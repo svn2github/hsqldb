@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<!-- $Id: sqltool.xml,v 1.3 2004/04/03 22:35:47 blaine Exp $ -->
+<!-- $Id: sqltool.xml,v 1.1 2004/04/11 04:44:57 unsaved Exp $ -->
 
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN"
 "http://www.oasis-open.org/docbook/xml/4.2CR1/docbookx.dtd" [
-    <!ENTITY revision "$Revision: 1.3 $">
-    <!ENTITY date "$Date: 2004/04/03 22:35:47 $">
+    <!ENTITY revision "$Revision: 1.1 $">
+    <!ENTITY date "$Date: 2004/04/11 04:44:57 $">
     <!ENTITY alts SYSTEM "../formats-section.xml">
     <!ENTITY docbasename "sqltool">
     <!ENTITY baseurl "http://hsqldb.sourceforge.net/alphadocs/&docbasename;">
@@ -95,8 +95,8 @@
                 </para></step><step><para>
                     Run 
                 </para><informalexample><screen>
-    java org.hsqldb.util.SqlTool --help
-                </screen></informalexample><para>
+                java org.hsqldb.util.SqlTool --help</screen>
+                </informalexample><para>
                     to see what command-line arguments are available.
                     Assuming that you set up your SqlTool configuration file 
                     at the default location and you want to use the hsqldb 
@@ -106,12 +106,12 @@
                 </screen></informalexample><para>
                     for interactive use, or
                 </para><informalexample><screen>
-    java org.hsqldb.util.SqlTool --noinput --sql 'SQL statement;' localhost-sa
-                    </screen></informalexample><para>
+    java org.hsqldb.util.SqlTool --noinput --sql 'SQL statement;' localhost-sa</screen>
+                    </informalexample><para>
                     or
                     </para><informalexample><screen>
-    java org.hsqldb.util.SqlTool localhost-sa filepath1.sql...
-                    </screen></informalexample><para>
+    java org.hsqldb.util.SqlTool localhost-sa filepath1.sql...</screen>
+                    </informalexample><para>
                     where <literal>localhost-sa</literal> is an
                     <emphasis>urlid</emphasis>,
                     and the following arguments are paths to text SQL files.
@@ -133,8 +133,8 @@
             The <link linkend='auth-chapter' endterm='auth-title'/> chapter.
             explains the second method.  Here's an example of the first method.
         </para><informalexample><screen>
-    java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid
-        </screen></informalexample>
+        java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
+        </informalexample>
     </chapter>
     <chapter id='auth-chapter'>
         <title id='auth-title'>Authentication Setup</title>
@@ -159,22 +159,22 @@
             with a phoney urlid and it will tell you where it expects the 
             configuration file to be.
         </para><informalexample><screen>
-    java org.hsqldb.util.SqlTool x
-        </screen></informalexample><para>
+    java org.hsqldb.util.SqlTool x</screen>
+        </informalexample><para>
             The config file consists of stanza(s) like this:
         </para><informalexample><screen>
     urlid web
     url jdbc:hsqldb:hsql://localhost
     username web
-    password webspassword
-        </screen></informalexample><para>
+    password webspassword</screen>
+        </informalexample><para>
             These four settings are required for every urlid.
             (There are optional settings also, which are described a couple 
             paragraphs down).
             You can have as many blank lines and comments like
         </para><informalexample><screen>
-    # This comment
-        </screen></informalexample><para>
+    # This comment</screen>
+        </informalexample><para>
         </para><para>
             in the file as you like.
             The whole point is that the <emphasis>urlid</emphasis> that you 
@@ -223,8 +223,8 @@
             You run SqlTool interactively by specifying no SQL filepaths on 
             the SqlTool command line.  Like this.
         </para><informalexample><screen>
-    java org.hsqldb.util.SqlTool urlid
-        </screen></informalexample><para>
+    java org.hsqldb.util.SqlTool urlid</screen>
+        </informalexample><para>
             If it starts up and connects to the database (as specified in your
             SqlTool configuration file as explained in the
             <link linkend='auth-chapter' endterm='auth-title'/> chapter),
@@ -337,8 +337,8 @@
                 it must not occur in the from or to strings.
                 Example
                 </para><informalexample><screen>
-    :s@from string@to string@
-                </screen></informalexample><para>
+    :s@from string@to string@</screen>
+                </informalexample><para>
                 All occurrences of the "from string" are substituted with "to 
                 string".
                 If the SQL Statement is multi-line, the substitution will 
@@ -354,13 +354,13 @@
                 actually look for occurrences of
                 </para><informalexample><screen>
     "*
-        FROM mytable"
-                </screen></informalexample><para>
+     FROM mytable"</screen>
+                </informalexample><para>
                 This is very useful, as it permits you to append to or prefix 
                 to specific lines within a multi-line SQL Statement, like
                 </para><informalexample><screen>
-    :s/e)$/e) WHERE col1 is not null$/
-                </screen></informalexample><para>
+    :s/e)$/e) WHERE col1 is not null$/</screen>
+                </informalexample><para>
                 This command appends
                 "<emphasis>WHERE col1 is not null</emphasis>" to the 
                 line(s) which end with "e)".
@@ -368,8 +368,8 @@
                 The "to string" may be empty, in which case, occurrences of 
                 the "from string" are just deleted.  For example
                 </para><informalexample><screen>
-    :s/this//
-                </screen></informalexample><para>
+    :s/this//</screen>
+                </informalexample><para>
                 would remove all occurrences of "this".
             </para></listitem></varlistentry>
         </variablelist>
@@ -380,8 +380,8 @@
             banner or command prompts, and aborting upon failure by default, 
             then specify a SQL filepath of "-", like
         </para><informalexample><screen>
-    java org.hsqldb.util.SqlTool urlid -
-        </screen></informalexample><para>
+    java org.hsqldb.util.SqlTool urlid -</screen>
+        </informalexample><para>
             You may want to do this if you are redirecting or tee-ing output 
             to a log file, and you don't want the user-interaction messages 
             ending up in the log file.
@@ -405,8 +405,8 @@
             directly from the comand-line or from a shell script without an 
             SQL file, like this.
         </para><informalexample><screen>
-        java org.hsqldb.util.SqlTool --noinput --sql 'SQL statement;' urlid
-        </screen></informalexample><para>
+    java org.hsqldb.util.SqlTool --noinput --sql 'SQL statement;' urlid</screen>
+        </informalexample><para>
             Since SqlTool executes SQL statements only when a statement line 
             is terminated with ";", you can only execute more than one SQL 
             statement this way if your OS shell has some mechanism to pass 
@@ -419,8 +419,8 @@
         SQL statement
             number two;
         SQL statement three;
-    ' urlid
-        </screen></informalexample><para>
+    ' urlid</screen>
+        </informalexample><para>
         If you don't give the <literal>--noinput</literal> switch, then after 
             executing the given statements, an interactive session will be 
             started.
@@ -444,8 +444,8 @@
         </para><para>
             Often, you will want to redirect output to a file, like
         </para><informalexample><screen>
-    java org.hsqldb.util.SqlTool urlid filepath1.sql... > /tmp/log.sql 2>&amp;1
-        </screen></informalexample><para>
+    java org.hsqldb.util.SqlTool urlid filepath1.sql... > /tmp/log.sql 2>&amp;1</screen>
+        </informalexample><para>
             (Skip the "2>&amp;1" if you're on Windows).
         </para><para>
             If you are viewing this document as an HTML document, then you can
@@ -495,8 +495,8 @@
                 If you redirect output to a file, this can make query output 
                 much easier to view.  For example,
                 </para><informalexample><screen>
-    java org.hsqldb.util.SqlTool urlid filepath1.sql... > /tmp/log.html 2>&amp;1
-                </screen></informalexample><para>
+    java org.hsqldb.util.SqlTool urlid filepath1.sql... > /tmp/log.html 2>&amp;1</screen>
+                </informalexample><para>
             </para></listitem></varlistentry>
             <varlistentry><term>\* [true|false]</term><listitem><para>
                 A "true" setting tells SqlTool to continue when errors are 
@@ -527,13 +527,13 @@
             In this case, do not give the sql file(s) as an argument to 
             SqlTool, but pipe them in instead, like
         </para><informalexample><screen>
-    java org.hsqldb.util.SqlTool urlid &lt; filepath1.sql &gt; /tmp/log.html 2&gt;&amp;1
-        </screen></informalexample><para>
+    java org.hsqldb.util.SqlTool urlid &lt; filepath1.sql &gt; /tmp/log.html 2&gt;&amp;1</screen>
+        </informalexample><para>
             or
         </para><informalexample><screen>
     cat filepath1.sql... |
-    java org.hsqldb.util.SqlTool urlid &gt; /tmp/log.html 2&gt;&amp;1
-        </screen></informalexample>
+java org.hsqldb.util.SqlTool urlid &gt; /tmp/log.html 2&gt;&amp;1</screen>
+        </informalexample>
     </section>
     <section id='charencoding-section'><title id='charencoding-title'>
             Character Encoding</title>
@@ -542,8 +542,8 @@
             You can use another character set by setting the system property 
             <literal>sqltool.charset</literal>, like
         </para><informalexample><screen>
-    java -Dsqltool.charset=UTF=8 org.hsqldb.util.SqlTool urlid filepath1.sql...
-        </screen></informalexample><para>
+    java -Dsqltool.charset=UTF=8 org.hsqldb.util.SqlTool urlid filepath1.sql...</screen>
+        </informalexample><para>
             You can also set this per urlid in the SqlTool configuration file.
             See the <link linkend='auth-chapter' endterm='auth-title'/>
             chapter about that.
