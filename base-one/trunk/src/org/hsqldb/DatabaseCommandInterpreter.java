@@ -32,7 +32,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2002, The HSQL Development Group
+ * Copyright (c) 2001-2004, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -710,10 +710,10 @@ class DatabaseCommandInterpreter {
      */
     private Column processCreateColumn(Table t) throws HsqlException {
 
-        boolean isIdentity    = false;
+        boolean isIdentity        = false;
         long    identityStart     = 0;
         long    identityIncrement = 1;
-        boolean isPrimaryKey  = false;
+        boolean isPrimaryKey      = false;
         String  columnName;
         boolean isQuoted;
         String  typeName;

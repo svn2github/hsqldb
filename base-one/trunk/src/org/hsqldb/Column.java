@@ -32,7 +32,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2002, The HSQL Development Group
+ * Copyright (c) 2001-2004, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -160,16 +160,16 @@ class Column {
             boolean identity, long startvalue, long increment,
             boolean primarykey, String defstring) throws HsqlException {
 
-        columnName    = name;
-        isNullable    = nullable;
-        colType       = type;
-        colSize       = size;
-        colScale      = scale;
-        isIdentity    = identity;
-        identityStart = startvalue;
+        columnName        = name;
+        isNullable        = nullable;
+        colType           = type;
+        colSize           = size;
+        colScale          = scale;
+        isIdentity        = identity;
+        identityStart     = startvalue;
         identityIncrement = increment;
-        isPrimaryKey  = primarykey;
-        defaultString = defstring;
+        isPrimaryKey      = primarykey;
+        defaultString     = defstring;
 
         if (isIdentity) {
             if (type == Types.INTEGER) {
@@ -754,7 +754,7 @@ class Column {
         }
 
         return (i == 0) ? 0
-                       : (i < 0 ? -1
+                        : (i < 0 ? -1
                                  : 1);
     }
 

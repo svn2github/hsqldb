@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2003, The HSQL Development Group
+/* Copyright (c) 2001-2004, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -130,8 +130,8 @@ public class ValuePool {
         }
 
         synchronized (stringPool) {
-        return stringPool.getOrAddString(val);
-    }
+            return stringPool.getOrAddString(val);
+        }
     }
 
     public static synchronized java.sql.Date getDate(long val) {
@@ -161,9 +161,9 @@ public class ValuePool {
 //        return n == null ? null : getBoolean(n.doubleValue() == 1.0);
 //    }
 //    public static Boolean getBoolean(Object o) {
-//       return o == null ? null 
-//                        : o instanceof Boolean 
-//                              ? (Boolean) o 
+//       return o == null ? null
+//                        : o instanceof Boolean
+//                              ? (Boolean) o
 //                              : o instanceof Number
 //                                    ? getBoolean((Number)o)
 //                                    : getBoolean(String.valueOf(o);

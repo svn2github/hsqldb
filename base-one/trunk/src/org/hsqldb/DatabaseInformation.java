@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2003, The HSQL Development Group
+/* Copyright (c) 2001-2004, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -93,6 +93,22 @@ class DatabaseInformation {
 // boucherb@users 20030403 - isolated and improved text table reporting
     protected static final int SYSTEM_TEXTTABLES = 31;
 
+// boucherb@users 20040107 - metadata support for sequences    
+    protected static final int SYSTEM_SEQUENCES        = 32;
+    protected static final int SYSTEM_USAGE_PRIVILEGES = 33;
+
+// boucherb@users 20040107 - metadata support for constraints      
+    protected static final int SYSTEM_CHECK_CONSTRAINTS = 34;
+    protected static final int SYSTEM_TABLE_CONSTRAINTS = 35;
+
+// boucherb@users 20040107 - metadata support for view usage breakdown- SQL 200n
+    protected static final int SYSTEM_CHECK_COLUMN_USAGE             = 36;
+    protected static final int SYSTEM_CHECK_CONSTRAINT_ROUTINE_USAGE = 37;
+    protected static final int SYSTEM_CHECK_TABLE_USAGE              = 38;
+    protected static final int SYSTEM_VIEW_COLUMN_USAGE              = 39;
+    protected static final int SYSTEM_VIEW_TABLE_USAGE               = 40;
+    protected static final int SYSTEM_VIEW_ROUTINE_USAGE             = 41;
+
     /** system table names strictly in order of their ids */
     protected static final String sysTableNames[] = {
         "SYSTEM_BESTROWIDENTIFIER",    //
@@ -128,11 +144,22 @@ class DatabaseInformation {
         "SYSTEM_TRIGGERS",             //
         "SYSTEM_ALLTYPEINFO",          //
 
-// boucherb@users 20030305 - brought in line with SQL 200n
+        // boucherb@users 20030305 - brought in line with SQL 200n
         "SYSTEM_VIEWS",
 
-// boucherb@users 20030403 - isolated and improved text table reporting
-        "SYSTEM_TEXTTABLES"
+        // boucherb@users 20030403 - isolated and improved text table reporting
+        "SYSTEM_TEXTTABLES",
+
+        // boucherb@users 20040107 - metadata support for sequences - SQL 200n
+        "SYSTEM_SEQUENCES", "SYSTEM_USAGE_PRIVILEGES",
+
+        // boucherb@users 20040107 - metadata support for constraints - SQL 200n  
+        "SYSTEM_CHECK_CONSTRAINTS", "SYSTEM_TABLE_CONSTRAINTS",
+
+        // boucherb@users 20040107 - metadata support for usage - SQL 200n
+        "SYSTEM_CHECK_COLUMN_USAGE", "SYSTEM_CHECK_CONSTRAINT_ROUTINE_USAGE",
+        "SYSTEM_CHECK_TABLE_USAGE", "SYSTEM_VIEW_COLUMN_USAGE",
+        "SYSTEM_VIEW_TABLE_USAGE", "SYSTEM_VIEW_ROUTINE_USAGE"
 
         // Future use
 //        "SYSTEM_ASSERTIONS",
@@ -140,10 +167,10 @@ class DatabaseInformation {
 //        "SYSTEM_CHARACTER_ENCODING_FORMS",
 //        "SYSTEM_CHARACTER_REPERTOIRES",
 //        "SYSTEM_CHARACTER_SETS",
-//        "SYSTEM_CHECK_COLUMN_USAGE",
-//        "SYSTEM_CHECK_CONSTRAINT_ROUTINE_USAGE",
-//        "SYSTEM_CHECK_CONSTRAINTS",
-//        "SYSTEM_CHECK_TABLE_USAGE",
+//        "SYSTEM_CHECK_COLUMN_USAGE",             // boucherb@users 20040107 - implemented
+//        "SYSTEM_CHECK_CONSTRAINT_ROUTINE_USAGE", // boucherb@users 20040107 - implemented
+//        "SYSTEM_CHECK_CONSTRAINTS",              // boucherb@users 20040107 - implemented
+//        "SYSTEM_CHECK_TABLE_USAGE",              // boucherb@users 20040107 - implemented
 //        "SYSTEM_COLLATION_CHARACTER_SET_APPLICABILITY",
 //        "SYSTEM_COLLATIONS",
 //        "SYSTEM_COLUMN_COLUMN_USAGE",
@@ -187,13 +214,13 @@ class DatabaseInformation {
 //        "SYSTEM_ROUTINE_TABLE_USAGE",
 //        "SYSTEM_ROUTINES",
 //        "SYSTEM_SCHEMATA",
-//        "SYSTEM_SEQUENCES",
+//        "SYSTEM_SEQUENCES",                      // boucherb@users 20040107 - implemented
 //        "SYSTEM_SQL_FEATURES",
 //        "SYSTEM_SQL_IMPLEMENTATION_INFO",
 //        "SYSTEM_SQL_LANGUAGES",
 //        "SYSTEM_SQL_SIZING",
 //        "SYSTEM_SQL_SIZING_PROFILES",
-//        "SYSTEM_TABLE_CONSTRAINTS",
+//        "SYSTEM_TABLE_CONSTRAINTS",              // boucherb@users 20040107 - implemented
 //        "SYSTEM_TABLE_METHOD_PRIVILEGES",
 //        "SYSTEM_TABLE_PRIVILEGES",
 //        "SYSTEM_TABLES",
@@ -206,15 +233,15 @@ class DatabaseInformation {
 //        "SYSTEM_TRIGGERED_UPDATE_COLUMNS",
 //        "SYSTEM_TRIGGERS",
 //        "SYSTEM_TYPE_JAR_USAGE",
-//        "SYSTEM_USAGE_PRIVILEGES",
+//        "SYSTEM_USAGE_PRIVILEGES",               // boucherb@users 20040107 - implemented
 //        "SYSTEM_USER_DEFINED_TYPE_PRIVILEGES",
 //        "SYSTEM_USER_DEFINED_TYPES",
 //        "SYSTEM_USER_MAPPING_OPTIONS",
 //        "SYSTEM_USER_MAPPINGS",
 //        "SYSTEM_USERS",
-//        "SYSTEM_VIEW_COLUMN_USAGE",
-//        "SYSTEM_VIEW_ROUTINE_USAGE",
-//        "SYSTEM_VIEW_TABLE_USAGE",
+//        "SYSTEM_VIEW_COLUMN_USAGE",              // boucherb@users 20040107 - implemented
+//        "SYSTEM_VIEW_ROUTINE_USAGE",             // boucherb@users 20040107 - implemented
+//        "SYSTEM_VIEW_TABLE_USAGE",               // boucherb@users 20040107 - implemented
 //        "SYSTEM_VIEWS", // boucherb@users 20030305 - implemented
     };
 
@@ -284,6 +311,8 @@ class DatabaseInformation {
                     break;
                 }
             } catch (Exception e) {
+                e.printStackTrace();
+
                 if (Trace.TRACE) {
                     Trace.trace(e.getMessage());
                 }

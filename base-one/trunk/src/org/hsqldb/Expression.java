@@ -32,7 +32,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2002, The HSQL Development Group
+ * Copyright (c) 2001-2004, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -222,9 +222,9 @@ class Expression {
     private int     dataType;
 
     // VALUE LIST NEW
-    private Expression[] valueList;
-    private boolean      isFixedConstantValueList;
-    private boolean      isFixedConstantValueListChecked;
+    Expression[]    valueList;
+    private boolean isFixedConstantValueList;
+    private boolean isFixedConstantValueListChecked;
 
     // QUERY - in single value selects, IN or EXISTS predicates
     Select  subSelect;
@@ -232,7 +232,7 @@ class Expression {
     Table   subTable;                         // if not correlated
 
     // FUNCTION
-    private Function function;
+    Function function;
 
     // LIKE
     private Like likeObject;
@@ -617,7 +617,7 @@ class Expression {
                 if (Token.T_NULL.equals(right)) {
                     buf.append(left).append(" IS ").append(right);
                 } else {
-                buf.append(left).append('=').append(right);
+                    buf.append(left).append('=').append(right);
                 }
 
                 return buf.toString();
@@ -646,7 +646,7 @@ class Expression {
                 if (Token.T_NULL.equals(right)) {
                     buf.append(left).append(" IS NOT ").append(right);
                 } else {
-                buf.append(left).append("!=").append(right);
+                    buf.append(left).append("!=").append(right);
                 }
 
                 return buf.toString();
@@ -3332,4 +3332,82 @@ class Expression {
     boolean isWritable;        // = false; true if column of writable table
     int     paramMode = PARAM_UNKNOWN;
     String  valueClassName;    // = null
+
+// boucherb@users 20040111 - patch 1.7.2 RC1 - metadata xxxusage support
+//-------------------------------------------------------------------    
+    // TODO:  Maybe provide an interface or abstract class + a default
+    // implementation instead?  This would allow a more powerful system
+    // of collectors to be created, for example to assist in the optimization
+    // of condition expression trees:
+    //
+    // HashSet joins = new JoinConditionCollector();
+    // joins.addAll(select.whereCondition);
+    // for(Iterator it = joins.iterator(); it.hasNext();) {
+    //      process((it.next());
+    // }
+
+    /**
+     * Provides a generic way to collect a set of distinct expressions
+     * of some type from a tree rooted at a specified Expression.
+     */
+    static class Collector extends HashSet {
+
+        Collector() {
+            super();
+        }
+
+        void addAll(Expression e, int type) {
+
+            Select       select;
+            Function     function;
+            Expression[] list;
+
+            if (e == null) {
+                return;
+            }
+
+            addAll(e.getArg(), type);
+            addAll(e.getArg2(), type);
+
+            // CHECKME: What about setTrue() Expressions?
+            if (e.exprType == type) {
+                add(e);
+            }
+
+            select = e.subSelect;
+
+            if (select != null) {
+                for (; select != null; select = select.sUnion) {
+                    list = select.exprColumns;
+
+                    for (int i = 0; i < list.length; i++) {
+                        addAll(list[i], type);
+                    }
+
+                    addAll(select.queryCondition, type);
+                    addAll(select.havingCondition, type);
+                }
+            }
+
+            function = e.function;
+
+            if (function != null) {
+                list = function.eArg;
+
+                if (list != null) {
+                    for (int i = 0; i < list.length; i++) {
+                        addAll(list[i], type);
+                    }
+                }
+            }
+
+            list = e.valueList;
+
+            if (list != null) {
+                for (int i = 0; i < list.length; i++) {
+                    addAll(list[i], type);
+                }
+            }
+        }
+    }
 }

@@ -32,7 +32,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2002, The HSQL Development Group
+ * Copyright (c) 2001-2004, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -176,7 +176,7 @@ class Database {
      *      name and path resolves to are in use by another process
      */
 
-// loosecannon1@users 1.7.2 patch properties on the JDBC URL    
+// loosecannon1@users 1.7.2 patch properties on the JDBC URL
     Database(String type, String path, String name, boolean ifexists,
              HsqlProperties props) throws HsqlException {
 
@@ -253,7 +253,7 @@ class Database {
 
             databaseProperties.load();
 
-// loosecannon1@users 1.7.2 patch properties on the JDBC URL    
+// loosecannon1@users 1.7.2 patch properties on the JDBC URL
             // overload file database properties with any passed on URL line
             if (urlProperties != null) {
                 for (Enumeration e = urlProperties.propertyNames();

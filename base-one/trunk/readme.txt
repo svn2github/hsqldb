@@ -1,5 +1,11 @@
 Readme File
 
+2003.01.12
+
+Fixed reported bugs
+
+Support for new system tables for constraints, views and sequences
+
 2003.01.05 
 
 Fixed two reported bugs

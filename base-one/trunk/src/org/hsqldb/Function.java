@@ -32,7 +32,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2002, The HSQL Development Group
+ * Copyright (c) 2001-2004, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -93,7 +93,7 @@ class Function {
 
     private Session        cSession;
     private String         sFunction;
-    private Method         mMethod;
+    Method                 mMethod;
     private Class          cReturnClass;
     private Class[]        aArgClasses;
     private int            iReturnType;
@@ -102,7 +102,7 @@ class Function {
     private int            iSqlArgStart;
     private int            iArgType[];
     private boolean        bArgNullable[];
-    private Expression     eArg[];
+    Expression[]           eArg;
     private boolean        bConnection;
     private static HashMap methodCache = new HashMap();
     private int            fID;

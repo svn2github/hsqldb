@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2003, The HSQL Development Group
+/* Copyright (c) 2001-2004, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -415,7 +415,17 @@ class DatabaseInformationMain extends DatabaseInformation {
             sysTableSessionDependent[SYSTEM_TRIGGERCOLUMNS] =
             sysTableSessionDependent[SYSTEM_TRIGGERS] =
             sysTableSessionDependent[SYSTEM_VIEWS] =
-            sysTableSessionDependent[SYSTEM_TEXTTABLES] = true;
+            sysTableSessionDependent[SYSTEM_TEXTTABLES] =
+            sysTableSessionDependent[SYSTEM_CHECK_CONSTRAINTS] =
+            sysTableSessionDependent[SYSTEM_SEQUENCES] =
+            sysTableSessionDependent[SYSTEM_USAGE_PRIVILEGES] =
+            sysTableSessionDependent[SYSTEM_TABLE_CONSTRAINTS] =
+            sysTableSessionDependent[SYSTEM_CHECK_COLUMN_USAGE] =
+            sysTableSessionDependent[SYSTEM_CHECK_CONSTRAINT_ROUTINE_USAGE] =
+            sysTableSessionDependent[SYSTEM_CHECK_TABLE_USAGE] =
+            sysTableSessionDependent[SYSTEM_VIEW_COLUMN_USAGE] =
+            sysTableSessionDependent[SYSTEM_VIEW_TABLE_USAGE] =
+            sysTableSessionDependent[SYSTEM_VIEW_ROUTINE_USAGE] = true;
 
         Table   t;
         Session oldSession = session;

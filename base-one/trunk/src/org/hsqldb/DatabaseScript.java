@@ -32,7 +32,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2002, The HSQL Development Group
+ * Copyright (c) 2001-2004, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -110,7 +110,7 @@ class DatabaseScript {
         HashMappedList seqmap = dDatabase.sequenceManager.sequenceMap;
 
         for (int i = 0, sSize = seqmap.size(); i < sSize; i++) {
-            NumberSequence seq    = (NumberSequence) seqmap.get(i);
+            NumberSequence seq = (NumberSequence) seqmap.get(i);
 
             a = new StringBuffer(128);
 

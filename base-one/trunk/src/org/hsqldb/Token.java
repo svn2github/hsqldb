@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2003, The HSQL Development Group
+/* Copyright (c) 2001-2004, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -376,7 +376,7 @@ class Token {
     static final String T_WRITE_DELAY           = "WRITE_DELAY";
 
     // SQL 200n token values
-    static final int ADD                   = 1;
+    static final int ADD                           = 1;
     static final int ALL                           = 2;
     static final int ALLOCATE                      = 3;
     static final int ALTER                         = 4;

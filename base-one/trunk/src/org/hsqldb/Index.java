@@ -32,7 +32,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2002, The HSQL Development Group
+ * Copyright (c) 2001-2004, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -528,7 +528,7 @@ class Index {
      * @throws HsqlException
      */
     Node findNotNull(Object rowdata[], int[] rowColMap,
-                    boolean first) throws HsqlException {
+                     boolean first) throws HsqlException {
 
         Node x      = root, n;
         Node result = null;
