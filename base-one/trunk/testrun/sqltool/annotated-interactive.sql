@@ -1,5 +1,5 @@
 /*
-    $Id: annotated-interactive.sql,v 1.2 2004/06/16 18:59:51 unsaved Exp $
+    $Id: annotated-interactive.sql,v 1.3 2004/06/16 19:07:57 unsaved Exp $
 
     See readme.txt in this directory for how to unit test SqlTool.
 
@@ -9,7 +9,7 @@
     This is an annotated example on how to test SqlTool run in interactive
     mode.  SqlTool will be run without any filename arguments, and this
     file will be fed to SqlTool via stdin.
-    This SQL test file runs SqlTool in interactive mode by virtue ofusing
+    This SQL test file runs SqlTool in interactive mode by virtue of using
     "inputAsFile" false (the default) and not specifying any SQL filename
     (or "-") with "arg".
 
@@ -36,6 +36,9 @@
         requireErroutRegex: Regular expression to require from errout of SqlTool
         rejectErroutRegex:  Regular expression to reject from errout of SqlTool
         exitValue:          Required exit value from the SqlTool run.
+                            Default is 0.  Specify no value at all (i.e.
+                            a line containing just "exitValue") to ignore
+                            the exit value.
         inputAsFile:        "true" or "false" (defaults to "false").
                             If "false", this file you are reading will be
                             passed to SqlTool via stdin.

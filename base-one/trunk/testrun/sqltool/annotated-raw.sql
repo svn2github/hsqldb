@@ -1,5 +1,5 @@
 /*
-    $Id: annotated-raw.sql,v 1.5 2004/06/16 18:59:42 unsaved Exp $
+    $Id: annotated-raw.sql,v 1.6 2004/06/16 19:07:57 unsaved Exp $
 
     See readme.txt in this directory for how to unit test SqlTool.
 
@@ -12,7 +12,7 @@
         java org.hsqldb.util.SqlTool mem -
     This causes SqlTool to read stdin, but non-interactively (e.g. 
     command-line editing won't work and there is no login banner, etc.).
-    This SQL test file runs SqlTool in raw mode by virtue ofusing
+    This SQL test file runs SqlTool in raw mode by virtue of using
     "inputAsFile" false (the default) and specifying filename of "-"
     with "arg".
 
@@ -39,6 +39,9 @@
         requireErroutRegex: Regular expression to require from errout of SqlTool
         rejectErroutRegex:  Regular expression to reject from errout of SqlTool
         exitValue:          Required exit value from the SqlTool run.
+                            Default is 0.  Specify no value at all (i.e.
+                            a line containing just "exitValue") to ignore
+                            the exit value.
         inputAsFile:        "true" or "false" (defaults to "false").
                             If "false", this file you are reading will be
                             passed to SqlTool via stdin.

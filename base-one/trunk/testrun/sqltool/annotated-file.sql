@@ -1,5 +1,5 @@
 /*
-    $Id: annotated-file.sql,v 1.1 2004/06/16 19:00:51 unsaved Exp $
+    $Id: annotated-file.sql,v 1.2 2004/06/16 19:07:57 unsaved Exp $
 
     See readme.txt in this directory for how to unit test SqlTool.
 
@@ -9,7 +9,7 @@
     This is an annotated example on how to test SqlTool run in SQL file
     mode.  SqlTool will be run without this filename (the name of the
     file you are now reading), and nothing be fed to SqlTool via stdin.
-    This SQL test file runs SqlTool in SQL file mode by virtue ofthe
+    This SQL test file runs SqlTool in SQL file mode by virtue of the
     "inputAsFile true" setting below.
 
     N.b. that there are no annotations between the "HARNESS_METADATA BEGIN"
@@ -35,6 +35,9 @@
         requireErroutRegex: Regular expression to require from errout of SqlTool
         rejectErroutRegex:  Regular expression to reject from errout of SqlTool
         exitValue:          Required exit value from the SqlTool run.
+                            Default is 0.  Specify no value at all (i.e.
+                            a line containing just "exitValue") to ignore
+                            the exit value.
         inputAsFile:        "true" or "false" (defaults to "false").
                             If "false", this file you are reading will be
                             passed to SqlTool via stdin.
