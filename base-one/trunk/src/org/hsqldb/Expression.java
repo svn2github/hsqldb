@@ -202,16 +202,15 @@ class Expression {
     private static final int AGGREGATE_BOTH  = 3;
 
     // type
-    int exprType;
+    int         exprType;
+    private int aggregateSpec = AGGREGATE_NONE;
 
     // nodes
     private Expression eArg, eArg2;
-    private int        aggregateSpec = AGGREGATE_NONE;
 
     // VALUE, VALUELIST
     Object          valueData;
     private HashSet hList;
-    private boolean hListIsUpper;       // no longer used
     private int     dataType;
 
     // VALUE LIST NEW
@@ -226,6 +225,7 @@ class Expression {
     private Function function;
 
     // LIKE
+    private Like    likeObject;
     private char    likeEscapeChar;
     private boolean likeOptimized;
 
@@ -276,14 +276,17 @@ class Expression {
      */
     Expression(Expression e) {
 
-        exprType       = e.exprType;
-        dataType       = e.dataType;
-        eArg           = e.eArg;
-        eArg2          = e.eArg2;
+        exprType = e.exprType;
+        dataType = e.dataType;
+        eArg     = e.eArg;
+        eArg2    = e.eArg2;
+        isInJoin = e.isInJoin;
+
+        //
+        likeObject     = e.likeObject;
         likeEscapeChar = e.likeEscapeChar;
         subSelect      = e.subSelect;
         function       = e.function;
-        isInJoin       = e.isInJoin;
 
         checkAggregate();
     }
@@ -329,9 +332,9 @@ class Expression {
      * @param e operand 1
      * @param e2 operand 2
      */
-    Expression(int type, Expression e, Expression e2, char escape) {
+    Expression(Expression e, Expression e2, char escape) {
 
-        exprType       = type;
+        exprType       = LIKE;
         eArg           = e;
         eArg2          = e2;
         likeEscapeChar = escape;
@@ -650,18 +653,11 @@ class Expression {
         dataType = type;
     }
 
-// NOTES: boucherb@users.sourceforge.net 20030601
-// setTrue()  is bad.  It is a destructive operation that
-// affects the ability to resolve an expression more than once.
-// the related methods below are useful only for now and only for toString()
-// under EXPLAIN PLAN FOR on CompiledStatement objects containg Select objects.
-// In the future, this all needs to be changed around to
-// support clean reparameterization and reresolution of
-// expression trees.
     int oldIType = -1;
 
     /**
-     * Method declaration
+     * When an Expression is assigned to a TableFilter, a copy is made for use
+     * there and the original is set to Expression.TRUE
      *
      */
     void setTrue() {
@@ -1126,7 +1122,7 @@ class Expression {
         }
 
         if (subSelect != null) {
-            subSelect.checkResolved();
+            subSelect.checkResolved(aliases);
         }
 
         if (function != null) {
@@ -1143,76 +1139,115 @@ class Expression {
     }
 
     /**
-     * Method declaration
+     * Resolve the table names for columns
      *
      *
      * @param f
      *
      * @throws HsqlException
      */
-    void resolve(TableFilter f) throws HsqlException {
+    void resolveTables(TableFilter f) throws HsqlException {
 
-        if (isParam) {
+        if (isParam || f == null || exprType == Expression.VALUE) {
             return;
         }
 
-// boucherb@users 20030718 - patch 1.7.2
-// initial refinements to compress tree, calculating
-// fixed vaue expressions where possible
         if (eArg != null) {
-            eArg.resolve(f);
+            eArg.resolveTables(f);
         }
 
         if (eArg2 != null) {
-            eArg2.resolve(f);
+            eArg2.resolveTables(f);
         }
 
-// fredt - moved
-        if ((f != null) && (exprType == COLUMN)) {
-            String filterName = f.getName();
+        switch (exprType) {
 
-            if ((tableName == null) || filterName.equals(tableName)) {
-                Table table = f.getTable();
-                int   i     = table.searchColumn(columnName);
+            case COLUMN :
+                String filterName = f.getName();
 
-                if (i != -1) {
+                if (tableFilter == null
+                        && (tableName == null
+                            || filterName.equals(tableName))) {
+                    Table table = f.getTable();
+                    int   i     = table.searchColumn(columnName);
 
+                    if (i != -1) {
+                        /*
 // fredt@users 20011110 - fix for 471711 - subselects
-                    // todo: other error message: multiple tables are possible
-                    Trace.check(
-                        tableFilter == null
-                        || tableFilter.getName().equals(
-                            filterName), Trace.COLUMN_NOT_FOUND, columnName);
+                                            boolean repeat = tableFilter != null && !tableFilter.getName().equals(filterName);
+                                            if ( repeat){
+                             throw Trace.error(Trace.AMBIGUOUS_COLUMN_REFERENCE, columnName);
+                                            }
+                         */
+                        tableFilter = f;
+                        columnIndex = i;
+                        tableName   = filterName;
 
-                    tableFilter = f;
-                    columnIndex = i;
-                    tableName   = filterName;
+                        setTableColumnAttributes(table, i);
 
-                    setTableColumnAttributes(table, i);
-
-                    // COLUMN is leaf; we are done
-                    return;
+                        // COLUMN is leaf; we are done
+                        return;
+                    }
                 }
-            }
+                break;
+
+            case QUERY :
+
+                // fredt - subselects are resolved once when they are created
+                // the subselect condition gets resolved here
+                // we now resolve independently first, then
+                // resolve in the enclosing context
+                if (subSelect != null) {
+                    subSelect.resolve();
+                    subSelect.resolve(f, false);
+                }
+                break;
+
+            case FUNCTION :
+                if (function != null) {
+                    function.resolveTables(f);
+                }
+                break;
+
+            case IN :
+                if (eArg2.exprType != QUERY) {
+                    Expression[] vl = eArg2.valueList;
+
+                    for (int i = 0; i < vl.length; i++) {
+                        vl[i].resolveTables(f);
+                    }
+                }
+                break;
+
+            default :
+        }
+    }
+
+    void resolveTypes() throws HsqlException {
+
+        if (isParam || exprType == Expression.VALUE) {
+            return;
         }
 
-        if (subSelect != null) {
-            subSelect.resolve(f, false);
-            subSelect.resolve();
+        if (eArg != null) {
+            eArg.resolveTypes();
         }
 
-        if (function != null) {
-            function.resolve(f);
+        if (eArg2 != null) {
+            eArg2.resolveTypes();
         }
 
-// temp fix to allow leaf Expression objects to be resolved
-//
-//        if (dataType != Types.NULL) {
+// temp fix to allow leaf Expression objects to be resolved removed
+        if (dataType != Types.NULL) {
+
 //            return;
-//        }
+        }
+
         switch (exprType) {
 
             case FUNCTION :
+                function.resolveType();
+
                 dataType = function.getReturnType();
                 break;
 
@@ -1317,111 +1352,7 @@ class Expression {
                 break;
 
             case LIKE :
-                Trace.check(
-                    !(eArg.isParam && eArg2.isParam),
-                    Trace.COLUMN_TYPE_MISMATCH,
-                    "it is ambiguous for both expressions of a LIKE comparison-predicate to be parameter markers");
-
-                if (isFixedConditional()) {
-                    exprType = test() ? TRUE
-                                      : FALSE;
-                    eArg     = null;
-                    eArg2    = null;
-                } else if (eArg.isParam) {
-                    eArg.dataType = Types.VARCHAR;
-                } else if (eArg2.isParam) {
-                    eArg2.dataType = Types.VARCHAR;
-                }
-
-// boucherb@users 2003-09-25 - patch 1.7.2 Alpha P
-//
-// Some optimizations for LIKE
-//
-// TODO: 
-//
-// See if the same optimizations can be done dynamically at execute time when
-// eArg2 is PARAM.  Unfortunately, this currently requires re-resolving from
-// the root any expression containing at least one parameterized LIKE in the
-// compiled statement and reseting conditions on any involved table filters, 
-// so the answer is: probably not, at least not under the current code.
-//
-// CHECKME:
-//
-// Test for correct results under all XXXCHAR types (padding, etc.?) 
-//
-// NOTE:
-//                
-// For the old behaviour, simply comment out the block below                
-                if (exprType == LIKE &&!likeOptimized
-                        && eArg2.isFixedConstant()) {
-                    String likeStr = (String) eArg2.getValue(Types.VARCHAR);
-                    boolean ignoreCase = eArg.dataType
-                                         == Types.VARCHAR_IGNORECASE;
-                    Like like = new Like(likeStr, likeEscapeChar, ignoreCase);
-
-                    if (like.isEquivalentToFalsePredicate()) {
-                        exprType = FALSE;
-                        eArg     = null;
-                        eArg2    = null;
-                    } else if (like.isEquivalentToEqualsPredicate()) {
-                        exprType      = EQUAL;
-                        likeOptimized = true;
-                        eArg2 = new Expression(Types.VARCHAR,
-                                               like.getStartsWith());
-                    } else if (like.isEquivalentToNotNullPredicate()) {
-
-                        // X LIKE '%' <=>  X IS NOT NULL
-                        exprType = NOT_EQUAL;
-                        eArg2    = new Expression(Types.NULL, null);
-                    } else if (like.isEquivalentToBetweenPredicate()) {
-
-                        // X LIKE 'abc%' <=> X >= 'abc' AND X <= 'abd'
-                        Expression eArgOld = eArg;
-                        Expression eFirst =
-                            new Expression(Types.VARCHAR, like.getRangeLow());
-                        Expression eLast =
-                            new Expression(Types.VARCHAR,
-                                           like.getRangeHigh());
-
-                        eArg = new Expression(BIGGER_EQUAL, eArgOld, eFirst);
-                        eArg2 = new Expression(SMALLER_EQUAL, eArgOld, eLast);
-                        exprType = AND;
-
-                        //
-                        eFirst.likeOptimized = true;
-                        eLast.likeOptimized  = true;
-                        eArg.likeOptimized   = true;
-                        eArg2.likeOptimized  = true;
-                        likeOptimized        = true;
-                    } else if (like
-                            .isEquivalentToBetweenPredicateAugmentedWithLike()) {
-
-                        // X LIKE 'abc%...' <=> X >= 'abc' AND X <= 'abd' AND X LIKE 'abc%...'
-                        eArg.likeOptimized = true;
-
-                        Expression eFirst =
-                            new Expression(Types.VARCHAR, like.getRangeLow());
-                        Expression eLast =
-                            new Expression(Types.VARCHAR,
-                                           like.getRangeHigh());
-                        Expression gte = new Expression(BIGGER_EQUAL, eArg,
-                                                        eFirst);
-                        Expression lte = new Expression(SMALLER_EQUAL, eArg,
-                                                        eLast);
-
-                        eArg2    = new Expression(LIKE, eArg, eArg2);
-                        eArg     = new Expression(AND, gte, lte);
-                        exprType = AND;
-
-                        //
-                        eFirst.likeOptimized = true;
-                        eLast.likeOptimized  = true;
-                        lte.likeOptimized    = true;
-                        eArg.likeOptimized   = true;
-                        eArg2.likeOptimized  = true;
-                        likeOptimized        = true;
-                    }
-                }
+                resolveTypeForLike();
 
                 dataType = Types.BIT;
                 break;
@@ -1495,90 +1426,7 @@ class Expression {
                 break;
 
             case IN :
-
-// PARAM Resolution rules:
-//                
-// Expression used with IN:    Same as the first value or the result column 
-//                             of the subquery
-//                
-// A value used with IN:       Same as the expression or the first value if
-//                             there is a parameter marker in the expression 
-// Implies ambiguity if:       A parameter marker is both the expression and
-//                             the first value of an IN operation, from which
-//                             follows that it is ambiguous for the expression
-//                             to be a parameter marker if the list is empty.
-// CHECKME: 
-// Is an empty IN list legal?  Why would anyone ever use it?
-                if (eArg2.exprType == QUERY) {
-                    if (eArg.isParam) {
-                        eArg.dataType = eArg2.dataType;
-                    }
-                } else {    // eArg2.exprType == VALUELIST
-                    Expression[] vl = eArg2.valueList;
-
-                    if (eArg.isParam) {
-                        Trace.check(
-                            vl.length > 0, Trace.COLUMN_TYPE_MISMATCH,
-                            "it is ambiguous for the expression of an IN operation to be a parameter marker when the value list is empty");
-                        Trace.check(
-                            !vl[0].isParam, Trace.COLUMN_TYPE_MISMATCH,
-                            "it is ambiguous for both the expression and the first value list entry of an IN operation to be parameter markers");
-
-                        Expression e = vl[0];
-
-                        e.resolve(f);
-
-                        int dt = e.dataType;
-
-                        // PARAM datatype same as first value list expression
-                        // should never be Types.NULL when all is said and done
-                        if (dt == Types.NULL) {
-
-                            // do nothing...
-                        } else {
-                            if (eArg.dataType == Types.NULL) {
-                                eArg.dataType = dt;
-                            }
-
-                            if (eArg2.dataType == Types.NULL) {
-                                eArg2.dataType = dt;
-                            }
-                        }
-
-                        for (int i = 1; i < vl.length; i++) {
-                            e = vl[i];
-
-                            if (e.isParam) {
-                                if (e.dataType == Types.NULL
-                                        && dt != Types.NULL) {
-                                    e.dataType = dt;
-                                }
-                            } else {
-                                e.resolve(f);
-                            }
-                        }
-                    } else {
-                        int dt = eArg.dataType;
-
-                        if (eArg2.dataType == Types.NULL
-                                && dt != Types.NULL) {
-                            eArg2.dataType = dt;
-                        }
-
-                        for (int i = 0; i < vl.length; i++) {
-                            Expression e = vl[i];
-
-                            if (e.isParam) {
-                                if (e.dataType == Types.NULL
-                                        && dt != Types.NULL) {
-                                    e.dataType = dt;
-                                }
-                            } else {
-                                e.resolve(f);
-                            }
-                        }
-                    }
-                }
+                resolveTypeForIn();
 
                 dataType = Types.BIT;
                 break;
@@ -1679,6 +1527,201 @@ class Expression {
                 }
 
                 break;
+            }
+        }
+    }
+
+    void resolveTypeForLike() throws HsqlException {
+
+        Trace.check(
+            !(eArg.isParam && eArg2.isParam), Trace.COLUMN_TYPE_MISMATCH,
+            "it is ambiguous for both expressions of a LIKE comparison-predicate to be parameter markers");
+
+        if (isFixedConditional()) {
+            exprType = test() ? TRUE
+                              : FALSE;
+            eArg     = null;
+            eArg2    = null;
+        } else if (eArg.isParam) {
+            eArg.dataType = Types.VARCHAR;
+        } else if (eArg2.isParam) {
+            eArg2.dataType = Types.VARCHAR;
+        }
+
+// boucherb@users 2003-09-25 - patch 1.7.2 Alpha P
+//
+// Some optimizations for LIKE
+//
+// TODO:
+//
+// See if the same optimizations can be done dynamically at execute time when
+// eArg2 is PARAM.  Unfortunately, this currently requires re-resolving from
+// the root any expression containing at least one parameterized LIKE in the
+// compiled statement and reseting conditions on any involved table filters,
+// so the answer is: probably not, at least not under the current code.
+//
+// CHECKME:
+//
+// Test for correct results under all XXXCHAR types (padding, etc.?)
+//
+// NOTE:
+//
+// For the old behaviour, simply comment out the block below
+        if (likeOptimized) {
+            return;
+        }
+
+        String likeStr = eArg2.isFixedConstant()
+                         ? (String) eArg2.getValue(Types.VARCHAR)
+                         : null;
+        boolean ignoreCase = eArg.dataType == Types.VARCHAR_IGNORECASE;
+        Like    like       = new Like(likeStr, likeEscapeChar, ignoreCase);
+
+        if (eArg2.isFixedConstant()) {
+            if (like.isEquivalentToFalsePredicate()) {
+                exprType = FALSE;
+                eArg     = null;
+                eArg2    = null;
+            } else if (like.isEquivalentToEqualsPredicate()) {
+                exprType      = EQUAL;
+                likeOptimized = true;
+                eArg2 = new Expression(Types.VARCHAR, like.getRangeLow());
+            } else if (like.isEquivalentToNotNullPredicate()) {
+
+                // X LIKE '%' <=>  X IS NOT NULL
+                exprType = NOT_EQUAL;
+                eArg2    = new Expression(Types.NULL, null);
+            } else if (like.isEquivalentToBetweenPredicate()) {
+
+                // X LIKE 'abc%' <=> X >= 'abc' AND X <= 'abd'
+                Expression eArgOld = eArg;
+                Expression eFirst = new Expression(Types.VARCHAR,
+                                                   like.getRangeLow());
+                Expression eLast = new Expression(Types.VARCHAR,
+                                                  like.getRangeHigh());
+
+                eArg     = new Expression(BIGGER_EQUAL, eArgOld, eFirst);
+                eArg2    = new Expression(SMALLER_EQUAL, eArgOld, eLast);
+                exprType = AND;
+
+                //
+                eFirst.likeOptimized = true;
+                eLast.likeOptimized  = true;
+                eArg.likeOptimized   = true;
+                eArg2.likeOptimized  = true;
+                likeOptimized        = true;
+            } else if (like
+                    .isEquivalentToBetweenPredicateAugmentedWithLike()) {
+
+                // X LIKE 'abc%...' <=> X >= 'abc' AND X <= 'abd' AND X LIKE 'abc%...'
+                eArg.likeOptimized = true;
+
+                Expression eFirst = new Expression(Types.VARCHAR,
+                                                   like.getRangeLow());
+                Expression eLast = new Expression(Types.VARCHAR,
+                                                  like.getRangeHigh());
+                Expression gte = new Expression(BIGGER_EQUAL, eArg, eFirst);
+                Expression lte = new Expression(SMALLER_EQUAL, eArg, eLast);
+
+                eArg2            = new Expression(LIKE, eArg, eArg2);
+                eArg2.likeObject = like;
+                eArg             = new Expression(AND, gte, lte);
+                exprType         = AND;
+
+                //
+                eFirst.likeOptimized = true;
+                eLast.likeOptimized  = true;
+                lte.likeOptimized    = true;
+                eArg.likeOptimized   = true;
+                eArg2.likeOptimized  = true;
+                likeOptimized        = true;
+            } else {
+                likeObject    = like;
+                likeOptimized = true;
+            }
+        } else {
+            likeObject    = like;
+            likeOptimized = true;
+        }
+    }
+
+    void resolveTypeForIn() throws HsqlException {
+
+// PARAM Resolution rules:
+//
+// Expression used with IN:    Same as the first value or the result column
+//                             of the subquery
+//
+// A value used with IN:       Same as the expression or the first value if
+//                             there is a parameter marker in the expression
+// Implies ambiguity if:       A parameter marker is both the expression and
+//                             the first value of an IN operation, from which
+//                             follows that it is ambiguous for the expression
+//                             to be a parameter marker if the list is empty.
+// CHECKME:
+// Is an empty IN list legal?  Why would anyone ever use it?
+        if (eArg2.exprType == QUERY) {
+            if (eArg.isParam) {
+                eArg.dataType = eArg2.dataType;
+            }
+        } else {    // eArg2.exprType == VALUELIST
+            Expression[] vl = eArg2.valueList;
+
+            if (eArg.isParam) {
+                Trace.check(
+                    vl.length > 0, Trace.COLUMN_TYPE_MISMATCH,
+                    "it is ambiguous for the expression of an IN operation to be a parameter marker when the value list is empty");
+                Trace.check(
+                    !vl[0].isParam, Trace.COLUMN_TYPE_MISMATCH,
+                    "it is ambiguous for both the expression and the first value list entry of an IN operation to be parameter markers");
+
+                Expression e  = vl[0];
+                int        dt = e.dataType;
+
+                // PARAM datatype same as first value list expression
+                // should never be Types.NULL when all is said and done
+                if (dt == Types.NULL) {
+
+                    // do nothing...
+                } else {
+                    if (eArg.dataType == Types.NULL) {
+                        eArg.dataType = dt;
+                    }
+
+                    if (eArg2.dataType == Types.NULL) {
+                        eArg2.dataType = dt;
+                    }
+                }
+
+                for (int i = 1; i < vl.length; i++) {
+                    e = vl[i];
+
+                    if (e.isParam) {
+                        if (e.dataType == Types.NULL && dt != Types.NULL) {
+                            e.dataType = dt;
+                        }
+                    } else {
+                        e.resolveTypes();
+                    }
+                }
+            } else {
+                int dt = eArg.dataType;
+
+                if (eArg2.dataType == Types.NULL && dt != Types.NULL) {
+                    eArg2.dataType = dt;
+                }
+
+                for (int i = 0; i < vl.length; i++) {
+                    Expression e = vl[i];
+
+                    if (e.isParam) {
+                        if (e.dataType == Types.NULL && dt != Types.NULL) {
+                            e.dataType = dt;
+                        }
+                    } else {
+                        e.resolveTypes();
+                    }
+                }
             }
         }
     }
@@ -1998,7 +2041,7 @@ class Expression {
                                                                 .FALSE;
 
             case LIKE :
-
+/*
                 // todo: now for all tests a new 'like' object required!
                 String s = (String) Column.convertObject(rightValue,
                     Types.VARCHAR);
@@ -2010,6 +2053,19 @@ class Expression {
 
                 return l.compare(c) ? Boolean.TRUE
                                     : Boolean.FALSE;
+*/
+                String s = (String) Column.convertObject(rightValue,
+                    Types.VARCHAR);
+
+                if (eArg2.exprType == PARAM) {
+                    likeObject.resetPattern(s);
+                }
+
+                String c = (String) Column.convertObject(leftValue,
+                    Types.VARCHAR);
+
+                return likeObject.compare(c) ? Boolean.TRUE
+                                             : Boolean.FALSE;
 
             case IN :
                 return eArg2.testValueList(leftValue, eArg.dataType)
@@ -2239,7 +2295,7 @@ class Expression {
                 return eArg.test() || eArg2.test();
 
             case LIKE :
-
+/*
                 // todo: now for all tests a new 'like' object required!
                 String s    = (String) eArg2.getValue(Types.VARCHAR);
                 int    type = eArg.dataType;
@@ -2248,6 +2304,16 @@ class Expression {
                 String c = (String) eArg.getValue(Types.VARCHAR);
 
                 return l.compare(c);
+*/
+                String s = (String) eArg2.getValue(Types.VARCHAR);
+
+                if (eArg2.exprType == PARAM) {
+                    likeObject.resetPattern(s);
+                }
+
+                String c = (String) eArg.getValue(Types.VARCHAR);
+
+                return likeObject.compare(c);
 
             case IN :
                 return eArg2.testValueList(eArg.getValue(), eArg.dataType);
@@ -2416,7 +2482,9 @@ class Expression {
                     hList = new HashSet();
 
                     for (int i = 0; i < len; i++) {
-                        hList.add(valueList[i].getValue(datatype));
+                        Object value = valueList[i].getValue(datatype);
+
+                        hList.add(value);
                     }
                 }
 
@@ -2602,8 +2670,8 @@ class Expression {
         columnScale = c.getScale();
         isIdentity  = c.isIdentity();
 
-        // IDENTITY columns are not nullable;
-        // NULLs are converted into the next identity value for the table
+        // IDENTITY columns are not nullable but NULLs are accepted
+        // and converted into the next identity value for the table
         nullability = c.isNullable() &&!isIdentity ? NULLABLE
                                                    : NO_NULLS;
         isWritable  = t.isWritable();

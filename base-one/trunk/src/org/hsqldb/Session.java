@@ -376,6 +376,10 @@ class Session implements SessionInterface {
             commit();
 
             isAutoCommit = autocommit;
+
+            try {
+                dDatabase.logger.writeToLog(this, getAutoCommitStatement());
+            } catch (HsqlException e) {}
         }
     }
 

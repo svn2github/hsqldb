@@ -400,7 +400,29 @@ class Function {
      * @throws HsqlException if there is a problem resolving an argument
      * against the specified TableFilter
      */
-    void resolve(TableFilter f) throws HsqlException {
+    void resolveTables(TableFilter f) throws HsqlException {
+
+        Expression e;
+
+        for (int i = iSqlArgStart; i < iArgCount; i++) {
+            e = eArg[i];
+
+            if (e != null) {
+                e.resolveTables(f);
+            }
+        }
+    }
+
+    /**
+     * Resolves the arguments supplied to this Function object against the
+     * specified TableFilter.
+     *
+     *
+     * @param f the TableFilter against which to resolve this Function
+     * object's arguments
+     * @throws HsqlException if there is a problem resolving an argument
+     */
+    void resolveType() throws HsqlException {
 
         Expression e;
 
@@ -414,7 +436,7 @@ class Function {
                     e.nullability    = getArgNullability(i);
                     e.valueClassName = getArgClass(i).getName();
                 } else {
-                    eArg[i].resolve(f);
+                    e.resolveTypes();
                 }
             }
         }

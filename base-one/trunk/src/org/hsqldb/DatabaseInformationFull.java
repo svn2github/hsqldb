@@ -1932,7 +1932,7 @@ extends org.hsqldb.DatabaseInformationMain {
                 select = parser.parseSelect();
 
                 select.resolve();
-                select.checkResolved();
+                select.checkResolved(null);
 
                 row[ivalid] = Boolean.TRUE;
             } catch (Exception e) {

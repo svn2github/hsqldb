@@ -234,41 +234,44 @@ public class Trace extends PrintWriter {
      jdbcResultSetMetaData_jdbcResultSetMetaData_3 = 121,
 
     // new one
-    TableFilter_findFirst                                        = 122,
-                  Table_moveDefinition                           = 123,
-                  STRING_DATA_TRUNCATION                         = 124,
-                  QUOTED_IDENTIFIER_REQUIRED                     = 125,
-                  STATEMENT_IS_CLOSED                            = 126,
-                  DatabaseRowInput_skipBytes                     = 127,
-                  DatabaseRowInput_readLine                      = 128,
-                  DataFileDefrag_writeTableToDataFile            = 129,
-                  DiskNode_writeTranslatePointer                 = 130,
-                  HsqlDateTime_null_string                       = 131,
-                  HsqlDateTime_invalid_timestamp                 = 132,
-                  HsqlDateTime_null_date                         = 133,
-                  HsqlDateTime_invalid_date                      = 134,
-                  HsqlProperties_load                            = 135,
-                  HsqlSocketFactorySecure_verify                 = 136,
-                  HsqlSocketFactorySecure_verify2                = 137,
-                  jdbcConnection_nativeSQL                       = 138,
-                  HsqlSocketFactorySecure_verify3                = 139,
-                  jdbcPreparedStatement_setCharacterStream       = 140,
-                  jdbcPreparedStatement_setClob                  = 141,
-                  jdbcStatement_executeUpdate                    = 142,
-                  LockFile_checkHeartbeat                        = 143,
-                  LockFile_checkHeartbeat2                       = 144,
-                  QuotedTextDatabaseRowOutput_checkConvertString = 145,
-                  Result_Result                                  = 146,
-                  Server_checkRunning                            = 147,
-                  Server_openServerSocket                        = 148,
-                  Server_openServerSocket2                       = 149,
-                  TextDatabaseRowOutput_checkConvertString       = 150,
-                  TextDatabaseRowOutput_checkConvertString2      = 151,
-                  TextDatabaseRowOutput_writeIntData             = 152,
-                  ORDER_BY_POSITION                              = 153,
-                  JDBC_STATEMENT_NOT_ROW_COUNT                   = 154,
-                  JDBC_STATEMENT_NOT_RESULTSET                   = 155;
-    static String MESSAGE_TAG                                    = "$$";
+    TableFilter_findFirst                           = 122,
+     Table_moveDefinition                           = 123,
+     STRING_DATA_TRUNCATION                         = 124,
+     QUOTED_IDENTIFIER_REQUIRED                     = 125,
+     STATEMENT_IS_CLOSED                            = 126,
+     DatabaseRowInput_skipBytes                     = 127,
+     DatabaseRowInput_readLine                      = 128,
+     DataFileDefrag_writeTableToDataFile            = 129,
+     DiskNode_writeTranslatePointer                 = 130,
+     HsqlDateTime_null_string                       = 131,
+     HsqlDateTime_invalid_timestamp                 = 132,
+     HsqlDateTime_null_date                         = 133,
+     HsqlDateTime_invalid_date                      = 134,
+     HsqlProperties_load                            = 135,
+     HsqlSocketFactorySecure_verify                 = 136,
+     HsqlSocketFactorySecure_verify2                = 137,
+     jdbcConnection_nativeSQL                       = 138,
+     HsqlSocketFactorySecure_verify3                = 139,
+     jdbcPreparedStatement_setCharacterStream       = 140,
+     jdbcPreparedStatement_setClob                  = 141,
+     jdbcStatement_executeUpdate                    = 142,
+     LockFile_checkHeartbeat                        = 143,
+     LockFile_checkHeartbeat2                       = 144,
+     QuotedTextDatabaseRowOutput_checkConvertString = 145,
+     Result_Result                                  = 146,
+     Server_checkRunning                            = 147,
+     Server_openServerSocket                        = 148,
+     Server_openServerSocket2                       = 149,
+     TextDatabaseRowOutput_checkConvertString       = 150,
+     TextDatabaseRowOutput_checkConvertString2      = 151,
+     TextDatabaseRowOutput_writeIntData             = 152,
+     ORDER_BY_POSITION                              = 153,
+     JDBC_STATEMENT_NOT_ROW_COUNT                   = 154,
+     JDBC_STATEMENT_NOT_RESULTSET                   = 155,
+     AMBIGUOUS_COLUMN_REFERENCE                     = 156;
+
+    //
+    static String MESSAGE_TAG = "$$";
 
     //
     private static final String[] sDescription = {
@@ -428,6 +431,7 @@ public class Trace extends PrintWriter {
         "00000 ORDER BY must be at the end of the statement",
         "00000 Statement does not generate a row count",
         "00000 Statement does not generate a result set",
+        "S0022 amgiguous Column reference",                                   //
     };
 
     /** Used during tests. */

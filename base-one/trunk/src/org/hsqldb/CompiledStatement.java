@@ -189,7 +189,9 @@ final class CompiledStatement {
         if (deleteCondition != null) {
             condition = new Expression(deleteCondition);
 
-            condition.resolve(tf);
+//            condition.resolve(tf);
+            condition.resolveTables(tf);
+            condition.resolveTypes();
             tf.setCondition(condition);
         }
 
@@ -228,14 +230,19 @@ final class CompiledStatement {
             if (cve.isParam()) {
                 cve.setTableColumnAttributes(targetTable, columnMap[i]);
             } else {
-                cve.resolve(tf);
+
+//                cve.resolve(tf);
+                cve.resolveTables(tf);
+                cve.resolveTypes();
             }
         }
 
         if (updateCondition != null) {
             condition = new Expression(updateCondition);
 
-            condition.resolve(tf);
+//            condition.resolve(tf);
+            condition.resolveTables(tf);
+            condition.resolveTypes();
             tf.setCondition(condition);
         }
 
@@ -335,7 +342,8 @@ final class CompiledStatement {
 
         this.expression = expression;
 
-        expression.resolve(null);
+//        expression.resolve(null);
+        expression.resolveTypes();
 
         expression.paramMode = Expression.PARAM_OUT;
 

@@ -265,8 +265,8 @@ class TableFilter {
     // at the time the plan is being generated.
 
     /**
-     * Method declaration
-     *
+     * Chooses certain query conditions and assigns a copy of them to this
+     * filter. The original condition is set to Expression.TRUE once assigned.
      *
      * @param e
      *
@@ -294,7 +294,7 @@ class TableFilter {
         }
 
 // fredt@users 20030813 - patch 1.7.2 - fix for column comparison within same table bugs #572075 and 722443
-        if (e1.getFilter() == this && e1.getFilter() == e2.getFilter()) {
+        if (e1.getFilter() == this && e2.getFilter() == this) {
             conditionType = CONDITION_UNORDERED;
         } else if (e1.getFilter() == this) {    // ok include this
         } else if ((e2.getFilter() == this)

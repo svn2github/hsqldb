@@ -181,41 +181,6 @@ class Parser {
         return columns;
     }
 
-    void getColumnValues(Table t, Object[] row, int[] columnmap,
-                         int len) throws HsqlException {
-
-        boolean enclosed = false;
-        int     i        = 0;
-        String  token;
-        int[]   columntypes = t.getColumnTypes();
-
-        tokenizer.getThis(Token.T_OPENBRACKET);
-
-        for (; i < len; i++) {
-            int colindex;
-
-            colindex      = columnmap[i];
-            row[colindex] = getValue(columntypes[colindex]);
-            token         = tokenizer.getString();
-
-            if (token.equals(Token.T_COMMA)) {
-                continue;
-            }
-
-            if (token.equals(Token.T_CLOSEBRACKET)) {
-                enclosed = true;
-
-                break;
-            }
-
-            throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
-        }
-
-        if (!enclosed || i != len - 1) {
-            throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
-        }
-    }
-
     SubQuery parseSubquery(boolean isView) throws HsqlException {
 
         HsqlException se;
@@ -430,7 +395,7 @@ class Parser {
         }
 
         tokenizer.back();
-        resolveTableFilter(select, vcolumn, vfilter);
+        resolveSelectTableFilter(select, vcolumn, vfilter);
 
         // where
         token = tokenizer.getString();
@@ -566,9 +531,10 @@ class Parser {
         select.iOrderLen = len;
     }
 
-    private void resolveTableFilter(Select select, HsqlArrayList vcolumn,
-                                    HsqlArrayList vfilter)
-                                    throws HsqlException {
+    private void resolveSelectTableFilter(Select select,
+                                          HsqlArrayList vcolumn,
+                                          HsqlArrayList vfilter)
+                                          throws HsqlException {
 
         int         len       = vfilter.size();
         TableFilter filters[] = new TableFilter[len];
@@ -592,7 +558,8 @@ class Parser {
                 for (int t = 0; t < filters.length; t++) {
                     TableFilter f = filters[t];
 
-                    e.resolve(f);
+//                    e.resolve(f);
+                    e.resolveTables(f);
 
                     if (n != null &&!n.equals(f.getName())) {
                         continue;
@@ -623,10 +590,18 @@ class Parser {
                 if (e.getTableName() == null) {
                     for (int filterIndex = 0; filterIndex < filters.length;
                             filterIndex++) {
-                        e.resolve(filters[filterIndex]);
+
+//                        e.resolve(filters[filterIndex]);
+                        e.resolveTables(filters[filterIndex]);
                     }
                 }
             }
+        }
+
+        for (int i = 0; i < len; i++) {
+            Expression e = (Expression) (vcolumn.get(i));
+
+            e.resolveTypes();
         }
 
         select.iResultLen = len;
@@ -850,25 +825,6 @@ class Parser {
     /**
      *  Method declaration
      *
-     * @param  type
-     * @return
-     * @throws  HsqlException
-     */
-    private Object getValue(int type) throws HsqlException {
-
-        int        paramCount = parameters.size();
-        Expression r          = parseExpression();
-
-        Trace.doAssert(paramCount == parameters.size(),
-                       "expression has unbound parameters");
-        r.resolve(null);
-
-        return r.getValue(type);
-    }
-
-    /**
-     *  Method declaration
-     *
      * @return
      * @throws  HsqlException
      */
@@ -978,7 +934,8 @@ class Parser {
                 Trace.check(iToken == Expression.SELECT,
                             Trace.UNEXPECTED_TOKEN);
 
-                Expression s = new Expression(parseSelect());
+                Select     select = parseSelect();
+                Expression s      = new Expression(select);
 
                 read();
                 readThis(Expression.CLOSE);
@@ -1071,7 +1028,7 @@ class Parser {
             escape = s.charAt(0);
         }
 
-        a = new Expression(Expression.LIKE, a, b, escape);
+        a = new Expression(a, b, escape);
 
         return a;
     }
@@ -1345,7 +1302,11 @@ class Parser {
                 break;
             }
             case Expression.SELECT : {
-                r = new Expression(parseSelect());
+                Select select = parseSelect();
+
+                select.resolve();
+
+                r = new Expression(select);
 
                 read();
 
@@ -2032,8 +1993,8 @@ class Parser {
         return cs;
     }
 
-    void getColumnValueExpressions(Table t, Expression[] acve,
-                                   int len) throws HsqlException {
+    private void getInsertColumnValueExpressions(Table t, Expression[] acve,
+            int len) throws HsqlException {
 
         boolean    enclosed;
         String     token;
@@ -2052,7 +2013,9 @@ class Parser {
 // CHECKME:  Is it always correct / desirable to resolve the expressions
 // here?  Or are there some cases where resolution should be delayed.
 // See, for instance, CompiledStatement.setAsUpdate().
-            cve.resolve(null);
+//            cve.resolve(null);
+            cve.resolveTables(null);
+            cve.resolveTypes();
 
             acve[i] = cve;
             token   = tokenizer.getString();
@@ -2131,7 +2094,7 @@ class Parser {
         if (token.equals(Token.T_VALUES)) {
             acve = new Expression[len];
 
-            getColumnValueExpressions(t, acve, len);
+            getInsertColumnValueExpressions(t, acve, len);
 
             if (cs == null) {
                 cs = new CompiledStatement();

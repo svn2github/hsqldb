@@ -168,31 +168,21 @@ class Select {
      */
     void resolve(TableFilter f, boolean ownfilter) throws HsqlException {
 
-/*
-        if (eCondition != null) {
-
-            // first set the table filter in the condition
-            eCondition.resolve(f);
-
-            if (f != null && ownfilter) {
-
-                // the table filter tries to get as many conditions as
-                // possible but only if it belongs to this query
-                f.setCondition(eCondition);
-            }
-        }
-*/
         int len = eColumn.length;
 
         for (int i = 0; i < len; i++) {
-            eColumn[i].resolve(f);
+
+//            eColumn[i].resolve(f);
+            eColumn[i].resolveTables(f);
+            eColumn[i].resolveTypes();
         }
 
-// fredt - moved
+// fredt - moved codition resolution after column resolution
         if (eCondition != null) {
 
-            // first set the table filter in the condition
-            eCondition.resolve(f);
+//            eCondition.resolve(f);
+            eCondition.resolveTables(f);
+            eCondition.resolveTypes();
 
             if (f != null && ownfilter) {
 
@@ -208,7 +198,7 @@ class Select {
      *
      * @throws HsqlException
      */
-    void checkResolved() throws HsqlException {
+    void checkResolved(HashMap aliases) throws HsqlException {
 
         int len = eColumn.length;
 
@@ -649,7 +639,7 @@ class Select {
         }
 
         resolve();
-        checkResolved();
+        checkResolved(null);
 
         if (sUnion != null) {
             if (sUnion.iResultLen != iResultLen) {

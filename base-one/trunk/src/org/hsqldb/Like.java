@@ -68,19 +68,24 @@
 package org.hsqldb;
 
 /**
- * Class declaration
+ * Reusable object for processing LIKE queries.
  *
- *
- * @version 1.7.0
+ * @version 1.7.2
  */
+
+// boucherb@users 20030930 - patch 1.7.2 - optimize into joins if possible
+// fredt@users 20031006 - patch 1.7.2 - reuse Like objects for all rows
 class Like {
 
-    private char    cLike[];
-    private int[]   iType;
-    private int     iLen;
-    private boolean bIgnoreCase;
-    private int     iFirstWildCard = -1;
-    private boolean isNull;
+    private char[]   cLike;
+    private int[]    iType;
+    private int      iLen;
+    private boolean  isIgnoreCase;
+    private int      iFirstWildCard;
+    private boolean  isNull;
+    private char     escapeChar;
+    static final int UNDERSCORE_CHAR = 1;
+    static final int PERCENT_CHAR    = 2;
 
     /**
      * Constructor declaration
@@ -92,24 +97,20 @@ class Like {
      */
     Like(String s, char escape, boolean ignorecase) {
 
-        isNull = s == null;
+        escapeChar   = escape;
+        isIgnoreCase = ignorecase;
 
-        if (!isNull && ignorecase) {
-            s = s.toUpperCase();
-        }
-
-        normalize(s, true, escape);
-
-        bIgnoreCase = ignorecase;
+        normalize(s, true);
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @return
+     * Resets the search pattern;
      */
-    String getStartsWith() {
+    void resetPattern(String s) {
+        normalize(s, true);
+    }
+
+    private String getStartsWith() {
 
         StringBuffer s = new StringBuffer();
         int          i = 0;
@@ -141,7 +142,7 @@ class Like {
 
         String s = o.toString();
 
-        if (bIgnoreCase) {
+        if (isIgnoreCase) {
             s = s.toUpperCase();
         }
 
@@ -164,19 +165,19 @@ class Like {
         for (; i < iLen; i++) {
             switch (iType[i]) {
 
-                case 0 :    // general character
+                case 0 :                  // general character
                     if ((j >= jLen) || (cLike[i] != s.charAt(j++))) {
                         return false;
                     }
                     break;
 
-                case 1 :    // underscore: do not test this character
+                case UNDERSCORE_CHAR :    // underscore: do not test this character
                     if (j++ >= jLen) {
                         return false;
                     }
                     break;
 
-                case 2 :    // percent: none or any character(s)
+                case PERCENT_CHAR :       // percent: none or any character(s)
                     if (++i >= iLen) {
                         return true;
                     }
@@ -209,12 +210,19 @@ class Like {
      * @param b
      * @param e
      */
-    private void normalize(String s, boolean b, char e) {
+    private void normalize(String pattern, boolean b) {
 
-        iLen = 0;
+        isNull = pattern == null;
 
-        int l = s == null ? 0
-                          : s.length();
+        if (!isNull && isIgnoreCase) {
+            pattern = pattern.toUpperCase();
+        }
+
+        iLen           = 0;
+        iFirstWildCard = -1;
+
+        int l = pattern == null ? 0
+                                : pattern.length();
 
         cLike = new char[l];
         iType = new int[l];
@@ -223,15 +231,15 @@ class Like {
                 bPercent  = false;
 
         for (int i = 0; i < l; i++) {
-            char c = s.charAt(i);
+            char c = pattern.charAt(i);
 
             if (bEscaping == false) {
-                if (b && (c == e)) {
+                if (b && (c == escapeChar)) {
                     bEscaping = true;
 
                     continue;
                 } else if (c == '_') {
-                    iType[iLen] = 1;
+                    iType[iLen] = UNDERSCORE_CHAR;
 
                     if (iFirstWildCard == -1) {
                         iFirstWildCard = iLen;
@@ -242,7 +250,7 @@ class Like {
                     }
 
                     bPercent    = true;
-                    iType[iLen] = 2;
+                    iType[iLen] = PERCENT_CHAR;
 
                     if (iFirstWildCard == -1) {
                         iFirstWildCard = iLen;
@@ -259,9 +267,10 @@ class Like {
         }
 
         for (int i = 0; i < iLen - 1; i++) {
-            if ((iType[i] == 2) && (iType[i + 1] == 1)) {
-                iType[i]     = 1;
-                iType[i + 1] = 2;
+            if ((iType[i] == PERCENT_CHAR)
+                    && (iType[i + 1] == UNDERSCORE_CHAR)) {
+                iType[i]     = UNDERSCORE_CHAR;
+                iType[i + 1] = PERCENT_CHAR;
             }
         }
     }
@@ -280,7 +289,7 @@ class Like {
 
     boolean isEquivalentToNotNullPredicate() {
 
-        if (cLike.length == 1 && iType[0] == 2) {
+        if (cLike.length == 1 && iType[0] == PERCENT_CHAR) {
             return true;
         }
 
@@ -316,13 +325,13 @@ class Like {
 
     public String toString() {
 
-        return super.toString() + "[\n" + "bIgnoreCase=" + bIgnoreCase + '\n'
-               + "iLen=" + iLen + '\n' + "cLike="
+        return super.toString() + "[\n" + "bIgnoreCase=" + isIgnoreCase
+               + '\n' + "iLen=" + iLen + '\n' + "cLike="
                + org.hsqldb.lib.StringUtil.arrayToString(cLike) + '\n'
                + "iType=" + org.hsqldb.lib.StringUtil.arrayToString(iType)
                + ']';
     }
-
+/*
     static int indexOf(String s, int start, char search, String escape) {
 
         // PRE:
@@ -337,16 +346,5 @@ class Like {
 
         return pos;
     }
-
-    public static void main(String[] args) {
-
-        String s    = "name444%_";
-        Like   like = new Like(s, '\\', false);
-
-        System.out.println(like);
-
-        boolean b = like.isEquivalentToBetweenPredicateAugmentedWithLike();
-
-        System.out.println(b);
-    }
+*/
 }
