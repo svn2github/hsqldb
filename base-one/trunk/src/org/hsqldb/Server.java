@@ -252,10 +252,10 @@ public class Server {
 	  	 "Failed to find an SSL method even though JSSE " +
 		 "is installed:\n" + nsme);
 	    } catch (InvocationTargetException ite) {
-	    	Throwable t = ite.getCause();
+	    	Throwable t = ite.getTargetException();
 		throw((t instanceof Exception) ? ((Exception) t) : ite);
 	    } catch (ExceptionInInitializerError eiie) {
-	    	Throwable t = eiie.getCause();
+	    	Throwable t = eiie.getException();
 		if (t instanceof Exception) throw (Exception) t;
 		else throw eiie;
 	    // Any remaining exception will fall through to the outer "try"
