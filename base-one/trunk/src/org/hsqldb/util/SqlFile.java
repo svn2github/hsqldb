@@ -1,5 +1,5 @@
 /*
- * $Id: SqlFile.java,v 1.11 2004/01/20 19:59:28 unsaved Exp $
+ * $Id: SqlFile.java,v 1.12 2004/01/20 22:34:18 unsaved Exp $
  *
  * Copyright (c) 2001-2003, The HSQL Development Group
  * All rights reserved.
@@ -91,7 +91,8 @@ public class SqlFile {
         + "    \\! [command to run]  * Shell out\n"
         + "    \\e                   * Open last command in external editor\n"
         + "    \\p [line to print]   Print string to stdout\n"
-        + "    \\s                   * Show previous commands \n"
+        + "    \\* [true|false]      Continue upon errors (a.o.t. abort upon error)\n"
+        + "    \\s                   * Show previous commands\n"
         + "    \\-                   * reload last command\n"
         + "    \\-2;                 * reload and run 2nd-to-last command, etc.\n"
         + "    \\q                   Quit (alternatively, end input,\n"
@@ -104,8 +105,9 @@ public class SqlFile {
 
     /**
      * @param inFile  inFile of null means to read stdin.
-     * @param inInteractive  If true, print prompts and continue if errors
-     *                       are encountered.
+     * @param inInteractive  If true, prompts are printed, the interactive
+     *                       Special commands are enabled, and 
+     *                       continueOnError defaults to true.
      */
     SqlFile(File inFile, boolean inInteractive) throws IOException {
         file = inFile;
@@ -131,6 +133,12 @@ public class SqlFile {
     private PrintStream psErr = null;
     StringBuffer curBuffer = new StringBuffer();
 
+    /*
+     * This is reset upon each execute() invocation (to true if interactive,
+     * false otherwise).
+     */
+    private boolean continueOnError = false;
+
     /**
      * Run SQL in the file through the given database connection.
      *
@@ -147,6 +155,7 @@ public class SqlFile {
         String trimmedCommand;
         String deTerminated;
 
+        continueOnError = interactive;
         BufferedReader br = null;
         try {
             br = new BufferedReader(new InputStreamReader(
@@ -180,7 +189,7 @@ public class SqlFile {
                                 + ((file == null) ? "stdin" : file.toString())
                                 + "' line " + curLinenum
                                 + ":\n\"" + inputLine + "\"\n" + bs.getMessage());
-                            if (!interactive) throw new SqlToolError(bs);
+                            if (!continueOnError) throw new SqlToolError(bs);
                         }
                         continue;
                     }
@@ -189,7 +198,8 @@ public class SqlFile {
                     if (interactive) {
                         setHist(curBuffer.toString());
                         curBuffer.setLength(0);
-                        psStd.println("Buffer stored into history then cleared");
+                        psStd.println(
+                                "Buffer stored into history then cleared");
                     }
                     continue;
                 }
@@ -213,7 +223,7 @@ public class SqlFile {
                     + ((file == null) ? "stdin" : file.toString())
                     + "' line " + curLinenum
                     + ":\n\"" + curCommand + "\"\n" + se.getMessage());
-                if (!interactive) throw se;
+                if (!continueOnError) throw se;
             }
             curBuffer.setLength(0);
         }
@@ -264,6 +274,18 @@ public class SqlFile {
         switch (inString.charAt(0)) {
             case 'q':
                 throw new QuitNow();
+            case 'p':
+                if (other == null) psStd.println();
+                else psStd.println(other);
+                break;
+            case '*':
+                if (other != null) {
+                    // But remember that we have to abort on some I/O errors.
+                    continueOnError = Boolean.valueOf(other).booleanValue();
+                }
+                psStd.println("Continue-on-error is set to: "
+                        + continueOnError);
+                break;
             case 's':
                 showHistory();
                 break;
