@@ -76,6 +76,7 @@ example:
       <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes" >
          <arg line="${src}/org/hsqldb/jdbcStubs.java -JAVA2 -JDBC3"/>
        </java>
+       <available classname="java.util.Vector" property="noswing"/>
     </target>
 
     <target name="switchtojdk12" depends="codeswitcher" if="ant.java.iscjava12">
@@ -105,9 +106,9 @@ example:
              destdir="classes"
                  debug="${build.debug}"
                  optimize="${build.optimize}"
-       >
-    <include name="org/hsqldb/lib/**"/>
-    <include name="org/hsqldb/lib/java/**"/>
+      >
+         <include name="org/hsqldb/lib/**"/>
+         <include name="org/hsqldb/lib/java/**"/>
       </javac>
     </target>
 
@@ -127,7 +128,7 @@ example:
          <exclude name="org/hsqldb/sample/*.java"/>
          <exclude name="org/hsqldb/util/*.java"/>
          <exclude name="org/hsqldb/jdbcDataSource*.java"/>
-         <exclude name="org/hsqldb/jdbcStubs.class"/>
+         <exclude name="org/hsqldb/jdbcStubs.java"/>
       </javac>
     </target>
 
@@ -146,8 +147,8 @@ example:
              destdir="classes"
                  debug="${build.debug}"
                  optimize="${build.optimize}"
-       >
-     <include name="org/hsqldb/util/**"/>
+      >
+         <include name="org/hsqldb/util/**"/>
          <exclude name="org/hsqldb/util/*Swing.java"/>
       </javac>
       <copy todir="classes/org/hsqldb/util">

@@ -536,7 +536,7 @@ public class CodeSwitcher {
             Vector v1 = new Vector(v.size());
 
             for (int i = 0; i < v.size(); i++) {
-                v1.add(v.elementAt(i));
+                v1.addElement(v.elementAt(i));
             }
 
             for (int i = 0; i < v.size(); i++) {
