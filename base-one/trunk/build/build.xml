@@ -574,8 +574,8 @@ examples:
         <if><not><uptodate targetfile='docwork/${book}/cdata/.status'>
             <!-- Mappers don't work for shit with multiple patterns.
             Therefore, have to use a timestamp file.  -->
-            <srcfiles dir='docsrc/${book}'
-                 includes='*.java, *.txt, *.ksh, *.properties, *.rc, *.cfg'/>
+            <srcfiles dir='src/org/hsqldb/sample'
+             includes='*.java, *.txt, *.ksh, *.properties, *.rc, *.cfg, *.sql'/>
         </uptodate></not><then>
             <!-- This copies files matching the fileset below to the docwork
                  dir w/ data so that DocBook may entity include them.
@@ -583,8 +583,8 @@ examples:
                  directory  for this specific book. -->
             <pathconvert property='_virginfiles' targetos='unix' pathsep='|'
                          setonempty='false'> <path>
-                 <fileset dir='docsrc/${book}'
-                  includes='*.java, *.txt, *.ksh, *.properties, *.rc, *.cfg'/>
+                 <fileset dir='src/org/hsqldb/sample'
+             includes='*.java, *.txt, *.ksh, *.properties, *.rc, *.cfg, *.sql'/>
             </path> </pathconvert>
             <if><isset property='_virginfiles'/><then>
                 <foreach list='${_virginfiles}' param='vfile' inheritall='false'
@@ -750,7 +750,7 @@ includes='**/*.css, **/*.java, **/*.sql, **/*.txt, **/*.properties, **/*.cfg'/>
         <basename property='base' file='${vfile}'/>
         <loadfile srcfile='${vfile}' property='content'/>
         <dependset>
-            <srcfilelist dir='docsrc/${book}' files='${base}'/>
+            <srcfilelist dir='src/org/hsqldb/sample' files='${base}'/>
             <targetfilelist dir='docwork/${book}/cdata' files='${base}'/>
         </dependset>
         <if><not><available file='docwork/${book}/cdata/${base}'/></not>
