@@ -32,7 +32,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.24 2004/06/06 19:19:32 unsaved Exp $
+# $Id: hsqldb,v 1.25 2004/06/07 15:19:53 unsaved Exp $
 
 # UNIX init script for HSQLDB.
 
@@ -112,6 +112,11 @@ BASEDIR=
 AUTH_FILE=
 SHUTDOWN_OPTION=
 case "`uname`" in
+    Darwin)
+        CFGFILE=/etc/hsqldb.conf
+        LOGFILE=/var/log/hsqldb.log
+        PIDFILE=/var/run/hsqldb.pid
+    ;;
     Linux)
         CFGFILE=/etc/sysconfig/hsqldb
         LOGFILE=/var/log/hsqldb.log
@@ -179,23 +184,24 @@ COMMAND="$1"; shift
     exit 2
 }
 HSQLDB_OWNER=
-JAVA_HOME=
+JAVA_EXECUTABLE=
 HSQLDB_JAR_PATH=
 SERVER_HOME=
 SHUTDOWN_URLIDS=
 . "$CFGFILE"
 # Validate that config file sets all required variables.
-[ -n "$JAVA_HOME" ] && [ -n "$HSQLDB_JAR_PATH" ] && [ -n "$SERVER_HOME" ] || {
+[ -n "$JAVA_EXECUTABLE" ] && [ -n "$HSQLDB_JAR_PATH" ] &&
+[ -n "$SERVER_HOME" ] || {
     echo "Config file '$CFGFILE' does not set one or more of following variables
-    JAVA_HOME, HSQLDB_JAR_PATH, SERVER_HOME" 1>&2
+    JAVA_EXECUTABLE, HSQLDB_JAR_PATH, SERVER_HOME" 1>&2
     exit 2
 }
-[ -d "$JAVA_HOME" ] && [ -d "$SERVER_HOME" ] || {
-    echo "A *_HOME variables set in '$CFGFILE' is set to a non-directory." 1>&2
+[ -d "$SERVER_HOME" ] || {
+    echo "SERVER_HOME variable in '$CFGFILE' is set to a non-directory." 1>&2
     exit 2
 }
-[ -f "$HSQLDB_JAR_PATH" ] || {
-    echo "HSQLDB_JAR_PATH in '$CFGFILE' is set to a non-file." 1>&2
+[ -f "$JAVA_EXECUTABLE" ] && [ -f "$HSQLDB_JAR_PATH" ] || {
+    echo "JAVA_EXECUTABLE or HSQLDB_JAR_PATH in '$CFGFILE' is set to a non-file." 1>&2
     exit 2
 }
 
@@ -219,8 +225,8 @@ esac
     echo "'$HSQLDB_JAR_PATH' isn't readable" 1>&2
     exit 2
 }
-[ -x "$JAVA_HOME"/bin/java ] || {
-    echo "No Java executable found at '$JAVA_HOME/bin/java'" 1>&2
+[ -x "$JAVA_EXECUTABLE" ] || {
+    echo "No Java executable found at '$JAVA_EXECUTABLE'" 1>&2
     exit 2
 }
 
@@ -270,14 +276,11 @@ running with pid $HSQLDB_PID."
         # spaces inside of $AUTH_FILE.
         [ -n "$AUTH_FILE" ] &&
         AUTH_FILE_SWITCH="-Dsqltoolsprayer.rcfile=$AUTH_FILE"
-        # Some shell implementations don't allow substitution on arg 0,
-        # so, we'll set the search path.
-        PATH="$JAVA_HOME/bin:$PATH"
-        # Might as well set CLASSPATH too, for a cleaner command.
+        # Might as well set CLASSPATH for a cleaner command.
         CLASSPATH="$HSQLDB_JAR_PATH"
         export CLASSPATH
         export PATH   # Required only for some funny init environments.
-        exec java $AUTH_FILE_SWITCH $CLIENT_JVMARGS \
+        exec "$JAVA_EXECUTABLE" $AUTH_FILE_SWITCH $CLIENT_JVMARGS \
             "-Dsqltoolsprayer.propfile=$PROPERTY_FILE" \
             "-Dsqltoolsprayer.monfile=$PIDFILE" \
             org.hsqldb.util.SqlToolSprayer ''
@@ -302,13 +305,13 @@ running with pid $HSQLDB_PID."
             # Some OSes choke if there are newlines in this string.
             # N.b.!!!  The shell of the -c command is the target user's default
             # login shell, so keep this command shell-independent!
-            nohup su -f "$HSQLDB_OWNER" -c "cd '$SERVER_HOME' && echo "'$$'" > '$PIDFILE' && exec $JAVA_HOME/bin/java $SERVER_JVMARGS $TLS_SWITCHES -classpath '$HSQLDB_JAR_PATH' org.hsqldb.$TARGET_CLASS" >> "$LOGFILE" 2>&1 &
+            nohup su -f "$HSQLDB_OWNER" -c "cd '$SERVER_HOME' && echo "'$$'" > '$PIDFILE' && exec '$JAVA_EXECUTABLE' $SERVER_JVMARGS $TLS_SWITCHES -classpath '$HSQLDB_JAR_PATH' org.hsqldb.$TARGET_CLASS" >> "$LOGFILE" 2>&1 &
         else
             cd "$SERVER_HOME" || {
                 echo "Failed to cd to '$SERVER_HOME'" 1>&2
                 exit 1
             }
-            export JAVA_HOME
+            export JAVA_EXECUTABLE
             export HSQLDB_JAR_PATH
             export PIDFILE
             export TLS_SWITCHES
@@ -319,7 +322,7 @@ running with pid $HSQLDB_PID."
                     echo "Failed to write pid to pid file" 1>&2
                     exit 1
                 }
-                exec $JAVA_HOME/bin/java $SERVER_JVMARGS $TLS_SWITCHES -classpath "$HSQLDB_JAR_PATH"  org.hsqldb.$TARGET_CLASS
+                exec "$JAVA_EXECUTABLE" $SERVER_JVMARGS $TLS_SWITCHES -classpath "$HSQLDB_JAR_PATH"  org.hsqldb.$TARGET_CLASS
             ' >> "$LOGFILE" 2>&1 &
         fi
         sleep $SU_ECHO_SECS  # Make sure bg commands have time to echo pid.
@@ -328,10 +331,7 @@ running with pid $HSQLDB_PID."
         # spaces inside of $AUTH_FILE.
         [ -n "$AUTH_FILE" ] &&
         AUTH_FILE_SWITCH="-Dsqltoolsprayer.rcfile=$AUTH_FILE"
-        # Some shell implementations don't allow substitution on arg 0,
-        # so, we'll set the search path.
-        PATH="$JAVA_HOME/bin:$PATH"
-        # Might as well set CLASSPATH too, for a cleaner command.
+        # Might as well set CLASSPATH for a cleaner command.
         CLASSPATH="$HSQLDB_JAR_PATH"
         export CLASSPATH
         export PATH   # Required only for some funny init environments.
@@ -354,7 +354,7 @@ running with pid $HSQLDB_PID."
                 sleep 1
             done
         ) &
-        java $AUTH_FILE_SWITCH $CLIENT_JVMARGS \
+        "$JAVA_EXECUTABLE" $AUTH_FILE_SWITCH $CLIENT_JVMARGS \
             "-Dsqltoolsprayer.propfile=$PROPERTY_FILE" \
             "-Dsqltoolsprayer.monfile=$PIDFILE" \
             "-Dsqltoolsprayer.maxtime=${MAX_START_SECS}000" \
@@ -379,14 +379,11 @@ See log file '$LOGFILE'." 1>&2
         # spaces inside of $AUTH_FILE.
         [ -n "$AUTH_FILE" ] &&
         AUTH_FILE_SWITCH="-Dsqltoolsprayer.rcfile=$AUTH_FILE"
-        # Some shell implementations don't allow substitution on arg 0,
-        # so, we'll set the search path.
-        PATH="$JAVA_HOME/bin:$PATH"
-        # Might as well set CLASSPATH too, for a cleaner command.
+        # Might as well set CLASSPATH for a cleaner command.
         CLASSPATH="$HSQLDB_JAR_PATH"
         export CLASSPATH
         export PATH   # Required only for some funny init environments.
-        java $AUTH_FILE_SWITCH $CLIENT_JVMARGS \
+        "$JAVA_EXECUTABLE" $AUTH_FILE_SWITCH $CLIENT_JVMARGS \
             "-Dsqltoolsprayer.propfile=$PROPERTY_FILE" \
             org.hsqldb.util.SqlToolSprayer "shutdown ${SHUTDOWN_OPTION};" \
             $SHUTDOWN_URLIDS
