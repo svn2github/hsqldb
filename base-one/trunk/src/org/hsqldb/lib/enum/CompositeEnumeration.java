@@ -41,14 +41,15 @@ import java.util.NoSuchElementException;
  *
  * @author Campbell Boucher-Burnet
  */
-public final class CompositeEnumeration extends Object implements Enumeration {
+public final class CompositeEnumeration extends Object
+implements Enumeration {
 
     /**
      * An enumeration whose elements are themselves Enumerations
      */
     private Enumeration enum = null;
 
-    /** current enumeration selected from enum*/
+    /** current enumeration selected from enum */
     private Enumeration currentEnumeration = null;
 
     /**
@@ -68,45 +69,43 @@ public final class CompositeEnumeration extends Object implements Enumeration {
      * @param b the second enumeration
      */
     public CompositeEnumeration(Enumeration a, Enumeration b) {
-        this(new ArrayEnumeration(new Enumeration[] { a, b }));
-    }
 
+        this(new ArrayEnumeration(new Enumeration[] {
+            a, b
+        }));
+    }
 
     /**
      * Tests if this enumeration contains next element.
      *
-     *@return <code>true</code> if this enumeration contains it;
+     * @return <code>true</code> if this enumeration contains it;
      *          <code>false</code> otherwise.
      */
     public boolean hasMoreElements() {
 
-        if (enum == null) return false;
+        if (enum == null) {
+            return false;
+        }
 
-        if (
-        currentEnumeration != null &&
-        currentEnumeration.hasMoreElements()
-        ) {
+        if (currentEnumeration != null
+                && currentEnumeration.hasMoreElements()) {
             return true;
         }
 
         while (enum.hasMoreElements()) {
-
             currentEnumeration = (Enumeration) enum.nextElement();
 
-            if (
-            currentEnumeration != null &&
-            currentEnumeration.hasMoreElements()
-            ) {
+            if (currentEnumeration != null
+                    && currentEnumeration.hasMoreElements()) {
                 return true;
             }
         }
 
         // we are done: release any objects we hold for garbage collection
-        enum                = null;
-        currentEnumeration  = null;
+        enum               = null;
+        currentEnumeration = null;
 
         return false;
-
     }
 
     /**

@@ -55,8 +55,8 @@ class TextTable extends org.hsqldb.Table {
      * @exception  SQLException  Description of the Exception
      */
     TextTable(Database db, HsqlName name, int type,
-              Session session) throws SQLException {
-        super(db, name, type, session);
+              int sessionid) throws SQLException {
+        super(db, name, type, sessionid);
     }
 
     /**
@@ -174,7 +174,7 @@ class TextTable extends org.hsqldb.Table {
                                  Session s) throws SQLException {
 
         if (isTemp) {
-            Trace.check(s.getId() == ownerSession.getId(),
+            Trace.check(s.getId() == ownerSessionId,
                         Trace.ACCESS_IS_DENIED);
         } else {
             s.checkAdmin();
@@ -232,7 +232,7 @@ class TextTable extends org.hsqldb.Table {
     }
 
     protected Table duplicate() throws SQLException {
-        return new TextTable(dDatabase, tableName, tableType, ownerSession);
+        return new TextTable(dDatabase, tableName, tableType, ownerSessionId);
     }
 
     CachedRow getRow(int pos, Node primarynode) throws SQLException {

@@ -46,7 +46,7 @@ import java.util.NoSuchElementException;
 public final class EmptyEnumeration implements Enumeration {
 
     /** the single instance of this class, to be used by all clients. */
-    public static final Enumeration instance = new EmptyEnumeration ();
+    public static final Enumeration instance = new EmptyEnumeration();
 
     /**
      * Constructs a new EmptyEnumeration instance. <p>
@@ -76,5 +76,3 @@ public final class EmptyEnumeration implements Enumeration {
         throw new NoSuchElementException();
     }
 }
-
-

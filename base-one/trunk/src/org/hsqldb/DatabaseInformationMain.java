@@ -868,6 +868,6 @@ class DatabaseInformationMain extends DatabaseInformation {
      * @return
      */
     private Table createTable(HsqlName name) throws SQLException {
-        return new Table(database, name, Table.SYSTEM_TABLE, null);
+        return new Table(database, name, Table.SYSTEM_TABLE, 0);
     }
 }

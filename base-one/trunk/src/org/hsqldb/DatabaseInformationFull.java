@@ -76,20 +76,20 @@ import org.hsqldb.resources.BundleHandler;
  * attributes or cached instances of system tables.<p>
  *
  * Two fixed static lists of reserved table names are kept in String[] and
- * HsqlName[] forms. These are shred by all implementations of
+ * HsqlName[] forms. These are shared by all implementations of
  * DatabaseInformtion.<p>
  *
  * Each implementation keeps a lookup set of names for those tables whose
  * contents are never cached (nonCachedTablesSet).
  *
- * An instance of this class usess three lists named sysTablexxxx for caching
+ * An instance of this class uses three lists named sysTablexxxx for caching
  * system tables.<p>
  *
- * sysTableUserDependent indicates which tables contain data that is dependent
- * on the user rights of the User associatiod with the Session.<p>
+ * sysTableSessionDependent indicates which tables contain data that is
+ * dependent on the user rights of the User associatiod with the Session.<p>
  *
- * sysTableUsers contains the User with whose rights each cached table was
- * built.<p>
+ * sysTableSessions contains the Session with whose rights each cached table
+ * was built.<p>
  *
  * sysTables contains the cached tables.<p>
  *
@@ -119,8 +119,8 @@ import org.hsqldb.resources.BundleHandler;
  *
  * If a table has non-cached contents, its contents are cleared and rebuilt.
  *
- * For the rest of the tables, if the sysTableUsers slot is null or if the
- * User object for the Session parameter is not the same as the User object
+ * For the rest of the tables, if the sysTableSessions slot is null or if the
+ * Session parameter is not the same as the Session object
  * in that slot, the table contents are cleared and rebuilt.
  *
  * (fredt@users)
@@ -143,12 +143,15 @@ final class DatabaseInformationFull extends DatabaseInformation {
         }
     }
 
-    // current user for each cached system table
-    protected User[] sysTableUsers = new User[sysTableNames.length];
-    // true if the contents of a cached system table depends on the user
-    protected boolean[] sysTableUserDependent = new boolean[sysTableNames.length];
-    // cache of system tables
-    protected Table[]  sysTables = new Table[sysTableNames.length];
+    /** current user for each cached system table */
+    protected Session[] sysTableSessions = new Session[sysTableNames.length];
+
+    /** true if the contents of a cached system table depends on the session */
+    protected boolean[] sysTableSessionDependent =
+        new boolean[sysTableNames.length];
+
+    /** cache of system tables */
+    protected Table[] sysTables = new Table[sysTableNames.length];
 
     /**
      * The <code>Class</code> of the procedure column, if any, under
@@ -160,13 +163,14 @@ final class DatabaseInformationFull extends DatabaseInformation {
      * The <code>Column</code> object, if any, under consideration in the
      * current executution context.
      */
-    private Column _column;
+
+//    private Column _column;
 
     /**
      * The name of the <code>Column</code> object, if any, under
      * consideration in the current execution context.
      */
-    private String _columnName;
+//    private String _columnName;
 
     /**
      * The name of the database, as known to the <code>Database</code> object
@@ -318,6 +322,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
      * <code>_initStatic1()</code> is executed only once in a
      * JVM session. <p>
      */
+
 //    private static boolean _isInitProduces = false;
 
     /**
@@ -493,6 +498,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
      * @see _findOrCreateHsqlName
      * @see HsqlName
      */
+
 //    private HsqlName _tableHsqlName;
 
     /** The table types HSQLDB supports. */
@@ -1257,19 +1263,22 @@ final class DatabaseInformationFull extends DatabaseInformation {
     }
 *
     /** Clears the contents of cached system tables and resets users to null */
-
     private void _cacheClear() throws SQLException {
+
         int i = sysTables.length;
-        while ( --i > 0 ) {
-          Table t = sysTables[i];
-            if ( t != null ){
+
+        while (--i > 0) {
+            Table t = sysTables[i];
+
+            if (t != null) {
                 t.clearAllRows();
             }
-          sysTableUsers[i] = null;
+
+            sysTableSessions[i] = null;
         }
+
         isDirty = false;
     }
-
 
     /**
      * Retrives a cached system table corresponding to system table name
@@ -2014,7 +2023,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
      * @return buffer length attribute of the <code>Column</code> object currently under
      *    consideration
      */
-    private Integer _getColBufLen() {
+    private Integer getColBufLen(Column column) {
 
         int size;
 
@@ -2024,7 +2033,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             case I_CLOB :
             case I_LONGVARCHAR :
             case I_VARCHAR : {
-                size = _column.getSize();
+                size = column.getSize();
 
                 if (size == 0) {}
                 else if (size > _HALF_MAX_INT) {
@@ -2039,7 +2048,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             case I_BLOB :
             case I_LONGVARBINARY :
             case I_VARBINARY : {
-                size = _column.getSize();
+                size = column.getSize();
 
                 break;
             }
@@ -2085,7 +2094,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
      * @return character octet length attribute of the <code>Column</code> object
      *    currently under consideration
      */
-    private Integer _getColCharOctLen() {
+    private Integer getColCharOctLen(Column column) {
 
         int size;
 
@@ -2095,7 +2104,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             case I_CLOB :
             case I_LONGVARCHAR :
             case I_VARCHAR : {
-                size = _column.getSize();
+                size = column.getSize();
 
                 if (size == 0) {}
                 else if (size > _HALF_MAX_INT) {
@@ -2124,9 +2133,9 @@ final class DatabaseInformationFull extends DatabaseInformation {
      * @return default value attribute of the <code>Column</code> object
      *    currently under consideration
      */
-    private String _getColDefault() {
-        return (_column == null) ? null
-                                 : _column.getDefaultString();
+    private String getColDefault(Column column) {
+        return (column == null) ? null
+                                : column.getDefaultString();
     }
 
     /**
@@ -2145,12 +2154,12 @@ final class DatabaseInformationFull extends DatabaseInformation {
      *    does not allow NULL values; "YES" if it might allow NULL values;
      *    "" if it is not known whether or not it might allow NULL values.
      */
-    private String _getColIsNullable() {
+    private String getColIsNullable(Column column) {
 
-        return (_column == null) ? ""
-                                 : (_column.isNullable() ||!_column.isIdentity())
-                                   ? "YES"
-                                   : "NO";
+        return (column == null) ? ""
+                                : (column.isNullable() ||!column.isIdentity())
+                                  ? "YES"
+                                  : "NO";
     }
 
     /**
@@ -2159,9 +2168,9 @@ final class DatabaseInformationFull extends DatabaseInformation {
      * under consideration in the current executution context.
      * @return the simple name the <code>Column</code> object under consideration.
      */
-    private String _getColName() {
-        return (_column == null) ? null
-                                 : _column.columnName.name;
+    private String getColName(Column column) {
+        return (column == null) ? null
+                                : column.columnName.name;
     }
 
     /**
@@ -2192,14 +2201,14 @@ final class DatabaseInformationFull extends DatabaseInformation {
      *    <code>NULLABLE</code> column value for the <code>Column</code>
      *    object under consideration in the current executution context.<p>
      */
-    private Integer _getColNullability() {
+    private Integer getColNullability(Column column) {
 
-        return (_column == null) ? null
-                                 : (_column.isNullable() &&!_column.isIdentity())
-                                   ? ValuePool.getInt(
-                                       DatabaseMetaData.columnNullable)
-                                   : ValuePool.getInt(
-                                       DatabaseMetaData.columnNoNulls);
+        return (column == null) ? null
+                                : (column.isNullable() &&!column.isIdentity())
+                                  ? ValuePool.getInt(
+                                      DatabaseMetaData.columnNullable)
+                                  : ValuePool.getInt(
+                                      DatabaseMetaData.columnNoNulls);
     }
 
     /**
@@ -2210,11 +2219,12 @@ final class DatabaseInformationFull extends DatabaseInformation {
      * @return localized column remarks for the <code>Column</code> object under
      *    consideration in the current executution context.<p>
      */
-    private String _getColRemarks() {
+    private String getColRemarks(Column column) {
 
         return (_isSystemTable)
                ? BundleHandler.getString(_rbHndTColumnRemarks,
-                                         _tableName + "_" + _columnName)
+                                         _tableName + "_"
+                                         + getColName(column))
                : null;
     }
 
@@ -2226,13 +2236,13 @@ final class DatabaseInformationFull extends DatabaseInformation {
      *    under consideration in the current executution
      *    context.
      */
-    private Integer _getColScale() {
+    private Integer getColScale(Column column) {
 
         switch (_iInternalType) {
 
             case I_DECIMAL :
             case I_NUMERIC : {
-                return ValuePool.getInt(_column.getScale());
+                return ValuePool.getInt(column.getScale());
             }
             default :
                 return _getTIDefScale();
@@ -2308,7 +2318,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
      *    under consideration in the current executution
      *    context.  <p>
      */
-    private Integer _getColSize() {
+    private Integer getColSize(Column column) {
 
         int size;
 
@@ -2325,7 +2335,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             case I_NUMERIC :
             case I_VARBINARY :
             case I_VARCHAR : {
-                size = _column.getSize();
+                size = column.getSize();
 
                 break;
             }
@@ -4248,8 +4258,9 @@ final class DatabaseInformationFull extends DatabaseInformation {
         }
     }
 
-    /**  one time initialisation of instance at construction time */
+    /** one time initialisation of instance at construction time */
     private void _initProduces() throws SQLException {
+
 /*
         if (_isInitProduces) {
             return;
@@ -4278,16 +4289,15 @@ final class DatabaseInformationFull extends DatabaseInformation {
         nonCachedTablesSet.add("SYSTEM_SESSIONS");
         nonCachedTablesSet.add("SYSTEM_PROPERTIES");
 
-
-        // flag the user-dependent cached tables
-        sysTableUserDependent[SYSTEM_COLUMNPRIVILEGES] =
-        sysTableUserDependent[SYSTEM_CROSSREFERENCE] =
-        sysTableUserDependent[SYSTEM_INDEXINFO] =
-        sysTableUserDependent[SYSTEM_PRIMARYKEYS] =
-        sysTableUserDependent[SYSTEM_TABLES] =
-        sysTableUserDependent[SYSTEM_TRIGGERCOLUMNS] =
-        sysTableUserDependent[SYSTEM_TRIGGERS] =
-        sysTableUserDependent[SYSTEM_VIEWSOURCE] = true;
+        // flag the Session-dependent cached tables
+        sysTableSessionDependent[SYSTEM_COLUMNPRIVILEGES] =
+            sysTableSessionDependent[SYSTEM_CROSSREFERENCE] =
+            sysTableSessionDependent[SYSTEM_INDEXINFO] =
+            sysTableSessionDependent[SYSTEM_PRIMARYKEYS] =
+            sysTableSessionDependent[SYSTEM_TABLES] =
+            sysTableSessionDependent[SYSTEM_TRIGGERCOLUMNS] =
+            sysTableSessionDependent[SYSTEM_TRIGGERS] =
+            sysTableSessionDependent[SYSTEM_VIEWSOURCE] = true;
 
 /*
         Method[] methods = getClass().getMethods();
@@ -4308,9 +4318,10 @@ final class DatabaseInformationFull extends DatabaseInformation {
                     UserManager.SYS_USER_NAME);
 
         for (int i = 0; i < sysTables.length; i++) {
-            tableName      = sysTableNames[i];
-            t              = sysTables[i] = generateTable(i);
-            if ( t != null ){
+            tableName = sysTableNames[i];
+            t         = sysTables[i] = generateTable(i);
+
+            if (t != null) {
                 t.setDataReadOnly(true);
             }
         }
@@ -4356,9 +4367,9 @@ final class DatabaseInformationFull extends DatabaseInformation {
         }
 */
         for (int i = 0; i < sysTableHsqlNames.length; i++) {
-            if (sysTables[i] != null){
+            if (sysTables[i] != null) {
                 _userManager.grant("PUBLIC", sysTableHsqlNames[i],
-                               UserManager.SELECT);
+                                   UserManager.SELECT);
             }
         }
 
@@ -4665,11 +4676,13 @@ final class DatabaseInformationFull extends DatabaseInformation {
         HsqlArrayList list  = new HsqlArrayList(count);
 
         for (int i = 1; i < count; i++) {
-            _setColumn(t.getColumn(i));
+            Column column = t.getColumn(i);
+
             list.add(new Object[] {
-                _getColName(), _getTIDataType(), _getTITypeName(),
-                _getColSize(), _getColBufLen(), _getColScale(),
-                _getTINumPrecRadix(), _getColNullability(), _getColRemarks()
+                getColName(column), _getTIDataType(), _getTITypeName(),
+                getColSize(column), getColBufLen(column), getColScale(column),
+                _getTINumPrecRadix(), getColNullability(column),
+                getColRemarks(column)
             });
         }
 
@@ -4706,11 +4719,12 @@ final class DatabaseInformationFull extends DatabaseInformation {
             scale       = rsmd.getScale(i);
             nullability = rsmd.isNullable(i);
 
-            _setColumn(new Column(new HsqlName(name, false), true, type,
-                                  precision, scale, false, false, null));
+            Column column = new Column(new HsqlName(name, false), true, type,
+                                       precision, scale, false, false, null);
+
             list.add(new Object[] {
-                name, ValuePool.getInt(type), typeName, _getColSize(),
-                _getColBufLen(), ValuePool.getInt(scale),
+                name, ValuePool.getInt(type), typeName, getColSize(column),
+                getColBufLen(column), ValuePool.getInt(scale),
                 _getTINumPrecRadix(), ValuePool.getInt(nullability), null
             });
         }
@@ -4793,8 +4807,18 @@ final class DatabaseInformationFull extends DatabaseInformation {
      *            else <code>true</code>
      * @param objectName to check
      */
-    private boolean _isAccessible(Object dbobject) throws SQLException {
+    private boolean _isAccessible(String dbobject) throws SQLException {
         return _session.isAccessible(dbobject);
+    }
+
+    private boolean _isAccessible(Table table) throws SQLException {
+        boolean access = _session.isAccessible(table.getName());
+        if (access == false )
+            return access;
+        if (table.isTemp())
+            return (table.getOwnerSessionId() == _session.getId());
+
+        return true;
     }
 
     /**
@@ -4870,6 +4894,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
      * @param c
      * @throws SQLException
      */
+/*
     private void _setColumn(Column c) throws SQLException {
 
         Trace.doAssert(c != null, "Column is null.");
@@ -4882,8 +4907,9 @@ final class DatabaseInformationFull extends DatabaseInformation {
             _iInternalType = _findInternalType(_column.getType());
         }
 
-        _columnName = _getColName();
+        _columnName = getColName(c);
     }
+*/
 
     /**
      * @param t
@@ -4897,7 +4923,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
         _isSystemTable     = (t.tableType == Table.SYSTEM_TABLE);
         _isTempTable       = t.isTemp();
         _tableName         = _getTableName();
-        _isAccessibleTable = _isAccessible(_table.getName());
+        _isAccessibleTable = _isAccessible(_table);
     }
 
     /**
@@ -4969,8 +4995,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
      * @throws SQLException if a database access error occurs
      */
     private Table createBlankTable(HsqlName name) throws SQLException {
-        return new Table(database, name, Table.SYSTEM_TABLE,
-                         null);
+        return new Table(database, name, Table.SYSTEM_TABLE, 0);
     }
 
     /**
@@ -4978,7 +5003,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
      * @return
      */
     protected Enumeration enumerateSysTables() throws SQLException {
-        return new ArrayEnumeration(sysTables);
+        return new ArrayEnumeration(sysTables, true);
     }
 
     /**
@@ -5074,7 +5099,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
         t          = sysTables[tableIndex];
 
         // fredt - any system table that is not supported will be null here
-        if (t == null ) {
+        if (t == null) {
             return t;
         }
 
@@ -5082,7 +5107,6 @@ final class DatabaseInformationFull extends DatabaseInformation {
         if (!withContent) {
             return t;
         }
-
 
         // first call to produceTable() with intent of retrieving
         // a table with actual content...we need to finish initializing
@@ -5126,37 +5150,39 @@ final class DatabaseInformationFull extends DatabaseInformation {
 
         if (isDirty) {
             _cacheClear();
+
             if (Trace.TRACE) {
                 Trace.trace("System table cache cleared.");
             }
         }
 
-        boolean tableValid = true;
-        User oldUser = sysTableUsers[tableIndex];
-        {
-            User newUser = session.getUser();
-            if(oldUser == null || (session.getUser() != oldUser &&
-                       sysTableUserDependent[tableIndex] ) ){
-                // user has changed and table is user-dependent
-                tableValid = false;
-            }
+        Session oldSession = sysTableSessions[tableIndex];
+        boolean tableValid = oldSession != null;
+
+        // user has changed and table is user-dependent
+        if (session != oldSession && sysTableSessionDependent[tableIndex]) {
+            tableValid = false;
         }
-        // fredt - any valid cached table will be returned here
-        if ( tableValid && !nonCachedTablesSet.contains(name)) {
+
+        if (nonCachedTablesSet.contains(name)) {
+            tableValid = false;
+        }
+
+        // any valid cached table will be returned here
+        if (tableValid) {
             return t;
         }
 
         // fredt - clear the contents of table and set new User
         t.clearAllRows();
-        sysTableUsers[tableIndex] = session.getUser();
 
+        sysTableSessions[tableIndex] = session;
 
         // match and if found, generate.
         t = generateTable(tableIndex);
 
         // t will b null at this point, if this implementation
         // does not support the particular table
-
         if (Trace.TRACE) {
             Trace.trace("generated system table: " + name + " in "
                         + sw.elapsedTime() + " ms.");
@@ -5452,8 +5478,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
      * for each accessible table defined within this database
      * @throws SQLException if an error occurs while producing the table
      */
-    Table SYSTEM_BESTROWIDENTIFIER(int tableIndex)
-    throws SQLException {
+    Table SYSTEM_BESTROWIDENTIFIER(int tableIndex) throws SQLException {
 
         Table t = sysTables[tableIndex];
 
@@ -5530,9 +5555,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
         // Do it.
         while (tables.hasMoreElements()) {
             table = (Table) tables.nextElement();
-            if (table == null){
-                continue;
-            }
+
             _setTable(table);
 
             if (!_isAccessibleTable()) {
@@ -5553,22 +5576,22 @@ final class DatabaseInformationFull extends DatabaseInformation {
             scope           = _getBRIScope();
 
             for (int i = 0; i < columnPositions.length; i++) {
-                _setColumn(table.getColumn(columnPositions[i]));
+                Column column = table.getColumn(columnPositions[i]);
 
-                columnName           = _getColName();
+                columnName           = getColName(column);
                 row                  = t.getNewRow();
                 row[iscope]          = scope;
                 row[icolumn_name]    = columnName;
                 row[idata_type]      = _getTIDataType();
                 row[itype_name]      = _getTITypeName();
-                row[icolumn_size]    = _getColSize();
-                row[ibuffer_length]  = _getColBufLen();
-                row[idecimal_digits] = _getColScale();
+                row[icolumn_size]    = getColSize(column);
+                row[ibuffer_length]  = getColBufLen(column);
+                row[idecimal_digits] = getColScale(column);
                 row[ipseudo_column]  = _getBRIPseudo();
                 row[itable_cat]      = tableCatalog;
                 row[itable_schem]    = tableSchema;
                 row[itable_name]     = tableName;
-                row[inullable]       = _getColNullability();
+                row[inullable]       = getColNullability(column);
                 row[iinKey]          = inKey;
 
                 r.add(row);
@@ -6202,11 +6225,6 @@ final class DatabaseInformationFull extends DatabaseInformation {
         // Do it.
         while (tables.hasMoreElements()) {
             table     = (Table) tables.nextElement();
-
-            if (table == null){
-                continue;
-            }
-
             accessKey = table.getName();
 
             _setTable(table);
@@ -6373,9 +6391,6 @@ final class DatabaseInformationFull extends DatabaseInformation {
         while (tables.hasMoreElements()) {
             table = (Table) tables.nextElement();
 
-            if ( table == null )
-                continue;
-
             _setTable(table);
 
             if (!_isAccessibleTable()) {
@@ -6388,28 +6403,28 @@ final class DatabaseInformationFull extends DatabaseInformation {
             columnCount  = table.getColumnCount();
 
             for (int i = 0; i < columnCount; i++) {
-                _setColumn(table.getColumn(i));
+                Column column = table.getColumn(i);
 
                 row                     = t.getNewRow();
                 ordinalPosition         = i + 1;
                 row[itable_cat]         = tableCatalog;
                 row[itable_schem]       = tableSchema;
                 row[itable_name]        = tableName;
-                row[icolumn_name]       = _getColName();
+                row[icolumn_name]       = getColName(column);
                 row[idata_type]         = _getTIDataType();
                 row[itype_name]         = _getTITypeName();
-                row[icolumn_size]       = _getColSize();
-                row[ibuffer_length]     = _getColBufLen();
-                row[idecimal_digits]    = _getColScale();
+                row[icolumn_size]       = getColSize(column);
+                row[ibuffer_length]     = getColBufLen(column);
+                row[idecimal_digits]    = getColScale(column);
                 row[inum_prec_radix]    = _getTINumPrecRadix();
-                row[inullable]          = _getColNullability();
-                row[iremark]            = _getColRemarks();
-                row[icolumn_def]        = _getColDefault();
+                row[inullable]          = getColNullability(column);
+                row[iremark]            = getColRemarks(column);
+                row[icolumn_def]        = getColDefault(column);
                 row[isql_data_type]     = _getTISqlDataType();
                 row[isql_datetime_sub]  = _getTISqlDateTimeSub();
-                row[ichar_octet_length] = _getColCharOctLen();
+                row[ichar_octet_length] = getColCharOctLen(column);
                 row[iordinal_position]  = ValuePool.getInt(ordinalPosition);
-                row[iis_nullable]       = _getColIsNullable();
+                row[iis_nullable]       = getColIsNullable(column);
 
                 r.add(row);
             }
@@ -6873,10 +6888,6 @@ final class DatabaseInformationFull extends DatabaseInformation {
         // Do it.
         while (tables.hasMoreElements()) {
             table = (Table) tables.nextElement();
-
-            if (table == null){
-                continue;
-            }
 
             _setTable(table);
 
@@ -7775,6 +7786,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             _addColumn(t, "AUTOCOMMIT", Types.BIT, false);
             _addColumn(t, "READONLY", Types.BIT, false);
             _addColumn(t, "MAXROWS", Types.INTEGER, false);
+
             // some sessions do not have a LAST_IDENTITY value
             _addColumn(t, "LAST_IDENTITY", Types.BIGINT);
             _addColumn(t, "TRANSACTION_SIZE", Types.INTEGER, false);
@@ -7820,9 +7832,12 @@ final class DatabaseInformationFull extends DatabaseInformation {
             row[iautocommit] = valueOf(session.getAutoCommit());
             row[ireadonly]   = valueOf(session.isReadOnly());
             row[imaxrows]    = ValuePool.getInt(session.getMaxRows());
+
             Number tempLastId = (Number) session.getLastIdentity();
-            row[ilast_id] = tempLastId == null ? null : ValuePool.getLong(
-                tempLastId.longValue());
+
+            row[ilast_id] = tempLastId == null ? null
+                                               : ValuePool.getLong(
+                                                   tempLastId.longValue());
             row[it_size]   = ValuePool.getInt(session.getTransactionSize());
             row[it_nested] = valueOf(session.isNestedTransaction());
 
@@ -7875,7 +7890,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
      *        user-defined type (UDT) defined within this database
      * @throws SQLException if an error occurs while producing the table
      */
-     Table SYSTEM_SUPERTYPES(int tableIndex) throws SQLException {
+    Table SYSTEM_SUPERTYPES(int tableIndex) throws SQLException {
 
         Table t = sysTables[tableIndex];
 
@@ -8117,10 +8132,6 @@ final class DatabaseInformationFull extends DatabaseInformation {
         // Do it.
         while (tables.hasMoreElements()) {
             table = (Table) tables.nextElement();
-
-            if (table == null){
-                continue;
-            }
 
             _setTable(table);
 

@@ -159,10 +159,10 @@ class Parser {
 
             if (select.intoType == Table.TEXT_TABLE) {
                 t = new TextTable(dDatabase, select.sIntoTable,
-                                  select.intoType, cSession);
+                                  select.intoType, cSession.getId());
             } else {
                 t = new Table(dDatabase, select.sIntoTable, select.intoType,
-                              cSession);
+                              cSession.getId());
             }
 
             t.addColumns(r);
@@ -1010,7 +1010,7 @@ class Parser {
 
             // it's not a problem that this table has not a unique name
             t = new Table(dDatabase, new HsqlName("SYSTEM_SUBQUERY", false),
-                          Table.SYSTEM_TABLE, null);
+                          Table.SYSTEM_TABLE, 0);
 
             tTokenizer.getThis(")");
             t.addColumns(r);
@@ -1066,7 +1066,7 @@ class Parser {
                 // it's not a problem that this table has not a unique name
                 t = new Table(dDatabase,
                               new HsqlName("SYSTEM_SUBQUERY", false),
-                              Table.SYSTEM_TABLE, null);
+                              Table.SYSTEM_TABLE, 0);
 
                 tTokenizer.getThis(")");
                 t.addColumns(r);

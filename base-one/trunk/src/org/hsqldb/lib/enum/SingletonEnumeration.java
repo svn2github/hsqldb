@@ -76,8 +76,9 @@ public final class SingletonEnumeration implements Enumeration {
         }
 
         Object tmp = element;
-        element = null;
-        return tmp;
 
+        element = null;
+
+        return tmp;
     }
 }

@@ -1694,10 +1694,10 @@ class Database {
 // --
         if (type == Table.TEMP_TEXT_TABLE || type == Table.TEXT_TABLE) {
             t = new TextTable(this, new HsqlName(sToken, isnamequoted), type,
-                              session);
+                              session.getId());
         } else {
             t = new Table(this, new HsqlName(sToken, isnamequoted), type,
-                          session);
+                          session.getId());
         }
 
         c.getThis("(");
@@ -2783,7 +2783,7 @@ class Database {
         while (i-- > 0) {
             Table toDrop = (Table) tTable.get(i);
 
-            if (toDrop.isTemp() && toDrop.getOwnerSession() == ownerSession) {
+            if (toDrop.isTemp() && toDrop.getOwnerSessionId() != ownerSession.getId()) {
                 tTable.remove(i);
             }
         }

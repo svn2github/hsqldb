@@ -48,7 +48,7 @@ class View extends Table {
 
     View(Database db, HsqlName name) throws SQLException {
 
-        super(db, name, VIEW, null);
+        super(db, name, VIEW, 0);
 
         sStatement = "";
     }

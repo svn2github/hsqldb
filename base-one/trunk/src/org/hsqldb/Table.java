@@ -149,7 +149,7 @@ class Table {
     protected Cache    cCache;
     protected HsqlName tableName;               // SQL name
     protected int      tableType;
-    protected Session  ownerSession;            // fredt - set for temp tables only
+    protected int  ownerSessionId;              // fredt - set for temp tables only
     protected boolean  isReadOnly;
     protected boolean  isTemp;
     protected boolean  isCached;
@@ -166,7 +166,7 @@ class Table {
      * @exception  SQLException  Description of the Exception
      */
     Table(Database db, HsqlName name, int type,
-            Session session) throws SQLException {
+            int sessionid) throws SQLException {
 
         dDatabase      = db;
         sqlEnforceSize = db.sqlEnforceSize;
@@ -178,10 +178,9 @@ class Table {
                 break;
 
             case TEMP_TABLE :
-                Trace.doAssert(session != null);
 
                 isTemp       = true;
-                ownerSession = session;
+                ownerSessionId = sessionid;
                 break;
 
             case CACHED_TABLE :
@@ -195,7 +194,6 @@ class Table {
                 break;
 
             case TEMP_TEXT_TABLE :
-                Trace.doAssert(session != null);
 
                 if (!db.logger.hasLog()) {
                     throw Trace.error(Trace.DATABASE_IS_MEMORY_ONLY);
@@ -205,7 +203,7 @@ class Table {
                 isText       = true;
                 isReadOnly   = true;
                 isCached     = true;
-                ownerSession = session;
+                ownerSessionId = sessionid;
                 break;
 
             case TEXT_TABLE :
@@ -245,7 +243,7 @@ class Table {
 
     boolean equals(String other, Session c) {
 
-        if (isTemp && c.getId() != ownerSession.getId()) {
+        if (isTemp && c.getId() != ownerSessionId) {
             return false;
         }
 
@@ -290,8 +288,8 @@ class Table {
         isReadOnly = value;
     }
 
-    Session getOwnerSession() {
-        return ownerSession;
+    int getOwnerSessionId() {
+        return ownerSessionId;
     }
 
     protected void setDataSource(String source, boolean isDesc,
@@ -488,7 +486,7 @@ class Table {
 
     protected Table duplicate() throws SQLException {
 
-        Table t = (new Table(dDatabase, tableName, tableType, ownerSession));
+        Table t = (new Table(dDatabase, tableName, tableType, ownerSessionId));
 
         return t;
     }

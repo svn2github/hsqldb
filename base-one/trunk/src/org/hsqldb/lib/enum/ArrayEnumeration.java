@@ -40,9 +40,13 @@ import java.util.NoSuchElementException;
 public final class ArrayEnumeration implements Enumeration {
 
     /** the array of objects to enumerate */
-    private Object[]    elements;
+    private Object[] elements;
+
     /** the index of the next element to be enumerated */
     private int i;
+
+    /** return only not null elements */
+    private boolean notNull;
 
     /**
      * Constructs a new ArrayEnumeration for specified array. <p>
@@ -51,7 +55,11 @@ public final class ArrayEnumeration implements Enumeration {
      */
     public ArrayEnumeration(Object[] elements) {
         this.elements = elements;
-        i = 0;
+    }
+
+    public ArrayEnumeration(Object[] elements, boolean notnull) {
+        this.elements = elements;
+        notNull       = notnull;
     }
 
     /**
@@ -61,6 +69,9 @@ public final class ArrayEnumeration implements Enumeration {
      *          <code>false</code> otherwise.
      */
     public boolean hasMoreElements() {
+
+        for (; notNull && i < elements.length && elements[i] == null; i++) {}
+
         return (i < elements.length);
     }
 
@@ -71,11 +82,13 @@ public final class ArrayEnumeration implements Enumeration {
      * @throws NoSuchElementException if there is no next element
      */
     public Object nextElement() {
+
+        hasMoreElements();
+
         try {
             return elements[i++];
         } catch (ArrayIndexOutOfBoundsException e) {
             throw new NoSuchElementException();
         }
     }
-
 }
