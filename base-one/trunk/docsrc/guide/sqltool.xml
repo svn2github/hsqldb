@@ -1,7 +1,7 @@
-<!-- $Id: sqltool.xml,v 1.7 2004/04/21 18:01:01 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.8 2004/04/22 03:49:13 unsaved Exp $ -->
 
-<chapter>
-    <title>SqlTool</title>
+<chapter id='sqltool-chapter'>
+    <title id='sqltool-title'>SqlTool</title>
     <subtitle>SqlTool Manual and HOWTO</subtitle>
     <chapterinfo>
         <author>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.7 $</edition>
-        <pubdate>$Date: 2004/04/21 18:01:01 $</pubdate>
+        <edition>$Revision: 1.8 $</edition>
+        <pubdate>$Date: 2004/04/22 03:49:13 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>HOWTO</keyword>
@@ -550,17 +550,5 @@
                 section about that.
             </para>
         </section>
-    </section>
-
-    <section>
-        <title>Web Application</title>
-        <para>
-            It wouldn't bee much trouble for me to make a web application 
-            that uses SqlTool so that users can use a HTML text area field 
-            to execute SQL Statements.
-            I already have a war that does a similar thing with a different 
-            technology.  So, email me at &authoraddr;
-            if you would like me to assemble a war like this.
-        </para>
     </section>
 </chapter>

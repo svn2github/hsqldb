@@ -1,4 +1,4 @@
-<!-- $Id: unix.xml,v 1.5 2004/04/22 23:48:25 unsaved Exp $ -->
+<!-- $Id: unix.xml,v 1.6 2004/04/22 23:54:51 unsaved Exp $ -->
 
 <chapter>
     <title>UNIX Quick Start</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.5 $</edition>
-        <pubdate>$Date: 2004/04/22 23:48:25 $</pubdate>
+        <edition>$Revision: 1.6 $</edition>
+        <pubdate>$Date: 2004/04/22 23:54:51 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>UNIX</keyword>
@@ -57,7 +57,8 @@
             Hopefully, the JPackage folk will document what JVM versions their
             rpm will support (currently they document this neither on their
             site nor within the package itself).
-            Download the package you want
+            Download the package you want, making sure that you get version
+            1.7.2 of HSQLDB.
             (I really can't document how to download from a site that is
             totally beyond my control).
         </para> <note><para>
@@ -194,6 +195,11 @@
                 </para>
             </step>
         </procedure>
+        <para>
+            See the <link linkend='building-appendix' endterm='building-title'/>
+            appendix if you want to build anything other than
+            <filename>hsqldb.jar</filename> with all default settings.
+        </para>
     </section>
 
     <section id='instance_setup-section'>
@@ -251,21 +257,17 @@
                 <link linkend='advanced-chapter' endterm='advanced-title'/>
                 chapter.
             </para></step><step><para>
-                Set the environmental variable <literal>HSQLDB_HOME</literal>
-                to the real value of
-                <emphasis role='bold'>HSQLDB_HOME</emphasis> as described 
-                above, like
+                Set and export the environmental variable
+                <literal>CLASSPATH</literal> to the value of
+                <emphasis role='bold'>HSQLDB_HOME</emphasis> (as described 
+                above) plus "/lib/hsqldb.jar", like
                 </para><informalexample><screen>
-    HSQLDB_HOME=/path/to/hsqldb/install/home</screen>
+    export CLASSPATH; CLASSPATH=/path/to/hsqldb/install/home/lib/hsqldb.jar</screen>
                 </informalexample><para>
-                We are only setting this so we can use this variable for
-                the commands we'll give latter on.
-                Neither Java nor HSQLDB itself uses this environmental
-                variable.
-                </para>
                 In <emphasis role='bold'>HSQLDB_OWNER</emphasis>'s home
-                directory, run<informalexample><screen>
-    java -classpath $HSQLDB_HOME/lib/hsqldb.jar org.hsqldb.Server</screen>
+                directory, run</para>
+                <informalexample><screen>
+    java org.hsqldb.Server</screen>
                 </informalexample><para>
                     This will create your database instance and start it up.
                     Use <literal>Ctrl Z</literal> to move the database process
@@ -292,21 +294,24 @@
             <link linkend='advanced-chapter' endterm='advanced-title'/>
             chapter.
         </para> <para>
-            Run Sql Tool.
+            Run <classname>SqlTool</classname>.
         </para><informalexample><screen>
     java org.hsqldb.util.SqlTool localhost-sa</screen>
+   
         </informalexample><para>
             If you get a prompt, then all is well.
             If security is of any concern to you at all, then you should change 
             the privileged password in the database.
-            Execute the command
+            Use the command
+            <link linkend='set_password-section'>SET PASSWORD</link>
+            command to change SA's password.
             </para><informalexample><programlisting>
     set password "newpassword";</programlisting>
             </informalexample><para>
-            When you're finised playing, exit with the command
+            When you're finished playing, exit with the command
             <literal>\q</literal>.
         </para> <para>
-            If you changed the <literal>sa</literal> password, then you need to
+            If you changed the SA password, then you need to
             fix the password in the <filename>sqltool.rc</filename> file
             accordingly.
         </para> <para>
@@ -315,12 +320,31 @@
             See the
             <link linkend='firstclient-appendix' endterm='firstclient-title'/>
             appendix.
+            You will need to modify your classpath to include your client
+            class(es) in addition to <filename>hsqldb.jar</filename>.
+            You can also use the other HSQLDB client programs, such as
+            <classname>org.hsqldb.util.DatabasManagerSwing</classname>,
+            a graphical client with a similar purpose to
+            <classname>SqlTool</classname>.
+        </para> <para>
+            You can use any normal UNIX account to run the JDBC clients,
+            including <classname>SqlTool</classname>, as long as the account has
+            read access to the <filename>hsqldb.jar</filename> file and to an 
+            <filename>sqltool.rc</filename> file.
+            See the <link linkend='sqltool-chapter' endterm='sqltool-title'/>
+            chapter about where to put <filename>sqltool.rc</filename>, how to
+            execute sql files, and other <classname>SqlTool</classname> 
+            features.
         </para>
     </section>
 
     <section>
         <title>Create additional Accounts</title>
         <para>
+            Connect to the database as SA (or any other Administrative user)
+            and run <link linkend='create_user-section'>CREATE USER</link>
+            to create new accounts for your database instance.
+        </para> <para>
             There are two classes of database accounts, Admin accounts and
             non-Admin accounts.
             Admins have privileges to do anything, non-Admins may be granted 
@@ -332,9 +356,7 @@
             Each Admin user has a unique user name (and optional password), but 
             these accounts are otherwise indistinguishable.
             These accounts are created by appending the keyword "ADMIN" to the 
-            <literal>CREATE USER</literal> command (see the
-            <link linkend='create_user-section'
-                  endterm='create_user-title'/> section).
+            <link linkend='create_user-section'>CREATE USER</link> command.
         </para> <para>
             If you create a user without the ADMIN tag, it will be a Non-Admin 
             account.
