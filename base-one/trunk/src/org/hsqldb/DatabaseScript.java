@@ -197,13 +197,10 @@ class DatabaseScript {
         for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
             Table t = (Table) tTable.get(i);
 
-            if (bCached && t.isIndexCached()) {
+            if (bCached && t.isIndexCached() &&!t.isEmpty()) {
                 addRow(r, getIndexRootsDDL((Table) tTable.get(i)));
             }
         }
-
-        // rights for classes and tables (not views)
-        addRightsStatements(dDatabase, r, false);
 
         // ignorecase for future CREATE TABLE statements
         if (dDatabase.isIgnoreCase()) {
@@ -252,8 +249,8 @@ class DatabaseScript {
             }
         }
 
-        // rights for views
-        addRightsStatements(dDatabase, r, true);
+        // rights for classes, tables and views
+        addRightsStatements(dDatabase, r);
 
         return r;
     }
@@ -535,8 +532,7 @@ class DatabaseScript {
      * grant select on system tables
      *
      */
-    private static void addRightsStatements(Database dDatabase, Result r,
-            boolean views) {
+    private static void addRightsStatements(Database dDatabase, Result r) {
 
         HsqlStringBuffer a;
         HsqlArrayList    uv = dDatabase.getUserManager().getUsers();
@@ -545,7 +541,7 @@ class DatabaseScript {
             User   u    = (User) uv.get(i);
             String name = u.getName();
 
-            if (!views &&!name.equals("PUBLIC")) {
+            if (!name.equals("PUBLIC")) {
                 a = new HsqlStringBuffer(128);
 
                 a.append("CREATE USER ");
@@ -581,10 +577,6 @@ class DatabaseScript {
                 a.append(" ON ");
 
                 if (object instanceof String) {
-                    if (views) {
-                        continue;
-                    }
-
                     if (object.equals("java.lang.Math")
                             || object.equals("org.hsqldb.Library")) {
                         continue;
@@ -600,7 +592,7 @@ class DatabaseScript {
                         dDatabase.findUserTable(((HsqlName) object).name);
 
                     // assumes all non String objects are table names
-                    if (table != null && views == table.isView()) {
+                    if (table != null) {
                         a.append(((HsqlName) object).statementName);
                     } else {
                         continue;

@@ -106,14 +106,14 @@ class TableWorks {
      *  <p>
      *  If sql.strict_fk is set (default for new databases) a pre-existing
      *  primary key or unique index is required on the referenced columns
-     *  of the referenced table.
+     *  of the referenced table (1.7.1).
      *  <p>
      *  When there is no primary key or unique index, a new index is created
      *  automatically. If sql.strong_fk is set in the abasence of
      *  sql.strict_fk, this automatic index will be a unique index. Otherwise
      *  (for compatibility with existing data created with HSQLDB 1.61 or
-     *  earlier) it will be an ordinary index.
-     *  <>
+     *  earlier) it will be an ordinary index (1.7.1).
+     *  <p>
      *  In version 1.7.2, the semantics of sql.strict_fk are enforced
      *  regardless of the database properties settings (which are now obsolete).
      *

@@ -146,7 +146,7 @@ class DatabaseFile extends RandomAccessFile {
 
         if (index == count) {
             index = 0;
-            count = super.read(in);
+            count = super.read(in, 0, in.length);
 
             if (count == -1) {
                 count = 0;
@@ -163,21 +163,7 @@ class DatabaseFile extends RandomAccessFile {
     }
 
     public int read(byte[] b) throws IOException {
-
-        int i = 0;
-        int next;
-
-        for (; i < b.length; i++) {
-            next = read();
-
-            if (next == -1) {
-                return (-1);
-            }
-
-            b[i] = (byte) next;
-        }
-
-        return i;
+        return read(b, 0, b.length);
     }
 
 // fredt@users - patch 1.7.2 - method added
@@ -220,11 +206,7 @@ class DatabaseFile extends RandomAccessFile {
     }
 
     public void write(byte[] b) throws IOException {
-
-        index = count = 0;
-        pos   += b.length;
-
-        super.write(b);
+        write(b, 0, b.length);
     }
 
     public void write(byte[] b, int off, int len) throws IOException {

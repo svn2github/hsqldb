@@ -140,6 +140,7 @@ class Database {
 
 // ----------------------------------------------------------------------------
     boolean                        sqlEnforceSize;
+    int                            firstIdentity;
     private boolean                bShutdown;
     private HsqlHashMap            hAlias;
     private boolean                bIgnoreCase;
@@ -186,19 +187,18 @@ class Database {
     private static final int MEMORY                = 30;
     private static final int PASSWORD              = 37;
     private static final int PRIMARY               = 36;
+    private static final int PROPERTY              = 47;
     private static final int READONLY              = 38;
     private static final int REFERENTIAL_INTEGRITY = 46;
     private static final int RENAME                = 23;
     private static final int SOURCE                = 44;
-
-    //for process*()
-    private static final int TABLE       = 21;
-    private static final int TEXT        = 29;
-    private static final int TRIGGER     = 33;
-    private static final int UNIQUE      = 28;
-    private static final int USER        = 34;
-    private static final int VIEW        = 32;
-    private static final int WRITE_DELAY = 45;
+    private static final int TABLE                 = 21;
+    private static final int TEXT                  = 29;
+    private static final int TRIGGER               = 33;
+    private static final int UNIQUE                = 28;
+    private static final int USER                  = 34;
+    private static final int VIEW                  = 32;
+    private static final int WRITE_DELAY           = 45;
     private static final HsqlObjectToIntMap commandSet =
         new HsqlObjectToIntMap(67);
 
@@ -240,8 +240,9 @@ class Database {
         commandSet.put("TRIGGER", TRIGGER);
         commandSet.put("USER", USER);
         commandSet.put("ALIAS", ALIAS);
-        commandSet.put("PRIMARY", PRIMARY);
         commandSet.put("PASSWORD", PASSWORD);
+        commandSet.put("PRIMARY", PRIMARY);
+        commandSet.put("PROPERTY", PROPERTY);
         commandSet.put("READONLY", READONLY);
         commandSet.put("LOGSIZE", LOGSIZE);
         commandSet.put("LOGTYPE", LOGTYPE);
@@ -312,29 +313,16 @@ class Database {
         sessionManager = new SessionManager(this, sysUser);
 
 // -------------------------------------------------------------------
-        databaseProperties = new HsqlDatabaseProperties(sName);
+        databaseProperties = new HsqlDatabaseProperties(this);
         dInfo              = DatabaseInformation.newDatabaseInformation(this);
 
         if (sName.length() == 0) {
             throw Trace.error(Trace.GENERAL_ERROR, "bad database name");
         } else if (sName.equals(".")) {
             newdatabase = true;
-
-            databaseProperties.setProperty("sql.strict_fk", true);
         } else {
             newdatabase = logger.openLog(this, sName);
         }
-
-        Library.setSqlMonth(databaseProperties.isPropertyTrue("sql.month"));
-
-        sqlEnforceSize =
-            databaseProperties.isPropertyTrue("sql.enforce_size");
-
-        Column.setCompareInLocal(
-            databaseProperties.isPropertyTrue("sql.compare_in_locale"));
-
-        Record.gcFrequency =
-            databaseProperties.getIntegerProperty("hsqldb.gc_interval", 0);
 
         if (newdatabase) {
             execute("CREATE USER SA PASSWORD \"\" ADMIN",
@@ -2390,6 +2378,16 @@ class Database {
         String sToken = c.getString();
 
         switch (commandSet.get(sToken)) {
+
+            case PROPERTY :
+                session.checkAdmin();
+
+                sToken = c.getString().toLowerCase();
+
+                databaseProperties.setProperty(sToken, c.getString());
+                databaseProperties.setDatabaseVariables();
+                sToken = c.getString();
+                break;
 
             case PASSWORD : {
                 session.checkDDLWrite();

@@ -95,7 +95,7 @@ class DatabaseScriptReader {
 
             if (result != null && result.iMode == Result.ERROR) {
                 throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
-                                  " line: " + lineCount);
+                                  " line: " + lineCount + " "+ result.sError);
             }
         }
     }

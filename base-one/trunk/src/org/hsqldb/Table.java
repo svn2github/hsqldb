@@ -172,6 +172,7 @@ class Table {
 
         dDatabase      = db;
         sqlEnforceSize = db.sqlEnforceSize;
+        iIdentityId= db.firstIdentity;
 
         switch (type) {
 
@@ -916,7 +917,7 @@ class Table {
             getIndex(i).setRoot(null);
         }
 
-        iIdentityId = 0;
+        iIdentityId = dDatabase.firstIdentity;
     }
 
     /**

@@ -228,7 +228,7 @@ public class Trace extends PrintWriter {
         "S0011 Attempt to drop a foreign key index",
         "S1000 ResultSet was set to forward only",
         "S0003 View already exists", "S0004 View not found",
-        "S0005 Not A View", "S0005 Not A Table",
+        "S0005 Not a View", "S0005 Not a Table",
         "S0011 Attempt to drop or rename a system index",
         "S0021 Column types do not match",
         "s0021 Column constraints are not acceptable",

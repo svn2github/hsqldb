@@ -78,15 +78,14 @@ import java.sql.SQLException;
  */
 class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
+    private Database        database;
     private FileInputStream propsFileStream;    // kept open until closed
 
-    private HsqlDatabaseProperties() {
-        super();
-    }
+    public HsqlDatabaseProperties(Database db) {
 
-    public HsqlDatabaseProperties(String name) {
+        super(db.getName());
 
-        super(name);
+        database = db;
 
         // month 1-12 instead of 0-11
         setProperty("sql.month", true);
@@ -163,14 +162,17 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
         // type of logging (0 : text , 1 : binary)
         setProperty("hsqldb.log_type", "0");
+
+        // initial value of idendity columns
+        setProperty("hsqldb.first_identity", "0");
         setProperty("readonly", false);
         setProperty("modified", "no");
 
 // ----------------------------------------------------------------------------
 // akede@users - 1.7.2 patch Files readonly
         setProperty("hsqldb.files_readonly", false);
-// ----------------------------------------------------------------------------
 
+// ----------------------------------------------------------------------------
         // the property "version" is also set to the current version
         //
         // the following properties can be set by the user as defaults for
@@ -184,6 +186,23 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         // "textdb.encoding", "ASCII"
         // "textdb.cache_scale", 10  -- allowed range 8-16
         // "textdb.cache_size_scale", 12  -- allowed range 8-20
+        setSystemVariables();
+        setDatabaseVariables();
+    }
+
+    private void setSystemVariables() {
+
+        Library.setSqlMonth(isPropertyTrue("sql.month"));
+        Column.setCompareInLocal(isPropertyTrue("sql.compare_in_locale"));
+
+        Record.gcFrequency = getIntegerProperty("hsqldb.gc_interval", 0);
+    }
+
+    void setDatabaseVariables() {
+
+        database.sqlEnforceSize = isPropertyTrue("sql.enforce_size");
+        database.firstIdentity = getIntegerProperty("hsqldb.first_identity",
+                0);
     }
 
     public void close() throws SQLException {
@@ -223,6 +242,9 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
             throw Trace.error(Trace.FILE_IO_ERROR,
                               fileName + ".properties " + e);
         }
+
+        setSystemVariables();
+        setDatabaseVariables();
     }
 
     /**
@@ -262,13 +284,13 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         setProperty("version", jdbcDriver.VERSION);
         setProperty("hsqldb.cache_version", "1.7.0");
         setProperty("hsqldb.compatible_version", "1.7.2");
-        setProperty("sql.strict_fk", true);
         save();
 
         return true;
     }
 
 // fredt@users - patch suggested by Ian Roberts clarry@users
+
     /**
      *  check by trying to delete the properties file this will not work if
      *  some application has the file open this is why the properties file
@@ -285,11 +307,15 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         if (Trace.TRACE) {
             Trace.trace();
         }
+
         File f = new File(fileName + ".properties");
+
         if (f.delete() == false) {
             f = null;
+
             return true;
         }
+
         f = null;
 
         // the file was deleted, so recreate it now

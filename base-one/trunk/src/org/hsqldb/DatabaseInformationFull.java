@@ -49,7 +49,7 @@ import org.hsqldb.lib.ValuePool;
 // boucherb@users - 1.7.2 - 20020304 - bug fixes, refinements, better java docs
 
 /**
- * Extends DatabaseInformationMain to provide additional system table 
+ * Extends DatabaseInformationMain to provide additional system table
  * support. <p>
  *
  * @author boucherb@users.sourceforge.net
@@ -847,7 +847,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
 
             props     = database.getProperties();
             nameSpace = "database.properties";
-            
+
             // hsqldb.catalogs
             row         = t.getNewRow();
             row[iscope] = scope;
@@ -855,17 +855,17 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
             row[iname]  = "hsqldb.catalogs";
             row[ivalue] = props.getProperty("hsqldb.catalogs","false");
             row[iclass] = "boolean";
-            
+
             rsp.add(row);
-            
+
             // hsqldb.schemas
             row         = t.getNewRow();
             row[iscope] = scope;
             row[ins]    = nameSpace;
             row[iname]  = "hsqldb.schemas";
             row[ivalue] = props.getProperty("hsqldb.schemas","false");
-            row[iclass] = "boolean"; 
-            
+            row[iclass] = "boolean";
+
             rsp.add(row);
 
             // sql.month
@@ -898,23 +898,13 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
 
             rsp.add(row);
 
-            // sql.strict_fk
+            // hsqldb.first_identity
             row         = t.getNewRow();
             row[iscope] = scope;
             row[ins]    = nameSpace;
-            row[iname]  = "sql.strict_fk";
-            row[ivalue] = props.getProperty("sql.strict_fk","false");
-            row[iclass] = "boolean";
-
-            rsp.add(row);
-
-            // sql.strong_fk
-            row         = t.getNewRow();
-            row[iscope] = scope;
-            row[ins]    = nameSpace;
-            row[iname]  = "sql.strong_fk";
-            row[ivalue] = props.getProperty("sql.strong_fk","false");
-            row[iclass] = "boolean";
+            row[iname]  = "hsqldb.first_identity";
+            row[ivalue] = props.getProperty("hsqldb.first_identity","0");
+            row[iclass] = "int";
 
             rsp.add(row);
 
