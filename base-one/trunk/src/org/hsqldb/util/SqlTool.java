@@ -41,7 +41,7 @@ import java.io.FileReader;
 import java.util.StringTokenizer;
 import java.util.HashMap;
 
-/* $Id: SqlTool.java,v 1.27 2004/06/05 05:44:38 unsaved Exp $ */
+/* $Id: SqlTool.java,v 1.28 2004/06/05 06:52:33 unsaved Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -52,7 +52,7 @@ import java.util.HashMap;
  * See JavaDocs for the main method for syntax of how to run.
  *
  * @see @main()
- * @version $Revision: 1.27 $
+ * @version $Revision: 1.28 $
  * @author Blaine Simpson
  */
 public class SqlTool {
@@ -340,7 +340,10 @@ public class SqlTool {
                     tmpFile = File.createTempFile("sqltool-", ".sql");
                     //(new java.io.FileWriter(tmpFile)).write(sqlText);
                     java.io.FileWriter fw = new java.io.FileWriter(tmpFile);
-                    fw.write(sqlText);
+                    fw.write("/* " + (new java.util.Date())
+                            + ".  " + SqlTool.class.getName()
+                            + " command-line SQL. */\n\n");
+                    fw.write(sqlText + '\n');
                     fw.flush();
                     fw.close();
                 } catch (IOException ioe) {
