@@ -81,7 +81,8 @@ example:
 
     <target name="switchtojdk11" depends="codeswitcher" unless="ant.java.iscjavamodern">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes" >
-         <arg line="${src}/org/hsqldb/jdbcStubs.java -JAVA2 -JDBC3"/>
+         <arg line="${src}/org/hsqldb/jdbcStubs.java
+                    ${src}/org/hsqldb/jdbcStatement.java -JAVA2 -JDBC3"/>
        </java>
        <available classname="java.util.Vector" property="noswing"/>
     </target>
@@ -138,7 +139,6 @@ example:
          <exclude name="org/hsqldb/sample/*.java"/>
          <exclude name="org/hsqldb/util/*.java"/>
          <exclude name="org/hsqldb/jdbcDataSource*.java"/>
-         <exclude name="org/hsqldb/jdbcStubs.java"/>
          <exclude name="org/hsqldb/HsqlSocketFactorySecure.java" unless="ant.java.hasjsse"/>
          <exclude name="org/hsqldb/NIOLockFile.java"/>
       </javac>
@@ -147,7 +147,18 @@ example:
       </copy>      
     </target>
 
-   <target name="classes14" depends="classes" if="ant.java.iscjava14">
+   <target name="classes12" depends="classes" if="ant.java.iscjavamodern">
+      <javac srcdir="${src}"
+             destdir="classes"
+                 debug="${build.debug}"
+                 optimize="${build.optimize}"
+       >
+         <include name="org/hsqldb/jdbcBlob.java"/>
+         <include name="org/hsqldb/jdbcClob.java"/>
+      </javac>
+   </target>
+
+   <target name="classes14" depends="classes12" if="ant.java.iscjava14">
       <javac srcdir="${src}"
              destdir="classes"
                  debug="${build.debug}"
