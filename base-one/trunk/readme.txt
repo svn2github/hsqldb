@@ -13,7 +13,7 @@ have been reported over the last couple of years. A new fix is
 intended to ensure correct results in all cases.
 
 - When two tables are joined, rows resulting from joining null
-values on in the joined columns are no longer returned.
+values in the joined columns are no longer returned.
 
 - Use of OUTER requires the existence of an index on a joined OUTER column
 - There are still limitations on the conditions used in OUTER joins.
@@ -184,7 +184,7 @@ overhauled by Campbell.
 
 STRICT FOREIGN KEYS
 
--strict treatment of foreign key index requirements is now enforeced.
+-strict treatment of foreign key index requirements is now enforced.
 A foreign key declaration _requires_ a unique constraint or index to exist
 on the columns of the referenced table. This applies both to old and
 new databases. Duplicate foreign keys (with exactly the same column sets)
@@ -220,7 +220,7 @@ HSQLDB 1.7.2 ALPHA_L
 various patches and fixes
 
 -fixes new issues reported with ALPHA_K
--fixes old issues related to uncommited transactions in
+-fixes old issues related to uncommitted transactions in
 abnormal shutdown
 -fixes old issues with SAVEPOINT names
 -enhanced TEXT table handling and reporting of errors in
