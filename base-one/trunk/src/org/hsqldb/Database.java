@@ -124,27 +124,23 @@ class Database {
     DatabaseInformation   dInfo;
     ClassLoader           classLoader;
 
-// ----------------------------------------------------------------------------
-// boucherb@users - pluggable system table producer strategy for metadata 1.7.2
-
-    /** true only while this database is in the open() method */
-    private boolean isOpening;
-
-// ----------------------------------------------------------------------------
-    Logger  logger;
-    boolean databaseReadOnly;    // all tables are readonly
+    /** indicates the state of the database */
+    private int dbState;
+    Logger      logger;
+    boolean     databaseReadOnly;    // all tables are readonly
 
 // ----------------------------------------------------------------------------
 // akede@users - 1.7.2 patch Files readonly
 
     /** true means that all file based table will automaticly become readonly */
-    boolean filesReadOnly;       // cached tables are readonly
+    boolean filesReadOnly;           // cached tables are readonly
 
 // ----------------------------------------------------------------------------
-    boolean                        filesInJar;
-    boolean                        sqlEnforceSize;
-    int                            firstIdentity;
-    private boolean                bShutdown;
+    boolean filesInJar;
+    boolean sqlEnforceSize;
+    int     firstIdentity;
+
+//    private boolean                bShutdown;
     private HsqlHashMap            hAlias;
     private boolean                bIgnoreCase;
     private boolean                bReferentialIntegrity;
@@ -153,6 +149,10 @@ class Database {
     private Tokenizer              tokenizer;
     DatabaseObjectNames            triggerNameList;
     DatabaseObjectNames            indexNameList;
+    final static int               DATABASE_ONLINE   = 1;
+    final static int               DATABASE_OPENING  = 4;
+    final static int               DATABASE_CLOSING  = 8;
+    final static int               DATABASE_SHUTDOWN = 16;
 
     //for execute()
     private static final int CALL                  = 1;
@@ -294,8 +294,6 @@ class Database {
      * "shutdown compact".
      * @see close(int closemode)
      */
-
-    // tony_lai@users 20020820
     private void open() throws SQLException {
 
         tTable                = new HsqlArrayList();
@@ -305,7 +303,7 @@ class Database {
         triggerNameList       = new DatabaseObjectNames();
         indexNameList         = new DatabaseObjectNames();
         bReferentialIntegrity = true;
-        isOpening = true;
+        dbState               = DATABASE_OPENING;
 
         boolean newdatabase = false;
 
@@ -334,7 +332,7 @@ class Database {
                     sessionManager.getSysSession());
         }
 
-        isOpening = false;
+        dbState = DATABASE_ONLINE;
 
         dInfo.setWithContent(true);
     }
@@ -364,7 +362,7 @@ class Database {
      * @return  the value of this Database object's isShutdown attribute
      */
     boolean isShutdown() {
-        return bShutdown;
+        return dbState == DATABASE_SHUTDOWN;
     }
 
     /**
@@ -478,7 +476,8 @@ class Database {
             }
 
             Trace.check(session != null, Trace.ACCESS_IS_DENIED);
-            Trace.check(!bShutdown, Trace.DATABASE_IS_SHUTDOWN);
+            Trace.check(dbState != DATABASE_SHUTDOWN,
+                        Trace.DATABASE_IS_SHUTDOWN);
 
             while (true) {
                 tokenizer.setPartMarker();
@@ -2001,122 +2000,126 @@ class Database {
 
         session.setScripting(!t.isTemp());
 
-        switch (commandSet.get(sToken)) {
+        HsqlName cname = null;
 
-            default :
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-            case RENAME :
-                c.getThis("TO");
-                processRenameTable(c, session, tablename);
+        for (;;) {
+            switch (commandSet.get(sToken)) {
 
-                return;
+                default :
+                    throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+                case RENAME :
+                    c.getThis("TO");
+                    processRenameTable(c, session, tablename);
 
-            case ADD : {
-                sToken = c.getString();
+                    return;
 
-                switch (commandSet.get(sToken)) {
+                case FOREIGN :
+                    c.getThis("KEY");
 
-                    default :
-                        throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-                    case CONSTRAINT :
-                        HsqlName cname =
-                            new HsqlName(c.getName(),
-                                         c.wasQuotedIdentifier());
+                    TempConstraint tc = processCreateFK(c, session, t, cname);
 
-                        sToken = c.getString();
+                    t.checkColumnsMatch(tc.localCol, tc.expTable, tc.expCol);
 
-                        switch (commandSet.get(sToken)) {
+                    if (tc.deleteAction == Constraint.SET_DEFAULT
+                            || tc.deleteAction == Constraint.SET_NULL
+                            || tc.updateAction != Constraint.NO_ACTION) {
+                        throw Trace.error(
+                            Trace.FOREIGN_KEY_NOT_ALLOWED,
+                            "only ON UPDATE NO ACTION and ON DELETE CASCADE possible");
+                    }
 
-                            default :
-                                throw Trace.error(Trace.UNEXPECTED_TOKEN,
-                                                  sToken);
-                            case FOREIGN :
-                                c.getThis("KEY");
+                    session.commit();
+                    tw.createForeignKey(tc.localCol, tc.expCol, tc.name,
+                                        tc.expTable, tc.deleteAction,
+                                        tc.updateAction);
 
-                                TempConstraint tc =
-                                    processCreateFK(c, session, t, cname);
+                    return;
 
-                                t.checkColumnsMatch(tc.localCol, tc.expTable,
-                                                    tc.expCol);
+                case ADD : {
+                    sToken = c.getString();
 
-                                if (tc.deleteAction == Constraint
-                                        .SET_DEFAULT || tc
-                                        .deleteAction == Constraint
-                                        .SET_NULL || tc
-                                        .updateAction != Constraint
-                                        .NO_ACTION) {
-                                    throw Trace.error(
-                                        Trace.FOREIGN_KEY_NOT_ALLOWED,
-                                        "only ON UPDATE NO ACTION and ON DELETE CASCADE possible");
-                                }
+                    switch (commandSet.get(sToken)) {
 
-                                session.commit();
-                                tw.createForeignKey(tc.localCol, tc.expCol,
-                                                    tc.name, tc.expTable,
-                                                    tc.deleteAction,
-                                                    tc.updateAction);
+                        default :
+                            throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+                        case CONSTRAINT :
+                            cname = new HsqlName(c.getName(),
+                                                 c.wasQuotedIdentifier());
+                            sToken = c.getString();
 
-                                return;
+                            switch (commandSet.get(sToken)) {
 
-                            case UNIQUE :
-                                int col[] = processColumnList(c, t);
+                                default :
+                                    throw Trace.error(Trace.UNEXPECTED_TOKEN,
+                                                      sToken);
+                                case FOREIGN :
+                                    break;
 
-                                session.commit();
-                                tw.createUniqueConstraint(col, cname);
+                                case UNIQUE :
+                                    int col[] = processColumnList(c, t);
 
-                                return;
-                        }
-                    case COLUMN :
-                        int    colindex = t.getColumnCount();
-                        Column column   = processCreateColumn(c, t);
+                                    session.commit();
+                                    tw.createUniqueConstraint(col, cname);
 
-                        sToken = c.getString();
+                                    return;
+                            }
+                            break;
 
-                        if (sToken.equals("BEFORE")) {
-                            sToken   = c.getName();
-                            colindex = t.getColumnNr(sToken);
-                        } else {
-                            c.back();
-                        }
+                        case COLUMN :
+                            int    colindex = t.getColumnCount();
+                            Column column   = processCreateColumn(c, t);
 
-                        if (column.isIdentity() || column.isPrimaryKey()
-                                || (!t.isEmpty()
-                                    && column.isNullable() == false
-                                    && column.getDefaultString() == null)) {
-                            throw Trace.error(
-                                Trace.BAD_ADD_COLUMN_DEFINITION);
-                        }
+                            sToken = c.getString();
 
-                        session.commit();
-                        tw.addOrDropColumn(column, colindex, 1);
+                            if (sToken.equals("BEFORE")) {
+                                sToken   = c.getName();
+                                colindex = t.getColumnNr(sToken);
+                            } else {
+                                c.back();
+                            }
 
-                        return;
+                            if (column.isIdentity() || column.isPrimaryKey()
+                                    || (!t.isEmpty()
+                                        && column.isNullable() == false
+                                        && column.getDefaultString()
+                                           == null)) {
+                                throw Trace.error(
+                                    Trace.BAD_ADD_COLUMN_DEFINITION);
+                            }
+
+                            session.commit();
+                            tw.addOrDropColumn(column, colindex, 1);
+
+                            return;
+                    }
+
+                    break;
                 }
-            }
-            case DROP : {
-                sToken = c.getString();
+                case DROP : {
+                    sToken = c.getString();
 
-                switch (commandSet.get(sToken)) {
+                    switch (commandSet.get(sToken)) {
 
-                    default :
-                        throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-                    case CONSTRAINT :
-                        String cname = c.getName();
+                        default :
+                            throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+                        case CONSTRAINT :
+                            String constname = c.getName();
 
-                        session.commit();
-                        tw.dropConstraint(cname);
+                            session.commit();
+                            tw.dropConstraint(constname);
 
-                        return;
+                            return;
 
-                    case COLUMN :
-                        sToken = c.getName();
+                        case COLUMN :
+                            sToken = c.getName();
 
-                        int colindex = t.getColumnNr(sToken);
+                            int colindex = t.getColumnNr(sToken);
 
-                        session.commit();
-                        tw.addOrDropColumn(null, colindex, -1);
+                            session.commit();
+                            tw.addOrDropColumn(null, colindex, -1);
 
-                        return;
+                            return;
+                    }
                 }
             }
         }
@@ -2664,6 +2667,8 @@ class Database {
      */
     private void close(int closemode) throws SQLException {
 
+        dbState = DATABASE_CLOSING;
+
         logger.closeLog(closemode);
 
         // tony_lai@users 20020820
@@ -2676,7 +2681,7 @@ class Database {
             logger.closeLog(0);
         }
 
-        bShutdown = true;
+        dbState = DATABASE_SHUTDOWN;
 
         jdbcConnection.removeDatabase(this);
         logger.releaseLock();
@@ -2972,30 +2977,14 @@ class Database {
      * was created, dropped, altered or a permission was granted or revoked,
      * meaning that potentially all cached ssytem table are dirty.
      *
-     * <B>Note:</B>  the SYSTEM _PARAMETERS is no longer cached by the full sytem table
-     * producer implementation precisely becuase it takes very little time to
-     * regenerate and because it is often the case the clients regularly issue
-     * edundant SET statments, such as SET MAXROWS, otherwise seriously breaking the
-     * caching effect that the full system table producer works so hard to maintain.
-     *
-     * If the database is opening, then this method does nothing, the rationale
-     * being that no actual users will be querying system table content during the
-     * open sequence of the database.  The system table producer implementation
-     * must ensure that at least structurally correct system table surrogates
-     * are available duringthe open sequence, as the may be DDL on the log the
-     * references system tables, such as user view declarations.  However, it should
-     * never be the case that system tables produced directly by the system table
-     * producer are queried for content during the open sequence.
      * @param r A Result to test for update status, indicating the a table was created as the
      * result of executing a SELECT INTO statement.
-     * @throws SQLException never
      *
      */
-    private void setMetaDirty(Result r) throws SQLException {
+    private void setMetaDirty(Result r) {
 
-        if (isOpening) {}
-        else if (r == null
-                 || (r.iMode == Result.UPDATECOUNT && r.iUpdateCount > 0)) {
+        if (r == null
+                || (r.iMode == Result.UPDATECOUNT && r.iUpdateCount > 0)) {
             dInfo.setDirty();
         }
     }

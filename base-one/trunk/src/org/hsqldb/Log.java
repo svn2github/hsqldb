@@ -166,10 +166,13 @@ class Log implements Runnable {
         dDatabase   = db;
         sName       = name;
         pProperties = db.getProperties();
-        tRunner = new Thread(this,
-                             "HSQLDB " + jdbcDriver.VERSION + " logger");
 
-        tRunner.start();
+        if (!db.filesReadOnly) {
+            tRunner = new Thread(this,
+                                 "HSQLDB " + jdbcDriver.VERSION + " logger");
+
+            tRunner.start();
+        }
     }
 
     /**
@@ -351,6 +354,11 @@ class Log implements Runnable {
      *  Method declaration
      */
     void stop() {
+
+        if (tRunner != null) {
+            tRunner.stop();
+        }
+
         tRunner = null;
     }
 
@@ -527,6 +535,10 @@ class Log implements Runnable {
      * @throws  SQLException
      */
     void shutdown() throws SQLException {
+
+        if (tRunner != null) {
+            tRunner.stop();
+        }
 
         tRunner = null;
 
