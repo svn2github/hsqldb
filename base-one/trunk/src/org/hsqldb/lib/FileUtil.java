@@ -103,10 +103,6 @@ public class FileUtil {
         }
     }
 
-    static void printSystemOut(String message) {
-        System.out.println(message);
-    }
-
     static IOException toIOException(Throwable e) {
 
         if (e instanceof IOException) {

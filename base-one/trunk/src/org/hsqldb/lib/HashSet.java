@@ -33,6 +33,13 @@ package org.hsqldb.lib;
 
 import org.hsqldb.store.BaseHashMap;
 
+/**
+ * This class does not store null keys.
+ *
+ * @author fredt@users
+ * @version 1.7.2
+ * @since 1.7.2
+ */
 public class HashSet extends BaseHashMap implements Set {
 
     public HashSet() {

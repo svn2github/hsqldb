@@ -31,6 +31,17 @@
 
 package org.hsqldb.lib;
 
+/**
+ * Implementation of an Map which maintains the user-defined order of the keys.
+ * Key/value pairs can be accessed by index or by key. Iterators return the
+ * keys or values in the index order.
+ *
+ * This class does not store null keys.
+ *
+ * @author fredt@users
+ * @version 1.7.2
+ * @since 1.7.2
+ */
 public class HashMappedList extends HashMap {
 
     public HashMappedList() {

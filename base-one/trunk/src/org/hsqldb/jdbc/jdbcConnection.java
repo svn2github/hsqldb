@@ -31,8 +31,8 @@
 
 package org.hsqldb.jdbc;
 
-import java.sql.*;        // avoid specific import due to java.sql.Savepoint
-import java.util.*;       // java.util.Map
+import java.sql.*;     // avoid specific import due to java.sql.Savepoint
+import java.util.*;    // java.util.Map
 
 import org.hsqldb.DatabaseManager;
 import org.hsqldb.HSQLClientConnection;
@@ -872,6 +872,8 @@ public class jdbcConnection implements Connection {
      */
     public void setAutoCommit(boolean autoCommit) throws SQLException {
 
+        checkClosed();
+
         try {
             sessionProxy.setAutoCommit(autoCommit);
         } catch (HsqlException e) {
@@ -887,6 +889,8 @@ public class jdbcConnection implements Connection {
      * @see  #setAutoCommit
      */
     public boolean getAutoCommit() throws SQLException {
+
+        checkClosed();
 
         try {
             return sessionProxy.isAutoCommit();
@@ -926,6 +930,8 @@ public class jdbcConnection implements Connection {
      */
     public void commit() throws SQLException {
 
+        checkClosed();
+
         try {
             sessionProxy.commit();
         } catch (HsqlException e) {
@@ -963,6 +969,8 @@ public class jdbcConnection implements Connection {
      * @see #setAutoCommit
      */
     public void rollback() throws SQLException {
+
+        checkClosed();
 
         try {
             sessionProxy.rollback();
@@ -1117,6 +1125,8 @@ public class jdbcConnection implements Connection {
      * @exception SQLException if a database access error occurs
      */
     public void setReadOnly(boolean readonly) throws SQLException {
+
+        checkClosed();
 
         try {
             sessionProxy.setReadOnly(readonly);
@@ -1303,9 +1313,9 @@ public class jdbcConnection implements Connection {
      */
     public SQLWarning getWarnings() throws SQLException {
 
-        synchronized (rootWarning_mutex) {
-            checkClosed();
+        checkClosed();
 
+        synchronized (rootWarning_mutex) {
             return rootWarning;
         }
     }
@@ -1333,9 +1343,9 @@ public class jdbcConnection implements Connection {
      */
     public void clearWarnings() throws SQLException {
 
-        synchronized (rootWarning_mutex) {
-            checkClosed();
+        checkClosed();
 
+        synchronized (rootWarning_mutex) {
             rootWarning = null;
         }
     }

@@ -103,10 +103,9 @@ import org.hsqldb.scriptio.ScriptWriterText;
 // fredt@users 20031224 - support for CREATE SEQUENCE ...
 class DatabaseCommandInterpreter {
 
-    static final Result emptyResult = new Result(ResultConstants.UPDATECOUNT);
-    Tokenizer           tokenizer   = new Tokenizer();
-    protected Database  database;
-    protected Session   session;
+    Tokenizer          tokenizer = new Tokenizer();
+    protected Database database;
+    protected Session  session;
 
     /**
      * Constructs a new DatabaseCommandInterpreter for the given Session
@@ -119,15 +118,14 @@ class DatabaseCommandInterpreter {
     }
 
     /**
-     * Executes the statment(s) represented by the given SQL String
+     * Executes the SQL String. This method is always called from a block
+     * synchronized on the database object.
      *
      * @param sql query
      * @return the result of executing the given SQL String
      */
     Result execute(String sql) {
 
-        // PRE: This method is never invoked outside a block
-        //      synchronized on database (and _must_ not be).
         Parser parser;
         Result result;
         String token;
@@ -182,14 +180,14 @@ class DatabaseCommandInterpreter {
             result = new Result(t, tokenizer.getLastPart());
         }
 
-        return result == null ? emptyResult
+        return result == null ? Session.emptyUpdateCount
                               : result;
     }
 
     private Result executePart(int cmd, String token,
                                Parser parser) throws Throwable {
 
-        Result result = emptyResult;
+        Result result = Session.emptyUpdateCount;
 
         switch (cmd) {
 
@@ -2683,7 +2681,7 @@ class DatabaseCommandInterpreter {
     }
 
     private void processDisconnect() throws HsqlException {
-        database.sessionManager.processDisconnect(session);
+        session.close();
     }
 
     private void processDropTable(boolean isView) throws HsqlException {

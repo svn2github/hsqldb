@@ -261,8 +261,16 @@ public class BaseHashMap {
                                  Object objectKey, Object objectValue,
                                  boolean remove) {
 
-        int    hash        = isObjectKey ? objectKey.hashCode()
-                                         : (int) longKey;
+        int hash = (int) longKey;
+
+        if (isObjectKey) {
+            if (objectKey == null) {
+                return null;
+            }
+
+            hash = objectKey.hashCode();
+        }
+
         int    index       = hashIndex.getHashIndex(hash);
         int    lookup      = hashIndex.hashTable[index];
         int    lastLookup  = -1;
@@ -370,6 +378,10 @@ public class BaseHashMap {
     }
 
     protected Object removeObject(Object objectKey) {
+
+        if (objectKey == null) {
+            return null;
+        }
 
         int    hash        = objectKey.hashCode();
         int    index       = hashIndex.getHashIndex(hash);
@@ -801,6 +813,10 @@ public class BaseHashMap {
     }
 
     protected boolean containsKey(Object key) {
+
+        if (key == null) {
+            return false;
+        }
 
         int lookup = getLookup(key, key.hashCode());
 

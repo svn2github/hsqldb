@@ -79,9 +79,6 @@ import org.hsqldb.HsqlNameManager.HsqlName;
  * Implementation of a table constraint with references to the indexes used
  * by the constraint.<p>
  *
- * Methods for checking constraint violation must be called from within a
- * synchronized context that locks the ConsraintCore object.
- *
  * @version    1.7.2
  */
 class Constraint {

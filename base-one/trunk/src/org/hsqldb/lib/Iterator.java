@@ -33,6 +33,12 @@ package org.hsqldb.lib;
 
 import java.util.NoSuchElementException;
 
+/**
+ *
+ * @author fredt@users
+ * @version 1.7.2
+ * @since 1.7.2
+ */
 public interface Iterator {
 
     boolean hasNext();

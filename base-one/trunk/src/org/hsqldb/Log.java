@@ -75,7 +75,6 @@ import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HsqlTimer;
 import org.hsqldb.lib.Iterator;
-import org.hsqldb.lib.StopWatch;
 import org.hsqldb.lib.ZipUnzipFile;
 import org.hsqldb.scriptio.ScriptReaderBase;
 import org.hsqldb.scriptio.ScriptWriterBase;

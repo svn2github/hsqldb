@@ -72,7 +72,10 @@ final class DITableInfo {
      * invalid table member attribute.
      */
     DITableInfo() {
-        setLocale(Locale.getDefault());
+
+        // fredt - removed from here - should be set in a database-wide
+        // context, depending on some property database property
+//        setLocale(Locale.getDefault());
     }
 
     /**

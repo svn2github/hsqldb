@@ -45,7 +45,9 @@ import java.io.OutputStream;
 public class InOutUtil {
 
 /**
- * Implementation only supports unix line-end format.
+ * Implementation only supports unix line-end format and is suitable for
+ * processing HTTP and other network protocol communications. Reads and writes
+ * a line of data. Returns the number of bytes read/written.
  */
     public static int readLine(InputStream in,
                                OutputStream out) throws IOException {

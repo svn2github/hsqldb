@@ -307,7 +307,7 @@ public class Library {
      * @return the next pseudorandom, uniformly distributed <code>double</code> value between
      *      0.0 and 1.0
      */
-    public static synchronized double rand(Integer seed) {
+    public static double rand(Integer seed) {
 
         // boucherb@users 20020918
         // CHECKME: perhaps rRandom should be a member of Session,
@@ -318,11 +318,13 @@ public class Library {
         // database instances, so it is not even guaranteed that the
         // sole connection to one instance will get the same sequence given
         // the same set of calls to this SQL function.
-        if (seed != null) {
-            rRandom.setSeed(seed.intValue());
-        }
+        synchronized (rRandom) {
+            if (seed != null) {
+                rRandom.setSeed(seed.intValue());
+            }
 
-        return rRandom.nextDouble();
+            return rRandom.nextDouble();
+        }
     }
 
     /**
@@ -1236,11 +1238,14 @@ public class Library {
      * @return the name of the day corresponding to the given
      * <code>java.sql.Date</code>
      */
-    synchronized public static String dayname(java.sql.Date d) {
+    public static String dayname(java.sql.Date d) {
 
-        daynameBuffer.setLength(0);
+        synchronized (daynameBuffer) {
+            daynameBuffer.setLength(0);
 
-        return daynameFormat.format(d, daynameBuffer, dayPosition).toString();
+            return daynameFormat.format(d, daynameBuffer,
+                                        dayPosition).toString();
+        }
     }
 
     /**
@@ -1323,12 +1328,14 @@ public class Library {
      * @param d the date value from which to extract the month name
      * @return a String representing the month name from the given date value
      */
-    synchronized public static String monthname(java.sql.Date d) {
+    public static String monthname(java.sql.Date d) {
 
-        monthnameBuffer.setLength(0);
+        synchronized (monthnameBuffer) {
+            monthnameBuffer.setLength(0);
 
-        return monthnameFormat.format(d, monthnameBuffer,
-                                      monthPosition).toString();
+            return monthnameFormat.format(d, monthnameBuffer,
+                                          monthPosition).toString();
+        }
     }
 
     /**

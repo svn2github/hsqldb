@@ -304,11 +304,24 @@ class DiskNode extends Node {
             Trace.doAssert(iBalance != -2);
 
             if (n != this) {
-                Trace.doAssert((getKey() == NO_POS) || (n == null)
-                               || (n.getKey() != getKey()));
-            } else {
+                boolean test = (getKey() == NO_POS) || (n == null)
+                               || (n.getKey() != getKey());
+
+                if (test == false) {
+                    int aA = ((CachedDataRow) getRow()).iLastAccess;
+                    int bA = ((CachedDataRow) n.getRow()).iLastAccess;
+
+                    Trace.doAssert(test,
+                                   "a: " + aA + " - " + iParent + " b: " + bA
+                                   + " - " + ((DiskNode) n).iParent);
+                }
+            }
+/*
+            tautology
+            else {
                 Trace.doAssert(n.getKey() == getKey());
             }
+*/
         }
 
         return n == this;

@@ -45,7 +45,7 @@ import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
-/* $Id: SqlFile.java,v 1.43 2004/02/22 18:04:52 fredt Exp $ */
+/* $Id: SqlFile.java,v 1.42 2004/02/21 20:19:49 fredt Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -71,7 +71,7 @@ import java.util.StringTokenizer;
  * Also, to keep the code simpler, we're sticking to only single-char
  * special commands until we really need more.
  *
- * Buffer commands are uniqueue to SQLFile.  The ":" commands allow 
+ * Buffer commands are uniqueue to SQLFile.  The ":" commands allow
  * you to edit the buffer and to execute the buffer.
  *
  * The command history consists only of SQL Statements (i.e., special
@@ -81,21 +81,21 @@ import java.util.StringTokenizer;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.43 $
+ * @version $Revision: 1.42 $
  * @author Blaine Simpson
  */
 public class SqlFile {
 
-    private File             file;
-    private boolean          interactive;
-    private String           primaryPrompt    = "sql> ";
-    private String           contPrompt       = "  +> ";
-    private Connection       curConn          = null;
-    private String[]         statementHistory = new String[10];
-    private boolean          htmlMode         = false;
+    private File       file;
+    private boolean    interactive;
+    private String     primaryPrompt    = "sql> ";
+    private String     contPrompt       = "  +> ";
+    private Connection curConn          = null;
+    private String[]   statementHistory = new String[10];
+    private boolean    htmlMode         = false;
 
     // Ascii field separator blanks
-    final private static int SEP_LEN          = 2;
+    final private static int SEP_LEN = 2;
     final private static String DIVIDER =
         "-----------------------------------------------------------------";
     final private static String SPACES =
@@ -112,7 +112,7 @@ public class SqlFile {
         + "SQL Statements consisting of only /* SQL comment */ are not executed, therefore\n"
         + "    you can comment scripts like \"/* This is a comment */;\"\n";
     final private static String BUFFER_HELP_TEXT =
-          "BUFFER Commands (only available for interactive use).\n"
+        "BUFFER Commands (only available for interactive use).\n"
         + "In place of \"3\" below, you can use nothing for the previous command, or\n"
         + "an integer \"X\" to indicate the Xth previous command.\n\n"
         + "    :?          Help\n"
@@ -124,7 +124,7 @@ public class SqlFile {
         + "                ('/' can actually be any char which occurs in\n"
         + "                 neither \"to\" nor \"from\")\n"
         + "    :;          Execute current buffer as an SQL Statement\n"
-        ;
+    ;
     final private static String HELP_TEXT = "SPECIAL Commands.\n"
         + "* commands only available for interactive use.\n"
         + "In place of \"3\" below, you can use nothing for the previous command, or\n"
@@ -142,11 +142,11 @@ public class SqlFile {
         + "    \\s\n" + "    \\-3\n" + "    :;\n";
 
     /**
-     * Interpret lines of input file as SQL Statements, Comments, 
+     * Interpret lines of input file as SQL Statements, Comments,
      * Special Commands, and Buffer Commands.
      * Most Special Commands and many Buffer commands are only for
      * interactive use.
-     * 
+     *
      * @param inFile  inFile of null means to read stdin.
      * @param inInteractive  If true, prompts are printed, the interactive
      *                       Special commands are enabled, and
@@ -182,17 +182,17 @@ public class SqlFile {
         execute(conn, System.out, System.err);
     }
 
-    private String      curCommand = null;
-    private int         curLinenum = -1;
-    private int         curHist    = -1;
-    private PrintStream psStd      = null;
-    private PrintStream psErr      = null;
-    StringBuffer        stringBuffer  = new StringBuffer();
+    private String      curCommand   = null;
+    private int         curLinenum   = -1;
+    private int         curHist      = -1;
+    private PrintStream psStd        = null;
+    private PrintStream psErr        = null;
+    StringBuffer        stringBuffer = new StringBuffer();
     /*
      * This is reset upon each execute() invocation (to true if interactive,
      * false otherwise).
      */
-    private boolean continueOnError = false;
+    private boolean             continueOnError = false;
     static private final String DEFAULT_CHARSET = "US-ASCII";
 
     /**
@@ -222,18 +222,17 @@ public class SqlFile {
         String trimmedCommand;
         String trimmedInput;
         String deTerminated;
-        String commentTestString;
 
         continueOnError = interactive;
 
-        BufferedReader br = null;
+        BufferedReader br       = null;
         String specifiedCharSet = System.getProperty("sqlfile.charset");
 
         try {
             br = new BufferedReader(new InputStreamReader((file == null)
                     ? System.in
                     : new FileInputStream(file), ((specifiedCharSet == null)
-                            ? DEFAULT_CHARSET 
+                                                  ? DEFAULT_CHARSET
                                                   : specifiedCharSet)));
             curLinenum = 0;
 
@@ -244,7 +243,7 @@ public class SqlFile {
             while (true) {
                 if (interactive) {
                     psStd.print((stringBuffer.length() == 0) ? primaryPrompt
-                                                          : contPrompt);
+                                                             : contPrompt);
                 }
 
                 inputLine = br.readLine();
@@ -253,7 +252,7 @@ public class SqlFile {
                     /*
                      * This is because interactive EOD on some OSes doesn't
                      * send a line-break, resulting in no linebreak at all
-                     * after the SqlFile prompt or whatever happens to be 
+                     * after the SqlFile prompt or whatever happens to be
                      * on their screen.
                      */
                     if (interactive) {
@@ -289,7 +288,7 @@ public class SqlFile {
                             } catch (BadSpecial bs) {
                                 errprint("Error at '"
                                          + ((file == null) ? "stdin"
-                                        : file.toString()) + "' line "
+                                                           : file.toString()) + "' line "
                                                            + curLinenum
                                                            + ":\n\""
                                                            + inputLine
@@ -310,7 +309,7 @@ public class SqlFile {
                             } catch (BadSpecial bs) {
                                 errprint("Error at '"
                                          + ((file == null) ? "stdin"
-                                        : file.toString()) + "' line "
+                                                           : file.toString()) + "' line "
                                                            + curLinenum
                                                            + ":\n\""
                                                            + inputLine
@@ -345,15 +344,10 @@ public class SqlFile {
                         }
 
                         stringBuffer.append((deTerminated == null) ? inputLine
-                                : deTerminated);
+                                                                   : deTerminated);
                     }
 
                     if (deTerminated == null) {
-                        commentTestString = stringBuffer.toString().trim();
-                        if (commentTestString.startsWith("/*") &&
-                                commentTestString.endsWith("*/")) {
-                            stringBuffer.setLength(0);
-                        }
                         continue;
                     }
 
@@ -468,15 +462,15 @@ public class SqlFile {
         int    index = 0;
         int    special;
         char   commandChar = 'i';
-        String other = null;
+        String other       = null;
 
         if (inString.length() > 0) {
             commandChar = inString.charAt(0);
-            other = inString.substring(1).trim();
+            other       = inString.substring(1).trim();
 
             if (other.length() == 0) {
                 other = null;
-        }
+            }
         }
 
         switch (commandChar) {
@@ -505,8 +499,8 @@ public class SqlFile {
             case 's' :
             case 'S' :
                 try {
-                    String fromHist = commandFromHistory(0);
-                    StringBuffer sb = new StringBuffer(fromHist);
+                    String       fromHist = commandFromHistory(0);
+                    StringBuffer sb       = new StringBuffer(fromHist);
 
                     if (other == null) {
                         throw new BadSwitch(0);
@@ -519,7 +513,7 @@ public class SqlFile {
                     if (toker.countTokens() < 4
                             ||!toker.nextToken().equals(delim)) {
                         throw new BadSwitch(1);
-                            }
+                    }
 
                     String from = toker.nextToken().replace('$', '\n');
 
@@ -535,7 +529,7 @@ public class SqlFile {
                         if (toker.countTokens() < 1
                                 ||!toker.nextToken().equals(delim)) {
                             throw new BadSwitch(3);
-                         }
+                        }
                     }
 
                     if (toker.countTokens() > 0) {
@@ -553,9 +547,9 @@ public class SqlFile {
                     stdprint("Current Buffer:\n" + commandFromHistory(0));
                 } catch (BadSwitch badswitch) {
                     throw new BadSpecial(
-                            "Switch syntax:  \":s/from this/to that/\".  "
-                            + "Use '$' for line separations.  ["
-                            + badswitch.getMessage() + ']');
+                        "Switch syntax:  \":s/from this/to that/\".  "
+                        + "Use '$' for line separations.  ["
+                        + badswitch.getMessage() + ']');
                 }
 
                 return;
@@ -649,8 +643,8 @@ public class SqlFile {
                 return;
 
             case '-' :
-                int     commandsAgo = 0;
-                String  numStr;
+                int    commandsAgo = 0;
+                String numStr;
 
                 numStr = (arg1.length() == 1) ? null
                                               : arg1.substring(1,
@@ -669,7 +663,7 @@ public class SqlFile {
                 setBuf(commandFromHistory(commandsAgo));
                 stdprint(
                     "RESTORED following command to buffer.  Enter \":?\" "
-                        + "to see buffer commands:\n" + commandFromHistory(0));
+                    + "to see buffer commands:\n" + commandFromHistory(0));
 
                 return;
 
@@ -726,8 +720,8 @@ public class SqlFile {
     }
 
     static private final int DEFAULT_ELEMENT = 0,
-        HSQLDB_ELEMENT  = 1,
-        ORACLE_ELEMENT  = 2
+                             HSQLDB_ELEMENT  = 1,
+                             ORACLE_ELEMENT  = 2
     ;
 
     /** Column numbering starting at 1. */
@@ -735,7 +729,7 @@ public class SqlFile {
         {
             2, 3
         },        // Default
-        { 3 },       // HSQLDB
+        { 3 },    // HSQLDB
         {
             2, 3
         },        // Oracle
@@ -764,8 +758,8 @@ public class SqlFile {
      *     Nulls permitted.
      */
     static private final String[][][] prohibitMDTableVals = {
-        null,                               // Default
-        null,                               // HSQLDB
+        null,     // Default
+        null,     // HSQLDB
         {
             null, {
                 "SYS", "SYSTEM"
@@ -779,28 +773,28 @@ public class SqlFile {
      */
     private void listTables() throws SQLException {
 
-        int[] listSet = null;
-        String[][] reqSet = null;
-        String[][] prohibSet = null;
-        java.sql.DatabaseMetaData md = curConn.getMetaData();
-        String dbProductName = md.getDatabaseProductName();
+        int[]                     listSet       = null;
+        String[][]                reqSet        = null;
+        String[][]                prohibSet     = null;
+        java.sql.DatabaseMetaData md            = curConn.getMetaData();
+        String                    dbProductName = md.getDatabaseProductName();
 
         //System.err.println("DB NAME = (" + dbProductName + ')');
         // Database-specific table filtering.
         String excludePrefix = null;
 
         if (dbProductName.indexOf("HSQL") > -1) {
-            listSet = listMDTableCols[HSQLDB_ELEMENT];
-            reqSet = requireMDTableVals[HSQLDB_ELEMENT]; 
-            prohibSet = prohibitMDTableVals[HSQLDB_ELEMENT]; 
+            listSet   = listMDTableCols[HSQLDB_ELEMENT];
+            reqSet    = requireMDTableVals[HSQLDB_ELEMENT];
+            prohibSet = prohibitMDTableVals[HSQLDB_ELEMENT];
         } else if (dbProductName.indexOf("Oracle") > -1) {
-            listSet = listMDTableCols[ORACLE_ELEMENT];
-            reqSet = requireMDTableVals[ORACLE_ELEMENT]; 
-            prohibSet = prohibitMDTableVals[ORACLE_ELEMENT]; 
+            listSet   = listMDTableCols[ORACLE_ELEMENT];
+            reqSet    = requireMDTableVals[ORACLE_ELEMENT];
+            prohibSet = prohibitMDTableVals[ORACLE_ELEMENT];
         } else {
-            listSet = listMDTableCols[DEFAULT_ELEMENT];
-            reqSet = requireMDTableVals[DEFAULT_ELEMENT]; 
-            prohibSet = prohibitMDTableVals[DEFAULT_ELEMENT]; 
+            listSet   = listMDTableCols[DEFAULT_ELEMENT];
+            reqSet    = requireMDTableVals[DEFAULT_ELEMENT];
+            prohibSet = prohibitMDTableVals[DEFAULT_ELEMENT];
         }
 
         displayResultSet(null, md.getTables(null, null, null, null), listSet,
@@ -1060,7 +1054,7 @@ public class SqlFile {
     static private final String PRE_TD   = spaces(8);
 
     /**
-     * Print a properly formatted HTML &lt;TR&gt; command for the given 
+     * Print a properly formatted HTML &lt;TR&gt; command for the given
      * situation.
      *
      * @param colType Column type:  COL_HEAD, COL_ODD or COL_EVEN.
@@ -1170,12 +1164,12 @@ public class SqlFile {
             for (int i = ctr; i >= 0; i--) {
                 psStd.println(((i == 0) ? "BUFR"
                                         : ("-" + i + "  ")) + " **********************************************\n"
-                    + reversedList[i]);
+                                        + reversedList[i]);
             }
 
             psStd.println(
                 "\n<<<  Copy a command to buffer like \"\\-3\"       "
-                          + "Re-execute buffer like \":;\"  >>>");
+                + "Re-execute buffer like \":;\"  >>>");
         }
     }
 
@@ -1261,7 +1255,7 @@ public class SqlFile {
                 ((m.isNullable(i + 1) == java.sql.ResultSetMetaData.columnNullable)
                  ? (htmlMode ? "&nbsp;"
                              : "")
-                            : "*");
+                 : "*");
 
             rows.add(fieldArray);
 

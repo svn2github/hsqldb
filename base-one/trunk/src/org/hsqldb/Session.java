@@ -92,10 +92,12 @@ import org.hsqldb.store.ValuePool;
  *  becomes the public interface to an HSQLDB database, accessed locally or
  *  remotely via SessionInterface.
  *
+ *  When as Session is closed, all references to internal engine objects are
+ *  set to null. But the session id and scripting mode may still be used for
+ *  scripting
+ *
  * @version  1.7.2
  */
-
-/** @todo fredt - move error and assert string literals to Trace */
 public class Session implements SessionInterface {
 
     private Database       database;
@@ -162,7 +164,7 @@ public class Session implements SessionInterface {
     /**
      * Closes this Session.
      */
-    public synchronized void close() {
+    public void close() {
 
         if (!isClosed) {
             synchronized (database) {
@@ -179,27 +181,29 @@ public class Session implements SessionInterface {
      * Closes this Session, freeing any resources associated with it
      * and rolling back any uncommited transaction it may have open.
      */
-    synchronized void disconnect() {
+    void disconnect() {
 
         // PRE:  disconnect() is called _only_ from SessionManager
         if (isClosed) {
             return;
         }
 
-        rollback();
-        database.dropTempTables(this);
-        compiledStatementManager.removeSession(sessionId);
+        synchronized (database) {
+            rollback();
+            database.dropTempTables(this);
+            compiledStatementManager.removeSession(sessionId);
 
-        database                  = null;
-        user                      = null;
-        transactionList           = null;
-        savepoints                = null;
-        intConnection             = null;
-        compiledStatementExecutor = null;
-        compiledStatementManager  = null;
-        dbCommandInterpreter      = null;
-        iLastIdentity             = null;
-        isClosed                  = true;
+            database                  = null;
+            user                      = null;
+            transactionList           = null;
+            savepoints                = null;
+            intConnection             = null;
+            compiledStatementExecutor = null;
+            compiledStatementManager  = null;
+            dbCommandInterpreter      = null;
+            iLastIdentity             = null;
+            isClosed                  = true;
+        }
     }
 
     /**
@@ -384,8 +388,12 @@ public class Session implements SessionInterface {
      */
     public void setAutoCommit(boolean autocommit) {
 
-        if (autocommit != isAutoCommit) {
-            synchronized (database) {
+        if (isClosed) {
+            return;
+        }
+
+        synchronized (database) {
+            if (autocommit != isAutoCommit) {
                 commit();
 
                 isAutoCommit = autocommit;
@@ -405,17 +413,16 @@ public class Session implements SessionInterface {
      */
     public void commit() {
 
-        if (!transactionList.isEmpty()) {
-            synchronized (database) {
+        synchronized (database) {
+            if (!transactionList.isEmpty()) {
                 try {
                     database.logger.writeToLog(this, Token.T_COMMIT);
                 } catch (HsqlException e) {}
+
+                transactionList.clear();
+                savepoints.clear();
             }
-
-            transactionList.clear();
         }
-
-        savepoints.clear();
     }
 
     /**
@@ -423,11 +430,11 @@ public class Session implements SessionInterface {
      *
      * @throws  HsqlException
      */
-    public synchronized void rollback() {
-
-        int i = transactionList.size();
+    public void rollback() {
 
         synchronized (database) {
+            int i = transactionList.size();
+
             while (i-- > 0) {
                 Transaction t = (Transaction) transactionList.get(i);
 
@@ -441,9 +448,9 @@ public class Session implements SessionInterface {
 
                 transactionList.clear();
             }
-        }
 
-        savepoints.clear();
+            savepoints.clear();
+        }
     }
 
     /**
@@ -601,7 +608,7 @@ public class Session implements SessionInterface {
      *
      * @return the current value
      */
-    public synchronized boolean isAutoCommit() {
+    public boolean isAutoCommit() {
         return isAutoCommit;
     }
 
@@ -806,9 +813,9 @@ public class Session implements SessionInterface {
             return new Result(t, null);
         }
 
-        int type = cmd.iMode;
-
         synchronized (database) {
+            int type = cmd.iMode;
+
             if (sessionMaxRows == 0) {
                 currentMaxRows = cmd.iUpdateCount;
             }
@@ -938,8 +945,11 @@ public class Session implements SessionInterface {
         }
     }
 
-    public synchronized Result sqlExecuteDirectNoPreChecks(String sql) {
-        return dbCommandInterpreter.execute(sql);
+    public Result sqlExecuteDirectNoPreChecks(String sql) {
+
+        synchronized (database) {
+            return dbCommandInterpreter.execute(sql);
+        }
     }
 
     Result sqlExecuteCompiledNoPreChecks(CompiledStatement cs) {

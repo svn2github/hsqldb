@@ -35,6 +35,11 @@ import java.util.NoSuchElementException;
 
 import org.hsqldb.store.BaseHashMap;
 
+/**
+ * @author fredt@users
+ * @version 1.7.2
+ * @since 1.7.2
+ */
 public class IntKeyIntValueHashMap extends org.hsqldb.store.BaseHashMap {
 
     Set        keySet;

@@ -32,7 +32,6 @@
 package org.hsqldb.test;
 
 import java.sql.*;
-import java.util.Properties;
 
 import junit.framework.*;
 
@@ -42,40 +41,22 @@ import junit.framework.*;
  */
 public class TestSql extends TestBase {
 
-    String     path = "test3";
     Statement  stmnt;
-    Connection cConnection;
-    String     getColumnName;
+    Connection connection;
+    String     getColumnName = "false";
 
     public TestSql(String name) {
-
         super(name);
-
-        TestSelf.deleteDatabase(path);
     }
 
     protected void setUp() {
 
         super.setUp();
 
-        getColumnName = "false";
-
-        Properties props = new Properties();
-
-        props.put("user", user);
-        props.put("password", password);
-        props.put("jdbc.strict_md", "false");
-        props.put("jdbc.get_column_name", getColumnName);
-
         try {
-            Class.forName("org.hsqldb.jdbcDriver");
-
-            cConnection = DriverManager.getConnection(url, props);
-            stmnt       = cConnection.createStatement();
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("TestSql.setUp() error: " + e.getMessage());
-        }
+            connection = super.newConnection();
+            stmnt      = connection.createStatement();
+        } catch (Exception e) {}
     }
 
     public void testMetaData() {
@@ -100,9 +81,55 @@ public class TestSql extends TestBase {
             stmnt.execute(ddl2);
             stmnt.execute(ddl3);
 
-            DatabaseMetaData md = cConnection.getMetaData();
+            DatabaseMetaData md = connection.getMetaData();
 
             {
+                System.out.println(md.getDatabaseMajorVersion());
+                System.out.println(md.getDatabaseMinorVersion());
+                System.out.println(md.getDatabaseProductName());
+                System.out.println(md.getDatabaseProductVersion());
+                System.out.println(md.getDefaultTransactionIsolation());
+                System.out.println(md.getDriverMajorVersion());
+                System.out.println(md.getDriverMinorVersion());
+                System.out.println(md.getDriverName());
+                System.out.println(md.getDriverVersion());
+                System.out.println(md.getExtraNameCharacters());
+                System.out.println(md.getIdentifierQuoteString());
+                System.out.println(md.getJDBCMajorVersion());
+                System.out.println(md.getJDBCMinorVersion());
+                System.out.println(md.getMaxBinaryLiteralLength());
+                System.out.println(md.getMaxCatalogNameLength());
+                System.out.println(md.getMaxColumnsInGroupBy());
+                System.out.println(md.getMaxColumnsInIndex());
+                System.out.println(md.getMaxColumnsInOrderBy());
+                System.out.println(md.getMaxColumnsInSelect());
+                System.out.println(md.getMaxColumnsInTable());
+                System.out.println(md.getMaxConnections());
+                System.out.println(md.getMaxCursorNameLength());
+                System.out.println(md.getMaxIndexLength());
+                System.out.println(md.getMaxProcedureNameLength());
+                System.out.println(md.getMaxRowSize());
+                System.out.println(md.getMaxSchemaNameLength());
+                System.out.println(md.getMaxStatementLength());
+                System.out.println(md.getMaxStatements());
+                System.out.println(md.getMaxTableNameLength());
+                System.out.println(md.getMaxUserNameLength());
+                System.out.println(md.getNumericFunctions());
+                System.out.println(md.getProcedureTerm());
+                System.out.println(md.getResultSetHoldability());
+                System.out.println(md.getSchemaTerm());
+                System.out.println(md.getSearchStringEscape());
+                System.out.println(md.getSQLKeywords());
+                System.out.println(md.getSQLStateType());
+                System.out.println(md.getStringFunctions());
+                System.out.println(md.getSystemFunctions());
+                System.out.println(md.getTimeDateFunctions());
+                System.out.println(md.getURL());
+                System.out.println(md.getUserName());
+                System.out.println(md.importedKeyCascade);
+                System.out.println(md.isCatalogAtStart());
+                System.out.println(md.isReadOnly());
+
                 ResultSet rs;
 
                 rs = md.getPrimaryKeys(null, null, "USER");
@@ -304,7 +331,7 @@ public class TestSql extends TestBase {
         try {
             stmnt.execute(ddl1);
 
-            PreparedStatement ps = cConnection.prepareStatement(
+            PreparedStatement ps = connection.prepareStatement(
                 "INSERT INTO t1 (d,f,l,i,s,t,dt,ti,ts) VALUES (?,?,?,?,?,?,?,?,?)");
 
             ps.setString(1, "0.2");
@@ -397,7 +424,7 @@ public class TestSql extends TestBase {
                         "INSERT INTO cdType VALUES (10,'Test String');");
                 } catch (SQLException e1) {
                     stmnt.execute("ROLLBACK");
-                    cConnection.rollback();
+                    connection.rollback();
                 }
             }
         } catch (SQLException e) {
@@ -420,11 +447,11 @@ public class TestSql extends TestBase {
             String sql = "insert into PRICE_RELATE_USER_ORDER_V2 "
                          + "(ID_ORDER_V2, ID_USER, DATE_CREATE) " + "values "
                          + "(?, ?, ?)";
-            Statement st = cConnection.createStatement();
+            Statement st = connection.createStatement();
 
             st.execute(ddl);
 
-            PreparedStatement ps = cConnection.prepareStatement(sql);
+            PreparedStatement ps = connection.prepareStatement(sql);
 
             ps.setLong(1, 1);
             ps.setNull(2, Types.NUMERIC);
@@ -442,7 +469,7 @@ public class TestSql extends TestBase {
     protected void tearDown() {
 
         try {
-            cConnection.close();
+            connection.close();
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("TestSql.tearDown() error: " + e.getMessage());

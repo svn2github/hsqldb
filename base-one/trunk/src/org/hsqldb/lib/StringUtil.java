@@ -36,10 +36,10 @@ import java.lang.reflect.Array;
 /** Provides a collection of convenience methods for processing and
  * creating objects with <code>String</code> value components.
  *
- * @version 1.7.2
- * @since 1.7.0
  * @author fredt@users
  * @author boucherb@users.sourceforge.net
+ * @version 1.7.2
+ * @since 1.7.0
  */
 public class StringUtil {
 

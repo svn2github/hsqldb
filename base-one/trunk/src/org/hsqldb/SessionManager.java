@@ -136,14 +136,10 @@ public class SessionManager {
      *  Removes the session from management and disconnects.
      *
      * @param  session to disconnect
-     * @return the result of disconnecting the specified Session
      */
-    Result processDisconnect(Session session) {
-
+    void processDisconnect(Session session) {
         sessionMap.remove(session.getId());
         session.disconnect();
-
-        return new Result(ResultConstants.UPDATECOUNT);
     }
 
     /**

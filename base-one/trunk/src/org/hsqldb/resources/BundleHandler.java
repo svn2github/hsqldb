@@ -38,7 +38,6 @@ import java.util.ResourceBundle;
 
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashMap;
-import org.hsqldb.store.ValuePool;
 
 /**
  * A ResourceBundle helper class. <p>
@@ -142,7 +141,7 @@ public final class BundleHandler {
 
                     bundleList.add(bundle);
 
-                    bundleHandle = ValuePool.getInt(bundleList.size() - 1);
+                    bundleHandle = new Integer(bundleList.size() - 1);
 
                     bundleHandleMap.put(bundleKey, bundleHandle);
                 } catch (Exception e) {

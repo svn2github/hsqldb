@@ -5424,13 +5424,17 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database access error occurs
      * @since JDK 1.4, HSQLDB 1.7
      */
+
+    /**
+     * @todo fredt@users we haven't checked it all but should aim at
+     *  sqlStateSQL99; Need to review the codes.
+     */
 //#ifdef JDBC3
     public int getSQLStateType() throws SQLException {
 
-        // TODO: fredt@users we don't really. Need to review the codes.
         // Which do we support, if any? Probably X/OPEN, if any. Must check.
         // boucherb@users 20020426
-        throw jdbcUtil.notSupported;
+        return sqlStateSQL99;
     }
 
 //#endif JDBC3

@@ -56,7 +56,7 @@ public class TestInstantiation {
             String                   m_DatabaseName;
             HsqlSocketRequestHandler m_hsrh;
 
-            m_DatabaseName = "/hsql/test/testdb1";
+            m_DatabaseName = "/hsql/tmc/tmc";
             serversocket   = new ServerSocket(9999);
 
             while (true) {

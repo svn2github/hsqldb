@@ -119,7 +119,7 @@ final class CompiledStatementManager {
     /**
      * Clears all internal data structures, removing any references to compiled statements.
      */
-    void reset() {
+    synchronized void reset() {
 
         sqlMap.clear();
         sqlLookup.clear();
@@ -135,7 +135,7 @@ final class CompiledStatementManager {
      * Clears references to CompiledStatement objects while keeping the counts
      * and references to the sql strings.
      */
-    void resetStatements() {
+    synchronized void resetStatements() {
 
         Iterator it = csidMap.keySet().iterator();
 

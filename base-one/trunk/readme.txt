@@ -4,6 +4,9 @@ Readme File
 More tests are required to verify the improvements. Please perform tests and report any 
 issues.
 
+2004.03.27
+
+Some bug fixes.
 
 2004.03.22 RC_4
 

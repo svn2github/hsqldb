@@ -94,33 +94,49 @@ public class ValuePool {
 
     public static void resetPool(int[] sizeArray, int sizeFactor) {
 
-        for (int i = 0; i < poolList.length; i++) {
-            poolList[i].resetCapacity(sizeArray[i] * sizeFactor,
-                                      BaseHashMap.PURGE_HALF);
+        synchronized (ValuePool.class) {
+            for (int i = 0; i < poolList.length; i++) {
+                poolList[i].resetCapacity(sizeArray[i] * sizeFactor,
+                                          BaseHashMap.PURGE_HALF);
+            }
         }
     }
 
     public static void resetPool() {
-        resetPool(defaultPoolLookupSize, defaultSizeFactor);
+
+        synchronized (ValuePool.class) {
+            resetPool(defaultPoolLookupSize, defaultSizeFactor);
+        }
     }
 
     public static void clearPool() {
 
-        for (int i = 0; i < poolList.length; i++) {
-            poolList[i].clear();
+        synchronized (ValuePool.class) {
+            for (int i = 0; i < poolList.length; i++) {
+                poolList[i].clear();
+            }
         }
     }
 
-    public static synchronized Integer getInt(int val) {
-        return intPool.getOrAddInteger(val);
+    public static Integer getInt(int val) {
+
+        synchronized (intPool) {
+            return intPool.getOrAddInteger(val);
+        }
     }
 
-    public static synchronized Long getLong(long val) {
-        return longPool.getOrAddLong(val);
+    public static Long getLong(long val) {
+
+        synchronized (longPool) {
+            return longPool.getOrAddLong(val);
+        }
     }
 
-    public static synchronized Double getDouble(long val) {
-        return doublePool.getOrAddDouble(val);
+    public static Double getDouble(long val) {
+
+        synchronized (doublePool) {
+            return doublePool.getOrAddDouble(val);
+        }
     }
 
     public static String getString(String val) {
@@ -134,18 +150,23 @@ public class ValuePool {
         }
     }
 
-    public static synchronized java.sql.Date getDate(long val) {
-        return datePool.getOrAddDate(val);
+    public static java.sql.Date getDate(long val) {
+
+        synchronized (datePool) {
+            return datePool.getOrAddDate(val);
+        }
     }
 
-    public static synchronized java.math.BigDecimal getBigDecimal(
+    public static java.math.BigDecimal getBigDecimal(
             java.math.BigDecimal val) {
 
         if (val == null) {
             return val;
         }
 
-        return (java.math.BigDecimal) bigdecimalPool.getOrAddObject(val);
+        synchronized (bigdecimalPool) {
+            return (java.math.BigDecimal) bigdecimalPool.getOrAddObject(val);
+        }
     }
 
     public static Boolean getBoolean(boolean b) {

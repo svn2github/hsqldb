@@ -2088,8 +2088,10 @@ public class Server implements HsqlSocketRequestHandler {
         releaseServerSocket();
         DatabaseManager.deRegisterServer(this);
 
-        for (int i = 0; i < dbPath.length; i++) {
-            releaseDatabase(i);
+        if (dbPath != null) {
+            for (int i = 0; i < dbPath.length; i++) {
+                releaseDatabase(i);
+            }
         }
 
         // Be nice and let applications exit if there are no

@@ -606,6 +606,10 @@ public class DatabaseManager {
             } else {
                 database = url.substring(pos, semicolpos);
             }
+
+            if (database.length() == 0) {
+                return null;
+            }
         }
 
         props.setProperty("database", database);
