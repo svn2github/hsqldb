@@ -32,7 +32,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.18 2004/05/14 23:01:11 unsaved Exp $
+# $Id: hsqldb,v 1.19 2004/05/14 23:20:00 unsaved Exp $
 
 # UNIX init script for HSQLDB.
 
@@ -367,7 +367,6 @@ running with pid $HSQLDB_PID."
         CLASSPATH="$HSQLDB_HOME/lib/hsqldb.jar"
         export CLASSPATH
         export PATH   # Required only for some funny init environments.
-        ERRORS=
         java $AUTH_FILE_SWITCH \
             "-Dsqltoolsprayer.propfile=$PROPERTY_FILE" \
             org.hsqldb.util.SqlToolSprayer 'shutdown;' $SHUTDOWN_URLIDS
