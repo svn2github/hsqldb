@@ -6,7 +6,7 @@ area is in changelog_1_7_2.txt.
 
 Fred Toussi (fredt@users.sourceforge.net)
 
-2004.06.28 RC_6e
+2004.07.15 RC_6e
 
 Enhancements to ALTER TABLE ADD COLUMN and DROP COLUMN.
 Fixed bug with closed HTTP connections.
