@@ -505,4 +505,27 @@ class Session {
 
         return intConnection;
     }
+
+// boucherb@users.sf.net 20020810 metadata 1.7.2
+//----------------------------------------------------------------
+    private final long connectTime = System.currentTimeMillis();
+
+// more effecient for MetaData concerns than checkAdmin
+    boolean isAdmin() {
+        return uUser.isAdmin();
+    }
+
+    long getConnectTime() {
+        return connectTime;
+    }
+
+    int getTransactionSize() {
+        return tTransaction.size();
+    }
+
+    boolean isAccessible(Object dbobject) throws SQLException {
+        return uUser.isAccessible(dbobject);
+    }
+
+//----------------------------------------------------------------
 }

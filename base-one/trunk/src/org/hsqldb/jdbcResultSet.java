@@ -454,12 +454,17 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
  * (boucherb@users) (version 1.7.0)<p>
 */
 
+// boucherb@users/hiep256@users 20010829 - patch 1.7.2 - allow expression to
+// return Results as Object, where object is Result or jdbcResultSet.
+// - rResult access changed to allow getting internal result object
+// from Parser.processCall()
+
     /**
      * The internal representation.  Basically, a linked list of records,
      * each containing an Object[] payload representing the data for a row,
      * plus some metadata.
      */
-    private Result rResult;
+    protected Result rResult;
 
     /**
      * The record containing the data for the row, if any,
@@ -4708,7 +4713,10 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        byte[] b = getBytes(i);
+
+        return b == null ? null
+                         : new jdbcBlob(b);
     }
 
     /**
@@ -4743,7 +4751,10 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        String s = getString(i);
+
+        return s == null ? null
+                         : new jdbcClob(s);
     }
 
     /**
@@ -4981,16 +4992,16 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
     public java.sql.Date getDate(int columnIndex,
                                  Calendar cal) throws SQLException {
 
-        // ADDED:
-        // to be consistent:  this was missing
-        // boucherb@users 20020413
-        // TODO: implement, based on new jdbcPreparedStatement code
-        // and change documentation to reflect
         if (Trace.TRACE) {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        java.sql.Date date = getDate(columnIndex);
+
+        cal.setTime(date);
+        HsqlDateTime.resetToDate(cal);
+
+        return new java.sql.Date(cal.getTime().getTime());
     }
 
     /**
@@ -5052,15 +5063,6 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
-     *
-     * Up to and including 1.7.1, HSQLDB does not support this feature.  <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
-     *
-     * </span>
      * <!-- end release-specific documentation -->
      *
      * @param columnIndex the first column is 1, the second is 2, ...
@@ -5074,22 +5076,19 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *   jdbcResultSet)
      */
-
-// fredt@users 20020320 - comment - to do
-// use new code already in jdbcPreparedStatement
     public java.sql.Time getTime(int columnIndex,
                                  Calendar cal) throws SQLException {
 
-        // ADDED:
-        // trace to be consistent:  this was missing
-        // boucherb@users 20020413
-        // TODO: implement, based on new jdbcPreparedStatement code
-        // and change documentation to reflect
         if (Trace.TRACE) {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        Time t = getTime(columnIndex);
+
+        cal.setTime(t);
+        HsqlDateTime.resetToTime(cal);
+
+        return new java.sql.Time(cal.getTime().getTime());
     }
 
     /**
@@ -5152,14 +5151,6 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
-     *
-     * Up to and including 1.7.1, HSQLDB does not support this feature.  <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
-     *
      * </span>
      * <!-- end release-specific documentation -->
      *
@@ -5177,16 +5168,11 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
     public java.sql.Timestamp getTimestamp(int columnIndex,
                                            Calendar cal) throws SQLException {
 
-        // ADDED:
-        // trace was missing.  not consistent with the other methdods
-        // boucherb@users 20020413
-        // TODO: implement, based on new jdbcPreparedStatement code
-        // and change documentation to reflect
         if (Trace.TRACE) {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        return getTimestamp(columnIndex);
     }
 
     /**

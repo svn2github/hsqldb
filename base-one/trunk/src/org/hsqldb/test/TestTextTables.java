@@ -233,9 +233,9 @@ public class TestTextTables {
 //                tempobj.put("lastname", "Clancy");
 //                tempobj.put("random", new Long(nextrandom));
 //                tempobj.put("filler", new StringBuffer(varfiller));
-                ps.setObject(6, tempobj, Types.OTHER);
+//                ps.setObject(6, tempobj, Types.OTHER);
 
-//                ps.setObject(6, null, Types.OTHER);
+                ps.setObject(6, null, Types.OTHER);
                 ps.execute();
 
                 if ((i + 1) % 10000 == 0) {

@@ -274,6 +274,21 @@ class Result {
         iSize += a.iSize;
     }
 
+    void addAll(Result r) {
+
+        if (r == null) {
+            return;
+        }
+
+        Record from = r.rRoot;
+
+        while (from != null) {
+            add(from.data);
+
+            from = from.next;
+        }
+    }
+
     /**
      *  Method declaration
      *

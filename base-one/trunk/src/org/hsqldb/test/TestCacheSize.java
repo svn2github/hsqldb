@@ -70,6 +70,7 @@ public class TestCacheSize {
     boolean cachedTable     = false;
     int     cacheScale      = 12;
     int     logType         = 3;
+    int     writeDelay      = 1;
     boolean indexZip        = true;
     boolean indexLastName   = false;
     boolean addForeignKey   = false;
@@ -172,7 +173,7 @@ public class TestCacheSize {
 
             java.util.Random randomgen = new java.util.Random();
 
-            sStatement.execute("SET WRITE_DELAY 60");
+            sStatement.execute("SET WRITE_DELAY " + writeDelay);
             sStatement.execute(ddl1);
             sStatement.execute(ddl2);
             sStatement.execute(ddl3);
@@ -287,7 +288,7 @@ public class TestCacheSize {
 
             sStatement = cConnection.createStatement();
 
-            sStatement.execute("SET WRITE_DELAY TRUE");
+            sStatement.execute("SET WRITE_DELAY " + writeDelay);
 
             // the tests use different indexes
             // use primary index
@@ -312,7 +313,7 @@ public class TestCacheSize {
             checkUpdates();
             sw.zero();
             cConnection.close();
-            System.out.println("Closed database:" + sw.elapsedTime());
+            System.out.println("Closed database: " + sw.elapsedTime());
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
@@ -430,11 +431,13 @@ public class TestCacheSize {
 
     public static void main(String argv[]) {
 
+        StopWatch     sw   = new StopWatch();
         TestCacheSize test = new TestCacheSize();
 
         test.setUp();
         test.testFillUp();
         test.tearDown();
         test.checkResults();
+        System.out.println("Total Test Time: " + sw.elapsedTime());
     }
 }

@@ -39,6 +39,7 @@ import java.sql.SQLException;
  *
  * @author fredt@users
  * @version 1.7.2
+ * @since 1.7.2
  */
 class BinaryDatabaseScriptReader extends DatabaseScriptReader {
 
@@ -66,17 +67,6 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
 
         readRow(rowIn, 0, dataStreamIn);
 
-/*
-        rowIn.reset();
-        dataStreamIn.read(rowIn.getBuffer(),0,4);
-        int length = rowIn.readInt();
-        rowIn.resetRow(0,length);
-        int count = 0;
-        while ( dataStreamIn.available() > 0 && count < length ){
-            count  += dataStreamIn.read(rowIn.getBuffer(),count,length - count);
-        }
-        // trouble if count != length
-*/
         Result r = new Result(rowIn);
         Record n = r.rRoot;
         String s;
@@ -112,8 +102,8 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
             int checkCount = readTableTerm();
 
             if (j != checkCount) {
-                System.out.println("table " + s + " row count error : " + j
-                                   + " read, needed " + checkCount);
+                Trace.printSystemOut("table " + s + " row count error : " + j
+                                     + " read, needed " + checkCount);
 
                 // error
             }
@@ -130,21 +120,6 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
             return false;
         }
 
-/*
-        rowIn.reset();
-        dataStreamIn.read(rowIn.getBuffer(),0,4);
-        int length = rowIn.readInt();
-
-        if (length == 0) {
-            return false;
-        }
-
-        rowIn.resetRow(0, length);
-        int count = 4;
-        while ( dataStreamIn.available() > 0 && count < length ){
-            count  += dataStreamIn.read(rowIn.getBuffer(),count,length - count);
-        }
-*/
         Object[] row = rowIn.readData(t.getColumnTypes());
 
         t.insertNoCheck(row, null, false);
@@ -170,21 +145,6 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
             return null;
         }
 
-/*
-        rowIn.reset();
-        dataStreamIn.read(rowIn.getBuffer(),0,4);
-        int length = rowIn.readInt();
-
-        if (length == 0) {
-            return null;
-        }
-
-        rowIn.resetRow(0, length);
-        int count = 4;
-        while ( dataStreamIn.available() > 0 && count < length ){
-            count  += dataStreamIn.read(rowIn.getBuffer(),count,length - count);
-        }
-*/
         String s = rowIn.readString();
 
         // operation is always INSERT

@@ -79,6 +79,14 @@ class CachedDataRow extends CachedRow {
     }
 
     /**
+     *  As the indexes are in-memory, this method is the same as the in-memory
+     *  implementation of Row.
+     */
+    Row getUpdatedRow() throws SQLException {
+        return this;
+    }
+
+    /**
      *  Used when data is read from the disk into the Cache the first time.
      *  New Nodes are created which are then indexed.
      */

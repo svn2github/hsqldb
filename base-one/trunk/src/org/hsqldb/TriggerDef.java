@@ -206,6 +206,33 @@ class TriggerDef extends Thread {
         return indx;
     }
 
+    public static int indexToRight(int idx) {
+
+        switch (idx) {
+
+            case DELETE_AFTER :
+            case DELETE_AFTER_ROW :
+            case DELETE_BEFORE :
+            case DELETE_BEFORE_ROW :
+                return UserManager.DELETE;
+
+            case INSERT_AFTER :
+            case INSERT_AFTER_ROW :
+            case INSERT_BEFORE :
+            case INSERT_BEFORE_ROW :
+                return UserManager.INSERT;
+
+            case UPDATE_AFTER :
+            case UPDATE_AFTER_ROW :
+            case UPDATE_BEFORE :
+            case UPDATE_BEFORE_ROW :
+                return UserManager.UPDATE;
+
+            default :
+                return 0;
+        }
+    }
+
     /**
      *  run method declaration <P>
      *

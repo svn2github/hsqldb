@@ -36,6 +36,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
 // fredt@users 20020130 - patch 1.7.0 by fredt - new class
@@ -51,10 +52,24 @@ import java.util.TimeZone;
  * @author  fredt@users
  * @version 1.7.0
  */
-// fredt - 20030103 - currently under review for 1.7.2
-public class HsqlDateTime {
 
-    static Date tempDate = new Date(0);
+/**
+ * fredt - 20030103 - currently under review for 1.7.2
+ * There is a fundamental SQL compatibility problem as SQL stores
+ * DATETIME values as their separate fields, wheras Java stores them
+ * all as a long representing milliseconds.
+ * Currently, this causes issues in comparison between DATETIME values
+ * if the db is accessed from different time zones.
+ *
+ */
+class HsqlDateTime {
+
+    /**
+     * A reusable static value for today's date. Should only be accessed
+     * by getToday()
+     */
+    private static Date today    = new Date(0);
+    static Date         tempDate = new Date(0);
 
     /**
      *  Converts a string in JDBC timestamp escape format to a
@@ -66,7 +81,7 @@ public class HsqlDateTime {
      * @exception java.lang.IllegalArgumentException if the given argument
      * does not have the format <code>yyyy-mm-dd hh:mm:ss.fffffffff</code>
      */
-    public static Timestamp timestampValue(String s) {
+    static Timestamp timestampValue(String s) {
 
         if (s == null) {
             throw new java.lang.IllegalArgumentException("null string");
@@ -80,16 +95,11 @@ public class HsqlDateTime {
                 return new Timestamp(System.currentTimeMillis());
             }
 
-            // fredt - todo - treat Date as full days only
+            // fredt - treat Date as full days only
             if (s.toUpperCase().equals("CURRENT_DATE")
                     || s.toUpperCase().equals("TODAY")
                     || s.toUpperCase().equals("SYSDATE")) {
-                tempDate.setTime(System.currentTimeMillis());
-
-                long      now = tempDate.getTime();
-                Timestamp ts  = new Timestamp(now);
-
-                return ts;
+                return new Timestamp(getToday().getTime());
             }
 
             throw new java.lang.IllegalArgumentException("invalid timestamp");
@@ -107,7 +117,7 @@ public class HsqlDateTime {
      * @param  nano nanoseconds
      * @return  Timestamp object
      */
-    public static Timestamp timestampValue(long time, int nano) {
+    static Timestamp timestampValue(long time, int nano) {
 
         Timestamp ts = new Timestamp(time);
 
@@ -126,7 +136,7 @@ public class HsqlDateTime {
      * @exception java.lang.IllegalArgumentException if the given argument
      * does not have the format <code>yyyy-mm-dd</code>
      */
-    public static Date dateValue(String s) {
+    static Date dateValue(String s) {
 
         if (s == null) {
             throw new java.lang.IllegalArgumentException("null date");
@@ -135,11 +145,10 @@ public class HsqlDateTime {
         if (s.indexOf('-') == -1) {
             s = s.toUpperCase();
 
-            // fredt - todo - treat Date as full days only
-            if (s.equals("TODAY") || s.equals("NOW")
-                    || s.equals("CURRENT_DATE")
-                    || s.equals("CURRENT_TIMESTAMP") || s.equals("SYSDATE")) {
-                return new Date(System.currentTimeMillis());
+            // fredt - treat Date as full days only
+            if (s.equals("TODAY") || s.equals("CURRENT_DATE")
+                    || s.equals("SYSDATE")) {
+                return getToday();
             }
 
             throw new java.lang.IllegalArgumentException("invalid date");
@@ -149,7 +158,7 @@ public class HsqlDateTime {
             return Date.valueOf(s.substring(0, sdfdPattern.length()));
         }
 
-        return Date.valueOf(s);    // BCompatiblity...if no leading zero in mm/dd!
+        return Date.valueOf(s);    // Compatiblity...if no leading zero in mm/dd!
     }
 
     /**
@@ -162,7 +171,7 @@ public class HsqlDateTime {
      * @exception java.lang.IllegalArgumentException if the given argument
      * does not have the format <code>hh:mm:ss</code>
      */
-    public static Time timeValue(String s) {
+    static Time timeValue(String s) {
 
         if (s == null) {
             throw new java.lang.IllegalArgumentException("null string");
@@ -170,7 +179,8 @@ public class HsqlDateTime {
 
         if (s.toUpperCase().equals("NOW")
                 || s.toUpperCase().equals("CURRENT_TIME")) {
-            return new Time(System.currentTimeMillis());
+            return new Time(System.currentTimeMillis()
+                            - getToday().getTime());
         }
 
         return Time.valueOf(s);
@@ -180,8 +190,8 @@ public class HsqlDateTime {
     private static final String sdfdPattern  = "yyyy-MM-dd";
     private static final String sdftsPattern = "yyyy-MM-dd HH:mm:ss.";
 
-    public static java.sql.Date getDate(String dateString,
-                                        Calendar cal) throws Exception {
+    static java.sql.Date getDate(String dateString,
+                                 Calendar cal) throws Exception {
 
         java.text.SimpleDateFormat sdfd = new SimpleDateFormat(sdfdPattern);
 
@@ -192,8 +202,7 @@ public class HsqlDateTime {
         return new java.sql.Date(d.getTime());
     }
 
-    public static Time getTime(String timeString,
-                               Calendar cal) throws Exception {
+    static Time getTime(String timeString, Calendar cal) throws Exception {
 
         java.text.SimpleDateFormat sdft = new SimpleDateFormat(sdftPattern);
 
@@ -204,8 +213,8 @@ public class HsqlDateTime {
         return new java.sql.Time(d.getTime());
     }
 
-    public static Timestamp getTimestamp(String dateString,
-                                         Calendar cal) throws Exception {
+    static Timestamp getTimestamp(String dateString,
+                                  Calendar cal) throws Exception {
 
         java.text.SimpleDateFormat sdfts = new SimpleDateFormat(sdftsPattern);
 
@@ -222,10 +231,10 @@ public class HsqlDateTime {
         return ts;
     }
 
-    private static java.text.SimpleDateFormat sdfts;
+    static java.text.SimpleDateFormat sdfts;
 
-    public static String getTimestampString(Timestamp x,
-            Calendar cal) throws Exception {
+    static String getTimestampString(Timestamp x,
+                                     Calendar cal) throws Exception {
 
         SimpleDateFormat sdfts = new SimpleDateFormat(sdftsPattern);
 
@@ -235,8 +244,7 @@ public class HsqlDateTime {
                                                + x.getNanos() / 1000000));
     }
 
-    public static String getTimeString(Time x,
-                                       Calendar cal) throws Exception {
+    static String getTimeString(Time x, Calendar cal) throws Exception {
 
         final SimpleDateFormat sdft = new SimpleDateFormat(sdftPattern);
 
@@ -245,8 +253,7 @@ public class HsqlDateTime {
         return sdft.format(x);
     }
 
-    public static String getDateString(Date x,
-                                       Calendar cal) throws Exception {
+    static String getDateString(Date x, Calendar cal) throws Exception {
 
         SimpleDateFormat sdfd = new SimpleDateFormat(sdfdPattern);
 
@@ -255,15 +262,64 @@ public class HsqlDateTime {
         return sdfd.format(x);
     }
 
+/*
+    // experimental stuff
     static SimpleDateFormat sdfd = new SimpleDateFormat(sdfdPattern);
 
     static {
         sdfd.setCalendar(Calendar.getInstance(TimeZone.getTimeZone("GMT")));
     }
 
-    public static String getGMTDateString(Date x,
-                                          Calendar cal) throws Exception {
+    static String getGMTDateString(Date x, Calendar cal) throws Exception {
         return sdfd.format(x);
+    }
+*/
+
+    /**
+     * Returns the same Date Object. This object should be treated as
+     * read-only.
+     */
+    static Date getToday() {
+
+        long now = System.currentTimeMillis();
+
+        if (now - today.getTime() > 24 * 3600 * 1000) {
+            resetToday();
+        }
+
+        return today;
+    }
+
+    static void resetToDate(Calendar cal) {
+
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+    }
+
+    static void resetToTime(Calendar cal) {
+
+        cal.set(Calendar.YEAR, 0);
+        cal.set(Calendar.MONTH, 0);
+        cal.set(Calendar.DATE, 0);
+    }
+
+    /**
+     * resets the static reusable value today
+     */
+    synchronized private static void resetToday() {
+
+        long now = System.currentTimeMillis();
+
+// fredt - this needs more work
+//        Calendar c   = new GregorianCalendar(TimeZone.getTimeZone("GMT"));
+        Calendar c = new GregorianCalendar();
+
+        c.setTime(new Date(now));
+        resetToDate(c);
+
+        today = new Date(c.getTime().getTime());
     }
     /*
     public static void main(String[] args) {

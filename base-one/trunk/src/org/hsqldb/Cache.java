@@ -131,27 +131,33 @@ class Cache {
     static int iCurrentAccess = 0;
 
     // pre openning fields
-    private Database                 dDatabase;
+    private Database dDatabase;
+
+// boucherb@users - access changed for metadata 1.7.2    
     protected HsqlDatabaseProperties dbProps;
     protected String                 sName;
 
+// --------------------------------------------------    
     // cache operation mode
+// boucherb@users - access changed for metadata 1.7.2     
     protected boolean storeOnInsert;
 
+// --------------------------------------------------    
     // post openning constant fields
     boolean cacheReadonly;
 
     // this flag is used externally to determine if a backup is required
-    boolean           fileModified;
+    boolean fileModified;
+
     // outside access to all below allowed only for metadata
-    int       cacheScale;
-    int       cacheRowScale;
-    int       cachedRowType = DatabaseRowOutput.CACHE_ROW_160;
-    int       cacheLength;
-    int       writerLength;
-    int       maxCacheSize;            // number of Rows
-    int       maxCacheBytes;           // number of bytes
-    int       multiplierMask;
+    int               cacheScale;
+    int               cacheRowScale;
+    int               cachedRowType = DatabaseRowOutput.CACHE_ROW_160;
+    int               cacheLength;
+    int               writerLength;
+    int               maxCacheSize;            // number of Rows
+    int               maxCacheBytes;           // number of bytes
+    int               multiplierMask;
     private CachedRow rData[];
     private CachedRow rWriter[];
 
@@ -160,9 +166,11 @@ class Cache {
     static final int INITIAL_FREE_POS = 32;
 
     // variable fields
+// boucherb@users - access changed for metadata 1.7.2     
     protected DatabaseFile rFile;
     protected int          iFreePos;
 
+// ---------------------------------------------------    
     //
     private CachedRow        rFirst;           // must point to one of rData[]
     private CachedRow        rLastChecked;     // can be any row

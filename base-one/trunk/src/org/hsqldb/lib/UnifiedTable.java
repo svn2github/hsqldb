@@ -34,6 +34,16 @@ package org.hsqldb.lib;
 import java.lang.reflect.*;
 import java.util.Hashtable;
 
+// fredt@users - patch 1.7.2 - added support for Object storage and row removal
+
+/**
+ * Provides a reflection-based abstraction of Java array objects, allowing
+ * table-like access to and manipulation of both primitive and object array
+ * types through a single interface.
+ * @author tony_lai@users.sourceforge.net
+ * @version 1.7.2
+ * @since 1.7.2
+ */
 public class UnifiedTable {
 
     private static Hashtable classCodeMap = new Hashtable(37, 1);
@@ -59,6 +69,9 @@ public class UnifiedTable {
     static final int OBJ_CLASS_CODE_DOUBLE = Double.class.hashCode();
     static final int OBJ_CLASS_CODE_STRING = String.class.hashCode();
 
+// fredt
+    static final int OBJ_CLASS_CODE_COMPARABLE = Comparable.class.hashCode();
+
     static {
         classCodeMap.put(byte.class, new Integer(PRIM_CLASS_CODE_BYTE));
         classCodeMap.put(char.class, new Integer(PRIM_CLASS_CODE_SHORT));
@@ -75,6 +88,8 @@ public class UnifiedTable {
         classCodeMap.put(Float.class, new Integer(OBJ_CLASS_CODE_FLOAT));
         classCodeMap.put(Double.class, new Integer(OBJ_CLASS_CODE_DOUBLE));
         classCodeMap.put(String.class, new Integer(OBJ_CLASS_CODE_STRING));
+        classCodeMap.put(Comparable.class,
+                         new Integer(OBJ_CLASS_CODE_COMPARABLE));
     }
 
     protected SingleCellComparator getSingleCellComparator(int targetColumn) {
@@ -103,7 +118,7 @@ public class UnifiedTable {
                 return new PrimDoubleCellComparator(targetColumn);
 
             default :
-                return null;
+                return new PrimObjectCellComparator(targetColumn);
         }
     }
 
@@ -142,6 +157,15 @@ public class UnifiedTable {
         int dataIndex = makeRoom(rowCount, 1);
 
         System.arraycopy(rowData, 0, tableData, dataIndex, columns);
+    }
+
+// fredt@users - 20030109 - new method
+    public void removeRow(int rowIndex) {
+        makeRoom(rowIndex, -1);
+    }
+
+    public void setCell(int rowIndex, int colIndex, Object cellData) {
+        Array.set(tableData, rowIndex * columns + colIndex, cellData);
     }
 
     public void setRow(int rowIndex, Object rowData) {
@@ -258,6 +282,9 @@ public class UnifiedTable {
         return rowCount;
     }
 
+    /**
+     * Handles both addition and removal of rows
+     */
     protected int makeRoom(int rowIndex, int rows) {
 
         int     newCount  = rowCount + rows;
@@ -274,9 +301,27 @@ public class UnifiedTable {
             System.arraycopy(tableData, 0, data, 0, rowIndex * columns);
 
             if (rowIndex < rowCount) {
-                System.arraycopy(tableData, rowIndex * columns, data,
-                                 (rowIndex + rows) * columns,
-                                 (rowCount - rowIndex) * columns);
+                int source;
+                int target;
+                int size;
+
+                if (rows >= 0) {
+                    source = rowIndex * columns;
+                    target = (rowIndex + rows) * columns;
+                    size   = (rowCount - rowIndex) * columns;
+                } else {
+                    source = (rowIndex - rows) * columns;
+                    target = rowIndex * columns;
+                    size   = (rowCount - rowIndex + rows) * columns;
+
+                    if (size < 0) {
+                        size = 0;
+                    }
+                }
+
+                System.arraycopy(tableData, source, data, target, size);
+
+                // after removing rows, leave the phantom rows at the end
             }
 
             tableData = data;
@@ -287,6 +332,7 @@ public class UnifiedTable {
         return rowIndex * columns;
     }
 
+// fredt - patched - this actually compares the rowCount column
     private int binarySearch(Object target) {
 
         if (rowComparator == null) {
@@ -304,11 +350,14 @@ public class UnifiedTable {
         int high = rowCount;
         int mid  = 0;
 
-        while (low <= high) {
+// fredt - patched - changed from while (low <= high)
+        while (low < high) {
             mid = (low + high) / 2;
 
             if (rowComparator.greaterThan(mid)) {
-                high = mid - 1;
+
+// fredt - patched - changed from high = mid -1
+                high = mid;
             } else {
                 if (rowComparator.lessThan(mid)) {
                     low = mid + 1;
@@ -395,7 +444,7 @@ public class UnifiedTable {
     }
 
     /**
-     * Check if row indexed i is less then row indexed j
+     * Check if row indexed i is less than row indexed j
      */
     private boolean lessThan(int i, int j) {
         return ascending ? rowComparator.lessThan(i, j)
@@ -403,7 +452,7 @@ public class UnifiedTable {
     }
 
     /**
-     * Check if targeted column value in the row indexed i is less then the
+     * Check if targeted column value in the row indexed i is less than the
      * search target object.
      */
     private boolean lessThan(int i) {
@@ -412,7 +461,7 @@ public class UnifiedTable {
     }
 
     /**
-     * Check if targeted column value in the row indexed i is greater then the
+     * Check if targeted column value in the row indexed i is greater than the
      * search target object.
      * @see setSearchTarget(Object)
      */
@@ -424,20 +473,20 @@ public class UnifiedTable {
     interface RowComparator {
 
         /**
-         * Check if row indexed i is less then row indexed j.
+         * Check if row indexed i is less than row indexed j.
          */
         abstract boolean lessThan(int i, int j);
 
         /**
-         * Check if targeted column value in the row indexed i is less then the
-         * search target object.
+         * Check if targeted column value in the row indexed i is less than
+         * the search target object.
          * @see setSearchTarget(Object)
          */
         abstract boolean lessThan(int i);
 
         /**
-         * Check if targeted column value in the row indexed i is greater then the
-         * search target object.
+         * Check if targeted column value in the row indexed i is greater than
+         * the search target object.
          * @see setSearchTarget(Object)
          */
         abstract boolean greaterThan(int i);
@@ -471,7 +520,7 @@ public class UnifiedTable {
         }
 
         /**
-         * Check if row indexed i is less then row indexed j
+         * Check if row indexed i is less than row indexed j
          */
         public boolean lessThan(int i, int j) {
             return myTableData[i * columns + targetColumn]
@@ -479,8 +528,8 @@ public class UnifiedTable {
         }
 
         /**
-         * Check if targeted column value in the row indexed i is less then the
-         * search target object.
+         * Check if targeted column value in the row indexed i is less than
+         * the search target object.
          * @see setSearchTarget(Object)
          */
         public boolean lessThan(int i) {
@@ -488,8 +537,8 @@ public class UnifiedTable {
         }
 
         /**
-         * Check if targeted column value in the row indexed i is greater then the
-         * search target object.
+         * Check if targeted column value in the row indexed i is greater
+         * than the search target object.
          * @see setSearchTarget(Object)
          */
         public boolean greaterThan(int i) {
@@ -517,7 +566,7 @@ public class UnifiedTable {
         }
 
         /**
-         * Check if row indexed i is less then row indexed j
+         * Check if row indexed i is less than row indexed j
          */
         public boolean lessThan(int i, int j) {
             return myTableData[i * columns + targetColumn]
@@ -525,8 +574,8 @@ public class UnifiedTable {
         }
 
         /**
-         * Check if targeted column value in the row indexed i is less then the
-         * search target object.
+         * Check if targeted column value in the row indexed i is less than
+         * the search target object.
          * @see setSearchTarget(Object)
          */
         public boolean lessThan(int i) {
@@ -534,8 +583,8 @@ public class UnifiedTable {
         }
 
         /**
-         * Check if targeted column value in the row indexed i is greater then the
-         * search target object.
+         * Check if targeted column value in the row indexed i is greater
+         * than the search target object.
          * @see setSearchTarget(Object)
          */
         public boolean greaterThan(int i) {
@@ -564,7 +613,7 @@ public class UnifiedTable {
         }
 
         /**
-         * Check if row indexed i is less then row indexed j
+         * Check if row indexed i is less than row indexed j
          */
         public boolean lessThan(int i, int j) {
             return myTableData[i * columns + targetColumn]
@@ -572,8 +621,8 @@ public class UnifiedTable {
         }
 
         /**
-         * Check if targeted column value in the row indexed i is less then the
-         * search target object.
+         * Check if targeted column value in the row indexed i is less than
+         * the search target object.
          * @see setSearchTarget(Object)
          */
         public boolean lessThan(int i) {
@@ -581,8 +630,8 @@ public class UnifiedTable {
         }
 
         /**
-         * Check if targeted column value in the row indexed i is greater then the
-         * search target object.
+         * Check if targeted column value in the row indexed i is greater than
+         * the search target object.
          * @see setSearchTarget(Object)
          */
         public boolean greaterThan(int i) {
@@ -610,7 +659,7 @@ public class UnifiedTable {
         }
 
         /**
-         * Check if row indexed i is less then row indexed j
+         * Check if row indexed i is less than row indexed j
          */
         public boolean lessThan(int i, int j) {
             return myTableData[i * columns + targetColumn]
@@ -618,8 +667,8 @@ public class UnifiedTable {
         }
 
         /**
-         * Check if targeted column value in the row indexed i is less then the
-         * search target object.
+         * Check if targeted column value in the row indexed i is less than
+         * the search target object.
          * @see setSearchTarget(Object)
          */
         public boolean lessThan(int i) {
@@ -627,8 +676,8 @@ public class UnifiedTable {
         }
 
         /**
-         * Check if targeted column value in the row indexed i is greater then the
-         * search target object.
+         * Check if targeted column value in the row indexed i is greater than
+         * the search target object.
          * @see setSearchTarget(Object)
          */
         public boolean greaterThan(int i) {
@@ -656,7 +705,7 @@ public class UnifiedTable {
         }
 
         /**
-         * Check if row indexed i is less then row indexed j
+         * Check if row indexed i is less than row indexed j
          */
         public boolean lessThan(int i, int j) {
             return myTableData[i * columns + targetColumn]
@@ -664,8 +713,8 @@ public class UnifiedTable {
         }
 
         /**
-         * Check if targeted column value in the row indexed i is less then the
-         * search target object.
+         * Check if targeted column value in the row indexed i is less than
+         * the search target object.
          * @see setSearchTarget(Object)
          */
         public boolean lessThan(int i) {
@@ -673,8 +722,8 @@ public class UnifiedTable {
         }
 
         /**
-         * Check if targeted column value in the row indexed i is greater then the
-         * search target object.
+         * Check if targeted column value in the row indexed i is greater than
+         * the search target object.
          * @see setSearchTarget(Object)
          */
         public boolean greaterThan(int i) {
@@ -702,7 +751,7 @@ public class UnifiedTable {
         }
 
         /**
-         * Check if row indexed i is less then row indexed j
+         * Check if row indexed i is less than row indexed j
          */
         public boolean lessThan(int i, int j) {
             return myTableData[i * columns + targetColumn]
@@ -710,8 +759,8 @@ public class UnifiedTable {
         }
 
         /**
-         * Check if targeted column value in the row indexed i is less then the
-         * search target object.
+         * Check if targeted column value in the row indexed i is less than
+         * the search target object.
          * @see setSearchTarget(Object)
          */
         public boolean lessThan(int i) {
@@ -719,8 +768,8 @@ public class UnifiedTable {
         }
 
         /**
-         * Check if targeted column value in the row indexed i is greater then the
-         * search target object.
+         * Check if targeted column value in the row indexed i is greater than
+         * the search target object.
          * @see setSearchTarget(Object)
          */
         public boolean greaterThan(int i) {
@@ -748,7 +797,7 @@ public class UnifiedTable {
         }
 
         /**
-         * Check if row indexed i is less then row indexed j
+         * Check if row indexed i is less than row indexed j
          */
         public boolean lessThan(int i, int j) {
             return myTableData[i * columns + targetColumn]
@@ -756,8 +805,8 @@ public class UnifiedTable {
         }
 
         /**
-         * Check if targeted column value in the row indexed i is less then the
-         * search target object.
+         * Check if targeted column value in the row indexed i is less than
+         * the search target object.
          * @see setSearchTarget(Object)
          */
         public boolean lessThan(int i) {
@@ -765,8 +814,8 @@ public class UnifiedTable {
         }
 
         /**
-         * Check if targeted column value in the row indexed i is greater then the
-         * search target object.
+         * Check if targeted column value in the row indexed i is greater than
+         * the search target object.
          * @see setSearchTarget(Object)
          */
         public boolean greaterThan(int i) {
@@ -778,6 +827,76 @@ public class UnifiedTable {
          */
         public void setSearchTarget(Object target) {
             mySearchTarget = ((Number) target).doubleValue();
+        }
+    }
+
+    class PrimObjectCellComparator extends SingleCellComparator {
+
+        private Comparable[] myTableData;
+        private Comparable   mySearchTarget;
+
+        PrimObjectCellComparator(int targetColumn) {
+
+            super(targetColumn);
+
+            myTableData = (Comparable[]) tableData;
+        }
+
+        /**
+         * Check if row indexed i is less than row indexed j
+         */
+        public boolean lessThan(int i, int j) {
+            return compare(
+                myTableData[i * columns + targetColumn], myTableData[j * columns + targetColumn]) < 0;
+        }
+
+        /**
+         * Check if targeted column value in the row indexed i is less than
+         * the search target object.
+         * @see setSearchTarget(Object)
+         */
+        public boolean lessThan(int i) {
+            return compare(
+                myTableData[i * columns + targetColumn], mySearchTarget) < 0;
+        }
+
+        /**
+         * Check if targeted column value in the row indexed i is greater
+         * than the search target object.
+         * @see setSearchTarget(Object)
+         */
+        public boolean greaterThan(int i) {
+            return compare(
+                myTableData[i * columns + targetColumn], mySearchTarget) > 0;
+        }
+
+        private int compare(Comparable a, Comparable b) {
+
+            if (a == b) {
+                return 0;
+            }
+
+            // null==null and smaller than any value
+            if (a == null) {
+                if (b == null) {
+                    return 0;
+                }
+
+                return -1;
+            }
+
+            if (b == null) {
+                return 1;
+            }
+
+            return a.compareTo(b);
+        }
+
+        /**
+         * Sets the target object in a search operation.
+         */
+        public void setSearchTarget(Object target) {
+            mySearchTarget = (Comparable) target;
         }
     }
 
@@ -796,7 +915,7 @@ public class UnifiedTable {
         }
 
         /**
-         * Check if row indexed i is less then row indexed j
+         * Check if row indexed i is less than row indexed j
          */
         public boolean lessThan(int i, int j) {
 
@@ -810,8 +929,8 @@ public class UnifiedTable {
         }
 
         /**
-         * Check if targeted column value in the row indexed i is less then the
-         * search target object.
+         * Check if targeted column value in the row indexed i is less than
+         * the search target object.
          * @see setSearchTarget(Object)
          */
         public boolean lessThan(int i) {
@@ -826,8 +945,8 @@ public class UnifiedTable {
         }
 
         /**
-         * Check if targeted column value in the row indexed i is greater then the
-         * search target object.
+         * Check if targeted column value in the row indexed i is greater than
+         * the search target object.
          * @see setSearchTarget(Object)
          */
         public boolean greaterThan(int i) {

@@ -34,22 +34,46 @@
  */
 package org.hsqldb.lib;
 
-/**
+/** Provides the programatic analog of a physical stop watch. <p>
  *
+ * The watch can be started, stopped and zeroed and can be queried for
+ * elapsed running time.  The watch accumulates elapsed time over starts
+ * and stops such that only the time actually spent running is recorded.
+ * If the watch is zeroed, then the accumulated time is discarded and
+ * the watch starts again with zero acumulated time.
  * @author  Campbell Boucher-Burnet, Camco & Associates Consulting
  * @version 1.0
+ * @since HSQLDB 1.7.2
  */
 public class StopWatch {
 
+    /**
+     * The last time this object made the transition
+     * from stopped to running state, as reported
+     * by System.currentTimeMillis().
+     */
     private long startTime;
+
+    /**
+     * The accumulated running time of this object since
+     * it was last zeroed.
+     */
     private long total;
-    boolean      running = false;
+
+    /** Flags if this object is started or stopped. */
+    boolean running = false;
 
     /** Creates, zeros, and starts a new StopWatch */
     public StopWatch() {
         zero();
     }
 
+    /**
+     * Retrieves the accumulated time this object has spent running since
+     * it was last zeroed.
+     * @return the accumulated time this object has spent running since
+     * it was last zeroed.
+     */
     public long elapsedTime() {
 
         if (running) {
@@ -59,6 +83,7 @@ public class StopWatch {
         }
     }
 
+    /** Zeros accumulated running time and restarts this object. */
     public void zero() {
 
         total = 0;
@@ -66,11 +91,25 @@ public class StopWatch {
         start();
     }
 
+    /**
+     * Ensures that this object is in the running state.  If this object is not
+     * running, then the call has the effect of setting the <code>startTime</code>
+     * attribute to the current value of System.currentTimeMillis() and setting
+     * the <code>running</code> attribute to <code>true</code>.
+     */
     public void start() {
         startTime = System.currentTimeMillis();
-        running   = true;
+        running = true;
     }
 
+    /**
+     * Ensures that this object is in the stopped state.  If this object is
+     * in the running state, then this has the effect of adding to the
+     * <code>total</code> attribute the elapsed time since the last transition
+     * from stopped to running state and sets the <code>running</code> attribute
+     * to false. If this object is not in the running state, this call has no
+     * effect.
+     */
     public void stop() {
 
         if (running) {

@@ -42,24 +42,17 @@ import java.sql.*;
 
 /**
  * @author james house jhouse@part.net
+ * @version 1.7.2
+ * @since 1.7.2
  */
 public class jdbcBlob implements Blob {
 
-    byte[] blobData = null;
+    byte[] blobData;
+    static final SQLException notSupported =
+        Trace.error(Trace.FUNCTION_NOT_SUPPORTED);
 
-    jdbcBlob(Object data) {
-
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ObjectOutputStream    out  = new ObjectOutputStream(baos);
-
-            out.writeObject(data);
-            out.flush();
-
-            this.blobData = baos.toByteArray();
-        } catch (IOException io) {
-            io.printStackTrace();
-        }
+    jdbcBlob(byte[] data) {
+        this.blobData = data;
     }
 
     /**
@@ -89,27 +82,27 @@ public class jdbcBlob implements Blob {
     }
 
     public long position(Blob pattern, long start) throws SQLException {
-        throw new SQLException("Not implemented");
+        throw notSupported;
     }
 
     public long position(byte[] pattern, long start) throws SQLException {
-        throw new SQLException("Not implemented");
+        throw notSupported;
     }
 
     public int setBytes(long pos, byte[] bytes) throws SQLException {
-        throw new SQLException("Not implemented");
+        throw notSupported;
     }
 
     public int setBytes(long pos, byte[] bytes, int offset,
                         int len) throws SQLException {
-        throw new SQLException("Not implemented");
+        throw notSupported;
     }
 
     public OutputStream setBinaryStream(long pos) throws SQLException {
-        throw new SQLException("Not implemented");
+        throw notSupported;
     }
 
     public void truncate(long len) throws SQLException {
-        throw new SQLException("Not implemented");
+        throw notSupported;
     }
 }

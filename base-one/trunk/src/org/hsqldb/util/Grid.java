@@ -79,8 +79,12 @@ import java.util.Vector;
 class Grid extends Panel {
 
     // drawing
-    private Dimension   dMinimum;
-    private Font        fFont;
+    private Dimension dMinimum;
+
+// boucherb@users changed access for databasemanager2
+    protected Font fFont;
+
+// --------------------------------------------------
     private FontMetrics fMetrics;
     private Graphics    gImage;
     private Image       iImage;
@@ -92,11 +96,18 @@ class Grid extends Panel {
     private int iX, iY;
 
     // data
-    private String sColHead[] = new String[0];
-    private Vector vData      = new Vector();
-    private int    iColWidth[];
-    private int    iColCount, iRowCount;
+// boucherb@users changed access for databasemanager2
+    protected String[] sColHead = new String[0];
+    protected Vector   vData    = new Vector();
 
+// --------------------------------------------------
+    private int iColWidth[];
+    private int iColCount;
+
+// boucherb@users changed access for databasemanager2
+    protected int iRowCount;
+
+// --------------------------------------------------
     // scrolling
     private Scrollbar sbHoriz, sbVert;
     private int       iSbWidth, iSbHeight;

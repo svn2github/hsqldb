@@ -123,7 +123,8 @@ implements org.hsqldb.DatabaseRowInputInterface {
     }
 
     protected Boolean readBit() throws IOException, SQLException {
-        return new Boolean(readBoolean());
+        return readBoolean() ? Boolean.TRUE
+                             : Boolean.FALSE;
     }
 
     protected java.sql.Time readTime() throws IOException, SQLException {

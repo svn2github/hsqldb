@@ -242,19 +242,16 @@ class Tokenizer {
                 return true;
         }
 
-		if (sToken.length() == 0) {
-	        return false;
-		}
+        if (sToken.length() == 0) {
+            return false;
+        }
 
-		return sToken.equals("NULL")
-	        || sToken.equals("TRUE")
-	        || sToken.equals("FALSE")
-	        || sToken.equals("CURRENT_DATE")
-                || sToken.equals("CURRENT_TIME")
-                || sToken.equals("CURRENT_TIMESTAMP")
-	        || sToken.equals("SYSDATE")
-	        || sToken.equals("NOW")
-	        || sToken.equals("TODAY");
+        return sToken.equals("NULL") || sToken.equals("TRUE")
+               || sToken.equals("FALSE") || sToken.equals("CURRENT_DATE")
+               || sToken.equals("CURRENT_TIME")
+               || sToken.equals("CURRENT_TIMESTAMP")
+               || sToken.equals("SYSDATE") || sToken.equals("NOW")
+               || sToken.equals("TODAY");
     }
 
     boolean wasQuotedIdentifier() {

@@ -99,7 +99,7 @@ public class HsqlLinkedList implements HsqlList {
 
     /**
      * Appends <code>element</code> to the end of this list.
-     * @returns true
+     * @return true
      */
     public boolean add(Object element) {
 
@@ -166,7 +166,7 @@ public class HsqlLinkedList implements HsqlList {
     /**
      * Replaces the current element at <code>index/code> with
      * <code>element</code>.
-     * @returns The current element at <code>index</code>.
+     * @return The current element at <code>index</code>.
      */
     public Object set(int index, Object element) {
 
@@ -182,7 +182,7 @@ public class HsqlLinkedList implements HsqlList {
      * Accessor for the size of this linked list.  The size is the total number
      * of elements in the list and is one greater than the largest index in the
      * list.
-     * @returns The size of this.
+     * @return The size of this.
      */
     public final int size() {
         return elementCount;
@@ -246,7 +246,7 @@ public class HsqlLinkedList implements HsqlList {
     /**
      * Helper method that returns the Node at <code>index</code>.
      * @param index The index of the Node to return.
-     * @returns The Node at the given index.
+     * @return The Node at the given index.
      * @throws <code>IndexOutOfBoundsException</code> if index is not valid
      * index within the list (0 &lt;= <code>index</code> &lt;
      * <code>size</code>).

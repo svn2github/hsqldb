@@ -150,6 +150,16 @@ public class StringConverter {
         return new String(s);
     }
 
+    public static String byteToString(byte[] b, String charset) {
+
+        try {
+            return (charset == null) ? new String(b)
+                                     : new String(b, charset);
+        } catch (Exception e) {}
+
+        return null;
+    }
+
     /**
      * Converts a Unicode string into UTF8 then convert into a hex string
      *

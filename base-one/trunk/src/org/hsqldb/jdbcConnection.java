@@ -1256,27 +1256,64 @@ public class jdbcConnection implements Connection {
      * regardless of whether the calling user has any rights on any
      * of the tables. <p>
      *
-     * HSQLDB 1.7.1 will provide the option of installing a full and
-     * accurate <code>DatabaseMetaData</code> implementation that is
-     * accessible to all database users, regardless of admin status.
-     * In that implementation, <code>DatabaseMetaData</code> methods
-     * returning <code>ResultSet</code> will yield results that have
-     * been automatically pre-filtered to omit entries to which the
-     * connected user has not been granted access, regardless of the
-     * filter parameters specified to those methods. That is,
-     * supplied filter parameters will only further restrict results
-     * that already comply with the security set up by
-     * administration, and will never give greater access than has
-     * been granted. Also in that implementation, full MetaData will
-     * be reported to all users about all system tables, unless
-     * SELECT on any system table providing <code>DatabaseMetaData</code>
-     * is specifically revoked from PUBLIC and not explicitly granted
-     * to each user. <p>
+     * Starting with HSQLDB 1.7.2, an option is provided to
+     * plug in alternate meta-data implementations, including
+     * a pre-written full and accurate <code>AbstractTableProducer</code>
+     * implementation that makes all DatabaseMetaData information
+     * provided through system tables accessible to all database users,
+     * regardless of admin status.  This works through the
+     * {@link AbstractTableProducer#createSystemTableProducer
+     * AbstractTableProducer.createSystemTableProducer} factory method.
+     * The factory method searches for and dynamically constructs a
+     * system table producer implementation when opening a database,
+     * using the following steps : <p>
+     *
+     * <ol>
+     * <li>The database properties object is queried for a value corresponding
+     *     to the key: "hsqldb.system_table_producer" with default value
+     *     "org.hsqldb.DatabaseInformationFull"
+     *
+     * <li>If a class whose fully qualified name matches the
+     *     "hsqldb.system_table_producer" property can be
+     *     found by the <code>ClassLoader</code> object specified by
+     *     the database classLoader member attribute, the found class
+     *     descends from AbstractTableProducer and it has a constructor
+     *     that takes a <code>Database</code> object as the single
+     *     parameter, then an instance of that class is reflectively
+     *     instantiated and set as the value of database <code>dInfo</code>
+     *     <code>AbstractTableProducer</code> member attribute.
+     *
+     * <li>If 2.) fails, then the process is repeated using the value
+     *     "org.hsqldb.DatabaseInformation"  This class provides the
+     *     1.7.1 system table implementation.
+     *
+     * <li>If 3.) fails, the database fails to open.
+     * </ol>
+     *
+     * With the <code>org.hsqldb.DatabaseInformationFull</code> implementation
+     * installed, <code>jdbcDatabaseMetaData</code> methods returning
+     * <code>ResultSet</code> yield results that have been automatically
+     * pre-filtered to omit entries to which connected users have not been
+     * granted access, regardless of the filter parameters specified to those
+     * methods. That is, unlike the original implementation, supplied filter
+     * parameters only further restrict results that already comply with the
+     * security set up by administration, and will never erronously indicate
+     * greater access than has been granted. Also in the full implementation,
+     * MetaData is reported to all users about all system tables, unless
+     * SELECT is explicitly revoked.  Finally, the full implementation
+     * provides a number of system tables that are not used directly by
+     * the <code>jdbcDatabaseMetaData</code> class but that provide extended
+     * information about the database that was not available in previous
+     * releases, such as information about the triggers and aliases defined
+     * in the database.<p>
      *
      * </span> <!-- end release-specific documentation -->
      *
      * @return a DatabaseMetaData object for this Connection
      * @see jdbcDatabaseMetaData
+     * @see AbstractTableProducer
+     * @see DatabaseInformation
+     * @see DatabaseInformationFull
      */
     public DatabaseMetaData getMetaData() {
 
@@ -1342,12 +1379,26 @@ public class jdbcConnection implements Connection {
      */
     public boolean isReadOnly() throws SQLException {
 
-        String s = "SELECT * FROM SYSTEM_CONNECTIONINFO WHERE KEY='READONLY'";
-        ResultSet r = execute(s);
+        if (Trace.TRACE) {
+            Trace.trace();
+        }
 
-        r.next();
+        if (iType == INTERNAL || iType == STANDALONE) {
+            return cSession.isReadOnly();
+        } else {
+            try {
+                ResultSet rs = execute(
+                    "call \"org.hsqldb.Library.isReadOnlyConnection\"()");
 
-        return r.getString(2).equals("TRUE");
+                rs.next();
+
+                return rs.getBoolean(1);
+            } catch (SQLException e) {
+                this.close();
+
+                throw Trace.error(Trace.CONNECTION_IS_BROKEN);
+            }
+        }
     }
 
     /**
@@ -2494,25 +2545,24 @@ public class jdbcConnection implements Connection {
      * <code>Database</code>. <p>
      *
      * This constructor is called on behalf of the
-     * <code>java.sql.DriverManager</code>
-     * when getting a <code>Connection</code> for use in normal
-     * (external) client code. <p>
+     * <code>java.sql.DriverManager</code> when getting a
+     * <code>Connection</code> for use in normal (external)
+     * client code. <p>
      *
      * Internal client code, that being code located in HSQLDB SQL
      * functions and stored procedures, receives an INTERNAL
      * connection constructed by the {@link #jdbcConnection(Session)
      * jdbcConnection(Session)} constructor.
-     *
+     * @param props A <code>Properties</code> object containing the connection
+     * properties such as the user name and password
      * @param s A connection specifier.<p>
      *
-     *     Essentialy, this is the name of the target <code>Database</code>
-     *     , possibly decorated with a protocol specifier prefix such
+     *     Essentially, this is the name of the target <code>Database</code>,
+     *     possibly decorated with a protocol specifier prefix such
      *     as <span class="JavaStringLiteral">"hsql://"</span> or
-     *     <span class="JavaStringLiteral">"http://"</span> , in the
+     *     <span class="JavaStringLiteral">"http://"</span> in the
      *     case that a network connection rather than a connection to
      *     an in-process <code>Database</code> is desired. <p>
-     * @param user name of user to connect
-     * @param password user's password
      * @exception SQLException when the user/password combination is
      *     invalid, the connection specifier is invalid, or the
      *     <code>Database</code> is unavailable. <p>
@@ -2542,6 +2592,8 @@ public class jdbcConnection implements Connection {
         s             = s.toUpperCase();
 
         if (s.startsWith("HTTP://") || s.startsWith("HTTPS://")) {
+            iType = HTTP;
+
             openHTTP(user, password);
         } else if (s.startsWith("HSQLS://")) {
             iType = HSQLDB;
@@ -2869,7 +2921,7 @@ public class jdbcConnection implements Connection {
      *
      * @param  user the user's name, as known to the database
      * @param  password the user's password
-     * @param  tls TLS mode
+     * @param bTlsIn Whether to use TLS mode
      * @throws  SQLException when the supplied user/password
      *      combination is invalid or the network or database are
      *      unavailable, or (if TLS mode was requested) if there are

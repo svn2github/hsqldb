@@ -216,14 +216,15 @@ class TableWorks {
     Index createIndex(int col[], HsqlName name,
                       boolean unique) throws SQLException {
 
-        if (table.isEmpty() || table.isIndexingMutable()) {
-            Index newindex = table.createIndex(col, name, unique);
+        Index newindex;
 
-            return newindex;
+        if (table.isEmpty() || table.isIndexingMutable()) {
+            newindex = table.createIndex(col, name, unique);
         } else {
             Table tn = table.moveDefinition(null, null,
                                             table.getColumnCount(), 0);
-            Index newindex = tn.createIndexStructure(col, name, unique);
+
+            newindex = tn.createIndexStructure(col, name, unique);
 
             tn.moveData(table, table.getColumnCount(), 0);
             tn.updateConstraints(table, table.getColumnCount(), 0);
@@ -233,9 +234,12 @@ class TableWorks {
             table.dDatabase.getTables().set(index, tn);
 
             table = tn;
-
-            return newindex;
         }
+
+        table.dDatabase.indexNameList.addName(newindex.getName().name,
+                                              table.getName());
+
+        return newindex;
     }
 
 // fredt@users 20020225 - avoid duplicate constraints
@@ -305,6 +309,8 @@ class TableWorks {
 
             table = tn;
         }
+
+        table.dDatabase.indexNameList.removeName(indexname);
     }
 
     /**

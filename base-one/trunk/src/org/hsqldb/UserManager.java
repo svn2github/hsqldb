@@ -76,29 +76,48 @@ import java.sql.SQLException;
 // fredt@users 20021103 - patch 1.7.2 - allow for drop table, etc.
 
 /**
- *  The collection (HsqlArrayList) of User object instances within a specific
- *  database. Methods are provided for creating, modifying and deleting
- *  users, as well as manipulating their access rights to the database
- *  objects.
- *
+ * Contains a set of User objects, and supports operations for
+ * creating, finding, modifying and deleting User objects for a Database.
  * @version  1.7.2
  * @see  User
  */
 class UserManager {
 
-    static final int      SELECT = 1,
-                          DELETE = 2,
-                          INSERT = 4,
-                          UPDATE = 8,
-                          ALL    = 15;
-    private HsqlArrayList uUser;
-    private User          uPublic;
+    /** Flag required to SELECT from a table. */
+    static final int SELECT = 1 << 0;
+
+    /** Flag required to DELETE from a table. */
+    static final int DELETE = 1 << 1;
+
+    /** flag required to INSERT into a table. */
+    static final int INSERT = 1 << 2;
+
+    /** Flag required to UPDATE a table. */
+    static final int UPDATE = 1 << 3;
+
+    /** Combined flag permitting any action. */
+    static final int ALL = SELECT | DELETE | INSERT | UPDATE;
 
     /**
-     *  Creates a new HsqlArrayList to contain the User object instances,
-     *  as well as creating an initial PUBLIC user, with no password.
+     * This object's set of User objects. <p>
      *
-     * @throws  SQLException
+     * Note: The special SYS User object
+     * is not included in this list but the special PUBLIC
+     * User object is.
+     */
+    private HsqlArrayList uUser;
+
+    /**
+     * The special PUBLIC User object. <p>
+     *
+     * Note: All User objects except the special
+     * SYS and PUBLIC User objects contain a reference to this object
+     */
+    private User uPublic;
+
+    /**
+     * Construction happens once for each Database object. The PUBLIC user is
+     * created
      */
     UserManager() throws SQLException {
         uUser   = new HsqlArrayList();
@@ -106,11 +125,7 @@ class UserManager {
     }
 
     /**
-     *  Returns int value for the string argument
-     *
-     * @param  right one of ALL SELECT UPDATE DELETE INSERT
-     * @return int value representing tthe right passed in.
-     * @throws  SQLException
+     * Translate a string representation or right(s) into its numeric form.
      */
     static int getRight(String right) throws SQLException {
 
@@ -130,11 +145,12 @@ class UserManager {
     }
 
     /**
-     * Returns comma separated list of String arguments based on int mask
-     * @param  right with each bit representing a distinct right
-     * @return  csv list of rights
+     * Returns a comma separated list of right names corresponding to the
+     * right flags set in the right argument. <p>
      */
-    static String getRight(int right) {
+    static String getRight(int right) throws SQLException {
+
+        checkValidFlags(right);
 
         if (right == ALL) {
             return "ALL";
@@ -166,19 +182,39 @@ class UserManager {
     }
 
     /**
-     *  This method is used to create a new user. The collection of users is
-     *  first checked for a duplicate name, and an exception will be thrown
-     *  if a user of the same name already exists.
+     * Creates a new User object under management of this object. <p>
      *
-     * @param  name (User login)
-     * @param  password (Plaintext password)
-     * @param  admin (Is this a database admin user?)
-     * @return a newly created User object
-     * @throws  SQLException
+     *  A set of constraints regarding user creation is imposed: <p>
+     *
+     *  <OL>
+     *    <LI>If the specified name is null, then an
+     *        ASSERTION_FAILED exception is thrown stating that
+     *        the name is null.
+     *
+     *    <LI>If the specified name equals the reserved SYS user
+     *        name, then an exception is thrown stating that the user already
+     *        exits.
+     *
+     *    <LI>If this object's collection already contains an element whose
+     *        name attribute equals the name argument, then
+     *        a USER_ALREADY_EXISTS exception is thrown.
+     *  </OL>
      */
     User createUser(String name, String password,
                     boolean admin) throws SQLException {
 
+        // boucherb@users 20020815 - patch assert nn name
+        Trace.doAssert(name != null, "null is name");
+
+        // TODO:
+        // checkComplexity(password);
+        // requires special: createSAUser(), createPublicUser()
+        // boucherb@users 20020815 - disallow user-land creation of SYS user
+        if (SYS_USER_NAME.equals(name)) {
+            throw Trace.error(Trace.USER_ALREADY_EXISTS, name);
+        }
+
+        // -------------------------------------------------------
         for (int i = 0, uSize = uUser.size(); i < uSize; i++) {
             User u = (User) uUser.get(i);
 
@@ -195,14 +231,23 @@ class UserManager {
     }
 
     /**
-     *  This method is used to drop a user. The user object is set to null,
-     *  and all access rights revoked. <P>
+     * Attempts to drop a User object with the specified name
+     *  from this object's set. <p>
      *
-     *  <B>Note:</B> An ACCESS_IS_DENIED exception will be thrown if an
-     *  attempt is made to drop the PUBLIC user.
+     *  A successful drop action consists of: <p>
      *
-     * @param  name of the user to be dropped
-     * @throws  SQLException
+     *  <UL>
+     *
+     *    <LI>removing the User object with the specified name
+     *        from the set.
+     *
+     *    <LI>revoking all rights from the removed object<br>
+     *        (this ensures that in case there are still references to the
+     *        just dropped User object, those references
+     *        cannot be used to erronously access database objects).
+     *
+     *  </UL> <p>
+     *
      */
     void dropUser(String name) throws SQLException {
 
@@ -226,16 +271,8 @@ class UserManager {
     }
 
     /**
-     *  This method is used to return an instance of a particular User
-     *  object, given the user name and password. <P>
-     *
-     *  <B>Note:</B> An ACCESS_IS_DENIED exception will be thrown if an
-     *  attempt is made to get the PUBLIC user.
-     *
-     * @param  name user name
-     * @param  password user password
-     * @return  the User object associated with name
-     * @throws  SQLException thrown if name or password are not correct
+     * Returns the User object with the specified name and
+     * password from this object's set.
      */
     User getUser(String name, String password) throws SQLException {
 
@@ -251,52 +288,57 @@ class UserManager {
 
         User u = get(name);
 
+        Trace.check(u != null, Trace.USER_NOT_FOUND);
         u.checkPassword(password);
 
         return u;
     }
 
     /**
-     *  This method is used to access the entire HsqlArrayList of User objects
-     *  for this database.
-     *
-     * @return  The HsqlArrayList of User objects
+     * Retrieves this object's set of User objects as
+     *  an HsqlArrayList. <p>
      */
     HsqlArrayList getUsers() {
         return uUser;
     }
 
     /**
-     *  This method is used to grant a user rights to database objects.
+     * Grants the rights represented by the rights argument on
+     * the database object identified by the dbobject argument
+     * to the User object identified by name
+     * argument.<p>
      *
-     * @param  name of the user
-     * @param  dbobject Table in the database or Java class name
-     * @param  right to grant to the user
-     * @throws  SQLException thrown if user does not exist
+     *  Note: For the dbobject argument, Java Class objects are identified
+     *  using a String object whose value is the fully qualified name
+     *  of the Class, while Table objects are
+     *  identified by an HsqlName object.  A Table
+     *  object identifier must be precisely the one obtained by calling
+     *  table.getName(); if a different HsqlName
+     *  object with an identical name attribute is specified, then
+     *  rights checks and tests will fail, since the HsqlName
+     *  class implements its {@link HsqlName#hashCode hashCode} and
+     *  {@link HsqlName#equals equals} methods based on pure object
+     *  identity, rather than on attribute values. <p>
      */
-    void grant(String name, Object dbobject, int right) throws SQLException {
-        get(name).grant(dbobject, right);
+    void grant(String name, Object dbobject, int rights) throws SQLException {
+        get(name).grant(dbobject, rights);
     }
 
     /**
-     *  This method is used to revoke a user's rights to database objects.
-     *
-     * @param  name of the user
-     * @param  dbobject Table in the database or Java class name
-     * @param  right to grant to the user
-     * @throws  SQLException thrown if user does not exist
+     * Revokes the rights represented by the rights argument on
+     * the database object identified by the dbobject argument
+     * from the User object identified by the name
+     * argument.<p>
+     * @see #grant
      */
-    void revoke(String name, Object dbobject, int right) throws SQLException {
-        get(name).revoke(dbobject, right);
+    void revoke(String name, Object dbobject,
+                int rights) throws SQLException {
+        get(name).revoke(dbobject, rights);
     }
 
     /**
-     *  This private method is used to access the User objects in the
-     *  collection and perform operations on them.
-     *
-     * @param  name Description of the Parameter
-     * @return  Description of the Return Value
-     * @exception  SQLException Description of the Exception
+     * Returns the User object identified by the
+     * name argument. <p>
      */
     private User get(String name) throws SQLException {
 
@@ -312,8 +354,8 @@ class UserManager {
     }
 
 /**
- * Removes all references to a db object for all users. Used when
- * dropping a table.
+     * Removes all rights mappings for the database object identified by
+     * the dbobject argument from all User objects in the set.
  */
     void removeDbObject(Object dbobject) {
 
@@ -324,5 +366,12 @@ class UserManager {
                 u.revokeDbObject(dbobject);
             }
         }
+    }
+
+    /** The user name reserved for the special SYS user. */
+    static final String SYS_USER_NAME = "SYS";
+
+    static void checkValidFlags(int rights) throws SQLException {
+        Trace.doAssert((rights & ~ALL) == 0, "illegal flags encountered");
     }
 }

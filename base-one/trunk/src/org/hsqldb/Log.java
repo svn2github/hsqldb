@@ -134,13 +134,15 @@ class Log implements Runnable {
     private String                 sFileLog;
     private boolean                bRestoring;
     private boolean                bReadOnly;
-    private int                    maxLogSize;
-    private int                    iLogCount;
-    private int                    logType;
-    private Thread                 tRunner;
-    private volatile int           writeDelay = 60;
-    private int                    mLastId;
-    private Cache                  cCache;
+
+    // metadata visibilty when not private
+    int            maxLogSize;
+    int            iLogCount;
+    int            logType;
+    private Thread tRunner;
+    volatile int   writeDelay = 60;
+    private int    mLastId;
+    private Cache  cCache;
 
     // used for tracing
     private StopWatch defaultTimer = new StopWatch();

@@ -111,41 +111,49 @@ class Table {
     static final int TEXT_TABLE      = 5;
     static final int VIEW            = 6;
 
+// boucherb@users - added in antcipation of special (not created via SQL) system
+// view objects to implement a SQL9n or 200n INFORMATION_SCHEMA
+    static final int SYSTEM_VIEW = 7;
+
     // name of the column added to tables without primary key
     static final String DEFAULT_PK = "";
 
     // main properties
-    private HsqlArrayList vColumn;            // columns in table
-    private HsqlArrayList vIndex;             // vIndex(0) is the primary key index
-    private int[]         iPrimaryKey;        // column numbers for primary key
-    protected int         iIndexCount;        // size of vIndex
-    private int           iIdentityColumn;    // -1 means no such row
-    protected int         iIdentityId;        // next value of identity column
-    HsqlArrayList         vConstraint;        // constrainst for the table
-    HsqlArrayList         vTrigs[];           // array of trigger lists
-    private int[]         colTypes;           // fredt - types of columns
-    private int[]         colSizes;           // fredt - copy of SIZE values for columns
-    private boolean[]     colNullable;        // fredt - modified copy of isNullable() values
-    private String[] colDefaults;             // fredt - copy of DEFAULT values
-    private int[]    defaultColumnMap;        // fred - holding 0,1,2,3,...
-    private boolean  hasDefaultValues;        //fredt - shortcut for above
+// boucherb@users - access changed in support of metadata 1.7.2
+    protected HsqlArrayList vColumn;            // columns in table
+    protected HsqlArrayList vIndex;             // vIndex(0) is the primary key index
+    protected int[]         iPrimaryKey;        // column numbers for primary key
+    private int             iIndexCount;        // size of vIndex
+    protected int           iIdentityColumn;    // -1 means no such row
+    protected int           iIdentityId;        // next value of identity column
+
+// -----------------------------------------------------------------------
+    HsqlArrayList     vConstraint;              // constrainst for the table
+    HsqlArrayList     vTrigs[];                 // array of trigger lists
+    private int[]     colTypes;                 // fredt - types of columns
+    private int[]     colSizes;                 // fredt - copy of SIZE values for columns
+    private boolean[] colNullable;              // fredt - modified copy of isNullable() values
+    private String[] colDefaults;               // fredt - copy of DEFAULT values
+    private int[]    defaultColumnMap;          // fred - holding 0,1,2,3,...
+    private boolean  hasDefaultValues;          //fredt - shortcut for above
     private boolean  isSystem;
     private boolean  isText;
     private boolean  isView;
-    boolean          sqlEnforceSize;          // inherited for the database -
+    boolean          sqlEnforceSize;            // inherited for the database -
 
     // properties for subclasses
-    protected int      iColumnCount;          // inclusive the hidden primary key
-    protected int      iVisibleColumns;       // exclusive of hidden primary key
+// boucherb@users - access changes in support of metadata 1.7.2
+    protected int      iColumnCount;            // inclusive the hidden primary key
+    protected int      iVisibleColumns;         // exclusive of hidden primary key
     protected Database dDatabase;
     protected Cache    cCache;
-    protected HsqlName tableName;             // SQL name
+    protected HsqlName tableName;               // SQL name
     protected int      tableType;
-    protected Session  ownerSession;          // fredt - set for temp tables only
+    protected Session  ownerSession;            // fredt - set for temp tables only
     protected boolean  isReadOnly;
     protected boolean  isTemp;
     protected boolean  isCached;
-    protected int      indexType;             // fredt - type of index used
+    protected int      indexType;               // fredt - type of index used
 
     /**
      *  Constructor declaration
@@ -564,7 +572,7 @@ class Table {
                 colindex, adjust);
 
             // fredt - we don't drop pk column
-            // in future we can drop signle column pk wih no fk reference
+            // although we _can_ drop single column pk wih no fk reference
             if (primarykey.length != newpk.length) {
                 throw Trace.error(Trace.DROP_PRIMARY_KEY);
             } else {
@@ -593,6 +601,8 @@ class Table {
                 throw Trace.error(Trace.INDEX_ALREADY_EXISTS);
             }
         }
+
+        tn.vTrigs = vTrigs;
 
         return tn;
     }
@@ -940,6 +950,7 @@ class Table {
         int[] colarr = ArrayUtil.toAdjustedColumnArray(indexcolumns,
             colindex, adjust);
 
+        // if a column to remove is one of the Index columns
         if (colarr.length != index.getVisibleColumns()) {
             return null;
         }
@@ -1266,6 +1277,8 @@ class Table {
             n = index.next(n);
         }
 
+        // fredt - this is replaced with drop()
+/*
         index = from.getPrimaryIndex();
         n     = index.first();
 
@@ -1281,6 +1294,8 @@ class Table {
 
             n = nextnode;
         }
+*/
+        from.drop();
     }
 
     /**

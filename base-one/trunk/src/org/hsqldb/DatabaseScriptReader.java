@@ -48,8 +48,9 @@ class DatabaseScriptReader {
 
     InputStream dataStreamIn;
     Database    db;
-    int         count;
+    int         lineCount;
 
+//    int         byteCount;
     // this is used only to enable reading one logged line at a time
     BufferedReader d;
     String         fileName;
@@ -77,6 +78,10 @@ class DatabaseScriptReader {
 
     void readAll(Session session) throws IOException, SQLException {}
 
+    int getLineNumber(){
+        return lineCount;
+    }
+
     protected void openFile() throws IOException {
         dataStreamIn = new DataInputStream(new FileInputStream(fileName));
         d = new BufferedReader(new InputStreamReader(dataStreamIn));
@@ -88,6 +93,7 @@ class DatabaseScriptReader {
 
             //fredt temporary solution - should read bytes directly from buffer
             String s = d.readLine();
+            lineCount++;
 
             return StringConverter.asciiToUnicode(s);
         } catch (IOException e) {

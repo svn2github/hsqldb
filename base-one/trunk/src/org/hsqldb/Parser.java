@@ -242,7 +242,19 @@ class Parser {
 
         int    type = e.getDataType();
         Object o    = e.getValue();
-        Result r    = new Result(1);
+
+// boucherb@users/hiep256@users 20010829 - patch 1.7.2 - allow expression to
+// return Results as Object, where object is Result or jdbcResultSet.     
+        if (o instanceof Result) {
+            return (Result) o;
+        }
+
+        if (o instanceof jdbcResultSet) {
+            return ((jdbcResultSet) o).rResult;
+        }
+
+// --------------------------------------------------------------------------        
+        Result r = new Result(1);
 
         r.sTable[0]  = "";
         r.colType[0] = type;

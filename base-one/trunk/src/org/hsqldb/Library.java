@@ -67,14 +67,16 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.HsqlHashMap;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Random;
 import java.text.SimpleDateFormat;
+import org.hsqldb.lib.HsqlHashMap;
 
 /**
  * Provides the HSQLDB implementation of standard Open Group SQL CLI
@@ -267,17 +269,17 @@ public class Library {
 // fredt@users 20020220 - patch 489184 by xclayl@users - thread safety
 
     /**
-     * Returns the next pseudorandom, uniformly distributed <CODE>double</CODE> value
+     * Returns the next pseudorandom, uniformly distributed <code>double</code> value
      * between 0.0 and 1.0 from a single, system-wide random number generator's
      * sequence, optionally re-seeding (and thus resetting) the generator sequence.
      *
-     * If the seed value is <CODE>null</CODE>, then the underlying random number
+     * If the seed value is <code>null</code>, then the underlying random number
      * generator retrieves the next value in its current sequence, else the seed
      * alters the state of the generator object so as to be in exactly the same state
      * as if it had just been created with the seed value.
      * @param seed an optional parameter with which to reseed the underlying
      * pseudorandom number generator
-     * @return the next pseudorandom, uniformly distributed <CODE>double</CODE> value between
+     * @return the next pseudorandom, uniformly distributed <code>double</code> value between
      *      0.0 and 1.0
      */
     public static synchronized double rand(Integer seed) {
@@ -311,7 +313,7 @@ public class Library {
     private static final double LOG10_FACTOR = 0.43429448190325183;
 
     /**
-     * Returns the base 10 logarithm of the given <code>double<code> value.
+     * Returns the base 10 logarithm of the given <code>double</code> value.
      * @param x the value for which to calculate the base 10 logarithm
      * @return the base 10 logarithm of <code>x</code>, as a <code>double</code>
      */
@@ -333,13 +335,13 @@ public class Library {
      * <LI> input outside the interval -1000000000000..1000000000000 returns
      *      input unchanged
      * <LI> input is converted to String form
-     * <LI> input with a <CODE>String</CODE> form length greater than 16 returns
+     * <LI> input with a <code>String</code> form length greater than 16 returns
      *      input unchaged
-     * <LI> <CODE>String</CODE> form with last four characters of '...000x' where
+     * <LI> <code>String</code> form with last four characters of '...000x' where
      *      x != '.' is converted to '...0000'
-     * <LI> <CODE>String</CODE> form with last four characters of '...9999' is
+     * <LI> <code>String</code> form with last four characters of '...9999' is
      *      converted to '...999999'
-     * <LI> the <CODE>java.lang.Double.doubleValue</CODE> of the <CODE>String</CODE>
+     * <LI> the <code>java.lang.Double.doubleValue</code> of the <code>String</code>
      *      form is returned
      * </UL>
      * @param d the double value for which to retrieve the <em>magically</em>
@@ -501,7 +503,7 @@ public class Library {
      * Returns the Unicode code value of the leftmost character of
      * <code>s</code> as an <code>int</code>.  This is the same as the
      * ASCII value if the string contains only ASCII characters.
-     * @param s the <CODE>String</CODE> to evaluate
+     * @param s the <code>String</code> to evaluate
      * @return the integer Unicode value of the
      *    leftmost character
      */
@@ -521,7 +523,7 @@ public class Library {
      * <b>Note:</b> <p>
      *
      * In some SQL CLI
-     * implementations, a <CODE>null</CODE> is returned if the range is outside 0..255.
+     * implementations, a <code>null</code> is returned if the range is outside 0..255.
      * In HSQLDB, the corresponding Unicode character is returned
      * unchecked.
      * @param code the character code for which to return a String
@@ -533,22 +535,22 @@ public class Library {
     }
 
     /**
-     * Returns a <CODE>String</CODE> object that is the result of an
-     * <em>SQL-style</em> concatenation of the given <CODE>String</CODE> objects. <p>
+     * Returns a <code>String</code> object that is the result of an
+     * <em>SQL-style</em> concatenation of the given <code>String</code> objects. <p>
      *
      * <b>Note:</b> by <em>SQL-style</em>, it is meant:
      *
      * <UL>
-     * <LI> if both <CODE>String</CODE> objects are <CODE>null</CODE>, return
-     *      <CODE>null</CODE>
-     * <LI> if only one string is <CODE>null</CODE>, return the other
-     * <LI> if both <CODE>String</CODE> objects are non-null, return as a
-     *      <CODE>String</CODE> object the character sequence obtained by listing,
+     * <LI> if both <code>String</code> objects are <code>null</code>, return
+     *      <code>null</code>
+     * <LI> if only one string is <code>null</code>, return the other
+     * <LI> if both <code>String</code> objects are non-null, return as a
+     *      <code>String</code> object the character sequence obtained by listing,
      *      in left to right order, the characters of the first string followed by
      *      the characters of the second
      * </UL>
-     * @param s1 the first <CODE>String</CODE>
-     * @param s2 the second <CODE>String</CODE>
+     * @param s1 the first <code>String</code>
+     * @param s2 the second <code>String</code>
      * @return <code>s1</code> concatentated with <code>s2</code>
      */
     public static String concat(String s1, String s2) {
@@ -638,7 +640,7 @@ public class Library {
 
     /**
      * Returns a character sequence which is the result of writing the
-     * first <code>length<code> number of characters from the second
+     * first <code>length</code> number of characters from the second
      * given <code>String</code> over the first string. The start position
      * in the first string where the characters are overwritten is given by
      * <code>start</code>.<p>
@@ -723,7 +725,7 @@ public class Library {
      *  <LI> if <code>count</code> is greater than the length of <code>s</code>,
      *      then a copy of <code>s</code> is returned
      * </UL>
-     * @param s the code>String</code> from which to retrieve the leftmost
+     * @param s the <code>String</code> from which to retrieve the leftmost
      *      characters
      * @param count the count of leftmost characters to retrieve
      * @return the leftmost <code>count</code> characters of <code>s</code>
@@ -920,7 +922,7 @@ public class Library {
      * precedence:
      *
      * <UL>
-     *  <LI> if <code>s</code> is <CODE>null</CODE>, <CODE>null</CODE> is returned
+     *  <LI> if <code>s</code> is <code>null</code>, <code>null</code> is returned
      *  <LI> if <code>count</code> is less than one, a zero-length
      *      <code>String</code> is returned
      *  <LI> if <code>count</code> is greater than the length of <code>s</code>,
@@ -950,7 +952,7 @@ public class Library {
      * Returns the characters of the given <code>String</code>, with trailing
      * spaces removed.
      * @param s the <code>String</code> from which to remove the trailing blanks
-     * @return the characters of the given <CODE>String</CODE>, with the
+     * @return the characters of the given <code>String</code>, with the
      * trailing spaces removed
      */
     public static String rtrim(String s) {
@@ -1121,7 +1123,10 @@ public class Library {
      * @return a date value representing the current date
      */
     public static java.sql.Date curdate() {
-        return new java.sql.Date(System.currentTimeMillis());
+
+        return HsqlDateTime.getToday();
+
+//        return new java.sql.Date(System.currentTimeMillis());
     }
 
     /**
@@ -1151,7 +1156,7 @@ public class Library {
      * Returns an integral value representing the indicated
      * part of the given date object, using a <code>GregorianCalendar</code>
      * object.
-     * @param d the <CODE>Date</CODE> object from which to extract the indicated part
+     * @param d the <code>Date</code> object from which to extract the indicated part
      * @param part an integer code corresponding to the desired date part
      * @return the indicated part of the given <code>java.util.Date</code> object
      */
@@ -1377,20 +1382,83 @@ public class Library {
         return 0;
     }
 
+    // JDBC SYSTEM
+
     /**
-     * Retrieves the autocommit status of this connection.
+     * Retrieves the autocommit status of this connection. <p>
      *
-     * @param conn the connection for which to retrieve the last generated
-     *      integer identity value
+     * @param conn the <code>Connection</code> object for which to retrieve
+     *      the current autocommit status
      * @return a boolean value representing the connection's autocommit status
+     * @since HSQLDB 1.7.0
      */
     public static boolean getAutoCommit(Connection conn) {
+        return ((jdbcConnection) conn).cSession.getAutoCommit();
+    }
 
-        try {
-            return conn.getAutoCommit();
-        } catch (SQLException e) {
-            return false;
-        }
+    /**
+     * Retrieves the name of this database product. <p>
+     *
+     * @return database product name as a <code>String</code> object
+     * @since HSQLDB 1.7.2
+     */
+    public static String getDatabaseProductName() {
+        return "HSQL Database Engine";
+    }
+
+    /**
+     * Retrieves the version number of this database product. <p>
+     *
+     * @return database version number as a <code>String</code> object
+     * @since HSQLDB 1.7.2
+     */
+    public static String getDatabaseProductVersion() {
+        return "1.7.2";
+    }
+
+    /**
+     * Retrieves the major version number of this database. <p>
+     *
+     * @return the database's major version as an <code>int</code> value
+     * @since HSQLDB 1.7.2
+     */
+    public static int getDatabaseMajorVersion() {
+        return 1;
+    }
+
+    /**
+     * Retrieves the major version number of this database. <p>
+     *
+     * @return the database's major version as an <code>int</code> value
+     * @since HSQLDB 1.7.2
+     */
+    public static int getDatabaseMinorVersion() throws SQLException {
+        return 7;
+    }
+
+    /**
+     * Retrieves whether this connection is in read-only mode. <p>
+     *
+     * @param conn the <code>Connection</code> object for which to retrieve
+     *      the current read-only status
+     * @return  <code>true</code> if connection is read-only and
+     *      <code>false</code> otherwise
+     * @since HSQLDB 1.7.2
+     */
+    public static boolean isReadOnlyConnection(Connection conn) {
+        return ((jdbcConnection) conn).cSession.isReadOnly();
+    }
+
+    /**
+     * Retrieves whether this database is in read-only mode. <p>
+     *
+     * @param conn the <code>Connection</code> object for which to retrieve
+     *      the current database read-only status
+     * @return <code>true</code> if so; <code>false</code> otherwise
+     * @since HSQLDB 1.7.2
+     */
+    public static boolean isReadOnlyDatabase(Connection c) {
+        return ((jdbcConnection) c).dDatabase.bReadOnly;
     }
 /*
 // test for soundex

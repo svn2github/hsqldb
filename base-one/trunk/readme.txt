@@ -1,6 +1,8 @@
 Readme File
 
-2003.01.03 CVS hsqldb-dev
+HSQLDB 1.7.2 ALPHA_K
+
+2003.01.10
 
 various patches and fixes
 
@@ -12,6 +14,8 @@ a range or equality condition on the OUTER columns returned.
 range queries has been applied. e.g. 
 WHERE columnvalue < 3
 will exclude from the result all rows with NULL in columnvalue.
+
+-a number of small enhancements and bug fixes.
 
 further enhancements to logging. 
 -The *.script file now contains only the DDL and data that is 
@@ -30,12 +34,13 @@ written out completely to disk at given intervals.
 SET WRITE_DELAY {TRUE | FALSE} is interpreted as synch every
 60 seconds or 1 second. SET WRITE_DELAY <n> where n is an integer
 is interpreted as synch every n seconds. The current default is
-5 seconds which seems too frequent and has a measurable impact on
-performance. This command will be further refined in the near
-future.
+60 seconds which seems to provide the right balance. The
+performance impact of SET WRITE_DELAY 1 is probably about 15% over that
+of SET WRITE_DELAY 300.
 
-Further enhancements and fine-tuning to the above will be committed
-in the next few days.
+-The recovery from crash has been modified so that any line in the log
+that is not properly written (and causes an error) ends the redo process.
+A message is reported to the user, instead of stopping engine operation.
 
 HSQLDB 1.7.2 ALPHA_J
 

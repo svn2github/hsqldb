@@ -148,6 +148,7 @@ class TestSelf {
         delete(path + ".properties");
         delete(path + ".script");
         delete(path + ".data");
+        delete(path + ".log");
     }
 
     static void test(String url, String user, String password,
@@ -183,15 +184,19 @@ class TestSelf {
             String     password    = "";
             Connection cConnection = null;
 
+            print("Openning DB");
+
             cConnection = DriverManager.getConnection(url, user, password);
 
             testScript(cConnection, "TestSelfCreate.txt");
             cConnection.close();
+            print("Openning DB");
 
             cConnection = DriverManager.getConnection(url, user, password);
 
             testScript(cConnection, "TestSelfModify.txt");
             cConnection.close();
+            print("Openning DB");
 
             cConnection = DriverManager.getConnection(url, user, password);
 
@@ -513,10 +518,7 @@ class TestSelf {
                                 boolean persistent) throws Exception {
 
         if (persistent) {
-            delete("test2.backup");
-            delete("test2.properties");
-            delete("test2.script");
-            delete("test2.data");
+            deleteDatabase("test2");
         }
 
         Statement  sStatement  = null;

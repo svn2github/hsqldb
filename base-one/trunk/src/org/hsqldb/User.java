@@ -74,31 +74,52 @@ import org.hsqldb.lib.HsqlHashMap;
 // fredt@users 20021103 - patch 1.7.2 - allow for drop table, etc.
 // when tables are dropped or renamed, changes are reflected in the
 // permissions held in User objects.
+// boucherb@users 200208-200212 - doc 1.7.2 - update
+// boucherb@users 200208-200212 - patch 1.7.2 - metadata
 
 /**
- * A User objects holds the rights for a particular user, plus a reference
- * to the special uPublic. checkXXX() and getXXX() methods use the uPublic
- * rights as well individually granted rights to decide which rights exist
- * for the user.
- *
- *
+ * A User Object holds the name, password, role and access rights for a
+ * particular database user.<p>
+ * It supplies the methods used to grant, revoke, test
+ * and check a user's access rights to other database objects.
+ * It also holds a reference to the common PUBLIC User Object,
+ * which represent the special user refered to in
+ * GRANT ... TO PUBLIC statements.<p>
+ * The check(), isAccessible() and getGrantedClassNames() methods check the
+ * rights granted to the PUBLIC User Object, in addition to individually
+ * granted rights, in order to decide which rights exist for the user.
  * @version 1.7.2
  */
 class User {
 
-    private boolean     bAdministrator;
+    /** true if this user has database administrator role. */
+    private boolean bAdministrator;
+
+    /** map with database object identifier keys and access privileges values */
     private HsqlHashMap rightsMap;
-    private String      sName, sPassword;
-    private User        uPublic;
+
+    /** user name. */
+    private String sName;
+
+    /** password. */
+    private String sPassword;
 
     /**
-     * Constructor declaration
-     *
-     *
-     * @param name
-     * @param password
-     * @param admin
-     * @param pub
+     * A reference to the common, PUBLIC User object held by UserManager.
+     * For the special PUBLIC and SYS user objects, this attribute is null.
+     * Under the current security scheme, User objects for users with
+     * administrator role do not really need a non-null uPublic attribute,
+     * as it is never consulted, but one is currently assigned to them anyway
+     * by UserManager. In the future, this may be of some use,
+     * as for instance if the database administrator role could be
+     * revoked (which it currently can not), or if the idea of roles is
+     * broadened.
+     */
+    private User uPublic;
+
+    /**
+     * Constructor, with a argument reference to the PUBLIC User Object which
+     * is null if this is the SYS or PUBLIC user.
      */
     User(String name, String password, boolean admin, User pub) {
 
@@ -111,22 +132,10 @@ class User {
         uPublic        = pub;
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @return
-     */
     String getName() {
         return sName;
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @return
-     */
     String getPassword() {
 
         // necessary to create the script
@@ -134,10 +143,22 @@ class User {
     }
 
     /**
-     * Method declaration
+     * Retrieves the map object that represents the rights that have been
+     * granted on database objects.  <p>
      *
+     * The map has keys and values with the following interpretation: <P>
      *
-     * @return
+     * <UL>
+     * <LI> The keys are generally (but not limited to) objects having
+     *      an attribute or value equal to the name of an actual database
+     *      object.
+     *
+     * <LI> Specifically, the keys act as database object identifiers.
+     *
+     * <LI> The values are always Integer objects, each formed by combining
+     *      a set of flags, one for each of the access rights defined in
+     *      UserManager: {SELECT, INSERT, UPDATE and DELETE}.
+     * </UL>
      */
     HsqlHashMap getRights() {
 
@@ -145,58 +166,68 @@ class User {
         return rightsMap;
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param password
-     */
     void setPassword(String password) {
+
+        // TODO:
+        // checkComplexity(password);
+        // requires: UserManager.createSAUser(), UserManager.createPublicUser()
         sPassword = password;
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @param test
-     *
-     * @throws SQLException
+     * Checks if this object's password attibute equals
+     * specified argument, else throws.
      */
     void checkPassword(String test) throws SQLException {
         Trace.check(test.equals(sPassword), Trace.ACCESS_IS_DENIED);
     }
 
     /**
-     * changes made to keys stored in rightsMap to use HsqlName objects for
-     * tables. This allows rights to persist when a table is renamed.
+     * Grants the specified rights on the specified database object. <p>
      *
-     * @param object
-     * @param right
+     * This method throws if the flags set in the rights argument do not
+     * repesent a valid set of rights.<p>
+     *
+     * Keys stored in rightsMap for database tables are their HsqlName
+     * attribute. This allows rights to persist when a table is renamed. <p>
      */
-    void grant(Object dbobject, int right) {
+    void grant(Object dbobject, int rights) throws SQLException {
+
+        Trace.doAssert(dbobject != null, "dbobject is null");
+
+        if (rights == 0) {
+            return;
+        }
+
+        UserManager.checkValidFlags(rights);
 
         Integer n = (Integer) rightsMap.get(dbobject);
 
-        if (n == null) {
-            n = new Integer(right);
-        } else {
-            n = new Integer(n.intValue() | right);
-        }
+        n = (n == null) ? new Integer(rights)
+                        : new Integer(n.intValue() | rights);
 
         rightsMap.put(dbobject, n);
     }
 
-// boucher@users 20021230 - patch 643665 - remove rights object when empty
-
     /**
-     * Method declaration
+     * Revokes the specified rights on the specified database object. <p>
      *
+     * It throws if the bits set in the rights argument do not repesent a
+     * valid set of right flags.<p>
      *
-     * @param object
-     * @param right
+     * If, after removing the specified rights, no rights remain on the
+     * database object, then the key/value pair for that object is removed
+     * from the rights map
      */
-    void revoke(Object dbobject, int right) {
+    void revoke(Object dbobject, int rights) throws SQLException {
+
+        Trace.doAssert(dbobject != null, "dbobject is null");
+
+        if (rights == 0) {
+            return;
+        }
+
+        UserManager.checkValidFlags(rights);
 
         Integer n = (Integer) rightsMap.get(dbobject);
 
@@ -204,7 +235,7 @@ class User {
             return;
         }
 
-        int rights = n.intValue() & (UserManager.ALL - right);
+        rights = n.intValue() & (UserManager.ALL - rights);
 
         if (rights == 0) {
             rightsMap.remove(dbobject);
@@ -216,15 +247,17 @@ class User {
     }
 
     /**
-     * Revokes all righs for an object. Used when tables are dropped.
+     * Revokes all rights on the specified database object.<p>
+     *
+     * This method removes any existing mapping from the rights map
      */
     void revokeDbObject(Object dbobject) {
         rightsMap.remove(dbobject);
     }
 
     /**
-     * Revokes all rights for this user.
-     *
+     * Revokes all rights from this User object.  The map is cleared and
+     * the database administrator role attribute is set false.
      */
     void revokeAll() {
 
@@ -234,54 +267,69 @@ class User {
     }
 
     /**
-     * Method declaration
+     * Checks if any of the rights represented by the rights
+     * argument have been granted on the specified database object. <p>
      *
-     *
-     * @param object
-     * @param right
-     *
-     * @throws SQLException
+     * This is done by checking that a mapping exists in the rights map
+     * from the dbobject argument for at least one of the rights
+     * contained in the rights argument. Otherwise, it throws.
      */
-    void check(Object dbobject, int right) throws SQLException {
+    void check(Object dbobject, int rights) throws SQLException {
 
-        if (bAdministrator) {
-            return;
+        if (!isAccessible(dbobject, rights)) {
+            throw Trace.error(Trace.ACCESS_IS_DENIED);
         }
-
-        Integer n;
-
-        n = (Integer) rightsMap.get(dbobject);
-
-        if ((n != null) && (n.intValue() & right) != 0) {
-            return;
-        }
-
-        if (uPublic != null) {
-            n = (Integer) (uPublic.rightsMap).get(dbobject);
-
-            if ((n != null) && (n.intValue() & right) != 0) {
-                return;
-            }
-        }
-
-        throw Trace.error(Trace.ACCESS_IS_DENIED);
     }
 
     /**
-     * Method declaration
+     * Returns true if any of the rights represented by the
+     * rights argument has been granted on the database object identified
+     * by the dbobject argument. <p>
      *
-     *
-     * @throws SQLException
+     * This is done by checking that a mapping exists in the rights map
+     * from the dbobject argument for at least one of the rights
+     * contained in the rights argument.
+     */
+    boolean isAccessible(Object dbobject, int rights) throws SQLException {
+
+        Integer n;
+
+        Trace.doAssert(dbobject != null, "dbobject is null");
+        UserManager.checkValidFlags(rights);
+
+        if (bAdministrator) {
+            return true;
+        }
+
+        n = (Integer) rightsMap.get(dbobject);
+
+        if (n != null) {
+            return (n.intValue() & rights) != 0;
+        }
+
+        return (uPublic == null) ? false
+                                 : uPublic.isAccessible(dbobject, rights);
+    }
+
+    /**
+     * Returns true if any right at all has been granted to this User object
+     * on the database object identified by the dbobject argument.
+     */
+    boolean isAccessible(Object dbobject) throws SQLException {
+        return isAccessible(dbobject, UserManager.ALL);
+    }
+
+    /**
+     * Checks that this User object is for a user with the
+     * database administrator role. Otherwise it throws.
      */
     void checkAdmin() throws SQLException {
         Trace.check(isAdmin(), Trace.ACCESS_IS_DENIED);
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @return
+     * Returns true if this User object is for a user with the
+     * database administrator role.
      */
     boolean isAdmin() {
         return bAdministrator;

@@ -69,6 +69,7 @@ package org.hsqldb;
 
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.UnifiedTable;
 import org.hsqldb.lib.StopWatch;
 import java.sql.SQLException;
 import java.sql.Types;
@@ -126,7 +127,9 @@ class Database {
     private HsqlArrayList          cSession;
     private HsqlDatabaseProperties databaseProperties;
     private Session                sysSession;
-    private Tokenizer              tokenizer = new Tokenizer();
+    private Tokenizer              tokenizer     = new Tokenizer();
+    DatabaseObjectNames triggerNameList          = new DatabaseObjectNames();
+    DatabaseObjectNames            indexNameList = new DatabaseObjectNames();
 
     //for execute()
     private static final int CALL                  = 1;
@@ -918,6 +921,8 @@ class Database {
                 case TEXT :
                 case MEMORY :
                     session.setScripting(false);
+                    break;
+
                 default :
                     throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
             }
@@ -1129,7 +1134,14 @@ class Database {
             name      = indexname.name;
         }
 */
+
+// fredt - 2003
+/*
         if (findIndex(name) != null) {
+            throw Trace.error(Trace.INDEX_ALREADY_EXISTS);
+        }
+*/
+        if (this.indexNameList.containsName(name)) {
             throw Trace.error(Trace.INDEX_ALREADY_EXISTS);
         }
 
@@ -1147,6 +1159,7 @@ class Database {
      * @param  name Description of the Parameter
      * @return  Description of the Return Value
      */
+/*
     private Index findIndex(String name) {
 
         Table t = findTableForIndex(name);
@@ -1157,14 +1170,25 @@ class Database {
             return t.getIndex(name);
         }
     }
+*/
 
     /**
      *  Finds the table that has an index with the given name in the
-     *  whole database.
+     *  whole database and visible in this session.
      *
-     * @param  name Description of the Parameter
-     * @return  Description of the Return Value
      */
+    private Table findUserTableForIndex(String name, Session session) {
+
+        HsqlName hsqlname = indexNameList.getOwner(name);
+
+        if (hsqlname == null) {
+            return null;
+        }
+
+        return findUserTable(hsqlname.name, session);
+    }
+
+/*
     private Table findTableForIndex(String name) {
 
         for (int i = 0, tsize = tTable.size(); i < tsize; i++) {
@@ -1177,6 +1201,7 @@ class Database {
 
         return null;
     }
+*/
 
     /**
      *  Retrieves the index of a table or view in the HsqlArrayList that
@@ -1217,8 +1242,13 @@ class Database {
         int     nQueueSize = TriggerDef.getDefaultQueueSize();
         String  sTrigName  = c.getName();
         boolean namequoted = c.wasQuotedIdentifier();
-        String  sWhen      = c.getString();
-        String  sOper      = c.getString();
+
+        Trace.doAssert(!triggerNameList.containsName(sTrigName),
+                       " trigger " + sTrigName + "exists");
+
+// -----------------------------------------------
+        String sWhen = c.getString();
+        String sOper = c.getString();
 
         c.getThis("ON");
 
@@ -1226,7 +1256,8 @@ class Database {
 
         t = getTable(sTableName, session);
 
-        if (t.isView()) {
+// boucherb@users 20021128 - disallow triggers on system tables
+        if (t.isView() || t.tableType == Table.SYSTEM_TABLE) {
             throw Trace.error(Trace.NOT_A_TABLE);
         }
 
@@ -1293,6 +1324,11 @@ class Database {
 
             throw Trace.error(Trace.UNKNOWN_FUNCTION, msg);
         }
+
+// boucherb@users 20021128 - enforce unique trigger names
+        triggerNameList.addName(sTrigName, t.getName());
+
+// ------------------------------------------------------
     }
 
     /**
@@ -1445,6 +1481,142 @@ class Database {
                           defaultvalue);
     }
 
+    HsqlArrayList processCreateConstraints(Tokenizer c, Session session,
+                                           Table t, boolean constraint,
+                                           int[] primarykeycolumn)
+                                           throws SQLException {
+
+        String sToken;
+
+// fredt@users 20020225 - comment
+// HSQLDB relies on primary index to be the first one defined
+// and needs original or system added primary key before any non-unique index
+// is created
+        HsqlArrayList tempConstraints = new HsqlArrayList();
+        TempConstraint tempConst = new TempConstraint(null, primarykeycolumn,
+            null, null, Constraint.MAIN, Constraint.NO_ACTION,
+            Constraint.NO_ACTION);
+
+// tony_lai@users 20020820 - patch 595099
+        HsqlName pkName = null;
+
+        tempConstraints.add(tempConst);
+
+        if (!constraint) {
+            return tempConstraints;
+        }
+
+        int i = 0;
+
+        while (true) {
+            sToken = c.getString();
+
+            HsqlName cname = null;
+
+            i++;
+
+            if (sToken.equals("CONSTRAINT")) {
+                cname  = new HsqlName(c.getName(), c.wasQuotedIdentifier());
+                sToken = c.getString();
+            }
+
+            int     cmd     = -1;
+            Integer command = (Integer) hCommands.get(sToken);
+
+            if (command != null) {
+                cmd = command.intValue();
+            }
+
+            switch (cmd) {
+
+                case PRIMARY : {
+                    c.getThis("KEY");
+
+// tony_lai@users 20020820 - patch 595099
+                    pkName = cname;
+
+                    int col[] = processColumnList(c, t);
+                    TempConstraint mainConst =
+                        (TempConstraint) tempConstraints.get(0);
+
+                    Trace.check(mainConst.localCol == null,
+                                Trace.SECOND_PRIMARY_KEY);
+
+                    mainConst.localCol = col;
+
+                    break;
+                }
+                case UNIQUE : {
+                    int col[] = processColumnList(c, t);
+
+                    if (cname == null) {
+                        cname = HsqlName.newAutoName("CT");
+                    }
+
+                    tempConst = new TempConstraint(cname, col, null, null,
+                                                   Constraint.UNIQUE,
+                                                   Constraint.NO_ACTION,
+                                                   Constraint.NO_ACTION);
+
+                    tempConstraints.add(tempConst);
+
+                    break;
+                }
+                case FOREIGN : {
+                    c.getThis("KEY");
+
+                    tempConst = processCreateFK(c, session, t, cname);
+
+                    if (tempConst.expCol == null) {
+                        TempConstraint mainConst =
+                            (TempConstraint) tempConstraints.get(0);
+
+                        tempConst.expCol = mainConst.localCol;
+
+                        if (tempConst.expCol == null) {
+                            throw Trace.error(Trace.INDEX_NOT_FOUND,
+                                              "table has no primary key");
+                        }
+                    }
+
+                    if (tempConst.updateAction == Constraint.SET_DEFAULT
+                            || tempConst.deleteAction
+                               == Constraint.SET_DEFAULT) {
+                        for (int j = 0; j < tempConst.localCol.length; j++) {
+                            if (t.getColumn(tempConst.localCol[j])
+                                    .getDefaultString() == null) {
+                                throw Trace.error(
+                                    Trace.COLUMN_TYPE_MISMATCH,
+                                    "missing DEFAULT value on column '"
+                                    + t.getColumn(
+                                        tempConst.localCol[j]).columnName
+                                            .name + "'");
+                            }
+                        }
+                    }
+
+                    t.checkColumnsMatch(tempConst.localCol,
+                                        tempConst.expTable, tempConst.expCol);
+                    tempConstraints.add(tempConst);
+                }
+            }
+
+            sToken = c.getString();
+
+            if (sToken.equals(",")) {
+                continue;
+            }
+
+            if (sToken.equals(")")) {
+                break;
+            }
+
+            throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+        }
+
+        return tempConstraints;
+    }
+
 // fredt@users 20020225 - patch 509002 by fredt
 // temporary attributes for constraints used in processCreateTable()
 
@@ -1570,137 +1742,10 @@ class Database {
             throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
         }
 
+        HsqlArrayList tempConstraints = processCreateConstraints(c, session,
+            t, constraint, primarykeycolumn);
+
         try {
-
-// fredt@users 20020225 - comment
-// HSQLDB relies on primary index to be the first one defined
-// and needs original or system added primary key before any non-unique index
-// is created
-            HsqlArrayList tempConstraints = new HsqlArrayList();
-            TempConstraint tempConst = new TempConstraint(null,
-                primarykeycolumn, null, null, Constraint.MAIN,
-                Constraint.NO_ACTION, Constraint.NO_ACTION);
-
-// tony_lai@users 20020820 - patch 595099
-            HsqlName pkName = null;
-
-            tempConstraints.add(tempConst);
-
-            if (constraint) {
-                int i = 0;
-
-                while (true) {
-                    sToken = c.getString();
-
-                    HsqlName cname = null;
-
-                    i++;
-
-                    if (sToken.equals("CONSTRAINT")) {
-                        cname = new HsqlName(c.getName(),
-                                             c.wasQuotedIdentifier());
-                        sToken = c.getString();
-                    }
-
-                    int     cmd     = -1;
-                    Integer command = (Integer) hCommands.get(sToken);
-
-                    if (command != null) {
-                        cmd = command.intValue();
-                    }
-
-                    switch (cmd) {
-
-                        case PRIMARY : {
-                            c.getThis("KEY");
-
-// tony_lai@users 20020820 - patch 595099
-                            pkName = cname;
-
-                            int col[] = processColumnList(c, t);
-                            TempConstraint mainConst =
-                                (TempConstraint) tempConstraints.get(0);
-
-                            Trace.check(mainConst.localCol == null,
-                                        Trace.SECOND_PRIMARY_KEY);
-
-                            mainConst.localCol = col;
-
-                            break;
-                        }
-                        case UNIQUE : {
-                            int col[] = processColumnList(c, t);
-
-                            if (cname == null) {
-                                cname = HsqlName.newAutoName("CT");
-                            }
-
-                            tempConst =
-                                new TempConstraint(cname, col, null, null,
-                                                   Constraint.UNIQUE,
-                                                   Constraint.NO_ACTION,
-                                                   Constraint.NO_ACTION);
-
-                            tempConstraints.add(tempConst);
-
-                            break;
-                        }
-                        case FOREIGN : {
-                            c.getThis("KEY");
-
-                            tempConst = processCreateFK(c, session, t, cname);
-
-                            if (tempConst.expCol == null) {
-                                TempConstraint mainConst =
-                                    (TempConstraint) tempConstraints.get(0);
-
-                                tempConst.expCol = mainConst.localCol;
-
-                                if (tempConst.expCol == null) {
-                                    throw Trace.error(
-                                        Trace.INDEX_NOT_FOUND,
-                                        "table has no primary key");
-                                }
-                            }
-
-                            if (tempConst.updateAction == Constraint
-                                    .SET_DEFAULT || tempConst
-                                    .deleteAction == Constraint.SET_DEFAULT) {
-                                for (int j = 0; j < tempConst.localCol.length;
-                                        j++) {
-                                    if (t.getColumn(tempConst.localCol[j])
-                                            .getDefaultString() == null) {
-                                        throw Trace.error(
-                                            Trace.COLUMN_TYPE_MISMATCH,
-                                            "missing DEFAULT value on column '"
-                                            + t.getColumn(
-                                                tempConst.localCol[j])
-                                                    .columnName.name + "'");
-                                    }
-                                }
-                            }
-
-                            t.checkColumnsMatch(tempConst.localCol,
-                                                tempConst.expTable,
-                                                tempConst.expCol);
-                            tempConstraints.add(tempConst);
-                        }
-                    }
-
-                    sToken = c.getString();
-
-                    if (sToken.equals(",")) {
-                        continue;
-                    }
-
-                    if (sToken.equals(")")) {
-                        break;
-                    }
-
-                    throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-                }
-            }
-
             session.commit();
 
 // fredt@users 20020225 - patch 509002 by fredt
@@ -1714,10 +1759,11 @@ class Database {
 // also, duplicate indexes can be avoided if we choose to in the future but
 // currently we have to accept them to stay compatible with existing cached
 // tables that include them
-            tempConst = (TempConstraint) tempConstraints.get(0);
+            TempConstraint tempConst =
+                (TempConstraint) tempConstraints.get(0);
 
 // tony_lai@users 20020820 - patch 595099
-            t.createPrimaryKey(pkName, tempConst.localCol);
+            t.createPrimaryKey(tempConst.name, tempConst.localCol);
 
             boolean logDDL = false;
 
@@ -1887,7 +1933,7 @@ class Database {
         String sToken      = c.getName();
         int    logposition = c.getPartMarker();
 
-        if (this.findUserTable(sToken, session) != null) {
+        if (findUserTable(sToken, session) != null) {
             throw Trace.error(Trace.VIEW_ALREADY_EXISTS, sToken);
         }
 
@@ -2149,15 +2195,15 @@ class Database {
 
         String  newname  = c.getName();
         boolean isQuoted = c.wasQuotedIdentifier();
-        Table   t        = findTableForIndex(indexname);
+        Table   t        = findUserTableForIndex(indexname, session);
 
-        if (t == null ||!t.equals(t.getName().name, session)) {
+        if (t == null) {
             throw Trace.error(Trace.INDEX_NOT_FOUND, indexname);
         }
 
-        Table ttemp = findTableForIndex(newname);
+        Table ttemp = findUserTableForIndex(newname, session);
 
-        if (ttemp != null && ttemp.equals(ttemp.getName().name, session)) {
+        if (ttemp != null) {
             throw Trace.error(Trace.INDEX_ALREADY_EXISTS, indexname);
         }
 
@@ -2172,6 +2218,7 @@ class Database {
         session.setScripting(!t.isTemp());
         session.commit();
         t.getIndex(indexname).setName(newname, isQuoted);
+        indexNameList.rename(indexname, newname);
     }
 
 // fredt@users 20020221 - patch 1.7.0 chnaged IF EXISTS syntax
@@ -2249,9 +2296,9 @@ class Database {
 
     void dropIndex(String indexname, Session session) throws SQLException {
 
-        Table t = findTableForIndex(indexname);
+        Table t = findUserTableForIndex(indexname, session);
 
-        if (t == null ||!t.equals(t.getName().name, session)) {
+        if (t == null) {
             throw Trace.error(Trace.INDEX_NOT_FOUND, indexname);
         }
 
@@ -2888,6 +2935,8 @@ class Database {
         tTable.remove(dropIndex);
         removeExportedKeys(toDrop);
         aAccess.removeDbObject(toDrop.getName());
+        triggerNameList.removeOwner(toDrop.tableName);
+        indexNameList.removeOwner(toDrop.tableName);
         toDrop.drop();
         session.setScripting(!toDrop.isTemp());
         session.commit();
@@ -2964,17 +3013,22 @@ class Database {
         }
 
         Trace.check(found, Trace.TRIGGER_NOT_FOUND, name);
+
+// boucherb@users 20021128 - enforce unique trigger names
+        triggerNameList.removeName(name);
+
+// ------------------------------------------------------
     }
 
     /**
-     *  Transitional interface for log and cache management. In future, this
-     *  will form the basis for the public interface of logging and cache
+     *  Transitional interface for log and cache management. In the future,
+     *  this will form the basis for the public interface of logging and cache
      *  classes.<p>
      *
-     *  Implements a storage manager wrapper that provides a consitent, always
-     *  available interface to storage management for the Database class,
-     *  despite the fact not all Database objects actually use file storage.
-     *  <p>
+     *  Implements a storage manager wrapper that provides a consistent,
+     *  always available interface to storage management for the Database
+     *  class, despite the fact not all Database objects actually use file
+     *  storage.<p>
      *
      *  The Logger class makes it possible avoid the necessity to test for a
      *  null Log Database attribute again and again, in many different places,
@@ -3219,6 +3273,84 @@ class Database {
          */
         void closeTextCache(HsqlName name) throws SQLException {
             lLog.closeTextCache(name);
+        }
+    }
+
+    /**
+     * Transitional container for object names that are unique across the
+     * DB instance but are owned by different DB objects. Currently names for
+     * Index and Trigger objects.
+     */
+    class DatabaseObjectNames {
+
+        UnifiedTable nameList = new UnifiedTable(Comparable.class, 2);
+        Object[]     tempName = new Object[2];
+
+        DatabaseObjectNames() {
+            nameList.sort(0, true);
+        }
+
+        boolean containsName(String name) {
+            return nameList.search(name) != -1;
+        }
+
+        HsqlName getOwner(String name) {
+
+            int i = nameList.search(name);
+
+            if (i == -1) {
+                return null;
+            }
+
+            return (HsqlName) nameList.getCell(i, 1);
+        }
+
+        void addName(String name, Object owner) throws SQLException {
+
+            // should not contain name
+            if (containsName(name)) {
+                throw Trace.error(Trace.GENERAL_ERROR);
+            }
+
+            tempName[0] = name;
+            tempName[1] = owner;
+
+            nameList.addRow(tempName);
+            nameList.sort(0, true);
+        }
+
+        void rename(String name, String newname) throws SQLException {
+
+            int i = nameList.search(name);
+
+            if (i != -1) {
+                nameList.setCell(i,0,newname);
+                nameList.sort(0,true);
+            }
+        }
+
+        void removeName(String name) throws SQLException {
+
+            int i = nameList.search(name);
+
+            if (i != -1) {
+                nameList.removeRow(i);
+            } else {
+
+                // should contain name
+                throw Trace.error(Trace.GENERAL_ERROR);
+            }
+        }
+
+        void removeOwner(HsqlName name) {
+
+            for (int i = 0; i < nameList.size(); i++) {
+                Object owner = nameList.getCell(i, 1);
+
+                if (owner == name || (owner != null && owner.equals(name))) {
+                    nameList.removeRow(i);
+                }
+            }
         }
     }
 }

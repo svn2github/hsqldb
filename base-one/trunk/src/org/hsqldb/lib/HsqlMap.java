@@ -53,14 +53,14 @@ public interface HsqlMap {
     /**
      * Tests if this map contains a mapping for the given key.
      * @param The key to test.
-     * @returns Whether or not this map contains a mapping for <code>key</code>.
+     * @return Whether or not this map contains a mapping for <code>key</code>.
      */
     public boolean containsKey(Object key);
 
     /**
      * Returns the object mapped to the given key.
      * @param key The <code>key</code> to look up in this map.
-     * @returns The element mapped to <code>key</code> or null if <code>key
+     * @return The element mapped to <code>key</code> or null if <code>key
      * </code> is not contained in the Map.
      */
     public Object get(Object key);
@@ -78,13 +78,13 @@ public interface HsqlMap {
      * Removes a mapping from this map.  The key and its corresponding element
      * are taken out of the map.
      * @param key The key of the mapping to remove.
-     * @returns The value, mapped to <code>key</code> that is being removed.
+     * @return The value, mapped to <code>key</code> that is being removed.
      */
     public Object remove(Object key);
 
     /**
      * Accessor for the number of mappings in this map.
-     * @returns The numbr of mappings in this map.
+     * @return The numbr of mappings in this map.
      */
     public int size();
 }

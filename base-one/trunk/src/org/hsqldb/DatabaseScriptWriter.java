@@ -36,6 +36,7 @@ import java.sql.SQLException;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.StringConverter;
+import org.hsqldb.lib.StopWatch;
 
 /**
  * Handles all logging to file operations. A log consists of three blocks:<p>
@@ -44,7 +45,7 @@ import org.hsqldb.lib.StringConverter;
  * DATA BLOCK: all data for MEMORY tables at startup time<br>
  * LOG BLOCK: SQL statements logged since startup or the last CHECKPOINT<br>
  *
- * The implementation of this class and its subclasses determines the format
+ * The implementation of this class and its subclasses support the formats
  * used for writing the data. In versions up to 1.7.2, this data is written
  * to the *.script file for the database. Since 1.7.2 the data can also be
  * written as binray in order to speed up shutdown and startup.<p>
@@ -54,7 +55,7 @@ import org.hsqldb.lib.StringConverter;
  *
  * A related use for this class is for saving a current snapshot of the
  * database data to a user-defined file. This happens in the SHUTDOWN COMPACT
- * process or done as a result of the SCRIPT command. In this use use, the
+ * process or done as a result of the SCRIPT command. In this case, the
  * DATA block contains the CACHED table data as well.<p>
  *
  * DatabaseScriptReader and its subclasses read back the data at startup time.
@@ -67,6 +68,7 @@ import org.hsqldb.lib.StringConverter;
  *
  * @author fredt@users
  * @version 1.7.2
+ * @since 1.7.2
  */
 
 // todo - can lock the database engine as readonly in a wrapper for this when
@@ -84,6 +86,7 @@ class DatabaseScriptWriter {
     FileDescriptor    outDescriptor;
     DatabaseRowOutput binaryOut = new BinaryServerRowOutput();
     int               tableRowCount;
+    StopWatch         sw = new StopWatch();
 
     /**
      * this determines if the script is the normal script (false) used
@@ -91,11 +94,13 @@ class DatabaseScriptWriter {
      */
     boolean          includeCachedData;
     long             byteCount;
-    int              writeDelay = 0;
-    boolean          needsSync = false;
-    static final int INSERT     = 0;
+    int              writeDelay;
+    volatile boolean needsSync;
+    volatile boolean forceSync;
+    volatile boolean busyWriting;
+    static final int INSERT = 0;
 
-    // todo - perhaps move this gloabal into a lib utility class
+    // todo - perhaps move this global into a lib utility class
     static byte[] lineSep;
 
     static {
@@ -148,21 +153,35 @@ class DatabaseScriptWriter {
         openFile();
     }
 
+    /**
+     *  Not used in current implementation.
+     */
     void setWriteDelay(int delay) {
         writeDelay = delay;
     }
 
     /**
-     *  Called externally if write delay is on.
+     *  Called externally in write delay intervals.
      */
-    void sync() throws IOException {
+    synchronized void sync() throws IOException {
 
         if (needsSync) {
+            if (busyWriting) {
+                forceSync = true;
+
+                return;
+            }
+
+            Trace.printSystemOut("file sync interval: " + sw.elapsedTime());
+            sw.zero();
             fileStreamOut.flush();
             outDescriptor.sync();
-        }
+            Trace.printSystemOut("file sync: " + sw.elapsedTime());
+            sw.zero();
 
-        needsSync = false;
+            needsSync = false;
+            forceSync = false;
+        }
     }
 
     void close() throws IOException {
@@ -185,6 +204,10 @@ class DatabaseScriptWriter {
         }
     }
 
+    /**
+     *  File is opened in append mode although in current usage the file
+     *  never pre-exists
+     */
     protected void openFile() throws SQLException {
 
         try {
@@ -201,8 +224,7 @@ class DatabaseScriptWriter {
      * This is not really useful in the current usage but may be if this
      * class is used in a different way.
      */
-    protected void finishStream() throws IOException {
-    }
+    protected void finishStream() throws IOException {}
 
     protected void writeDDL() throws IOException, SQLException {
 
@@ -294,13 +316,22 @@ class DatabaseScriptWriter {
 
     void writeLogStatement(String s) throws IOException, SQLException {
 
+        busyWriting = true;
+
         binaryOut.reset();
         StringConverter.unicodeToAscii(binaryOut, s);
         binaryOut.write(lineSep);
         fileStreamOut.write(binaryOut.getBuffer(), 0, binaryOut.size());
 
-        byteCount      += binaryOut.size();
-        needsSync = true;
+        byteCount += binaryOut.size();
+
         fileStreamOut.flush();
+
+        needsSync   = true;
+        busyWriting = false;
+
+        if (forceSync) {
+            sync();
+        }
     }
 }

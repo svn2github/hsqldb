@@ -139,9 +139,13 @@ class ScriptRunner {
                 if (s.length() != 0) {
                     Result result = dDatabase.execute(s, current);
 
-                    if ((result != null) && (result.iMode == Result.ERROR)) {
-                        throw (Trace.getError(result.errorCode,
-                                              result.sError));
+                    if (result != null && result.iMode == Result.ERROR) {
+                        Trace.printSystemOut("error in " + sFileScript
+                                             + " line: "
+                                             + scr.getLineNumber());
+                        Trace.printSystemOut(result.sError);
+
+                        break;
                     }
                 }
 

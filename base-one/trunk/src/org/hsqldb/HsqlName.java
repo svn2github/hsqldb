@@ -93,7 +93,7 @@ import org.hsqldb.lib.StringConverter;
  * @author fredt@users
  * @version 1.7.2
  */
-class HsqlName {
+class HsqlName implements Comparable {
 
     String             name;
     boolean            isNameQuoted;
@@ -215,5 +215,15 @@ class HsqlName {
     static void resetNumbering() {
         sysNumber    = 0;
         serialNumber = 0;
+    }
+
+    public String toString() {
+
+        return getClass().getName() + super.hashCode() + "[this.hashCode()="
+               + this.hashCode + ", name=" + name + ", name.hashCode()="
+               + name.hashCode() + ", isNameQuoted=" + isNameQuoted + "]";
+    }
+    public int compareTo(Object o) {
+        return hashCode - o.hashCode();
     }
 }
