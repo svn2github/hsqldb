@@ -40,7 +40,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.StringTokenizer;
 
-/* $Id: SqlTool.java,v 1.10 2004/02/16 21:32:09 unsaved Exp $ */
+/* $Id: SqlTool.java,v 1.11 2004/02/16 22:21:21 unsaved Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -51,8 +51,7 @@ import java.util.StringTokenizer;
  * See JavaDocs for the main method for syntax of how to run.
  *
  * @see @main()
- *
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  * @author Blaine Simpson
  */
 public class SqlTool {
@@ -109,35 +108,26 @@ public class SqlTool {
 
             while ((s = br.readLine()) != null) {
                 ++linenum;
-
                 s = s.trim();
-
                 if (s.length() == 0) {
                     continue;
                 }
-
                 if (s.charAt(0) == '#') {
                     continue;
                 }
-
                 tokenizer = new StringTokenizer(s);
-
                 if (tokenizer.countTokens() != 2) {
                     throw new Exception("Bad line " + linenum + " in '"
                                         + file + "':  " + s);
                 }
-
                 keyword = tokenizer.nextToken();
                 value   = tokenizer.nextToken();
-
                 if (dbKey == null) {
                     if (keyword.equals("urlid")) {
                         System.out.println(value);
                     }
-
                     continue;
                 }
-
                 if (keyword.equals("urlid")) {
                     if (value.equals(dbKey)) {
                         if (id == null) {
@@ -151,10 +141,8 @@ public class SqlTool {
                     } else {
                         thisone = false;
                     }
-
                     continue;
                 }
-
                 if (thisone) {
                     if (keyword.equals("url")) {
                         url = value;
@@ -168,18 +156,15 @@ public class SqlTool {
                     }
                 }
             }
-
             if (dbKey == null) {
                 return;
             }
-
             if (url == null || username == null || password == null) {
                 throw new Exception("url or username or password not set "
                                     + "for '" + dbKey + "' in file '" + file
                                     + "'");
             }
         }
-
         String id       = null;
         String url      = null;
         String username = null;
@@ -214,6 +199,7 @@ public class SqlTool {
      * @param arg  Run "java... org.hsqldb.util.SqlTool --help" for syntax.
      */
     public static void main(String arg[]) {
+
         /*
          * The big picture is, we parse input args; load a ConnectData;
          * get a JDBC Connection with the ConnectData; instantiate and
@@ -232,73 +218,53 @@ public class SqlTool {
         try {
             while ((i + 1 < arg.length) && arg[i + 1].startsWith("--")) {
                 i++;
-
                 if (arg[i].length() == 2) {
                     break;    // "--"
                 }
-
                 if (arg[i].substring(2).equals("help")) {
                     System.out.println(SYNTAX_MESSAGE);
                     System.exit(0);
                 }
-
                 if (arg[i].substring(2).equals("list")) {
                     listMode = true;
-
                     continue;
                 }
-
                 if (arg[i].substring(2).equals("rcfile")) {
                     if (++i == arg.length) {
                         throw bcl;
                     }
-
                     rcFile = arg[i];
-
                     continue;
                 }
-
                 if (arg[i].substring(2).equals("debug")) {
                     debug = true;
-
                     continue;
                 }
-
                 if (arg[i].substring(2).equals("driver")) {
                     if (++i == arg.length) {
                         throw bcl;
                     }
-
                     driver = arg[i];
-
                     continue;
                 }
-
                 throw bcl;
             }
-
             if (!listMode) {
                 if (++i == arg.length) {
                     throw bcl;
                 }
-
                 targetDb = arg[i];
             }
-
             int scriptIndex = 0;
-
             if (arg.length > i + 1) {
                 interactive = false;
-
                 if (arg.length != i + 2 ||!arg[i + 1].equals("-")) {
                     scriptFiles = new File[arg.length - i - 1];
-
                     if (debug) {
                         System.err.println("scriptFiles has "
                                            + scriptFiles.length
                                            + " elements");
                     }
-
                     while (i + 1 < arg.length) {
                         scriptFiles[scriptIndex++] = new File(arg[++i]);
                     }
@@ -310,9 +276,7 @@ public class SqlTool {
             System.err.println(SYNTAX_MESSAGE);
             System.exit(2);
         }
-
         ConnectData conData = null;
-
         try {
             conData = new ConnectData(rcFile, targetDb);
         } catch (Exception e) {
@@ -321,15 +285,12 @@ public class SqlTool {
                 + targetDb + "': " + e.getMessage());
             System.exit(1);
         }
-
         if (listMode) {
             System.exit(0);
         }
-
         if (debug) {
             conData.report();
         }
-
         try {
 
             // As described in the JDBC FAQ:
@@ -338,20 +299,16 @@ public class SqlTool {
             // There is a bug in the JDK 1.1.x that can cause Class.forName()
             // to fail. // new org.hsqldb.jdbcDriver();
             Class.forName(driver).newInstance();
-
             conn = DriverManager.getConnection(conData.url, conData.username,
                                                conData.password);
         } catch (Exception e) {
             System.err.println("Failed to get a connection to " + conData.url
                                + ".  " + e.getMessage());
-
             //e.printStackTrace();
             // Let's not continuing as if nothing is wrong.
             throw new RuntimeException(e.getMessage());
         }
-
         SqlFile[] sqlFiles = new SqlFile[scriptFiles.length];
-
         try {
             for (int j = 0; j < scriptFiles.length; j++) {
                 sqlFiles[j] = new SqlFile(scriptFiles[j], interactive);
@@ -360,20 +317,16 @@ public class SqlTool {
             try {
                 conn.close();
             } catch (Exception e) {}
-
             System.err.println(ioe.getMessage());
             System.exit(2);
         }
-
         int retval = 0;    // Value we will return via System.exit().
-
         try {
             for (int j = 0; j < scriptFiles.length; j++) {
                 sqlFiles[j].execute(conn);
             }
         } catch (IOException ioe) {
             System.err.println("Failed to execute SQL:  " + ioe.getMessage());
-
             retval = 3;
 
             // These two Exception types are handled properly inside of SqlFile.
@@ -383,11 +336,9 @@ public class SqlTool {
         } catch (SQLException se) {
             retval = 1;
         }
-
         try {
             conn.close();
         } catch (Exception e) {}
-
         System.exit(retval);
     }
 }

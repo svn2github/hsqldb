@@ -45,7 +45,7 @@ import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
-/* $Id: SqlFile.java,v 1.33 2004/02/16 22:36:41 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.34 2004/02/16 23:11:12 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -81,7 +81,7 @@ import java.util.StringTokenizer;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.33 $
+ * @version $Revision: 1.34 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -93,7 +93,9 @@ public class SqlFile {
     private Connection       curConn          = null;
     private String[]         statementHistory = new String[10];
     private boolean          htmlMode         = false;
-    final private static int SEP_LEN          = 2;    // Ascii field separator blanks
+
+    // Ascii field separator blanks
+    final private static int SEP_LEN          = 2;
     final private static String DIVIDER =
         "-----------------------------------------------------------------";
     final private static String SPACES =
@@ -150,7 +152,6 @@ public class SqlFile {
      *                       continueOnError defaults to true.
      */
     SqlFile(File inFile, boolean inInteractive) throws IOException {
-
         file        = inFile;
         interactive = inInteractive;
 
@@ -218,7 +219,6 @@ public class SqlFile {
         String deTerminated;
 
         continueOnError = interactive;
-
         BufferedReader br = null;
 
         try {
@@ -226,19 +226,15 @@ public class SqlFile {
                     ? System.in
                     : new FileInputStream(file)));
             curLinenum = 0;
-
             if (interactive) {
                 stdprint(BANNER);
             }
-
             while (true) {
                 if (interactive) {
                     psStd.print((stringBuffer.length() == 0) ? primaryPrompt
                                                           : contPrompt);
                 }
-
                 inputLine = br.readLine();
-
                 if (inputLine == null) {
 
                     /*
@@ -252,11 +248,8 @@ public class SqlFile {
                     }
                     break;
                 }
-
                 curLinenum++;
-
                 trimmedInput = inputLine.trim();
-
                 try {
 
                     // This is the try for SQLException.  SQLExceptions are
@@ -270,51 +263,45 @@ public class SqlFile {
                         if (trimmedInput.length() == 0) {
                             continue;
                         }
-
                         if (trimmedInput.charAt(0) == '\\') {
                             try {
                                 processSpecial(trimmedInput.substring(1));
                             } catch (QuitNow qn) {
                                 return;
                             } catch (BadSpecial bs) {
-                                errprint("Error at '"
-                                         + ((file == null) ? "stdin"
-                                                           : file.toString()) + "' line "
+                                errprint("Error at '" + ((file == null)
+                                        ? "stdin"
+                                        : file.toString()) + "' line "
                                                            + curLinenum
                                                            + ":\n\""
                                                            + inputLine
                                                            + "\"\n"
                                                            + bs.getMessage());
-
                                 if (!continueOnError) {
                                     throw new SqlToolError(bs);
                                 }
                             }
-
                             continue;
                         }
                         if (interactive && trimmedInput.charAt(0) == ':') {
                             try {
                                 processBuffer(trimmedInput.substring(1));
                             } catch (BadSpecial bs) {
-                                errprint("Error at '"
-                                         + ((file == null) ? "stdin"
-                                                           : file.toString()) + "' line "
+                                errprint("Error at '" + ((file == null)
+                                        ? "stdin"
+                                        : file.toString()) + "' line "
                                                            + curLinenum
                                                            + ":\n\""
                                                            + inputLine
                                                            + "\"\n"
                                                            + bs.getMessage());
-
                                 if (!continueOnError) {
                                     throw new SqlToolError(bs);
                                 }
                             }
-
                             continue;
                         }
                     }
-
                     if (trimmedInput.length() == 0) {
                         if (interactive) {
                             setBuf(stringBuffer.toString());
@@ -323,7 +310,6 @@ public class SqlFile {
                         }
                         continue;
                     }
-
                     deTerminated = deTerminated(inputLine);
 
                     // A null terminal line (i.e., /\s*;\s*$/) is never useful.
@@ -331,11 +317,10 @@ public class SqlFile {
                         if (stringBuffer.length() > 0) {
                             stringBuffer.append('\n');
                         }
-
-                        stringBuffer.append((deTerminated == null) ? inputLine
-                                                                : deTerminated);
+                        stringBuffer.append((deTerminated == null)
+                                ? inputLine
+                                : deTerminated);
                     }
-
                     if (deTerminated == null) {
                         continue;
                     }
@@ -344,7 +329,6 @@ public class SqlFile {
                     // SQL command.
                     curCommand     = stringBuffer.toString();
                     trimmedCommand = curCommand.trim();
-
                     if (trimmedCommand.length() == 0) {
                         throw new SQLException("Empty SQL Statement");
                     }
@@ -358,27 +342,20 @@ public class SqlFile {
                         if (interactive) {
                             setBuf(curCommand);
                         }
-
                         processStatement();
                     }
                 } catch (SQLException se) {
-                    errprint("SQL Error at '" + ((file == null) ? "stdin"
-                                                                : file.toString()) + "' line "
-                                                                + curLinenum
-                                                                    + ":\n\""
-                                                                        + curCommand
-                                                                            + "\"\n"
-                                                                                + se
-                                                                                .getMessage());
-
+                    errprint("SQL Error at '" + ((file == null)
+                            ? "stdin"
+                            : file.toString()) + "' line " + curLinenum
+                                    + ":\n\"" + curCommand + "\"\n"
+                                    + se.getMessage());
                     if (!continueOnError) {
                         throw se;
                     }
                 }
-
                 stringBuffer.setLength(0);
             }
-
             if (stringBuffer.length() != 0) {
                 errprint("Unterminated input:  [" + stringBuffer + ']');
             }
@@ -397,19 +374,16 @@ public class SqlFile {
      *                 a "copy" will be returned).
      */
     static private String deTerminated(String inString) {
-
         int index = inString.lastIndexOf(';');
 
         if (index < 0) {
             return null;
         }
-
         for (int i = index + 1; i < inString.length(); i++) {
             if (!Character.isWhitespace(inString.charAt(i))) {
                 return null;
             }
         }
-
         return inString.substring(0, index);
     }
 
@@ -453,7 +427,6 @@ public class SqlFile {
             other = inString.substring(1).trim();
             if (other.length() == 0) other = null;
         }
-
         switch (commandChar) {
             case ';':
                 curCommand = commandFromHistory(0);
@@ -535,17 +508,12 @@ public class SqlFile {
         if (inString.length() < 1) {
             throw new BadSpecial("Null special command");
         }
-
         StringTokenizer toker = new StringTokenizer(inString);
-
         arg1 = toker.nextToken();
-
         if (toker.hasMoreTokens()) {
             other = toker.nextToken("").trim();
         }
-
         switch (arg1.charAt(0)) {
-
             case 'q' :
                 throw new QuitNow();
             case 'H' :
@@ -553,55 +521,41 @@ public class SqlFile {
 
                 stdprint(htmlMode ? "<HTML>"
                                   : "</HTML>");
-
                 return;
-
             case 'd' :
                 if (arg1.length() > 1 && arg1.charAt(1) == 't') {
                     listTables();
-
                     return;
                 }
-
                 if (arg1.length() == 1 && other != null) {
                     describe(other);
-
                     return;
                 }
                 break;
-
             case 'p' :
                 if (other == null) {
                     stdprint();
                 } else {
                     stdprint(other);
                 }
-
                 return;
-
             case '*' :
                 if (other != null) {
 
                     // But remember that we have to abort on some I/O errors.
                     continueOnError = Boolean.valueOf(other).booleanValue();
                 }
-
                 stdprint("Continue-on-error is set to: " + continueOnError);
-
                 return;
-
             case 's' :
                 showHistory();
-
                 return;
-
             case '-' :
                 int     commandsAgo = 0;
                 String  numStr;
-
-                numStr = (arg1.length() == 1) ? null
-                                              : arg1.substring(1,
-                                              arg1.length());
+                numStr = (arg1.length() == 1)
+                         ? null
+                         : arg1.substring(1, arg1.length());
                 if (numStr == null) {
                     commandsAgo = 0;
                 } else {
@@ -611,24 +565,18 @@ public class SqlFile {
                         throw new BadSpecial("Malformatted command number");
                     }
                 }
-
                 setBuf(commandFromHistory(commandsAgo));
                 stdprint("RESTORED following command to buffer.  Enter \"/?\" "
                         + "to see buffer commands:\n" + commandFromHistory(0));
                 return;
-
             case '?' :
                 stdprint(HELP_TEXT);
-
                 return;
-
             case '!' :
                 System.err.println("Run '" + ((other == null) ? "SHELL"
                                                               : other) + "'");
-
                 return;
         }
-
         throw new BadSpecial("Unknown Special Command");
     }
 
@@ -638,7 +586,6 @@ public class SqlFile {
      * Conditionally HTML-ifies output.
      */
     private void stdprint() {
-
         if (htmlMode) {
             psStd.println("<BR>");
         } else {
@@ -664,8 +611,7 @@ public class SqlFile {
      * Conditionally HTML-ifies output.
      */
     private void stdprint(String s) {
-        psStd.println(htmlMode ? ("<P>" + s + "</P>")
-                               : s);
+        psStd.println(htmlMode ? ("<P>" + s + "</P>") : s);
     }
 
     /**
@@ -696,7 +642,6 @@ public class SqlFile {
         } else {
             // Don't know the DB, so use no filter.
         }
-
         displayResultSet(
             null, md.getTables(null, null, null, null),
             listTableCols, excludePrefix);
@@ -706,7 +651,6 @@ public class SqlFile {
      * Process the currenct command as an SQL Statement
      */
     private void processStatement() throws SQLException {
-
         Statement statement = curConn.createStatement();
 
         statement.execute(curCommand);
@@ -735,21 +679,17 @@ public class SqlFile {
          */
         int updateCount = (statement == null) ? -1
                                               : statement.getUpdateCount();
-
         switch (updateCount) {
-
             case -1 :
                 if (r == null) {
                     stdprint("No result");
-
                     break;
                 }
-
                 ResultSetMetaData m        = r.getMetaData();
                 int               cols     = m.getColumnCount();
-                int               incCount = (incCols == null) ? cols
-                                                               : incCols
-                                                                   .length;
+                int               incCount = (incCols == null)
+                                             ? cols
+                                             : incCols.length;
                 String            val;
                 ArrayList         rows        = new ArrayList();
                 String[]          headerArray = null;
@@ -765,37 +705,29 @@ public class SqlFile {
                         maxWidth[i] = 0;
                     }
                 }
-
                 boolean[] rightJust = new boolean[incCount];
-
                 if (incCount > 1) {
                     insi        = -1;
                     headerArray = new String[incCount];
-
                     for (int i = 1; i <= cols; i++) {
                         if (incCols != null) {
                             skip = true;
-
                             for (int j = 0; j < incCols.length; j++) {
                                 if (i == incCols[j]) {
                                     skip = false;
                                 }
                             }
-
                             if (skip) {
                                 continue;
                             }
                         }
-
                         headerArray[++insi] = m.getColumnLabel(i);
                         dataType            = m.getColumnTypeName(i);
                         rightJust[insi] = dataType.equals("INTEGER")
                                           || dataType.equals("NUMBER");
-
                         if (htmlMode) {
                             continue;
                         }
-
                         if (headerArray[insi].length() > maxWidth[insi]) {
                             maxWidth[insi] = headerArray[insi].length();
                         }
@@ -806,43 +738,34 @@ public class SqlFile {
                 while (r.next()) {
                     fieldArray = new String[incCount];
                     insi       = -1;
-
                     for (int i = 1; i <= cols; i++) {
                         if (incCols != null) {
                             skip = true;
-
                             for (int j = 0; j < incCols.length; j++) {
                                 if (i == incCols[j]) {
                                     skip = false;
                                 }
                             }
-
                             if (skip) {
                                 continue;
                             }
                         }
-
                         val = r.getString(i);
-
                         if (exclPref != null && val != null
                                 && val.startsWith(exclPref)) {
                             continue EACH_ROW;
                         }
-
                         fieldArray[++insi] = r.wasNull()
                                              ? (htmlMode ? "<I>null</I>"
                                                          : "null")
                                              : val;
-
                         if (htmlMode) {
                             continue;
                         }
-
                         if (fieldArray[insi].length() > maxWidth[insi]) {
                             maxWidth[insi] = fieldArray[insi].length();
                         }
                     }
-
                     rows.add(fieldArray);
                 }
 
@@ -850,12 +773,10 @@ public class SqlFile {
                 if (htmlMode) {
                     psStd.println("<TABLE border='1'>");
                 }
-
                 if (headerArray != null) {
                     if (htmlMode) {
                         psStd.print(htmlRow(COL_HEAD) + '\n' + PRE_TD);
                     }
-
                     for (int i = 0; i < headerArray.length; i++) {
                         psStd.print(htmlMode
                                     ? ("<TD>" + headerArray[i] + "</TD>")
@@ -864,30 +785,23 @@ public class SqlFile {
                                                             maxWidth[i],
                                                             rightJust[i])));
                     }
-
-                    psStd.println(htmlMode ? ("\n" + PRE_TR + "</TR>")
-                                           : "");
-
+                    psStd.println(htmlMode ? ("\n" + PRE_TR + "</TR>") : "");
                     if (!htmlMode) {
                         for (int i = 0; i < headerArray.length; i++) {
                             psStd.print(((i > 0) ? spaces(2)
                                                  : "") + divider(
                                                      maxWidth[i]));
                         }
-
                         psStd.println();
                     }
                 }
-
                 for (int i = 0; i < rows.size(); i++) {
                     if (htmlMode) {
                         psStd.print(htmlRow(((i % 2) == 0) ? COL_EVEN
                                                            : COL_ODD) + '\n'
                                                            + PRE_TD);
                     }
-
                     fieldArray = (String[]) rows.get(i);
-
                     for (int j = 0; j < fieldArray.length; j++) {
                         psStd.print(htmlMode
                                     ? ("<TD>" + fieldArray[j] + "</TD>")
@@ -896,26 +810,20 @@ public class SqlFile {
                                                             maxWidth[j],
                                                             rightJust[j])));
                     }
-                    ;
-
-                    psStd.println(htmlMode ? ("\n" + PRE_TR + "</TR>")
-                                           : "");
+                    psStd.println(htmlMode ? ("\n" + PRE_TR + "</TR>") : "");
                 }
-
                 if (htmlMode) {
                     psStd.println("</TABLE>");
                 }
-
                 if (rows.size() != 1) {
                     stdprint("\n" + rows.size() + " rows");
                 }
                 break;
-
             default :
                 if (updateCount != 0) {
                     stdprint(Integer.toString(updateCount) + " row"
-                             + ((updateCount == 1) ? ""
-                                                   : "s") + " updated");
+                             + ((updateCount == 1) ? "" : "s")
+                             + " updated");
                 }
                 break;
         }
@@ -940,10 +848,12 @@ public class SqlFile {
                 return PRE_TR + "<TR style='font-weight: bold;'>";
             case COL_ODD :
                 return PRE_TR
-                       + "<TR style='background: #94d6ef; font: normal normal 10px/10px Arial, Helvitica, sans-serif;'>";
+                       + "<TR style='background: #94d6ef; font: normal "
+                       + "normal 10px/10px Arial, Helvitica, sans-serif;'>";
             case COL_EVEN :
                 return PRE_TR
-                       + "<TR style='background: silver; font: normal normal 10px/10px Arial, Helvitica, sans-serif;'>";
+                       + "<TR style='background: silver; font: normal "
+                       + "normal 10px/10px Arial, Helvitica, sans-serif;'>";
         }
         return null;
     }
@@ -954,8 +864,7 @@ public class SqlFile {
      * @param len Length of output String.
      */
     static private String divider(int len) {
-        return (len > DIVIDER.length()) ? DIVIDER
-                                        : DIVIDER.substring(0, len);
+        return (len > DIVIDER.length()) ? DIVIDER : DIVIDER.substring(0, len);
     }
 
     /**
@@ -964,8 +873,7 @@ public class SqlFile {
      * @param len Length of output String.
      */
     static private String spaces(int len) {
-        return (len > SPACES.length()) ? SPACES
-                                       : SPACES.substring(0, len);
+        return (len > SPACES.length()) ? SPACES : SPACES.substring(0, len);
     }
 
     /**
@@ -984,12 +892,9 @@ public class SqlFile {
         if (len < 1) {
             return inString;
         }
-
         String pad = spaces(len);
-
-        return ((rightJustify ? pad
-                              : "") + inString + (rightJustify ? ""
-                                                               : pad));
+        return ((rightJustify ? pad : "")
+                + inString + (rightJustify ? "" : pad));
     }
 
     /**
@@ -997,7 +902,6 @@ public class SqlFile {
      * commands.
      */
     private void showHistory() {
-
         int      ctr = -1;
         String   s;
         String[] reversedList = new String[statementHistory.length];
@@ -1005,37 +909,29 @@ public class SqlFile {
         try {
             for (int i = curHist; i >= 0; i--) {
                 s = statementHistory[i];
-
                 if (s == null) {
                     return;
                 }
-
                 reversedList[++ctr] = s;
             }
-
             for (int i = 9; i > curHist; i--) {
                 s = statementHistory[i];
-
                 if (s == null) {
                     return;
                 }
-
                 reversedList[++ctr] = s;
             }
         } finally {
             if (ctr < 0) {
                 stdprint("<<<    No history yet    >>>");
-
                 return;
             }
-
             for (int i = ctr; i >= 0; i--) {
                 psStd.println(
                     ((i == 0) ? "BUFR" : ("-" + i + "  "))
                     + " **********************************************\n"
                     + reversedList[i]);
             }
-
             psStd.println("\n<<<  Copy a command to buffer like \"\\-3\"       "
                           + "Re-execute buffer like \":;\"  >>>");
         }
@@ -1045,19 +941,16 @@ public class SqlFile {
      * Return a SQL Command from command history.
      */
     private String commandFromHistory(int commandsAgo) throws BadSpecial {
-
         if (commandsAgo >= statementHistory.length) {
             throw new BadSpecial("History can only hold up to "
                                  + statementHistory.length + " commands");
         }
-
         String s =
-            statementHistory[(statementHistory.length + curHist - commandsAgo) % statementHistory.length];
-
+            statementHistory[(statementHistory.length + curHist - commandsAgo)
+                    % statementHistory.length];
         if (s == null) {
             throw new BadSpecial("History doesn't go back that far");
         }
-
         return s;
     }
 
@@ -1067,7 +960,6 @@ public class SqlFile {
      */
     private void setBuf(String inString) {
         curHist++;
-
         if (curHist == statementHistory.length) {
             curHist = 0;
         }
@@ -1080,11 +972,8 @@ public class SqlFile {
      * @param tableName  Table that will be described.
      */
     private void describe(String tableName) throws SQLException {
-
         Statement statement = curConn.createStatement();
-
         statement.execute("SELECT * FROM " + tableName + " WHERE 1 = 2");
-
         ResultSet         r    = statement.getResultSet();
         ResultSetMetaData m    = r.getMetaData();
         int               cols = m.getColumnCount();
@@ -1106,25 +995,20 @@ public class SqlFile {
             if (htmlMode) {
                 continue;
             }
-
             if (headerArray[i].length() > maxWidth[i]) {
                 maxWidth[i] = headerArray[i].length();
             }
         }
-
         for (int i = 0; i < cols; i++) {
             fieldArray    = new String[4];
             fieldArray[0] = m.getColumnName(i + 1);
             fieldArray[1] = m.getColumnTypeName(i + 1);
             fieldArray[2] = Integer.toString(m.getColumnDisplaySize(i + 1));
-            fieldArray[3] =
-                ((m.isNullable(i + 1) == java.sql.ResultSetMetaData.columnNullable)
-                 ? (htmlMode ? "&nbsp;"
-                             : "")
-                 : "*");
-
+            fieldArray[3] = ((m.isNullable(i + 1)
+                    == java.sql.ResultSetMetaData.columnNullable)
+                            ? (htmlMode ? "&nbsp;" : "")
+                            : "*");
             rows.add(fieldArray);
-
             for (int j = 0; j < fieldArray.length; j++) {
                 if (fieldArray[j].length() > maxWidth[j]) {
                     maxWidth[j] = fieldArray[j].length();
@@ -1136,51 +1020,38 @@ public class SqlFile {
         if (htmlMode) {
             psStd.println("<TABLE border='1'>");
         }
-
         if (htmlMode) {
             psStd.print(htmlRow(COL_HEAD) + '\n' + PRE_TD);
         }
-
         for (int i = 0; i < headerArray.length; i++) {
             psStd.print(htmlMode ? ("<TD>" + headerArray[i] + "</TD>")
                                  : (((i > 0) ? spaces(2)
                                              : "") + pad(headerArray[i],
                                              maxWidth[i], rightJust[i])));
         }
-
-        psStd.println(htmlMode ? ("\n" + PRE_TR + "</TR>")
-                               : "");
-
+        psStd.println(htmlMode ? ("\n" + PRE_TR + "</TR>") : "");
         if (!htmlMode) {
             for (int i = 0; i < headerArray.length; i++) {
                 psStd.print(((i > 0) ? spaces(2)
                                      : "") + divider(maxWidth[i]));
             }
-
             psStd.println();
         }
-
         for (int i = 0; i < rows.size(); i++) {
             if (htmlMode) {
                 psStd.print(htmlRow(((i % 2) == 0) ? COL_EVEN
                                                    : COL_ODD) + '\n'
                                                    + PRE_TD);
             }
-
             fieldArray = (String[]) rows.get(i);
-
             for (int j = 0; j < fieldArray.length; j++) {
                 psStd.print(htmlMode ? ("<TD>" + fieldArray[j] + "</TD>")
                                      : (((j > 0) ? spaces(2)
                                                  : "") + pad(fieldArray[j],
                                                  maxWidth[j], rightJust[j])));
             }
-            ;
-
-            psStd.println(htmlMode ? ("\n" + PRE_TR + "</TR>")
-                                   : "");
+            psStd.println(htmlMode ? ("\n" + PRE_TR + "</TR>") : "");
         }
-
         if (htmlMode) {
             stdprint("\n</TABLE>");
         }
