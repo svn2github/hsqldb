@@ -68,6 +68,13 @@ If you want to provide a link to the document, you just ulink to
 the document in the current directory, not to the one in the cdata
 
 
+TIP
+When closing DocBook <screen> and <programlisting> elements, make
+sure that there is no line break after the text to display and before
+the closing </screen> or </programlisting> tag.
+Otherwise the resultant display will not look right.
+
+
 * Theoretically it would be better and SHOULD be simpler to use
 unparsed entities for this purpose, but unparsed entities are a 
 messy legacy feature of DTD which is more convoluted than the 
