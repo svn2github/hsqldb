@@ -71,9 +71,7 @@ import java.io.IOException;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.sql.SQLException;
-
-//
-import java.util.ArrayList;
+import org.hsqldb.lib.HsqlArrayList;
 
 // fredt@users 20011220 - patch 437174 by hjb@users - cache update
 // most changes and comments by HSB are kept unchanged
@@ -277,9 +275,9 @@ class Cache {
      *  Writes out all cached data and the free position to this
      *  object's database file and then closes the file.
      */
-    ArrayList defrag() throws SQLException {
+    HsqlArrayList defrag() throws SQLException {
 
-        ArrayList indexRoots = null;
+        HsqlArrayList indexRoots = null;
 
         try {
             flush();

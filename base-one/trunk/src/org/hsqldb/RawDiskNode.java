@@ -67,11 +67,11 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.UnifiedTable;
 import java.sql.SQLException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.HashMap;
+import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.UnifiedTable;
 
 /**
  *  Wrapper for disk image of CachedNode used for direct file defragmentation

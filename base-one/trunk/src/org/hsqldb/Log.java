@@ -430,7 +430,7 @@ class Log implements Runnable {
     void checkpoint(boolean defrag) throws SQLException {
 
         if (defrag) {
-            ArrayList rootsArray = cCache.defrag();
+            HsqlArrayList rootsArray = cCache.defrag();
 
             for (int i = 0; i < rootsArray.size(); i++) {
                 int[] roots = (int[]) rootsArray.get(i);

@@ -70,7 +70,7 @@ package org.hsqldb;
 import java.sql.SQLException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.HashMap;
+import org.hsqldb.lib.HsqlHashMap;
 import org.hsqldb.lib.UnifiedTable;
 
 /**

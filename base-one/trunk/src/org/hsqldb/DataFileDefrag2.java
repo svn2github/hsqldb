@@ -71,7 +71,7 @@ import org.hsqldb.lib.UnifiedTable;
 import java.sql.SQLException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.ArrayList;
+import org.hsqldb.lib.HsqlArrayList;
 
 /**
  *  Experimental routine to defrag the *.data file.
@@ -87,13 +87,13 @@ import java.util.ArrayList;
  */
 class DataFileDefrag2 {
 
-    ArrayList defrag(Database db, DatabaseFile sourcenotused,
+    HsqlArrayList defrag(Database db, DatabaseFile sourcenotused,
                      String filename) throws IOException, SQLException {
 
         System.out.println("Transfer begins: "
                            + new java.util.Date(System.currentTimeMillis()));
 
-        ArrayList                    rootsList = new ArrayList();
+        HsqlArrayList                    rootsList = new HsqlArrayList();
         org.hsqldb.lib.HsqlArrayList tTable    = db.getTables();
         RandomAccessFile dest = new RandomAccessFile(filename + ".new", "rw");
 
@@ -135,7 +135,7 @@ class DataFileDefrag2 {
     }
 
     static void updateTableIndexRoots(org.hsqldb.lib.HsqlArrayList tTable,
-                                      ArrayList rootsList)
+                                      HsqlArrayList rootsList)
                                       throws SQLException {
 
         for (int i = 0; i < tTable.size(); i++) {
