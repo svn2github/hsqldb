@@ -370,7 +370,9 @@ implements java.sql.PreparedStatement {
             }
 
             if (types[i] == Types.OTHER) {
-                parameters[i] = new JavaObject(parameters[i]);
+                if (!(parameters[i] instanceof JavaObject)) {
+                    parameters[i] = new JavaObject(parameters[i]);
+                }
             } else {
                 parameters[i] = Column.convertObject(parameters[i], types[i]);
             }

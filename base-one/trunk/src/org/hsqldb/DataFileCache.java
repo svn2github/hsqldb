@@ -74,19 +74,10 @@ import org.hsqldb.lib.FileUtil;
 
 public class DataFileCache extends Cache {
 
-    String                   sName;
     private static final int MAX_FREE_COUNT = 1024;
 
     DataFileCache(String name, Database db) throws HsqlException {
-
-        super(db);
-
-        sName = name;
-    }
-
-    private void initBuffers() throws HsqlException {
-        rowIn  = DatabaseRowInput.newDatabaseRowInput(cachedRowType);
-        rowOut = DatabaseRowOutput.newDatabaseRowOutput(cachedRowType);
+        super(name, db);
     }
 
     /**

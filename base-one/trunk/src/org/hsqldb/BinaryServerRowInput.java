@@ -171,29 +171,40 @@ implements org.hsqldb.DatabaseRowInputInterface {
     }
 
     protected Object readOther() throws IOException, HsqlException {
-
-// fredt@users 20020328 -  patch 482109 by fredt - OBJECT handling
-// objects are / were stored as serialized byte[]
-// now they are deserialized before retrieval
-        byte[] data = readByteArray();
-
-        return new JavaObject(data,true);
+        return new JavaObject(readByteArray(), true);
     }
 
     protected Binary readBinary(int type) throws IOException, HsqlException {
-        return new Binary(readByteArray(),true);
+        return new Binary(readByteArray(), true);
     }
 
     /**
-     *  Used to reset the row, ready for a new row to be written into the
+     *  Used to reset the row, ready for Result data to be written into the
+     *  byte[] buffer by an external routine.
+     *
+     */
+    public void resetRow(int rowsize) {
+
+        if (out != null) {
+            out.reset(rowsize);
+
+            buf = out.getBuffer();
+        }
+
+        super.reset();
+    }
+
+    /**
+     *  Used to reset the row, ready for a new db row to be written into the
      *  byte[] buffer by an external routine.
      *
      */
     public void resetRow(int filepos, int rowsize) throws IOException {
 
         if (out != null) {
-            out.reset();
-            out.ensureRoom(rowsize);
+            out.reset(rowsize);
+
+            buf = out.getBuffer();
         }
 
         super.resetRow(filepos, rowsize);

@@ -301,6 +301,8 @@ abstract class DatabaseRowInput extends HsqlByteArrayInputStream {
      */
     public void resetRow(int filepos, int rowsize) throws IOException {
 
+        mark = 0;
+
         reset();
 
         if (buf.length < rowsize) {

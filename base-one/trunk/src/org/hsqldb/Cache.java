@@ -216,8 +216,9 @@ abstract class Cache {
         return null;
     }
 
-    Cache(Database db) throws HsqlException {
+    Cache(String name, Database db) throws HsqlException {
 
+        sName     = name;
         dDatabase = db;
         dbProps   = db.getProperties();
 
@@ -268,6 +269,11 @@ abstract class Cache {
         fRoot          = null;
         iFreeCount     = 0;
         iCacheSize     = 0;
+    }
+
+    protected void initBuffers() throws HsqlException {
+        rowOut = DatabaseRowOutput.newDatabaseRowOutput(cachedRowType);
+        rowIn  = DatabaseRowInput.newDatabaseRowInput(cachedRowType);
     }
 
     abstract void open(boolean readonly) throws HsqlException;
@@ -490,6 +496,7 @@ abstract class Cache {
         }
 
         resetAccessCount();
+        initBuffers();
     }
 
     /**

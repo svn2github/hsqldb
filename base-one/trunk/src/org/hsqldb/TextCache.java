@@ -149,6 +149,8 @@ class TextCache extends DataFileCache {
         }
     }
 
+    protected void initBuffers() throws HsqlException {}
+
     private String translateSep(String sep) {
         return translateSep(sep, false);
     }

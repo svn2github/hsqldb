@@ -63,6 +63,10 @@ implements DataOutput {
         buf = new byte[size];
     }
 
+    public HsqlByteArrayOutputStream(byte[] buffer) {
+        buf = buffer;
+    }
+
     // methods that implement dataOutput
     public final void writeShort(int v) {
 
@@ -250,6 +254,15 @@ implements DataOutput {
             System.arraycopy(buf, 0, newbuf, 0, count);
 
             buf = newbuf;
+        }
+    }
+
+    protected void reset(int newSize) {
+
+        count = 0;
+
+        if (newSize > buf.length) {
+            buf = new byte[newSize];
         }
     }
 }

@@ -66,6 +66,15 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
         super(initialSize);
     }
 
+    /**
+     *  Constructor used for network transmission of result sets
+     *
+     * @exception  IOException when an IO error is encountered
+     */
+    public BinaryServerRowOutput(byte[] buffer) {
+        super(buffer);
+    }
+
 // fredt@users - comment - methods for writing column type, name and data size
     public void writeIntData(int i) throws IOException {
         writeInt(i);
@@ -364,5 +373,16 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
 
     public void ensureRoom(int extra) {
         super.ensureRoom(extra);
+    }
+
+    public void reset(int newSize) {
+        super.reset(newSize);
+    }
+
+    public void setBuffer(byte[] buffer) {
+
+        buf = buffer;
+
+        reset();
     }
 }

@@ -60,18 +60,18 @@ public class TestCacheSize {
     protected boolean shutdown = true;
     protected String  url      = "jdbc:hsqldb:";
 
-//    protected String  filepath = "hsql://localhost";
+//    protected String  filepath = "hsql://localhost/mytest";
 //    protected String filepath = "mem:test";
     protected String filepath = "/hsql/testcache/test";
-    String     user;
-    String     password;
-    Statement  sStatement;
-    Connection cConnection;
+    String           user;
+    String           password;
+    Statement        sStatement;
+    Connection       cConnection;
 
     // prameters
     boolean reportProgress  = false;
-    boolean cachedTable     = true;
-    int     cacheScale      = 12;
+    String  tableType       = "CACHED";
+    int     cacheScale      = 14;
     String  logType         = "TEXT";
     int     writeDelay      = 60;
     boolean indexZip        = true;
@@ -85,7 +85,7 @@ public class TestCacheSize {
     int     deleteWhileInsertInterval = 10000;
 
     //
-    int bigrows   = 200000;
+    int bigrows   = 40000;
     int smallrows = 0xfff;
 
     protected void setUp() {
@@ -139,12 +139,11 @@ public class TestCacheSize {
         String ddl1 = "DROP TABLE test IF EXISTS;"
                       + "DROP TABLE zip IF EXISTS;";
         String ddl2 = "CREATE TABLE zip( zip INT IDENTITY );";
-        String ddl3 = "CREATE " + (cachedTable ? "CACHED "
-                                               : "") + "TABLE test( id INT IDENTITY,"
-                                                   + " firstname VARCHAR, "
-                                                   + " lastname VARCHAR, "
-                                                   + " zip INTEGER, "
-                                                   + " filler VARCHAR); ";
+        String ddl3 = "CREATE " + tableType + " TABLE test( id INT IDENTITY,"
+                      + " firstname VARCHAR, " + " lastname VARCHAR, "
+                      + " zip INTEGER, " + " filler VARCHAR); ";
+        String ddl31 = "SET TABLE test SOURCE \"test.csv;cache_scale="
+                       + cacheScale + "\";";
 
         // adding extra index will slow down inserts a bit
         String ddl4 = "CREATE INDEX idx1 ON TEST (lastname);";
@@ -182,6 +181,11 @@ public class TestCacheSize {
             sStatement.execute(ddl1);
             sStatement.execute(ddl2);
             sStatement.execute(ddl3);
+
+            if (tableType.equals("TEXT")) {
+                sStatement.execute(ddl31);
+            }
+
             System.out.println("test table with no index");
 
             if (indexLastName) {

@@ -884,6 +884,7 @@ public class BaseHashMap {
         boolean keys;
         int     lookup = -1;
         int     counter;
+        boolean removed;
 
         public BaseHashIterator(boolean keys) {
             this.keys = keys;
@@ -898,6 +899,8 @@ public class BaseHashMap {
             if ((keys &&!isObjectKey) || (!keys &&!isObjectValue)) {
                 throw new NoSuchElementException("Hash Iterator");
             }
+
+            removed = false;
 
             if (hasNext()) {
                 counter++;
@@ -920,6 +923,8 @@ public class BaseHashMap {
                 throw new NoSuchElementException("Hash Iterator");
             }
 
+            removed = false;
+
             if (hasNext()) {
                 lookup = nextLookup(lookup);
 
@@ -939,6 +944,8 @@ public class BaseHashMap {
                 throw new NoSuchElementException("Hash Iterator");
             }
 
+            removed = false;
+
             if (hasNext()) {
                 lookup = nextLookup(lookup);
 
@@ -951,6 +958,13 @@ public class BaseHashMap {
         }
 
         public void remove() throws NoSuchElementException {
+
+            if (removed) {
+                throw new NoSuchElementException("Hash Iterator");
+            }
+
+            removed = true;
+
             BaseHashMap.this.remove(lookup);
         }
     }

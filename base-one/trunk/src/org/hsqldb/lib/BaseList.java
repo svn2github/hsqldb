@@ -84,7 +84,8 @@ abstract class BaseList {
 
     private class BaseListIterator implements Iterator {
 
-        int counter = 0;
+        int     counter = 0;
+        boolean removed;
 
         public boolean hasNext() {
             return counter < elementCount;
@@ -93,6 +94,8 @@ abstract class BaseList {
         public Object next() {
 
             if (counter < elementCount) {
+                removed = false;
+
                 Object returnValue = get(counter);
 
                 counter++;
@@ -112,6 +115,12 @@ abstract class BaseList {
         }
 
         public void remove() {
+
+            if (removed) {
+                throw new NoSuchElementException("Hash Iterator");
+            }
+
+            removed = true;
 
             if (counter != 0) {
                 BaseList.this.remove(counter - 1);

@@ -106,9 +106,10 @@ class ServerConnection implements Runnable {
     private OutputStream    dataOutput;
     private static int      mCurrentThread = 0;
     private int             mThread;
-    static final int        bufferSize = 256;
-    BinaryServerRowOutput   rowOut = new BinaryServerRowOutput(bufferSize);
-    BinaryServerRowInput    rowIn      = new BinaryServerRowInput(rowOut);
+    static final int        BUFFER_SIZE = 0x1000;
+    final byte[]            mainBuffer  = new byte[BUFFER_SIZE];
+    BinaryServerRowOutput   rowOut = new BinaryServerRowOutput(BUFFER_SIZE);
+    BinaryServerRowInput    rowIn       = new BinaryServerRowInput(rowOut);
     Thread                  runnerThread;
 
     /**
@@ -235,6 +236,8 @@ class ServerConnection implements Runnable {
                     Result resultOut = session.execute(resultIn);
 
                     HSQLClientConnection.write(resultOut, rowOut, dataOutput);
+                    rowOut.setBuffer(mainBuffer);
+                    rowIn.resetRow(mainBuffer.length);
                 }
             } catch (IOException e) {
 

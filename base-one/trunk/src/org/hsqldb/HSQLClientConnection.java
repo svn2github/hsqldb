@@ -59,7 +59,8 @@ import org.hsqldb.lib.ArrayUtil;
 /** @todo fredt - manage the size of rowIn / rowOut buffer */
 public class HSQLClientConnection implements SessionInterface {
 
-    private static final int        BUFFER_SIZE = 256;
+    static final int                BUFFER_SIZE = 0x1000;
+    final byte[]                    mainBuffer  = new byte[BUFFER_SIZE];
     private boolean                 isClosed;
     private Socket                  socket;
     protected OutputStream          dataOutput;
@@ -115,7 +116,7 @@ public class HSQLClientConnection implements SessionInterface {
      */
     private void initStructures() {
 
-        rowOut          = new BinaryServerRowOutput(BUFFER_SIZE);
+        rowOut          = new BinaryServerRowOutput(mainBuffer);
         rowIn           = new BinaryServerRowInput(rowOut);
         resultOut       = new Result(ResultConstants.DATA, 7);
         resultOut.sName = resultOut.sLabel = resultOut.sTable = new String[] {
@@ -274,7 +275,13 @@ public class HSQLClientConnection implements SessionInterface {
     }
 
     protected Result read() throws IOException, HsqlException {
-        return read(rowIn, dataInput);
+
+        Result r = read(rowIn, dataInput);
+
+        rowOut.setBuffer(mainBuffer);
+        rowIn.resetRow(mainBuffer.length);
+
+        return r;
     }
 
     /**

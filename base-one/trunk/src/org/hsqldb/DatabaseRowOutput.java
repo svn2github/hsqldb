@@ -89,6 +89,15 @@ implements DatabaseRowOutputInterface {
         super(initialSize);
     }
 
+    /**
+     *  Constructor used for network transmission of result sets
+     *
+     * @exception  IOException when an IO error is encountered
+     */
+    public DatabaseRowOutput(byte[] buffer) {
+        super(buffer);
+    }
+
 // fredt@users - comment - methods for writing column type, name and data size
     public abstract void writePos(int pos) throws IOException;
 

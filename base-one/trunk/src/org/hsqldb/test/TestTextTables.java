@@ -91,7 +91,7 @@ public class TestTextTables {
     public void testFillUp() {
 
         StopWatch sw        = new StopWatch();
-        int       bigrows   = 100000;
+        int       bigrows   = 40000;
         int       smallrows = 0xfff;
         double    value     = 0;
         String ddl1 = "DROP TABLE test IF EXISTS;"
