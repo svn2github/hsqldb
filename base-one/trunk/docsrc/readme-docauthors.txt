@@ -30,6 +30,11 @@ For examples of just about everything, see .../docsrc/sqltool/sqltool.xml.
 Notice that sqltool.xml pulls in a document section from the main docsrc
 directory.
 
+Until all of the CVS artifacts are moved out of the "doc" directory,
+you will need to edit the clean-doc target in the build.xml file in
+the build directory so that it will remove the derived files for
+your book from under the doc directory.
+
 
 HOW TO REFERENCE OR INCLUDE OTHER FILES IN YOUR DOCBOOK SOURCE FILE(s).
 
