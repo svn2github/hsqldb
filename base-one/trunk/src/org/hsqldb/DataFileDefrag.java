@@ -191,7 +191,7 @@ class DataFileDefrag {
             }
 
             rowOut.writeData(row.getData(), row.getTable());
-            rowOut.writePos((int) filePos);
+            rowOut.writeEnd();
 
 // end
             fileStreamOut.write(rowOut.getOutputStream().getBuffer(), 0,

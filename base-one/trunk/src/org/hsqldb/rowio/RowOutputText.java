@@ -34,10 +34,10 @@ package org.hsqldb.rowio;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
-import org.hsqldb.Binary;
+import org.hsqldb.types.Binary;
 import org.hsqldb.CachedRow;
 import org.hsqldb.HsqlException;
-import org.hsqldb.JavaObject;
+import org.hsqldb.types.JavaObject;
 import org.hsqldb.TextCache;
 import org.hsqldb.Trace;
 import org.hsqldb.Types;
@@ -113,7 +113,7 @@ public class RowOutputText extends RowOutputBase {
         this.encoding   = encoding;
     }
 
-    public void writePos(int pos) throws IOException {
+    public void writeEnd() throws IOException {
 
         // terminate at the end of row
         if (nextSepEnd) {
@@ -224,6 +224,10 @@ public class RowOutputText extends RowOutputBase {
             Trace.getMessage(Trace.TextDatabaseRowOutput_writeIntData));
     }
 
+    public void writeLongData(long i) throws IOException {
+        throw new RuntimeException();
+    }
+
 // fredt@users - comment - methods used for writing each SQL type
     protected void writeFieldType(int type) throws IOException {
 
@@ -330,16 +334,18 @@ public class RowOutputText extends RowOutputBase {
         writeByteArray(o.getBytes());
     }
 
-    public int getSize(CachedRow r) throws HsqlException {
+    public int getSize(CachedRow r) {
 
         reset();
 
         try {
             writeSize(0);
             writeData(r.getData(), r.getTable());
-            writePos(0);
-        } catch (IOException e) {
-            throw (Trace.error(Trace.FILE_IO_ERROR, e.toString()));
+            writeEnd();
+        } catch (Exception e) {
+            reset();
+
+//            throw (Trace.error(Trace.FILE_IO_ERROR, e.toString()));
         }
 
         int rowsize = size();

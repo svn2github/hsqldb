@@ -93,16 +93,14 @@ public class ScriptRunner {
     public static void runScript(Database database, String scriptFilename,
                                  int logType) throws HsqlException {
 
-        try {
-            if (database.isFilesInJar()) {
-                if (ScriptRunner.class.getClassLoader().getResource(
-                        scriptFilename) == null) {
-                    return;
-                }
-            } else if (!FileUtil.exists(scriptFilename)) {
+        if (database.isFilesInJar()) {
+            if (ScriptRunner.class.getClassLoader().getResource(
+                    scriptFilename) == null) {
                 return;
             }
-        } catch (IOException e) {}
+        } else if (!FileUtil.exists(scriptFilename)) {
+            return;
+        }
 
         IntKeyHashMap sessionMap = new IntKeyHashMap();
         Session sysSession = database.getSessionManager().getSysSession();
@@ -145,15 +143,20 @@ public class ScriptRunner {
                     if (result != null
                             && result.mode == ResultConstants.ERROR) {
 
-/** @todo fredt - must catch out of  memory errors and terminate */
+                        // catch out-of-memory errors and terminate
+                        if (result.getStatementID() == Trace.OUT_OF_MEMORY) {
+                            throw Trace.error(result);
+                        }
 
 /** @todo fredt - must display the error through different method as printSystemOut does not normally print */
 
-/* boucherb - Result(OOME,sql) now sets vendor code to Trace.OUT_OF_MEMORY */
+                        // stop processing on bad log line
                         Trace.printSystemOut("error in " + scriptFilename
                                              + " line: "
                                              + scr.getLineNumber());
                         Trace.printSystemOut(result.getMainString());
+
+                        break;
                     }
                 }
             }

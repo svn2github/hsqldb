@@ -60,7 +60,15 @@ public class HashMap extends BaseHashMap {
     }
 
     public Object get(Object key) {
-        return super.getObject(key);
+
+        int hash   = key.hashCode();
+        int lookup = getLookup(key, hash);
+
+        if (lookup != -1) {
+            return objectValueTable[lookup];
+        }
+
+        return null;
     }
 
     public Object put(Object key, Object value) {

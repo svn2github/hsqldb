@@ -36,10 +36,10 @@ import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-import org.hsqldb.Binary;
+import org.hsqldb.types.Binary;
 import org.hsqldb.CachedRow;
 import org.hsqldb.HsqlException;
-import org.hsqldb.JavaObject;
+import org.hsqldb.types.JavaObject;
 import org.hsqldb.Trace;
 import org.hsqldb.Types;
 import org.hsqldb.lib.StringConverter;
@@ -56,7 +56,8 @@ import org.hsqldb.lib.StringConverter;
  */
 public class RowOutputBinary extends RowOutputBase {
 
-    private static Method unscaledValueMethod = null;
+    final private static int INT_STORE_SIZE      = 4;
+    private static Method    unscaledValueMethod = null;
 
     static {
         try {
@@ -103,7 +104,11 @@ public class RowOutputBinary extends RowOutputBase {
         }
     }
 
-    public void writePos(int pos) throws IOException {
+    public void writeLongData(long i) throws IOException {
+        this.writeLong(i);
+    }
+
+    public void writeEnd() throws IOException {
 
         // fredt - this value is used in 1.7.0 when reading back, for a
         // 'data integrity' check
@@ -143,13 +148,13 @@ public class RowOutputBinary extends RowOutputBase {
      * @return  size of byte array
      * @exception  HsqlException When data is inconsistent
      */
-    public int getSize(CachedRow row) throws HsqlException {
+    public int getSize(CachedRow row) {
 
         Object data[] = row.getData();
         int    type[] = row.getTable().getColumnTypes();
         int    cols   = row.getTable().getColumnCount();
 
-        return getSize(data, cols, type);
+        return INT_STORE_SIZE + getSize(data, cols, type);
     }
 
     public static int getRowSize(CachedRow row) {
@@ -364,8 +369,18 @@ public class RowOutputBinary extends RowOutputBase {
         super.ensureRoom(extra);
     }
 
+    public void reset() {
+
+        super.reset();
+
+        storageSize = 0;
+    }
+
     public void reset(int newSize) {
+
         super.reset(newSize);
+
+        storageSize = 0;
     }
 
     public void setBuffer(byte[] buffer) {

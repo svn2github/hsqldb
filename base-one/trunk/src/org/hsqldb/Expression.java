@@ -128,7 +128,8 @@ public class Expression {
                      AND           = 28,
                      OR            = 29,
                      IN            = 30,
-                     EXISTS        = 31;
+                     EXISTS        = 31,
+                     IS_NULL       = 32;
 
     // aggregate functions
     static final int COUNT = 40,
@@ -698,6 +699,12 @@ public class Expression {
 
                 return buf.toString();
 
+            case IS_NULL :
+                buf.append(left).append(' ').append(Token.T_IS).append(
+                    ' ').append(Token.T_NULL);
+
+                return buf.toString();
+
             case ALTERNATIVE :
                 buf.append(left).append(',').append(right);
 
@@ -890,6 +897,10 @@ public class Expression {
                 buf.append("IN ");
                 break;
 
+            case IS_NULL :
+                buf.append("IS_NULL ");
+                break;
+
             case EXISTS :
                 buf.append("EXISTS ");
                 break;
@@ -968,6 +979,15 @@ public class Expression {
         }
 
         exprType = TRUE;
+    }
+
+    void setNull() {
+
+        exprType  = VALUE;
+        dataType  = Types.NULL;
+        valueData = null;
+        eArg      = null;
+        eArg2     = null;
     }
 
     /**
@@ -1234,6 +1254,7 @@ public class Expression {
             case LIKE :
             case IN :
             case EXISTS :
+            case IS_NULL :
                 return true;
 
             case NOT :
@@ -2282,7 +2303,7 @@ public class Expression {
             int          len = vl.length;
 
             if (eArg.isParam) {
-                if (len <= 0) {
+                if (len == 0) {
                     throw Trace.error(Trace.UNRESOLVED_PARAMETER_TYPE,
                                       Trace.Expression_resolveTypeForIn1);
                 }
@@ -2949,6 +2970,10 @@ public class Expression {
         }
     }
 
+    boolean testCondition(Session session) throws HsqlException {
+        return test(session);
+    }
+
     /**
      * Returns the test result of a conditional expression
      *
@@ -3273,7 +3298,8 @@ public class Expression {
                    || exprType == Expression.BIGGER
                    || exprType == Expression.BIGGER_EQUAL
                    || exprType == Expression.SMALLER
-                   || exprType == Expression.SMALLER_EQUAL);
+                   || exprType == Expression.SMALLER_EQUAL
+                   || exprType == Expression.IS_NULL);
     }
 
     /**
@@ -3373,6 +3399,9 @@ public class Expression {
 
                 //case IN : TODO
                 return eArg.isFixedConstant() && eArg2.isFixedConstant();
+
+            case IS_NULL :
+                return eArg.isFixedConstant();
 
             case NOT :
                 return eArg.isFixedConditional();

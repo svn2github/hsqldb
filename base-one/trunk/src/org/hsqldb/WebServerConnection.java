@@ -383,11 +383,10 @@ class WebServerConnection implements Runnable {
      */
     private void processGet(String name, boolean send) {
 
-        InputStream  is = null;
-        OutputStream os = null;
-
         try {
             String       hdr;
+            OutputStream os;
+            InputStream  is;
             int          b;
 
             if (name.endsWith("/")) {
@@ -407,6 +406,8 @@ class WebServerConnection implements Runnable {
                 name = name.replace('/', File.separatorChar);
             }
 
+            is = null;
+
             server.printWithThread("GET " + name);
 
             try {
@@ -417,6 +418,10 @@ class WebServerConnection implements Runnable {
                               (int) file.length());
             } catch (IOException e) {
                 processError(HttpURLConnection.HTTP_NOT_FOUND);
+
+                if (is != null) {
+                    is.close();
+                }
 
                 return;
             }
@@ -430,27 +435,13 @@ class WebServerConnection implements Runnable {
                     os.write(b);
                 }
             }
+
+            os.flush();
+            os.close();
+            is.close();
         } catch (Exception e) {
             server.printError("processGet: " + e.getMessage());
             server.printStackTrace(e);
-        } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (java.io.IOException ioe) {
-
-                    //too late
-                }
-            }
-
-            if (os != null) {
-                try {
-                    os.close();
-                } catch (java.io.IOException ioe) {
-
-                    //too late
-                }
-            }
         }
     }
 
@@ -519,24 +510,16 @@ class WebServerConnection implements Runnable {
                 break;
         }
 
-        OutputStream os = null;
-
         try {
-            os = new BufferedOutputStream(socket.getOutputStream());
+            OutputStream os =
+                new BufferedOutputStream(socket.getOutputStream());
 
             os.write(msg.getBytes(ENCODING));
+            os.flush();
+            os.close();
         } catch (Exception e) {
             server.printError("processError: " + e.getMessage());
             server.printStackTrace(e);
-        } finally {
-            if (os != null) {
-                try {
-                    os.close();
-                } catch (java.io.IOException ioe) {
-
-                    //too late
-                }
-            }
         }
     }
 

@@ -110,6 +110,13 @@ public class HsqlDateTime {
     }
 
     /**
+     * For use with .script file, simpler than above
+     */
+    public static Timestamp simpleTimestampValue(String s) {
+        return Timestamp.valueOf(s);
+    }
+
+    /**
      * @param  time milliseconds
      * @param  nano nanoseconds
      * @return  Timestamp object

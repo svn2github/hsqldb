@@ -188,14 +188,10 @@ class TextTable extends org.hsqldb.Table {
             s.checkAdmin();
         }
 
-        try {
-            dataSourceNew = dataSourceNew.trim();
+        dataSourceNew = dataSourceNew.trim();
 
-            if (newFile && FileUtil.exists(dataSourceNew)) {
-                throw Trace.error(Trace.TEXT_SOURCE_EXISTS, dataSourceNew);
-            }
-        } catch (IOException e) {
-            throw Trace.error(Trace.FILE_IO_ERROR, e.getMessage());
+        if (newFile && FileUtil.exists(dataSourceNew)) {
+            throw Trace.error(Trace.TEXT_SOURCE_EXISTS, dataSourceNew);
         }
 
         //-- Open if descending, direction changed, or file changed.

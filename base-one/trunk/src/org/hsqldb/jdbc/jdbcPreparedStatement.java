@@ -44,11 +44,11 @@ import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HsqlByteArrayOutputStream;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.StringConverter;
-import org.hsqldb.Binary;
+import org.hsqldb.types.Binary;
 import org.hsqldb.Column;
 import org.hsqldb.HsqlDateTime;
 import org.hsqldb.HsqlException;
-import org.hsqldb.JavaObject;
+import org.hsqldb.types.JavaObject;
 import org.hsqldb.Result;
 import org.hsqldb.ResultConstants;
 import org.hsqldb.Trace;
@@ -877,6 +877,8 @@ implements java.sql.PreparedStatement {
      * @deprecated Sun does not include a reason, but presumably
      *      this is because setCharacterStream is now prefered
      */
+
+//#ifdef DEPRECATEDJDBC
     public void setUnicodeStream(int parameterIndex, java.io.InputStream x,
                                  int length) throws SQLException {
 
@@ -922,6 +924,8 @@ implements java.sql.PreparedStatement {
 
         setParameter(parameterIndex, sb.toString());
     }
+
+//#endif
 
     /**
      * <!-- start generic documentation -->
@@ -1318,6 +1322,7 @@ implements java.sql.PreparedStatement {
      */
 
 // boucherb@users 20030801 - method implemented
+//#ifdef JAVA2
     public void setBlob(int i, Blob x) throws SQLException {
 
         if (x instanceof jdbcBlob) {
@@ -1376,6 +1381,8 @@ implements java.sql.PreparedStatement {
         }
     }
 
+//#endif JAVA2
+
     /**
      * <!-- start generic documentation -->
      * Sets the designated parameter to the given <code>Clob</code> object.
@@ -1405,8 +1412,8 @@ implements java.sql.PreparedStatement {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *  jdbcPreparedStatement)
      */
-
 // boucherb@users 20030801 - method implemented
+//#ifdef JAVA2
     public void setClob(int i, Clob x) throws SQLException {
 
         if (x instanceof jdbcClob) {
@@ -1455,6 +1462,8 @@ implements java.sql.PreparedStatement {
 
         setParameter(i, sb.toString());
     }
+
+//#endif JAVA2
 
     /**
      * <!-- start generic documentation -->
@@ -1964,7 +1973,11 @@ implements java.sql.PreparedStatement {
                         o = HsqlDateTime.getNormalisedTime((java.sql.Time) o);
                     } else if (outType == Types.TIMESTAMP
                                &&!connection.isNetConn) {
+
+//#ifdef JAVA2
                         o = ((java.sql.Timestamp) o).clone();
+
+//#endif JAVA2
                     }
                 }
             }

@@ -44,7 +44,9 @@ package org.hsqldb;
 // boucherb@users 200404xx - patch 1.7.2 - changed parameter naming scheme for SQLCI client usability/support
 final class CompiledStatement {
 
-    static final int UNKNOWN = 0;
+    static final String PCOL_PREFIX        = "@p";
+    static final String RETURN_COLUMN_NAME = "@p0";
+    static final int    UNKNOWN            = 0;
 
     // enumeration of allowable CompiledStatement types
     static final int INSERT_VALUES = 1;
@@ -164,7 +166,7 @@ final class CompiledStatement {
      * @param parameters
      */
     CompiledStatement(Table targetTable, Expression deleteCondition,
-                      Expression[] parameters) throws HsqlException {
+                      Expression[] params) throws HsqlException {
 
         this.targetTable = targetTable;
         tf               = new TableFilter(targetTable, null, false);
@@ -177,7 +179,7 @@ final class CompiledStatement {
             tf.setConditions(condition);
         }
 
-        setParameters(parameters);
+        setParameters(params);
 
         type = DELETE;
     }
@@ -189,11 +191,11 @@ final class CompiledStatement {
      * @param columnMap
      * @param columnValues
      * @param updateCondition
-     * @param parameters
+     * @param params
      */
     CompiledStatement(Table targetTable, String alias, int[] columnMap,
                       Expression[] columnValues, Expression updateCondition,
-                      Expression[] parameters) throws HsqlException {
+                      Expression[] params) throws HsqlException {
 
         this.targetTable  = targetTable;
         this.columnMap    = columnMap;
@@ -223,7 +225,7 @@ final class CompiledStatement {
             tf.setConditions(condition);
         }
 
-        setParameters(parameters);
+        setParameters(params);
 
         type = UPDATE;
     }
@@ -235,11 +237,11 @@ final class CompiledStatement {
      * @param columnMap
      * @param columnValues
      * @param checkColumns
-     * @param parameters
+     * @param params
      */
     CompiledStatement(Table targetTable, int[] columnMap,
                       Expression[] columnValues, boolean[] checkColumns,
-                      Expression[] parameters) throws HsqlException {
+                      Expression[] params) throws HsqlException {
 
         this.targetTable  = targetTable;
         this.columnMap    = columnMap;
@@ -256,7 +258,7 @@ final class CompiledStatement {
             }
         }
 
-        setParameters(parameters);
+        setParameters(params);
 
         type = INSERT_VALUES;
     }
@@ -268,11 +270,11 @@ final class CompiledStatement {
      * @param columnMap
      * @param checkColumns
      * @param select
-     * @param parameters
+     * @param params
      */
     CompiledStatement(Table targetTable, int[] columnMap,
                       boolean[] checkColumns, Select select,
-                      Expression[] parameters) throws HsqlException {
+                      Expression[] params) throws HsqlException {
 
         this.targetTable  = targetTable;
         this.columnMap    = columnMap;
@@ -284,7 +286,7 @@ final class CompiledStatement {
 
         // set select result metadata etc.
         select.prepareResult();
-        setParameters(parameters);
+        setParameters(params);
 
         type = INSERT_SELECT;
     }
@@ -293,10 +295,10 @@ final class CompiledStatement {
      * Instantiate this as a SELECT statement.
      *
      * @param select
-     * @param parameters
+     * @param params
      */
     CompiledStatement(Select select,
-                      Expression[] parameters) throws HsqlException {
+                      Expression[] params) throws HsqlException {
 
         this.select = select;
 
@@ -311,7 +313,7 @@ final class CompiledStatement {
 
         // set select result metadata etc.
         select.prepareResult();
-        setParameters(parameters);
+        setParameters(params);
 
         type = SELECT;
     }
@@ -320,10 +322,10 @@ final class CompiledStatement {
      * Instantiate this as a CALL statement.
      *
      * @param expression
-     * @param parameters
+     * @param params
      */
     CompiledStatement(Expression expression,
-                      Expression[] parameters) throws HsqlException {
+                      Expression[] params) throws HsqlException {
 
         this.expression = expression;
 
@@ -331,7 +333,7 @@ final class CompiledStatement {
 
         expression.paramMode = Expression.PARAM_OUT;
 
-        setParameters(parameters);
+        setParameters(params);
 
         type = CALL;
     }
@@ -352,9 +354,9 @@ final class CompiledStatement {
         }
     }
 
-    private void setParameters(Expression[] parameters) {
+    private void setParameters(Expression[] params) {
 
-        this.parameters = parameters;
+        this.parameters = params;
 
         int[] types = new int[parameters.length];
 
@@ -427,7 +429,7 @@ final class CompiledStatement {
 
                 e = expression;
                 r = Result.newSingleColumnResult(
-                    DIProcedureInfo.RETURN_COLUMN_NAME, e.getDataType());
+                    CompiledStatement.RETURN_COLUMN_NAME, e.getDataType());
                 r.metaData.classNames[0] = e.getValueClassName();
 
                 // no more setup for r; all the defaults apply
@@ -492,7 +494,7 @@ final class CompiledStatement {
 
             // always i + 1.  We currently use the convention of @p0 to name the
             // return value OUT parameter
-            out.metaData.colNames[idx] = DIProcedureInfo.PCOL_PREFIX
+            out.metaData.colNames[idx] = CompiledStatement.PCOL_PREFIX
                                          + (i + 1);
 
             // sLabel is meaningless in this context.

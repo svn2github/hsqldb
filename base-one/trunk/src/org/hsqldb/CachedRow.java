@@ -167,7 +167,7 @@ public class CachedRow extends Row {
             n       = n.nNext;
         }
 
-        oData = in.readData(tTable.getColumnTypes());
+        oData = in.readData(tTable.getColumnTypes(), tTable.columnCount);
 
         setPos(iPos);
 
@@ -310,7 +310,7 @@ public class CachedRow extends Row {
 
         if (hasDataChanged) {
             out.writeData(oData, tTable);
-            out.writePos(iPos);
+            out.writeEnd();
         }
 
         hasDataChanged = false;

@@ -510,7 +510,6 @@ public class StringConverter {
                                OutputStream out) throws IOException {
 
         int strlen = str.length();
-        int utflen = 0;
         int c,
             count  = 0;
 

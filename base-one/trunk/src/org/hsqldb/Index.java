@@ -66,8 +66,11 @@
 
 package org.hsqldb;
 
+import org.hsqldb.index.RowIterator;
 import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.ArrayUtil;
+
+import java.util.NoSuchElementException;
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users - corrections
 // fredt@users 20020225 - patch 1.7.0 - cascading deletes
@@ -85,7 +88,7 @@ import org.hsqldb.lib.ArrayUtil;
  *
  * @version 1.7.2
  */
-class Index {
+public class Index {
 
     // types of index
     static final int MEMORY_INDEX  = 0;
@@ -93,18 +96,19 @@ class Index {
     static final int POINTER_INDEX = 2;
 
     // fields
-    private final HsqlName indexName;
-    final boolean[]        colCheck;
-    private final int[]    colIndex;
-    private final int[]    colType;
-    private final boolean  isUnique;                 // DDL uniqueness
-    boolean                isConstraint;
-    boolean                isForward;
-    private final boolean  isExact;
-    private final int      visibleColumns;
-    private final int      colIndex_0, colType_0;    // just for tuning
-    private Node           root;
-    private int            depth;
+    private final HsqlName     indexName;
+    final boolean[]            colCheck;
+    private final int[]        colIndex;
+    private final int[]        colType;
+    private final boolean      isUnique;                 // DDL uniqueness
+    boolean                    isConstraint;
+    boolean                    isForward;
+    private final boolean      isExact;
+    private final int          visibleColumns;
+    private final int          colIndex_0, colType_0;    // just for tuning
+    private Node               root;
+    private int                depth;
+    private static RowIterator emtyIterator = new IndexRowIterator(null);
 
     /**
      * Constructor declaration
@@ -211,6 +215,11 @@ class Index {
         }
 
         return count;
+    }
+
+    void clearAll() {
+        root  = null;
+        depth = 0;
     }
 
     /**
@@ -642,6 +651,8 @@ class Index {
      */
     Node findFirst(Object value, int compare) throws HsqlException {
 
+        boolean isEqual = compare == Expression.EQUAL
+                          || compare == Expression.IS_NULL;
         Node x     = root;
         int  iTest = 1;
 
@@ -649,7 +660,7 @@ class Index {
             iTest = 0;
         }
 
-        if (value == null && compare != Expression.EQUAL) {
+        if (value == null &&!isEqual) {
             return null;
         }
 
@@ -701,7 +712,7 @@ class Index {
             if (result >= iTest) {
                 x = next(x);
             } else {
-                if (compare == Expression.EQUAL) {
+                if (isEqual) {
                     if (result != 0) {
                         x = null;
                     }
@@ -787,6 +798,10 @@ class Index {
         }
 
         return x;
+    }
+
+    RowIterator firstRow() throws HsqlException {
+        return new IndexRowIterator(this);
     }
 
     /**
@@ -1092,6 +1107,44 @@ class Index {
                                         : 1;
         } else {
             return 2;
+        }
+    }
+
+    public static class IndexRowIterator implements RowIterator {
+
+        Index index;
+        Node  next;
+
+        private IndexRowIterator(Index index) {
+
+            this.index = index;
+
+            if (index != null) {
+                try {
+                    next = index.first();
+                } catch (HsqlException e) {}
+            }
+        }
+
+        public boolean hasNext() {
+            return next != null;
+        }
+
+        public Row next() {
+
+            if (hasNext()) {
+                try {
+                    Row row = next.getRow();
+
+                    next = index.next(next);
+
+                    return row;
+                } catch (Exception e) {
+                    throw new NoSuchElementException();
+                }
+            }
+
+            throw new NoSuchElementException();
         }
     }
 }

@@ -83,7 +83,7 @@ package org.hsqldb;
  *
  * @version 1.7.2
  */
-class Row {
+public class Row {
 
     protected Object oData[];
     protected Node   nPrimaryNode;

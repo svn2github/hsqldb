@@ -883,9 +883,9 @@ final class DITypeInfo {
     }
 
     /**
-     * Retrieves whether the type is an IDENTITY type. <p>
+     * Retrieves whether the type can be an IDENTITY type. <p>
      *
-     * @return whether the type is an IDENTITY type.
+     * @return whether the type can be an IDENTITY type.
      */
     Boolean isAutoIncrement() {
 
@@ -898,9 +898,11 @@ final class DITypeInfo {
             case Types.REAL :
             case Types.SMALLINT :
             case Types.TINYINT :
+                return Boolean.FALSE;
+
             case Types.BIGINT :
             case Types.INTEGER :
-                return Boolean.FALSE;
+                return Boolean.TRUE;
 
             default :
                 return null;

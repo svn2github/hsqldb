@@ -515,7 +515,8 @@ public class Result {
                     int count = in.readIntData();
 
                     while (count-- > 0) {
-                        add(in.readData(metaData.colTypes));
+                        add(in.readData(metaData.colTypes,
+                                        metaData.colTypes.length));
                     }
 
                     break;
@@ -533,7 +534,8 @@ public class Result {
                     int count = in.readIntData();
 
                     while (count-- > 0) {
-                        add(in.readData(metaData.colTypes));
+                        add(in.readData(metaData.colTypes,
+                                        metaData.colTypes.length));
                     }
 
                     break;

@@ -269,9 +269,9 @@ public class TextCache extends DataFileCache {
         try {
             rFile = ScaledRAFile.newScaledRAFile(sName, readonly, 1,
                                                  ScaledRAFile.DATA_FILE_RAF);
-            iFreePos = (int) rFile.length();
+            fileFreePosition = (int) rFile.length();
 
-            if ((iFreePos == 0) && ignoreFirst) {
+            if ((fileFreePosition == 0) && ignoreFirst) {
                 byte[] buf = null;
 
                 try {
@@ -282,7 +282,7 @@ public class TextCache extends DataFileCache {
 
                 rFile.write(buf, 0, buf.length);
 
-                iFreePos = ignoredFirst.length();
+                fileFreePosition = ignoredFirst.length();
             }
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR,

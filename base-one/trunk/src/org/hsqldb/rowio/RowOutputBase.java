@@ -34,10 +34,10 @@ package org.hsqldb.rowio;
 import java.io.IOException;
 import java.math.BigDecimal;
 
-import org.hsqldb.Binary;
+import org.hsqldb.types.Binary;
 import org.hsqldb.Column;
 import org.hsqldb.HsqlException;
-import org.hsqldb.JavaObject;
+import org.hsqldb.types.JavaObject;
 import org.hsqldb.Table;
 import org.hsqldb.Trace;
 import org.hsqldb.Types;
@@ -108,7 +108,7 @@ implements RowOutputInterface {
     }
 
 // fredt@users - comment - methods for writing Result column type, name and data size
-    public abstract void writePos(int pos) throws IOException;
+    public abstract void writeEnd() throws IOException;
 
     public abstract void writeSize(int size) throws IOException;
 
@@ -183,7 +183,7 @@ implements RowOutputInterface {
                           Table t) throws IOException, HsqlException {
 
         int[] types = t.getColumnTypes();
-        int   l     = types.length - 1;
+        int   l     = t.getColumnCount();
 
         writeData(l, types, data, null, false);
     }

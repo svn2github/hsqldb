@@ -72,12 +72,12 @@ import java.math.BigDecimal;
 import java.sql.*;     // for Array, Blob, Clob, Ref (jdk 1.1)
 import java.util.*;    // for Map (jdk 1.1)
 
-import org.hsqldb.Binary;
+import org.hsqldb.types.Binary;
 import org.hsqldb.Column;
 import org.hsqldb.HsqlDateTime;
 import org.hsqldb.HsqlException;
 import org.hsqldb.HsqlProperties;
-import org.hsqldb.JavaObject;
+import org.hsqldb.types.JavaObject;
 import org.hsqldb.Record;
 import org.hsqldb.Result;
 import org.hsqldb.ResultConstants;
@@ -720,6 +720,8 @@ public class jdbcResultSet implements ResultSet {
      * @exception SQLException if a database access error occurs
      * @deprecated by java.sun.com as of JDK 1.2
      */
+
+//#ifdef DEPRECATEDJDBC
     public BigDecimal getBigDecimal(int columnIndex,
                                     int scale) throws SQLException {
 
@@ -737,6 +739,8 @@ public class jdbcResultSet implements ResultSet {
 
         return bd;
     }
+
+//#endif
 
     /**
      * <!-- start generic documentation -->
@@ -954,6 +958,8 @@ public class jdbcResultSet implements ResultSet {
      * @deprecated use <code>getCharacterStream</code> in place of
      *        <code>getUnicodeStream</code>
      */
+
+//#ifdef DEPRECATEDJDBC
     public java.io.InputStream getUnicodeStream(int columnIndex)
     throws SQLException {
 
@@ -965,6 +971,8 @@ public class jdbcResultSet implements ResultSet {
 
         return new StringInputStream(s);
     }
+
+//#endif
 
     /**
      * <!-- start generic documentation -->
@@ -989,7 +997,6 @@ public class jdbcResultSet implements ResultSet {
      *     <code>null</code>
      * @exception SQLException if a database access error occurs
      */
-
 // fredt@users 20020215 - patch 485704 by boucherb@users
     public java.io.InputStream getBinaryStream(int columnIndex)
     throws SQLException {
@@ -1155,10 +1162,14 @@ public class jdbcResultSet implements ResultSet {
      * @exception SQLException if a database access error occurs
      * @deprecated by java.sun.com as of JDK 1.2
      */
+
+//#ifdef DEPRECATEDJDBC
     public BigDecimal getBigDecimal(String columnName,
                                     int scale) throws SQLException {
         return getBigDecimal(findColumn(columnName), scale);
     }
+
+//#endif
 
     /**
      * <!-- start generic documentation -->
@@ -1287,10 +1298,14 @@ public class jdbcResultSet implements ResultSet {
      * @deprecated use <code>getCharacterStream</code> instead
      * @see #getUnicodeStream(int)
      */
+
+//#ifdef DEPRECATEDJDBC
     public java.io.InputStream getUnicodeStream(String columnName)
     throws SQLException {
         return getUnicodeStream(findColumn(columnName));
     }
+
+//#endif
 
     /**
      * <!-- start generic documentation -->
@@ -1553,13 +1568,19 @@ public class jdbcResultSet implements ResultSet {
             }
         } else if (o instanceof Binary) {
             return ((Binary) o).getClonedBytes();
-        } else if (o instanceof java.sql.Date) {
+        }
+
+//#ifdef JAVA2
+        else if (o instanceof java.sql.Date) {
             return ((java.sql.Date) o).clone();
         } else if (o instanceof java.sql.Time) {
             return ((java.sql.Time) o).clone();
         } else if (o instanceof java.sql.Timestamp) {
             return ((java.sql.Timestamp) o).clone();
-        } else {
+        }
+
+//#endif JAVA2
+        else {
             return o;
         }
     }
@@ -4895,6 +4916,8 @@ public class jdbcResultSet implements ResultSet {
 
         // no conversion necessary
         if (type == t) {
+
+//#ifdef JAVA2
             if (type == Types.DATE) {
                 o = ((java.sql.Date) o).clone();
             } else if (type == Types.TIME) {
@@ -4903,6 +4926,7 @@ public class jdbcResultSet implements ResultSet {
                 o = ((java.sql.Timestamp) o).clone();
             }
 
+//#endif JAVA2
             return o;
         }
 

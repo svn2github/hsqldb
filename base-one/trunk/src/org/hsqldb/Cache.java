@@ -197,7 +197,7 @@ abstract class Cache {
     // variable fields
 // boucherb@users - access changed for metadata 1.7.2
     protected ScaledRAFile rFile;
-    protected int          iFreePos;
+    protected int          fileFreePosition;
 
 // ---------------------------------------------------
     //
@@ -273,7 +273,7 @@ abstract class Cache {
         rowTable         = new CachedRow[maxCacheSize];
         rData            = new CachedRow[lookupTableLength];
         rFirst           = null;
-        iFreePos         = 0;
+        fileFreePosition = 0;
         fRoot            = null;
         iFreeCount       = 0;
         iCacheSize       = 0;
@@ -284,9 +284,6 @@ abstract class Cache {
 
         rowOut = RowOutputBase.newRowOutput(cachedRowType);
         rowIn  = RowInputBase.newRowInput(cachedRowType);
-
-        rowIn.setSystemId(true);
-
         rowStoreExtra = rowOut instanceof RowOutputBinary
                         ? ROW_STORE_EXTRA_170
                         : ROW_STORE_EXTRA_160;
@@ -670,7 +667,7 @@ abstract class Cache {
      * Getter for iFreePos member
      */
     int getFreePos() {
-        return iFreePos;
+        return fileFreePosition;
     }
 
     static class CachedRowComparator implements ObjectComparator {

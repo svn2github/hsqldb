@@ -953,7 +953,7 @@ public class Table extends BaseTable {
         }
 
         for (int i = 0; i < indexList.length; i++) {
-            Index index     = (Index) indexList[i];
+            Index index     = indexList[i];
             int[] cols      = index.getColumns();
             int   colsCount = index.getVisibleColumns();
 
@@ -1094,7 +1094,7 @@ public class Table extends BaseTable {
         int   colCount    = 0;
 
         for (int i = 0; i < indexList.length; i++) {
-            Index index = (Index) indexList[i];
+            Index index = indexList[i];
             boolean result = ArrayUtil.containsAllTrueElements(columnCheck,
                 index.colCheck);
 
@@ -1270,17 +1270,17 @@ public class Table extends BaseTable {
 
         createIndexStructure(columns, name, true, true, true, false);
 
-        colTypes         = new int[columnCount];
+        colTypes         = new int[visibleColumnCount];
         colDefaults      = new Expression[visibleColumnCount];
         colSizes         = new int[visibleColumnCount];
         colNullable      = new boolean[visibleColumnCount];
         defaultColumnMap = new int[visibleColumnCount];
 
         for (int i = 0; i < columnCount; i++) {
-            column      = getColumn(i);
-            colTypes[i] = column.getType();
+            column = getColumn(i);
 
             if (i < visibleColumnCount) {
+                colTypes[i]         = column.getType();
                 colSizes[i]         = column.getSize();
                 colNullable[i]      = column.isNullable();
                 defaultColumnMap[i] = i;
@@ -1730,7 +1730,7 @@ public class Table extends BaseTable {
         indexRow(r);
 
         if (session != null) {
-            session.addTransactionInsert(this, data);
+            session.addTransactionInsert(this, r);
         }
 
         if (!isTemp &&!isText &&!isReadOnly && database.logger.hasLog()) {
@@ -1777,6 +1777,11 @@ public class Table extends BaseTable {
         return count;
     }
 
+    public void insertFromScript(Object[] data) throws HsqlException {
+        updateIdentityValue(data);
+        insert(data);
+    }
+
     /**
      * Used by ScriptReaderBinary to unconditionally insert a row into
      * the table when the .script file is read.
@@ -1819,7 +1824,7 @@ public class Table extends BaseTable {
 
         Object[] data = row.getData();
 
-        setIdentityColumn(null, data);
+        updateIdentityValue(data);
         enforceFieldValueLimits(data);
         enforceNullConstraints(data);
         indexRow(row);
@@ -1865,6 +1870,21 @@ public class Table extends BaseTable {
             // only do this if id is for a visible column
             if (session != null && identityColumn < visibleColumnCount) {
                 session.setLastIdentity(id);
+            }
+        }
+    }
+
+    /**
+     * If there is an identity column (visible or hidden) on the table, sets
+     * the max identity value.
+     */
+    protected void updateIdentityValue(Object[] data) throws HsqlException {
+
+        if (identityColumn != -1) {
+            Number id = (Number) data[identityColumn];
+
+            if (id != null) {
+                identitySequence.getValue(id.longValue());
             }
         }
     }
@@ -2643,7 +2663,7 @@ public class Table extends BaseTable {
         row.delete();
 
         if (session != null) {
-            session.addTransactionDelete(this, data);
+            session.addTransactionDelete(this, row);
         }
 
         if (log &&!isTemp &&!isText &&!isReadOnly) {
@@ -3032,7 +3052,7 @@ public class Table extends BaseTable {
     void clearAllRows() {
 
         for (int i = 0; i < getIndexCount(); i++) {
-            getIndex(i).setRoot(null);
+            getIndex(i).clearAll();
         }
 
         identitySequence.reset();

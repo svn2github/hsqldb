@@ -69,6 +69,7 @@ package org.hsqldb.util;
 import java.io.*;
 import java.util.Vector;
 
+import org.hsqldb.lib.java.JavaSystem;
 import org.hsqldb.lib.HashMappedList;
 
 // sqlbob@users 20020407 - patch 1.7.0 - reengineering
@@ -137,7 +138,11 @@ class ConnectionDialogCommon {
 
     static String[][] getTypes() {
 
+        return sJDBCTypes;
+/*
+
         if (connTypes == null) {
+
 
             // Pluggable connection types:
             Vector plugTypes = new Vector();
@@ -171,6 +176,7 @@ class ConnectionDialogCommon {
         }
 
         return (connTypes);
+ */
     }
 
     private static final String fileName       = "hsqlprefs.dat";
@@ -184,7 +190,7 @@ class ConnectionDialogCommon {
 
         try {
             if (recentSettings == null) {
-                String dir = getTempDir();
+                String dir = JavaSystem.getTempDir(tempdir);
 
                 if (dir == null) {
                     return list;
@@ -193,8 +199,9 @@ class ConnectionDialogCommon {
                 recentSettings = new File(dir, fileName);
 
                 if (!recentSettings.exists()) {
-                    recentSettings.createNewFile();
 
+// jdk 1.1 doesn't support this
+//                    recentSettings.createNewFile();
                     return list;
                 }
             }
@@ -264,7 +271,7 @@ class ConnectionDialogCommon {
 
         try {
             if (recentSettings == null) {
-                String dir = getTempDir();
+                String dir = JavaSystem.getTempDir(tempdir);
 
                 if (dir == null) {
                     return;
@@ -273,7 +280,8 @@ class ConnectionDialogCommon {
                 recentSettings = new File(dir, fileName);
 
                 if (!recentSettings.exists()) {
-                    recentSettings.createNewFile();
+
+//                    recentSettings.createNewFile();
                 }
             }
 
@@ -302,7 +310,7 @@ class ConnectionDialogCommon {
 
         try {
             if (recentSettings == null) {
-                String dir = getTempDir();
+                String dir = JavaSystem.getTempDir(tempdir);
 
                 if (dir == null) {
                     return;
@@ -323,23 +331,5 @@ class ConnectionDialogCommon {
         } catch (Throwable t) {}
     }
 
-    private static String tmpdir = null;
-
-    private static String getTempDir() {
-
-        if (tmpdir == null) {
-            try {
-                Class.forName("sun.security.action.GetPropertyAction");
-
-                sun.security.action.GetPropertyAction a =
-                    new sun.security.action.GetPropertyAction(
-                        "java.io.tmpdir");
-
-                tmpdir =
-                    ((String) java.security.AccessController.doPrivileged(a));
-            } catch (Exception e) {}
-        }
-
-        return tmpdir;
-    }
+    private static String tempdir = null;
 }

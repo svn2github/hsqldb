@@ -74,9 +74,9 @@ package org.hsqldb;
 class Transaction {
 
     private boolean isDelete;
-    private boolean isNested;
     private Table   tTable;
     private Object  oRow[];
+    long            SCN;
 
     /**
      * Constructor. <p>
@@ -88,10 +88,9 @@ class Transaction {
      * @param table the Table object against which the operation occured
      * @param row the row data that iis inserted or deleted
      */
-    Transaction(boolean delete, boolean nested, Table table, Object row[]) {
+    Transaction(boolean delete, Table table, Object row[], long SCN) {
 
         isDelete = delete;
-        isNested = nested;
         tTable   = table;
         oRow     = row;
     }
@@ -100,15 +99,16 @@ class Transaction {
      * Undoes the single row delete or insert represented by this object.
      *
      * @param session the session context in which to perform the undo
+     * @param log if true log the work
      * @throws HsqlException if a database access error occurs
      */
-    void rollback(Session session) {
+    void rollback(Session session, boolean log) {
 
         try {
             if (isDelete) {
-                tTable.insertNoCheckRollback(session, oRow, isNested);
+                tTable.insertNoCheckRollback(session, oRow, log);
             } else {
-                tTable.deleteNoCheckRollback(session, oRow, isNested);
+                tTable.deleteNoCheckRollback(session, oRow, log);
             }
         } catch (Exception e) {}
     }

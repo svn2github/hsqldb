@@ -39,7 +39,7 @@ import java.net.*;
 import java.io.*;
 import java.util.*;
 
-import org.hsqldb.lib.java.javaSystem;
+import org.hsqldb.lib.java.JavaSystem;
 
 // fredt@users 20011220 - patch 481239 by yfl@users - new class
 // jrmaher@users 20020710 - support for batch mode
@@ -120,7 +120,7 @@ public class ScriptTool {
                 trace("script   = " + script);
                 trace("log      = " + log);
                 trace("batch    = " + BATCH);
-                javaSystem.setLogToSystem(true);
+                JavaSystem.setLogToSystem(true);
             }
 
             // As described in the JDBC FAQ:

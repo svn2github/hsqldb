@@ -72,7 +72,7 @@ class CachedDataRow extends CachedRow {
         tTable      = t;
         iPos        = in.getPos();
         storageSize = in.getSize();
-        oData       = in.readData(tTable.getColumnTypes());
+        oData = in.readData(tTable.getColumnTypes(), tTable.getColumnCount());
 
         setPos(iPos);
     }
@@ -121,7 +121,7 @@ class CachedDataRow extends CachedRow {
 
         out.writeSize(storageSize);
         out.writeData(oData, tTable);
-        out.writePos(iPos);
+        out.writeEnd();
 
         hasChanged = false;
     }

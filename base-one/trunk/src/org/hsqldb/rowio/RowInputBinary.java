@@ -35,10 +35,10 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-import org.hsqldb.Binary;
+import org.hsqldb.types.Binary;
 import org.hsqldb.HsqlDateTime;
 import org.hsqldb.HsqlException;
-import org.hsqldb.JavaObject;
+import org.hsqldb.types.JavaObject;
 import org.hsqldb.lib.StringConverter;
 import org.hsqldb.store.ValuePool;
 
@@ -91,6 +91,10 @@ implements org.hsqldb.rowio.RowInputInterface {
 
     public int readIntData() throws IOException {
         return readInt();
+    }
+
+    public long readLongData() throws IOException {
+        return readLong();
     }
 
     public String readString() throws IOException {

@@ -41,6 +41,7 @@ import org.hsqldb.Database;
 import org.hsqldb.DatabaseScript;
 import org.hsqldb.HsqlException;
 import org.hsqldb.Result;
+import org.hsqldb.index.RowIterator;
 import org.hsqldb.Table;
 import org.hsqldb.Token;
 import org.hsqldb.Trace;
@@ -275,10 +276,10 @@ public abstract class ScriptWriterBase {
                 if (script) {
                     writeTableInit(t);
 
-                    Iterator it = t.iterator();
+                    RowIterator it = t.rowIterator();
 
                     while (it.hasNext()) {
-                        writeRow(0, t, (Object[]) it.next());
+                        writeRow(0, t, it.next().getData());
                     }
 
                     writeTableTerm(t);

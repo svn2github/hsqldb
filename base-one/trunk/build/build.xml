@@ -97,11 +97,49 @@ examples:
        </javac>
     </target>
 
+    <target name="switchtodeprecatedjava" depends="codeswitcher"
+            description="self explanatory">
+      <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes" >
+         <arg line="${src}/org/hsqldb/lib/java/JavaSystem.java +DEPRECATEDJAVA"/>
+       </java>
+    </target>
+
+    <target name="switchoffdeprecatedjava" depends="codeswitcher"
+            description="self explanatory">
+      <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes" >
+         <arg line="${src}/org/hsqldb/lib/java/JavaSystem.java -DEPRECATEDJAVA"/>
+       </java>
+    </target>
+
+    <target name="switchtodeprecatedjdbc" depends="codeswitcher"
+            description="self explanatory">
+      <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes" >
+         <arg line="${src}/org/hsqldb/jdbc/jdbcCallableStatement.java
+                    ${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java
+                    ${src}/org/hsqldb/jdbc/jdbcResultSet.java +DEPRECATEDJDBC"/>
+       </java>
+    </target>
+
+    <target name="switchoffdeprecatedjdbc" depends="codeswitcher"
+            description="self explanatory">
+      <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes" >
+         <arg line="${src}/org/hsqldb/jdbc/jdbcCallableStatement.java
+                    ${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java
+                    ${src}/org/hsqldb/jdbc/jdbcResultSet.java -DEPRECATEDJDBC"/>
+       </java>
+    </target>
+
     <target name="switchtojdk11" depends="codeswitcher"
             description="self explanatory" unless="ant.java.iscjavamodern">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes" >
          <arg line="${src}/org/hsqldb/jdbc/jdbcStubs.java
+                    ${src}/org/hsqldb/jdbc/jdbcConnection.java
+                    ${src}/org/hsqldb/jdbc/jdbcDatabaseMetaData.java
+                    ${src}/org/hsqldb/jdbc/jdbcCallableStatement.java
+                    ${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java
+                    ${src}/org/hsqldb/jdbc/jdbcResultSet.java
                     ${src}/org/hsqldb/jdbc/jdbcStatement.java
+                    ${src}/org/hsqldb/rowio/RowInputTextLog.java
                     ${src}/org/hsqldb/HsqlDateTime.java -JAVA2 -JDBC3"/>
        </java>
        <available classname="java.util.Vector" property="noswing"/>
@@ -117,6 +155,7 @@ examples:
                     ${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java
                     ${src}/org/hsqldb/jdbc/jdbcResultSet.java
                     ${src}/org/hsqldb/jdbc/jdbcStatement.java
+                    ${src}/org/hsqldb/rowio/RowInputTextLog.java
                     ${src}/org/hsqldb/HsqlDateTime.java +JAVA2 -JDBC3"/>
        </java>
     </target>
@@ -131,6 +170,7 @@ examples:
                     ${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java
                     ${src}/org/hsqldb/jdbc/jdbcResultSet.java
                     ${src}/org/hsqldb/jdbc/jdbcStatement.java
+                    ${src}/org/hsqldb/rowio/RowInputTextLog.java
                     ${src}/org/hsqldb/HsqlDateTime.java +JAVA2 +JDBC3"/>
        </java>
     </target>
@@ -361,7 +401,6 @@ examples:
              basedir="classes"
          >
          <exclude name="org/hsqldb/jmx/**"/>
-         <exclude name="org/hsqldb/lib/java/*.*"/>
          <exclude name="org/hsqldb/util/*.*"/>
          <exclude name="org/hsqldb/test/*.*"/>
          <exclude name="org/hsqldb/sample/*.*"/>
@@ -369,6 +408,7 @@ examples:
          <exclude name="hsqlServlet.class"/>
          <exclude name="org/hsqldb/Servlet.class"/>
          <exclude name="org/hsqldb/HsqlSocketFactory.class"/>
+         <exclude name="org/hsqldb/HsqlSocketFactorySecure.class"/>
          <exclude name="org/hsqldb/HsqlServerFactory.class"/>
          <exclude name="org/hsqldb/HsqlServerProperties.class"/>
          <exclude name="org/hsqldb/HsqlSocketRequestHandler.class"/>
@@ -388,7 +428,6 @@ examples:
          <exclude name="org/hsqldb/DatabaseInformationFull.class"/>
          <exclude name="org/hsqldb/rowio/RowInputLegacy.class"/>
          <exclude name="org/hsqldb/rowio/RowOutputLegacy.class"/>
-         <exclude name="org/hsqldb/DINameSpace.class"/>
          <exclude name="org/hsqldb/DIProcedureInfo.class"/>
          <exclude name="org/hsqldb/HSQLClientConnection.class"/>
          <exclude name="org/hsqldb/HTTPClientConnection.class"/>
@@ -541,13 +580,13 @@ examples:
     <target name="javadoc" depends="-preparedoc"
             description="Create javadoc for the distribution package">
       <javadoc
-		   sourcefiles="${src}/org/hsqldb/jdbcDriver.java,
+                   sourcefiles="${src}/org/hsqldb/jdbcDriver.java,
                         ${src}/org/hsqldb/Trigger.java,
-		   				${src}/org/hsqldb/Server.java,
-		   				${src}/org/hsqldb/WebServer.java,
-		   				${src}/org/hsqldb/jdbc/*.java,
-		   				${src}/org/hsqldb/sample/TriggerSample.java,
-		   				${src}/org/hsqldb/util/SqlTool.java"
+                                                   ${src}/org/hsqldb/Server.java,
+                                                   ${src}/org/hsqldb/WebServer.java,
+                                                   ${src}/org/hsqldb/jdbc/*.java,
+                                                   ${src}/org/hsqldb/sample/TriggerSample.java,
+                                                   ${src}/org/hsqldb/util/SqlTool.java"
            destdir="${basedir}/doc/src"
            classpath="${basedir}/lib/servlet.jar;${basedir}/lib/junit.jar"
            author="true"

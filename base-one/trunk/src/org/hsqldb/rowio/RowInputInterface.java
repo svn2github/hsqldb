@@ -57,10 +57,10 @@ public interface RowInputInterface {
 
     public int readIntData() throws IOException;
 
-    public void setSystemId(boolean flag);
+    public long readLongData() throws IOException;
 
-    public Object[] readData(int[] colTypes)
-    throws IOException, HsqlException;
+    public Object[] readData(int[] colTypes,
+                             int length) throws IOException, HsqlException;
 
     public void resetRow(int filePos, int size) throws IOException;
 

@@ -34,6 +34,14 @@ package org.hsqldb.lib;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
+import org.hsqldb.lib.HsqlByteArrayOutputStream;
+import org.hsqldb.lib.HsqlByteArrayInputStream;
+
+import java.io.IOException;
+import java.io.Serializable;
 
 /**
  * Input / Output utility
@@ -91,5 +99,40 @@ public class InOutUtil {
         }
 
         return count;
+    }
+
+    /**
+     * Retrieves the serialized form of the specified <CODE>Object</CODE>
+     * as an array of bytes.
+     *
+     * @param s the Object to serialize
+     * @return  a static byte array representing the passed Object
+     * @throws HsqlException if a serialization failure occurs
+     */
+    public static byte[] serialize(Serializable s) throws IOException {
+
+        HsqlByteArrayOutputStream bo = new HsqlByteArrayOutputStream();
+        ObjectOutputStream        os = new ObjectOutputStream(bo);
+
+        os.writeObject(s);
+
+        return bo.toByteArray();
+    }
+
+    /**
+     * Deserializes the specified byte array to an
+     * <CODE>Object</CODE> instance.
+     *
+     * @return the Object resulting from deserializing the specified array of bytes
+     * @param ba the byte array to deserialize to an Object
+     * @throws HsqlException if a serialization failure occurs
+     */
+    public static Serializable deserialize(byte[] ba)
+    throws IOException, ClassNotFoundException {
+
+        HsqlByteArrayInputStream bi = new HsqlByteArrayInputStream(ba);
+        ObjectInputStream        is = new ObjectInputStream(bi);
+
+        return (Serializable) is.readObject();
     }
 }

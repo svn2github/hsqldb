@@ -104,7 +104,7 @@ class ScaledRAFile {
     }
 
     /**
-     * Some JVM's do not allow seek beyond end of file, so zeros are written
+     * Some JVM's do not allow seek beyon end of file, so zeros are written
      * first in that case. Reported by bohgammer@users in Open Disucssion
      * Forum.
      */

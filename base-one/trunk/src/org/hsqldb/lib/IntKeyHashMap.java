@@ -60,7 +60,14 @@ public class IntKeyHashMap extends BaseHashMap {
     }
 
     public Object get(int key) {
-        return super.getObject(key);
+
+        int lookup = getLookup(key);
+
+        if (lookup != -1) {
+            return objectValueTable[lookup];
+        }
+
+        return null;
     }
 
     public Object put(int key, Object value) {

@@ -112,11 +112,11 @@ public class DataFileCache extends Cache {
             if (exists) {
                 rFile.seek(FREE_POS_POS);
 
-                iFreePos = rFile.readInt();
+                fileFreePosition = rFile.readInt();
             } else {
 
 // erik - iFreePos = INITIAL_FREE_POS / cacheFileScale;
-                iFreePos = INITIAL_FREE_POS;
+                fileFreePosition = INITIAL_FREE_POS;
 
                 dbProps.setProperty("hsqldb.cache_version", "1.7.0");
             }
@@ -151,13 +151,13 @@ public class DataFileCache extends Cache {
 
         try {
             rFile.seek(FREE_POS_POS);
-            rFile.writeInt(iFreePos);
+            rFile.writeInt(fileFreePosition);
             saveAll();
             rFile.close();
 
             rFile = null;
 
-            boolean empty = iFreePos == INITIAL_FREE_POS;
+            boolean empty = fileFreePosition == INITIAL_FREE_POS;
 
             if (empty) {
                 new File(sName).delete();
@@ -183,17 +183,14 @@ public class DataFileCache extends Cache {
 
         close();
 
-        try {
+        // return here if *.data file was deleted because it was empty
+        if (!FileUtil.exists(sName)) {
+            init();
+            open(cacheReadonly);
+            Trace.printSystemOut("opened empty chache");
 
-            // return here if *.data file was deleted because it was empty
-            if (!FileUtil.exists(sName)) {
-                init();
-                open(cacheReadonly);
-                Trace.printSystemOut("opened empty chache");
-
-                return;
-            }
-        } catch (IOException e) {}
+            return;
+        }
 
         HsqlArrayList indexRoots = null;
 
@@ -323,7 +320,7 @@ public class DataFileCache extends Cache {
         int       size    = rowSize;
         CacheFree f       = fRoot;
         CacheFree last    = null;
-        int       i       = iFreePos;
+        int       i       = fileFreePosition;
 
         while (f != null) {
 
@@ -356,10 +353,10 @@ public class DataFileCache extends Cache {
             f    = f.fNext;
         }
 
-        if (i == iFreePos) {
+        if (i == fileFreePosition) {
 
 // erik  iFreePs += size / cacheFileScale
-            iFreePos += size;
+            fileFreePosition += size;
         }
 
         r.setPos(i);
@@ -464,5 +461,9 @@ public class DataFileCache extends Cache {
         size = ((size + cachedRowPadding - 1) / cachedRowPadding)
                * cachedRowPadding;    // align to 8 byte blocks
         r.storageSize = size;
+    }
+
+    int getCachedCount() {
+        return this.iCacheSize;
     }
 }

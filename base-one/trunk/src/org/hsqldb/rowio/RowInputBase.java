@@ -34,7 +34,7 @@ package org.hsqldb.rowio;
 import java.io.IOException;
 import java.math.BigDecimal;
 
-import org.hsqldb.Binary;
+import org.hsqldb.types.Binary;
 import org.hsqldb.HsqlException;
 import org.hsqldb.Trace;
 import org.hsqldb.Types;
@@ -58,9 +58,6 @@ public abstract class RowInputBase extends HsqlByteArrayInputStream {
     protected int filePos = NO_POS;
     protected int nextPos = NO_POS;
     protected int size;
-
-    // the last column is a SYSTEM_ID that has to be created at read time
-    protected boolean makeSystemId;
 
     public static RowInputInterface newRowInput(int cachedRowType)
     throws HsqlException {
@@ -120,6 +117,8 @@ public abstract class RowInputBase extends HsqlByteArrayInputStream {
 // fredt@users - comment - methods used for node and type data
     public abstract int readIntData() throws IOException;
 
+    public abstract long readLongData() throws IOException;
+
     public abstract int readType() throws IOException;
 
     public abstract String readString() throws IOException;
@@ -160,10 +159,6 @@ public abstract class RowInputBase extends HsqlByteArrayInputStream {
     protected abstract Binary readBinary(int type)
     throws IOException, HsqlException;
 
-    public void setSystemId(boolean flag) {
-        makeSystemId = flag;
-    }
-
     /**
      *  reads row data from a stream using the JDBC types in colTypes
      *
@@ -172,16 +167,11 @@ public abstract class RowInputBase extends HsqlByteArrayInputStream {
      * @throws  IOException
      * @throws  HsqlException
      */
-    public Object[] readData(int[] colTypes)
-    throws IOException, HsqlException {
+    public Object[] readData(int[] colTypes,
+                             int cols) throws IOException, HsqlException {
 
         int    l      = colTypes.length;
-        Object data[] = new Object[l];
-
-        if (makeSystemId) {
-            l--;
-        }
-
+        Object data[] = new Object[cols];
         Object o;
         int    type;
 

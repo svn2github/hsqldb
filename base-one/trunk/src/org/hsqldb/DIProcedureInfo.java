@@ -38,6 +38,7 @@ import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.store.ValuePool;
 import org.hsqldb.resources.BundleHandler;
+import org.hsqldb.types.*;
 
 /**@todo fredt - move Trace.doAssert() literals to Trace*/
 
@@ -54,11 +55,6 @@ import org.hsqldb.resources.BundleHandler;
  * @since HSQLDB 1.7.2
  */
 final class DIProcedureInfo {
-
-    // make temporary ad-hoc spec a little more "official"
-    // until better system in place
-    static final String PCOL_PREFIX        = "@p";
-    static final String RETURN_COLUMN_NAME = "@p0";
 
     // java.sql dependencies mostly removed
     static final String   conClsName               = "java.sql.Connection";
@@ -178,7 +174,7 @@ final class DIProcedureInfo {
     }
 
     String getColName(int i) {
-        return PCOL_PREFIX + (i + colOffset());
+        return CompiledStatement.PCOL_PREFIX + (i + colOffset());
     }
 
     Integer getColNullability(int i) {
@@ -202,7 +198,7 @@ final class DIProcedureInfo {
         return BundleHandler.getString(hnd_remarks, key);
     }
 
-    // JDBC sort-contract: 
+    // JDBC sort-contract:
     // out return value column, then in/in out/out parameter columns
     // in formal order, then result columns in column order
     //
@@ -316,40 +312,23 @@ final class DIProcedureInfo {
     String getSignature() {
 
         if (sig == null) {
-            sig = getSignature(method);
+            sig = DINameSpace.getSignature(method);
         }
 
         return sig;
     }
 
-    static String getSignature(Method method) {
+    /**
+     * Retrieves the specific name of the given Method object. <p>
+     *
+     * @param m The Method object for which to retreive the specific name
+     * @return the specific name of the specified Method object.
+     */
+    static String getMethodSpecificName(Method m) {
 
-        StringBuffer sb;
-        String       signature;
-        Class[]      parmTypes;
-        int          len;
-        int          last;
-
-        sb        = new StringBuffer();
-        parmTypes = method.getParameterTypes();
-        len       = parmTypes.length;
-        last      = len - 1;
-
-        sb.append(method.getName()).append('(');
-
-        for (int i = 0; i < len; i++) {
-            sb.append(parmTypes[i].getName());
-
-            if (i < last) {
-                sb.append(',');
-            }
-        }
-
-        sb.append(')');
-
-        signature = sb.toString();
-
-        return signature;
+        return m == null ? null
+                         : m.getDeclaringClass().getName() + '.'
+                           + DINameSpace.getSignature(m);
     }
 
     DINameSpace getNameSpace() {

@@ -926,7 +926,7 @@ class DatabaseCommandInterpreter {
         }
 
         Parser     parser = new Parser(session, database, tokenizer);
-        Expression expr   = parser.readDefaultClause();
+        Expression expr   = parser.readDefaultClause(type);
 
         expr.resolveTypes();
 

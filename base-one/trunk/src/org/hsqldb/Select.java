@@ -784,7 +784,8 @@ class Select {
             }
 
             // apply condition
-            if (queryCondition == null || queryCondition.test(session)) {
+            if (queryCondition == null
+                    || queryCondition.testCondition(session)) {
                 try {
                     Object row[] = new Object[len];
 

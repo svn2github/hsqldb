@@ -37,6 +37,7 @@ import java.io.FileInputStream;
 import java.io.RandomAccessFile;
 import java.sql.Timestamp;
 
+import org.hsqldb.lib.java.JavaSystem;
 import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.HsqlTimer;
 
@@ -816,7 +817,7 @@ public class LockFile {
                 // attempt to ensure that tryRelease() gets called if/when
                 // the VM shuts down, just in case this object has not yet
                 // been garbage-collected or explicitly released.
-                System.runFinalizersOnExit(true);
+                JavaSystem.runFinalizers();
                 trace(mn + "success for System.runFinalizersOnExit(true)");
             } catch (Exception e) {
                 trace(mn + e.toString());

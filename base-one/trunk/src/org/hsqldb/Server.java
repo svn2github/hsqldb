@@ -83,7 +83,7 @@ import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.lib.StringUtil;
 import org.hsqldb.lib.WrapperIterator;
-import org.hsqldb.lib.java.javaSystem;
+import org.hsqldb.lib.java.JavaSystem;
 import org.hsqldb.resources.BundleHandler;
 
 // fredt@users 20020215 - patch 1.7.0
@@ -1174,7 +1174,7 @@ public class Server implements HsqlSocketRequestHandler {
 
         printWithThread("setTrace(" + trace + ")");
         serverProperties.setProperty(ServerConstants.SC_KEY_TRACE, trace);
-        javaSystem.setLogToSystem(trace);
+        JavaSystem.setLogToSystem(trace);
     }
 
     /**
@@ -1217,7 +1217,7 @@ public class Server implements HsqlSocketRequestHandler {
         maxConnections = serverProperties.getIntegerProperty(
             ServerConstants.SC_KEY_MAX_CONNECTIONS, 16);
 
-        javaSystem.setLogToSystem(isTrace());
+        JavaSystem.setLogToSystem(isTrace());
 
         isSilent =
             serverProperties.isPropertyTrue(ServerConstants.SC_KEY_SILENT);
@@ -1326,7 +1326,7 @@ public class Server implements HsqlSocketRequestHandler {
         logWriter        = new PrintWriter(System.out);
         errWriter        = new PrintWriter(System.err);
 
-        javaSystem.setLogToSystem(isTrace());
+        JavaSystem.setLogToSystem(isTrace());
     }
 
     /**

@@ -36,6 +36,8 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Random;
 
+import org.hsqldb.lib.java.JavaSystem;
+
 /**
  * A collection of static file management methods.
  *
@@ -60,21 +62,8 @@ public class FileUtil {
     public static final boolean fsNormalizesPosixSeparator =
         (new File("/")).getPath().endsWith(File.separator);
 
-    // only available in JDK 1.2 or better
-    static final Method deleteOnExitMethod = getDeleteOnExitMethod();
-
     // for JDK 1.1 createTempFile
     static final Random random = new Random(System.currentTimeMillis());
-
-    // retrieve the method, or null of not available
-    private static Method getDeleteOnExitMethod() {
-
-        try {
-            return File.class.getMethod("deleteOnExit", new Class[0]);
-        } catch (Exception e) {
-            return null;
-        }
-    }
 
     /**
      * Delete the named file
@@ -104,27 +93,14 @@ public class FileUtil {
      *       machine terminates
      */
     public static void deleteOnExit(File f) {
-
-        if (deleteOnExitMethod == null) {
-
-            // do nothing
-        } else {
-            try {
-                deleteOnExitMethod.invoke(f, new Object[0]);
-            } catch (Exception e) {}
-        }
+        JavaSystem.deleteOnExit(f);
     }
 
     /**
      * Return true or false based on whether the named file exists.
      */
-    static public boolean exists(String filename) throws IOException {
-
-        try {
-            return (new File(filename)).exists();
-        } catch (Throwable e) {
-            throw toIOException(e);
-        }
+    static public boolean exists(String filename) {
+        return (new File(filename)).exists();
     }
 
     /**

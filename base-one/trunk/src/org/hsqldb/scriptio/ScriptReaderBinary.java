@@ -66,7 +66,6 @@ class ScriptReaderBinary extends ScriptReaderBase {
 
     protected void readDDL(Session session)
     throws IOException, HsqlException {
-        rowIn.setSystemId(false);
         readSingleColumnResult(session);
     }
 
@@ -86,8 +85,6 @@ class ScriptReaderBinary extends ScriptReaderBase {
 
     protected void readExistingData(Session session)
     throws IOException, HsqlException {
-
-        rowIn.setSystemId(true);
 
         // wsoni variable i never accessed!
         //for (int i = 0; ; i++) {
@@ -133,9 +130,10 @@ class ScriptReaderBinary extends ScriptReaderBase {
             return false;
         }
 
-        Object[] data = rowIn.readData(t.getColumnTypes());
+        Object[] data = rowIn.readData(t.getColumnTypes(),
+                                       t.getColumnCount());
 
-        t.insertWithIdentity(null, data);
+        t.insertFromScript(data);
 
         return true;
     }

@@ -74,6 +74,7 @@ class NIOScaledRAFile extends ScaledRAFile {
         channel = file.getChannel();
 
         enlargeBuffer(super.length(), 0);
+        Trace.printSystemOut("initial length " + super.length());
         Trace.printSystemOut("NIO file instance created. mode:  " + mode);
     }
 

@@ -40,7 +40,7 @@ import java.net.*;
 import java.io.*;
 import java.util.*;
 
-import org.hsqldb.lib.java.javaSystem;
+import org.hsqldb.lib.java.JavaSystem;
 
 /**
  * Class declaration
@@ -409,9 +409,9 @@ implements ActionListener, WindowListener, KeyListener {
         } else if (s.equals("Exit")) {
             windowClosing(null);
         } else if (s.equals("Logging on")) {
-            javaSystem.setLogToSystem(true);
+            JavaSystem.setLogToSystem(true);
         } else if (s.equals("Logging off")) {
-            javaSystem.setLogToSystem(false);
+            JavaSystem.setLogToSystem(false);
         } else if (s.equals("Refresh Tree")) {
             refreshTree();
             layoutCard.show(pCard, "tree");

@@ -33,11 +33,11 @@ package org.hsqldb.rowio;
 
 import java.io.IOException;
 
-import org.hsqldb.Binary;
+import org.hsqldb.types.Binary;
 import org.hsqldb.Column;
 import org.hsqldb.HsqlDateTime;
 import org.hsqldb.HsqlException;
-import org.hsqldb.JavaObject;
+import org.hsqldb.types.JavaObject;
 import org.hsqldb.Trace;
 import org.hsqldb.Types;
 
@@ -77,8 +77,6 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
                         boolean allQuoted) {
 
         super(new byte[0]);
-
-        setSystemId(true);
 
         //-- Newline indicates that field should match to end of line.
         if (fieldSep.endsWith("\n")) {
@@ -203,6 +201,10 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
         }
 
         return Integer.parseInt(s);
+    }
+
+    public long readLongData() throws IOException {
+        throw new RuntimeException();
     }
 
     public int readType() throws IOException {

@@ -73,6 +73,7 @@ import java.lang.reflect.Modifier;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.StringConverter;
+import org.hsqldb.types.*;
 
 // fredt@users 20020912 - patch 1.7.1 - shortcut treatment of identity() call
 // fredt@users 20020912 - patch 1.7.1 - cache java.lang.reflect.Method objects
@@ -577,7 +578,7 @@ class Function {
     }
 
     /**
-     * Returns the java.sql.Types type of the argument at the specified
+     * Returns the type of the argument at the specified
      * offset in this Function object's paramter list. <p>
      */
     int getArgType(int i) {
@@ -585,7 +586,7 @@ class Function {
     }
 
     /**
-     * Returns the java.sql.Types type of this Function
+     * Returns the type of this Function
      * object's return type. <p>
      */
     int getReturnType() {
@@ -623,8 +624,8 @@ class Function {
             // special case for TRIM
             sb.append(name).append('(');
 
-            boolean leading  = eArg[2].test(null);
-            boolean trailing = eArg[3].test(null);
+            boolean leading  = eArg[2].testCondition(null);
+            boolean trailing = eArg[3].testCondition(null);
 
             if (leading && trailing) {
                 sb.append(Token.T_BOTH);

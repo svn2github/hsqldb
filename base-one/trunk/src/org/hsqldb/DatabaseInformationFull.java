@@ -411,16 +411,16 @@ extends org.hsqldb.DatabaseInformationMain {
             return t;
         }
 
-        Cache     cache;
-        Object[]  row;
-        HashSet   cacheSet;
-        Iterator  caches;
-        Iterator  tables;
-        Table     table;
-        CacheFree cacheFree;
-        int       iFreeBytes;
-        int       iLargestFreeItem;
-        long      lSmallestFreeItem;
+        DataFileCache cache;
+        Object[]      row;
+        HashSet       cacheSet;
+        Iterator      caches;
+        Iterator      tables;
+        Table         table;
+        CacheFree     cacheFree;
+        int           iFreeBytes;
+        int           iLargestFreeItem;
+        long          lSmallestFreeItem;
 
         // column number mappings
         final int icache_class     = 0;
@@ -459,7 +459,7 @@ extends org.hsqldb.DatabaseInformationMain {
 
         // Do it.
         while (caches.hasNext()) {
-            cache             = (Cache) caches.next();
+            cache             = (DataFileCache) caches.next();
             row               = t.getNewRow();
             cacheFree         = new CacheFree();
             iFreeBytes        = 0;
@@ -488,12 +488,12 @@ extends org.hsqldb.DatabaseInformationMain {
             row[icache_hash]      = ValuePool.getInt(cache.hashCode());
             row[icache_file] = FileUtil.canonicalOrAbsolutePath(cache.sName);
             row[icache_length]    = ValuePool.getLong(cache.cacheBytesLength);
-            row[icache_size]      = ValuePool.getInt(cache.iCacheSize);
+            row[icache_size]      = ValuePool.getInt(cache.getCachedCount());
             row[ifree_bytes]      = ValuePool.getInt(iFreeBytes);
             row[is_free_item]     = ValuePool.getInt((int) lSmallestFreeItem);
             row[il_free_item]     = ValuePool.getInt(iLargestFreeItem);
             row[ifree_count]      = ValuePool.getInt(cache.iFreeCount);
-            row[ifree_pos]        = ValuePool.getInt(cache.iFreePos);
+            row[ifree_pos]        = ValuePool.getInt(cache.fileFreePosition);
             row[imax_cache_sz]    = ValuePool.getInt(cache.maxCacheSize);
             row[imax_cache_bytes] = ValuePool.getLong(cache.maxCacheBytes);
             row[iwriter_length] = ValuePool.getInt(

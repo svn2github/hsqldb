@@ -49,9 +49,9 @@ import org.hsqldb.lib.StringConverter;
  * correspond to DatabaseScriptWriter and its subclasses for the supported
  * formats.
  *
-*  @author fredt@users
-*  @since 1.7.2
-*  @version 1.7.2
+ *  @author fredt@users
+ *  @since 1.7.2
+ *  @version 1.7.2
  */
 public class ScriptReaderText extends ScriptReaderBase {
 

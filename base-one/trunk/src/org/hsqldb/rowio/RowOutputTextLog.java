@@ -37,11 +37,11 @@ import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
 
-import org.hsqldb.Binary;
+import org.hsqldb.types.Binary;
 import org.hsqldb.CachedRow;
 import org.hsqldb.Column;
 import org.hsqldb.HsqlException;
-import org.hsqldb.JavaObject;
+import org.hsqldb.types.JavaObject;
 import org.hsqldb.lib.StringConverter;
 
 /**
@@ -87,7 +87,7 @@ public class RowOutputTextLog extends RowOutputBase {
         this.writeBytes(o.toString());
     }
 
-    public void writePos(int pos) throws IOException {}
+    public void writeEnd() throws IOException {}
 
     protected void writeTime(Time o) throws IOException, HsqlException {
 
@@ -119,7 +119,7 @@ public class RowOutputTextLog extends RowOutputBase {
         write('\'');
     }
 
-    public int getSize(CachedRow row) throws HsqlException {
+    public int getSize(CachedRow row) {
         return 0;
     }
 

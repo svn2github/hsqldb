@@ -234,10 +234,6 @@ implements DataOutput {
         return new String(buf, 0, count, enc);
     }
 
-    public String toString(int hibyte) {
-        return new String(buf, hibyte, 0, count);
-    }
-
     public void close() throws IOException {}
 
     // additional public methods not in similar java.util classes

@@ -166,6 +166,7 @@ class TableFilter {
             case Expression.IN : {
                 return CONDITION_UNORDERED;
             }
+            case Expression.IS_NULL :
             case Expression.EQUAL : {
                 return CONDITION_START_END;
             }
@@ -487,11 +488,11 @@ class TableFilter {
             currentData = currentNode.getData();
             currentRow  = currentNode.getRow();
 
-            if (!(eEnd == null || eEnd.test(null))) {
+            if (!(eEnd == null || eEnd.testCondition(null))) {
                 break;
             }
 
-            if (eAnd == null || eAnd.test(null)) {
+            if (eAnd == null || eAnd.testCondition(null)) {
                 return true;
             }
 
@@ -521,11 +522,11 @@ class TableFilter {
             currentData = currentNode.getData();
             currentRow  = currentNode.getRow();
 
-            if (!(eEnd == null || eEnd.test(null))) {
+            if (!(eEnd == null || eEnd.testCondition(null))) {
                 break;
             }
 
-            if (eAnd == null || eAnd.test(null)) {
+            if (eAnd == null || eAnd.testCondition(null)) {
                 return true;
             }
 
@@ -546,7 +547,7 @@ class TableFilter {
         currentRow     = null;
 
         return eAnd == null || (eAnd.getFilter() != this && eAnd.isInJoin)
-               || eAnd.test(null);
+               || eAnd.testCondition(null);
     }
 
     /**

@@ -31,9 +31,8 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.Iterator;
-
-import java.util.NoSuchElementException;
+import org.hsqldb.index.RowIterator;
+import org.hsqldb.HsqlException;
 
 /**
  * The abstract base of all HSQLDB table implementations.
@@ -44,56 +43,11 @@ import java.util.NoSuchElementException;
  */
 public abstract class BaseTable {
 
-    public BaseTable() {}
+    BaseTable() {}
 
     abstract Index getPrimaryIndex();
 
-    public Iterator iterator() throws HsqlException {
-        return new RowIterator();
-    }
-
-    private class RowIterator implements Iterator {
-
-        boolean removed;
-        Node    next;
-        Index   primary;
-
-        private RowIterator() throws HsqlException {
-            primary = getPrimaryIndex();
-            next    = primary.first();
-        }
-
-        public boolean hasNext() {
-            return next != null;
-        }
-
-        public Object next() {
-
-            if (hasNext()) {
-                try {
-                    Object data = next.getData();
-
-                    next = primary.next(next);
-
-                    return data;
-                } catch (Exception e) {
-                    throw new NoSuchElementException();
-                }
-            }
-
-            throw new NoSuchElementException();
-        }
-
-        public int nextInt() {
-            throw new NoSuchElementException();
-        }
-
-        public long nextLong() {
-            throw new NoSuchElementException();
-        }
-
-        public void remove() {
-            throw new NoSuchElementException();
-        }
+    public RowIterator rowIterator() throws HsqlException {
+        return getPrimaryIndex().firstRow();
     }
 }

@@ -182,6 +182,9 @@ public class BaseHashMap {
         }
     }
 
+/*
+    // this code was moved to relevant subclasses
+
     protected Object getObject(int key) {
 
         int lookup = getLookup(key);
@@ -215,7 +218,7 @@ public class BaseHashMap {
 
         return null;
     }
-
+*/
     protected int getLookup(Object key, int hash) {
 
         int    lookup = hashIndex.getLookup(hash);
@@ -308,13 +311,17 @@ public class BaseHashMap {
             if (remove) {
                 if (isObjectKey) {
                     objectKeyTable[lookup] = null;
-                } else if (longKey == 0) {
-                    hasZeroKey   = false;
-                    zeroKeyIndex = -1;
-                } else if (isIntKey) {
-                    intKeyTable[lookup] = 0;
                 } else {
-                    longKeyTable[lookup] = 0;
+                    if (longKey == 0) {
+                        hasZeroKey   = false;
+                        zeroKeyIndex = -1;
+                    }
+
+                    if (isIntKey) {
+                        intKeyTable[lookup] = 0;
+                    } else {
+                        longKeyTable[lookup] = 0;
+                    }
                 }
 
                 if (isObjectValue) {
@@ -342,6 +349,10 @@ public class BaseHashMap {
                 intValueTable[lookup] = (int) longValue;
             } else if (isLongValue) {
                 longValueTable[lookup] = longValue;
+            }
+
+            if (accessTable != null) {
+                accessTable[lookup] = accessCount++;
             }
 
             return returnValue;
@@ -393,9 +404,98 @@ public class BaseHashMap {
         }
 
         //
+        if (accessTable != null) {
+            accessTable[lookup] = accessCount++;
+        }
+
         return returnValue;
     }
 
+    /**
+     * type-specific method for adding or removing keys in int->Object maps
+     */
+    protected Object addOrRemove(int intKey, Object objectValue,
+                                 boolean remove) {
+
+        int    hash        = intKey;
+        int    index       = hashIndex.getHashIndex(hash);
+        int    lookup      = hashIndex.hashTable[index];
+        int    lastLookup  = -1;
+        Object returnValue = null;
+
+        for (; lookup >= 0;
+                lastLookup = lookup,
+                lookup = hashIndex.getNextLookup(lookup)) {
+            if (intKey == intKeyTable[lookup]) {
+                break;
+            }
+        }
+
+        if (lookup >= 0) {
+            if (remove) {
+                if (intKey == 0) {
+                    hasZeroKey   = false;
+                    zeroKeyIndex = -1;
+                }
+
+                intKeyTable[lookup]      = 0;
+                returnValue              = objectValueTable[lookup];
+                objectValueTable[lookup] = null;
+
+                hashIndex.unlinkNode(index, lastLookup, lookup);
+
+                if (accessTable != null) {
+                    accessTable[lookup] = 0;
+                }
+
+                return returnValue;
+            }
+
+            if (isObjectValue) {
+                returnValue              = objectValueTable[lookup];
+                objectValueTable[lookup] = objectValue;
+            }
+
+            if (accessTable != null) {
+                accessTable[lookup] = accessCount++;
+            }
+
+            return returnValue;
+        }
+
+        // not found
+        if (remove) {
+            return returnValue;
+        }
+
+        if (hashIndex.elementCount >= threshold) {
+            if (reset()) {
+                return addOrRemove(intKey, objectValue, remove);
+            } else {
+                return null;
+            }
+        }
+
+        lookup              = hashIndex.linkNode(index, lastLookup);
+        intKeyTable[lookup] = intKey;
+
+        if (intKey == 0) {
+            hasZeroKey   = true;
+            zeroKeyIndex = lookup;
+        }
+
+        objectValueTable[lookup] = objectValue;
+
+        if (accessTable != null) {
+            accessTable[lookup] = accessCount++;
+        }
+
+        return returnValue;
+    }
+
+    /**
+     * type specific method for Object sets or Object->Object maps
+     */
     protected Object removeObject(Object objectKey) {
 
         if (objectKey == null) {
@@ -917,6 +1017,11 @@ public class BaseHashMap {
         int     counter;
         boolean removed;
 
+        /**
+         * default is iterator for values
+         */
+        public BaseHashIterator() {}
+
         public BaseHashIterator(boolean keys) {
             this.keys = keys;
         }
@@ -1005,6 +1110,15 @@ public class BaseHashMap {
             removed = true;
 
             BaseHashMap.this.removeLookup(lookup);
+        }
+
+        public int getAccessCount() {
+
+            if (removed || accessTable == null) {
+                throw new NoSuchElementException();
+            }
+
+            return accessTable[lookup];
         }
     }
 }

@@ -43,6 +43,7 @@ import java.util.Properties;
 
 import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.FileUtil;
+import org.hsqldb.lib.java.JavaSystem;
 
 /**
  * Wrapper for java.util.Properties to limit values to Specific types and
@@ -55,18 +56,6 @@ import org.hsqldb.lib.FileUtil;
  * @since 1.7.0
  */
 public class HsqlProperties {
-
-    private static Method savePropsMethod = null;
-
-    static {
-        try {
-            savePropsMethod = java.util.Properties.class.getMethod("store",
-                    new Class[] {
-                OutputStream.class, String.class
-            });
-        } catch (NoSuchMethodException e) {}
-        catch (SecurityException e) {}
-    }
 
     public static final int NO_VALUE_FOR_KEY = 1;
     protected String        fileName;
@@ -279,26 +268,7 @@ public class HsqlProperties {
             }
         }
 
-        FileOutputStream fos = null;
-
-        try {
-            fos = new FileOutputStream(f);
-
-            if (savePropsMethod == null) {
-                stringProps.save(fos, "HSQL database");
-            } else {
-                try {
-                    savePropsMethod.invoke(stringProps, new Object[] {
-                        fos, "HSQL database"
-                    });
-                } catch (java.lang.reflect.InvocationTargetException e) {}
-                catch (IllegalAccessException e) {}
-            }
-        } finally {
-            if (fos != null) {
-                fos.close();
-            }
-        }
+        JavaSystem.saveProperties(stringProps, "HSQL database", f);
     }
 
     /**

@@ -775,7 +775,7 @@ class Parser {
      * @param  e                          Description of the Parameter
      * @param  vcolumn                    Description of the Parameter
      * @return                            Description of the Return Value
-     * @exception  java.sql.HsqlException  Description of the Exception
+     * @exception  HsqlException          Description of the Exception
      */
     private static Expression resolveWhereColumnAliases(Expression e,
             HsqlArrayList vcolumn) throws HsqlException {
@@ -1928,7 +1928,7 @@ class Parser {
     /**
      *  Parses and returns a DEFAULT clause expression.
      */
-    Expression readDefaultClause() throws HsqlException {
+    Expression readDefaultClause(int dataType) throws HsqlException {
 
         Expression r = null;
 
@@ -1943,38 +1943,39 @@ class Parser {
                 if (javaName != null) {
                     Function f = new Function(name, javaName, true);
 
-                    r = new Expression(f);
-                } else {
-                    throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, sToken);
+                    return new Expression(f);
                 }
 
                 break;
             }
             case Expression.NEGATE : {
-                int type = iToken;
+                int exprType = iToken;
 
                 read();
 
                 if (iToken == Expression.VALUE) {
-                    r = new Expression(type, new Expression(iType, oData),
-                                       null);
-                } else {
-                    throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, sToken);
+                    return new Expression(exprType,
+                                          new Expression(dataType, oData),
+                                          null);
                 }
 
                 break;
             }
             case Expression.VALUE : {
-                r = new Expression(iType, oData);
+                String name     = sToken.toUpperCase();
+                String javaName = (String) simpleFunctions.get(name);
 
-                break;
-            }
-            default : {
-                throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, sToken);
+                if (Types.isDatetimeType(dataType) && javaName != null) {
+                    Function f = new Function(name, javaName, true);
+
+                    return new Expression(f);
+                }
+
+                return new Expression(dataType, oData);
             }
         }
 
-        return r;
+        throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, sToken);
     }
 
     Expression parseCaseWhen(Expression r) throws HsqlException {

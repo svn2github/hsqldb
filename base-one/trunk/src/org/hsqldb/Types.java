@@ -782,6 +782,7 @@ public final class Types {
         }
     }
 
+*/
     static boolean isDatetimeType(int type) {
 
         switch (type) {
@@ -795,7 +796,6 @@ public final class Types {
                 return false;
         }
     }
-*/
 
     /**
      * Types that accept precition params in column definition or casts.

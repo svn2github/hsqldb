@@ -74,7 +74,7 @@ import java.net.*;
 import java.io.*;
 import java.util.*;
 
-import org.hsqldb.lib.java.javaSystem;
+import org.hsqldb.lib.java.JavaSystem;
 
 /**
  * Class declaration
@@ -183,7 +183,7 @@ implements WindowListener, ActionListener {
                 trace("password=" + password);
                 trace("test    =" + test);
                 trace("log     =" + log);
-                javaSystem.setLogToSystem(true);
+                JavaSystem.setLogToSystem(true);
             }
 
             // As described in the JDBC FAQ:

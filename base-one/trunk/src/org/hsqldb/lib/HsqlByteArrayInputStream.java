@@ -136,7 +136,7 @@ implements DataInput {
         int ch1 = buf[pos++] & 0xff;
         int ch2 = buf[pos++] & 0xff;
 
-        return (short) ((ch1 << 8) + (ch2 << 0));
+        return (short) ((ch1 << 8) + (ch2));
     }
 
     public final int readUnsignedShort() throws IOException {
@@ -148,7 +148,7 @@ implements DataInput {
             throw new EOFException();
         }
 
-        return (ch1 << 8) + (ch2 << 0);
+        return (ch1 << 8) + (ch2);
     }
 
     public final char readChar() throws IOException {
@@ -160,7 +160,7 @@ implements DataInput {
             throw new EOFException();
         }
 
-        return (char) ((ch1 << 8) + (ch2 << 0));
+        return (char) ((ch1 << 8) + (ch2));
     }
 
     public final int readInt() throws IOException {
@@ -176,7 +176,7 @@ implements DataInput {
         int ch3 = buf[pos++] & 0xff;
         int ch4 = buf[pos++] & 0xff;
 
-        return ((ch1 << 24) + (ch2 << 16) + (ch3 << 8) + (ch4 << 0));
+        return ((ch1 << 24) + (ch2 << 16) + (ch3 << 8) + (ch4));
     }
 
     public final long readLong() throws IOException {

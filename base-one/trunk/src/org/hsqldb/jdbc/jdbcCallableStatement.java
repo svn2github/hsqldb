@@ -788,10 +788,14 @@ implements CallableStatement {
      *       or <code>getBigDecimal(String parameterName)</code>
      * @see #setBigDecimal
      */
+
+//#ifdef DEPRECATEDJDBC
     public BigDecimal getBigDecimal(int parameterIndex,
                                     int scale) throws SQLException {
         throw jdbcUtil.notSupported;
     }
+
+//#endif
 
     /**
      * <!-- start generic documentation -->

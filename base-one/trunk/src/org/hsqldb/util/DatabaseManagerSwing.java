@@ -76,7 +76,7 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.tree.*;
 
-import org.hsqldb.lib.java.javaSystem;
+import org.hsqldb.lib.java.JavaSystem;
 
 import java.lang.Thread;
 import java.lang.System;
@@ -477,9 +477,9 @@ implements ActionListener, WindowListener, KeyListener {
         } else if (s.equals("Restore")) {
             Transfer.work(new String[]{ "-r" });
         } else if (s.equals("Logging on")) {
-            javaSystem.setLogToSystem(true);
+            JavaSystem.setLogToSystem(true);
         } else if (s.equals("Logging off")) {
-            javaSystem.setLogToSystem(false);
+            JavaSystem.setLogToSystem(false);
         } else if (s.equals("Refresh Tree")) {
             refreshTree();
         } else if (s.startsWith("#")) {

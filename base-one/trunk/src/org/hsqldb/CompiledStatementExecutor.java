@@ -164,7 +164,7 @@ final class CompiledStatementExecutor {
             return ((jdbcResultSet) o).rResult;
         }
 
-        r = Result.newSingleColumnResult(DIProcedureInfo.RETURN_COLUMN_NAME,
+        r = Result.newSingleColumnResult(CompiledStatement.RETURN_COLUMN_NAME,
                                          e.getDataType());
 
         Object[] row = new Object[1];
@@ -206,7 +206,7 @@ final class CompiledStatementExecutor {
                 count = table.delete(session, del);
             } else {
                 do {
-                    if (c.test(session)) {
+                    if (c.testCondition(session)) {
                         del.add(filter.currentRow);
                     }
                 } while (filter.next());
@@ -373,7 +373,7 @@ final class CompiledStatementExecutor {
             boolean        success   = false;
 
             do {
-                if (condition == null || condition.test(session)) {
+                if (condition == null || condition.testCondition(session)) {
                     try {
                         Row      row = filter.currentRow;
                         Object[] ni  = table.getNewRow();

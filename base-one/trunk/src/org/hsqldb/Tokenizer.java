@@ -139,7 +139,7 @@ public class Tokenizer {
         valueTokens.put(Token.T_FALSE, BOOLEAN);
     }
 
-    Tokenizer() {}
+    public Tokenizer() {}
 
     public Tokenizer(String s) {
 
@@ -148,7 +148,7 @@ public class Tokenizer {
         iIndex   = 0;
     }
 
-    void reset(String s) {
+    public void reset(String s) {
 
         sCommand       = s;
         iLength        = s.length();
@@ -461,7 +461,7 @@ public class Tokenizer {
      *
      * @return
      */
-    int getType() {
+    public int getType() {
 
         // todo: make sure it's used only for Values!
         // todo: synchronize iType with hColumn

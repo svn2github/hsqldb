@@ -119,6 +119,9 @@ final class DINameSpace {
      */
     private static final HsqlArrayList sysSchemas = new HsqlArrayList();
 
+    // procedure columns
+    // make temporary ad-hoc spec a little more "official"
+    // until better system in place
     static {
         sysSchemas.add(DEFN_SCHEMA);
         sysSchemas.add(INFO_SCHEMA);
@@ -431,7 +434,37 @@ final class DINameSpace {
 
         return m == null ? null
                          : m.getDeclaringClass().getName() + '.'
-                           + DIProcedureInfo.getSignature(m);
+                           + getSignature(m);
+    }
+
+    static String getSignature(Method method) {
+
+        StringBuffer sb;
+        String       signature;
+        Class[]      parmTypes;
+        int          len;
+        int          last;
+
+        sb        = new StringBuffer();
+        parmTypes = method.getParameterTypes();
+        len       = parmTypes.length;
+        last      = len - 1;
+
+        sb.append(method.getName()).append('(');
+
+        for (int i = 0; i < len; i++) {
+            sb.append(parmTypes[i].getName());
+
+            if (i < last) {
+                sb.append(',');
+            }
+        }
+
+        sb.append(')');
+
+        signature = sb.toString();
+
+        return signature;
     }
 
     /**

@@ -220,10 +220,9 @@ class TestSelf extends TestUtil {
             String     password    = "";
             Connection cConnection = null;
             String[]   filelist;
+            String     absolute = new File("TestSelf.txt").getAbsolutePath();
 
-            filelist = new File(
-                new File(
-                    "TestSelf.txt").getAbsoluteFile().getParent()).list();
+            filelist = new File(new File(absolute).getParent()).list();
 
             Sort.sort((Object[]) filelist, new Sort.StringComparator(), 0,
                       filelist.length - 1);

@@ -67,8 +67,6 @@
 package org.hsqldb;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -77,10 +75,9 @@ import java.math.BigInteger;
 import java.text.Collator;
 
 import org.hsqldb.lib.StringConverter;
-import org.hsqldb.lib.HsqlByteArrayOutputStream;
-import org.hsqldb.lib.HsqlByteArrayInputStream;
 import org.hsqldb.store.ValuePool;
 import org.hsqldb.HsqlNameManager.HsqlName;
+import org.hsqldb.types.*;
 
 // fredt@users 20020130 - patch 491987 by jimbag@users
 // fredt@users 20020320 - doc 1.7.0 - update
@@ -1616,49 +1613,6 @@ public class Column {
             if (b > a) {
                 return -1;
             }
-        }
-    }
-
-    /**
-     * Retrieves the serialized form of the specified <CODE>Object</CODE>
-     * as an array of bytes.
-     *
-     * @param s the Object to serialize
-     * @return  a static byte array representing the passed Object
-     * @throws HsqlException if a serialization failure occurs
-     */
-    static byte[] serialize(Serializable s) throws HsqlException {
-
-        HsqlByteArrayOutputStream bo = new HsqlByteArrayOutputStream();
-
-        try {
-            ObjectOutputStream os = new ObjectOutputStream(bo);
-
-            os.writeObject(s);
-
-            return bo.toByteArray();
-        } catch (Exception e) {
-            throw Trace.error(Trace.SERIALIZATION_FAILURE, e.getMessage());
-        }
-    }
-
-    /**
-     * Deserializes the specified byte array to an
-     * <CODE>Object</CODE> instance.
-     *
-     * @return the Object resulting from deserializing the specified array of bytes
-     * @param ba the byte array to deserialize to an Object
-     * @throws HsqlException if a serialization failure occurs
-     */
-    static Serializable deserialize(byte[] ba) throws HsqlException {
-
-        try {
-            HsqlByteArrayInputStream bi = new HsqlByteArrayInputStream(ba);
-            ObjectInputStream        is = new ObjectInputStream(bi);
-
-            return (Serializable) is.readObject();
-        } catch (Exception e) {
-            throw Trace.error(Trace.SERIALIZATION_FAILURE, e.getMessage());
         }
     }
 }

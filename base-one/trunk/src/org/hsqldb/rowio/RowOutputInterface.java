@@ -49,7 +49,7 @@ import org.hsqldb.lib.HsqlByteArrayOutputStream;
  */
 public interface RowOutputInterface {
 
-    public void writePos(int pos) throws IOException;
+    public void writeEnd() throws IOException;
 
     public void writeSize(int size) throws IOException;
 
@@ -60,6 +60,8 @@ public interface RowOutputInterface {
     public void writeIntData(int i) throws IOException;
 
     public void writeIntData(int i, int position) throws IOException;
+
+    public void writeLongData(long i) throws IOException;
 
     public void writeRow(Object[] data,
                          Table t) throws IOException, HsqlException;
@@ -73,7 +75,7 @@ public interface RowOutputInterface {
                           throws IOException, HsqlException;
 
     // independent of the this object, calls only a static method
-    public int getSize(CachedRow row) throws HsqlException;
+    public int getSize(CachedRow row);
 
     // returns the underlying HsqlByteArrayOutputStream
     public HsqlByteArrayOutputStream getOutputStream();

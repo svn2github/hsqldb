@@ -108,7 +108,7 @@ public class Session implements SessionInterface {
     //
     private Database       database;
     private User           user;
-    private HsqlArrayList  transactionList;
+    HsqlArrayList          transactionList;
     private boolean        isNestedTransaction;
     private int            nestedOldTransIndex;
     private int            currentMaxRows;
@@ -349,12 +349,11 @@ public class Session implements SessionInterface {
      * @param  row the deleted row
      * @throws  HsqlException
      */
-    void addTransactionDelete(Table table,
-                              Object row[]) throws HsqlException {
+    void addTransactionDelete(Table table, Row row) throws HsqlException {
 
         if (!isAutoCommit || isNestedTransaction) {
-            Transaction t = new Transaction(true, isNestedTransaction, table,
-                                            row);
+            Transaction t = new Transaction(true, table, row.getData(),
+                                            sessionSCN);
 
             transactionList.add(t);
         }
@@ -367,12 +366,11 @@ public class Session implements SessionInterface {
      * @param  row the inserted row
      * @throws  HsqlException
      */
-    void addTransactionInsert(Table table,
-                              Object row[]) throws HsqlException {
+    void addTransactionInsert(Table table, Row row) throws HsqlException {
 
         if (!isAutoCommit || isNestedTransaction) {
-            Transaction t = new Transaction(false, isNestedTransaction,
-                                            table, row);
+            Transaction t = new Transaction(false, table, row.getData(),
+                                            sessionSCN);
 
             transactionList.add(t);
         }
@@ -444,7 +442,7 @@ public class Session implements SessionInterface {
             while (i-- > 0) {
                 Transaction t = (Transaction) transactionList.get(i);
 
-                t.rollback(this);
+                t.rollback(this, false);
             }
 
             if (!transactionList.isEmpty()) {
@@ -493,7 +491,7 @@ public class Session implements SessionInterface {
 
         index = oi.intValue();
 
-        rollbackToSavepoint(index);
+        rollbackToSavepoint(index, false);
         releaseSavepoint(name);
 
         try {
@@ -504,14 +502,15 @@ public class Session implements SessionInterface {
         } catch (HsqlException e) {}
     }
 
-    private void rollbackToSavepoint(int index) throws HsqlException {
+    private void rollbackToSavepoint(int index,
+                                     boolean log) throws HsqlException {
 
         int i = transactionList.size() - 1;
 
         for (; i >= index; i--) {
             Transaction t = (Transaction) transactionList.get(i);
 
-            t.rollback(this);
+            t.rollback(this, log);
         }
 
         transactionList.setSize(index);
@@ -560,7 +559,7 @@ public class Session implements SessionInterface {
         Trace.doAssert(isNestedTransaction, "endNestedTransaction");
 
         if (rollback) {
-            rollbackToSavepoint(nestedOldTransIndex);
+            rollbackToSavepoint(nestedOldTransIndex, true);
         }
 
         // reset after the rollback

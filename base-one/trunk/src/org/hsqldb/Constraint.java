@@ -476,7 +476,7 @@ Referential Constraint 4 SET DEFAULT
 
         core.checkFilter.currentData = row;
 
-        if (!core.check.test(session)) {
+        if (!core.check.testCondition(session)) {
             core.checkFilter.currentRow = null;
 
             throw Trace.error(Trace.CHECK_CONSTRAINT_VIOLATION,
