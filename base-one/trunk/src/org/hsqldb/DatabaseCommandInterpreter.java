@@ -926,9 +926,11 @@ class DatabaseCommandInterpreter {
                 throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE);
             }
 
-            if (database.sqlEnforceSize || database.sqlEnforceStrictSize) {
-                String defValTest = (String) Table.enforceSize(defValTemp,
-                    type, length, false, false);
+            if (defValTemp != null
+                    && (database.sqlEnforceSize
+                        || database.sqlEnforceStrictSize)) {
+                Object defValTest = Table.enforceSize(defValTemp, type,
+                                                      length, false, false);
 
                 if (!defValTemp.equals(defValTest)) {
 
