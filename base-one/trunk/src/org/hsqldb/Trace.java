@@ -234,8 +234,10 @@ public class Trace extends PrintWriter {
      jdbcResultSetMetaData_jdbcResultSetMetaData_3 = 121,
 
     // new one
-    TableFilter_findFirst = 122,
-     Table_moveDefinition = 123
+    TableFilter_findFirst       = 122,
+     Table_moveDefinition       = 123,
+     STRING_DATA_TRUNCATION     = 124,
+     QUOTED_IDENTIFIER_REQUIRED = 125
     ;
 
     //
@@ -362,6 +364,8 @@ public class Trace extends PrintWriter {
         "connection is closed",                                       // jdbcResultSetMetaData_jdbcResultSetMetaData_3
         "37000 an index is required on table $$, column $$",          // TableFilter_findFirst
         "37000 there is an index on the column to be removed",        // Table_moveDefinition
+        "22001 string too long",
+        "00000 quoted identifier required"                            // SET PROPERTY "name" "value"
     };
 
     static {

@@ -136,6 +136,7 @@ class Database {
 // ----------------------------------------------------------------------------
     boolean                        filesInJar;
     boolean                        sqlEnforceSize;
+    boolean                        sqlEnforceStrictSize;
     int                            sqlMonth;
     int                            firstIdentity;
     private HashMap                hAlias;

@@ -148,6 +148,7 @@ class Table {
     private boolean  isText;
     private boolean  isView;
     boolean          sqlEnforceSize;           // inherited for the database -
+    boolean          sqlEnforceStrictSize;     // inherited for the database -
 
     // properties for subclasses
 // boucherb@users - access changes in support of metadata 1.7.2
@@ -176,10 +177,11 @@ class Table {
     Table(Database db, HsqlName name, int type,
             int sessionid) throws HsqlException {
 
-        database         = db;
-        sqlEnforceSize   = db.sqlEnforceSize;
-        identitySequence = new NumberSequence(db.firstIdentity);
-        rowIdSequence    = new NumberSequence(0);
+        database             = db;
+        sqlEnforceSize       = db.sqlEnforceSize;
+        sqlEnforceStrictSize = db.sqlEnforceStrictSize;
+        identitySequence     = new NumberSequence(db.firstIdentity);
+        rowIdSequence        = new NumberSequence(0);
 
         switch (type) {
 
@@ -1780,12 +1782,13 @@ class Table {
 
         int colindex;
 
-        if (sqlEnforceSize) {
+        if (sqlEnforceSize || sqlEnforceStrictSize) {
             for (colindex = 0; colindex < iVisibleColumns; colindex++) {
                 if (colSizes[colindex] != 0 && row[colindex] != null) {
                     row[colindex] = enforceSize(row[colindex],
                                                 colTypes[colindex],
-                                                colSizes[colindex], true);
+                                                colSizes[colindex], true,
+                                                sqlEnforceStrictSize);
                 }
             }
         }
@@ -1807,7 +1810,8 @@ class Table {
                 if (colSizes[colindex] != 0 && row[colindex] != null) {
                     row[colindex] = enforceSize(row[colindex],
                                                 colTypes[colindex],
-                                                colSizes[colindex], true);
+                                                colSizes[colindex], true,
+                                                sqlEnforceStrictSize);
                 }
             }
         }
@@ -1825,8 +1829,10 @@ class Table {
      * @param  pad   pad strings
      * @return       the altered object if the right type, else the object
      *      passed in unaltered
+     * @throws HsqlException if data too long
      */
-    static Object enforceSize(Object obj, int type, int size, boolean pad) {
+    static Object enforceSize(Object obj, int type, int size, boolean pad,
+                              boolean raise) throws HsqlException {
 
         if (size == 0) {
             return obj;
@@ -1836,14 +1842,11 @@ class Table {
         switch (type) {
 
             case Types.CHAR :
-                return padOrTrunc((String) obj, size, pad);
+                return padOrTrunc((String) obj, size, pad, raise);
 
             case Types.VARCHAR :
-                if (((String) obj).length() > size) {
+                return padOrTrunc((String) obj, size, false, raise);
 
-                    // Just truncate for VARCHAR type
-                    return ((String) obj).substring(0, size);
-                }
             default :
                 return obj;
         }
@@ -1857,9 +1860,18 @@ class Table {
      * @param pad   pad the string
      * @return      the string of size len
      */
-    static String padOrTrunc(String s, int len, boolean pad) {
+    static String padOrTrunc(String s, int len, boolean pad,
+                             boolean raise) throws HsqlException {
 
-        if (s.length() >= len) {
+        if (raise && StringUtil.rTrimSize(s) > len) {
+            throw Trace.error(Trace.STRING_DATA_TRUNCATION);
+        }
+
+        if (s.length() == len) {
+            return s;
+        }
+
+        if (s.length() > len) {
             return s.substring(0, len);
         }
 

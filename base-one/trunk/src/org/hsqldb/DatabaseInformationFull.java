@@ -737,6 +737,7 @@ extends org.hsqldb.DatabaseInformationMain {
      *     <LI>REFERENTIAL_INTEGITY - currently enforcing referential integrity?
      *     <LI>sql.month - TRUE: output range is 1..12; FALSE: 0..11
      *     <LI>sql.enforce_size - column length specifications enforced?
+     *     <LI>sql.enforce_strict_size - strict column length specifications enforced?
      *     <LI>sql.compare_in_locale - is JVM Locale used in collations?
      *     <LI>sql.strict_fk - TRUE: FK must reference pre-existing unique
      *     <LI>sql.strong_fk - TRUE: autogen referenced unique, else plain index
@@ -884,6 +885,16 @@ extends org.hsqldb.DatabaseInformationMain {
         row[ins]    = nameSpace;
         row[iname]  = "sql.enforce_size";
         row[ivalue] = props.getProperty("sql.enforce_size", "false");
+        row[iclass] = "boolean";
+
+        t.insert(row, session);
+
+        // sql.enforce_strict_size
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "sql.enforce_strict_size";
+        row[ivalue] = props.getProperty("sql.enforce_strict_size", "false");
         row[iclass] = "boolean";
 
         t.insert(row, session);

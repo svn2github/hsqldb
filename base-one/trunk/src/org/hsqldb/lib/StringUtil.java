@@ -186,7 +186,6 @@ public class StringUtil {
 
 /**
  * Checks if text is empty (characters <= space)
- * Creation date: (19/07/03 1:10:12 PM)
  * @author: Nitin Chauhan
  * @return boolean true if text is null or empty, false otherwise
  * @param s java.lang.String
@@ -203,5 +202,20 @@ public class StringUtil {
         }
 
         return true;
+    }
+
+    public static int rTrimSize(String s) {
+
+        int i = s.length();
+
+        while (i > 0) {
+            i--;
+
+            if (s.charAt(i) != ' ') {
+                return i + 1;
+            }
+        }
+
+        return 0;
     }
 }

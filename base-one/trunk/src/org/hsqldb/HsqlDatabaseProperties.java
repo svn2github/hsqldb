@@ -103,6 +103,9 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         // char trimming and padding to size and varchar trimming to size
         setProperty("sql.enforce_size", false);
 
+        // char and padding to size and exception if data is too long
+        setProperty("sql.enforce_strict_size", false);
+
         // char and varchar sorting in charset of the current jvm Locale
         setProperty("sql.compare_in_locale", false);
 
@@ -269,6 +272,8 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         }
 
         database.sqlEnforceSize = isPropertyTrue("sql.enforce_size");
+        database.sqlEnforceStrictSize =
+            isPropertyTrue("sql.enforce_strict_size");
         database.firstIdentity = getIntegerProperty("hsqldb.first_identity",
                 0);
     }

@@ -880,9 +880,10 @@ class DatabaseCommandInterpreter {
         }
 
         // ensure char triming does not affect the value
-        if (database.sqlEnforceSize) {
+        if (database.sqlEnforceSize || database.sqlEnforceSize) {
             dvTemp = Column.convertObject(sv);
-            dvTest = (String) Table.enforceSize(dvTemp, iType, iLen, false);
+            dvTest = (String) Table.enforceSize(dvTemp, iType, iLen, false,
+                                                false);
 
             if (!dvTemp.equals(dvTest)) {
 
@@ -1735,11 +1736,23 @@ class DatabaseCommandInterpreter {
                 session.checkAdmin();
 
                 token = tokenizer.getString().toLowerCase();
-                p     = database.getProperties();
+
+                if (!tokenizer.wasQuotedIdentifier()) {
+                    throw Trace.error(Trace.QUOTED_IDENTIFIER_REQUIRED);
+                }
+
+                p = database.getProperties();
 
                 Trace.check(!p.isProtected(token), Trace.ACCESS_IS_DENIED,
                             token);
-                p.setProperty(token, tokenizer.getString());
+
+                String value = tokenizer.getString().toLowerCase();
+
+                if (!tokenizer.wasQuotedIdentifier()) {
+                    throw Trace.error(Trace.QUOTED_IDENTIFIER_REQUIRED);
+                }
+
+                p.setProperty(token, value);
 
                 token = tokenizer.getString();
 
