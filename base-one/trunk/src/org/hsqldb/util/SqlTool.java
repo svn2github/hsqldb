@@ -41,7 +41,7 @@ import java.io.FileReader;
 import java.util.StringTokenizer;
 import java.util.HashMap;
 
-/* $Id: SqlTool.java,v 1.30 2004/06/06 01:35:18 unsaved Exp $ */
+/* $Id: SqlTool.java,v 1.31 2004/06/06 14:15:16 unsaved Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -52,7 +52,7 @@ import java.util.HashMap;
  * See JavaDocs for the main method for syntax of how to run.
  *
  * @see @main()
- * @version $Revision: 1.30 $
+ * @version $Revision: 1.31 $
  * @author Blaine Simpson
  */
 public class SqlTool {
@@ -180,13 +180,14 @@ public class SqlTool {
         + "where arguments are:\n"
         + "    --help                   Prints this message\n"
         + "    --list                   List urlids in the rcfile\n"
-        + "    --noinput                Do not read stdin (dflt if sql file(s) given)\n"
+        + "    --noinput                Do not read stdin (default if sql file(s)\n"
+        + "                             given or --sql switch used).\n"
         + "    --debug                  Print Debug info to stderr\n"
         + "    --noAutoFile             Do not execute auto.sql from home dir\n"
         + "    --autoCommit             Auto-commit JDBC DML commands\n"
         + "    --sql \"SQL;\"             Execute given SQL before stdin/files,\n"
         + "                             where \"SQL;\" consists of SQL command(s) like\n"
-        + "                             in an SQL file, and may contain line breaks\n"
+        + "                             in an SQL file, and may contain line breaks.\n"
         + "    --rcfile /file/path.rc   Connect Info File [$HOME/sqltool.rc]\n"
         + "    --abortOnErr             Abort on Error (overrides defaults)\n"
         + "    --continueOnErr          Continue on Error (overrides defaults)\n"
@@ -196,8 +197,8 @@ public class SqlTool {
         + "    urlid                    ID of url/userame/password in rcfile\n"
         + "    file1.sql...             SQL files to be executed [stdin]\n"
         + "                             "
-        + "(Use '-' for non-interactively stdin)\n"
-        + "* items may, alternatively, be set per-urlid in the rc file.";
+        + "(Use '-' for non-interactively stdin).\n"
+        + "* item(s) may, alternatively, be set per-urlid in the rc file.";
 
     /** Utility nested class for internal use. */
     private static class BadCmdline extends Exception {};
@@ -379,7 +380,7 @@ public class SqlTool {
                     return;
                 }
             }
-            interactive = (arg.length <= i + 1);
+            interactive = (!noinput) && (arg.length <= i + 1);
             if ((arg.length > i + 1)
                     && (arg.length != i + 2 ||!arg[i + 1].equals("-"))) {
                 // I.e., if there are any SQL files specified.
