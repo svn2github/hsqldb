@@ -93,8 +93,8 @@ import org.hsqldb.lib.StringInputStream;
 // it was missing here but specified in the java.sql.ResultSet and
 // java.sql.ResultSetMetaData interfaces, updated generic documentation to
 // JDK 1.4, and added JDBC3 methods and docs
-// boucherb@users and fredt@users 20020409/20020505 extensive review and update
-// of docs and behaviour to comply with previous and latest java.sql specification
+// boucherb@users and fredt@users 20020505 extensive review and update
+// of docs and behaviour to comply with java.sql specification
 // tony_lai@users 20020820 - patch 595073 - duplicated exception msg
 
 /**
@@ -1715,7 +1715,7 @@ public class jdbcResultSet implements ResultSet {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -2669,7 +2669,7 @@ public class jdbcResultSet implements ResultSet {
         }
 
         if (rsType == TYPE_FORWARD_ONLY && direction != FETCH_FORWARD) {
-            throw getNotSupported();
+            throw jdbcDriver.notSupported;
         }
     }
 
@@ -2976,7 +2976,7 @@ public class jdbcResultSet implements ResultSet {
             Trace.trace(columnIndex);
         }
 
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -3013,7 +3013,7 @@ public class jdbcResultSet implements ResultSet {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -3051,7 +3051,7 @@ public class jdbcResultSet implements ResultSet {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -3087,7 +3087,7 @@ public class jdbcResultSet implements ResultSet {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -3124,7 +3124,7 @@ public class jdbcResultSet implements ResultSet {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -3161,7 +3161,7 @@ public class jdbcResultSet implements ResultSet {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -3198,7 +3198,7 @@ public class jdbcResultSet implements ResultSet {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -3235,7 +3235,7 @@ public class jdbcResultSet implements ResultSet {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -3274,7 +3274,7 @@ public class jdbcResultSet implements ResultSet {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -3311,7 +3311,7 @@ public class jdbcResultSet implements ResultSet {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -3348,7 +3348,7 @@ public class jdbcResultSet implements ResultSet {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -3386,7 +3386,7 @@ public class jdbcResultSet implements ResultSet {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -3424,7 +3424,7 @@ public class jdbcResultSet implements ResultSet {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -3463,7 +3463,7 @@ public class jdbcResultSet implements ResultSet {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -3502,7 +3502,7 @@ public class jdbcResultSet implements ResultSet {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -3541,7 +3541,7 @@ public class jdbcResultSet implements ResultSet {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -3580,7 +3580,7 @@ public class jdbcResultSet implements ResultSet {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -3622,7 +3622,7 @@ public class jdbcResultSet implements ResultSet {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -3659,7 +3659,7 @@ public class jdbcResultSet implements ResultSet {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -4326,7 +4326,7 @@ public class jdbcResultSet implements ResultSet {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -4360,7 +4360,7 @@ public class jdbcResultSet implements ResultSet {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -4394,7 +4394,7 @@ public class jdbcResultSet implements ResultSet {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -4444,7 +4444,7 @@ public class jdbcResultSet implements ResultSet {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -4484,7 +4484,7 @@ public class jdbcResultSet implements ResultSet {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -4530,7 +4530,7 @@ public class jdbcResultSet implements ResultSet {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -4635,7 +4635,7 @@ public class jdbcResultSet implements ResultSet {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -4670,7 +4670,7 @@ public class jdbcResultSet implements ResultSet {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -4781,7 +4781,7 @@ public class jdbcResultSet implements ResultSet {
             Trace.trace();
         }
 
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -5243,7 +5243,7 @@ public class jdbcResultSet implements ResultSet {
 //#ifdef JDBC3
 /*
     public java.net.URL getURL(int columnIndex) throws SQLException {
-        throw getNotSupportedJDBC3();
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -5279,7 +5279,7 @@ public class jdbcResultSet implements ResultSet {
 //#ifdef JDBC3
 /*
     public java.net.URL getURL(String columnName) throws SQLException {
-        throw getNotSupportedJDBC3();
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -5316,7 +5316,7 @@ public class jdbcResultSet implements ResultSet {
 /*
     public void updateRef(int columnIndex,
                           java.sql.Ref x) throws SQLException {
-        throw getNotSupportedJDBC3();
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -5353,7 +5353,7 @@ public class jdbcResultSet implements ResultSet {
 /*
     public void updateRef(String columnName,
                           java.sql.Ref x) throws SQLException {
-        throw getNotSupportedJDBC3();
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -5390,7 +5390,7 @@ public class jdbcResultSet implements ResultSet {
 /*
     public void updateBlob(int columnIndex,
                            java.sql.Blob x) throws SQLException {
-        throw getNotSupportedJDBC3();
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -5427,7 +5427,7 @@ public class jdbcResultSet implements ResultSet {
 /*
     public void updateBlob(String columnName,
                            java.sql.Blob x) throws SQLException {
-        throw getNotSupportedJDBC3();
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -5464,7 +5464,7 @@ public class jdbcResultSet implements ResultSet {
 /*
     public void updateClob(int columnIndex,
                            java.sql.Clob x) throws SQLException {
-        throw getNotSupportedJDBC3();
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -5501,7 +5501,7 @@ public class jdbcResultSet implements ResultSet {
 /*
     public void updateClob(String columnName,
                            java.sql.Clob x) throws SQLException {
-        throw getNotSupportedJDBC3();
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -5538,7 +5538,7 @@ public class jdbcResultSet implements ResultSet {
 /*
     public void updateArray(int columnIndex,
                             java.sql.Array x) throws SQLException {
-        throw getNotSupportedJDBC3();
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -5575,7 +5575,7 @@ public class jdbcResultSet implements ResultSet {
 /*
     public void updateArray(String columnName,
                             java.sql.Array x) throws SQLException {
-        throw getNotSupportedJDBC3();
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -5588,27 +5588,6 @@ public class jdbcResultSet implements ResultSet {
     public static final int CONCUR_READ_ONLY        = 1007;
 
     //---------------------------- Private ---------------------------------
-
-    /**
-     * Convenience method for throwing FUNCTION_NOT_SUPPORTED
-     *
-     * @return a SQLException object whose message states that the function is
-     * not supported
-     */
-    private SQLException getNotSupported() {
-        return Trace.error(Trace.FUNCTION_NOT_SUPPORTED);
-    }
-
-    /**
-     * Convenience method for throwing FUNCTION_NOT_SUPPORTED for JDBC 3
-     * methods.
-     *
-     * @return a SQLException object whose message states that the function is
-     * not supported and is a JDBC 3 method
-     */
-    private SQLException getNotSupportedJDBC3() {
-        return Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
-    }
 
     /**
      * Internal row data availability check.
@@ -5706,7 +5685,8 @@ public class jdbcResultSet implements ResultSet {
      *
      * @param r the internal result form that the new <code>jdbcResultSet</code>
      * represents
-     * @exception SQLException when the supplied Result is of type org.hsqldb.Result.ERROR
+     * @exception SQLException when the supplied Result is of type
+     * org.hsqldb.Result.ERROR
      */
     jdbcResultSet(Result r, HsqlProperties props) throws SQLException {
 

@@ -126,6 +126,10 @@ public class jdbcDriver implements Driver {
                         REVISION  = 2;
     static final String VERSION   = "1.7.2";
     static final String PRODUCT   = "HSQL Database Engine";
+    static final SQLException notSupported =
+        Trace.error(Trace.FUNCTION_NOT_SUPPORTED);
+    static final SQLException notSupportedJDBC3 =
+        Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
 
     /**
      *  Attempts to make a database connection to the given URL. The driver
@@ -184,7 +188,7 @@ public class jdbcDriver implements Driver {
      * @return  true if this driver can connect to the given URL
      */
 
-    // fredt@users - patch 1.7.0 - allow mixedcase url's when called externally
+    // fredt@users - patch 1.7.0 - allow mixedcase url's
     public boolean acceptsURL(String url) {
 
         if (Trace.TRACE) {

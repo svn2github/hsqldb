@@ -115,6 +115,11 @@ import java.sql.SQLException;
 // value and convert the string 'MY_TABLE' to 'MY<escval>_TABLE' if they
 // truly want an exact rather than a pattern match.
 //
+// fredt - in the above example, "MY_TABLE" is for a pattern argument so
+// "MY_TABLE" should match all tables named "MY_TABLE" and "MYXTABLE" etc.
+// we should adhere strictly to what the argument is so this case will
+// work correctly when LIKE is used in the query.
+//
 // What I _have_ done is to determine if a potetnial pattern string contains
 // any unescaped search characters and substitute "=" for "LIKE" as the
 // operator if none are detected.  This will make queries faster when
@@ -5941,7 +5946,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // , instead of throwing.  Must check what we actually do.
         // boucherb@users 20020426
         // return ResultSet.CLOSE_CURSORS_AT_COMMIT; // ???
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -6116,7 +6121,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // TODO: fredt@users we don't really. Need to review the codes.
         // Which do we support, if any? Probably X/OPEN, if any. Must check.
         // boucherb@users 20020426
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 

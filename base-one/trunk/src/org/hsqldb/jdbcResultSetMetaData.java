@@ -67,22 +67,8 @@
 
 package org.hsqldb;
 
-import java.io.ByteArrayInputStream;
-import java.io.StringReader;
-import java.math.BigDecimal;
-import java.sql.*;     // for Array, Blob, Clob, Ref
-import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.sql.Types;
-import java.sql.SQLWarning;
-import java.util.*;    // for Map
-import java.util.Calendar;
-import org.hsqldb.lib.AsciiStringInputStream;
-import org.hsqldb.lib.StringInputStream;
 
 // fredt@users 20020320 - patch 1.7.0 - JDBC 2 support and error trapping
 // JDBC 2 methods can now be called from jdk 1.1.x - see javadoc comments
@@ -93,8 +79,8 @@ import org.hsqldb.lib.StringInputStream;
 // it was missing here but specified in the java.sql.ResultSet and
 // java.sql.ResultSetMetaData interfaces, updated generic documentation to
 // JDK 1.4, and added JDBC3 methods and docs
-// boucherb@users and fredt@users 20020409/20020505 extensive review and update
-// of docs and behaviour to comply with previous and latest java.sql specification
+// boucherb@users and fredt@users 20020505 extensive review and update
+// of docs and behaviour to comply with java.sql specification
 // tony_lai@users 20020820 - patch 595073 - duplicated exception msg
 
 /**
@@ -380,8 +366,8 @@ import org.hsqldb.lib.StringInputStream;
  */
 public class jdbcResultSetMetaData implements ResultSetMetaData {
 
-    Result        rResult;
-    jdbcResultSet resultSet;
+    private Result        rResult;
+    private jdbcResultSet resultSet;
 
     jdbcResultSetMetaData(jdbcResultSet resultSet) {
         this.resultSet = resultSet;
@@ -468,7 +454,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         // checkColumn(column); ?
         // boucherb@users 20020413
         if (resultSet.strictMetaData) {
-            throw getNotSupported();
+            throw jdbcDriver.notSupported;
         }
 
         return false;
@@ -510,7 +496,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         // checkColumn(column); ?
         // boucherb@users 20020413
         if (resultSet.strictMetaData) {
-            throw getNotSupported();
+            throw jdbcDriver.notSupported;
         }
 
         return true;
@@ -562,7 +548,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
 // fredt@users - OTHER can be used in a WHERE clause but we don't know if
 // RS column is a DB column or a computed value
         if (resultSet.strictMetaData) {
-            throw getNotSupported();
+            throw jdbcDriver.notSupported;
         }
 
         return true;
@@ -1101,7 +1087,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         // boucherb@users 20020413
         // fredt@users - 20020413 - also if the RS column is a DB column
         if (resultSet.strictMetaData) {
-            throw getNotSupported();
+            throw jdbcDriver.notSupported;
         }
 
         return false;
@@ -1152,7 +1138,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         // boucherb@users 20020413
         // fredt@users - 20020413 - also if the RS column is a DB column
         if (resultSet.strictMetaData) {
-            throw getNotSupported();
+            throw jdbcDriver.notSupported;
         }
 
         return true;
@@ -1203,7 +1189,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         // boucherb@users 20020413
         // fredt@users - 20020413 - also if the RS column is a DB column
         if (resultSet.strictMetaData) {
-            throw getNotSupported();
+            throw jdbcDriver.notSupported;
         }
 
         return true;
@@ -1252,29 +1238,6 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         // fredt@users - 20020413
         // need a reverse mapping list between SQL and Java types used
         // in HSQLDB.
-        throw getNotSupported();
-    }
-
-    //---------------------------- Private ---------------------------------
-
-    /**
-     * Convenience method for throwing FUNCTION_NOT_SUPPORTED
-     *
-     * @return a SQLException object whose message states that the function is
-     * not supported
-     */
-    private SQLException getNotSupported() {
-        return Trace.error(Trace.FUNCTION_NOT_SUPPORTED);
-    }
-
-    /**
-     * Convenience method for throwing FUNCTION_NOT_SUPPORTED for JDBC 3
-     * methods.
-     *
-     * @return a SQLException object whose message states that the function is
-     * not supported and is a JDBC 3 method
-     */
-    private SQLException getNotSupportedJDBC3() {
-        return Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupported;
     }
 }

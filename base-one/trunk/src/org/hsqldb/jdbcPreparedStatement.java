@@ -1310,7 +1310,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * jdbcPreparedStatement)
      */
     public void addBatch() throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -1393,7 +1393,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * jdbcPreparedStatement)
      */
     public void setRef(int i, Ref x) throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -1423,7 +1423,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * jdbcPreparedStatement)
      */
     public void setBlob(int i, Blob x) throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -1453,7 +1453,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      *  jdbcPreparedStatement)
      */
     public void setClob(int i, Clob x) throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -1483,7 +1483,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      *   jdbcPreparedStatement)
      */
     public void setArray(int i, Array x) throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -1525,7 +1525,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      *   jdbcPreparedStatement)
      */
     public ResultSetMetaData getMetaData() throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -1747,7 +1747,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 /*
     public void setURL(int parameterIndex,
                        java.net.URL x) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -1781,7 +1781,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 //#ifdef JDBC3
 /*
     public ParameterMetaData getParameterMetaData() throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -1860,7 +1860,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      */
     public void registerOutParameter(int parameterIndex,
                                      int sqlType) throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -1901,7 +1901,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      */
     public void registerOutParameter(int parameterIndex, int sqlType,
                                      int scale) throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -1929,7 +1929,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @exception SQLException if a database access error occurs
      */
     public boolean wasNull() throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -1966,7 +1966,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @see #setString
      */
     public String getString(int parameterIndex) throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -1995,7 +1995,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @see #setBoolean
      */
     public boolean getBoolean(int parameterIndex) throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -2024,7 +2024,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @see #setByte
      */
     public byte getByte(int parameterIndex) throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -2053,7 +2053,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @see #setShort
      */
     public short getShort(int parameterIndex) throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -2082,7 +2082,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @see #setInt
      */
     public int getInt(int parameterIndex) throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -2111,7 +2111,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @see #setLong
      */
     public long getLong(int parameterIndex) throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -2140,7 +2140,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @see #setFloat
      */
     public float getFloat(int parameterIndex) throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -2169,7 +2169,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @see #setDouble
      */
     public double getDouble(int parameterIndex) throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -2203,7 +2203,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      */
     public BigDecimal getBigDecimal(int parameterIndex,
                                     int scale) throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -2232,7 +2232,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @see #setBytes
      */
     public byte[] getBytes(int parameterIndex) throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -2260,7 +2260,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @see #setDate
      */
     public java.sql.Date getDate(int parameterIndex) throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -2289,7 +2289,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @see #setTime
      */
     public java.sql.Time getTime(int parameterIndex) throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -2319,7 +2319,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      */
     public java.sql.Timestamp getTimestamp(int parameterIndex)
     throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     //----------------------------------------------------------------------
@@ -2358,7 +2358,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @see #setObject
      */
     public Object getObject(int parameterIndex) throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     //--------------------------JDBC 2.0-----------------------------
@@ -2392,7 +2392,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      *  jdbcPreparedStatement)
      */
     public BigDecimal getBigDecimal(int parameterIndex) throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -2428,7 +2428,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      *   jdbcPreparedStatement)
      */
     public Object getObject(int i, Map map) throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -2459,7 +2459,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * jdbcPreparedStatement)
      */
     public Ref getRef(int i) throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -2490,7 +2490,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      *  jdbcPreparedStatement)
      */
     public Blob getBlob(int i) throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -2521,7 +2521,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      *  jdbcPreparedStatement)
      */
     public Clob getClob(int i) throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -2552,7 +2552,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      *  jdbcPreparedStatement)
      */
     public Array getArray(int i) throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -2752,7 +2752,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      */
     public void registerOutParameter(int paramIndex, int sqlType,
                                      String typeName) throws SQLException {
-        throw getNotSupported();
+        throw jdbcDriver.notSupported;
     }
 
     //--------------------------JDBC 3.0-----------------------------
@@ -2799,7 +2799,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 /*
     public void registerOutParameter(String parameterName,
                                      int sqlType) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -2844,7 +2844,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 /*
     public void registerOutParameter(String parameterName, int sqlType,
                                      int scale) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -2902,7 +2902,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 /*
     public void registerOutParameter(String parameterName, int sqlType,
                                      String typeName) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -2939,7 +2939,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 //#ifdef JDBC3
 /*
     public java.net.URL getURL(int parameterIndex) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -2975,7 +2975,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 /*
     public void setURL(String parameterName,
                        java.net.URL val) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -3009,7 +3009,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 /*
     public void setNull(String parameterName,
                         int sqlType) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -3044,7 +3044,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 /*
     public void setBoolean(String parameterName,
                            boolean x) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -3078,7 +3078,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 //#ifdef JDBC3
 /*
     public void setByte(String parameterName, byte x) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -3112,7 +3112,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 //#ifdef JDBC3
 /*
     public void setShort(String parameterName, short x) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -3146,7 +3146,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 //#ifdef JDBC3
 /*
     public void setInt(String parameterName, int x) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -3180,7 +3180,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 //#ifdef JDBC3
 /*
     public void setLong(String parameterName, long x) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -3214,7 +3214,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 //#ifdef JDBC3
 /*
     public void setFloat(String parameterName, float x) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -3249,7 +3249,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 /*
     public void setDouble(String parameterName,
                           double x) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -3285,7 +3285,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 /*
     public void setBigDecimal(String parameterName,
                               BigDecimal x) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -3322,7 +3322,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 /*
     public void setString(String parameterName,
                           String x) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -3358,7 +3358,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 //#ifdef JDBC3
 /*
     public void setBytes(String parameterName, byte x[]) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -3393,7 +3393,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 /*
     public void setDate(String parameterName,
                         java.sql.Date x) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -3428,7 +3428,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 /*
     public void setTime(String parameterName,
                         java.sql.Time x) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -3464,7 +3464,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 /*
     public void setTimestamp(String parameterName,
                              java.sql.Timestamp x) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -3507,7 +3507,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 /*
     public void setAsciiStream(String parameterName, java.io.InputStream x,
                                int length) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -3549,7 +3549,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 /*
     public void setBinaryStream(String parameterName, java.io.InputStream x,
                                 int length) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -3605,7 +3605,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 /*
     public void setObject(String parameterName, Object x, int targetSqlType,
                           int scale) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -3642,7 +3642,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 /*
     public void setObject(String parameterName, Object x,
                           int targetSqlType) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -3700,7 +3700,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 /*
     public void setObject(String parameterName,
                           Object x) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -3745,7 +3745,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
     public void setCharacterStream(String parameterName,
                                    java.io.Reader reader,
                                    int length) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -3788,7 +3788,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 /*
     public void setDate(String parameterName, java.sql.Date x,
                         Calendar cal) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -3831,7 +3831,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 /*
     public void setTime(String parameterName, java.sql.Time x,
                         Calendar cal) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -3875,7 +3875,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 /*
     public void setTimestamp(String parameterName, java.sql.Timestamp x,
                              Calendar cal) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -3929,7 +3929,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 /*
     public void setNull(String parameterName, int sqlType,
                         String typeName) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -3969,7 +3969,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 //#ifdef JDBC3
 /*
     public String getString(String parameterName) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -4002,7 +4002,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 //#ifdef JDBC3
 /*
     public boolean getBoolean(String parameterName) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -4035,7 +4035,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 //#ifdef JDBC3
 /*
     public byte getByte(String parameterName) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -4068,7 +4068,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 //#ifdef JDBC3
 /*
     public short getShort(String parameterName) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -4102,7 +4102,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 //#ifdef JDBC3
 /*
     public int getInt(String parameterName) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -4136,7 +4136,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 //#ifdef JDBC3
 /*
     public long getLong(String parameterName) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -4169,7 +4169,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 //#ifdef JDBC3
 /*
     public float getFloat(String parameterName) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -4202,7 +4202,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 //#ifdef JDBC3
 /*
     public double getDouble(String parameterName) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -4236,7 +4236,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 //#ifdef JDBC3
 /*
     public byte[] getBytes(String parameterName) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -4270,7 +4270,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 //#ifdef JDBC3
 /*
     public java.sql.Date getDate(String parameterName) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -4304,7 +4304,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 //#ifdef JDBC3
 /*
     public java.sql.Time getTime(String parameterName) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -4338,7 +4338,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 /*
     public java.sql.Timestamp getTimestamp(String parameterName)
     throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -4378,7 +4378,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 //#ifdef JDBC3
 /*
     public Object getObject(String parameterName) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -4413,7 +4413,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 /*
     public BigDecimal getBigDecimal(String parameterName)
     throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -4454,7 +4454,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 /*
     public Object getObject(String parameterName,
                             Map map) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -4488,7 +4488,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 //#ifdef JDBC3
 /*
     public Ref getRef(String parameterName) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -4522,7 +4522,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 //#ifdef JDBC3
 /*
     public Blob getBlob(String parameterName) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -4555,7 +4555,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 //#ifdef JDBC3
 /*
     public Clob getClob(String parameterName) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -4589,7 +4589,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 //#ifdef JDBC3
 /*
     public Array getArray(String parameterName) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -4632,7 +4632,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 /*
     public java.sql.Date getDate(String parameterName,
                                  Calendar cal) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -4675,7 +4675,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 /*
     public java.sql.Time getTime(String parameterName,
                                  Calendar cal) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -4719,7 +4719,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 /*
     public java.sql.Timestamp getTimestamp(String parameterName,
                                            Calendar cal) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -4755,7 +4755,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 //#ifdef JDBC3
 /*
     public java.net.URL getURL(String parameterName) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -4829,17 +4829,6 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
         }
 
         return s.toString();
-    }
-
-    /**
-     * Constructs a <code>SQLException</code> object to be thrown by any
-     * methods that are not supported.
-     *
-     * @return a SQLException whose message indicates the function is not
-     *        supported
-     */
-    private SQLException getNotSupported() {
-        return Trace.error(Trace.FUNCTION_NOT_SUPPORTED);
     }
 
     /**

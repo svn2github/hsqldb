@@ -33,7 +33,6 @@ package org.hsqldb;
 
 import java.io.File;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -41,11 +40,7 @@ import java.util.Enumeration;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HsqlHashSet;
 import org.hsqldb.lib.HsqlHashMap;
-import org.hsqldb.lib.StopWatch;
 import org.hsqldb.lib.ValuePool;
-import org.hsqldb.lib.enum.ArrayEnumeration;
-import org.hsqldb.lib.enum.CompositeEnumeration;
-import org.hsqldb.lib.enum.EmptyEnumeration;
 
 // fredt@users - 1.7.2 - structural modifications to allow inheritance
 // boucherb@users - 1.7.2 - 20020225

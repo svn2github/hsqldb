@@ -1989,6 +1989,10 @@ class Database {
         TableWorks tw        = new TableWorks(t);
         String     sToken    = c.getString();
 
+        if (t.isView()) {
+            throw Trace.error(Trace.NOT_A_TABLE);
+        }
+
         session.setScripting(!t.isTemp());
 
         switch (commandSet.get(sToken)) {

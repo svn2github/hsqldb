@@ -102,8 +102,8 @@ import org.hsqldb.lib.StringConverter;
 // boucherb@users 20020509 - added "throws SQLException" to all methods where
 // it was missing here but specified in the java.sql.Connection interface,
 // updated generic documentation to JDK 1.4, and added JDBC3 methods and docs
-// boucherb@users and fredt@users 20020409/20020505 extensive review and update
-// of docs and behaviour to comply with previous and latest java.sql specification
+// boucherb@users and fredt@users 20020505 - extensive review and update
+// of docs and behaviour to comply with java.sql specification
 // fredt@users 20020830 - patch 487323 by xclayl@users - better synchronization
 // fredt@users 20020930 - patch 1.7.1 - support for connection properties
 // kneedeepincode@users 20021110 - patch 635816 - correction to properties
@@ -1499,7 +1499,7 @@ public class jdbcConnection implements Connection {
         }
 
         if (level != Connection.TRANSACTION_READ_UNCOMMITTED) {
-            throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED);
+            throw jdbcDriver.notSupported;
         }
 
         checkClosed();
@@ -1609,7 +1609,7 @@ public class jdbcConnection implements Connection {
         if ((type != jdbcResultSet.TYPE_FORWARD_ONLY && type != jdbcResultSet
                 .TYPE_SCROLL_INSENSITIVE) || concurrency != jdbcResultSet
                     .CONCUR_READ_ONLY) {
-            throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED);
+            throw jdbcDriver.notSupported;
         }
     }
 
@@ -1918,7 +1918,7 @@ public class jdbcConnection implements Connection {
      *     for jdbcConnection)
      */
     public Map getTypeMap() throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED);
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -1950,7 +1950,7 @@ public class jdbcConnection implements Connection {
      * @see #getTypeMap
      */
     public void setTypeMap(Map map) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED);
+        throw jdbcDriver.notSupported;
     }
 
 // boucherb@users 20020409 - javadocs for all JDBC 3 methods
@@ -1990,7 +1990,7 @@ public class jdbcConnection implements Connection {
 //#ifdef JDBC3
 /*
     public void setHoldability(int holdability) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -2025,7 +2025,7 @@ public class jdbcConnection implements Connection {
 //#ifdef JDBC3
 /*
     public int getHoldability() throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -2060,7 +2060,7 @@ public class jdbcConnection implements Connection {
 //#ifdef JDBC3
 /*
     public Savepoint setSavepoint() throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -2097,7 +2097,7 @@ public class jdbcConnection implements Connection {
 //#ifdef JDBC3
 /*
     public Savepoint setSavepoint(String name) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -2136,7 +2136,7 @@ public class jdbcConnection implements Connection {
 //#ifdef JDBC3
 /*
     public void rollback(Savepoint savepoint) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -2173,7 +2173,7 @@ public class jdbcConnection implements Connection {
 //#ifdef JDBC3
 /*
     public void releaseSavepoint(Savepoint savepoint) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -2227,7 +2227,7 @@ public class jdbcConnection implements Connection {
                                      int resultSetConcurrency,
                                      int resultSetHoldability)
                                      throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -2285,7 +2285,7 @@ public class jdbcConnection implements Connection {
     public PreparedStatement prepareStatement(String sql, int resultSetType,
             int resultSetConcurrency,
             int resultSetHoldability) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -2343,7 +2343,7 @@ public class jdbcConnection implements Connection {
                                          int resultSetConcurrency,
                                          int resultSetHoldability)
                                          throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -2405,7 +2405,7 @@ public class jdbcConnection implements Connection {
 /*
     public PreparedStatement prepareStatement(String sql,
             int autoGeneratedKeys) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -2469,7 +2469,7 @@ public class jdbcConnection implements Connection {
 /*
     public PreparedStatement prepareStatement(String sql,
             int columnIndexes[]) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 
@@ -2533,7 +2533,7 @@ public class jdbcConnection implements Connection {
 /*
     public PreparedStatement prepareStatement(String sql,
             String columnNames[]) throws SQLException {
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        throw jdbcDriver.notSupportedJDBC3;
     }
 */
 

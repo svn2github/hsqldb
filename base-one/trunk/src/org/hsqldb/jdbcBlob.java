@@ -32,10 +32,7 @@
 package org.hsqldb;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
 import java.sql.*;
@@ -47,9 +44,7 @@ import java.sql.*;
  */
 public class jdbcBlob implements Blob {
 
-    byte[] blobData;
-    static final SQLException notSupported =
-        Trace.error(Trace.FUNCTION_NOT_SUPPORTED);
+    private byte[] blobData;
 
     jdbcBlob(byte[] data) {
         this.blobData = data;
@@ -82,27 +77,27 @@ public class jdbcBlob implements Blob {
     }
 
     public long position(Blob pattern, long start) throws SQLException {
-        throw notSupported;
+        throw jdbcDriver.notSupported;
     }
 
     public long position(byte[] pattern, long start) throws SQLException {
-        throw notSupported;
+        throw jdbcDriver.notSupported;
     }
 
     public int setBytes(long pos, byte[] bytes) throws SQLException {
-        throw notSupported;
+        throw jdbcDriver.notSupported;
     }
 
     public int setBytes(long pos, byte[] bytes, int offset,
                         int len) throws SQLException {
-        throw notSupported;
+        throw jdbcDriver.notSupported;
     }
 
     public OutputStream setBinaryStream(long pos) throws SQLException {
-        throw notSupported;
+        throw jdbcDriver.notSupported;
     }
 
     public void truncate(long len) throws SQLException {
-        throw notSupported;
+        throw jdbcDriver.notSupported;
     }
 }

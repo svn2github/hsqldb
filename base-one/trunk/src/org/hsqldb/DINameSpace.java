@@ -589,26 +589,9 @@ final class DINameSpace {
      */
     Table tableForIndexName(String indexName) {
 
-        HsqlArrayList tables;
-        int           size;
-        Table         table;
+        HsqlName tableName = database.indexNameList.getOwner(indexName);
 
-        if (indexName == null) {
-            return null;
-        }
-
-        tables = database.getTables();
-        size   = tables.size();
-
-        for (int i = 0; i < size; i++) {
-            table = (Table) tables.get(i);
-
-            if (table.getIndex(indexName) != null) {
-                return table;
-            }
-        }
-
-        return null;
+        return database.findUserTable(tableName.name);
     }
 
     /**

@@ -32,8 +32,8 @@
 package org.hsqldb;
 
 import java.sql.*;
-import java.io.*;
-import org.hsqldb.lib.*;
+import java.io.StringReader;
+import org.hsqldb.lib.AsciiStringInputStream;
 
 /**
  *
@@ -43,9 +43,7 @@ import org.hsqldb.lib.*;
  */
 public class jdbcClob implements java.sql.Clob {
 
-    String data;
-    static final SQLException notSupported =
-        Trace.error(Trace.FUNCTION_NOT_SUPPORTED);
+    private String data;
 
     jdbcClob(String datum) throws SQLException {
         this.data = datum;
@@ -179,7 +177,7 @@ public class jdbcClob implements java.sql.Clob {
      *
      */
     public java.io.OutputStream setAsciiStream(long pos) throws SQLException {
-        throw notSupported;
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -199,7 +197,7 @@ public class jdbcClob implements java.sql.Clob {
      *
      */
     public java.io.Writer setCharacterStream(long pos) throws SQLException {
-        throw notSupported;
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -220,7 +218,7 @@ public class jdbcClob implements java.sql.Clob {
      *
      */
     public int setString(long pos, String str) throws SQLException {
-        throw notSupported;
+        throw jdbcDriver.notSupported;
     }
 
     /**
@@ -244,7 +242,7 @@ public class jdbcClob implements java.sql.Clob {
      */
     public int setString(long pos, String str, int offset,
                          int len) throws SQLException {
-        throw notSupported;
+        throw jdbcDriver.notSupported;
     }
 
     /**
