@@ -107,6 +107,7 @@ class ConstraintCore {
     Index iRef;
 
 /** @todo fredt - reused structure to be reviewed for multi-threading */
+
     // empty table row used for selective filling and comparison
     Object[] oRef;
 

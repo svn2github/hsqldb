@@ -67,7 +67,7 @@
 
 package org.hsqldb;
 
-// fredt@users 20021229 - patch 1.7.2 - fix for OUTER JOIN conditions bug
+// fredt@users 20030810 - patch 1.7.2 - OUTER JOIN rewrite
 
 /**
  * This class performs a join between two tables, or a self-join, using
@@ -89,16 +89,12 @@ class TableFilter {
     private Node       nCurrent;
     private Object     oEmptyData[];
     private Expression eStart, eEnd;
-    private Expression eAnd;
-    boolean            isOuterJoin;
 
-    // this is public to improve performance
-    Object oCurrentData[];
-    Row    currentRow;
-
-    // Object[] getCurrent() {
-    // return oCurrentData;
-    // }
+    // these are package public to improve performance
+    Expression eAnd;
+    boolean    isOuterJoin;
+    Object     oCurrentData[];
+    Row        currentRow;
 
     /**
      * Constructor declaration
@@ -375,13 +371,9 @@ class TableFilter {
     }
 
     /**
-     * For inner joins, this simply finds the first row in the table (using
+     * This simply finds the first row in the table (using
      * an index if there is one) and checks it against the eEnd (range) and
-     * eAnd (other conditions) Expression objects.<p>
-     *
-     * For outer joins, application of the eAnd condition is more complex. It
-     * returns true only if a real row was found and passed the test, or if no
-     * row was found but the all-null row passed the test. (fredt)
+     * eAnd (other conditions) Expression objects. (fredt)
      *
      */
     boolean findFirst() throws HsqlException {
@@ -389,12 +381,6 @@ class TableFilter {
         boolean andtested = false;
 
         if (iIndex == null) {
-            if (isOuterJoin) {
-                throw Trace.error(Trace.TableFilter_findFirst, new Object[] {
-                    tTable.getName().name, eAnd.getColumnName()
-                });
-            }
-
             iIndex = tTable.getPrimaryIndex();
         }
 
@@ -426,15 +412,6 @@ class TableFilter {
         oCurrentData = oEmptyData;
         currentRow   = null;
 
-        if (isOuterJoin) {
-            if (eAnd == null) {
-                return true;
-            } else {
-                return andtested ? false
-                                 : eAnd.test();
-            }
-        }
-
         return false;
     }
 
@@ -447,10 +424,6 @@ class TableFilter {
      * @throws HsqlException
      */
     boolean next() throws HsqlException {
-
-        if (isOuterJoin && nCurrent == null) {
-            return false;
-        }
 
         nCurrent = iIndex.next(nCurrent);
 

@@ -496,27 +496,50 @@ class Select {
         return true;
     }
 
+// fredt@users 20030810 - patch 1.7.2 - OUTER JOIN rewrite
     private void buildResult(Result r, int limitcount) throws HsqlException {
 
         GroupedResult gResult = new GroupedResult(this, r);
-        int           len     = eColumn.length;
-        int           filter  = tFilter.length;
+        final int     len     = eColumn.length;
+        final int     filter  = tFilter.length;
         boolean       first[] = new boolean[filter];
+        boolean       outer[] = new boolean[filter];
         int           level   = 0;
 
         while (level >= 0 &&!isPreProcess) {
+
+            // perform a join
             TableFilter t = tFilter[level];
             boolean     found;
+            boolean     outerfound;
 
             if (!first[level]) {
-                found        = t.findFirst();
+                if (level != 0 && outer[level - 1]) {
+
+                    // don't attempt to find if the left side was outer and returned nulls
+                    found = false;
+                } else {
+                    found = t.findFirst();
+                }
+
+                // if outer join and retured null, test the condition
+                outer[level] = outerfound = t.isOuterJoin &&!found
+                                            &&!outer[level]
+                                            && (t.eAnd == null
+                                                || t.eAnd.test());
                 first[level] = found;
             } else {
-                found        = t.next();
+                found = t.next();
+
+                // if outer join and retured null, test the condition
+                outer[level] = outerfound = t.isOuterJoin &&!found
+                                            &&!first[level] &&!outer[level]
+                                            && (t.eAnd == null
+                                                || t.eAnd.test());
                 first[level] = found;
             }
 
-            if (!found) {
+            if (!found &&!outerfound) {
                 level--;
 
                 continue;
