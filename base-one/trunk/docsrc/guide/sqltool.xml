@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.8 2004/04/22 03:49:13 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.9 2004/04/23 00:47:18 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.8 $</edition>
-        <pubdate>$Date: 2004/04/22 03:49:13 $</pubdate>
+        <edition>$Revision: 1.9 $</edition>
+        <pubdate>$Date: 2004/04/23 00:47:18 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>HOWTO</keyword>
@@ -51,8 +51,9 @@
                     Copy <ulink url='sqltool.rc'/> to your home directory and
                     secure access to it if your home directory is accessible
                     to anybody else.
-                    This file will work as-is if your target hsqldb Server is
-                    running on your local computer with default settings,
+                    This file will work as-is for a Memory Only database
+                    instance; or if your target is a hsqldb Server 
+                    running on your local computer with default settings
                     and the password for the "sa" account is blank
                     (the sa password is blank when new hsqldb database 
                     instances are created).
@@ -82,26 +83,32 @@
                     at the default location and you want to use the hsqldb 
                     JDBC driver, you will want to run either
                 </para><informalexample><screen>
-    java org.hsqldb.util.SqlTool localhost-sa</screen>
+    java org.hsqldb.util.SqlTool mem</screen>
                 </informalexample><para>
                     for interactive use, or
                 </para><informalexample><screen>
-    java org.hsqldb.util.SqlTool --noinput --sql 'SQL statement;' localhost-sa</screen>
+    java org.hsqldb.util.SqlTool --noinput --sql 'SQL statement;' mem</screen>
                     </informalexample><para>
                     or
                     </para><informalexample><screen>
-    java org.hsqldb.util.SqlTool localhost-sa filepath1.sql...</screen>
+    java org.hsqldb.util.SqlTool mem filepath1.sql...</screen>
                     </informalexample><para>
-                    where <literal>localhost-sa</literal> is an
+                    where <literal>mem</literal> is an
                     <emphasis>urlid</emphasis>,
                     and the following arguments are paths to text SQL files.
                     For the filepaths, you can use whatever wildcards your 
                     operating system shell supports.
                     </para><para>
-                    The <emphasis>urlid</emphasis> <literal>localhost-sa
+                    The <emphasis>urlid</emphasis> <literal>mem
                     </literal>in these commands is a key 
                     into your SqlTool configuration file, as explained in the 
                     <link linkend='auth-section' endterm='auth-title'/> section.
+                    Since this is a Memory Only database, you can use SqlTool
+                    with this urlid immediately with no database setup 
+                    whatsoever (however, you can't persist any changes that 
+                    you make to this database).
+                    The sample sqltool.rc file also defines the urlid
+                    "localhost-sa" for a local HSQLDB Server.
                 </para></step>
             </procedure>
         <para>
