@@ -1,0 +1,21 @@
+
+# Bourne shell Solaris packaging script (no interpreter line on purpose)
+
+# $Id$
+
+# Do not set path.  Pkgadd sets a safe path, it does not use any inherited path
+
+
+BASE=hsqldb1.7.1a.dev
+
+/etc/init.d/hsqldb stop
+
+[ -L $BASEDIR/$BASE/lib/hsqldb.jar ] && rm $BASEDIR/$BASE/lib/hsqldb.jar
+[ -f $BASEDIR/$BASE/data/db1/server.properties ] &&
+[ ! -s $BASEDIR/$BASE/data/db1/server.properties ] &&
+ rm $BASEDIR/$BASE/data/db1/server.properties
+
+BACKUPFILE=`date "+/etc/hsqldb.conf.%Y%m%d"`
+[ -r $BACKUPFILE ] || cp -p /etc/hsqldb.conf $BACKUPFILE
+
+exit 0
