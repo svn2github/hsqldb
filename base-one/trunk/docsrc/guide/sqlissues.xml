@@ -1,4 +1,4 @@
-<!-- $Id: sqlissues.xml,v 1.9 2004/04/20 22:42:26 unsaved Exp $ -->
+<!-- $Id: sqlissues.xml,v 1.10 2004/04/22 03:06:26 unsaved Exp $ -->
 
 <chapter id='sql_issues-chapter'>
     <title id='sql_issues-title'>SQL Issues</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.9 $</edition>
-        <pubdate>$Date: 2004/04/20 22:42:26 $</pubdate>
+        <edition>$Revision: 1.10 $</edition>
+        <pubdate>$Date: 2004/04/22 03:06:26 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>SQL</keyword>
@@ -90,7 +90,7 @@
             </para>
         </section>
         <section>
-            <title>Unique Indexex</title>
+            <title>Unique Indexes</title>
             <para>
                 In 1.7.2, user defined UNIQUE indexes can still be declared but 
                 they are deprecated.
