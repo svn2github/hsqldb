@@ -1,4 +1,4 @@
-<!-- $Id: unix.xml,v 1.23 2004/06/06 19:38:14 unsaved Exp $ -->
+<!-- $Id: unix.xml,v 1.24 2004/06/11 20:56:50 unsaved Exp $ -->
 
 <chapter id='unix-chapter'>
     <title id='unix-title'>UNIX Quick Start</title>
@@ -13,8 +13,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.23 $</edition>
-        <pubdate>$Date: 2004/06/06 19:38:14 $</pubdate>
+        <edition>$Revision: 1.24 $</edition>
+        <pubdate>$Date: 2004/06/11 20:56:50 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>UNIX</keyword>
@@ -563,8 +563,13 @@
             </para> </step> <step><para>
                 Tell your OS to run the init script upon system startup and 
                 shutdown.
-                If using a BSD variant, you must set "enable_hsqldb" to "YES" 
-                in <filename>/etc/rc.conf</filename>.
+                If you are using a UNIX variant that has 
+                <filename>/etc/rc.conf</filename> or 
+                <filename>/etc/rc.conf.local</filename> (like BSD variants
+                and Gentoo), you must set "enable_hsqldb" to "YES" in either
+                of those files.
+                (Just run <literal>cd /etc; ls rc.conf rc.conf.local</literal>
+                to see if you have one of these files).
                 For good UNIXes that use System V style init, you must set up 
                 hard links or soft links either manually or with management 
                 tools (such as <literal>chkconfig</literal> or
