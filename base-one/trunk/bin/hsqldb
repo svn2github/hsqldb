@@ -1,0 +1,131 @@
+# If using this as a UNIX init script, do not put an interpreter line here,
+# since System V UNIXes invoke init scripts using the the default system
+# shell and ignore interpreter lines.
+
+# Copyright (c) 2001-2004, The HSQL Development Group
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# Redistributions of source code must retain the above copyright notice, this
+# list of conditions and the following disclaimer.
+#
+# Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation
+# and/or other materials provided with the distribution.
+#
+# Neither the name of the HSQL Development Group nor the names of its
+# contributors may be used to endorse or promote products derived from this
+# software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL HSQL DEVELOPMENT GROUP, HSQLDB.ORG, 
+# OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+# $Id$
+
+
+# This stuff will be ignored by systems that don't use chkconfig.
+# chkconfig: - 87 13
+# description: Hsqldb, A High Performance Java Database
+# config: /etc/sysconfig/hsqldb
+
+# N.b.  Being a system script, this script does not use inherited variables.
+# If you want to adjust a setting, edit the config file.
+
+
+# Strategy of this init script is to avoid shell-specific functionality,
+# and use only lowest-common-denominator Bourne capabilities.
+# We don't include OS-specific functions, and we don't use shell-
+# implementation-specific functionality like "echo ...\c" or "echo -n...".
+# Since some Bourne shells don't support shell functions at all, we don't
+# even define any local functions.
+
+SYNTAX_MSG='SYNTAX:  /path/to/this/script/hsqldb start|stop|restart|status'
+
+CFGFILE=
+LOGFILE=
+case "`uname`" in
+    Linux)
+        CFGFILE=/etc/sysconfig/hsqldb
+        LOGFILE=/var/log/hsqldb.log
+    ;;
+    *)
+        CFGFILE=/etc/hsqldb.cfg
+        LOGFILE=/var/log/hsqldb.log
+    ;;
+esac
+
+# Sanity check
+[ -n "$CFGFILE" ] && [ -n "$LOGFILE" ] || {
+    echo "Internal problem in init script" 1>&2
+    exit 11
+}
+
+[ $# -eq 1 ] || {
+    echo "$SYNTAX_MSG" 1>&2
+    exit 4
+}
+
+# Use bsd-style enable/disable if it's in place.
+BSDCFG=
+[ -r /etc/rc.conf ] && [ -f /etc/rc.conf ] && {
+    . /etc/rc.conf
+    BSDCFG=1
+}
+[ -r /etc/rc.conf.local ] && [ -f /etc/rc.conf.local ] && {
+    . /etc/rc.conf.local
+    BSDCFG=1
+}
+[ -n "$BSDCFG" ] && {
+    case "$hsqldb_enable" in [Yy][Ee][Ss]);; [Oo][Nn]);; [Tt][Rr][Uu][Ee]);;
+        *) exit 0;;  # Don't run if not enabled for BSD startup
+    esac
+}
+
+COMMAND="$1"; shift
+
+[ -r "$CFGFILE" ] || {
+    echo "Unable to read config file '$CFGFILE'"
+    exit 2
+}
+[ -f "$CFGFILE" ] || {
+    echo "'$CFGFILE' is not a regular file"
+    exit 2
+}
+HSQLDB_OWNER=
+JAVA_HOME=
+HSQLDB_HOME=
+SERVER_HOME=
+URLIDS=
+. "$CFGFILE"
+# Validate that config file sets all required variables.
+[ -n "$JAVA_HOME" ] && [ -n "$HSQLDB_HOME" ] && [ -n "$SERVER_HOME" ] &&
+[ -n "$URLIDS" ] || {
+    echo "Config file '$CFGFILE' does not set one or more of following variables
+    JAVA_HOME, HSQLDB_HOME, SERVER_HOME, URLIDS"
+    exit 2
+}
+
+case "$1" in
+    start)
+        echo "I am here"
+    ;;
+    stop)
+        echo "Haven't done STOP yet"
+    ;;
+    *)
+        echo "$SYNTAX_MSG" 1>&2
+        exit 5
+    ;;
+esac
