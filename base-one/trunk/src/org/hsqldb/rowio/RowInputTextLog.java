@@ -37,23 +37,23 @@ import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
 
-import org.hsqldb.types.Binary;
 import org.hsqldb.Column;
 import org.hsqldb.HsqlDateTime;
 import org.hsqldb.HsqlException;
-import org.hsqldb.types.JavaObject;
-import org.hsqldb.Types;
 import org.hsqldb.Token;
 import org.hsqldb.Tokenizer;
-import org.hsqldb.store.ValuePool;
+import org.hsqldb.Types;
 import org.hsqldb.lib.BooleanConverter;
 import org.hsqldb.scriptio.ScriptReaderBase;
+import org.hsqldb.store.ValuePool;
+import org.hsqldb.types.Binary;
+import org.hsqldb.types.JavaObject;
 
 /**
  *  Class for reading the data for a database row from the script file.
  *
  * @author fredt@users
- * @version 1.7.3
+ * @version 1.8.0
  * @since 1.7.3
  */
 public class RowInputTextLog extends RowInputBase

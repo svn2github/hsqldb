@@ -46,8 +46,7 @@ import org.hsqldb.rowio.RowOutputTextQuoted;
 import org.hsqldb.scriptio.ScriptWriterText;
 
 // Ito Kazumitsu 20030328 - patch 1.7.2 - character encoding support
-
-/** @todo fredt - file error messages to Trace */
+// Dimitri Maziuk - patch for NL in string support
 
 /**
  * Acts as a buffer manager for a single TEXT table with respect its Row data.
@@ -55,8 +54,10 @@ import org.hsqldb.scriptio.ScriptWriterText;
  * Handles read/write operations on the table's text format data file using a
  * compatible pair of org.hsqldb.rowio input/output class instances.
  *
+ * Updated for 1.8.0.
+ *
  * @author sqlbob@users (RMP)
- * @version 1.7.2
+ * @version 1.8.0
  */
 public class TextCache extends DataFileCache {
 
@@ -69,7 +70,7 @@ public class TextCache extends DataFileCache {
     public boolean             isQuoted;
     public boolean             isAllQuoted;
     public boolean             ignoreFirst;
-    protected String           ignoredFirst = NL;
+    protected String           header;
     protected Table            table;
     int                        nextRowPos;
 
@@ -283,20 +284,6 @@ public class TextCache extends DataFileCache {
             if (fileFreePosition > Integer.MAX_VALUE) {
                 throw new IOException();
             }
-
-            if ((fileFreePosition == 0) && ignoreFirst) {
-                byte[] buf = null;
-
-                try {
-                    buf = ignoredFirst.getBytes(stringEncoding);
-                } catch (UnsupportedEncodingException e) {
-                    buf = ignoredFirst.getBytes();
-                }
-
-                dataFile.write(buf, 0, buf.length);
-
-                fileFreePosition = ignoredFirst.length();
-            }
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR,
                               Trace.TextCache_openning_file_error,
@@ -349,17 +336,15 @@ public class TextCache extends DataFileCache {
      */
     void purge() throws HsqlException {
 
-        if (dataFile == null) {
-            return;
-        }
-
         try {
             if (cacheReadonly) {
                 close(false);
             } else {
-                dataFile.close();
+                if (dataFile != null) {
+                    dataFile.close();
 
-                dataFile = null;
+                    dataFile = null;
+                }
 
                 FileUtil.delete(fileName);
             }
@@ -404,6 +389,7 @@ public class TextCache extends DataFileCache {
         return nextRowPos;
     }
 
+    // sqlbob -- Allow line breaks in quoted fields.
     protected boolean readObject(int pos) throws IOException {
 
         ByteArray buffer    = new ByteArray(80);
@@ -424,7 +410,17 @@ public class TextCache extends DataFileCache {
                 next = dataFile.read();
 
                 if (next == -1) {
-                    complete = (termCount == 1);
+
+                    // sqlbob -- Allow last line to not have NL.
+                    if (buffer.length() > 0) {
+                        complete = !blank;
+
+                        if (!cacheReadonly) {
+                            dataFile.write(
+                                ScriptWriterText.BYTES_LINE_SEP, 0,
+                                ScriptWriterText.BYTES_LINE_SEP.length);
+                        }
+                    }
 
                     break;
                 }
@@ -443,8 +439,8 @@ public class TextCache extends DataFileCache {
 
                         //-- Store first line.
                         if (ignoreFirst && pos == 0) {
-                            ignoredFirst = buffer.toString();
-                            blank        = true;
+                            header = buffer.toString();
+                            blank  = true;
                         }
 
                         if (c == '\n') {
@@ -499,6 +495,45 @@ public class TextCache extends DataFileCache {
         }
 
         return false;
+    }
+
+    public String getHeader() {
+        return header;
+    }
+
+    public void setHeader(String header) throws HsqlException {
+
+        if (ignoreFirst && fileFreePosition == 0) {
+            try {
+                writeHeader(header);
+
+                this.header = header;
+            } catch (IOException e) {
+                throw new HsqlException(
+                    e, Trace.getMessage(Trace.GENERAL_IO_ERROR),
+                    Trace.GENERAL_IO_ERROR);
+            }
+
+            return;
+        }
+
+        throw Trace.error(Trace.TEXT_TABLE_HEADER);
+    }
+
+    private void writeHeader(String header) throws IOException {
+
+        byte[] buf       = null;
+        String firstLine = header + NL;
+
+        try {
+            buf = firstLine.getBytes(stringEncoding);
+        } catch (UnsupportedEncodingException e) {
+            buf = firstLine.getBytes();
+        }
+
+        dataFile.write(buf, 0, buf.length);
+
+        fileFreePosition = firstLine.length();
     }
 
     private class ByteArray {

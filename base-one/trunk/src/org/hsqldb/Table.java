@@ -67,6 +67,8 @@
 package org.hsqldb;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 
 import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.index.RowIterator;
@@ -103,14 +105,14 @@ import org.hsqldb.store.ValuePool;
 // achnettest@users 20040130 - patch 878288 - bug fix for new indexes in memory tables by Arne Christensen
 // boucherb@users 20040327 - doc 1.7.2 - javadoc updates
 // boucherb@users 200404xx - patch 1.7.2 - proper uri for getCatalogName
-
-/**@todo: fredt - move error and assert string literals to Trace*/
+// fredt@users 20050000 - 1.8.0 updates in several areas
+// fredt@users 20050220 - patch 1.8.0 enforcement of DECIMAL precision/scale
 
 /**
  *  Holds the data structures and methods for creation of a database table.
  *
  *
- * @version 1.7.2
+ * @version 1.8.0
  */
 public class Table extends BaseTable {
 
@@ -152,6 +154,7 @@ public class Table extends BaseTable {
     HsqlArrayList[]   triggerLists;                   // array of trigger lists
     private int[]     colTypes;                       // fredt - types of columns
     private int[]     colSizes;                       // fredt - copy of SIZE values for columns
+    private int[]     colScales;                      // fredt - copy of SCALE values for columns
     private boolean[] colNullable;                    // fredt - modified copy of isNullable() values
     private Expression[] colDefaults;                 // fredt - expressions of DEFAULT values
     private int[]        defaultColumnMap;            // fred - holding 0,1,2,3,...
@@ -366,8 +369,6 @@ public class Table extends BaseTable {
      */
     protected void setDataSource(Session s, String source, boolean isDesc,
                                  boolean newFile) throws HsqlException {
-
-        // Same exception as setIndexRoots.
         throw (Trace.error(Trace.TABLE_NOT_FOUND));
     }
 
@@ -383,6 +384,20 @@ public class Table extends BaseTable {
      */
     protected boolean isDescDataSource() {
         return false;
+    }
+
+    /**
+     * For text tables.
+     */
+    public void setHeader(String header) throws HsqlException {
+        throw Trace.error(Trace.TEXT_TABLE_HEADER);
+    }
+
+    /**
+     * For text tables.
+     */
+    public String getHeader() {
+        return null;
     }
 
     /**
@@ -509,7 +524,7 @@ public class Table extends BaseTable {
 
     /**
      *  Performs the table level checks and adds a column to the table at the
-     *  DDL level.
+     *  DDL level. Only used at table creation, not at alter column.
      */
     void addColumn(Column column) throws HsqlException {
 
@@ -900,7 +915,7 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Returns the count of user defined columns.
+     *  Returns the count of all columns.
      */
     public int getInvisibleColumnCount() {
         return columnCount;
@@ -1331,6 +1346,7 @@ public class Table extends BaseTable {
         colTypes         = new int[visibleColumnCount];
         colDefaults      = new Expression[visibleColumnCount];
         colSizes         = new int[visibleColumnCount];
+        colScales        = new int[visibleColumnCount];
         colNullable      = new boolean[visibleColumnCount];
         defaultColumnMap = new int[visibleColumnCount];
 
@@ -1339,6 +1355,7 @@ public class Table extends BaseTable {
 
             colTypes[i]         = column.getType();
             colSizes[i]         = column.getSize();
+            colScales[i]        = column.getScale();
             colNullable[i]      = column.isNullable();
             defaultColumnMap[i] = i;
 
@@ -1891,7 +1908,8 @@ public class Table extends BaseTable {
     }
 
     /**
-     * Used by ScriptReaderBinary to unconditionally insert a row into
+     * Not for general use.
+     * Used by ScriptReader to unconditionally insert a row into
      * the table when the .script file is read.
      */
     public void insertFromScript(Object[] data) throws HsqlException {
@@ -1932,7 +1950,7 @@ public class Table extends BaseTable {
         Object[] data = row.getData();
 
         updateIdentityValue(data);
-        enforceFieldValueLimits(data);
+        enforceFieldValueLimits(data, defaultColumnMap);
         enforceNullConstraints(data);
         indexRow(row);
     }
@@ -1999,25 +2017,6 @@ public class Table extends BaseTable {
      *  Enforce max field sizes according to SQL column definition.
      *  SQL92 13.8
      */
-    void enforceFieldValueLimits(Object[] data) throws HsqlException {
-
-        int colindex;
-
-        if (sqlEnforceSize || sqlEnforceStrictSize) {
-            for (colindex = 0; colindex < visibleColumnCount; colindex++) {
-                if (colSizes[colindex] != 0 && data[colindex] != null) {
-                    data[colindex] = enforceSize(data[colindex],
-                                                 colTypes[colindex],
-                                                 colSizes[colindex], true,
-                                                 sqlEnforceStrictSize);
-                }
-            }
-        }
-    }
-
-    /**
-     *  As above but for a limited number of columns used for UPDATE queries.
-     */
     void enforceFieldValueLimits(Object[] data,
                                  int[] cols) throws HsqlException {
 
@@ -2026,99 +2025,24 @@ public class Table extends BaseTable {
 
         if (sqlEnforceSize || sqlEnforceStrictSize) {
             if (cols == null) {
-                enforceFieldValueLimits(data);
-
-                return;
+                cols = defaultColumnMap;
             }
 
             for (i = 0; i < cols.length; i++) {
                 colindex = cols[i];
 
                 if (colSizes[colindex] != 0 && data[colindex] != null) {
-                    data[colindex] = enforceSize(data[colindex],
-                                                 colTypes[colindex],
-                                                 colSizes[colindex], true,
-                                                 sqlEnforceStrictSize);
+                    data[colindex] = Column.enforceSize(data[colindex],
+                                                        colTypes[colindex],
+                                                        colSizes[colindex],
+                                                        colScales[colindex],
+                                                        sqlEnforceStrictSize);
                 }
             }
         }
     }
 
 // fredt@users 20020130 - patch 491987 by jimbag@users - modified
-
-    /**
-     *  Check an object for type CHAR and VARCHAR and truncate/pad based on
-     *  the  size
-     *
-     * @param  obj   object to check
-     * @param  type  the object type
-     * @param  size  size to enforce
-     * @param  pad   pad strings
-     * @return       the altered object if the right type, else the object
-     *      passed in unaltered
-     * @throws HsqlException if data too long
-     */
-    static Object enforceSize(Object obj, int type, int size, boolean pad,
-                              boolean raise) throws HsqlException {
-
-        if (size == 0) {
-            return obj;
-        }
-
-        // todo: need to handle BINARY like this as well
-        switch (type) {
-
-            case Types.CHAR :
-                return padOrTrunc((String) obj, size, pad, raise);
-
-            case Types.VARCHAR :
-                return padOrTrunc((String) obj, size, false, raise);
-
-            default :
-                return obj;
-        }
-    }
-
-    /**
-     *  Pad or truncate a string to len size
-     *
-     * @param  s    the string to pad to truncate
-     * @param  len  the len to make the string
-     * @param pad   pad the string
-     * @param check if true, throw an exception if truncation takes place
-     * @return      the string of size len
-     */
-    static String padOrTrunc(String s, int len, boolean pad,
-                             boolean check) throws HsqlException {
-
-        if (check && StringUtil.rTrimSize(s) > len) {
-            throw Trace.error(Trace.STRING_DATA_TRUNCATION);
-        }
-
-        int slen = s.length();
-
-        if (slen == len) {
-            return s;
-        }
-
-        if (slen > len) {
-            return s.substring(0, len);
-        }
-
-        if (!pad) {
-            return s;
-        }
-
-        char[] b = new char[len];
-
-        s.getChars(0, slen, b, 0);
-
-        for (int i = slen; i < len; i++) {
-            b[i] = ' ';
-        }
-
-        return new String(b);
-    }
 
     /**
      *  Fires all row-level triggers of the given set (trigger type)
@@ -2274,10 +2198,30 @@ public class Table extends BaseTable {
                 continue;
             }
 
-            RowIterator refiterator = c.findFkRef(row.getData(), true,
-                                                  delete);
+            RowIterator refiterator = c.findFkRef(row.getData(), delete);
 
-            if (!refiterator.hasNext()) {
+            if (refiterator.hasNext()) {
+                if (c.core.deleteAction == Constraint.NO_ACTION) {
+                    if (c.core.mainTable == c.core.refTable) {
+                        Row refrow = refiterator.next();
+
+                        // fredt - it's the same row
+                        // this supports deleting a single row
+                        // in future we can iterate over and check against
+                        // the full delete row list to enable multi-row
+                        // with self-referencing FK's deletes
+                        if (row.equals(refrow)) {
+                            continue;
+                        }
+                    }
+
+                    throw Trace.error(Trace.INTEGRITY_CONSTRAINT_VIOLATION,
+                                      Trace.Constraint_violation,
+                                      new Object[] {
+                        c.core.fkName.name, c.core.refTable.getName().name
+                    });
+                }
+            } else {
 
                 // no referencing row found
                 continue;
@@ -2487,10 +2431,19 @@ public class Table extends BaseTable {
                     continue;
                 }
 
-                RowIterator refiterator = c.findFkRef(orow.getData(), false,
-                                                      false);
+                // there must be no record in the 'slave' table
+                // sebastian@scienion -- dependent on forDelete | forUpdate
+                RowIterator refiterator = c.findFkRef(orow.getData(), false);
 
-                if (!refiterator.hasNext()) {
+                if (refiterator.hasNext()) {
+                    if (c.core.updateAction == Constraint.NO_ACTION) {
+                        throw Trace.error(
+                            Trace.INTEGRITY_CONSTRAINT_VIOLATION,
+                            Trace.Constraint_violation, new Object[] {
+                            c.core.fkName.name, c.core.refTable.getName().name
+                        });
+                    }
+                } else {
 
                     // no referencing row found
                     continue;
@@ -2598,14 +2551,15 @@ public class Table extends BaseTable {
      * Return false if changes conflict.
      */
     static boolean mergeKeepUpdate(HashMappedList rowSet, int[] cols,
-                                   Row row,
+                                   int[] colTypes, Row row,
                                    Object[] newData) throws HsqlException {
 
         Object[] data = (Object[]) rowSet.get(row);
 
         if (data != null) {
-            if (Index.compareRows(row.getData(), newData, cols) != 0
-                    && Index.compareRows(newData, data, cols) != 0) {
+            if (Index.compareRows(row
+                    .getData(), newData, cols, colTypes) != 0 && Index
+                        .compareRows(newData, data, cols, colTypes) != 0) {
                 return false;
             }
 
@@ -2744,8 +2698,6 @@ public class Table extends BaseTable {
         }
     }
 
-/** @todo  change system gen primary key */
-
     /**
      * For log statements.
      */
@@ -2759,48 +2711,45 @@ public class Table extends BaseTable {
                 primaryKeyColsSequence);
 
             row = it.next();
-        } else {
-            RowIterator it;
-            int[]       colSeq = new int[visibleColumnCount];
+        } else if (bestIndex == null) {
+            RowIterator it = rowIterator();
 
-            ArrayUtil.fillSequence(colSeq);
+            while (true) {
+                row = it.next();
 
-            if (bestIndex == null) {
-                it = rowIterator();
-
-                while (true) {
-                    row = it.next();
-
-                    if (row == null) {
-                        break;
-                    }
-
-                    if (Index.compareRows(row.getData(), data, colSeq) == 0) {
-                        break;
-                    }
+                if (row == null) {
+                    break;
                 }
-            } else {
-                it = bestIndex.findFirstRow(data);
 
-                while (true) {
-                    row = it.next();
+                if (Index.compareRows(
+                        row.getData(), data, defaultColumnMap,
+                        colTypes) == 0) {
+                    break;
+                }
+            }
+        } else {
+            RowIterator it = bestIndex.findFirstRow(data);
 
-                    if (row == null) {
-                        break;
-                    }
+            while (true) {
+                row = it.next();
 
-                    // reached end of range
-                    if (Index.compareRows(
-                            row.getData(), data,
-                            bestIndex.getColumns()) != 0) {
-                        row = null;
+                if (row == null) {
+                    break;
+                }
 
-                        break;
-                    }
+                Object[] rowdata = row.getData();
 
-                    if (Index.compareRows(row.getData(), data, colSeq) == 0) {
-                        break;
-                    }
+                // reached end of range
+                if (bestIndex.compareRowNonUnique(
+                        data, bestIndex.getColumns(), rowdata) != 0) {
+                    row = null;
+
+                    break;
+                }
+
+                if (Index.compareRows(
+                        rowdata, data, defaultColumnMap, colTypes) == 0) {
+                    break;
                 }
             }
         }
@@ -2916,7 +2865,7 @@ public class Table extends BaseTable {
                 Row      row  = (Row) triggeredList.getKey(i);
                 Object[] data = (Object[]) triggeredList.get(i);
 
-                mergeKeepUpdate(updateList, cols, row, data);
+                mergeKeepUpdate(updateList, cols, colTypes, row, data);
             }
 
             triggeredList.clear();
@@ -2996,7 +2945,7 @@ public class Table extends BaseTable {
     void checkRowDataInsert(Session session,
                             Object[] data) throws HsqlException {
 
-        enforceFieldValueLimits(data);
+        enforceFieldValueLimits(data, null);
         enforceNullConstraints(data);
 
         if (database.isReferentialIntegrity()) {
@@ -3143,7 +3092,9 @@ public class Table extends BaseTable {
             try {
                 cache.add((CachedRow) row);
             } catch (IOException e) {
-                throw new HsqlException(e);
+                throw new HsqlException(
+                    e, Trace.getMessage(Trace.GENERAL_IO_ERROR),
+                    Trace.GENERAL_IO_ERROR);
             }
         } else if (needsRowID) {
 
@@ -3335,7 +3286,9 @@ public class Table extends BaseTable {
                 }
             }
         } catch (IOException e) {
-            throw new HsqlException(e);
+            throw new HsqlException(
+                e, Trace.getMessage(Trace.GENERAL_IO_ERROR),
+                Trace.GENERAL_IO_ERROR);
         }
 
         return row;
@@ -3371,11 +3324,6 @@ public class Table extends BaseTable {
         }
 
         public void add(CachedObject row) throws IOException {
-
-            if (((Row) row).oData[0] == null) {
-                cache.add(row);
-            }
-
             cache.add(row);
         }
 

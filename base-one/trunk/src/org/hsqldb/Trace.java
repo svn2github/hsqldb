@@ -90,7 +90,7 @@ import org.hsqldb.lib.HsqlByteArrayOutputStream;
 
 /** @todo  fredt - 20021022 management of nested throws inside the program in
  * such a way that it is possible to return exactly the text of the error
- *  thrown at a given level withou higher level messages being added and to
+ *  thrown at a given level without higher level messages being added and to
  * preserve the original error code
  */
 public class Trace {
@@ -198,8 +198,8 @@ public class Trace {
                             INVALID_CONVERSION                        = 95,
                             ERROR_IN_BINARY_SCRIPT_1                  = 96,
                             ERROR_IN_BINARY_SCRIPT_2                  = 97,
-                            Cache_cleanUp                             = 98,
-                            Cache_saveAll                             = 99,
+                            GENERAL_IO_ERROR                          = 98,
+                            EXPRESSION_NOT_SUPPORTED                  = 99,
                             Constraint_violation                      = 100,
                             Database_dropTable                        = 101,
                             ERROR_IN_CONSTRAINT_COLUMN_LIST           = 102,
@@ -250,7 +250,7 @@ public class Trace {
                             SERVER_NO_DATABASE                        = 147,
                             Server_openServerSocket                   = 148,
                             Server_openServerSocket2                  = 149,
-                            TextDatabaseRowOutput_checkConvertString  = 150,
+                            TEXT_TABLE_HEADER                         = 150,
                             TextDatabaseRowOutput_checkConvertString2 = 151,
                             TextDatabaseRowOutput_writeIntData        = 152,
                             ORDER_BY_POSITION                         = 153,
@@ -431,8 +431,8 @@ public class Trace {
         "22003 Type Conversion not supported",                          //
         " table $$ row count error : $$ read, needed $$",               // BinaryDatabaseScriptReader_readExistingData
         " wrong data for insert operation",                             // BinaryDatabaseScriptReader_readTableInit
-        " SaveRow $$",                                                  // Cache_cleanUp
-        " SaveRow $$",                                                  // Cache_saveAll
+        "S1000",                                                        // GENERAL_IO_ERROR
+        "S1000 expression not supported in this context",               // EXPRESSION_NOT_SUPPORTED                                   // Cache_saveAll
         " $$ table: $$",                                                // Constraint_checkInsert
         " $$ table: $$",                                                // 101 Database_dropTable
         "duplicate column in list",                                     // DatabaseCommandInterpreter_processColumnList
@@ -478,13 +478,13 @@ public class Trace {
         "executeUpdate() cannot be used with this statement",           // jdbcStatement_executeUpdate
         " $$ : $$",                                                     // LockFile_checkHeartbeat
         "$$$$ is presumably locked by another process.",                // LockFile_checkHeartbeat2
-        "end of line characters not allowed",                           // QuotedTextDatabaseRowOutput_checkConvertString
+        "22001 end of line characters not allowed",                     // TEXT_STRING_HAS_NEWLINE
         "trying to use unsupported result mode: $$",                    // Result_Result
         "no valid database paths",                                      // SERVER_NO_DATABASE
         "Invalid address : $$\nTry one of: $$",                         // Server_openServerSocket
         "Invalid address : $$",                                         // Server_openServerSocket2
-        "end of line characters not allowed",                           // TextDatabaseRowOutput_checkConvertString
-        "separator not allowed in unquoted string",                     // 151 TextDatabaseRowOutput_checkConvertString2
+        "22001 header not allowed or too long",                         // TEXT_TABLE_HEADER
+        "22001 separator not allowed in unquoted string",               // 151 TextDatabaseRowOutput_checkConvertString2
         "not implemented",                                              // TextDatabaseRowOutput_writeIntData
         "00000 ORDER BY must be at the end of the statement",           //
         "00000 Statement does not generate a row count",                //

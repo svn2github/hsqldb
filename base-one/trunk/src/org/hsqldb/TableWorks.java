@@ -42,7 +42,7 @@ import org.hsqldb.HsqlNameManager.HsqlName;
  * The methods in this class perform alterations to the structure of an
  * existing table which may result in a new Table object
  *
- * @version 1.7.2
+ * @version 1.8.0
  * @since 1.7.0
  */
 class TableWorks {
@@ -217,6 +217,17 @@ class TableWorks {
         table.database.recompileViews(table.getName().name);
 
         return newindex;
+    }
+
+    void addPrimaryKey(int[] cols, HsqlName name) throws HsqlException {
+
+        if (table.database.constraintNameList.containsName(name.name)) {
+            throw Trace.error(Trace.CONSTRAINT_ALREADY_EXISTS, name.name);
+        }
+
+        addOrDropPrimaryKey(cols, name);
+        table.database.constraintNameList.addName(name.name, table.getName(),
+                Trace.CONSTRAINT_ALREADY_EXISTS);
     }
 
     void addOrDropPrimaryKey(int[] cols, HsqlName name) throws HsqlException {
@@ -398,25 +409,26 @@ class TableWorks {
 
         int        j = table.getConstraintIndex(name);
         Constraint c = table.getConstraint(name);
+        int        ctype;
 
         if (name.equals(table.getIndexes()[0].getName().name)) {
-            addOrDropPrimaryKey(null, null);
-
-            return;
-        }
-
-        if (c == null) {
+            ctype = Constraint.PRIMARY_KEY;
+        } else if (c == null) {
             throw Trace.error(Trace.CONSTRAINT_NOT_FOUND,
                               Trace.TableWorks_dropConstraint, new Object[] {
                 name, table.getName().name
             });
+        } else {
+            ctype = c.getType();
         }
 
-        if (c.getType() == Constraint.MAIN) {
+        if (ctype == Constraint.MAIN) {
             throw Trace.error(Trace.DROP_SYSTEM_CONSTRAINT);
         }
 
-        if (c.getType() == Constraint.FOREIGN_KEY) {
+        if (ctype == Constraint.PRIMARY_KEY) {
+            addOrDropPrimaryKey(null, null);
+        } else if (ctype == Constraint.FOREIGN_KEY) {
             Table mainTable = c.getMain();
             int   k         = mainTable.getConstraintIndex(c.getPkName());
 
@@ -432,7 +444,7 @@ class TableWorks {
             table.constraintList =
                 (Constraint[]) ArrayUtil.toAdjustedArray(table.constraintList,
                     null, j, -1);
-        } else if (c.getType() == Constraint.UNIQUE) {
+        } else if (ctype == Constraint.UNIQUE) {
             HashSet cset = new HashSet();
 
             cset.add(c);
@@ -447,7 +459,7 @@ class TableWorks {
             table.constraintList =
                 (Constraint[]) ArrayUtil.toAdjustedArray(table.constraintList,
                     null, j, -1);
-        } else if (c.getType() == Constraint.CHECK) {
+        } else if (ctype == Constraint.CHECK) {
             table.constraintList =
                 (Constraint[]) ArrayUtil.toAdjustedArray(table.constraintList,
                     null, j, -1);

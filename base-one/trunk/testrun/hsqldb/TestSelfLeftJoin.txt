@@ -188,7 +188,7 @@ INSERT INTO employee (id, name, bossid) VALUES (3, 'wally', null);
 --bug #959678
 
 CREATE CACHED TABLE propertyvalue (
- id INT, name CHAR(36), value CHAR(255));
+ id INT, name CHAR(36), value VARCHAR(255));
 INSERT INTO propertyvalue VALUES (1, 'title', 'Foo');
 INSERT INTO propertyvalue VALUES (2, 'title', 'Bar');
 /*r

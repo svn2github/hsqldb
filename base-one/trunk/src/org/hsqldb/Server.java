@@ -912,7 +912,7 @@ public class Server implements HsqlSocketRequestHandler {
 
         HsqlProperties p = ServerConfiguration.getPropertiesFromFile(path);
 
-        if (p == null) {
+        if (p == null || p.isEmpty()) {
             return false;
         }
 

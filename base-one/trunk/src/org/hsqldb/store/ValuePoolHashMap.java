@@ -36,7 +36,7 @@ package org.hsqldb.store;
  * range of java.lang.* objects.
  *
  * @author fredt@users
- * @version 1.7.2
+ * @version 1.8.0
  * @since 1.7.2
  *
  */
@@ -64,28 +64,35 @@ public class ValuePoolHashMap extends BaseHashMap {
         this.purgePolicy = purgePolicy;
     }
 
-    public void resetCapacity(int maxCapacity,
-                              int purgePolicy)
-                              throws IllegalArgumentException {
+    /**
+     * In rare circumstances resetCapacity may not succeed, in which case
+     * capacity remains unchanged but purge policy is set to newPolicy
+     */
+    public void resetCapacity(int newCapacity,
+                              int newPolicy) throws IllegalArgumentException {
 
-        if (maxCapacity != 0) {
-            while (hashIndex.elementCount > maxCapacity) {
-                int surplus = 256 + hashIndex.elementCount - maxCapacity;
+        if (newCapacity != 0 && hashIndex.elementCount > newCapacity) {
+            int surplus = hashIndex.elementCount - newCapacity;
 
-                if (surplus > hashIndex.elementCount) {
-                    surplus = hashIndex.elementCount;
-                }
+            surplus += (surplus >> 5);
 
-                clear(surplus);
+            if (surplus > hashIndex.elementCount) {
+                surplus = hashIndex.elementCount;
+            }
+
+            clear(surplus, (surplus >> 6));
+        }
+
+        if (newCapacity != 0 && newCapacity < threshold) {
+            rehash(newCapacity);
+
+            if (newCapacity < hashIndex.elementCount) {
+                newCapacity = maxCapacity;
             }
         }
 
-        if (maxCapacity != 0 && maxCapacity < threshold) {
-            rehash(maxCapacity);
-        }
-
-        this.maxCapacity = maxCapacity;
-        this.purgePolicy = purgePolicy;
+        this.maxCapacity = newCapacity;
+        this.purgePolicy = newPolicy;
     }
 
     protected Integer getOrAddInteger(int intKey) {

@@ -1764,11 +1764,6 @@ class Parser {
                 readThis(Expression.COMMA);
 
                 int t = Types.getTypeNr(sToken);
-
-                // For now, parse but ignore precision and scale
-                // TODO: definitely validate values (e.g. check non-neg) and
-                //       maybe even enforce in Expression.getValue(), incl.
-                //       trim, pad, throw on overflow, etc.
                 int p = 0;
                 int s = 0;
 
@@ -1788,9 +1783,8 @@ class Parser {
                     r.setDataType(t);
                 }
 
-                r = new Expression(type, r, null);
+                r = new Expression(Expression.CONVERT, r, t, p, s);
 
-                r.setDataType(t);
                 read();
                 readThis(Expression.CLOSE);
 
@@ -1829,9 +1823,8 @@ class Parser {
                     r.setDataType(t);
                 }
 
-                r = new Expression(Expression.CONVERT, r, null);
+                r = new Expression(Expression.CONVERT, r, t, p, s);
 
-                r.setDataType(t);
                 read();
                 readThis(Expression.CLOSE);
 

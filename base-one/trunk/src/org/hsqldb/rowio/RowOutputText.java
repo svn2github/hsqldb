@@ -50,7 +50,7 @@ import org.hsqldb.types.JavaObject;
  *  Class for writing the data for a database row in text table format.
  *
  * @author sqlbob@users (RMP)
- * @version 1.7.2
+ * @version 1.8.0
  * @since 1.7.0
  */
 public class RowOutputText extends RowOutputBase {
@@ -65,15 +65,6 @@ public class RowOutputText extends RowOutputBase {
     private boolean   nextSepEnd;
     protected boolean allQuoted;
     private String    encoding;
-
-    public RowOutputText(String fieldSep, String varSep, String longvarSep,
-                         boolean allQuoted) throws IOException {
-
-        super();
-
-        initTextDatabaseRowOutput(fieldSep, varSep, longvarSep, allQuoted,
-                                  "ASCII");
-    }
 
     public RowOutputText(String fieldSep, String varSep, String longvarSep,
                          boolean allQuoted, String encoding) {
@@ -134,7 +125,6 @@ public class RowOutputText extends RowOutputBase {
         //--do Nothing
     }
 
-/** @todo handle errors from checkConvertString() */
     public void writeString(String s) {
 
         s = checkConvertString(s, fieldSep);
@@ -153,7 +143,6 @@ public class RowOutputText extends RowOutputBase {
         nextSepEnd = fieldSepEnd;
     }
 
-/** @todo handle errors from checkConvertString() */
     protected void writeVarString(String s) {
 
         s = checkConvertString(s, varSep);
@@ -171,7 +160,6 @@ public class RowOutputText extends RowOutputBase {
         nextSepEnd = varSepEnd;
     }
 
-/** @todo handle errors from checkConvertString() */
     protected void writeLongVarString(String s) {
 
         s = checkConvertString(s, longvarSep);
@@ -192,7 +180,8 @@ public class RowOutputText extends RowOutputBase {
     protected String checkConvertString(String s, String sep) {
 
         if (s.indexOf('\n') != -1 || s.indexOf('\r') != -1) {
-            return null;
+            throw new IllegalArgumentException(
+                Trace.getMessage(Trace.TEXT_STRING_HAS_NEWLINE));
         } else if (s.indexOf(sep) != -1) {
             return null;
         }

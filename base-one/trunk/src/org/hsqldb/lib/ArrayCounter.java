@@ -55,8 +55,8 @@ public class ArrayCounter {
      * smaller sub-range than the rest.
      *
      */
-    public static int[] countSegments(int[] array, int segments, int start,
-                                      int limit) {
+    public static int[] countSegments(int[] array, int elements,
+                                      int segments, int start, int limit) {
 
         int[] counts   = new int[segments];
         long  interval = calcInterval(segments, start, limit);
@@ -67,7 +67,7 @@ public class ArrayCounter {
             return counts;
         }
 
-        for (int i = 0; i < array.length; i++) {
+        for (int i = 0; i < elements; i++) {
             element = array[i];
 
             if (element < start || element >= limit) {
@@ -92,14 +92,14 @@ public class ArrayCounter {
      * In statistics, this can be used to calculate a median or quadrile value.
      * A usage example applied to an array of age values is to determine
      * the maximum age of a given number of people. With the example array
-     * given in countSegments, rank(array, 6000, 18, 65, 0) will return an age
+     * given in countSegments, rank(array, c, 6000, 18, 65, 0) will return an age
      * value between 18-64 (inclusive) and the count of all people aged between
      * 18 and the returned value(exclusive) will be less than or equal
      * 6000.
      *
      */
-    public static int rank(int[] array, int target, int start, int limit,
-                           int margin) {
+    public static int rank(int[] array, int elements, int target, int start,
+                           int limit, int margin) {
 
         final int segments     = 256;
         int       elementCount = 0;
@@ -107,7 +107,7 @@ public class ArrayCounter {
 
         for (;;) {
             long interval = calcInterval(segments, start, currentLimit);
-            int[] counts = countSegments(array, segments, start,
+            int[] counts = countSegments(array, elements, segments, start,
                                          currentLimit);
 
             for (int i = 0; i < counts.length; i++) {

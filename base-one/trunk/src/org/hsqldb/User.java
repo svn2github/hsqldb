@@ -428,7 +428,7 @@ public class User {
     }
 
     /**
-     * Appends to the specified StringBuffer the DDL character
+     * returns the DDL string
      * sequence that creates this user.
      *
      */

@@ -374,7 +374,9 @@ public class DataFileCache {
                 deleteOrResetFreePos(database, fileName);
             }
         } catch (IOException e) {
-            throw new HsqlException(e);
+            throw new HsqlException(
+                e, Trace.getMessage(Trace.GENERAL_IO_ERROR),
+                Trace.GENERAL_IO_ERROR);
         }
     }
 
@@ -382,8 +384,6 @@ public class DataFileCache {
         rowOut = new RowOutputBinary();
         rowIn  = new RowInputBinary();
     }
-
-    /** @todo fredt - better error message */
 
     /**
      *  Writes out all the rows to a new file without fragmentation.
@@ -442,7 +442,9 @@ public class DataFileCache {
         } catch (Exception e) {
             database.logger.appLog.logContext(e);
 
-            throw new HsqlException(e);
+            throw new HsqlException(
+                e, Trace.getMessage(Trace.GENERAL_IO_ERROR),
+                Trace.GENERAL_IO_ERROR);
             /*
             Trace.error(Trace.FILE_IO_ERROR, Trace.DataFileCache_defrag, new Object[] {
                 e, fileName
@@ -671,8 +673,7 @@ public class DataFileCache {
             return;
         }
 
-        // can use direct file method calls now
-        if (!FileUtil.exists(filename)) {
+        if (!database.getFileAccess().isStreamElement(filename)) {
             return;
         }
 

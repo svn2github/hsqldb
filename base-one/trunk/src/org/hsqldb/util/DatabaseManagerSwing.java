@@ -155,6 +155,7 @@ public class DatabaseManagerSwing extends JApplet
 implements ActionListener, WindowListener, KeyListener {
 
     static final String    NL         = System.getProperty("line.separator");
+    static final String    NULL_STR   = "\t(null)";
     static int             iMaxRecent = 24;
     Connection             cConn;
     Connection             rowConn;        // holds the connetion for getting table row counts
@@ -208,10 +209,10 @@ implements ActionListener, WindowListener, KeyListener {
      */
 
     // Changed: (weconsultants@users): commonted out the, out of the box, cursor to use a custom cursor
-    private final Cursor waitCursor =
-        getToolkit().createCustomCursor(CommonSwing.getIcon("SystemCursor"),
-                                        new Point(4, 4), "HourGlass cursor");
+    private final Cursor waitCursor = new Cursor(Cursor.WAIT_CURSOR);
 
+    //getToolkit().createCustomCursor(CommonSwing.getIcon("SystemCursor"),
+    //                                new Point(4, 4), "HourGlass cursor");
     // (ulrivo): variables set by arguments from the commandline
     static String defDriver   = "org.hsqldb.jdbcDriver";
     static String defURL      = "jdbc:hsqldb:.";
@@ -285,8 +286,6 @@ implements ActionListener, WindowListener, KeyListener {
         // Added: (weconsultants@users): Need databaseManagerSwing for later Reference
         refForFontDialogSwing = m;
 
-        // Added: (weconsultants@users): For preloadng FontDialogSwing
-        FontDialogSwing.CreatFontDialog(refForFontDialogSwing);
         m.main();
 
         Connection c = null;
@@ -309,6 +308,8 @@ implements ActionListener, WindowListener, KeyListener {
             return;
         }
 
+        // Added: (weconsultants@users): For preloadng FontDialogSwing
+        FontDialogSwing.CreatFontDialog(refForFontDialogSwing);
         m.connect(c);
 
         // Added: (weconsultants@users) Changes the running status icon
@@ -1066,7 +1067,7 @@ implements ActionListener, WindowListener, KeyListener {
                     h[i - 1] = r.getObject(i);
 
                     if (r.wasNull()) {
-                        h[i - 1] = null;    // = "(null)";
+                        h[i - 1] = NULL_STR;
                     }
                 }
 
@@ -1187,7 +1188,12 @@ implements ActionListener, WindowListener, KeyListener {
             row = (Object[]) data.elementAt(i);
 
             for (int j = 0; j < width; j++) {
-                int l = row[j].toString().length();
+                String item = row[j].toString();
+                int    l    = item.length();
+
+                if (NULL_STR.equals(item)) {
+                    l--;
+                }
 
                 if (l > size[j]) {
                     size[j] = l;
@@ -1221,9 +1227,15 @@ implements ActionListener, WindowListener, KeyListener {
             row = (Object[]) data.elementAt(i);
 
             for (int j = 0; j < width; j++) {
-                b.append(row[j]);
+                String item = row[j].toString();
 
-                for (int l = row[j].toString().length(); l <= size[j]; l++) {
+                if (NULL_STR.equals(item)) {
+                    item = item.substring(1);
+                }
+
+                b.append(item);
+
+                for (int l = item.length(); l <= size[j]; l++) {
                     b.append(' ');
                 }
             }

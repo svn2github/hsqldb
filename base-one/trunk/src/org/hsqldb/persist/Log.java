@@ -132,7 +132,7 @@ public class Log {
     private String                 logFileName;
     private boolean                filesReadOnly;
     private long                   maxLogSize;
-    private int                    writeDelay = 60;
+    private int                    writeDelay;
     private int                    scriptFormat;
     private DataFileCache          cache;
 
@@ -160,11 +160,7 @@ public class Log {
         maxLogSize = logMegas * 1024 * 1024;
         scriptFormat = properties.getIntegerProperty("hsqldb.script_format",
                 ScriptWriterBase.SCRIPT_TEXT_170);
-
-        if (database.isStoredFileAccess()) {
-            scriptFormat = ScriptWriterBase.SCRIPT_TEXT_170;
-        }
-
+        writeDelay     = properties.getDefaultWriteDelay();
         filesReadOnly  = database.isFilesReadOnly();
         scriptFileName = fileName + ".script";
         logFileName    = fileName + ".log";
@@ -186,10 +182,28 @@ public class Log {
                 if (cache != null) {
                     cache.open(filesReadOnly);
                 }
+
+                reopenAllTextCaches();
                 break;
 
             case HsqlDatabaseProperties.FILES_NOT_MODIFIED :
+
+                /**
+                 * if startup is after a SHUTDOWN SCRIPT and there are CACHED
+                 * or TEXT tables, perform a checkpoint so that the .script
+                 * file no longer contains CACHED or TEXT table rows.
+                 */
                 processScript();
+
+                if (isAnyCacheModified()) {
+                    close(false);
+
+                    if (cache != null) {
+                        cache.open(filesReadOnly);
+                    }
+
+                    reopenAllTextCaches();
+                }
                 break;
 
             case HsqlDatabaseProperties.FILES_NEW :
@@ -269,6 +283,18 @@ public class Log {
         } catch (IOException e) {
             database.logger.appLog.logContext(e);
         }
+    }
+
+    /**
+     * Checks all the caches and returns true if the modified flag is set for any
+     */
+    boolean isAnyCacheModified() {
+
+        if (cache != null && cache.isFileModified()) {
+            return true;
+        }
+
+        return isAnyTextCacheModified();
     }
 
     /**
@@ -556,18 +582,29 @@ public class Log {
      */
     private void processScript() throws HsqlException {
 
+        ScriptReaderBase scr = null;
+
         try {
             if (database.isFilesInJar()
                     || fa.isStreamElement(scriptFileName)) {
-                ScriptReaderBase scr =
-                    ScriptReaderBase.newScriptReader(database,
-                                                     scriptFileName,
-                                                     scriptFormat);
+                scr = ScriptReaderBase.newScriptReader(database,
+                                                       scriptFileName,
+                                                       scriptFormat);
 
                 scr.readAll(database.sessionManager.getSysSession());
                 scr.close();
             }
         } catch (IOException e) {
+            if (scr != null) {
+                scr.close();
+
+                if (cache != null) {
+                    cache.close(false);
+                }
+
+                closeAllTextCaches(false);
+            }
+
             database.logger.appLog.logContext(e);
 
             throw Trace.error(Trace.FILE_IO_ERROR, e.getMessage());
@@ -580,7 +617,7 @@ public class Log {
     private void processDataFile() throws HsqlException {
 
         if (cache == null || filesReadOnly || database.isStoredFileAccess()
-                ||!FileUtil.exists(logFileName)) {
+                ||!fa.isStreamElement(logFileName)) {
             return;
         }
 
@@ -598,13 +635,9 @@ public class Log {
      */
     private void processLog() throws HsqlException {
 
-        try {
-            if (!database.isFilesInJar() && fa.isStreamElement(logFileName)) {
-                ScriptRunner.runScript(database, logFileName,
-                                       ScriptWriterBase.SCRIPT_TEXT_170);
-            }
-        } catch (IOException e) {
-            database.logger.appLog.logContext(e);
+        if (!database.isFilesInJar() && fa.isStreamElement(logFileName)) {
+            ScriptRunner.runScript(database, logFileName,
+                                   ScriptWriterBase.SCRIPT_TEXT_170);
         }
     }
 
@@ -693,5 +726,18 @@ public class Log {
         while (it.hasNext()) {
             ((TextCache) it.next()).reopen();
         }
+    }
+
+    private boolean isAnyTextCacheModified() {
+
+        Iterator it = textCacheList.values().iterator();
+
+        while (it.hasNext()) {
+            if (((TextCache) it.next()).isFileModified()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

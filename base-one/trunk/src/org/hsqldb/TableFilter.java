@@ -464,7 +464,7 @@ final class TableFilter {
             filterIndex = filterTable.getPrimaryIndex();
         }
 
-        if (this.isMultiFindFirst) {
+        if (isMultiFindFirst) {
             Object[] data  = filterTable.getEmptyRowData();
             int[]    types = filterTable.getColumnTypes();
 
@@ -522,6 +522,8 @@ final class TableFilter {
      */
     boolean next(Session session) throws HsqlException {
 
+        boolean result = false;
+
         nonJoinIsNull  = false;
         isCurrentOuter = false;
 
@@ -539,8 +541,14 @@ final class TableFilter {
             }
 
             if (eAnd == null || eAnd.testCondition(session)) {
-                return true;
+                result = true;
+
+                break;
             }
+        }
+
+        if (result) {
+            return true;
         }
 
         currentRow  = null;

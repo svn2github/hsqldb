@@ -129,7 +129,7 @@ public class BaseHashMap {
 
     protected BaseHashMap(int initialCapacity, float loadFactor, int keyType,
                           int valueType,
-                          boolean accessCount)
+                          boolean hasAccessCount)
                           throws IllegalArgumentException {
 
         if (initialCapacity <= 0 || loadFactor <= 0.0) {
@@ -177,7 +177,7 @@ public class BaseHashMap {
             isNoValue = true;
         }
 
-        if (accessCount) {
+        if (hasAccessCount) {
             accessTable = new int[arraySize];
         }
     }
@@ -540,11 +540,11 @@ public class BaseHashMap {
 
             return true;
         } else if (purgePolicy == PURGE_QUARTER) {
-            clear(threshold / 4);
+            clear(threshold / 4, threshold >> 8);
 
             return true;
         } else if (purgePolicy == PURGE_HALF) {
-            clear(threshold / 2);
+            clear(threshold / 2, threshold >> 8);
 
             return true;
         } else if (purgePolicy == NO_PURGE) {
@@ -566,6 +566,10 @@ public class BaseHashMap {
         int     limitLookup     = hashIndex.newNodePointer;
         boolean oldZeroKey      = hasZeroKey;
         int     oldZeroKeyIndex = zeroKeyIndex;
+
+        if (newCapacity < hashIndex.elementCount) {
+            return;
+        }
 
         hashIndex.reset((int) (newCapacity * loadFactor), newCapacity);
 
@@ -882,11 +886,11 @@ public class BaseHashMap {
 
     /**
      * Return the max accessCount value for count elements with the lowest
-     * access count
+     * access count. Always return at least accessMin + 1
      */
     protected int getAccessCountCeiling(int count, int margin) {
-        return ArrayCounter.rank(accessTable, count, accessMin, accessCount,
-                                 margin);
+        return ArrayCounter.rank(accessTable, hashIndex.newNodePointer,
+                                 count, accessMin + 1, accessCount, margin);
     }
 
     /**
@@ -895,16 +899,14 @@ public class BaseHashMap {
      *
      * Only for maps with Object key table
      */
-    protected void clear(int count) {
-
-        int margin = threshold >> 8;
+    protected void clear(int count, int margin) {
 
         if (margin < 64) {
             margin = 64;
         }
 
-        int accessBase = getAccessCountCeiling(count, margin);
         int maxlookup  = hashIndex.newNodePointer;
+        int accessBase = getAccessCountCeiling(count, margin);
 
         for (int lookup = 0; lookup < maxlookup; lookup++) {
             Object o = objectKeyTable[lookup];

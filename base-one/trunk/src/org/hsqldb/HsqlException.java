@@ -68,8 +68,11 @@ public class HsqlException extends Exception {
         this.code    = r.getStatementID();
     }
 
-    public HsqlException(Throwable t) {
+    public HsqlException(Throwable t, String errorState, int errorCode) {
+
         this.message = t.getMessage();
+        this.state   = errorState;
+        this.code    = errorCode;
     }
 
     /**

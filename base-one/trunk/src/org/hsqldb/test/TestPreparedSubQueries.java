@@ -97,7 +97,7 @@ class TestPreparedSubQueries {
                                + "'");
         } catch (Exception e) {
             System.out.println(" ?? main: Caught Exception " + e);
-            System.out.println(" - SHIT - ");
+            System.out.println(" - FAILED - ");
 
             return;
         }

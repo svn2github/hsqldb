@@ -44,20 +44,11 @@ import java.math.BigDecimal;
  *
  *
  * @author fredt@users
- * @version 1.7.2
+ * @version 1.8.0
  * @since 1.7.2
  */
 
 /**
- * implementation notes:
- *
- * In future versions we may use a single Set as the underlying store.
- * this may have a slight impact on speed but is probably memory efficient
- * (depends on usage pattern anyway) and it would be easier to configure
- * the pool size.
- *
- * It is also worth considering using a fixed array for the int and long
- * objects in the low range (-100, +100) for speed. This needs some usage tests
  *
  */
 public class ValuePool {
@@ -194,24 +185,5 @@ public class ValuePool {
     public static Boolean getBoolean(boolean b) {
         return b ? Boolean.TRUE
                  : Boolean.FALSE;
-    }
-
-    public static class poolSettings {
-
-        String[] propertyStrings = new String[] {
-            "runtime.pool.int_size",        //
-            "runtime.pool.long_size",       //
-            "runtime.pool.double_size",     //
-            "runtime.pool.decimal_size",    //
-            "runtime.pool.string_size",     //
-            "runtime.pool.date_size",       //
-            "runtime.pool.factor",          //
-            "runtime.pool.string_length"    //
-        };
-
-        //
-        static final int[] defaultPoolLookupSize = new int[] {
-            1000, 1000, 1000, 1000, 1000, 1000
-        };
     }
 }

@@ -172,6 +172,7 @@ public class Token {
     static final String        T_GROUPING        = "GROUPING";                    //reserved
     static final String        T_HANDLER         = "HANDLER";                     //reserved
     static final String        T_HAVING          = "HAVING";                      //reserved
+    static final String        T_HEADER          = "HEADER";                      //reserved
     static final String        T_HOLD            = "HOLD";                        //reserved
     static final String        T_HOUR            = "HOUR";                        //reserved
     static final String        T_IDENTITY        = "IDENTITY";                    //reserved

@@ -110,18 +110,14 @@ import org.hsqldb.types.JavaObject;
 // Strings to reduce execution time and garbage collection
 // fredt@users 20021013 - patch 1.7.1 by fredt - type conversions
 // scripting of Double.Nan and infinity values
-// fredt@users 20020825 - patch 1.7.1 - ByteArray.java converted to static
-// methods
-// BINARY objest are now represented internally as byte[] and use the static
-// methods in this class to compare or convert the byte[] objects
-// fredt@users 20021110 - patch 1.7.2 - ByteArray.java removed and methods
-// moved here
+// fredt@users 20030715 - patch 1.7.2 - type narrowing for numeric values
+// fredt@users - patch 1.8.0 - enforcement of precision and scale
 
 /**
  *  Implementation of SQL table columns as defined in DDL statements with
  *  static methods to process their values.
  *
- * @version    1.7.0
+ * @version    1.8.0
  */
 public class Column {
 
@@ -1387,7 +1383,162 @@ public class Column {
         return StringConverter.toQuotedString(s, '\'', true);
     }
 
-// fredt@users 20030715 - patch 1.7.2 - type narrowing for numeric values
+    /**
+     * Explicit casts are handled here. This is separate from the implicit
+     * casts carried out when inserting/updating rows.
+     * SQL standard 6.12 rules for enforcement of size, precision and scale
+     * are implemented here are as follows:
+     *
+     * For no size, precision or scale, default to convertObject(Object)
+     *
+     * Right truncation is allowed only for CHAR to CHAR casts
+     * (CHAR is generic for all string types).
+     *
+     * For other casts to CHAR, right truncation is not allowed.
+     *
+     * For numeric conversions, scale is always converted to target first,
+     * then precision is imposed. No truncation is allowed. (fredt)
+     */
+    public static Object convertObject(Object o, int type, int precision,
+                                       int scale) throws HsqlException {
+
+        if (precision == 0) {
+            return convertObject(o, type);
+        }
+
+        boolean check = true;
+
+        switch (type) {
+
+            case Types.VARCHAR_IGNORECASE :
+            case Types.LONGVARCHAR :
+                type = Types.VARCHAR;
+            case Types.VARCHAR :
+            case Types.CHAR :
+                if (o instanceof String) {
+                    check = false;
+                } else {
+                    o = convertObject(o, Types.VARCHAR);
+                }
+
+                return enforceSize(o, type, precision, scale, check);
+
+            case Types.NUMERIC :
+            case Types.DECIMAL :
+                if (!(o instanceof Number)) {
+                    o = convertObject(o, type);
+                }
+
+                return enforceSize(o, type, precision, scale, true);
+        }
+
+        return convertObject(o, type);
+    }
+
+    /**
+     *  Check an object for type CHAR and VARCHAR and truncate/pad based on
+     *  the  size
+     *
+     * @param  obj   object to check
+     * @param  type  the object type
+     * @param  size  size to enforce
+     * @param check  throw if too long
+     * @return       the altered object if the right type, else the object
+     *      passed in unaltered
+     * @throws HsqlException if data too long
+     */
+    static Object enforceSize(Object obj, int type, int size, int scale,
+                              boolean check) throws HsqlException {
+
+        if (size == 0) {
+            return obj;
+        }
+
+        // todo: need to handle BINARY like this as well
+        switch (type) {
+
+            case Types.CHAR :
+                return checkChar((String) obj, size, check);
+
+            case Types.VARCHAR :
+                return checkVarchar((String) obj, size, check);
+
+            case Types.NUMERIC :
+            case Types.DECIMAL :
+                BigDecimal dec = (BigDecimal) obj;
+
+                dec = dec.setScale(scale, BigDecimal.ROUND_HALF_DOWN);
+
+                BigInteger big  = dec.unscaledValue();
+                int        sign = big.signum() == -1 ? 1
+                                                     : 0;
+
+                if (big.toString().length() - sign > size) {
+                    throw Trace.error(Trace.STRING_DATA_TRUNCATION);
+                }
+
+                return dec;
+
+            default :
+                return obj;
+        }
+    }
+
+    /**
+     *  Checks the length of a VARCHAR string.
+     *
+     * @param s     the string to pad to truncate
+     * @param len   the len to make the string
+     * @param check if true, throw an exception if truncation takes place
+     * @return      the string of size len
+     */
+    static String checkVarchar(String s, int len,
+                               boolean check) throws HsqlException {
+
+        int slen = s.length();
+
+        if (slen > len) {
+            if (check) {
+                throw Trace.error(Trace.STRING_DATA_TRUNCATION);
+            }
+
+            return s.substring(0, len);
+        }
+
+        return s;
+    }
+
+    /**
+     *  Checks and pads a CHARACTER string to len size
+     *
+     * @param s     the string to pad to truncate
+     * @param len   the len to make the string
+     * @param check if true, throw an exception if truncation takes place
+     * @return      the string of size len
+     */
+    static String checkChar(String s, int len,
+                            boolean check) throws HsqlException {
+
+        int slen = s.length();
+
+        if (slen > len) {
+            if (check) {
+                throw Trace.error(Trace.STRING_DATA_TRUNCATION);
+            }
+
+            return s.substring(0, len);
+        }
+
+        char[] b = new char[len];
+
+        s.getChars(0, slen, b, 0);
+
+        for (int i = slen; i < len; i++) {
+            b[i] = ' ';
+        }
+
+        return new String(b);
+    }
 
     /**
      * Type narrowing from DOUBLE/DECIMAL/NUMERIC to BIGINT / INT / SMALLINT / TINYINT
@@ -1479,7 +1630,7 @@ public class Column {
 // fredt@users 20020408 - patch 442993 by fredt - arithmetic expressions
 
     /**
-     *  Arithmetic expressions terms are promoted to a type that can
+     *  Arithmetic expression terms are promoted to a type that can
      *  represent the resulting values and avoid incorrect results.<p>
      *  When the result or the expression is converted to the
      *  type of the target column for storage, an exception is thrown if the

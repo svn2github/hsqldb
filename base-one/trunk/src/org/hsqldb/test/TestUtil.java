@@ -479,7 +479,9 @@ class ResultSetParsedSection extends ParsedSection {
         expectedRows = new String[(resEndRow + 1)];
 
         for (int i = 0; i <= resEndRow; i++) {
-            expectedRows[i] = lines[i];
+            int skip = StringUtil.skipSpaces(lines[i], 0);
+
+            expectedRows[i] = lines[i].substring(skip);
         }
     }
 
@@ -539,8 +541,8 @@ class ResultSetParsedSection extends ParsedSection {
                             if (results.getString(j) == null) {    //..then we have a null
 
                                 //...check to see if we were expecting it...
-                                if (!expectedFields[i].trim()
-                                        .equalsIgnoreCase("NULL")) {
+                                if (!expectedFields[i].equalsIgnoreCase(
+                                        "NULL")) {
                                     throw new Exception(
                                         "Expected row " + count
                                         + " of the ResultSet to contain:\n"
@@ -549,7 +551,7 @@ class ResultSetParsedSection extends ParsedSection {
                                         + " contained NULL");
                                 }
                             } else if (!results.getString(j).equals(
-                                    expectedFields[i].trim())) {
+                                    expectedFields[i])) {
 
                                 //then the results are different
                                 throw new Exception(

@@ -120,7 +120,7 @@ class GroupedResult {
                 groups.add(currGroup);
                 result.add(row);
             } else {
-                ArrayUtil.copyArray(row, currGroup.row, row.length);
+                System.arraycopy(row, 0, currGroup.row, 0, row.length);
             }
         } else if (isAggregated) {
             if (currGroup == null) {
@@ -128,7 +128,7 @@ class GroupedResult {
 
                 result.add(row);
             } else {
-                ArrayUtil.copyArray(row, currGroup.row, row.length);
+                System.arraycopy(row, 0, currGroup.row, 0, row.length);
             }
         } else {
             result.add(row);

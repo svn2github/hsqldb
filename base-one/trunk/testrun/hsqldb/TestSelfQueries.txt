@@ -45,7 +45,7 @@ insert into TESTTABLE(aString, firstNum, aDate, secondNum, thirdNum, aName)
 
 drop index IDX_TESTTABLE_aString;
 drop index IDX_TESTTABLE_aDate_secondNum;
-/*e*/alter table TESTTABLE add constraint tt_pk primary key (astring);
+alter table TESTTABLE add constraint tt_pk primary key (astring);
 /*c11*/select * from testtable where adate = '2003-11-10' and secondNum = 18;
 /*c11*/select * from testtable where adate = '2003-11-10';
 /*c1*/select * from testtable where adate = '2003-11-10' and firstNum = 20;

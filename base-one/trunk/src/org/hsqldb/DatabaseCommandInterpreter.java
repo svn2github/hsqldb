@@ -69,6 +69,7 @@ package org.hsqldb;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.StringReader;
+import java.util.Locale;
 
 import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.ArrayUtil;
@@ -102,6 +103,7 @@ import org.hsqldb.scriptio.ScriptWriterText;
 // fredt@users 20030609 - support for ALTER COLUMN SET/DROP DEFAULT / RENAME TO
 // wondersonic@users 20031205 - IF EXISTS support for DROP INDEX
 // fredt@users 20031224 - support for CREATE SEQUENCE ...
+// tytar@users 20041209 - provide to set default table type
 class DatabaseCommandInterpreter {
 
     private Tokenizer tokenizer = new Tokenizer();
@@ -116,6 +118,26 @@ class DatabaseCommandInterpreter {
     DatabaseCommandInterpreter(Session s) {
         session  = s;
         database = s.getDatabase();
+    }
+
+    /**
+     * Obtain default table types from database properties
+     */
+    private int getDefaultTableType() {
+
+        int dtt = Table.MEMORY_TABLE;
+        String dttName = database.getProperties().getProperty(
+            HsqlDatabaseProperties.DEFAULT_TABLE_TYPE);
+
+        if (dttName != null) {
+            if (dttName.equalsIgnoreCase(Token.T_CACHED)) {
+                dtt = Table.CACHED_TABLE;
+            } else if (dttName.equalsIgnoreCase(Token.T_MEMORY)) {
+                dtt = Table.MEMORY_TABLE;
+            }
+        }
+
+        return dtt;
     }
 
     /**
@@ -436,13 +458,8 @@ class DatabaseCommandInterpreter {
 
             // table
             case Token.TABLE :
-                if (isTemp) {
-                    tableType = Table.TEMP_TABLE;
-                } else {
-                    tableType = database.isStoredFileAccess()
-                                ? Table.CACHED_TABLE
-                                : Table.MEMORY_TABLE;
-                }
+                tableType = isTemp ? Table.TEMP_TABLE
+                                   : getDefaultTableType();
 
                 processCreateTable(tableType);
                 break;
@@ -806,7 +823,7 @@ class DatabaseCommandInterpreter {
         token = tokenizer.getString();
 
         if (token.equals(Token.T_DEFAULT)) {
-            defaultExpr = processCreateDefaultExpression(type, length);
+            defaultExpr = processCreateDefaultExpression(type, length, scale);
             token       = tokenizer.getString();
         } else if (token.equals(Token.T_GENERATED)) {
             tokenizer.getThis(Token.T_BY);
@@ -886,8 +903,8 @@ class DatabaseCommandInterpreter {
      * @throws HsqlException
      * @return new Expression
      */
-    private Expression processCreateDefaultExpression(int type,
-            int length) throws HsqlException {
+    private Expression processCreateDefaultExpression(int type, int length,
+            int scale) throws HsqlException {
 
         if (type == Types.OTHER) {
             throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE);
@@ -912,10 +929,10 @@ class DatabaseCommandInterpreter {
             if (defValTemp != null
                     && (database.sqlEnforceSize
                         || database.sqlEnforceStrictSize)) {
-                Object defValTest = Table.enforceSize(defValTemp, type,
-                                                      length, false, false);
-
-                if (!defValTemp.equals(defValTest)) {
+                try {
+                    Column.enforceSize(defValTemp, type, length, scale,
+                                       database.sqlEnforceStrictSize);
+                } catch (HsqlException e) {
 
                     // default value is too long for fixed size column
                     throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE);
@@ -1671,12 +1688,13 @@ class DatabaseCommandInterpreter {
             case Token.SET : {
                 tokenizer.getThis(Token.T_DEFAULT);
 
-                int iType = column.getType();
-                int iLen  = column.getSize();
+                int type   = column.getType();
+                int length = column.getSize();
+                int scale  = column.getScale();
 
                 t.setDefaultExpression(columnIndex,
-                                       processCreateDefaultExpression(iType,
-                                           iLen));
+                                       processCreateDefaultExpression(type,
+                                           length, scale));
 
                 return;
             }
@@ -1821,7 +1839,7 @@ class DatabaseCommandInterpreter {
 
         tokenizer.getThis(Token.T_TO);
 
-        token = tokenizer.getUserOrPassword();
+        token = getUserIdentifier();
 
         UserManager um = database.getUserManager();
 
@@ -1845,12 +1863,12 @@ class DatabaseCommandInterpreter {
 
         tokenizer.getThis(Token.T_USER);
 
-        userName = tokenizer.getUserOrPassword();
+        userName = getUserIdentifier();
 
         if (tokenizer.isGetThis(Token.T_PASSWORD)) {
 
             // legacy log statement or connect statement issued by user
-            password = tokenizer.getUserOrPassword();
+            password = getPassword();
             user     = database.getUserManager().getUser(userName, password);
 
             session.commit();
@@ -1927,7 +1945,7 @@ class DatabaseCommandInterpreter {
             }
             case Token.PASSWORD : {
                 session.checkDDLWrite();
-                session.getUser().setPassword(tokenizer.getUserOrPassword());
+                session.getUser().setPassword(getPassword());
 
                 break;
             }
@@ -2009,6 +2027,18 @@ class DatabaseCommandInterpreter {
                             session.checkAdmin();
                         }
 
+                        if (tokenizer.isGetThis(Token.T_HEADER)) {
+                            token = tokenizer.getString();
+
+                            if (!tokenizer.wasQuotedIdentifier()) {
+                                throw Trace.error(Trace.TEXT_TABLE_SOURCE);
+                            }
+
+                            t.setHeader(token);
+
+                            break;
+                        }
+
                         token = tokenizer.getString();
 
                         if (!tokenizer.wasQuotedIdentifier()) {
@@ -2072,7 +2102,7 @@ class DatabaseCommandInterpreter {
                 String s     = tokenizer.getString();
 
                 if (s.equals(Token.T_TRUE)) {
-                    delay = 60;
+                    delay = database.getProperties().getDefaultWriteDelay();
                 } else if (s.equals(Token.T_FALSE)) {
                     delay = 0;
                 } else {
@@ -2669,11 +2699,11 @@ class DatabaseCommandInterpreter {
         String  password;
         boolean admin;
 
-        name = tokenizer.getUserOrPassword();
+        name = getUserIdentifier();
 
         tokenizer.getThis(Token.T_PASSWORD);
 
-        password = tokenizer.getUserOrPassword();
+        password = getPassword();
         admin    = tokenizer.getString().equals(Token.T_ADMIN);
 
         if (!admin) {
@@ -2726,7 +2756,7 @@ class DatabaseCommandInterpreter {
 
     private void processDropUser() throws HsqlException {
         session.checkDDLWrite();
-        database.getUserManager().dropUser(tokenizer.getUserOrPassword());
+        database.getUserManager().dropUser(getPassword());
     }
 
     private void processDropSequence() throws HsqlException {
@@ -3027,7 +3057,7 @@ class DatabaseCommandInterpreter {
 
         TableWorks tableWorks = new TableWorks(session, t);
 
-        tableWorks.addOrDropPrimaryKey(col, n);
+        tableWorks.addPrimaryKey(col, n);
     }
 
     private void processReleaseSavepoint() throws HsqlException {
@@ -3052,7 +3082,7 @@ class DatabaseCommandInterpreter {
         String password;
         User   userObject;
 
-        userName = tokenizer.getUserOrPassword();
+        userName = getUserIdentifier();
         userObject =
             (User) database.getUserManager().getUsers().get(userName);
 
@@ -3060,10 +3090,25 @@ class DatabaseCommandInterpreter {
         tokenizer.getThis(Token.T_SET);
         tokenizer.getThis(Token.T_PASSWORD);
 
-        password = tokenizer.getUserOrPassword();
+        password = getPassword();
 
         userObject.setPassword(password);
         database.logger.writeToLog(session, userObject.getAlterUserDDL());
         session.setScripting(false);
+    }
+
+    private String getUserIdentifier() throws HsqlException {
+
+        String    token = tokenizer.getString();
+        Tokenizer t     = new Tokenizer(token);
+
+        return t.getIdentifier();
+    }
+
+    private String getPassword() throws HsqlException {
+
+        String token = tokenizer.getString();
+
+        return token.toUpperCase(Locale.ENGLISH);
     }
 }

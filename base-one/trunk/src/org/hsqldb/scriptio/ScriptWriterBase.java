@@ -133,9 +133,7 @@ public abstract class ScriptWriterBase implements Runnable {
 
         boolean exists = false;
 
-        try {
-            exists = db.getFileAccess().isStreamElement(file);
-        } catch (IOException e) {}
+        exists = db.getFileAccess().isStreamElement(file);
 
         if (exists && isNewFile) {
             throw Trace.error(Trace.FILE_IO_ERROR, file);

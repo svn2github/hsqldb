@@ -79,7 +79,7 @@ import org.hsqldb.HsqlNameManager.HsqlName;
  * Implementation of a table constraint with references to the indexes used
  * by the constraint.<p>
  *
- * @version    1.7.2
+ * @version    1.8.0
  */
 class Constraint {
 
@@ -102,7 +102,8 @@ class Constraint {
     static final int FOREIGN_KEY    = 0,
                      MAIN           = 1,
                      UNIQUE         = 2,
-                     CHECK          = 3;
+                     CHECK          = 3,
+                     PRIMARY_KEY    = 4;
     ConstraintCore   core;
     HsqlName         constName;
     int              constType;
@@ -482,24 +483,22 @@ class Constraint {
 
         core.checkFilter.currentData = row;
 
-        if (Boolean.FALSE.equals(core.check.test(session))) {
-            core.checkFilter.currentRow = null;
+        boolean nomatch = Boolean.FALSE.equals(core.check.test(session));
 
+        core.checkFilter.currentData = null;
+
+        if (nomatch) {
             throw Trace.error(Trace.CHECK_CONSTRAINT_VIOLATION,
                               Trace.Constraint_violation, new Object[] {
                 constName.name, core.mainTable.tableName.name
             });
         }
-
-        core.checkFilter.currentData = null;
-
-        return;
     }
 
 // fredt@users 20020225 - patch 1.7.0 - cascading deletes
 
     /**
-     * New method to find any referencing node (containing the row) for a
+     * New method to find any referencing row for a
      * foreign key (finds row in child table). If ON DELETE CASCADE is
      * supported by this constraint, then the method finds the first row
      * among the rows of the table ordered by the index and doesn't throw.
@@ -513,13 +512,13 @@ class Constraint {
      * @return Node object or null
      * @throws  HsqlException
      */
-    RowIterator findFkRef(Object[] row, boolean forDelete,
-                          boolean delete) throws HsqlException {
+    RowIterator findFkRef(Object[] row, boolean delete) throws HsqlException {
 
         if (row == null || Index.isNull(row, core.mainColArray)) {
             return core.refIndex.emptyIterator();
         }
 
+/*
         // there must be no record in the 'slave' table
         // sebastian@scienion -- dependent on forDelete | forUpdate
         boolean noaction = forDelete ? core.deleteAction == NO_ACTION
@@ -540,6 +539,10 @@ class Constraint {
                        core.mainColArray)
                    : core.refIndex.findFirstRow(row, core.mainColArray);
         }
+*/
+        return delete
+               ? core.refIndex.findFirstRowForDelete(row, core.mainColArray)
+               : core.refIndex.findFirstRow(row, core.mainColArray);
     }
 
     /**

@@ -85,8 +85,6 @@ import org.hsqldb.store.ValuePool;
 // thomasm@users 20041001 - patch 1.7.3 - BOOLEAN undefined handling
 // fredt@users 200412xx - patch 1.7.2 - evaluation of time functions
 
-/**@todo fredt - move error string literals to Trace*/
-
 /**
  * Expression class declaration
  *
@@ -250,8 +248,8 @@ public class Expression {
     //
     private int     columnIndex;
     private boolean columnQuoted;
-    private int     columnSize;
-    private int     columnScale;
+    private int     precision;
+    private int     scale;
     private String  columnAlias;              // if it is a column of a select column list
     private boolean aliasQuoted;
 
@@ -364,6 +362,19 @@ public class Expression {
         eArg2    = e2;
 
         checkAggregate();
+    }
+
+    /**
+     * creates a CONVERT expression
+     */
+    Expression(int type, Expression e, int dataType, int precision,
+               int scale) {
+
+        exprType       = type;
+        eArg           = e;
+        this.dataType  = dataType;
+        this.precision = precision;
+        this.scale     = scale;
     }
 
     /**
@@ -697,7 +708,7 @@ public class Expression {
             case CONVERT :
                 buf.append(' ').append(Token.T_CONVERT).append('(');
                 buf.append(left).append(',');
-                buf.append(Types.getTypeString(dataType));
+                buf.append(Types.getTypeString(dataType, precision, scale));
                 buf.append(')');
 
                 return buf.toString();
@@ -786,8 +797,7 @@ public class Expression {
                 break;
         }
 
-        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED,
-                          "check constraint expression");
+        throw Trace.error(Trace.EXPRESSION_NOT_SUPPORTED);
     }
 
     private String toString(int blanks) {
@@ -990,7 +1000,7 @@ public class Expression {
 
             case CONVERT :
                 buf.append("CONVERT ");
-                buf.append(Types.getTypeString(dataType));
+                buf.append(Types.getTypeString(dataType, precision, scale));
                 buf.append(' ');
                 break;
 
@@ -2621,7 +2631,7 @@ public class Expression {
      * @return size
      */
     int getColumnSize() {
-        return columnSize;
+        return precision;
     }
 
     /**
@@ -2631,7 +2641,7 @@ public class Expression {
      * @return scale
      */
     int getColumnScale() {
-        return columnScale;
+        return scale;
     }
 
     /**
@@ -2778,7 +2788,8 @@ public class Expression {
 
             case CONVERT :
                 return Column.convertObject(
-                    eArg.getAggregatedValue(session, currValue), dataType);
+                    eArg.getAggregatedValue(session, currValue), dataType,
+                    precision, scale);
         }
 
         // handle expressions
@@ -3053,7 +3064,8 @@ public class Expression {
                 return test(session);
 
             case CONVERT :
-                return eArg.getValue(session, dataType);
+                return Column.convertObject(eArg.getValue(session), dataType,
+                                            precision, scale);
 
             case CASEWHEN :
                 Boolean result = eArg.test(session);
@@ -3531,8 +3543,8 @@ public class Expression {
 
     void setTableColumnAttributes(Expression e) {
 
-        columnSize  = e.columnSize;
-        columnScale = e.columnScale;
+        precision   = e.precision;
+        scale       = e.scale;
         isIdentity  = e.isIdentity;
         nullability = e.nullability;
         isWritable  = e.isWritable;
@@ -3544,10 +3556,10 @@ public class Expression {
 
         Column c = t.getColumn(i);
 
-        dataType    = c.getType();
-        columnSize  = c.getSize();
-        columnScale = c.getScale();
-        isIdentity  = c.isIdentity();
+        dataType   = c.getType();
+        precision  = c.getSize();
+        scale      = c.getScale();
+        isIdentity = c.isIdentity();
 
         // IDENTITY columns are not nullable but NULLs are accepted
         // and converted into the next identity value for the table

@@ -250,35 +250,6 @@ public class Tokenizer {
     }
 
     /**
-     * This is used solely for user name and password
-     *
-     *
-     * @return
-     *
-     * @throws HsqlException
-     */
-    String getUserOrPassword() throws HsqlException {
-
-        getToken();
-
-        switch (iType) {
-
-            case STRING :
-
-                // fred - no longer including first quote in sToken
-                return sToken.toUpperCase(Locale.ENGLISH);
-
-            case NAME :
-                return sToken;
-
-            case QUOTED_IDENTIFIER :
-                return sToken.toUpperCase(Locale.ENGLISH);
-        }
-
-        throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-    }
-
-    /**
      * this methode is called before other wasXXX methods and takes
      * precedence
      */

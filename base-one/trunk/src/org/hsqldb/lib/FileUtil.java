@@ -55,14 +55,8 @@ public class FileUtil implements FileAccess {
     /** Creates a new instance of FileUtil */
     public FileUtil() {}
 
-    public boolean isStreamElement(java.lang.String elementName)
-    throws java.util.NoSuchElementException, java.io.IOException {
-
-        try {
-            return (new File(elementName)).exists();
-        } catch (Throwable e) {
-            throw toIOException(e);
-        }
+    public boolean isStreamElement(java.lang.String elementName) {
+        return (new File(elementName)).exists();
     }
 
     public java.io.InputStream openInputStreamElement(

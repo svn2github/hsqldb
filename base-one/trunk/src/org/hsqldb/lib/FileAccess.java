@@ -55,8 +55,7 @@ public interface FileAccess {
     OutputStream openOutputStreamElement(java.lang.String streamName)
     throws java.io.IOException;
 
-    boolean isStreamElement(java.lang.String elementName)
-    throws java.util.NoSuchElementException, java.io.IOException;
+    boolean isStreamElement(java.lang.String elementName);
 
     void createParentDirs(java.lang.String filename);
 

@@ -42,6 +42,7 @@ import org.hsqldb.Trace;
 import org.hsqldb.lib.HashSet;
 
 // loosecannon1@users 1.7.2 patch properties on the JDBC URL
+// tytar@users 20041209 - provide to set default table type
 
 /**
  * Manages a .properties file for a database.
@@ -78,6 +79,8 @@ public class HsqlDatabaseProperties extends HsqlProperties {
     public static final String DEFRAG_LIMIT     = "hsqldb.defrag_limit";
     public static final String CACHE_VERSION    = "hsqldb.cache_version";
     public static final String CACHE_FILE_SCALE = "hsqldb.cache_file_scale";
+    public static final String DEFAULT_TABLE_TYPE =
+        "hsqldb.default_table_type";
 
     static {
 
@@ -118,8 +121,11 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         integralProperties.addAll(integralPropertiesNames);
 
         // user defined string properties
+// tytar@users 20041209 - provide to set default table type
+// added PROP_DEFAULT_TABLE_TYPE
         String[] stringPropertiesNames = {
-            "textdb.fs", "textdb.vs", "textdb.lvs", "textdb.encoding"
+            "textdb.fs", "textdb.vs", "textdb.lvs", "textdb.encoding",
+            DEFAULT_TABLE_TYPE
         };
 
         stringProperties.addAll(stringPropertiesNames);
@@ -201,8 +207,8 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         // this property is either 1 or 8
         setProperty(HsqlDatabaseProperties.CACHE_FILE_SCALE, "1");
 
-        // this property is between 6 - 20, default 10
-        setProperty("hsqldb.cache_size_scale", "10");
+        // this property is between 6 - 20, default 8
+        setProperty("hsqldb.cache_size_scale", "8");
 
         // number of rows from CACHED tables kept constantly in memory
         // the number of rows in up to 3 * (2 to the power of
@@ -226,6 +232,9 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         // initial method of data file access
         setProperty("hsqldb.nio_data_file", true);
 
+        // set default table type to MEMORY
+        setProperty(DEFAULT_TABLE_TYPE, "memory");
+
         // the property "version" is also set to the current version
         //
         // the following properties can be set by the user as defaults for
@@ -239,6 +248,15 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         // "textdb.encoding", "ASCII"
         // "textdb.cache_scale", 10  -- allowed range 8-16
         // "textdb.cache_size_scale", 10  -- allowed range 8-20
+        //
+        // settings for OOo integration
+        if (db.isStoredFileAccess()) {
+            setProperty(DEFAULT_TABLE_TYPE, "cached");
+            setProperty("hsqldb.cache_scale", "13");
+            setProperty("hsqldb.log_size", "10");
+            setProperty("sql.enforce_strict_size", true);
+        }
+
         setSystemVariables();
         setDatabaseVariables();
     }
@@ -388,7 +406,7 @@ public class HsqlDatabaseProperties extends HsqlProperties {
     }
 
     boolean isString(String property) {
-        return integralProperties.contains(property);
+        return stringProperties.contains(property);
     }
 
     public String setProperty(String key, String value) {
@@ -398,6 +416,11 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         setDatabaseVariables();
 
         return value;
+    }
+
+    public int getDefaultWriteDelay() {
+        return database.isStoredFileAccess() ? 2
+                                             : 20;
     }
 
     public void setDBModified(int mode) throws HsqlException {

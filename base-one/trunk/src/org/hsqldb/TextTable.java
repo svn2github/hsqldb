@@ -33,6 +33,7 @@ package org.hsqldb;
 
 import org.hsqldb.lib.FileUtil;
 import org.hsqldb.persist.TextCache;
+import org.hsqldb.lib.StringConverter;
 
 // tony_lai@users 20020820 - patch 595099 - user define PK name
 
@@ -43,12 +44,11 @@ import org.hsqldb.persist.TextCache;
  * data is read from and written to a text format data file.
  *
  * @author sqlbob@users (RMP)
- * @version    1.7.0
+ * @version    1.8.0
  */
 class TextTable extends org.hsqldb.Table {
 
     private String  dataSource = "";
-    private String  firstLine  = "";
     private boolean isReversed = false;
 
     /**
@@ -178,6 +178,26 @@ class TextTable extends org.hsqldb.Table {
 
     protected boolean isDescDataSource() {
         return isReversed;
+    }
+
+    public void setHeader(String header) throws HsqlException {
+
+        if (cache != null && ((TextCache) cache).ignoreFirst) {
+            ((TextCache) cache).setHeader(header);
+
+            return;
+        }
+
+        throw Trace.error(Trace.TEXT_TABLE_HEADER);
+    }
+
+    public String getHeader() {
+
+        String header = ((TextCache) cache).getHeader();
+
+        return header == null ? null
+                              : StringConverter.toQuotedString(header, '\"',
+                              true);
     }
 
     /**

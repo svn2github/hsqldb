@@ -41,16 +41,10 @@ import org.hsqldb.lib.StringConverter;
  * the separator for the field. The quote character is doubled.
  *
  * @author sqlbob@users (RMP)
- * @version 1.7.2
+ * @version 1.8.0
  * @since 1.7.0
  */
 public class RowOutputTextQuoted extends RowOutputText {
-
-    public RowOutputTextQuoted(String fieldSep, String varSep,
-                               String longvarSep,
-                               boolean allQuoted) throws IOException {
-        super(fieldSep, varSep, longvarSep, allQuoted);
-    }
 
     public RowOutputTextQuoted(String fieldSep, String varSep,
                                String longvarSep, boolean allQuoted,
@@ -60,9 +54,6 @@ public class RowOutputTextQuoted extends RowOutputText {
 
     protected String checkConvertString(String s, String sep) {
 
-        //if (s.indexOf('\n') != -1 || s.indexOf('\r') != -1) {
-        //    return null;
-        //}
         if (allQuoted || s.length() == 0 || s.indexOf('\"') != -1
                 || (sep.length() > 0 && s.indexOf(sep) != -1)
                 || hasUnprintable(s)) {

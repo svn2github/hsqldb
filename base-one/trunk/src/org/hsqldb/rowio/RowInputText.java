@@ -50,7 +50,7 @@ import org.hsqldb.types.JavaObject;
  *  Class for reading the data for a database row in text table format.
  *
  * @author sqlbob@users (RMP)
- * @version 1.7.2
+ * @version 1.8.0
  * @since 1.7.0
  */
 public class RowInputText extends RowInputBase implements RowInputInterface {
@@ -149,6 +149,7 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
 
             s    = text.substring(start, next);
             next += sepLen;
+            s    = s.trim();
 
             if (s.length() == 0) {
                 s = null;

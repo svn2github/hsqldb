@@ -39,6 +39,8 @@ import java.awt.Font;
 import java.awt.GraphicsEnvironment;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -47,29 +49,36 @@ import javax.swing.JColorChooser;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
-import javax.swing.JSpinner;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 //  weconsultants@users 20041109 - original swing port
+//  weconsultants@users 20050215 - version 1.8.0 -  Update: Compatbilty fix for JDK 1.3
+//      - Replaced: Objects JSpinner spinnerFontSizes and SpinnerNumberModel spinnerModelSizes
+//        for JComboBox fontSizesComboBox and String fontSizes[];
 public class FontDialogSwing extends JDialog {
 
-    private static boolean              isRunning   = false;
-    private static final String         BACKGROUND  = "Background";
-    private static String               defaultFont = "Dialog";
-    private static final String         FOREGROUND  = "Foreground";
-    private static JButton              bgColorButton;
-    private static JCheckBox            ckbbold;
-    private static JButton              closeButton;
-    private static JButton              fgColorButton;
-    private static JComboBox            fontsComboBox;
+    private static boolean      isRunning   = false;
+    private static final String BACKGROUND  = "Background";
+    private static String       defaultFont = "Dialog";
+    private static final String FOREGROUND  = "Foreground";
+    private static JButton      bgColorButton;
+    private static JCheckBox    ckbbold;
+    private static JButton      closeButton;
+    private static JButton      fgColorButton;
+    private static JComboBox    fontsComboBox;
+
+    //  weconsultants@users 20050215 - Added for Compatbilty fix for JDK 1.3
+    private static JComboBox    fontSizesComboBox;
+    final private static String fontSizes[] = {
+        "8", "9", "10", "11", "12", "13", "14", "16", "18", "24", "36"
+    };
+
+    // weconsultants@users 20050215 - Commented out for Compatbilty fix for JDK 1.3
+    //  private static JSpinner           spinnerFontSizes;
+    //  private static SpinnerNumberModel spinnerModelSizes;
     private static DatabaseManagerSwing fOwner;
     private static JFrame frame =
         new JFrame("DataBaseManagerSwing Font Selection Dialog");
-    private static JCheckBox          ckbitalic;
-    private static JSpinner           spinnerFontSizes;
-    private static SpinnerNumberModel spinnerModelSizes;
+    private static JCheckBox ckbitalic;
 
     /**
      * Create and display FontDialogSwing Dialog.
@@ -88,7 +97,6 @@ public class FontDialogSwing extends JDialog {
 
             isRunning = true;
 
-//            frame.setUndecorated(true);
             frame.setSize(600, 100);
             CommonSwing.setFramePositon(frame);
 
@@ -170,30 +178,48 @@ public class FontDialogSwing extends JDialog {
                 }
             });
 
-            Dimension spinnerDimension = new Dimension(50, 25);
+            // weconsultants@users 20050215 - Added for Compatbilty fix for  JDK 1.3
+            fontSizesComboBox = new JComboBox(fontSizes);
 
-            spinnerFontSizes = new JSpinner();
+            Dimension spinnerDimension = new Dimension(45, 25);
 
-            spinnerFontSizes.putClientProperty("is3DEnabled", Boolean.TRUE);
-            spinnerFontSizes.setMinimumSize(spinnerDimension);
-            spinnerFontSizes.setPreferredSize(spinnerDimension);
-            spinnerFontSizes.setMaximumSize(spinnerDimension);
+            fontSizesComboBox.putClientProperty("is3DEnabled", Boolean.TRUE);
+            fontSizesComboBox.setMinimumSize(spinnerDimension);
+            fontSizesComboBox.setPreferredSize(spinnerDimension);
+            fontSizesComboBox.setMaximumSize(spinnerDimension);
+            fontSizesComboBox.addItemListener(new ItemListener() {
 
-            spinnerModelSizes = new SpinnerNumberModel(12, 8, 72, 1);
+                public void itemStateChanged(ItemEvent evt) {
 
-            spinnerFontSizes.setModel(spinnerModelSizes);
-            spinnerFontSizes.addChangeListener(new ChangeListener() {
-
-                public void stateChanged(ChangeEvent e) {
-                    setFontSize();
+                    if (evt.getStateChange() == ItemEvent.SELECTED) {
+                        setFontSize((String) evt.getItem());
+                    }
                 }
             });
 
+            // weconsultants@users 20050215 - Commented out for Compatbilty fix for  JDK 1.3
+            //            Dimension spinnerDimension = new Dimension(50, 25);
+            //            spinnerFontSizes = new JSpinner();
+            //            spinnerFontSizes.putClientProperty("is3DEnabled", Boolean.TRUE);
+            //            spinnerFontSizes.setMinimumSize(spinnerDimension);
+            //            spinnerFontSizes.setPreferredSize(spinnerDimension);
+            //            spinnerFontSizes.setMaximumSize(spinnerDimension);
+            //            spinnerModelSizes = new SpinnerNumberModel(12, 8, 72, 1);
+            //            spinnerFontSizes.setModel(spinnerModelSizes);
+            //            spinnerFontSizes.addChangeListener(new ChangeListener() {
+            //                public void stateChanged(ChangeEvent e) {
+            //                    setFontSize();
+            //                }
+            //            });
             Container contentPane = frame.getContentPane();
 
             contentPane.setLayout(new FlowLayout());
             contentPane.add(fontsComboBox);
-            contentPane.add(spinnerFontSizes);
+
+            // weconsultants@users 20050215 - Commented out for Compatbilty fix for 1.3
+            // contentPane.add(spinnerFontSizes);
+            // weconsultants@users 20050215 - Added for Compatbilty fix for 1.3
+            contentPane.add(fontSizesComboBox);
             contentPane.add(ckbbold);
             contentPane.add(ckbitalic);
             contentPane.add(fgColorButton);
@@ -231,11 +257,13 @@ public class FontDialogSwing extends JDialog {
     /**
      * Displays a color chooser and Sets the selected color.
      */
-    public static void setFontSize() {
+    public static void setFontSize(String inFontSize) {
 
-        float fontSize =
-            ((Number) (spinnerModelSizes.getValue())).floatValue();
-        Font fonttTree = fOwner.tTree.getFont().deriveFont(fontSize);
+        // weconsultants@users 20050215 - Changed for Compatbilty fix for JDK 1.3
+        // Convert Strng to float for deriveFont() call
+        Float stageFloat = new Float(inFontSize);
+        float fontSize   = stageFloat.floatValue();
+        Font  fonttTree  = fOwner.tTree.getFont().deriveFont(fontSize);
 
         fOwner.tTree.setFont(fonttTree);
 

@@ -76,19 +76,19 @@ import org.hsqldb.lib.Iterator;
 /**
  * Script generation.
  *
- * @version 1.7.2
+ * @version 1.8.0
  */
 public class DatabaseScript {
 
     /**
      * Returns the DDL and all other statements for the database excluding
      * INSERT and SET <tablename> READONLY statements.
-     * bCached == true indicates that SET <tablenmae> INDEX statements should
+     * cachedData == true indicates that SET <tablenmae> INDEX statements should
      * also be included.
      *
      * This class should not have any dependencies on metadata reporting.
      */
-    public static Result getScript(Database dDatabase, boolean bCached) {
+    public static Result getScript(Database dDatabase, boolean indexRoots) {
 
         HsqlArrayList tTable          = dDatabase.getTables();
         HsqlArrayList forwardFK       = new HsqlArrayList();
@@ -193,6 +193,13 @@ public class DatabaseScript {
                 addRow(r, dataSource);
             }
 
+            // header
+            String header = getDataSourceHeader(t);
+
+            if (!indexRoots && header != null) {
+                addRow(r, header);
+            }
+
             // triggers
             int numTrigs = TriggerDef.NUM_TRIGS;
 
@@ -230,7 +237,7 @@ public class DatabaseScript {
         for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
             Table t = (Table) tTable.get(i);
 
-            if (bCached && t.isIndexCached() &&!t.isEmpty()) {
+            if (indexRoots && t.isIndexCached() &&!t.isEmpty()) {
                 addRow(r, getIndexRootsDDL((Table) tTable.get(i)));
             }
         }
@@ -480,13 +487,36 @@ public class DatabaseScript {
 
         a.append(Token.T_SET).append(' ').append(Token.T_TABLE).append(' ');
         a.append(t.getName().statementName);
-        a.append(' ').append(Token.T_SOURCE).append('"');
+        a.append(' ').append(Token.T_SOURCE).append(' ').append('"');
         a.append(dataSource);
         a.append('"');
 
         if (isDesc) {
             a.append(' ').append(Token.T_DESC);
         }
+
+        return a.toString();
+    }
+
+    /**
+     * Generates the SET TABLE <tablename> SOURCE HEADER <string> statement for a
+     * text table;
+     */
+    static String getDataSourceHeader(Table t) {
+
+        String header = t.getHeader();
+
+        if (header == null) {
+            return null;
+        }
+
+        StringBuffer a = new StringBuffer(128);
+
+        a.append(Token.T_SET).append(' ').append(Token.T_TABLE).append(' ');
+        a.append(t.getName().statementName);
+        a.append(' ').append(Token.T_SOURCE).append(' ');
+        a.append(Token.T_HEADER).append(' ');
+        a.append(header);
 
         return a.toString();
     }

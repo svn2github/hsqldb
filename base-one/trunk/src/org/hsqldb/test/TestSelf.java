@@ -221,7 +221,7 @@ class TestSelf extends TestUtil {
         deleteDatabase("test1");
 
         try {
-            String     url         = "jdbc:hsqldb:test1";
+            String     url = "jdbc:hsqldb:test1;sql.enforce_strict_size=true";
             String     user        = "sa";
             String     password    = "";
             Connection cConnection = null;

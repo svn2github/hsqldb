@@ -19,10 +19,10 @@ create table confignodetype (cnt_nodetypeid numeric(10) not null primary key,
 
 -- bug #1114899
 create table mytable(field1 int not null, field2 int);
-/*e*/alter table mytable add constraint pk primary key (field1);
+alter table mytable add constraint pk primary key (field1);
 /*e*/alter table mytable add constraint pk foreign key (field2)
  references mytable(field1) ;
-/*e*/alter table mytable add constraint fk foreign key (field2)
+alter table mytable add constraint fk foreign key (field2)
  references mytable(field1) ;
 /*u1*/insert into mytable values (0,0);
 /*u1*/insert into mytable values (1,1);

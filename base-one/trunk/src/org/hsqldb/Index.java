@@ -1010,10 +1010,11 @@ public class Index {
     }
 
     /**
-     * Compares two table rows based on the columns of the index. The aColIndex
+     * Compares two table rows based on the columns of this index. The rowColMap
      * parameter specifies which columns of the other table are to be compared
-     * with the colIndex columns of this index. The aColIndex can cover all
-     * or only some columns of this index.
+     * with the colIndex columns of this index. The rowColMap can cover all
+     * or only some columns of this index. The invisible column is never
+     * compared
      *
      * @param a row from another table
      * @param rowColMap column indexes in the other table
@@ -1088,13 +1089,13 @@ public class Index {
      * @return comparison result, -1,0,+1
      * @throws HsqlException
      */
-    static int compareRows(Object[] a, Object[] b,
-                           int[] cols) throws HsqlException {
+    static int compareRows(Object[] a, Object[] b, int[] cols,
+                           int[] coltypes) throws HsqlException {
 
         int fieldcount = cols.length;
 
         for (int j = 0; j < fieldcount; j++) {
-            int i = Column.compare(a[cols[j]], b[cols[j]], cols[j]);
+            int i = Column.compare(a[cols[j]], b[cols[j]], coltypes[j]);
 
             if (i != 0) {
                 return i;

@@ -576,6 +576,32 @@ public class Types {
     }
 
     /**
+     * Returns SQL type string for a java.sql.Types int value
+     */
+    public static String getTypeString(int type, int precision, int scale) {
+
+        String s = (String) typeNames.get(type);
+
+        if (precision != 0 && acceptsPrecisionCreateParam(type)) {
+            StringBuffer sb = new StringBuffer(s);
+
+            sb.append(Token.T_OPENBRACKET);
+            sb.append(precision);
+
+            if (scale != 0 && acceptsScaleCreateParam(type)) {
+                sb.append(Token.T_COMMA);
+                sb.append(scale);
+            }
+
+            sb.append(Token.T_CLOSEBRACKET);
+
+            return sb.toString();
+        }
+
+        return s;
+    }
+
+    /**
      * Retieves the type number corresponding to the class
      * of an IN, IN OUT or OUT parameter.  <p>
      *
