@@ -1,3 +1,8 @@
+1/15/2003 CHANGE
+THIS IS A TEST
+Added syncmail script...testing hsqldb-cvs@lists.sourceforge.net
+TEST COMPLETE
+
 HSQLDB version 1.7.1 CHANGELOG SINCE VERSION 1.60
 
 Version 1.7.1 improves performance and fixes several bugs that have come to light since the release of 1.7.0. It does not feature any major new functionality in the database engine.
