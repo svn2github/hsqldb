@@ -1,4 +1,4 @@
-# $Id: sqltool.rc,v 1.6 2004/07/18 03:19:25 unsaved Exp $
+# $Id: sqltool.rc,v 1.7 2004/07/18 04:13:56 unsaved Exp $
 
 # This is a sample SqlTool configuration file, a.k.a. rc file.
 
@@ -59,6 +59,9 @@ password
 # the target Postgresql server version and the client-side JDBC level (which
 # is determined by your client-side Java version, as explained at
 # http://jdbc.postgresql.org/download.html).
+# I recommend the latest production version for your JDBC version.  The 
+# later JDBC drivers work better even with older Postgresql servers.
+# (E.g. \dt won't list owners with an older driver).
 # Since you need to add to the classpath, you can't invoke SqlTool with
 # the jar switch, like "java -jar .../hsqldb.jar..." or 
 # "java -jar .../hsqlsqltool.jar...".
