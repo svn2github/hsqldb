@@ -52,7 +52,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.56 2004/06/05 03:03:28 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.57 2004/06/05 05:53:37 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -88,7 +88,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.56 $
+ * @version $Revision: 1.57 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -109,8 +109,8 @@ public class SqlFile {
         "                                                                 ";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.56 $".substring("$Revision: ".length(),
-                "$Revision: 1.56 $".length() - 2);
+        revnum = "$Revision: 1.57 $".substring("$Revision: ".length(),
+                "$Revision: 1.57 $".length() - 2);
     }
     private static String BANNER =
         "SqlFile processor v. " + revnum + ".\n"
@@ -161,7 +161,7 @@ public class SqlFile {
         + "EXAMPLE:  To show previous commands then edit and execute the 3rd-to-last:\n"
         + "    \\s\n" + "    \\-3\n" + "    :;\n";
     final private static String PL_HELP_TEXT =
-        "PROCESS LANGUAGE Commands.\n"
+        "PROCEDURAL LANGUAGE Commands.\n"
         + "    * VARNAME = Variable value    Set variable value (note spaces around =)\n"
         + "    * VARNAME =                   Unset variable\n"
         + "    * list                        List values of all variables\n\n"
