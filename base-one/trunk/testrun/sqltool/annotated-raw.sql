@@ -57,9 +57,11 @@
     This specific example emulates the command:
         SqlTool --sql '\p Print message from --sql argument.' -
     Then pipes this entire file into stdin of SqlTool.
+    This test will INTENTIONALLY FAIL since the required regular expression
+    does not show up in Stdout.
 
     HARNESS_METADATA        BEGIN         
-    requireStdoutRegex  SQL file
+    requireStdoutRegex  Nonexistent string
     arg --noinput
     arg --sql
     arg \p Print message from --sql argument.

@@ -1,4 +1,4 @@
-$Id: readme.txt,v 1.4 2004/06/16 17:38:42 unsaved Exp $
+$Id: readme.txt,v 1.5 2004/06/16 17:54:02 unsaved Exp $
 
 SqlTool UNIT TESTING
 
@@ -79,4 +79,23 @@ To make a new SQL test file.
     zillion files (what if we need to update an explanation!), plus,
     I like the real test files to be nice and concise.
 
-    In general, 
+    In general, try to use a Memory-only urlid named "mem".
+
+
+Regexes
+
+    You can use regular expression values as documented in the 
+    JDK 1.4 API Spec for java.util.regex.Pattern.
+
+    This is a very powerful regular expression language very close
+    to Perl's.  There are a few limitations (such as look-ahead and
+    look-behind strings must be of fixed size), but, like I said,
+    they are still extremely powerful.
+
+    Example:
+    
+        requireStdoutRegex  (?im)\w+\s+something bad\s*$
+
+    This would match lines anywhere in stdout of the SqlTool run
+    which end with a word + whitespace + "something bad" (case
+    insensitive) + optional whitespace.
