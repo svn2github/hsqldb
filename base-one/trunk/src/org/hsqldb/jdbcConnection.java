@@ -639,6 +639,51 @@ public class jdbcConnection implements Connection {
      * the driver would send in place of client-specified JDBC SQL
      * grammar. <p>
      *
+     * Up to and including 1.7.1, escape processing was incomplete and
+     * also severely broken in terms of support for nested escapes. <p>
+     *
+     * Starting with 1.7.2, escape processing is mostly fixed, but uses a
+     * very strict interpretation of the syntax and does not attempt to
+     * properly handle comments. <p>
+     *
+     * In essence, the HSQLDB engine directly handles the prescribed syntax
+     * and date / time formats specified internal to the JDBC escapes.
+     * It also directly offers the XOpen / ODBC standard extended scalar
+     * functions specified available internal to the {fn ...} JDBC escape.
+     * As such, the driver simply removes the curly braces and JDBC escape
+     * codes in the simplest and fastest fashion possible. Also, to avoid
+     * a great deal of complexity, certain forms of whitespace are
+     * currently not recognised.  For instance, the driver handles
+     * "{?= call ...}" but not "{ ?= call ...}  or "{? = call ...}" <p>
+     *
+     * It is intended to implement this method more robustly, but doing so
+     * basically requires something closer to a parse or a full SQL
+     * tokenization than a simple state machine transformation.  As such,
+     * escape processing might end up consuming a significant portion of
+     * execution time for plain old Statement objects.  Hence, this is
+     * currently low priority work.
+     *
+     * The following JDBC escape forms are supported, with the exact layout
+     * described: <p>
+     *
+     * <ol>
+     * <li>{call ...}
+     * <li>{?= call ...}
+     * <li>{fn ...}
+     * <li>{oj ...}
+     * <li>{d ...}
+     * <li>{t ...}
+     * <li>{ts ...}
+     * </ol>
+     *
+     * Also, as mentioned above, comments embedded in SQL are still not
+     * handled and thus may have unexpected effects on the output of this
+     * method, for instance causing otherwise valid SQL to become
+     * invalid. It is especially important to be aware of this, as escape
+     * processing is set true by default for Statement objects and is always
+     * set true when producing a PreparedStatement from prepareStatement()
+     * or CallableStatement from prepareCall().
+     *
      * </span> <!-- end release-specific documentation -->
      *
      * @param sql a SQL statement that may contain one or more '?'
@@ -650,20 +695,29 @@ public class jdbcConnection implements Connection {
 
         //boucherb@users 20030405
         //FIXME: does not work properly for nested escapes
-        //       e.g.  {call ...(...,{dt '...'},....)} does not work
+        //       e.g.  {call ...(...,{ts '...'},....)} does not work
+        //boucherb@users 20030817
+        //TESTME: First kick at the FIXME cat done.  Now test lots.
         checkClosed();
+
+        if (sql == null) {
+            return null;
+        }
 
         if (sql.indexOf('{') == -1) {
             return sql;
         }
 
-        char    s[]     = sql.toCharArray();
-        boolean changed = false;
-        int     state   = 0;
-        int     len     = s.length;
+        boolean      changed = false;
+        int          state   = 0;
+        int          len     = sql.length();
+        int          nest    = 0;
+        StringBuffer sb      = new StringBuffer(sql.length());
+
+        sb.append(sql);
 
         for (int i = 0; i < len; i++) {
-            char c = s[i];
+            char c = sb.charAt(i);;
 
             switch (state) {
 
@@ -673,20 +727,44 @@ public class jdbcConnection implements Connection {
                     } else if (c == '"') {
                         state = 2;
                     } else if (c == '{') {
-                        s[i]    = ' ';
-                        changed = true;
+                        sb.setCharAt(i++, ' ');
 
-                        String sub = sql.substring(i + 1).toUpperCase();
-
-                        if (sub.startsWith("?=")) {
-                            i += 2;
-                        } else if (sub.startsWith("CALL")) {
+                        if (sql.regionMatches(true, i, "fn ", 0, 3)
+                                || sql.regionMatches(true, i, "oj ", 0, 3)
+                                || sql.regionMatches(true, i, "ts ", 0, 3)) {
+                            sb.setCharAt(i++, ' ');
+                            sb.setCharAt(i++, ' ');
+                        } else if (sql.regionMatches(true, i, "d ", 0, 2)
+                                   || sql.regionMatches(true, i, "t ", 0,
+                                                        2)) {
+                            sb.setCharAt(i++, ' ');
+                        } else if (sql.regionMatches(true, i, "call ", 0,
+                                                     5)) {
                             i += 4;
-                        } else if (sub.startsWith("ESCAPE")) {
+                        } else if (sql.regionMatches(true, i, "?= call ", 0,
+                                                     8)) {
+                            sb.setCharAt(i++, ' ');
+                            sb.setCharAt(i++, ' ');
+
+                            i += 5;
+                        } else if (sql.regionMatches(true, i, "escape ", 0,
+                                                     7)) {
                             i += 6;
+                        } else {
+                            i--;
+
+                            String msg = "Unknown JDBC escape sequence: ...{"
+                                         + sb.substring(i);
+
+                            throw new SQLException(
+                                msg, "S0010", Trace.INVALID_JDBC_ARGUMENT);
                         }
 
-                        state = 3;
+                        changed = true;
+
+                        nest++;
+
+                        state = 4;
                     }
                     break;
 
@@ -704,37 +782,77 @@ public class jdbcConnection implements Connection {
                     }
                     break;
 
-                case 3 :    // inside { } before whitespace
-                    if (c == ' ') {
-                        state = 4;
-                    } else {
-                        s[i]    = ' ';
-                        changed = true;
-                    }
-                    break;
-
+// NO: 
+//                    
+// This just erases characters from '{' until a following ' ' is found
+// There is no point to this now, as we correctly detect the
+// valid JDBC escape sequences in states 0 & 4 and throw
+// if no valid escape is found
+//                case 3 :    // inside { } before whitespace
+//                    if (c == ' ') {
+//                        state = 4;
+//                    } 
+//                    else {
+//                        s[i]    = ' ';
+//                        changed = true;
+//                    }
+//                    break;
                 case 4 :    // inside { } after whitespace
                     if (c == '\'') {
                         state = 5;
                     } else if (c == '"') {
                         state = 6;
                     } else if (c == '}') {
-                        s[i]    = ' ';
+                        sb.setCharAt(i, ' ');
+
                         changed = true;
-                        state   = 0;
+
+                        nest--;
+
+                        state = (nest == 0) ? 0
+                                            : 4;
+                    } else if (c == '{') {
+                        sb.setCharAt(i++, ' ');
+
+                        if (sql.regionMatches(true, i, "fn ", 0, 3)
+                                || sql.regionMatches(true, i, "oj ", 0, 3)
+                                || sql.regionMatches(true, i, "ts ", 0, 3)) {
+                            sb.setCharAt(i++, ' ');
+                            sb.setCharAt(i++, ' ');
+                        } else if (sql.regionMatches(true, i, "d ", 0, 2)
+                                   || sql.regionMatches(true, i, "t ", 0,
+                                                        2)) {
+                            sb.setCharAt(i++, ' ');
+                        } else if (sql.regionMatches(true, i, "call ", 0,
+                                                     5)) {
+                            i += 4;
+                        } else if (sql.regionMatches(true, i, "?= call ", 0,
+                                                     8)) {
+                            sb.setCharAt(i++, ' ');
+                            sb.setCharAt(i++, ' ');
+
+                            i += 5;
+                        } else if (sql.regionMatches(true, i, "escape ", 0,
+                                                     7)) {
+                            i += 6;
+                        } else {
+                            String msg = "Unknown JDBC escape sequence: ...{"
+                                         + sb.substring(i);
+
+                            throw new SQLException(
+                                msg, "S0010", Trace.INVALID_JDBC_ARGUMENT);
+                        }
+
+                        changed = true;
+
+                        nest++;
+
+                        state = 4;
                     }
             }
         }
 
-        if (changed) {
-            sql = new String(s);
-
-            if (Trace.TRACE) {
-                Trace.trace(s + " > " + sql);
-            }
-        }
-
-        return sql;
+        return sb.toString();
     }
 
     /**
