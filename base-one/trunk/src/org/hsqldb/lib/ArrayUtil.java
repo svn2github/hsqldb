@@ -246,6 +246,18 @@ public class ArrayUtil {
     }
 
     /**
+     * Fills the array with a value
+     */
+    public static void arrayFill(Object[] array, Object value) {
+
+        int to = array.length;
+
+        while (--to >= 0) {
+            array[to] = value;
+        }
+    }
+
+    /**
      * Returns a duplicates of an array.
      */
     public static Object duplicateArray(Object source) {

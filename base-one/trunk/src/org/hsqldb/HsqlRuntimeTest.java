@@ -77,11 +77,11 @@ public class HsqlRuntimeTest {
 
         HsqlRuntime                   runtime;
         Database                      database;
-        String                        absPath;
+        String                        cpath;
         HsqlRuntime.DatabaseReference ref;
 
         runtime = HsqlRuntime.getHsqlRuntime();
-        absPath = HsqlRuntime.absoluteDatabasePath(path);
+        cpath = runtime.canonicalDatabasePath(path);
 
         println(sep);
         print("maxMemory() test: ");
@@ -107,13 +107,13 @@ public class HsqlRuntimeTest {
         println(sep);
         println("stateDescriptor() test;");
         println("Should be list of hsqldb thread groups,");
-        println("showing place holder thread for " + absPath + ":");
+        println("showing place holder thread for " + cpath + ":");
         println(sep);
         print(runtime.stateDescriptor());
         println(sep);
-        println("listRegisteredDatabasePaths() test:");
-        println("should be [" + absPath + "]': ");
-        println(runtime.listRegisteredDatabasePaths());
+        println("listRegisteredDatabaseNames() test:");
+        print("should be [" + database.getName() + "]: ");
+        println(runtime.listRegisteredDatabaseNames());
         println(sep);
         print("isRegisteredDatabase() test; should be 'true': ");
         println("" + runtime.isRegisteredDatabase(path));
@@ -121,13 +121,12 @@ public class HsqlRuntimeTest {
         println("removeDatabase() test;");
         println("Next line should be a message that thread is ");
         println("exiting, followed by thread group listing NOT ");
-        println("showing place holder thread for " + absPath);
+        println("showing place holder thread for " + cpath);
         println(sep);
-        runtime.removeDatabase(database);
+        database.sessionManager.getSysSession().sqlExecuteDirect("shutdown");
         print(runtime.stateDescriptor());
         println(sep);
-        println("usedMemory() test: " + (runtime.usedMemory() / onekb)
-                + " KB");
+        println("usedMemory() test: " + toKB(runtime.usedMemory()) + " KB");
         println(sep);
         print("isRegisteredDatabase() test; should be 'false': ");
         println("" + runtime.isRegisteredDatabase(path));
@@ -147,7 +146,7 @@ public class HsqlRuntimeTest {
         println(sep);
         println("stateDescriptor() test while holding valid reference;");
         println("Should be list of hsqldb thread groups,");
-        println("showing place holder thread for " + absPath + ":");
+        println("showing place holder thread for " + cpath + ":");
         println(sep);
         print(runtime.stateDescriptor());
         println(sep);
@@ -161,7 +160,7 @@ public class HsqlRuntimeTest {
         println("stateDescriptor() test while holding invalid ref;");
         println("Should be list of hsqldb thread groups");
         print("NOT showing place holder thread for ");
-        println(absPath + ":");
+        println(cpath + ":");
         println(sep);
         print(runtime.stateDescriptor());
         println(sep);

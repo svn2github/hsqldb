@@ -31,6 +31,8 @@
 
 package org.hsqldb;
 
+import java.net.URL;
+
 // boucherb@users 20030510 - patch 1.7.2 - added cooperative file locking
 
 /**
@@ -72,19 +74,24 @@ class Logger {
      *  files are first created.
      *
      * @param  db the Database
-     * @param  sys the anonymous system Session context in which the
-     *      specified Database object's logging process will operate
-     * @param  name the path and common name of the database files
-     * @return  true if the specified database files had to be created
-     *      before being opened (i.e. a new database is created)
      * @throws  HsqlException if there is a problem, such as the case when
      *      the specified files are in use by another process
      */
-    void openLog(Database db, String name) throws HsqlException {
+    void openLog(Database db) throws HsqlException {
+        String path;
+        
+        // NOTE:
+        // this method never gets called unless path is non-null
+        // so no check here
+        path = db.getPath();
+        
+        if (db.isFilesInJar()) {
+            checkFilesInJar(path);
+        } else {
+            aquireLock(path);
+        }
 
-        aquireLock(name);
-
-        lLog = new Log(db, name);
+        lLog = new Log(db, path);
 
         lLog.open();
     }
@@ -93,8 +100,6 @@ class Logger {
 
     /**
      *  Shuts down the logging process using the specified mode. <p>
-     *
-     *
      *
      * @param  closemode The mode in which to shut down the logging
      *      process
@@ -292,12 +297,15 @@ class Logger {
         lLog.closeTextCache(name);
     }
 
-    void aquireLock(String name) throws HsqlException {
+    /**
+     * Attempts to aquire a cooperative lock condition on the database files
+     */
+    void aquireLock(String path) throws HsqlException {
 
         boolean locked;
         String  msg;
 
-        lf     = LockFile.newLockFile(name + ".lck");
+        lf     = LockFile.newLockFile(path + ".lck");
         locked = false;
         msg    = "";
 
@@ -327,5 +335,23 @@ class Logger {
         }
 
         lf = null;
+    }
+    
+    private void checkFilesInJar(String path) throws HsqlException {
+        URL    url;
+        String sScript;
+        
+        Trace.check(path != null, Trace.FILE_IO_ERROR, "path is null");
+        
+        sScript = path + ".script";
+        url     = getClass().getResource(sScript);
+        
+        Trace.check(url != null, Trace.FILE_IO_ERROR, 
+                "non-existent resource: " + sScript);        
+        
+        Trace.check(
+            "jar".equalsIgnoreCase(url.getProtocol()), 
+            Trace.ACCESS_IS_DENIED, 
+            "wrong resource protocol: " + url);
     }
 }

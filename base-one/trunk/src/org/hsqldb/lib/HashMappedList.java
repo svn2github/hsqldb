@@ -80,6 +80,19 @@ public class HashMappedList extends HashMap {
         return returnValue;
     }
 
+    public boolean add(Object key, Object value){
+
+        if (keySet().contains(key)) {
+            return false;
+        }
+        super.put(key,value);
+        return true;
+    }
+
+    public Object put(Object key, Object value){
+        throw new RuntimeException();
+    }
+
     public Object set(int index,
                       Object value) throws IndexOutOfBoundsException {
 
@@ -92,21 +105,27 @@ public class HashMappedList extends HashMap {
         return returnValue;
     }
 
+    public boolean set(int index,
+                          Object key, Object value) throws IndexOutOfBoundsException {
+
+        checkRange(index);
+
+        if (keySet().contains(key) && getIndex(key) != index) {
+            return false;
+        }
+
+        super.remove(objectKeyTable[index]);
+        super.put(key, value);
+
+        return true;
+    }
+
     public boolean setKey(int index,
                           Object key) throws IndexOutOfBoundsException {
 
         checkRange(index);
-
-        if (keySet.contains(key)) {
-            return false;
-        }
-
         Object value = objectValueTable[index];
-
-        super.remove(objectKeyTable[index]);
-        put(key, value);
-
-        return true;
+        return set(index,key,value);
     }
 
     public Object getKey(int index) throws IndexOutOfBoundsException {

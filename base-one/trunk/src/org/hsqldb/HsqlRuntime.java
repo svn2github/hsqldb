@@ -34,9 +34,14 @@ package org.hsqldb;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
+import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.StringTokenizer;
 import java.util.Vector;
 import org.hsqldb.lib.HsqlTimer;
 
@@ -67,12 +72,16 @@ public final class HsqlRuntime {
     private static final String stgName = "hsqldb-servers";
 
     /** Web server thread group name */
-    private static final String    wstgName   = "hsqldb-webservers";
-    private static final Hashtable dbMutexMap = new Hashtable();
+    private static final String wstgName = "hsqldb-webservers";
+    
+    /** MAP: alias => canonical connection url*/
+    private static Hashtable aliasMap;    
+    
+    /** MAP: canonical database name => database mutex object*/
+    private static Hashtable dbMutexMap;
 
     /** Reference to the java.lang.Runtime instance for this JVM */
-    private static final Runtime javaRuntime = Runtime.getRuntime();
-    private static Database      memoryDatabase;
+    private static final Runtime javaRuntime = Runtime.getRuntime();    
 
     /** The one and only instance of HsqlRuntime in this class loader context */
     private static HsqlRuntime instance;
@@ -85,6 +94,14 @@ public final class HsqlRuntime {
 
     /** The HsqlRuntime database placeholder thread group */
     private static ThreadGroup dbThreadGroup;
+    
+    /**
+     * Gaurds database related critical sections.  This may be the 
+     * dbThreadGroup itself under less restrictive security policies
+     * where the dbThreadZGroup can be created, or it may just be a 
+     * subsititute Object under more restrictive security policies.
+     */
+    private static Object dbThreadGroupMutex;
 
     /** The HsqlRuntime server thread group */
     private static ThreadGroup serverThreadGroup;
@@ -119,6 +136,11 @@ public final class HsqlRuntime {
 
     /** The java runtime removeShutdownHook method */
     private static Method removeShutdownHook;
+    
+//    static {
+//        aliasMap.put("test","jdbc:hsqldb:file:test");
+//    }
+
 
 //--------------------------------- Constructors -------------------------------
 
@@ -131,26 +153,6 @@ public final class HsqlRuntime {
 
 //----------------------------------- Methods ----------------------------------
 // --------------------------- Public Static Methods ---------------------------
-
-    /**
-     * Retieves null if path is null, the absolute path of the database
-     * indicated by path, or the special path '.' indicating the memory database
-     * instance, if '.'.equals(path.trim()).
-     *
-     * @param path proposed database path
-     * @return corresponding absolute database path
-     */
-    public static String absoluteDatabasePath(String path) {
-
-        if (path == null) {
-            return null;
-        }
-
-        path = path.trim();
-
-        return ".".equals(path) ? "."
-                                : (new File(path)).getAbsolutePath();
-    }
 
     /**
      * Retrieves the Class object associated with the class or interface with
@@ -211,9 +213,9 @@ public final class HsqlRuntime {
      * @see #getContextClassLoader(Object)
      */
     public static Class classForName(String name,
-                                     Object ctx) throws Exception {
+                                     Object ctx) throws Exception {             
         return getContextClassLoader(ctx).loadClass(name);
-    }
+    }         
 
     /**
      * Retrieves, if  possible, the class loader associated with the
@@ -233,18 +235,39 @@ public final class HsqlRuntime {
     public static ClassLoader getContextClassLoader(Object ctx)
     throws Exception {
 
-        Class  c;
         Method m;
 
         if (ctx == null) {
             return null;
         }
 
-        c = ctx.getClass();
-        m = c.getMethod("getContextClassLoader", new Class[]{});
+        m = getMethod(ctx.getClass(), "getContextClassLoader", new Class[]{});
+        
+        if (m == null) {
+            return null;
+        }
 
         return (ClassLoader) m.invoke(ctx, new Object[]{});
     }
+    
+//    public static Method getDeclaredMethod(String fqn, String name, Class[] ptypes) {
+//        try {
+//            return getDeclaredMethod(Class.forName(fqn),name,ptypes);
+//        } catch (Exception e) {
+//            return null;
+//        }
+//    }
+//    
+//    public static Method getDeclaredMethod(Class clazz, String name, Class[] ptypes) {
+//        if (clazz == null || name == null || ptypes == null) {
+//            return null;
+//        }    
+//        try {
+//            return clazz.getDeclaredMethod(name, ptypes);
+//        } catch (Exception e) {
+//            return null;
+//        }
+//    }
 
     /**
      * Retrieves the HSQLDB runtime object associated with the current Java
@@ -277,21 +300,59 @@ public final class HsqlRuntime {
             return instance;
         }
     }
-
+    
+//    public static Method getMethod(String fqn, String name, Class[] ptypes) {
+//        try {
+//            return getMethod(Class.forName(fqn),name,ptypes);
+//        } catch (Exception e) {
+//            return null;
+//        }
+//    }
+    
     /**
-     * Retrieves whether the stipulated path is the special HSQLDB memory
-     * database path.
+     * Retreives the Method object with the given name and parameter types,
+     * relative to the given Class.
      *
-     * @return true iff path is memory database path
+     * @param clazz the Class supposedly having the named method
+     * @param name the name of the method
+     * @param ptypes the paramter types of the method
      */
-    public static boolean isMemoryDatabasePath(String path) {
-        return path != null && ".".equals(path.trim());
-    }
+    public static Method getMethod(Class clazz, String name, Class[] ptypes) {
+        if (clazz == null || name == null || ptypes == null) {
+            return null;
+        }
+        try {
+            return clazz.getMethod(name, ptypes);
+        } catch (Exception e) {
+            return null;
+        }
+    }    
 
 //-------------------------- Public Instance Methods ---------------------------
-// TODO: maybe offer shutdown hooks for database instances if available
-//       in runtime env.
+    
+    public String addConnectionURLAlias(String url,
+                                      String alias) throws HsqlException {
 
+        Trace.doAssert(alias != null, "alias is null");
+        Trace.doAssert(alias.length() > 0, "alias is zero length");
+        
+        url = canonicalConnectionURL(url);
+
+        Trace.doAssert(url != null, "canonical url is null");
+
+        return (String) aliasMap.put(alias, url);
+    }
+    
+// TODO: maybe offer shutdown hooks instead of runFinalizersOnExit 
+//       for database instances, if available in runtime env.  This
+//       would give databases a chance to shutdown cleanly at Ctrl-C,
+//       Logoff, system shutdown, etc.  Caveat:  Some operating systems   
+//       allow only a limited amount of time for processes to shutdown,
+//       aborting them if they take too long.  So, which is better:
+//       the equivalent of an immediate shutdown when the the process
+//       is terminated, or a clean shutdown initiated, but with the 
+//       possibility that the process will be aborted in the middle of 
+//       the shutdown?    
     /**
      * Registers a new virtual-machine shutdown hook, iff the underlying java
      * runtime permits.
@@ -386,6 +447,227 @@ public final class HsqlRuntime {
 
         return 1;
     }
+    
+    /**
+     * Retreives the canonical hsqldb jdbc connection url, given a 
+     * candidate connection url.  If no canonical connection 
+     * url corresponds to the candidate, null is returned.
+     *
+     * @param s the candidate connection url
+     * @return the canonical url
+     */
+    public String canonicalConnectionURL(String s) {
+        String cname;
+        String props;
+        int    pos;
+        
+        if (s == null || s.length() == 0) {
+            return null;
+        }
+        
+        pos   = s.indexOf(";");
+        
+        // - properties spec is not really part of canonical url
+        // - this should be handled by jdbcDriver.connect()
+        // - is dealt with here for consistency, regardless
+        if (pos > -1) {
+            props = s.substring(pos);
+            s     = s.substring(0,pos);            
+        } else {
+            props = null;
+        }
+        
+        cname = canonicalDatabaseName(s);
+        
+        if (cname != null && props != null) {
+            cname += props;
+        }
+        
+        return cname == null ? null : "jdbc:hsqldb:" + cname;        
+    } 
+    
+    /**
+     * Retrieves the canonical hsqldb database name, given a 
+     * candidate hqldb database name.  If no canonical database name 
+     * corresponds to the candidate, null is returned.
+     *
+     * @param name the candidate database name
+     * @return the canonical database name
+     */    
+    public String canonicalDatabaseName(String name) {
+        StringBuffer sb;
+        int          pos;
+        int          type = -1;
+        final int    MEM   = 0;
+        final int    FILE  = 1;
+        final int    RES   = 2;
+        final int    ALIAS = 3;
+        final int    HSQL  = 4;
+        final int    HSQLS = 5;
+        final int    HTTP  = 6;
+        final int    HTTPS = 7;
+        
+        if (name == null || name.trim().length() == 0) {
+            return null;
+        }                
+        
+        if (name.regionMatches(true, 0, "jdbc:hsqldb:", 0, 12)) {
+            name = name.substring(12);
+            if (name.trim().length() == 0) {
+                return null;
+            }
+        }
+        
+        pos = name.indexOf(';');
+        
+        if (pos > -1) {
+            name = name.substring(0,pos);
+        }
+        
+        if (name.length() == 0) {
+            return null;
+        }          
+        
+        if(name.regionMatches(true, 0, "mem:", 0, 4)) {
+            name = name.substring(4);
+            type = MEM;
+        } else if (name.equals(".")) {
+            type = MEM;
+        } else if (name.regionMatches(true, 0, "file:", 0, 5)) {
+            name = name.substring(5);
+            type = FILE;            
+        } else if (name.regionMatches(true, 0, "res:", 0, 4)) {
+            name = name.substring(4);
+            type = RES;
+        } else if (name.regionMatches(true, 0, "alias:", 0, 6)) {
+            name = name.substring(6);
+            type = ALIAS;            
+        } else if (name.regionMatches(true, 0, "hsql://", 0, 7)) {
+            name = name.substring(7);
+            type = HSQL;            
+        } else if (name.regionMatches(true, 0, "hsqls://", 0, 8)) {
+            name = name.substring(8);
+            type = HSQLS;            
+        } else if (name.regionMatches(true, 0, "http://", 0, 7)) {
+            name = name.substring(7);
+            type = HTTP;            
+        } else if (name.regionMatches(true, 0, "https://", 0, 8)) {
+            name = name.substring(8);
+            type = HTTPS;            
+        } else {
+            type = FILE;
+        }
+        
+        if (name.length() == 0) {
+            return null;
+        }              
+        
+        sb = new StringBuffer();
+        
+        switch(type) {
+            case MEM : {
+                sb.append("mem:").append(name);
+                break;
+            }
+            case FILE : {
+                try {
+                    sb.append("file:")
+                      .append((new File(name)).getCanonicalPath());
+                } catch (Exception e) {
+                    return null;
+                }
+                break;
+            }
+            case RES : {
+                sb.append("res:");
+                // want to use getClass().getResource(), 
+                // not getClass().getClassLoader().getResource(),
+                // because getClassLoader() requires permission
+                // but getClass().getResource() does not.
+                // resource paths should be relative to the default
+                // package anyway, not relative to org.hsqldb
+                if (!name.startsWith("/")) {
+                    sb.append('/');
+                }
+                sb.append(name);
+                break;
+            }
+            case ALIAS : {
+                    return canonicalDatabaseName(
+                        getConnectionURLForAlias(name));
+            }
+            case HSQL : {
+                sb.append("hsql://").append(name);
+                break;
+            }
+            case HSQLS : {
+                sb.append("hsqls://").append(name);
+                break;
+            }
+            case HTTP : {
+                sb.append("http://").append(name);
+                break;
+            }
+            case HTTPS : {
+                sb.append("https://").append(name);
+                break;
+            }
+            default: {
+                return null;
+            }                
+        }
+
+        return sb.toString();        
+    }
+    
+    /**
+     * Retieves the canonical file system path of the database
+     * indicated by the name argument, or null if name is null or does not 
+     * identify a file-based database.  <p>
+     *
+     * For "res:" databases, the path
+     * returned is an absolute resource path of the form: <p>
+     * 
+     * /[pkgi/]*<simple-database-name> <p>
+     *
+     * For "file:" databases, the path returned is the canonical file system
+     * path, including the simple database name. <p>
+     *
+     * Examples:  
+     *
+     * Windows: <p>
+     *
+     * C:\[diri\]*<simple-database-name> <p>
+     * 
+     * \\<machine-name>\<share-name>\[diri\]*<simple-database-name> <p>
+     * 
+     * UNIX: <p>
+     *
+     * /[diri/]*<simple-database-name> <p>
+     *
+     * @param name The proposed database name
+     * @return corresponding canonical database path
+     */
+    public String canonicalDatabasePath(String name) {
+        
+        if (name == null) {
+            return null;
+        }
+
+        name = canonicalDatabaseName(name);
+        
+        if (name == null) {
+            return null;
+        }
+        
+        if (name.regionMatches(true, 0, "file:", 0, 5)) {
+            return name.substring(5);
+        } else if (name.regionMatches(true, 0, "res:", 0, 4)) {
+            return name.substring(4);
+        }
+
+        return null;
+    }    
 
     /**
      * Performs conditional garbage collection, predicated upon how many Record
@@ -412,29 +694,52 @@ public final class HsqlRuntime {
 
 //        }
     }
+    
+    /**
+     * Retrieves the canonical jdbc connection url corresponding to
+     * the specified alias, if any, previously registered with HsqlRuntime
+     * via the addConnectionURLAlias() method.
+     * 
+     * @param the alias for which to retrieve the corresponding canonical
+     * jdbc connection url
+     */
+    public String getConnectionURLForAlias(String alias) {
+        
+        if (alias == null) {
+            return null;
+        }
+        
+        // NOTE: connection urls in aliasMap are always in canonical form
+        // as strictly enforced by addConnectionURLAlias()
+        return (String) aliasMap.get(alias);
+    }    
 
     /**
      * Retrieves the number of HsqlRuntime registrations recorded in this JVM
-     * against the database with the specified path. Currently, if the database
+     * against the database with the specified name. Currently, if the database
      * is registered in an incompatible class loader context, the value returned
      * is '1', regardless of the actual number of registrations recorded in
      * the incompatible context.  This case will be reported more accurately
      * as refinements are made to DatabasePlaceHolderThread.
      *
-     * @param path Database path
+     * @param name Database name
      * @return The number of registrations against the specified database
      * @throws IllegalStateException If an unexpected internal error occurs
      */
-    public int getDatabaseRegistrationCount(String path)
+    public int getDatabaseRegistrationCount(String name)
     throws IllegalStateException {
 
         Integer useCount;
         Object  database;
 
-        path = absoluteDatabasePath(path);
+        name = canonicalDatabaseName(name);
+        
+        if (name == null) {
+            return 0;
+        }
 
-        synchronized (findOrCreateDatabaseMutexImpl(path)) {
-            database = dbMap.get(path);
+        synchronized (findOrCreateDatabaseMutex(name)) {
+            database = dbMap.get(name);
 
             if (database == null) {
 
@@ -444,7 +749,7 @@ public final class HsqlRuntime {
                 // use count is "1" (we can't know yet what its real use
                 // count is.  This will become more accurate as
                 // DatabasePlaceHolderThread is refined.
-                return isRegisteredDatabase(path) ? 1
+                return isRegisteredDatabase(name) ? 1
                                                   : 0;
             }
 
@@ -476,65 +781,87 @@ public final class HsqlRuntime {
 
 //        }
     }
+    
+    /**
+     * Retrieves whether the database with the specified name is either
+     * currently registered (as determined by isRegisteredDatabase()),
+     * possibly registered in another process or simply inaccessible for
+     * use because its canonical database path is inaccessible for some 
+     * reason (e.g. invalid canonical file system path, a path to a 
+     * read-only share or local file system entity, path to a non-file
+     * file system entity, locked by some operating system process other
+     * than an hsqldb Database instance, etc.)
+     *
+     * @param name the stipulated database name
+     * @return true iff the database is registered or the canonical path
+     *  represents the path of a "file:" database, is a file and is locked
+     *  or inaccessible as determined by LockFile.isLocked(String)
+     */
+    public boolean isInUseDatabase(String name) {
+
+        String  path;
+        boolean b;
+        
+        b    = false;
+        name = canonicalDatabaseName(name);
+        
+        if (name == null) {
+            // b = false;
+        } else if (isRegisteredDatabase(name)) {
+            b = true;
+        } else {            
+            path = canonicalDatabasePath(name);
+            
+            if (path != null 
+                    &&name.startsWith("file:") 
+                    &&(new File(path)).isFile()) {
+                b =  LockFile.isLocked(path + ".lck");
+            }
+        }
+        
+        return b;
+    }    
 
     /**
-     * Retrieves whether the database with the specified path is currently
+     * Retrieves whether the database with the specified name is currently
      * registered with any HsqlRuntime instance in this JVM, regardless of
      * class loader context, subject to lookup across context security
      * restrictions, based on ThreadGroup access rights.
      *
-     * @param path the path of the desired database
+     * @param name the name of the desired database
      *
      * @return true iff the indicated database is registered with some
      *      HsqlRuntime instance in this JVM
      */
-    public boolean isRegisteredDatabase(String path) {
+    public boolean isRegisteredDatabase(String name) {
 
         Vector list;
         int    size;
 
-        path = absoluteDatabasePath(path);
+        name = canonicalDatabaseName(name);
+        
+        if (name == null) {
+            return false;
+        }
 
         // We wait till any in-process free/new against this path is done,
         // and we lock out any following operations against this
         // path until we are done
-        synchronized (findOrCreateDatabaseMutexImpl(path)) {
-            if (dbMap.containsKey(path)) {
+        synchronized (findOrCreateDatabaseMutex(name)) {
+            if (dbMap.containsKey(name)) {
 
                 // open in *this* class loader context
                 return true;
             }
 
-            list = listRegisteredDatabasePaths();
+            list = listRegisteredDatabaseNames();
             size = list.size();
 
             for (int i = 0; i < size; i++) {
-                if (path.equals(list.get(i))) {
+                if (name.equals(list.get(i))) {
                     return true;
                 }
             }
-
-            // TODO?:
-            // We can also check using lock file here if we want,
-            // in order to make a determination even across process
-            // boundaries.
-            // SIMPLIFIED EXAMPLE:
-            // LockFile lf = new LockFile(path + ".lck")
-            // boolean locked = false;
-            // try {
-            //     lf.tryLock();
-            //     locked = false
-            // } catch (Exception e) {
-            //     locked = true;
-            // }
-            // try {
-            //      lf.tryRelease();
-            // } catch (Exception e) {}
-            //
-            // return locked;
-            // Not registered either in this class loader context
-            // or any other accessible one in this JVM (assuming we
-            // have unrestricted access to JVM root thread group).
             return false;
         }
     }
@@ -558,7 +885,19 @@ public final class HsqlRuntime {
         // HsqlRuntime constructor is properly synchronized, and this
         // attribute is initialized there, so this test is thread-safe
         if (dbThreadGroup == null) {
-            return new Vector();
+            synchronized(dbMap) {
+                count = dbMap.size();
+                list  = new Vector();
+
+                for(Enumeration e = dbMap.keys(); e.hasMoreElements();) {
+                    Database db = (Database) dbMap.get(e.nextElement());
+
+                    list.addElement(
+                        String.valueOf(db) + "[" + db.getStateString() + "]");
+                }
+            }
+
+            return list;
         }
 
         synchronized (dbThreadGroup) {
@@ -573,7 +912,7 @@ public final class HsqlRuntime {
 
         for (int i = 0; i < count; i++) {
             if (threads[i] != null) {
-                list.add(threads[i].toString());
+                list.addElement(threads[i].toString());
             }
         }
 
@@ -581,7 +920,7 @@ public final class HsqlRuntime {
     }
 
     /**
-     * Retieves a Vector of String objects representing the paths of all
+     * Retieves a Vector of String objects representing the names of all
      * database instances registered in this JVM, regardless of class loader
      * context, subject to lookup across context security restrictions,
      * based on ThreadGroup access rights.
@@ -589,7 +928,7 @@ public final class HsqlRuntime {
      * @return a Vector of String objects representing the paths of all
      *      database instances registered in this JVM
      */
-    public Vector listRegisteredDatabasePaths() {
+    public Vector listRegisteredDatabaseNames() {
 
         int      count;
         Thread[] threads;
@@ -597,8 +936,18 @@ public final class HsqlRuntime {
 
         // HsqlRuntime constructor is properly synchronized, and this
         // attribute is initialized there, so this test is thread-safe
-        if (dbThreadGroup == null) {
-            return new Vector();
+        if (dbThreadGroup == null) {            
+            synchronized(dbMap) {
+                count = dbMap.size();
+                list  = new Vector();
+
+                for(Enumeration e = dbMap.keys(); e.hasMoreElements();) {
+                    Database db = (Database) dbMap.get(e.nextElement());
+                    list.addElement(db.getName());
+                }
+            }
+
+            return list;
         }
 
         synchronized (dbThreadGroup) {
@@ -617,7 +966,7 @@ public final class HsqlRuntime {
 
         for (int i = 0; i < count; i++) {
             if (threads[i] != null) {
-                list.add(threads[i].getName());
+                list.addElement(threads[i].getName());
             }
         }
 
@@ -658,7 +1007,7 @@ public final class HsqlRuntime {
 
         for (int i = 0; i < count; i++) {
             if (threads[i] != null) {
-                list.add(threads[i].toString());
+                list.addElement(threads[i].toString());
             }
         }
 
@@ -698,7 +1047,7 @@ public final class HsqlRuntime {
 
         for (int i = 0; i < count; i++) {
             if (threads[i] != null) {
-                nameList.add(threads[i].toString());
+                nameList.addElement(threads[i].toString());
             }
         }
 
@@ -749,6 +1098,22 @@ public final class HsqlRuntime {
         return Record.memoryRecords;
 
 //        }
+    }
+    
+    /**
+     * Deregisteres any connection url associated with the specified alias,
+     * returning its value.  If alias is null or no such association
+     * exists, null is returned.
+     *
+     * @param alias the alias entry to remove
+     * @return the connection url previously associated with the specified
+     *      alias
+     */
+    public String removeConnectionURLAlias(String alias) {
+        if (alias == null) {
+            return null;
+        }
+        return (String) aliasMap.remove(alias);
     }
 
     /**
@@ -845,59 +1210,22 @@ public final class HsqlRuntime {
 //        }
     }
 
-// TODO:  enumerate threadgoups and custom print them instead of relying on
-// substituting System.out and doing an rtg.list();
-// fredt - should never lock system resources
-
     /**
      * Retrieves a string representation of the state of this HsqlRuntime.
      *
      * @return a string representation of the state of this HsqlRuntime
      */
     public String stateDescriptor() {
-
-        ByteArrayOutputStream baos;
-        PrintStream           ps;
-        PrintStream           tempps;
-        String                stateDescriptor;
-
-        if (rtg == null) {
-            return null;
-        }
-
-        baos = new ByteArrayOutputStream();
-        ps   = new PrintStream(baos);
-
-        synchronized (System.out) {
-            tempps = System.out;
-
-            try {
-                System.setOut(ps);
-            } catch (SecurityException e) {
-                if (Trace.TRACE) {
-                    Trace.trace(e.toString());
-                }
-            }
-
-            if (rtg != null) {
-                rtg.list();
-            }
-
-            try {
-                System.setOut(tempps);
-            } catch (SecurityException e) {
-                if (Trace.TRACE) {
-                    Trace.trace(e.toString());
-                }
-            }
-        }
-
-        ps.flush();
-
-        stateDescriptor = baos.toString();
-
-        return stateDescriptor.length() == 0 ? rtg.toString()
-                                             : stateDescriptor;
+        StringWriter sw;
+        PrintWriter pw;
+        
+        sw = new StringWriter();
+        pw = new PrintWriter(sw);
+        
+        printThreadGroup(pw,rtg,0);
+        pw.flush();
+        
+        return sw.getBuffer().toString();
     }
 
     /**
@@ -940,33 +1268,49 @@ public final class HsqlRuntime {
     }
 
 //------------------------ Package Instance Methods ----------------------------
-
+   
     /**
      * Retrieves an object against which synchronization will guarantee
      * exclusive HsqlRuntime access regarding the database with the
-     * specified path.  The path argument is absolutized before use.
+     * specified path.  The name argument must already be in canonical
+     * form.
      *
-     * @param the stipulated database path, possibly in relative form
-     * @return the distinct mutex object for the specified database path
+     * @param name must be the canonical database name
+     * @return the distinct mutex object for the specified canonical 
+     *      database name
      */
-    Object findOrCreateDatabaseMutex(String path) {
-        return findOrCreateDatabaseMutexImpl(absoluteDatabasePath(path));
-    }
+    Object findOrCreateDatabaseMutex(String name) {
+
+        Object mutex;        
+
+        synchronized (dbMutexMap) {
+            mutex = dbMutexMap.get(name);
+
+            if (mutex == null) {
+                mutex = new Object();
+
+                dbMutexMap.put(name, mutex);
+            }
+        }
+
+        return mutex;
+    }    
 
     /**
-     * Retrieves a Database instance given a database path.  If a
+     * Retrieves a Database instance given a database name.  If a
      * corresponding Database instance is already registered, it is
      * returned, else a new instance is constructed, registered and returned,
      * if possible.
      *
-     * @param path Database path
+     * @param name Database name
      * @param requestor object requesting instance (optional - may be null)
      * @throws HsqlException if a database access error occurs
      * @return a database instance corresponding to the specified
      *      path.
      */
-    Database getDatabase(String path, Object requestor) throws HsqlException {
+    Database getDatabase(String name, Object requestor) throws HsqlException {
 
+        String                    path;
         Database                  database;
         DatabasePlaceHolderThread placeholder;
         Integer                   useCount;
@@ -974,20 +1318,22 @@ public final class HsqlRuntime {
         Thread[]                  threads;
         Thread                    thread;
 
-        path = absoluteDatabasePath(path);
+
+        name = canonicalDatabaseName(name);
+        
+        if (name == null) {
+            return null;
+        }
 
 //        trace("getDatabase(): entered with path: " + path);
-        synchronized (findOrCreateDatabaseMutexImpl(path)) {
+        synchronized (findOrCreateDatabaseMutex(name)) {
 
 //            trace("getDatabase(): entered database mutex sync block");
-            if (isMemoryDatabasePath(path)) {
-                return getOrCreateMemoryDatabase();
-            }
 
 //            trace("getDatabase(): dbMap is: " + dbMap);
-            database = (Database) dbMap.get(path);
+            database = (Database) dbMap.get(name);
 
-//            trace("getDatabase(): dbMap.get(path) is: " + database);
+//            trace("getDatabase(): dbMap.get(name) is: " + database);
             if (database != null) {
 
 //                trace("getDatabase(): got non-null database");
@@ -1007,7 +1353,7 @@ public final class HsqlRuntime {
 
 //                trace("getDatabase(): returning database from dbMap");
                 return database;
-            }
+            }                        
 
 //            trace("getDatabase(): database not found in dbMap");
             // If dbThreadGroup is null at this point, we have
@@ -1031,61 +1377,62 @@ public final class HsqlRuntime {
             // Under a non-restrictive security policy where creation
             // of the dbThreadGroup is possible, this will block threads
             // in incompatible class loader contexts until the creation
-            // and registration is done.  OTOH, this sync attempt will
-            // throw an NPE if the sandbox of the calling application
-            // disallowed creation of the root HsqlRuntime thread group at
-            // init time and thus its subordinates, such as dbThreadGroup
-            synchronized (dbThreadGroup) {
-
+            // and registration is done.           
+            
+            synchronized (dbThreadGroupMutex) {                
+                if (dbThreadGroup != null) {
 //                trace("getDatabase(): inside dbThreadGroup sync block");
-                threadCount = dbThreadGroup.activeCount();
-
+                    threadCount = dbThreadGroup.activeCount();
+                    
 //                trace("getDatabase(): dbThreadGroup.activeCount(): " + threadCount);
-                threads = new Thread[threadCount];
-
-                try {
-                    dbThreadGroup.enumerate(threads);
-                } catch (SecurityException e) {}
-
+                    threads = new Thread[threadCount];
+                    
+                    try {
+                        dbThreadGroup.enumerate(threads);
+                    } catch (SecurityException e) {}
+                    
 //                trace("getDatabase(): dbThreadGroup enumerated");
-                for (int i = 0; i < threadCount; i++) {
-                    thread = threads[i];
-
+                    for (int i = 0; i < threadCount; i++) {
+                        thread = threads[i];
+                        
 //                    trace("getDatabase(): considering enumerated thread: " + thread);
-                    if ((thread != null) && path.equals(thread.getName())) {
-
+                        if ((thread != null) && name.equals(thread.getName())) {
+                            
 //                        trace("getDatabase(): unreachable class loader context.");
-                        throw Trace.error(
+                            throw Trace.error(
                             Trace.DATABASE_ALREADY_IN_USE,
-                            "incompatible class loader context for: " + path);
+                            "incompatible class loader context for: " + name);
+                        }
                     }
                 }
-
-//                trace("getDatabase(): path is not registered: " + path);
-//                trace("getDatabase(): constructing new Database instance for path");
-                database = new Database(path);
+//                trace("getDatabase(): name is not registered: " + name);
+//                trace("getDatabase(): constructing new Database instance for name");
+                path     = canonicalDatabasePath(name);
+                database = new Database(name, path);
 
 //                trace("getDatabase(): new Database constructed: " + database);
 //                trace("getDatabase(): adding database to dbMap");
-                dbMap.put(path, database);
+                dbMap.put(name, database);
 
+                if (dbThreadGroup != null) {
 //                trace("getDatabase(): dbMap is now: " + dbMap);
 //                trace("getDatabase(): constructing placeholder thread...");
-                placeholder = new DatabasePlaceHolderThread(dbThreadGroup,
-                        database);
-
+                    placeholder = new DatabasePlaceHolderThread(dbThreadGroup,
+                                                                database);
+                    
 //                trace("getDatabase(): placeholder is : " + placeholder);
 //                trace("getDatabase(): dbThreadMap was: " + dbThreadMap);
-                if (dbThreadMap.containsKey(path)) {
-                    throw new IllegalStateException();
-                }
-
+                    if (dbThreadMap.containsKey(name)) {
+                        throw new IllegalStateException();
+                    }
+                    
 //                trace("getDatabase(): adding placeholder to dbThreadMap");
-                dbThreadMap.put(path, placeholder);
-
+                    dbThreadMap.put(name, placeholder);
+                    
 //                trace("getDatabase(): dbThreadMap is now: " + dbThreadMap);
 //                trace("getDatabase(): starting placeholder thread");
-                placeholder.start();
+                    placeholder.start();
+                }
 
 //                trace("getDatabase(): dbUseCountMap was: " + dbUseCountMap);
 //                trace("getDatabase(): putting use count 1 for : " + database);
@@ -1146,7 +1493,7 @@ public final class HsqlRuntime {
         int      count;
         Thread[] threads;
         Thread   placeholder;
-        String   path;
+        String   name;
         Integer  useCount;
         Session  sysSession;
 
@@ -1158,24 +1505,27 @@ public final class HsqlRuntime {
             return;
         }
 
-        path = absoluteDatabasePath(database.getName());
+        name = database.getName();
 
-        synchronized (findOrCreateDatabaseMutexImpl(path)) {
+        synchronized (findOrCreateDatabaseMutex(name)) {
             if (database.isShutdown()) {
 
                 // Presumably, the database has already removed
                 // itself from HsqlRuntime registration.
                 // Given that a database is only shutdown by processing
-                // the "shutdown" SQL command and that all SQL commands
+                // the "shutdown" SQL command, that all sessions are
+                // disconnected as a result and that SQL commands
                 // are currently processed in a serial fashion by virtue of
                 // synchronization on the concerned Database instance, this
-                // case should never actually occur, but is included so that
-                // enforcement is centralized here
+                // case should never actually occur, but is included 
+                // none-the-less so that enforcement is centralized here and 
+                // integrity of the HsqlRuntime repository is absolutely 
+                // guaranteed
 //                trace("releaseDatabase(): database is shutdown; exiting immediately");
                 return;
             }
 
-            if (database != dbMap.get(path)) {
+            if (database != dbMap.get(name)) {
 
                 // Again, this should never happen under the new scheme.
 //                trace("releaseDatabase(): database not mapped; exiting immediately");
@@ -1190,7 +1540,7 @@ public final class HsqlRuntime {
                 // We'd get an NPE below anyway
 //                trace("releaseDatabase(): useCount == null; IllegalStateException next");
                 throw new IllegalStateException("null use count for: "
-                                                + path);
+                                                + name);
             }
 
 //            trace("releaseDatabase(): useCount: " + useCount);
@@ -1233,18 +1583,13 @@ public final class HsqlRuntime {
      */
     void removeDatabase(Database database) {
 
-        String path;
+        String name;
         Thread placeholder;
 
 //        trace("removeDatabase(): entered with " + database);
-        path = absoluteDatabasePath(database.getName());
+        name = database.getName();
 
-        // applet use
-        if (isMemoryDatabasePath(path)) {
-            removeMemoryDatabase();
-        }
-
-        if (database != dbMap.get(path)) {
+        if (database != dbMap.get(name)) {
 
             // This should not happen happen under the new scheme because
             // Database.finalize() is now set up properly (does not try to
@@ -1257,11 +1602,11 @@ public final class HsqlRuntime {
         }
 
         dbUseCountMap.remove(database);
-        dbMap.remove(path);
+        dbMap.remove(name);
 
 //        trace("removeDatabase(): getting placeholder for: " + path);
 //        trace("removeDatabase(): dbThreadMap is: " + dbThreadMap);
-        placeholder = (Thread) dbThreadMap.remove(path);
+        placeholder = (Thread) dbThreadMap.remove(name);
 
 //        trace("removeDatabase(): placeholder is: " + placeholder);
         if (placeholder != null) {
@@ -1282,7 +1627,7 @@ public final class HsqlRuntime {
 //            trace("removeDatabase(): dbMap.size() == 0; shutting down timer");
             // Exit timer background thread, allowing VM to exit if there are
             // no other running threads.  Timer thread should not be a daemon
-            // as it's better for it to continue process database tasks until
+            // as it's better for it to continue to process database tasks until
             // the queue is empty than to stop as soon as there are no other
             // running threads in the VM.
             timer.shutDown();
@@ -1360,75 +1705,18 @@ public final class HsqlRuntime {
 //-------------------------- Private Instance Methods --------------------------
 
     /**
-     * Retrieves an object against which synchronization will guarantee
-     * exclusive HsqlRuntime access regarding the database with the
-     * specified path.  The path argument must already be in absolutized
-     * form.
-     *
-     * @param the absolute database path
-     * @return the distinct mutex object for the specified absolute
-     *      database path
-     */
-    private Object findOrCreateDatabaseMutexImpl(String abspath) {
-
-        Object mutex;
-
-        synchronized (dbMutexMap) {
-            mutex = dbMutexMap.get(abspath);
-
-            if (mutex == null) {
-                mutex = new Object();
-
-                dbMutexMap.put(abspath, mutex);
-            }
-        }
-
-        return mutex;
-    }
-
-    /**
-     * Retrieves the existing or newly created memory Database instance.
-     *
-     * @return the memory database instance for this HsqlRuntime
-     * @throws HsqlException should be never; required by database Constructor
-     */
-    private Database getOrCreateMemoryDatabase() throws HsqlException {
-
-        // This method does not need synchronization because it is
-        // only called inside a syncronized(findOrCreateDatabaseMutext(path))
-        // block.
-        if (memoryDatabase == null) {
-            memoryDatabase = new Database(".");
-        }
-
-        return memoryDatabase;
-    }
-
-    /**
-     * Removes the memory Database instance for this HsqlRuntime.
-     */
-    private void removeMemoryDatabase() {
-
-        // This method does not need synchronization because it is
-        // only called inside a syncronized(findOrCreateDatabaseMutext(path))
-        // block.
-        memoryDatabase = null;
-    }
-
-    /**
      * Initializes the HsqlRuntime state upon first getHsqlRuntime() invocation
-     *
-     * @throws IllegalStateException if a problem occurs while initializing the
-     *      HsqlRuntime.
      */
-    private void init() throws IllegalStateException {
+    private void init()  {
 
         ThreadGroup root;
         Vector      exceptions;
         Class       c;
-
-        dbThreadMap   = new Hashtable();
-        dbMap         = new Hashtable();
+        
+        aliasMap      = new Hashtable();        
+        dbMap         = new Hashtable(); 
+        dbMutexMap    = new Hashtable();
+        dbThreadMap   = new Hashtable();        
         dbUseCountMap = new Hashtable();
         exceptions    = new Vector();
 
@@ -1454,8 +1742,11 @@ public final class HsqlRuntime {
         if (rtg == null) {
 
 //            trace("root hsqldb thread group is null");
-            // do nothing; security dictates that we aren't allowed to have
-            // our thread groups
+            // security dictates that we aren't allowed to have
+            // our thread groups; still need sync objects, unless
+            // we want to do code back-flips later
+            
+            dbThreadGroupMutex = new Object();            
         } else {
 
 //            trace("got root hsqldb thread group: " + rtg);
@@ -1467,42 +1758,41 @@ public final class HsqlRuntime {
                 dbThreadGroup.setDaemon(false);
                 serverThreadGroup.setDaemon(false);
                 webServerThreadGroup.setDaemon(false);
+                
+                dbThreadGroupMutex = dbThreadGroup;
 
 //                trace("stateDescriptor\n" + stateDescriptor());
                 if (Trace.TRACE) {
                     Trace.trace("HsqlRuntime.init() fully initialized");
                 }
             } catch (Exception e) {
+                // security dictates that we aren't allowed to have
+                // subordinate our thread groups; still need sync objects,
+                // unless we want to do code back-flips later              
+                dbThreadGroupMutex = new Object();               
                 exceptions.addElement(e);
             }
         }
 
         timer = new HsqlTimer();
-        c     = Runtime.class;
+        c     = java.lang.Runtime.class;
 
-        try {
-            addShutdownHook = c.getMethod("addShutdownHook",
-                                          new Class[]{ Thread.class });
-        } catch (Exception e) {}
+        addShutdownHook = 
+            getMethod(c, "addShutdownHook", new Class[]{ Thread.class });
 
-        try {
-            availableProcessors = c.getMethod("availableProcessors",
-                                              new Class[]{});
-        } catch (Exception e) {}
+        availableProcessors = 
+            getMethod(c, "availableProcessors", new Class[]{});
 
-        try {
-            maxMemory = c.getMethod("maxMemory", new Class[]{});
-        } catch (Exception e) {}
+        maxMemory = getMethod(c, "maxMemory", new Class[]{});
 
-        try {
-            removeShutdownHook = c.getMethod("removeShutdownHook",
-                                             new Class[]{ Thread.class });
-        } catch (Exception e) {}
+        removeShutdownHook 
+            = getMethod(c, "removeShutdownHook", new Class[]{ Thread.class });          
 
         if (exceptions.size() > 0) {
+            print("WARNING:");
             print("Restrictive security policy in effect.");
             print("Available features will be limited.");
-            print("Likely only memory database instance will be available.");
+            print("Likely only mem:, res: and network databases available.");
             print("Exceptions follow:");
 
             for (int i = 0; i < exceptions.size(); i++) {
@@ -1513,6 +1803,48 @@ public final class HsqlRuntime {
 
     private void print(Object o) {
         Trace.printSystemOut("[" + this + "]:" + o);
+    }
+    
+    private void printThreadGroup(PrintWriter pw, ThreadGroup tg, int level) {
+        int           count;
+        ThreadGroup[] atg;
+        Thread[]      at;
+
+        if (tg == null) {
+            return;   
+        }
+        
+        for(int i = 0; i < level; i++) {
+            pw.print("    ");
+        }
+
+        pw.println(tg);
+
+        count = tg.activeGroupCount();
+        atg   = new ThreadGroup[count];
+        
+        tg.enumerate(atg, false);
+
+        for (int i = 0; i < count; i++) {
+            if (atg[i] != null) {
+                printThreadGroup(pw, atg[i], level+1);
+            }
+        }
+
+        count = tg.activeCount();
+        at    = new Thread[count];
+        
+        tg.enumerate(at, false);
+
+        for (int i = 0; i < count; i++) {
+            if (at[i] != null) {
+                for(int j = 0; j < level + 1; j++) {
+                    pw.print("    ");
+                }
+                
+                pw.println(at[i]);
+            }
+        }
     }
 
 //    private void trace(Object o) {
@@ -1541,8 +1873,8 @@ public final class HsqlRuntime {
          *
          * @throws HsqlException if a database access error occurs
          */
-        private DatabaseReference(String path) throws HsqlException {
-            database = HsqlRuntime.getHsqlRuntime().getDatabase(path, this);
+        private DatabaseReference(String name) throws HsqlException {
+            database = HsqlRuntime.getHsqlRuntime().getDatabase(name, this);
         }
 
         //~ Methods ------------------------------------------------------------
@@ -1557,9 +1889,9 @@ public final class HsqlRuntime {
          *
          * @throws HsqlException if a database access error occurs
          */
-        public static DatabaseReference newReference(String path)
+        public static DatabaseReference newReference(String name)
         throws HsqlException {
-            return new DatabaseReference(path);
+            return new DatabaseReference(name);
         }
 
         /**
@@ -1582,9 +1914,9 @@ public final class HsqlRuntime {
         }
 
         /**
-         * Retreives a string representation of this object. This includes a
+         * Retrieves a string representation of this object. This includes a
          * string representation of the internal database instance,
-         * its absolute path and its state string.
+         * its name and its state string.
          *
          * @return a string representation of this object
          */
@@ -1594,8 +1926,7 @@ public final class HsqlRuntime {
             String dbstate;
 
             dbname = (database == null) ? null
-                                        : absoluteDatabasePath(
-                                            database.getName());
+                                        : database.getName();
             dbstate = (database == null) ? null
                                          : database.getStateString();
 
@@ -1635,7 +1966,7 @@ public final class HsqlRuntime {
          */
         DatabasePlaceHolderThread(ThreadGroup tg, Database database) {
 
-            super(tg, HsqlRuntime.absoluteDatabasePath(database.getName()));
+            super(tg, database.getName());
 
             this.database = database;
 
@@ -1746,7 +2077,7 @@ public final class HsqlRuntime {
             sb            = new StringBuffer();
 
             sb.append("DatabasePlaceHolderThread").append('[').append(
-                String.valueOf(database)).append('[').append(this.getName())    // was set to abs db path
+                String.valueOf(database)).append('[').append(this.getName())
                 .append('[').append(dbStateString).append(']').append(
                     ']').append('[').append(String.valueOf(cl)).append(
                     ']').append(',').append(this.getPriority()).append(
@@ -1754,5 +2085,5 @@ public final class HsqlRuntime {
 
             return sb.toString();
         }
-    }
+    }    
 }

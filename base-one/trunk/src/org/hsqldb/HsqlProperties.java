@@ -54,28 +54,16 @@ import org.hsqldb.lib.ArrayUtil;
  */
 public class HsqlProperties {
 
-    protected static boolean JARFILE;
-    private static Method    savePropsMethod = null;
-
-    static {
-        try {
-            JARFILE = Boolean.getBoolean("hsqldb.files_in_jar");
-        } catch (Exception e) {}
-
-        try {
-            savePropsMethod = java.util.Properties.class.getMethod("store",
-                    new Class[] {
-                OutputStream.class, String.class
-            });
-        } catch (NoSuchMethodException e) {}
-        catch (SecurityException e) {}
-    }
+    private static final Method storeMethod = 
+        HsqlRuntime.getMethod(Properties.class, "store", 
+                              new Class[] {OutputStream.class, String.class});
 
     public static int    NO_VALUE_FOR_KEY = 1;
     protected String     fileName;
     protected Properties stringProps;
     protected int[]      errorCodes = new int[0];
     protected String[]   errorKeys  = new String[0];
+    protected boolean    resource   = false;
 
     public HsqlProperties() {
         stringProps = new Properties();
@@ -86,6 +74,12 @@ public class HsqlProperties {
         stringProps = new Properties();
         fileName    = name;
     }
+    
+    public HsqlProperties(String name, boolean b) {
+        stringProps = new Properties();
+        fileName    = name;
+        resource    = b;
+    }    
 
     public HsqlProperties(Properties props) {
         stringProps = props;
@@ -199,20 +193,22 @@ public class HsqlProperties {
     }
 
     public boolean checkFileExists() {
-
+        String      propFilename;
+        
         if (fileName == null || fileName.length() == 0) {
             return false;
         }
+        
+        propFilename = fileName + ".properties";
 
-        if (JARFILE) {
-            return (this.getClass().getClassLoader().getResource(fileName
-                    + ".properties") != null);
-        }
-
-        return FileUtil.exists(fileName + ".properties");
+        return resource
+            ? null != getClass().getResource(propFilename)
+            : FileUtil.exists(propFilename);
     }
 
     public boolean load() throws Exception {
+        InputStream fis;
+        String      propsFilename;
 
         if (!checkFileExists()) {
             return false;
@@ -223,20 +219,15 @@ public class HsqlProperties {
                 "properties name is null or empty");
         }
 
-        InputStream fis = null;
+        fis           = null;
+        propsFilename = fileName + ".properties";
 
         try {
-            if (JARFILE) {
-                fis = this.getClass().getClassLoader().getResourceAsStream(
-                    fileName + ".properties");
-            } else {
-                File f = new File(fileName + ".properties");
-
-                fis = new FileInputStream(f);
-            }
+            fis = resource
+                ? getClass().getResourceAsStream(propsFilename)
+                : new FileInputStream(new File(propsFilename));
 
             stringProps.load(fis);
-            fis.close();
         } finally {
             if (fis != null) {
                 fis.close();
@@ -278,11 +269,11 @@ public class HsqlProperties {
 
         FileOutputStream fos = new FileOutputStream(f);
 
-        if (savePropsMethod == null) {
+        if (storeMethod == null) {
             stringProps.save(fos, "HSQL database");
         } else {
             try {
-                savePropsMethod.invoke(stringProps, new Object[] {
+                storeMethod.invoke(stringProps, new Object[] {
                     fos, "HSQL database"
                 });
             } catch (java.lang.reflect.InvocationTargetException e) {}

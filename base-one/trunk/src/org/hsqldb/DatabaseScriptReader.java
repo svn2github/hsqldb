@@ -32,6 +32,7 @@
 package org.hsqldb;
 
 import java.io.*;
+import java.net.URL;
 import org.hsqldb.lib.StringConverter;
 
 /**
@@ -134,15 +135,17 @@ class DatabaseScriptReader {
         return lineCount;
     }
 
-    protected void openFile() throws IOException {
+    protected void openFile() throws IOException {       
+   
+        // canonical path for "res:" type databases always starts with "/"
+        // so we don't need to use getClassLoader.getResourceAsStream here
+        // or anywhere else.
+        // In fact, getClass().getResourceAsStream() is preferred, as 
+        // it is not subject to the same security restrictions
+        dataStreamIn = db.isFilesInJar()
+            ? getClass().getResourceAsStream(fileName)
+            : new DataInputStream(new FileInputStream(fileName));
 
-        if (db.filesInJar) {
-            dataStreamIn =
-                DatabaseScriptReader.class.getClassLoader()
-                    .getResourceAsStream(fileName);
-        } else {
-            dataStreamIn = new DataInputStream(new FileInputStream(fileName));
-        }
 
         d = new BufferedReader(new InputStreamReader(dataStreamIn));
     }

@@ -93,25 +93,24 @@ public class BaseHashMap {
     boolean hasZeroKey;
     int     zeroKeyIndex;
 
-    public interface keyOrValueTypes {
+    // keyOrValueTypes
+    protected static final int noKeyOrValue     = 0;
+    protected static final int intKeyOrValue    = 1;
+    protected static final int longKeyOrValue   = 2;
+    protected static final int objectKeyOrValue = 3;
 
-        int noKeyOrValue     = 0;
-        int intKeyOrValue    = 1;
-        int longKeyOrValue   = 2;
-        int objectKeyOrValue = 3;
-    }
-
-    public static final int noPurge            = 0;
-    public static final int purgeAll           = 1;
-    public static final int purgeAlternateHalf = 2;
-    public static final int purgeOldAccessHalf = 3;
+    // purgePolicy
+    protected static final int noPurge            = 0;
+    protected static final int purgeAll           = 1;
+    protected static final int purgeAlternateHalf = 2;
+    protected static final int purgeOldAccessHalf = 3;
 
     protected BaseHashMap(int initialCapacity, int maxCapacity,
                           int purgePolicy) throws IllegalArgumentException {
 
         this(initialCapacity, 1,
-             BaseHashMap.keyOrValueTypes.objectKeyOrValue,
-             BaseHashMap.keyOrValueTypes.noKeyOrValue);
+             BaseHashMap.objectKeyOrValue,
+             BaseHashMap.noKeyOrValue);
 
         this.maxCapacity = maxCapacity;
         this.purgePolicy = purgePolicy;
@@ -130,10 +129,10 @@ public class BaseHashMap {
 
         int arraySize = threshold;
 
-        if (keyType == keyOrValueTypes.intKeyOrValue) {
+        if (keyType == BaseHashMap.intKeyOrValue) {
             isIntKey    = true;
             intKeyTable = new int[arraySize];
-        } else if (keyType == keyOrValueTypes.objectKeyOrValue) {
+        } else if (keyType == BaseHashMap.objectKeyOrValue) {
             isObjectKey    = true;
             objectKeyTable = new Object[arraySize];
         } else {
@@ -141,10 +140,10 @@ public class BaseHashMap {
             longKeyTable = new long[arraySize];
         }
 
-        if (valueType == keyOrValueTypes.intKeyOrValue) {
+        if (valueType == BaseHashMap.intKeyOrValue) {
             isIntValue    = true;
             intValueTable = new int[arraySize];
-        } else if (valueType == keyOrValueTypes.objectKeyOrValue) {
+        } else if (valueType == BaseHashMap.objectKeyOrValue) {
             isObjectValue    = true;
             objectValueTable = new Object[arraySize];
         } else {

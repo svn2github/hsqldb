@@ -138,7 +138,7 @@ public final class BundleHandler {
 
             if (bundleHandle == null) {
                 try {
-                    bundle = getBundle(name, locale, cl);
+                    bundle = getBundle(bundleName, locale, cl);
                     bundleList.add(bundle);
                     bundleHandle = ValuePool.getInt(bundleList.size() - 1);
                     bundleHandleMap.put(bundleKey, bundleHandle);

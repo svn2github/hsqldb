@@ -67,9 +67,11 @@
 
 package org.hsqldb;
 
-import java.util.Enumeration;
+//import java.util.Enumeration;
 import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HsqlStringBuffer;
 
@@ -534,10 +536,11 @@ class DatabaseScript {
     private static void addRightsStatements(Database dDatabase, Result r) {
 
         HsqlStringBuffer a;
-        HsqlArrayList    uv = dDatabase.getUserManager().getUsers();
+        HashMappedList    uv = dDatabase.getUserManager().getUsers();
 
-        for (int i = 0; i < uv.size(); i++) {
-            User   u    = (User) uv.get(i);
+        Iterator it = uv.values().iterator();
+        for (;it.hasNext();) {
+            User   u    = (User) it.next();
             String name = u.getName();
 
             if (!name.equals("PUBLIC")) {
@@ -557,7 +560,7 @@ class DatabaseScript {
                 addRow(r, a.toString());
             }
 
-            HashMap rights = u.getRights();
+            IntValueHashMap rights = u.getRights();
 
             if (rights == null) {
                 continue;
@@ -567,7 +570,7 @@ class DatabaseScript {
 
             while (e.hasNext()) {
                 Object object = e.next();
-                int    right  = ((Integer) (rights.get(object))).intValue();
+                int    right  = rights.get(object,0);
 
                 a = new HsqlStringBuffer(64);
 

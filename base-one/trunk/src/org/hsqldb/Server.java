@@ -203,6 +203,15 @@ public class Server implements ServerConstants, HsqlSocketRequestHandler {
             Server.this.run();
             trace("ServerThread.run() exiting");
         }
+        
+        public String toString() {
+            String dbname;
+            
+            dbname = mDatabase == null ? null : mDatabase.getName();
+            
+            return 
+                super.toString() + "[Database[" + dbname + "]," + socket + "]";
+        }
     }
 
 //--------------------------------- Constructors -------------------------------
@@ -323,6 +332,10 @@ public class Server implements ServerConstants, HsqlSocketRequestHandler {
         scl.removeAllElements();
         trace("closeAllServerConnections() exited");
     }
+    
+    protected void finalize() throws Throwable {
+        
+    }
 
     /**
      * Retrieves, in string form, this server's host address.
@@ -348,7 +361,7 @@ public class Server implements ServerConstants, HsqlSocketRequestHandler {
      *  description="For hosted database"
      */
     public String getDatabasePath() {
-        return HsqlRuntime.absoluteDatabasePath(
+        return runtime.canonicalDatabasePath(
             serverProperties.getProperty(SC_KEY_DATABASE));
     }
 
@@ -1047,7 +1060,7 @@ public class Server implements ServerConstants, HsqlSocketRequestHandler {
                 return getState();
             }
 
-            serverThread = new ServerThread(serverThreadGroup, serverId);
+            serverThread = new ServerThread(serverThreadGroup, serverId + "[LISTENER]");
 
             serverThread.start();
             waitForStatus();
@@ -1119,10 +1132,6 @@ public class Server implements ServerConstants, HsqlSocketRequestHandler {
         serverProtocol    = protocol;
         serverProperties  = newDefaultProperties();
         serverThreadGroup = runtime.getServerThreadGroup(serverProtocol);
-        serverConnectionThreadGroup = new ThreadGroup(serverThreadGroup,
-                serverId);
-
-        serverConnectionThreadGroup.setDaemon(false);
         javaSystem.setLogToSystem(isTrace());
     }
 
@@ -1192,8 +1201,20 @@ public class Server implements ServerConstants, HsqlSocketRequestHandler {
      */
     final void printResource(String key) {
 
-        String          resource = BundleHandler.getString(bhnd, key);
-        StringTokenizer st       = new StringTokenizer(resource, "\n\r");
+        String          resource;
+        StringTokenizer st;
+        
+        if (bhnd < 0) {
+            return;
+        }
+        
+        resource = BundleHandler.getString(bhnd, key);
+        
+        if (resource == null) {
+            return;
+        }
+        
+        st = new StringTokenizer(resource, "\n\r");        
 
         while (st.hasMoreTokens()) {
             print(st.nextToken());
@@ -1494,6 +1515,11 @@ public class Server implements ServerConstants, HsqlSocketRequestHandler {
         sw = new StopWatch();
 
         setState(SERVER_OPENING);
+        
+        serverConnectionThreadGroup = new ThreadGroup(serverThreadGroup,
+                serverId + "[CONNECTIONS]");
+
+        serverConnectionThreadGroup.setDaemon(false);        
 
         serverError = null;
 
@@ -1582,18 +1608,36 @@ public class Server implements ServerConstants, HsqlSocketRequestHandler {
         releaseDB();
 
         serverThread = null;
+        
+        // paranoia:  try { sctg.destroy() } is probably fine
+        if (serverConnectionThreadGroup != null) {
+            if (!serverConnectionThreadGroup.isDestroyed()) {
+                try {
+                    serverConnectionThreadGroup.destroy();
+                } catch (Throwable t) {
+                    if (Trace.TRACE) {
+                        Trace.trace(t.toString());
+                    }
+                }
+            }
+            serverConnectionThreadGroup = null;
+        }        
 
         setState(SERVER_SHUTDOWN);
         print(sw.elapsedTimeToMessage("Shutdown sequence completed"));
-        notifyStatus();
+        notifyStatus();                
 
         if (isNoSystemExit()) {
             printWithTimestamp("SHUTDOWN : System.exit() was not called");
             print(dashes);
         } else {
             printWithTimestamp("SHUTDOWN : System.exit() is called next");
-            print(dashes);
-            System.exit(0);
+            print(dashes); 
+            try {
+                System.exit(0);
+            } catch (Throwable t) {
+                trace(t.toString());
+            }
         }
     }
 

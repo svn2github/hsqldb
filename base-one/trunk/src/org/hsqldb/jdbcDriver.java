@@ -127,6 +127,7 @@ public class jdbcDriver implements Driver {
                         REVISION  = 2;
     static final String VERSION   = "1.7.2";
     static final String PRODUCT   = "HSQL Database Engine";
+    static final HsqlRuntime runtime = HsqlRuntime.getHsqlRuntime();
 
     static final void throwError(HsqlException e) throws SQLException {
         throw new SQLException(e.message, e.state, e.code);
@@ -188,14 +189,24 @@ public class jdbcDriver implements Driver {
     public Connection connect(String url,
                               Properties info) throws SQLException {
 
+        String         canonicalUrl;
         String         spec;
         String         specProps;
         int            pos;
         HsqlProperties props;
+                
 
         if (!acceptsURL(url)) {
             return null;
         }
+        
+        canonicalUrl = runtime.canonicalConnectionURL(url);
+        
+        if (canonicalUrl == null) {
+            throw new SQLException("no canonical form for url: " + url); 
+        }
+        
+        url = canonicalUrl;
 
         spec = url.substring(sStartURL.length());
         pos  = spec.indexOf(';');
@@ -357,7 +368,7 @@ public class jdbcDriver implements Driver {
         return false;
     }
 
-    static {
+    static {        
         try {
             DriverManager.registerDriver(new jdbcDriver());
 

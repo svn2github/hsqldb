@@ -50,8 +50,8 @@ public class HashMap extends BaseHashMap {
 
     public HashMap(int initialCapacity,
                    float loadFactor) throws IllegalArgumentException {
-        super(initialCapacity, loadFactor, keyOrValueTypes.objectKeyOrValue,
-              keyOrValueTypes.objectKeyOrValue);
+        super(initialCapacity, loadFactor, BaseHashMap.objectKeyOrValue,
+              BaseHashMap.objectKeyOrValue);
     }
 
     public Object get(Object key) {

@@ -659,6 +659,33 @@ public class LockFile {
     public boolean isLocked() {
         return locked;
     }
+    
+    /**
+     * Retrieves whether there is potentially already a cooperative lock,
+     * operating system lock or some other situation preventing
+     * a cooperative lock condition from being aquired, relative to the
+     * specified path.
+     *
+     * @param path the path to test 
+     */    
+    public static boolean isLocked(String path) {
+        LockFile        lf;
+        FileInputStream fis;                
+        
+        try {
+            lf = LockFile.newLockFile(path);
+            lf.checkHeartbeat();
+            if (lf.f.exists() && lf.f.isFile()) {
+                fis = new FileInputStream(lf.f);
+                fis.read();
+                fis.close();
+            }
+        } catch (Exception e) {
+            return true;
+        }
+
+        return false;
+    }    
 
     /**
      * Retrieves whether this object holds a valid lock on its lock file. <p>

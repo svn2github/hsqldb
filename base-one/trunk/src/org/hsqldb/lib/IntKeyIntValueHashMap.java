@@ -32,6 +32,7 @@
 package org.hsqldb.lib;
 
 import java.util.NoSuchElementException;
+import org.hsqldb.store.BaseHashMap;
 
 public class IntKeyIntValueHashMap extends org.hsqldb.store.BaseHashMap {
 
@@ -47,27 +48,27 @@ public class IntKeyIntValueHashMap extends org.hsqldb.store.BaseHashMap {
     public IntKeyIntValueHashMap(int initialCapacity,
                                  float loadFactor)
                                  throws IllegalArgumentException {
-        super(initialCapacity, loadFactor, keyOrValueTypes.intKeyOrValue,
-              keyOrValueTypes.intKeyOrValue);
+        super(initialCapacity, loadFactor, BaseHashMap.intKeyOrValue,
+              BaseHashMap.intKeyOrValue);
     }
 
     public int get(int key) throws NoSuchElementException {
         return super.getInt(key);
     }
 
-    public int get(int key, int defaultValue){
+    public int get(int key, int defaultValue) {
         return super.getInt(key, defaultValue);
     }
 
-    public boolean get(int key, int[] value){
+    public boolean get(int key, int[] value) {
         return super.getInt(key, value);
     }
 
     public void put(int key, int value) {
-        super.addOrRemove(key, value, null, null,false);
+        super.addOrRemove(key, value, null, null, false);
     }
 
     public Object remove(int key) {
-        return super.addOrRemove(key,0,null,null,true);
+        return super.addOrRemove(key, 0, null, null, true);
     }
 }

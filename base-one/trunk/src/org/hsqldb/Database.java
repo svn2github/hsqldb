@@ -119,6 +119,7 @@ import org.hsqldb.lib.StopWatch;
 class Database {
 
     private String        sName;
+    private String        sPath;
     private UserManager   aAccess;
     private HsqlArrayList tTable;
     DatabaseInformation   dInfo;
@@ -154,22 +155,46 @@ class Database {
     final static int               DATABASE_SHUTDOWN = 16;
 
     /**
-     *  Constructs a new Database object that mounts or creates the database
-     *  files specified by the supplied name.
+     *  Constructs a new Database object having the specified canonical name,
+     *  using the specified canonical path (if file-based) to access its
+     *  database files.
      *
-     * @param  name the path to and common name shared by the database files
-     *      this Database uses
-     * @exception  HsqlException if the specified path and common name
+     * @param name must be the canonical name of the database, as determined
+     *      by HsqlRuntime.canonicalDatabaseName(String)
+     * @param path must be the canonical path to the database files
+     *      this Database uses, as determined by 
+     *      HsqlRuntime.canonicalDatabasePath(String)     
+     * @exception  HsqlException if the specified name and path
      *      combination is illegal or unavailable, or the database files the
-     *      name resolves to are in use by another process
+     *      name and path resolves to are in use by another process
      */
-    Database(String name) throws HsqlException {
+    Database(String name, String path) throws HsqlException {
 
         if (Trace.TRACE) {
             Trace.trace();
         }
 
-        sName  = name.trim();
+// PRE This is guaranteed, since HsqlRuntime is now the sole constructor 
+//       of Database instances:
+//
+//        Trace.check(
+//            name != null 
+//                && HsqlRuntime.canonicalDatabaseName(name).equals(name),
+//            Trace.GENERAL_ERROR, 
+//            "bad database name: " + name);
+//        
+//        Trace.check(
+//            HsqlRuntime.canonicalDatabasePath(name).equals(path),
+//            Trace.GENERAL_ERROR, 
+//            "bad database path: " + path); 
+        
+        sName  = name;
+        sPath  = path;
+        
+        if (sName.startsWith("res:")) {
+            setFilesInJar();
+        }
+        
         logger = new Logger();
 
         // does not need to be done more than once
@@ -197,11 +222,7 @@ class Database {
     private void open() throws HsqlException {
 
         boolean newdatabase;
-        User    sysUser;
-
-        if (sName.length() == 0) {
-            throw Trace.error(Trace.GENERAL_ERROR, "bad database name");
-        }
+        User    sysUser; 
 
         setState(DATABASE_OPENING);
         compiledStatementManager.reset();
@@ -216,21 +237,27 @@ class Database {
         sysUser               = aAccess.createSysUser(this);
         sessionManager        = new SessionManager(this, sysUser);
         databaseProperties    = new HsqlDatabaseProperties(this);
-        dInfo = DatabaseInformation.newDatabaseInformation(this);
+        dInfo = DatabaseInformation.newDatabaseInformation(this);        
 
-        if (sName.equals(".")) {
+        if (sPath == null) {
             newdatabase = true;
-        } else {
-
+        } else {          
             // create properties file if not exits and report if new file
             newdatabase = !databaseProperties.load();
 
-            logger.openLog(this, sName);
+            logger.openLog(this);
         }
 
-        if (newdatabase) {
+        // Case of filesInJar:
+        // There could be an accessible script file resource but no
+        // properties file resource in the jar, in which case,
+        // the CREATE USER SA below might throw, even though we
+        // actually have a valid filesInJar database with a
+        // valid "SA" user.
+        // TODO:  This is a kludge; investigate and simplfy
+        if (newdatabase && !aAccess.exists("SA")) {
             execute("CREATE USER SA PASSWORD \"\" ADMIN",
-                    sessionManager.getSysSession());
+                sessionManager.getSysSession());
         }
 
         setState(DATABASE_ONLINE);
@@ -245,6 +272,10 @@ class Database {
      */
     String getName() {
         return sName;
+    }
+    
+    String getPath() {
+        return sPath;
     }
 
     /**
@@ -395,10 +426,15 @@ class Database {
 
 // ----------------------------------------------------------------------------
 
+    boolean isFilesInJar() {
+        return filesInJar;
+    }
     /** Setter for fileInJar attribute */
     void setFilesInJar() {
         filesInJar = true;
+        filesReadOnly = true;
     }
+        
 
     /**
      *  Retrieves a HsqlArrayList containing references to all non-system
@@ -736,11 +772,11 @@ class Database {
      */
     void close(int closemode) throws HsqlException {
 
-        HsqlException se;
+        HsqlException he;
         HsqlRuntime   rt;
 
-        se = null;
-        rt = HsqlRuntime.getHsqlRuntime();
+        he = null;
+        rt = HsqlRuntime.getHsqlRuntime();        
 
         synchronized (rt.findOrCreateDatabaseMutex(sName)) {
             setState(DATABASE_CLOSING);
@@ -759,9 +795,9 @@ class Database {
                 }
             } catch (Throwable t) {
                 if (t instanceof HsqlException) {
-                    se = (HsqlException) t;
+                    he = (HsqlException) t;
                 } else {
-                    se = Trace.error(Trace.GENERAL_ERROR, t.toString());
+                    he = Trace.error(Trace.GENERAL_ERROR, t.toString());
                 }
             }
 
@@ -772,8 +808,8 @@ class Database {
             this.setState(DATABASE_SHUTDOWN);
         }
 
-        if (se != null) {
-            throw se;
+        if (he != null) {
+            throw he;
         }
     }
 

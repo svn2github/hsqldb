@@ -68,14 +68,19 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.HashMappedList;
+import org.hsqldb.lib.IntValueHashMap;
+import org.hsqldb.lib.IntKeyHashMap;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.Iterator;
+import org.hsqldb.lib.StringUtil;
 
 // fredt@users 20020130 - patch 497872 by Nitin Chauhan - loop optimisation
 // fredt@users 20020320 - doc 1.7.0 - update
 // fredt@users 20021103 - patch 1.7.2 - allow for drop table, etc.
+// fredt@users 20030613 - patch 1.7.2 - simplified data structures and reporting
 
 /**
  * Contains a set of User objects, and supports operations for
@@ -101,6 +106,24 @@ class UserManager {
     static final int     ALL         = SELECT | DELETE | INSERT | UPDATE;
     static final Integer INTEGER_ALL = new Integer(ALL);
 
+    //
+    static final String S_R_ALL    = "ALL";
+    static final String S_R_SELECT = "SELECT";
+    static final String S_R_UPDATE = "UPDATE";
+    static final String S_R_DELETE = "DELETE";
+    static final String S_R_INSERT = "INSERT";
+
+    //
+    static final IntValueHashMap rightsStringLookup = new IntValueHashMap(7);
+
+    static {
+        rightsStringLookup.put(S_R_ALL, ALL);
+        rightsStringLookup.put(S_R_SELECT, SELECT);
+        rightsStringLookup.put(S_R_UPDATE, UPDATE);
+        rightsStringLookup.put(S_R_DELETE, DELETE);
+        rightsStringLookup.put(S_R_INSERT, INSERT);
+    }
+
     /**
      * This object's set of User objects. <p>
      *
@@ -108,7 +131,7 @@ class UserManager {
      * is not included in this list but the special PUBLIC
      * User object is.
      */
-    private HsqlArrayList uUser;
+    private HashMappedList uUser;
 
     /**
      * The special PUBLIC User object. <p>
@@ -124,7 +147,7 @@ class UserManager {
      */
     UserManager() throws HsqlException {
 
-        uUser   = new HsqlArrayList();
+        uUser   = new HashMappedList();
         uPublic = createUser("PUBLIC", null, false);
 
         uPublic.grant("java.lang.Math", UserManager.ALL);
@@ -135,20 +158,7 @@ class UserManager {
      * Translate a string representation or right(s) into its numeric form.
      */
     static int getRight(String right) {
-
-        if (right.equals("ALL")) {
-            return ALL;
-        } else if (right.equals("SELECT")) {
-            return SELECT;
-        } else if (right.equals("UPDATE")) {
-            return UPDATE;
-        } else if (right.equals("DELETE")) {
-            return DELETE;
-        } else if (right.equals("INSERT")) {
-            return INSERT;
-        }
-
-        return 0;
+        return rightsStringLookup.get(right, 0);
     }
 
     /**
@@ -158,33 +168,73 @@ class UserManager {
     static String getRight(int right) {
 
 //        checkValidFlags(right);
-        if (right == ALL) {
-            return "ALL";
-        } else if (right == 0) {
+        if (right == 0) {
             return null;
         }
 
-        HsqlStringBuffer b = new HsqlStringBuffer();
-
-        if ((right & SELECT) != 0) {
-            b.append("SELECT,");
+        if (right == ALL) {
+            return S_R_ALL;
         }
 
-        if ((right & UPDATE) != 0) {
-            b.append("UPDATE,");
+        return StringUtil.getList(getRightsArray(right), ",", "");
+    }
+
+    /**
+     * Retrieves the list of right names represented by the right flags
+     * set in the specified <code>Integer</code> object's <code>int</code>
+     * value. <p>
+     *
+     * @param rights An Integer representing a set of right flags
+     * @return an empty list if the specified <code>Integer</code> object is
+     *        null, else a list of rights, as <code>String</code> objects,
+     *        represented by the rights flag bits set in the specified
+     *        <code>Integer</code> object's int value.
+     *
+     */
+    static String[] getRightsArray(int rights) {
+
+        if (rights == 0) {
+            return emptyRightsList;
         }
 
-        if ((right & DELETE) != 0) {
-            b.append("DELETE,");
+        String[] list = (String[]) hRightsLists.get(rights);
+
+        if (list != null) {
+            return list;
         }
 
-        if ((right & INSERT) != 0) {
-            b.append("INSERT,");
+        list = getRightsArraySub(rights);
+
+        hRightsLists.put(rights, list);
+
+        return list;
+    }
+
+    private static String[] getRightsArraySub(int right) {
+
+//        checkValidFlags(right);
+        if (right == 0) {
+            return emptyRightsList;
         }
 
-        b.setLength(b.length() - 1);
+        HsqlArrayList a  = new HsqlArrayList();
+        Iterator      it = rightsStringLookup.keySet().iterator();
 
-        return b.toString();
+        for (; it.hasNext(); ) {
+            String rightString = (String) it.next();
+
+            if (rightString.equals(S_R_ALL)) {
+                continue;
+            }
+
+            int i = rightsStringLookup.get(rightString);
+
+            if ((right & i) != 0) {
+                a.add(rightString);
+            }
+        }
+
+        return (String[]) a.toArray(new String[a.size()]);
     }
 
     /**
@@ -221,19 +271,11 @@ class UserManager {
         }
 
         // -------------------------------------------------------
-        int i = uUser.size();
-
-        while (i-- > 0) {
-            User u = (User) uUser.get(i);
-
-            if (u != null && u.getName().equals(name)) {
-                throw Trace.error(Trace.USER_ALREADY_EXISTS, name);
-            }
-        }
-
         User u = new User(name, password, admin, uPublic);
 
-        uUser.add(u);
+        if (!uUser.add(name, u)) {
+            throw Trace.error(Trace.USER_ALREADY_EXISTS, name);
+        }
 
         return u;
     }
@@ -261,25 +303,13 @@ class UserManager {
 
         Trace.check(!name.equals("PUBLIC"), Trace.ACCESS_IS_DENIED);
 
-        int i = uUser.size();
+        User u = (User) uUser.remove(name);
 
-        while (i-- > 0) {
-            User u = (User) uUser.get(i);
-
-            if (u.getName().equals(name)) {
-                /*
-                // todo: find a better way. Problem: removeElementAt would not
-                // work correctly while others are connected
-                uUser.set(i, null);
-                */
-                uUser.remove(i);
-                u.revokeAll();    // in case the user is referenced in a Session
-
-                return;
-            }
+        if (u == null) {
+            throw Trace.error(Trace.USER_NOT_FOUND, name);
         }
 
-        throw Trace.error(Trace.USER_NOT_FOUND, name);
+        u.revokeAll();    // in case the user is referenced in a Session
     }
 
     /**
@@ -310,7 +340,7 @@ class UserManager {
      * Retrieves this object's set of User objects as
      *  an HsqlArrayList. <p>
      */
-    HsqlArrayList getUsers() {
+    HashMappedList getUsers() {
         return uUser;
     }
 
@@ -349,11 +379,7 @@ class UserManager {
         get(name).revoke(dbobject, rights);
     }
 
-    /**
-     * Returns the User object identified by the
-     * name argument. <p>
-     */
-    private User get(String name) throws HsqlException {
+    boolean exists(String name) {
 
         int i = uUser.size();
 
@@ -361,11 +387,26 @@ class UserManager {
             User u = (User) uUser.get(i);
 
             if (u != null && u.getName().equals(name)) {
-                return u;
+                return true;
             }
         }
 
-        throw Trace.error(Trace.USER_NOT_FOUND, name);
+        return false;
+    }
+
+    /**
+     * Returns the User object identified by the
+     * name argument. <p>
+     */
+    private User get(String name) throws HsqlException {
+
+        User u = (User) uUser.get(name);
+
+        if (u == null) {
+            throw Trace.error(Trace.USER_NOT_FOUND, name);
+        }
+
+        return u;
     }
 
     /**
@@ -374,14 +415,12 @@ class UserManager {
      */
     void removeDbObject(Object dbobject) {
 
-        int i = uUser.size();
+        Iterator it = uUser.values().iterator();
 
-        while (i-- > 0) {
-            User u = (User) uUser.get(i);
+        for (; it.hasNext(); ) {
+            User u = (User) it.next();
 
-            if (u != null) {
-                u.revokeDbObject(dbobject);
-            }
+            u.revokeDbObject(dbobject);
         }
     }
 
@@ -389,77 +428,25 @@ class UserManager {
     static final String SYS_USER_NAME = "SYS";
 
     /**
-     * An empty list returned from {@link #listRightNames
-     * listRightNames} when the <code>rights</code> argument
-     * is zero.
+     * An empty list that is returned from
+     * {@link #listTablePrivileges listTablePrivileges} when
+     * it is detected that neither this <code>User</code> object or
+     * its <code>PUBLIC</code> <code>User</code> object attribute have been
+     * granted any rights on the <code>Table</code> object identified by
+     * the specified <code>HsqlName</code> object.
      *
      */
-    static final HsqlArrayList emptyRightsList = new HsqlArrayList();
+    static final String[] emptyRightsList = new String[0];
 
     /**
-     * MAP:  Integer => HsqlArrayList. <p>
+     * MAP:  int => HsqlArrayList. <p>
      *
      * This map caches the lists of <code>String</code> objects naming the rights
      * corresponding to each valid set of rights flags, as returned by
      * {@link #listRightNames listRightNames}
      *
      */
-    static final HashMap hRightsLists = new HashMap();
-
-    /**
-     * Retrieves the list of right names represented by the right flags
-     * set in the specified <code>Integer</code> object's <code>int</code>
-     * value. <p>
-     *
-     * <b>Note:</b> In the interests of memory and CPU efficiency, this method
-     * uses a lazy cache algorithm, so special care must be taken not to modify
-     * the retrieved list objects.  If you do need to manipulate the returned
-     * lists, please first make a copy and then and perform the manipulation
-     * on the copy. <p>
-     *
-     * @param rights An Integer representing a set of right flags
-     * @return an empty list if the specified <code>Integer</code> object is
-     *        null, else a list of rights, as <code>String</code> objects,
-     *        represented by the rights flag bits set in the specified
-     *        <code>Integer</code> object's int value.
-     *
-     */
-    static HsqlArrayList listRightNames(Integer rights) {
-
-        if (rights == null) {
-            return emptyRightsList;
-        }
-
-        HsqlArrayList list = (HsqlArrayList) hRightsLists.get(rights);
-
-        if (list != null) {
-            return list;
-        }
-
-        int rightFlags = rights.intValue();
-
-        list = new HsqlArrayList();
-
-        if ((rightFlags & SELECT) != 0) {
-            list.add("SELECT");
-        }
-
-        if ((rightFlags & UPDATE) != 0) {
-            list.add("UPDATE");
-        }
-
-        if ((rightFlags & DELETE) != 0) {
-            list.add("DELETE");
-        }
-
-        if ((rightFlags & INSERT) != 0) {
-            list.add("INSERT");
-        }
-
-        hRightsLists.put(rights, list);
-
-        return list;
-    }
+    static final IntKeyHashMap hRightsLists = new IntKeyHashMap();
 
     /**
      * Retrieves the <code>User</code> objects representing the database
@@ -467,7 +454,7 @@ class UserManager {
      * represented by the <code>session</code> argument. <p>
      *
      * If the <code>session</code> argument's <code>User</code> object
-     * attribute has the database administrator role, then all of the non-null
+     * attribute has the database administrator role, then all of the
      * <code>User</code> objects in this collection are considered visible.
      * Otherwise, only this object's special <code>PUBLIC</code>
      * <code>User</code> object attribute and the session <code>User</code>

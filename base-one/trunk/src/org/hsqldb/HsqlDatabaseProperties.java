@@ -91,7 +91,7 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
     HsqlDatabaseProperties(Database db) {
 
-        super(db.getName());
+        super(db.getPath(), db.isFilesInJar());
 
         database = db;
 
@@ -176,11 +176,6 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         setProperty("readonly", false);
         setProperty("modified", "no");
 
-        if (JARFILE) {
-            setProperty("hsqldb.files_in_jar", true);
-            setProperty("hsqldb.files_readonly", true);
-        }
-
         // the property "version" is also set to the current version
         //
         // the following properties can be set by the user as defaults for
@@ -230,13 +225,6 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
             return false;
         }
 
-        // overwrite properties if wrongly set in props file
-        if (JARFILE) {
-            setProperty("hsqldb.files_in_jar", true);
-            setProperty("hsqldb.files_readonly", true);
-            database.setFilesInJar();
-        }
-
         String version = getProperty("hsqldb.compatible_version");
 
         // do not open if the database belongs to a later (future) version
@@ -253,10 +241,6 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
     }
 
     private void setDatabaseVariables() {
-
-        if (JARFILE) {
-            database.setFilesInJar();
-        }
 
         if (isPropertyTrue("readonly")) {
             database.setReadOnly();

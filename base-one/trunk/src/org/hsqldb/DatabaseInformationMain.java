@@ -2090,7 +2090,7 @@ class DatabaseInformationMain extends DatabaseInformation implements Types {
         // intermediate holders
         HsqlArrayList users;
         User          user;
-        HsqlArrayList tablePrivileges;
+        String[]      tablePrivileges;
         Iterator      tables;
         Table         table;
         HsqlName      accessKey;
@@ -2132,8 +2132,8 @@ class DatabaseInformationMain extends DatabaseInformation implements Types {
                 isGrantable     = (user.isAdmin()) ? "YES"
                                                    : "NO";
 
-                for (int j = 0; j < tablePrivileges.size(); j++) {
-                    privilege          = (String) tablePrivileges.get(j);
+                for (int j = 0; j < tablePrivileges.length; j++) {
+                    privilege          = (String) tablePrivileges[j];
                     row                = t.getNewRow();
                     row[itable_cat]    = tableCatalog;
                     row[itable_schem]  = tableSchema;

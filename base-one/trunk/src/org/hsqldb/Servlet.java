@@ -121,7 +121,7 @@ public class Servlet extends javax.servlet.http.HttpServlet {
         log("Database filename = " + sDatabase);
 
         try {
-            dDatabase = new Database(sDatabase);
+            dDatabase = HsqlRuntime.getHsqlRuntime().getDatabase(sDatabase,this);
         } catch (HsqlException e) {
             sError = e.getMessage();
 

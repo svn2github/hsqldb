@@ -71,6 +71,7 @@ import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.IntValueHashMap;
 
 // fredt@users 20021103 - patch 1.7.2 - fix bug in revokeAll()
 // fredt@users 20021103 - patch 1.7.2 - allow for drop table, etc.
@@ -101,7 +102,7 @@ class User {
     private boolean isSys;
 
     /** map with database object identifier keys and access privileges values */
-    private HashMap rightsMap;
+    private IntValueHashMap rightsMap;
 
     /** user name. */
     private String sName;
@@ -116,23 +117,12 @@ class User {
     private User uPublic;
 
     /**
-     * An empty list that is returned from
-     * {@link #listTablePrivileges listTablePrivileges} when
-     * it is detected that neither this <code>User</code> object or
-     * its <code>PUBLIC</code> <code>User</code> object attribute have been
-     * granted any rights on the <code>Table</code> object identified by
-     * the specified <code>HsqlName</code> object.
-     *
-     */
-    static final HsqlArrayList emptyRightsList = new HsqlArrayList();
-
-    /**
      * Constructor, with a argument reference to the PUBLIC User Object which
      * is null if this is the SYS or PUBLIC user.
      */
     User(String name, String password, boolean admin, User pub) {
 
-        rightsMap = new HashMap();
+        rightsMap = new IntValueHashMap();
         sName     = name;
 
         setPassword(password);
@@ -170,7 +160,7 @@ class User {
      *      UserManager: {SELECT, INSERT, UPDATE and DELETE}.
      * </UL>
      */
-    HashMap getRights() {
+    IntValueHashMap getRights() {
 
         // necessary to create the script
         return rightsMap;
@@ -205,10 +195,9 @@ class User {
             return;
         }
 
-        Integer n = (Integer) rightsMap.get(dbobject);
+        int n = rightsMap.get(dbobject,0);
 
-        n = (n == null) ? new Integer(rights)
-                        : new Integer(n.intValue() | rights);
+        n |= rights;
 
         rightsMap.put(dbobject, n);
     }
@@ -227,20 +216,18 @@ class User {
             return;
         }
 
-        Integer n = (Integer) rightsMap.get(dbobject);
+        int n = rightsMap.get(dbobject, 0);
 
-        if (n == null) {
+        if (n == 0) {
             return;
         }
 
-        rights = n.intValue() & (UserManager.ALL - rights);
+        rights = n & (UserManager.ALL - rights);
 
         if (rights == 0) {
             rightsMap.remove(dbobject);
         } else {
-            n = new Integer(rights);
-
-            rightsMap.put(dbobject, n);
+            rightsMap.put(dbobject, rights);
         }
     }
 
@@ -290,17 +277,15 @@ class User {
      */
     boolean isAccessible(Object dbobject, int rights) {
 
-        Integer n;
-
 //        Trace.doAssert(dbobject != null, "dbobject is null");
         if (isAdministrator) {
             return true;
         }
 
-        n = (Integer) rightsMap.get(dbobject);
+        int n =  rightsMap.get(dbobject,0);
 
-        if (n != null) {
-            return (n.intValue() & rights) != 0;
+        if (n != 0) {
+            return (n & rights) != 0;
         }
 
         return (uPublic == null) ? false
@@ -355,11 +340,11 @@ class User {
      */
     HashSet getGrantedClassNames(boolean andToPublic) {
 
-        HashMap  rights;
+        IntValueHashMap  rights;
         HashSet  out;
         HashSet  pub;
         Object   key;
-        Integer  right;
+        int  right;
         Iterator i;
 
         rights = rightsMap;
@@ -370,9 +355,9 @@ class User {
             key = i.next();
 
             if (key instanceof String) {
-                right = (Integer) rights.get(key);
+                right = rights.get(key,0);
 
-                if (right.intValue() == UserManager.ALL) {
+                if (right == UserManager.ALL) {
                     out.add(key);
                 }
             }
@@ -386,9 +371,9 @@ class User {
                 key = i.next();
 
                 if (key instanceof String) {
-                    right = (Integer) rights.get(key);
+                    right = rights.get(key,0);
 
-                    if (right.intValue() == UserManager.ALL) {
+                    if (right == UserManager.ALL) {
                         out.add(key);
                     }
                 }
@@ -399,23 +384,18 @@ class User {
     }
 
     /**
-     * Retrieves a list object whose elements are the names, as
-     * <code>String</code> objects, of the rights granted to
-     * this <code>User</code> object on the <code>Table</code>
+     * Retrieves a string[] whose elements are the names, of the rights
+     * granted to this <code>User</code> object on the <code>Table</code>
      * object identified by the <code>name</code> argument.
-     * @return a list of Strings naming the rights granted to this
+     * @return array of Strings naming the rights granted to this
      *        <code>User</code> object on the <code>Table</code> object
      *        identified by the <code>name</code> argument.
      * @param name a <code>Table</code> object identifier
      * @since HSQLDB 1.7.2
      *
      */
-    HsqlArrayList listTablePrivileges(HsqlName name) {
+    String[] listTablePrivileges(HsqlName name) {
 
-        if (name == null) {
-            return emptyRightsList;
-        }
-
-        return UserManager.listRightNames((Integer) rightsMap.get(name));
+        return UserManager.getRightsArray(rightsMap.get(name));
     }
 }
