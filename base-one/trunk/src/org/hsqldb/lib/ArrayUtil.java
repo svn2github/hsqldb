@@ -258,7 +258,7 @@ public class ArrayUtil {
      *
      */
     public static boolean areEqual(int[] a, int[] b, int count,
-                                       boolean full) {
+                                   boolean full) {
 
         if (ArrayUtil.haveEqualArrays(a, b, count)) {
             if (full) {
@@ -315,6 +315,28 @@ public class ArrayUtil {
         for (int j = 0; j < count; j++) {
             if (a[j] != b[j]) {
                 return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Returns true if the first count elements of a and b are identical
+     * subarrays of Objects
+     *
+     */
+    public static boolean haveEqualArrays(Object[] a, Object[] b, int count) {
+
+        if (count > a.length || count > b.length) {
+            return false;
+        }
+
+        for (int j = 0; j < count; j++) {
+            if (a[j] != b[j]) {
+                if (a[j] == null ||!a[j].equals(b[j])) {
+                    return false;
+                }
             }
         }
 
