@@ -34,6 +34,7 @@ package org.hsqldb;
 import java.io.File;
 import java.sql.DatabaseMetaData;
 import java.util.Locale;
+import org.hsqldb.lib.FileUtil;
 import org.hsqldb.store.ValuePool;
 import org.hsqldb.resources.BundleHandler;
 
@@ -147,8 +148,8 @@ final class DITableInfo {
     String getCachePath() {
 
         return (table.cache == null) ? null
-                                     : new File(
-                                         table.cache.sName).getAbsolutePath();
+                                     : FileUtil.canonicalOrAbsolutePath(
+                                         table.cache.sName);
     }
 
     /**

@@ -37,6 +37,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.RandomAccessFile;
 import java.sql.Timestamp;
+import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.HsqlTimer;
 
 /**
@@ -153,8 +154,8 @@ public class LockFile {
     /** Reference to this object's lock file. */
     protected File f;
 
-    /** Cached value of the lock file's absolute path. */
-    private String apath = null;
+    /** Cached value of the lock file's canonical path. */
+    private String cpath = null;
 
     /**
      * A RandomAccessFile constructed from this object's reference, f, to its
@@ -220,7 +221,7 @@ public class LockFile {
         String path;
 
         mn   = "checkHeartbeat(): ";
-        path = "lock file [" + getAbsolutePath() + "]";
+        path = "lock file [" + cpath + "]";
 
         trace(mn + "entered.");
 
@@ -244,7 +245,7 @@ public class LockFile {
             throw new Exception(
                 Trace.getMessage(
                     Trace.LockFile_checkHeartbeat, true, new Object[] {
-                e.getMessage(), getAbsolutePath()
+                e.getMessage(), cpath
             }));
         }
 
@@ -294,7 +295,7 @@ public class LockFile {
      * @param file a reference to the file this object is to use as its
      *      lock file
      */
-    private void setFile(File file) {
+    private void setFile(File file) throws Exception {
 
         if (isLocked()) {
             try {
@@ -305,7 +306,7 @@ public class LockFile {
         }
 
         f      = file;
-        apath  = f.getAbsolutePath();
+        cpath  = FileUtil.canonicalPath(f);
         raf    = null;
         locked = false;
     }
@@ -362,8 +363,7 @@ public class LockFile {
             m = File.class.getMethod("deleteOnExit", new Class[]{});
 
             m.invoke(f, new Object[]{});
-            trace(mn + "sucess for deleteOnExit: [" + getAbsolutePath()
-                  + "]");
+            trace(mn + "sucess for deleteOnExit: [" + cpath + "]");
         } catch (Exception e) {
             trace(mn + e);
         }
@@ -406,7 +406,7 @@ public class LockFile {
         heartbeat = Long.MIN_VALUE;
 
         String mn   = "readHeartbeat(): ";
-        String path = "lock file [" + getAbsolutePath() + "]";
+        String path = "lock file [" + cpath + "]";
 
         trace(mn + "entered.");
 
@@ -503,7 +503,7 @@ public class LockFile {
     private void writeMagic() throws Exception {
 
         String mn   = "writeMagic(): ";
-        String path = "lock file [" + apath + "]";
+        String path = "lock file [" + cpath + "]";
 
         trace(mn + "entered.");
         trace(mn + "raf.seek(0)");
@@ -524,7 +524,7 @@ public class LockFile {
 
         long   time;
         String mn   = "writeHeartbeat(): ";
-        String path = "lock file [" + apath + "]";
+        String path = "lock file [" + cpath + "]";
 
         trace(mn + "entered.");
 
@@ -549,7 +549,7 @@ public class LockFile {
      *        which the retrieved <code>LockFile</code>
      *        object is to be initialized
      */
-    public static LockFile newLockFile(String path) {
+    public static LockFile newLockFile(String path) throws Exception {
 
         File     f;
         LockFile lf;
@@ -609,12 +609,12 @@ public class LockFile {
     }
 
     /**
-     * Retreives, as a String, the absolute path of this object's lock file.
+     * Retreives, as a String, the canonical path of this object's lock file.
      *
      * @return the absolute path of this object's lock file.
      */
-    public String getAbsolutePath() {
-        return apath;
+    public String getCanonicalPath() {
+        return cpath;
     }
 
     /**
@@ -751,7 +751,7 @@ public class LockFile {
      */
     public String toString() {
 
-        return super.toString() + "[file =" + apath + ", exists="
+        return super.toString() + "[file =" + cpath + ", exists="
                + f.exists() + ", locked=" + isLocked() + ", valid="
                + isValid() + ", " + toStringImpl() + "]";
     }
@@ -894,7 +894,7 @@ public class LockFile {
 
         trace(mn + "Finished Thread.sleep(100).");
 
-        path = "[" + getAbsolutePath() + "]";
+        path = "[" + cpath + "]";
 
         if (f.exists()) {
             trace(mn + path + " exists.");

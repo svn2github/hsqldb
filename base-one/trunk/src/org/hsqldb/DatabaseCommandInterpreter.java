@@ -103,7 +103,6 @@ class DatabaseCommandInterpreter {
 
     static final Result emptyResult = new Result(ResultConstants.UPDATECOUNT);
     Tokenizer           tokenizer   = new Tokenizer();
-    CompiledStatement   cStatement  = new CompiledStatement();
     protected Database  database;
     protected Session   session;
 
@@ -192,8 +191,9 @@ class DatabaseCommandInterpreter {
 
         switch (cmd) {
 
-            case Token.SELECT :
-                cStatement = parser.compileSelectStatement(cStatement, false);
+            case Token.SELECT : {
+                CompiledStatement cStatement =
+                    parser.compileSelectStatement(false);
 
                 Trace.doAssert(cStatement.parameters.length == 0,
                                Trace.ASSERT_DIRECT_EXEC_WITH_PARAM);
@@ -206,44 +206,52 @@ class DatabaseCommandInterpreter {
 
                     database.setMetaDirty(result);
                 }
-                break;
 
-            case Token.INSERT :
-                cStatement = parser.compileInsertStatement(cStatement);
+                break;
+            }
+            case Token.INSERT : {
+                CompiledStatement cStatement =
+                    parser.compileInsertStatement();
 
                 Trace.doAssert(cStatement.parameters.length == 0,
                                Trace.ASSERT_DIRECT_EXEC_WITH_PARAM);
 
                 result = session.sqlExecuteCompiledNoPreChecks(cStatement);
-                break;
 
-            case Token.UPDATE :
-                cStatement = parser.compileUpdateStatement(cStatement);
+                break;
+            }
+            case Token.UPDATE : {
+                CompiledStatement cStatement =
+                    parser.compileUpdateStatement();
 
                 Trace.doAssert(cStatement.parameters.length == 0,
                                Trace.ASSERT_DIRECT_EXEC_WITH_PARAM);
 
                 result = session.sqlExecuteCompiledNoPreChecks(cStatement);
-                break;
 
-            case Token.DELETE :
-                cStatement = parser.compileDeleteStatement(cStatement);
+                break;
+            }
+            case Token.DELETE : {
+                CompiledStatement cStatement =
+                    parser.compileDeleteStatement();
 
                 Trace.doAssert(cStatement.parameters.length == 0,
                                Trace.ASSERT_DIRECT_EXEC_WITH_PARAM);
 
                 result = session.sqlExecuteCompiledNoPreChecks(cStatement);
-                break;
 
-            case Token.CALL :
-                cStatement = parser.compileCallStatement(cStatement);
+                break;
+            }
+            case Token.CALL : {
+                CompiledStatement cStatement = parser.compileCallStatement();
 
                 Trace.doAssert(cStatement.parameters.length < 1,
                                Trace.ASSERT_DIRECT_EXEC_WITH_PARAM);
 
                 result = session.sqlExecuteCompiledNoPreChecks(cStatement);
-                break;
 
+                break;
+            }
             case Token.SET :
                 processSet();
                 break;
@@ -319,8 +327,6 @@ class DatabaseCommandInterpreter {
             default :
                 throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
         }
-
-        cStatement.clearAll();
 
         return result;
     }
@@ -889,13 +895,13 @@ class DatabaseCommandInterpreter {
         Object  defValue;
         boolean wasminus;
 
-        defString       = tokenizer.getString();
-        wasminus = false;
+        defString = tokenizer.getString();
+        wasminus  = false;
 
         // see if it is a negative number
         if (defString.equals("-") && tokenizer.getType() != Types.VARCHAR) {
-            wasminus = true;
-            defString       += tokenizer.getString();
+            wasminus  = true;
+            defString += tokenizer.getString();
         }
 
         if (type == Types.OTHER ||!tokenizer.wasValue()) {
@@ -924,8 +930,8 @@ class DatabaseCommandInterpreter {
         // ensure char triming does not affect the value
         if (database.sqlEnforceSize || database.sqlEnforceSize) {
             String defValTemp = Column.convertObject(defValue);
-            String defValTest = (String) Table.enforceSize(defValTemp, type, length, false,
-                                                false);
+            String defValTest = (String) Table.enforceSize(defValTemp, type,
+                length, false, false);
 
             if (!defValTemp.equals(defValTest)) {
 
@@ -1526,6 +1532,11 @@ class DatabaseCommandInterpreter {
 
                 break;
             }
+            case Token.USER : {
+                processAlterUser();
+
+                break;
+            }
         }
     }
 
@@ -1820,13 +1831,26 @@ class DatabaseCommandInterpreter {
 
         userName = tokenizer.getUserOrPassword();
 
-        tokenizer.getThis(Token.T_PASSWORD);
+        if (tokenizer.isGetThis(Token.T_PASSWORD)) {
 
-        password = tokenizer.getUserOrPassword();
-        user     = database.getUserManager().getUser(userName, password);
+            // legacy log statement or connect statement issued by user
+            password = tokenizer.getUserOrPassword();
+            user     = database.getUserManager().getUser(userName, password);
 
-        session.commit();
-        session.setUser(user);
+            session.commit();
+            session.setUser(user);
+        } else if (session == database.sessionManager.getSysSession()) {
+
+            // log statement
+            user = database.getUserManager().get(userName);
+
+            session.commit();
+            session.setUser(user);
+        } else {
+
+            // force throw if not log statement
+            tokenizer.getThis(Token.T_PASSWORD);
+        }
     }
 
     /**
@@ -2771,23 +2795,23 @@ class DatabaseCommandInterpreter {
         switch (cmd) {
 
             case Token.SELECT :
-                cs = parser.compileSelectStatement(null, false);
+                cs = parser.compileSelectStatement(false);
                 break;
 
             case Token.INSERT :
-                cs = parser.compileInsertStatement(null);
+                cs = parser.compileInsertStatement();
                 break;
 
             case Token.UPDATE :
-                cs = parser.compileUpdateStatement(null);
+                cs = parser.compileUpdateStatement();
                 break;
 
             case Token.DELETE :
-                cs = parser.compileDeleteStatement(null);
+                cs = parser.compileDeleteStatement();
                 break;
 
             case Token.CALL :
-                cs = parser.compileCallStatement(null);
+                cs = parser.compileCallStatement();
                 break;
 
             default :
@@ -3014,5 +3038,25 @@ class DatabaseCommandInterpreter {
         }
 
         session.releaseSavepoint(token);
+    }
+
+    private void processAlterUser() throws HsqlException {
+
+        String userName;
+        String password;
+        User   userObject;
+
+        userName = tokenizer.getUserOrPassword();
+        userObject =
+            (User) database.getUserManager().getUsers().get(userName);
+
+        Trace.check(userObject != null, Trace.USER_NOT_FOUND, userName);
+        tokenizer.getThis(Token.T_SET);
+        tokenizer.getThis(Token.T_PASSWORD);
+
+        password = tokenizer.getUserOrPassword();
+
+        userObject.setPassword(password);
+        database.logger.writeToLog(session, userObject.getAlterUserDDL());
     }
 }

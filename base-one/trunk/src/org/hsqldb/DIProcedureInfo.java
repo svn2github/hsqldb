@@ -58,7 +58,7 @@ final class DIProcedureInfo {
     private int           colOffset;
     private int           colCount;
     private boolean       colsResolved;
-    private String        csig;
+    private String        methodDescr;
     private String        fqn;
     private int           hnd_remarks;
     private Method        method;
@@ -83,13 +83,13 @@ final class DIProcedureInfo {
         return (HsqlArrayList) nameSpace.getInverseAliasMap().get(getFQN());
     }
 
-    String getCanonicalSignature() {
+    String getMethodDescriptor() {
 
-        if (csig == null) {
-            csig = method.toString();
+        if (methodDescr == null) {
+            methodDescr = method.toString();
         }
 
-        return csig;
+        return methodDescr;
     }
 
     Class getColClass(int i) {
@@ -541,7 +541,7 @@ final class DIProcedureInfo {
         clazz        = method.getDeclaringClass();
         fqn          = null;
         sig          = null;
-        csig         = null;
+        methodDescr  = null;
         colsResolved = false;
         remarkKey    = clazz.getName().replace('.', '_');
         hnd_remarks  = BundleHandler.getBundleHandle(remarkKey, null);

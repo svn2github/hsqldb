@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2003, The HSQL Development Group
+/* Copyright (c) 2001-2004, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,6 +45,15 @@ import java.nio.channels.FileLock;
  */
 final class NIOLockFile extends LockFile {
 
+    // From the java.nio.channels.FileLock API docs:
+    //
+    // Some network filesystems do not implement file locks on regions
+    // that extend past a certain position, often 2**30 or 2**31.
+    // In general, great care should be taken when locking files that
+    // reside on network filesystems.
+    static final long MAX_NFS_LOCK_REGION = (1L << 30);
+    static final long MIN_LOCK_REGION     = MAGIC.length + 8;
+
     /**
      * A <code>FileChannel</code> object obtained from the super
      * <code>raf</code> attribute. <p>
@@ -71,7 +80,7 @@ final class NIOLockFile extends LockFile {
     protected boolean lockImpl() throws Exception {
 
         boolean isValid;
-        
+
         if (fl != null && fl.isValid()) {
             return true;
         }
@@ -81,11 +90,11 @@ final class NIOLockFile extends LockFile {
         fc = raf.getChannel();
 
         trace("lockImpl(): fl = fc.tryLock()");
-        
+
         fl = null;
-        
+
         try {
-            fl = fc.tryLock();
+            fl = fc.tryLock(0, MIN_LOCK_REGION, false);
 
             trace("lockImpl(): fl = " + fl);
         } catch (Exception e) {
@@ -101,6 +110,33 @@ final class NIOLockFile extends LockFile {
             trace(e.toString());
         }
 
+// In an ideal world, maybe?:
+//        try {
+//            fl = fc.tryLock();
+//
+//            trace("lockImpl(): fl = " + fl);
+//        } catch (Exception e) {
+//            trace(e.toString());
+//
+//            try {
+//               fl = fc.tryLock(0, MAX_NFS_LOCK_REGION, false);
+//
+//               trace("lockImpl(): fl = " + fl);
+//               trace("Warning: possibly attempting to lock on NFS");
+//            } catch (Exception e2) {
+//                trace(e2.toString());
+//
+//                try {
+//                    fl = fc.tryLock(0, MIN_LOCK_REGION, false);
+//
+//                    trace("lockImpl(): fl = " + fl);
+//                    trace("Warning: backed off to min lock region");
+//                    trace("Warning: lock file may be unusable on reuse");
+//                } catch (Exception e3) {
+//                      trace(e3.toString());
+//                }
+//            }
+//        }
         trace("lockImpl(): f.deleteOnExit()");
         f.deleteOnExit();
 
@@ -141,6 +177,11 @@ final class NIOLockFile extends LockFile {
             fc = null;
         }
 
+        // CHECKME:
+        // possibly overcomes some regarding full and
+        // true release of FileLock and maybe related
+        // NIO resources?
+        // System.gc();
         return true;
     }
 

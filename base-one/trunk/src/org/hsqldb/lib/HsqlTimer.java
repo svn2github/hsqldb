@@ -121,6 +121,8 @@ public class HsqlTimer implements ObjectComparator {
         if (taskRunnerThread == null) {
             taskRunnerThread = threadFactory.newThread(taskRunner);
 
+            taskRunnerThread.setName("HSQLDB Timer @"
+                                     + Integer.toHexString(this.hashCode()));
             taskRunnerThread.setDaemon(true);
             taskRunnerThread.start();
         } else {

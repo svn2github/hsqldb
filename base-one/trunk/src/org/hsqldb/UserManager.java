@@ -398,7 +398,7 @@ class UserManager {
      * Returns the User object identified by the
      * name argument. <p>
      */
-    private User get(String name) throws HsqlException {
+    User get(String name) throws HsqlException {
 
         User u = (User) uUser.get(name);
 

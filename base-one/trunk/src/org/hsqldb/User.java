@@ -400,4 +400,65 @@ class User {
     String[] listTablePrivileges(HsqlName name) {
         return UserManager.getRightsArray(rightsMap.get(name, 0));
     }
+
+    /**
+     * Returns the ALTER USER DDL character sequence that preserves the
+     * this user's current password value and mode. <p>
+     *
+     * @return  the DDL
+     */
+    String getAlterUserDDL() {
+
+        StringBuffer sb = new StringBuffer();
+
+        sb.append(Token.T_ALTER).append(' ');
+        sb.append(Token.T_USER).append(' ');
+        sb.append(sName).append(' ');
+        sb.append(Token.T_SET).append(' ');
+        sb.append(Token.T_PASSWORD).append(' ');
+        sb.append('"').append(sPassword).append('"');
+
+        return sb.toString();
+    }
+
+    /**
+     * Appends to the specified StringBuffer the DDL character
+     * sequence that creates this user.
+     *
+     * @param the StringBuffer to which to append the character sequence
+     */
+    String getCreateUserDDL() {
+
+        StringBuffer sb = new StringBuffer(64);
+
+        sb.append(Token.T_CREATE).append(' ');
+        sb.append(Token.T_USER).append(' ');
+        sb.append(sName).append(' ');
+        sb.append(Token.T_PASSWORD).append(' ');
+        sb.append('"').append(sPassword).append('"');
+
+        if (isAdministrator) {
+            sb.append(' ').append(Token.T_ADMIN);
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * Retrieves the redo log character sequence for connecting
+     * this user
+     *
+     * @return the redo log character sequence for connecting
+     *      this user
+     */
+    String getConnectStatement() {
+
+        StringBuffer sb = new StringBuffer();
+
+        sb.append(Token.T_CONNECT).append(' ');
+        sb.append(Token.T_USER).append(' ');
+        sb.append(sName);
+
+        return sb.toString();
+    }
 }

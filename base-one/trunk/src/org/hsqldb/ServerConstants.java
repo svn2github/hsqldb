@@ -39,7 +39,7 @@ package org.hsqldb;
  * @version 1.7.2
  * @since 1.7.2
  */
-interface ServerConstants {
+public interface ServerConstants {
 
     // server states
     int SERVER_STATE_ONLINE   = 1;
@@ -49,7 +49,7 @@ interface ServerConstants {
     int SC_DATABASE_SHUTDOWN  = 0;
 
     // use default address for server socket
-    String SC_DEFAULT_ADDRESS = "any";
+    String SC_DEFAULT_ADDRESS = "0.0.0.0";
 
     // default database name if non specified
     String SC_DEFAULT_DATABASE = "test";
@@ -86,7 +86,7 @@ interface ServerConstants {
     String SC_KEY_WEB_ROOT           = SC_KEY_PREFIX + ".root";
     String SC_KEY_MAX_CONNECTIONS    = SC_KEY_PREFIX + ".maxconnections";
 
-    // web serrver page defaults
+    // web server page defaults
     String SC_DEFAULT_WEB_MIME = "text/html";
     String SC_DEFAULT_WEB_PAGE = "index.html";
     String SC_DEFAULT_WEB_ROOT = "./";

@@ -375,7 +375,7 @@ class Database {
         Session session = sessionManager.newSession(this, user,
             databaseReadOnly);
 
-        logger.logConnectUser(session, user.getName(), user.getPassword());
+        logger.logConnectUser(session);
 
         return session;
     }

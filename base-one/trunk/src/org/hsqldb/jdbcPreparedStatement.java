@@ -1690,12 +1690,10 @@ implements java.sql.PreparedStatement {
      * @since JDK 1.4, HSQL 1.7.0
      */
 //#ifdef JDBC3
-/*
     public void setURL(int parameterIndex,
                        java.net.URL x) throws SQLException {
         throw jdbcDriver.notSupported;
     }
-*/
 
 //#endif JDBC3
 
@@ -1722,7 +1720,6 @@ implements java.sql.PreparedStatement {
      */
 // boucherb@users 20030801 - method implemented
 //#ifdef JDBC3
-/*
     public ParameterMetaData getParameterMetaData() throws SQLException {
 
         checkClosed();
@@ -1734,7 +1731,6 @@ implements java.sql.PreparedStatement {
         // NOTE:  pmd is declared as Object to avoid yet another #ifdef.
         return (ParameterMetaData) pmd;
     }
-*/
 
 //#endif JDBC3
     //-------------------- Internal Implementation -----------------------------

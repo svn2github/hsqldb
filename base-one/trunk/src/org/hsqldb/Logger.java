@@ -189,19 +189,11 @@ class Logger {
      *
      * @param  session the Session object for which to record the log
      *      entry
-     * @param  username the name of the User, as known to the database
-     * @param  password the password of the user, as know to the database
      * @throws  HsqlException if there is a problem recording the Log
      *      entry
      */
-    void logConnectUser(Session session, String username,
-                        String password) throws HsqlException {
-
-        if (lLog != null) {
-            lLog.write(session,
-                       "CONNECT USER " + username + " PASSWORD \"" + password
-                       + "\"");
-        }
+    void logConnectUser(Session session) throws HsqlException {
+        writeToLog(session, session.getUser().getConnectStatement());
     }
 
     /**
@@ -333,7 +325,12 @@ class Logger {
             return;
         }
 
-        lf     = LockFile.newLockFile(path + ".lck");
+        try {
+            lf = LockFile.newLockFile(path + ".lck");
+        } catch (Exception e) {
+            throw Trace.error(Trace.FILE_IO_ERROR, e.toString());
+        }
+
         locked = false;
         msg    = "";
 

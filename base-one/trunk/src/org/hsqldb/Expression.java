@@ -3376,17 +3376,15 @@ class Expression {
 
             select = e.subSelect;
 
-            if (select != null) {
-                for (; select != null; select = select.sUnion) {
-                    list = select.exprColumns;
+            for (; select != null; select = select.sUnion) {
+                list = select.exprColumns;
 
-                    for (int i = 0; i < list.length; i++) {
-                        addAll(list[i], type);
-                    }
-
-                    addAll(select.queryCondition, type);
-                    addAll(select.havingCondition, type);
+                for (int i = 0; i < list.length; i++) {
+                    addAll(list[i], type);
                 }
+
+                addAll(select.queryCondition, type);
+                addAll(select.havingCondition, type);
             }
 
             function = e.function;

@@ -2367,11 +2367,7 @@ extends org.hsqldb.DatabaseInformationMain {
      *      value of GRANTEE forthe usage privilege being described. <p>
      *
      * <li> The value of GRANTEE is the &lt;authorization identifier&gt; of some
-<<<<<<< DatabaseInformationFull.java
      *      user or role, or PUBLIC to indicate all users, to whom the usage
-=======
-     *      user or role, or  PUBLIC  to indicate all users, to whom the usage
->>>>>>> 1.39
      *      privilege being described is granted. <p>
      *
      * <li> The values of OBJECT_CATALOG, OBJECT_SCHEMA, and OBJECT_NAME are the

@@ -4869,11 +4869,9 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public boolean supportsSavepoints() throws SQLException {
         return true;
     }
-*/
 
 //#endif JDBC3
 
@@ -4896,7 +4894,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public boolean supportsNamedParameters() throws SQLException {
 
         // TODO: fredt@users - sure
@@ -4905,7 +4902,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // return false;
         return false;
     }
-*/
 
 //#endif JDBC3
 
@@ -4931,7 +4927,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public boolean supportsMultipleOpenResults() throws SQLException {
 
         // TODO: fredt@users  - agreed on both
@@ -4941,7 +4936,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // return false;
         return false;
     }
-*/
 
 //#endif JDBC3
 
@@ -4966,7 +4960,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public boolean supportsGetGeneratedKeys() throws SQLException {
 
         // TODO: fredt@users - agreed
@@ -4974,7 +4967,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // boucherb@users 20020426
         return false;
     }
-*/
 
 //#endif JDBC3
 
@@ -5033,7 +5025,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public ResultSet getSuperTypes(String catalog, String schemaPattern,
                                    String typeNamePattern)
                                    throws SQLException {
@@ -5050,7 +5041,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         return execute(select.toString());
     }
-*/
 
 //#endif JDBC3
 
@@ -5102,7 +5092,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public ResultSet getSuperTables(String catalog, String schemaPattern,
                                     String tableNamePattern)
                                     throws SQLException {
@@ -5119,7 +5108,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         return execute(select.toString());
     }
-*/
 
 //#endif JDBC3
 
@@ -5209,7 +5197,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public ResultSet getAttributes(String catalog, String schemaPattern,
                                    String typeNamePattern,
                                    String attributeNamePattern)
@@ -5228,7 +5215,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         return execute(select.toString());
     }
-*/
 
 //#endif JDBC3
 
@@ -5254,12 +5240,10 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public boolean supportsResultSetHoldability(int holdability)
     throws SQLException {
         return holdability == jdbcResultSet.HOLD_CURSORS_OVER_COMMIT;
     }
-*/
 
 //#endif JDBC3
 
@@ -5287,7 +5271,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public int getResultSetHoldability() throws SQLException {
 
 // JDBC 3.0 fr spec:
@@ -5321,7 +5304,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 // Our ResultSet objects are never closed as the result of a commit
         return jdbcResultSet.HOLD_CURSORS_OVER_COMMIT;
     }
-*/
 
 //#endif JDBC3
 
@@ -5349,7 +5331,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public int getDatabaseMajorVersion() throws SQLException {
 
         ResultSet rs =
@@ -5359,7 +5340,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         return rs.getInt(1);
     }
-*/
 
 //#endif JDBC3
 
@@ -5387,7 +5367,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public int getDatabaseMinorVersion() throws SQLException {
 
         ResultSet rs =
@@ -5397,7 +5376,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         return rs.getInt(1);
     }
-*/
 
 //#endif JDBC3
 
@@ -5422,11 +5400,9 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public int getJDBCMajorVersion() throws SQLException {
         return 3;
     }
-*/
 
 //#endif JDBC3
 
@@ -5450,11 +5426,9 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public int getJDBCMinorVersion() throws SQLException {
         return 0;
     }
-*/
 
 //#endif JDBC3
 
@@ -5480,7 +5454,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public int getSQLStateType() throws SQLException {
 
         // TODO: fredt@users we don't really. Need to review the codes.
@@ -5488,7 +5461,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // boucherb@users 20020426
         throw jdbcDriver.notSupported;
     }
-*/
 
 //#endif JDBC3
 
@@ -5511,7 +5483,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public boolean locatorsUpdateCopy() throws SQLException {
 
         // TODO: fredt@users - agreed
@@ -5521,7 +5492,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // return false;
         return false;
     }
-*/
 
 //#endif JDBC3
 
@@ -5543,7 +5513,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public boolean supportsStatementPooling() throws SQLException {
 
         // TODO:
@@ -5553,7 +5522,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // return false;
         return false;
     }
-*/
 
 //#endif JDBC3
     //----------------------- Internal Implementation --------------------------

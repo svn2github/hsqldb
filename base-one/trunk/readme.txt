@@ -1,5 +1,10 @@
 Readme File
 
+2003.01.27
+
+Bug fixes and enhancements
+New SqlTool and SqlFile utilities by Blaine Simpson.
+
 2003.01.15
 
 Fixed some reported bugs

@@ -211,14 +211,12 @@ class Parser {
         SubQuery sq;
 
         if (v == null) {
-            Table  table;
-            Select s = null;
-
             sq = new SubQuery();
 
             subQueryLevel++;
 
-            s        = parseSelect(false);
+            Select s = parseSelect(false);
+
             sq.level = subQueryLevel;
 
             subQueryLevel--;
@@ -233,7 +231,7 @@ class Parser {
             }
 
             // it's not a problem that this table has not a unique name
-            table = new Table(
+            Table table = new Table(
                 database,
                 database.nameManager.newHsqlName("SYSTEM_SUBQUERY", false),
                 Table.SYSTEM_SUBQUERY, 0);
@@ -2029,54 +2027,16 @@ class Parser {
         return subqueries;
     }
 
-    CompiledStatement compileStatement(CompiledStatement cs)
-    throws HsqlException {
-
-        String token;
-
-        token = tokenizer.getString();
-
-        int id = Token.get(token);
-
-        switch (id) {
-
-            case Token.CALL :
-                return compileCallStatement(cs);
-
-            case Token.DELETE :
-                return compileDeleteStatement(cs);
-
-            case Token.INSERT :
-                return compileInsertStatement(cs);
-
-            case Token.UPDATE :
-                return compileUpdateStatement(cs);
-
-            case Token.SELECT :
-                return compileSelectStatement(cs, false);
-
-            default :
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
-        }
-    }
-
     /**
      * Retrieves a CALL-type CompiledStatement from this parse context.
      */
-    CompiledStatement compileCallStatement(CompiledStatement cs)
-    throws HsqlException {
-
-        Expression expression;
+    CompiledStatement compileCallStatement() throws HsqlException {
 
         clearParameters();
 
-        expression = parseExpression();
-
-        if (cs == null) {
-            cs = new CompiledStatement();
-        }
-
-        cs.setAsCall(expression, getParameters());
+        Expression expression = parseExpression();
+        CompiledStatement cs = new CompiledStatement(expression,
+            getParameters());
 
         cs.subqueries = getSortedSubqueries();
 
@@ -2086,8 +2046,7 @@ class Parser {
     /**
      * Retrieves a DELETE-type CompiledStatement from this parse context.
      */
-    CompiledStatement compileDeleteStatement(CompiledStatement cs)
-    throws HsqlException {
+    CompiledStatement compileDeleteStatement() throws HsqlException {
 
         String     token;
         Table      table;
@@ -2110,9 +2069,7 @@ class Parser {
             tokenizer.back();
         }
 
-        if (cs == null) {
-            cs = new CompiledStatement();
-        }
+        CompiledStatement cs = new CompiledStatement();
 
         cs.setAsDelete(table, condition, getParameters());
 
@@ -2165,24 +2122,17 @@ class Parser {
     /**
      * Retrieves an INSERT_XXX-type CompiledStatement from this parse context.
      */
-    CompiledStatement compileInsertStatement(CompiledStatement cs)
-    throws HsqlException {
-
-        String        token;
-        Table         t;
-        HsqlArrayList cNames;
-        boolean[]     ccl;
-        int[]         cm;
-        int           ci;
-        int           len;
-        Expression[]  acve;
-        Select        select;
+    CompiledStatement compileInsertStatement() throws HsqlException {
 
         clearParameters();
         tokenizer.getThis(Token.T_INTO);
 
-        token = tokenizer.getString();
-        t     = database.getTable(token, session);
+        HsqlArrayList cNames;
+        boolean[]     ccl;
+        int[]         cm;
+        int           len;
+        String        token = tokenizer.getString();
+        Table         t     = database.getTable(token, session);
 
         checkTableWriteAccess(t, UserManager.INSERT);
 
@@ -2204,7 +2154,8 @@ class Parser {
             cm  = new int[len];
 
             for (int i = 0; i < len; i++) {
-                ci      = t.getColumnNr((String) cNames.get(i));
+                int ci = t.getColumnNr((String) cNames.get(i));
+
                 cm[i]   = ci;
                 ccl[ci] = true;
             }
@@ -2213,27 +2164,20 @@ class Parser {
         }
 
         if (token.equals(Token.T_VALUES)) {
-            acve = new Expression[len];
+            Expression[] acve = new Expression[len];
 
             getInsertColumnValueExpressions(t, acve, len);
 
-            if (cs == null) {
-                cs = new CompiledStatement();
-            }
-
-            cs.setAsInsertValues(t, cm, acve, ccl, getParameters());
+            CompiledStatement cs = new CompiledStatement(t, cm, acve, ccl,
+                getParameters());
 
             cs.subqueries = getSortedSubqueries();
 
             return cs;
         } else if (token.equals(Token.T_SELECT)) {
-            select = parseSelect(false);
-
-            if (cs == null) {
-                cs = new CompiledStatement();
-            }
-
-            cs.setAsInsertSelect(t, cm, ccl, select, getParameters());
+            Select select = parseSelect(false);
+            CompiledStatement cs = new CompiledStatement(t, cm, ccl, select,
+                getParameters());
 
             cs.subqueries = getSortedSubqueries();
 
@@ -2246,8 +2190,8 @@ class Parser {
     /**
      * Retrieves a SELECT-type CompiledStatement from this parse context.
      */
-    CompiledStatement compileSelectStatement(CompiledStatement cs,
-            boolean isview) throws HsqlException {
+    CompiledStatement compileSelectStatement(boolean isview)
+    throws HsqlException {
 
         Select select;
 
@@ -2255,11 +2199,7 @@ class Parser {
 
         select = parseSelect(isview);
 
-        if (cs == null) {
-            cs = new CompiledStatement();
-        }
-
-        cs.setAsSelect(select, getParameters());
+        CompiledStatement cs = new CompiledStatement(select, getParameters());
 
         cs.subqueries = getSortedSubqueries();
 
@@ -2269,8 +2209,7 @@ class Parser {
     /**
      * Retrieves an UPDATE-type CompiledStatement from this parse context.
      */
-    CompiledStatement compileUpdateStatement(CompiledStatement cs)
-    throws HsqlException {
+    CompiledStatement compileUpdateStatement() throws HsqlException {
 
         String token;
         Table  table;
@@ -2329,11 +2268,8 @@ class Parser {
             acve[i] = (Expression) cveList.get(i);
         }
 
-        if (cs == null) {
-            cs = new CompiledStatement();
-        }
-
-        cs.setAsUpdate(table, cm, acve, condition, getParameters());
+        CompiledStatement cs = new CompiledStatement(table, cm, acve,
+            condition, getParameters());
 
         cs.subqueries = getSortedSubqueries();
 

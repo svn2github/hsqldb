@@ -36,6 +36,9 @@ import java.io.StringReader;
 import org.hsqldb.lib.AsciiStringInputStream;
 
 /**
+ * Provides methods for getting the length of an SQL CLOB (Character Large
+ * Object) value, for materializing a CLOB value on the client, and for
+ * searching for a substring or CLOB object within a CLOB value.
  *
  * @author  boucherb@users
  * @version 1.7.2
@@ -45,7 +48,7 @@ public class jdbcClob implements Clob {
 
     private String data;
 
-    jdbcClob(String datum) throws SQLException {
+    public jdbcClob(String datum) throws SQLException {
         this.data = datum;
     }
 
@@ -103,11 +106,25 @@ public class jdbcClob implements Clob {
      */
     public String getSubString(long pos, int length) throws SQLException {
 
+        pos--;
+
         try {
-            return data.substring((int) pos, length);
-        } catch (Exception e) {
-            throw jdbcDriver.sqlException(Trace.error(Trace.GENERAL_ERROR,
-                    e.getMessage()));
+            Trace.check(pos >= 0 && pos <= data.length(),
+                        Trace.INVALID_JDBC_ARGUMENT, "pos: " + (pos + 1L));
+            Trace.check(length >= 0 && length <= Integer.MAX_VALUE,
+                        Trace.INVALID_JDBC_ARGUMENT, "length: " + length);
+
+            int end = (int) pos + length;
+
+            Trace.check(end <= data.length(), Trace.INVALID_JDBC_ARGUMENT,
+                        "length: " + length);
+
+            return data.substring((int) pos, end);
+        } catch (HsqlException he) {
+            throw jdbcDriver.sqlException(he);
+        } catch (Throwable t) {
+            throw jdbcDriver.sqlException(new HsqlException(new Result(t,
+                    null)));
         }
     }
 
@@ -120,7 +137,7 @@ public class jdbcClob implements Clob {
      * @param searchstr the substring for which to search
      * @param start the position at which to begin searching; the
      *          first position is 1
-     * @return he position at which the substring appears or -1 if it is not
+     * @return the position at which the substring appears or -1 if it is not
      *          present; the first position is 1
      * @exception SQLException if there is an error accessing the
      *          <code>CLOB</code> value
@@ -129,11 +146,22 @@ public class jdbcClob implements Clob {
      */
     public long position(String searchstr, long start) throws SQLException {
 
+        start--;
+
         try {
-            return data.indexOf(searchstr, (int) start);
-        } catch (Exception e) {
-            throw jdbcDriver.sqlException(Trace.error(Trace.GENERAL_ERROR,
-                    e.getMessage()));
+            Trace.check(start >= 0 && start <= data.length(),
+                        Trace.INVALID_JDBC_ARGUMENT,
+                        "start: " + (start + 1L));
+
+            int pos = data.indexOf(searchstr, (int) start);
+
+            return pos >= 0 ? pos + 1
+                            : -1;
+        } catch (HsqlException he) {
+            throw jdbcDriver.sqlException(he);
+        } catch (Throwable t) {
+            throw jdbcDriver.sqlException(new HsqlException(new Result(t,
+                    null)));
         }
     }
 
@@ -155,12 +183,41 @@ public class jdbcClob implements Clob {
      */
     public long position(Clob searchstr, long start) throws SQLException {
 
+        start--;
+
         try {
-            return position(
-                searchstr.getSubString(0L, (int) searchstr.length()), start);
-        } catch (Exception e) {
-            throw jdbcDriver.sqlException(Trace.error(Trace.GENERAL_ERROR,
-                    e.getMessage()));
+            Trace.check(start >= 0 && start <= Integer.MAX_VALUE,
+                        Trace.INVALID_JDBC_ARGUMENT, "start: " + start);
+
+            long sslen = searchstr.length();
+            long dslen = data.length();
+
+// This is potentially much less expensive than materializing a large
+// substring from some other vendor's CLOB.  Indeed, we should probably
+// do the comparison piecewise, using in-memory lists (or temp-files
+// when available), if it is detected that the input CLOB is very long.
+            if ((start + sslen) > dslen) {
+                return -1;
+            }
+
+            // Avoid wrap-around and potential aioobe on cast to int
+            Trace.check(sslen <= Integer.MAX_VALUE,
+                        Trace.INVALID_JDBC_ARGUMENT,
+                        "searchstr.length(): " + sslen + " > "
+                        + Integer.MAX_VALUE);
+
+            String s   = searchstr.getSubString(1L, (int) sslen);
+            int    pos = data.indexOf(s, (int) start);
+
+            return pos >= 0 ? pos + 1
+                            : -1;
+        } catch (SQLException e) {
+            throw e;
+        } catch (HsqlException he) {
+            throw jdbcDriver.sqlException(he);
+        } catch (Throwable t) {
+            throw jdbcDriver.sqlException(new HsqlException(new Result(t,
+                    null)));
         }
     }
 
@@ -278,10 +335,25 @@ public class jdbcClob implements Clob {
     public void truncate(long len) throws SQLException {
 
         try {
-            data = data.substring(0, (int) len);
-        } catch (Exception e) {
-            throw jdbcDriver.sqlException(Trace.error(Trace.GENERAL_ERROR,
-                    e.getMessage()));
+            Trace.check(len >= 0, Trace.INVALID_JDBC_ARGUMENT, "len: " + len);
+
+            len = len >> 1;
+
+            Trace.check(len <= data.length(), Trace.INVALID_JDBC_ARGUMENT,
+                        "len: " + len);
+
+            if (len == data.length()) {
+
+                // nothing has changed, so there's no point
+                // in making a copy
+            } else {
+                data = data.substring(0, (int) len);
+            }
+        } catch (HsqlException he) {
+            throw jdbcDriver.sqlException(he);
+        } catch (Throwable t) {
+            throw jdbcDriver.sqlException(new HsqlException(new Result(t,
+                    null)));
         }
     }
 }

@@ -68,6 +68,7 @@
 package org.hsqldb;
 
 import java.io.File;
+import org.hsqldb.lib.FileUtil;
 import org.hsqldb.resources.BundleHandler;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt
@@ -220,7 +221,7 @@ public class WebServer extends Server {
      *  description="Read by putPropertiesFromFile()"
      */
     public String getDefaultPropertiesPath() {
-        return (new File("webserver")).getAbsolutePath();
+        return FileUtil.canonicalOrAbsolutePath("webserver");
     }
 
     /**

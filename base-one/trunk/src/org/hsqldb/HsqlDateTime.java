@@ -351,15 +351,15 @@ class HsqlDateTime {
     private static void setTimeInMillis(Calendar cal, long millis) {
 
 //#ifdef JDBC3
-/*
         // Use method directly
         cal.setTimeInMillis(millis);
-*/
 
 //#else
+/*
         // Have to go indirect
         tempDate.setTime(millis);
         cal.setTime(tempDate);
+*/
 
 //#endif JDBC3
     }
@@ -374,14 +374,14 @@ class HsqlDateTime {
     private static long getTimeInMillis(Calendar cal) {
 
 //#ifdef JDBC3
-/*
         // Use method directly
         return (cal.getTimeInMillis());
-*/
 
 //#else
+/*
         // Have to go indirect
         return (cal.getTime().getTime());
+*/
 
 //#endif JDBC3
     }

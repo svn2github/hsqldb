@@ -31,6 +31,7 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.HsqlTimer;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HashSet;
@@ -69,16 +70,16 @@ class DatabaseManager {
     private static int dbIDCounter;
 
     /** name to Database mapping for mem: databases */
-    private static HashMap memDatabaseMap = new HashMap();
+    static final HashMap memDatabaseMap = new HashMap();
 
     /** File to Database mapping for file: databases */
-    private static HashMap fileDatabaseMap = new HashMap();
+    static final HashMap fileDatabaseMap = new HashMap();
 
     /** File to Database mapping for res: databases */
-    private static HashMap resDatabaseMap = new HashMap();
+    static final HashMap resDatabaseMap = new HashMap();
 
     /** id number to Database for Databases currently in registry */
-    private static IntKeyHashMap databaseIDMap = new IntKeyHashMap();
+    static final IntKeyHashMap databaseIDMap = new IntKeyHashMap();
 
     /**
      * Returns a vector containing the paths for all the databases.
@@ -260,7 +261,7 @@ class DatabaseManager {
 
         if (type == S_FILE) {
             databaseMap = fileDatabaseMap;
-            key         = new File(path);
+            key         = filePathToKey(path);
         } else if (type == S_RES) {
             databaseMap = resDatabaseMap;
         } else {
@@ -296,7 +297,7 @@ class DatabaseManager {
 
         if (type == S_FILE) {
             databaseMap = fileDatabaseMap;
-            key         = new File(path);
+            key         = filePathToKey(path);
         } else if (type == S_RES) {
             databaseMap = resDatabaseMap;
         } else {
@@ -318,7 +319,7 @@ class DatabaseManager {
 
         if (type == S_FILE) {
             databaseMap = fileDatabaseMap;
-            key         = new File(path);
+            key         = filePathToKey(path);
         } else if (type == S_RES) {
             databaseMap = resDatabaseMap;
         } else {
@@ -344,7 +345,40 @@ class DatabaseManager {
 
         if (type == S_FILE) {
             databaseMap = fileDatabaseMap;
-            key         = new File(path);
+
+// boucherb@users 20040124 - patch 1.7.2
+// Under the current contract, it's essentially impossible for an
+// exception to get thrown here, because the database could not
+// have been registered successfully before hand using the same
+// path
+//
+// Eventually, we might think about storing the key with the
+// database instance so as to avoid this unnecessary additional
+// conversion and highly unlikely corner case handling.
+            try {
+                key = filePathToKey(path);
+            } catch (HsqlException e) {
+                Iterator it       = databaseMap.keySet().iterator();
+                Object   foundKey = null;
+
+                while (it.hasNext()) {
+                    Object currentKey = it.next();
+
+                    if (databaseMap.get(currentKey) == database) {
+                        foundKey = currentKey;
+
+                        break;
+                    }
+                }
+
+                if (foundKey == null) {
+                    e.printStackTrace();
+
+                    // ??? return;
+                } else {
+                    key = foundKey;
+                }
+            }
         } else if (type == S_RES) {
             databaseMap = resDatabaseMap;
         } else {
@@ -366,7 +400,7 @@ class DatabaseManager {
      * The database is then removed form the sets for all servers and the
      * servers that have no other database are removed from the map.
      */
-    private static HashMap serverMap = new HashMap();
+    static HashMap serverMap = new HashMap();
 
     /**
      * Deregisters a server completely.
@@ -426,7 +460,7 @@ class DatabaseManager {
         }
     }
 
-    private static boolean isServerDB(Database db) {
+    static boolean isServerDB(Database db) {
 
         Iterator it = serverMap.keySet().iterator();
 
@@ -636,9 +670,20 @@ class DatabaseManager {
     }
 
     // Timer
-    private static HsqlTimer timer = new HsqlTimer();
+    private static final HsqlTimer timer = new HsqlTimer();
 
     static HsqlTimer getTimer() {
         return timer;
+    }
+
+    // converts file path to database lookup key, converting any
+    // any thrown exception to an HsqlException in the process
+    private static Object filePathToKey(String path) throws HsqlException {
+
+        try {
+            return FileUtil.canonicalFile(path);
+        } catch (Exception e) {
+            throw Trace.error(Trace.FILE_IO_ERROR, e.toString());
+        }
     }
 }

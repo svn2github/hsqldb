@@ -617,21 +617,7 @@ class DatabaseScript {
             String name = u.getName();
 
             if (!name.equals(Token.T_PUBLIC)) {
-                a = new StringBuffer(128);
-
-                a.append(Token.T_CREATE).append(' ').append(
-                    Token.T_USER).append(' ');
-                a.append(name);
-                a.append(' ').append(Token.T_PASSWORD).append(' ');
-                a.append('"');
-                a.append(u.getPassword());
-                a.append('"');
-
-                if (u.isAdmin()) {
-                    a.append(' ').append(Token.T_ADMIN);
-                }
-
-                addRow(r, a.toString());
+                addRow(r, u.getCreateUserDDL());
             }
 
             IntValueHashMap rights = u.getRights();

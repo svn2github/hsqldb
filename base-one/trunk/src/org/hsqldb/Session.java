@@ -723,22 +723,22 @@ class Session implements SessionInterface {
         switch (cmd) {
 
             case Token.SELECT : {
-                cs = parser.compileSelectStatement(null, false);
+                cs = parser.compileSelectStatement(false);
 
                 break;
             }
             case Token.INSERT : {
-                cs = parser.compileInsertStatement(null);
+                cs = parser.compileInsertStatement();
 
                 break;
             }
             case Token.UPDATE : {
-                cs = parser.compileUpdateStatement(null);
+                cs = parser.compileUpdateStatement();
 
                 break;
             }
             case Token.DELETE : {
-                cs = parser.compileDeleteStatement(null);
+                cs = parser.compileDeleteStatement();
 
                 break;
             }
@@ -748,7 +748,7 @@ class Session implements SessionInterface {
                                       "not a CALL statement");
                 }
 
-                cs = parser.compileCallStatement(null);
+                cs = parser.compileCallStatement();
 
                 break;
             }

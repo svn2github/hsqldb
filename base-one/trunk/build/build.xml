@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<!-- author fredt@users.sourceforge.net 2001 - 2002 -->
-
+<!-- author fredt@users.sourceforge.net 2001 - 2003 -->
+<!-- additional targets by unsaved@users.sourceforge.net -->
 
 <project name="hsqldb" default="help" basedir="../">
    <!-- This loads properties in the same exact way as if you ran
@@ -11,7 +11,7 @@
         Ant expert.
         If you want to know, "Can I set property 'x' in 'build.properties'",
         rephrase the question to yourself as "Can I run 'ant -Dx=...?"
-        Do not address questions about property file(s) to anybody in the
+        Do not address questions about property file(s) to the
         hsqldb community. -->
    <property file='build/build.properties'/>
 

@@ -80,6 +80,21 @@ import java.util.zip.InflaterInputStream;
 
 public class FileUtil {
 
+    // a new File("...")'s path is not canonicalized, only resolved
+    // and normalized (e.g. redundant separator chars removed),
+    // so as of JDK 1.4.2, this is a valid test for case insensitivity,
+    // at least when it is assumed that we are dealing in a configuration
+    // that only needs to consider the host platform's native file system,
+    // even if, unlike for File.getCanonicalPath(), (new File("a")).exists() or 
+    // (new File("A")).exits(), regardless of the hosting system's
+    // file path case sensitivity policy.
+    public static final boolean fsIsIgnoreCase =
+        (new File("A")).equals(new File("a"));
+
+    // posix separator normalized to File.separator?
+    // CHECKME is this true for every file system under Java?
+    public static final boolean fsNormalizesPosixSeparator =
+        (new File("/")).getPath().endsWith(File.separator);
     private static final int COPY_BLOCK_SIZE = 1 << 16;
 
     public static void compressFile(String infilename,
@@ -240,6 +255,87 @@ public class FileUtil {
             return (IOException) e;
         } else {
             return new IOException(e.getMessage());
+        }
+    }
+
+    /**
+     * Retrieves the absolute path, given some path specification.
+     *
+     * @param path the path for which to retrieve the absolute path
+     * @return the absolute path
+     */
+    public static String absolutePath(String path) {
+        return (new File(path)).getAbsolutePath();
+    }
+
+    /**
+     * Retrieves the absolute File, given some path specification.
+     *
+     * @param path the path for which to retrieve the absolute File
+     * @return the absolute File
+     */
+    public static File absoluteFile(String path) {
+        return (new File(path)).getAbsoluteFile();
+    }
+
+    /**
+     * Retrieves the canonical file for the given file, in a
+     * JDK 1.1 complaint way.
+     *
+     * @param f the File for which to retrieve the absolute File
+     * @return the canonical File
+     */
+    public static File canonicalFile(File f) throws IOException {
+        return new File(f.getCanonicalPath());
+    }
+
+    /**
+     * Retrieves the canonical file for the given path, in a
+     * JDK 1.1 complaint way.
+     *
+     * @param path the path for which to retrieve the canonical File
+     * @return the canonical File
+     */
+    public static File canonicalFile(String path) throws IOException {
+        return new File(new File(path).getCanonicalPath());
+    }
+
+    /**
+     * Retrieves the canonical path for the given File in a
+     * JDK 1.1 complaint way.
+     *
+     * @param f the File for which to retrieve the canonical path
+     * @return the canonical path
+     */
+    public static String canonicalPath(File f) throws IOException {
+        return f.getCanonicalPath();
+    }
+
+    /**
+     * Retrieves the canonical path for the given path in a
+     * JDK 1.1 complaint way.
+     *
+     * @param path the path for which to retrieve the canonical path
+     * @return the canonical path
+     */
+    public static String canonicalPath(String path) throws IOException {
+        return new File(path).getCanonicalPath();
+    }
+
+    /**
+     * Retrieves the canonical path for the given path, or the absolute
+     * path if attemting to retrieve the canonical path fails.
+     *
+     * @param path the path for which to retrieve the canonical or
+     *      absolute path
+     * @return the canonical or absolute path
+     */
+    public static String canonicalOrAbsolutePath(String path) {
+
+        try {
+            return canonicalPath(path);
+        } catch (Exception e) {
+            return absolutePath(path);
         }
     }
 }
