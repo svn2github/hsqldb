@@ -1,4 +1,4 @@
-<!-- $Id: advancedtopics.xml,v 1.9 2004/04/22 11:34:41 unsaved Exp $ -->
+<!-- $Id: advancedtopics.xml,v 1.10 2004/05/15 10:16:00 fredt Exp $ -->
 
 <chapter id='advanced-chapter'>
     <title id='advanced-title'>Advanced Topics</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.9 $</edition>
-        <pubdate>$Date: 2004/04/22 11:34:41 $</pubdate>
+        <edition>$Revision: 1.10 $</edition>
+        <pubdate>$Date: 2004/05/15 10:16:00 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Advanced</keyword>
@@ -386,6 +386,15 @@
                         <entry>server alias for the first database file</entry>
                     </row>
                     <row>
+                        <entry><property>server.urlid.0</property></entry>
+                        <entry><literal>NONE</literal></entry>
+                        <entry>SqlTool urlid used by UNIX init script.
+                                (This property is not used if your are running
+                                Server/Webserver on a platform other than UNIX,
+                                or of you are not using our UNIX init script).
+                        </entry>
+                    </row>
+                    <row>
                         <entry><property>server.silent</property></entry>
                         <entry><literal>true</literal></entry>
                         <entry>
@@ -412,8 +421,8 @@
                 <literal>file:</literal> or <literal>res:</literal> prefixes and properties as
                 discussed above under CONNECTIONS. For example,
                 <informalexample><programlisting>
-    database.0=mem:temp;sql.enforce_strict_size=true;
-                </programlisting></informalexample>
+    database.0=mem:temp;sql.enforce_strict_size=true;</programlisting>
+                </informalexample>
             </para>
             <para>
                 Values specific to <filename>server.properties</filename> are:
