@@ -6,6 +6,19 @@ area is in changelog_1_7_2.txt.
 
 Fred Toussi (fredt@users.sourceforge.net)
 
+2004.06.28 RC_6d
+
+The implemntation of UNION, EXCEPT and INTERSECT set operations has been 
+rewritten to comply with SQL standards.
+When multiple set operations are present in a query, they are now evaluated
+from left to right, with INTERSECT taking precedence over the rest.
+It is now possible to use parentheses around multiple (or single) select
+statements with set operations to change the order of evalation.E.g.:
+
+((SELECT * FROM A EXCEPT SELECT * FROM B) INTERSECT SELECT * FROM D UNION SELECT * FROM E)
+
+Timestamp, date and time values in TEXT TABLE source files are treated more
+leniently, allowing spaces before values.   
 
 2004.06.19 RC_6c 
 
@@ -298,7 +311,8 @@ A new JDBC connection property "toupper_column_name" can be used when the applic
 program submits lowercase / mixedcase column names to Result.getXXX(String column)
 methods when the names are in fact UPPERCASE as they were not quoted when the
 table was created. The default value is false. See related documentation in
-hsqldbAdvancedGuide.html on how to set this property value.
+hsqldbAdvancedGuide.html on how to set this property value. (this property was 
+subsequently dropped)
 
 The rest of the information for ALPHA_N below applies to this version too.
 
@@ -346,7 +360,7 @@ COALESCE(.. , ..)
 
 FURTHER IMPROVEMENTS IN PREPARED STATEMENT EXECUTION SPEED
 
-SUPPORT FOR JDBC BATCH EXECUTION AND MULTIPLE-RESULT SET
+SUPPORT FOR JDBC BATCH EXECUTION
 
 SUPPORT FOR MULTIPLE ROWS WITH NULL FIELDS UNDER UNIQUE CONSTRAINTS
 
@@ -360,7 +374,7 @@ REWRITE OF LEFT OUTER JOIN SUPPORT
 
 - Complete rewrite of join processing abolishes the requirement for 
 an index on any joined columns. All expressions with AND are supported
-in the join condition (ON ....)
+in the join condition (JOIN atable ON ....)
 
 IMPROVEMENTS TO ON DELETE CASCADE / SET DEFAULT / SET NULL
 

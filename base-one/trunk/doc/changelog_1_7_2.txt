@@ -74,7 +74,17 @@ UNION and other set queries accept only one ORDER BY clause at the end. In this 
 
 SELECT .. UNION SELECT .. ORDER BY 1 DESC, 5, 3
 
+The implemntation of UNION, EXCEPT and INTERSECT set operations has been rewritten to comply with SQL standards.
 
+When multiple set operations are present in a query, they are now evaluated from left to right, with INTERSECT taking precedence over the rest.
+
+It is now possible to use parentheses around multiple (or single) select statements with set operations to change the order of evalation.E.g.:
+
+((SELECT * FROM A EXCEPT SELECT * FROM B) INTERSECT SELECT * FROM D UNION SELECT * FROM E)
+
+The above applies to all cases where a SELECT can be used except a single value select inside another select. Eg.
+
+SELECT a, b, SELECT asinglevalue FROM anothertable WHERE ..., FROM atable JOIN ... 
 
 ----------------
 
@@ -245,7 +255,7 @@ JDBC ENHANCEMENTS
 
 JDBC support for savepoints.
 
-Support for JDBC batch execution and multiple-result sets.
+Support for JDBC batch execution with multiple-results. Both Statement and PreparedStatement batch modes are supported.
 
 SSL support for server mode operation.
 

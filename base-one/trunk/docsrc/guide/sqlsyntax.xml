@@ -1,4 +1,4 @@
-<!-- $Id: sqlsyntax.xml,v 1.13 2004/06/14 11:44:23 fredt Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.14 2004/06/30 15:30:49 unsaved Exp $ -->
 
 <chapter id='sqlsyntax-chapter'>
 <title id='sqlsyntax-title'>SQL Syntax</title>
@@ -34,8 +34,8 @@
             </affiliation>
         </editor>
     </authorgroup>
-    <edition>$Revision: 1.13 $</edition>
-    <pubdate>$Date: 2004/06/14 11:44:23 $</pubdate>
+    <edition>$Revision: 1.14 $</edition>
+    <pubdate>$Date: 2004/06/30 15:30:49 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Syntax</keyword>
@@ -843,7 +843,7 @@ FROM tableList
             Retrieves information from one or more tables in the database. 
         </para>
         <variablelist>
-            <title>Components of a CREATE TABLE command</title>
+            <title>Components of a SELECT command</title>
             <varlistentry><term>tableList</term>
                 <listitem><programlisting>
     table [{ INNER | LEFT OUTER } JOIN table ON Expression] [, ...]</programlisting>
@@ -881,6 +881,23 @@ FROM tableList
             <varlistentry><term>TOP m</term>
                 <listitem><para>
                     Equivalent to LIMIT 0 m.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry><term>UNION and other set operations</term>
+                <listitem><para>
+                </para><para>
+                    Multiple SELECT statements joined with UNION, EXCEPT and INTERSECT
+			  are possible. Each SELECT is then treated as a term, and the 
+			  set operation as an operator in an expression. The expression is
+                    evaluated from left to right but INTERSECT takes 
+                    precedence over the rest of the operators and applied first.
+                    You can use parentheses around any SELECT pairs to change the
+                    evaluation order.
+                </para><para>
+                    NOT NULL constraints can be part of the column definition 
+                    only.
+                    Other constraints cannot be part of the column definition 
+                    and must appear at the end of the column definition list.
                 </para></listitem>
             </varlistentry>
         </variablelist>
