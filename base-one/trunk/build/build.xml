@@ -820,7 +820,7 @@ includes='**/*.css, **/*.java, **/*.sql, **/*.txt, **/*.properties, **/*.cfg'/>
                extension='${_ext}'>
             <param name='html.stylesheet' expression='${_css}'/>
             <param name='navig.graphics' expression='true'/>
-            <param name='navig.graphics.path' expression='../'/>
+            <param name='navig.graphics.path' expression='navicons/'/>
             <param name='navig.graphics.extension' expression='.gif'/>
             <param name='chunk.section.depth' expression='0'/>
         </style>
