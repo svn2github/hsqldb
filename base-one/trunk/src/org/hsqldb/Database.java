@@ -153,7 +153,7 @@ class Database {
     HsqlNameManager                nameManager;
     DatabaseObjectNames            triggerNameList;
     DatabaseObjectNames            indexNameList;
-    HashMappedList                 sequenceMap;
+    SequenceManager                sequenceManager;
     final static int               DATABASE_ONLINE       = 1;
     final static int               DATABASE_OPENING      = 4;
     final static int               DATABASE_CLOSING      = 8;
@@ -274,7 +274,7 @@ class Database {
             nameManager           = new HsqlNameManager();
             triggerNameList       = new DatabaseObjectNames();
             indexNameList         = new DatabaseObjectNames();
-            sequenceMap           = new HashMappedList();
+            sequenceManager       = new SequenceManager();
             bReferentialIntegrity = true;
             sysUser               = userManager.createSysUser(this);
             sessionManager        = new SessionManager(this, sysUser);
@@ -315,7 +315,7 @@ class Database {
         nameManager     = null;
         triggerNameList = null;
         indexNameList   = null;
-        sequenceMap     = null;
+        sequenceManager = null;
         sessionManager  = null;
         dInfo           = null;
     }
@@ -991,21 +991,6 @@ class Database {
                 }
             }
         }
-    }
-
-    /**
-     *  Drops a sequence with the specified name from this Database
-     *
-     * @param name of the trigger to drop
-     * @param session execution context
-     * @throws HsqlException if a database access error occurs
-     */
-    void dropSequence(String name) throws HsqlException {
-
-        boolean found = sequenceMap.containsKey(name);
-
-        Trace.check(found, Trace.SEQUENCE_NOT_FOUND, name);
-        sequenceMap.remove(name);
     }
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)

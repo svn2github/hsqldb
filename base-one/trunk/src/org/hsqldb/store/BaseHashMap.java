@@ -806,7 +806,7 @@ public class BaseHashMap {
 
     void resetAccessCount() {
 
-        if (accessCount < Integer.MAX_VALUE / 2) {
+        if (accessCount < Integer.MAX_VALUE) {
             return;
         }
 

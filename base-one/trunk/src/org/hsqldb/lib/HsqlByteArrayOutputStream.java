@@ -31,11 +31,7 @@
 
 package org.hsqldb.lib;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.io.UTFDataFormatException;
-import java.io.DataOutput;
+import java.io.*;
 
 /**
  * This class is a replacement for both java.io.ByteArrayOuputStream
@@ -176,6 +172,13 @@ implements DataOutput {
         buf[initpos]   = (byte) bytecount;
     }
 
+    /**
+     * does nothing
+     */
+    public void flush() throws java.io.IOException {
+        super.flush();
+    }
+
     // methods that extend java.io.OutputStream
     public void write(int b) {
 
@@ -184,6 +187,10 @@ implements DataOutput {
         buf[count] = (byte) b;
 
         count++;
+    }
+
+    public void write(byte[] b) throws java.io.IOException {
+        write(b, 0, b.length);
     }
 
     public void write(byte b[], int off, int len) {

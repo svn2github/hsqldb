@@ -1525,7 +1525,8 @@ class Parser {
                 tokenizer.getString();
 
                 NumberSequence sequence =
-                    (NumberSequence) database.sequenceMap.get(name);
+                    (NumberSequence) database.sequenceManager.getSequence(
+                        name);
 
                 Trace.check(sequence != null, Trace.SEQUENCE_NOT_FOUND);
 

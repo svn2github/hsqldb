@@ -480,6 +480,23 @@ class Expression {
         return toString(0);
     }
 
+    static String getContextDDL(Expression expression) throws HsqlException {
+
+        String ddl = expression.getDDL();
+
+        if (expression.exprType != VALUE && expression.exprType != COLUMN
+                && expression.exprType != FUNCTION
+                && expression.exprType != ALTERNATIVE
+                && expression.exprType != CASEWHEN
+                && expression.exprType != CONVERT) {
+            StringBuffer temp = new StringBuffer();
+
+            ddl = temp.append('(').append(ddl).append(')').toString();
+        }
+
+        return ddl;
+    }
+
     /**
      * For use with CHECK constraints. Under development.
      *
@@ -504,31 +521,11 @@ class Expression {
         String       right = null;
 
         if (eArg != null) {
-            left = eArg.getDDL();
-
-            if (eArg.exprType != VALUE && eArg.exprType != COLUMN
-                    && eArg.exprType != FUNCTION
-                    && eArg.exprType != ALTERNATIVE
-                    && eArg.exprType != CASEWHEN
-                    && eArg.exprType != CONVERT) {
-                StringBuffer temp = new StringBuffer();
-
-                left = temp.append('(').append(left).append(')').toString();
-            }
+            left = Expression.getContextDDL(eArg);
         }
 
         if (eArg2 != null) {
-            right = eArg2.getDDL();
-
-            if (eArg2.exprType != VALUE && eArg2.exprType != COLUMN
-                    && eArg2.exprType != FUNCTION
-                    && eArg2.exprType != ALTERNATIVE
-                    && eArg2.exprType != CASEWHEN
-                    && eArg2.exprType != CONVERT) {
-                StringBuffer temp = new StringBuffer();
-
-                right = temp.append('(').append(right).append(')').toString();
-            }
+            right = Expression.getContextDDL(eArg2);
         }
 
         switch (exprType) {
@@ -617,7 +614,11 @@ class Expression {
                 return buf.toString();
 
             case EQUAL :
+                if (Token.T_NULL.equals(right)) {
+                    buf.append(left).append(" IS ").append(right);
+                } else {
                 buf.append(left).append('=').append(right);
+                }
 
                 return buf.toString();
 
@@ -642,7 +643,11 @@ class Expression {
                 return buf.toString();
 
             case NOT_EQUAL :
+                if (Token.T_NULL.equals(right)) {
+                    buf.append(left).append(" IS NOT ").append(right);
+                } else {
                 buf.append(left).append("!=").append(right);
+                }
 
                 return buf.toString();
 
@@ -1090,11 +1095,13 @@ class Expression {
      */
     boolean collectColumnName(HashSet columnNames) {
 
-        if (exprType == COLUMN) {
+        boolean result = exprType == COLUMN;
+
+        if (result) {
             columnNames.add(columnName);
         }
 
-        return exprType == COLUMN;
+        return result;
     }
 
     /**

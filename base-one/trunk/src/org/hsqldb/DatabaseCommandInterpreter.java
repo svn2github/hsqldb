@@ -136,7 +136,7 @@ class DatabaseCommandInterpreter {
         }
 
         result = null;
-        cmd    = Token.UNKNOWN;
+        cmd    = Token.UNKNOWNTOKEN;
         logger = database.logger;
 
         try {
@@ -1084,15 +1084,9 @@ class DatabaseCommandInterpreter {
 
                     tempConst = new Constraint(cname, null, null, null,
                                                Constraint.CHECK, 0, 0);
+                    tempConst.core.check =
+                        processCreateCheckConstraintCondition(t);
 
-                    tokenizer.getThis(Token.T_OPENBRACKET);
-
-                    Parser parser = new Parser(database, tokenizer, session);
-                    Expression condition = parser.parseExpression();
-
-                    tempConst.core.check = condition;
-
-                    tokenizer.getThis(Token.T_CLOSEBRACKET);
                     tcList.add(tempConst);
 
                     break;
@@ -1124,7 +1118,7 @@ class DatabaseCommandInterpreter {
      * @throws HsqlException
      * @return
      */
-    private Expression processCreateCheckConstraint(Table t)
+    private Expression processCreateCheckConstraintCondition(Table t)
     throws HsqlException {
 
         tokenizer.getThis(Token.T_OPENBRACKET);
@@ -2403,7 +2397,7 @@ class DatabaseCommandInterpreter {
 
         start = tokenizer.getBigint();
 
-        NumberSequence seq = (NumberSequence) database.sequenceMap.get(name);
+        NumberSequence seq = database.sequenceManager.getSequence(name);
 
         Trace.check(seq != null, Trace.SEQUENCE_NOT_FOUND);
         seq.reset(start);
@@ -2648,14 +2642,10 @@ class DatabaseCommandInterpreter {
             increment = tokenizer.getBigint();
         }
 
-        Trace.check(!database.sequenceMap.containsKey(name),
-                    Trace.SEQUENCE_ALREADY_EXISTS);
-
         HsqlName hsqlname = database.nameManager.newHsqlName(name, isquoted);
 
-        database.sequenceMap.put(name,
-                                 new NumberSequence(hsqlname, start,
-                                     increment, type));
+        database.sequenceManager.createSequence(hsqlname, start, increment,
+                type);
     }
 
     private void processCreateUser() throws HsqlException {
@@ -2733,7 +2723,7 @@ class DatabaseCommandInterpreter {
 
     private void processDropSequence() throws HsqlException {
         session.checkDDLWrite();
-        database.dropSequence(tokenizer.getString());
+        database.sequenceManager.dropSequence(tokenizer.getString());
     }
 
     private void processDropTrigger() throws HsqlException {
@@ -3002,15 +2992,8 @@ class DatabaseCommandInterpreter {
         }
 
         check = new Constraint(n, null, null, null, Constraint.CHECK, 0, 0);
+        check.core.check = processCreateCheckConstraintCondition(t);
 
-        tokenizer.getThis(Token.T_OPENBRACKET);
-
-        Parser     parser    = new Parser(database, tokenizer, session);
-        Expression condition = parser.parseExpression();
-
-        check.core.check = condition;
-
-        tokenizer.getThis(Token.T_CLOSEBRACKET);
         session.commit();
 
         TableWorks tableWorks = new TableWorks(t);

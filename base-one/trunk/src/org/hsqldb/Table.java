@@ -138,7 +138,6 @@ class Table {
 
 // -----------------------------------------------------------------------
     HsqlArrayList     vConstraint;                    // constrainst for the table
-    TableFilter       checkFilter;                    // for check constrainst
     HsqlArrayList[]   vTrigs;                         // array of trigger lists
     private int[]     colTypes;                       // fredt - types of columns
     private int[]     colSizes;                       // fredt - copy of SIZE values for columns

@@ -491,6 +491,7 @@ abstract class Cache {
                                   new Object[]{ e });
             }
 
+            // all rows must be cleard from array - even those that remain in cache
             rowTable[i] = null;
         }
 

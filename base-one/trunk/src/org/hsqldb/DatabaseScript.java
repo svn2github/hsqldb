@@ -107,9 +107,9 @@ class DatabaseScript {
         [START WITH <value>]
         [INCREMENT BY <value>]
         */
-        for (int i = 0, sSize = dDatabase.sequenceMap.size(); i < sSize;
-                i++) {
-            HashMappedList seqmap = dDatabase.sequenceMap;
+        HashMappedList seqmap = dDatabase.sequenceManager.sequenceMap;
+
+        for (int i = 0, sSize = seqmap.size(); i < sSize; i++) {
             NumberSequence seq    = (NumberSequence) seqmap.get(i);
 
             a = new StringBuffer(128);

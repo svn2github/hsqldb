@@ -284,21 +284,17 @@ class TableWorks {
     void createCheckConstraint(Constraint c,
                                HsqlName name) throws HsqlException {
 
-        if (table.checkFilter == null) {
-            table.checkFilter = new TableFilter(table, null, false);
-        }
-
         // check the existing rows
         Expression e = c.core.check;
 
         // this workaround is here to stop LIKE optimisation (for proper scripting)
         e.setLikeOptimised();
 
-        c.core.checkFilter = table.checkFilter;
-        c.core.mainTable   = table;
-
         Select s = Expression.getCheckSelect(table, e);
         Result r = s.getResult(1);
+
+        c.core.checkFilter = s.tFilter[0];
+        c.core.mainTable   = table;
 
         if (r.getSize() != 0) {
             throw Trace.error(Trace.CHECK_CONSTRAINT_VIOLATION);
@@ -307,6 +303,19 @@ class TableWorks {
         // workaround is here to ensure no subselects etc. are in condition
         e.getDDL();
         table.addConstraint(c);
+    }
+
+/** @todo
+     * before a column is dropped, all CHECK constraints must be reset to
+     * make sure they do not reference the column
+     *
+     * when a new Table object is created as a result of structural changes
+     * the check constraint expression must be renewed to hold references
+     * to the new table (otherwise there will still remain references to the
+     * old Table object, resulting in memory leaks
+     */
+    void resetCheckConstraint(Constraint c) throws HsqlException {
+
     }
 
 // fredt@users 20020315 - patch 1.7.0 - drop index bug

@@ -87,6 +87,7 @@ public class ArrayCounter {
      * largest element (rank) where the count of all smaller elements in that
      * range is less than or equals count.<p>
      *
+     * In statistics, this can be used to calculate a median or quadrile value.
      * A usage example applied to an array of age values is to determine,
      * the maximum age of a given number of people. With the example array
      * given in countSegments, rank(array, 6000, 18, 65) will return an age

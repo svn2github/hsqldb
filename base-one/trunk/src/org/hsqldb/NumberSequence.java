@@ -81,6 +81,7 @@ public class NumberSequence {
     private HsqlName name;
     private long     currValue;
     private long     markValue;
+    private long     lastValue;
     private long     increment;
     private int      dataType;
 
@@ -90,7 +91,7 @@ public class NumberSequence {
     NumberSequence(HsqlName name, long value, long increment, int type) {
 
         this.name      = name;
-        currValue      = markValue = value;
+        currValue      = markValue = lastValue = value;
         this.increment = increment;
         dataType       = type;
     }
@@ -164,6 +165,20 @@ public class NumberSequence {
     }
 
     /**
+     * true if since one or more values were retreived since the last resetWasUsed
+     */
+    boolean wasUsed() {
+        return lastValue != currValue;
+    }
+
+    /**
+     * reset the wasUsed flag
+     */
+    void resetWasUsed() {
+        lastValue = currValue;
+    }
+
+    /**
      * reset to new initial value
      */
     void reset(long value) {
@@ -171,7 +186,7 @@ public class NumberSequence {
     }
 
     void reset(long value, long increment) {
-        markValue      = currValue = value;
+        markValue      = currValue = lastValue = value;
         this.increment = increment;
     }
 

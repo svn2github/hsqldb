@@ -36,6 +36,8 @@ package org.hsqldb.store;
  * range of java.lang.* objects.
  *
  */
+
+/** @todo fredt - check accessCount and reset on each getOrAddXXX() */
 public class ValuePoolHashMap extends BaseHashMap {
 
     public ValuePoolHashMap(int initialCapacity, int maxCapacity,

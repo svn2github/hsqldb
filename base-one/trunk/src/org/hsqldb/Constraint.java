@@ -396,6 +396,11 @@ Referential Constraint 4 SET DEFAULT
             core.mainColArray =
                 ArrayUtil.toAdjustedColumnArray(core.mainColArray, colindex,
                                                 adjust);
+
+            if (constType == Constraint.CHECK) {
+
+//                core.check.
+            }
         }
 
         if (oldt == core.refTable) {
