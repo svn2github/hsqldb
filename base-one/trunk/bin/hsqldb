@@ -32,7 +32,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.16 2004/05/13 22:38:49 unsaved Exp $
+# $Id: hsqldb,v 1.17 2004/05/14 20:32:20 unsaved Exp $
 
 # UNIX init script for HSQLDB.
 
@@ -177,10 +177,9 @@ SERVER_HOME=
 SHUTDOWN_URLIDS=
 . "$CFGFILE"
 # Validate that config file sets all required variables.
-[ -n "$JAVA_HOME" ] && [ -n "$HSQLDB_HOME" ] && [ -n "$SERVER_HOME" ] &&
-[ -n "$SHUTDOWN_URLIDS" ] || {
+[ -n "$JAVA_HOME" ] && [ -n "$HSQLDB_HOME" ] && [ -n "$SERVER_HOME" ] || {
     echo "Config file '$CFGFILE' does not set one or more of following variables
-    JAVA_HOME, HSQLDB_HOME, SERVER_HOME, SHUTDOWN_URLIDS" 1>&2
+    JAVA_HOME, HSQLDB_HOME, SERVER_HOME" 1>&2
     exit 2
 }
 [ -n "$JAVA_HOME" ] && [ -n "$HSQLDB_HOME" ] && [ -n "$SERVER_HOME" ] || {
@@ -263,8 +262,6 @@ running with pid $HSQLDB_PID."
         # spaces inside of $AUTH_FILE.
         [ -n "$AUTH_FILE" ] &&
         AUTH_FILE_SWITCH="-Dsqltoolsprayer.rcfile=$AUTH_FILE"
-        databases="`echo $SHUTDOWN_URLIDS | wc -w`"
-        echo "$databases database instance(s) to check..."
         # Some shell implementations don't allow substitution on arg 0,
         # so, we'll set the search path.
         PATH="$JAVA_HOME/bin:$PATH"
@@ -316,8 +313,6 @@ running with pid $HSQLDB_PID."
         # spaces inside of $AUTH_FILE.
         [ -n "$AUTH_FILE" ] &&
         AUTH_FILE_SWITCH="-Dsqltoolsprayer.rcfile=$AUTH_FILE"
-        databases="`echo $SHUTDOWN_URLIDS | wc -w`"
-        echo "$databases database instance(s) to check..."
         # Some shell implementations don't allow substitution on arg 0,
         # so, we'll set the search path.
         PATH="$JAVA_HOME/bin:$PATH"
@@ -364,8 +359,6 @@ running with pid $HSQLDB_PID."
         # N.b., there will be a problem if there are special characters or
         # spaces inside of $AUTH_FILE.
         [ -n "$AUTH_FILE" ] && AUTH_FILE_SWITCH="--rcfile $AUTH_FILE"
-        databases="`echo $SHUTDOWN_URLIDS | wc -w`"
-        echo "$databases database instance(s) to shut down..."
         # Some shell implementations don't allow substitution on arg 0,
         # so, we'll set the search path.
         PATH="$JAVA_HOME/bin:$PATH"
