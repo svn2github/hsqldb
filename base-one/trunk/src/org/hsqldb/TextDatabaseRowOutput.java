@@ -32,6 +32,7 @@
 package org.hsqldb;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
 import java.sql.Types;
 import org.hsqldb.lib.StringConverter;
@@ -53,12 +54,31 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
     private String    nextSep = "";
     private boolean   nextSepEnd;
     protected boolean allQuoted;
+    private String    encoding;
 
     public TextDatabaseRowOutput(String fieldSep, String varSep,
                                  String longvarSep,
                                  boolean allQuoted) throws IOException {
 
         super();
+        initTextDatabaseRowOutput(fieldSep, varSep, longvarSep, allQuoted,
+                                 "ASCII");
+    }
+
+    public TextDatabaseRowOutput(String fieldSep, String varSep,
+                                 String longvarSep,
+                                 boolean allQuoted,
+                                 String encoding) throws IOException {
+
+        super();
+        initTextDatabaseRowOutput(fieldSep, varSep, longvarSep, allQuoted,
+                                 encoding);
+    }
+
+    private void initTextDatabaseRowOutput(String fieldSep, String varSep,
+                                 String longvarSep,
+                                 boolean allQuoted,
+                                 String encoding) throws IOException {
 
         //-- Newline indicates that field should match to end of line.
         if (fieldSep.endsWith("\n")) {
@@ -80,6 +100,7 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
         this.varSep     = varSep;
         this.longvarSep = longvarSep;
         this.allQuoted  = allQuoted;
+        this.encoding   = encoding;
     }
 
     public void writePos(int pos) throws IOException {
@@ -108,7 +129,9 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
         s = checkConvertString(s, fieldSep);
 
-        writeBytes(s);
+        // writeBytes(s);
+        byte[] bytes = getBytes(s);
+        write(bytes, 0, bytes.length);
 
         nextSep    = fieldSep;
         nextSepEnd = fieldSepEnd;
@@ -122,7 +145,9 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
         s = checkConvertString(s, varSep);
 
-        writeBytes(s);
+        // writeBytes(s);
+        byte[] bytes = getBytes(s);
+        write(bytes, 0, bytes.length);
 
         nextSep    = varSep;
         nextSepEnd = varSepEnd;
@@ -132,7 +157,9 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
         s = checkConvertString(s, longvarSep);
 
-        writeBytes(s);
+        // writeBytes(s);
+        byte[] bytes = getBytes(s);
+        write(bytes, 0, bytes.length);
 
         nextSep    = longvarSep;
         nextSepEnd = longvarSepEnd;
@@ -148,6 +175,17 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
         }
 
         return s;
+    }
+
+    private byte[] getBytes(String s) {
+        byte[] bytes = null;
+        try {
+            bytes = s.getBytes(encoding);
+        }
+        catch (UnsupportedEncodingException e) {
+            bytes = s.getBytes();
+        }
+        return bytes;
     }
 
     protected void writeByteArray(byte b[]) throws IOException {

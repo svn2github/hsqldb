@@ -438,7 +438,7 @@ class Session {
         if (rollback) {
             int i = tTransaction.size();
 
-            while (--i >= nestedOldTransIndex) {
+            while (i-- > nestedOldTransIndex) {
                 Transaction t = (Transaction) tTransaction.get(i);
 
                 t.rollback(this);

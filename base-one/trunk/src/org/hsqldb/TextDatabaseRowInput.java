@@ -112,6 +112,20 @@ implements org.hsqldb.DatabaseRowInputInterface {
         field = 0;
     }
 
+    public void setSource(String text, int pos, int len) {
+
+        this.text = text.substring(0, text.indexOf('\n'));
+        textLen   = this.text.length();
+        filePos   = pos;
+        size      = len;
+        nextPos   = pos + size;
+        next      = 0;
+
+        line++;
+
+        field = 0;
+    }
+
     void setSystemId(boolean flag) {
         makeSystemId = flag;
     }

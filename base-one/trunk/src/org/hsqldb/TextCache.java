@@ -32,6 +32,7 @@
 package org.hsqldb;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
 import org.hsqldb.lib.HsqlByteArrayOutputStream;
 import org.hsqldb.lib.HsqlStringBuffer;
@@ -45,6 +46,8 @@ import org.hsqldb.lib.FileUtil;
  * @author sqlbob@users (RMP)
  * @version 1.7.2
  */
+
+// Ito Kazumitsu 20030328 - patch 1.7.2 - character encoding support
 class TextCache extends Cache {
 
     //state of Cache
@@ -133,10 +136,11 @@ class TextCache extends Cache {
                 rowIn = new QuotedTextDatabaseRowInput(fs, vs, lvs,
                                                        allquoted);
                 rowOut = new QuotedTextDatabaseRowOutput(fs, vs, lvs,
-                        allquoted);
+                        allquoted, stringEncoding);
             } else {
-                rowIn  = new TextDatabaseRowInput(fs, vs, lvs, false);
-                rowOut = new TextDatabaseRowOutput(fs, vs, lvs, false);
+                rowIn = new TextDatabaseRowInput(fs, vs, lvs, false);
+                rowOut = new TextDatabaseRowOutput(fs, vs, lvs, false,
+                                                   stringEncoding);
             }
         } catch (IOException e) {
 
@@ -251,7 +255,15 @@ class TextCache extends Cache {
             iFreePos = (int) rFile.length();
 
             if ((iFreePos == 0) && ignoreFirst) {
-                rFile.write(ignoredFirst.getBytes());
+                byte[] buf = null;
+
+                try {
+                    buf = ignoredFirst.getBytes(stringEncoding);
+                } catch (UnsupportedEncodingException e) {
+                    buf = ignoredFirst.getBytes();
+                }
+
+                rFile.write(buf);
 
                 iFreePos = ignoredFirst.length();
             }
@@ -357,13 +369,17 @@ class TextCache extends Cache {
         CachedRow r = null;
 
         try {
-            HsqlStringBuffer buffer   = new HsqlStringBuffer(80);
-            boolean          blank    = true;
-            boolean          complete = false;
+
+            // HsqlStringBuffer buffer   = new HsqlStringBuffer(80);
+            ByteArray buffer   = new ByteArray(80);
+            boolean   blank    = true;
+            boolean   complete = false;
 
             try {
-                char c;
-                int  next;
+
+                // char c;
+                int c;
+                int next;
 
                 rFile.readSeek(pos);
 
@@ -376,7 +392,8 @@ class TextCache extends Cache {
                         break;
                     }
 
-                    c = (char) (next & 0xff);
+                    // c = (char) (next & 0xff);
+                    c = next;
 
                     //-- Ensure line is complete.
                     if (c == '\n') {
@@ -416,7 +433,8 @@ class TextCache extends Cache {
                                 break;
                             }
 
-                            c = (char) (next & 0xff);
+                            // c = (char) (next & 0xff);
+                            c = next;
 
                             if (c == '\n') {
                                 buffer.append('\n');
@@ -467,7 +485,9 @@ class TextCache extends Cache {
             }
 
             if (complete) {
-                rowIn.setSource(buffer.toString(), pos);
+
+                // rowIn.setSource(buffer.toString(), pos);
+                rowIn.setSource(buffer.toString(), pos, buffer.length());
 
                 if (isIndexingSource) {
                     r = new PointerCachedDataRow(t, rowIn);
@@ -480,6 +500,49 @@ class TextCache extends Cache {
         }
 
         return r;
+    }
+
+    private class ByteArray {
+
+        private byte[] buffer;
+        private int    buflen;
+
+        public ByteArray(int n) {
+            buffer = new byte[n];
+            buflen = 0;
+        }
+
+        public void append(int c) {
+
+            if (buflen >= buffer.length) {
+                byte[] newbuf = new byte[buflen + 80];
+
+                System.arraycopy(buffer, 0, newbuf, 0, buflen);
+
+                buffer = newbuf;
+            }
+
+            buffer[buflen] = (byte) c;
+
+            buflen++;
+        }
+
+        public int length() {
+            return buflen;
+        }
+
+        public void setLength(int l) {
+            buflen = l;
+        }
+
+        public String toString() {
+
+            try {
+                return new String(buffer, 0, buflen, stringEncoding);
+            } catch (UnsupportedEncodingException e) {
+                return new String(buffer, 0, buflen);
+            }
+        }
     }
 
     int getLineNumber() {

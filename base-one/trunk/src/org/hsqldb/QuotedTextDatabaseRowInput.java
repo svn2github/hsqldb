@@ -62,6 +62,13 @@ class QuotedTextDatabaseRowInput extends org.hsqldb.TextDatabaseRowInput {
         qtext = this.text.toCharArray();
     }
 
+    public void setSource(String text, int pos, int len) {
+
+        super.setSource(text, pos, len);
+
+        qtext = this.text.toCharArray();
+    }
+
     protected String getField(String sep, int sepLen,
                               boolean isEnd) throws IOException {
 

@@ -117,8 +117,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
     protected static final HsqlName[] sysTableHsqlNames;
 
     /** Current user for each cached system table */
-    protected final int[] sysTableSessions =
-        new int[sysTableNames.length];
+    protected final int[] sysTableSessions = new int[sysTableNames.length];
 
     /** true if the contents of a cached system table depends on the session */
     protected final boolean[] sysTableSessionDependent =
@@ -296,10 +295,8 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      * @return an enumeration over all of the tables in this database
      */
     protected final Enumeration allTables() {
-
         return new CompositeEnumeration(database.getTables().elements(),
-                                        new HsqlEnumeration(sysTables,
-                                            true));
+                                        new HsqlEnumeration(sysTables, true));
     }
 
     /**
@@ -312,7 +309,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
 
         int i = sysTables.length;
 
-        while (--i > 0) {
+        while (i-- > 0) {
             Table t = sysTables[i];
 
             if (t != null) {
@@ -599,11 +596,12 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             }
         }
 
-        int oldSessionId = sysTableSessions[tableIndex];
-        boolean tableValid = oldSessionId != -1;
+        int     oldSessionId = sysTableSessions[tableIndex];
+        boolean tableValid   = oldSessionId != -1;
 
         // user has changed and table is user-dependent
-        if (session.getId() != oldSessionId && sysTableSessionDependent[tableIndex]) {
+        if (session.getId() != oldSessionId
+                && sysTableSessionDependent[tableIndex]) {
             tableValid = false;
         }
 

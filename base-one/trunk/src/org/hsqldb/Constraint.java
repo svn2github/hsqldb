@@ -179,10 +179,6 @@ class Constraint {
         if (core.tRef != null) {
             core.oRef = core.tRef.getNewRow();
         }
-
-        if (Trace.DOASSERT) {
-            Trace.doAssert(core.iColMain.length == core.iColRef.length);
-        }
     }
 
     HsqlName getName() {
