@@ -1,5 +1,12 @@
 Readme File
 
+
+2003.10.26
+
+HSQLDB 1.7.2 ALPHA_S
+
+Improved index use for multiple key joins.
+
 2003.10.24
 
 Fixed some reported and unreported bugs.
