@@ -1,0 +1,48 @@
+-- CIRCULAR SELF REFERENCING FK
+-- ON DELETE CASCADE
+drop table testB if exists;
+create table testB(id integer, parent integer, ref integer,
+ data varchar(200), unique(parent), primary key (id),foreign key (parent)
+ references testB(id) on delete cascade, foreign key (id)
+ references testB(parent) on delete cascade);
+/*u1*/insert into testB values(100,100,1,'xxxx');
+/*u1*/insert into testB values(200,200,1,'xxxx');
+/*u1*/delete from testB where id=100;
+/*c1*/select * from testB
+-- NORMAL SELF REFERENCING FK
+-- ON DELETE CASCADE
+drop table testB if exists;
+create table testB(id integer, parent integer, ref integer,
+ data varchar(200), unique (id), foreign key (parent)
+ references testB(id) on delete cascade);
+/*u1*/insert into testB values(100,100,1,'xxxx');
+/*u1*/insert into testB values(101,100,1,'xxxx');
+/*u1*/insert into testB values(102,100,1,'xxxx');
+/*u1*/insert into testB values(200,200,1,'xxxx');
+/*u1*/delete from testB where id=100;
+/*c1*/select * from testB
+-- ON DELETE SET NULL
+drop table testB if exists;
+create table testB(id integer, parent integer, ref integer,
+ data varchar(200), unique (id), foreign key (parent)
+ references testB(id) on delete set null);
+/*u1*/insert into testB values(100,100,1,'xxxx');
+/*u1*/insert into testB values(101,100,1,'xxxx');
+/*u1*/insert into testB values(102,100,1,'xxxx');
+/*u1*/insert into testB values(200,200,1,'xxxx');
+/*u1*/delete from testB where id=100;
+/*c3*/select * from testB
+/*c2*/select * from testB where parent is null
+-- ON DELETE SET DEFAULT
+drop table testB if exists;
+create table testB(id integer, parent integer default 20, ref integer,
+ data varchar(200), unique (id),foreign key (parent)
+ references testB(id) on delete set default);
+/*u1*/insert into testB values(20,20,1,'xxxx');
+/*u1*/insert into testB values(100,100,1,'xxxx');
+/*u1*/insert into testB values(101,100,1,'xxxx');
+/*u1*/insert into testB values(200,200,1,'xxxx');
+/*u1*/delete from testB where id=100;
+/*c3*/select * from testB
+/*c2*/select * from testB where parent=20
+
