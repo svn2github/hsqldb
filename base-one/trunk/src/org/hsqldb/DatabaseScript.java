@@ -237,12 +237,12 @@ public class DatabaseScript {
         }
 
         // aliases
-        HashMap  h       = dDatabase.getAlias();
+        HashMap  h       = dDatabase.getAliasMap();
         HashMap  builtin = Library.getAliasMap();
-        Iterator e       = h.keySet().iterator();
+        Iterator it      = h.keySet().iterator();
 
-        while (e.hasNext()) {
-            String alias  = (String) e.next();
+        while (it.hasNext()) {
+            String alias  = (String) it.next();
             String java   = (String) h.get(alias);
             String biJava = (String) builtin.get(alias);
 
@@ -352,38 +352,9 @@ public class DatabaseScript {
                 a.append(')');
             }
 
-            String defaultString = column.getDefaultString();
+            String defaultString = column.getDefaultDDL();
 
             if (defaultString != null) {
-                boolean quote = false;
-
-                switch (column.getType()) {
-
-                    // do not quote CURRENT_DATE etc.
-                    case Types.DATE :
-                    case Types.TIMESTAMP :
-                        quote = defaultString.indexOf('-') != -1;
-                        break;
-
-                    case Types.TIME :
-                        quote = defaultString.indexOf(':') != -1;
-                        break;
-
-                    case Types.CHAR :
-                    case Types.VARCHAR :
-                    case Types.VARCHAR_IGNORECASE :
-                    case Types.LONGVARCHAR :
-                    case Types.BINARY :
-                    case Types.VARBINARY :
-                    case Types.LONGVARBINARY :
-                        quote = true;
-                    default :
-                }
-
-                if (quote) {
-                    defaultString = Column.createSQLString(defaultString);
-                }
-
                 a.append(' ').append(Token.T_DEFAULT).append(' ');
                 a.append(defaultString);
             }

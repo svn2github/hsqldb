@@ -246,7 +246,7 @@ extends org.hsqldb.DatabaseInformationMain {
         final int ialias              = 6;
 
         // Initialization
-        hAliases = database.getAlias();
+        hAliases = database.getAliasMap();
         aliases  = hAliases.keySet().iterator();
         objType  = "ROUTINE";
 

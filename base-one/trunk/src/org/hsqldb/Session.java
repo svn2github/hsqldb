@@ -86,6 +86,7 @@ import org.hsqldb.store.ValuePool;
 //                                         based command execution
 //                                       - batch execution handling
 // fredt@users 20030628 - patch 1.7.2 - session proxy support
+// fredt@users 20040509 - patch 1.7.2 - SQL conformance for CURRENT_TIMESTAMP and other datetime functions
 
 /**
  *  Implementation of a user session with the database. In 1.7.2 Session
@@ -120,6 +121,7 @@ public class Session implements SessionInterface {
     private jdbcConnection intConnection;
     private Tokenizer      tokenizer;
     private Parser         parser;
+    private long           sessionSCN;
     final static Result emptyUpdateCount =
         new Result(ResultConstants.UPDATECOUNT);
 
@@ -815,6 +817,9 @@ public class Session implements SessionInterface {
                 currentMaxRows = cmd.iUpdateCount;
             }
 
+            // we simply get the next system change number - no matter what type of query
+            sessionSCN = database.nextDMLSCN();
+
             DatabaseManager.gc();
 
             switch (type) {
@@ -1224,7 +1229,82 @@ public class Session implements SessionInterface {
         return result;
     }
 
-//------------------------------------------------------------------------------
+// session DATETIME functions
+    long               currentDateTimeSCN;
+    long               currentMillis;
+    java.sql.Date      currentDate;
+    java.sql.Time      currentTime;
+    java.sql.Timestamp currentTimestamp;
+
+    /**
+     * Returns the current date, unchanged for the duration of the current
+     * execution unit (statement).<p>
+     *
+     * SQL standards require that CURRENT_DATE, CURRENT_TIME and
+     * CURRENT_TIMESTAMP are all evaluated at the same point of
+     * time in the duration of each SQL statement, no matter how long the
+     * SQL statement takes to complete.<p>
+     *
+     * When this method or a corresponding method for CURRENT_TIME or
+     * CURRENT_TIMESTAMP is first called in the scope of a system change
+     * number, currentMillis is set to the current system time. All further
+     * CURRENT_XXXX calls in this scope will use this millisecond value.
+     * (fredt@users)
+     */
+    java.sql.Date getCurrentDate() {
+
+        if (currentDateTimeSCN != sessionSCN) {
+            currentDateTimeSCN = sessionSCN;
+            currentMillis      = System.currentTimeMillis();
+            currentDate        = HsqlDateTime.getCurrentDate(currentMillis);
+            currentTime        = null;
+            currentTimestamp   = null;
+        } else if (currentDate == null) {
+            currentDate = HsqlDateTime.getCurrentDate(currentMillis);
+        }
+
+        return currentDate;
+    }
+
+    /**
+     * Returns the current time, unchanged for the duration of the current
+     * execution unit (statement)
+     */
+    java.sql.Time getCurrentTime() {
+
+        if (currentDateTimeSCN != sessionSCN) {
+            currentDateTimeSCN = sessionSCN;
+            currentMillis      = System.currentTimeMillis();
+            currentDate        = null;
+            currentTime = HsqlDateTime.getNormalisedTime(currentMillis);
+            currentTimestamp   = null;
+        } else if (currentTime == null) {
+            currentTime = HsqlDateTime.getNormalisedTime(currentMillis);
+        }
+
+        return currentTime;
+    }
+
+    /**
+     * Returns the current timestamp, unchanged for the duration of the current
+     * execution unit (statement)
+     */
+    java.sql.Timestamp getCurrentTimestamp() {
+
+        if (currentDateTimeSCN != sessionSCN) {
+            currentDateTimeSCN = sessionSCN;
+            currentMillis      = System.currentTimeMillis();
+            currentDate        = null;
+            currentTime        = null;
+            currentTimestamp   = HsqlDateTime.getTimestamp(currentMillis);
+        } else if (currentTimestamp == null) {
+            currentTimestamp = HsqlDateTime.getTimestamp(currentMillis);
+        }
+
+        return currentTimestamp;
+    }
+
+//
     static final int INFO_DATABASE            = 0;
     static final int INFO_USER                = 1;
     static final int INFO_SESSION_ID          = 2;
@@ -1292,7 +1372,7 @@ public class Session implements SessionInterface {
     }
 
     // DatabaseMetaData.getURL should work as specified for
-    // internal connections too.   
+    // internal connections too.
     public String getInternalConnectionURL() {
         return DatabaseManager.S_URL_PREFIX + database.getURI();
     }

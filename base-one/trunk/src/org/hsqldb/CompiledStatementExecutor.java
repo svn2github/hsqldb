@@ -251,7 +251,7 @@ final class CompiledStatementExecutor {
 
         try {
             while (rc != null) {
-                row = t.getNewRow(ccl);
+                row = t.getNewRow(session, ccl);
 
                 for (int i = 0; i < len; i++) {
                     int j = cm[i];
@@ -290,7 +290,7 @@ final class CompiledStatementExecutor {
     throws HsqlException {
 
         Table        t    = cs.targetTable;
-        Object[]     row  = t.getNewRow(cs.checkColumns);
+        Object[]     row  = t.getNewRow(session, cs.checkColumns);
         int[]        cm   = cs.columnMap;        // column map
         Expression[] acve = cs.columnValues;
         Expression   cve;

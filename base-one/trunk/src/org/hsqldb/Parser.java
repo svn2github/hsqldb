@@ -99,7 +99,7 @@ import org.hsqldb.store.ValuePool;
 // fredt@users 20030820 - patch 1.7.2 - COALESCE(expr,expr,...)
 // fredt@users 20031012 - patch 1.7.2 - improved scoping for column names in all areas
 // boucherb@users 2004-03-xx - patch 1.7.2 - added support for prepared SELECT INTO
-// boucherb@users 2004-03-xx - doc 1.7.2 - some 
+// boucherb@users 2004-03-xx - doc 1.7.2 - some
 /* todo: fredt - implement numeric value functions (SQL92 6.6)
 *
  * EXTRACT({TIMEZONE_HOUR | TIMEZONE_MINUTE} FROM {datetime | interval})
@@ -1275,18 +1275,19 @@ class Parser {
         return r;
     }
 
-    static HashMap datetimeTokens = new HashMap();
+    static HashMap simpleFunctions = new HashMap();
 
     static {
-        datetimeTokens.put(Token.T_CURRENT_DATE,
-                           "org.hsqldb.Library.curdate");
-        datetimeTokens.put(Token.T_CURRENT_TIME,
-                           "org.hsqldb.Library.curtime");
-        datetimeTokens.put(Token.T_CURRENT_TIMESTAMP,
-                           "org.hsqldb.Library.now");
-        datetimeTokens.put(Token.T_SYSDATE, "org.hsqldb.Library.curdate");
-        datetimeTokens.put(Token.T_NOW, "org.hsqldb.Library.now");
-        datetimeTokens.put(Token.T_TODAY, "org.hsqldb.Library.curdate");
+        simpleFunctions.put(Token.T_CURRENT_DATE,
+                            "org.hsqldb.Library.curdate");
+        simpleFunctions.put(Token.T_CURRENT_TIME,
+                            "org.hsqldb.Library.curtime");
+        simpleFunctions.put(Token.T_CURRENT_TIMESTAMP,
+                            "org.hsqldb.Library.now");
+        simpleFunctions.put(Token.T_CURRENT_USER, "org.hsqldb.Library.user");
+        simpleFunctions.put(Token.T_SYSDATE, "org.hsqldb.Library.curdate");
+        simpleFunctions.put(Token.T_NOW, "org.hsqldb.Library.now");
+        simpleFunctions.put(Token.T_TODAY, "org.hsqldb.Library.curdate");
     }
 
     /**
@@ -1389,7 +1390,7 @@ class Parser {
                     // TODO: Maybe allow AS <alias> here
                     r = new Expression(f);
                 } else {
-                    String javaName = (String) datetimeTokens.get(name);
+                    String javaName = (String) simpleFunctions.get(name);
 
                     if (javaName != null) {
                         Function f = new Function(name, javaName, true);
@@ -1855,6 +1856,58 @@ class Parser {
                 }
 
                 break;
+            }
+        }
+
+        return r;
+    }
+
+    /**
+     *  Parses and returns a DEFAULT clause expression.
+     */
+    Expression readDefaultClause() throws HsqlException {
+
+        Expression r = null;
+
+        read();
+
+        switch (iToken) {
+
+            case Expression.COLUMN : {
+                String name     = sToken;
+                String javaName = (String) simpleFunctions.get(name);
+
+                if (javaName != null) {
+                    Function f = new Function(name, javaName, true);
+
+                    r = new Expression(f);
+                } else {
+                    throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, sToken);
+                }
+
+                break;
+            }
+            case Expression.NEGATE : {
+                int type = iToken;
+
+                read();
+
+                if (iToken == Expression.VALUE) {
+                    r = new Expression(type, new Expression(iType, oData),
+                                       null);
+                } else {
+                    throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, sToken);
+                }
+
+                break;
+            }
+            case Expression.VALUE : {
+                r = new Expression(iType, oData);
+
+                break;
+            }
+            default : {
+                throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, sToken);
             }
         }
 

@@ -83,10 +83,12 @@ import org.hsqldb.lib.HsqlArrayList;
  */
 class TableWorks {
 
-    private Table table;
+    private Table   table;
+    private Session session;
 
-    TableWorks(Table table) {
-        this.table = table;
+    TableWorks(Session session, Table table) {
+        this.table   = table;
+        this.session = session;
     }
 
     Table getTable() {
@@ -235,7 +237,7 @@ class TableWorks {
             newindex = tn.createIndexStructure(col, name, false, unique,
                                                constraint, forward);
 
-            tn.moveData(table, table.getColumnCount(), 0);
+            tn.moveData(session, table, table.getColumnCount(), 0);
             tn.updateConstraintsTables(table, table.getColumnCount(), 0);
 
             int index = table.database.getTableIndex(table);
@@ -352,7 +354,7 @@ class TableWorks {
             Table tn = table.moveDefinition(indexname, null,
                                             table.getColumnCount(), 0);
 
-            tn.moveData(table, table.getColumnCount(), 0);
+            tn.moveData(session, table, table.getColumnCount(), 0);
             tn.updateConstraintsTables(table, table.getColumnCount(), 0);
 
             int i = table.database.getTableIndex(table);
@@ -390,7 +392,7 @@ class TableWorks {
 
         Table tn = table.moveDefinition(null, column, colindex, adjust);
 
-        tn.moveData(table, colindex, adjust);
+        tn.moveData(session, table, colindex, adjust);
         tn.updateConstraintsTables(table, colindex, adjust);
 
         int i = table.database.getTableIndex(table);

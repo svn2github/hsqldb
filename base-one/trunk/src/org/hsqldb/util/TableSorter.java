@@ -408,7 +408,7 @@ public class TableSorter extends AbstractTableModel {
             // If the table structure has changed, cancel the sorting; the             
             // sorting columns may have been either moved or deleted from             
             // the model. 
-            if (e.getFirstRow() == TableModelEvent.HEADER_ROW) {
+            if (e == null || e.getFirstRow() == TableModelEvent.HEADER_ROW) {
                 cancelSorting();
                 fireTableChanged(e);
 

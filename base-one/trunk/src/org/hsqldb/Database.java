@@ -156,14 +156,17 @@ public class Database {
     DatabaseObjectNames            indexNameList;
     DatabaseObjectNames            constraintNameList;
     SequenceManager                sequenceManager;
-    final static int               DATABASE_ONLINE       = 1;
-    final static int               DATABASE_OPENING      = 4;
-    final static int               DATABASE_CLOSING      = 8;
-    final static int               DATABASE_SHUTDOWN     = 16;
-    final static int               CLOSEMODE_IMMEDIATELY = -1;
-    final static int               CLOSEMODE_NORMAL      = 0;
-    final static int               CLOSEMODE_COMPACT     = 1;
-    final static int               CLOSEMODE_SCRIPT      = 2;
+    CompiledStatementManager       compiledStatementManager;
+
+    //
+    final static int DATABASE_ONLINE       = 1;
+    final static int DATABASE_OPENING      = 4;
+    final static int DATABASE_CLOSING      = 8;
+    final static int DATABASE_SHUTDOWN     = 16;
+    final static int CLOSEMODE_IMMEDIATELY = -1;
+    final static int CLOSEMODE_NORMAL      = 0;
+    final static int CLOSEMODE_COMPACT     = 1;
+    final static int CLOSEMODE_SCRIPT      = 2;
 
     /**
      *  Constructs a new Database object.
@@ -425,7 +428,7 @@ public class Database {
      *  Returns a map from Java method-call name aliases to the
      *  fully-qualified names of the Java methods themsleves.
      */
-    HashMap getAlias() {
+    HashMap getAliasMap() {
         return hAlias;
     }
 
@@ -610,7 +613,7 @@ public class Database {
         session.commit();
         session.setScripting(!t.isTemp());
 
-        TableWorks tw = new TableWorks(t);
+        TableWorks tw = new TableWorks(session, t);
 
         tw.dropIndex(indexname);
     }
@@ -985,47 +988,41 @@ public class Database {
     }
 
 // boucherb@users - patch 1.7.2 - system change number support
-//
-// NOTE: dml_scn sketched in but not used.  Will only be required
-// when we start implementing various levels of read consistency.
-// This will require either a change in the .data file format and
-// changes to in-memory row representation, or changes only to
-// in-memory row representation along with pinning all dependency
-// rows in memory until dependent transactions are committed or
-// rolled back.  Index scans will have to be changed to
-// ignore rows that are not in transaction or statement scn
-// scope (are not commited), and undo buffer items will have
-// to be tagged for similar purposes.
-// ---------------------------------
-    CompiledStatementManager compiledStatementManager;
-    private long             scn     = 0;
-    private long             ddl_scn = 0;
-    private long             dml_scn = 0;
+// fredt@users - system change numbers utilised
+
+    /** last statement level change number - not externally settable */
+    private long dbSCN = 0;
+
+    /** last statement level change number for DDL statements - unused */
+    private long ddlSCN = 0;
+
+    /** last statement level change number for DML statements - used for all statements */
+    private long dmlSCN = 0;
 
     synchronized long getSCN() {
-        return scn;
+        return dbSCN;
     }
 
     private synchronized void setSCN(long l) {
-        scn = l;
+        dbSCN = l;
     }
 
     private synchronized long nextSCN() {
 
-        scn++;
+        dbSCN++;
 
-        return scn;
+        return dbSCN;
     }
 
     synchronized long getDMLSCN() {
-        return dml_scn;
+        return dmlSCN;
     }
 
     synchronized long nextDMLSCN() {
 
-        dml_scn = nextSCN();
+        dmlSCN = nextSCN();
 
-        return dml_scn;
+        return dmlSCN;
     }
 
     private synchronized void setState(int state) {

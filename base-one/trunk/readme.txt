@@ -6,6 +6,22 @@ More tests are required to verify the improvements. Please perform tests and rep
 issues. Testers are needed for build scripts with different JVM's using both ANT and batch 
 builds.
 
+2004.05.09
+
+Bug fixes and minor enhancements to Database Manager and Transfer tools.
+
+Fixed bug with different values in one row with multiple CURRENT_TIMESTAMP or
+NOW() calls.
+
+Introduction of CURRENT_USER, can be used as column default value as well.
+
+CURRENT_TIMESTAMP, NOW, TODAY etc. should not be quoted when used as column
+default values.
+
+Improvements to PreparedStatement set stream methods.
+
+Improvements to Clob and Blob implementations.
+
 2004.05.01
 
 Small improvemnts in different areas

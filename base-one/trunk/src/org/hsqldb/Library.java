@@ -89,9 +89,20 @@ import org.hsqldb.store.ValuePool;
 // boucherb@users 20030201 - patch 1.7.2 - direct calls for org.hsqldb.Library
 
 /**
+ * fredt - todo - since the introduction of SQL built-in functions and
+ * evaluation of several session-dependent methods outside this class,
+ * several methods here are dummies. These methods are still reported in
+ * system tables incorrectly as corresponding to the SQL function names.
+ */
+
+/**
  * Provides the HSQLDB implementation of standard Open Group SQL CLI
- * <em>Extended Scalar Functions</em> and other public HSQLDB SQL functions.
+ * <em>Extended Scalar Functions</em> and other public HSQLDB SQL functions.<p>
  *
+ * All methods here that have a Connection parameter are dummies and should
+ * not be called from user supplied Java procedure or trigger code. Use real
+ * SQL functions should be called instead in these instances.
+*
  * @version 1.7.2
  */
 public class Library {
@@ -1246,21 +1257,25 @@ public class Library {
     // TIME AND DATE
 
     /**
-     * Returns the current date as a date value.
+     * Returns the current date as a date value. <p>
+     *
+     * Dummy mehtod.<p>
      *
      * @return a date value representing the current date
      */
-    public static java.sql.Date curdate() {
-        return new java.sql.Date(
-            HsqlDateTime.getTimeInMillis(HsqlDateTime.getToday()));
+    public static java.sql.Date curdate(Connection c) {
+        return null;
     }
 
     /**
-     * Returns the current local time as a time value.
+     * Returns the current local time as a time value. <p>
+     *
+     * Dummy mehtod.<p>
+     *
      * @return a time value representing the current local time
      */
-    public static java.sql.Time curtime() {
-        return HsqlDateTime.getCurrentTime();
+    public static java.sql.Time curtime(Connection c) {
+        return null;
     }
 
     /**
@@ -1372,17 +1387,19 @@ public class Library {
     }
 
     /**
-     * Returns the current date and time as a timestamp value.
+     * Returns the current date and time as a timestamp value. <p>
+     *
+     * Dummy mehtod.<p>
      *
      * @return a timestamp value representing the current date and time
      */
-    public static Timestamp now() {
-        return new Timestamp(System.currentTimeMillis());
+    public static Timestamp now(Connection c) {
+        return null;
     }
 
     /**
      * Returns the quarter of the year in the given date value, as an integer
-     * value in the range of 1-4.
+     * value in the range of 1-4. <p>
      *
      * @param d the date value from which to extract the quarter of the year
      * @return an integer representing the quater of the year from the given
@@ -1406,7 +1423,7 @@ public class Library {
 
     /**
      * Returns the week of the year from the given date value, as an integer
-     * value in the range of 1-53.
+     * value in the range of 1-53. <p>
      *
      * @param d the date value from which to extract the week of the year
      * @return an integer representing the week of the year from the given
@@ -1418,7 +1435,7 @@ public class Library {
 
     /**
      * Returns the year from the given date value, as an integer value in
-     * the range of 1-9999.
+     * the range of 1-9999. <p>
      *
      * @param d the date value from which to extract the year
      * @return an integer value representing the year from the given
@@ -1431,7 +1448,7 @@ public class Library {
     // date calculations.
 
     /**
-     * Method that calculates the number of units elapsed between two dates.<p>
+     * Returns the number of units elapsed between two dates.<p>
      *
      * Contributed by Michael Landon<p>
      *
@@ -1480,7 +1497,7 @@ public class Library {
 
     /**
      * Private method used to do actual calculation units elapsed between
-     * two given dates.
+     * two given dates. <p>
      *
      * @param field Calendar field to use to calculate elapsed time
      * @param d1 The starting date for the interval. This value is
@@ -1593,8 +1610,10 @@ public class Library {
     }
 
     /**
-     * Retrieves the last auto-generated integer indentity value used
-     * by this connection.
+     * Retrieves the last auto-generated integer indentity value
+     * used by this connection. <p>
+     *
+     * Dummy mehtod.<p>
      *
      * @return the connection's the last generated integer identity value
      * @throws HsqlException if a database access error occurs
@@ -1660,6 +1679,8 @@ public class Library {
     /**
      * Retrieves whether this connection is in read-only mode. <p>
      *
+     * Dummy mehtod.<p>
+     *
      * @param conn the <code>Connection</code> object for which to retrieve
      *      the current read-only status
      * @return  <code>true</code> if connection is read-only and
@@ -1671,7 +1692,7 @@ public class Library {
     }
 
     /**
-     * Retrieves whether this database is in read-only mode. <p>
+     * Dummy method. Retrieves whether this database is in read-only mode. <p>
      *
      * @param c the <code>Connection</code> object for which to retrieve
      *      the current database read-only status
@@ -1684,6 +1705,8 @@ public class Library {
 
     /**
      * Retrieves whether the files of this database are in read-only mode. <p>
+     *
+     * Dummy mehtod.<p>
      *
      * @param c the <code>Connection</code> object for which to retrieve
      *      the current database files read-only status
@@ -1868,10 +1891,10 @@ public class Library {
                         cot(((Number) params[0]).doubleValue()));
                 }
                 case curdate : {
-                    return curdate();
+                    return null;
                 }
                 case curtime : {
-                    return curtime();
+                    return null;
                 }
                 case database : {
                     return null;
@@ -1972,7 +1995,7 @@ public class Library {
                     return ValuePool.getString(monthname((Date) params[0]));
                 }
                 case now : {
-                    return now();
+                    return null;
                 }
                 case octetLength : {
                     return octetLength((String) params[0]);

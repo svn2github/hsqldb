@@ -144,13 +144,13 @@ public class Table extends BaseTable {
     private int[]     colTypes;                       // fredt - types of columns
     private int[]     colSizes;                       // fredt - copy of SIZE values for columns
     private boolean[] colNullable;                    // fredt - modified copy of isNullable() values
-    private String[] colDefaults;                     // fredt - copy of DEFAULT values
-    private int[]    defaultColumnMap;                // fred - holding 0,1,2,3,...
-    private boolean  hasDefaultValues;                //fredt - shortcut for above
-    private boolean  isText;
-    private boolean  isView;
-    boolean          sqlEnforceSize;                  // inherited for the database -
-    boolean          sqlEnforceStrictSize;            // inherited for the database -
+    private Expression[] colDefaults;                 // fredt - expressions of DEFAULT values
+    private int[]        defaultColumnMap;            // fred - holding 0,1,2,3,...
+    private boolean      hasDefaultValues;            //fredt - shortcut for above
+    private boolean      isText;
+    private boolean      isView;
+    boolean              sqlEnforceSize;              // inherited for the database -
+    boolean              sqlEnforceStrictSize;        // inherited for the database -
 
     // properties for subclasses
     protected int      columnCount;                   // inclusive the hidden primary key
@@ -1042,21 +1042,25 @@ public class Table extends BaseTable {
     /**
      * Sets the SQL default value for a columm.
      */
-    void setDefaultString(int columnIndex, String def) {
+    void setDefaultExpression(int columnIndex, Expression def) {
 
         Column column = getColumn(columnIndex);
 
-        column.setDefaultString(def);
+        column.setDefaultExpression(def);
+        resetDefaultValues();
+    }
+
+    void resetDefaultValues() {
 
         hasDefaultValues = false;
 
         for (int i = 0; i < columnCount; i++) {
-            column = getColumn(i);
+            Column column = getColumn(i);
 
             if (i < visibleColumnCount) {
                 hasDefaultValues = hasDefaultValues
-                                   || column.getDefaultString() != null;
-                colDefaults[i] = column.getDefaultString();
+                                   || column.getDefaultExpression() != null;
+                colDefaults[i] = column.getDefaultExpression();
             }
         }
     }
@@ -1268,7 +1272,7 @@ public class Table extends BaseTable {
         createIndexStructure(columns, name, true, true, true, false);
 
         colTypes         = new int[columnCount];
-        colDefaults      = new String[visibleColumnCount];
+        colDefaults      = new Expression[visibleColumnCount];
         colSizes         = new int[visibleColumnCount];
         colNullable      = new boolean[visibleColumnCount];
         defaultColumnMap = new int[visibleColumnCount];
@@ -1278,10 +1282,7 @@ public class Table extends BaseTable {
             colTypes[i] = column.getType();
 
             if (i < visibleColumnCount) {
-                hasDefaultValues = hasDefaultValues
-                                   || column.getDefaultString() != null;
-                colDefaults[i] = column.getDefaultString();
-                colSizes[i]    = column.getSize();
+                colSizes[i] = column.getSize();
 
                 // when insert or update values are processed, IDENTITY column can be null
                 colNullable[i] = column.isNullable() || column.isIdentity();
@@ -1294,6 +1295,7 @@ public class Table extends BaseTable {
             }
         }
 
+        resetDefaultValues();
         setBestRowIdentifiers();
     }
 
@@ -1539,17 +1541,18 @@ public class Table extends BaseTable {
      * required and avoids evaluating these values where they will be
      * overwritten.
      */
-    Object[] getNewRow(boolean[] exists) throws HsqlException {
+    Object[] getNewRow(Session session,
+                       boolean[] exists) throws HsqlException {
 
         Object[] row = new Object[columnCount];
         int      i;
 
         if (exists != null && hasDefaultValues) {
             for (i = 0; i < visibleColumnCount; i++) {
-                String def = colDefaults[i];
+                Expression def = colDefaults[i];
 
                 if (exists[i] == false && def != null) {
-                    row[i] = Column.convertObject(def, colTypes[i]);
+                    row[i] = def.getValue(colTypes[i], session);
                 }
             }
         }
@@ -1599,15 +1602,15 @@ public class Table extends BaseTable {
      * The colindex argument is the index of the column that was
      * added or removed. The adjust argument is {-1 | 0 | +1}
      */
-    void moveData(Table from, int colindex, int adjust) throws HsqlException {
+    void moveData(Session session, Table from, int colindex,
+                  int adjust) throws HsqlException {
 
         Object colvalue = null;
 
         if (adjust > 0) {
             Column column = getColumn(colindex);
 
-            colvalue = Column.convertObject(column.getDefaultString(),
-                                            column.getType());
+            colvalue = column.getDefaultValue(session);
         }
 
         Index index = from.getPrimaryIndex();
@@ -1746,7 +1749,7 @@ public class Table extends BaseTable {
 
     /**
      *  Low level method for row insert.
-     *  Is used when reading db scripts.
+     *  It is used when reading db scripts.
      *  UNIQUE or PRIMARY constraints are enforced by attempting to
      *  add the row to the indexes.
      */
@@ -2147,11 +2150,9 @@ public class Table extends BaseTable {
                         }
                     } else {
                         for (int j = 0; j < r_columns.length; j++) {
-                            rnd[r_columns[j]] =
-                                Column.convertObject(reftable
-                                    .getColumn(r_columns[j])
-                                    .getDefaultString(), reftable
-                                    .getColumn(r_columns[j]).getType());
+                            Column col = reftable.getColumn(r_columns[j]);
+
+                            rnd[r_columns[j]] = col.getDefaultValue(session);
                         }
                     }
 
@@ -2383,11 +2384,9 @@ public class Table extends BaseTable {
                         // -- set default; we check referential integrity with ref==null; since we manipulated
                         // -- the values and referential integrity is no longer guaranteed to be valid
                         for (int j = 0; j < r_columns.length; j++) {
-                            rnd[r_columns[j]] =
-                                Column.convertObject(reftable
-                                    .getColumn(r_columns[j])
-                                    .getDefaultString(), reftable
-                                    .getColumn(r_columns[j]).getType());
+                            Column col = reftable.getColumn(r_columns[j]);
+
+                            rnd[r_columns[j]] = col.getDefaultValue(session);
                         }
 
                         if (path.add(c)) {

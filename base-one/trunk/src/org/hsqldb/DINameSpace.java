@@ -386,7 +386,7 @@ final class DINameSpace {
         // inverse alias map.  This will make things *much*
         // faster for our  purposes here, without appreciably
         // slowing down Database
-        mapIn  = database.getAlias();
+        mapIn  = database.getAliasMap();
         mapOut = new HashMap();
         keys   = mapIn.keySet().iterator();
 

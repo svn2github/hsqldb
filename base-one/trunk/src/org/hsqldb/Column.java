@@ -137,7 +137,7 @@ public class Column {
     private boolean         isNullable;
     private boolean         isIdentity;
     private boolean         isPrimaryKey;
-    private String          defaultString;
+    private Expression      defaultExpression;
     long                    identityStart;
     long                    identityIncrement;
     static final BigInteger MAX_LONG = BigInteger.valueOf(Long.MAX_VALUE);
@@ -161,7 +161,8 @@ public class Column {
      */
     Column(HsqlName name, boolean nullable, int type, int size, int scale,
             boolean identity, long startvalue, long increment,
-            boolean primarykey, String defstring) throws HsqlException {
+            boolean primarykey,
+            Expression defexpression) throws HsqlException {
 
         columnName        = name;
         isNullable        = nullable;
@@ -172,7 +173,7 @@ public class Column {
         identityStart     = startvalue;
         identityIncrement = increment;
         isPrimaryKey      = primarykey;
-        defaultString     = defstring;
+        defaultExpression = defexpression;
 
         if (isIdentity) {
             if (type == Types.INTEGER) {
@@ -229,16 +230,39 @@ public class Column {
     }
 
     /**
-     *  The default value for the column.
-     *
-     * @return default value string as defined in DDL
+     *  Returns default value in the session context.
      */
-    String getDefaultString() {
-        return defaultString;
+    Object getDefaultValue(Session session) throws HsqlException {
+
+        return defaultExpression == null ? null
+                                         : defaultExpression.getValue(colType,
+                                         session);
     }
 
-    void setDefaultString(String value) {
-        defaultString = value;
+    /**
+     *  Returns DDL for default value.
+     */
+    String getDefaultDDL() {
+
+        String ddl = null;
+
+        try {
+            ddl = defaultExpression == null ? null
+                                            : defaultExpression.getDDL();
+        } catch (HsqlException e) {}
+
+        return ddl;
+    }
+
+    /**
+     *  Returns default expression for the column.
+     */
+    Expression getDefaultExpression() {
+        return defaultExpression;
+    }
+
+    void setDefaultExpression(Expression expr) {
+        defaultExpression = expr;
     }
 
     /**

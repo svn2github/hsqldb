@@ -324,7 +324,7 @@ final class DITableInfo {
      * @return the declared default value expression for the column
      */
     String getColDefault(int i) {
-        return table.getColumn(i).getDefaultString();
+        return table.getColumn(i).getDefaultDDL();
     }
 
     /**

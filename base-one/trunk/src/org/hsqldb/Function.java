@@ -286,30 +286,39 @@ class Function {
 
         switch (fID) {
 
-            case Library.identity :
-                return session.getLastIdentity();
+            case Library.curtime :
+                return session.getCurrentTime();
+
+            case Library.curdate :
+                return session.getCurrentDate();
 
             case Library.database :
                 return session.getDatabase().getPath();
-
-            case Library.user :
-                return session.getUser().getName();
-
-            case Library.isReadOnlyConnection :
-                return session.isReadOnly() ? Boolean.TRUE
-                                            : Boolean.FALSE;
 
             case Library.getAutoCommit :
                 return session.isAutoCommit() ? Boolean.TRUE
                                               : Boolean.FALSE;
 
+            case Library.identity :
+                return session.getLastIdentity();
+
             case Library.isReadOnlyDatabase :
                 return session.getDatabase().databaseReadOnly ? Boolean.TRUE
                                                               : Boolean.FALSE;
 
+            case Library.isReadOnlyConnection :
+                return session.isReadOnly() ? Boolean.TRUE
+                                            : Boolean.FALSE;
+
             case Library.isReadOnlyDatabaseFiles :
                 return session.getDatabase().filesReadOnly ? Boolean.TRUE
                                                            : Boolean.FALSE;
+
+            case Library.now :
+                return session.getCurrentTimestamp();
+
+            case Library.user :
+                return session.getUser().getName();
         }
 
         Object[] oArg = getArguments(session);

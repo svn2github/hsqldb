@@ -593,7 +593,7 @@ class DatabaseCommandInterpreter {
         session.commit();
         session.setScripting(!t.isTemp());
 
-        TableWorks tableWorks = new TableWorks(t);
+        TableWorks tableWorks = new TableWorks(session, t);
 
         tableWorks.createIndex(indexColumns, indexHsqlName, unique, false,
                                false);
@@ -733,21 +733,21 @@ class DatabaseCommandInterpreter {
      */
     private Column processCreateColumn(Table t) throws HsqlException {
 
-        boolean isIdentity        = false;
-        long    identityStart     = database.firstIdentity;
-        long    identityIncrement = 1;
-        boolean isPrimaryKey      = false;
-        String  columnName;
-        boolean isQuoted;
-        String  typeName;
-        int     type;
-        String  sLen;
-        int     length = 0;
-        String  sScale;
-        int     scale        = 0;
-        boolean isNullable   = true;
-        String  defaultValue = null;
-        String  token        = tokenizer.getString();
+        boolean    isIdentity        = false;
+        long       identityStart     = database.firstIdentity;
+        long       identityIncrement = 1;
+        boolean    isPrimaryKey      = false;
+        String     columnName;
+        boolean    isQuoted;
+        String     typeName;
+        int        type;
+        String     sLen;
+        int        length = 0;
+        String     sScale;
+        int        scale       = 0;
+        boolean    isNullable  = true;
+        Expression defaultExpr = null;
+        String     token       = tokenizer.getString();
 
         columnName = token;
 
@@ -826,8 +826,8 @@ class DatabaseCommandInterpreter {
         }
 
         if (token.equals(Token.T_DEFAULT)) {
-            defaultValue = processCreateDefaultValue(type, length);
-            token        = tokenizer.getString();
+            defaultExpr = processCreateDefaultExpression(type, length);
+            token       = tokenizer.getString();
         } else if (token.equals(Token.T_GENERATED)) {
             tokenizer.getThis(Token.T_BY);
             tokenizer.getThis(Token.T_DEFAULT);
@@ -896,76 +896,53 @@ class DatabaseCommandInterpreter {
         return new Column(
             database.nameManager.newHsqlName(columnName, isQuoted),
             isNullable, type, length, scale, isIdentity, identityStart,
-            identityIncrement, isPrimaryKey, defaultValue);
+            identityIncrement, isPrimaryKey, defaultExpr);
     }
 
     /**
-     * @param type type of value
-     * @param length length of string
+     * @param type data type of column
+     * @param length maximum length of column
      * @throws HsqlException
-     * @return new string
+     * @return new Expression
      */
-    private String processCreateDefaultValue(int type,
+    private Expression processCreateDefaultExpression(int type,
             int length) throws HsqlException {
 
-        String  defString;
-        Object  defValue;
-        boolean wasminus;
-
-        defString = tokenizer.getString();
-        wasminus  = false;
-
-        // see if it is a negative number
-        if (defString.equals("-") && tokenizer.getType() != Types.VARCHAR) {
-            wasminus  = true;
-            defString += tokenizer.getString();
-        }
-
         if (type == Types.OTHER) {
-            throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, defString);
+            throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE);
         }
 
-        if (tokenizer.wasValue()) {
-            defValue = tokenizer.getAsValue();
-        } else {
-            if (Parser.datetimeTokens.containsKey(defString)) {
-                defValue = defString;
-            } else {
-                throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, defString);
+        Parser     parser = new Parser(database, tokenizer, session);
+        Expression expr   = parser.readDefaultClause();
+
+        expr.resolveTypes();
+
+        if (expr.getType() == Expression.VALUE
+                || (expr.getType() == Expression.FUNCTION
+                    && expr.function.isSimple)) {
+            Object defValTemp;
+
+            try {
+                defValTemp = expr.getValue(type, session);
+            } catch (HsqlException e) {
+                throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE);
             }
-        }
 
-        if (wasminus) {
-            defValue = Column.negate(defValue, type);
-        }
+            if (database.sqlEnforceSize || database.sqlEnforceStrictSize) {
+                String defValTest = (String) Table.enforceSize(defValTemp,
+                    type, length, false, false);
 
-        if (defValue == null) {
-            return null;
-        }
+                if (!defValTemp.equals(defValTest)) {
 
-        // check conversion of literals to values and size constraints
-        try {
-            Column.convertObject(defValue, type);
-        } catch (Exception e) {
-            throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, defString);
-        }
-
-        checkBooleanDefault(defString, type);
-
-        // ensure char triming does not affect the value
-        if (database.sqlEnforceSize || database.sqlEnforceSize) {
-            String defValTemp = Column.convertObject(defValue);
-            String defValTest = (String) Table.enforceSize(defValTemp, type,
-                length, false, false);
-
-            if (!defValTemp.equals(defValTest)) {
-
-                // default value is too long for fixed size column
-                throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, defString);
+                    // default value is too long for fixed size column
+                    throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE);
+                }
             }
+
+            return expr;
         }
 
-        return defString;
+        throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE);
     }
 
     public static void checkBooleanDefault(String s,
@@ -1255,7 +1232,7 @@ class DatabaseCommandInterpreter {
                 Constraint tempConst = (Constraint) tempConstraints.get(i);
 
                 if (tempConst.constType == Constraint.UNIQUE) {
-                    TableWorks tableWorks = new TableWorks(t);
+                    TableWorks tableWorks = new TableWorks(session, t);
 
                     tableWorks.createUniqueConstraint(
                         tempConst.core.mainColArray, tempConst.constName);
@@ -1264,7 +1241,7 @@ class DatabaseCommandInterpreter {
                 }
 
                 if (tempConst.constType == Constraint.FOREIGN_KEY) {
-                    TableWorks tableWorks = new TableWorks(t);
+                    TableWorks tableWorks = new TableWorks(session, t);
 
                     tableWorks.createForeignKey(tempConst.core.mainColArray,
                                                 tempConst.core.refColArray,
@@ -1277,7 +1254,7 @@ class DatabaseCommandInterpreter {
                 }
 
                 if (tempConst.constType == Constraint.CHECK) {
-                    TableWorks tableWorks = new TableWorks(t);
+                    TableWorks tableWorks = new TableWorks(session, t);
 
                     tableWorks.createCheckConstraint(tempConst,
                                                      tempConst.constName);
@@ -1685,7 +1662,7 @@ class DatabaseCommandInterpreter {
             }
             case Token.DROP : {
                 tokenizer.getThis(Token.T_DEFAULT);
-                t.setDefaultString(columnIndex, null);
+                t.setDefaultExpression(columnIndex, null);
 
                 return;
             }
@@ -1695,8 +1672,9 @@ class DatabaseCommandInterpreter {
                 int iType = column.getType();
                 int iLen  = column.getSize();
 
-                t.setDefaultString(columnIndex,
-                                   processCreateDefaultValue(iType, iLen));
+                t.setDefaultExpression(columnIndex,
+                                       processCreateDefaultExpression(iType,
+                                           iLen));
 
                 return;
             }
@@ -2405,7 +2383,7 @@ class DatabaseCommandInterpreter {
         } else if (c.isPrimaryKey()) {
             canAdd = false;
         } else if (!t.isEmpty()) {
-            canAdd = c.isNullable() || c.getDefaultString() != null;
+            canAdd = c.isNullable() || c.getDefaultExpression() != null;
         }
 
         if (!canAdd) {
@@ -2416,24 +2394,19 @@ class DatabaseCommandInterpreter {
     private void checkFKColumnDefaults(Table t,
                                        Constraint tc) throws HsqlException {
 
-        boolean check;
-        int[]   localCol;
-        String  defStr;
-        Column  column;
-        String  columnName;
+        boolean check = tc.core.updateAction == Constraint.SET_DEFAULT;
 
-        check = tc.core.updateAction == Constraint.SET_DEFAULT;
         check = check || tc.core.deleteAction == Constraint.SET_DEFAULT;
 
         if (check) {
-            localCol = tc.core.mainColArray;
+            int[] localCol = tc.core.mainColArray;
 
             for (int j = 0; j < localCol.length; j++) {
-                column = t.getColumn(localCol[j]);
-                defStr = column.getDefaultString();
+                Column     column  = t.getColumn(localCol[j]);
+                Expression defExpr = column.getDefaultExpression();
 
-                if (defStr == null) {
-                    columnName = column.columnName.name;
+                if (defExpr == null) {
+                    String columnName = column.columnName.name;
 
                     throw Trace.error(Trace.COLUMN_TYPE_MISMATCH,
                                       Trace.NO_DEFAULT_VALUE_FOR_COLUMN,
@@ -2525,7 +2498,7 @@ class DatabaseCommandInterpreter {
 
         session.commit();
 
-        TableWorks tableWorks = new TableWorks(t);
+        TableWorks tableWorks = new TableWorks(session, t);
 
         tableWorks.addOrDropColumn(column, colindex, 1);
 
@@ -2552,7 +2525,7 @@ class DatabaseCommandInterpreter {
         // fredt - no, uncommitted data may include the column
         session.commit();
 
-        TableWorks tableWorks = new TableWorks(t);
+        TableWorks tableWorks = new TableWorks(session, t);
 
         tableWorks.addOrDropColumn(null, colindex, -1);
     }
@@ -2572,7 +2545,7 @@ class DatabaseCommandInterpreter {
 
         session.commit();
 
-        TableWorks tableWorks = new TableWorks(t);
+        TableWorks tableWorks = new TableWorks(session, t);
 
         tableWorks.dropConstraint(cname);
 
@@ -2590,7 +2563,7 @@ class DatabaseCommandInterpreter {
 
         methodFQN = upgradeMethodFQN(tokenizer.getString());
 
-        database.getAlias().put(alias, methodFQN);
+        database.getAliasMap().put(alias, methodFQN);
     }
 
     private void processCreateIndex(boolean unique) throws HsqlException {
@@ -2962,7 +2935,7 @@ class DatabaseCommandInterpreter {
 
         session.commit();
 
-        TableWorks tableWorks = new TableWorks(t);
+        TableWorks tableWorks = new TableWorks(session, t);
 
         tableWorks.createUniqueConstraint(col, n);
     }
@@ -2982,7 +2955,7 @@ class DatabaseCommandInterpreter {
                             tc.core.refColArray);
         session.commit();
 
-        TableWorks tableWorks = new TableWorks(t);
+        TableWorks tableWorks = new TableWorks(session, t);
 
         tableWorks.createForeignKey(tc.core.mainColArray,
                                     tc.core.refColArray, tc.constName,
@@ -3005,7 +2978,7 @@ class DatabaseCommandInterpreter {
         processCreateCheckConstraintCondition(check);
         session.commit();
 
-        TableWorks tableWorks = new TableWorks(table);
+        TableWorks tableWorks = new TableWorks(session, table);
 
         tableWorks.createCheckConstraint(check, name);
     }

@@ -79,9 +79,10 @@ public class HsqlDateTime {
     private static Calendar tempCalGMT1 =
         new GregorianCalendar(TimeZone.getTimeZone("GMT"));
     private static Date tempDate = new Date(0);
+    private static Date currentDate;
 
     static {
-        resetToday();
+        resetToday(System.currentTimeMillis());
     }
 
     final static String zerodatetime = "1970-01-01 00:00:00.000000000";
@@ -101,23 +102,6 @@ public class HsqlDateTime {
         if (s == null) {
             throw new java.lang.IllegalArgumentException(
                 Trace.getMessage(Trace.HsqlDateTime_null_string));
-        }
-
-        if (s.indexOf('-') == -1) {
-            s = s.toUpperCase();
-
-            if (s.equals("NOW") || s.equals("CURRENT_TIMESTAMP")) {
-                return new Timestamp(System.currentTimeMillis());
-            }
-
-            // fredt - treat Date as full days only
-            if (s.equals("CURRENT_DATE") || s.equals("TODAY")
-                    || s.equals("SYSDATE")) {
-                return new Timestamp(getTimeInMillis(getToday()));
-            }
-
-            throw new java.lang.IllegalArgumentException(
-                Trace.getMessage(Trace.HsqlDateTime_invalid_timestamp));
         }
 
         s = s + zerodatetime.substring(s.length());
@@ -156,19 +140,6 @@ public class HsqlDateTime {
                 Trace.getMessage(Trace.HsqlDateTime_null_date));
         }
 
-        if (s.indexOf('-') == -1) {
-            s = s.toUpperCase();
-
-            // fredt - treat Date as full days only
-            if (s.equals("TODAY") || s.equals("CURRENT_DATE")
-                    || s.equals("SYSDATE")) {
-                return new java.sql.Date(getTimeInMillis(getToday()));
-            }
-
-            throw new java.lang.IllegalArgumentException(
-                Trace.getMessage(Trace.HsqlDateTime_invalid_date));
-        }
-
         if (s.length() > sdfdPattern.length()) {
             return Date.valueOf(s.substring(0, sdfdPattern.length()));
         }
@@ -193,10 +164,6 @@ public class HsqlDateTime {
                 Trace.getMessage(Trace.HsqlDateTime_null_string));
         }
 
-        if (s.toUpperCase().equals("CURRENT_TIME")) {
-            return getCurrentTime();
-        }
-
         return Time.valueOf(s);
     }
 
@@ -210,8 +177,15 @@ public class HsqlDateTime {
                                          : -1;
     }
 
-    public static Time getCurrentTime() {
-        return getNormalisedTime(System.currentTimeMillis());
+    public synchronized static Date getCurrentDate(long millis) {
+
+        getToday(millis);
+
+        return currentDate;
+    }
+
+    public static Timestamp getTimestamp(long millis) {
+        return new Timestamp(millis);
     }
 
     private static final String sdftPattern  = "HH:mm:ss";
@@ -303,12 +277,10 @@ public class HsqlDateTime {
      * Returns the same Date Object. This object should be treated as
      * read-only.
      */
-    static Calendar getToday() {
+    static synchronized Calendar getToday(long millis) {
 
-        long now = System.currentTimeMillis();
-
-        if (now - getTimeInMillis(today) > 24 * 3600 * 1000) {
-            resetToday();
+        if (millis - getTimeInMillis(today) >= 24 * 3600 * 1000) {
+            resetToday(millis);
         }
 
         return today;
@@ -333,21 +305,23 @@ public class HsqlDateTime {
     /**
      * resets the static reusable value today
      */
-    synchronized private static void resetToday() {
+    synchronized private static void resetToday(long millis) {
 
 //#ifdef JDBC3
         // Use method directly
-        today.setTimeInMillis(System.currentTimeMillis());
+        today.setTimeInMillis(millis);
 
 //#else
 /*
         // Have to go indirect
-        tempDate.setTime(System.currentTimeMillis());
+        tempDate.setTime(millis);
         today.setTime(tempDate);
 */
 
 //#endif JDBC3
         resetToDate(today);
+
+        currentDate = new java.sql.Date(getTimeInMillis(today));
     }
 
     /**
