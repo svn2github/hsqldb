@@ -84,7 +84,6 @@ class TextTable extends org.hsqldb.Table {
             try {
                 cCache = dDatabase.logger.openTextCache(tableName.name,
                         source, isRdOnly, isDesc);
-                iIdentityId = cCache.getFreePos();
 
                 // all zero
                 int[] roots = new int[iIndexCount];
@@ -112,7 +111,7 @@ class TextTable extends org.hsqldb.Table {
                     isReversed = false;
                 }
 
-                throw (e);
+                throw e;
             }
         }
 
@@ -132,7 +131,7 @@ class TextTable extends org.hsqldb.Table {
             }
         }
 
-        return (isEqual);
+        return isEqual;
     }
 
     boolean equals(String other) {
@@ -147,7 +146,7 @@ class TextTable extends org.hsqldb.Table {
             }
         }
 
-        return (isEqual);
+        return isEqual;
     }
 
     protected void setDataSource(String source, boolean isDesc,
@@ -194,7 +193,7 @@ class TextTable extends org.hsqldb.Table {
     }
 
     protected Table duplicate() throws SQLException {
-        return (new TextTable(dDatabase, tableName, tableType, ownerSession));
+        return new TextTable(dDatabase, tableName, tableType, ownerSession);
     }
 
     void indexRow(Row r, boolean inserted,
@@ -205,10 +204,30 @@ class TextTable extends org.hsqldb.Table {
         } else {
             if (primarynode == null) {
                 ((CachedDataRow) r).setNewNodes();
-                super.indexRow(r, true, null);
+                insert((CachedDataRow) r);
             } else {
                 ((CachedDataRow) r).setPrimaryNode(primarynode);
             }
+        }
+    }
+    /**
+     *  Method declaration
+     *
+     * @param  row
+     * @param  c
+     * @param  log
+     * @throws  SQLException
+     */
+    private void insert(CachedDataRow r) throws SQLException {
+        Object[] row = r.getData();
+        int nextId = iIdentityId;
+        checkNullColumns(row);
+        setIdentityColumn(row);
+
+        super.indexRow(r, true, null);
+
+        if ( iIdentityId >= nextId ){
+            iIdentityId++;
         }
     }
 
@@ -238,19 +257,6 @@ class TextTable extends org.hsqldb.Table {
         }
 
         super.delete(row, c);
-    }
-
-// tony_lai@users 20020820 - patch 595099
-    void createPrimaryKey(String pkName, int[] columns) throws SQLException {
-
-        if ((columns == null)
-                || ((columns.length == 1)
-                    && getColumn(columns[0]).columnName.name.equals(
-                        DEFAULT_PK))) {
-            super.createPrimaryKey(null, columns);
-        } else {
-            throw (Trace.error(Trace.SECOND_PRIMARY_KEY));
-        }
     }
 
     void drop() throws SQLException {

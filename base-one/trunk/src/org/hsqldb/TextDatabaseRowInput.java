@@ -153,19 +153,19 @@ implements org.hsqldb.DatabaseRowInputInterface {
                                    + e.getMessage() + ")"));
         }
 
-        return (s);
+        return s;
     }
 
     public String readString() throws IOException {
-        return (getField(fieldSep, fieldSepLen, fieldSepEnd));
+        return getField(fieldSep, fieldSepLen, fieldSepEnd);
     }
 
     private String readVarString() throws IOException {
-        return (getField(varSep, varSepLen, varSepEnd));
+        return getField(varSep, varSepLen, varSepEnd);
     }
 
     private String readLongVarString() throws IOException {
-        return (getField(longvarSep, longvarSepLen, longvarSepEnd));
+        return getField(longvarSep, longvarSepLen, longvarSepEnd);
     }
 
     public int readIntData() throws IOException {
@@ -173,10 +173,10 @@ implements org.hsqldb.DatabaseRowInputInterface {
         String s = readString();
 
         if (s == null) {
-            return (0);
+            return 0;
         }
 
-        return (Integer.parseInt(s));
+        return Integer.parseInt(s);
     }
 
     public int readType() throws IOException {
@@ -211,7 +211,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         String s = readString();
 
         if (s == null) {
-            return (null);
+            return null;
         }
 
         return Integer.valueOf(s);
@@ -222,7 +222,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         String s = readString();
 
         if (s == null) {
-            return (null);
+            return null;
         }
 
         return Integer.valueOf(s);
@@ -233,7 +233,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         String s = readString();
 
         if (s == null) {
-            return (null);
+            return null;
         }
 
         return Long.valueOf(s);
@@ -244,7 +244,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         String s = readString();
 
         if (s == null) {
-            return (null);
+            return null;
         }
 
         return Double.valueOf(s);
@@ -256,7 +256,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         String s = readString();
 
         if (s == null) {
-            return (null);
+            return null;
         }
 
         return new java.math.BigDecimal(s);
@@ -267,7 +267,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         String s = readString();
 
         if (s == null) {
-            return (null);
+            return null;
         }
 
         return java.sql.Time.valueOf(s);
@@ -278,7 +278,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         String s = readString();
 
         if (s == null) {
-            return (null);
+            return null;
         }
 
         return java.sql.Date.valueOf(s);
@@ -290,7 +290,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         String s = readString();
 
         if (s == null) {
-            return (null);
+            return null;
         }
 
         return java.sql.Timestamp.valueOf(s);
@@ -301,7 +301,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         String s = readString();
 
         if (s == null) {
-            return (null);
+            return null;
         }
 
         return Boolean.valueOf(s);
@@ -313,7 +313,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         String s = readString();
 
         if (s == null) {
-            return (null);
+            return null;
         }
 
         o = Column.hexToByteArray(s);
@@ -332,11 +332,11 @@ implements org.hsqldb.DatabaseRowInputInterface {
         return Column.hexToByteArray(s);
     }
 
-    public void setNextPos(int pos) {
+    void setNextPos(int pos) {
         nextPos = pos;
     }
 
-    public void skippedLine() {
+    void skippedLine() {
         line++;
     }
 

@@ -1257,17 +1257,7 @@ class Table {
         fireAll(TriggerDef.INSERT_AFTER, row);
     }
 
-    /**
-     *  Method declaration
-     *
-     * @param  row
-     * @param  c
-     * @param  log
-     * @throws  SQLException
-     */
-    void insertNoCheck(Object row[], Session c,
-                       boolean log) throws SQLException {
-
+    protected void checkNullColumns(Object[] row) throws SQLException {
         for (int i = 0; i < iColumnCount; i++) {
             if (row[i] == null) {
                 Column  col    = getColumn(i);
@@ -1280,9 +1270,9 @@ class Table {
                 }
             }
         }
+    }
 
-        int nextId = iIdentityId;
-
+    protected void setIdentityColumn(Object[] row) {
         if (iIdentityColumn != -1) {
             Number id = (Number) row[iIdentityColumn];
 
@@ -1292,29 +1282,44 @@ class Table {
                 int columnId = id.intValue();
 
                 if (iIdentityId < columnId) {
-                    iIdentityId = nextId = columnId;
+                    iIdentityId = columnId;
                 }
             }
         }
+    }
 
+    /**
+     *  Method declaration
+     *
+     * @param  row
+     * @param  c
+     * @param  log
+     * @throws  SQLException
+     */
+    void insertNoCheck(Object row[], Session c,
+                       boolean log) throws SQLException {
+        int nextId = iIdentityId;
+        checkNullColumns(row);
+        setIdentityColumn(row);
         Row r = Row.newRow(this, row);
 
-        if (isText) {
-
-            //-- Always inserted at end of file.
-            nextId = ((CachedRow) r).iPos + ((CachedRow) r).storageSize;
-        } else {
-            nextId++;
+        try {
+            indexRow(r, true, null);
+        } catch (SQLException e ){
+            if ( cCache != null ){
+                cCache.free((CachedRow) r);
+            }
+            throw e;
         }
-
-        indexRow(r, true, null);
 
         if (c != null) {
             c.setLastIdentity(iIdentityId);
             c.addTransactionInsert(this, row);
         }
 
-        iIdentityId = nextId;
+        if ( iIdentityId >= nextId ){
+            iIdentityId++;
+        }
 
         if (log &&!isTemp &&!isText &&!isReadOnly
                 && dDatabase.logger.hasLog()) {
@@ -1937,7 +1942,7 @@ class Table {
      * @return
      * @throws  SQLException
      */
-    Row getRow(int pos,Node primaryNode) throws SQLException {
+    Row getRow(int pos, Node primaryNode) throws SQLException {
 
         if (isCached) {
             return (cCache.getRow(pos, this, primaryNode));
@@ -1962,7 +1967,8 @@ class Table {
         }
     }
 
-    void indexRow(Row r, boolean inserted, Node primarynode) throws SQLException {
+    void indexRow(Row r, boolean inserted,
+                  Node primarynode) throws SQLException {
 
         if (inserted) {
             int i = 0;
