@@ -225,24 +225,35 @@ shrinks the data file.
 <b>CREATE</b> [ MEMORY | CACHED |<font color="#FF0000"> TEMP | TEXT   </font>] <b>TABLE</b> &lt;name&gt; <br>
 ( &lt;columnDefinition&gt; [, ...] [, &lt;constraintDefinition&gt;...]) ;
 </font>
-<p><font face="Arial">Creates a tables in the memory (default) or on disk and only cached in memory. 
-  Identity columns are autoincrement columns. They must be integer columns and 
-  are automatically primary key columns. The last inserted value into an identity 
+<p><font face="Arial">Creates a tables in the memory (default) or on disk and only cached in memory.</font>
+<p><font face="Arial">columnDefinition: <br>
+  columnname <a href="#Datatypes">Datatype</a><font color="#FF0000"> [(columnSize[,precision])] [{DEFAULT &lt;defaultValue&gt; | GENERATES BY DEFAULT AS IDENTITY (START WITH &lt;n&gt;)}]</font> |  [[NOT] NULL] [IDENTITY] 
+  [PRIMARY KEY] </font>
+<p>Default values that are allowed are constant values or certain SQL datetime functions.
+</font>
+<ul>
+  <li><font face="Arial, Helvetica" size="2">For character column,   a single-quoted string or NULL.</font></li>
+  <li><font face="Arial, Helvetica" size="2">For datetime columns, a single-quoted DATE, TIME or TIMESTAMP value or NULL. Or an appropriate SQL function such as CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP, TODAY, NOW. Each functions is allowed for a certain column type.</font></li>
+  <li><font face="Arial, Helvetica" size="2">For BOOLEAN columns, the literals   FALSE, TRUE, NULL.</font></li>
+</ul>
+<p><font face="Arial, Helvetica" size="2">Only one identity column is allowed in each table. <font face="Arial"> 
+  Identity columns are autoincrement columns. They must be of  INTEGER or BIGINT type 
+  and are automatically primary key columns. Using the long SQL syntax the (START WITH &lt;n&gt;) clause specifies the first value that will be used.  The last inserted value into an identity 
   column for a connection is available using the function IDENTITY(), for example 
   (where Id is the identity column): <br>
+  </font></font></p>
+<p><font face="Arial, Helvetica" size="2"><font face="Arial">
   INSERT INTO Test (Id, Name) VALUES (NULL,'Test'); CALL IDENTITY();
-</font>
-<p><font face="Arial">columnDefinition: <br>
-  columnname <a href="#Datatypes">Datatype</a><font color="#FF0000"> [(columnSize[,precision])] [{DEFAULT &lt;defaultValue&gt; | GENERATES BY DEFAULT AS IDENTITY(START WITH &lt;n&gt;)}]</font> |  [[NOT] NULL] [IDENTITY] 
-  [PRIMARY KEY] </font>
-<p>the default value must be in the same format as used in an INSERT statement.
-<p><font face="Arial">constraintDefinition: <br>
+</font></font></p>
+<p><font face="Arial, Helvetica" size="2"> <font face="Arial">constraintDefinition: <br>
   [ CONSTRAINT &lt;name&gt; ] <br>
   UNIQUE ( &lt;column&gt; [,&lt;column&gt;...] ) | <br>
   PRIMARY KEY ( &lt;column&gt; [,&lt;column&gt;...] ) | <br>
   FOREIGN KEY ( &lt;column&gt; [,&lt;column&gt;...] ) REFERENCES &lt;refTable&gt; ( &lt;column&gt; [,&lt;column&gt;...]) 
 <font color="#FF0000"> 
   [ON {DELETE | UPDATE} {CASCADE | SET DEFAULT | SET NULL}]</font></font>
+</font></p>
+<font face="Arial, Helvetica" size="2">
 <p>&nbsp; 
 <p><font face="Arial">See also: <a href="#DROP_TABLE">DROP TABLE</a> 
 </font>
@@ -512,9 +523,10 @@ Will not work if the index backs a UNIQUE of FOREIGN KEY constraint.
 </font>
 <hr>
 <font face="Arial"><br>
-<b>ROLLBACK</b> [TO SAVEPOINT &lt;savepointname&gt; |  WORK}] ;
+<b>ROLLBACK</b> [<font color="#FF0000">TO SAVEPOINT &lt;savepoint name&gt;</font> |  WORK}] ;
 </font>
-<p><font face="Arial">Undoes changes made since the last COMMIT or ROLLBACK. ROLLBACK TO SAVEPOINT &lt;savepointname&gt; undoes the change since the named savepoint. It has no effect if the savepoint is not found.</font>
+<p><font face="Arial">ROLLBACK used on its own, or with WORK, undoes changes made since the last COMMIT or ROLLBACK.</font>
+<p><font face="Arial"> ROLLBACK TO SAVEPOINT &lt;savepoint name&gt; undoes the change since the named savepoint. It has no effect if the savepoint is not found.</font>
 <p><font face="Arial">See also: <a href="#COMMIT">COMMIT</a> 
 </font>
 <p> <font face="Arial"><br>
@@ -522,8 +534,8 @@ Will not work if the index backs a UNIQUE of FOREIGN KEY constraint.
 </font>
 <hr>
 <font face="Arial, Helvetica" size="2"><br>
-<b>SAVEPOINT</b> &lt;savepoint name&gt; ;
-</font>
+<b><font color="#FF0000">SAVEPOINT</font></b> <font color="#FF0000">&lt;savepoint name&gt; ;
+</font></font>
 </font>
 <p><font face="Arial, Helvetica" size="2">Sets up a SAVEPOINT for use with ROLLBACK TO SAVEPOINT. 
 </font>
@@ -559,8 +571,8 @@ Will not work if the index backs a UNIQUE of FOREIGN KEY constraint.
   table [ { INNER | LEFT OUTER } JOIN table ON Expression ] [, ...] 
 </font>
 <p><font face="Arial">selectExpression: <br>
-  { Expression | COUNT(*) | {COUNT | MIN | MAX | SUM | AVG} (<font color="#FF0000">[DISTINCT] </font>Expression) } 
-</font>
+  { Expression | COUNT(*) | {COUNT | MIN | MAX | SUM | AVG} (<font color="#FF0000">[DISTINCT] </font>Expression) } </font>
+<p><font face="Arial">If DISTINCT is specified, only one instance of several equivalent values is used in the aggregate function.</font>
 <p><font face="Arial">orderExpression: <br>
   { columnNr | columnAlias | selectExpression } [ ASC | DESC ] 
 </font>
@@ -597,10 +609,9 @@ Will not work if the index backs a UNIQUE of FOREIGN KEY constraint.
 <b>SET IGNORECASE</b> { TRUE | FALSE } ;
 </font>
 <p><font face="Arial" size="2">Disables (ignorecase = true) or enables (ignorecase = false) the case sensitivity 
-  of text comparison and indexing for new tables. By default, new databases are case sensitive. The sensitivity 
+  of text comparison and indexing for new tables. By default, character columns in new databases are case sensitive. The sensitivity 
   must be switched before creating tables. Existing tables and their data are not affected. 
-  When switched on, the data type VARCHAR is set to VARCHAR_IGNORECASE. This special 
-  data type can also be used without switching global  ignorecase on. So it is possible 
+  When switched on, the data type VARCHAR is set to VARCHAR_IGNORECASE in new tables. Alternatively, you can specify the VARCHAR_IGNORECASE type for the definition of individual columns. So it is possible 
   to have some columns  case sensitive and some not, even in the same table. <br>
   Only an administrator may do this. 
 </font>
@@ -629,6 +640,14 @@ Will not work if the index backs a UNIQUE of FOREIGN KEY constraint.
 </font>
 <p> <font face="Arial" size="2"><br>
   <a name="SET_REFINT"></a>
+</font>
+<hr>
+<font face="Arial" size="2"><br>
+<b><font color="#FF0000">SET PROPERTY</font></b><font color="#FF0000"> &lt;double quoted name&gt; &lt;double quoted value&gt;;
+</font></font>
+<p><font face="Arial" size="2">Sets a database property. Properties that can be set using this command are listed in <a href="hsqlAdvancedGuide.html">hsqlAdvancedGuide.html</a></font>
+<p> <font face="Arial" size="2"><br>
+  <a name="SET_PROPERTY"></a>
 </font>
 <hr>
 <font face="Arial" size="2"><br>
@@ -679,7 +698,7 @@ Will not work if the index backs a UNIQUE of FOREIGN KEY constraint.
 <font face="Arial"><br>
 <b><font size="2" color="#FF0000">SET TABLE </font></b><font size="2" color="#FF0000">&lt;tablename&gt;</font><b><font size="2" color="#FF0000"> SOURCE </font></b><font size="2" color="#FF0000">&lt;file and options&gt;</font><b><font size="2" color="#FF0000"> [DESC]</font></b>
 ;</font>
-<p><font face="Arial" size="2">For details see the document TextTables.html. </font>
+<p><font face="Arial" size="2">For details see the document <a href="hsqlTextTables.html">hsqlTextTables.html</a>. </font>
 <p><font face="Arial" size="2">This command is used exclusively with TEXT tables to specify which file is used for storage of the data. The optional DESC qualifier results in the text file indexed from the end and opened as readonly. The &lt;file and options&gt; argument is a double quoted string that consists of:</font>
 <p><font face="Arial" size="2">&lt;file and options&gt;::= &lt;doublequote&gt; &lt;filepath&gt; [&lt;semicolon&gt; &lt;option&gt;...] &lt;doublequote&gt;</font>
 <p><font face="Arial" size="2">Example: SET TABLE mytable SOURCE "myfile;fs=|;vs=.;lvs=~"</font>
@@ -703,13 +722,9 @@ HSQLDB also recognises the following special indicators for separators: <br><br>
 </font>
 <hr>
 <font face="Arial"><br>
-<b>SET WRITE_DELAY</b> { TRUE | FALSE } ;
+<b>SET WRITE_DELAY</b> {{ TRUE | FALSE } | &lt;seconds&gt;} ;
 </font>
-<p><font face="Arial">When the write delay is switched on, the executed commands are written to the 
-  log file (.script) at most 1 second after they are executed. This improves the 
-  performance of applications that makes a lot of inserts/updates/deletes. When 
-  switched off (this is the default) then all SQL commands are written into the 
-  log file (.script) just after they are executed. <br>
+<p><font face="Arial">In 1.7.2 this controls the frequencty of file synch. When WRITE_DELAY is set to FALSE, the synch takes place once every second. WRITE_DELAY TRUE performs the synch once every minute. The default is TRUE (60 seconds). A numeric value can be specified instead. <br>
   Only an administrator may do this.</font>
 </font>
 <p> <font face="Arial" size="2"><br>
@@ -877,14 +892,16 @@ In practice, objects of up to a megabyte in size have been successfully used in 
 <p><font face="Arial"> VARCHAR_IGNORECASE is a special case-insensitive type of VARCHAR. This type 
   is not portable. 
 </font>
-<p> <font face="Arial">In HSQLDB, when defining CHAR and VARCHAR columns,  the SIZE argument is optional and defaults to 0. If any other size is specified, it is stored in the database definition but is not enforeced by default. Once you have created the database (before adding data), you can close the database and add a database property value:</font>
-<p><font face="Arial"> sql.enforce_size=true</font>
+<p> <font face="Arial">In HSQLDB, when defining CHAR and VARCHAR columns,  the SIZE argument is optional and defaults to 0. If any other size is specified, it is stored in the database definition but is not enforeced by default. Once you have created the database (before adding data), you can add a database property value to enforce the sizes:</font>
+<p><font face="Arial"> </font><font face="Arial, Helvetica" size="2">SET PROPERTY &quot;sql.enforce_strict_size&quot; &quot;true&quot;</font>
 <p><font face="Arial">This </font><font face="Arial, Helvetica" size="2"><font face="Arial"> will  enforce the specified size and pad CHAR fields with spaces to fill the size.</font></font>
-<p><font face="Arial">
- CHAR and VARCHAR and LONGVARCHAR columns are by default compared and sorted according to POSIX standards. To use the current JRE locale for sorting and comparison, add the following database property to the properties file.</font>
+This complies with SQL standards by throwing an exception if an attempt is made to insert a string longer than the maximum size.
+<p><font face="Arial">CHAR and VARCHAR and LONGVARCHAR columns are by default compared and sorted according to POSIX standards. To use the current JRE locale for sorting and comparison, add the following database property to the properties file.</font>
 <p><font face="Arial, Helvetica" size="2"><font face="Arial">sql.compare_in_locale=true
 
 </font></font>
+</font><font face="Arial, Helvetica" size="2">
+<p>&nbsp;
 <p>Columns of the type OTHER or OBJECT contain the serialized form of a Java Object in binary format. To insert or update such columns, a binary format string (see below under Expression) should be used. Using PreparedStatements with JDBC automates this transformation.
 <p><font face="Arial"><br>
   <a name="Comments"></a>
@@ -914,7 +931,7 @@ In practice, objects of up to a megabyte in size have been successfully used in 
 </font>
 <p> <font face="Arial">"java.lang.Math.sqrt"(2.0) 
 </font>
-<p><font face="Arial"> This means the packacke must be provided, and the name must be written as 
+<p><font face="Arial"> This means the package must be provided, and the name must be written as 
   one word, and inside " because otherwise it is converted to uppercase (and not 
   found). 
 </font>
@@ -925,8 +942,9 @@ In practice, objects of up to a megabyte in size have been successfully used in 
 <p><font face="Arial"> When an alias is defined, then the function can be called additionally using 
   this alias: 
 </font>
-<p><font face="Arial"> SQRT(2.0) 
-</font>
+<p><font face="Arial"> SELECT SQRT(A) , B
+ FROM MYTABLE;</font>
+<p><font face="Arial">Only static java methods can be used as stored procedurs. If, within the same class, there are overloaded methods with the same number of arguments, then the first one encountered by the program will be used. If you want to use Java library methods, it is recommended that you create your own class with static methods that act as  wrappers around the Java library methods. This will allow you to control which method signature is used to call each Java library method.</font>
 <p> <font face="Arial"><br>
   <a name="List"></a>
 </font>
@@ -970,14 +988,16 @@ In practice, objects of up to a megabyte in size have been successfully used in 
   CHAR(c) (returns a character that has the ASCII code c) <br>
   CONCAT(str1,str2) (returns str1 + str2 ) <br>
   DIFFERENCE(s1,s2) (returns the difference between the sound of s1 and s2) <br>
-  <font color="#FF0000">HEXTORAW(s1) (returns translated string) </font><br>
+  <font color="#FF0000">HEXTORAW(s1)<font color="#000000"> (returns translated string) </font></font><font color="#000000"><br>
+  </font>
   INSERT(s,start,len,s2) (returns a string where len number of characters beginning at start has been replaced by s2) <br>
   LCASE(s) (converts s to lower case) <br>
   LEFT(s,count) (returns the leftmost count of characters of s) <br>
   LENGTH(s) (returns the number of characters in s) <br>
   LOCATE(search,s,[start]) (returns the first index (1=left, 0=not found) where search is found in s, starting at start) <br>
   LTRIM(s) (removes all leading blanks in s) <br>
-  <font color="#FF0000">RAWTOHEX(s1) (returns translated string) </font><br>
+  <font color="#FF0000">RAWTOHEX(s1)<font color="#000000"> (returns translated string) </font></font><font color="#000000"><br>
+  </font>
   REPEAT(s,count) (returns s repeated count times) <br>
   REPLACE(s,replace,s2) (replaces all occurrences of replace in s with s2) <br>
   RIGHT(s,count) (returns the rightmost count of characters of s) <br>
@@ -1020,10 +1040,15 @@ In practice, objects of up to a megabyte in size have been successfully used in 
   CASEWHEN(exp,v1,v2) (if exp is true, v1 is returned, else v2) <br>
   CONVERT(term,type) (converts exp to another data type) <br>
   CAST(term AS type) (converts exp to another data type) </font>
-<p><font face="Arial" color="#FF0000">NULLIF(v1,v2) (if v1 equals v2 return null, otherwise v1)<br>
-  CASE v1 WHEN v2 THEN v3 [ELSE v4] END (when v1 equals v2 return v3 [otherwise v4])<br>
-  </font><font face="Arial, Helvetica" size="2" color="#FF0000"><font face="Arial">CASE WHEN expr1 THEN v1 [ELSE v2] END (when expr1 is true return v1 [otherwise v4])</font></font><font face="Arial" color="#FF0000">
+<p><font face="Arial, Helvetica" size="2"><font face="Arial, Helvetica, sans-serif" color="#FF0000">COALESCE(exp,value) <font color="#000000">(if exp is null, value is returned else exp) <br>
+  </font>
+  </font></font><font face="Arial" color="#FF0000">NULLIF(v1,v2)<font color="#000000"> (if v1 equals v2 return null, otherwise v1)<br>
+  </font>
+  CASE v1 WHEN v2 THEN v3 [ELSE v4] END<font color="#000000"> (when v1 equals v2 return v3 [otherwise v4 or null if there is no ELSE] )<br>
+  </font>
+  </font><font face="Arial, Helvetica" size="2" color="#FF0000"><font face="Arial">CASE WHEN expr1 THEN v1 [ELSE v2] END<font color="#000000"> (when expr1 is true return v1 [otherwise v4</font><font face="Arial, Helvetica" size="2"><font face="Arial" color="#FF0000"><font color="#000000"> or null if there is no ELSE</font></font></font><font color="#000000">])</font></font></font><font face="Arial" color="#000000">
 <br>
+  </font><font face="Arial" color="#FF0000">
   EXTRACT {YEAR | MONTH | DAY | HOUR | MINUTE | SECOND} FROM &lt;datetime value&gt;<br>
   SUBSTRING(&lt;string expression&gt; FROM &lt;numeric expression&gt; [FOR &lt;numeric expression&gt;])<br>
   TRIM([{LEADING | TRAILING | BOTH}] FROM &lt;string expression&gt;)</font>
