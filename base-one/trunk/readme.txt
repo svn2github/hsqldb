@@ -3,6 +3,22 @@ Readme File
 
 leading to HSQLDB 1.7.2 ALPHA_N
 
+2003.08.02
+
+NIO ACCESS FOR .data FILES
+
+New nio access layer for .data files speeds up most CACHED TABLE related
+operations very significantly. 90% speedups in TestCacheSize tests
+have been observed. The program must be compiled with JDK 1.4 and run
+in a 1.4 JRE to use the new access mode.
+
+IMPROVEMENTS TO UPDATE AND INSERT
+
+Certain types of UPDATES and INSERTS that previously failed due to
+blanket application of UNIQUE constraints now work.
+
+Examples include UPDATE ... SET col = col + 1 where col is an identity
+column or INSERT a self referencing row under FOREIGN key constraints.
 
 2003.07.30
 

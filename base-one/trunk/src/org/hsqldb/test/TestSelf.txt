@@ -178,7 +178,8 @@ DROP TABLE HLO
   not name = 'null' and not country = 'NULL' order by zip
 /*c3*/ select * from address where nr in (1,5,99,5,4)
 /*c1*/ select * from (select * from address) as address where nr=4
-/*c6*/ select p1.country from place p1,place p2 where p1.country=p2.country
+-- from 1.7.2, next result no longer returns null == null
+/*c5*/ select p1.country from place p1,place p2 where p1.country=p2.country
 /*c1*/ select * from t_double where id>-10 and d>1.3 and d>.3
 /*c2*/ select * from t_double where d>-20 or f<10.2
 /*c2*/ select d,t,d from t_date where d>'1900-08-21';
