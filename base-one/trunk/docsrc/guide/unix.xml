@@ -1,4 +1,4 @@
-<!-- $Id: unix.xml,v 1.6 2004/04/22 23:54:51 unsaved Exp $ -->
+<!-- $Id: unix.xml,v 1.7 2004/04/23 00:47:18 unsaved Exp $ -->
 
 <chapter>
     <title>UNIX Quick Start</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.6 $</edition>
-        <pubdate>$Date: 2004/04/22 23:54:51 $</pubdate>
+        <edition>$Revision: 1.7 $</edition>
+        <pubdate>$Date: 2004/04/23 00:47:18 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>UNIX</keyword>
@@ -293,6 +293,9 @@
             other servers in the 
             <link linkend='advanced-chapter' endterm='advanced-title'/>
             chapter.
+            The urlid in the sample file is <literal>localhost-sa</literal>,
+            so that's what I'll be using as urlid in the examples in this
+            chapter.
         </para> <para>
             Run <classname>SqlTool</classname>.
         </para><informalexample><screen>
@@ -377,6 +380,22 @@
             the significant exception of any data which you want to keep 
             secret).
         </para>
+    </section>
+
+    <section>
+        <title>Shutdown</title>
+        <para>
+            Do a clean database shutdown when you are finished with the
+            database instance.
+            You need to connect up as SA or some other Admin user, of course.
+            With SqlTool, you can run
+        </para><informalexample><screen>
+    java org.hsqldb.util.SqlTool --noinput --sql 'shutdown;' localhost-sa</screen>
+    </informalexample><para>
+        You don't have to worry about stopping the
+        <classname>Server</classname> because it shuts down automatically when 
+        all served database instances are shut down.
+    </para>
     </section>
 
     <section>
