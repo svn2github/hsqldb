@@ -141,7 +141,9 @@ public class SetFunction {
                     return;
                 }
 
-                if (Column.compare(session, currentValue, item, type) > 0) {
+                if (Column.compare(
+                        session.database.collation, currentValue, item,
+                        type) > 0) {
                     currentValue = item;
                 }
 
@@ -154,7 +156,9 @@ public class SetFunction {
                     return;
                 }
 
-                if (Column.compare(session, currentValue, item, type) < 0) {
+                if (Column.compare(
+                        session.database.collation, currentValue, item,
+                        type) < 0) {
                     currentValue = item;
                 }
 

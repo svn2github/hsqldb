@@ -252,15 +252,17 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
                     cmd.columnDisplaySize = Types.getMaxDisplaySize(type);
                 } else {
                     cmd.columnDisplaySize = rmd.colSizes[i];
+
+                    if (Types.acceptsScaleCreateParam(type)) {
+                        if (rmd.colScales[i] != 0) {
+                            cmd.columnDisplaySize += (1 + rmd.colScales[i]);
+                        }
+                    }
                 }
             } else {
                 cmd.columnDisplaySize = Types.getMaxDisplaySize(type);
             }
 
-            // todo: declared scale (and precision?) across the network
-            // for types that accept (precision, scale) declarations
-            // We do not yet (will we ever?) enforce/consider
-            // NUMERIC/DECIMAL precision
             if (Types.isNumberType(type)
                     && Types.acceptsPrecisionCreateParam(type)) {
                 cmd.precision = rmd.colSizes[i];

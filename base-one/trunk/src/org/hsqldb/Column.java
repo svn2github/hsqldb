@@ -652,7 +652,7 @@ public class Column {
      * @return result 1 if a>b, 0 if a=b, -1 if b>a
      * @throws  HsqlException
      */
-    static int compare(Session session, Object a, Object b,
+    static int compare(Collation collation, Object a, Object b,
                        int type) throws HsqlException {
 
         int i = 0;
@@ -679,16 +679,15 @@ public class Column {
 
             case Types.VARCHAR :
             case Types.LONGVARCHAR :
-                return session.database.collation.compare((String) a,
-                        (String) b);
+                return collation.compare((String) a, (String) b);
 
             case Types.CHAR :
-                return session.database.collation.compare(
-                    Library.rtrim((String) a), Library.rtrim((String) b));
+                return collation.compare(Library.rtrim((String) a),
+                                         Library.rtrim((String) b));
 
             case Types.VARCHAR_IGNORECASE :
-                return session.database.collation.compare(
-                    ((String) a).toUpperCase(), ((String) b).toUpperCase());
+                return collation.compare(((String) a).toUpperCase(),
+                                         ((String) b).toUpperCase());
 
             case Types.TINYINT :
             case Types.SMALLINT :

@@ -3335,7 +3335,8 @@ public class Expression {
                                          Object o2, int valueType,
                                          int exprType) throws HsqlException {
 
-        int result = Column.compare(session, o, o2, valueType);
+        int result = Column.compare(session.database.collation, o, o2,
+                                    valueType);
 
         switch (exprType) {
 
@@ -3400,7 +3401,8 @@ public class Expression {
             for (int i = 0; i < len; i++) {
                 Object o2 = valueList[i].getValue(session, dataType);
 
-                if (Column.compare(session, o, o2, dataType) == 0) {
+                if (Column.compare(
+                        session.database.collation, o, o2, dataType) == 0) {
                     return Boolean.TRUE;
                 }
             }
@@ -3438,7 +3440,9 @@ public class Expression {
             while (n != null) {
                 Object o2 = n.data[0];
 
-                if (o2 != null && Column.compare(session, o2, o, type) == 0) {
+                if (o2 != null
+                        && Column.compare(
+                            session.database.collation, o2, o, type) == 0) {
                     return Boolean.TRUE;
                 }
 

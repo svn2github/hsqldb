@@ -1090,13 +1090,13 @@ public class Result {
                               final int[] order,
                               int[] way) throws HsqlException {
 
-        int i = Column.compare(session, a[order[0]], b[order[0]],
-                               metaData.colTypes[order[0]]);
+        int i = Column.compare(session.database.collation, a[order[0]],
+                               b[order[0]], metaData.colTypes[order[0]]);
 
         if (i == 0) {
             for (int j = 1; j < order.length; j++) {
-                i = Column.compare(session, a[order[j]], b[order[j]],
-                                   metaData.colTypes[order[j]]);
+                i = Column.compare(session.database.collation, a[order[j]],
+                                   b[order[j]], metaData.colTypes[order[j]]);
 
                 if (i != 0) {
                     return i * way[j];
@@ -1120,7 +1120,8 @@ public class Result {
                               int len) throws HsqlException {
 
         for (int j = 0; j < len; j++) {
-            int i = Column.compare(session, a[j], b[j], metaData.colTypes[j]);
+            int i = Column.compare(session.database.collation, a[j], b[j],
+                                   metaData.colTypes[j]);
 
             if (i != 0) {
                 return i;

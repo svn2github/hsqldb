@@ -215,7 +215,7 @@ class TransferDb extends DataAccessPoint {
                     tmpTypes = new int[len + 1];
 
                     for (int j = 1; j <= len; j++) {
-                        tmpTypes[i] = r.getColumnType(j);
+                        tmpTypes[j] = r.getColumnType(j);
                     }
                 }
 
