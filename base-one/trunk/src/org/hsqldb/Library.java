@@ -74,7 +74,6 @@ import java.sql.Timestamp;
 import java.text.FieldPosition;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.GregorianCalendar;
 import java.util.Random;
 import java.util.Locale;
 
@@ -1886,22 +1885,16 @@ public class Library {
                     return null;
                 }
                 default : {
-                    throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED,
-                                      "org.hsqldb.Library: fID: " + fID);
+
+                    // coding error
+                    Trace.doAssert(false);
+
+                    return null;
                 }
             }
         } catch (Exception e) {
-            throw wrapException(e);
+            throw Trace.error(Trace.FUNCTION_CALL_ERROR);
         }
-    }
-
-    static HsqlException wrapException(Exception e) {
-
-        if (e instanceof HsqlException) {
-            return (HsqlException) e;
-        }
-
-        return Trace.error(Trace.GENERAL_ERROR, e.toString());
     }
 
     static final String prefix       = "org.hsqldb.Library.";

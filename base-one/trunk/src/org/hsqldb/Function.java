@@ -170,7 +170,7 @@ class Function {
             try {
                 classinstance = Class.forName(classname);
             } catch (Exception e) {
-                throw Trace.error(Trace.ERROR_IN_FUNCTION,
+                throw Trace.error(Trace.FUNCTION_NOT_FOUND,
                                   Trace.Message_Pair, new Object[] {
                     classname, e
                 });
@@ -316,32 +316,21 @@ class Function {
             Object ret = (fID >= 0) ? Library.invoke(fID, arguments)
                                     : mMethod.invoke(null, arguments);
 
-            //if (ret instanceof byte[] || ret instanceof Object) {
-            // it's always an instanceof Object
-            //ret =
             return Column.convertObject(ret, iReturnType);
+        } catch (InvocationTargetException e1) {
 
-            //}
-            //return ret;
-// boucherb@users - patch 1.7.2 - better function invocation error reporting
-        } catch (Throwable t) {
-            String s = sFunction;
+            // thrown by user functions
+            Throwable t = e1.getTargetException();
+            String    s = sFunction + " : " + t.toString();
 
-            if (t instanceof InvocationTargetException) {
-                while (t instanceof InvocationTargetException) {
-                    t = ((InvocationTargetException) t).getTargetException();
-                    s += ": " + t.toString();
-                }
+            throw Trace.error(Trace.FUNCTION_CALL_ERROR, s);
+        } catch (IllegalAccessException e3) {
 
-                s += ": " + t.toString();
-
-                throw Trace.error(Trace.UNKNOWN_FUNCTION, s);
-            } else {
-                s = sFunction + ": " + t.toString();
-
-                throw Trace.error(Trace.GENERAL_ERROR, s);
-            }
+            // never thrown in this method
+            throw Trace.error(Trace.FUNCTION_CALL_ERROR);
         }
+
+        // Library function throw HsqlException
     }
 
     private Object[] getArguments() throws HsqlException {

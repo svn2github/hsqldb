@@ -68,7 +68,6 @@
 package org.hsqldb;
 
 import java.io.PrintWriter;
-import java.sql.DriverManager;
 
 import org.hsqldb.lib.HsqlByteArrayOutputStream;
 
@@ -143,7 +142,7 @@ public class Trace {
      EXTERNAL_STOP                       = 39,
      GENERAL_ERROR                       = 40,
      WRONG_OUT_PARAMETER                 = 41,
-     ERROR_IN_FUNCTION                   = 42,
+     FUNCTION_NOT_FOUND                  = 42,
      TRIGGER_NOT_FOUND                   = 43,
      SAVEPOINT_NOT_FOUND                 = 44,
      LABEL_REQUIRED                      = 45,
@@ -308,6 +307,7 @@ public class Trace {
      PARAMETRIC_TABLE_NAME                          = 195,
      TEXT_SOURCE_EXISTS                             = 196,
      COLUMN_IS_REFERENCED                           = 197,
+     FUNCTION_CALL_ERROR                            = 198,
 
     //
     INTERNAL_unknown_internal_statement_type                       = 201,
@@ -380,7 +380,7 @@ public class Trace {
         "S1000 External stop request",    //
         "S1000 General error",    //
         "S1009 Wrong OUT parameter",    //
-        "S1010 Error in function",    //
+        "S1010 Function not found",    //
         "S0002 Trigger not found",    //
         "S1011 Savepoint not found",    //
         "37000 Label required for value list",    //
@@ -536,7 +536,7 @@ public class Trace {
         "parametric table identifier",    //Parser
         "S1000 text source file already exists",    // SELECT INTO TEXT <name>
         "23000 column is referenced in",    //
-        "reserved 198",    //
+        "S1000 Error calling function",    //
         "reserved 199",    //
         "reserved 200",    //
         "S1000 Internal Error : Unknown SQL Statement Type:",                                                                   //

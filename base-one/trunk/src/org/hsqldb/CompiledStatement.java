@@ -39,6 +39,8 @@ package org.hsqldb;
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
+
+// fredt@users 20040404 - patch 1.7.2 - fixed type resolution for parameters
 final class CompiledStatement {
 
     static final int UNKNOWN = 0;
@@ -276,7 +278,10 @@ final class CompiledStatement {
         this.checkColumns = checkColumns;
         this.select       = select;
 
-//        select.resolveAll();
+        // resolve any parameters in SELECT
+        resolveInsertParameterTypes();
+
+        // set select result metadata etc.
         select.prepareResult();
         setParameters(parameters);
 
@@ -294,6 +299,16 @@ final class CompiledStatement {
 
         this.select = select;
 
+        // resolve any parameters in SELECT as VARCHAR
+        for (int i = 0; i < select.iResultLen; i++) {
+            Expression colexpr = select.exprColumns[i];
+
+            if (colexpr.getDataType() == Types.NULL) {
+                colexpr.setDataType(Types.VARCHAR);
+            }
+        }
+
+        // set select result metadata etc.
         select.prepareResult();
         setParameters(parameters);
 
@@ -318,6 +333,22 @@ final class CompiledStatement {
         setParameters(parameters);
 
         type = CALL;
+    }
+
+    /**
+     * For parameters in INSERT_VALUES and INSERT_SELECT lists
+     */
+    private void resolveInsertParameterTypes() {
+
+        for (int i = 0; i < select.iResultLen; i++) {
+            Expression colexpr = select.exprColumns[i];
+
+            if (colexpr.getDataType() == Types.NULL) {
+                Column col = targetTable.getColumn(columnMap[i]);
+
+                colexpr.setDataType(col.getType());
+            }
+        }
     }
 
     private void setParameters(Expression[] parameters) {

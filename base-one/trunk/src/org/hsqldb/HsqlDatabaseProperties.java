@@ -246,6 +246,8 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
             return false;
         }
 
+        filterLoadedProperties();
+
         String version = getProperty("hsqldb.compatible_version");
 
         // do not open if the database belongs to a later (future) version
@@ -300,6 +302,24 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
                               new Object[] {
                 fileName, e
             });
+        }
+    }
+
+    void filterLoadedProperties() {
+
+        Enumeration en = stringProps.propertyNames();
+
+        while (en.hasMoreElements()) {
+            String key = (String) en.nextElement();
+            boolean accept = fullyProtectedProperties.contains(key)
+                             || setProtectedProperties.contains(key)
+                             || booleanProperties.contains(key)
+                             || integralProperties.contains(key)
+                             || stringProperties.contains(key);
+
+            if (!accept) {
+                stringProps.remove(key);
+            }
         }
     }
 
