@@ -32,7 +32,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.19 2004/05/14 23:20:00 unsaved Exp $
+# $Id: hsqldb,v 1.20 2004/05/14 23:21:38 unsaved Exp $
 
 # UNIX init script for HSQLDB.
 
@@ -85,6 +85,9 @@ INVOC_PATH=`dirname "$0"` || {
 
 SYNTAX_MSG="SYNTAX:  ${INVOC_PATH}hsqldb start|stop|restart|status"
 
+# Allow this much time for background su command to start up and echo pid.
+# (0 works for moderately fast servers).
+SU_ECHO_SECS=1
 # File used as semaphore.  If file is removed, a running pid checker
 # process will exit.
 PIDCHECKER_FLAGFILE=/tmp/pidchecker.run
@@ -308,6 +311,7 @@ running with pid $HSQLDB_PID."
                 exec $JAVA_HOME/bin/java -classpath "$HSQLDB_HOME/lib/hsqldb.jar"  org.hsqldb.$TARGET_CLASS
             ' >> "$LOGFILE" 2>&1 &
         fi
+        sleep $SU_ECHO_SECS  # Make sure bg commands have time to echo pid.
         AUTH_FILE_SWITCH=
         # N.b., there will be a problem if there are special characters or
         # spaces inside of $AUTH_FILE.
@@ -344,9 +348,11 @@ running with pid $HSQLDB_PID."
             "-Dsqltoolsprayer.monfile=$PIDFILE" \
             "-Dsqltoolsprayer.maxtime=${MAX_START_SECS}000" \
             org.hsqldb.util.SqlToolSprayer '' && {
+            rm -f "$PIDCHECKER_FLAGFILE"
             echo "org.hsqldb.$TARGET_CLASS started with pid `cat $PIDFILE`"
             exit 0
         }
+        rm -f "$PIDCHECKER_FLAGFILE"
         echo "Failed to start org.hsqldb.$TARGET_CLASS" 1>&2
         exit 1
     ;;
