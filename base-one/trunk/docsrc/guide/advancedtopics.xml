@@ -1,4 +1,4 @@
-<!-- $Id: advancedtopics.xml,v 1.7 2004/04/22 03:06:26 unsaved Exp $ -->
+<!-- $Id: advancedtopics.xml,v 1.8 2004/04/22 03:49:13 unsaved Exp $ -->
 
 <chapter id='advanced-chapter'>
     <title id='advanced-title'>Advanced Topics</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.7 $</edition>
-        <pubdate>$Date: 2004/04/22 03:06:26 $</pubdate>
+        <edition>$Revision: 1.8 $</edition>
+        <pubdate>$Date: 2004/04/22 03:49:13 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Advanced</keyword>
@@ -243,7 +243,7 @@
                     Example below:
                     </para>
                     <informalexample><programlisting>
-    jdbc:hsqldb:hsql://localhost/enrollments;get_column_name=false</programlisting>
+    jdbc:hsqldb:hsql://localhost/enrolments;get_column_name=false</programlisting>
                     </informalexample>
                     </entry>
                 </row>
