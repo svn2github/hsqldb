@@ -52,7 +52,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.62 2004/06/05 14:32:46 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.63 2004/06/05 15:50:27 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -88,7 +88,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.62 $
+ * @version $Revision: 1.63 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -109,8 +109,8 @@ public class SqlFile {
         "                                                                 ";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.62 $".substring("$Revision: ".length(),
-                "$Revision: 1.62 $".length() - 2);
+        revnum = "$Revision: 1.63 $".substring("$Revision: ".length(),
+                "$Revision: 1.63 $".length() - 2);
     }
     private static String BANNER =
         "SqlFile processor v. " + revnum + ".\n"
@@ -293,7 +293,7 @@ public class SqlFile {
                 curLinenum++;
                 if (inComment) {
                     postCommentIndex = inputLine.indexOf("*/", 2) + 2;
-                    if (postCommentIndex > 1) {
+                    if (postCommentIndex > -1) {
                         // I see no reason to leave comments in history.
                         inputLine = inputLine.substring(postCommentIndex);
                         // Empty the buffer.  The non-comment remainder of
