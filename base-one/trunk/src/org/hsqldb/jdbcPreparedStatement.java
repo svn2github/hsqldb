@@ -317,6 +317,7 @@ implements java.sql.PreparedStatement {
     public synchronized boolean execute() throws SQLException {
 
         checkClosed();
+        connection.clearWarningsNoCheck();
 
         resultIn = null;
 
@@ -356,6 +357,7 @@ implements java.sql.PreparedStatement {
     public synchronized ResultSet executeQuery() throws SQLException {
 
         checkClosed();
+        connection.clearWarningsNoCheck();
         checkIsRowCount(false);
 
         resultIn = null;
@@ -403,6 +405,7 @@ implements java.sql.PreparedStatement {
     public synchronized int executeUpdate() throws SQLException {
 
         checkClosed();
+        connection.clearWarningsNoCheck();
         checkIsRowCount(true);
 
         resultIn = null;
@@ -420,7 +423,7 @@ implements java.sql.PreparedStatement {
                                    resultIn.getSubString(),
                                    resultIn.getStatementID());
         } else if (resultIn.iMode != ResultConstants.UPDATECOUNT) {
-            String msg = "Expected but did not recieve a row count";
+            String msg = "Expected but did not recieve a row update count";
 
             throw jdbcDriver.sqlException(Trace.UNEXPECTED_EXCEPTION, msg);
         }
@@ -450,7 +453,7 @@ implements java.sql.PreparedStatement {
 
         checkSetParameterIndex(parameterIndex);
         checkClosed();
-        setParameter(parameterIndex, null, Types.NULL, false);
+        setParameter(parameterIndex, null, sqlType, false);
     }
 
     /**
@@ -660,9 +663,7 @@ implements java.sql.PreparedStatement {
 
         checkSetParameterIndex(parameterIndex);
         checkClosed();
-        setParameter(parameterIndex, ValuePool.getBigDecimal(x),
-                     Types.DECIMAL,    // NUMERIC?
-                     false);
+        setParameter(parameterIndex, x, Types.DECIMAL, true);
     }
 
     /**
@@ -693,8 +694,7 @@ implements java.sql.PreparedStatement {
 
         checkSetParameterIndex(parameterIndex);
         checkClosed();
-        setParameter(parameterIndex, ValuePool.getString(x),
-                     Types.LONGVARCHAR, false);
+        setParameter(parameterIndex, x, Types.LONGVARCHAR, true);
     }
 
     /**
@@ -749,7 +749,7 @@ implements java.sql.PreparedStatement {
 
         checkSetParameterIndex(parameterIndex);
         checkClosed();
-        setParameter(parameterIndex, x, Types.DATE, false);
+        setParameter(parameterIndex, x, Types.DATE, true);
     }
 
     /**
@@ -836,22 +836,23 @@ implements java.sql.PreparedStatement {
         checkSetParameterIndex(parameterIndex);
         checkClosed();
 
-        if (x == null) {
-            String msg = "input stream is null";
+        String s;
 
-            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+        if (x == null) {
+            s = "input stream is null";
+
+            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, s);
         }
 
+        s = null;    // else compiler complains
+
         try {
-            setParameter(parameterIndex, x == null ? null
-                                                   : ValuePool.getString(
-                                                   StringConverter
-                                                       .inputStreamToString(
-                                                           x)), Types
-                                                               .LONGVARCHAR, false);
+            s = StringConverter.inputStreamToString(x);
         } catch (IOException e) {
             throw jdbcDriver.sqlException(Trace.INVALID_CHARACTER_ENCODING);
         }
+
+        setParameter(parameterIndex, s, Types.LONGVARCHAR, true);
     }
 
     /**
@@ -900,32 +901,49 @@ implements java.sql.PreparedStatement {
             throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
         }
 
-        StringBuffer sb = new StringBuffer(length / 2);
+// NOTE:
+//        
+// No longer using StringBuffer, as chlen may end up exceeding
+// chread.  The new way ensures that the slack is taken up so
+// that no larger a character array than necessary is ever
+// made internal to the database.  On the down side, this requires
+// up to twice the intermediate memory, as chars is copied, whereas
+// the undocumented behavior of String is to share the array with
+// the StringBuffer from which it was created, until such time,
+// if any, that the StringBuffer is later modified.
+// CHECKME: 
+//
+// what about when length is odd?
+        int    chlen  = length / 2;
+        int    chread = 0;
+        char[] chars  = new char[chlen];
+        int    hi;
+        int    lo;
+        String s;
 
         try {
-            for (int i = 0; i < sb.length(); i++) {
-                int c = x.read();
+            for (; chread < chlen; chread++) {
+                hi = x.read();
 
-                if (c == -1) {
+                if (hi == -1) {
                     break;
                 }
 
-                int c1 = x.read();
+                lo = x.read();
 
-                if (c1 == -1) {
+                if (lo == -1) {
                     break;
                 }
 
-                int character = c << 8 | c1;
-
-                sb.append(character);
+                chars[chread] = (char) (hi << 8 | lo);
             }
         } catch (IOException e) {
             throw jdbcDriver.sqlException(Trace.TRANSFER_CORRUPTED);
         }
 
-        setParameter(parameterIndex, ValuePool.getString(sb.toString()),
-                     Types.LONGVARCHAR, false);
+        s = new String(chars, 0, chread);
+
+        setParameter(parameterIndex, s, Types.LONGVARCHAR, true);
     }
 
     /**
@@ -979,10 +997,10 @@ implements java.sql.PreparedStatement {
      * <hr>
      *
      * Starting with 1.7.2, a byte[] is read from the input stream and
-     * submitted directly to the engine in binary form, possibly after
-     * conversion to the type of the parameter . Also, unlike previous
+     * submitted directly to the engine in internal form, possibly after
+     * conversion to the type of the parameter. Also, unlike previous
      * releases, the stream is no longer closed when the read is
-     * finished, as this was incorrect. <p>
+     * finished, as this was incorrect behaviour. <p>
      *
      * </span>
      * @param parameterIndex the first parameter is 1, the second is 2, ...
@@ -1003,30 +1021,21 @@ implements java.sql.PreparedStatement {
         }
 
         byte b[] = new byte[length];
-        int  len;
+        int  bytesread;
 
         try {
-            len = x.read(b, 0, length);
-
-            // NO:
-            // Caller should be responsible for this.
-            // What if client wants to read other things from the stream
-            // later?
-            //x.close();
+            bytesread = x.read(b, 0, length);
         } catch (IOException e) {
             throw jdbcDriver.sqlException(Trace.INPUTSTREAM_ERROR,
                                           e.getMessage());
         }
 
-        // CHECKME:  What if fewer than length bytes are read?
-        //           shouldn't we trim b?  Or is it definite from the
-        //           spec that b must always be length long?
-        if (len < length) {
-            byte[] b2 = new byte[len];
+        if (bytesread < length) {
+            byte[] old = b;
 
-            System.arraycopy(b, 0, b2, 0, len);
+            b = new byte[bytesread];
 
-            b = b2;
+            System.arraycopy(old, 0, b, 0, bytesread);
         }
 
         setParameter(parameterIndex, new Binary(b), Types.LONGVARBINARY,
@@ -1174,38 +1183,7 @@ implements java.sql.PreparedStatement {
      */
     public void setObject(int parameterIndex, Object x,
                           int targetSqlType) throws SQLException {
-
         setObject(parameterIndex, x);
-
-// NO:  Redundant.  setParameter() now, if required, automatically,
-//      directly and locally converts x to an object whose class
-//      is that of the internal storage format of the SQL type of the
-//      parameter, or fails in the attempt, in which case this method will
-//      throw. Moreover, we do not yet support UDTs of any sort or handling
-//      of SQLData, so there's not much good in paying attention to the
-//      targetSqlType argument at this point; if it's different from the
-//      parameter SQL type, there's no use in doing an intermediate conversion,
-//      as setParameter() will still have to do another conversion.  And if it
-//      is the same as the parameter type, then the requested conversion is the
-//      same one that <i>may</i> be performed by setParameter(), so there is no
-//      point in doing it twice.
-//
-//        if (x == null) {
-//            setParameter(parameterIndex, null);
-//
-//            return;
-//        }
-//
-//// fredt@users 20020328 -  patch 482109 by fredt - OBJECT handling
-//        if (targetSqlType != Types.OTHER) {
-//            try {
-//                x = Column.convertObject(x, targetSqlType);
-//            } catch (HsqlException e) {
-//                jdbcDriver.throwError(e);
-//            }
-//        }
-//
-//        setObjectInType(parameterIndex, x, targetSqlType);
     }
 
     /**
@@ -1269,71 +1247,25 @@ implements java.sql.PreparedStatement {
     public void setObject(int parameterIndex, Object x) throws SQLException {
 
         /** @todo fredt - implement SQLData support */
-        boolean search;
-        int     type;
+        boolean searchPool;
+        int     inType;
 
         checkSetParameterIndex(parameterIndex);
         checkClosed();
 
-        if (x instanceof byte[]) {
-            x      = new Binary((byte[]) x);
-            search = false;
+        if (x == null) {
+            inType     = Types.NULL;
+            searchPool = false;
+        } else if (x instanceof byte[]) {
+            x          = new Binary((byte[]) x);
+            inType     = Types.LONGVARBINARY;
+            searchPool = false;
         } else {
-            search = true;
+            inType     = org.hsqldb.Types.getWidestTypeNrNoConvert(x);
+            searchPool = true;
         }
 
-        type = org.hsqldb.Types.getWidestTypeNrNoConvert(x);
-
-        setParameter(parameterIndex, x, type, false);
-
-// NO:  This is now redundant.  When required, setParameter() automatically
-//      converts x to an object whose class is that of the internal
-//      representation used for the SQL type of the paramter, or fails in
-//      the attempt.
-//      setObjectInType is now obsoleted as well, since setParameter()
-//      will, under the correct conditions, attempt to fish for an equivalent
-//      instance of the (maybe converted) parameter value object in the
-//      ValuePool. The "correct condition" is if the fromPool argument is false
-//      and the class/constraints (indicated SQL data type) of supplied object
-//      indicate that no conversion is required or if conversion is required,
-//      regarless of the value of fromPool.
-//        if (x == null) {
-//            setParameter(parameterIndex, null);
-//
-//            return;
-//        }
-//
-//        int type = Types.OTHER;
-//
-//        if (x instanceof String) {
-//            type = Types.VARCHAR;
-//        } else if (x instanceof BigDecimal) {
-//            type = Types.NUMERIC;
-//        } else if (x instanceof Integer) {
-//            type = Types.INTEGER;
-//        } else if (x instanceof Long) {
-//            type = Types.BIGINT;
-//        } else if (x instanceof Float) {
-//            type = Types.REAL;
-//        } else if (x instanceof Double) {
-//            type = Types.DOUBLE;
-//        } else if (x instanceof byte[]) {
-//            type = Types.BINARY;
-//        } else if (x instanceof java.sql.Date) {
-//            type = Types.DATE;
-//        } else if (x instanceof Time) {
-//            type = Types.TIME;
-//        } else if (x instanceof Timestamp) {
-//            type = Types.TIMESTAMP;
-//        } else if (x instanceof Boolean) {
-//            type = Types.BIT;
-//        } else if (x instanceof Byte) {
-//            type = Types.TINYINT;
-//        } else if (x instanceof Short) {
-//            type = Types.SMALLINT;
-//        }
-//
-//        setObjectInType(parameterIndex, x, type);
+        setParameter(parameterIndex, x, inType, searchPool);
     }
 
     //--------------------------JDBC 2.0-----------------------------
@@ -1425,23 +1357,21 @@ implements java.sql.PreparedStatement {
         }
 
         char[] buffer = new char[length];
-        int    len;
-        String s;
+        int    chread;
 
         try {
-            len = reader.read(buffer);
+            chread = reader.read(buffer);
 
-            if (len == -1) {
-                throw new IOException();
+            if (chread == -1) {
+                throw new IOException("End of stream with no data read");
             }
         } catch (IOException e) {
             throw jdbcDriver.sqlException(Trace.TRANSFER_CORRUPTED,
                                           e.toString());
         }
 
-        s = ValuePool.getString(new String(buffer, 0, len));
-
-        setParameter(parameterIndex, s, Types.LONGVARCHAR, false);
+        setParameter(parameterIndex, new String(buffer, 0, chread),
+                     Types.LONGVARCHAR, true);
     }
 
     /**
@@ -1458,10 +1388,10 @@ implements java.sql.PreparedStatement {
      *
      * Starting with HSQLDB 1.7.2, this feature is supported, but
      * if and only if the product is built and run under a
-     * JDBC 3 capable JVM. Lack of support for JDBC 1/2 builds is due
+     * JDBC 3 capable JVM. Lack of support for JDBC 1 & 2 builds is due
      * to lack of support for SQLData coupled with the fact that
-     * Ref.getObject() is JDBC 3 only.  In 1.7.2, under JDBC 3,
-     * setRef(i,x) is roughly equivalent (null handling not shown) to:
+     * Ref.getObject() is JDBC 3 only. In 1.7.2, under JDBC 3,
+     * setRef(i, x) is roughly equivalent (null handling not shown) to:
      *
      * <pre>
      * setObject(i, x.getObject());
@@ -1486,9 +1416,25 @@ implements java.sql.PreparedStatement {
 //        to do any better than this.
 //#ifdef JDBC3
 /*
-        Object o = x == null ? null : x.getObject();
-        int type = org.hsqldb.Types.getWidestTypeNrNoConvert(o);
-        setParameter(i, o, type, true);
+        Object  o;
+        int     inType;
+        boolean searchPool;
+
+        o = (x == null) ? null : x.getObject();
+
+        if (o == null) {
+            inType     = Types.NULL;
+            searchPool = false;
+        } else if (o instanceof byte[]) {
+            o          = new Binary((byte[]) o);
+            inType     = Types.LONGVARBINARY;
+            searchPool = false;
+        } else {
+            inType     = org.hsqldb.Types.getWidestTypeNrNoConvert(o);
+            searchPool = true;
+        }
+
+        setParameter(i, o, inType, searchPool);
 */
 
 //#else
@@ -1511,8 +1457,8 @@ implements java.sql.PreparedStatement {
      * Up to and including HSQLDB 1.7.1, this feature is not supported. <p>
      *
      * Starting with 1.7.2, setBlob is supported for Blob objects of length
-     * less than or equal to Integer.MAX_VALUE.  In 1.7.2, setBlob(i,x) is roughly
-     * equivalent  (null and length handling not shown) to:
+     * less than or equal to Integer.MAX_VALUE.  In 1.7.2, setBlob(i,x) is
+     * roughly equivalent (null and length handling not shown) to:
      *
      * <pre>
      * setBinaryStream(i, x.getBinaryStream(), (int) x.length());
@@ -1534,7 +1480,9 @@ implements java.sql.PreparedStatement {
         checkClosed();
 
         if (x == null) {
-            setParameter(i, null, Types.NULL, false);
+            setParameter(i, null, Types.LONGVARBINARY, false);
+
+            return;
         }
 
         long   length;
@@ -1543,30 +1491,27 @@ implements java.sql.PreparedStatement {
         length = x.length();
 
         if (length > Integer.MAX_VALUE) {
-            msg = "Maximum Blob input stream length exceeded: " + length;
+            msg = "Maximum Blob input octet length exceeded: " + length;
 
             throw jdbcDriver.sqlException(Trace.INPUTSTREAM_ERROR, msg);
         }
 
-        byte b[] = new byte[(int) length];
-        int  len;
+        int  len = (int) length;
+        byte b[] = new byte[len];
 
         try {
-            len = x.getBinaryStream().read(b, 0, (int) length);
+            len = x.getBinaryStream().read(b, 0, len);
         } catch (IOException e) {
             throw jdbcDriver.sqlException(Trace.INPUTSTREAM_ERROR,
                                           e.getMessage());
         }
 
-        // CHECKME:  What if fewer than length bytes are read?
-        //           shouldn't  we trim b?  Or is it definite from the
-        //           spec that b must always be length long?
         if (len < length) {
-            byte[] b2 = new byte[len];
+            byte[] old = b;
 
-            System.arraycopy(b, 0, b2, 0, len);
+            b = new byte[len];
 
-            b = b2;
+            System.arraycopy(old, 0, b, 0, len);
         }
 
         setParameter(i, new Binary(b), Types.LONGVARBINARY, false);
@@ -1586,12 +1531,13 @@ implements java.sql.PreparedStatement {
      * Up to and including HSQLDB 1.7.1, this feature was not supported. <p>
      *
      * Starting with 1.7.2, setClob is supported for Clob objects of length
-     * less than or equal to Integer.MAX_VALUE.  In 1.7.2, setClob(i,x) is rougly
-     * equivalent (null and length handling not shown) to: <p>
+     * less than or equal to Integer.MAX_VALUE.  In 1.7.2, setClob(i,x) is
+     * rougly equivalent (null and length handling not shown) to: <p>
      *
      * <pre>
      * setCharacterStream(i, x.getCharacterStream(), (int) x.length());
      * </pre>
+     *
      * </span>
      * <!-- end release-specific documentation -->
      * @param i the first parameter is 1, the second is 2, ...
@@ -1609,36 +1555,37 @@ implements java.sql.PreparedStatement {
 
         if (x == null) {
             setParameter(i, null, Types.LONGVARCHAR, true);
+
+            return;
         }
 
-        long   len;
+        long   length;
         String msg;
 
-        len = x.length();
+        length = x.length();
 
-        if (len > Integer.MAX_VALUE) {
-            msg = "Maximum Clob input stream length exceeded: " + len;
+        if (length > Integer.MAX_VALUE) {
+            msg = "Maximum Clob input character length exceeded: " + length;
 
             throw jdbcDriver.sqlException(Trace.INPUTSTREAM_ERROR, msg);
         }
 
-        char[] buffer = new char[(int) len];
-        String s;
+        char[] buffer = new char[(int) length];
+        int    chread;
 
         try {
-            len = x.getCharacterStream().read(buffer);
+            chread = x.getCharacterStream().read(buffer);
 
-            if (len == -1) {
-                throw new IOException();
+            if (chread == -1) {
+                throw new IOException("End of stream with no data read");
             }
         } catch (IOException e) {
             throw jdbcDriver.sqlException(Trace.TRANSFER_CORRUPTED,
                                           e.toString());
         }
 
-        s = ValuePool.getString(new String(buffer, 0, (int) len));
-
-        setParameter(i, s, Types.LONGVARCHAR, false);
+        setParameter(i, new String(buffer, 0, chread), Types.LONGVARCHAR,
+                     true);
     }
 
     /**
@@ -1674,26 +1621,29 @@ implements java.sql.PreparedStatement {
 
 // boucherb@users 20030801 - method implemented
         Object o;
-        int    type;
+        int    inType;
 
         checkSetParameterIndex(i);
         checkClosed();
 
-        o = x == null ? null
-                      : x.getArray();
+        o = (x == null) ? null
+                        : x.getArray();
 
-        if (o instanceof byte[]) {
-            o    = new Binary((byte[]) o);
-            type = Types.LONGVARBINARY;
+        if (o == null) {
+            inType = Types.NULL;
+        } else if (o instanceof byte[]) {
+            o      = new Binary((byte[]) o);
+            inType = Types.LONGVARBINARY;
         } else {
-            type = Types.OTHER;
+
+            // This will work in general if the base component type of the
+            // array is primitive or Serializable and the type of the parameter
+            // is OTHER.  Otherwise, Column.convertObject(o, type) will almost
+            // certainly fail.           
+            inType = Types.OTHER;
         }
 
-        // This will work in general if the component type of the array is
-        // serializable and the type of the parameter is OTHER
-        // Otherwise, Column.convertObject(o, type) will almost certainly
-        // fail.
-        setParameter(i, o, type, false);
+        setParameter(i, o, inType, false);
     }
 
     /**
@@ -1786,16 +1736,28 @@ implements java.sql.PreparedStatement {
         checkSetParameterIndex(parameterIndex);
         checkClosed();
 
-        try {
-            setParameter(parameterIndex, x == null ? null
-                                                   : HsqlDateTime
-                                                   .getDateString(
-                                                       x, cal), Types
-                                                           .LONGVARCHAR, true);
-        } catch (Exception e) {
-            throw jdbcDriver.sqlException(Trace.INVALID_ESCAPE,
-                                          e.getMessage());
+// CHECKME:  What happens if the client specifies a null Calendar object?
+//           If this happens, do we properly use the default
+//           timezone, which is that of the virtual machine running the
+//           application?
+//        
+//        if (cal == null) {
+//            cal = ??? java.util.Calendar.getInstance();
+//        }
+        String s;
+
+        if (x == null) {
+            s = null;
+        } else {
+            try {
+                s = HsqlDateTime.getDateString(x, cal);
+            } catch (Exception e) {
+                throw jdbcDriver.sqlException(Trace.INVALID_ESCAPE,
+                                              e.getMessage());
+            }
         }
+
+        setParameter(parameterIndex, s, Types.LONGVARCHAR, true);
     }
 
     /**
@@ -1833,16 +1795,28 @@ implements java.sql.PreparedStatement {
         checkSetParameterIndex(parameterIndex);
         checkClosed();
 
-        try {
-            setParameter(parameterIndex, x == null ? null
-                                                   : HsqlDateTime
-                                                   .getTimeString(
-                                                       x, cal), Types
-                                                           .LONGVARCHAR, true);
-        } catch (Exception e) {
-            throw jdbcDriver.sqlException(Trace.INVALID_ESCAPE,
-                                          e.getMessage());
+// CHECKME:  What happens if the client specifies a null Calendar object?
+//           If this happens, do we properly use the default
+//           timezone, which is that of the virtual machine running the
+//           application?
+//        
+//        if (cal == null) {
+//            cal = ??? java.util.Calendar.getInstance();
+//        }
+        String s;
+
+        if (x == null) {
+            s = null;
+        } else {
+            try {
+                s = HsqlDateTime.getTimeString(x, cal);
+            } catch (Exception e) {
+                throw jdbcDriver.sqlException(Trace.INVALID_ESCAPE,
+                                              e.getMessage());
+            }
         }
+
+        setParameter(parameterIndex, s, Types.LONGVARCHAR, true);
     }
 
     /**
@@ -1878,16 +1852,28 @@ implements java.sql.PreparedStatement {
         checkSetParameterIndex(parameterIndex);
         checkClosed();
 
-        try {
-            setParameter(parameterIndex, x == null ? null
-                                                   : HsqlDateTime
-                                                   .getTimestampString(
-                                                       x, cal), Types
-                                                           .LONGVARCHAR, true);
-        } catch (Exception e) {
-            throw jdbcDriver.sqlException(Trace.INVALID_ESCAPE,
-                                          e.getMessage());
+// CHECKME:  What happens if the client specifies a null Calendar object?
+//           If this happens, do we properly use the default
+//           timezone, which is that of the virtual machine running the
+//           application?
+//        
+//        if (cal == null) {
+//            cal = ??? java.util.Calendar.getInstance();
+//        }        
+        String s;
+
+        if (x == null) {
+            s = null;
+        } else {
+            try {
+                s = HsqlDateTime.getTimestampString(x, cal);
+            } catch (Exception e) {
+                throw jdbcDriver.sqlException(Trace.INVALID_ESCAPE,
+                                              e.getMessage());
+            }
         }
+
+        setParameter(parameterIndex, s, Types.LONGVARCHAR, true);
     }
 
     /**
@@ -1933,7 +1919,8 @@ implements java.sql.PreparedStatement {
     public void setNull(int paramIndex, int sqlType,
                         String typeName) throws SQLException {
 
-        //setNull(paramIndex, sqlType);
+        checkSetParameterIndex(paramIndex);
+        checkClosed();
         setParameter(paramIndex, null, sqlType, false);
     }
 
@@ -2061,7 +2048,7 @@ implements java.sql.PreparedStatement {
 //
 //        What does "cannot" mean in this context?
     jdbcPreparedStatement(jdbcConnection c, String sql,
-                          int type) throws HsqlException {
+                          int type) throws HsqlException, SQLException {
 
         super(c, type);
 
@@ -2069,6 +2056,8 @@ implements java.sql.PreparedStatement {
         Result   in;
         Result   modesResult;
         Object[] row;
+
+        sql = c.nativeSQL(sql);
 
         resultOut.setResultType(ResultConstants.SQLPREPARE);
         resultOut.setMainString(sql);
@@ -2085,7 +2074,7 @@ implements java.sql.PreparedStatement {
             throw new HsqlException(in);
         }
 
-        // else its a MULTI result encapsulating three sub results:
+        // else it's a MULTI result encapsulating three sub results:
         // 1.) a PREPARE_ACK
         //
         //     Indicates the statement id to be communicated in SQLEXECUTE
@@ -2144,98 +2133,23 @@ implements java.sql.PreparedStatement {
             throw Trace.error(Trace.GENERAL_ERROR, e.toString());
         }
 
-        resultOut = new Result(ResultConstants.SQLEXECUTE,
-                               pmdDescriptor.metaData.colType, statementID);
+        resultOut = new Result(ResultConstants.SQLEXECUTE, parameterTypes,
+                               statementID);
 
         // for toString()
         this.sql = sql;
     }
 
-// boucherb@users - 20030805 - 1.7.2
-// NOTE: Obsoleted by changes to setParameter
-//    /**
-//     * Internal setObject implementation. <p>
-//     *
-//     * @param parameterIndex the first parameter is 1, the second is 2, ...
-//     * @param x the object containing the input parameter value
-//     * @param type the SQL type (as defined in java.sql.Types) to be
-//     *                sent to the database
-//     * @throws SQLException if a database access error occurs
-//     */
-//    private void setObjectInType(int parameterIndex, Object x,
-//                                 int type) throws SQLException {
-//        if (x == null) {
-//            setParameter(parameterIndex, null);
-//
-//            return;
-//        }
-//
-//        switch (type) {
-//
-//            case Types.BIT :
-//                setParameter(parameterIndex, x);
-//                break;
-//
-//            case Types.TINYINT :
-//                setByte(parameterIndex, ((Number) x).byteValue());
-//                break;
-//
-//            case Types.SMALLINT :
-//                setShort(parameterIndex, ((Number) x).shortValue());
-//                break;
-//
-//            case Types.INTEGER :
-//                setInt(parameterIndex, ((Number) x).intValue());
-//                break;
-//
-//            case Types.BIGINT :
-//                setLong(parameterIndex, ((Number) x).longValue());
-//                break;
-//
-//            case Types.REAL :
-//            case Types.FLOAT :
-//            case Types.DOUBLE :
-//                setDouble(parameterIndex, ((Number) x).doubleValue());
-//                break;
-//
-//            case Types.NUMERIC :
-//                setBigDecimal(parameterIndex, (BigDecimal) x);
-//                break;
-//
-//            case Types.CHAR :
-//            case Types.VARCHAR :
-//            case Types.LONGVARCHAR :
-//                setString(parameterIndex, (String) x);
-//                break;
-//
-//            case Types.DATE :
-//                setDate(parameterIndex, (java.sql.Date) x);
-//                break;
-//
-//            case Types.TIME :
-//                setTime(parameterIndex, (Time) x);
-//                break;
-//
-//            case Types.TIMESTAMP :
-//                setTimestamp(parameterIndex, (Timestamp) x);
-//                break;
-//
-//            case Types.BINARY :
-//            case Types.VARBINARY :
-//            case Types.LONGVARBINARY :
-//                setBytes(parameterIndex, (byte[]) x);
-//                break;
-//
-//            case Types.OTHER :
-//                setParameter(parameterIndex, x);
-//                break;
-//
-//            default :
-//                setParameter(parameterIndex, x.toString());
-//                break;
-//        }
-//    }
-    private void checkIsRowCount(boolean yes) throws SQLException {
+    /**
+     * Checks if execution does or does not generate a single row
+     * update count, throwing if the argument, yes, does not match. <p>
+     *
+     * @param yes if true, check that execution generates a single
+     *      row update count, else check that execution generates
+     *      something other than a single row update count.
+     * @throws SQLException if the argument, yes, does not match
+     */
+    protected void checkIsRowCount(boolean yes) throws SQLException {
 
         if (yes != isRowCount) {
             String msg = "Statement does not generate a " + (yes ? "row count"
@@ -2246,7 +2160,9 @@ implements java.sql.PreparedStatement {
     }
 
     /**
-     * Checks if the specified parameter index value is valid
+     * Checks if the specified parameter index value is valid in terms of
+     * setting an IN or IN OUT parameter value. <p>
+     *
      * @param i The parameter index to check
      * @throws SQLException if the specified parameter index is invalid
      */
@@ -2278,30 +2194,45 @@ implements java.sql.PreparedStatement {
     }
 
     /**
+     * Specialization of org.hsqldb.Types.promotesWithoutConversion. <p>
+     *
+     * Excludes the case where t1 or t2 or both are OTHER. <p>
+     *
+     * @param the "from" type
+     * @param the "to" type
+     * @return true iff setParameter can safely assign the value of its
+     *      argument, o, without an intermediate conversion
+     */
+    private static boolean promotesWithoutConversion(int t1, int t2) {
+
+        return (t1 == Types.OTHER || t2 == Types.OTHER) ? false
+                                                        : org.hsqldb.Types
+                                                        .promotesWithoutConversion(
+                                                            t2, t2);
+    }
+
+    /**
      * The internal parameter value setter. <p>
      *
      * @param i the first parameter is 1, the second is 2, ...
      * @param o the parameter value
-     * @param inType The SQL type of the argument, o.  It is always safe to
-     *    supply a value of OTHER here, as this will cause the driver to
-     *    unconditionaly attempt to perform the appropriate conversion
-     *    to the SQL type of the parameter, throwing if the conversion
-     *    is not possible.  When passing any other value, inType *MUST
-     *    properly indicate at least the widest SQL type to which the
-     *    standard mappng of the class of the argument, o, promotes
-     *    without conversion.
+     * @param inType The SQL type of the argument, o. <p>
      *
-     * @param searchPool Whether to search the ValuePool for an equivalent.
+     *    It is always safe to supply a value of OTHER here, as this will
+     *    cause the driver to unconditionaly attempt to perform the
+     *    appropriate conversion to the SQL type of the parameter, throwing
+     *    if the conversion is not possible.  When passing any other value for
+     *    inType, it *MUST* properly indicate a SQL type to which the
+     *    standard type mapping of the class of the argument, o, promotes
+     *    without conversion.  In the case of Integer, however, it is safe
+     *    to pass SMALLINT or TINYINT if it is absolutely known that the
+     *    primitive value of the object fits in the target range.
+     *
+     * @param searchPool Whether to search the ValuePool for an equivalent. <p>
      *
      *    If true and the parent connection is to an in-process database,
      *    then an attempt is made to substitute the argument, o, with an
-     *    equivalent object from the pool.  However, this occurs if and only
-     *    if it is determined that the inType promotes without conversion to
-     *    the SQL type of the parameter.  Otherwise, o is converted to the
-     *    SQL type of the parameter.  Once again, if the parent connection is
-     *    to an in-process database, then an attempt is made to substitute
-     *    the object resulting from the conversion with and equivalent object
-     *    from the pool. <p>
+     *    equivalent object from the pool. <p>
      *
      *    In general, this value is set false only from the interface
      *    implementation methods where it makes sense to pre-fetch from the
@@ -2316,8 +2247,8 @@ implements java.sql.PreparedStatement {
 
         // synchronized, as we would not want the effect of setting
         // a parameter in one thread during an executeXXX call in
-        // another to be visible to the execute call.
-        // Already passed parameter index precheck
+        // another to be visible to the execute call.                                                             
+        // PRE: Already passed checkSetParameterIndex(i)
         i--;
 
         if (o == null) {
@@ -2326,34 +2257,26 @@ implements java.sql.PreparedStatement {
             return;
         }
 
-        int outType = parameterTypes[i];
+        int     outType = parameterTypes[i];
+        boolean convert = !promotesWithoutConversion(inType, outType);
 
-        if (outType == Types.OTHER) {
-            parameterValues[i] = (o instanceof JavaObject) ? o
-                                                           : new JavaObject(
-                                                           o);
-        } else if (org.hsqldb.Types.promotesWithoutConversion(inType,
-                outType)) {
-
-            // PRE:
-            // Safe, since  setArray, setBytes, setBlob, setBinaryStream
-            // and setObject all preconvert to Binary if required.
-            parameterValues[i] = (!searchPool || isNetConn) ? o
-                                                            : ValuePool
-                                                            .getObject(o);
-        } else {
+        // PRE:
+        // Safe, since  setArray, setBytes, setBlob, setBinaryStream
+        // setObject and setRef all preconvert to Binary if required,
+        // and the local specification of promotesWithoutConversion(t1,t2)
+        // excludes the case where either t1 or t2 is OTHER
+        if (convert) {
             try {
                 o = Column.convertObject(o, outType);
             } catch (HsqlException e) {
                 jdbcDriver.throwError(e);
             }
-
-            // No point in getting from pool if net connection, since value
-            // will be written out to socket, never directly end up referenced
-            // as a field or expression value at the engine.
-            parameterValues[i] = (isNetConn) ? o
-                                             : ValuePool.getObject(o);
         }
+
+        parameterValues[i] = (isNetConn ||!(convert || searchPool)) ? o
+                                                                    : ValuePool
+                                                                    .getObject(
+                                                                        o);
     }
 
     /**
@@ -2437,7 +2360,7 @@ implements java.sql.PreparedStatement {
         if (!isDisconnect) {
             try {
                 connection.sessionProxy.execute(
-                    Result.newFreeStmtResult(statementID));
+                    Result.newFreeStmtRequest(statementID));
             } catch (HsqlException e) {
                 he = e;
             }
@@ -2445,6 +2368,7 @@ implements java.sql.PreparedStatement {
 
         parameterValues = null;
         parameterTypes  = null;
+        parameterModes  = null;
         rsmdDescriptor  = null;
         pmdDescriptor   = null;
         rsmd            = null;
@@ -2470,36 +2394,39 @@ implements java.sql.PreparedStatement {
      *
      * @return a String representation of this object
      */
-    public String toString() {
+    public synchronized String toString() {
 
+        // synchronized, since otherwise we could get NPE's
+        // if another thread closes this statement while the
+        // current thread is executing this method.
         StringBuffer sb;
 
         sb = new StringBuffer();
 
         sb.append(super.toString());
 
-        try {
-            if (!isClosed()) {
-                sb.append("[sql=[").append(sql).append("]");
+        if (isClosed()) {
+            sb.append("[closed]");
 
-// Represent batch parameter values?
-// No:  That could be a huge string.
-                if (parameterValues.length > 0) {
-                    sb.append(", parameters=[");
+            return sb.toString();
+        }
 
-                    for (int i = 0; i < parameterValues.length; i++) {
-                        sb.append('[');
-                        sb.append(parameterValues[i]);
-                        sb.append("], ");
-                    }
+        sb.append("[sql=[").append(sql).append("]");
 
-                    sb.setLength(sb.length() - 2);
-                    sb.append(']');
-                }
+        if (parameterValues.length > 0) {
+            sb.append(", parameters=[");
 
-                sb.append(']');
+            for (int i = 0; i < parameterValues.length; i++) {
+                sb.append('[');
+                sb.append(parameterValues[i]);
+                sb.append("], ");
             }
-        } catch (Exception e) {}
+
+            sb.setLength(sb.length() - 2);
+            sb.append(']');
+        }
+
+        sb.append(']');
 
         return sb.toString();
     }

@@ -233,8 +233,9 @@ class Select {
             }
         }
 
-        int    len = eColumn.length;
-        Result r   = new Result(ResultConstants.DATA, len);
+        int                   len = eColumn.length;
+        Result                r   = new Result(ResultConstants.DATA, len);
+        Result.ResultMetaData rmd = r.metaData;
 
         // tony_lai@users having
         int groupByStart = iResultLen;
@@ -246,9 +247,9 @@ class Select {
         for (int i = 0; i < len; i++) {
             Expression e = eColumn[i];
 
-            r.metaData.colType[i]  = e.getDataType();
-            r.metaData.colSize[i]  = e.getColumnSize();
-            r.metaData.colScale[i] = e.getColumnScale();
+            rmd.colType[i]  = e.getDataType();
+            rmd.colSize[i]  = e.getColumnSize();
+            rmd.colScale[i] = e.getColumnScale();
 
             if (e.isAggregate()) {
                 isAggregated = true;
@@ -266,18 +267,18 @@ class Select {
                                                 eColumn[i]);
 
             if (i < iResultLen) {
-                r.metaData.sLabel[i]        = e.getAlias();
-                r.metaData.isLabelQuoted[i] = e.isAliasQuoted();
-                r.metaData.sTable[i]        = e.getTableName();
-                r.metaData.sName[i]         = e.getColumnName();
+                rmd.sLabel[i]        = e.getAlias();
+                rmd.isLabelQuoted[i] = e.isAliasQuoted();
+                rmd.sTable[i]        = e.getTableName();
+                rmd.sName[i]         = e.getColumnName();
 
-                if (r.metaData.isTableColumn(i)) {
-                    r.metaData.nullability[i] = e.nullability;
-                    r.metaData.isIdentity[i]  = e.isIdentity;
-                    r.metaData.isWritable[i]  = e.isWritable;
+                if (rmd.isTableColumn(i)) {
+                    rmd.nullability[i] = e.nullability;
+                    rmd.isIdentity[i]  = e.isIdentity;
+                    rmd.isWritable[i]  = e.isWritable;
                 }
 
-                r.metaData.sClassName[i] = e.getValueClassName();
+                rmd.sClassName[i] = e.getValueClassName();
             }
         }
 
@@ -348,10 +349,13 @@ class Select {
 
         Result r;
 
-        prepareResult();
-        buildResult(getLimitCount(maxrows));
+        if (rResult == null) {
+            prepareResult();
+        }
 
-        r = rResult;
+        r = Result.newSelectResult(rResult);
+
+        buildResult(r, getLimitCount(maxrows));
 
         // the result is perhaps wider (due to group and order by)
         // so use the visible columns to remove duplicates
@@ -502,9 +506,9 @@ class Select {
     }
 
 // fredt@users 20030810 - patch 1.7.2 - OUTER JOIN rewrite
-    private void buildResult(int limitcount) throws HsqlException {
+    private void buildResult(Result r, int limitcount) throws HsqlException {
 
-        GroupedResult gResult     = new GroupedResult(this, rResult);
+        GroupedResult gResult     = new GroupedResult(this, r);
         final int     len         = eColumn.length;
         final int     filter      = tFilter.length;
         boolean       first[]     = new boolean[filter];
@@ -744,35 +748,30 @@ class Select {
 
     Result describeResult() {
 
-        Result     r;
-        Expression e;
+        Result                r;
+        Result.ResultMetaData rmd;
+        Expression            e;
 
-        r = new Result(ResultConstants.DATA, iResultLen);
+        r   = new Result(ResultConstants.DATA, iResultLen);
+        rmd = r.metaData;
 
         for (int i = 0; i < iResultLen; i++) {
-            e                           = eColumn[i];
-            r.metaData.colType[i]       = e.getDataType();
-            r.metaData.colSize[i]       = e.getColumnSize();
-            r.metaData.colScale[i]      = e.getColumnScale();
-            r.metaData.sLabel[i]        = e.getAlias();
-            r.metaData.isLabelQuoted[i] = e.isAliasQuoted();
-            r.metaData.sTable[i]        = e.getTableName();
-            r.metaData.sName[i]         = e.getColumnName();
+            e                    = eColumn[i];
+            rmd.colType[i]       = e.getDataType();
+            rmd.colSize[i]       = e.getColumnSize();
+            rmd.colScale[i]      = e.getColumnScale();
+            rmd.sLabel[i]        = e.getAlias();
+            rmd.isLabelQuoted[i] = e.isAliasQuoted();
+            rmd.sTable[i]        = e.getTableName();
+            rmd.sName[i]         = e.getColumnName();
 
-            if (r.metaData.isTableColumn(i)) {
-                r.metaData.nullability[i] = e.nullability;
-                r.metaData.isIdentity[i]  = e.isIdentity;
-                r.metaData.isWritable[i]  = e.isWritable;
+            if (rmd.isTableColumn(i)) {
+                rmd.nullability[i] = e.nullability;
+                rmd.isIdentity[i]  = e.isIdentity;
+                rmd.isWritable[i]  = e.isWritable;
             }
         }
 
         return r;
-    }
-
-    void resetResult() {
-
-        if (rResult != null) {
-            rResult.trimResult(0, 0);
-        }
     }
 }

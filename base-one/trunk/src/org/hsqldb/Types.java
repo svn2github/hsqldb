@@ -868,6 +868,12 @@ class Types {
     static boolean promotesWithoutConversion(int t1, int t2) {
 
         if (t1 == t2) {
+
+            // Probably should be: return t1 != OTHER,
+            // but internally t1 == t2 is ok, so the
+            // JDBC PreparedStatement implementation
+            // extends the test to cover things from
+            // the external viewpoint
             return true;
         }
 

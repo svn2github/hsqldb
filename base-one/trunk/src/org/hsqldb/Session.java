@@ -939,7 +939,7 @@ class Session implements SessionInterface {
             rsmd = cs.describeResultSet();
             pmd  = cs.describeParameters();
 
-            return Result.newPrepareResult(csid, rsmd, pmd);
+            return Result.newPrepareResponse(csid, rsmd, pmd);
         }
 
         // ...compile or (re)validate
@@ -984,7 +984,7 @@ class Session implements SessionInterface {
         rsmd = cs.describeResultSet();
         pmd  = cs.describeParameters();
 
-        return Result.newPrepareResult(csid, rsmd, pmd);
+        return Result.newPrepareResponse(csid, rsmd, pmd);
     }
 
     private Result sqlExecuteBatch(Result cmd) {

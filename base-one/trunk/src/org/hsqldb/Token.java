@@ -34,8 +34,8 @@ package org.hsqldb;
 import org.hsqldb.lib.IntValueHashMap;
 
 /**
- * Provides an enumeration of the token types commonly encountered
- * while processing database commands.<p>
+ * Provides declaratin and enumeration of reserved and non-reserved SQL
+ * keywords.<p>
  *
  * @author  Nitin Chauhan
  * @since HSQLDB 1.7.2
@@ -64,6 +64,7 @@ class Token {
     static final String T_AUTOCOMMIT            = "AUTOCOMMIT";
     static final String T_BEFORE                = "BEFORE";
     static final String T_BINARY                = "BINARY";
+    static final String T_BOTH                  = "BOTH";
     static final String T_BY                    = "BY";
     static final String T_CACHED                = "CACHED";
     static final String T_CALL                  = "CALL";
@@ -77,6 +78,7 @@ class Token {
     static final String T_CONNECT               = "CONNECT";
     static final String T_CONSTRAINT            = "CONSTRAINT";
     static final String T_CREATE                = "CREATE";
+    static final String T_DAY                   = "DAY";
     static final String T_DEFAULT               = "DEFAULT";
     static final String T_DEFRAG                = "DEFRAG";
     static final String T_DELETE                = "DELETE";
@@ -89,6 +91,7 @@ class Token {
     static final String T_EXCEPT                = "EXCEPT";
     static final String T_EXISTS                = "EXISTS";
     static final String T_EXPLAIN               = "EXPLAIN";
+    static final String T_EXTRACT               = "EXTRACT";
     static final String T_FALSE                 = "FALSE";
     static final String T_FOR                   = "FOR";
     static final String T_FOREIGN               = "FOREIGN";
@@ -96,10 +99,12 @@ class Token {
     static final String T_GRANT                 = "GRANT";
     static final String T_GROUP                 = "GROUP";
     static final String T_HAVING                = "HAVING";
+    static final String T_HOUR                  = "HOUR";
     static final String T_IDENTITY              = "IDENTITY";
     static final String T_IF                    = "IF";
     static final String T_IGNORECASE            = "IGNORECASE";
     static final String T_IMMEDIATELY           = "IMMEDIATELY";
+    static final String T_IN                    = "IN";
     static final String T_INDEX                 = "INDEX";
     static final String T_INNER                 = "INNER";
     static final String T_INSERT                = "INSERT";
@@ -107,12 +112,15 @@ class Token {
     static final String T_INTO                  = "INTO";
     static final String T_JOIN                  = "JOIN";
     static final String T_KEY                   = "KEY";
+    static final String T_LEADING               = "LEADING";
     static final String T_LEFT                  = "LEFT";
     static final String T_LIMIT                 = "LIMIT";
     static final String T_LOGSIZE               = "LOGSIZE";
     static final String T_MAXROWS               = "MAXROWS";
     static final String T_MEMORY                = "MEMORY";
     static final String T_MINUS                 = "MINUS";
+    static final String T_MINUTE                = "MINUTE";
+    static final String T_MONTH                 = "MONTH";
     static final String T_NOT                   = "NOT";
     static final String T_NOWAIT                = "NOWAIT";
     static final String T_NULL                  = "NULL";
@@ -121,6 +129,7 @@ class Token {
     static final String T_OUTER                 = "OUTER";
     static final String T_PASSWORD              = "PASSWORD";
     static final String T_PLAN                  = "PLAN";
+    static final String T_POSITION              = "POSITION";
     static final String T_PRECISION             = "PRECISION";
     static final String T_PRIMARY               = "PRIMARY";
     static final String T_PROPERTY              = "PROPERTY";
@@ -135,6 +144,7 @@ class Token {
     static final String T_SAVEPOINT             = "SAVEPOINT";
     static final String T_SCRIPT                = "SCRIPT";
     static final String T_SCRIPTFORMAT          = "SCRIPTFORMAT";
+    static final String T_SECOND                = "SECOND";
     static final String T_SELECT                = "SELECT";
     static final String T_SET                   = "SET";
     static final String T_SHUTDOWN              = "SHUTDOWN";
@@ -142,9 +152,13 @@ class Token {
     static final String T_TABLE                 = "TABLE";
     static final String T_TEMP                  = "TEMP";
     static final String T_TEXT                  = "TEXT";
+    static final String T_TIMEZONE_HOUR         = "TIMEZONE_HOUR";
+    static final String T_TIMEZONE_MINUTE       = "TIMEZONE_MINUTE";
     static final String T_TO                    = "TO";
     static final String T_TOP                   = "TOP";
+    static final String T_TRAILING              = "TRAILING";
     static final String T_TRIGGER               = "TRIGGER";
+    static final String T_TRIM                  = "TRIM";
     static final String T_TRUE                  = "TRUE";
     static final String T_UNION                 = "UNION";
     static final String T_UNIQUE                = "UNIQUE";
@@ -155,6 +169,7 @@ class Token {
     static final String T_WHERE                 = "WHERE";
     static final String T_WORK                  = "WORK";
     static final String T_WRITE_DELAY           = "WRITE_DELAY";
+    static final String T_YEAR                  = "YEAR";
 
 //
     static final int UNKNOWN               = -1;

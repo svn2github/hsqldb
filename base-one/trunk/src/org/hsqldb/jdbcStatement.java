@@ -226,8 +226,9 @@ public class jdbcStatement implements java.sql.Statement {
         // This method is synchronized since resultIn is an instance attribute 
         // and thus it is theoretically possible that a race condition occurs
         // in which a different thread executes fetchResult(sql), replacing
-        // resultIn before it gets assigned propery to the new result set.
+        // resultIn before it gets assigned propery to the new result set.        
         checkClosed();
+        connection.clearWarningsNoCheck();
         fetchResult(sql);
 
         return new jdbcResultSet(this, resultIn, connection.connProperties);
@@ -263,6 +264,7 @@ public class jdbcStatement implements java.sql.Statement {
         // resultIn before it is properly tested and/or its update count
         // returned.
         checkClosed();
+        connection.clearWarningsNoCheck();
         fetchResult(sql);
 
         if (resultIn == null || resultIn.iMode == ResultConstants.DATA) {
@@ -718,8 +720,9 @@ public class jdbcStatement implements java.sql.Statement {
         // in which a different thread executes fetchResult(sql), replacing
         // resultIn after this methods call to fetchResult but before it
         // calculates and returns the value of
-        // resultIn.iMode == ResultConstants.DATA.
+        // resultIn.iMode == ResultConstants.DATA.        
         checkClosed();
+        connection.clearWarningsNoCheck();
         fetchResult(sql);
 
         return resultIn.iMode == ResultConstants.DATA;
@@ -743,7 +746,7 @@ public class jdbcStatement implements java.sql.Statement {
      *
      * @return the current result as a <code>ResultSet</code> object or
      *      <code>null</code> if the result is an update count or there
-     *       are no more results
+     *      are no more results
      * @exception SQLException if a database access error occurs
      * @see #execute
      */
@@ -1104,7 +1107,7 @@ public class jdbcStatement implements java.sql.Statement {
      */
     public synchronized void clearBatch() throws SQLException {
         checkClosed();
-        batch.trimResult(0, 0);
+        batch.setRows(null);
     }
 
     /**
@@ -1183,6 +1186,7 @@ public class jdbcStatement implements java.sql.Statement {
         HsqlException he;
 
         checkClosed();
+        connection.clearWarningsNoCheck();
 
         if (batch.getSize() == 0) {
             throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT,
@@ -1199,7 +1203,7 @@ public class jdbcStatement implements java.sql.Statement {
             he = e;
         }
 
-        resultOut.trimResult(0, 0);
+        resultOut.setRows(null);
 
         if (he != null) {
             throw jdbcDriver.sqlException(he);
@@ -1727,10 +1731,8 @@ public class jdbcStatement implements java.sql.Statement {
 
     /**
      * Retrieves whether this statement is closed.
-     *
-     * @throws SQLException when the connection is closed
      */
-    synchronized boolean isClosed() throws SQLException {
+    synchronized boolean isClosed() {
 
         // There is no point to checking if the parent connection
         // is closed every time.  It's a waste.  When the parent connection

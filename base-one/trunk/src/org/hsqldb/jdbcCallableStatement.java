@@ -253,7 +253,8 @@ implements CallableStatement {
 
     /** Creates a new instance of jdbcCallableStatement */
     public jdbcCallableStatement(jdbcConnection c, String sql,
-                                 int type) throws HsqlException {
+                                 int type)
+                                 throws HsqlException, SQLException {
 
         super(c, sql, type);
 

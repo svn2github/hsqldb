@@ -139,11 +139,13 @@ class Tokenizer {
         String keyword[] = {
             "AND", "ALL", "AVG", "BY", "BETWEEN", "COUNT", "CASEWHEN",
             "DISTINCT", "EXISTS", "EXCEPT", "EXTRACT", /* "FALSE",*/ "FROM",
-            "GROUP", "IF", "INTO", "IFNULL", "IS", "IN", "INTERSECT", "INNER",    /* "LEFT" ,*/
+            "GROUP", "IF", "INTO", "IFNULL", "IS", "IN", "INTERSECT", "INNER",
+
+            /* "LEFT" ,*/
             "LIKE", "MAX", "MIN", /* "NULL", */ "NOT", "ON", "ORDER", "OR",
-            "OUTER", "PRIMARY", "SELECT", "SET", "SUM", "TO",                     /* "TRUE",*/
-            "UNIQUE", "UNION", "VALUES", "WHERE", "CONVERT", "CAST", "CONCAT",
-            "MINUS", "CALL", "HAVING"
+            "OUTER", "POSITION", "PRIMARY", "SELECT", "SET", "SUBSTRING",
+            "SUM", "TO", "TRIM", /* "TRUE",*/ "UNIQUE", "UNION", "VALUES",
+            "WHERE", "CONVERT", "CAST", "CONCAT", "MINUS", "CALL", "HAVING"
         };
 
         for (int i = 0; i < keyword.length; i++) {

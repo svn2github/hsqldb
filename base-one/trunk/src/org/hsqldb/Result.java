@@ -521,7 +521,7 @@ class Result {
         return result;
     }
 
-    static Result newPrepareResult(int csid, Result rsmd, Result pmd) {
+    static Result newPrepareResponse(int csid, Result rsmd, Result pmd) {
 
         Result out;
         Result pack;
@@ -548,13 +548,24 @@ class Result {
         return r;
     }
 
-    static Result newFreeStmtResult(int statementID) {
+    static Result newFreeStmtRequest(int statementID) {
 
         Result r = new Result(ResultConstants.SQLFREESTMT);
 
         r.statementID = statementID;
 
         return r;
+    }
+
+    static Result newSelectResult(Result in) {
+
+        Result out;
+
+        out                    = new Result(ResultConstants.DATA);
+        out.significantColumns = in.significantColumns;
+        out.metaData           = in.metaData;
+
+        return out;
     }
 
     /**
@@ -624,7 +635,9 @@ class Result {
     void setRows(Result a) {
 
         if (a == null) {
-            trimResult(0, 0);
+            rRoot = null;
+            rTail = null;
+            iSize = 0;
         } else {
             rRoot = a.rRoot;
             rTail = a.rTail;

@@ -5917,10 +5917,12 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.2, this JDBC feature is not supported. <p>
+     * Starting with HSQLDB 1.7.2, this JDBC feature is supported. <p>
      *
-     * Calling this method throws a SQLException stating that the function
-     * is not supported.
+     * Calling this method returns HOLD_CURSORS_OVER_COMMIT, since HSQLDB
+     * ResultSet objects are never closed as the result of an implicit
+     * or explicit commit operation. <p>
+     *
      * </span>
      * <!-- end release-specific documentation -->
      *
@@ -5934,13 +5936,47 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 /*
     public int getResultSetHoldability() throws SQLException {
 
+// NO:
         // TODO: fredt@users - if we don't support holdability how can we
         // say which type we support? Let's leave it for now.
         // we might return ResultSet.CLOSE_CURSORS_AT_COMMIT here
         // , instead of throwing.  Must check what we actually do.
         // boucherb@users 20020426
         // return ResultSet.CLOSE_CURSORS_AT_COMMIT; // ???
-        throw jdbcDriver.notSupportedJDBC3;
+        //throw jdbcDriver.notSupportedJDBC3;
+
+// YES:
+// JDBC 3.0 fr spec:
+// 14.1.3 ResultSet Holdability
+//
+// Calling the method Connection.commit can close the ResultSet objects that
+// have been created during the current transaction. In some cases, however,
+// this may not be the desired behaviour. The ResultSet property holdability
+// gives the application control over whether ResultSet objects (cursors) are
+// closed when a commit operation is implicity or explictly performed.
+// The following ResultSet constants may be supplied to the Connection methods
+// createStatement, prepareStatement, and prepareCall:
+//
+// 1. HOLD_CURSORS_OVER_COMMIT
+//
+// * ResultSet objects (cursors) are not closed; they are held open when a
+//   commit operation is implicity or explicity performed.
+//
+// 2. CLOSE_CURSORS_AT_COMMIT
+//
+// * ResultSet objects (cursors) are closed when a commit operation is
+//   implicity or explicity performed. Closing cursors at commit can result
+//   in better performance for some applications.
+//
+//   The default holdability of ResultSet objects is implementation defined.
+//   The DatabaseMetaData method getResultSetHoldability can be called to
+//   determine the default holdability of result sets returned by the
+//   underlying data
+//   source.
+
+// boucherb@users 20030819
+// Our ResultSet objects are never closed as the result of a commit
+        return jdbcResultSet.HOLD_CURSORS_OVER_COMMIT;
     }
 */
 

@@ -137,28 +137,39 @@ class Expression {
 // TODO: Standard Deviation and maybe some other statistical aggregate functions
 //                   STDDEV  = 45;
     // system functions
-    static final int IFNULL   = 60,
-                     CONVERT  = 61,
-                     CASEWHEN = 62,
-                     EXTRACT  = 63;
+    static final int IFNULL    = 60,
+                     CONVERT   = 61,
+                     CASEWHEN  = 62,
+                     EXTRACT   = 63,
+                     POSITION  = 64,
+                     TRIM      = 65,
+                     SUBSTRING = 66;
 
     // temporary used during paring
-    static final int     PLUS                 = 100,
-                         OPEN                 = 101,
-                         CLOSE                = 102,
-                         SELECT               = 103,
-                         COMMA                = 104,
-                         STRINGCONCAT         = 105,
-                         BETWEEN              = 106,
-                         CAST                 = 107,
-                         END                  = 108,
-                         IS                   = 109;
-    static final HashSet extractFunctionNames = new HashSet();
+    static final int PLUS         = 100,
+                     OPEN         = 101,
+                     CLOSE        = 102,
+                     SELECT       = 103,
+                     COMMA        = 104,
+                     STRINGCONCAT = 105,
+                     BETWEEN      = 106,
+                     CAST         = 107,
+                     END          = 108,
+                     IS           = 109,
+
+    // used inside brackets for system functions
+    FROM                                         = 110;
+    static final HashSet SQL_EXTRACT_FIELD_NAMES = new HashSet();
+    static final HashSet SQL_TRIM_SPECIFICATION  = new HashSet();
 
     static {
-        extractFunctionNames.addAll(new Object[] {
-            "YEAR", "MONTH", "DAY", "HOUR", "MINUTE", "SECOND",
-            "TIMEZONE_HOUR", "TIMEZONE_MINUTE"
+        SQL_EXTRACT_FIELD_NAMES.addAll(new Object[] {
+            Token.T_YEAR, Token.T_MONTH, Token.T_DAY, Token.T_HOUR,
+            Token.T_MINUTE, Token.T_SECOND, Token.T_TIMEZONE_HOUR,
+            Token.T_TIMEZONE_MINUTE
+        });
+        SQL_TRIM_SPECIFICATION.addAll(new Object[] {
+            "LEADING", "TRAILING", "BOTH"
         });
     }
 

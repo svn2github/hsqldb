@@ -170,9 +170,10 @@ public final class CompiledStatementExecutor {
 //        if (o instanceof Statement) {
 //            return Result.newResult(((Statement)o));
 //        }
-        r      = Result.newSingleColumnResult(e.getAlias(), e.getDataType());
-        row    = new Object[1];
-        row[0] = o;
+        r = Result.newSingleColumnResult("@0", e.getDataType());
+        row                      = new Object[1];
+        row[0]                   = o;
+        r.metaData.sClassName[0] = e.getValueClassName();
 
         r.add(row);
 

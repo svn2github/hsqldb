@@ -91,12 +91,14 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 // fredt@users 20020525 - patch 559914 by fredt@users - SELECT INTO logging
 // tony_lai@users 20021020 - patch 1.7.2 - improved aggregates and HAVING
 // aggregate functions can now be used in expressions - HAVING supported
-// kloska@users 20021030 - PATCH 1.7.2 - ON UPDATE CASCADE
+// kloska@users 20021030 - patch 1.7.2 - ON UPDATE CASCADE
 // fredt@users 20021112 - patch 1.7.2 by Nitin Chauhan - use of switch
 // rewrite of the majority of multiple if(){}else{} chains with switch(){}
 // fredt@users 20021228 - patch 1.7.2 - refactoring
 // boucherb@users 20030705 - patch 1.7.2 - handle parameter marker ambiguity
 // fredt@users 20030819 - patch 1.7.2 - EXTRACT({YEAR | MONTH | DAY | HOUR | MINUTE | SECOND } FROM datetime)
+// fredt@users 20030820 - patch 1.7.2 - CHAR_LENGTH | CHARACTER_LENGTH | OCTECT_LENGTHPOSITION(string)
+// fredt@users 20030820 - patch 1.7.2 - POSITION(string IN string)
 
 /**
  *  This class is responsible for parsing non-DDL statements.
@@ -106,7 +108,6 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 
 /** @todo fredt - implement numeric value functions (SQL92 6.6)
  *
- * POSITION(string IN string)
  * EXTRACT({TIMEZONE_HOUR | TIMEZONE_MINUTE} FROM {datetime | interval})
  *
  *
@@ -1408,24 +1409,72 @@ class Parser {
                 break;
             }
             case Expression.EXTRACT : {
-
-                // should be just one of accepted identifiers
                 read();
                 readThis(Expression.OPEN);
 
                 String name = sToken;
 
-                if (!Expression.extractFunctionNames.contains(name)) {
+                // must be an accepted identifier
+                if (!Expression.SQL_EXTRACT_FIELD_NAMES.contains(name)) {
                     throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
                 }
 
-                tokenizer.getThis(Token.T_FROM);
+                readToken();
+                readThis(Expression.FROM);
 
                 Function f = new Function(database.getAlias(name), session,
                                           false);
 
-                read();
                 f.setArgument(0, readOr());
+                readThis(Expression.CLOSE);
+
+                r = new Expression(f);
+
+                break;
+            }
+            case Expression.TRIM : {
+                read();
+                readThis(Expression.OPEN);
+
+                String type = sToken;
+
+                if (Expression.SQL_TRIM_SPECIFICATION.contains(type)) {
+                    readToken();
+                } else {
+                    type = Token.T_BOTH;
+                }
+
+                readThis(Expression.FROM);
+
+                String function;
+
+                if (type.equals(Token.T_LEADING)) {
+                    function = "org.hsqldb.Library.ltrim";
+                } else if (type.equals(Token.T_TRAILING)) {
+                    function = "org.hsqldb.Library.rtrim";
+                } else {
+                    function = "org.hsqldb.Library.trim";
+                }
+
+                Function f = new Function(function, session, false);
+
+                f.setArgument(0, readOr());
+                readThis(Expression.CLOSE);
+
+                r = new Expression(f);
+
+                break;
+            }
+            case Expression.POSITION : {
+                read();
+                readThis(Expression.OPEN);
+
+                Function f = new Function("org.hsqldb.Library.position",
+                                          session, false);
+
+                f.setArgument(0, this.readTerm());
+                readThis(Expression.IN);
+                f.setArgument(1, readOr());
                 readThis(Expression.CLOSE);
 
                 r = new Expression(f);
@@ -1517,8 +1566,11 @@ class Parser {
                 case Expression.CASEWHEN :
                 case Expression.CONCAT :
                 case Expression.EXTRACT :
+                case Expression.POSITION :
+                case Expression.FROM :
                 case Expression.END :
                 case Expression.PARAM :
+                case Expression.TRIM :
                     break;            // nothing else required, iToken initialized properly
 
                 case Expression.MULTIPLY :
@@ -1543,6 +1595,11 @@ class Parser {
         }
     }
 
+    private void readToken() throws HsqlException {
+        sToken = tokenizer.getString();
+        iToken = tokenSet.get(sToken, -1);
+    }
+
     private static IntValueHashMap tokenSet = new IntValueHashMap(37);
 
     static {
@@ -1555,10 +1612,10 @@ class Parser {
         tokenSet.put("<=", Expression.SMALLER_EQUAL);
         tokenSet.put(">=", Expression.BIGGER_EQUAL);
         tokenSet.put("AND", Expression.AND);
-        tokenSet.put("NOT", Expression.NOT);
+        tokenSet.put(Token.T_NOT, Expression.NOT);
         tokenSet.put("OR", Expression.OR);
-        tokenSet.put("IN", Expression.IN);
-        tokenSet.put("EXISTS", Expression.EXISTS);
+        tokenSet.put(Token.T_IN, Expression.IN);
+        tokenSet.put(Token.T_EXISTS, Expression.EXISTS);
         tokenSet.put("BETWEEN", Expression.BETWEEN);
         tokenSet.put("+", Expression.PLUS);
         tokenSet.put("-", Expression.NEGATE);
@@ -1567,7 +1624,7 @@ class Parser {
         tokenSet.put("||", Expression.STRINGCONCAT);
         tokenSet.put("(", Expression.OPEN);
         tokenSet.put(")", Expression.CLOSE);
-        tokenSet.put("SELECT", Expression.SELECT);
+        tokenSet.put(Token.T_SELECT, Expression.SELECT);
         tokenSet.put("LIKE", Expression.LIKE);
         tokenSet.put("COUNT", Expression.COUNT);
         tokenSet.put("SUM", Expression.SUM);
@@ -1578,8 +1635,11 @@ class Parser {
         tokenSet.put("CONVERT", Expression.CONVERT);
         tokenSet.put("CAST", Expression.CAST);
         tokenSet.put("CASEWHEN", Expression.CASEWHEN);
-        tokenSet.put("CONCATE", Expression.CONCAT);
-        tokenSet.put("EXTRACT", Expression.EXTRACT);
+        tokenSet.put("CONCAT", Expression.CONCAT);
+        tokenSet.put(Token.T_EXTRACT, Expression.EXTRACT);
+        tokenSet.put(Token.T_POSITION, Expression.POSITION);
+        tokenSet.put(Token.T_FROM, Expression.FROM);
+        tokenSet.put(Token.T_TRIM, Expression.TRIM);
         tokenSet.put("IS", Expression.IS);
         tokenSet.put("?", Expression.PARAM);
     }

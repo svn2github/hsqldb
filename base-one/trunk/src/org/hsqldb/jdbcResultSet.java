@@ -424,7 +424,9 @@ public class jdbcResultSet implements ResultSet {
      * This is important for methods that return primitive values, since
      * there is no other way to check for this condition in those cases.
      */
-    private boolean           bWasNull;
+    private boolean bWasNull;
+
+    /** The one and only ResultSetMetaData object for this ResultSet */
     private ResultSetMetaData rsmd;
 
 // fredt@users 20020222 - patch 489917 by jytou@users - made optional
@@ -5488,13 +5490,31 @@ public class jdbcResultSet implements ResultSet {
     public static final int FETCH_FORWARD = 1000;
 
     /** Copy of java.sql.ResultSet constant, for JDK 1.1 clients. */
+    public static final int FETCH_REVERSE = 1001;
+
+    /** Copy of java.sql.ResultSet constant, for JDK 1.1 clients. */
+    public static final int FETCH_UNKNOWN = 1002;
+
+    /** Copy of java.sql.ResultSet constant, for JDK 1.1 clients. */
     public static final int TYPE_FORWARD_ONLY = 1003;
 
     /** Copy of java.sql.ResultSet constant, for JDK 1.1 clients. */
     public static final int TYPE_SCROLL_INSENSITIVE = 1004;
 
     /** Copy of java.sql.ResultSet constant, for JDK 1.1 clients. */
+    public static final int TYPE_SCROLL_SENSITIVE = 1005;
+
+    /** Copy of java.sql.ResultSet constant, for JDK 1.1 clients. */
     public static final int CONCUR_READ_ONLY = 1007;
+
+    /** Copy of java.sql.ResultSet constant, for JDK 1.1 clients. */
+    public static final int CONCUR_UPDATABLE = 1008;
+
+    /** Copy of java.sql.ResultSet constant, for JDK 1.1 clients. */
+    public static final int HOLD_CURSORS_OVER_COMMIT = 1;
+
+    /** Copy of java.sql.ResultSet constant, for JDK 1.1 clients. */
+    public static final int CLOSE_CURSORS_AT_COMMIT = 2;
 
     //---------------------------- Private ---------------------------------
 

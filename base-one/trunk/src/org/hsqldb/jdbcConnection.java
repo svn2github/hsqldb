@@ -105,6 +105,10 @@ import org.hsqldb.lib.HashSet;
 // kneedeepincode@users 20021110 - patch 635816 - correction to properties
 // unsaved@users 20021113 - patch 1.7.2 - SSL support
 // fredt@users 20030620 - patch 1.7.2 - reworked to use a SessionInterface
+// boucherb@users 2003 ??? - patch 1.7.2 - SSL support moved to factory interface
+// boucherb@users 20030801 - JavaDoc updates to reflect new connection urls
+// boucherb@users 20030819 - patch 1.7.2 - partial fix for broken nativeSQL method
+// boucherb@users 20030819 - patch 1.7.2 - SQLWarning cases implemented
 
 /**
  * <!-- start generic documentation -->
@@ -125,6 +129,9 @@ import org.hsqldb.lib.HashSet;
  * <!-- end generic documentation -->
  * <!-- start release-specific documentation -->
  * <span class="ReleaseSpecificDocumentation">
+ *
+ * <hr>
+ *
  * <b>HSQLDB-Specific Information:</b> <p>
  *
  * To get a <code>Connection</code> to an HSQLDB database, the
@@ -139,160 +146,205 @@ import org.hsqldb.lib.HashSet;
  * Connection c = DriverManager.<b>getConnection</b>
  * (url,user,password); </code><p>
  *
- * For HSQLDB connections, the <b>url</b> must start with
+ * Under HSQLDB, the database connection <b>&lt;url&gt;</b> must start with
  * <b>'jdbc:hsqldb:'</b><p>
  *
- * Starting with 1.7.2, HSQLDB connection properties (key-value-pairs>) may be
- * appended to the url using the form: <p>
+ * Starting with 1.7.2, HSQLDB connection properties (&lt;key-value-pairs&gt;)
+ * may be appended to the database connection <b>&lt;url&gt;</b>, using
+ * the form: <p>
  *
- * <b>'<url>[;keyi=valuei]*'</b> <p>
+ * <b>'&lt;url&gt;[;key=value]*'</b> <p>
  *
- * Starting with 1.7.2, the HSQLDB connection urls have been extended.  All
- * legacy forms continue to work with the same semantics.  The extentions
- * are as described in the following material: <p>
+ * Starting with 1.7.2, the allowable forms of the HSQLDB database connection
+ * <b>&lt;url&gt;</b> have been extended.  However, all legacy forms continue
+ * to work, with unchanged semantics.  The extentions are as described in the
+ * following material: <p>
  *
- * The {@link Server Server} database <b>url</b> has
+ * <b>Network Server Database Connections:</b> <p>
+ *
+ * The 1.7.2 {@link Server Server} database connection <b>&lt;url&gt;</b> has
  * changed to take one of the two following forms: <p>
  *
  * <ol>
- * <li> <b>'jdbc:hsqldb:hsql://host[:port][/alias][<key-value-pairs>]'</b>
- * <li> <b>'jdbc:hsqldb:hsqls://host[:port][/alias][<key-value-pairs>]'</b>
+ * <li> <b>'jdbc:hsqldb:hsql://host[:port][/&lt;alias&gt;][&lt;key-value-pairs&gt;]'</b>
+ *
+ * <li> <b>'jdbc:hsqldb:hsqls://host[:port][/&lt;alias&gt;][&lt;key-value-pairs&gt;]'</b>
  *         (with TLS).
  * </ol> <p>
  *
- * The 1.7.2 {@link WebServer WebServer} database <b>url</b> also
- * takes one of two new forms: <p>
+ * The 1.7.2 {@link WebServer WebServer} database connection <b>&lt;url&gt;</b>
+ * also changes to take one of two following forms: <p>
  *
  * <ol>
- * <li> <b>'jdbc:hsqldb:http://host[:port][/alias][<key-value-pairs>]'</b>
- * <li> <b>'jdbc:hsqldb:https://host[:port][/alias][<key-value-pairs>]'</b>
+ * <li> <b>'jdbc:hsqldb:http://host[:port][/&lt;alias&gt;][&lt;key-value-pairs&gt;]'</b>
+ *
+ * <li> <b>'jdbc:hsqldb:https://host[:port][/&lt;alias&gt;][&lt;key-value-pairs&gt;]'</b>
         (with TLS).
  * </ol> <p>
  *
- * In both network server <b>url<b> forms, the optional <b>alias<b> is used to
- * distinguish between one of possibly several database instances hosted
- * by the indicated server.  If it is omitted, a connection is made to the
- * server's default database instance (instance 0). For more information on
- * server configuration, please read the JavaDocs for {@link Server Server} and
- * the related general documentation. <p>
+ * In both network server database connection <b>&lt;url&gt;</b> forms, the
+ * optional <b>&lt;alias&gt;</b> component is used to identify one of possibly
+ * several database instances available at the indicated host and port.  If the
+ * <b>&lt;alias&gt;</b> component is omitted, then a connection is made to the
+ * network server's default database instance (instance 0). <p>
  *
- * The 1.7.2 100% in-memory (diskless, in-process) database <B>url</B>
- * takes one of two new forms: <p>
+ * For more information on server configuration regarding mounting multiple
+ * databases and assigning them <b>&lt;alias&gt;</b> values, please read the
+ * Java API documentation for {@link Server Server} and related chapters in
+ * the general documentation, especially the Advanced Users Guide. <p>
+ *
+ * <b>Transient, In-Process Database Connections:</b> <p>
+ *
+ * The 1.7.2 100% in-memory (transient, in-process) database connection
+ * <b>&lt;url&gt;</b> takes one of the two following forms: <p>
  *
  * <ol>
- * <li> <b>'jdbc:hsqldb:.[<key-value-pairs>]'</b>
+ * <li> <b>'jdbc:hsqldb:.[&lt;key-value-pairs&gt;]'</b>
         (the legacy form, extended)
  *
- * <li> <b>'jdbc:hsqldb:mem:name[<key-value-pairs>]'</b>
+ * <li> <b>'jdbc:hsqldb:mem:&lt;alias&gt;[&lt;key-value-pairs&gt;]'</b>
         (the new form)
  * </ol> <p>
  *
- * In the 1.7.2 100% in-memory mode <b><url><b>, <B>'name'</B> is the
- * distinguished name of a 100% in-memory database instance and is thus used
- * as a key to look up such an instance among the collection of all such
- * instances already in existence in the current JVM.  If no such instance
- * exists, one may be automatically created and registered against the name, as
- * governed by the 'ifexists' connection property.
+ * With the 1.7.2 transient, in-process database connection <b>&lt;url&gt;</b>,
+ * the <b>&lt;alias&gt;</b> component is the key used to look up a transient,
+ * in-process database instance amongst the collection of all such instances
+ * already in existence within the current class loading context in the
+ * current JVM. If no such instance exists, one <em>may</em> be automatically
+ * created and mapped to the <b>&lt;alias&gt;</b>, as governed by the
+ * <b>'ifexists=true|false'</b> connection property. <p>
  *
- * The 1.7.2 standalone (disk-based, in-process) database connection <b>url</b>
- * takes one of three new forms: <p>
+ * <b>Persistent, In-Process Database Connections:</b> <p>
+ *
+ * The 1.7.2 standalone (persistent, in-process) database connection
+ * <b>&lt;url&gt;</b> takes one of the three following forms: <p>
  *
  * <ol>
- * <li> <b>'jdbc:hsqldb:name[<key-value-pairs>]'</b>
+ * <li> <b>'jdbc:hsqldb:&lt;path&gt;[&lt;key-value-pairs&gt;]'</b>
         (the legacy form, extended)
  *
- * <li> <b>'jdbc:hsqldb:file:name[<key-value-pairs>]'</b>
+ * <li> <b>'jdbc:hsqldb:file:&lt;path&gt;[&lt;key-value-pairs&gt;]'</b>
         (same semantics as the legacy form)
  *
- * <li> <b>'jdbc:hsqldb:res:name[<key-value-pairs>]'</b>
-        (new 'files_in_jar' semantics form)
+ * <li> <b>'jdbc:hsqldb:res:&lt;path&gt;[&lt;key-value-pairs&gt;]'</b>
+        (new form with 'files_in_jar' semantics)
  * </ol>
  *
- * In the standalone mode <b><url><b>, <b>'name'</b> is the common path prefix
- * of the files that compose the database. <p>
+ * For the persistent, in-process database connection <b>&lt;url&gt;</b>,
+ * the <b>&lt;path&gt;</b> component is the path prefix common to all of
+ * the files that compose the database. <p>
  *
- * As of 1.7.2, although other files may be involved, such as transient working
- * files and/or TEXT table data source files, the essential set that may,
+ * As of 1.7.2, although other files may be involved (such as transient working
+ * files and/or TEXT table CSV data source files), the essential set that may,
  * at any particular point in time, compose an HSQLDB database are: <p>
  *
  * <ul>
- * <li><name>.properties
- * <li><name>.script
- * <li><name>.log
- * <li><name>.data
- * <li><name>.backup
- * <li><name>.lck
+ * <li>&lt;path&gt;.properties
+ * <li>&lt;path&gt;.script
+ * <li>&lt;path&gt;.log
+ * <li>&lt;path&gt;.data
+ * <li>&lt;path&gt;.backup
+ * <li>&lt;path&gt;.lck
  * </ul> <p>
  *
  * For example: <b>'jdbc:hsqldb:file:test'</b> connects to a database
- * named <b>'test'</b>, which is composed of some subset of the files
- * listed above, all located in the working directory fixed at the time the
- * JVM is started. <p>
+ * composed of some subset of the files listed above, where the expansion
+ * of <b>&lt;path&gt;</b> is <b>'test'</b> prefixed with the path of the
+ * working directory fixed at the time the JVM is started. <p>
  *
  * Under <em>Windows</em> <sup><font size="-2">TM</font> </sup>, <b>
- * 'jdbc:hsqldb:file:c:\databases\test'</b> connects to a database named
- * <b>'test'</b>, located on drive C: in the directory <b>'databases'</b>,
- * which is composed of some subset of the files listed above. <p>
+ * 'jdbc:hsqldb:file:c:\databases\test'</b> connects a database located
+ * on drive <b>'C:'</b> in the directory <b>'databases'</b>, composed
+ * of some subset of the files: <p>
+ *
+ * <pre>
+ * C:\
+ * +--databases\
+ *    +--test.properties
+ *    +--test.script
+ *    +--test.log
+ *    +--test.data
+ *    +--test.backup
+ *    +--test.lck
+ * </pre>
  *
  * Under most variations of UNIX, <b>'jdbc:hsqldb:file:/databases/test'</b>
- * connects to a database named <b>'test'</b> located in the
- * directory <b>'databases'</b> directly under root, which is composed
- * of some subset of the files listed above. <p>
+ * connects to a database located in the directory <b>'databases'</b> directly
+ * under root, once again composed of some subset of the files: <p>
  *
- * The new <b>'jdbc:hsqldb:res:name'</b> database connection <b>url</b> has
- * different semantics than the <b>'jdbc:hsqldb:file:name'</b> form.  The
- * semantics are essentially those offered previously by setting the database
- * system property 'file_in_jar' true (now deprecated), which are in turn
- * similar to those of a 'files_read_only' database, with some additional
- * caveats.  That is, in addition to 'files_read_only' semantics being put in
- * effect, the <b>'name'</b> component is used to obtain URL objects which are
- * in turn used read in database content from resources on the class path and,
- * moreover, the obtained URL objects must point only to resources contained in
- * one or more jars on the class path, never files directly on the file system.
- * In short, a <b>'res:'<b> type database connection <b>url</b> is designed
- * specifically to connect to a 'files_in_jar' mode database instance, which
- * in turn isdesigned specifically to operate safely under a Java WebStart
- * configuration without special security configuration or code signing. <p>
+ * <pre>
+ * \
+ * +--databases\
+ *    +--test.properties
+ *    +--test.script
+ *    +--test.log
+ *    +--test.data
+ *    +--test.backup
+ *    +--test.lck
+ * </pre>
  *
- * <b>N.B.:<b> Since it is difficult or impossible to determine or control
- * from where classes are being loaded or which class loader is doing the
- * loading under 'files_in_jar' semantics, the <b>'name'</b> component of the
- * <b>url</b> is always taken to be relative to the default package.  That is,
- * if the <b>'name'</b> component does not start with '/', then '/' is prepended
- * when obtaining the resource URLs required to read in database content.
- *
- * <b>Some Guidelines:</b> <p>
+* <b>Some Guidelines:</b> <p>
  *
  * <ol>
- * <li> Both relative and absolute database paths are supported.
+ * <li> Both relative and absolute database file paths are supported.
  *
- * <li> Relative paths can be specified in a platform independent
- *      manner as: <b>'[dir1/dir2/.../dirn/]name'</b>.
+ * <li> Relative database file paths can be specified in a platform independent
+ *      manner as: <b>'[dir1/dir2/.../dirn/]&lt;file-name-prefix&gt;'</b>.
  *
- * <li> Specification of absolute paths is operating-system specific.<br>
+ * <li> Specification of absolute file paths is operating-system specific.<br>
  *      Please read your OS file system documentation.
  *
  * <li> Specification of network mounts may be operating-system specific.<br>
  *      Please read your OS file system documentation.
  *
- * <li> Special care may be needed w.r.t. path specifications
-        containing whitespace and/or  mixed-case.<br>
+ * <li> Special care may be needed w.r.t. file path specifications
+        containing whitespace and/or mixed-case.<br>
  *      Please read your OS file system documentation.
  * </ol> <p>
  *
- * <B>NB:</B> Versions of HSQLDB previous to 1.7.0 did not support creating
- * directories along the path specified in Standalone mode jdbc urls,
- * in the case that they did not already exist. Starting with HSQLDB 1.7.0,
- * directories <i>will</i> be created if they do not already exist, but only
- * if HSQLDB is built under a version of the compiler grreater than JDK 1.1.x.
- * <p>
+ * <b>Note:</b> Versions of HSQLDB previous to 1.7.0 did not support creating
+ * directories along the file path specified in the persistent, in-process mode
+ * database connection <b>&lt;url&gt;</b> form, in the case that they did
+ * not already exist.  Starting with HSQLDB 1.7.0, directories <i>will</i>
+ * be created if they do not already exist, but only if HSQLDB is built under
+ * a version of the compiler grreater than JDK 1.1.x. <p>
  *
- * For more information about HSQLDB file structure, please read the
- * {@link Files Files} section of the documentation. <p>
+ * The new <b>'jdbc:hsqldb:res:&lt;path&gt;'</b> database connection
+ * <b>&lt;url&gt;</b> has different semantics than the
+ * <b>'jdbc:hsqldb:file:&lt;path&gt;'</b> form. The semantics are essentially
+ * those offered previously by setting the system property
+ * <b>'files_in_jar'</b> true (now deprecated), which are in turn similar to
+ * those of a <b>'files_read_only'</b> database, but with some additional
+ * points to consider. <p>
  *
- * For more information on various database modes and other attributes
- * controlled via the database properties file, please read the Advanced
- * Users Guide. <p>
+ * Specifically, the <b>'&lt;path&gt;</b> component of a <b>res:</b> type
+ * database connection <b>&lt;url&gt;</b> is used to obtain resource URL
+ * objects and therby read the database files as resources on the class path.
+ * Moreover, the URL objects <i>must</i> point only to resources contained
+ * in one or more jars on the class path (must be jar protocol). <p>
+ *
+ * In short, a <b>res:</b> type database connection <b>&lt;url&gt;</b> is
+ * designed specifically to connect to a <b>'files_in_jar'</b> mode database
+ * instance, which in turn is designed specifically to operate under a
+ * <em>Java WebStart</em><sup><font size="-2">TM</font></sup> configuration,
+ * where co-locating the database files in the jars that make up the
+ * <em>WebStart</em> application avoids the need for special security
+ * configuration or code signing. <p>
+ *
+ * <b>Note:</b> Since it is difficult or impossible to determine or control
+ * from where classes are being loaded or which class loader is doing the
+ * loading under <b>'files_in_jar'</b> semantics, the <b>&lt;path&gt;</b>
+ * component of the database connection <b>&lt;url&gt;</b> is always taken
+ * to be relative to the default package.  That is, if the <b>&lt;path&gt;</b>
+ * component does not start with '/', then '/' is prepended when obtaining
+ * the resource URLs used to read the database files. <p>
+ *
+ * -- <p>
+ *
+ * For more information about HSQLDB file structure, various database modes
+ * and other attributes such as those controlled through the HSQLDB properties
+ * files, please read the general documentation, especially the Advanced Users
+ * Guide. <p>
  *
  * <hr>
  *
@@ -325,6 +377,7 @@ import org.hsqldb.lib.HashSet;
  * jdbcResultSet.TYPE_FORWARD_ONLY<br>
  * jdbcResultSet.TYPE_SCROLL_INSENSITIVE<br>
  * jdbcResultSet.CONCUR_READ_ONLY<br>
+ * // etc.
  * </code> <p>
  *
  * However, please note that code written to use HSQLDB JDBC 2 features under
@@ -334,6 +387,8 @@ import org.hsqldb.lib.HashSet;
  * use some of the more advanced features available under the JDBC 2
  * specification. <p>
  *
+ * <hr>
+ *
  * (fredt@users)<br>
  * (boucherb@users)<p>
  *
@@ -341,6 +396,8 @@ import org.hsqldb.lib.HashSet;
  *
  * @see jdbcDriver
  * @see jdbcStatement
+ * @see jdbcPreparedStatement
+ * @see jdbcCallableStatement
  * @see jdbcResultSet
  * @see jdbcDatabaseMetaData
  */
@@ -361,7 +418,7 @@ public class jdbcConnection implements Connection {
     SessionInterface sessionProxy;
 
     /**
-     * Is this an internal connection.
+     * Is this an internal connection?
      */
     boolean isInternal;
 
@@ -370,9 +427,13 @@ public class jdbcConnection implements Connection {
      */
     boolean isClosed;
 
+    /** The first warning in the chain. Null if there are no warnings. */
+    SQLWarning rootWarning;
+    Object     rootWarning_mutex = new Object();
+
     /**
-     * The set of Statement objects issued by this Connection via calls to
-     * createStatement, prepareCall and prepareStatement.
+     * The set of open Statement objects returned by this Connection from
+     * calls to createStatement, prepareCall and prepareStatement.
      */
     org.hsqldb.lib.HashSet statementSet = new org.hsqldb.lib.HashSet();
 
@@ -396,12 +457,10 @@ public class jdbcConnection implements Connection {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * The standard java.sql API documentation above suggests that if
-     * the same SQL statement is executed many times, it may be more
-     * efficient to use a <code>PreparedStatement</code> object. As
-     * of HSQLDB 1.7.0, this is still not the case. However, this
-     * feature <I>is</I> slated to be part of the HSQLDB 1.7.x
-     * series. <p>
+     * Starting with HSQLDB 1.7.2, support for precompilation at the engine level
+     * has been implemented, so it is now much more efficient and performant
+     * to use a <code>PreparedStatement</code> object if the same SQL statement
+     * is executed many times. <p>
      *
      * Up to 1.6.1, HSQLDB supported <code>TYPE_FORWARD_ONLY</code> -
      * <code>CONCUR_READ_ONLY</code> results only, so <code>ResultSet</code>
@@ -469,28 +528,14 @@ public class jdbcConnection implements Connection {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * The standard java.sql API documentation above suggests that if
-     * the same SQL statement is executed many times, it may be more
-     * efficient to use a <code>PreparedStatement</code> object. From
-     * HSQLDB 1.7.2, precompilation is supported. In previous versins, the
-     * statement was stored on the client and was not sent to the
-     * database until the <code>PreparedStatement</code> object was
-     * executed.<p>
+     * Starting with HSQLDB 1.7.2, support for precompilation at the engine level
+     * has been implemented, so it is now much more efficient and performant
+     * to use a <code>PreparedStatement</code> object if the same SQL statement
+     * is executed many times. <p>
      *
-     * Up to 1.6.1, HSQLDB supported <code>TYPE_FORWARD_ONLY</code> -
-     * <code>CONCUR_READ_ONLY</code> results only, so <code>ResultSet</code>
-     * objects created using the returned <code>PreparedStatement</code>
-     * object would <I>always</I> be type <code>TYPE_FORWARD_ONLY</code>
-     * with <code>CONCUR_READ_ONLY</code> concurrency. <p>
-     *
-     * Starting with 1.7.0, HSQLDB also supports
-     * <code>TYPE_SCROLL_INSENSITIVE</code> results. <p>
-     *
-     * <b>Notes:</b> <p>
-     *
-     * Up to 1.6.1, calling this method returned <code>null</code> if the
-     * connection was already closed. Starting with 1.7.0. the behaviour is
-     * to throw a <code>SQLException</code> if the connection is closed. <p>
+     * Starting with 1.7.2, the support for and behaviour of
+     * PreparedStatment has changed.  Please read the introductory section
+     * of the documentation for org.hsqldb.jdbcPreparedStatement. <P>
      *
      * </span> <!-- end release-specific documentation -->
      *
@@ -545,47 +590,9 @@ public class jdbcConnection implements Connection {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * The standard java.sql API documentation above suggests that if
-     * the same stored procedure is executed many times, it may be
-     * more efficient to use a <code>CallableStatement</code> object.
-     * As of HSQLDB 1.7.0, this is still not the case. Rather, the
-     * statement is stored on the client and is not sent to the
-     * database until the <code>CallableStatement</code> object is
-     * executed. However, protocol optimizations and statement
-     * precompilation on the database for optimization of stored
-     * procedure execution <I>are</I> a features slated to be part of
-     * the 1.7.x series. <p>
-     *
-     * Up to and including 1.7.1, HSQLDB supports only the default
-     * <code>TYPE_FORWARD_ONLY</code> - <code>CONCUR_READ_ONLY</code> for
-     * results obtained from <code>CallableStatement</code> objects. <p>
-     *
-     * <B>Notes:</B> <p>
-     *
-     * Up to 1.6.1, calling this method returned <code>null</code> if the
-     * connection was already closed. This was possibly counter-intuitive
-     * to the expectation that an exception would be thrown for
-     * closed connections. Starting with 1.7.0. the behaviour is to throw
-     * a <code>SQLException</code> if the connection is closed.<p>
-     *
-     * Starting with 1.7.0, HSQLDB now allows calling <code>void</code> Java
-     * methods as SQL functions and stored procedures, the result being
-     * a SQL <code>NULL</code> value or a result with one column and one
-     * row whose single field is the SQL <code>NULL</code> value,
-     * respectiviely.  Previously, calling such Java methods
-     * in either context resulted in throwing a <code>SQLException</code>. <p>
-     *
-     * Starting with 1.7.2, limited support has been
-     * added for Java stored procedures that return multi-column,
-     * multi-row results. As such, <code>CallableStatement</code> objects
-     * can now return <code>TYPE_SCROLL_INSENSITIVE</code>
-     * <code>ResultSet</code> objects. <p>
-     *
-     * Finally, up to and including 1.7.2, the returned
-     * <code>CallableStatement</code> object does not support any
-     * getXXX methods. That is, HSQLDB stored procedures still do not
-     * support <code>OUT</code> or <code>IN OUT</code> parameters.
-     * This may change before the final 1.7.2 release. <p>
+     * Starting with 1.7.2, the support for and behaviour of
+     * CallableStatement has changed.  Please read the introductory section
+     * of the documentation for org.hsqldb.jdbcCallableStatement.
      *
      * </span> <!-- end release-specific documentation -->
      *
@@ -633,38 +640,50 @@ public class jdbcConnection implements Connection {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.1, HSQLDB converts the JDBC SQL
+     * Up to and including 1.7.2, HSQLDB converts the JDBC SQL
      * grammar into the system's native SQL grammar prior to sending
-     * it; this method returns the native form of the statement that
-     * the driver would send in place of client-specified JDBC SQL
-     * grammar. <p>
+     * it, if escape processing is set true; this method returns the
+     * native form of the statement that the driver would send in place
+     * of client-specified JDBC SQL grammar. <p>
      *
      * Up to and including 1.7.1, escape processing was incomplete and
-     * also severely broken in terms of support for nested escapes. <p>
+     * also broken in terms of support for nested escapes. <p>
      *
-     * Starting with 1.7.2, escape processing is mostly fixed, but uses a
-     * very strict interpretation of the syntax and does not attempt to
-     * properly handle comments. <p>
+     * Starting with 1.7.2, escape processing is complete and handles nesting
+     * to arbitrary depth, but enforces a very strict interpretation of the
+     * syntax and does not detect or process SQL comments. <p>
      *
      * In essence, the HSQLDB engine directly handles the prescribed syntax
      * and date / time formats specified internal to the JDBC escapes.
-     * It also directly offers the XOpen / ODBC standard extended scalar
+     * It also directly offers the XOpen / ODBC extended scalar
      * functions specified available internal to the {fn ...} JDBC escape.
      * As such, the driver simply removes the curly braces and JDBC escape
-     * codes in the simplest and fastest fashion possible. Also, to avoid
-     * a great deal of complexity, certain forms of whitespace are
-     * currently not recognised.  For instance, the driver handles
-     * "{?= call ...}" but not "{ ?= call ...}  or "{? = call ...}" <p>
+     * codes in the simplest and fastest fashion possible, by replacing them
+     * with whitespace.
      *
-     * It is intended to implement this method more robustly, but doing so
-     * basically requires something closer to a parse or a full SQL
-     * tokenization than a simple state machine transformation.  As such,
-     * escape processing might end up consuming a significant portion of
-     * execution time for plain old Statement objects.  Hence, this is
-     * currently low priority work.
+     * But to avoid a great deal of complexity, certain forms of input
+     * whitespace are currently not recognised.  For instance,
+     * the driver handles "{?= call ...}" but not "{ ?= call ...} or
+     * "{? = call ...}" <p>
      *
-     * The following JDBC escape forms are supported, with the exact layout
-     * described: <p>
+     * Also, comments embedded in SQL are currently not detected or
+     * processed and thus may have unexpected effects on the output
+     * of this method, for instance causing otherwise valid SQL to become
+     * invalid. It is especially important to be aware of this because escape
+     * processing is set true by default for Statement objects and is always
+     * set true when producing a PreparedStatement from prepareStatement()
+     * or CallableStatement from prepareCall().  Currently, it is simply
+     * recommended to avoid submitting SQL having comments containing JDBC
+     * escape sequence patterns and/or single or double quotation marks,
+     * as this will avoid any potential problems.
+     *
+     * It is intended to implement a less strict handling of whitespace and
+     * proper processing of SQL comments at some point in the near future,
+     * perhaps before the final 1.7.2 release.
+     *
+     * In any event, 1.7.2 now correctly processes the following JDBC escape
+     * forms to arbitrary nesting depth, but only if the exact whitespace
+     * layout described below is used: <p>
      *
      * <ol>
      * <li>{call ...}
@@ -674,15 +693,7 @@ public class jdbcConnection implements Connection {
      * <li>{d ...}
      * <li>{t ...}
      * <li>{ts ...}
-     * </ol>
-     *
-     * Also, as mentioned above, comments embedded in SQL are still not
-     * handled and thus may have unexpected effects on the output of this
-     * method, for instance causing otherwise valid SQL to become
-     * invalid. It is especially important to be aware of this, as escape
-     * processing is set true by default for Statement objects and is always
-     * set true when producing a PreparedStatement from prepareStatement()
-     * or CallableStatement from prepareCall().
+     * </ol> <p>
      *
      * </span> <!-- end release-specific documentation -->
      *
@@ -693,39 +704,54 @@ public class jdbcConnection implements Connection {
      */
     public String nativeSQL(String sql) throws SQLException {
 
-        //boucherb@users 20030405
-        //FIXME: does not work properly for nested escapes
+        // boucherb@users 20030405
+        // FIXME: does not work properly for nested escapes
         //       e.g.  {call ...(...,{ts '...'},....)} does not work
-        //boucherb@users 20030817
-        //TESTME: First kick at the FIXME cat done.  Now test lots.
+        // boucherb@users 20030817
+        // TESTME: First kick at the FIXME cat done.  Now lots of testing
+        // and refinment
         checkClosed();
 
-        if (sql == null) {
-            return null;
-        }
-
-        if (sql.indexOf('{') == -1) {
+        // CHECKME:  Thow or return null if input is null?
+        if (sql == null || sql.length() == 0 || sql.indexOf('{') == -1) {
             return sql;
         }
 
-        boolean      changed = false;
-        int          state   = 0;
-        int          len     = sql.length();
-        int          nest    = 0;
-        StringBuffer sb      = new StringBuffer(sql.length());
+        // boolean   changed = false;
+        int          state = 0;
+        int          len   = sql.length();
+        int          nest  = 0;
+        StringBuffer sb    = new StringBuffer(sql.length());    //avoid 16 extra
+        String       msg;
 
+        //--
+        final int outside_all                         = 0;
+        final int outside_escape_inside_single_quotes = 1;
+        final int outside_escape_inside_double_quotes = 2;
+
+        //--
+        final int inside_escape                      = 3;
+        final int inside_escape_inside_single_quotes = 4;
+        final int inside_escape_inside_double_quotes = 5;
+
+        // TODO:
+        // final int inside_single_line_comment          = 6;
+        // final int inside_multi_line_comment           = 7;
+        // Better than old way for large inputs and for avoiding GC overhead;
+        // toString() reuses internal char[], reducing memory requirment
+        // and garbage items 3:2
         sb.append(sql);
 
         for (int i = 0; i < len; i++) {
-            char c = sb.charAt(i);;
+            char c = sb.charAt(i);
 
             switch (state) {
 
-                case 0 :    // normal
+                case outside_all :                            // Not inside an escape or quotes
                     if (c == '\'') {
-                        state = 1;
+                        state = outside_escape_inside_single_quotes;
                     } else if (c == '"') {
-                        state = 2;
+                        state = outside_escape_inside_double_quotes;
                     } else if (c == '{') {
                         sb.setCharAt(i++, ' ');
 
@@ -753,64 +779,47 @@ public class jdbcConnection implements Connection {
                         } else {
                             i--;
 
-                            String msg = "Unknown JDBC escape sequence: ...{"
-                                         + sb.substring(i);
+                            msg = "Unknown JDBC escape sequence: {"
+                                  + sql.substring(i);
 
                             throw new SQLException(
                                 msg, "S0010", Trace.INVALID_JDBC_ARGUMENT);
                         }
 
-                        changed = true;
-
+                        // changed = true;
                         nest++;
 
-                        state = 4;
+                        state = inside_escape;
                     }
                     break;
 
-                case 1 :    // inside ' '
-                case 5 :    // inside { } and ' '
+                case outside_escape_inside_single_quotes :    // inside ' ' only
+                case inside_escape_inside_single_quotes :     // inside { } and ' '
                     if (c == '\'') {
                         state -= 1;
                     }
                     break;
 
-                case 2 :    // inside " "
-                case 6 :    // inside { } and " "
+                case outside_escape_inside_double_quotes :    // inside " " only
+                case inside_escape_inside_double_quotes :     // inside { } and " "
                     if (c == '"') {
                         state -= 2;
                     }
                     break;
 
-// NO: 
-//                    
-// This just erases characters from '{' until a following ' ' is found
-// There is no point to this now, as we correctly detect the
-// valid JDBC escape sequences in states 0 & 4 and throw
-// if no valid escape is found
-//                case 3 :    // inside { } before whitespace
-//                    if (c == ' ') {
-//                        state = 4;
-//                    } 
-//                    else {
-//                        s[i]    = ' ';
-//                        changed = true;
-//                    }
-//                    break;
-                case 4 :    // inside { } after whitespace
+                case inside_escape :                          // inside { }
                     if (c == '\'') {
-                        state = 5;
+                        state = inside_escape_inside_single_quotes;
                     } else if (c == '"') {
-                        state = 6;
+                        state = inside_escape_inside_double_quotes;
                     } else if (c == '}') {
                         sb.setCharAt(i, ' ');
 
-                        changed = true;
-
+                        // changed = true;
                         nest--;
 
-                        state = (nest == 0) ? 0
-                                            : 4;
+                        state = (nest == 0) ? outside_all
+                                            : inside_escape;
                     } else if (c == '{') {
                         sb.setCharAt(i++, ' ');
 
@@ -836,18 +845,19 @@ public class jdbcConnection implements Connection {
                                                      7)) {
                             i += 6;
                         } else {
-                            String msg = "Unknown JDBC escape sequence: ...{"
-                                         + sb.substring(i);
+                            i--;
+
+                            msg = "Unknown JDBC escape sequence: {"
+                                  + sql.substring(i);
 
                             throw new SQLException(
                                 msg, "S0010", Trace.INVALID_JDBC_ARGUMENT);
                         }
 
-                        changed = true;
-
+                        // changed = true;
                         nest++;
 
-                        state = 4;
+                        state = inside_escape;
                     }
             }
         }
@@ -886,14 +896,14 @@ public class jdbcConnection implements Connection {
      * Up to and including HSQLDB 1.7.0, <p>
      *
      *
-     * <OL>
-     *   <LI> All rows of a result set are retrieved internally <I>
-     *   before</I> the first row can actually be fetched.<br>
+     * <ol>
+     *   <li> All rows of a result set are retrieved internally <em>
+     *   before</em> the first row can actually be fetched.<br>
      *   Therefore, a statement can be considered complete as soon as
-     *   any XXXStatement.executeXXX method returns. </LI>
-     *   <LI> Multiple result sets and output parameters are not yet
-     *   supported. </LI>
-     * </OL>
+     *   any XXXStatement.executeXXX method returns. </li>
+     *   <li> Multiple result sets and output parameters are not yet
+     *   supported. </li>
+     * </ol>
      * <p>
      *
      * (boucherb@users) </span> <!-- end release-specific
@@ -1078,8 +1088,10 @@ public class jdbcConnection implements Connection {
         closeAllStatements();
         sessionProxy.close();
 
-        sessionProxy = null;
-        isClosed     = true;
+        sessionProxy   = null;
+        rootWarning    = null;
+        connProperties = null;
+        isClosed       = true;
     }
 
     /**
@@ -1094,7 +1106,7 @@ public class jdbcConnection implements Connection {
         // closed every time.  It's a waste.  The session proxy does not
         // call back to the database across the network each time its
         // isClosed method is called, so the only time the session proxy
-        // will return true from isClosed is when we are in-process or 
+        // will return true from isClosed() is when we are in-process or 
         // internal and the SQL DISCONNECT is issued or when we call
         // sessionProxy.close() explicilty, which only happens when
         // our close() method is called.
@@ -1123,7 +1135,7 @@ public class jdbcConnection implements Connection {
      * Also, some methods may ignore the filters provided as
      * parameters, returning an unfiltered result each time. <p>
      *
-     * As of version 1.7.1, the only completely accurate
+     * As of version 1.7.1, the only reasonably accurate
      * <code>DatabaseMetaData</code>
      * methods returning <code>ResultSet</code> are {@link
      * jdbcDatabaseMetaData#getTables getTables},
@@ -1131,7 +1143,7 @@ public class jdbcConnection implements Connection {
      * {@link jdbcDatabaseMetaData#getColumns getPrimaryKeys},
      * and {@link jdbcDatabaseMetaData#getIndexInfo getIndexInfo}.
      * Also, the majority of methods returning <code>ResultSet</code>
-     * throw a <code>SQLException</code> when accessed by a non-admin
+     * throw an <code>SQLException</code> when accessed by a non-admin
      * user. In order to provide non-admin users access to these methods,
      * an admin user must explicitly grant SELECT to such users or to
      * the PUBLIC user on each HSQLDB system table corresponding to a
@@ -1210,6 +1222,11 @@ public class jdbcConnection implements Connection {
      * files to CDROM. This will reduce the space required and may
      * improve access times against the .data file which holds the
      * CACHED table data. <p>
+     *
+     * Starting with 1.7.2, an alternate approach to opimizing the
+     * .data file before creating a CDROM-based readonly is to issue
+     * the CHECKPOINT DEFRAG command before taking the database offline
+     * in preparation to burn the database files to CDROM. <p>
      *
      * </span> <!-- end release-specific documentation -->
      *
@@ -1326,11 +1343,11 @@ public class jdbcConnection implements Connection {
      */
     public void setTransactionIsolation(int level) throws SQLException {
 
+        checkClosed();
+
         if (level != Connection.TRANSACTION_READ_UNCOMMITTED) {
             throw jdbcDriver.notSupported;
         }
-
-        checkClosed();
     }
 
     /**
@@ -1392,8 +1409,12 @@ public class jdbcConnection implements Connection {
      * Up to and including 1.7.1, HSQLDB never produces warnings,
      * always returns null.<p>
      *
-     * </span> <!-- end release-specific documentation -->
+     * Starting with 1.7.2, HSQLDB produces warnings whenever a createStatement(),
+     * prepareStatement() or prepareCall() invocation requests an unsupported
+     * but defined combination of result set type, concurrency and holdability,
+     * such that another set is substituted.
      *
+     * </span> <!-- end release-specific documentation -->
      * @return the first <code>SQLWarning</code> object or <code>null</code>
      *     if there are none<p>
      * @exception SQLException if a database access error occurs or
@@ -1402,46 +1423,10 @@ public class jdbcConnection implements Connection {
      */
     public SQLWarning getWarnings() throws SQLException {
 
-        checkClosed();
+        synchronized (rootWarning_mutex) {
+            checkClosed();
 
-        return null;
-    }
-
-    /**
-     * An internal check for unsupported combinations of
-     * <code>ResultSet</code> type and concurrency. <p>
-     *
-     * Up to and including HSQLDB 1.7.0, the only supported
-     * combinations are type <code>TYPE_FORWARD_ONLY</code> or
-     * <code>TYPE_SCROLL_INSENSITIVE</code>, combined with
-     * concurrency <code>CONCUR_READ_ONLY</code>.
-     *
-     * @param type of <code>ResultSet</code>; one of
-     *     <code>ResultSet.TYPE_XXX</code>
-     * @param concurrency of <code>ResultSet</code>; one of
-     *     <code>ResultSet.CONCUR_XXX</code>
-     * @throws SQLException when the specified combination of type
-     *     and concurrency is not supported
-     */
-    static void checkTypeConcurrency(int type,
-                                     int concurrency) throws SQLException {
-
-        if ((type != jdbcResultSet.TYPE_FORWARD_ONLY && type != jdbcResultSet
-                .TYPE_SCROLL_INSENSITIVE) || concurrency != jdbcResultSet
-                    .CONCUR_READ_ONLY) {
-            throw jdbcDriver.notSupported;
-        }
-    }
-
-    /**
-     * An internal check for closed connections. <p>
-     *
-     * @throws SQLException when the connection is closed
-     */
-    void checkClosed() throws SQLException {
-
-        if (isClosed) {
-            throw jdbcDriver.sqlException(Trace.CONNECTION_IS_CLOSED);
+            return rootWarning;
         }
     }
 
@@ -1460,12 +1445,19 @@ public class jdbcConnection implements Connection {
      * Up to and including HSQLDB 1.7.0, <code>SQLWarning</code> is not
      * supported, and calls to this method are simply ignored. <p>
      *
+     * Starting with HSQLDB 1.7.2, the standard behaviour is implemented. <p>
+     *
      * </span> <!-- end release-specific documentation -->
      *
      * @exception SQLException if a database access error occurs <p>
      */
     public void clearWarnings() throws SQLException {
-        checkClosed();
+
+        synchronized (rootWarning_mutex) {
+            checkClosed();
+
+            rootWarning = null;
+        }
     }
 
     //--------------------------JDBC 2.0-----------------------------
@@ -1491,8 +1483,13 @@ public class jdbcConnection implements Connection {
      * Starting with HSQLDB 1.7.0, support is now provided for types
      * <code>TYPE_FORWARD_ONLY</code>, <I>and</I>
      * <code>TYPE_SCROLL_INSENSITIVE</code>,
-     * with concurrency <code>CONCUR_READ_ONLY</code>. Specifying
-     * any other values will throw a <code>SQLException</code>.<p>
+     * with concurrency <code>CONCUR_READ_ONLY</code>.
+     *
+     * Starting with HSQLDB 1.7.2, the behaviour regarding the type and
+     * concurrency values has changed to more closely conform to the
+     * specification.  That is, if an unsupported combination is requested,
+     * a SQLWarning is issued on this Connection and the closest supported
+     * combination is used instead. <p>
      *
      * <B>Notes:</B> <p>
      *
@@ -1526,10 +1523,13 @@ public class jdbcConnection implements Connection {
     public Statement createStatement(int type,
                                      int concurrency) throws SQLException {
 
-        checkClosed();
-        checkTypeConcurrency(type, concurrency);
+        Statement stmt;
 
-        Statement stmt = new jdbcStatement(this, type);
+        checkClosed();
+
+        type        = xlateRSType(type);
+        concurrency = xlateRSConcurrency(concurrency);
+        stmt        = new jdbcStatement(this, type);
 
         statementSet.add(stmt);
 
@@ -1550,24 +1550,15 @@ public class jdbcConnection implements Connection {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to HSQLDB 1.6.1, support was provided only for type
-     * <code>TYPE_FORWARD_ONLY</code>
-     * and concurrency <code>CONCUR_READ_ONLY</code>. <p>
+     * Starting with HSQLDB 1.7.2, the behaviour regarding the type and
+     * concurrency values has changed to more closely conform to the
+     * specification.  That is, if an unsupported combination is requested,
+     * a SQLWarning is issued on this Connection and the closest supported
+     * combination is used instead. <p>
      *
-     * Starting with HSQLDB 1.7.0, support is now provided for types
-     * <code>TYPE_FORWARD_ONLY</code>, <I>and</I>
-     * <code>TYPE_SCROLL_INSENSITIVE</code>,
-     * with concurrency <code>CONCUR_READ_ONLY</code>. Specifying
-     * any other values will throw a SQLException.<p>
-     *
-     * <B>Notes:</B> <p>
-     *
-     * Up to 1.6.1, calling this method returned <code>null</code> if the
-     * connection was already closed and a supported combination of type and
-     * concurrency was specified. This was possibly counter-intuitive
-     * to the expectation that an exception would be thrown for
-     * closed connections. Starting with 1.7.0. the behaviour is to throw a
-     * <code>SQLException</code> if the connection is closed.<p>
+     * Also starting with 1.7.2, the support for and behaviour of
+     * PreparedStatment has changed.  Please read the introductory section
+     * of the documentation for org.hsqldb.jdbcPreparedStatement.
      *
      * </span> <!-- end release-specific documentation -->
      *
@@ -1597,8 +1588,10 @@ public class jdbcConnection implements Connection {
 
         PreparedStatement stmt;
 
-        checkTypeConcurrency(type, concurrency);
         checkClosed();
+
+        type        = xlateRSType(type);
+        concurrency = xlateRSConcurrency(concurrency);
 
         try {
             stmt = new jdbcPreparedStatement(this, sql, type);
@@ -1625,47 +1618,15 @@ public class jdbcConnection implements Connection {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including HSQLDB 1.7.0, support is provided only for
-     * type <code>TYPE_FORWARD_ONLY</code> and concurrency
-     * <code>CONCUR_READ_ONLY</code>.
-     * Specifying any other values will throw a SQLException.<p>
+     * Starting with HSQLDB 1.7.2, the behaviour regarding the type,
+     * concurrency and holdability values has changed to more closely
+     * conform to the specification.  That is, if an unsupported
+     * combination is requrested, a SQLWarning is issued on this Connection
+     * and the closest supported combination is used instead. <p>
      *
-     * <B>Notes:</B> <p>
-     *
-     * Up to 1.6.1, calling this method returned null if the connection
-     * was already closed and a supported combination of type and
-     * concurrency was specified. This was possibly counter-intuitive
-     * to the expectation that an exception would be thrown for
-     * closed connections. Starting with 1.7.0. the behaviour is to throw
-     * a <code>SQLException</code> if the connection is closed.<p>
-     *
-     * Up to and including 1.7.1, each HSQLDB stored procedure returns
-     * only a single value wrapped in a <code>ResultSet</code> object. That
-     * is, HSQLDB stored procedures act very much like SQL functions,
-     * and can actually always be used in such a capacity. As such,
-     * there is really no point in supporting anything but
-     * <code>TYPE_FORWARD_ONLY</code>, since the result obtained by
-     * executing a <code>CallableStatement</code> object has
-     * always just one column and one row.  Be aware that this
-     * behaviour will change in HSQLDB 1.7., in that support will be
-     * added for Java stored procedures that return multi-column,
-     * multi-row results. At that point, support will be added for
-     * <code>CallableStatement</code> objects that return
-     * <code>TYPE_FORWARD_ONLY</code> <code>ResultSet</code> objects. <p>
-     *
-     * New to 1.7.0, HSQLDB now allows calling <code>void</code> Java
-     * methods as SQL functions and stored procedures, the result being a
-     * SQL <code>NULL</code> value or a result with one column and one row
-     * whose single field is the SQL <code>NULL</code> value, respectiviely.
-     * Previously, calling such Java methods in either context resulted in
-     * throwing a <code>SQLException</code>.
-     *
-     * Finally, up to and including 1.7.1, the returned
-     * <code>CallableStatement</code> object does not support any
-     * getXXX methods. That is, HSQLDB stored procedures do not
-     * support <code>OUT</code> or <code>IN OUT</code> parameters.
-     * This behaviour <I>may</I> change at some point in the 1.7.x series,
-     * but no decisions have yet been made. <p>
+     * Also starting with 1.7.2, the support for and behaviour of
+     * CallableStatement has changed.  Please read the introdutory section
+     * of the documentation for org.hsqldb.jdbcCallableStatement.
      *
      * </span> <!-- end release-specific documentation -->
      *
@@ -1693,8 +1654,10 @@ public class jdbcConnection implements Connection {
 
         CallableStatement stmt;
 
-        checkTypeConcurrency(resultSetType, resultSetConcurrency);
         checkClosed();
+
+        resultSetType        = xlateRSType(resultSetType);
+        resultSetConcurrency = xlateRSConcurrency(resultSetConcurrency);
 
         try {
             stmt = new jdbcCallableStatement(this, sql, resultSetType);
@@ -1732,6 +1695,9 @@ public class jdbcConnection implements Connection {
      *     for jdbcConnection)
      */
     public Map getTypeMap() throws SQLException {
+
+        checkClosed();
+
         throw jdbcDriver.notSupported;
     }
 
@@ -1764,6 +1730,9 @@ public class jdbcConnection implements Connection {
      * @see #getTypeMap
      */
     public void setTypeMap(Map map) throws SQLException {
+
+        checkClosed();
+
         throw jdbcDriver.notSupported;
     }
 
@@ -1783,10 +1752,10 @@ public class jdbcConnection implements Connection {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * Starting with HSQLDB 1.7.2, this feature is supported. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * As of 1.7.2, only HOLD_CURSORS_OVER_COMMIT is supported; supplying
+     * any other value will throw an exception. <p>
      *
      * </span> <!-- end release-specific documentation -->
      *
@@ -1804,7 +1773,13 @@ public class jdbcConnection implements Connection {
 //#ifdef JDBC3
 /*
     public void setHoldability(int holdability) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+
+        checkClosed();
+
+        if (holdability != jdbcResultSet.HOLD_CURSORS_OVER_COMMIT) {
+            String msg = "ResultSet holdability: " + holdability;
+            throw jdbcDriver.sqlException(Trace.FUNCTION_NOT_SUPPORTED, msg);
+        }
     }
 */
 
@@ -1821,10 +1796,9 @@ public class jdbcConnection implements Connection {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * Starting with HSQLDB 1.7.2, this feature is supported. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always returns HOLD_CURSORS_OVER_COMMIT. <p>
      *
      * </span> <!-- end release-specific documentation -->
      *
@@ -1839,7 +1813,10 @@ public class jdbcConnection implements Connection {
 //#ifdef JDBC3
 /*
     public int getHoldability() throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+
+        checkClosed();
+
+        return jdbcResultSet.HOLD_CURSORS_OVER_COMMIT;
     }
 */
 
@@ -1874,6 +1851,9 @@ public class jdbcConnection implements Connection {
 //#ifdef JDBC3
 /*
     public Savepoint setSavepoint() throws SQLException {
+
+        checkClosed();
+
         throw jdbcDriver.notSupportedJDBC3;
     }
 */
@@ -1911,6 +1891,9 @@ public class jdbcConnection implements Connection {
 //#ifdef JDBC3
 /*
     public Savepoint setSavepoint(String name) throws SQLException {
+
+        checkClosed();
+
         throw jdbcDriver.notSupportedJDBC3;
     }
 */
@@ -1950,6 +1933,9 @@ public class jdbcConnection implements Connection {
 //#ifdef JDBC3
 /*
     public void rollback(Savepoint savepoint) throws SQLException {
+
+        checkClosed();
+
         throw jdbcDriver.notSupportedJDBC3;
     }
 */
@@ -1987,6 +1973,9 @@ public class jdbcConnection implements Connection {
 //#ifdef JDBC3
 /*
     public void releaseSavepoint(Savepoint savepoint) throws SQLException {
+
+        checkClosed();
+
         throw jdbcDriver.notSupportedJDBC3;
     }
 */
@@ -2007,10 +1996,13 @@ public class jdbcConnection implements Connection {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * Starting with HSQLDB 1.7.2, this feature is supported. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with HSQLDB 1.7.2, the behaviour regarding the type,
+     * concurrency and holdability values has changed to more closely conform
+     * to the specification.  That is, if an unsupported combination is requested,
+     * a SQLWarning is issued on this Connection and the closest supported
+     * combination is used instead. <p>
      *
      * </span> <!-- end release-specific documentation -->
      *
@@ -2041,7 +2033,18 @@ public class jdbcConnection implements Connection {
                                      int resultSetConcurrency,
                                      int resultSetHoldability)
                                      throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        Statement stmt;
+
+        checkClosed();
+
+        resultSetType        = xlateRSType(resultSetType);
+        resultSetConcurrency = xlateRSConcurrency(resultSetConcurrency);
+        resultSetHoldability = xlateRSHoldability(resultSetHoldability);
+        stmt                 = new jdbcStatement(this, resultSetType);
+
+        statementSet.add(stmt);
+
+        return stmt;
     }
 */
 
@@ -2062,10 +2065,17 @@ public class jdbcConnection implements Connection {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * Starting with HSQLDB 1.7.2, this feature is supported. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with HSQLDB 1.7.2, the behaviour regarding the type,
+     * concurrency and holdability values has changed to more closely
+     * conform to the specification.  That is, if an unsupported
+     * combination is requested, a SQLWarning is issued on this Connection
+     * and the closest supported combination is used instead. <p>
+     *
+     * Also starting with 1.7.2, the support for and behaviour of
+     * PreparedStatment has changed.  Please read the introductory section
+     * of the documentation for org.hsqldb.jdbcPreparedStatement.
      *
      * </span> <!-- end release-specific documentation -->
      *
@@ -2099,7 +2109,24 @@ public class jdbcConnection implements Connection {
     public PreparedStatement prepareStatement(String sql, int resultSetType,
             int resultSetConcurrency,
             int resultSetHoldability) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+
+        PreparedStatement stmt;
+
+        checkClosed();
+
+        resultSetType        = xlateRSType(resultSetType);
+        resultSetConcurrency = xlateRSConcurrency(resultSetConcurrency);
+        resultSetHoldability = xlateRSHoldability(resultSetHoldability);
+
+        try {
+            stmt = new jdbcPreparedStatement(this, sql, resultSetType);
+
+            statementSet.add(stmt);
+
+            return stmt;
+        } catch (HsqlException e) {
+            throw jdbcDriver.sqlException(e);
+        }
     }
 */
 
@@ -2119,10 +2146,17 @@ public class jdbcConnection implements Connection {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * Starting with HSQLDB 1.7.2, this feature is supported. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with HSQLDB 1.7.2, the behaviour regarding the type,
+     * concurrency and holdability values has changed to more closely
+     * conform to the specification.  That is, if an unsupported
+     * combination is requrested, a SQLWarning is issued on this Connection
+     * and the closest supported combination is used instead. <p>
+     *
+     * Also starting with 1.7.2, the support for and behaviour of
+     * CallableStatment has changed.  Please read the introdutory section
+     * of the documentation for org.hsqldb.jdbcCallableStatement.
      *
      * </span> <!-- end release-specific documentation -->
      *
@@ -2157,7 +2191,23 @@ public class jdbcConnection implements Connection {
                                          int resultSetConcurrency,
                                          int resultSetHoldability)
                                          throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        CallableStatement stmt;
+
+        checkClosed();
+
+        resultSetType        = xlateRSType(resultSetType);
+        resultSetConcurrency = xlateRSConcurrency(resultSetConcurrency);
+        resultSetHoldability = xlateRSHoldability(resultSetHoldability);
+
+        try {
+            stmt = new jdbcCallableStatement(this, sql, resultSetType);
+
+            statementSet.add(stmt);
+
+            return stmt;
+        } catch (HsqlException e) {
+            throw jdbcDriver.sqlException(e);
+        }
     }
 */
 
@@ -2193,7 +2243,7 @@ public class jdbcConnection implements Connection {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
      * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
@@ -2219,6 +2269,9 @@ public class jdbcConnection implements Connection {
 /*
     public PreparedStatement prepareStatement(String sql,
             int autoGeneratedKeys) throws SQLException {
+
+        checkClosed();
+
         throw jdbcDriver.notSupportedJDBC3;
     }
 */
@@ -2260,7 +2313,7 @@ public class jdbcConnection implements Connection {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
      * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
@@ -2283,6 +2336,9 @@ public class jdbcConnection implements Connection {
 /*
     public PreparedStatement prepareStatement(String sql,
             int columnIndexes[]) throws SQLException {
+
+        checkClosed();
+
         throw jdbcDriver.notSupportedJDBC3;
     }
 */
@@ -2324,7 +2380,7 @@ public class jdbcConnection implements Connection {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
      * Calling this method always throws a <code>SQLException</code>,
      * stating that the function is not supported. <p>
@@ -2347,6 +2403,9 @@ public class jdbcConnection implements Connection {
 /*
     public PreparedStatement prepareStatement(String sql,
             String columnNames[]) throws SQLException {
+
+        checkClosed();
+
         throw jdbcDriver.notSupportedJDBC3;
     }
 */
@@ -2450,10 +2509,12 @@ public class jdbcConnection implements Connection {
      *
      * @param c the Session requesting the construction of this
      *     Connection
-     * @exception SQLException when the specified Session is null
+     * @exception HsqlException never (reserved for future use);
      * @see Function
      */
     jdbcConnection(Session c) throws HsqlException {
+
+        // PRE: Session is non-null
         isInternal   = true;
         sessionProxy = c;
     }
@@ -2499,9 +2560,183 @@ public class jdbcConnection implements Connection {
     /**
      * Retrieves this connection's JDBC url.
      *
-     * The method is in support of the jdbcDatabaseMetaData.getURL() method.
+     * This method is in support of the jdbcDatabaseMetaData.getURL() method.
+     *
+     * @return the database connection url with which this object was
+     *      constructed
      */
-    String getURL() {
+    String getURL() throws SQLException {
+
+        checkClosed();
+
         return connProperties.getProperty("url");
+    }
+
+    /**
+     * An internal check for closed connections. <p>
+     *
+     * @throws SQLException when the connection is closed
+     */
+    void checkClosed() throws SQLException {
+
+        if (isClosed) {
+            throw jdbcDriver.sqlException(Trace.CONNECTION_IS_CLOSED);
+        }
+    }
+
+    /**
+     * Adds another SQLWarning to this Connection object's warning chain.
+     *
+     * @param w the SQLWarning to add to the chain
+     */
+    void addWarning(SQLWarning w) {
+
+        synchronized (rootWarning_mutex) {
+            if (w == null) {
+
+                // don't bother adding null warnings
+            } else if (rootWarning == null) {
+                rootWarning = w;
+            } else {
+                rootWarning.setNextWarning(w);
+            }
+        }
+    }
+
+    /**
+     * Clears the warning chain without checking if this Connection is closed.
+     */
+    void clearWarningsNoCheck() {
+
+        synchronized (rootWarning_mutex) {
+            rootWarning = null;
+        }
+    }
+
+    /**
+     * Translates <code>ResultSet</code> type, adding to the warning
+     * chain if the requested type is downgraded. <p>
+     *
+     * Up to and including HSQLDB 1.7.2,  <code>TYPE_FORWARD_ONLY</code> and
+     * <code>TYPE_SCROLL_INSENSITIVE</code> are passed through. <p>
+     *
+     * Starting with 1.7.2, while <code>TYPE_SCROLL_SENSITIVE</code> is
+     * downgraded to <code>TYPE_SCROLL_INSENSITIVE</code> and an SQLWarning is
+     * issued. <p>
+     *
+     * @param type of <code>ResultSet</code>; one of
+     *     <code>jdbcResultSet.TYPE_XXX</code>
+     * @return the actual type that will be used
+     * @throws SQLException if type is not one of the defined values
+     */
+    int xlateRSType(int type) throws SQLException {
+
+        SQLWarning w;
+        String     msg;
+
+        switch (type) {
+
+            case jdbcResultSet.TYPE_FORWARD_ONLY :
+            case jdbcResultSet.TYPE_SCROLL_INSENSITIVE : {
+                return type;
+            }
+            case jdbcResultSet.TYPE_SCROLL_SENSITIVE : {
+                msg = "TYPE_SCROLL_SENSITIVE => TYPE_SCROLL_SENSITIVE";
+                w = new SQLWarning(msg, "SOO10", Trace.INVALID_JDBC_ARGUMENT);
+
+                addWarning(w);
+
+                return jdbcResultSet.TYPE_SCROLL_INSENSITIVE;
+            }
+            default : {
+                msg = "ResultSet type: " + type;
+
+                throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT,
+                                              msg);
+            }
+        }
+    }
+
+    /**
+     * Translates <code>ResultSet</code> concurrency, adding to the warning
+     * chain if the requested concurrency is downgraded. <p>
+     *
+     * Starting with HSQLDB 1.7.2, <code>CONCUR_READ_ONLY</code> is
+     * passed through while <code>CONCUR_UPDATABLE</code> is downgraded
+     * to <code>CONCUR_READ_ONLY</code> and an SQLWarning is issued.
+     *
+     * @param concurrency of <code>ResultSet</code>; one of
+     *     <code>jdbcResultSet.CONCUR_XXX</code>
+     * @return the actual concurrency that will be used
+     * @throws SQLException if concurrency is not one of the defined values
+     */
+    int xlateRSConcurrency(int concurrency) throws SQLException {
+
+        SQLWarning w;
+        String     msg;
+
+        switch (concurrency) {
+
+            case jdbcResultSet.CONCUR_READ_ONLY : {
+                return concurrency;
+            }
+            case jdbcResultSet.CONCUR_UPDATABLE : {
+                msg = "CONCUR_UPDATABLE => CONCUR_READ_ONLY";
+                w = new SQLWarning(msg, "SOO10", Trace.INVALID_JDBC_ARGUMENT);
+
+                addWarning(w);
+
+                return jdbcResultSet.CONCUR_READ_ONLY;
+            }
+            default : {
+                msg = "ResultSet concurrency: " + concurrency;
+
+                throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT,
+                                              msg);
+            }
+        }
+    }
+
+    /**
+     * Translates <code>ResultSet</code> holdability, adding to the warning
+     * chain if the requested holdability is changed from an unsupported to
+     * a supported value. <p>
+     *
+     * Starting with HSQLDB 1.7.2, <code>HOLD_CURSORS_OVER_COMMIT</code> is
+     * passed through while <code>CLOSE_CURSORS_AT_COMMIT</code> is changed
+     * to <code>HOLD_CURSORS_OVER_COMMIT</code> and an SQLWarning is
+     * issued. <p>
+     *
+     * @param holdability of <code>ResultSet</code>; one of
+     *     <code>jdbcResultSet.HOLD_CURSORS_OVER_COMMIT</code> or
+     *     <code>jdbcResultSet.CLOSE_CURSORS_AT_COMMIT</code>
+     * @return the actual holdability that will be used
+     * @throws SQLException if holdability is not one of the defined values
+     */
+    int xlateRSHoldability(int holdability) throws SQLException {
+
+        SQLWarning w;
+        String     msg;
+
+        switch (holdability) {
+
+            case jdbcResultSet.HOLD_CURSORS_OVER_COMMIT : {
+                return holdability;
+            }
+            case jdbcResultSet.CLOSE_CURSORS_AT_COMMIT : {
+                msg = "CLOSE_CURSORS_AT_COMMIT => HOLD_CURSORS_OVER_COMMIT";
+                w = new SQLWarning(msg, "SOO10", Trace.INVALID_JDBC_ARGUMENT);
+
+                addWarning(w);
+
+                return jdbcResultSet.HOLD_CURSORS_OVER_COMMIT;
+            }
+            default : {
+                msg = "ResultSet holdability: " + holdability;
+
+                throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT,
+                                              msg);
+            }
+        }
     }
 }

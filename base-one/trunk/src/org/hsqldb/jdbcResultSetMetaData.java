@@ -150,7 +150,12 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
     private jdbcColumnMetaData[] columnMetaData;
 
     /** The number of columns in this object's parent ResultSet. */
-    private int     columnCount;
+    private int columnCount;
+
+    /**
+     * Whether to use the underlying column name or label when reporting
+     * getColumnName().
+     */
     private boolean useColumnName;
 
     /**
@@ -222,11 +227,12 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      */
     void init(Result r, HsqlProperties props) throws SQLException {
 
-        jdbcColumnMetaData cmd;
-        DITypeInfo         ti;
-        StopWatch          sw;
-        int                ditype;
-        int                ditype_sub;
+        jdbcColumnMetaData    cmd;
+        DITypeInfo            ti;
+        StopWatch             sw;
+        int                   ditype;
+        int                   ditype_sub;
+        Result.ResultMetaData rmd;
 
         if (r == null) {
             throw jdbcDriver.sqlException(
@@ -241,6 +247,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         columnCount    = r.getColumnCount();
         useColumnName  = props.isPropertyTrue("get_column_name");
         columnMetaData = new jdbcColumnMetaData[columnCount];
+        rmd            = r.metaData;
         ti             = new DITypeInfo();
 
         for (int i = 0; i < columnCount; i++) {
@@ -251,30 +258,25 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
             // above, it is not _guaranteed_ that these values
             // will be non-null.   So, it is better to do the work
             // here than have to perform checks and conversions later.
-            cmd.catalogName = r.metaData.sCatalog[i] == null ? ""
-                                                             : r.metaData
-                                                             .sCatalog[i];
-            cmd.schemaName = r.metaData.sSchema[i] == null ? ""
-                                                           : r.metaData
-                                                           .sSchema[i];
-            cmd.tableName = r.metaData.sTable[i] == null ? ""
-                                                         : r.metaData
-                                                         .sTable[i];
-            cmd.columnName = r.metaData.sName[i] == null ? ""
-                                                         : r.metaData
-                                                         .sName[i];
-            cmd.columnLabel = r.metaData.sLabel[i] == null ? ""
-                                                           : r.metaData
-                                                           .sLabel[i];
-            cmd.columnType      = r.metaData.colType[i];
+            cmd.catalogName     = rmd.sCatalog[i] == null ? ""
+                                                          : rmd.sCatalog[i];
+            cmd.schemaName      = rmd.sSchema[i] == null ? ""
+                                                         : rmd.sSchema[i];
+            cmd.tableName       = rmd.sTable[i] == null ? ""
+                                                        : rmd.sTable[i];
+            cmd.columnName      = rmd.sName[i] == null ? ""
+                                                       : rmd.sName[i];
+            cmd.columnLabel     = rmd.sLabel[i] == null ? ""
+                                                        : rmd.sLabel[i];
+            cmd.columnType      = rmd.colType[i];
             cmd.columnTypeName  = Types.getTypeString(cmd.columnType);
-            cmd.columnClassName = r.metaData.sClassName[i];
-            cmd.isWritable      = r.metaData.isWritable[i];
+            cmd.columnClassName = rmd.sClassName[i];
+            cmd.isWritable      = rmd.isWritable[i];
             cmd.isReadOnly      = !cmd.isWritable;
 
             // default: cmd.isDefinitelyWritable = false;
-            cmd.isAutoIncrement = r.metaData.isIdentity[i];
-            cmd.isNullable      = r.metaData.nullability[i];
+            cmd.isAutoIncrement = rmd.isIdentity[i];
+            cmd.isNullable      = rmd.nullability[i];
             ditype              = cmd.columnType;
 
             if (cmd.columnType == Types.VARCHAR_IGNORECASE) {

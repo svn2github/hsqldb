@@ -817,6 +817,18 @@ public class Library {
     }
 
     /**
+     * As locate but from start positionl
+     * @param search the <code>String</code> occurence to find in <code>s</code>
+     * @param s the <code>String</code> within which to find the first
+     *      occurence of <code>search</code>
+     * @return the one-based starting position of the first occurrence of
+     *      <code>search</code> within <code>s</code>, or 0 if not found
+     */
+    public static int position(String search, String s) {
+        return locate(search, s, null);
+    }
+
+    /**
      * Returns the characters of the given <code>String</code>, with the
      * leading spaces removed. Characters such as TAB are not removed.
      *
@@ -995,6 +1007,35 @@ public class Library {
 
         return i == endindex ? s
                              : s.substring(0, i + 1);
+    }
+
+    public static String trim(String s) {
+
+        if (s == null) {
+            return s;
+        }
+
+        int endindex = s.length() - 1;
+
+        for (; endindex >= 0 && s.charAt(endindex) == ' '; endindex--) {}
+
+        endindex++;
+
+        if (endindex == 0) {
+            return "";
+        }
+
+        int startindex = 0;
+
+        while (startindex < endindex && s.charAt(startindex) == ' ') {
+            startindex++;
+        }
+
+        if (startindex == 0 && endindex == s.length()) {
+            return s;
+        } else {
+            return s.substring(startindex, endindex);
+        }
     }
 
 // fredt@users 20011010 - patch 460907 by fredt - soundex
@@ -1756,6 +1797,7 @@ public class Library {
     //
     static final int isReadOnlyDatabaseFiles = 58;
     static final int day                     = 59;
+    static final int position                = 60;
 
     //
     private static final IntValueHashMap functionMap =
@@ -1804,6 +1846,7 @@ public class Library {
         functionMap.put("now", now);
         functionMap.put("octetLength", octetLength);
         functionMap.put("pi", pi);
+        functionMap.put("position", position);
         functionMap.put("quarter", quarter);
         functionMap.put("rand", rand);
         functionMap.put("rawToHex", rawToHex);
@@ -1954,13 +1997,17 @@ public class Library {
                     return ValuePool.getInt(month((Date) parms[0]));
                 }
                 case monthname : {
-                    return monthname((Date) parms[0]);
+                    return ValuePool.getString(monthname((Date) parms[0]));
                 }
                 case now : {
                     return now();
                 }
                 case octetLength : {
                     return octetLength((String) parms[0]);
+                }
+                case position : {
+                    return ValuePool.getInt(position((String) parms[0],
+                                                     (String) parms[1]));
                 }
                 case pi : {
                     return piValue;
