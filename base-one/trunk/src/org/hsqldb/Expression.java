@@ -106,10 +106,10 @@ class Expression {
 
 // --
     // operations
-    static final int NEGATE   = 9,
-                     ADD      = 10,
-                     SUBTRACT = 11,
-                     MULTIPLY = 12,
+    static final int NEGATE   = 10,
+                     ADD      = 11,
+                     SUBTRACT = 12,
+                     MULTIPLY = 13,
                      DIVIDE   = 14,
                      CONCAT   = 15;
 
@@ -165,7 +165,8 @@ class Expression {
                      ENDWHEN      = 113;
 
     // used inside brackets for system functions
-    static final int     FOR                     = 123,
+    static final int     AS                      = 122,
+                         FOR                     = 123,
                          FROM                    = 124,
                          BOTH                    = 125,
                          LEADING                 = 126,

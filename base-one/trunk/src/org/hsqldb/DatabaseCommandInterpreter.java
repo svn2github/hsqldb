@@ -702,35 +702,29 @@ class DatabaseCommandInterpreter {
      */
     private Column processCreateColumn(Table t) throws HsqlException {
 
-        boolean isIdentity;
-        boolean isPrimaryKey;
-        String  token;
+        boolean isIdentity    = false;
+        int     identityStart = 0;
+        boolean isPrimaryKey  = false;
         String  columnName;
         boolean isQuoted;
         String  typeName;
         int     type;
         String  sLen;
-        int     length;
+        int     length = 0;
         String  sScale;
-        int     scale;
-        boolean isNullable;
-        String  defaultValue;
+        int     scale        = 0;
+        boolean isNullable   = true;
+        String  defaultValue = null;
+        String  token        = tokenizer.getString();
 
-        token      = tokenizer.getString();
         columnName = token;
 
         Trace.check(!columnName.equals(Table.DEFAULT_PK),
                     Trace.COLUMN_ALREADY_EXISTS, columnName);
 
-        isQuoted     = tokenizer.wasQuotedIdentifier();
-        typeName     = tokenizer.getString();
-        type         = Types.getTypeNr(typeName);
-        isIdentity   = false;
-        isPrimaryKey = false;
-        isNullable   = true;
-        length       = 0;
-        scale        = 0;
-        defaultValue = null;
+        isQuoted = tokenizer.wasQuotedIdentifier();
+        typeName = tokenizer.getString();
+        type     = Types.getTypeNr(typeName);
 
         if (typeName.equals(Token.T_IDENTITY)) {
             isIdentity   = true;
@@ -757,12 +751,6 @@ class DatabaseCommandInterpreter {
         sLen = "";
 
         if (token.equals(Token.T_OPENBRACKET)) {
-
-            // TODO:
-            // Shouldn't we throw for types that do not
-            // allow create parameters?
-            // checkAllowsCreateParams(iType);
-            // read length
             while (true) {
                 token = tokenizer.getString();
 
@@ -783,6 +771,9 @@ class DatabaseCommandInterpreter {
             sScale = sLen.substring(index + 1, sLen.length());
             sLen   = sLen.substring(0, index);
 
+            Trace.check(Types.acceptsScaleCreateParam(type),
+                        Trace.UNEXPECTED_TOKEN);
+
             try {
                 scale = Integer.parseInt(sScale.trim());
             } catch (NumberFormatException ne) {
@@ -792,6 +783,9 @@ class DatabaseCommandInterpreter {
 
         // convert the length
         if (!org.hsqldb.lib.StringUtil.isEmpty(sLen)) {
+            Trace.check(Types.acceptsPrecisionCreateParam(type),
+                        Trace.UNEXPECTED_TOKEN);
+
             try {
                 length = Integer.parseInt(sLen.trim());
             } catch (NumberFormatException ne) {
@@ -801,6 +795,26 @@ class DatabaseCommandInterpreter {
 
         if (token.equals(Token.T_DEFAULT)) {
             defaultValue = processCreateDefaultValue(type, length);
+            token        = tokenizer.getString();
+        } else if (token.equals(Token.T_GENERATED)) {
+            tokenizer.getThis(Token.T_BY);
+            tokenizer.getThis(Token.T_DEFAULT);
+            tokenizer.getThis(Token.T_AS);
+            tokenizer.getThis(Token.T_IDENTITY);
+            tokenizer.getThis(Token.T_OPENBRACKET);
+            tokenizer.getThis(Token.T_START);
+            tokenizer.getThis(Token.T_WITH);
+
+            try {
+                identityStart = tokenizer.getInt();
+            } catch (NumberFormatException ne) {
+                throw Trace.error(Trace.UNEXPECTED_TOKEN, sLen);
+            }
+
+            tokenizer.getThis(Token.T_CLOSEBRACKET);
+
+            isIdentity   = true;
+            isPrimaryKey = true;
             token        = tokenizer.getString();
         }
 
@@ -829,8 +843,8 @@ class DatabaseCommandInterpreter {
 
         return new Column(
             database.nameManager.newHsqlName(columnName, isQuoted),
-            isNullable, type, length, scale, isIdentity, isPrimaryKey,
-            defaultValue);
+            isNullable, type, length, scale, isIdentity, identityStart,
+            isPrimaryKey, defaultValue);
     }
 
     /**

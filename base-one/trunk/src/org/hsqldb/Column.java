@@ -138,6 +138,7 @@ class Column {
     private boolean isIdentity;
     private boolean isPrimaryKey;
     String          defaultString;
+    int             identityStart;
 
     // supported JDBC types - exclude NULL and VARCHAR_IGNORECASE
     static final int numericTypes[] = {
@@ -172,7 +173,8 @@ class Column {
      * @param  defvalue    Description of the Parameter
      */
     Column(HsqlName name, boolean nullable, int type, int size, int scale,
-            boolean identity, boolean primarykey, String defstring) {
+            boolean identity, int startvalue, boolean primarykey,
+            String defstring) {
 
         columnName    = name;
         isNullable    = nullable;
@@ -180,6 +182,7 @@ class Column {
         colSize       = size;
         colScale      = scale;
         isIdentity    = identity;
+        identityStart = startvalue;
         isPrimaryKey  = primarykey;
         defaultString = defstring;
     }

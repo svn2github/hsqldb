@@ -239,6 +239,13 @@ public class Server implements HsqlSocketRequestHandler {
         props = HsqlProperties.argArrayToProps(args,
                                                ServerConstants.SC_KEY_PREFIX);
 
+        String defaultdb = props.getProperty(ServerConstants.SC_KEY_DATABASE);
+
+        if (defaultdb != null) {
+            props.setProperty(ServerConstants.SC_KEY_DATABASE + ".0",
+                              defaultdb);
+        }
+
         // Standard behaviour when started from the command line
         // is to halt the VM when the server shuts down.  This may, of
         // course, be overridden by whatever, if any, security policy

@@ -138,9 +138,10 @@ class Tokenizer {
 
         // fredt - if we add MONTH, DAY, YEAR etc. MONTH(), DAY() et al will no longer work
         String keyword[] = {
-            "AND", "ALL", "AVG", "BY", "BETWEEN", "BOTH", "CALL", "CASE",
-            "CASEWHEN", "CAST", "CONVERT", "CONCAT", "COUNT", "COALESCE",
-            "DISTINCT", "ELSE", "END", "EXISTS", "EXCEPT", "EXTRACT",       /* "FALSE",*/
+            "AS", "AND", "ALL", "AVG", "BY", "BETWEEN", "BOTH", "CALL",
+            "CASE", "CASEWHEN", "CAST", "CONVERT", "CONCAT", "COUNT",
+            "COALESCE", "DISTINCT", "ELSE", "END", "EXISTS", "EXCEPT",
+            "EXTRACT",                                                      /* "FALSE",*/
             "FOR", "FROM", "GROUP", "IF", "INTO", "IFNULL", "IS", "IN",
             "INTERSECT", "INNER", "LEADING",
 

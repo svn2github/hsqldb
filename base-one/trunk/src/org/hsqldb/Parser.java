@@ -1440,9 +1440,7 @@ class Parser {
 
                 r = readOr();
 
-                Trace.check(sToken.equals(Token.T_AS),
-                            Trace.UNEXPECTED_TOKEN, sToken);
-                read();
+                readThis(Expression.AS);
 
                 int t = Types.getTypeNr(sToken);
 
@@ -1692,6 +1690,7 @@ class Parser {
                 case Expression.LEADING :
                 case Expression.TRAILING :
                 case Expression.BOTH :
+                case Expression.AS :
                     break;            // nothing else required, iToken initialized properly
 
                 case Expression.MULTIPLY :
@@ -1773,6 +1772,7 @@ class Parser {
         tokenSet.put(Token.T_TRIM, Expression.TRIM);
         tokenSet.put(Token.T_SUBSTRING, Expression.SUBSTRING);
         tokenSet.put(Token.T_FOR, Expression.FOR);
+        tokenSet.put(Token.T_AS, Expression.AS);
         tokenSet.put("IS", Expression.IS);
         tokenSet.put("?", Expression.PARAM);
     }

@@ -59,6 +59,7 @@ class Token {
     static final String T_ALIAS                 = "ALIAS";
     static final String T_ALL                   = "ALL";
     static final String T_ALTER                 = "ALTER";
+    static final String T_ALWAYS                = "ALWAYS";
     static final String T_AS                    = "AS";
     static final String T_ASC                   = "ASC";
     static final String T_AUTOCOMMIT            = "AUTOCOMMIT";
@@ -100,6 +101,7 @@ class Token {
     static final String T_FOR                   = "FOR";
     static final String T_FOREIGN               = "FOREIGN";
     static final String T_FROM                  = "FROM";
+    static final String T_GENERATED             = "GENERATED";
     static final String T_GRANT                 = "GRANT";
     static final String T_GROUP                 = "GROUP";
     static final String T_HAVING                = "HAVING";
@@ -154,6 +156,7 @@ class Token {
     static final String T_SET                   = "SET";
     static final String T_SHUTDOWN              = "SHUTDOWN";
     static final String T_SOURCE                = "SOURCE";
+    static final String T_START                 = "START";
     static final String T_SUBSTRING             = "SUBSTRING";
     static final String T_TABLE                 = "TABLE";
     static final String T_TEMP                  = "TEMP";
@@ -175,6 +178,7 @@ class Token {
     static final String T_VIEW                  = "VIEW";
     static final String T_WHEN                  = "WHEN";
     static final String T_WHERE                 = "WHERE";
+    static final String T_WITH                  = "WITH";
     static final String T_WORK                  = "WORK";
     static final String T_WRITE_DELAY           = "WRITE_DELAY";
     static final String T_YEAR                  = "YEAR";

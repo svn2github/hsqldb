@@ -230,7 +230,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         Column   c;
 
         cn = ns.findOrCreateHsqlName(name, columnNameMap);
-        c  = new Column(cn, nullable, type, 0, 0, false, false, null);
+        c  = new Column(cn, nullable, type, 0, 0, false, 0, false, null);
 
         t.addColumn(c);
     }

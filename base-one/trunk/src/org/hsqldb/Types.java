@@ -474,7 +474,7 @@ class Types {
 
     // These values are not in table 37 of the SQL CLI 200n FCD, but some
     // are found in tables 6-9 and some are found in Annex A1:
-    // c Header File SQLCLI.H and/or addendums in other documents, 
+    // c Header File SQLCLI.H and/or addendums in other documents,
     // such as:
     // SQL 200n Part 9: Management of External Data (SQL/MED) : DATALINK
     // SQL 200n Part 14: XML-Related Specifications (SQL/XML) : XML
@@ -504,10 +504,10 @@ class Types {
     static IntKeyHashMap   typeNames;
     static IntValueHashMap javaTypeNames;
 
-//  boucherb@users - We can't handle method invocations in 
+//  boucherb@users - We can't handle method invocations in
 //                   Function.java whose number class is
 //                   narrower than the corresponding internal
-//                   wrapper    
+//                   wrapper
     private static org.hsqldb.lib.HashSet illegalParameterClasses;
 
     static {
@@ -1027,8 +1027,8 @@ class Types {
             case CHAR :
 
 // Not supported yet & would break:
-// promotesWithoutConversion & haveSameInternalRepresentation                 
-//          case CLOB : 
+// promotesWithoutConversion & haveSameInternalRepresentation
+//          case CLOB :
             case LONGVARCHAR :
             case VARCHAR :
             case VARCHAR_IGNORECASE :
@@ -1046,7 +1046,7 @@ class Types {
             case BINARY :
 
 // Not supported yet & would break:
-// promotesWithoutConversion & haveSameInternalRepresentation                
+// promotesWithoutConversion & haveSameInternalRepresentation
 //          case BLOB :
             case LONGVARBINARY :
             case VARBINARY :
@@ -1075,13 +1075,15 @@ class Types {
 
         switch (type) {
 
+// fredt - we don't support these
             case BINARY :
             case BLOB :
             case CHAR :
             case CLOB :
 
 // CHECKME:
-// I suppose we do/could, but, typically, other systems do not?             
+// I suppose we do/could, but, typically, other systems do not?
+// fredt - we don't support these
 //            case LONGVARBINARY :
 //            case LONGVARCHAR :
             case VARBINARY :

@@ -479,7 +479,7 @@ class Table {
 
         Column column =
             new Column(database.nameManager.newHsqlName(name, false), true,
-                       type, 0, 0, false, false, null);
+                       type, 0, 0, false, 0, false, null);
 
         addColumn(column);
     }
@@ -533,7 +533,7 @@ class Table {
                     .newHsqlName(result.metaData.sLabel[i], result.metaData
                         .isLabelQuoted[i]), true, result.metaData
                             .colType[i], result.metaData.colSize[i], result
-                            .metaData.colScale[i], false, false, null);
+                            .metaData.colScale[i], false, 0, false, null);
 
             addColumn(column);
         }
@@ -554,8 +554,8 @@ class Table {
             Column column = new Column(
                 database.nameManager.newHsqlName(
                     e.getAlias(), e.isAliasQuoted()), true, e.getDataType(),
-                        e.getColumnSize(), e.getColumnScale(), false, false,
-                        null);
+                        e.getColumnSize(), e.getColumnScale(), false, 0,
+                        false, null);
 
             addColumn(column);
         }
@@ -1164,7 +1164,7 @@ class Table {
 
         Column column =
             new Column(database.nameManager.newAutoName(DEFAULT_PK), false,
-                       Types.INTEGER, 0, 0, false, columns == null, null);
+                       Types.INTEGER, 0, 0, false, 0, columns == null, null);
 
         addColumn(column);
 
@@ -1211,6 +1211,10 @@ class Table {
                 // when insert or update values are processed, IDENTITY column can be null
                 colNullable[i] = column.isNullable() || column.isIdentity();
                 defaultColumnMap[i] = i;
+            }
+
+            if (column.isIdentity()) {
+                this.identitySequence.reset(column.identityStart);
             }
         }
 
