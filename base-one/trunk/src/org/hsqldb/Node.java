@@ -71,12 +71,13 @@ import java.sql.SQLException;
 import java.io.IOException;
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-// fredt@users 20020920 - path 1.7.1 by fredt - refactoring to cut mamory footprint
+// fredt@users 20020920 - path 1.7.1 - refactoring to cut mamory footprint
+// fredt@users 20021205 - path 1.7.2 - enhancements
 
 /**
  *  The parent for all AVL node implementations, features factory methods for
  *  its subclasses. Subclasses of Node vary in the way they hold
- *  references to other nodes in the AVL tree.<br>
+ *  references to other nodes in the AVL tree, or to their data.<br>
  *
  *  nNext links the Node objects belonging to different indexes for each
  *  table row. It is used solely by Row to locate the node belonging to a
@@ -87,12 +88,8 @@ import java.io.IOException;
  */
 abstract class Node {
 
-    static final int TYPE_MEMORY  = 0;
-    static final int TYPE_DISK    = 1;
-    static final int TYPE_POINTER = 2;
-    static final int NO_POS       = CachedRow.NO_POS;
+    static final int NO_POS = CachedRow.NO_POS;
     protected int    iBalance;    // currently, -2 means 'deleted'
-    protected Row    rData;
     Node             nNext;       // node of next index (nNext==null || nNext.iId=iId+1)
 
     static final Node newNode(Row r, int id, Table t) {
@@ -140,13 +137,6 @@ abstract class Node {
      */
     abstract int getKey();
 
-    /**
-     *  Used with CachedRow objects only
-     *
-     * @param  pos file offset of node
-     */
-    abstract void setKey(int pos);
-
     abstract Row getRow() throws SQLException;
 
     abstract Node getLeft() throws SQLException;
@@ -154,13 +144,6 @@ abstract class Node {
     abstract void setLeft(Node n) throws SQLException;
 
     abstract Node getRight() throws SQLException;
-
-    /**
-     *  Used with PointerNode objects only
-     *
-     * @param  pos file offset of node
-     */
-    abstract Node getRightPointer() throws SQLException;
 
     abstract void setRight(Node n) throws SQLException;
 
@@ -181,17 +164,7 @@ abstract class Node {
 
     abstract void setBalance(int b) throws SQLException;
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param x
-     *
-     * @return
-     *
-     * @throws SQLException
-     */
-    abstract boolean from() throws SQLException;
+    abstract boolean isFromLeft() throws SQLException;
 
     /**
      *  Returns the data held in the table Row for this Node

@@ -77,131 +77,25 @@ import java.io.IOException;
  *
  * @version    1.7.1
  */
-class MemoryNode extends Node {
+class MemoryNode extends BaseMemoryNode {
 
-    protected Node nLeft;
-    protected Node nRight;
-    protected Node nParent;
-
-    MemoryNode() {}
+    protected Row rData;
 
     /**
-     *  Constructor declaration
+     *  A MemoreyNode is permenently linked with the row it refers to.
      *
      * @param  r
-     * @param  id
      */
     MemoryNode(Row r) {
         rData = r;
-    }
-
-    /**
-     *  Method declaration
-     */
-    void delete() {
-        iBalance = -2;
-        nLeft    = nRight = nParent = null;
     }
 
     int getKey() {
         return 0;
     }
 
-    void setKey(int pos) {}
-
     Row getRow() throws SQLException {
         return rData;
-    }
-
-    Node getLeft() throws SQLException {
-
-        if (Trace.DOASSERT) {
-            Trace.doAssert(iBalance != -2);
-        }
-
-        return nLeft;
-    }
-
-    void setLeft(Node n) throws SQLException {
-
-        if (Trace.DOASSERT) {
-            Trace.doAssert(iBalance != -2);
-        }
-
-        nLeft = n;
-    }
-
-    Node getRight() throws SQLException {
-
-        if (Trace.DOASSERT) {
-            Trace.doAssert(iBalance != -2);
-        }
-
-        return nRight;
-    }
-
-    /**
-     *  Used with PointerNode objects only
-     *
-     * @param  pos file offset of node
-     */
-    Node getRightPointer() throws SQLException {
-        throw Trace.error(Trace.GENERAL_ERROR, "wrong method access");
-    }
-
-    void setRight(Node n) throws SQLException {
-
-        if (Trace.DOASSERT) {
-            Trace.doAssert(iBalance != -2);
-        }
-
-        nRight = n;
-    }
-
-    Node getParent() throws SQLException {
-
-        if (Trace.DOASSERT) {
-            Trace.doAssert(iBalance != -2);
-        }
-
-        return nParent;
-    }
-
-    boolean isRoot() {
-        return nParent == null;
-    }
-
-    void setParent(Node n) throws SQLException {
-
-        if (Trace.DOASSERT) {
-            Trace.doAssert(iBalance != -2);
-        }
-
-        nParent = n;
-    }
-
-    void setBalance(int b) throws SQLException {
-
-        if (Trace.DOASSERT) {
-            Trace.doAssert(iBalance != -2);
-        }
-
-        iBalance = b;
-    }
-
-    boolean from() throws SQLException {
-
-        if (this.isRoot()) {
-            return true;
-        }
-
-        if (Trace.DOASSERT) {
-            Trace.doAssert(getParent() != null);
-        }
-
-        Node parent = getParent();
-
-        return equals(parent.getLeft());
     }
 
     Object[] getData() throws SQLException {
@@ -212,23 +106,4 @@ class MemoryNode extends Node {
 
         return rData.getData();
     }
-
-    boolean equals(Node n) throws SQLException {
-
-        if (Trace.DOASSERT) {
-            Trace.doAssert(iBalance != -2);
-        }
-
-        return n == this;
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @param  out
-     * @throws  IOException
-     * @throws  SQLException
-     */
-    void write(DatabaseRowOutputInterface out)
-    throws IOException, SQLException {}
 }

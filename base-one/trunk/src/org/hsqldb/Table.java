@@ -757,7 +757,7 @@ class Table {
             Row r = null;
 
             if (p != -1) {
-                r = cCache.getRow(p, this, null);
+                r = cCache.getRow(p, this);
             }
 
             Node f = null;
@@ -905,9 +905,13 @@ class Table {
         return createIndexPrivate(colarr, index.getName(), index.isUnique());
     }
 
-/**
- * todo - memory check
- */
+    /**
+     *  Create new memory resident index. For MEMORY and TEXT tables.
+     *
+     * @param  column
+     * @param  name
+     * @param  unique
+     */
     Index createIndex(int column[], HsqlName name,
                       boolean unique) throws SQLException {
 
@@ -1258,6 +1262,7 @@ class Table {
     }
 
     protected void checkNullColumns(Object[] row) throws SQLException {
+
         for (int i = 0; i < iColumnCount; i++) {
             if (row[i] == null) {
                 Column  col    = getColumn(i);
@@ -1273,6 +1278,7 @@ class Table {
     }
 
     protected void setIdentityColumn(Object[] row) {
+
         if (iIdentityColumn != -1) {
             Number id = (Number) row[iIdentityColumn];
 
@@ -1298,26 +1304,22 @@ class Table {
      */
     void insertNoCheck(Object row[], Session c,
                        boolean log) throws SQLException {
+
         int nextId = iIdentityId;
+
         checkNullColumns(row);
         setIdentityColumn(row);
+
         Row r = Row.newRow(this, row);
 
-        try {
-            indexRow(r, true, null);
-        } catch (SQLException e ){
-            if ( cCache != null ){
-                cCache.free((CachedRow) r);
-            }
-            throw e;
-        }
+        indexRow(r);
 
         if (c != null) {
             c.setLastIdentity(iIdentityId);
             c.addTransactionInsert(this, row);
         }
 
-        if ( iIdentityId >= nextId ){
+        if (iIdentityId >= nextId) {
             iIdentityId++;
         }
 
@@ -1745,12 +1747,18 @@ class Table {
     void deleteNoCheck(Object row[], Session c,
                        boolean log) throws SQLException {
 
-        for (int i = 1; i < iIndexCount; i++) {
-            getIndex(i).delete(row, false);
+        Node node = getIndex(0).search(row);
+        Row  r    = node.getRow();
+
+        r.lockRow();
+
+        for (int i = 0; i < iIndexCount; i++) {
+            getIndex(i).delete(node);
+
+            node = r.getNextNode(node);
         }
 
-        // must delete data last
-        getIndex(0).delete(row, true);
+        r.delete();
 
         if (c != null) {
             c.addTransactionDelete(this, row);
@@ -1942,10 +1950,10 @@ class Table {
      * @return
      * @throws  SQLException
      */
-    Row getRow(int pos, Node primaryNode) throws SQLException {
+    CachedRow getRow(int pos, Node primarynode) throws SQLException {
 
         if (isCached) {
-            return (cCache.getRow(pos, this, primaryNode));
+            return cCache.getRow(pos, this);
         }
 
         return null;
@@ -1967,27 +1975,35 @@ class Table {
         }
     }
 
-    void indexRow(Row r, boolean inserted,
-                  Node primarynode) throws SQLException {
+    void indexRow(Row r) throws SQLException {
 
-        if (inserted) {
-            int i = 0;
+        r.lockRow();
 
-            try {
-                Node n = null;
+        int i = 0;
 
-                for (; i < iIndexCount; i++) {
-                    n = r.getNextNode(n);
+        try {
+            Node n = null;
 
-                    getIndex(i).insert(n);
-                }
-            } catch (SQLException e) {    // rollback insert
-                for (--i; i >= 0; i--) {
-                    getIndex(i).delete(r.getData(), i == 0);
-                }
+            for (; i < iIndexCount; i++) {
+                n = r.getNextNode(n);
 
-                throw e;                  // and throw error again
+                getIndex(i).insert(n);
             }
+
+            r.unlockRow();
+        } catch (SQLException e) {
+
+            // unique index violation - rollback insert
+            for (--i; i >= 0; i--) {
+                Node n = r.getNode(i);
+
+                getIndex(i).delete(n);
+            }
+
+            r.delete();
+            r.unlockRow();
+
+            throw e;    // and throw error again
         }
     }
 

@@ -47,6 +47,8 @@ import org.hsqldb.lib.HsqlStringBuffer;
  */
 class TextCache extends org.hsqldb.Cache {
 
+    //state of Cache
+    private boolean                isIndexingSource;
     public static final String     NL = System.getProperty("line.separator");
     private String                 fs;
     private String                 vs;
@@ -507,7 +509,11 @@ class TextCache extends org.hsqldb.Cache {
             if (complete) {
                 rowIn.setSource(buffer.toString(), pos);
 
-                r = new CachedDataRow(t, rowIn);
+                if (isIndexingSource) {
+                    r = new PointerCachedDataRow(t, rowIn);
+                } else {
+                    r = new CachedDataRow(t, rowIn);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -516,5 +522,9 @@ class TextCache extends org.hsqldb.Cache {
         }
 
         return (r);
+    }
+
+    void setSourceIndexing(boolean mode) {
+        isIndexingSource = mode;
     }
 }

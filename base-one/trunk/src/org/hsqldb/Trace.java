@@ -97,7 +97,7 @@ public class Trace extends PrintWriter {
     public static boolean       TRACE          = false;
     public static boolean       TRACESYSTEMOUT = false;
     public static final boolean STOP           = false;
-    public static final boolean DOASSERT       = false;
+    public static final boolean DOASSERT       = true;
     private static Trace        tTracer        = new Trace();
     private static String       sTrace;
     private static int          iStop                               = 0;

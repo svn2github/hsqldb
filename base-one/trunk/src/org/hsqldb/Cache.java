@@ -77,16 +77,36 @@ import org.hsqldb.lib.HsqlArrayList;
 // most changes and comments by HSB are kept unchanged
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP) - cache update
 // fredt@users 20020320 - doc 1.7.0 by boucherb@users - doc update
+// fredt@users 20021105 - patch 1.7.2 - refactoring and enhancements
 
 /**
  *
- * Handles cached tables through a .data file and memory cache.
+ * Handles cached table persistence through a .data file and memory cache.<p>
  *
- * @version    1.7.1
- * @see        Row
+ * All CACHED tables are stored in a .data file. The Cache object provides
+ * buffered access to the rows. The buffer is a linear
+ * hash index implementation. Chains of elements in the hash table buckets
+ * form a circular double-linked list of all the
+ * cached elements. This list is used for selecting modified rows that need
+ * saving to disk or to drop infrequently accessed rows to make way for new
+ * rows. Saving modified rows to disk is performed in the sequential order of
+ * the file offsets of the rows.<p>
+ *
+ * A separate linked list of free slots in the .data file is also kept. This
+ * list is formed when rows are deleted from the database, and is used for
+ * allocating space to newly created rows.<p>
+ *
+ * The algorithm for dropping rows from the cache has changed in version
+ * 1.7.2 to better reflect row usage. (fred@users)
+ *
+ * @version    1.7.2
+ * @see        CachedRow
  * @see        CacheFree
  */
 class Cache {
+
+    // cached row access counter
+    static int iCurrentAccess = 0;
 
     // pre openning fields
     private Database                 dDatabase;
@@ -118,7 +138,6 @@ class Cache {
     //
     private CachedRow        rFirst;           // must point to one of rData[]
     private CachedRow        rLastChecked;     // can be any row
-    private int              iCurrentAccess = 0;
     private static final int MAX_FREE_COUNT = 1024;
 
     //
@@ -369,58 +388,18 @@ class Cache {
     /**
      * Adds a Row to the Cache. <p>
      *
-     * A Row is added by walking the list of CacheFree
-     * objects to see if there is available space to store it,
-     * reusing space if it exists.  Otherwise , this object's cache
-     * file is grown to accomadate it.
      */
     void add(CachedRow r) throws SQLException {
 
+        if (iCacheSize >= maxCacheSize) {
+            cleanUp();
+        }
+
         setStorageSize(r);
 
-        int       rowSize = r.storageSize;
-        int       size    = rowSize;
-        CacheFree f       = fRoot;
-        CacheFree last    = null;
-        int       i       = iFreePos;
+        r.iLastAccess = iCurrentAccess++;
 
-        while (f != null) {
-            if (Trace.TRACE) {
-                Trace.stop();
-            }
-
-            // first that is long enough
-            if (f.iLength >= size) {
-                i    = f.iPos;
-                size = f.iLength - size;
-
-                if (size < 8) {
-
-                    // remove almost empty blocks
-                    if (last == null) {
-                        fRoot = f.fNext;
-                    } else {
-                        last.fNext = f.fNext;
-                    }
-
-                    iFreeCount--;
-                } else {
-                    f.iLength = size;
-                    f.iPos    += rowSize;
-                }
-
-                break;
-            }
-
-            last = f;
-            f    = f.fNext;
-        }
-
-        r.setPos(i);
-
-        if (i == iFreePos) {
-            iFreePos += size;
-        }
+        int i = setFilePos(r);
 
         // HJB-2001-06-21
         int       k      = (i >> 3) & multiplierMask;
@@ -446,6 +425,63 @@ class Cache {
 
         rData[k] = r;
         rFirst   = r;
+    }
+
+    /**
+     * Allocates file space for the row. <p>
+     *
+     * A Row is added by walking the list of CacheFree
+     * objects to see if there is available space to store it,
+     * reusing space if it exists.  Otherwise the
+     * file is grown to accommodate it.
+     */
+    int setFilePos(CachedRow r) throws SQLException {
+
+        int       rowSize = r.storageSize;
+        int       size    = rowSize;
+        CacheFree f       = fRoot;
+        CacheFree last    = null;
+        int       i       = iFreePos;
+
+        while (f != null) {
+            if (Trace.TRACE) {
+                Trace.stop();
+            }
+
+            // first that is long enough
+            if (f.iLength >= size) {
+                i    = f.iPos;
+                size = f.iLength - size;
+
+                if (size < 32) {
+
+                    // remove almost empty blocks
+                    if (last == null) {
+                        fRoot = f.fNext;
+                    } else {
+                        last.fNext = f.fNext;
+                    }
+
+                    iFreeCount--;
+                } else {
+                    f.iLength = size;
+                    f.iPos    += rowSize;
+                }
+
+                break;
+            }
+
+            last = f;
+            f    = f.fNext;
+        }
+
+        if (i == iFreePos) {
+            iFreePos += size;
+        }
+
+        r.setPos(i);
+
+        return i;
     }
 
     /**
@@ -477,7 +513,49 @@ class Cache {
      * Reads a Row object from this Cache that corresponds to the
      * (pos) file offset in .data file.
      */
-    CachedRow getRow(int pos, Table t, Node n) throws SQLException {
+    CachedRow getRow(int pos, Table t) throws SQLException {
+
+        CachedRow r = getRow(pos);
+
+        if (r != null) {
+            r.iLastAccess = iCurrentAccess++;
+
+            return r;
+        }
+
+        if (iCacheSize >= maxCacheSize) {
+            cleanUp();
+        }
+
+        //-- makeRow in text tables may change iPos because of blank lines
+        //-- row can be null at the end of csv file
+        r = makeRow(pos, t);
+
+        if (r == null) {
+            return r;
+        }
+
+        int       k      = (r.iPos >> 3) & multiplierMask;
+        CachedRow before = rData[k];
+
+        if (before == null) {
+            before = rFirst;
+        }
+
+        if (r != null) {
+            r.insert(before);
+
+            iCacheSize++;
+
+            rData[k]      = r;
+            rFirst        = r;
+            r.iLastAccess = iCurrentAccess++;
+        }
+
+        return r;
+    }
+
+    private CachedRow getRow(int pos) {
 
         // HJB-2001-06-21
         int       k     = (pos >> 3) & multiplierMask;
@@ -489,10 +567,10 @@ class Cache {
             p = r.iPos;
 
             if (p == pos) {
-                r.iLastAccess = iCurrentAccess++;
-
                 return r;
-            } else if (((p >> 3) & multiplierMask) != k) {    // HJB-2001-06-21
+            } else if (((p >> 3) & multiplierMask) != k) {
+
+                // HJB-2001-06-21 - check the row belongs to this bucket
                 break;
             }
 
@@ -503,49 +581,22 @@ class Cache {
             }
         }
 
-        if (iCacheSize == maxCacheSize) {
-            cleanUp();
-        }
-
-        CachedRow before = rData[k];
-
-        if (before == null) {
-            before = rFirst;
-        }
-
-        r = makeRow(pos, t);
-
-        if (r != null) {
-            r.insert(before);
-
-            iCacheSize++;
-
-            //-- iPos may have changed (blank lines).
-            rData[(r.iPos >> 3) & multiplierMask] = r;
-            rFirst                                = r;
-
-            t.indexRow(r, false, n);
-
-            r.iLastAccess = iCurrentAccess++;
-        }
-
-        return r;
+        return null;
     }
 
     /**
      * Reduces the number of rows held in this Cache object. <p>
      *
-     * This method is called when this Cache object grows too large. <p>
-     *
-     * Cleanup is done by checking the iLastAccess member of this
-     * object's in-memory Rows and removing those that have
-     * been least recently accessed (classic LRU algoritm).
+     * Cleanup is done by checking the accessCount of the Rows and removing
+     * some of those that have been accessed less frequently.
      *
      */
     private void cleanUp() throws SQLException {
 
         int count = 0;
         int j     = 0;
+
+        resetAccessCount();
 
         // HJB-2001-06-21
         while ((j++ < cacheLength) && (iCacheSize > maxCacheSize / 2)
@@ -566,12 +617,11 @@ class Cache {
                  *  for (int i=0;i<count;i++) { if (rWriter[i]==r) { r=null;
                  *  break; } } if (r!=null) { rWriter[count++] = r; }
                  */
-                r.iLastAccess    = iCurrentAccess;
                 rWriter[count++] = r;
             } else {
 
                 // here we can't remove roots
-                if (!r.isRoot()) {
+                if (!r.isRoot() &&!r.isLocked()) {
                     remove(r);
                 }
             }
@@ -613,12 +663,7 @@ class Cache {
      */
     protected CachedRow remove(CachedRow r) throws SQLException {
 
-/*
-        if (Trace.DOASSERT) {
-            Trace.doAssert(!r.bChanged);
-        }
-*/
-
+        // r.hasChanged() == false unless called from Cache.remove(Table)
         // make sure rLastChecked does not point to r
         if (r == rLastChecked) {
             rLastChecked = rLastChecked.rNext;
@@ -667,32 +712,50 @@ class Cache {
 
         if (rLastChecked == null) {
             rLastChecked = rFirst;
+
+            if (rLastChecked == null) {
+                return null;
+            }
         }
 
-        CachedRow r = rLastChecked;
+        CachedRow candidate = rLastChecked;
+        int       worst     = rLastChecked.iLastAccess;
 
-        if (r == null) {
-            return null;
-        }
+        rLastChecked = rLastChecked.rNext;
 
-        CachedRow candidate = r;
-        int       worst     = iCurrentAccess;
-
-        // algorithm: check the next rows and take the worst
-        for (int i = 0; i < 6; i++) {
-            int w = r.iLastAccess;
+        // algorithm: check the next 5 rows and take the worst
+        for (int i = 0; i < 5; i++) {
+            int w = rLastChecked.iLastAccess;
 
             if (w < worst) {
-                candidate = r;
+                candidate = rLastChecked;
                 worst     = w;
             }
 
-            r = r.rNext;
+            rLastChecked = rLastChecked.rNext;
         }
 
-        rLastChecked = r.rNext;
-
         return candidate;
+    }
+
+    /**
+     * Scales down all iLastAccess values to avoid negative numbers.
+     *
+     */
+    private void resetAccessCount() throws SQLException {
+
+        if (iCurrentAccess < Integer.MAX_VALUE / 2) {
+            return;
+        }
+
+        iCurrentAccess >>= 8;
+
+        int i = iCacheSize;
+
+        while (i-- > 0) {
+            rFirst.iLastAccess >>= 8;
+            rFirst             = rFirst.rNext;
+        }
     }
 
     /**

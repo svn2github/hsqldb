@@ -71,38 +71,34 @@ import java.sql.SQLException;
 import java.io.IOException;
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-// fredt@users 20020920 - path 1.7.1 by fredt - refactoring to cut mamory footprint
+// fredt@users 20020920 - path 1.7.1 - refactoring to cut mamory footprint
+// fredt@users 20021205 - path 1.7.2 - enhancements
 
 /**
- *  Cached table Node implementation.<br>
+ *  Cached table Node implementation.<p>
  *  Only integral references to left, right and parent nodes in the AVL tree
- *  are held and used as offsets to disk data.<br>
+ *  are held and used as pointers data.<p>
  *
- *  tTable is a reference to the table for this node and is used to get a
- *  linked node in the tree.<br>
  *  iId is a reference to the Index object that contains this node.<br>
- *  These fields can be eliminated in the future, by changing the
- *  method signatures to take a Table parameter from Index.java (fredt@users)
+ *  This fields can be eliminated in the future, by changing the
+ *  method signatures to take a Index parameter from Index.java (fredt@users)
  *
  *
- * @version    1.7.1
+ * @version    1.7.2
  */
 class DiskNode extends Node {
 
+    protected Row rData;
     private int   iLeft   = NO_POS;
     private int   iRight  = NO_POS;
     private int   iParent = NO_POS;
     private int   iId;    // id of Index object for this Node
-    private int   iData = NO_POS;
-    private Table tTable;
 
     DiskNode(CachedRow r, DatabaseRowInputInterface in,
              int id) throws IOException, SQLException {
 
         iId      = id;
-        tTable   = r.getTable();
         rData    = r;
-        iData    = r.iPos;
         iBalance = in.readIntData();
         iLeft    = in.readIntData();
 
@@ -128,22 +124,15 @@ class DiskNode extends Node {
     }
 
     DiskNode(CachedRow r, int id) {
-
-        iId    = id;
-        tTable = r.getTable();
-
-        if (r.iPos == CachedRow.NO_POS) {
-            rData = r;
-        } else {
-            iData = r.iPos;
-        }
+        iId   = id;
+        rData = r;
     }
 
     void delete() {
 
         iBalance = -2;
-        iLeft    = iRight = iParent = 0;
-        tTable   = null;
+
+//        iLeft    = iRight = iParent = 0;
     }
 
     int getKey() {
@@ -152,31 +141,22 @@ class DiskNode extends Node {
             return ((CachedRow) rData).iPos;
         }
 
-        return iData;
-    }
-
-    void setKey(int pos) {
-        iData = pos;
-        rData = null;
+        return NO_POS;
     }
 
     Row getRow() throws SQLException {
 
-        if (rData != null) {
-            return rData;
+        if (Trace.DOASSERT) {
+            Trace.doAssert(rData != null);
         }
 
-        if (iData == NO_POS) {
-            return null;
-        }
-
-        return tTable.getRow(iData, null);
+        return rData;
     }
 
     private Node findNode(int pos) throws SQLException {
 
         Node ret = null;
-        Row  r   = tTable.getRow(pos, null);
+        Row  r   = ((CachedRow) rData).getTable().getRow(pos, null);
 
         if (r != null) {
             ret = r.getNode(iId);
@@ -192,10 +172,10 @@ class DiskNode extends Node {
         }
 
         if (iLeft == NO_POS) {
-            return (null);
+            return null;
         }
 
-        return (findNode(iLeft));
+        return findNode(iLeft);
     }
 
     void setLeft(Node n) throws SQLException {
@@ -204,7 +184,7 @@ class DiskNode extends Node {
             Trace.doAssert(iBalance != -2);
         }
 
-        ((CachedRow) getRow()).changed();
+        ((CachedRow) rData).changed();
 
         iLeft = NO_POS;
 
@@ -223,16 +203,7 @@ class DiskNode extends Node {
             return null;
         }
 
-        return (findNode(iRight));
-    }
-
-    /**
-     *  Used with PointerNode objects only
-     *
-     * @param  pos file offset of node
-     */
-    Node getRightPointer() throws SQLException {
-        throw Trace.error(Trace.GENERAL_ERROR, "wrong method access");
+        return findNode(iRight);
     }
 
     void setRight(Node n) throws SQLException {
@@ -241,7 +212,7 @@ class DiskNode extends Node {
             Trace.doAssert(iBalance != -2);
         }
 
-        ((CachedRow) getRow()).changed();
+        ((CachedRow) rData).changed();
 
         iRight = NO_POS;
 
@@ -273,7 +244,7 @@ class DiskNode extends Node {
             Trace.doAssert(iBalance != -2);
         }
 
-        ((CachedRow) getRow()).changed();
+        ((CachedRow) rData).changed();
 
         iParent = NO_POS;
 
@@ -289,13 +260,13 @@ class DiskNode extends Node {
         }
 
         if (iBalance != b) {
-            ((CachedRow) getRow()).changed();
+            ((CachedRow) rData).changed();
 
             iBalance = b;
         }
     }
 
-    boolean from() throws SQLException {
+    boolean isFromLeft() throws SQLException {
 
         if (this.isRoot()) {
             return true;
@@ -308,7 +279,7 @@ class DiskNode extends Node {
         DiskNode parent = (DiskNode) getParent();
 
         if (parent.iLeft != Node.NO_POS) {
-            return (getKey() == parent.iLeft);
+            return getKey() == parent.iLeft;
         } else {
             return equals(parent.getLeft());
         }
@@ -320,7 +291,7 @@ class DiskNode extends Node {
             Trace.doAssert(iBalance != -2);
         }
 
-        return getRow().getData();
+        return rData.getData();
     }
 
     boolean equals(Node n) throws SQLException {

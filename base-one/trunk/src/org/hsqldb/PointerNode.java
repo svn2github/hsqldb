@@ -72,81 +72,52 @@ import java.io.IOException;
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // fredt@users 20020920 - path 1.7.1 - refactoring to cut mamory footprint
+// fredt@users 20021205 - path 1.7.2 - enhancements
 
 /**
- *  Text table node implementation.<br>
+ *  Text table node implementation.<p>
  *  Nodes for the AVL tree are all built and kept in memory while the actual
- *  row data is accessed through TextCache from disk.<br>
- *  This extends MemoryNode by maintaining a disk based offset for the
- *  Row data. (fredt@users)
+ *  row data is accessed through TextCache from disk.<p>
+ *  This differs from MemoryNode by maintaining an integral pointer for the
+ *  Row data instead of a Java reference. (fredt@users)
  *
- * @version    1.7.1
+ * @version    1.7.2
  */
-class PointerNode extends MemoryNode {
+class PointerNode extends BaseMemoryNode {
 
-    private int   iId;     // id of Index for this Node
-    private int   iData = NO_POS;
+    int           iData = NO_POS;
     private Table tTable;
-    Node          nKey;    // node of key / primary index for this row
+    private Node  nPrimary;    // node of key / primary index for this row
 
     PointerNode(CachedRow r, int id) {
 
-        iId    = id;
-        tTable = r.getTable();
-
-        if (r.iPos == CachedRow.NO_POS) {
-            rData = r;
-        } else {
-            iData = r.iPos;
-        }
-
-        nKey = r.nPrimaryNode;
+        tTable   = r.getTable();
+        iData    = r.iPos;
+        nPrimary = r.nPrimaryNode == null ? this
+                                          : r.nPrimaryNode;
     }
 
     void delete() {
 
-        iBalance = -2;
-        nLeft    = nRight = nParent = null;
+        super.delete();
+
+        nPrimary = null;
         tTable   = null;
     }
 
     int getKey() {
-
-        if (rData != null) {
-            return ((CachedRow) rData).iPos;
-        }
-
         return iData;
     }
 
-    void setKey(int pos) {
-        iData = pos;
-        rData = null;
-    }
-
     Row getRow() throws SQLException {
-
-        if (rData != null) {
-            return rData;
-        }
 
         if (iData == NO_POS) {
             return null;
         }
 
-        return tTable.getRow(iData, nKey);
-    }
+        CachedRow r = tTable.getRow(iData, nPrimary);
 
-    private Node findNode(int pos) throws SQLException {
-
-        Node ret = null;
-        Row  r   = tTable.getRow(pos, nKey);
-
-        if (r != null) {
-            ret = r.getNode(iId);
-        }
-
-        return ret;
+        return r;
     }
 
     Object[] getData() throws SQLException {
@@ -156,21 +127,5 @@ class PointerNode extends MemoryNode {
         }
 
         return getRow().getData();
-    }
-
-    boolean equals(Node n) throws SQLException {
-
-        if (Trace.DOASSERT) {
-            Trace.doAssert(iBalance != -2);
-
-            if (n != this) {
-                Trace.doAssert((getKey() == NO_POS) || (n == null)
-                               || (n.getKey() != getKey()));
-            } else {
-                Trace.doAssert(n.getKey() == getKey());
-            }
-        }
-
-        return n == this;
     }
 }

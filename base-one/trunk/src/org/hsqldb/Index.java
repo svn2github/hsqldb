@@ -69,15 +69,21 @@ package org.hsqldb;
 
 import java.sql.SQLException;
 
+// fredt@users 20020221 - patch 513005 by sqlbob@users - corrections
 // fredt@users 20020225 - patch 1.7.0 - cascading deletes
 // a number of changes to support this feature
 // tony_lai@users 20020820 - patch 595052 - better error message
+// fredt@users 20021205 - patch 1.7.2 - changes to method signature
 
 /**
- * Index class declaration
+ * Implementation of an AVL tree with parent pointers in nodes. Subclasses
+ * of Node implement the tree node objects for memory or disk storage. An
+ * Index has a root Node that is linked with other nodes using Java Object
+ * references or file pointers, depending on Node implementation.<p>
+ * An Index object also holds information on table columns (in the form of int
+ * indexes) that are covered by it.(fredt@users)
  *
- *
- * @version 1.7.0
+ * @version 1.7.2
  */
 class Index {
 
@@ -88,7 +94,6 @@ class Index {
 
     // fields
     private HsqlName indexName;
-//    private Table    table;
     private int      iFields;
     private int      iColumn[];
     private int      iType[];
@@ -110,7 +115,6 @@ class Index {
             boolean unique, int visibleColumns) {
 
         indexName           = name;
-//        this.table          = table;
         iFields             = column.length;
         iColumn             = column;
         iType               = type;
@@ -229,7 +233,7 @@ class Index {
         Object  data[]  = i.getData();
         Node    n       = root,
                 x       = n;
-        boolean way     = true;
+        boolean isleft  = true;
         int     compare = -1;
 
         while (true) {
@@ -244,47 +248,37 @@ class Index {
                     return;
                 }
 
-                set(x, way, i);
+                set(x, isleft, i);
 
                 break;
             }
 
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
             Object nData[] = n.getData();
-
-            if (data == nData) {
-                set(x, way, i);
-
-                break;
-            }
 
             compare = compareRow(data, nData);
 
-// tony.lai@users - patch 595052
             if (compare == 0) {
                 throw Trace.error(Trace.VIOLATION_OF_UNIQUE_INDEX,
                                   indexName.name);
             }
 
-            way = compare < 0;
-            x   = n;
-            n   = child(x, way);
+            isleft = compare < 0;
+            x      = n;
+            n      = child(x, isleft);
         }
 
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-        balance(x, way);
+        balance(x, isleft);
     }
 
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-    private void balance(Node x, boolean way) throws SQLException {
+    private void balance(Node x, boolean isleft) throws SQLException {
 
         while (true) {
             if (Trace.STOP) {
                 Trace.stop();
             }
 
-            int sign = way ? 1
-                           : -1;
+            int sign = isleft ? 1
+                              : -1;
 
             switch (x.getBalance() * sign) {
 
@@ -298,22 +292,22 @@ class Index {
                     break;
 
                 case -1 :
-                    Node l = child(x, way);
+                    Node l = child(x, isleft);
 
                     if (l.getBalance() == -sign) {
                         replace(x, l);
-                        set(x, way, child(l, !way));
-                        set(l, !way, x);
+                        set(x, isleft, child(l, !isleft));
+                        set(l, !isleft, x);
                         x.setBalance(0);
                         l.setBalance(0);
                     } else {
-                        Node r = child(l, !way);
+                        Node r = child(l, !isleft);
 
                         replace(x, r);
-                        set(l, !way, child(r, way));
-                        set(r, way, l);
-                        set(x, way, child(r, !way));
-                        set(r, !way, x);
+                        set(l, !isleft, child(r, isleft));
+                        set(r, isleft, l);
+                        set(x, isleft, child(r, !isleft));
+                        set(r, !isleft, x);
 
                         int rb = r.getBalance();
 
@@ -331,8 +325,8 @@ class Index {
                 return;
             }
 
-            way = x.from();
-            x   = x.getParent();
+            isleft = x.isFromLeft();
+            x      = x.getParent();
         }
     }
 
@@ -345,9 +339,7 @@ class Index {
      *
      * @throws SQLException
      */
-    void delete(Object row[], boolean datatoo) throws SQLException {
-
-        Node x = search(row);
+    void delete(Node x) throws SQLException {
 
         if (x == null) {
             return;
@@ -364,13 +356,23 @@ class Index {
 
             x = x.getLeft();
 
+/*
             // todo: this can be improved
+
             while (x.getRight() != null) {
                 if (Trace.STOP) {
                     Trace.stop();
                 }
 
                 x = x.getRight();
+            }
+*/
+            for (Node temp = x; (temp = temp.getRight()) != null; ) {
+                if (Trace.STOP) {
+                    Trace.stop();
+                }
+
+                x = temp;
             }
 
             // x will be replaced with n later
@@ -435,17 +437,11 @@ class Index {
             x = d;
         }
 
-        boolean way = x.from();
+        boolean isleft = x.isFromLeft();
 
         replace(x, n);
 
         n = x.getParent();
-
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-        //x.delete();
-        if (datatoo) {
-            x.getRow().delete();
-        }
 
         x.delete();
 
@@ -456,8 +452,8 @@ class Index {
 
             x = n;
 
-            int sign = way ? 1
-                           : -1;
+            int sign = isleft ? 1
+                              : -1;
 
             switch (x.getBalance() * sign) {
 
@@ -471,13 +467,13 @@ class Index {
                     return;
 
                 case 1 :
-                    Node r = child(x, !way);
+                    Node r = child(x, !isleft);
                     int  b = r.getBalance();
 
                     if (b * sign >= 0) {
                         replace(x, r);
-                        set(x, !way, child(r, way));
-                        set(r, way, x);
+                        set(x, !isleft, child(r, isleft));
+                        set(r, isleft, x);
 
                         if (b == 0) {
                             x.setBalance(sign);
@@ -491,16 +487,16 @@ class Index {
 
                         x = r;
                     } else {
-                        Node l = child(r, way);
+                        Node l = child(r, isleft);
 
                         replace(x, l);
 
                         b = l.getBalance();
 
-                        set(r, way, child(l, !way));
-                        set(l, !way, r);
-                        set(x, !way, child(l, way));
-                        set(l, way, x);
+                        set(r, isleft, child(l, !isleft));
+                        set(l, !isleft, r);
+                        set(x, !isleft, child(l, isleft));
+                        set(l, isleft, x);
                         x.setBalance((b == sign) ? -sign
                                                  : 0);
                         r.setBalance((b == -sign) ? sign
@@ -511,8 +507,8 @@ class Index {
                     }
             }
 
-            way = x.from();
-            n   = x.getParent();
+            isleft = x.isFromLeft();
+            n      = x.getParent();
         }
     }
 
@@ -581,30 +577,24 @@ class Index {
      *
      * @throws SQLException
      */
-    Node find(Object data[]) throws SQLException {
+    Node find(Object d[]) throws SQLException {
 
-        Node x = root, n;
+        Node x = root;
 
         while (x != null) {
             if (Trace.STOP) {
                 Trace.stop();
             }
 
-            int i = compareRowNonUnique(data, x.getData());
+            int c = compareRowNonUnique(d, x.getData());
 
-            if (i == 0) {
+            if (c == 0) {
                 return x;
-            } else if (i > 0) {
-                n = x.getRight();
+            } else if (c < 0) {
+                x = x.getLeft();
             } else {
-                n = x.getLeft();
+                x = x.getRight();
             }
-
-            if (n == null) {
-                return null;
-            }
-
-            x = n;
         }
 
         return null;
@@ -760,9 +750,9 @@ class Index {
      *
      * @throws SQLException
      */
-    private Node child(Node x, boolean w) throws SQLException {
-        return w ? x.getLeft()
-                 : x.getRight();
+    private Node child(Node x, boolean isleft) throws SQLException {
+        return isleft ? x.getLeft()
+                      : x.getRight();
     }
 
     /**
@@ -783,7 +773,7 @@ class Index {
                 n.setParent(null);
             }
         } else {
-            set(x.getParent(), x.from(), n);
+            set(x.getParent(), x.isFromLeft(), n);
         }
     }
 
@@ -797,9 +787,9 @@ class Index {
      *
      * @throws SQLException
      */
-    private void set(Node x, boolean w, Node n) throws SQLException {
+    private void set(Node x, boolean isleft, Node n) throws SQLException {
 
-        if (w) {
+        if (isleft) {
             x.setLeft(n);
         } else {
             x.setRight(n);
@@ -820,7 +810,7 @@ class Index {
      *
      * @throws SQLException
      */
-    private Node search(Object d[]) throws SQLException {
+    Node search(Object d[]) throws SQLException {
 
         Node x = root;
 

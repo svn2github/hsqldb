@@ -72,6 +72,7 @@ import java.sql.SQLException;
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // fredt@users 20020920 - path 1.7.1 - refactoring to cut mamory footprint
+// fredt@users 20021205 - path 1.7.2 - enhancements
 
 /**
  *  In-memory representation of a disk-based database row object with storage
@@ -90,12 +91,11 @@ class CachedRow extends Row {
     CachedRow        rLast, rNext;
     int              iPos = NO_POS;
     int              storageSize;
-    private boolean  bChanged;
+    private boolean  hasChanged;
+    boolean          isLocked;
 
+    CachedRow() {}
 
-    CachedRow(){
-
-    }
     /**
      *  Constructor declaration
      *
@@ -107,22 +107,23 @@ class CachedRow extends Row {
 
         tTable = t;
 
-        int index = t.getIndexCount();
+        int indexcount = t.getIndexCount();
 
         nPrimaryNode = Node.newNode(this, 0, t);
 
         Node n = nPrimaryNode;
 
-        for (int i = 1; i < index; i++) {
+        for (int i = 1; i < indexcount; i++) {
             n.nNext = Node.newNode(this, i, t);
             n       = n.nNext;
         }
 
-        oData    = o;
-        bChanged = true;
+        oData      = o;
+        hasChanged = true;
 
         t.putRow(this);
     }
+
     /**
      *  constructor when read from cache
      *
@@ -138,13 +139,13 @@ class CachedRow extends Row {
         iPos        = in.getPos();
         storageSize = in.getSize();
 
-        int index = t.getIndexCount();
+        int indexcount = t.getIndexCount();
 
         nPrimaryNode = Node.newNode(this, in, 0, t);
 
         Node n = nPrimaryNode;
 
-        for (int i = 1; i < index; i++) {
+        for (int i = 1; i < indexcount; i++) {
             n.nNext = Node.newNode(this, in, i, t);
             n       = n.nNext;
         }
@@ -154,25 +155,48 @@ class CachedRow extends Row {
         Trace.check(in.readIntData() == iPos, Trace.INPUTSTREAM_ERROR);
     }
 
+    /**
+     *  Method declaration
+     *
+     * @throws  SQLException
+     */
+    void delete() throws SQLException {
+
+        Record.memoryRecords++;
+
+        hasChanged = false;
+
+        tTable.removeRow(this);
+
+        rNext        = null;
+        rLast        = null;
+        tTable       = null;
+        oData        = null;
+        nPrimaryNode = null;
+    }
+
+    void lockRow() {
+        isLocked = true;
+    }
+
+    void unlockRow() {
+        isLocked = false;
+    }
+
+    boolean isLocked() {
+        return isLocked;
+    }
+
     void setPos(int pos) {
-
         iPos = pos;
-
-        Node n = nPrimaryNode;
-
-        while (n != null) {
-            n.setKey(pos);
-
-            n = n.nNext;
-        }
     }
 
     void changed() {
-        bChanged = true;
+        hasChanged = true;
     }
 
     boolean hasChanged() {
-        return (bChanged);
+        return (hasChanged);
     }
 
     /**
@@ -204,12 +228,9 @@ class CachedRow extends Row {
         }
     }
 
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-// method renamed
-
     /**
-     * Used only in Cache.java to avoid removing the row from the cache
-     *
+     * Returns true if any of the Index Nodes for this row is root node.
+     * Used only in Cache.java to avoid removing the row from the cache.
      *
      * @return
      * @throws  SQLException
@@ -262,27 +283,7 @@ class CachedRow extends Row {
         out.writeData(oData, tTable);
         out.writePos(iPos);
 
-        bChanged = false;
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @throws  SQLException
-     */
-    void delete() throws SQLException {
-
-        Record.memoryRecords++;
-
-        bChanged = false;
-
-        tTable.removeRow(this);
-
-        rNext        = null;
-        rLast        = null;
-        tTable       = null;
-        oData        = null;
-        nPrimaryNode = null;
+        hasChanged = false;
     }
 
     /**
@@ -301,5 +302,4 @@ class CachedRow extends Row {
 
         return rNext;
     }
-
 }

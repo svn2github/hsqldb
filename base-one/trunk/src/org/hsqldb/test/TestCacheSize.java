@@ -56,21 +56,21 @@ public class TestCacheSize {
 
     protected String url = "jdbc:hsqldb:";
 
-    protected String filepath = ".";
-//    protected String filepath = "/hsql/testcache/test";
+//    protected String filepath = ".";
+    protected String filepath = "/hsql/testcache/test";
     String           user;
     String           password;
     Statement        sStatement;
     Connection       cConnection;
-    boolean          indexZip        = false;
+    boolean          indexZip        = true;
     boolean          indexLastName   = false;
     boolean          addForeignKey   = false;
     boolean          refIntegrity    = false;
     boolean          createTempTable = false;
 
     // introduces fragmentation to the .data file
-    boolean deleteWhileInsert         = false;
-    int     deleteWhileInsertInterval = 100000;
+    boolean deleteWhileInsert         = true;
+    int     deleteWhileInsertInterval = 10000;
 
     protected void setUp() {
 
@@ -116,7 +116,7 @@ public class TestCacheSize {
      */
     public void testFillUp() {
 
-        int    bigrows   = 100000;
+        int    bigrows   = 200000;
         int    smallrows = 0xfff;
         double value     = 0;
         String ddl1 = "DROP TABLE test IF EXISTS;"
@@ -290,6 +290,7 @@ public class TestCacheSize {
         test.setUp();
         test.testFillUp();
         test.tearDown();
+
 //        test.checkResults();
     }
 }

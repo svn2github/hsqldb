@@ -37,65 +37,28 @@ import java.sql.SQLException;
 // fredt@users 20021205 - path 1.7.2 - enhancements
 
 /**
- * Implementation of rows for tables with memory resident indexes and
- * disk-based data, such as TEXT tables.<p>
+ * Variation on CachedDataRow used while reading the data source the first
+ * time to build the memory index. The extra nextPos field is used here.
+ * Subsequently, CachedDataRow instances are created, without the extra field.
  *
  * @version 1.7.2
  */
-class CachedDataRow extends CachedRow {
+class PointerCachedDataRow extends CachedDataRow {
+
+    int nextPos = NO_POS;
 
     /**
-     *  Constructor for new rows
-     *
-     * @param  t
-     * @param  o
-     * @exception  SQLException  Description of the Exception
-     */
-    CachedDataRow(Table t, Object o[]) throws SQLException {
-
-        super(t, o);
-
-        Node n = nPrimaryNode;
-
-        while (n != null) {
-            ((PointerNode) n).iData = iPos;
-            n                       = n.nNext;
-        }
-    }
-
-    /**
-     *  constructor when read from cache
+     *  constructor used when read from the data source (CSV) file
      *
      * @param  t
      * @param  in
-     * @exception  IOException   Description of the Exception
-     * @exception  SQLException  Description of the Exception
      */
-    CachedDataRow(Table t,
-                  DatabaseRowInputInterface in)
-                  throws IOException, SQLException {
+    PointerCachedDataRow(Table t,
+                         DatabaseRowInputInterface in)
+                         throws IOException, SQLException {
 
-        tTable      = t;
-        iPos        = in.getPos();
-        storageSize = in.getSize();
-        oData       = in.readData(tTable.getColumnTypes());
-    }
+        super(t, in);
 
-    void setNewNodes() {
-
-        int index = tTable.getIndexCount();
-
-        nPrimaryNode = Node.newNode(this, 0, tTable);
-
-        Node n = nPrimaryNode;
-
-        for (int i = 1; i < index; i++) {
-            n.nNext = Node.newNode(this, i, tTable);
-            n       = n.nNext;
-        }
-    }
-
-    void setPrimaryNode(Node primary) {
-        nPrimaryNode = primary;
+        nextPos = in.getNextPos();
     }
 }

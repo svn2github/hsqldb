@@ -67,135 +67,121 @@
 
 package org.hsqldb;
 
-import java.io.IOException;
 import java.sql.SQLException;
+import java.io.IOException;
 
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-// fredt@users 20020920 - patch 1.7.1 - refactoring to cut mamory footprint
+// fredt@users 20021205 - path 1.7.2 - enhancements
 
 /**
- * Base class for a database row object implementing rows for
- * memory resident tables and TEXT tables.<p>
+ *  Common MEMORY and TEXT table node implementation.
  *
- * A Row object references a linked list consisting of Node objects
- * (one Node per index on the table), and an Object[] containing references
- * to the field values for the row.
- *
- * Subclass CachedRow implements rows for CACHED tables.
- *
- * @version 1.7.1
+ * @version    1.7.2
  */
-class Row {
+abstract class BaseMemoryNode extends Node {
 
-    protected Object oData[];
-    protected Node   nPrimaryNode;
+    protected Node nLeft;
+    protected Node nRight;
+    protected Node nParent;
 
-    /**
-     *  Factory method instantiates a Row based on table type.
-     */
-    static Row newRow(Table t, Object o[]) throws SQLException {
+    void delete() {
 
-        if (t.isText()) {
-            return new CachedDataRow(t, o);
-        } else if (t.isCached()) {
-            return new CachedRow(t, o);
-        } else {
-            return new Row(t, o);
-        }
+        iBalance = -2;
+        nLeft    = nRight = nParent = null;
+
+//        rData    = null;
     }
 
-    Row() {}
+    Node getLeft() throws SQLException {
 
-    /**
-     *  Constructor for memory Row
-     *
-     * @param  t
-     * @param  o
-     * @exception  SQLException  Description of the Exception
-     */
-    Row(Table t, Object o[]) throws SQLException {
-
-        int index = t.getIndexCount();
-
-        nPrimaryNode = Node.newNode(this, 0, t);
-
-        Node n = nPrimaryNode;
-
-        for (int i = 1; i < index; i++) {
-            n.nNext = Node.newNode(this, i, t);
-            n       = n.nNext;
+        if (Trace.DOASSERT) {
+            Trace.doAssert(iBalance != -2);
         }
 
-        oData = o;
+        return nLeft;
     }
 
-/*
-    void setPrimaryNode(Node primary) {
-        nPrimaryNode = primary;
-    }
-*/
+    void setLeft(Node n) throws SQLException {
 
-    /**
-     * Get the node for a given index.
-     *
-     * @param  index
-     * @return the node
-     */
-    Node getNode(int index) {
-
-        Node n = nPrimaryNode;
-
-        while (index-- > 0) {
-            n = n.nNext;
+        if (Trace.DOASSERT) {
+            Trace.doAssert(iBalance != -2);
         }
 
-        return n;
+        nLeft = n;
     }
 
-    /**
-     *  Method declaration
-     *
-     * @param  n
-     * @return
-     */
-    Node getNextNode(Node n) {
+    Node getRight() throws SQLException {
 
-        if (n == null) {
-            n = nPrimaryNode;
-        } else {
-            n = n.nNext;
+        if (Trace.DOASSERT) {
+            Trace.doAssert(iBalance != -2);
         }
 
-        return (n);
+        return nRight;
     }
 
-    /**
-     *  Method declaration
-     *
-     * @return
-     */
-    Object[] getData() {
-        return oData;
+    void setRight(Node n) throws SQLException {
+
+        if (Trace.DOASSERT) {
+            Trace.doAssert(iBalance != -2);
+        }
+
+        nRight = n;
     }
 
-    /**
-     *  Method declaration
-     *
-     * @throws  SQLException
-     */
-    void delete() throws SQLException {
+    Node getParent() throws SQLException {
 
-        Record.memoryRecords++;
+        if (Trace.DOASSERT) {
+            Trace.doAssert(iBalance != -2);
+        }
 
-        oData        = null;
-        nPrimaryNode = null;
+        return nParent;
     }
 
-    void lockRow() {}
-
-    void unlockRow() {}
-
-    boolean isLocked() {
-        return false;
+    boolean isRoot() {
+        return nParent == null;
     }
+
+    void setParent(Node n) throws SQLException {
+
+        if (Trace.DOASSERT) {
+            Trace.doAssert(iBalance != -2);
+        }
+
+        nParent = n;
+    }
+
+    void setBalance(int b) throws SQLException {
+
+        if (Trace.DOASSERT) {
+            Trace.doAssert(iBalance != -2);
+        }
+
+        iBalance = b;
+    }
+
+    boolean isFromLeft() throws SQLException {
+
+        if (this.isRoot()) {
+            return true;
+        }
+
+        if (Trace.DOASSERT) {
+            Trace.doAssert(getParent() != null);
+        }
+
+        Node parent = getParent();
+
+        return equals(parent.getLeft());
+    }
+
+    boolean equals(Node n) throws SQLException {
+
+        if (Trace.DOASSERT) {
+            Trace.doAssert(iBalance != -2);
+        }
+
+        return n == this;
+    }
+
+    void write(DatabaseRowOutputInterface out)
+    throws IOException, SQLException {}
 }

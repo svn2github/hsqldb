@@ -64,7 +64,7 @@ public class TestTextTables {
     Statement        sStatement;
     Connection       cConnection;
     boolean          indexZip        = true;
-    boolean          indexId         = true;
+    boolean          indexId         = false;
     boolean          indexLastName   = false;
     boolean          addForeignKey   = false;
     boolean          refIntegrity    = false;
@@ -117,13 +117,13 @@ public class TestTextTables {
      */
     public void testFillUp() {
 
-        int    bigrows   = 100000;
+        int    bigrows   = 50000;
         int    smallrows = 0xfff;
         double value     = 0;
         String ddl1 = "DROP TABLE test IF EXISTS;"
                       + "DROP TABLE zip IF EXISTS;";
         String ddl2 = "CREATE TABLE zip( zip INT IDENTITY );";
-        String ddl3 = "CREATE TEXT TABLE test( id INT,"
+        String ddl3 = "CREATE TEXT TABLE test( id INT IDENTITY,"
                       + " firstname VARCHAR, lastname VARCHAR, "
                       + " zip INTEGER, " + " filler VARCHAR, obj OTHER ); "
                       + "SET TABLE test SOURCE \"test.csv\";";
@@ -140,9 +140,9 @@ public class TestTextTables {
         String ddl7 = "CREATE TEMP TABLE temptest( id INT,"
                       + " firstname VARCHAR, " + " lastname VARCHAR, "
                       + " zip INTEGER, " + " filler VARCHAR); ";
+
         // adding this index will slow down inserts a bit
         String ddl8 = "CREATE INDEX idx3 ON TEST (id);";
-
         String filler =
             "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ"
             + "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -214,8 +214,9 @@ public class TestTextTables {
             long startTime = System.currentTimeMillis();
 
             for (i = 0; i < bigrows; i++) {
+
                 // only without identity
-                ps.setInt(1, i);
+//                ps.setInt(1, i);
                 ps.setInt(4, randomgen.nextInt() & smallrows);
 
                 long nextrandom   = randomgen.nextLong();
@@ -313,6 +314,7 @@ public class TestTextTables {
         test.setUp();
         test.testFillUp();
         test.tearDown();
+
 //        test.checkResults();
     }
 }

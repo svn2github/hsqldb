@@ -313,7 +313,7 @@ class Log implements Runnable {
             cCache.open(bReadOnly);
         }
 
-        return (cCache);
+        return cCache;
     }
 
     /**

@@ -85,18 +85,23 @@ class TextTable extends org.hsqldb.Table {
                 cCache = dDatabase.logger.openTextCache(tableName.name,
                         source, isRdOnly, isDesc);
 
-                // all zero
-                int[] roots = new int[iIndexCount];
+                // force creation of Row objects with nextPos pointers
+                ((TextCache) cCache).setSourceIndexing(true);
 
-                setIndexRoots(roots);
-
-                // build the indexes
-                CachedDataRow row = (CachedDataRow) getRow(0, null);
+                // read and insert all the rows from the cvs file
+                PointerCachedDataRow row = (PointerCachedDataRow) getRow(0,
+                    null);
 
                 while (row != null) {
-                    row = (CachedDataRow) getRow(row.nextPos, null);
+                    insert(row);
+
+                    row = (PointerCachedDataRow) getRow(row.nextPos, null);
                 }
+
+                ((TextCache) cCache).setSourceIndexing(false);
             } catch (SQLException e) {
+                ((TextCache) cCache).setSourceIndexing(false);
+
                 if (!dataSource.equals(source) || isDesc != isReversed
                         || isRdOnly != isReadOnly) {
 
@@ -196,20 +201,23 @@ class TextTable extends org.hsqldb.Table {
         return new TextTable(dDatabase, tableName, tableType, ownerSession);
     }
 
-    void indexRow(Row r, boolean inserted,
-                  Node primarynode) throws SQLException {
+    CachedRow getRow(int pos, Node primarynode) throws SQLException {
 
-        if (inserted) {
-            super.indexRow(r, true, null);
-        } else {
-            if (primarynode == null) {
-                ((CachedDataRow) r).setNewNodes();
-                insert((CachedDataRow) r);
-            } else {
-                ((CachedDataRow) r).setPrimaryNode(primarynode);
-            }
+        CachedDataRow r = (CachedDataRow) cCache.getRow(pos, this);
+
+        if (r == null) {
+            return null;
         }
+
+        if (primarynode == null) {
+            r.setNewNodes();
+        } else {
+            r.setPrimaryNode(primarynode);
+        }
+
+        return r;
     }
+
     /**
      *  Method declaration
      *
@@ -219,14 +227,15 @@ class TextTable extends org.hsqldb.Table {
      * @throws  SQLException
      */
     private void insert(CachedDataRow r) throws SQLException {
-        Object[] row = r.getData();
-        int nextId = iIdentityId;
+
+        Object[] row    = r.getData();
+        int      nextId = iIdentityId;
+
         checkNullColumns(row);
         setIdentityColumn(row);
+        indexRow(r);
 
-        super.indexRow(r, true, null);
-
-        if ( iIdentityId >= nextId ){
+        if (iIdentityId >= nextId) {
             iIdentityId++;
         }
     }

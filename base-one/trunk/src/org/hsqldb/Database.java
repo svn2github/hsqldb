@@ -109,7 +109,7 @@ import java.util.Enumeration;
 // fredt@users 20020912 - patch 1.7.1 by fredt - drop duplicate name triggers
 // fredt@users 20020912 - patch 1.7.1 by fredt - log alter statements
 // fredt@users 20021112 - patch 1.7.2 by Nitin Chauhan - use of switch
-// rewrite of the majority of multiple if(){}else chains with switch
+// rewrite of the majority of multiple if(){}else if(){} chains with switch()
 class Database {
 
     private String                 sName;
@@ -467,7 +467,6 @@ class Database {
             Parser    p = new Parser(this, c, session);
 
 //            logger.cleanUp();
-
             if (Trace.DOASSERT) {
                 Trace.doAssert(!session.isNestedTransaction());
             }
@@ -3081,22 +3080,6 @@ class Database {
             }
         }
 
-        /**
-         *  Releases any cached data rows above the maximum set for any Cache
-         *  objects existing within the context of this logger.
-         *
-         * @throws  SQLException if there is a problem releasing cahced data
-         *      rows during the cleanup process
-         */
-         /*
-        // replace with method to flush the cache
-        void cleanUp() throws SQLException {
-
-            if (lLog != null && lLog.getCache() != null) {
-                lLog.getCache().cleanUp();
-            }
-        }
-        */
         /**
          *  Records a Log entry representing a new connection action on the
          *  specified Session object.
