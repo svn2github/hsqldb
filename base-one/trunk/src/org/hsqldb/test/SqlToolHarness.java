@@ -42,7 +42,7 @@ import java.io.FileNotFoundException;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
-// $Id: SqlToolHarness.java,v 1.1 2004/06/16 07:41:59 unsaved Exp $
+// $Id: SqlToolHarness.java,v 1.2 2004/06/16 07:46:34 unsaved Exp $
 
 /**
  * Runs SqlTool tests based upon metacommands embedded in comments in SQL 
@@ -52,15 +52,6 @@ public class SqlToolHarness {
     private static final int MAX_SQLFILE_LEN = 10240;
     private static final String SYNTAX_MSG =
         "SYNTAX:  java org.hsqldb.test.SqlToolHarness file1.sql [file2.sq...]";
-
-    static {
-        try {
-            Boolean.valueOf(false);
-        } catch(RuntimeException re) {
-            System.err.println(
-                    "*****  SqlToolHarness only works with Java 1.4! *****");
-        }
-    }
 
     /**
      * To test the SqlToolHarness class itself.
