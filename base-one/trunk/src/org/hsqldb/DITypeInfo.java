@@ -400,22 +400,22 @@ final class DITypeInfo implements DITypes {
                 return "'";
 
             case DATALINK :
-                return "{url '";
+                return "'"; // hypothetically: "{url '";
 
             case DATE :
-                return "{d '";
+                return "'"; // or JDBC escape: "{d '";
 
             case OTHER :
-                return "{o '";
+                return  "'"; // hypothetically: "{o '"; or new "pkg.cls"(...)
 
             case TIME :
-                return "{t '";
+                return  "'"; // or JDBC escape: "{t '";
 
             case TIMESTAMP :
-                return "{ts '";
+                return  "'"; // or JDBC escape: "{ts '";
 
             case XML :
-                return "{xml '";
+                return  "'"; // hypothetically: "{xml '";
 
             default :
                 return null;
@@ -447,7 +447,7 @@ final class DITypeInfo implements DITypes {
             case TIME :
             case TIMESTAMP :
             case XML :
-                return "'}";
+                return "'"; // or JDBC close escape: "'}";
 
             default :
                 return null;

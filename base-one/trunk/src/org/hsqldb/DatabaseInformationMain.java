@@ -2214,7 +2214,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             // -------------------------------------------------------------
             // extended
             // ------------------------------------------------------------
-            addColumn(t, "HSQLDB_TYPE", VARCHAR, false);    // not null
+            addColumn(t, "HSQLDB_TYPE", VARCHAR);
             addColumn(t, "READ_ONLY", BIT, false);          // not null
 
 
