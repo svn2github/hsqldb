@@ -73,7 +73,6 @@ import java.io.StringReader;
 import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashSet;
-import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.lib.StringUtil;
 import org.hsqldb.HsqlNameManager.HsqlName;
@@ -100,8 +99,12 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 // fredt@users 20030609 - support for ALTER COLUMN SET/DROP DEFAULT / RENAME TO
 class DatabaseCommandInterpreter {
 
-    protected Database database;
-    protected Session  session;
+    static final Result emptyResult = new Result(ResultConstants.UPDATECOUNT);
+    TableWorks          tableWorks  = new TableWorks(null);
+    Tokenizer           tokenizer   = new Tokenizer();
+    CompiledStatement   cs          = new CompiledStatement();
+    protected Database  database;
+    protected Session   session;
 
     /** Constructs a new DatabaseCommandInterpreter for the given Session */
     DatabaseCommandInterpreter(Session s) {
@@ -558,7 +561,8 @@ class DatabaseCommandInterpreter {
         session.commit();
         session.setScripting(!t.isTemp());
         tableWorks.setTable(t);
-        tableWorks.createIndex(indexColumns, indexHsqlName, unique);
+        tableWorks.createIndex(indexColumns, indexHsqlName, unique, false,
+                               false);
     }
 
     /**
@@ -947,19 +951,19 @@ class DatabaseCommandInterpreter {
     private HsqlArrayList processCreateConstraints(Table t,
             boolean constraint, int[] primarykeycolumn) throws HsqlException {
 
-        String         token;
-        HsqlArrayList  tcList;
-        TempConstraint tempConst;
-        HsqlName       pkHsqlName;
+        String        token;
+        HsqlArrayList tcList;
+        Constraint    tempConst;
+        HsqlName      pkHsqlName;
 
 // fredt@users 20020225 - comment
 // HSQLDB relies on primary index to be the first one defined
 // and needs original or system added primary key before any
 // non-unique index is created
         tcList = new HsqlArrayList();
-        tempConst = new TempConstraint(null, primarykeycolumn, null, null,
-                                       Constraint.MAIN, Constraint.NO_ACTION,
-                                       Constraint.NO_ACTION);
+        tempConst = new Constraint(null, primarykeycolumn, null, null,
+                                   Constraint.MAIN, Constraint.NO_ACTION,
+                                   Constraint.NO_ACTION);
 
 // tony_lai@users 20020820 - patch 595099
         pkHsqlName = null;
@@ -993,20 +997,20 @@ class DatabaseCommandInterpreter {
                     // tony_lai@users 20020820 - patch 595099
                     pkHsqlName = cname;
 
-                    int            col[] = processColumnList(t);
-                    TempConstraint mainConst;
+                    int        col[] = processColumnList(t);
+                    Constraint mainConst;
 
-                    mainConst = (TempConstraint) tcList.get(0);
+                    mainConst = (Constraint) tcList.get(0);
 
-                    if (mainConst.localCol != null) {
-                        if (!ArrayUtil.areEqual(mainConst.localCol, col,
-                                                col.length, true)) {
+                    if (mainConst.core.mainColArray != null) {
+                        if (!ArrayUtil.areEqual(mainConst.core.mainColArray,
+                                                col, col.length, true)) {
                             throw Trace.error(Trace.SECOND_PRIMARY_KEY);
                         }
                     }
 
-                    mainConst.localCol = col;
-                    mainConst.name     = pkHsqlName;
+                    mainConst.core.mainColArray = col;
+                    mainConst.constName         = pkHsqlName;
 
                     break;
                 }
@@ -1017,10 +1021,10 @@ class DatabaseCommandInterpreter {
                         cname = database.nameManager.newAutoName("CT");
                     }
 
-                    tempConst = new TempConstraint(cname, col, null, null,
-                                                   Constraint.UNIQUE,
-                                                   Constraint.NO_ACTION,
-                                                   Constraint.NO_ACTION);
+                    tempConst = new Constraint(cname, col, null, null,
+                                               Constraint.UNIQUE,
+                                               Constraint.NO_ACTION,
+                                               Constraint.NO_ACTION);
 
                     tcList.add(tempConst);
 
@@ -1031,13 +1035,13 @@ class DatabaseCommandInterpreter {
 
                     tempConst = processCreateFK(t, cname);
 
-                    if (tempConst.expCol == null) {
-                        TempConstraint mainConst =
-                            (TempConstraint) tcList.get(0);
+                    if (tempConst.core.refColArray == null) {
+                        Constraint mainConst = (Constraint) tcList.get(0);
 
-                        tempConst.expCol = mainConst.localCol;
+                        tempConst.core.refColArray =
+                            mainConst.core.mainColArray;
 
-                        if (tempConst.expCol == null) {
+                        if (tempConst.core.refColArray == null) {
                             throw Trace.error(
                                 Trace.INDEX_NOT_FOUND,
                                 Trace.DatabaseCommandInterpreter_processCreateConstraints,
@@ -1046,9 +1050,32 @@ class DatabaseCommandInterpreter {
                     }
 
                     checkFKColumnDefaults(t, tempConst);
-                    t.checkColumnsMatch(tempConst.localCol,
-                                        tempConst.expTable, tempConst.expCol);
+                    t.checkColumnsMatch(tempConst.core.mainColArray,
+                                        tempConst.core.refTable,
+                                        tempConst.core.refColArray);
                     tcList.add(tempConst);
+
+                    break;
+                }
+                case Token.CHECK : {
+                    if (cname == null) {
+                        cname = database.nameManager.newAutoName("CT");
+                    }
+
+                    tempConst = new Constraint(cname, null, null, null,
+                                               Constraint.CHECK, 0, 0);
+
+                    tokenizer.getThis(Token.T_OPENBRACKET);
+
+                    Parser parser = new Parser(database, tokenizer, session);
+                    Expression condition = parser.parseExpression();
+
+                    tempConst.core.check = condition;
+
+                    tokenizer.getThis(Token.T_CLOSEBRACKET);
+                    tcList.add(tempConst);
+
+                    break;
                 }
             }
 
@@ -1066,6 +1093,28 @@ class DatabaseCommandInterpreter {
         }
 
         return tcList;
+    }
+
+    /**
+     * Responsible for handling check constraints section of CREATE TABLE ...
+     *
+     * @param t
+     * @param constraint
+     * @param primarykeycolumn
+     * @throws HsqlException
+     * @return
+     */
+    private Expression processCreateCheckConstraint(Table t)
+    throws HsqlException {
+
+        tokenizer.getThis(Token.T_OPENBRACKET);
+
+        Parser     parser    = new Parser(database, tokenizer, session);
+        Expression condition = parser.parseExpression();
+
+        tokenizer.getThis(Token.T_CLOSEBRACKET);
+
+        return condition;
     }
 
     /**
@@ -1110,6 +1159,7 @@ class DatabaseCommandInterpreter {
                 case Token.PRIMARY :
                 case Token.FOREIGN :
                 case Token.UNIQUE :
+                case Token.CHECK :
                     constraint = true;
             }
 
@@ -1163,34 +1213,43 @@ class DatabaseCommandInterpreter {
 // also, duplicate indexes can be avoided if we choose to in the
 // future, but currently we have to accept them to stay compatible
 // with existing cached tables that include them
-            TempConstraint tempConst;
+            Constraint tempConst;
 
-            tempConst = (TempConstraint) tempConstraints.get(0);
+            tempConst = (Constraint) tempConstraints.get(0);
 
             // tony_lai@users 20020820 - patch 595099
-            t.createPrimaryKey(tempConst.name, tempConst.localCol, true);
+            t.createPrimaryKey(tempConst.constName,
+                               tempConst.core.mainColArray, true);
 
             boolean logDDL = false;
 
             for (int i = 1; i < tempConstraints.size(); i++) {
-                tempConst = (TempConstraint) tempConstraints.get(i);
+                tempConst = (Constraint) tempConstraints.get(i);
 
-                if (tempConst.type == Constraint.UNIQUE) {
+                if (tempConst.constType == Constraint.UNIQUE) {
                     tableWorks.setTable(t);
-                    tableWorks.createUniqueConstraint(tempConst.localCol,
-                                                      tempConst.name);
+                    tableWorks.createUniqueConstraint(
+                        tempConst.core.mainColArray, tempConst.constName);
 
                     t = tableWorks.getTable();
                 }
 
-                if (tempConst.type == Constraint.FOREIGN_KEY) {
+                if (tempConst.constType == Constraint.FOREIGN_KEY) {
                     tableWorks.setTable(t);
-                    tableWorks.createForeignKey(tempConst.localCol,
-                                                tempConst.expCol,
-                                                tempConst.name,
-                                                tempConst.expTable,
-                                                tempConst.deleteAction,
-                                                tempConst.updateAction);
+                    tableWorks.createForeignKey(tempConst.core.mainColArray,
+                                                tempConst.core.refColArray,
+                                                tempConst.constName,
+                                                tempConst.core.refTable,
+                                                tempConst.core.deleteAction,
+                                                tempConst.core.updateAction);
+
+                    t = tableWorks.getTable();
+                }
+
+                if (tempConst.constType == Constraint.CHECK) {
+                    tableWorks.setTable(t);
+                    tableWorks.createCheckConstraint(tempConst,
+                                                     tempConst.constName);
 
                     t = tableWorks.getTable();
                 }
@@ -1215,9 +1274,8 @@ class DatabaseCommandInterpreter {
      * @throws HsqlException
      * @return
      */
-    private TempConstraint processCreateFK(Table t,
-                                           HsqlName cname)
-                                           throws HsqlException {
+    private Constraint processCreateFK(Table t,
+                                       HsqlName cname) throws HsqlException {
 
         int[]  localcol;
         int[]  expcol;
@@ -1331,9 +1389,9 @@ class DatabaseCommandInterpreter {
             cname = database.nameManager.newAutoName("FK");
         }
 
-        return new TempConstraint(cname, localcol, expTable, expcol,
-                                  Constraint.FOREIGN_KEY, deleteAction,
-                                  updateAction);
+        return new Constraint(cname, localcol, expTable, expcol,
+                              Constraint.FOREIGN_KEY, deleteAction,
+                              updateAction);
     }
 
     /**
@@ -1827,7 +1885,9 @@ class DatabaseCommandInterpreter {
 
                 token = tokenizer.getString();
 
-                int i = ArrayUtil.find(Token.LIST_SCRIPT_FORMATS, token);
+                int i =
+                    ArrayUtil.find(DatabaseScriptWriter.LIST_SCRIPT_FORMATS,
+                                   token);
 
                 if (i == 0 || i == 1 || i == 3) {
                     database.logger.setScriptType(i);
@@ -2277,8 +2337,7 @@ class DatabaseCommandInterpreter {
     }
 
     private void checkFKColumnDefaults(Table t,
-                                       TempConstraint tc)
-                                       throws HsqlException {
+                                       Constraint tc) throws HsqlException {
 
         boolean check;
         int[]   localCol;
@@ -2286,11 +2345,11 @@ class DatabaseCommandInterpreter {
         Column  column;
         String  columnName;
 
-        check = tc.updateAction == Constraint.SET_DEFAULT;
-        check = check || tc.deleteAction == Constraint.SET_DEFAULT;
+        check = tc.core.updateAction == Constraint.SET_DEFAULT;
+        check = check || tc.core.deleteAction == Constraint.SET_DEFAULT;
 
         if (check) {
-            localCol = tc.localCol;
+            localCol = tc.core.mainColArray;
 
             for (int j = 0; j < localCol.length; j++) {
                 column = t.getColumn(localCol[j]);
@@ -2673,44 +2732,6 @@ class DatabaseCommandInterpreter {
                                    : classLoader.loadClass(fqn);
     }
 
-    static final Result emptyResult = new Result(ResultConstants.UPDATECOUNT);
-    TableWorks          tableWorks  = new TableWorks(null);
-    Tokenizer           tokenizer   = new Tokenizer();
-    CompiledStatement   cs          = new CompiledStatement();
-
-    private static class TempConstraint {
-
-        HsqlName name;
-        int[]    localCol;
-        Table    expTable;
-        int[]    expCol;
-        int      type;
-        int      deleteAction;
-        int      updateAction;
-
-        /**
-         * @param name the hsql object identifier
-         * @param localCol indicies of locally participating columns
-         * @param expTable the exporting table
-         * @param expCol indicies of exported columns
-         * @param type the type of constraint
-         * @param deleteAction the action under the contraint at delete time
-         * @param updateAction the action under the contraint at update time
-         */
-        TempConstraint(HsqlName name, int[] localCol, Table expTable,
-                       int[] expCol, int type, int deleteAction,
-                       int updateAction) {
-
-            this.name         = name;
-            this.type         = type;
-            this.localCol     = localCol;
-            this.expTable     = expTable;
-            this.expCol       = expCol;
-            this.deleteAction = deleteAction;
-            this.updateAction = updateAction;
-        }
-    }
-
     private Result processSelectInto(Select select) throws HsqlException {
 
         Table        t;
@@ -2796,14 +2817,14 @@ class DatabaseCommandInterpreter {
      */
     private void logTableDDL(Table t) throws HsqlException {
 
-        HsqlStringBuffer tableDDL;
-        String           sourceDDL;
+        StringBuffer tableDDL;
+        String       sourceDDL;
 
         if (t.isTemp()) {
             return;
         }
 
-        tableDDL = new HsqlStringBuffer();
+        tableDDL = new StringBuffer();
 
         DatabaseScript.getTableDDL(database, t, 0, null, null, tableDDL);
 
@@ -2835,7 +2856,7 @@ class DatabaseCommandInterpreter {
     private void processAlterTableAddForeignKeyConstraint(Table t,
             HsqlName n) throws HsqlException {
 
-        TempConstraint tc;
+        Constraint tc;
 
         if (n == null) {
             n = database.nameManager.newAutoName("FK");
@@ -2843,22 +2864,14 @@ class DatabaseCommandInterpreter {
 
         tc = processCreateFK(t, n);
 
-        t.checkColumnsMatch(tc.localCol, tc.expTable, tc.expCol);
-/*
-        if (tc.deleteAction == Constraint.SET_DEFAULT
-                || tc.deleteAction == Constraint.SET_NULL
-                || tc.updateAction != Constraint.NO_ACTION) {
-            throw Trace.error(
-                Trace.FOREIGN_KEY_NOT_ALLOWED,
-                Trace.DatabaseCommandInterpreter_processAlterTableAddForeignKeyConstraint,
-                null);
-        }
-*/
+        t.checkColumnsMatch(tc.core.mainColArray, tc.core.refTable,
+                            tc.core.refColArray);
         session.commit();
         tableWorks.setTable(t);
-        tableWorks.createForeignKey(tc.localCol, tc.expCol, tc.name,
-                                    tc.expTable, tc.deleteAction,
-                                    tc.updateAction);
+        tableWorks.createForeignKey(tc.core.mainColArray,
+                                    tc.core.refColArray, tc.constName,
+                                    tc.core.refTable, tc.core.deleteAction,
+                                    tc.core.updateAction);
 
         return;
     }

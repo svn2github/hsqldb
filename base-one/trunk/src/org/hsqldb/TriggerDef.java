@@ -35,7 +35,6 @@ package org.hsqldb;
 // fredt@users 20020130 - patch 1.7.0 by fredt
 // added new class as jdk 1.1 does not allow use of LinkedList
 import org.hsqldb.lib.HsqlDeque;
-import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users 20030727 - signature and other alterations
@@ -136,33 +135,34 @@ class TriggerDef extends Thread {
      *
      * @return
      */
-    public HsqlStringBuffer toBuf() {
+    public StringBuffer getDDL() {
 
-        HsqlStringBuffer a = new HsqlStringBuffer(256);
+        StringBuffer a = new StringBuffer(256);
 
-        a.append("CREATE TRIGGER ");
+        a.append(Token.T_CREATE).append(' ').append(Token.T_TRIGGER);
         a.append(name.statementName);
-        a.append(" ");
+        a.append(' ');
         a.append(when);
-        a.append(" ");
+        a.append(' ');
         a.append(operation);
-        a.append(" ON ");
+        a.append(' ').append(Token.T_ON).append(' ');
         a.append(table.getName().statementName);
 
         if (forEachRow) {
-            a.append(" FOR EACH ROW ");
+            a.append(' ').append(Token.T_FOR).append(' ').append(
+                Token.T_EACH).append(' ').append(Token.T_ROW).append(' ');
         }
 
         if (nowait) {
-            a.append(" NOWAIT ");
+            a.append(' ').append(Token.T_NOWAIT).append(' ');
         }
 
         if (maxRowsQueued != getDefaultQueueSize()) {
-            a.append(" QUEUE ");
+            a.append(' ').append(Token.T_QUEUE).append(' ');
             a.append(maxRowsQueued);    // no need for trailing space
         }
 
-        a.append(" CALL ");
+        a.append(' ').append(Token.T_CALL).append(' ');
         a.append(fire);
 
         return a;
@@ -180,19 +180,19 @@ class TriggerDef extends Thread {
 
         int indx;
 
-        if (operation.equals("INSERT")) {
+        if (operation.equals(Token.T_INSERT)) {
             indx = Trigger.INSERT_AFTER;
-        } else if (operation.equals("DELETE")) {
+        } else if (operation.equals(Token.T_DELETE)) {
             indx = Trigger.DELETE_AFTER;
-        } else if (operation.equals("UPDATE")) {
+        } else if (operation.equals(Token.T_UPDATE)) {
             indx = Trigger.UPDATE_AFTER;
         } else {
             indx = -1;
         }
 
-        if (when.equals("BEFORE")) {
+        if (when.equals(Token.T_BEFORE)) {
             indx += NUM_TRIGGER_OPS;    // number of operations
-        } else if (!when.equals("AFTER")) {
+        } else if (!when.equals(Token.T_AFTER)) {
             indx = -1;
         }
 

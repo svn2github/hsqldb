@@ -815,8 +815,7 @@ SELECT MAX(a), MAX(b) FROM t;</pre>
   for the column. The <code>IDENTITY() </code>function returns the last value inserted into any  IDENTITY column by this connection. Use <code>CALL IDENTITY(); </code>as an SQL statement to retrieve this value. If you want to use the value for a field in a child table, you can use  <code>INSERT INTO &lt;childtable&gt; VALUES (...,IDENTITY(),...); </code>Both types of call to<code> IDENTITY()</code> must be made before any additional update or insert statements are issued on the database.</p>
 <h4>HANDLING OF JAVA OBJECTS</h4>
 <p>In version 1.7.2 this support has improved and any serializable JAVA Object can be inserted directly into 
-  an OTHER column using any variation of <code>PreparedStatement.setObject()</code> methods 
-  or its appropriate <code>setXXX()</code> method.</p>
+  an OTHER column using any variation of <code>PreparedStatement.setObject()</code> methods.</p>
 <p>For comparison purposes and in indexes, any two Java Objects are considered 
   equal unless one of them is NULL.</p>
 <h4>JDBC STREAM BASED METHODS</h4>
@@ -867,7 +866,7 @@ SELECT MAX(a), MAX(b) FROM t;</pre>
   object. Server modes require additional memory for returning result sets, as they convert the full  result set into an array of bytes which is then transmitted to the client.</p>
 <p>When transactions support is enabled with SET AUTOCOMMIT OFF, lists  of all  insert, delete or update operations are  stored in memory so that they can be undone when ROLLBACK is issued. Transactions that span hundreds of modification to data will take up a lot of memory until the next COMMIT or ROLLBACK clears the list.</p>
 <p>Most JVM implementations allocate up to a maximum amount of memory (usually 64 MB by default). This amount is generally not adequate when large memory tables are used, or when the average size of rows in cached tables is larger than a few hundred bytes. The maximum amount of allocated memory can be set on the JAVA ... command line that is used for running HSQLDB. For example, with Sun JVM    version 1.3.0 the parameter -Xmx256m increases the amount to 256 MB.</p>
-<p>1.7.2 uses a fast cache for immutable objects such as Integer or String that are stored in the database. In most circumstances, this reduces the memory footprint as fewer copies of the most frequently used objects are kept in memory.</p>
+<p>1.7.2 uses a fast cache for immutable objects such as Integer or String that are stored in the database. In most circumstances, this reduces the memory footprint as fewer copies of the most frequently-used objects are kept in memory.</p>
 <h3>ISSUES WITH TRANSACTIONS</h3>
 <p>HSQLDB supports transactions at the READ_UNCOMMITTED level, also known as level 
   0 transaction isolation. This means that during the lifetime of a transaction, 
@@ -891,8 +890,7 @@ SELECT MAX(a), MAX(b) FROM t;</pre>
 <h4>DIRECT UPGRADE</h4>
 <p>Databases created with Hypersonic version 1.43 and HSQLDB 1.6x can often  be seamlessly 
   upgraded to the new version. However, there may be cases where due to data inconsistencies, 
-  the upgrade may not be so simple. The following procedure is suggested for making 
-  the upgrade in the safest possible way.</p>
+  the upgrade may not be so simple. The following procedure MAY work. If it doesn't, try the alternative upgrade procedure using the SCRIPT command.</p>
 <ol>
   <li>Make a backup of your database.</li>
   <li>Open the database using the old version of the Database Manager software. 
@@ -903,13 +901,13 @@ SELECT MAX(a), MAX(b) FROM t;</pre>
   <li>Start using the database.</li>
 </ol>
 <p>Once a database is upgraded, it can no longer be used with Hypersonic or HSQLDB 
-  1.6x.</p>
+  1.6.x, 1.7.0 or 1.7.1.</p>
 <p>The new ALTER commands allow you to improve and streamline the design of your 
   database after a successful import.</p>
 <h4>Some Potential Problems </h4>
-<p>Version 1.7.0 does not accept duplicate names for indexes.<br>
-  Version 1.7.0 does not accept duplicate names for table columns. <br>
-  Version 1.7.0 does not create the same type of index for foreign keys as previous 
+<p>Version 1.7.2 does not accept duplicate names for indexes.<br>
+  Version 1.7.2 does not accept duplicate names for table columns. <br>
+  Version 1.7.2 does not create the same type of index for foreign keys as previous 
   versions. </p>
 <p>Some of  these problems can be resolved  by editing the old database script slightly 
   to conform to the new restrictions. So long as you just rename index or column 
@@ -920,7 +918,7 @@ SELECT MAX(a), MAX(b) FROM t;</pre>
 <p>In 1.7.2 several ALTER TABLE commands are available to change the data structures and their names. However, if an old database cannot be opened due data inconsistencies, or when there is no ALTER TABLE command for the particular change, manual editing can sometimes be used.</p>
 <p>In addition to changing the names of columns or indexes in a <code>.script file</code> mentioned above, the following changes can be applied so long as they do not affect the integrity of existing data.</p>
 <p><code>CREATE UNIQUE INDEX ... </code>to<code> CREATE INDEX ... </code>and vice versa</p>
-<p> A unique index on columns of a  MEMORY tables can always be converted  into a normal index so long as it is not referenced by a foreign key from another table or the same table. A non-unique index can only be converted into a unique index if the table data for the column(s) is  unique in each row. This conversion is not allowed on CACHED tables.</p>
+<p> A unique index on columns of a  MEMORY tables can always be converted  into a normal index so long as it is not referenced by a foreign key from another table or the same table. A non-unique index can only be converted into a unique index if the table data for the column(s) is  unique in each row. This conversion is 	NOT  allowed on CACHED tables.</p>
 <p><code>NOT NULL</code></p>
 <p>A not-null constraint can always be removed. It can only be added if  the table data for the column has no null values.</p>
 <p><code>DEFAULT 'defaultvalue'</code></p>
@@ -939,14 +937,17 @@ SELECT MAX(a), MAX(b) FROM t;</pre>
 <ol>
   <li>Open the original database in the old version of DatabaseManager</li>
   <li>Issue the SCRIPT command, for example <code>SCRIPT 'newversion.script'</code> to create a script file containing a copy of the database.</li>
-  <li>You can now edit the <code>newversion.script</code> file to change any table and index definition so long as it is consistent with the data. Use the guidelines in the previous section but assume the tables are not cached. You can, for example, remove or add a PRIMARY KEY to any table in this *.script file.</li>
-  <li>Use the 1.7.2 version of DatabaseManager to open the new database, in this example <code>'newversion'</code></li>
-  <li>If there is any inconsistency in the data, the script line number is reported on the console and the opening process is aborted. Edit and correct any problems in the script before attempting to open again.</li>
+  <li>You can now edit the <code>newversion.script</code> file to change any table and index definition so long as it is consistent with the data. Use the guidelines in the previous section but assume the tables are not cached. You can, for example, remove or add a PRIMARY KEY to any table in this *.script file, including CACHED tables.</li>
+  <li>Use the 1.7.2 version of DatabaseManager to create a new database, in this example <code>'newversion' </code>in a different directory.</li>
+  <li>SHUTDOWN this database.</li>
+  <li>Copy  the <code>newversion.script</code> file from step 2 over the file of the same name for the new database created in 4.</li>
+  <li>Try to open the new database using DatabaseManager.</li>
+  <li>If there is any inconsistency in the data, the script line number is reported on the console and the opening process is aborted. Edit and correct any problems in the <code>newversion.script</code> before attempting to open again.</li>
 </ol>
 <h3>Backing Up Databases</h3>
 <p>The data for each database consists of  up to 5 files in the same directory. The endings are *.properties, *.script, *.data, *.backup and *.log These should be backed up together. The files can be backed up while the engine is running but care should be taken that a CHECKPOINT or SHUTDOWN operation does not take place during the backup. It is more efficient to perform the backup immediately after a CHECKPOINT.  The *.data file can be excluded from the backup (the *.backup file will be used to replace this file if the full backup is restored). If a backup follows a checkpoint, then the *.log file can also be excluded, limiting the significant files to *.properties, *.script, *.backup. Normal backup methods, such as archiving the files in a compressed bundle can be used.</p>
 <h4></h4>
-<p>Author: Fred Toussi - 14 July 2002 - updated 23 Aug 2003</p>
+<p>Author: Fred Toussi - 14 July 2002 - updated 15 October 2003</p>
 <p>Copyright 2002-2003 Fred Toussi. Permission is granted to distribute this document 
   without any alteration under the terms of the HSQLDB license. Additional permission 
   is granted to the HSQLDB Development Group to distribute this document with 

@@ -70,7 +70,6 @@ package org.hsqldb;
 import java.util.Stack;
 import org.hsqldb.lib.HsqlArrayHeap;
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.store.ValuePool;
 import org.hsqldb.HsqlNameManager.HsqlName;
@@ -410,6 +409,7 @@ class Parser {
         }
 
         // tony_lai@users - having support
+        // fredt - this one does not go through resolve, etc.
         if (token.equals(Token.T_HAVING)) {
             select.iHavingIndex    = vcolumn.size();
             select.havingCondition = parseExpression();
@@ -792,10 +792,10 @@ class Parser {
                 }
 
                 String sLeft = tokenizer.getPart(0, CurrentPos - TokenLength);
-                String sRight = tokenizer.getPart(NewCurPos, sLength);
-                View             v         = (View) t;
-                String           sView     = v.getStatement();
-                HsqlStringBuffer sFromView = new HsqlStringBuffer(128);
+                String       sRight = tokenizer.getPart(NewCurPos, sLength);
+                View         v         = (View) t;
+                String       sView     = v.getStatement();
+                StringBuffer sFromView = new StringBuffer(128);
 
                 sFromView.append(sLeft);
                 sFromView.append('(');
@@ -893,7 +893,7 @@ class Parser {
      * @return
      * @throws  HsqlException
      */
-    private Expression parseExpression() throws HsqlException {
+    Expression parseExpression() throws HsqlException {
 
         read();
 
@@ -1058,11 +1058,11 @@ class Parser {
         }
     }
 
-    Expression parseLikePredicate(Expression a) throws HsqlException {
+    private Expression parseLikePredicate(Expression a) throws HsqlException {
 
         read();
 
-        Expression b = readConcat();
+        Expression b = readTerm();
 
         // boucherb@users 2003-09-25 - patch 1.7.2 Alpha P
         // correct default like escape characters (i.e. the one
@@ -1099,7 +1099,8 @@ class Parser {
         return a;
     }
 
-    Expression parseBetweenPredicate(Expression a) throws HsqlException {
+    private Expression parseBetweenPredicate(Expression a)
+    throws HsqlException {
 
         read();
 
@@ -1121,7 +1122,7 @@ class Parser {
         return new Expression(Expression.AND, l, h);
     }
 
-    Expression parseInPredicate(Expression a) throws HsqlException {
+    private Expression parseInPredicate(Expression a) throws HsqlException {
 
         int type = iToken;
 
@@ -1277,7 +1278,7 @@ class Parser {
 
                 if (iToken == Expression.OPEN) {
                     boolean checkPrivs = !isParsingView();
-                    Function f = new Function(database.getAlias(name),
+                    Function f = new Function(name, database.getAlias(name),
                                               session, checkPrivs);
                     int len = f.getArgCount();
                     int i   = 0;
@@ -1621,8 +1622,9 @@ class Parser {
                 readToken();
                 readThis(Expression.FROM);
 
-                Function f = new Function(database.getAlias(name), session,
-                                          false);
+                // the name argument is DAY, MONTH etc.  - OK for now for CHECK constraints
+                Function f = new Function(name, database.getAlias(name),
+                                          session, false);
 
                 f.setArgument(0, readOr());
                 readThis(Expression.CLOSE);
@@ -1643,21 +1645,41 @@ class Parser {
                     type = Token.T_BOTH;
                 }
 
-                readThis(Expression.FROM);
+                String trimstr;
 
-                String function;
+                if (sToken.length() == 1) {
+                    trimstr = sToken;
 
-                if (type.equals(Token.T_LEADING)) {
-                    function = "org.hsqldb.Library.ltrim";
-                } else if (type.equals(Token.T_TRAILING)) {
-                    function = "org.hsqldb.Library.rtrim";
+                    read();
                 } else {
-                    function = "org.hsqldb.Library.trim";
+                    trimstr = " ";
                 }
 
-                Function f = new Function(function, session, false);
+                readThis(Expression.FROM);
+
+                Expression trim = new Expression(Types.CHAR, trimstr);
+                Expression leading;
+                Expression trailing;
+
+                if (type.equals(Token.T_LEADING)) {
+                    leading  = new Expression(true);
+                    trailing = new Expression(false);
+                } else if (type.equals(Token.T_TRAILING)) {
+                    leading  = new Expression(false);
+                    trailing = new Expression(true);
+                } else {
+                    leading = trailing = new Expression(true);
+                }
+
+                // name argument is OK for now for CHECK constraints
+                Function f = new Function(Token.T_TRIM,
+                                          "org.hsqldb.Library.trim", session,
+                                          false);
 
                 f.setArgument(0, readOr());
+                f.setArgument(1, trim);
+                f.setArgument(2, leading);
+                f.setArgument(3, trailing);
                 readThis(Expression.CLOSE);
 
                 r = new Expression(f);
@@ -1668,7 +1690,8 @@ class Parser {
                 read();
                 readThis(Expression.OPEN);
 
-                Function f = new Function("org.hsqldb.Library.position",
+                Function f = new Function(Token.T_POSITION,
+                                          "org.hsqldb.Library.position",
                                           session, false);
 
                 f.setArgument(0, readTerm());
@@ -1686,7 +1709,9 @@ class Parser {
                 read();
                 readThis(Expression.OPEN);
 
-                Function f = new Function("org.hsqldb.Library.substring",
+                // OK for now for CHECK search conditions
+                Function f = new Function(Token.T_SUBSTRING,
+                                          "org.hsqldb.Library.substring",
                                           session, false);
 
                 f.setArgument(0, readTerm());
@@ -1756,7 +1781,6 @@ class Parser {
         } else if (tokenizer.wasLongName()) {
             sTable = tokenizer.getLongNameFirst();
 
-//            sToken = tTokenizer.getLongNameLast();
             if (sToken.equals(Token.T_ASTERISK)) {
                 iToken = Expression.MULTIPLY;
             } else {
@@ -1858,45 +1882,45 @@ class Parser {
     private static IntValueHashMap tokenSet = new IntValueHashMap(37);
 
     static {
-        tokenSet.put(",", Expression.COMMA);
-        tokenSet.put("=", Expression.EQUAL);
+        tokenSet.put(Token.T_COMMA, Expression.COMMA);
+        tokenSet.put(Token.T_EQUALS, Expression.EQUAL);
         tokenSet.put("!=", Expression.NOT_EQUAL);
         tokenSet.put("<>", Expression.NOT_EQUAL);
         tokenSet.put("<", Expression.SMALLER);
         tokenSet.put(">", Expression.BIGGER);
         tokenSet.put("<=", Expression.SMALLER_EQUAL);
         tokenSet.put(">=", Expression.BIGGER_EQUAL);
-        tokenSet.put("AND", Expression.AND);
+        tokenSet.put(Token.T_AND, Expression.AND);
         tokenSet.put(Token.T_NOT, Expression.NOT);
-        tokenSet.put("OR", Expression.OR);
+        tokenSet.put(Token.T_OR, Expression.OR);
         tokenSet.put(Token.T_IN, Expression.IN);
         tokenSet.put(Token.T_EXISTS, Expression.EXISTS);
-        tokenSet.put("BETWEEN", Expression.BETWEEN);
+        tokenSet.put(Token.T_BETWEEN, Expression.BETWEEN);
         tokenSet.put("+", Expression.PLUS);
         tokenSet.put("-", Expression.NEGATE);
         tokenSet.put("*", Expression.MULTIPLY);
         tokenSet.put("/", Expression.DIVIDE);
         tokenSet.put("||", Expression.STRINGCONCAT);
-        tokenSet.put("(", Expression.OPEN);
-        tokenSet.put(")", Expression.CLOSE);
+        tokenSet.put(Token.T_OPENBRACKET, Expression.OPEN);
+        tokenSet.put(Token.T_CLOSEBRACKET, Expression.CLOSE);
         tokenSet.put(Token.T_SELECT, Expression.SELECT);
-        tokenSet.put("LIKE", Expression.LIKE);
-        tokenSet.put("COUNT", Expression.COUNT);
-        tokenSet.put("SUM", Expression.SUM);
-        tokenSet.put("MIN", Expression.MIN);
-        tokenSet.put("MAX", Expression.MAX);
-        tokenSet.put("AVG", Expression.AVG);
-        tokenSet.put("IFNULL", Expression.IFNULL);
+        tokenSet.put(Token.T_LIKE, Expression.LIKE);
+        tokenSet.put(Token.T_COUNT, Expression.COUNT);
+        tokenSet.put(Token.T_SUM, Expression.SUM);
+        tokenSet.put(Token.T_MIN, Expression.MIN);
+        tokenSet.put(Token.T_MAX, Expression.MAX);
+        tokenSet.put(Token.T_AVG, Expression.AVG);
+        tokenSet.put(Token.T_IFNULL, Expression.IFNULL);
         tokenSet.put(Token.T_NULLIF, Expression.NULLIF);
-        tokenSet.put("CONVERT", Expression.CONVERT);
-        tokenSet.put("CAST", Expression.CAST);
+        tokenSet.put(Token.T_CONVERT, Expression.CONVERT);
+        tokenSet.put(Token.T_CAST, Expression.CAST);
         tokenSet.put(Token.T_CASE, Expression.CASE);
         tokenSet.put(Token.T_WHEN, Expression.WHEN);
         tokenSet.put(Token.T_THEN, Expression.THEN);
         tokenSet.put(Token.T_ELSE, Expression.ELSE);
         tokenSet.put(Token.T_END, Expression.ENDWHEN);
-        tokenSet.put("CASEWHEN", Expression.CASEWHEN);
-        tokenSet.put("CONCAT", Expression.CONCAT);
+        tokenSet.put(Token.T_CASEWHEN, Expression.CASEWHEN);
+        tokenSet.put(Token.T_CONCAT, Expression.CONCAT);
         tokenSet.put(Token.T_COALESCE, Expression.COALESCE);
         tokenSet.put(Token.T_EXTRACT, Expression.EXTRACT);
         tokenSet.put(Token.T_POSITION, Expression.POSITION);
@@ -1905,7 +1929,7 @@ class Parser {
         tokenSet.put(Token.T_SUBSTRING, Expression.SUBSTRING);
         tokenSet.put(Token.T_FOR, Expression.FOR);
         tokenSet.put(Token.T_AS, Expression.AS);
-        tokenSet.put("IS", Expression.IS);
+        tokenSet.put(Token.T_IS, Expression.IS);
         tokenSet.put("?", Expression.PARAM);
     }
 

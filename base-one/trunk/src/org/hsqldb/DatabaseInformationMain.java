@@ -259,13 +259,11 @@ class DatabaseInformationMain extends DatabaseInformation {
      * @param indexName the simple name of the index
      * @param cols zero-based array of column numbers specifying the columns
      *      to include in the index
-     * @param unique <code>true</code> if a unique index is desired,
-     *      else <code>false</code>
      * @throws HsqlException if there is a problem adding the specified index
      *      to the specified table
      */
-    protected final void addIndex(Table t, String indexName, int[] cols,
-                                  boolean unique) throws HsqlException {
+    protected final void addIndex(Table t, String indexName,
+                                  int[] cols) throws HsqlException {
 
         HsqlName name;
 
@@ -275,7 +273,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         } else {
             name = ns.findOrCreateHsqlName(indexName, indexNameMap);
 
-            t.createIndex(cols, name, unique);
+            t.createIndex(cols, name, false, false, false);
         }
     }
 
@@ -762,9 +760,9 @@ class DatabaseInformationMain extends DatabaseInformation {
             }, false);
 
             // fast lookup for metadata calls
-            addIndex(t, null, new int[]{ 8 }, false);
-            addIndex(t, null, new int[]{ 9 }, false);
-            addIndex(t, null, new int[]{ 10 }, false);
+            addIndex(t, null, new int[]{ 8 });
+            addIndex(t, null, new int[]{ 9 });
+            addIndex(t, null, new int[]{ 10 });
 
             return t;
         }
@@ -971,9 +969,9 @@ class DatabaseInformationMain extends DatabaseInformation {
             }, false);
 
             // fast lookup for metadata calls
-            addIndex(t, null, new int[]{ 0 }, false);
-            addIndex(t, null, new int[]{ 1 }, false);
-            addIndex(t, null, new int[]{ 2 }, false);
+            addIndex(t, null, new int[]{ 0 });
+            addIndex(t, null, new int[]{ 1 });
+            addIndex(t, null, new int[]{ 2 });
 
             return t;
         }
@@ -1069,11 +1067,11 @@ class DatabaseInformationMain extends DatabaseInformation {
             }, false);
 
             // fast lookup for metadata calls
-            addIndex(t, null, new int[]{ 0 }, false);
+            addIndex(t, null, new int[]{ 0 });
 
-            //addIndex(t, null, new int[]{1}, false);
-            addIndex(t, null, new int[]{ 2 }, false);
-            addIndex(t, null, new int[]{ 3 }, false);
+            //addIndex(t, null, new int[]{1});
+            addIndex(t, null, new int[]{ 2 });
+            addIndex(t, null, new int[]{ 3 });
 
             return t;
         }
@@ -1226,19 +1224,19 @@ class DatabaseInformationMain extends DatabaseInformation {
             }, false);
 
             // fast lookup for metadata calls
-            addIndex(t, null, new int[]{ 0 }, false);
-            addIndex(t, null, new int[]{ 1 }, false);
-            addIndex(t, null, new int[]{ 2 }, false);
-            addIndex(t, null, new int[]{ 3 }, false);
+            addIndex(t, null, new int[]{ 0 });
+            addIndex(t, null, new int[]{ 1 });
+            addIndex(t, null, new int[]{ 2 });
+            addIndex(t, null, new int[]{ 3 });
 
-            //addIndex(t, null, new int[]{4}, false);
-            addIndex(t, null, new int[]{ 5 }, false);
-            addIndex(t, null, new int[]{ 6 }, false);
-            addIndex(t, null, new int[]{ 7 }, false);
+            //addIndex(t, null, new int[]{4});
+            addIndex(t, null, new int[]{ 5 });
+            addIndex(t, null, new int[]{ 6 });
+            addIndex(t, null, new int[]{ 7 });
 
             // fast lookup by FK_NAME or PK_NAME
-            addIndex(t, null, new int[]{ 11 }, false);
-            addIndex(t, null, new int[]{ 12 }, false);
+            addIndex(t, null, new int[]{ 11 });
+            addIndex(t, null, new int[]{ 12 });
 
             return t;
         }
@@ -1497,12 +1495,12 @@ class DatabaseInformationMain extends DatabaseInformation {
             }, false);
 
             // fast lookup for metadata calls
-            addIndex(t, null, new int[]{ 0 }, false);
-            addIndex(t, null, new int[]{ 1 }, false);
-            addIndex(t, null, new int[]{ 2 }, false);
+            addIndex(t, null, new int[]{ 0 });
+            addIndex(t, null, new int[]{ 1 });
+            addIndex(t, null, new int[]{ 2 });
 
-            //addIndex(t, null, new int[]{3}, false);
-            addIndex(t, null, new int[]{ 5 }, false);
+            //addIndex(t, null, new int[]{3});
+            addIndex(t, null, new int[]{ 5 });
 
             return t;
         }
@@ -1663,13 +1661,13 @@ class DatabaseInformationMain extends DatabaseInformation {
             }, false);
 
             // fast lookups for metadata calls
-            addIndex(t, null, new int[]{ 0 }, false);
-            addIndex(t, null, new int[]{ 1 }, false);
-            addIndex(t, null, new int[]{ 2 }, false);
+            addIndex(t, null, new int[]{ 0 });
+            addIndex(t, null, new int[]{ 1 });
+            addIndex(t, null, new int[]{ 2 });
 
-            //addIndex(t, null, new int[]{3}, false);
+            //addIndex(t, null, new int[]{3});
             // fast lookup by pk name
-            addIndex(t, null, new int[]{ 5 }, false);
+            addIndex(t, null, new int[]{ 5 });
 
             return t;
         }
@@ -1838,12 +1836,12 @@ class DatabaseInformationMain extends DatabaseInformation {
             }, false);
 
             // fast lookup for metadata calls
-            addIndex(t, null, new int[]{ 0 }, false);
-            addIndex(t, null, new int[]{ 1 }, false);
-            addIndex(t, null, new int[]{ 2 }, false);
+            addIndex(t, null, new int[]{ 0 });
+            addIndex(t, null, new int[]{ 1 });
+            addIndex(t, null, new int[]{ 2 });
 
             // fast join with SYSTEM_PROCEDURES
-            addIndex(t, null, new int[]{ 13 }, false);
+            addIndex(t, null, new int[]{ 13 });
 
             return t;
         }
@@ -1918,12 +1916,12 @@ class DatabaseInformationMain extends DatabaseInformation {
             }, false);
 
             // fast lookup for metadata calls
-            addIndex(t, null, new int[]{ 0 }, false);
-            addIndex(t, null, new int[]{ 1 }, false);
-            addIndex(t, null, new int[]{ 2 }, false);
+            addIndex(t, null, new int[]{ 0 });
+            addIndex(t, null, new int[]{ 1 });
+            addIndex(t, null, new int[]{ 2 });
 
             // fast join with SYSTEM_PROCEDURECOLUMNS
-            addIndex(t, null, new int[]{ 9 }, false);
+            addIndex(t, null, new int[]{ 9 });
 
             return t;
         }
@@ -2035,11 +2033,11 @@ class DatabaseInformationMain extends DatabaseInformation {
             }, false);
 
             // fast lookup by (table,grantee)
-            addIndex(t, null, new int[]{ 0 }, false);
-            addIndex(t, null, new int[]{ 1 }, false);
+            addIndex(t, null, new int[]{ 0 });
+            addIndex(t, null, new int[]{ 1 });
 
             //addIndex(t, null, new int[]{2},false);
-            addIndex(t, null, new int[]{ 4 }, false);
+            addIndex(t, null, new int[]{ 4 });
 
             return t;
         }
@@ -2189,10 +2187,10 @@ class DatabaseInformationMain extends DatabaseInformation {
             }, false);
 
             // fast lookup by table ident
-            addIndex(t, null, new int[]{ 0 }, false);
-            addIndex(t, null, new int[]{ 1 }, false);
-            addIndex(t, null, new int[]{ 2 }, false);
-            addIndex(t, null, new int[]{ 3 }, false);
+            addIndex(t, null, new int[]{ 0 });
+            addIndex(t, null, new int[]{ 1 });
+            addIndex(t, null, new int[]{ 2 });
+            addIndex(t, null, new int[]{ 3 });
 
             return t;
         }

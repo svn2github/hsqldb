@@ -209,7 +209,7 @@ public class Trace extends PrintWriter {
      BinaryDatabaseScriptReader_readTableInit            = 97,
      Cache_cleanUp                                       = 98,
      Cache_saveAll                                       = 99,
-     Constraint_checkInsert                              = 100,
+     Constraint_violation                                = 100,
      Database_dropTable                                  = 101,
      DatabaseCommandInterpreter_processColumnList        = 102,
      DatabaseCommandInterpreter_processCreateConstraints = 103,
@@ -268,7 +268,8 @@ public class Trace extends PrintWriter {
      ORDER_BY_POSITION                              = 153,
      JDBC_STATEMENT_NOT_ROW_COUNT                   = 154,
      JDBC_STATEMENT_NOT_RESULTSET                   = 155,
-     AMBIGUOUS_COLUMN_REFERENCE                     = 156;
+     AMBIGUOUS_COLUMN_REFERENCE                     = 156,
+     CHECK_CONSTRAINT_VIOLATION                     = 157;
 
     //
     static String MESSAGE_TAG = "$$";
@@ -432,6 +433,7 @@ public class Trace extends PrintWriter {
         "00000 Statement does not generate a row count",
         "00000 Statement does not generate a result set",
         "S0022 ambiguous Column reference",                                   //
+        "23000 Check constraint violation",
     };
 
     /** Used during tests. */
@@ -807,6 +809,28 @@ public class Trace extends PrintWriter {
     }
 
     /**
+     * Used to print messages to System.out
+     *
+     *
+     * @param message message to print
+     */
+    static void printSystemOut(String message1, long message2) {
+        System.out.print(message1);
+        System.out.println(message2);
+    }
+
+    /**
+     * Used to print messages to System.out
+     *
+     *
+     * @param message message to print
+     */
+    static void printSystemOut(String message1, String message2) {
+        System.out.print(message1);
+        System.out.println(message2);
+    }
+
+    /**
      * Method declaration
      *
      *
@@ -1032,27 +1056,5 @@ public class Trace extends PrintWriter {
             throw getError(ASSERT_FAILED, add.length() > 0 ? add
                                                            : null);
         }
-    }
-
-    /**
-     * Used to print messages to System.out
-     *
-     *
-     * @param message message to print
-     */
-    static void printSystemOut(String message1, long message2) {
-        System.out.print(message1);
-        System.out.println(message2);
-    }
-
-    /**
-     * Used to print messages to System.out
-     *
-     *
-     * @param message message to print
-     */
-    static void printSystemOut(String message1, String message2) {
-        System.out.print(message1);
-        System.out.println(message2);
     }
 }

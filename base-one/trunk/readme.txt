@@ -1,5 +1,11 @@
 Readme File
 
+2003.10.17
+
+Fixed LIKE parameter bug.
+
+Support for CHECK constraints that apply to the modified/inserted row only.
+
 2003.10.12
 
 HSQLDB 1.7.2 ALPHA_R

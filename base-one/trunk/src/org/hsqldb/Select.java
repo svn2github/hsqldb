@@ -648,6 +648,118 @@ class Select {
         }
     }
 
+    /**
+     * Skeleton under development. Needs a lot of work.
+     */
+    public StringBuffer getDDL() throws HsqlException {
+
+        StringBuffer sb = new StringBuffer();
+
+        sb.append(Token.T_SELECT).append(' ');
+
+        //limitStart;
+        //limitCount;
+        for (int i = 0; i < iResultLen; i++) {
+            sb.append(eColumn[i].getDDL());
+
+            if (i < iResultLen - 1) {
+                sb.append(',');
+            }
+        }
+
+        sb.append(Token.T_FROM);
+
+        for (int i = 0; i < tFilter.length; i++) {
+
+            // find out if any expression in any of the filters isInJoin then use this form
+            TableFilter filter = tFilter[i];
+
+            // if any expression isInJoin
+            if (i != 0) {
+                if (filter.isOuterJoin) {
+                    sb.append(Token.T_FROM).append(' ');
+                    sb.append(Token.T_JOIN).append(' ');
+                }
+
+                // eStart and eEnd expressions
+            }
+
+            // otherwise use a comma delimited table list
+            sb.append(',');
+        }
+
+        // if there are any expressions that are not isInJoin
+        sb.append(' ').append(Token.T_WHERE).append(' ');
+
+        for (int i = 0; i < tFilter.length; i++) {
+            TableFilter filter = tFilter[i];
+
+            // eStart and eEnd expressions that are not isInJoin
+        }
+
+        // if has GROUP BY
+        sb.append(' ').append(Token.T_GROUP).append(' ');
+
+        for (int i = iResultLen; i < iResultLen + iGroupLen; i++) {
+            sb.append(eColumn[i].getDDL());
+
+            if (i < iResultLen + iGroupLen - 1) {
+                sb.append(',');
+            }
+        }
+
+        // if has HAVING
+        sb.append(' ').append(Token.T_HAVING).append(' ');
+
+        for (int i = iHavingIndex; i < iHavingIndex + eColumn.length; i++) {
+            sb.append(eColumn[i].getDDL());
+
+            if (i < iResultLen + iGroupLen - 1) {
+                sb.append(',');
+            }
+        }
+
+        if (sUnion != null) {
+            switch (iUnionType) {
+
+                case EXCEPT :
+                    sb.append(' ').append(Token.T_EXCEPT).append(' ');
+                    break;
+
+                case INTERSECT :
+                    sb.append(' ').append(Token.T_INTERSECT).append(' ');
+                    break;
+
+                case UNION :
+                    sb.append(' ').append(Token.T_UNION).append(' ');
+                    break;
+
+                case UNIONALL :
+                    sb.append(' ').append(Token.T_UNION).append(' ').append(
+                        Token.T_ALL).append(' ');
+                    break;
+            }
+        }
+
+        // if has ORDER BY
+        int groupByEnd   = iResultLen + iGroupLen;
+        int orderByStart = iHavingIndex >= 0 ? (iHavingIndex + 1)
+                                             : groupByEnd;
+        int orderByEnd   = orderByStart + iOrderLen;
+
+        sb.append(' ').append(Token.T_ORDER).append(Token.T_BY).append(' ');
+
+        for (int i = orderByStart; i < orderByEnd; i++) {
+            sb.append(eColumn[i].getDDL());
+
+            if (i < iResultLen + iGroupLen - 1) {
+                sb.append(',');
+            }
+        }
+
+        return sb;
+    }
+
 // boucherb@users 20030418 - patch 1.7.2 - fast execution for compiled statements
 // -----------------------------------------------------------------------------
     boolean isResolved = false;
@@ -676,9 +788,6 @@ class Select {
         return isResolved;
     }
 
-// --
-// boucherb@users 20030418 - patch 1.7.2 - explain plan support
-// -----------------------------------------------------------------------------
     public String toString() {
 
         StringBuffer sb;

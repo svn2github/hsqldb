@@ -55,15 +55,20 @@ class Token {
 
     //
     static final String T_ADD                   = "ADD";
+    static final String T_ACTION                = "ACTION";
     static final String T_ADMIN                 = "ADMIN";
+    static final String T_AFTER                 = "AFTER";
     static final String T_ALIAS                 = "ALIAS";
     static final String T_ALL                   = "ALL";
     static final String T_ALTER                 = "ALTER";
     static final String T_ALWAYS                = "ALWAYS";
+    static final String T_AND                   = "AND";
     static final String T_AS                    = "AS";
     static final String T_ASC                   = "ASC";
     static final String T_AUTOCOMMIT            = "AUTOCOMMIT";
+    static final String T_AVG                   = "AVG";
     static final String T_BEFORE                = "BEFORE";
+    static final String T_BETWEEN               = "BETWEEN";
     static final String T_BINARY                = "BINARY";
     static final String T_BOTH                  = "BOTH";
     static final String T_BY                    = "BY";
@@ -71,6 +76,9 @@ class Token {
     static final String T_CALL                  = "CALL";
     static final String T_CASCADE               = "CASCADE";
     static final String T_CASE                  = "CASE";
+    static final String T_CAST                  = "CAST";
+    static final String T_CASEWHEN              = "CASEWHEN";
+    static final String T_CHECK                 = "CHECK";
     static final String T_CHECKPOINT            = "CHECKPOINT";
     static final String T_CLASS                 = "CLASS";
     static final String T_COALESCE              = "COALESCE";
@@ -78,9 +86,15 @@ class Token {
     static final String T_COMMIT                = "COMMIT";
     static final String T_COMPACT               = "COMPACT";
     static final String T_COMPRESSED            = "COMPRESSED";
+    static final String T_CONCAT                = "CONCAT";
     static final String T_CONNECT               = "CONNECT";
     static final String T_CONSTRAINT            = "CONSTRAINT";
+    static final String T_CONVERT               = "CONVERT";
+    static final String T_COUNT                 = "COUNT";
     static final String T_CREATE                = "CREATE";
+    static final String T_CURRENT_DATE          = "CURRENT_DATE";
+    static final String T_CURRENT_TIME          = "CURRENT_TIME";
+    static final String T_CURRENT_TIMESTAMP     = "CURRENT_TIMESTAMP";
     static final String T_DAY                   = "DAY";
     static final String T_DEFAULT               = "DEFAULT";
     static final String T_DEFRAG                = "DEFRAG";
@@ -108,6 +122,7 @@ class Token {
     static final String T_HOUR                  = "HOUR";
     static final String T_IDENTITY              = "IDENTITY";
     static final String T_IF                    = "IF";
+    static final String T_IFNULL                = "IFNULL";
     static final String T_IGNORECASE            = "IGNORECASE";
     static final String T_IMMEDIATELY           = "IMMEDIATELY";
     static final String T_IN                    = "IN";
@@ -116,22 +131,29 @@ class Token {
     static final String T_INSERT                = "INSERT";
     static final String T_INTERSECT             = "INTERSECT";
     static final String T_INTO                  = "INTO";
+    static final String T_IS                    = "IS";
     static final String T_JOIN                  = "JOIN";
     static final String T_KEY                   = "KEY";
     static final String T_LEADING               = "LEADING";
     static final String T_LEFT                  = "LEFT";
+    static final String T_LIKE                  = "LIKE";
     static final String T_LIMIT                 = "LIMIT";
     static final String T_LOGSIZE               = "LOGSIZE";
+    static final String T_MAX                   = "MAX";
     static final String T_MAXROWS               = "MAXROWS";
     static final String T_MEMORY                = "MEMORY";
+    static final String T_MIN                   = "MIN";
     static final String T_MINUS                 = "MINUS";
     static final String T_MINUTE                = "MINUTE";
     static final String T_MONTH                 = "MONTH";
+    static final String T_NO                    = "NO";
     static final String T_NOT                   = "NOT";
+    static final String T_NOW                   = "NOW";
     static final String T_NOWAIT                = "NOWAIT";
     static final String T_NULL                  = "NULL";
     static final String T_NULLIF                = "NULLIF";
     static final String T_ON                    = "ON";
+    static final String T_OR                    = "OR";
     static final String T_ORDER                 = "ORDER";
     static final String T_OUTER                 = "OUTER";
     static final String T_PASSWORD              = "PASSWORD";
@@ -140,6 +162,7 @@ class Token {
     static final String T_PRECISION             = "PRECISION";
     static final String T_PRIMARY               = "PRIMARY";
     static final String T_PROPERTY              = "PROPERTY";
+    static final String T_PUBLIC                = "PUBLIC";
     static final String T_QUEUE                 = "QUEUE";
     static final String T_READONLY              = "READONLY";
     static final String T_REFERENCES            = "REFERENCES";
@@ -159,6 +182,8 @@ class Token {
     static final String T_SOURCE                = "SOURCE";
     static final String T_START                 = "START";
     static final String T_SUBSTRING             = "SUBSTRING";
+    static final String T_SUM                   = "SUM";
+    static final String T_SYSDATE               = "SYSDATE";
     static final String T_TABLE                 = "TABLE";
     static final String T_TEMP                  = "TEMP";
     static final String T_TEXT                  = "TEXT";
@@ -166,6 +191,7 @@ class Token {
     static final String T_TIMEZONE_HOUR         = "TIMEZONE_HOUR";
     static final String T_TIMEZONE_MINUTE       = "TIMEZONE_MINUTE";
     static final String T_TO                    = "TO";
+    static final String T_TODAY                 = "TODAY";
     static final String T_TOP                   = "TOP";
     static final String T_TRAILING              = "TRAILING";
     static final String T_TRIGGER               = "TRIGGER";
@@ -241,8 +267,10 @@ class Token {
     static final int UNION                 = 100;
     static final int INTERSECT             = 101;
     static final int EXCEPT                = 102;
-    static final int MINUS                 = 103;    //
+    static final int MINUS                 = 103;
+    static final int CHECK                 = 104;
 
+    //
     static {
         commandSet = newCommandSet();
     }
@@ -266,6 +294,7 @@ class Token {
         commandSet.put(T_AUTOCOMMIT, AUTOCOMMIT);
         commandSet.put(T_CACHED, CACHED);
         commandSet.put(T_CALL, CALL);
+        commandSet.put(T_CHECK, CHECK);
         commandSet.put(T_CHECKPOINT, CHECKPOINT);
         commandSet.put(T_COLUMN, COLUMN);
         commandSet.put(T_COMMIT, COMMIT);
@@ -317,10 +346,6 @@ class Token {
 
         return commandSet;
     }
-
-    static String[] LIST_SCRIPT_FORMATS = new String[] {
-        T_TEXT, T_BINARY, null, T_COMPRESSED
-    };
 
     static int get(String token) {
         return commandSet.get(token, -1);

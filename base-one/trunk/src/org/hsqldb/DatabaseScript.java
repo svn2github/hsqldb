@@ -67,13 +67,11 @@
 
 package org.hsqldb;
 
-//import java.util.Enumeration;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.lib.Iterator;
-import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.HsqlNameManager.HsqlName;
 
 /**
@@ -100,7 +98,7 @@ class DatabaseScript {
 
         r.metaData.sTable[0] = "SYSTEM_SCRIPT";
 
-        HsqlStringBuffer a;
+        StringBuffer a;
 
         // tables
         for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
@@ -110,7 +108,7 @@ class DatabaseScript {
                 continue;
             }
 
-            a = new HsqlStringBuffer(128);
+            a = new StringBuffer(128);
 
             getTableDDL(dDatabase, t, i, forwardFK, forwardFKSource, a);
             addRow(r, a.toString());
@@ -128,17 +126,17 @@ class DatabaseScript {
                     continue;
                 }
 
-                a = new HsqlStringBuffer(64);
+                a = new StringBuffer(64);
 
-                a.append("CREATE ");
+                a.append(Token.T_CREATE).append(' ');
 
                 if (index.isUnique()) {
-                    a.append("UNIQUE ");
+                    a.append(Token.T_UNIQUE).append(' ');
                 }
 
-                a.append("INDEX ");
+                a.append(Token.T_INDEX).append(' ');
                 a.append(index.getName().statementName);
-                a.append(" ON ");
+                a.append(' ').append(Token.T_ON).append(' ');
                 a.append(t.getName().statementName);
 
                 int col[] = index.getColumns();
@@ -150,10 +148,11 @@ class DatabaseScript {
 
             // readonly for TEXT tables only
             if (t.isText() && t.isDataReadOnly()) {
-                a = new HsqlStringBuffer("SET TABLE ");
-
+                a.append(Token.T_SET).append(' ').append(
+                    Token.T_TABLE).append(' ');
                 a.append(t.getName().statementName);
-                a.append(" READONLY TRUE");
+                a.append(' ').append(Token.T_READONLY).append(' ').append(
+                    Token.T_TRUE);
                 addRow(r, a.toString());
             }
 
@@ -172,7 +171,7 @@ class DatabaseScript {
                 int           trCount = trigVec.size();
 
                 for (int k = 0; k < trCount; k++) {
-                    a = ((TriggerDef) trigVec.get(k)).toBuf();
+                    a = ((TriggerDef) trigVec.get(k)).getDDL();
 
                     addRow(r, a.toString());
                 }
@@ -183,11 +182,12 @@ class DatabaseScript {
         for (int i = 0, tSize = forwardFK.size(); i < tSize; i++) {
             Constraint c = (Constraint) forwardFK.get(i);
 
-            a = new HsqlStringBuffer(128);
+            a = new StringBuffer(128);
 
-            a.append("ALTER TABLE ");
+            a.append(Token.T_ALTER).append(' ').append(Token.T_TABLE).append(
+                ' ');
             a.append(c.getRef().getName().statementName);
-            a.append(" ADD ");
+            a.append(' ').append(Token.T_ADD).append(' ');
             getFKStatement(c, a);
             addRow(r, a.toString());
         }
@@ -220,9 +220,10 @@ class DatabaseScript {
                 continue;
             }
 
-            HsqlStringBuffer buffer = new HsqlStringBuffer(64);
+            StringBuffer buffer = new StringBuffer(64);
 
-            buffer.append("CREATE ALIAS ");
+            buffer.append(Token.T_CREATE).append(' ').append(
+                Token.T_ALIAS).append(' ');
             buffer.append(alias);
             buffer.append(" FOR \"");
             buffer.append(java);
@@ -237,12 +238,12 @@ class DatabaseScript {
             if (t.isView()) {
                 View v = (View) tTable.get(i);
 
-                a = new HsqlStringBuffer(128);
+                a = new StringBuffer(128);
 
-                a.append("CREATE ");
-                a.append("VIEW ");
+                a.append(Token.T_CREATE).append(' ').append(
+                    Token.T_VIEW).append(' ');
                 a.append(v.getName().statementName);
-                a.append(" AS ");
+                a.append(' ').append(Token.T_AS).append(' ');
                 a.append(v.getStatement());
                 addRow(r, a.toString());
             }
@@ -256,11 +257,11 @@ class DatabaseScript {
 
     static String getIndexRootsDDL(Table t) {
 
-        HsqlStringBuffer a = new HsqlStringBuffer(128);
+        StringBuffer a = new StringBuffer(128);
 
-        a.append("SET TABLE ");
+        a.append(Token.T_SET).append(' ').append(Token.T_TABLE).append(' ');
         a.append(t.getName().statementName);
-        a.append(" INDEX '");
+        a.append(' ').append(Token.T_INDEX).append('\'');
         a.append(t.getIndexRoots());
         a.append('\'');
 
@@ -269,18 +270,17 @@ class DatabaseScript {
 
     static void getTableDDL(Database dDatabase, Table t, int i,
                             HsqlArrayList forwardFK,
-                            HsqlArrayList forwardFKSource,
-                            HsqlStringBuffer a) {
+                            HsqlArrayList forwardFKSource, StringBuffer a) {
 
-        a.append("CREATE ");
+        a.append(Token.T_CREATE).append(' ');
 
         if (t.isText()) {
-            a.append("TEXT ");
+            a.append(Token.T_TEXT).append(' ');
         } else if (t.isCached()) {
-            a.append("CACHED ");
+            a.append(Token.T_CACHED).append(' ');
         }
 
-        a.append("TABLE ");
+        a.append(Token.T_TABLE).append(' ');
         a.append(t.getName().statementName);
         a.append('(');
 
@@ -344,7 +344,7 @@ class DatabaseScript {
                     defaultString = Column.createSQLString(defaultString);
                 }
 
-                a.append(" DEFAULT ");
+                a.append(' ').append(Token.T_DEFAULT).append(' ');
                 a.append(defaultString);
             }
 
@@ -355,12 +355,14 @@ class DatabaseScript {
             }
 
             if (!column.isNullable()) {
-                a.append(" NOT NULL");
+                a.append(' ').append(Token.T_NOT).append(' ').append(
+                    Token.T_NULL);
             }
 
             if ((pk.length == 1) && (j == pk[0])
                     && pki.getName().isReservedIndexName()) {
-                a.append(" PRIMARY KEY");
+                a.append(' ').append(Token.T_PRIMARY).append(' ').append(
+                    Token.T_KEY);
             }
 
             if (j < columns - 1) {
@@ -369,9 +371,10 @@ class DatabaseScript {
         }
 
         if (pk.length > 1 ||!pki.getName().isReservedIndexName()) {
-            a.append(",CONSTRAINT ");
+            a.append(',').append(Token.T_CONSTRAINT).append(' ');
             a.append(pki.getName().statementName);
-            a.append(" PRIMARY KEY");
+            a.append(' ').append(Token.T_PRIMARY).append(' ').append(
+                Token.T_KEY);
             getColumnList(t, pk, pk.length, a);
         }
 
@@ -383,9 +386,9 @@ class DatabaseScript {
             switch (c.getType()) {
 
                 case Constraint.UNIQUE :
-                    a.append(",CONSTRAINT ");
+                    a.append(',').append(Token.T_CONSTRAINT).append(' ');
                     a.append(c.getName().statementName);
-                    a.append(" UNIQUE");
+                    a.append(' ').append(Token.T_UNIQUE);
 
                     int col[] = c.getMainColumns();
 
@@ -409,6 +412,20 @@ class DatabaseScript {
                         a.append(',');
                         getFKStatement(c, a);
                     }
+                    break;
+
+                case Constraint.CHECK :
+                    try {
+                        a.append(',').append(Token.T_CONSTRAINT).append(' ');
+                        a.append(c.getName().statementName);
+                        a.append(' ').append(Token.T_CHECK).append('(');
+                        a.append(c.core.check.getDDL());
+                        a.append(')');
+                    } catch (HsqlException e) {
+
+                        // should not throw as it is already tested OK
+                    }
+                    break;
             }
         }
 
@@ -427,17 +444,17 @@ class DatabaseScript {
             return null;
         }
 
-        boolean          isDesc = t.isDescDataSource();
-        HsqlStringBuffer a      = new HsqlStringBuffer(128);
+        boolean      isDesc = t.isDescDataSource();
+        StringBuffer a      = new StringBuffer(128);
 
-        a.append("SET TABLE ");
+        a.append(Token.T_SET).append(' ').append(Token.T_TABLE).append(' ');
         a.append(t.getName().statementName);
-        a.append(" SOURCE \"");
+        a.append(' ').append(Token.T_SOURCE).append('"');
         a.append(dataSource);
         a.append('"');
 
         if (isDesc) {
-            a.append(" DESC");
+            a.append(' ').append(Token.T_DESC);
         }
 
         return a.toString();
@@ -447,7 +464,7 @@ class DatabaseScript {
      * Generates the column definitions for a table.
      */
     private static void getColumnList(Table t, int col[], int len,
-                                      HsqlStringBuffer a) {
+                                      StringBuffer a) {
 
         a.append('(');
 
@@ -465,16 +482,16 @@ class DatabaseScript {
     /**
      * Generates the foreign key declaration for a given Constraint object.
      */
-    private static void getFKStatement(Constraint c, HsqlStringBuffer a) {
+    private static void getFKStatement(Constraint c, StringBuffer a) {
 
-        a.append("CONSTRAINT ");
+        a.append(Token.T_CONSTRAINT).append(' ');
         a.append(c.getName().statementName);
-        a.append(" FOREIGN KEY");
+        a.append(' ').append(Token.T_FOREIGN).append(' ').append(Token.T_KEY);
 
         int col[] = c.getRefColumns();
 
         getColumnList(c.getRef(), col, col.length, a);
-        a.append(" REFERENCES ");
+        a.append(' ').append(Token.T_REFERENCES).append(' ');
         a.append(c.getMain().getName().statementName);
 
         col = c.getMainColumns();
@@ -482,12 +499,14 @@ class DatabaseScript {
         getColumnList(c.getMain(), col, col.length, a);
 
         if (c.getDeleteAction() != Constraint.NO_ACTION) {
-            a.append(" ON DELETE ");
+            a.append(' ').append(Token.T_ON).append(' ').append(
+                Token.T_DELETE).append(' ');
             a.append(getFKAction(c.getDeleteAction()));
         }
 
         if (c.getUpdateAction() != Constraint.NO_ACTION) {
-            a.append(" ON UPDATE ");
+            a.append(' ').append(Token.T_ON).append(' ').append(
+                Token.T_UPDATE).append(' ');
             a.append(getFKAction(c.getUpdateAction()));
         }
     }
@@ -500,16 +519,16 @@ class DatabaseScript {
         switch (action) {
 
             case Constraint.CASCADE :
-                return "CASCADE";
+                return Token.T_CASCADE;
 
             case Constraint.SET_DEFAULT :
-                return "SET DEFAULT";
+                return Token.T_SET + ' ' + Token.T_DEFAULT;
 
             case Constraint.SET_NULL :
-                return "SET NULL";
+                return Token.T_SET + ' ' + Token.T_NULL;
 
             default :
-                return "NO ACTION";
+                return Token.T_NO + ' ' + Token.T_ACTION;
         }
     }
 
@@ -539,26 +558,27 @@ class DatabaseScript {
      */
     private static void addRightsStatements(Database dDatabase, Result r) {
 
-        HsqlStringBuffer a;
-        HashMappedList   uv = dDatabase.getUserManager().getUsers();
-        Iterator         it = uv.values().iterator();
+        StringBuffer   a;
+        HashMappedList uv = dDatabase.getUserManager().getUsers();
+        Iterator       it = uv.values().iterator();
 
         for (; it.hasNext(); ) {
             User   u    = (User) it.next();
             String name = u.getName();
 
-            if (!name.equals("PUBLIC")) {
-                a = new HsqlStringBuffer(128);
+            if (!name.equals(Token.T_PUBLIC)) {
+                a = new StringBuffer(128);
 
-                a.append("CREATE USER ");
+                a.append(Token.T_CREATE).append(' ').append(
+                    Token.T_USER).append(' ');
                 a.append(name);
-                a.append(" PASSWORD ");
+                a.append(' ').append(Token.T_PASSWORD).append(' ');
                 a.append('"');
                 a.append(u.getPassword());
                 a.append('"');
 
                 if (u.isAdmin()) {
-                    a.append(" ADMIN");
+                    a.append(' ').append(Token.T_ADMIN);
                 }
 
                 addRow(r, a.toString());
@@ -576,11 +596,11 @@ class DatabaseScript {
                 Object object = e.next();
                 int    right  = rights.get(object, 0);
 
-                a = new HsqlStringBuffer(64);
+                a = new StringBuffer(64);
 
-                a.append("GRANT ");
+                a.append(Token.T_GRANT).append(' ');
                 a.append(UserManager.getRight(right));
-                a.append(" ON ");
+                a.append(' ').append(Token.T_ON).append(' ');
 
                 if (object instanceof String) {
                     if (object.equals("java.lang.Math")
@@ -605,7 +625,7 @@ class DatabaseScript {
                     }
                 }
 
-                a.append(" TO ");
+                a.append(' ').append(Token.T_TO).append(' ');
                 a.append(u.getName());
                 addRow(r, a.toString());
             }

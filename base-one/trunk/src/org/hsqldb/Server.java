@@ -1961,13 +1961,15 @@ public class Server implements HsqlSocketRequestHandler {
      * Prints message for the specified key, without any special
      * formatting. The message content comes from the server
      * resource bundle and thus may localized according to the default
-     * JVM locale.
+     * JVM locale.<p>
+     *
+     * Uses System.out directly instead of Trace.printSystemOut() so it
+     * always prints, regardless of Trace settings.
      *
      * @param key for message
      */
     protected static void printHelp(String key) {
-        Trace.printSystemOut(BundleHandler.getString(serverBundleHandle,
-                key));
+        System.out.print(BundleHandler.getString(serverBundleHandle, key));
     }
 
     /**

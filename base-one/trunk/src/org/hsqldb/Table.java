@@ -73,7 +73,6 @@ import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.lib.HsqlLinkedList;
-import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.StringUtil;
 import org.hsqldb.store.ValuePool;
 import org.hsqldb.HsqlNameManager.HsqlName;
@@ -121,47 +120,48 @@ class Table {
 
     // main properties
 // boucherb@users - access changed in support of metadata 1.7.2
-    HashMappedList vColumn;                    // columns in table
-    HsqlArrayList  vIndex;                     // vIndex(0) is the primary key index
-    int[]          iPrimaryKey;                // column numbers for primary key
-    int            iIndexCount;                // size of vIndex
-    int[]          bestRowIdentifierCols;      // column set for best index
-    boolean        bestRowIdentifierStrict;    // true if it has no nullable column
-    int[]          bestIndexForColumn;         // index of the 'best' index for each column
-    boolean        needsRowID;
-    int[]          nullRowIDCols;
-    int            identityColumn;             // -1 means no such row
-    NumberSequence identitySequence;           // next value of identity column
-    NumberSequence rowIdSequence;              // next value of optional rowid
+    HashMappedList        vColumn;                    // columns in table
+    private HsqlArrayList vIndex;                     // vIndex(0) is the primary key index
+    int[]                 iPrimaryKey;                // column numbers for primary key
+    int                   iIndexCount;                // size of vIndex
+    int[]                 bestRowIdentifierCols;      // column set for best index
+    boolean               bestRowIdentifierStrict;    // true if it has no nullable column
+    int[]                 bestIndexForColumn;         // index of the 'best' index for each column
+    boolean               needsRowID;
+    int[]                 nullRowIDCols;
+    int                   identityColumn;             // -1 means no such row
+    NumberSequence        identitySequence;           // next value of identity column
+    NumberSequence        rowIdSequence;              // next value of optional rowid
 
 // -----------------------------------------------------------------------
-    HsqlArrayList     vConstraint;             // constrainst for the table
-    HsqlArrayList     vTrigs[];                // array of trigger lists
-    private int[]     colTypes;                // fredt - types of columns
-    private int[]     colSizes;                // fredt - copy of SIZE values for columns
-    private boolean[] colNullable;             // fredt - modified copy of isNullable() values
-    private String[] colDefaults;              // fredt - copy of DEFAULT values
-    private int[]    defaultColumnMap;         // fred - holding 0,1,2,3,...
-    private boolean  hasDefaultValues;         //fredt - shortcut for above
+    HsqlArrayList     vConstraint;                    // constrainst for the table
+    TableFilter       checkFilter;                    // for check constrainst
+    HsqlArrayList[]   vTrigs;                         // array of trigger lists
+    private int[]     colTypes;                       // fredt - types of columns
+    private int[]     colSizes;                       // fredt - copy of SIZE values for columns
+    private boolean[] colNullable;                    // fredt - modified copy of isNullable() values
+    private String[] colDefaults;                     // fredt - copy of DEFAULT values
+    private int[]    defaultColumnMap;                // fred - holding 0,1,2,3,...
+    private boolean  hasDefaultValues;                //fredt - shortcut for above
     private boolean  isSystem;
     private boolean  isText;
     private boolean  isView;
-    boolean          sqlEnforceSize;           // inherited for the database -
-    boolean          sqlEnforceStrictSize;     // inherited for the database -
+    boolean          sqlEnforceSize;                  // inherited for the database -
+    boolean          sqlEnforceStrictSize;            // inherited for the database -
 
     // properties for subclasses
 // boucherb@users - access changes in support of metadata 1.7.2
-    protected int      iColumnCount;           // inclusive the hidden primary key
-    protected int      iVisibleColumns;        // exclusive of hidden primary key
+    protected int      iColumnCount;                  // inclusive the hidden primary key
+    protected int      iVisibleColumns;               // exclusive of hidden primary key
     protected Database database;
     protected Cache    cache;
-    protected HsqlName tableName;              // SQL name
+    protected HsqlName tableName;                     // SQL name
     protected int      tableType;
-    protected int      ownerSessionId;         // fredt - set for temp tables only
+    protected int      ownerSessionId;                // fredt - set for temp tables only
     protected boolean  isReadOnly;
     protected boolean  isTemp;
     protected boolean  isCached;
-    protected int      indexType;              // fredt - type of index used
+    protected int      indexType;                     // fredt - type of index used
 
     /**
      *  Constructor declaration
@@ -366,8 +366,7 @@ class Table {
     /**
      *  Get the index supporting a constraint that can be used as an index
      *  of the given type and index column signature. Only Unique constraints
-     *  are considered (FK constraints' main index is actually on a different
-     *  table - one time bug)
+     *  are considered.
      *
      * @param  col column list array
      * @param  unique for the index
@@ -411,36 +410,6 @@ class Table {
 
             if (c.isEquivalent(tablemain, colmain, this, colref)) {
                 return c;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     *  To support alter table ops. Finds any autogenerated FK index that
-     *  fits into the colref[] index columns. Returns the FK constraint that
-     *  contains the index.
-     *
-     * @param  colref column list array
-     * @return constraint or null
-     */
-    Constraint getAutoIndexConstraintForColumns(int[] colref) {
-
-        for (int i = 0, size = vConstraint.size(); i < size; i++) {
-            Constraint c = (Constraint) vConstraint.get(i);
-
-            if (c.getType() == Constraint.FOREIGN_KEY) {
-                Index index = c.getRefIndex();
-
-                if (!index.isUnique()
-                        && index.getName().isReservedIndexName()) {
-                    if (ArrayUtil.areEqual(colref, index.getColumns(),
-                                           index.getVisibleColumns(),
-                                           false)) {
-                        return c;
-                    }
-                }
             }
         }
 
@@ -790,15 +759,6 @@ class Table {
 
         return index == iVisibleColumns ? -1
                                         : index;
-/*
-        for (int i = 0; i < this.iVisibleColumns; i++) {
-            if (c.equals(((Column) vColumn.get(i)).columnName.name)) {
-                return i;
-            }
-        }
-
-        return -1;
-*/
     }
 
     /**
@@ -1023,9 +983,8 @@ class Table {
      */
     String getIndexRoots() {
 
-//        Trace.doAssert(isCached, "Table.getIndexRootData");
-        String roots = StringUtil.getList(getIndexRootsArray(), " ", "");
-        HsqlStringBuffer s = new HsqlStringBuffer(roots);
+        String roots   = StringUtil.getList(getIndexRootsArray(), " ", "");
+        StringBuffer s = new StringBuffer(roots);
 
         s.append(' ');
         s.append(identitySequence.peek());
@@ -1189,7 +1148,7 @@ class Table {
                                            "SYS_PK", tableName.name,
                                            tableName.isNameQuoted);
 
-        createIndexStructure(columns, name, true, true);
+        createIndexStructure(columns, name, true, true, true, false);
 
         colTypes         = new int[iColumnCount];
         colDefaults      = new String[iVisibleColumns];
@@ -1243,8 +1202,9 @@ class Table {
             return null;
         }
 
-        return createIndexStructure(colarr, index.getName(),
-                                    index.isUnique(), false);
+        return createIndexStructure(colarr, index.getName(), false,
+                                    index.isUnique(), index.isConstraint,
+                                    index.isForward);
     }
 
     /**
@@ -1254,10 +1214,12 @@ class Table {
      * @param  name
      * @param  unique
      */
-    Index createIndex(int column[], HsqlName name,
-                      boolean unique) throws HsqlException {
+    Index createIndex(int column[], HsqlName name, boolean unique,
+                      boolean constraint,
+                      boolean forward) throws HsqlException {
 
-        Index newindex = createIndexStructure(column, name, unique, false);
+        Index newindex = createIndexStructure(column, name, false, unique,
+                                              constraint, forward);
         Index primaryindex = getPrimaryIndex();
         Node  n            = primaryindex.first();
         int   error        = 0;
@@ -1299,7 +1261,7 @@ class Table {
             n              = primaryindex.next(n);
         }
 
-        vIndex.remove(iIndexCount - 1);
+        vIndex.remove(newindex);
 
         iIndexCount = vIndex.size();
 
@@ -1317,8 +1279,9 @@ class Table {
      * @return                Description of the Return Value
      * @throws  HsqlException
      */
-    Index createIndexStructure(int column[], HsqlName name, boolean unique,
-                               boolean pk) throws HsqlException {
+    Index createIndexStructure(int column[], HsqlName name, boolean pk,
+                               boolean unique, boolean constraint,
+                               boolean forward) throws HsqlException {
 
         Trace.doAssert(iPrimaryKey != null, "createIndex");
 
@@ -1348,15 +1311,36 @@ class Table {
             s = 0;
         }
 
-        Index newindex = new Index(name, this, col, type, unique, s);
+        Index newindex = new Index(name, this, col, type, unique, constraint,
+                                   forward, s);
 
-        vIndex.add(newindex);
+        addIndex(newindex);
 
         iIndexCount = vIndex.size();
 
         setBestRowIdentifiers();
 
         return newindex;
+    }
+
+    private int addIndex(Index index) {
+
+        Index.IndexOrderComparator comparator =
+            new Index.IndexOrderComparator();
+        int i = 0;
+
+        for (; i < vIndex.size(); i++) {
+            Index current = (Index) vIndex.get(i);
+            int   order   = comparator.compare(index, current);
+
+            if (order < 0) {
+                break;
+            }
+        }
+
+        vIndex.add(i, index);
+
+        return i;
     }
 
     /**
@@ -1578,7 +1562,7 @@ class Table {
         int    count = 0;
 
         while (ni != null) {
-            checkNullColumns(ni.data);
+            enforceCheckConstraints(ni.data);
 
             ni = ni.next;
         }
@@ -1607,7 +1591,7 @@ class Table {
      */
     void insert(Object row[], Session c) throws HsqlException {
 
-        checkNullColumns(row);
+        enforceCheckConstraints(row);
         fireAll(Trigger.INSERT_BEFORE);
         insertRow(row, c);
         fireAll(Trigger.INSERT_AFTER);
@@ -1718,7 +1702,7 @@ class Table {
 
         Object[] row = r.getData();
 
-        checkNullColumns(row);
+        enforceCheckConstraints(row);
         setIdentityColumn(row, null);
         indexRow(r);
     }
@@ -1726,10 +1710,11 @@ class Table {
     /**
      * Checks a row against NOT NULL constraints on columns.
      */
-    protected void checkNullColumns(Object[] row) throws HsqlException {
+    protected void enforceCheckConstraints(Object[] data)
+    throws HsqlException {
 
         for (int i = 0; i < iVisibleColumns; i++) {
-            if (row[i] == null &&!colNullable[i]) {
+            if (data[i] == null &&!colNullable[i]) {
                 Trace.throwerror(Trace.TRY_TO_INSERT_NULL,
                                  "column: " + getColumn(i).columnName.name
                                  + " table: " + tableName.name);
@@ -1853,31 +1838,35 @@ class Table {
      * @return      the string of size len
      */
     static String padOrTrunc(String s, int len, boolean pad,
-                             boolean raise) throws HsqlException {
+                             boolean check) throws HsqlException {
 
-        if (raise && StringUtil.rTrimSize(s) > len) {
+        if (check && StringUtil.rTrimSize(s) > len) {
             throw Trace.error(Trace.STRING_DATA_TRUNCATION);
         }
 
-        if (s.length() == len) {
+        int slen = s.length();
+
+        if (slen == len) {
             return s;
         }
 
-        if (s.length() > len) {
+        if (slen > len) {
             return s.substring(0, len);
         }
 
-        HsqlStringBuffer b = new HsqlStringBuffer(len);
-
-        b.append(s);
-
-        if (pad) {
-            for (int i = s.length(); i < len; i++) {
-                b.append(' ');
-            }
+        if (!pad) {
+            return s;
         }
 
-        return b.toString();
+        char[] b = new char[len];
+
+        s.getChars(0, slen, b, 0);
+
+        for (int i = slen; i < len; i++) {
+            b[i] = ' ';
+        }
+
+        return new String(b);
     }
 
     /**
@@ -2512,7 +2501,7 @@ class Table {
             Row row = (Row) del.get(i);
 
             enforceFieldValueLimits(ni.data, col);
-            checkNullColumns(ni.data);
+            enforceCheckConstraints(ni.data);
 
             // this means the identity column can be set to null to force
             // creation of a new identity value

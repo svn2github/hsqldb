@@ -94,16 +94,17 @@ Referential Constraint 2 SET NULL
 Referential Constraint 3 NO ACTION
 Referential Constraint 4 SET DEFAULT
 */
-    static final int       CASCADE     = 0,
-                           SET_NULL    = 2,
-                           NO_ACTION   = 3,
-                           SET_DEFAULT = 4;
-    static final int       FOREIGN_KEY = 0,
-                           MAIN        = 1,
-                           UNIQUE      = 2;
-    private ConstraintCore core;
-    private HsqlName       constName;
-    private int            iType;
+    static final int CASCADE     = 0,
+                     SET_NULL    = 2,
+                     NO_ACTION   = 3,
+                     SET_DEFAULT = 4;
+    static final int FOREIGN_KEY = 0,
+                     MAIN        = 1,
+                     UNIQUE      = 2,
+                     CHECK       = 3;
+    ConstraintCore   core;
+    HsqlName         constName;
+    int              constType;
 
     /**
      *  Constructor declaration
@@ -114,17 +115,17 @@ Referential Constraint 4 SET DEFAULT
      */
     Constraint(HsqlName name, Table t, Index index) {
 
-        core       = new ConstraintCore();
-        constName  = name;
-        iType      = UNIQUE;
-        core.tMain = t;
-        core.iMain = index;
+        core           = new ConstraintCore();
+        constName      = name;
+        constType      = UNIQUE;
+        core.mainTable = t;
+        core.mainIndex = index;
         /* fredt - in unique constraints column list for iColMain is the
            visible columns of iMain
         */
-        core.iColMain = ArrayUtil.arraySlice(index.getColumns(), 0,
-                                             index.getVisibleColumns());
-        core.iLen = core.iColMain.length;
+        core.mainColArray = ArrayUtil.arraySlice(index.getColumns(), 0,
+                index.getVisibleColumns());
+        core.colLen = core.mainColArray.length;
     }
 
     /**
@@ -137,7 +138,7 @@ Referential Constraint 4 SET DEFAULT
     Constraint(HsqlName name, Constraint fkconstraint) {
 
         constName = name;
-        iType     = MAIN;
+        constType = MAIN;
         core      = fkconstraint.core;
     }
 
@@ -160,37 +161,53 @@ Referential Constraint 4 SET DEFAULT
                int colmain[], int colref[], Index imain, Index iref,
                int deleteAction, int updateAction) throws HsqlException {
 
-        core        = new ConstraintCore();
-        core.pkName = pkname;
-        core.fkName = fkname;
-        constName   = fkname;
-        iType       = FOREIGN_KEY;
-        core.tMain  = main;
-        core.tRef   = ref;
+        core           = new ConstraintCore();
+        core.pkName    = pkname;
+        core.fkName    = fkname;
+        constName      = fkname;
+        constType      = FOREIGN_KEY;
+        core.mainTable = main;
+        core.refTable  = ref;
         /* fredt - in FK constraints column lists for iColMain and iColRef have
            identical sets to visible columns of iMain and iRef respectively
-           but the order of columns can be different and must be maintained
+           but the order of columns can be different and must be preserved
         */
-        core.iColMain     = colmain;
-        core.iLen         = core.iColMain.length;
-        core.iColRef      = colref;
-        core.oColRef      = new Object[core.iColRef.length];
-        core.iMain        = imain;
-        core.iRef         = iref;
-        core.deleteAction = deleteAction;
-        core.updateAction = updateAction;
+        core.mainColArray   = colmain;
+        core.colLen         = core.mainColArray.length;
+        core.refColArray    = colref;
+        core.tempRefColData = new Object[core.refColArray.length];
+        core.mainIndex      = imain;
+        core.refIndex       = iref;
+        core.deleteAction   = deleteAction;
+        core.updateAction   = updateAction;
 
         setTableRows();
+    }
+
+    /**
+     * temp constraint constructor
+     */
+    Constraint(HsqlName name, int[] mainCol, Table refTable, int[] refCol,
+               int type, int deleteAction, int updateAction) {
+
+        core              = new ConstraintCore();
+        constName         = name;
+        constType         = type;
+        core.mainColArray = mainCol;
+        core.refTable     = refTable;
+        core.refColArray  = refCol;
+        core.deleteAction = deleteAction;
+        core.updateAction = updateAction;
     }
 
     private Constraint() {}
 
     private void setTableRows() throws HsqlException {
 
-        core.oMain = core.tMain.getNewRow();
+        core.tempMainData = core.mainTable.getNewRow();
 
-        if (core.tRef != null) {
-            core.oRef = core.tRef.getNewRow();
+        if (core.refTable != null) {
+            core.tempRefData = core.refTable.getNewRow();
         }
     }
 
@@ -238,7 +255,7 @@ Referential Constraint 4 SET DEFAULT
      * @return name of the index for the foreign key column (child)
      */
     int getType() {
-        return iType;
+        return constType;
     }
 
     /**
@@ -247,11 +264,11 @@ Referential Constraint 4 SET DEFAULT
      * @return
      */
     Table getMain() {
-        return core.tMain;
+        return core.mainTable;
     }
 
     Index getMainIndex() {
-        return core.iMain;
+        return core.mainIndex;
     }
 
     /**
@@ -260,11 +277,11 @@ Referential Constraint 4 SET DEFAULT
      * @return
      */
     Table getRef() {
-        return core.tRef;
+        return core.refTable;
     }
 
     Index getRefIndex() {
-        return core.iRef;
+        return core.refIndex;
     }
 
     /**
@@ -291,7 +308,7 @@ Referential Constraint 4 SET DEFAULT
      * @return
      */
     int[] getMainColumns() {
-        return core.iColMain;
+        return core.mainColArray;
     }
 
     /**
@@ -300,7 +317,7 @@ Referential Constraint 4 SET DEFAULT
      * @return
      */
     int[] getRefColumns() {
-        return core.iColRef;
+        return core.refColArray;
     }
 
     /**
@@ -311,8 +328,8 @@ Referential Constraint 4 SET DEFAULT
      */
     boolean isIndexFK(Index index) {
 
-        if (iType == FOREIGN_KEY || iType == MAIN) {
-            if (core.iMain == index || core.iRef == index) {
+        if (constType == FOREIGN_KEY || constType == MAIN) {
+            if (core.mainIndex == index || core.refIndex == index) {
                 return true;
             }
         }
@@ -329,7 +346,7 @@ Referential Constraint 4 SET DEFAULT
      */
     boolean isIndexUnique(Index index) {
 
-        if (iType == UNIQUE && core.iMain == index) {
+        if (constType == UNIQUE && core.mainIndex == index) {
             return true;
         }
 
@@ -344,11 +361,12 @@ Referential Constraint 4 SET DEFAULT
      */
     boolean isEquivalent(int col[], int type) {
 
-        if (type != iType || iType != UNIQUE || core.iLen != col.length) {
+        if (type != constType || constType != UNIQUE
+                || core.colLen != col.length) {
             return false;
         }
 
-        return ArrayUtil.haveEqualSets(core.iColMain, col, core.iLen);
+        return ArrayUtil.haveEqualSets(core.mainColArray, col, core.colLen);
     }
 
     /**
@@ -358,16 +376,17 @@ Referential Constraint 4 SET DEFAULT
     boolean isEquivalent(Table tablemain, int colmain[], Table tableref,
                          int colref[]) {
 
-        if (iType != Constraint.MAIN || iType != Constraint.FOREIGN_KEY) {
+        if (constType != Constraint.MAIN
+                || constType != Constraint.FOREIGN_KEY) {
             return false;
         }
 
-        if (tablemain != core.tMain || tableref != core.tRef) {
+        if (tablemain != core.mainTable || tableref != core.refTable) {
             return false;
         }
 
-        return ArrayUtil.areEqualSets(core.iColMain, colmain)
-               && ArrayUtil.areEqualSets(core.iColRef, colref);
+        return ArrayUtil.areEqualSets(core.mainColArray, colmain)
+               && ArrayUtil.areEqualSets(core.refColArray, colref);
     }
 
     /**
@@ -382,27 +401,30 @@ Referential Constraint 4 SET DEFAULT
     void replaceTable(Table oldt, Table newt, int colindex,
                       int adjust) throws HsqlException {
 
-        if (oldt == core.tMain) {
-            core.tMain = newt;
+        if (oldt == core.mainTable) {
+            core.mainTable = newt;
 
             setTableRows();
 
-            core.iMain = core.tMain.getIndex(core.iMain.getName().name);
-            core.iColMain = ArrayUtil.toAdjustedColumnArray(core.iColMain,
-                    colindex, adjust);
+            core.mainIndex =
+                core.mainTable.getIndex(core.mainIndex.getName().name);
+            core.mainColArray =
+                ArrayUtil.toAdjustedColumnArray(core.mainColArray, colindex,
+                                                adjust);
         }
 
-        if (oldt == core.tRef) {
-            core.tRef = newt;
+        if (oldt == core.refTable) {
+            core.refTable = newt;
 
             setTableRows();
 
-            if (core.iRef != null) {
-                core.iRef = core.tRef.getIndex(core.iRef.getName().name);
+            if (core.refIndex != null) {
+                core.refIndex =
+                    core.refTable.getIndex(core.refIndex.getName().name);
 
-                if (core.iRef != core.iMain) {
-                    core.iColRef =
-                        ArrayUtil.toAdjustedColumnArray(core.iColRef,
+                if (core.refIndex != core.mainIndex) {
+                    core.refColArray =
+                        ArrayUtil.toAdjustedColumnArray(core.refColArray,
                                                         colindex, adjust);
                 }
             }
@@ -419,12 +441,12 @@ Referential Constraint 4 SET DEFAULT
      */
     void replaceIndex(Index oldi, Index newi) {
 
-        if (oldi == core.iRef) {
-            core.iRef = newi;
+        if (oldi == core.refIndex) {
+            core.refIndex = newi;
         }
 
-        if (oldi == core.iMain) {
-            core.iMain = newi;
+        if (oldi == core.mainIndex) {
+            core.mainIndex = newi;
         }
     }
 
@@ -437,16 +459,33 @@ Referential Constraint 4 SET DEFAULT
      */
     void checkInsert(Object row[]) throws HsqlException {
 
-        if ((iType == MAIN) || (iType == UNIQUE)) {
+        if (constType == Constraint.MAIN || constType == Constraint.UNIQUE) {
 
             // inserts in the main table are never a problem
             // unique constraints are checked by the unique index
             return;
         }
 
+        if (constType == Constraint.CHECK) {
+            core.checkFilter.currentData = row;
+
+            if (!core.check.test()) {
+                core.checkFilter.currentRow = null;
+
+                throw Trace.error(Trace.CHECK_CONSTRAINT_VIOLATION,
+                                  Trace.Constraint_violation, new Object[] {
+                    constName.name, core.mainTable.tableName.name
+                });
+            }
+
+            core.checkFilter.currentData = null;
+
+            return;
+        }
+
         // must be called synchronized because of oMain
-        for (int i = 0; i < core.iLen; i++) {
-            Object o = row[core.iColRef[i]];
+        for (int i = 0; i < core.colLen; i++) {
+            Object o = row[core.refColArray[i]];
 
             if (o == null) {
 
@@ -454,16 +493,17 @@ Referential Constraint 4 SET DEFAULT
                 return;
             }
 
-            core.oMain[core.iColMain[i]] = o;
+            core.tempMainData[core.mainColArray[i]] = o;
         }
 
         // a record must exist in the main table
-        if (core.iMain.find(core.oMain) == null) {
-            if (core.tMain == core.tRef) {
+        if (core.mainIndex.find(core.tempMainData) == null) {
+            if (core.mainTable == core.refTable) {
                 boolean match = true;
 
-                for (int i = 0; i < core.iLen; i++) {
-                    if (!row[core.iColRef[i]].equals(row[core.iColMain[i]])) {
+                for (int i = 0; i < core.colLen; i++) {
+                    if (!row[core.refColArray[i]].equals(
+                            row[core.mainColArray[i]])) {
                         match = false;
 
                         break;
@@ -476,8 +516,8 @@ Referential Constraint 4 SET DEFAULT
             }
 
             throw Trace.error(Trace.INTEGRITY_CONSTRAINT_VIOLATION,
-                              Trace.Constraint_checkInsert, new Object[] {
-                core.fkName.name, core.tMain.getName().name
+                              Trace.Constraint_violation, new Object[] {
+                core.fkName.name, core.mainTable.getName().name
             });
         }
     }
@@ -494,8 +534,8 @@ Referential Constraint 4 SET DEFAULT
     private void checkDelete(Object row[]) throws HsqlException {
 
         // must be called synchronized because of oRef
-        for (int i = 0; i < core.iLen; i++) {
-            Object o = row[core.iColMain[i]];
+        for (int i = 0; i < core.colLen; i++) {
+            Object o = row[core.mainColArray[i]];
 
             if (o == null) {
 
@@ -503,15 +543,19 @@ Referential Constraint 4 SET DEFAULT
                 return;
             }
 
-            core.oRef[core.iColRef[i]] = o;
+            core.tempRefData[core.refColArray[i]] = o;
         }
 
         // there must be no record in the 'slave' table
-        Node node = core.iRef.find(core.oRef);
+        Node node = core.refIndex.find(core.tempRefData);
 
         // tony_lai@users 20020820 - patch 595156
-        Trace.check(node == null, Trace.INTEGRITY_CONSTRAINT_VIOLATION,
-                    core.fkName.name, " table: ", core.tRef.getName().name);
+        if (node != null) {
+            throw Trace.error(Trace.INTEGRITY_CONSTRAINT_VIOLATION,
+                              Trace.Constraint_violation, new Object[] {
+                core.fkName.name, core.refTable.getName().name
+            });
+        }
     }
 
 // fredt@users 20020225 - patch 1.7.0 - cascading deletes
@@ -538,8 +582,8 @@ Referential Constraint 4 SET DEFAULT
             return null;
         }
 
-        for (int i = 0; i < core.iLen; i++) {
-            Object o = row[core.iColMain[i]];
+        for (int i = 0; i < core.colLen; i++) {
+            Object o = row[core.mainColArray[i]];
 
             if (o == null) {
 
@@ -547,20 +591,23 @@ Referential Constraint 4 SET DEFAULT
                 return null;
             }
 
-            core.oColRef[i] = o;
+            core.tempRefColData[i] = o;
         }
 
         // there must be no record in the 'slave' table
         // sebastian@scienion -- dependent on forDelete | forUpdate
         boolean findfirst = forDelete ? core.deleteAction != NO_ACTION
                                       : core.updateAction != NO_ACTION;
-        Node    node      = core.iRef.findSimple(core.oColRef, findfirst);
+        Node node = core.refIndex.findSimple(core.tempRefColData, findfirst);
 
         // tony_lai@users 20020820 - patch 595156
         // sebastian@scienion -- check wether we should allow 'ON DELETE CASCADE' or 'ON UPDATE CASCADE'
-        Trace.check(node == null || findfirst,
-                    Trace.INTEGRITY_CONSTRAINT_VIOLATION, core.fkName.name,
-                    " table: ", core.tRef.getName().name);
+        if (!(node == null || findfirst)) {
+            throw Trace.error(Trace.INTEGRITY_CONSTRAINT_VIOLATION,
+                              Trace.Constraint_violation, new Object[] {
+                core.fkName.name, core.refTable.getName().name
+            });
+        }
 
         return node;
     }
@@ -581,8 +628,8 @@ Referential Constraint 4 SET DEFAULT
      */
     Node findMainRef(Object row[]) throws HsqlException {
 
-        for (int i = 0; i < core.iLen; i++) {
-            Object o = row[core.iColRef[i]];
+        for (int i = 0; i < core.colLen; i++) {
+            Object o = row[core.refColArray[i]];
 
             if (o == null) {
 
@@ -590,22 +637,26 @@ Referential Constraint 4 SET DEFAULT
                 return null;
             }
 
-            core.oColRef[i] = o;
+            core.tempRefColData[i] = o;
         }
 
-        Node node = core.iMain.findSimple(core.oColRef, true);
+        Node node = core.mainIndex.findSimple(core.tempRefColData, true);
 
         // -- there has to be a valid node in the main table
         // --
-        Trace.check(node != null, Trace.INTEGRITY_CONSTRAINT_VIOLATION,
-                    core.fkName.name, " table: ", core.tRef.getName().name);
+        if (node == null) {
+            throw Trace.error(Trace.INTEGRITY_CONSTRAINT_VIOLATION,
+                              Trace.Constraint_violation, new Object[] {
+                core.fkName.name, core.refTable.getName().name
+            });
+        }
 
         return node;
     }
 
     /**
      *  Checks if updating a set of columns in a table row breaks the
-     *  referential integrity constraint.
+     *  check and referential integrity constraint.
      *
      * @param  col array of column indexes for columns to check
      * @param  deleted  rows to delete
@@ -615,14 +666,29 @@ Referential Constraint 4 SET DEFAULT
     void checkUpdate(int col[], Result deleted,
                      Result inserted) throws HsqlException {
 
-        if (iType == UNIQUE) {
+        if (constType == UNIQUE) {
 
             // unique constraints are checked by the unique index
             return;
         }
 
-        if (iType == MAIN) {
-            if (!ArrayUtil.haveCommonElement(col, core.iColMain, core.iLen)) {
+        if (constType == Constraint.CHECK) {
+
+            // check inserted records
+            Record r = inserted.rRoot;
+
+            while (r != null) {
+                checkInsert(r.data);
+
+                r = r.next;
+            }
+
+            return;
+        }
+
+        if (constType == MAIN) {
+            if (!ArrayUtil.haveCommonElement(col, core.mainColArray,
+                                             core.colLen)) {
                 return;
             }
 
@@ -632,14 +698,15 @@ Referential Constraint 4 SET DEFAULT
             while (r != null) {
 
                 // if an identical record exists we don't have to test
-                if (core.iMain.find(r.data) == null) {
+                if (core.mainIndex.find(r.data) == null) {
                     checkDelete(r.data);
                 }
 
                 r = r.next;
             }
-        } else if (iType == FOREIGN_KEY) {
-            if (!ArrayUtil.haveCommonElement(col, core.iColMain, core.iLen)) {
+        } else if (constType == FOREIGN_KEY) {
+            if (!ArrayUtil.haveCommonElement(col, core.mainColArray,
+                                             core.colLen)) {
                 return;
             }
 

@@ -154,7 +154,7 @@ class Expression {
                      COALESCE    = 69,
                      ALTERNATIVE = 70;
 
-    // temporary used during paring
+    // temporary used during parsing
     static final int PLUS         = 100,
                      OPEN         = 101,
                      CLOSE        = 102,
@@ -264,6 +264,15 @@ class Expression {
     //
     static final Integer INTEGER_0 = ValuePool.getInt(0);
     static final Integer INTEGER_1 = ValuePool.getInt(1);
+
+    /**
+     * Creates a new boolean expression
+     * @param f
+     */
+    Expression(boolean b) {
+        exprType = b ? TRUE
+                     : FALSE;
+    }
 
     /**
      * Creates a new FUNCTION expression
@@ -444,6 +453,270 @@ class Expression {
 
     public String toString() {
         return toString(0);
+    }
+
+    /**
+     * For use with CHECK constraints. Under development.
+     *
+     * Currently supports a subset of expressions and is suitable for CHECK
+     * search conditions that refer only to the inserted/updated row.
+     *
+     * For full DDL reporting of VIEW select queries and CHECK search
+     * conditions, future improvements here are dependent upon improvements to
+     * SELECT query parsing, so that it is performed in a number of passes.
+     * An early pass should result in the query turned into an Expression tree
+     * that contains the information in the original SQL without any
+     * alterations, and with tables and columns all resolved. This Expression
+     * can then be preserved for future use. Table and column names that
+     * are not user-defined aliases should be kept as the HsqlName structures
+     * so that table or column renaming is reflected in the precompiled
+     * query.
+     */
+    StringBuffer getDDL() throws HsqlException {
+
+        StringBuffer buf   = new StringBuffer(64);
+        StringBuffer left  = null;
+        StringBuffer right = null;
+
+        if (eArg != null) {
+            left = eArg.getDDL();
+
+            if (eArg.exprType != VALUE && eArg.exprType != COLUMN
+                    && eArg.exprType != FUNCTION
+                    && eArg.exprType != ALTERNATIVE
+                    && eArg.exprType != CASEWHEN
+                    && eArg.exprType != CONVERT) {
+                StringBuffer temp = new StringBuffer();
+
+                left = temp.append('(').append(left).append(')');
+            }
+        }
+
+        if (eArg2 != null) {
+            right = eArg2.getDDL();
+
+            if (eArg2.exprType != VALUE && eArg2.exprType != COLUMN
+                    && eArg2.exprType != FUNCTION
+                    && eArg2.exprType != ALTERNATIVE
+                    && eArg2.exprType != CASEWHEN
+                    && eArg2.exprType != CONVERT) {
+                StringBuffer temp = new StringBuffer();
+
+                right = temp.append('(').append(right).append(')');
+            }
+        }
+
+        switch (exprType) {
+
+            case FUNCTION :
+                return function.getDLL();
+
+            case VALUE :
+                try {
+                    String val = Column.createSQLString(valueData, dataType);
+
+                    buf.append(val);
+                } catch (HsqlException e) {}
+
+                return buf;
+
+            case COLUMN :
+
+                // this is a limited solution
+                Table  table = tableFilter.getTable();
+                String ddlName;
+
+                if (tableName != null) {
+                    buf.append(table.tableName.statementName);
+                    buf.append('.');
+                }
+
+                buf.append(
+                    table.getColumn(columnIndex).columnName.statementName);
+
+                return buf;
+
+            case TRUE :
+                buf.append(Token.T_TRUE);
+
+                return buf;
+
+            case FALSE :
+                buf.append(Token.T_FALSE);
+
+                return buf;
+
+            case VALUELIST :
+                for (int i = 0; i < valueList.length; i++) {
+                    buf.append(valueList[i].getDDL());
+
+                    if (i < valueList.length - 1) {
+                        buf.append(',');
+                    }
+                }
+
+                return buf;
+
+            case ASTERIX :
+                buf.append('*');
+
+                return buf;
+
+            case NEGATE :
+                buf.append('-').append(left);
+
+                return buf;
+
+            case ADD :
+                buf.append(left).append('+').append(right);
+
+                return buf;
+
+            case SUBTRACT :
+                buf.append(left).append('-').append(right);
+
+                return buf;
+
+            case MULTIPLY :
+                buf.append(left).append('*').append(right);
+
+                return buf;
+
+            case DIVIDE :
+                buf.append(left).append('/').append(right);
+
+                return buf;
+
+            case CONCAT :
+                buf.append(left).append("||").append(right);
+
+                return buf;
+
+            case NOT :
+                buf.append(Token.T_NOT).append(' ').append(left);
+
+                return buf;
+
+            case EQUAL :
+                buf.append(left).append('=').append(right);
+
+                return buf;
+
+            case BIGGER_EQUAL :
+                buf.append(left).append(">=").append(right);
+
+                return buf;
+
+            case BIGGER :
+                buf.append(left).append('>').append(right);
+
+                return buf;
+
+            case SMALLER :
+                buf.append(left).append('<').append(right);
+
+                return buf;
+
+            case SMALLER_EQUAL :
+                buf.append(left).append("<=").append(right);
+
+                return buf;
+
+            case NOT_EQUAL :
+                buf.append(left).append("!=").append(right);
+
+                return buf;
+
+            case LIKE :
+                buf.append(left).append(' ').append(Token.T_LIKE).append(' ');
+                buf.append(right);
+
+                /** @todo fredt - scripting of non-ascii escapes needs changes to general script logging */
+                if (likeObject.escapeChar != null) {
+                    buf.append(' ').append(Token.T_ESCAPE).append(' ').append(
+                        '\'');
+                    buf.append(likeObject.escapeChar.toString()).append('\'');
+                    buf.append(' ');
+                }
+
+                return buf;
+
+            case AND :
+                buf.append(left).append(' ').append(Token.T_AND).append(
+                    ' ').append(right);
+
+                return buf;
+
+            case OR :
+                buf.append(left).append(' ').append(Token.T_OR).append(
+                    ' ').append(right);
+
+                return buf;
+
+            case IN :
+                buf.append(left).append(' ').append(Token.T_IN).append(
+                    ' ').append(right);
+
+                return buf;
+
+            case CONVERT :
+                buf.append(' ').append(Token.T_CONVERT).append('(');
+                buf.append(left).append(',');
+                buf.append(Types.getTypeString(dataType));
+                buf.append(')');
+
+                return buf;
+
+            case CASEWHEN :
+                buf.append(' ').append(Token.T_CASEWHEN).append('(');
+                buf.append(left).append(',').append(right).append(')');
+
+                return buf;
+
+            case ALTERNATIVE :
+                buf.append(left).append(',').append(right);
+
+                return buf;
+
+            case QUERY :
+/*
+                buf.append('(');
+                buf.append(subSelect.getDDL());
+                buf.append(')');
+*/
+                break;
+
+            case EXISTS :
+                buf.append(' ').append(Token.T_EXISTS).append(' ');
+                break;
+
+            case COUNT :
+                buf.append(' ').append(Token.T_COUNT).append('(');
+                break;
+
+            case SUM :
+                buf.append(' ').append(Token.T_SUM).append('(');
+                buf.append(left).append(')');
+                break;
+
+            case MIN :
+                buf.append(' ').append(Token.T_MIN).append('(');
+                buf.append(left).append(')');
+                break;
+
+            case MAX :
+                buf.append(' ').append(Token.T_MAX).append('(');
+                buf.append(left).append(')');
+                break;
+
+            case AVG :
+                buf.append(' ').append(Token.T_AVG).append('(');
+                buf.append(left).append(')');
+                break;
+        }
+
+        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED,
+                          "check constraint expression");
     }
 
     private String toString(int blanks) {
@@ -1214,6 +1487,24 @@ class Expression {
     }
 
     /**
+     * Workaround for CHECK constraints.
+     */
+    void setLikeOptimised() throws HsqlException {
+
+        if (eArg != null) {
+            eArg.setLikeOptimised();
+        }
+
+        if (eArg2 != null) {
+            eArg2.setLikeOptimised();
+        }
+
+        if (exprType == LIKE) {
+            likeObject.optimised = true;
+        }
+    }
+
+    /**
      * Resolve the table names for columns
      *
      *
@@ -1244,7 +1535,7 @@ class Expression {
 
                 String filterName = f.getName();
 
-                if (tableName == null || filterName.equals(tableName)) {
+                if (tableName == null || tableName.equals(filterName)) {
                     Table table = f.getTable();
                     int   i     = table.searchColumn(columnName);
 
@@ -2261,7 +2552,7 @@ class Expression {
 
             case COLUMN :
                 try {
-                    return tableFilter.oCurrentData[columnIndex];
+                    return tableFilter.currentData[columnIndex];
                 } catch (NullPointerException e) {
                     throw Trace.error(Trace.COLUMN_NOT_FOUND, columnName);
                 }
@@ -2369,7 +2660,7 @@ class Expression {
 */
                 String s = (String) eArg2.getValue(Types.VARCHAR);
 
-                if (eArg2.exprType == PARAM) {
+                if (eArg2.isParam) {
                     likeObject.resetPattern(s);
                 }
 

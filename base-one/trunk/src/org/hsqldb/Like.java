@@ -78,7 +78,7 @@ package org.hsqldb;
 class Like {
 
     private char[]   cLike;
-    private int[]    iType;
+    private int[]    wildCardType;
     private int      iLen;
     private boolean  isIgnoreCase;
     private int      iFirstWildCard;
@@ -120,7 +120,7 @@ class Like {
         StringBuffer s = new StringBuffer();
         int          i = 0;
 
-        for (; (i < iLen) && (iType[i] == 0); i++) {
+        for (; (i < iLen) && (wildCardType[i] == 0); i++) {
             s.append(cLike[i]);
         }
 
@@ -168,7 +168,7 @@ class Like {
     private boolean compareAt(String s, int i, int j, int jLen) {
 
         for (; i < iLen; i++) {
-            switch (iType[i]) {
+            switch (wildCardType[i]) {
 
                 case 0 :                  // general character
                     if ((j >= jLen) || (cLike[i] != s.charAt(j++))) {
@@ -229,8 +229,8 @@ class Like {
         int l = pattern == null ? 0
                                 : pattern.length();
 
-        cLike = new char[l];
-        iType = new int[l];
+        cLike        = new char[l];
+        wildCardType = new int[l];
 
         boolean bEscaping = false,
                 bPercent  = false;
@@ -245,7 +245,7 @@ class Like {
 
                     continue;
                 } else if (c == '_') {
-                    iType[iLen] = UNDERSCORE_CHAR;
+                    wildCardType[iLen] = UNDERSCORE_CHAR;
 
                     if (iFirstWildCard == -1) {
                         iFirstWildCard = iLen;
@@ -255,8 +255,8 @@ class Like {
                         continue;
                     }
 
-                    bPercent    = true;
-                    iType[iLen] = PERCENT_CHAR;
+                    bPercent           = true;
+                    wildCardType[iLen] = PERCENT_CHAR;
 
                     if (iFirstWildCard == -1) {
                         iFirstWildCard = iLen;
@@ -273,10 +273,10 @@ class Like {
         }
 
         for (int i = 0; i < iLen - 1; i++) {
-            if ((iType[i] == PERCENT_CHAR)
-                    && (iType[i + 1] == UNDERSCORE_CHAR)) {
-                iType[i]     = UNDERSCORE_CHAR;
-                iType[i + 1] = PERCENT_CHAR;
+            if ((wildCardType[i] == PERCENT_CHAR)
+                    && (wildCardType[i + 1] == UNDERSCORE_CHAR)) {
+                wildCardType[i]     = UNDERSCORE_CHAR;
+                wildCardType[i + 1] = PERCENT_CHAR;
             }
         }
     }
@@ -295,12 +295,12 @@ class Like {
 
     boolean isEquivalentToNotNullPredicate() {
 
-        if (cLike.length == 1 && iType[0] == PERCENT_CHAR) {
+        if (cLike.length == 1 && wildCardType[0] == PERCENT_CHAR) {
             return true;
         }
 
-        for (int i = 0; i < iType.length; i++) {
-            if (iType[i] == 0) {
+        for (int i = 0; i < wildCardType.length; i++) {
+            if (wildCardType[i] == 0) {
                 return false;
             }
         }
@@ -309,7 +309,9 @@ class Like {
     }
 
     boolean isEquivalentToBetweenPredicate() {
-        return iFirstWildCard > 0 && iFirstWildCard == iType.length - 1
+
+        return iFirstWildCard > 0
+               && iFirstWildCard == wildCardType.length - 1
                && cLike[iFirstWildCard] == '%';
     }
 
@@ -334,8 +336,8 @@ class Like {
         return super.toString() + "[\n" + "bIgnoreCase=" + isIgnoreCase
                + '\n' + "iLen=" + iLen + '\n' + "cLike="
                + org.hsqldb.lib.StringUtil.arrayToString(cLike) + '\n'
-               + "iType=" + org.hsqldb.lib.StringUtil.arrayToString(iType)
-               + ']';
+               + "iType="
+               + org.hsqldb.lib.StringUtil.arrayToString(wildCardType) + ']';
     }
 /*
     static int indexOf(String s, int start, char search, String escape) {

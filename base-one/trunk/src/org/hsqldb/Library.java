@@ -1004,17 +1004,21 @@ public class Library {
                              : s.substring(0, i + 1);
     }
 
-    public static String trim(String s) {
+    public static String trim(String s, String trimstr, boolean leading,
+                              boolean trailing) {
 
         if (s == null) {
             return s;
         }
 
+        int trim     = trimstr.charAt(0);
         int endindex = s.length() - 1;
 
-        for (; endindex >= 0 && s.charAt(endindex) == ' '; endindex--) {}
+        if (trailing) {
+            for (; endindex >= 0 && s.charAt(endindex) == trim; endindex--) {}
 
-        endindex++;
+            endindex++;
+        }
 
         if (endindex == 0) {
             return "";
@@ -1022,8 +1026,10 @@ public class Library {
 
         int startindex = 0;
 
-        while (startindex < endindex && s.charAt(startindex) == ' ') {
-            startindex++;
+        if (leading) {
+            while (startindex < endindex && s.charAt(startindex) == trim) {
+                startindex++;
+            }
         }
 
         if (startindex == 0 && endindex == s.length()) {

@@ -393,19 +393,25 @@ public class StringConverter {
     public static String readUTF(byte[] bytearr, int offset,
                                  int length) throws IOException {
 
-        HsqlStringBuffer str = new HsqlStringBuffer(length);
-        int              c, char2, char3;
-        int              count = 0;
+        char[] buf    = new char[length * 2];
+        int    bcount = 0;
+        int    c, char2, char3;
+        int    count = 0;
 
         while (count < length) {
             c = (int) bytearr[offset + count];
+
+            if (bcount > buf.length - 4) {
+                buf = (char[]) ArrayUtil.resizeArray(buf,
+                                                     buf.length + length);
+            }
 
             if (c > 0) {
 
                 /* 0xxxxxxx*/
                 count++;
 
-                str.append((char) c);
+                buf[bcount++] = (char) c;
 
                 continue;
             }
@@ -430,7 +436,8 @@ public class StringConverter {
                         throw new UTFDataFormatException();
                     }
 
-                    str.append((char) (((c & 0x1F) << 6) | (char2 & 0x3F)));
+                    buf[bcount++] = (char) (((c & 0x1F) << 6)
+                                            | (char2 & 0x3F));
                     break;
 
                 case 14 :
@@ -450,9 +457,9 @@ public class StringConverter {
                         throw new UTFDataFormatException();
                     }
 
-                    str.append((char) (((c & 0x0F) << 12)
-                                       | ((char2 & 0x3F) << 6)
-                                       | ((char3 & 0x3F) << 0)));
+                    buf[bcount++] = (char) (((c & 0x0F) << 12)
+                                            | ((char2 & 0x3F) << 6)
+                                            | ((char3 & 0x3F) << 0));
                     break;
 
                 default :
@@ -463,7 +470,7 @@ public class StringConverter {
         }
 
         // The number of chars produced may be less than length
-        return str.toString();
+        return new String(buf, 0, bcount);
     }
 
     /**

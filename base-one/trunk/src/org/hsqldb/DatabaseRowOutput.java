@@ -157,7 +157,7 @@ implements DatabaseRowOutputInterface {
                                         throws IOException, HsqlException;
 
     /**
-     *  This method is called to write data for a table
+     *  This method is called to write data for a table.
      *
      * @param  data
      * @param  t
@@ -173,7 +173,7 @@ implements DatabaseRowOutputInterface {
     }
 
     /**
-     *  This method is called to write data for a Result
+     *  This method is called to write data for a Result.
      *
      * @param  l
      * @param  type

@@ -1365,13 +1365,13 @@ extends org.hsqldb.DatabaseInformationMain {
             }, false);
 
             // fast lookup by trigger ident
-            addIndex(t, null, new int[]{ 1 }, false);
-            addIndex(t, null, new int[]{ 2 }, false);
+            addIndex(t, null, new int[]{ 1 });
+            addIndex(t, null, new int[]{ 2 });
 
             // fast lookup by table ident
-            addIndex(t, null, new int[]{ 3 }, false);
-            addIndex(t, null, new int[]{ 4 }, false);
-            addIndex(t, null, new int[]{ 5 }, false);
+            addIndex(t, null, new int[]{ 3 });
+            addIndex(t, null, new int[]{ 4 });
+            addIndex(t, null, new int[]{ 5 });
 
             return t;
         }
@@ -1464,14 +1464,14 @@ extends org.hsqldb.DatabaseInformationMain {
             }, false);
 
             // fast lookup by trigger ident
-            addIndex(t, null, new int[]{ 0 }, false);
-            addIndex(t, null, new int[]{ 1 }, false);
-            addIndex(t, null, new int[]{ 2 }, false);
+            addIndex(t, null, new int[]{ 0 });
+            addIndex(t, null, new int[]{ 1 });
+            addIndex(t, null, new int[]{ 2 });
 
             // fast lookup by table ident
-            addIndex(t, null, new int[]{ 5 }, false);
-            addIndex(t, null, new int[]{ 6 }, false);
-            addIndex(t, null, new int[]{ 8 }, false);
+            addIndex(t, null, new int[]{ 5 });
+            addIndex(t, null, new int[]{ 6 });
+            addIndex(t, null, new int[]{ 8 });
 
             return t;
         }
@@ -1565,7 +1565,7 @@ extends org.hsqldb.DatabaseInformationMain {
                     }
 
                     triggerName = def.name.name;
-                    description = def.toBuf().toString();
+                    description = def.getDDL().toString();
                     status      = def.valid ? "ENABLED"
                                             : "DISABLED";
                     triggerBody = def.fire;
@@ -1880,10 +1880,10 @@ extends org.hsqldb.DatabaseInformationMain {
             }, false);
 
             // fast lookup by view ident
-            addIndex(t, null, new int[]{ 0 }, false);
+            addIndex(t, null, new int[]{ 0 });
 
-            //addIndex(t, null, new int[]{1},false);
-            addIndex(t, null, new int[]{ 2 }, false);
+            //addIndex(t, null, new int[]{1});
+            addIndex(t, null, new int[]{ 2 });
 
             return t;
         }

@@ -90,29 +90,33 @@ class ConstraintCore {
     // iLen is the number of columns involved in the constraint.
     // it is equal to the size of iColMain but can be smaller than the
     // size of iColRef
-    int iLen;
+    int colLen;
 
     // Main is the sole table in a UNIQUE constraint
     // Or the table that is referenced by FOREIGN KEY ... REFERENCES
-    Table tMain;
-    int[] iColMain;
-    Index iMain;
+    Table mainTable;
+    int[] mainColArray;
+    Index mainIndex;
 
     // empty table row used for selective filling and comparison
-    Object[] oMain;
+    Object[] tempMainData;
 
     // Ref is the table that has a reference to the main table
-    Table tRef;
-    int[] iColRef;
-    Index iRef;
+    Table refTable;
+    int[] refColArray;
+    Index refIndex;
 
 /** @todo fredt - reused structure to be reviewed for multi-threading */
 
     // empty table row used for selective filling and comparison
-    Object[] oRef;
+    Object[] tempRefData;
 
     //
-    Object[] oColRef;
+    Object[] tempRefColData;
     int      deleteAction;
     int      updateAction;
+
+    //
+    Expression  check;
+    TableFilter checkFilter;
 }

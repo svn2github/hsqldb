@@ -84,7 +84,7 @@ import org.hsqldb.store.ValuePool;
 // strings and quoted identifiers
 // fredt@users 20021112 - patch 1.7.2 by Nitin Chauhan - use of switch
 // rewrite of the majority of multiple if(){}else{} chains with switch(){}
-// fredt@users 20030610 - patch 1.7.2 - yet fewer StringBuffers
+// fredt@users 20030610 - patch 1.7.2 - no StringBuffers
 
 /**
  * Tokenizer class declaration
@@ -136,19 +136,33 @@ class Tokenizer {
         hKeyword = new HashMap(67);
 
         // fredt - if we add MONTH, DAY, YEAR etc. MONTH(), DAY() et al will no longer work
-        String keyword[] = {
-            "AS", "AND", "ALL", "AVG", "BY", "BETWEEN", "BOTH", "CALL",
-            "CASE", "CASEWHEN", "CAST", "CONVERT", "CONCAT", "COUNT",
-            "COALESCE", "DISTINCT", "ELSE", "END", "EXISTS", "EXCEPT",
-            "EXTRACT",                                                      /* "FALSE",*/
-            "FOR", "FROM", "GROUP", "IF", "INTO", "IFNULL", "IS", "IN",
-            "JOIN", "INTERSECT", "INNER", "LEADING",
+        // following tokens are values
 
-            /* "LEFT" ,*/
-            "LIKE", "MAX", "MIN", /* "NULL", */ "NULLIF", "NOT", "MINUS",
-            "ON", "ORDER", "OR", "OUTER", "POSITION", "PRIMARY", "SELECT",
-            "SET", "SUBSTRING", "SUM", "THEN", "TO", "TRAILING", "TRIM",    /* "TRUE",*/
-            "UNIQUE", "UNION", "VALUES", "WHEN", "WHERE", "HAVING"
+        /* "FALSE",*/
+        /* "TRUE",*/
+        /* "NULL", */
+
+        /** @todo perhaps rename LEFT() */
+
+        // following token is excluded to allow LEFT() function to work
+
+        /* "LEFT" ,*/
+        String keyword[] = {
+            Token.T_AS, Token.T_AND, Token.T_ALL, Token.T_AVG, Token.T_BY,
+            Token.T_BETWEEN, Token.T_BOTH, Token.T_CALL, Token.T_CASE,
+            Token.T_CASEWHEN, Token.T_CAST, Token.T_CONVERT, Token.T_CONCAT,
+            Token.T_COUNT, Token.T_COALESCE, Token.T_DISTINCT, Token.T_ELSE,
+            Token.T_END, Token.T_EXISTS, Token.T_EXCEPT, Token.T_EXTRACT,
+            Token.T_FOR, Token.T_FROM, Token.T_GROUP, Token.T_IF,
+            Token.T_INTO, Token.T_IFNULL, Token.T_IS, Token.T_IN,
+            Token.T_JOIN, Token.T_INTERSECT, Token.T_INNER, Token.T_LEADING,
+            Token.T_LIKE, Token.T_MAX, Token.T_MIN, Token.T_NULLIF,
+            Token.T_NOT, Token.T_MINUS, Token.T_ON, Token.T_ORDER, Token.T_OR,
+            Token.T_OUTER, Token.T_POSITION, Token.T_PRIMARY, Token.T_SELECT,
+            Token.T_SET, Token.T_SUBSTRING, Token.T_SUM, Token.T_THEN,
+            Token.T_TO, Token.T_TRAILING, Token.T_TRIM, Token.T_UNIQUE,
+            Token.T_UNION, Token.T_VALUES, Token.T_WHEN, Token.T_WHERE,
+            Token.T_HAVING
         };
 
         for (int i = 0; i < keyword.length; i++) {
@@ -158,15 +172,15 @@ class Tokenizer {
         // literals that are values
         valueTokens = new IntValueHashMap(17);
 
-        valueTokens.put("NULL", NULL);
-        valueTokens.put("TRUE", BOOLEAN);
-        valueTokens.put("FALSE", BOOLEAN);
-        valueTokens.put("CURRENT_DATE", DATE);
-        valueTokens.put("CURRENT_TIME", TIME);
-        valueTokens.put("CURRENT_TIMESTAMP", TIMESTAMP);
-        valueTokens.put("SYSDATE", DATE);
-        valueTokens.put("NOW", TIMESTAMP);
-        valueTokens.put("TODAY", DATE);
+        valueTokens.put(Token.T_NULL, NULL);
+        valueTokens.put(Token.T_TRUE, BOOLEAN);
+        valueTokens.put(Token.T_FALSE, BOOLEAN);
+        valueTokens.put(Token.T_CURRENT_DATE, DATE);
+        valueTokens.put(Token.T_CURRENT_TIME, TIME);
+        valueTokens.put(Token.T_CURRENT_TIMESTAMP, TIMESTAMP);
+        valueTokens.put(Token.T_SYSDATE, DATE);
+        valueTokens.put(Token.T_NOW, TIMESTAMP);
+        valueTokens.put(Token.T_TODAY, DATE);
     }
 
     Tokenizer() {}
@@ -690,19 +704,7 @@ class Tokenizer {
 // after the dot - the same with NAME
                         getToken();
 
-//                        sLongNameLast = sToken;
                         iType = LONG_NAME;
-/*
-                        StringBuffer sb =
-                            new StringBuffer(sLongNameFirst.length() + 1
-                                             + sLongNameLast.length());
-
-                        sb.append(sLongNameFirst);
-                        sb.append('.');
-                        sb.append(sLongNameLast);
-
-                        sToken = sb.toString();
-*/
                     }
 
                     return;

@@ -74,6 +74,7 @@ import java.util.Date;
 import java.util.Calendar;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.StringConverter;
 import org.hsqldb.store.ValuePool;
 
 // fredt@users 20020912 - patch 1.7.1 - shortcut treatment of identity() call
@@ -106,6 +107,7 @@ class Function {
     private boolean        bConnection;
     private static HashMap methodCache = new HashMap();
     private int            fID;
+    String                 name;    // name used to call function
 
     /**
      * Constructs a new Function object with the given function call name
@@ -148,9 +150,10 @@ class Function {
      *      construction does not have the right to evaluate
      *      this Function.
      */
-    Function(String fqn, Session session,
+    Function(String name, String fqn, Session session,
              boolean checkPrivs) throws HsqlException {
 
+        this.name = name;
         cSession  = session;
         sFunction = fqn;
         fID       = Library.functionID(fqn);
@@ -512,6 +515,63 @@ class Function {
         }
 
         eArg[i] = e;
+    }
+
+    /**
+     * Retrieves a DDL representation of this object. <p>
+     *
+     * @return
+     */
+    StringBuffer getDLL() throws HsqlException {
+
+        StringBuffer sb = new StringBuffer();
+
+        // get the name as used by the CHECK statement
+        String ddlName = name;
+
+        // special case for TRIM
+        if (Token.T_TRIM.equals(name)) {
+            sb.append(name).append('(');
+
+            boolean leading  = eArg[2].test();
+            boolean trailing = eArg[3].test();
+
+            if (leading && trailing) {
+                sb.append(Token.T_BOTH);
+            } else {
+                sb.append(leading ? Token.T_LEADING
+                                  : Token.T_TRAILING);
+            }
+
+            // to do change to string
+            sb.append(' ');
+
+            String charval = (String) eArg[1].getValue();
+
+            sb.append(Column.createSQLString(charval)).append(' ');
+            sb.append(Token.T_FROM).append(' ');
+            sb.append(eArg[0].getDDL()).append(')');
+
+            return sb;
+        }
+
+        if (sFunction.equals(name)) {
+            ddlName = StringConverter.toQuotedString(name, '"', true);
+        }
+
+        sb.append(ddlName).append('(');
+
+        for (int i = iSqlArgStart; i < eArg.length; i++) {
+            sb.append(eArg[i].getDDL());
+
+            if (i < eArg.length - 1) {
+                sb.append(',');
+            }
+        }
+
+        sb.append(')');
+
+        return sb;
     }
 
     /**

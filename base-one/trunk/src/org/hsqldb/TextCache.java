@@ -34,7 +34,6 @@ package org.hsqldb;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import org.hsqldb.lib.HsqlByteArrayOutputStream;
-import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.FileUtil;
 
 /**
@@ -168,11 +167,11 @@ class TextCache extends DataFileCache {
         int next = 0;
 
         if ((next = sep.indexOf('\\')) != -1) {
-            int              start      = 0;
-            char             sepArray[] = sep.toCharArray();
-            char             ch         = 0;
-            int              len        = sep.length();
-            HsqlStringBuffer realSep    = new HsqlStringBuffer(len);
+            int          start      = 0;
+            char         sepArray[] = sep.toCharArray();
+            char         ch         = 0;
+            int          len        = sep.length();
+            StringBuffer realSep    = new StringBuffer(len);
 
             do {
                 realSep.append(sepArray, start, next - start);

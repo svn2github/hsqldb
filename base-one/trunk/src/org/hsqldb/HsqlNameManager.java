@@ -31,7 +31,6 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.StringConverter;
 
 /**
@@ -97,7 +96,7 @@ class HsqlNameManager {
      */
     HsqlName newAutoName(String type, String namepart) {
 
-        HsqlStringBuffer sbname = new HsqlStringBuffer();
+        StringBuffer sbname = new StringBuffer();
 
         if (type != null) {
             if (type.length() != 0) {
@@ -191,7 +190,7 @@ class HsqlNameManager {
         void rename(String prefix, String name,
                     boolean isquoted) throws HsqlException {
 
-            HsqlStringBuffer sbname = new HsqlStringBuffer(prefix);
+            StringBuffer sbname = new StringBuffer(prefix);
 
             sbname.append('_');
             sbname.append(name);

@@ -84,17 +84,17 @@ class TableFilter {
     static final int   CONDITION_START     = 2;    // candidate for eStart
     static final int   CONDITION_END       = 3;    // candidate for eEnd
     static final int   CONDITION_OUTER     = 4;    // add to this
-    private Table      tTable;
-    private String     sAlias;
-    private Index      iIndex;
-    private Node       nCurrent;
-    private Object     oEmptyData[];
+    private Table      filterTable;
+    private String     tableAlias;
+    private Index      filterIndex;
+    private Node       currentNode;
+    private Object     emptyData[];
     private Expression eStart, eEnd;
 
     //
     Expression eAnd;
     boolean    isOuterJoin;
-    Object     oCurrentData[];
+    Object     currentData[];
     Row        currentRow;
 
     // addendum to the result of findFirst() and next() with isOuterJoin==true
@@ -103,6 +103,12 @@ class TableFilter {
 
     // indicates current data is empty data produced for an outer join
     boolean isCurrentOuter;
+
+    /**
+     */
+    TableFilter(Table t) {
+        filterTable = t;
+    }
 
     /**
      * Constructor declaration
@@ -114,11 +120,11 @@ class TableFilter {
      */
     TableFilter(Table t, String alias, boolean outerjoin) {
 
-        tTable      = t;
-        sAlias      = (alias != null) ? alias
+        filterTable = t;
+        tableAlias  = (alias != null) ? alias
                                       : t.getName().name;
         isOuterJoin = outerjoin;
-        oEmptyData  = tTable.getNewRow();
+        emptyData   = filterTable.getNewRow();
     }
 
     /**
@@ -128,7 +134,7 @@ class TableFilter {
      * @return
      */
     String getName() {
-        return sAlias;
+        return tableAlias;
     }
 
     /**
@@ -138,7 +144,7 @@ class TableFilter {
      * @return
      */
     Table getTable() {
-        return tTable;
+        return filterTable;
     }
 
     /**
@@ -341,15 +347,15 @@ class TableFilter {
         }
 
         int   i     = e1.getColumnNr();
-        Index index = tTable.getIndexForColumn(i);
+        Index index = filterTable.getIndexForColumn(i);
 
-        if (index == null || (iIndex != index && iIndex != null)) {
+        if (index == null || (filterIndex != index && filterIndex != null)) {
             addAndCondition(e);
 
             return;
         }
 
-        iIndex = index;
+        filterIndex = index;
 
         switch (conditionType) {
 
@@ -410,22 +416,22 @@ class TableFilter {
         nonJoinIsNull  = false;
         isCurrentOuter = false;
 
-        if (iIndex == null) {
-            iIndex = tTable.getPrimaryIndex();
+        if (filterIndex == null) {
+            filterIndex = filterTable.getPrimaryIndex();
         }
 
         if (eStart == null) {
-            nCurrent = iIndex.first();
+            currentNode = filterIndex.first();
         } else {
             int    type = eStart.getArg().getDataType();
             Object o    = eStart.getArg2().getValue(type);
 
-            nCurrent = iIndex.findFirst(o, eStart.getType());
+            currentNode = filterIndex.findFirst(o, eStart.getType());
         }
 
-        while (nCurrent != null) {
-            oCurrentData = nCurrent.getData();
-            currentRow   = nCurrent.getRow();
+        while (currentNode != null) {
+            currentData = currentNode.getData();
+            currentRow  = currentNode.getRow();
 
             if (!(eEnd == null || eEnd.test())) {
                 break;
@@ -435,11 +441,11 @@ class TableFilter {
                 return true;
             }
 
-            nCurrent = iIndex.next(nCurrent);
+            currentNode = filterIndex.next(currentNode);
         }
 
-        oCurrentData = oEmptyData;
-        currentRow   = null;
+        currentData = emptyData;
+        currentRow  = null;
 
         return false;
     }
@@ -456,11 +462,11 @@ class TableFilter {
 
         nonJoinIsNull  = false;
         isCurrentOuter = false;
-        nCurrent       = iIndex.next(nCurrent);
+        currentNode    = filterIndex.next(currentNode);
 
-        while (nCurrent != null) {
-            oCurrentData = nCurrent.getData();
-            currentRow   = nCurrent.getRow();
+        while (currentNode != null) {
+            currentData = currentNode.getData();
+            currentRow  = currentNode.getRow();
 
             if (!(eEnd == null || eEnd.test())) {
                 break;
@@ -470,11 +476,11 @@ class TableFilter {
                 return true;
             }
 
-            nCurrent = iIndex.next(nCurrent);
+            currentNode = filterIndex.next(currentNode);
         }
 
-        oCurrentData = oEmptyData;
-        currentRow   = null;
+        currentData = emptyData;
+        currentRow  = null;
 
         return false;
     }
@@ -483,7 +489,7 @@ class TableFilter {
 
         nonJoinIsNull  = false;
         isCurrentOuter = true;
-        oCurrentData   = oEmptyData;
+        currentData    = emptyData;
         currentRow     = null;
 
         return eAnd == null || (eAnd.getFilter() != this && eAnd.isInJoin)
@@ -522,9 +528,9 @@ class TableFilter {
         boolean      fullScan;
 
         sb           = new StringBuffer();
-        index        = iIndex;
-        primaryIndex = tTable.getPrimaryIndex();
-        primaryKey   = tTable.getPrimaryKey();
+        index        = filterIndex;
+        primaryIndex = filterTable.getPrimaryIndex();
+        primaryKey   = filterTable.getPrimaryKey();
         hidden       = false;
         fullScan     = (eStart == null && eEnd == null);
 
@@ -538,8 +544,8 @@ class TableFilter {
         }
 
         sb.append(super.toString()).append('\n');
-        sb.append("table=[").append(tTable.getName().name).append("]\n");
-        sb.append("alias=[").append(sAlias).append("]\n");
+        sb.append("table=[").append(filterTable.getName().name).append("]\n");
+        sb.append("alias=[").append(tableAlias).append("]\n");
         sb.append("access=[").append(fullScan ? "FULL SCAN"
                                               : "INDEX PRED").append("]\n");
         sb.append("index=[");

@@ -73,6 +73,9 @@ public class Sort {
      * FastQSorts the [l,r] partition of the specfied array of Rows, based on
      * the comparator.
      *
+     * Modified from the original method in Hypersonic with the addition of
+     * the comparator. (fredt@users)
+     *
      */
     public static final void sort(Object w[], ObjectComparator comparator,
                                   int l, int r) {

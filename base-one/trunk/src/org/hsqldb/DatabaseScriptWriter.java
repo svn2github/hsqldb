@@ -33,7 +33,6 @@ package org.hsqldb;
 
 import java.io.*;
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.StopWatch;
 
 /**
@@ -94,7 +93,10 @@ class DatabaseScriptWriter {
     static final int INSERT = 0;
 
     /** the ID of the last session that wrote to log */
-    int sessionId;
+    int             sessionId;
+    static String[] LIST_SCRIPT_FORMATS = new String[] {
+        Token.T_TEXT, Token.T_BINARY, null, Token.T_COMPRESSED
+    };
 
     // todo - perhaps move this global into a lib utility class
     static byte[] BYTES_LINE_SEP;
@@ -307,7 +309,7 @@ class DatabaseScriptWriter {
     protected void writeTableTerm(Table t) throws HsqlException, IOException {
 
         if (t.isDataReadOnly() &&!t.isTemp() &&!t.isText()) {
-            HsqlStringBuffer a = new HsqlStringBuffer("SET TABLE ");
+            StringBuffer a = new StringBuffer("SET TABLE ");
 
             a.append(t.getName().statementName);
             a.append(" READONLY TRUE");

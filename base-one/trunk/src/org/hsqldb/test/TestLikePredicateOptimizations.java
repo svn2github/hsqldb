@@ -89,7 +89,7 @@ public class TestLikePredicateOptimizations extends TestBase {
 
         rs.next();
 
-        actualCount   = rs.getInt(1);
+        actualCount = rs.getInt(1);
 
         assertEquals("\"" + sql + "\"", expectedCount, actualCount);
 
@@ -106,7 +106,7 @@ public class TestLikePredicateOptimizations extends TestBase {
 
         rs.next();
 
-        actualCount   = rs.getInt(1);
+        actualCount = rs.getInt(1);
 
         assertEquals("\"" + sql + "\"", expectedCount, actualCount);
 
@@ -123,7 +123,7 @@ public class TestLikePredicateOptimizations extends TestBase {
 
         rs.next();
 
-        actualCount   = rs.getInt(1);
+        actualCount = rs.getInt(1);
 
         assertEquals("\"" + sql + "\"", expectedCount, actualCount);
 
@@ -157,11 +157,41 @@ public class TestLikePredicateOptimizations extends TestBase {
 
         rs.next();
 
-        actualCount   = rs.getInt(1);
+        actualCount = rs.getInt(1);
 
         assertEquals("\"" + sql + "\"", expectedCount, actualCount);
 
 // --
+        sql   = "CREATE TABLE test1 (col VARCHAR(30))";
+        pstmt = conn.prepareStatement(sql);
+
+        pstmt.execute();
+
+        sql   = "INSERT INTO test1 (col) VALUES ('one')";
+        pstmt = conn.prepareStatement(sql);
+
+        pstmt.execute();
+
+        sql   = "SELECT * FROM test1 WHERE ( col LIKE ? )";
+        pstmt = conn.prepareStatement(sql);
+
+        pstmt.setString(1, "one");
+
+        rs = pstmt.executeQuery();
+
+        rs.next();
+
+        String presult = rs.getString("COL");
+
+        sql   = "SELECT * FROM test1 WHERE ( col LIKE 'one' )";
+        pstmt = conn.prepareStatement(sql);
+        rs    = pstmt.executeQuery();
+
+        rs.next();
+
+        String result = rs.getString("COL");
+
+        assertEquals("\"" + sql + "\"", result, presult);
     }
 
     /* Runs TestLikePredicate test from the command line*/
