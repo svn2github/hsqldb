@@ -1,5 +1,5 @@
 /*
- * $Id: SqlTool.java,v 1.3 2004/01/19 19:50:52 unsaved Exp $
+ * $Id: SqlTool.java,v 1.4 2004/01/19 20:26:53 unsaved Exp $
  *
  * Copyright (c) 2001-2003, The HSQL Development Group
  * All rights reserved.
@@ -35,6 +35,7 @@ package org.hsqldb.util;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.io.File;
 import java.io.IOException;
 import java.io.BufferedReader;
@@ -47,7 +48,7 @@ import java.util.StringTokenizer;
  *  immediately after the description, just like's Sun's examples in
  *  their Coding Conventions document).
  *
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  */
 public class SqlTool {
     final static private String DEFAULT_JDBC_DRIVER = "org.hsqldb.jdbcDriver";
@@ -265,6 +266,9 @@ public class SqlTool {
                 sqlFiles[j] = new SqlFile(scriptFiles[j], interactive);
             }
         } catch (IOException ioe) {
+            try {
+                conn.close();
+            } catch (Exception e) {}
             System.err.println(ioe.getMessage());
             System.exit(2);
         }
@@ -274,9 +278,27 @@ public class SqlTool {
                 sqlFiles[j].execute(conn);
             }
         } catch (IOException ioe) {
+            try {
+                conn.close();
+            } catch (Exception e) {}
             System.err.println("Failed to execute SQL:  " + ioe.getMessage());
             System.exit(2);
+        } catch (SqlToolError ste) {
+            try {
+                conn.close();
+            } catch (Exception e) {}
+            System.err.println(ste.getMessage());
+            System.exit(2);
+        } catch (SQLException se) {
+            try {
+                conn.close();
+            } catch (Exception e) {}
+            System.err.println(se.getMessage());
+            System.exit(2);
         }
+        try {
+            conn.close();
+        } catch (Exception e) {}
         System.exit(0);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: SqlFile.java,v 1.1 2004/01/19 19:50:15 unsaved Exp $
+ * $Id: SqlFile.java,v 1.2 2004/01/19 20:26:53 unsaved Exp $
  *
  * Copyright (c) 2001-2003, The HSQL Development Group
  * All rights reserved.
@@ -40,12 +40,33 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.FileInputStream;
 import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 
+/**
+ * Definitions.
+ * COMMAND = Statement || Special
+ * Statement = SQL Statement
+ * Special =   Special Command like "\x arg..."
+ */
 public class SqlFile {
     private File file;
     private boolean interactive;
     private String primaryPrompt = "sql> ";
     private String contPrompt    = "  +> ";
+    private Connection conn = null;
+
+    final private static String BANNER =
+            "SqlFile processor.  Enter \"\\h;\" for help, \"\\q;\" to quit.\n"
+            + "REMEMBER TO TERMINATE EVERY COMMAND WITH ';'\n";
+    final private static String HELP_TEXT =
+              "All Commands (SQL Statements and SPECIAL Commands) are "
+            + "delimited with ';'.\n"
+            + "SPECIAL Commands all begin with '\\', SQL Statements do not.\n"
+            + "SPECIAL Commands:\n"
+            + "    \\q:  exit";
 
     /**
      * @param inFile  inFile of null means to read stdin.
@@ -55,7 +76,6 @@ public class SqlFile {
     SqlFile(File inFile, boolean inInteractive) throws IOException {
         file = inFile;
         interactive = inInteractive;
-System.err.println("Interactive? " + interactive);
         if (file != null && !file.canRead()) {
             throw new IOException("Can't read SQL file '" + file + "'");
         }
@@ -65,7 +85,8 @@ System.err.println("Interactive? " + interactive);
         this(null, inInteractive);
     }
 
-    public void execute(Connection conn) throws IOException {
+    public void execute(Connection conn) throws IOException, SqlToolError,
+            SQLException {
         execute(conn, System.out, System.err);
     }
 
@@ -79,20 +100,138 @@ System.err.println("Interactive? " + interactive);
      * track of current line number and command.
      */
     public synchronized void execute(Connection conn, PrintStream psStd,
-            PrintStream psErr) throws IOException {
+            PrintStream psErr) throws IOException, SqlToolError, SQLException {
+        StringBuffer buffer = new StringBuffer();
         curLinenum = -1;
+        int index, nextsem;
+        String inputLine;
+        String multicommand;
+
         BufferedReader br = new BufferedReader(new InputStreamReader(
                 (file == null) ? System.in : new FileInputStream(file)));
-        psErr.println("Executing '" + file + "'");
-        String s;
+        // psErr.println("Executing '" + file + "'");
         curLinenum = 0;
+        if (interactive) psStd.println(BANNER);
         while (true) {
             if (interactive) psStd.print(
-                    (curLinenum == 0) ? primaryPrompt : contPrompt);
-            s = br.readLine();
-            if (s == null) break;
+                    (buffer.length() == 0) ? primaryPrompt : contPrompt);
+            inputLine = br.readLine();
+            if (inputLine == null) break;
             curLinenum++;
-            psStd.println(Integer.toString(curLinenum) + ": " + s);
+            // This is just to filter out useless newlines at beginning of 
+            // commands.
+            if (buffer.length() == 0 && inputLine.trim().length() == 0)
+                continue;
+            buffer.append("\n" + inputLine);
+            if (inputLine.indexOf(';') < 0) continue;
+            multicommand = buffer.toString();
+            index = -1; // Previous sem
+            while (true) {
+                // This WILL succeed at least once.
+                nextsem = multicommand.indexOf(';', index + 1);
+                if (nextsem < 0) break;
+                try {
+                    curCommand =
+                        multicommand.substring(index + 1, nextsem).trim();
+                    if (curCommand.length() == 0) {
+                        ; // Permit null command, but don't pass to DB.
+                    } else if (curCommand.charAt(0) == '\\') {
+                        processSpecial();
+                    } else {
+                        processStatement(conn, psStd);
+                    }
+                } catch (QuitNow qn) {
+                    return;
+                } catch (BadSpecial bs) {
+                    psErr.println("Error at '"
+                        + ((file == null) ? "stdin" : file.toString())
+                        + "' line " + curLinenum
+                        + ":\n\"" + curCommand + "\"\n" + bs.getMessage());
+                    if (!interactive) throw new SqlToolError(bs);
+                } catch (SQLException se) {
+                    psErr.println("SQL Error at '"
+                        + ((file == null) ? "stdin" : file.toString())
+                        + "' line " + curLinenum
+                        + ":\n\"" + curCommand + "\"\n" + se.getMessage());
+                    if (!interactive) throw se;
+                }
+                index = nextsem;
+            }
+            while (++index < multicommand.length())
+                if (!Character.isWhitespace(multicommand.charAt(index))) break;
+            buffer.delete(0, index);
+        }
+        if (buffer.length() != 0)
+            psErr.println("Unterminated input:  [" + buffer + ']');
+    }
+    private class BadSpecial extends Exception {
+        private BadSpecial(String s) { super(s); }
+    }
+
+    private class QuitNow extends Exception { }
+
+    /**
+     * Process a Special Command.
+     */
+    private void processSpecial() throws BadSpecial, QuitNow {
+        int index = 0;
+        int special;
+        String other = null;
+
+        // Put an assertion here to verify that curCommand[0] == '\\'
+        if (curCommand.length() < 2)
+            throw new BadSpecial("Null special command");
+        if (curCommand.length() > 2) {
+            other = curCommand.substring(1).trim();
+            if (other.length() < 1) other = null;
+        }
+        switch (curCommand.charAt(1)) {
+            case 'q':
+                throw new QuitNow();
+            case '!':
+                System.err.println("Run '"
+                        + ((other == null) ? "SHELL" : other) + "'");
+                break;
+            default:
+                throw new BadSpecial("Unknown Special Command");
+        }
+    }
+
+    private void processStatement(Connection conn,
+            PrintStream printStream) throws SQLException {
+        //System.out.println(Integer.toString(curLinenum) + ": " + curCommand);
+        Statement statement = conn.createStatement();
+
+        statement.execute(curCommand);
+        ResultSet r = statement.getResultSet();
+        int       updateCount = statement.getUpdateCount();
+
+        switch (updateCount) {
+            case -1:
+                if (r == null) {
+                    printStream.println("No result");
+                    break;
+                }
+                ResultSetMetaData m      = r.getMetaData();
+                int               col    = m.getColumnCount();
+                StringBuffer      strbuf = new StringBuffer();
+                for (int i = 1; i <= col; i++) {
+                    strbuf.append(m.getColumnLabel(i) + "\t");
+                }
+                strbuf = strbuf.append("\n");
+                while (r.next()) {
+                    for (int i = 1; i <= col; i++) {
+                        strbuf = strbuf.append(r.getString(i) + "\t");
+                        if (r.wasNull()) {
+                            strbuf = strbuf.append("(null)\t");
+                        }
+                    }
+                }
+                printStream.println(strbuf.toString());
+                break;
+            default:
+                printStream.println("update count " + updateCount);
+                break;
         }
     }
 }
