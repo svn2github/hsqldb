@@ -93,7 +93,7 @@ import org.hsqldb.lib.StringConverter;
  * @author fredt@users
  * @version 1.7.2
  */
-class HsqlName implements Comparable {
+class HsqlName {
 
     String             name;
     boolean            isNameQuoted;

@@ -77,6 +77,17 @@ import java.util.GregorianCalendar;
 import java.util.Random;
 import java.text.SimpleDateFormat;
 import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.ValuePool;
+import org.hsqldb.lib.HsqlObjectToIntMap;
+import java.sql.Date;
+import java.sql.Time;
+
+// fredt@users 20020210 - patch 513005 by sqlbob@users (RMP) - ABS function
+// fredt@users 20020305 - patch 1.7.0 - change to 2D string arrays
+// sqlbob@users 20020420- patch 1.7.0 - added HEXTORAW and RAWTOHEX.
+// boucherb@user 20020918 - doc 1.7.2 - added JavaDoc  and code comments
+// fredt@user 20021021 - doc 1.7.2 - modified JavaDoc
+// boucherb@users 20030201 - patch 1.7.2 - direct calls for org.hsqldb.Library
 
 /**
  * Provides the HSQLDB implementation of standard Open Group SQL CLI
@@ -84,12 +95,6 @@ import org.hsqldb.lib.HsqlHashMap;
  *
  * @version 1.7.2
  */
-
-// fredt@users 20020210 - patch 513005 by sqlbob@users (RMP) - ABS function
-// fredt@users 20020305 - patch 1.7.0 - change to 2D string arrays
-// sqlbob@users 20020420- patch 1.7.0 - added HEXTORAW and RAWTOHEX.
-// boucherb@user 20020918 - doc 1.7.2 - added JavaDoc  and code comments
-// fredt@user 20021021 - doc 1.7.2 - modified JavaDoc
 public class Library {
 
     static final String sNumeric[][] = {
@@ -1460,6 +1465,7 @@ public class Library {
     public static boolean isReadOnlyDatabase(Connection c) {
         return ((jdbcConnection) c).dDatabase.bReadOnly;
     }
+
 /*
 // test for soundex
     public static void main (String argv[]){
@@ -1469,4 +1475,358 @@ public class Library {
         }
     }
 */
+    static final int                abs                       = 0;
+    static final int                ascii                     = 1;
+    static final int                bitand                    = 2;
+    static final int                bitor                     = 3;
+    static final int                character                 = 4;
+    static final int                concat                    = 5;
+    static final int                cot                       = 6;
+    static final int                curdate                   = 7;
+    static final int                curtime                   = 8;
+    static final int                database                  = 9;
+    static final int                dayname                   = 10;
+    static final int                dayofmonth                = 11;
+    static final int                dayofweek                 = 12;
+    static final int                dayofyear                 = 13;
+    static final int                difference                = 14;
+    static final int                getAutoCommit             = 15;
+    static final int                getDatabaseMajorVersion   = 16;
+    static final int                getDatabaseMinorVersion   = 17;
+    static final int                getDatabaseProductName    = 18;
+    static final int                getDatabaseProductVersion = 19;
+    static final int                hexToRaw                  = 20;
+    static final int                hour                      = 21;
+    static final int                identity                  = 22;
+    static final int                insert                    = 23;
+    static final int                isReadOnlyConnection      = 24;
+    static final int                isReadOnlyDatabase        = 25;
+    static final int                lcase                     = 26;
+    static final int                left                      = 27;
+    static final int                length                    = 28;
+    static final int                locate                    = 29;
+    static final int                log10                     = 30;
+    static final int                ltrim                     = 31;
+    static final int                minute                    = 32;
+    static final int                mod                       = 33;
+    static final int                month                     = 34;
+    static final int                monthname                 = 35;
+    static final int                now                       = 36;
+    static final int                pi                        = 37;
+    static final int                quarter                   = 38;
+    static final int                rand                      = 39;
+    static final int                rawToHex                  = 40;
+    static final int                repeat                    = 41;
+    static final int                replace                   = 42;
+    static final int                right                     = 43;
+    static final int                round                     = 44;
+    static final int                roundMagic                = 45;
+    static final int                rtrim                     = 46;
+    static final int                second                    = 47;
+    static final int                sign                      = 48;
+    static final int                soundex                   = 49;
+    static final int                space                     = 50;
+    static final int                substring                 = 51;
+    static final int                truncate                  = 52;
+    static final int                ucase                     = 53;
+    static final int                user                      = 54;
+    static final int                week                      = 55;
+    static final int                year                      = 56;
+    static final HsqlObjectToIntMap functionMap = new HsqlObjectToIntMap(113);
+    static final Double             piValue = new Double(Library.pi());
+
+    static {
+        functionMap.put("abs", abs);
+        functionMap.put("ascii", ascii);
+        functionMap.put("bitand", bitand);
+        functionMap.put("bitor", bitor);
+        functionMap.put("character", character);
+        functionMap.put("concat", concat);
+        functionMap.put("cot", cot);
+        functionMap.put("curdate", curdate);
+        functionMap.put("curtime", curtime);
+        functionMap.put("database", database);
+        functionMap.put("dayname", dayname);
+        functionMap.put("dayofmonth", dayofmonth);
+        functionMap.put("dayofweek", dayofweek);
+        functionMap.put("dayofyear", dayofyear);
+        functionMap.put("difference", difference);
+        functionMap.put("getAutoCommit", getAutoCommit);
+        functionMap.put("getDatabaseMajorVersion", getDatabaseMajorVersion);
+        functionMap.put("getDatabaseMinorVersion", getDatabaseMinorVersion);
+        functionMap.put("getDatabaseProductName", getDatabaseProductName);
+        functionMap.put("getDatabaseProductVersion",
+                        getDatabaseProductVersion);
+        functionMap.put("hexToRaw", hexToRaw);
+        functionMap.put("hour", hour);
+        functionMap.put("identity", identity);
+        functionMap.put("insert", insert);
+        functionMap.put("isReadOnlyConnection", isReadOnlyConnection);
+        functionMap.put("isReadOnlyDatabase", isReadOnlyDatabase);
+        functionMap.put("lcase", lcase);
+        functionMap.put("left", left);
+        functionMap.put("length", length);
+        functionMap.put("locate", locate);
+        functionMap.put("log10", log10);
+        functionMap.put("ltrim", ltrim);
+        functionMap.put("minute", minute);
+        functionMap.put("mod", mod);
+        functionMap.put("month", month);
+        functionMap.put("monthname", monthname);
+        functionMap.put("now", now);
+        functionMap.put("pi", pi);
+        functionMap.put("quarter", quarter);
+        functionMap.put("rand", rand);
+        functionMap.put("rawToHex", rawToHex);
+        functionMap.put("repeat", repeat);
+        functionMap.put("replace", replace);
+        functionMap.put("right", right);
+        functionMap.put("round", round);
+        functionMap.put("roundMagic", roundMagic);
+        functionMap.put("rtrim", rtrim);
+        functionMap.put("second", second);
+        functionMap.put("sign", sign);
+        functionMap.put("soundex", soundex);
+        functionMap.put("space", space);
+        functionMap.put("substring", substring);
+        functionMap.put("truncate", truncate);
+        functionMap.put("ucase", ucase);
+        functionMap.put("user", user);
+        functionMap.put("week", week);
+        functionMap.put("year", year);
+    }
+
+    public static Object invoke(int fID, Object[] parms) throws SQLException {
+
+        try {
+            switch (fID) {
+
+                case abs : {
+                    return new Double(
+                        Library.abs(((Number) parms[0]).doubleValue()));
+                }
+                case ascii : {
+                    return ascii((String) parms[0]);
+                }
+                case bitand : {
+                    return new Integer(
+                        bitand(((Number) parms[0]).intValue(),
+                               ((Number) parms[1]).intValue()));
+                }
+                case bitor : {
+                    return new Integer(bitor(((Number) parms[0]).intValue(),
+                                             ((Number) parms[1]).intValue()));
+                }
+                case character : {
+                    return character(((Number) parms[0]).intValue());
+                }
+                case concat : {
+                    return concat((String) parms[0], (String) parms[1]);
+                }
+                case cot : {
+                    return new Double(cot(((Number) parms[0]).doubleValue()));
+                }
+                case curdate : {
+                    return curdate();
+                }
+                case curtime : {
+                    return curtime();
+                }
+                case database : {
+                    return database((Connection) parms[0]);
+                }
+                case dayname : {
+                    return dayname((Date) parms[0]);
+                }
+                case dayofmonth : {
+                    return ValuePool.getInt(dayofmonth((Date) parms[0]));
+                }
+                case dayofweek : {
+                    return ValuePool.getInt(dayofweek((Date) parms[0]));
+                }
+                case dayofyear : {
+                    return ValuePool.getInt(dayofyear((Date) parms[0]));
+                }
+                case difference : {
+                    return ValuePool.getInt(difference((String) parms[0],
+                                                       (String) parms[1]));
+                }
+                case getAutoCommit : {
+                    return getAutoCommit((Connection) parms[0]) ? Boolean.TRUE
+                                                                : Boolean
+                                                                .FALSE;
+                }
+                case getDatabaseMajorVersion : {
+                    return ValuePool.getInt(getDatabaseMajorVersion());
+                }
+                case getDatabaseMinorVersion : {
+                    return ValuePool.getInt(getDatabaseMinorVersion());
+                }
+                case getDatabaseProductName : {
+                    return getDatabaseProductName();
+                }
+                case getDatabaseProductVersion : {
+                    return getDatabaseProductVersion();
+                }
+                case hexToRaw : {
+                    return hexToRaw((String) parms[0]);
+                }
+                case hour : {
+                    return ValuePool.getInt(hour((Time) parms[0]));
+                }
+                case identity : {
+                    return null;
+                }
+                case insert : {
+                    return insert((String) parms[0],
+                                  ((Number) parms[1]).intValue(),
+                                  ((Number) parms[2]).intValue(),
+                                  (String) parms[3]);
+                }
+                case isReadOnlyConnection : {
+                    return isReadOnlyConnection((Connection) parms[0])
+                           ? Boolean.TRUE
+                           : Boolean.FALSE;
+                }
+                case isReadOnlyDatabase : {
+                    return isReadOnlyDatabase((Connection) parms[0])
+                           ? Boolean.TRUE
+                           : Boolean.FALSE;
+                }
+                case lcase : {
+                    return lcase((String) parms[0]);
+                }
+                case left : {
+                    return left((String) parms[0],
+                                ((Number) parms[1]).intValue());
+                }
+                case length : {
+                    return length((String) parms[0]);
+                }
+                case locate : {
+                    return ValuePool.getInt(locate((String) parms[0],
+                                                   (String) parms[1],
+                                                   (Integer) parms[2]));
+                }
+                case log10 : {
+                    return new Double(
+                        log10(((Number) parms[0]).doubleValue()));
+                }
+                case ltrim : {
+                    return ltrim((String) parms[0]);
+                }
+                case minute : {
+                    return ValuePool.getInt(minute((Time) parms[0]));
+                }
+                case mod : {
+                    return new Integer(mod(((Number) parms[0]).intValue(),
+                                           ((Number) parms[1]).intValue()));
+                }
+                case month : {
+                    return ValuePool.getInt(month((Date) parms[0]));
+                }
+                case monthname : {
+                    return monthname((Date) parms[0]);
+                }
+                case now : {
+                    return now();
+                }
+                case pi : {
+                    return piValue;
+                }
+                case quarter : {
+                    return ValuePool.getInt(quarter((Date) parms[0]));
+                }
+                case rand : {
+                    return new Double(rand((Integer) parms[0]));
+                }
+                case rawToHex : {
+                    return rawToHex((String) parms[0]);
+                }
+                case repeat : {
+                    return repeat((String) parms[0], (Integer) parms[1]);
+                }
+                case replace : {
+                    return replace((String) parms[0], (String) parms[1],
+                                   (String) parms[2]);
+                }
+                case right : {
+                    return right((String) parms[0],
+                                 ((Number) parms[1]).intValue());
+                }
+                case round : {
+                    return new Double(round(((Number) parms[0]).doubleValue(),
+                                            ((Number) parms[0]).intValue()));
+                }
+                case roundMagic : {
+                    return new Double(
+                        roundMagic(((Number) parms[0]).doubleValue()));
+                }
+                case rtrim : {
+                    return rtrim((String) parms[0]);
+                }
+                case second : {
+                    return ValuePool.getInt(second((Time) parms[0]));
+                }
+                case sign : {
+                    return ValuePool.getInt(
+                        sign(((Number) parms[0]).doubleValue()));
+                }
+                case soundex : {
+                    return soundex((String) parms[0]);
+                }
+                case space : {
+                    return space(((Number) parms[0]).intValue());
+                }
+                case substring : {
+                    return substring((String) parms[0],
+                                     ((Number) parms[1]).intValue(),
+                                     (Integer) parms[2]);
+                }
+                case truncate : {
+                    return new Double(
+                        truncate(
+                            ((Number) parms[0]).doubleValue(),
+                            ((Number) parms[1]).intValue()));
+                }
+                case ucase : {
+                    return ucase((String) parms[0]);
+                }
+                case user : {
+                    return user((Connection) parms[0]);
+                }
+                case week : {
+                    return ValuePool.getInt(week((Date) parms[0]));
+                }
+                case year : {
+                    return new Integer(year((Date) parms[0]));
+                }
+                default : {
+                    throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED,
+                                      "org.hsqldb.Library" + fID);
+                }
+            }
+        } catch (Exception e) {
+            throw wrapException(e);
+        }
+    }
+
+    static SQLException wrapException(Exception e) {
+
+        if (e instanceof SQLException) {
+            return (SQLException) e;
+        }
+
+        return Trace.error(Trace.GENERAL_ERROR, e.toString());
+    }
+
+    static final String prefix       = "org.hsqldb.Library.";
+    static final int    prefixLength = prefix.length();
+
+    static int functionID(String fname) {
+
+        return fname.startsWith(prefix)
+               ? functionMap.get(fname.substring(prefixLength))
+               : -1;
+    }
 }

@@ -70,6 +70,7 @@ package org.hsqldb;
 import java.sql.SQLException;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.HsqlHashSet;
 import org.hsqldb.lib.UnifiedTable;
 
 // fredt@users 20020320 - doc 1.7.0 - update
@@ -89,7 +90,7 @@ class Session {
     private Database       dDatabase;
     private User           uUser;
     private HsqlArrayList  tTransaction;
-    private boolean        bAutoCommit;
+    boolean                bAutoCommit;
     private boolean        bNestedTransaction;
     private boolean        bNestedOldAutoCommit;
     private int            iNestedOldTransIndex;
@@ -546,6 +547,11 @@ class Session {
 
     boolean isAccessible(Object dbobject) throws SQLException {
         return uUser.isAccessible(dbobject);
+    }
+
+    HsqlHashSet getGrantedClassNames(boolean andToPublic) {
+        return (isAdmin()) ? dDatabase.getUserManager().getGrantedClassNames()
+                           : uUser.getGrantedClassNames(andToPublic);
     }
 
 //----------------------------------------------------------------

@@ -69,6 +69,7 @@ package org.hsqldb;
 
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.Enumeration;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HsqlHashMap;
 
@@ -155,7 +156,7 @@ class Expression {
     // VALUE, VALUELIST
     private Object      oData;
     private HsqlHashMap hList;
-    private boolean     hListHasNull;
+    private boolean     hListIsUpper;
     private int         iDataType;
 
     // QUERY (correlated subquery)
@@ -244,11 +245,7 @@ class Expression {
         for (int i = 0; i < size; i++) {
             Object o = v.get(i);
 
-            if (o != null) {
-                hList.put(o, Expression.INTEGER_1);
-            } else {
-                this.hListHasNull = true;
-            }
+            hList.put(o, Expression.INTEGER_1);
         }
     }
 
@@ -1287,24 +1284,29 @@ class Expression {
         switch (iType) {
 
             case COUNT :
-                return currValue == null ? INTEGER_0
-                                         : ((AggregatingValue) currValue)
-                                             .currentValue;
+                if (currValue == null) {
+                    return INTEGER_0;
+                }
+
+                return ((AggregatingValue) currValue).currentValue;
 
             case MAX :
             case MIN :
             case SUM :
-                return currValue == null ? null
-                                         : ((AggregatingValue) currValue)
-                                             .currentValue;
+                if (currValue == null) {
+                    return null;
+                }
+
+                return ((AggregatingValue) currValue).currentValue;
 
             case AVG :
-                return currValue == null ? null
-                                         : Column.avg(
-                                             ((AggregatingValue) currValue)
-                                                 .currentValue, iDataType,
-                                                     ((AggregatingValue) currValue)
-                                                         .acceptedValueCount);
+                if (currValue == null) {
+                    return null;
+                }
+
+                return Column.avg(
+                    ((AggregatingValue) currValue).currentValue, iDataType,
+                    ((AggregatingValue) currValue).acceptedValueCount);
 
             case NEGATE :
                 return Column.negate(eArg.getAggregatedValue(currValue),
@@ -1759,6 +1761,8 @@ class Expression {
      *
      * @throws SQLException
      */
+
+// fredt - in the future testValueList can be turned into a join query
     private boolean testValueList(Object o,
                                   int datatype) throws SQLException {
 
@@ -1767,15 +1771,34 @@ class Expression {
                 o = Column.convertObject(o, iDataType);
             }
 
-            if (o == null) {
-                return hListHasNull;
-            } else {
-                return hList.containsKey(o);
+            if (o != null && datatype == Column.VARCHAR_IGNORECASE) {
+                if (!hListIsUpper) {
+                    HsqlHashMap newMap = new HsqlHashMap(hList.size(), 1);
+                    Enumeration en     = hList.keys();
+
+                    while (en.hasMoreElements()) {
+                        Object key = en.nextElement();
+
+                        newMap.put(key.toString().toUpperCase(),
+                                   this.INTEGER_1);
+                    }
+
+                    hList        = newMap;
+                    hListIsUpper = true;
+                }
+
+                return hList.containsKey(o.toString().toUpperCase());
             }
+
+            return hList.containsKey(o);
         } else if (iType == QUERY) {
 
             // todo: convert to valuelist before if everything is resolvable
-            Result r    = sSelect.getResult(0);
+            Result r = sSelect.getResult(0);
+
+            // fredt - reduce the size if possible
+            r.removeDuplicates();
+
             Record n    = r.rRoot;
             int    type = r.colType[0];
 

@@ -67,851 +67,416 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.HsqlArrayList;
-
-//import org.hsqldb.lib.HsqlHashMap;
-import org.hsqldb.lib.HsqlObjectToIntMap;
+import java.lang.reflect.Constructor;
 import java.sql.SQLException;
-import java.sql.Types;
-import java.sql.DatabaseMetaData;
+import org.hsqldb.lib.HsqlObjectToIntMap;
 
-// fredt@users 20020130 - patch 491987 by jimbag@users
-// applied to different parts
-// fredt@users 20020215 - patch 1.7.0 by fredt - quoted identifiers
-// applied to different parts to support the sql standard for
-// naming of columns and tables (use of quoted identifiers as names)
-// written for universal support of quoted names including the quote character
-// and speed improvements to avoid repetitive string comparisons
-// thanks to suggestions by boucherb@users
-// instigated by patch 489864 by jytou@users
-// fredt@users 20020218 - patch 1.7.0 by fredt - DEFAULT keyword
-// support for default values for table columns
-// fredt@users 20020225 - patch 489777 by fredt
-// restructuring for error trapping
-// fredt@users 20020225 - patch 1.7.0 - named constraints
-// fredt@users 20020225 - patch 1.7.0 - multi-column primary keys
-// fredt@users 20020523 - patch 1.7.0 - JDBC reporting of forgin keys
-// fredt@users 20020526 - patch 1.7.0 - JDBC reporting of best row identifier
+// fredt@users - 1.7.2 - structural modifications to allow inheritance
 
 /**
- * Provides information about the database.
+ * Base class for system tables. Inclues a factory method which returns the
+ * most complete implementation available in the jar. This base implementation
+ * knows the names of all system tables but returns null for any system table.
+ * <p>
+ * This class has been developed from scratch to replace the previous
+ * DatabaseInformation implementations.
  *
- *
- * @version 1.7.0
+ * @author  boucherb@users.sourceforge.net
+ * @version 1.7.2
+ * @since 1.7.2
  */
 class DatabaseInformation {
 
-    private Database             dDatabase;
-    private UserManager          aAccess;
-    private HsqlArrayList        tTable;
-    private static final Integer INTEGER_0 = new Integer(0);
+    // ids for system table names strictly in order of sysName[]
+    protected static final int SYSTEM_BESTROWIDENTIFIER = 1;
+    protected static final int SYSTEM_CATALOGS          = 2;
+    protected static final int SYSTEM_COLUMNPRIVILEGES  = 3;
+    protected static final int SYSTEM_COLUMNS           = 4;
+    protected static final int SYSTEM_CROSSREFERENCE    = 5;
+    protected static final int SYSTEM_INDEXINFO         = 6;
+    protected static final int SYSTEM_PRIMARYKEYS       = 7;
+    protected static final int SYSTEM_PROCEDURECOLUMNS  = 8;
+    protected static final int SYSTEM_PROCEDURES        = 9;
+    protected static final int SYSTEM_SCHEMAS           = 10;
+    protected static final int SYSTEM_SUPERTABLES       = 11;
+    protected static final int SYSTEM_SUPERTYPES        = 12;
+    protected static final int SYSTEM_TABLEPRIVILEGES   = 13;
+    protected static final int SYSTEM_TABLES            = 14;
+    protected static final int SYSTEM_TABLETYPES        = 15;
+    protected static final int SYSTEM_TYPEINFO          = 16;
+    protected static final int SYSTEM_UDTATTRIBUTES     = 17;
+    protected static final int SYSTEM_UDTS              = 18;
+    protected static final int SYSTEM_USERS             = 19;
+    protected static final int SYSTEM_VERSIONCOLUMNS    = 20;
 
-    /**
-     * Constructor declaration
-     *
-     *
-     * @param db
-     * @param tables
-     * @param access
-     */
-    DatabaseInformation(Database db, HsqlArrayList tables,
-                        UserManager access) {
+    // HSQLDB-specific
+    protected static final int SYSTEM_ALIASES         = 21;
+    protected static final int SYSTEM_BYTECODE        = 22;
+    protected static final int SYSTEM_CACHEINFO       = 23;
+    protected static final int SYSTEM_CLASSPRIVILEGES = 24;
+    protected static final int SYSTEM_CONNECTIONINFO  = 25;
+    protected static final int SYSTEM_PROPERTIES      = 26;
+    protected static final int SYSTEM_SESSIONS        = 27;
+    protected static final int SYSTEM_TRIGGERCOLUMNS  = 28;
+    protected static final int SYSTEM_TRIGGERS        = 29;
+    protected static final int SYSTEM_ALLTYPEINFO     = 30;
+    protected static final int SYSTEM_VIEWSOURCE      = 31;
 
-        dDatabase = db;
-        tTable    = tables;
-        aAccess   = access;
-    }
+    // system table names strictly in order of their ids
+    protected static final String sysNames[] = {
+        "SYSTEM_BESTROWIDENTIFIER",                   //
+        "SYSTEM_CATALOGS",                            //
+        "SYSTEM_COLUMNPRIVILEGES",                    //
+        "SYSTEM_COLUMNS", "SYSTEM_CROSSREFERENCE",    //
+        "SYSTEM_INDEXINFO",                           //
+        "SYSTEM_PRIMARYKEYS",                         //
+        "SYSTEM_PROCEDURECOLUMNS",                    //
+        "SYSTEM_PROCEDURES",                          //
+        "SYSTEM_SCHEMAS",                             //
+        "SYSTEM_SUPERTABLES",                         //
+        "SYSTEM_SUPERTYPES",                          //
+        "SYSTEM_TABLEPRIVILEGES",                     //
+        "SYSTEM_TABLES",                              //
+        "SYSTEM_TABLETYPES",                          //
+        "SYSTEM_TYPEINFO",                            //
+        "SYSTEM_UDTATTRIBUTES",                       //
+        "SYSTEM_UDTS",                                //
+        "SYSTEM_USERS",                               //
+        "SYSTEM_VERSIONCOLUMNS",                      //
 
-    // some drivers use the following titles:
-    // static final String META_SCHEM="OWNER";
-    // static final String META_CAT="QUALIFIER";
-    // static final String META_COLUMN_SIZE="PRECISION";
-    // static final String META_BUFFER_LENGTH="LENGTH";
-    // static final String META_DECIMAL_DIGITS="SCALE";
-    // static final String META_NUM_PREC_RADIX="RADIX";
-    // static final String META_FIXED_PREC_SCALE="MONEY";
-    // static final String META_ORDINAL_POSITION="SEQ_IN_INDEX";
-    // static final String META_ASC_OR_DESC="COLLATION";
-    static final String               META_SCHEM          = "SCHEM";
-    static final String               META_CAT            = "CAT";
-    static final String               META_COLUMN_SIZE    = "COLUMN_SIZE";
-    static final String               META_BUFFER_LENGTH  = "BUFFER_LENGTH";
-    static final String               META_DECIMAL_DIGITS = "DECIMAL_DIGITS";
-    static final String               META_NUM_PREC_RADIX = "NUM_PREC_RADIX";
-    static final String META_FIXED_PREC_SCALE = "FIXED_PREC_SCALE";
-    static final String META_ORDINAL_POSITION = "ORDINAL_POSITION";
-    static final String               META_ASC_OR_DESC    = "ASC_OR_DESC";
-    private static HsqlObjectToIntMap sysTableNames;
-    private static HsqlName[]         sysTableHsqlNames;
-    private static final int          SYSTEM_PROCEDURES        = 1;
-    private static final int          SYSTEM_PROCEDURECOLUMNS  = 2;
-    private static final int          SYSTEM_TABLES            = 3;
-    private static final int          SYSTEM_SCHEMAS           = 4;
-    private static final int          SYSTEM_CATALOGS          = 5;
-    private static final int          SYSTEM_TABLETYPES        = 6;
-    private static final int          SYSTEM_COLUMNS           = 7;
-    private static final int          SYSTEM_COLUMNPRIVILEGES  = 8;
-    private static final int          SYSTEM_TABLEPRIVILEGES   = 9;
-    private static final int          SYSTEM_BESTROWIDENTIFIER = 10;
-    private static final int          SYSTEM_VERSIONCOLUMNS    = 11;
-    private static final int          SYSTEM_PRIMARYKEYS       = 12;
-    private static final int          SYSTEM_IMPORTEDKEYS      = 13;
-    private static final int          SYSTEM_EXPORTEDKEYS      = 14;
-    private static final int          SYSTEM_CROSSREFERENCE    = 15;
-    private static final int          SYSTEM_TYPEINFO          = 16;
-    private static final int          SYSTEM_INDEXINFO         = 17;
-    private static final int          SYSTEM_UDTS              = 18;
-    private static final int          SYSTEM_CONNECTIONINFO    = 19;
-    private static final int          SYSTEM_USERS             = 20;
+        // HSQLDB-specific
+        "SYSTEM_ALIASES",                             //
+        "SYSTEM_BYTECODE",                            //
+        "SYSTEM_CACHEINFO",                           //
+        "SYSTEM_CLASSPRIVILEGES",                     //
+        "SYSTEM_CONNECTIONINFO",                      //
+        "SYSTEM_PROPERTIES",                          //
+        "SYSTEM_SESSIONS",                            //
+        "SYSTEM_TRIGGERCOLUMNS",                      //
+        "SYSTEM_TRIGGERS",                            //
+        "SYSTEM_ALLTYPEINFO",                         //
+        "SYSTEM_VIEWSOURCE"                           //
 
-    // supported table types
-    private static final String[] tableTypes = new String[] {
-        "TABLE", "VIEW", "GLOBAL TEMPORARY"
+        // Future use
+//        "SYSTEM_ASSERTIONS",
+//        "SYSTEM_ATTRIBUTES",
+//        "SYSTEM_CHARACTER_ENCODING_FORMS",
+//        "SYSTEM_CHARACTER_REPERTOIRES",
+//        "SYSTEM_CHARACTER_SETS",
+//        "SYSTEM_CHECK_COLUMN_USAGE",
+//        "SYSTEM_CHECK_CONSTRAINT_ROUTINE_USAGE",
+//        "SYSTEM_CHECK_CONSTRAINTS",
+//        "SYSTEM_CHECK_TABLE_USAGE",
+//        "SYSTEM_COLLATION_CHARACTER_SET_APPLICABILITY",
+//        "SYSTEM_COLLATIONS",
+//        "SYSTEM_COLUMN_COLUMN_USAGE",
+//        "SYSTEM_COLUMN_OPTIONS",
+//        "SYSTEM_COLUMN_PRIVILEGES",
+//        "SYSTEM_COLUMNS",
+//        "SYSTEM_DATA_TYPE_DESCRIPTOR",
+//        "SYSTEM_DIRECT_SUPERTABLES",
+//        "SYSTEM_DIRECT_SUPERTYPES",
+//        "SYSTEM_DOMAIN_CONSTRAINTS",
+//        "SYSTEM_DOMAINS",
+//        "SYSTEM_ELEMENT_TYPES",
+//        "SYSTEM_FIELDS",
+//        "SYSTEM_FOREIGN_DATA_WRAPPER_OPTIONS",
+//        "SYSTEM_FOREIGN_DATA_WRAPPERS",
+//        "SYSTEM_FOREIGN_SERVER_OPTIONS",
+//        "SYSTEM_FOREIGN_SERVERS",
+//        "SYSTEM_FOREIGN_TABLE_OPTIONS",
+//        "SYSTEM_FOREIGN_TABLES",
+//        "SYSTEM_JAR_JAR_USAGE",
+//        "SYSTEM_JARS",
+//        "SYSTEM_KEY_COLUMN_USAGE",
+//        "SYSTEM_METHOD_SPECIFICATION_PARAMETERS",
+//        "SYSTEM_METHOD_SPECIFICATIONS",
+//        "SYSTEM_MODULE_COLUMN_USAGE",
+//        "SYSTEM_MODULE_PRIVILEGES",
+//        "SYSTEM_MODULE_TABLE_USAGE",
+//        "SYSTEM_MODULES",
+//        "SYSTEM_PARAMETERS",
+//        "SYSTEM_REFERENCED_TYPES",
+//        "SYSTEM_REFERENTIAL_CONSTRAINTS",
+//        "SYSTEM_ROLE_AUTHORIZATION_DESCRIPTORS",
+//        "SYSTEM_ROLES",
+//        "SYSTEM_ROUTINE_COLUMN_USAGE",
+//        "SYSTEM_ROUTINE_JAR_USAGE",
+//        "SYSTEM_ROUTINE_MAPPING_OPTIONS",
+//        "SYSTEM_ROUTINE_MAPPINGS",
+//        "SYSTEM_ROUTINE_PRIVILEGES",
+//        "SYSTEM_ROUTINE_ROUTINE_USAGE",
+//        "SYSTEM_ROUTINE_SEQUENCE_USAGE",
+//        "SYSTEM_ROUTINE_TABLE_USAGE",
+//        "SYSTEM_ROUTINES",
+//        "SYSTEM_SCHEMATA",
+//        "SYSTEM_SEQUENCES",
+//        "SYSTEM_SQL_FEATURES",
+//        "SYSTEM_SQL_IMPLEMENTATION_INFO",
+//        "SYSTEM_SQL_LANGUAGES",
+//        "SYSTEM_SQL_SIZING",
+//        "SYSTEM_SQL_SIZING_PROFILES",
+//        "SYSTEM_TABLE_CONSTRAINTS",
+//        "SYSTEM_TABLE_METHOD_PRIVILEGES",
+//        "SYSTEM_TABLE_PRIVILEGES",
+//        "SYSTEM_TABLES",
+//        "SYSTEM_TRANSFORMS",
+//        "SYSTEM_TRANSLATIONS",
+//        "SYSTEM_TRIGGER_COLUMN_USAGE",
+//        "SYSTEM_TRIGGER_ROUTINE_USAGE",
+//        "SYSTEM_TRIGGER_SEQUENCE_USAGE",
+//        "SYSTEM_TRIGGER_TABLE_USAGE",
+//        "SYSTEM_TRIGGERED_UPDATE_COLUMNS",
+//        "SYSTEM_TRIGGERS",
+//        "SYSTEM_TYPE_JAR_USAGE",
+//        "SYSTEM_USAGE_PRIVILEGES",
+//        "SYSTEM_USER_DEFINED_TYPE_PRIVILEGES",
+//        "SYSTEM_USER_DEFINED_TYPES",
+//        "SYSTEM_USER_MAPPING_OPTIONS",
+//        "SYSTEM_USER_MAPPINGS",
+//        "SYSTEM_USERS",
+//        "SYSTEM_VIEW_COLUMN_USAGE",
+//        "SYSTEM_VIEW_ROUTINE_USAGE",
+//        "SYSTEM_VIEW_TABLE_USAGE",
+//        "SYSTEM_VIEWS",
     };
 
-    static {
-        String sysNames[] = {
-            "SYSTEM_PROCEDURES", "SYSTEM_PROCEDURECOLUMNS", "SYSTEM_TABLES",
-            "SYSTEM_SCHEMAS", "SYSTEM_CATALOGS", "SYSTEM_TABLETYPES",
-            "SYSTEM_COLUMNS", "SYSTEM_COLUMNPRIVILEGES",
-            "SYSTEM_TABLEPRIVILEGES", "SYSTEM_BESTROWIDENTIFIER",
-            "SYSTEM_VERSIONCOLUMNS", "SYSTEM_PRIMARYKEYS",
-            "SYSTEM_IMPORTEDKEYS", "SYSTEM_EXPORTEDKEYS",
-            "SYSTEM_CROSSREFERENCE", "SYSTEM_TYPEINFO", "SYSTEM_INDEXINFO",
-            "SYSTEM_UDTS", "SYSTEM_CONNECTIONINFO", "SYSTEM_USERS"
-        };
+    // map for id lookup
+    protected static final HsqlObjectToIntMap sysTableNames;
 
-        sysTableHsqlNames = new HsqlName[sysNames.length];
-        sysTableNames     = new HsqlObjectToIntMap(37);
+    static {
+        sysTableNames = new HsqlObjectToIntMap(47);
 
         for (int i = 0; i < sysNames.length; i++) {
             sysTableNames.put(sysNames[i], i + 1);
-
-            sysTableHsqlNames[i] = HsqlName.newAutoName(null, sysNames[i]);
         }
     }
 
-    static boolean isSystemTable(String name) {
-        return sysTableNames.get(name) == -1 ? false
-                                             : true;
+    /** Database for which to produce tables */
+    protected Database database;
+
+    /**
+     * Simple object-wide flag indicating that all of this object's cached
+     * data is dirty.
+     */
+    protected boolean dirty = true;
+
+    /**
+     * state flag -- if true, contentful tables are to be produced, else
+     * empty (surrogate) tables are to be produced.  This allows faster
+     * database startup where user views reference system tables and faster
+     * system table structural reflection for table metadata.
+     */
+    protected boolean withContent = false;
+
+    /**
+     * Factory method retuns the fullest system table producer
+     * implementation available.  This instantiates implementations beginning
+     * with the most complet, finally choosing an empty table producer
+     * implemenation (this class) if no better instance can be constructed.
+     *
+     * @throws SQLException never - required by TableProducer.<init>
+     */
+    static DatabaseInformation newDatabaseInformation(Database db)
+    throws SQLException {
+
+        String[] impls = new String[] {
+            "org.hsqldb.DatabaseInformationFull",
+            "org.hsqldb.DatabaseInformationMain",
+            "org.hsqldb.DatabaseInformation"
+        };
+        Class               clazz;
+        Class[]             ctorParmTypes = new Class[]{ Database.class };
+        Object[]            ctorParms     = new Object[]{ db };
+        DatabaseInformation impl          = null;
+        Constructor         ctor;
+
+        for (int i = 0; i < impls.length; i++) {
+            try {
+                clazz = Class.forName(impls[i]);
+                ctor  = clazz.getDeclaredConstructor(ctorParmTypes);
+                impl  = (DatabaseInformation) ctor.newInstance(ctorParms);
+
+                if (impl != null) {
+                    break;
+                }
+            } catch (Exception e) {
+                if (Trace.TRACE) {
+                    Trace.trace(e.getMessage());
+                }
+            }
+        }
+
+        return impl;
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @param name
-     * @param session
-     *
-     * @return
-     *
-     * @throws SQLException
+     * Constructor
      */
-    Table getSystemTable(String tablename,
-                         Session session) throws SQLException {
-
-        int tableId = sysTableNames.get(tablename);
-
-        if (tableId == -1) {
-            return null;
-        }
-
-        HsqlName name = sysTableHsqlNames[tableId-1];
-        Table    t    = createTable(name);
-
-        switch (tableId) {
-
-            case SYSTEM_PROCEDURES : {
-                t.addColumn("PROCEDURE_" + META_CAT, Types.VARCHAR);
-                t.addColumn("PROCEDURE_" + META_SCHEM, Types.VARCHAR);
-                t.addColumn("PROCEDURE_NAME", Types.VARCHAR);
-                t.addColumn("NUM_INPUT_PARAMS", Types.INTEGER);
-                t.addColumn("NUM_OUTPUT_PARAMS", Types.INTEGER);
-                t.addColumn("NUM_RESULT_SETS", Types.INTEGER);
-                t.addColumn("REMARKS", Types.VARCHAR);
-                t.addColumn("PROCEDURE_TYPE", Types.SMALLINT);
-                t.createPrimaryKey();
-
-                return t;
-            }
-            case SYSTEM_PROCEDURECOLUMNS : {
-                t.addColumn("PROCEDURE_" + META_CAT, Types.VARCHAR);
-                t.addColumn("PROCEDURE_" + META_SCHEM, Types.VARCHAR);
-                t.addColumn("PROCEDURE_NAME", Types.VARCHAR);
-                t.addColumn("COLUMN_NAME", Types.VARCHAR);
-                t.addColumn("COLUMN_TYPE", Types.SMALLINT);
-                t.addColumn("DATA_TYPE", Types.SMALLINT);
-                t.addColumn("TYPE_NAME", Types.VARCHAR);
-                t.addColumn("PRECISION", Types.INTEGER);
-                t.addColumn("LENGTH", Types.INTEGER);
-                t.addColumn("SCALE", Types.SMALLINT);
-                t.addColumn("RADIX", Types.SMALLINT);
-                t.addColumn("NULLABLE", Types.SMALLINT);
-                t.addColumn("REMARKS", Types.VARCHAR);
-                t.createPrimaryKey();
-
-                return t;
-            }
-            case SYSTEM_TABLES : {
-                t.addColumn("TABLE_" + META_CAT, Types.VARCHAR);
-                t.addColumn("TABLE_" + META_SCHEM, Types.VARCHAR);
-                t.addColumn("TABLE_NAME", Types.VARCHAR);
-                t.addColumn("TABLE_TYPE", Types.VARCHAR);
-                t.addColumn("REMARKS", Types.VARCHAR);
-
-// boucherb@users 20020415 added for JDBC 3 clients
-                t.addColumn("TYPE_" + META_CAT, Types.VARCHAR);
-                t.addColumn("TYPE_" + META_SCHEM, Types.VARCHAR);
-                t.addColumn("TYPE_NAME", Types.VARCHAR);
-                t.addColumn("SELF_REFERENCING_COL_NAME", Types.VARCHAR);
-                t.addColumn("REF_GENERATION", Types.VARCHAR);
-                t.createPrimaryKey();
-
-                for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
-                    Table  table = (Table) tTable.get(i);
-                    Object o[]   = t.getNewRow();
-
-                    o[0] = o[1] = "";
-                    o[2] = table.getName().name;
-
-                    switch (table.tableType) {
-
-                        case Table.VIEW :
-                            o[3] = "VIEW";
-                            break;
-
-                        case Table.TEMP_TABLE :
-                        case Table.TEMP_TEXT_TABLE :
-                            if (dDatabase.findUserTable(
-                                    table.getName().name, session) == null) {
-                                continue;
-                            }
-
-                            o[3] = "GLOBAL TEMPORARY";
-                            break;
-
-                        default :
-                            o[3] = "TABLE";
-                    }
-
-                    // sqlbob@users Set remarks to readonly status.
-                    if (table.isDataReadOnly()) {
-                        o[4] = "ReadOnlyData=true";
-                    }
-
-                    // sqlbob@users Add data source to remarks
-                    String dataSource = table.getDataSource();
-
-                    if (dataSource != null) {
-                        if (o[4] == null) {
-                            o[4] = "";
-                        } else {
-                            o[4] = o[4] + "; ";
-                        }
-
-                        o[4] = o[4] + "DataSource=\"" + dataSource + "\"";
-
-                        if (table.isDescDataSource()) {
-                            o[4] = o[4] + " DESC";
-                        }
-                    }
-
-                    t.insert(o, null);
-                }
-
-                return t;
-            }
-            case SYSTEM_SCHEMAS : {
-                t.addColumn("TABLE_" + META_SCHEM, Types.VARCHAR);
-
-// boucherb@users 20020415 added for JDBC 3 clients
-                t.addColumn("TABLE_CATALOG", Types.VARCHAR);
-                t.createPrimaryKey();
-
-                return t;
-            }
-            case SYSTEM_CATALOGS : {
-                t.addColumn("TABLE_" + META_CAT, Types.VARCHAR);
-                t.createPrimaryKey();
-
-                return t;
-            }
-            case SYSTEM_TABLETYPES : {
-                t.addColumn("TABLE_TYPE", Types.VARCHAR);
-                t.createPrimaryKey();
-
-                for (int i = 0; i < tableTypes.length; i++) {
-                    Object o[] = t.getNewRow();
-
-                    o[0] = tableTypes[i];
-
-                    t.insert(o, null);
-                }
-
-                return t;
-            }
-            case SYSTEM_COLUMNS : {
-                t.addColumn("TABLE_" + META_CAT, Types.VARCHAR);
-                t.addColumn("TABLE_" + META_SCHEM, Types.VARCHAR);
-                t.addColumn("TABLE_NAME", Types.VARCHAR);
-                t.addColumn("COLUMN_NAME", Types.VARCHAR);
-                t.addColumn("DATA_TYPE", Types.SMALLINT);
-                t.addColumn("TYPE_NAME", Types.VARCHAR);
-                t.addColumn(META_COLUMN_SIZE, Types.INTEGER);
-                t.addColumn(META_BUFFER_LENGTH, Types.INTEGER);
-                t.addColumn(META_DECIMAL_DIGITS, Types.INTEGER);
-                t.addColumn(META_NUM_PREC_RADIX, Types.INTEGER);
-                t.addColumn("NULLABLE", Types.INTEGER);
-                t.addColumn("REMARKS", Types.VARCHAR);
-                t.addColumn("COLUMN_DEF", Types.VARCHAR);
-
-// fredt@users 20020407 - patch 1.7.0 by sqlbob@users - fixed incorrect type
-                t.addColumn("SQL_DATA_TYPE", Types.INTEGER);
-                t.addColumn("SQL_DATETIME_SUB", Types.INTEGER);
-                t.addColumn("CHAR_OCTET_LENGTH", Types.INTEGER);
-
-// fredt@users 20020407 - patch 1.7.0 - fixed incorrect type
-                t.addColumn("ORDINAL_POSITION", Types.INTEGER);
-                t.addColumn("IS_NULLABLE", Types.VARCHAR);
-
-// boucherb@users 20020415 added for JDBC 3 clients
-// fredt - spelling of SCOPE_CATLOG is according to JDBC specs
-                t.addColumn("SCOPE_CATLOG", Types.VARCHAR);
-                t.addColumn("SCOPE_SCHEMA", Types.VARCHAR);
-                t.addColumn("SCOPE_TABLE", Types.VARCHAR);
-                t.addColumn("SOURCE_DATA_TYPE", Types.VARCHAR);
-                t.addColumn("SCOPE_CATLOG ", Types.SMALLINT);
-                t.createPrimaryKey();
-
-                for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
-                    Table table       = (Table) tTable.get(i);
-                    int   columnCount = table.getColumnCount();
-
-                    if (table.tableType == Table.TEMP_TABLE
-                            || table.tableType == Table.TEMP_TEXT_TABLE) {
-                        if (dDatabase.findUserTable(
-                                table.getName().name, session) == null) {
-                            continue;
-                        }
-                    }
-
-                    for (int j = 0; j < columnCount; j++) {
-                        Column column = table.getColumn(j);
-                        Object o[]    = t.getNewRow();
-
-                        o[0] = o[1] = "";
-                        o[2] = table.getName().name;
-                        o[3] = column.columnName.name;
-                        o[4] = new Integer(column.getType());
-                        o[5] = Column.getTypeString(column.getType());
-
-// fredt@users 20020130 - patch 491987 by jimbag@users
-                        o[6] = new Integer(column.getSize());
-                        o[8] = new Integer(column.getScale());
-                        o[9] = new Integer(10);
-
-                        int nullable;
-
-                        if (column.isNullable()) {
-                            nullable = DatabaseMetaData.columnNullable;
-                            o[17]    = new String("YES");
-                        } else {
-                            nullable = DatabaseMetaData.columnNoNulls;
-                            o[17]    = new String("NO");
-                        }
-
-                        o[10] = new Integer(nullable);
-
-                        if (table.getIdentityColumn() == j) {
-                            o[11] = "IDENTITY";
-                        }
-
-                        o[12] = column.getDefaultString();
-
-                        // ordinal position
-                        o[16] = new Integer(j + 1);
-
-                        t.insert(o, null);
-                    }
-                }
-
-                return t;
-            }
-            case SYSTEM_COLUMNPRIVILEGES : {
-                t.addColumn("TABLE_" + META_CAT, Types.VARCHAR);
-                t.addColumn("TABLE_" + META_SCHEM, Types.VARCHAR);
-                t.addColumn("TABLE_NAME", Types.VARCHAR);
-                t.addColumn("COLUMN_NAME", Types.VARCHAR);
-                t.addColumn("GRANTOR", Types.VARCHAR);
-                t.addColumn("GRANTEE", Types.VARCHAR);
-                t.addColumn("PRIVILEGE", Types.VARCHAR);
-                t.addColumn("IS_GRANTABLE", Types.VARCHAR);
-                t.createPrimaryKey();
-
-                /*
-                 * // todo: get correct info
-                 * for(int i=0;i<tTable.size();i++) {
-                 * table=(Table)tTable.get(i);
-                 * int columns=table.getColumnCount();
-                 * for(int j=0;j<columns;j++) {
-                 * Object o[]=t.getNewRow();
-                 * o[2]=table.getName();
-                 * o[3]=table.getColumnName(j);
-                 * o[4]="sa";
-                 * o[6]="FULL";
-                 * o[7]="NO";
-                 * t.insert(o,null);
-                 * }
-                 * }
-                 */
-                return t;
-            }
-            case SYSTEM_TABLEPRIVILEGES : {
-                t.addColumn("TABLE_" + META_CAT, Types.VARCHAR);
-                t.addColumn("TABLE_" + META_SCHEM, Types.VARCHAR);
-                t.addColumn("TABLE_NAME", Types.VARCHAR);
-                t.addColumn("GRANTOR", Types.VARCHAR);
-                t.addColumn("GRANTEE", Types.VARCHAR);
-                t.addColumn("PRIVILEGE", Types.VARCHAR);
-                t.addColumn("IS_GRANTABLE", Types.VARCHAR);
-                t.createPrimaryKey();
-
-                for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
-                    Table table = (Table) tTable.get(i);
-
-                    if (table.tableType == Table.TEMP_TABLE
-                            || table.tableType == Table.TEMP_TEXT_TABLE) {
-                        if (dDatabase.findUserTable(
-                                table.getName().name, session) == null) {
-                            continue;
-                        }
-                    }
-
-                    Object o[] = t.getNewRow();
-
-                    o[0] = o[1] = "";
-                    o[2] = table.getName().name;
-                    o[3] = "sa";
-                    o[5] = "FULL";
-
-                    t.insert(o, null);
-                }
-
-                return t;
-            }
-            case SYSTEM_VERSIONCOLUMNS :
-
-            // return an empty table for SYSTEM_VERSIONCOLUMNS
-            case SYSTEM_BESTROWIDENTIFIER :
-                t.addColumn("SCOPE", Types.SMALLINT);
-                t.addColumn("COLUMN_NAME", Types.VARCHAR);
-                t.addColumn("DATA_TYPE", Types.SMALLINT);
-                t.addColumn("TYPE_NAME", Types.VARCHAR);
-                t.addColumn(META_COLUMN_SIZE, Types.INTEGER);
-                t.addColumn(META_BUFFER_LENGTH, Types.INTEGER);
-                t.addColumn(META_DECIMAL_DIGITS, Types.SMALLINT);
-                t.addColumn("PSEUDO_COLUMN", Types.SMALLINT);
-                t.addColumn("TABLE_NAME", Types.VARCHAR);
-                t.createPrimaryKey();
-
-                if (tableId == SYSTEM_VERSIONCOLUMNS) {
-                    return t;
-                }
-            {
-                for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
-                    Table table = (Table) tTable.get(i);
-
-                    if (table.tableType == Table.VIEW) {
-                        continue;
-                    }
-
-                    if (table.tableType == Table.TEMP_TABLE
-                            || table.tableType == Table.TEMP_TEXT_TABLE) {
-                        if (dDatabase.findUserTable(
-                                table.getName().name, session) == null) {
-                            continue;
-                        }
-                    }
-
-                    Index index = null;
-                    int[] cols  = null;
-
-                    // fredt - don't report primary key on hidden column
-                    for (int j = 0; j < table.getIndexCount(); j++) {
-                        index = table.getIndex(j);
-
-                        if (index.isUnique()) {
-                            cols = index.getColumns();
-
-                            if (cols[0] == table.getColumnCount()) {
-                                cols = null;
-                            } else {
-                                break;
-                            }
-                        }
-                    }
-
-                    if (cols == null) {
-                        continue;
-                    }
-
-                    int len = cols.length;
-
-                    for (int j = 0; j < len; j++) {
-                        Column column = table.getColumn(cols[j]);
-                        Object o[]    = t.getNewRow();
-
-                        o[0] = new Short(
-                            (short) DatabaseMetaData.bestRowTemporary);
-                        o[1] = column.columnName.name;
-                        o[2] = new Short((short) column.getType());
-                        o[3] = Column.getTypeString(column.getType());
-                        o[4] = new Integer(column.getSize());
-                        o[6] = new Integer(column.getScale());
-                        o[7] = new Short(
-                            (short) DatabaseMetaData.bestRowNotPseudo);
-                        o[8] = table.getName().name;
-
-                        t.insert(o, null);
-                    }
-                }
-            }
-
-                return t;
-
-            case SYSTEM_PRIMARYKEYS : {
-                t.addColumn("TABLE_" + META_CAT, Types.VARCHAR);
-                t.addColumn("TABLE_" + META_SCHEM, Types.VARCHAR);
-                t.addColumn("TABLE_NAME", Types.VARCHAR);
-                t.addColumn("COLUMN_NAME", Types.VARCHAR);
-                t.addColumn("KEY_SEQ", Types.SMALLINT);
-                t.addColumn("PK_NAME", Types.VARCHAR);
-                t.createPrimaryKey();
-
-                for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
-                    Table table = (Table) tTable.get(i);
-
-                    if (table.tableType == Table.VIEW) {
-                        continue;
-                    }
-
-                    if (table.tableType == Table.TEMP_TABLE
-                            || table.tableType == Table.TEMP_TEXT_TABLE) {
-                        if (dDatabase.findUserTable(
-                                table.getName().name, session) == null) {
-                            continue;
-                        }
-                    }
-
-                    Index index  = table.getIndex(0);
-                    int   cols[] = index.getColumns();
-
-                    // fredt - don't report primary key on hidden column
-                    if (cols[0] == table.getColumnCount()) {
-                        continue;
-                    }
-
-                    int len = cols.length;
-
-                    for (int j = 0; j < len; j++) {
-                        Object o[] = t.getNewRow();
-
-                        o[0] = o[1] = "";
-                        o[2] = table.getName().name;
-                        o[3] = table.getColumn(cols[j]).columnName.name;
-                        o[4] = new Integer((j + 1));
-                        o[5] = index.getName().name;
-
-                        t.insert(o, null);
-                    }
-                }
-
-                return t;
-            }
-            case SYSTEM_IMPORTEDKEYS :
-            case SYSTEM_EXPORTEDKEYS :
-            case SYSTEM_CROSSREFERENCE :
-                return getCrossReference(name, session);
-
-            case SYSTEM_TYPEINFO : {
-                t.addColumn("TYPE_NAME", Types.VARCHAR);
-                t.addColumn("DATA_TYPE", Types.SMALLINT);
-                t.addColumn("PRECISION", Types.INTEGER);
-                t.addColumn("LITERAL_PREFIX", Types.VARCHAR);
-                t.addColumn("LITERAL_SUFFIX", Types.VARCHAR);
-                t.addColumn("CREATE_PARAMS", Types.VARCHAR);
-                t.addColumn("NULLABLE", Types.SMALLINT);
-                t.addColumn("CASE_SENSITIVE", Types.BIT);
-                t.addColumn("SEARCHABLE", Types.SMALLINT);
-                t.addColumn("UNSIGNED_ATTRIBUTE", Types.BIT);
-                t.addColumn(META_FIXED_PREC_SCALE, Types.BIT);
-                t.addColumn("AUTO_INCREMENT", Types.BIT);
-                t.addColumn("LOCAL_TYPE_NAME", Types.VARCHAR);
-                t.addColumn("MINIMUM_SCALE", Types.SMALLINT);
-                t.addColumn("MAXIMUM_SCALE", Types.SMALLINT);
-                t.addColumn("SQL_DATE_TYPE", Types.INTEGER);
-                t.addColumn("SQL_DATETIME_SUB", Types.INTEGER);
-                t.addColumn("NUM_PREC_RADIX", Types.INTEGER);
-                t.createPrimaryKey();
-
-                for (int h = 0, hSize = Column.typesArray.length; h < hSize;
-                        h++) {
-                    for (int i = 0, iSize = Column.typesArray[h].length;
-                            i < iSize; i++) {
-                        Object o[]  = t.getNewRow();
-                        int    type = Column.typesArray[h][i];
-
-                        o[0] = Column.getTypeString(type);
-                        o[1] = new Integer(type);
-                        o[2] = INTEGER_0;             // precision
-                        o[6] = new Integer(DatabaseMetaData.typeNullable);
-                        o[7] = new Boolean(true);     // case sensitive
-                        o[8] = new Integer(DatabaseMetaData.typeSearchable);
-                        o[9] = new Boolean(false);    // unsigned
-                        o[10] = new Boolean(type == Types.NUMERIC
-                                            || type == Types.DECIMAL);
-                        o[11] = new Boolean(type == Types.INTEGER);
-                        o[12] = o[0];
-                        o[13] = INTEGER_0;
-                        o[14] = INTEGER_0;            // maximum scale
-                        o[17] = new Integer(10);
-
-                        t.insert(o, null);
-                    }
-                }
-
-                return t;
-            }
-            case SYSTEM_INDEXINFO : {
-                t.addColumn("TABLE_" + META_CAT, Types.VARCHAR);
-                t.addColumn("TABLE_" + META_SCHEM, Types.VARCHAR);
-                t.addColumn("TABLE_NAME", Types.VARCHAR);
-                t.addColumn("NON_UNIQUE", Types.BIT);
-                t.addColumn("INDEX_QUALIFIER", Types.VARCHAR);
-                t.addColumn("INDEX_NAME", Types.VARCHAR);
-                t.addColumn("TYPE", Types.SMALLINT);
-                t.addColumn(META_ORDINAL_POSITION, Types.SMALLINT);
-                t.addColumn("COLUMN_NAME", Types.VARCHAR);
-                t.addColumn(META_ASC_OR_DESC, Types.VARCHAR);
-                t.addColumn("CARDINALITY", Types.INTEGER);
-                t.addColumn("PAGES", Types.INTEGER);
-                t.addColumn("FILTER_CONDITION", Types.VARCHAR);
-                t.createPrimaryKey();
-
-                for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
-                    Table table = (Table) tTable.get(i);
-
-                    for (int j = 0; j < table.getIndexCount(); j++) {
-                        Index index  = table.getIndex(j);
-                        int   cols[] = index.getColumns();
-                        int   len    = index.getVisibleColumns();
-
-                        if (len == 0) {
-                            continue;
-                        }
-
-                        for (int k = 0; k < len; k++) {
-                            Object o[] = t.getNewRow();
-
-                            o[0] = o[1] = "";
-                            o[2] = table.getName().name;
-                            o[3] = new Boolean(!index.isUnique());
-                            o[5] = index.getName().name;
-                            o[6] = new Integer(
-                                DatabaseMetaData.tableIndexOther);
-                            o[7] = new Integer(k + 1);
-                            o[8] = table.getColumn(cols[k]).columnName.name;
-                            o[9] = "A";
-
-                            t.insert(o, null);
-                        }
-                    }
-                }
-
-                return t;
-            }
-            case SYSTEM_UDTS : {
-                t.addColumn("TYPE_" + META_CAT, Types.VARCHAR);
-                t.addColumn("TYPE_" + META_SCHEM, Types.VARCHAR);
-                t.addColumn("TYPE_NAME", Types.VARCHAR);
-                t.addColumn("CLASS_NAME", Types.BIT);
-                t.addColumn("DATA_TYPE", Types.VARCHAR);
-                t.addColumn("REMARKS", Types.VARCHAR);
-
-// boucherb@users 20020415 added for JDBC 3 clients
-                t.addColumn("BASE_TYPE ", Types.SMALLINT);
-                t.createPrimaryKey();
-
-                return t;
-            }
-            case SYSTEM_CONNECTIONINFO : {
-                t.addColumn("KEY", Types.VARCHAR);
-                t.addColumn("VALUE", Types.VARCHAR);
-                t.createPrimaryKey();
-
-                Object o[] = t.getNewRow();
-
-                o[0] = "USER";
-                o[1] = session.getUsername();
-
-                t.insert(o, null);
-
-                o    = t.getNewRow();
-                o[0] = "READONLY";
-                o[1] = session.isReadOnly() ? "TRUE"
-                                            : "FALSE";
-
-                t.insert(o, null);
-
-                o    = t.getNewRow();
-                o[0] = "MAXROWS";
-                o[1] = String.valueOf(session.getMaxRows());
-
-                t.insert(o, null);
-
-                o    = t.getNewRow();
-                o[0] = "DATABASE";
-                o[1] = session.getDatabase().getName();
-
-                t.insert(o, null);
-
-                o    = t.getNewRow();
-                o[0] = "IDENTITY";
-                o[1] = String.valueOf(session.getLastIdentity());
-
-                t.insert(o, null);
-
-                return t;
-            }
-            case SYSTEM_USERS : {
-                t.addColumn("USER", Types.VARCHAR);
-                t.addColumn("ADMIN", Types.BIT);
-                t.createPrimaryKey();
-
-                HsqlArrayList v = aAccess.getUsers();
-
-                for (int i = 0, vSize = v.size(); i < vSize; i++) {
-                    User u = (User) v.get(i);
-
-                    // todo: this is not a nice implementation
-                    if (u == null) {
-                        continue;
-                    }
-
-                    String user = u.getName();
-
-                    if (!user.equals("PUBLIC")) {
-                        Object o[] = t.getNewRow();
-
-                        o[0] = user;
-                        o[1] = new Boolean(u.isAdmin());
-
-                        t.insert(o, null);
-                    }
-                }
-
-                return t;
-            }
-            default :
-                return null;
-        }
-    }
-
-    static final Short importedKeyNoActionShort =
-        new Short((short) DatabaseMetaData.importedKeyNoAction);
-    static final Short importedKeyCascadeShort =
-        new Short((short) DatabaseMetaData.importedKeyCascade);
-    static final Short importedKeySetDefaultShort =
-        new Short((short) DatabaseMetaData.importedKeySetDefault);
-    static final Short importedKeySetNullShort =
-        new Short((short) DatabaseMetaData.importedKeySetNull);
-    static final Short importedKeyNotDeferrableShort =
-        new Short((short) DatabaseMetaData.importedKeyNotDeferrable);
-
-    Table getCrossReference(HsqlName name,
-                            Session session) throws SQLException {
-
-        Table t = createTable(name);
-
-        t.addColumn("PKTABLE_" + META_CAT, Types.VARCHAR);
-        t.addColumn("PKTABLE_" + META_SCHEM, Types.VARCHAR);
-        t.addColumn("PKTABLE_NAME", Types.VARCHAR);
-        t.addColumn("PKCOLUMN_NAME", Types.VARCHAR);
-        t.addColumn("FKTABLE_" + META_CAT, Types.VARCHAR);
-        t.addColumn("FKTABLE_" + META_SCHEM, Types.VARCHAR);
-        t.addColumn("FKTABLE_NAME", Types.VARCHAR);
-        t.addColumn("FKCOLUMN_NAME", Types.VARCHAR);
-        t.addColumn("KEY_SEQ", Types.SMALLINT);
-        t.addColumn("UPDATE_RULE", Types.SMALLINT);
-        t.addColumn("DELETE_RULE", Types.SMALLINT);
-        t.addColumn("FK_NAME", Types.VARCHAR);
-        t.addColumn("PK_NAME", Types.VARCHAR);
-        t.addColumn("DEFERRABILITY", Types.SMALLINT);
-        t.createPrimaryKey();
-
-        for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
-            Table         table     = (Table) tTable.get(i);
-            HsqlArrayList constVect = table.getConstraints();
-            Constraint    constraint;
-
-            for (int j = 0, cSize = constVect.size(); j < cSize; j++) {
-                constraint = (Constraint) constVect.get(j);
-
-                if (constraint.getType() != Constraint.FOREIGN_KEY) {
-                    continue;
-                }
-
-                String mainTableName = constraint.getMain().tableName.name;
-                String refTableName  = constraint.getRef().tableName.name;
-
-                if (dDatabase.findUserTable(mainTableName) == null
-                        || dDatabase.findUserTable(refTableName) == null) {
-                    continue;
-                }
-
-                int pkcols[] = constraint.getMainColumns();
-                int fkcols[] = constraint.getRefColumns();
-                int len      = pkcols.length;
-
-                for (int k = 0; k < len; k++) {
-                    Object o[] = t.getNewRow();
-
-                    o[0] = o[1] = "";
-                    o[2] = mainTableName;
-                    o[3] = constraint.getMain().getColumn(
-                        pkcols[k]).columnName.name;
-                    o[4] = o[5] = "";
-                    o[6] = refTableName;
-                    o[7] = constraint.getRef().getColumn(
-                        fkcols[k]).columnName.name;
-                    o[8] = new Short((short) (k + 1));
-                    o[9] = constraint.getUpdateAction()
-                           == Constraint.NO_ACTION ? importedKeyNoActionShort
-                                                   : importedKeyCascadeShort;
-                    o[10] = constraint.getDeleteAction()
-                            == Constraint.NO_ACTION ? importedKeyNoActionShort
-                                                    : importedKeyCascadeShort;
-                    o[11] = constraint.getFkName();
-                    o[12] = constraint.getPkName();
-                    o[13] = importedKeyNotDeferrableShort;
-
-                    t.insert(o, null);
-                }
-            }
-        }
-
-        return t;
+    DatabaseInformation(Database db) throws SQLException {
+        database = db;
     }
 
     /**
-     * Method declaration
+     * Tests if the specified name is that of a system table.
      *
+     * @param name the name to test
+     * @return true if the specified name is that of a system table
      *
-     * @param name
-     *
-     * @return
      */
-    private Table createTable(HsqlName name) throws SQLException {
-        return new Table(dDatabase, name, Table.SYSTEM_TABLE, null);
+    boolean isSystemTable(String name) {
+        return sysTableNames.containsKey(name);
+    }
+
+    /**
+     * Retrieves a table with the specified name whose content may depend on
+     * the execution context indicated by the session argument as well as the
+     * current value of <code>isWithContent()</code>.
+     *
+     * @param name the name of the table to produce
+     * @param session the context in which to produce the table
+     * @throws SQLException if a database access error occurs
+     * @return a table corresponding to the name and session arguments, or
+     *      <code>null</code> if there is no such table to be produced
+     */
+    Table getSystemTable(String name, Session session) throws SQLException {
+        return null;
+    }
+
+    /**
+     * Controls caching of all tables produced by this object. <p>
+     *
+     * Subclasses are free to ignore this, since they may choose an
+     * implementation that does not dynamically generate and/or cache
+     * table content on an as-needed basis. <p>
+     *
+     * If not ignored, this call indicates to this object that all cached
+     * table data may be dirty, requiring a complete cache clear at some
+     * point.<p>
+     *
+     * Subclasses are free to delay cache clear until next produceTable().
+     * However, subclasses may have to be aware of additional methods with
+     * semantics similar to produceTable() and act accordingly (e.g. clearing
+     * earlier than next invocation of produceTable()).
+     *
+     * @throws SQLException if a database access error occurs
+     */
+    void setDirty() throws SQLException {
+        dirty = true;
+    }
+
+    /**
+     * Controls caching of the named table. <p>
+     *
+     * Note that a table with the indicated name may not be produced
+     * by this object. As a general policy, it is not stritly an error
+     * to specify such a name, but if it is specified, implementors
+     * should probably ignore the call (i.e. is should have no effect on
+     * the cache state).<p>
+     *
+     * Subclasses are free to ignore this call completely, since they may choose an
+     * implementation that does not dynamically generate and cache table content
+     * on an as-needed basis. <p>
+     *
+     * If not ignored, this call indicates to this object that cached table
+     * data for the specified table is dirty for all sessions, requiring a
+     * regeneration of the data for the indicated table only.<p>
+     *
+     * Subclasses are free to delay cache clear until next get.  However,
+     * they may have to be aware of additional methods with semantics similar to
+     * produceTable() and act accordingly.
+     *
+     * @param name of table whose data is dirty
+     * @throws SQLException if a database access error occurs
+     */
+    void setDirty(String name) throws SQLException {
+        setDirty();
+    }
+
+    /**
+     * Controls caching of the named table for the specified session. <p>
+     *
+     * Note that a table with the indicated name may not be produced
+     * by this object for the specified session. As a general policy,
+     * it is not stritly an error to specify such a name/session pair,
+     * but if it is specified, implementors should probably ignore the
+     * call (i.e. is should have no effect on the cache state).<p>
+     *
+     * Subclasses are free to ignore this call completely, since they may
+     * choose an implementation that does not dynamically generate and
+     * cache table content on an as-needed basis. <p>
+     *
+     * If not ignored, this call indicates to this object that cached table
+     * data for the specified table and session is dirty, requiring a
+     * regeneration of the data for the {table, session} pair.<p>
+     *
+     * Subclasses are free to delay cache clear until the next invokation of
+     * produceTable().  However, they may have to be aware of additional
+     * methods with semantics similar to produceTable() and act accordingly.
+     *
+     * @param name the name of the table whose cached data is dirty
+     * @param session whose cached data is dirty
+     * @throws SQLException if a database access error occurs
+     */
+    void setDirty(String name, Session session) throws SQLException {
+        setDirty(name);
+    }
+
+    /**
+     * Retrieves whether this object's entire table cache, if any,
+     * is dirty.
+     *
+     * @return true if this object's entire table cache is dirty
+     *
+     */
+    boolean isDirty() {
+        return dirty;
+    }
+
+    /**
+     * Retrieves whether the cached data, if any, of the table with the
+     * specified name is dirty.
+     *
+     * @return true if the cached data of the table with the specified name
+     * is dirty.
+     * @param name the name of the table to test
+     */
+    boolean isDirty(String name) {
+        return isDirty();
+    }
+
+    /**
+     * Retrieves whether the cached data, if any, of the table with the
+     * specified name is dirty within the context of the specified session.
+     *
+     * @return true if he cached data, if any, of the table with the
+     * specified name is dirty within the context of the specified session.
+     * @param name the name of the table to test
+     * @param session the context within which to perform the test
+     */
+    boolean isDirty(String name, Session session) {
+        return isDirty(name);
+    }
+
+    /**
+     * Retrieves whether this table producer is presently producing empty
+     * (surrogate) or contentful tables.
+     *
+     * @return true if this table producer is presently producing
+     * contentful tables, else false
+     */
+    boolean isWithContent() {
+        return withContent;
+    }
+
+    /**
+     * Switches this table producer between producing empty (surrogate)
+     * or contentful tables.
+     *
+     * @param withContent if true, then produce contentful tables, else
+     *        produce emtpy (surrogate) tables
+     */
+    void setWithContent(boolean withContent) {
+        this.withContent = withContent;
     }
 }

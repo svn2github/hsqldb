@@ -36,17 +36,17 @@ import java.util.Enumeration;
 
 /**
  * This is a hash table based implementation of HsqlMap.
- * <p></p>
+ * <p>
  * All keys must have used in this map must have well-defined hashCode and
  * equals methods.  This means that all objects of the key data-type that are
  * equal according to the equals method must have the same hash code.  Also the
  * hash codes themselves should be as evenly distributed as possible.
- * <p></p>
+ * <p>
  * This type of map has two parameters required to create an instance:
  * the initial capacity and the load factor.  Initial capacity is simply the
  * capacity at the time the map is created where capacity is defined as the
  * number of buckets in the table.
- * <p></p>
+ * <p>
  * The load factor has to do with the type of hash table implementation.  This
  * map uses an open hash table.  That means each bucket stores a list of
  * elements that hash to that bucket.  This prevents the need for a rehash
@@ -54,10 +54,10 @@ import java.util.Enumeration;
  * same bucket.  The load factor is used to determine when the capacity should
  * be increased.  If the number of entries in the map exceeds the product of the
  * load factor and the current capacity, the capacity is increased.
- * <p></p>
+ * <p>
  * The default value for load factor is 0.75 and the default initial capacity is
  * 11.
- * <p></p>
+ * <p>
  * This temporary implementation is simply backed by a java.util.Hashtable.
  * This will allow the HsqlMap interface to be integrated into the HSQLDB
  * code, and at a later point this class can be replaced by a non-synchronized

@@ -29,33 +29,53 @@
  */
 
 
-package org.hsqldb.lib;
+package org.hsqldb.lib.enum;
 
-public class HsqlObjectToIntMap {
+import java.util.Enumeration;
+import java.util.NoSuchElementException;
 
-    private HsqlHashMap map;
+/** An Enumeration that takes its elements from a specified array
+ *
+ */
+public final class ArrayEnumeration implements Enumeration {
 
-    public HsqlObjectToIntMap(int capacity) {
-        map = new HsqlHashMap(capacity, 1);
+    /** the array of objects to enumerate */
+    private Object[]    elements;
+    /** the index of the next element to be enumerated */
+    private int i;
+
+    /**
+     * Constructs a new ArrayEnumeration for specified array. <p>
+     *
+     * @param elements the array of objects to enumerate
+     */
+    public ArrayEnumeration(Object[] elements) {
+        this.elements = elements;
+        i = 0;
     }
 
-    public int get(Object key) {
-
-        Integer value = (Integer) map.get(key);
-
-        return value == null ? -1
-                             : value.intValue();
+    /**
+     * Tests if this enumeration contains more elements. <p>
+     *
+     * @return  <code>true</code> if this enumeration contains more elements;
+     *          <code>false</code> otherwise.
+     */
+    public boolean hasMoreElements() {
+        return (i < elements.length);
     }
 
-    public int put(Object key, int value) {
-
-        Integer oldvalue = (Integer) map.put(key, new Integer(value));
-
-        return oldvalue == null ? -1
-                                : oldvalue.intValue();
+    /**
+     * Returns the next element of this enumeration.
+     *
+     * @return the next element
+     * @throws NoSuchElementException if there is no next element
+     */
+    public Object nextElement() {
+        try {
+            return elements[i++];
+        } catch (ArrayIndexOutOfBoundsException e) {
+            throw new NoSuchElementException();
+        }
     }
 
-    public boolean containsKey(Object key) {
-        return get(key) != -1;
-    }
 }

@@ -38,7 +38,7 @@ import java.util.StringTokenizer;
  * creating objects with <code>String</code> value components.
  * @version 1.7.0
  * @since HSQLDB 1.7.0
- * @author fredt@users.sourceforge.net
+ * @author fredt@users
  * @author boucherb@users.sourceforge.net
  */
 public class StringUtil {

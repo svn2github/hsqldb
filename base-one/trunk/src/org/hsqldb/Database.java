@@ -113,10 +113,21 @@ import org.hsqldb.lib.StopWatch;
 // rewrite of the majority of multiple if(){}else if(){} chains with switch()
 class Database {
 
-    private String                 sName;
-    private UserManager            aAccess;
-    private HsqlArrayList          tTable;
-    private DatabaseInformation    dInfo;
+    private String        sName;
+    private UserManager   aAccess;
+    private HsqlArrayList tTable;
+    DatabaseInformation   dInfo;
+
+// boucherb@users - table-based class loading
+    ClassLoader classLoader = ClassLoader.getSystemClassLoader();
+
+// ----------------------------------------------------------------------------
+// boucherb@users - pluggable system table producer strategy for metadata 1.7.2
+
+    /** true only while this database is in the open() method */
+    private boolean isOpening;
+
+// ----------------------------------------------------------------------------
     Logger                         logger;
     boolean                        bReadOnly;
     boolean                        sqlEnforceSize;
@@ -124,7 +135,7 @@ class Database {
     private HsqlHashMap            hAlias;
     private boolean                bIgnoreCase;
     private boolean                bReferentialIntegrity;
-    private HsqlArrayList          cSession;
+    HsqlArrayList                  cSession;
     private HsqlDatabaseProperties databaseProperties;
     private Session                sysSession;
     private Tokenizer              tokenizer;
@@ -250,7 +261,8 @@ class Database {
             Trace.trace();
         }
 
-        sName = name.trim();
+        sName  = name.trim();
+        logger = new Logger();
 
         open();
     }
@@ -265,25 +277,31 @@ class Database {
     // tony_lai@users 20020820
     private void open() throws SQLException {
 
-        tTable                = new HsqlArrayList();
-        aAccess               = new UserManager();
-        cSession              = new HsqlArrayList();
-        hAlias                = Library.getAliasMap();
-        logger                = new Logger();
+        tTable   = new HsqlArrayList();
+        aAccess  = new UserManager();
+        cSession = new HsqlArrayList();
+        hAlias   = Library.getAliasMap();
+
+//        logger                = new Logger();
         tokenizer             = new Tokenizer();
         triggerNameList       = new DatabaseObjectNames();
         indexNameList         = new DatabaseObjectNames();
         bReferentialIntegrity = true;
-        dInfo = new DatabaseInformation(this, tTable, aAccess);
 
         boolean newdatabase = false;
 
-        sysSession = new Session(this, new User(null, null, true, null),
-                                 true, false, 0);
+// boucherb@users 20021128 - metadata/classloader 1.7.2 sys user
+        sysSession = null;
+
+        User sysUser = aAccess.createSysUser(this);
+
+// -------------------------------------------------------------------
+        sysSession = new Session(this, sysUser, true, false, 0);
 
         registerSession(sysSession);
 
         databaseProperties = new HsqlDatabaseProperties(sName);
+        dInfo              = DatabaseInformation.newDatabaseInformation(this);
 
         if (sName.length() == 0) {
             throw Trace.error(Trace.GENERAL_ERROR, "bad database name");
@@ -295,7 +313,6 @@ class Database {
             newdatabase = logger.openLog(this, sName);
         }
 
-        HsqlName.resetNumbering();
         Library.setSqlMonth(databaseProperties.isPropertyTrue("sql.month"));
 
         sqlEnforceSize =
@@ -313,6 +330,13 @@ class Database {
 
         aAccess.grant("PUBLIC", "java.lang.Math", UserManager.ALL);
         aAccess.grant("PUBLIC", "org.hsqldb.Library", UserManager.ALL);
+
+// boucherb@users 20021128 - metadata 1.7.2 system tables
+        isOpening = false;
+
+        dInfo.setWithContent(true);
+
+// -------------------------------------------------------
     }
 
     /**
@@ -505,6 +529,11 @@ class Database {
 
                     case SELECT :
                         rResult = p.processSelect();
+
+// boucherb@users  - metadata 1.7.2 - system tables
+                        setMetaDirty(rResult);
+
+// --
                         break;
 
                     case INSERT :
@@ -547,24 +576,49 @@ class Database {
 
                     case CREATE :
                         rResult = processCreate(tokenizer, session);
+
+// boucherb@users  - metadata 1.7.2 - system tables
+                        setMetaDirty(null);
+
+// --
                         break;
 
                     case ALTER :
                         rResult = processAlter(tokenizer, session);
+
+// boucherb@users  - metadata 1.7.2 - system tables
+                        setMetaDirty(null);
+
+// --
                         break;
 
                     case DROP :
                         rResult = processDrop(tokenizer, session);
+
+// boucherb@users  - metadata 1.7.2 - system tables
+                        setMetaDirty(null);
+
+// --
                         break;
 
                     case GRANT :
                         rResult = processGrantOrRevoke(tokenizer, session,
                                                        true);
+
+// boucherb@users  - metadata 1.7.2 - system tables
+                        setMetaDirty(null);
+
+// --
                         break;
 
                     case REVOKE :
                         rResult = processGrantOrRevoke(tokenizer, session,
                                                        false);
+
+// boucherb@users  - metadata 1.7.2 - system tables
+                        setMetaDirty(null);
+
+// --
                         break;
 
                     case CONNECT :
@@ -599,8 +653,8 @@ class Database {
                 }
             }
         } catch (SQLException e) {
+            e.printStackTrace();
 
-            // e.printStackTrace();
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // tony_lai@users 20020820 - patch 595073
 //            rResult = new Result(Trace.getMessage(e) + " in statement ["
@@ -835,17 +889,6 @@ class Database {
             sw.close();
             System.out.println("text script" + stopw.elapsedTime());
 
-/*
-            stopw.zero();
-
-            BinaryDatabaseScriptWriter bsw =
-                new BinaryDatabaseScriptWriter(this, sToken + ".bin", true,
-                                               true);
-
-            bsw.writeAll();
-            bsw.close();
-            System.out.println("binary script" + stopw.elapsedTime());
-*/
             return new Result();
         } else {
             c.back();
@@ -1203,7 +1246,7 @@ class Database {
         Trace.doAssert(!triggerNameList.containsName(sTrigName),
                        " trigger " + sTrigName + "exists");
 
-// -----------------------------------------------
+// --
         String sWhen = c.getString();
         String sOper = c.getString();
 
@@ -1285,7 +1328,7 @@ class Database {
 // boucherb@users 20021128 - enforce unique trigger names
         triggerNameList.addName(sTrigName, t.getName());
 
-// ------------------------------------------------------
+// --
     }
 
     /**
@@ -1642,11 +1685,13 @@ class Database {
         String  sToken       = c.getName();
         boolean isnamequoted = c.wasQuotedIdentifier();
 
-        if (DatabaseInformation.isSystemTable(sToken)
+// boucherb@users - metadata 1.7.2
+        if (dInfo.isSystemTable(sToken)
                 || findUserTable(sToken, session) != null) {
             throw Trace.error(Trace.TABLE_ALREADY_EXISTS, sToken);
         }
 
+// --
         if (type == Table.TEMP_TEXT_TABLE || type == Table.TEXT_TABLE) {
             t = new TextTable(this, new HsqlName(sToken, isnamequoted), type,
                               session);
@@ -2653,6 +2698,9 @@ class Database {
         bShutdown = true;
 
         jdbcConnection.removeDatabase(this);
+
+        logger.tryRelease();
+        classLoader = null;
     }
 
     /**
@@ -2931,7 +2979,50 @@ class Database {
 // boucherb@users 20021128 - enforce unique trigger names
         triggerNameList.removeName(name);
 
-// ------------------------------------------------------
+// ---
     }
 
+    /**
+     * Ensures that under the correct conditions the system table producer's table
+     * cache, if any, is set dirty so that up-to-date versions are generated if
+     * necessary in response to following system table requests. <p>
+     *
+     * The result argument, if non-null, is checked for update status.  If it is an
+     * update result with an update count, then the call must have come from a
+     * successful SELECT INTO statement, in which a case a new table was created
+     * and all system tables reporting in the tables, columns, indexes, etc are
+     * dirty. <p>
+     *
+     * If the Result argument is null, then the call must have come from a DDL
+     * statement other than a set statement, in wich case a database object
+     * was created, dropped, altered or a permission was granted or revoked,
+     * meaning that potentially all cached ssytem table are dirty.
+     *
+     * <B>Note:</B>  the SYSTEM _PARAMETERS is no longer cached by the full sytem table
+     * producer implementation precisely becuase it takes very little time to
+     * regenerate and because it is often the case the clients regularly issue
+     * edundant SET statments, such as SET MAXROWS, otherwise seriously breaking the
+     * caching effect that the full system table producer works so hard to maintain.
+     *
+     * If the database is opening, then this method does nothing, the rationale
+     * being that no actual users will be querying system table content during the
+     * open sequence of the database.  The system table producer implementation
+     * must ensure that at least structurally correct system table surrogates
+     * are available duringthe open sequence, as the may be DDL on the log the
+     * references system tables, such as user view declarations.  However, it should
+     * never be the case that system tables produced directly by the system table
+     * producer are queried for content during the open sequence.
+     * @param r A Result to test for update status, indicating the a table was created as the
+     * result of executing a SELECT INTO statement.
+     * @throws SQLException never
+     *
+     */
+    private void setMetaDirty(Result r) throws SQLException {
+
+        if (isOpening) {}
+        else if (r == null
+                 || (r.iMode == Result.UPDATECOUNT && r.iUpdateCount > 0)) {
+            dInfo.setDirty();
+        }
+    }
 }

@@ -70,18 +70,20 @@ package org.hsqldb;
 import java.sql.SQLException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Hashtable;
-
-/**
- * Provides services to evaluate Java methods in the context of
- * SQL function and stored procedure calls.
- *
- * @version 1.7.0
- */
 
 // fredt@users 20020912 - patch 1.7.1 - shortcut treatment of identity() call
 // fredt@users 20020912 - patch 1.7.1 - cache java.lang.reflect.Method objects
 // fredt@users 20021013 - patch 1.7.1 - ignore non-static methods
+// boucherb@users 20030201 - patch 1.7.2 - direct calls for org.hsqldb.Library
+
+/**
+ * Provides services to evaluate and invoke Java methods in the context of
+ * SQL function and stored procedure calls.
+ *
+ * @version 1.7.0
+ */
 class Function {
 
     private Session          cSession;
@@ -96,6 +98,8 @@ class Function {
     private boolean          bConnection;
     private boolean          isIdentityFunction;
     private static Hashtable methodCache = new Hashtable();
+    private int              fID;
+    private String           fname;
 
     /**
      * Constructs a new Function object with the given function call name
@@ -136,6 +140,8 @@ class Function {
 
         cSession  = session;
         sFunction = function;
+        fname     = function;
+        fID       = Library.functionID(function);
 
         if (function.equals("org.hsqldb.Library.identity")) {
             isIdentityFunction = true;
@@ -259,11 +265,27 @@ class Function {
         }
 
         try {
-            return mMethod.invoke(null, oArg);
-        } catch (Exception e) {
-            String s = sFunction + ": " + e.toString();
+            return (fID >= 0) ? Library.invoke(fID, oArg)
+                              : mMethod.invoke(null, oArg);
 
-            throw Trace.getError(Trace.FUNCTION_NOT_SUPPORTED, s);
+// boucherb@users - patch 1.7.2 - better function invocation error reporting
+        } catch (Throwable t) {
+            String s = sFunction;
+
+            if (t instanceof InvocationTargetException) {
+                while (t instanceof InvocationTargetException) {
+                    t = ((InvocationTargetException) t).getTargetException();
+                    s += ": " + t.toString();
+                }
+
+                s += ": " + t.toString();
+
+                throw Trace.getError(Trace.UNKNOWN_FUNCTION, s);
+            } else {
+                s = sFunction + ": " + t.toString();
+
+                throw Trace.getError(Trace.GENERAL_ERROR, s);
+            }
         }
     }
 

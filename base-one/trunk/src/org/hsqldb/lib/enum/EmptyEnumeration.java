@@ -29,33 +29,52 @@
  */
 
 
-package org.hsqldb.lib;
+package org.hsqldb.lib.enum;
 
-public class HsqlObjectToIntMap {
+import java.util.Enumeration;
+import java.util.NoSuchElementException;
 
-    private HsqlHashMap map;
+/**
+ * An <code>Enumeration</code> class that can be used to represent an
+ * enumeration with no elements. <p>
+ *
+ * This class follows the Singleton pattern.  The single instance must
+ * be accessed via the <code>instance</code> member variable.
+ *
+ * @author Campbell Boucher-Burnet, Camco & Associates
+ */
+public final class EmptyEnumeration implements Enumeration {
 
-    public HsqlObjectToIntMap(int capacity) {
-        map = new HsqlHashMap(capacity, 1);
+    /** the single instance of this class, to be used by all clients. */
+    public static final Enumeration instance = new EmptyEnumeration ();
+
+    /**
+     * Constructs a new EmptyEnumeration instance. <p>
+     *
+     * This constructor is private since only one instance is ever
+     * required, and it can be obtained through the <code>instance</code>
+     * member.
+     */
+    private EmptyEnumeration() {}
+
+    /**
+     * Tests if this enumeration contains a next element, which it never does.
+     *
+     * @return <code>false</code> always
+     */
+    public final boolean hasMoreElements() {
+        return false;
     }
 
-    public int get(Object key) {
-
-        Integer value = (Integer) map.get(key);
-
-        return value == null ? -1
-                             : value.intValue();
-    }
-
-    public int put(Object key, int value) {
-
-        Integer oldvalue = (Integer) map.put(key, new Integer(value));
-
-        return oldvalue == null ? -1
-                                : oldvalue.intValue();
-    }
-
-    public boolean containsKey(Object key) {
-        return get(key) != -1;
+    /**
+     * Always throws NoSuchElementException.
+     *
+     * @return     never
+     * @exception  NoSuchElementException  always
+     */
+    public final Object nextElement() throws NoSuchElementException {
+        throw new NoSuchElementException();
     }
 }
+
+

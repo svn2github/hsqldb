@@ -29,33 +29,55 @@
  */
 
 
-package org.hsqldb.lib;
+package org.hsqldb.lib.enum;
 
-public class HsqlObjectToIntMap {
+import java.util.Enumeration;
+import java.util.NoSuchElementException;
 
-    private HsqlHashMap map;
+/**
+ * An <code>Enumeration</code> that enumerates a single object.<p>
+ *
+ * @author Campbell Boucher-Burnet, Cmaco & Associates
+ */
+public final class SingletonEnumeration implements Enumeration {
 
-    public HsqlObjectToIntMap(int capacity) {
-        map = new HsqlHashMap(capacity, 1);
+    /** the single object to be enumerated */
+    private Object element;
+
+    /**
+     * Constructs a new SingletonEnumeration using the specified object
+     *
+     * @param element the single object to enumerate
+     */
+    public SingletonEnumeration(Object element) {
+        this.element = element;
     }
 
-    public int get(Object key) {
-
-        Integer value = (Integer) map.get(key);
-
-        return value == null ? -1
-                             : value.intValue();
+    /**
+     * Tests if this enumeration contains next element.
+     *
+     * @return  <code>true</code> if this enumeration contains it
+     *          <code>false</code> otherwise.
+     */
+    public boolean hasMoreElements() {
+        return element != null;
     }
 
-    public int put(Object key, int value) {
+    /**
+     * Returns the next element of this enumeration.
+     *
+     * @return the next element
+     * @throws NoSuchElementException if there is no next element
+     */
+    public Object nextElement() throws NoSuchElementException {
 
-        Integer oldvalue = (Integer) map.put(key, new Integer(value));
+        if (element == null) {
+            throw new NoSuchElementException();
+        }
 
-        return oldvalue == null ? -1
-                                : oldvalue.intValue();
-    }
+        Object tmp = element;
+        element = null;
+        return tmp;
 
-    public boolean containsKey(Object key) {
-        return get(key) != -1;
     }
 }

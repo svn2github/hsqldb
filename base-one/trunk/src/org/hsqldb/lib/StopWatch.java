@@ -42,7 +42,7 @@ package org.hsqldb.lib;
  * If the watch is zeroed, then the accumulated time is discarded and
  * the watch starts again with zero acumulated time.
  * @author  Campbell Boucher-Burnet, Camco & Associates Consulting
- * @version 1.0
+ * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
 public class StopWatch {

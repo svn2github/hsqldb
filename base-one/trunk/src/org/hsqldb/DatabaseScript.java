@@ -585,7 +585,7 @@ class DatabaseScript {
                     // either table != null or issystem == true
                     Table table =
                         dDatabase.findUserTable(((HsqlName) object).name);
-                    boolean issystem = DatabaseInformation.isSystemTable(
+                    boolean issystem = dDatabase.dInfo.isSystemTable(
                         ((HsqlName) object).name);
 
                     // assumes all non String objects are table names

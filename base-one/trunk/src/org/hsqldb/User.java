@@ -68,6 +68,9 @@
 package org.hsqldb;
 
 import java.sql.SQLException;
+import java.util.Enumeration;
+import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.HsqlHashSet;
 import org.hsqldb.lib.HsqlHashMap;
 
 // fredt@users 20021103 - patch 1.7.2 - fix bug in revokeAll()
@@ -116,6 +119,27 @@ class User {
      * broadened.
      */
     private User uPublic;
+
+    /**
+     * An empty list that is returned from
+     * {@link #listTablePrivileges listTablePrivileges} when
+     * it is detected that neither this <code>User</code> object or
+     * its <code>PUBLIC</code> <code>User</code> object attribute have been
+     * granted any rights on the <code>Table</code> object identified by
+     * the specified <code>HsqlName</code> object.
+     *
+     */
+    static final HsqlArrayList emptyRightsList = new HsqlArrayList();
+
+    /**
+     * A list containing the single element "ALL" which is returned by
+     * calls to {@link #listTablePrivileges listTablePrivileges}, when
+     * it is detected that this <code>User</code> object has the
+     * database administrator role.
+     *
+     */
+    static final HsqlArrayList adminRightsList =
+        UserManager.listRightNames(UserManager.INTEGER_ALL);
 
     /**
      * Constructor, with a argument reference to the PUBLIC User Object which
@@ -199,8 +223,6 @@ class User {
             return;
         }
 
-        UserManager.checkValidFlags(rights);
-
         Integer n = (Integer) rightsMap.get(dbobject);
 
         n = (n == null) ? new Integer(rights)
@@ -226,8 +248,6 @@ class User {
         if (rights == 0) {
             return;
         }
-
-        UserManager.checkValidFlags(rights);
 
         Integer n = (Integer) rightsMap.get(dbobject);
 
@@ -295,7 +315,6 @@ class User {
         Integer n;
 
         Trace.doAssert(dbobject != null, "dbobject is null");
-        UserManager.checkValidFlags(rights);
 
         if (bAdministrator) {
             return true;
@@ -333,5 +352,97 @@ class User {
      */
     boolean isAdmin() {
         return bAdministrator;
+    }
+
+    /**
+     * Retrieves the distinct set of Java <code>Class</code> FQNs
+     * for which this <code>User</code> object has been
+     * granted <code>ALL</code> (the Class execution privilege). <p>
+     * @param andToPublic if <code>true</code>, then the set includes the
+     *        names of classes accessible to this <code>User</code> object
+     *        through grants to its <code>PUBLIC</code> <code>User</code>
+     *        object attribute, else only direct grants are inlcuded.
+     * @return the distinct set of Java Class FQNs for which this
+     *        this <code>User</code> object has been granted
+     *        <code>ALL</code>.
+     * @since HSQLDB 1.7.2
+     *
+     */
+    HsqlHashSet getGrantedClassNames(boolean andToPublic) {
+
+        HsqlHashMap rights;
+        HsqlHashSet out;
+        HsqlHashSet pub;
+        Object      key;
+        Integer     right;
+        Enumeration e;
+
+        rights = rightsMap;
+        out    = new HsqlHashSet();
+        e      = rightsMap.keys();
+
+        while (e.hasMoreElements()) {
+            key = e.nextElement();
+
+            if (key instanceof String) {
+                right = (Integer) rights.get(key);
+
+                if (right.intValue() == UserManager.ALL) {
+                    out.add(key);
+                }
+            }
+        }
+
+        if (andToPublic && uPublic != null) {
+            rights = uPublic.rightsMap;
+            e      = rights.keys();
+
+            while (e.hasMoreElements()) {
+                key = e.nextElement();
+
+                if (key instanceof String) {
+                    right = (Integer) rights.get(key);
+
+                    if (right.intValue() == UserManager.ALL) {
+                        out.add(key);
+                    }
+                }
+            }
+        }
+
+        return out;
+    }
+
+    /**
+     * Retrieves a list object whose elements are the names, as
+     * <code>String</code> objects, of the rights granted to
+     * this <code>User</code> object on the <code>Table</code>
+     * object identified by the <code>name</code> argument.
+     * @return a list of Strings naming the rights granted to this
+     *        <code>User</code> object on the <code>Table</code> object
+     *        identified by the <code>name</code> argument.
+     * @param name a <code>Table</code> object identifier
+     * @throws SQLException should be never (required because this method calls
+     *      {@link UserManager#listRightNames
+     *      UserManager.listRightNames(Integer)} which throws if
+     *      passed an argument with invalid right flags set).
+     * @since HSQLDB 1.7.2
+     *
+     */
+    HsqlArrayList listTablePrivileges(HsqlName name) throws SQLException {
+
+        if (name == null) {
+            return emptyRightsList;
+        }
+
+        if (bAdministrator) {
+            if (adminRightsList.size() == 0) {
+                adminRightsList.add("ALL");
+            }
+
+            return adminRightsList;
+        }
+
+        return UserManager.listRightNames((Integer) rightsMap.get(name));
     }
 }

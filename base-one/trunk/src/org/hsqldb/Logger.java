@@ -92,7 +92,7 @@ import java.sql.SQLException;
         /**
          *  The Log object this Logger object wraps
          */
-        private Log lLog;
+        Log lLog;
 
         /**
          *  Opens the specified Database object's database files and starts up
@@ -323,4 +323,6 @@ import java.sql.SQLException;
         void closeTextCache(HsqlName name) throws SQLException {
             lLog.closeTextCache(name);
         }
+
+        void tryRelease(){}
     }

@@ -68,8 +68,11 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.HsqlHashSet;
 import org.hsqldb.lib.HsqlStringBuffer;
 import java.sql.SQLException;
+import java.util.Enumeration;
 
 // fredt@users 20020130 - patch 497872 by Nitin Chauhan - loop optimisation
 // fredt@users 20020320 - doc 1.7.0 - update
@@ -96,7 +99,8 @@ class UserManager {
     static final int UPDATE = 1 << 3;
 
     /** Combined flag permitting any action. */
-    static final int ALL = SELECT | DELETE | INSERT | UPDATE;
+    static final int     ALL         = SELECT | DELETE | INSERT | UPDATE;
+    static final Integer INTEGER_ALL = new Integer(ALL);
 
     /**
      * This object's set of User objects. <p>
@@ -127,7 +131,7 @@ class UserManager {
     /**
      * Translate a string representation or right(s) into its numeric form.
      */
-    static int getRight(String right) throws SQLException {
+    static int getRight(String right) {
 
         if (right.equals("ALL")) {
             return ALL;
@@ -141,7 +145,7 @@ class UserManager {
             return INSERT;
         }
 
-        throw Trace.error(Trace.UNEXPECTED_TOKEN, right);
+        return 0;
     }
 
     /**
@@ -363,7 +367,7 @@ class UserManager {
     /**
      * Removes all rights mappings for the database object identified by
      * the dbobject argument from all User objects in the set.
-    */
+     */
     void removeDbObject(Object dbobject) {
 
         int i = uUser.size();
@@ -380,7 +384,195 @@ class UserManager {
     /** The user name reserved for the special SYS user. */
     static final String SYS_USER_NAME = "SYS";
 
-    static void checkValidFlags(int rights) throws SQLException {
-        Trace.doAssert((rights & ~ALL) == 0, "illegal flags encountered");
+    /**
+     * An empty list returned from {@link #listRightNames
+     * listRightNames} when the <code>rights</code> argument
+     * is zero.
+     *
+     */
+    static final HsqlArrayList emptyRightsList = new HsqlArrayList();
+
+    /**
+     * MAP:  Integer => HsqlArrayList. <p>
+     *
+     * This map caches the lists of <code>String</code> objects naming the rights
+     * corresponding to each valid set of rights flags, as returned by
+     * {@link #listRightNames listRightNames}
+     *
+     */
+    static final HsqlHashMap hRightsLists = new HsqlHashMap();
+
+    /**
+     * Retrieves the list of right names represented by the right flags
+     * set in the specified <code>Integer</code> object's <code>int</code>
+     * value. <p>
+     *
+     * <b>Note:</b> In the interests of memory and CPU efficiency, this method
+     * uses a lazy cache algorithm, so special care must be taken not to modify
+     * the retrieved list objects.  If you do need to manipulate the returned
+     * lists, please first make a copy and then and perform the manipulation
+     * on the copy. <p>
+     *
+     * @param rights An Integer representing a set of right flags
+     * @return an empty list if the specified <code>Integer</code> object is
+     *        null, else a list of rights, as <code>String</code> objects,
+     *        represented by the rights flag bits set in the specified
+     *        <code>Integer</code> object's int value.
+     *
+     */
+    static HsqlArrayList listRightNames(Integer rights) {
+
+        if (rights == null) {
+            return emptyRightsList;
+        }
+
+        HsqlArrayList list = (HsqlArrayList) hRightsLists.get(rights);
+
+        if (list != null) {
+            return list;
+        }
+
+        int rightFlags = rights.intValue();
+
+        list = new HsqlArrayList();
+
+        if ((rightFlags & SELECT) != 0) {
+            list.add("SELECT");
+        }
+
+        if ((rightFlags & UPDATE) != 0) {
+            list.add("UPDATE");
+        }
+
+        if ((rightFlags & DELETE) != 0) {
+            list.add("DELETE");
+        }
+
+        if ((rightFlags & INSERT) != 0) {
+            list.add("INSERT");
+        }
+
+        hRightsLists.put(rights, list);
+
+        return list;
+    }
+
+    /**
+     * Retrieves the <code>User</code> objects representing the database
+     * users that are visible to the <code>User</code> object
+     * represented by the <code>session</code> argument. <p>
+     *
+     * If the <code>session</code> argument's <code>User</code> object
+     * attribute has the database administrator role, then all of the non-null
+     * <code>User</code> objects in this collection are considered visible.
+     * Otherwise, only this object's special <code>PUBLIC</code>
+     * <code>User</code> object attribute and the session <code>User</code>
+     * object, if it exists in this collection, are considered visible. <p>
+     *
+     * @param session The <code>Session</code> object used to determine
+     *          visibility
+     * @param andPublicUser whether to include the special <code>PUBLIC</code>
+     *          <code>User</code> object in the retrieved list
+     * @return a list of <code>User</code> objects visible to
+     *          the <code>User</code> object contained by the
+     *         <code>session</code> argument.
+     *
+     */
+    HsqlArrayList listVisibleUsers(Session session, boolean andPublicUser) {
+
+        HsqlArrayList list;
+        User          user;
+        boolean       isAdmin;
+        String        sessName;
+        String        userName;
+
+        list     = new HsqlArrayList();
+        isAdmin  = session.isAdmin();
+        sessName = session.getUsername();
+
+        if (uUser == null || uUser.size() == 0) {
+            return list;
+        }
+
+        for (int i = 0; i < uUser.size(); i++) {
+            user = (User) uUser.get(i);
+
+            if (user == null) {
+                continue;
+            }
+
+            userName = user.getName();
+
+            if ("PUBLIC".equals(userName)) {
+                if (andPublicUser) {
+                    list.add(user);
+                }
+            } else if (isAdmin) {
+                list.add(user);
+            } else if (sessName.equals(userName)) {
+                list.add(user);
+            }
+        }
+
+        return list;
+    }
+
+    /**
+     * Retrieves the set of distinct, fully qualified Java <code>Class</code>
+     * names upon which any grants currently exist to elements in
+     * this collection. <p>
+     * @return the set of distinct, fully qualified Java Class names, as
+     *        <code>String</code> objects, upon which grants currently exist
+     *        to the elements of this collection
+     *
+     */
+    HsqlHashSet getGrantedClassNames() {
+
+        int         size;
+        User        user;
+        HsqlHashSet out;
+        Enumeration e;
+
+        size = uUser.size();
+        out  = new HsqlHashSet();
+
+        for (int i = 0; i < size; i++) {
+            user = (User) uUser.get(i);
+
+            if (user == null) {
+                continue;
+            }
+
+            e = user.getGrantedClassNames(false).elements();
+
+            while (e.hasMoreElements()) {
+                out.add(e.nextElement());
+            }
+        }
+
+        return out;
+    }
+
+    /**
+     * Constructs a new <code>SYS</code> <code>User</code> object for the
+     * specified <code>Database</code> object. <p>
+     *
+     * @param database the <code>Database</code> object for which to
+     *          construct a new
+     * <code>SYS</code> <code>User</code> object
+     * @throws SQLException - if the specified <code>Database</code>
+     *          object already has a non-null <code>SYS</code>
+     *          <code>User</code> attribute
+     * @return a new <code>SYS</code> <code>User</code> object
+     *
+     */
+    static User createSysUser(Database database) throws SQLException {
+
+        // enforce safety - only a Database object should be allowed
+        // to create the SYS user, and only at startup
+        Trace.check(database.getSysSession() == null,
+                    Trace.USER_ALREADY_EXISTS, SYS_USER_NAME);
+
+        return new User(SYS_USER_NAME, null, true, null);
     }
 }

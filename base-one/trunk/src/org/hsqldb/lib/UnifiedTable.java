@@ -42,7 +42,7 @@ import java.util.Hashtable;
  * table-like access to and manipulation of both primitive and object array
  * types through a single interface.
  *
- * @author tony_lai@users.sourceforge.net
+ * @author tony_lai@users
  * @version 1.7.2
  * @since 1.7.2
  */
@@ -172,6 +172,10 @@ public class UnifiedTable {
 
     public void clear() {
         rowCount = 0;
+    }
+
+    public void setCount(int count){
+        rowCount = count;
     }
 
     public void setCell(int rowIndex, int colIndex, Object cellData) {
