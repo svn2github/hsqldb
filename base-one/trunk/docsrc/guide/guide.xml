@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<!-- $Id: guide.xml,v 1.27 2004/05/26 09:05:50 fredt Exp $ -->
+<!-- $Id: guide.xml,v 1.28 2004/06/02 20:30:44 unsaved Exp $ -->
 
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN"
 "http://www.oasis-open.org/docbook/xml/4.2CR1/docbookx.dtd" [
-    <!ENTITY revision "$Revision: 1.27 $">
-    <!ENTITY date "$Date: 2004/05/26 09:05:50 $">
+    <!ENTITY revision "$Revision: 1.28 $">
+    <!ENTITY date "$Date: 2004/06/02 20:30:44 $">
     <!ENTITY alts SYSTEM "../formats-section.xml">
     <!ENTITY docbasename "guide">
     <!ENTITY baseurl "http://hsqldb.sourceforge.net/&docbasename;">
@@ -25,6 +25,8 @@
     <!ENTITY dbfiles-appendix.xml SYSTEM "dbfiles.xml">
     <!ENTITY openoffice-appendix.xml SYSTEM "openoffice.xml">
     <!ENTITY testutility-appendix.xml SYSTEM "testutility.xml">
+    <!ENTITY dbmanager-appendix.xml SYSTEM "dbmanager.xml">
+    <!ENTITY transfertool-appendix.xml SYSTEM "transfertool.xml">
 
     <!-- Imported cdata sandwich files -->
     <!ENTITY Testdb.java-cdata SYSTEM "../../docwork/guide/cdata/Testdb.java">
@@ -110,6 +112,8 @@
     &dbfiles-appendix.xml;
     &openoffice-appendix.xml;
     &testutility-appendix.xml;
+    &dbmanager-appendix.xml;
+    &transfertool-appendix.xml;
 
     <!--
           I'm not spending the time on adding indexentry elements, since
