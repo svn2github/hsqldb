@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+A patch for storing a readonly hsqldb database was contributed by Brendan Ryan
+and has been incorporated into the code base. Additional work on connection URL
+allow more uniform access to this feature.
+
+Brendan Ryan wrote (text and sample changed):
+
+I have made a small change to allow a readonly hsqldb database (.script and
+.properties) to be stored in a JAR file so that it can be used with JWS.
+
+A sample jnlp file is given below.
+
+The relative location of the database as taken from the jdbc url is used.
+For example, if the url is specified as "jdbc:hsqldb:res:testdata/felder.hsqldb"
+then the database is loaded from the "testdata/" directory in the jar
+and the database file names are "felder.hsqldb.properties" and
+felder.hsqldb.script" in that directory.
+
+I hope the code is useful for someone.
+
+Regards
+Brendan Ryan
+-->
+
+<jnlp spec="1.0+"
+  codebase="file:///c:/ERM/internet/build/pass/">
+<information>
+  <title>Mask Builder</title>
+  <vendor>PUI</vendor>
+  <homepage href="http://www.pi-ag.com" />
+  <description>Demonstration of JNLP</description>
+  <icon href="raptor.gif"/>
+</information>
+<offline-allowed/>
+<security>
+  <all-permissions/>
+</security>
+<resources>
+  <j2se version="1.4+" />
+  <jar href="pass-maskbuilder.jar"/>
+  <jar href="jaxb-rt-1.0-ea.jar"/>
+  <jar href="hsqldb.jar"/>
+  <jar href="testdb.jar"/>
+  <property name="jdbc.drivers" value="org.hsqldb.jdbcDriver"/>
+  <property name="jdbc.url" value="jdbc:hsqldb:res:testdata/felder.hsqldb"/>
+  <property name="jdbc.user" value="sa"/>
+  <property name="jdbc.password" value="" />
+</resources>
+<application-desc />
+</jnlp>
+
