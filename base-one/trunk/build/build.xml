@@ -88,14 +88,16 @@ examples:
       </delete>
    </target>
 
-    <target name="codeswitcher" depends="-prepare">
+    <target name="codeswitcher" depends="-prepare"
+            description="uses +-JDBC2 +-JDBC2 +-JAVA2">
       <javac destdir="classes">
          <src path="${src}"/>
          <include name="org/hsqldb/util/CodeSwitcher.java"/>
        </javac>
     </target>
 
-    <target name="switchtojdk11" depends="codeswitcher" unless="ant.java.iscjavamodern">
+    <target name="switchtojdk11" depends="codeswitcher"
+            description="self explanatory" unless="ant.java.iscjavamodern">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes" >
          <arg line="${src}/org/hsqldb/jdbcStubs.java
                     ${src}/org/hsqldb/jdbcStatement.java
@@ -104,7 +106,8 @@ examples:
        <available classname="java.util.Vector" property="noswing"/>
     </target>
 
-    <target name="switchtojdk12" depends="codeswitcher" if="ant.java.iscjava12">
+    <target name="switchtojdk12" depends="codeswitcher" 
+            description="self explanatory" if="ant.java.iscjava12">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes" >
          <arg line="${src}/org/hsqldb/jdbcStubs.java
                     ${src}/org/hsqldb/jdbcConnection.java
@@ -117,7 +120,8 @@ examples:
        </java>
     </target>
 
-    <target name="switchtojdk14" depends="codeswitcher" if="ant.java.iscjava14">
+    <target name="switchtojdk14" depends="codeswitcher" 
+            description="self explanatory" if="ant.java.iscjava14">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes" >
          <arg line="${src}/org/hsqldb/jdbcStubs.java
                     ${src}/org/hsqldb/jdbcConnection.java
@@ -130,7 +134,8 @@ examples:
        </java>
     </target>
 
-    <target name="store" depends="switchtojdk11,switchtojdk12,switchtojdk14">
+    <target name="store" depends="switchtojdk11,switchtojdk12,switchtojdk14"
+            description="compiles the /store folder">
       <javac srcdir="${src}"
              destdir="classes"
                  debug="${build.debug}"
@@ -140,7 +145,8 @@ examples:
       </javac>
     </target>
 
-    <target name="lib" depends="store">
+    <target name="lib" depends="store"
+            description="compiles the /lib folder">
       <javac srcdir="${src}"
              destdir="classes"
                  debug="${build.debug}"
@@ -151,7 +157,8 @@ examples:
       </javac>
     </target>
 
-    <target name="classes" depends="lib,-javajsse">
+    <target name="classes" depends="lib,-javajsse"
+            description="compiles all the classes">
       <javac srcdir="${src}"
              destdir="classes"
                  debug="${build.debug}"
@@ -180,7 +187,8 @@ examples:
       </copy>
     </target>
 
-   <target name="classes12" depends="classes" if="ant.java.iscjavamodern">
+   <target name="classes12" depends="classes" if="ant.java.iscjavamodern"
+           description="compiles 1.2 specific classes">
       <javac srcdir="${src}"
              destdir="classes"
                  debug="${build.debug}"
@@ -191,7 +199,8 @@ examples:
       </javac>
    </target>
 
-   <target name="classes14" depends="classes12" if="ant.java.iscjava14">
+   <target name="classes14" depends="classes12" if="ant.java.iscjava14"
+           description="compiles 1.4 specific classes">
       <javac srcdir="${src}"
              destdir="classes"
                  debug="${build.debug}"
@@ -205,7 +214,8 @@ examples:
       </javac>
    </target>
 
-    <target name="util" depends="lib">
+    <target name="util" depends="lib"
+            description="compiles the /util folder">
       <javac srcdir="${src}"
              destdir="classes"
                  debug="${build.debug}"
@@ -221,7 +231,8 @@ examples:
     </copy>
     </target>
 
-   <target name="swing" depends="util" unless="noswing">
+   <target name="swing" depends="util" unless="noswing"
+           description="compiles the swing based classes in the /util folder">
       <javac srcdir="${src}"
              destdir="classes"
                  debug="${build.debug}"
@@ -231,7 +242,8 @@ examples:
       </javac>
    </target>
 
-   <target name="test" depends="classes14">
+   <target name="test" depends="classes14"
+           description="compiles the /test folder">
       <available property='_junit_available' file='lib/junit.jar' type='file'/>
       <fail unless='_junit_available'
             message="'junit.jar' must reside in the /lib directory in order to use this target"/>
