@@ -1,4 +1,4 @@
-<!-- $Id: advancedtopics.xml,v 1.3 2004/04/17 20:46:56 unsaved Exp $ -->
+<!-- $Id: advancedtopics.xml,v 1.4 2004/04/20 18:35:55 unsaved Exp $ -->
 
 <chapter id='advanced-chapter'>
     <title id='advanced-title'>Advanced Topics</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.3 $</edition>
-        <pubdate>$Date: 2004/04/17 20:46:56 $</pubdate>
+        <edition>$Revision: 1.4 $</edition>
+        <pubdate>$Date: 2004/04/20 18:35:55 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Advanced</keyword>
@@ -34,7 +34,9 @@
             If you want to use HSQLDB with your application, you should read 
             this guide.
             This document covers system related issues.
-            For issues related to SQL see <ulink url="hsqlSQLGuide.html"/>
+            For issues related to SQL see the
+            <link linkend='sql_issues-chapter' endterm='sql_issues-title'/>
+            chapter.
         </para>
     </section>
     <section>
@@ -43,9 +45,12 @@
             The normal method of accessing an HSQLDB database is via the JDBC 
             Connection interface.
             An introduction to different methods of providing database services 
-            and accessing them can be found in <ulink url='hsqlGuide.html'/>.
+            and accessing them can be found in the
+            <link linkend='sql_issues-chapter' endterm='sql_issues-title'/>
+            chapter.
             Details and examples of how to connect via JDBC are provided in our 
-            <ulink url='somewhere'>JavaDoc for jdbcConnection.html</ulink>.
+            <ulink url='../src/org/hsqldb/jdbc/jdbcConnection'>JavaDoc for 
+            <literal>jdbcConnection.html</literal></ulink>.
         </para><para>
             Version 1.7.2 introduces a uniform method of distinguishing between 
             different types of connection, alongside new capabilities to 
@@ -772,8 +777,9 @@
                             </literal>command override both the engine defaults 
                             and the database properties defaults.
                             Individual <literal>textdb.*</literal> properties 
-                            are listed in
-                            <ulink url="hsqlTextTables.html"/>.
+                            are listed in the
+                            <link linkend='texttables-chapter'
+                                  endterm='texttables-title'/> chapter.
                             <literal>(SET PROPERTY)</literal>
                         </para> </entry>
                     </row>
@@ -996,13 +1002,16 @@
             Any database not produced with the release version of HSQLDB 1.7.2
             must be upgraded to this version.
             This includes databases created with the ALPHA versions of 1.7.2.
-            The instructions under <ulink url='somewhere'>UPGRADING USING THE 
-            SCRIPT COMMAND</ulink> should be followed when possible.
-            The <ulink url='somewhere'>DIRECT UPGRADE</ulink> instructions may 
+            The instructions under the
+            <link linkend='upgrade_via_script-section'
+                  endterm='upgrade_via_script-title'/> section
+            should be followed when possible.
+            The <link linkend='upgrade_direct-section'
+                      endterm='upgrade_direct-title'/> instructions may
             or may not work depending on the structure of the database.
         </para>
-        <section>
-            <title>Direct Upgrade</title>
+        <section id='upgrade_direct-section'>
+            <title id='upgrade_direct-title'>Direct Upgrade</title>
             <para>
                 Databases created with Hypersonic version 1.43 and HSQLDB 1.6x
                 can sometimes be seamlessly upgraded to the new version.
@@ -1042,8 +1051,9 @@
                 foreign keys as previous versions.
             </para></listitem>
         </itemizedlist>
-        <section>
-            <title>Upgrading Using the SCRIPT Command</title>
+        <section id='upgrade_via_script-section'>
+            <title id='upgrade_via_script-title'>
+                Upgrading Using the SCRIPT Command</title>
             <para>
                 In all versions of HSQLDB and Hypersonic 1.43, the
                 <literal>SCRIPT 'filename'</literal> command (used as an SQL 

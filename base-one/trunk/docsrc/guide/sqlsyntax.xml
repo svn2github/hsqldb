@@ -1,7 +1,7 @@
-<!-- $Id: sqlsyntax.xml,v 1.2 2004/04/17 22:52:46 unsaved Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.3 2004/04/20 18:35:56 unsaved Exp $ -->
 
-<chapter>
-<title>SQL Syntax</title>
+<chapter id='sqlsyntax-chapter'>
+<title id='sqlsyntax-title'>SQL Syntax</title>
 <chapterinfo>
     <authorgroup>
         <corpauthor>The Hypersonic SQL Group</corpauthor>
@@ -34,8 +34,8 @@
             </affiliation>
         </editor>
     </authorgroup>
-    <edition>$Revision: 1.2 $</edition>
-    <pubdate>$Date: 2004/04/17 22:52:46 $</pubdate>
+    <edition>$Revision: 1.3 $</edition>
+    <pubdate>$Date: 2004/04/20 18:35:56 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Syntax</keyword>
@@ -378,7 +378,9 @@ CREATE [MEMORY | CACHED | TEMP<footnoteref linkend="posthyper"/> | TEXT<footnote
                     CHECK constraint can only reference the current row, 
                     meaning there should be no SELECT statement.
                     Sample table definitions with CHECK constraints are in 
-                    <ulink url='fixthis'>TestSelfCheckConstraints.txt</ulink>.
+                    <!-- Would be nice to link to this, but there's no copy
+                         under the doc directory. -->
+                    <literal>TestSelfCheckConstraints.txt</literal>.
                 </para></listitem>
             </varlistentry>
             <varlistentry><term>General syntax limitations</term>
@@ -466,8 +468,10 @@ CREATE TRIGGER &lt;name&gt; {BEFORE | AFTER} {INSERT | UPDATE | DELETE} ON &lt;t
             This allows trigger action to alter the data that is about to be 
             stored in the database.
         </para> <para>
-            Please refer to the code for <ulink url='fixthis'>org.hsqldb.Trigger</ulink>
-            and <ulink url='x'>org.hsqldb.sample.TriggerSample</ulink>
+            Please refer to the code for 
+            <ulink url='fixthis'>../src/org/hsqldb/Trigger.html</ulink>
+            and <ulink url='../src/org/hsqldb/sample/TriggerSample.html'>
+            org.hsqldb.sample.TriggerSample</ulink>
             for more information on how to write a trigger class.
         </para> <para>
             See also:

@@ -1,7 +1,7 @@
-<!-- $Id: sqlissues.xml,v 1.7 2004/04/16 00:37:00 unsaved Exp $ -->
+<!-- $Id: sqlissues.xml,v 1.8 2004/04/20 18:35:56 unsaved Exp $ -->
 
-<chapter>
-    <title>SQL Issues</title>
+<chapter id='sql_issues-chapter'>
+    <title id='sql_issues-title'>SQL Issues</title>
     <chapterinfo>
         <authorgroup>
             <author>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.7 $</edition>
-        <pubdate>$Date: 2004/04/16 00:37:00 $</pubdate>
+        <edition>$Revision: 1.8 $</edition>
+        <pubdate>$Date: 2004/04/20 18:35:56 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>SQL</keyword>
@@ -623,8 +623,9 @@
         <title>New Features and Changes</title>
         <para>
             In 1.7.2 many enhancements have been made for better SQL support.
-            These are listed in <ulink url="hsqlSyntax.html"/>
-            and in <ulink url="changelog_1_7_2.txt"/>.
+            These are listed in the
+            <link linkend='sqlsyntax-chapter' endterm='sqlsyntax-title'/>
+            chapter and in <ulink url="../changelog_1_7_2.txt"/>.
             Functions and expressions such as SUBSTRING(), NULLIF(), COALESCE(),
             CASE ... WHEN .. ELSE etc. are among them.
             Other enhancements may not be very obvious in the documentation but 

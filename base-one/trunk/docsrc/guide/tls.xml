@@ -1,4 +1,4 @@
-<!-- $Id: tls.xml,v 1.1 2004/04/16 03:58:25 unsaved Exp $ -->
+<!-- $Id: tls.xml,v 1.2 2004/04/20 18:35:56 unsaved Exp $ -->
 
 <chapter>
     <title>TLS</title>
@@ -13,8 +13,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.1 $</edition>
-        <pubdate>$Date: 2004/04/16 03:58:25 $</pubdate>
+        <edition>$Revision: 1.2 $</edition>
+        <pubdate>$Date: 2004/04/20 18:35:56 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>TLS</keyword>
@@ -36,7 +36,7 @@
                 Java 2.x and up
             </para></listitem> <listitem><para>
                 If Java 2.x or 3.x, then you will need need to
-                <ulink url='internallink'>install JSSE</ulink>.
+                <link linkend='jsse-section'>install JSSE</link>.
                 Your server and/or client will start up much slower than that 
                 of Java 4.x users.
                 Client-side users will not be able to use the https: JDBC 
@@ -44,8 +44,8 @@
                 in 2.x/3.x Java JSSE;
                 if there is demand, we could work around this).
             </para></listitem> <listitem><para>
-                A <ulink url='int link'>JKS keystore containing a private key
-                </ulink>, in order to run a server.
+                A <link linkend='privatekey-section'>JKS keystore containing a 
+                private key</link>, in order to run a server.
             </para></listitem>
         </itemizedlist>
     </section>
@@ -142,8 +142,9 @@
         <section>
             <title>Server-Side</title>
             <para>
-                Get yourself a <ulink url='somewhere'>JKS keystore containing a 
-                private key</ulink>.
+                
+                Get yourself a <link linkend='privatekey-section'>JKS keystore 
+                containing a private key</link>.
                 Then set the system property javax.net.ssl.keyStore to the path 
                 to that file, and
                 <literal>javax.net.ssl.keyStorePassword</literal> to the 
@@ -172,7 +173,7 @@
         </section>
     </section>
 
-    <section>
+    <section id='jsse-section'>
         <title>JSSE</title>
         <para>
             If you are running Java 4.x, then you are all set.
@@ -193,8 +194,8 @@
             Pretty painless.
         </para>
     </section>
-    <section>
-        <label>Making a Private-key Keystore</label>
+    <section id='privatekey-section'>
+        <title>Making a Private-key Keystore</title>
         <para>
             There are two main ways to do this.
             Either you can use a certificate signed by a certificate authority,

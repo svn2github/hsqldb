@@ -1,4 +1,4 @@
-<!-- $Id: running.xml,v 1.2 2004/04/15 16:07:28 fredt Exp $ -->
+<!-- $Id: running.xml,v 1.3 2004/04/20 18:35:56 unsaved Exp $ -->
 
 <chapter>
     <title>Running and Using Hsqldb</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.2 $</edition>
-        <pubdate>$Date: 2004/04/15 16:07:28 $</pubdate>
+        <edition>$Revision: 1.3 $</edition>
+        <pubdate>$Date: 2004/04/20 18:35:56 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Guide</keyword>
@@ -169,7 +169,8 @@
             specified at the time of running the server.
         </para> <para>
             Server modes can use preset properties or command line arguments 
-            detailed in <ulink url='hsqlAdvancedGuide.html'/>.
+            as detailed in the
+            <link linkend='advanced-chapter' endterm='advanced-title'/> chapter.
             There are three server modes, based on the protocol used for 
             communications between the client and server.
         </para>
@@ -243,7 +244,7 @@
                     <filename>hsqldb.jar</filename>.
                     Full information on how to connect to a server is provided 
                     in the Java Documentation for 
-                    <ulink url='src/org/hsqldb/jdbcConnection.html'>
+                    <ulink url='../src/org/hsqldb/jdbcConnection.html'>
                     <literal>jdbcConnection</literal></ulink> (located in the
                     <filename>/doc/src</filename> directory of HSQLDB 
                     distribution.
@@ -274,7 +275,9 @@
                     Note in the above connection URL, there is no mention of 
                     the database file, as this was specified when running the 
                     server. Instead, the value defined for dbname.0 is used.
-                    Also, see the Advanced Guide for the connection URL when 
+                    Also, see the
+                    <link linkend='advanced-chapter' endterm='advanced-title'/>
+                    chapter for the connection URL when 
                     there is more than one database per server instance.
                 </para>
             </section>
@@ -332,7 +335,7 @@
     Connection c = DriverManager.getConnection("jdbc:hsqldb:file:/opt/db/testdb", "sa", "");</programlisting>
             <para>
                 Refer to Javadoc for
-                <ulink url='src/org/hsqldb/jdbcConnection.html'>
+                <ulink url='../src/org/hsqldb/jdbcConnection.html'>
                 <literal>jdbcConnection</literal></ulink> for more details.
             </para>
         </section>
@@ -390,8 +393,9 @@
                 However, from version 1.7.2, HSQLDB can serve several databases 
                 in multiple server modes and allow simultaneous access to 
                 multiple in-process and memory-only databases.
-                These capabilities are covered in
-                <ulink url='hsqlAdvancedGuide.html'/>.
+                These capabilities are covered in the
+                <link linkend='advanced-chapter'
+                      endterm='advanced-title'/> chapter.
             </para>
         </section>
         <section>
@@ -419,22 +423,20 @@
         <para>
             Once a connection is established to a database in any mode, JDBC 
             methods are used to interact with the database.
-            The Javadoc for <literal>
-            <ulink url='src/org/hsqldb/jdbcConnection.html'>jdbcConnection
-            </ulink> </literal>,
-            <literal><ulink url="src/org/hsqldb/jdbcDriver.html">jdbcDriver
-            </ulink>
-            </literal>, <literal>
-            <ulink url="src/org/hsqldb/jdbcDatabaseMetaData.html">
-            jdbcDatabaseMetadata</ulink></literal>,
-            <literal><ulink url="src/org/hsqldb/jdbcResultSet.html">
-            jdbcResultSet
-            </ulink></literal>, <literal>
-            <ulink url="src/org/hsqldb/jdbcStatement.html">jdbcStatement</ulink>
-            </literal> and <literal>
-            <ulink url="src/org/hsqldb/jdbcPreparedStatement.html">
-            jdbcPreparedStatement</ulink></literal> list all the supported JDBC 
-            methods together with information that is specific to HSQLDB. 
+            The Javadoc for <ulink url='../src/org/hsqldb/jdbcConnection.html'>
+            <literal>jdbcConnection</literal> </ulink>,
+            <ulink url="../src/org/hsqldb/jdbcDriver.html">
+            <literal>jdbcDriver</literal></ulink>,
+            <ulink url="../src/org/hsqldb/jdbcDatabaseMetaData.html">
+            <literal>jdbcDatabaseMetadata</literal></ulink>,
+            <ulink url="../src/org/hsqldb/jdbcResultSet.html">
+            <literal>jdbcResultSet</literal> </ulink>,
+            <ulink url="../src/org/hsqldb/jdbcStatement.html">
+            <literal>jdbcStatement</literal></ulink>,
+            and <ulink url="../src/org/hsqldb/jdbcPreparedStatement.html">
+            <literal>jdbcPreparedStatement</literal></ulink> list all the 
+            supported JDBC methods together with information that is specific 
+            to HSQLDB.
             JDBC methods are broadly divided into: connection related methods, 
             metadata methods and database access methods.
             The database access methods use SQL commands to perform actions on 
@@ -451,7 +453,9 @@
             The SQL dialect used in HSQLDB is as close to the SQL92 and 
             SQL200n standards as it has been possible to achieve so far in a 
             small-footprint database engine.
-            The full list of SQL commands is in <ulink url="hsqlSyntax.html"/>.
+            The full list of SQL commands is in the
+            <link linkend='sqlsyntax-chapter' endterm='sqlsyntax-title'/>
+            chapter.
         </para>
         <section>
             <title>Different Types of Tables</title>
@@ -501,7 +505,9 @@
                 The Text table data source can always be reassigned to a 
                 different file if necessary.
                 Two commands are needed to set up a TEXT table as detailed in 
-                <ulink url="hsqlTextTables.html"/> document.
+                the
+                <link linkend='texttables-chapter' endterm='texttables-title'/>
+                chapter.
             </para> <para>
                 With memory-only databases (see above), both MEMORY table and 
                 CACHED table declarations are treated as declarations for 
@@ -526,9 +532,9 @@
                 Because of this, you should not create duplicate user-defined 
                 indexes on the same column sets covered by these constraints.
                 This would result in unnecessary memory and speed overheads.
-                See the discussion in
-                <ulink url="hsqlSQLGuide.html"/> for more 
-                information.
+                See the discussion in the
+                <link linkend='sql_issues-chapter' endterm='sql_issues-title'/>
+                chapter for more information.
             </para> <para>
                 Indexes are crucial for adequate query speed.
                 When queries joining multiple tables are used, there must be an 
@@ -569,8 +575,9 @@
                 </para></listitem>
             </itemizedlist>
             <para>
-                The supported commands are listed in
-                <ulink url="hsqlSyntax.html"/>.
+                The supported commands are listed in the
+                <link linkend='sqlsyntax-chapter' endterm='sqlsyntax-title'/>
+                chapter.
                 For a  well written basic guide to SQL you can consult
                 <ulink url="http://www.postgresql.org/docs/awbook.html">
                 PostgreSQL: Introduction and Concepts</ulink> by Bruce Momjian,
@@ -587,7 +594,7 @@
                 In 1.7.2, support for JDBC2 has been significantly extended and 
                 some features of JDBC3 are also supported.
                 The relevant classes are thoroughly documented.
-                See the JavaDoc for <ulink url="src/">org.hsqldb.jdbcXXXX
+                See the JavaDoc for <ulink url="../src/">org.hsqldb.jdbcXXXX
                 </ulink> classes.
             </para>
         </section>
