@@ -1,10 +1,10 @@
-<!-- $Id: testutility.xml,v 1.6 2004/04/22 03:06:27 unsaved Exp $ -->
+<!-- $Id: testutility.xml,v 1.7 2004/05/01 18:12:41 fredt Exp $ -->
 
 <appendix>
     <title>Hsqldb Test Utility</title>
     <appendixinfo>
-        <edition>$Revision: 1.6 $</edition>
-        <pubdate>$Date: 2004/04/22 03:06:27 $</pubdate>
+        <edition>$Revision: 1.7 $</edition>
+        <pubdate>$Date: 2004/05/01 18:12:41 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Test</keyword>
@@ -50,11 +50,11 @@
         </emphasis></para></listitem><listitem><informalexample><programlisting>
 /*c&lt;rows&gt;*/ SQL statement returning column count of &lt;rows&gt;</programlisting>
         </informalexample></listitem><listitem><informalexample><programlisting>
-/*u &lt;count&gt;*/ SQL statement returning an update count equal to &lt;count&gt;</programlisting>
+/*u&lt;count&gt;*/ SQL statement returning an update count equal to &lt;count&gt;</programlisting>
         </informalexample></listitem><listitem><informalexample><programlisting>
 /*e*/ SQL statement that should produce an error when executing</programlisting>
         </informalexample></listitem><listitem><informalexample><programlisting>
-/*r &lt;string1&gt;,&lt;string2&gt;*/ SQL statement returning a single row ResultSet equal to the specified value</programlisting>
+/*r&lt;string1&gt;,&lt;string2&gt;*/ SQL statement returning a single row ResultSet equal to the specified value</programlisting>
         </informalexample></listitem><listitem><informalexample><programlisting>
 /*r
     &lt;string1&gt;,&lt;string2&gt;
