@@ -289,7 +289,7 @@ public class TestSql extends TestCase {
     public void testDoubleNaN() {
 
         double  value   = 0;
-        boolean wasNull = false;
+        boolean wasEqual = false;
         String  message = "DB operation completed";
         String ddl1 =
             "DROP TABLE t1 IF EXISTS;"
@@ -352,7 +352,7 @@ public class TestSql extends TestCase {
 
             if (rs.next()) {
                 value        = rs.getDouble(2);
-                wasNull      = rs.wasNull();
+                wasEqual     = Double.isNaN(value);
                 integerValue = rs.getInt(4);
             }
 
@@ -395,7 +395,7 @@ public class TestSql extends TestCase {
         }
 
         // assert new behaviour
-        assertEquals(true, wasNull);
+        assertEquals(true, wasEqual);
     }
 
     protected void tearDown() {

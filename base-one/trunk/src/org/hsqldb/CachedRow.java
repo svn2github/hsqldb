@@ -334,7 +334,10 @@ class CachedRow extends Row {
             n       = n.nNext;
         }
 
-        oData       = in.readData(tTable.getColumnTypes());
+        oData = in.readData(tTable.getColumnTypes());
+
+        Trace.check(in.readIntData() == iPos, Trace.INPUTSTREAM_ERROR);
+
         iLastAccess = iCurrentAccess++;
     }
 }

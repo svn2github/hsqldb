@@ -62,8 +62,8 @@ public class TestCacheSize {
     String           password;
     Statement        sStatement;
     Connection       cConnection;
-    boolean          indexZip        = false;
-    boolean          indexLastName   = true;
+    boolean          indexZip        = true;
+    boolean          indexLastName   = false;
     boolean          addForeignKey   = false;
     boolean          refIntegrity    = false;
     boolean          createTempTable = false;
@@ -85,18 +85,10 @@ public class TestCacheSize {
             boolean        fileexists = props.checkFileExists();
 
             Class.forName("org.hsqldb.jdbcDriver");
-            System.out.println("connect");
-            System.out.println(
-                new java.util.Date(System.currentTimeMillis()));
-
-            cConnection = DriverManager.getConnection(url + filepath, user,
-                    password);
-
-            System.out.println("connected");
-            System.out.println(
-                new java.util.Date(System.currentTimeMillis()));
 
             if (fileexists == false) {
+                cConnection = DriverManager.getConnection(url + filepath,
+                        user, password);
                 sStatement = cConnection.createStatement();
 
                 sStatement.execute("SHUTDOWN");
@@ -150,10 +142,19 @@ public class TestCacheSize {
             + "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
         try {
+            System.out.println("connect");
+            System.out.println(
+                new java.util.Date(System.currentTimeMillis()));
+
             cConnection = null;
             sStatement  = null;
             cConnection = DriverManager.getConnection(url + filepath, user,
                     password);
+
+            System.out.println("connected");
+            System.out.println(
+                new java.util.Date(System.currentTimeMillis()));
+
             sStatement = cConnection.createStatement();
 
             java.util.Random randomgen = new java.util.Random();
@@ -253,21 +254,30 @@ public class TestCacheSize {
             System.out.println(new java.util.Date(endTime));
             System.out.println("Insert Time:" + (endTime - startTime));
             sStatement.execute("SHUTDOWN");
-            System.out.println("shutdown");
-            System.out.println(
-                new java.util.Date(System.currentTimeMillis()));
+            cConnection.close();
+            System.out.println("Shutdown Time:"
+                               + (System.currentTimeMillis() - endTime));
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
     }
 
-    protected void tearDown() {
+    protected void tearDown() {}
+
+    protected void checkResults() {
 
         try {
+            long startTime = System.currentTimeMillis();
+            cConnection = DriverManager.getConnection(url + filepath, user,
+                    password);
+            sStatement = cConnection.createStatement();
+
+            sStatement.execute("SELECT count(*) from TEST");
             cConnection.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("TestSql.tearDown() error: " + e.getMessage());
+            System.out.println("Checked results:"
+                               + (System.currentTimeMillis() - startTime));
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
         }
     }
 
@@ -278,5 +288,6 @@ public class TestCacheSize {
         test.setUp();
         test.testFillUp();
         test.tearDown();
+        test.checkResults();
     }
 }

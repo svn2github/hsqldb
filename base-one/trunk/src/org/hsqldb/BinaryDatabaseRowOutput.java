@@ -81,6 +81,7 @@ import java.sql.Types;
  */
 class BinaryDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
+    int                           storageSize;
     private ByteArrayOutputStream byteOut = (ByteArrayOutputStream) out;
 
     /**
@@ -108,10 +109,18 @@ class BinaryDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
     }
 
     public void writePos(int pos) throws IOException {
+
         writeInt(pos);
+
+        for (; byteOut.size() < storageSize; ) {
+            this.write(0);
+        }
     }
 
     public void writeSize(int size) throws IOException {
+
+        storageSize = size;
+
         writeInt(size);
     }
 
