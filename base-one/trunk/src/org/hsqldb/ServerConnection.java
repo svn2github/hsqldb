@@ -194,7 +194,7 @@ class ServerConnection implements Runnable {
                     if (sql == null) {
                         break;
                     }
-
+                    // fredt - to optimise by reusing a BinaryServerRowOutput object
                     write(mServer.mDatabase.execute(sql, session).getBytes());
 
                     if (mServer.mDatabase.isShutdown()) {
@@ -226,6 +226,15 @@ class ServerConnection implements Runnable {
      *
      * @throws IOException
      */
+    // fredt - todo - rewrite for reusing the ouput buffer
+
+    void write(DatabaseRowOutputInterface binImage) throws IOException {
+
+        mOutput.writeInt(binImage.size());
+        mOutput.write(binImage.getBuffer(), 0, binImage.size());
+        mOutput.flush();
+    }
+
     void write(byte b[]) throws IOException {
 
         mOutput.writeInt(b.length);

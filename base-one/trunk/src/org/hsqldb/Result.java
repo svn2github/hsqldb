@@ -617,6 +617,13 @@ class Result {
         return 0;
     }
 
+    // fredt - todo can allow reuse of the byte[] via changes in Server.java
+    // WebServer.java etc.
+    void getBytes(DatabaseRowOutputInterface out) {
+
+        // to be implmented and called from Server.java etc.
+    }
+
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 
     /**

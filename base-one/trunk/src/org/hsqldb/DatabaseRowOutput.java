@@ -47,7 +47,7 @@ import org.hsqldb.lib.HsqlByteArrayOutputStream;
  * @version 1.7.0
  */
 abstract class DatabaseRowOutput extends HsqlByteArrayOutputStream
-implements org.hsqldb.DatabaseRowOutputInterface {
+implements DatabaseRowOutputInterface {
 
     static final int CACHE_ROW_160 = 0;
     static final int CACHE_ROW_170 = 1;
@@ -73,12 +73,21 @@ implements org.hsqldb.DatabaseRowOutputInterface {
     }
 
     /**
-     *  Constructor used for result sets and persistent storage of a Table row
+     *  Constructor used for persistent storage of a Table row
      *
      * @exception  IOException when an IO error is encountered
      */
     public DatabaseRowOutput() {
         super();
+    }
+
+    /**
+     *  Constructor used for result sets
+     *
+     * @exception  IOException when an IO error is encountered
+     */
+    public DatabaseRowOutput(int initialSize) {
+        super(initialSize);
     }
 
 // fredt@users - comment - methods for writing column type, name and data size

@@ -47,10 +47,15 @@ public class HsqlByteArrayOutputStream extends java.io.OutputStream {
     protected int  count;
 
     public HsqlByteArrayOutputStream() {
-        this(32);
+        this(64);
     }
 
     public HsqlByteArrayOutputStream(int size) {
+
+        if (size < 64) {
+            size = 64;
+        }
+
         buf = new byte[size];
     }
 
@@ -148,12 +153,13 @@ public class HsqlByteArrayOutputStream extends java.io.OutputStream {
 
     public void close() throws IOException {}
 
-    private void ensureRoom(int extra) {
+    protected void ensureRoom(int extra) {
 
         int newcount = count + extra;
 
         if (newcount > buf.length) {
-            byte newbuf[] = new byte[newcount];
+            byte newbuf[] =
+                new byte[(newcount + newcount / 2 + 256) & 0xffffff00];
 
             System.arraycopy(buf, 0, newbuf, 0, count);
 

@@ -54,6 +54,10 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
         super();
     }
 
+    public BinaryServerRowOutput(int initialSize) {
+        super(initialSize);
+    }
+
 // fredt@users - comment - methods for writing column type, name and data size
     public void writeIntData(int i) throws IOException {
         writeInt(i);
