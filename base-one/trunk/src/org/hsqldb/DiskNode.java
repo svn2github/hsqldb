@@ -326,7 +326,7 @@ class DiskNode extends Node {
 
         Row row = rData.getUpdatedRow();
 
-        return row.getNode(iId);
+        return row == null ? null : row.getNode(iId);
     }
 
     void writeTranslate(DatabaseRowOutputInterface out,

@@ -251,7 +251,7 @@ class CachedRow extends Row {
      *  Row that represents the database row for this Object.
      */
     Row getUpdatedRow() throws HsqlException {
-        return tTable.getRow(iPos, null);
+        return tTable == null ? null : tTable.getRow(iPos, null);
     }
 
     /**

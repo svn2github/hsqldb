@@ -416,26 +416,6 @@ public class TestDataStructures extends TestCase {
         return true;
     }
 
-    public static void main(String[] args) {
-
-        TestDataStructures test = new TestDataStructures("testLists");
-
-        for (int i = 0; i < NUMBER_OF_TEST_RUNS; i++) {
-            test.testLists();
-
-            if (i % 1000 == 0) {
-                System.out.println("Finished " + i + " tests");
-                System.out.flush();
-            }
-        }
-
-        System.out.println(
-            "After " + NUMBER_OF_TEST_RUNS + " tests of a maximum of "
-            + NUMBER_OF_ITERATIONS_PER_RUN
-            + " list commands each test, the list tests passed");
-        test.testGrowth();
-    }
-
     public void testGrowth() {
 
         HsqlArrayList d = new HsqlArrayList();
@@ -472,4 +452,77 @@ public class TestDataStructures extends TestCase {
         //-
         assertEquals(12, d.size());
     }
+
+    public void testSpeed() {
+        randomGenerator    = new Random(System.currentTimeMillis());
+        int TEST_RUNS = 100000;
+        int LOOP_COUNT = 1000;
+        HsqlArrayList  arrayList  = new HsqlArrayList(TEST_RUNS);
+        ArrayList      utilArrayList = new ArrayList(TEST_RUNS);
+        Vector         vector     = new Vector(TEST_RUNS);
+
+        Integer value = new Integer(randomGenerator.nextInt());
+        Integer INT_0 = new Integer(0);
+        StopWatch sw = new StopWatch();
+        System.out.println(sw.currentElapsedTimeToMessage("time"));
+
+        for (int i = 0; i < TEST_RUNS; i++){
+            arrayList.add(INT_0);
+        }
+
+        for (int i = 0; i < TEST_RUNS; i++){
+            for (int j = 0; j < LOOP_COUNT; j++){
+                arrayList.set(i,INT_0);
+            }
+
+        }
+        System.out.println(sw.currentElapsedTimeToMessage("time"));
+        sw.zero();
+
+        for (int i = 0; i < TEST_RUNS; i++){
+            utilArrayList.add(INT_0);
+        }
+
+        for (int i = 0; i < TEST_RUNS; i++){
+            for (int j = 0; j < LOOP_COUNT; j++){
+                utilArrayList.set(i,INT_0);
+            }
+        }
+        System.out.println(sw.currentElapsedTimeToMessage("time"));
+        sw.zero();
+        for (int i = 0; i < TEST_RUNS; i++){
+            vector.addElement(INT_0);
+        }
+        for (int i = 0; i < TEST_RUNS; i++){
+            for (int j = 0; j < LOOP_COUNT; j++){
+                vector.setElementAt(INT_0, i);
+            }
+        }
+        System.out.println(sw.currentElapsedTimeToMessage("time"));
+
+
+
+    }
+
+
+    public static void main(String[] args) {
+
+        TestDataStructures test = new TestDataStructures("testLists");
+
+        for (int i = 0; i < NUMBER_OF_TEST_RUNS; i++) {
+            test.testLists();
+
+            if (i % 1000 == 0) {
+                System.out.println("Finished " + i + " tests");
+                System.out.flush();
+            }
+        }
+
+        System.out.println(
+            "After " + NUMBER_OF_TEST_RUNS + " tests of a maximum of "
+            + NUMBER_OF_ITERATIONS_PER_RUN
+            + " list commands each test, the list tests passed");
+        test.testGrowth();
+    }
+
 }

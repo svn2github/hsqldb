@@ -2080,7 +2080,8 @@ class Table {
 
                         // fredt - we avoid infinite recursion on the fk's referencing the same table
                         // but chained rows can result in very deep recursion and StackOverflowError
-                        if (n.getRow() != row.getUpdatedRow()) {
+                        row = row == null ? null : row.getUpdatedRow();
+                        if (n.getRow() != row) {
                             reftable.checkCascadeDelete(n.getRow(), session,
                                                         doIt, path);
 
