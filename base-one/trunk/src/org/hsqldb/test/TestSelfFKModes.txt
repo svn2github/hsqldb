@@ -61,6 +61,31 @@ insert into testA(a,b) values(8,3);
 insert into testA(a,b) values(9,3);
 /*u1*/delete from testA where a=1;
 /*r0*/select count(*) from testA;
-
+-- bug 870835
+-- MIXED SELF AND FORWARD REFERENCE
+-- UPDATE ISSUE
+CREATE CACHED TABLE AUTH_GroupSubject (
+ description VARCHAR,
+ parent BIGINT,
+ admin BIGINT NOT NULL,
+ id_ BIGINT,
+ UNIQUE ( id_ ));
+CREATE CACHED TABLE AUTH_UserSubject (
+ subjectName VARCHAR NOT NULL,
+ id_ BIGINT,
+ UNIQUE ( id_ ),
+ PRIMARY KEY ( subjectName ));
+ALTER TABLE AUTH_GroupSubject ADD CONSTRAINT
+ AUTH_GroupSubject_REF_parent
+ FOREIGN KEY ( parent )
+ REFERENCES AUTH_GroupSubject ( id_ );
+ALTER TABLE AUTH_GroupSubject ADD CONSTRAINT
+ AUTH_GroupSubject_REF_admin
+ FOREIGN KEY ( admin )
+ REFERENCES AUTH_UserSubject ( id_ );
+insert into AUTH_UserSubject values ('admin', 100);
+insert into AUTH_GroupSubject values (null, null, 100, 200);
+/*u1*/update AUTH_GroupSubject set description = null,
+ parent = null, admin = 100 where id_ = 200;
 
 
