@@ -1,5 +1,5 @@
 /*
-    $Id: annotated-interactive.sql,v 1.2 2004/06/16 18:59:51 unsaved Exp $
+    $Id: hist-recall-19.sql,v 1.1 2004/06/16 19:26:24 unsaved Exp $
 
     See readme.txt in this directory for how to unit test SqlTool.
 
@@ -12,6 +12,8 @@
     HARNESS_METADATA        END       
 */
 
+/* The blank line after each command moves the command to history without
+   executing it. */
 command 01
 
 command 02
