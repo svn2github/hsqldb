@@ -524,7 +524,8 @@
         will break the indexing and result in inconsistent operation. To avoid 
         this, first change the value in the properties file, then open the database 
         and issue the SHUTDOWN COMPACT command to recreate all the indexes. 
-      
+      <p>If set <code>true</code>, this setting affects all the
+database in the JVM.      
     </td>
   </tr>
    
@@ -663,9 +664,17 @@
     </td>
   </tr>
   <tr>
-    <td width="33%" valign="TOP">&nbsp;</td>
-    <td width="33%" valign="TOP">&nbsp;</td>
-    <td width="33%" valign="TOP">&nbsp;</td>
+    <td width="33%" valign="TOP"><code>hsqldb.nio_data_file</code></td>
+    <td width="33%" valign="TOP">
+      <pre>true</pre>
+    </td>
+    <td width="33%" valign="TOP">use of nio access methods for the .data file</td>
+  </tr>
+  <tr>
+    <td colspan="3" valign="TOP">
+      <p>When HSQLDB is compiled and run in Java 1.4, setting this property to <code>false</code> will avoid the use of nio access methods, resulting in reduced speed. </p>
+      <p><code>(SET PROPERTY) </code>If used before defining any CACHED table, it applies to the current session, otherwise it comes to effect after a SHUTDOWN and restart.</p>
+    </td>
   </tr>
   <tr> 
       
@@ -800,7 +809,7 @@
 <h4>Backing Up Databases</h4>
 <p>The data for each database consists of  up to 5 files in the same directory. The endings are *.properties, *.script, *.data, *.backup and *.log (a file with the *.lck ending is used for controlling access to the database and should not be backed up). These should be backed up together. The files can be backed up while the engine is running but care should be taken that a CHECKPOINT or SHUTDOWN operation does not take place during the backup. It is more efficient to perform the backup immediately after a CHECKPOINT.  The *.data file can be excluded from the backup (the *.backup file will be used to replace this file if the full backup is restored). If a backup immediately follows a checkpoint, then the *.log file can also be excluded, limiting the significant files to *.properties, *.script, *.data and *.backup. Normal backup methods, such as archiving the files in a compressed bundle can be used.</p>
 <h4></h4>
-<p>Author: Fred Toussi - 14 July 2002 - updated 31 January 2004</p>
+<p>Author: Fred Toussi - 14 July 2002 - updated 22 March 2004</p>
 <p>Copyright 2002-2003 Fred Toussi. Permission is granted to distribute this document 
   without any alteration under the terms of the HSQLDB license. Additional permission 
   is granted to the HSQLDB Development Group to distribute this document with 

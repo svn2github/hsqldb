@@ -207,8 +207,8 @@ public class LockFile {
      *     thrown.
      *
      * <li>If the read is successful and the timestamp read in is less than
-     *     <code>HEARTBEAT_INTERVAL</code> milliseconds into the past,
-     *     then an exception is thrown.
+     *     <code>HEARTBEAT_INTERVAL</code> milliseconds into the past or
+     *     future, then an exception is thrown.
      *
      * <li>If no exception is thrown in 2.) or 3.), this method simply returns.
      * </ol>
@@ -252,7 +252,7 @@ public class LockFile {
 
         trace(mn + path + " last heartbeat " + lastHeartbeat + " ms ago.");
 
-        if (lastHeartbeat < HEARTBEAT_INTERVAL) {
+        if (Math.abs(lastHeartbeat) < HEARTBEAT_INTERVAL) {
             throw new Exception(
                 Trace.getMessage(
                     Trace.LockFile_checkHeartbeat2, true, new Object[] {
