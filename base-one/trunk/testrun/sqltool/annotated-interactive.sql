@@ -1,5 +1,5 @@
 /*
-    $Id: annotated-interactive.sql,v 1.1 2004/06/16 18:52:28 unsaved Exp $
+    $Id: annotated-interactive.sql,v 1.2 2004/06/16 18:59:51 unsaved Exp $
 
     See readme.txt in this directory for how to unit test SqlTool.
 
@@ -9,6 +9,9 @@
     This is an annotated example on how to test SqlTool run in interactive
     mode.  SqlTool will be run without any filename arguments, and this
     file will be fed to SqlTool via stdin.
+    This SQL test file runs SqlTool in interactive mode by virtue ofusing
+    "inputAsFile" false (the default) and not specifying any SQL filename
+    (or "-") with "arg".
 
     N.b. that there are no annotations between the "HARNESS_METADATA BEGIN"
     line and the "HARNESS_METADATA END" lines below.  This is because only

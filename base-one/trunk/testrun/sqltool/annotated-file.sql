@@ -1,5 +1,5 @@
 /*
-    $Id$
+    $Id: annotated-file.sql,v 1.1 2004/06/16 19:00:51 unsaved Exp $
 
     See readme.txt in this directory for how to unit test SqlTool.
 
@@ -9,6 +9,8 @@
     This is an annotated example on how to test SqlTool run in SQL file
     mode.  SqlTool will be run without this filename (the name of the
     file you are now reading), and nothing be fed to SqlTool via stdin.
+    This SQL test file runs SqlTool in SQL file mode by virtue ofthe
+    "inputAsFile true" setting below.
 
     N.b. that there are no annotations between the "HARNESS_METADATA BEGIN"
     line and the "HARNESS_METADATA END" lines below.  This is because only

@@ -1,5 +1,5 @@
 /*
-    $Id: annotated-raw.sql,v 1.4 2004/06/16 18:51:43 unsaved Exp $
+    $Id: annotated-raw.sql,v 1.5 2004/06/16 18:59:42 unsaved Exp $
 
     See readme.txt in this directory for how to unit test SqlTool.
 
@@ -12,6 +12,9 @@
         java org.hsqldb.util.SqlTool mem -
     This causes SqlTool to read stdin, but non-interactively (e.g. 
     command-line editing won't work and there is no login banner, etc.).
+    This SQL test file runs SqlTool in raw mode by virtue ofusing
+    "inputAsFile" false (the default) and specifying filename of "-"
+    with "arg".
 
     N.b. that there are no annotations between the "HARNESS_METADATA BEGIN"
     line and the "HARNESS_METADATA END" lines below.  This is because only
