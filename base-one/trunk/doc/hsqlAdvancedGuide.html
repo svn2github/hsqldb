@@ -152,7 +152,10 @@
     </td>
   </tr>
 </table>
-<p>&nbsp;</p>
+<p>In addition, when connecting to an in-process database creates a new database, 
+  or opens an existing database (i.e. it is the first connection made to the database 
+  by the application, all the user-defined database properties can be specified 
+  as URL properties.</p>
 <h3>PROPERTIES FILES</h3>
 <p>HSQLDB relies on a set of properties files for different settings. Version 
   1.7.0 streamlines property naming and introduces a number of new properties (in this document, all references to  versions 1.7.0 also apply to versions 1.7.1 and 1.7.2 unless stated otherwise) . 
@@ -604,7 +607,11 @@
       . <code>(SET PROPERTY)</code></td>
   </tr>
 </table>
-<p>&nbsp;</p>
+<p>When connecting to an in-process database creates a new database, or opens 
+  an existing database (i.e. it is the first connection made to the database by 
+  the application), all the user-defined database properties listed in this section 
+  can be specified as URL properties.</p>
+<h3></h3>
 <p><i>Upgrading: From 1.7.0, the location of the database files can no longer be overridden 
   by paths defined in the properties file. All files belonging to a database should 
   reside in the same directory.</i></p>
