@@ -585,23 +585,7 @@ public class jdbcResultSet implements ResultSet {
      * @exception SQLException if a database access error occurs
      */
     public String getString(int columnIndex) throws SQLException {
-
-        checkAvailable();
-
-        Object o;
-
-        try {
-            o = nCurrent.data[--columnIndex];
-        } catch (ArrayIndexOutOfBoundsException e) {
-            throw jdbcDriver.sqlException(Trace.COLUMN_NOT_FOUND,
-                                          String.valueOf(++columnIndex));
-        }
-
-        // use checknull because getColumnInType is not used
-        checkNull(o);
-
-        return o == null ? null
-                         : o.toString();
+        return (String) getColumnInType(columnIndex, Types.CHAR);
     }
 
     /**
@@ -1746,19 +1730,6 @@ public class jdbcResultSet implements ResultSet {
 
 // fredt@users 20020328 -  patch 482109 by fredt - OBJECT handling
 // fredt@users 20030708 -  patch 1.7.2 - OBJECT handling - superseded
-/*
-        try {
-            int t = rResult.colType[columnIndex];
-
-            if (t == org.hsqldb.Types.OTHER) {
-                return Column.deserialize((byte[]) o);
-            } else {
-                return o;
-            }
-        } catch (HsqlException e) {
-            throw jdbcDriver.sqlException(e);
-        }
-*/
         if (o instanceof JavaObject) {
             try {
                 return ((JavaObject) o).getObject();
@@ -5572,7 +5543,7 @@ public class jdbcResultSet implements ResultSet {
      *       specified column
      * @param columnIndex of the column value for which to perform the
      *                 conversion
-     * @param type the target Java object type for the conversion
+     * @param type the org.hsqldb.Types code for type
      * @throws SQLException when there is no data, the column index is
      *    invalid, or the conversion cannot be performed
      */
@@ -5599,6 +5570,10 @@ public class jdbcResultSet implements ResultSet {
             return o;
         }
 
+        if (o instanceof Binary) {
+            return o.toString();
+        }
+
         // try to convert
         try {
             return Column.convertObject(o, type);
@@ -5623,7 +5598,7 @@ public class jdbcResultSet implements ResultSet {
      * @exception SQLException when the supplied Result is of type
      * org.hsqldb.Result.ERROR
      */
-    jdbcResultSet(Statement s, Result r,
+    jdbcResultSet(jdbcStatement s, Result r,
                   HsqlProperties props) throws SQLException {
 
         sqlStatement   = s;
@@ -5639,6 +5614,10 @@ public class jdbcResultSet implements ResultSet {
             throw new SQLException(r.getMainString(), null,
                                    r.getStatementID());
         } else {
+            if (s != null) {
+                this.rsType = s.rsType;
+            }
+
             iUpdateCount = -1;
             rResult      = r;
             iColumnCount = r.getColumnCount();

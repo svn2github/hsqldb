@@ -52,7 +52,7 @@ class TextTable extends org.hsqldb.Table {
      * @param  name
      * @exception  HsqlException  Description of the Exception
      */
-    TextTable(Database db, HsqlName name, int type,
+    TextTable(Database db, HsqlNameManager.HsqlName name, int type,
               int sessionid) throws HsqlException {
         super(db, name, type, sessionid);
     }
@@ -72,20 +72,22 @@ class TextTable extends org.hsqldb.Table {
         }
 
         // Close old cache:
-        dDatabase.logger.closeTextCache(tableName);
+        database.logger.closeTextCache(tableName);
 
-        cCache = null;
+        cache = null;
 
         setIndexRootsNull();
 
         // Open new cache:
         if (dataSourceNew.length() > 0) {
             try {
-                cCache = dDatabase.logger.openTextCache(tableName,
-                        dataSourceNew, isReadOnlyNew, isReversedNew);
+                cache = database.logger.openTextCache(tableName,
+                                                      dataSourceNew,
+                                                      isReadOnlyNew,
+                                                      isReversedNew);
 
                 // force creation of Row objects with nextPos pointers
-                ((TextCache) cCache).setSourceIndexing(true);
+                ((TextCache) cache).setSourceIndexing(true);
 
                 // read and insert all the rows from the source file
                 PointerCachedDataRow row = (PointerCachedDataRow) getRow(0,
@@ -97,11 +99,11 @@ class TextTable extends org.hsqldb.Table {
                     row = (PointerCachedDataRow) getRow(row.nextPos, null);
                 }
 
-                ((TextCache) cCache).setSourceIndexing(false);
+                ((TextCache) cache).setSourceIndexing(false);
             } catch (HsqlException e) {
-                int linenumber = cCache == null ? 0
-                                                : ((TextCache) cCache)
-                                                    .getLineNumber();
+                int linenumber = cache == null ? 0
+                                               : ((TextCache) cache)
+                                                   .getLineNumber();
 
                 if (!dataSource.equals(dataSourceNew)
                         || isReversedNew != isReversed
@@ -111,12 +113,12 @@ class TextTable extends org.hsqldb.Table {
                     // fredt - todo - recursion works - but code is not clear
                     openCache(dataSource, isReversed, isReadOnly);
                 } else {
-                    if (cCache != null) {
-                        cCache.closeFile();
+                    if (cache != null) {
+                        cache.closeFile();
                     }
 
                     //fredt added
-                    cCache     = null;
+                    cache      = null;
                     dataSource = "";
                     isReversed = false;
                 }
@@ -229,12 +231,12 @@ class TextTable extends org.hsqldb.Table {
     }
 
     protected Table duplicate() throws HsqlException {
-        return new TextTable(dDatabase, tableName, tableType, ownerSessionId);
+        return new TextTable(database, tableName, tableType, ownerSessionId);
     }
 
     CachedRow getRow(int pos, Node primarynode) throws HsqlException {
 
-        CachedDataRow r = (CachedDataRow) cCache.getRow(pos, this);
+        CachedDataRow r = (CachedDataRow) cache.getRow(pos, this);
 
         if (r == null) {
             return null;

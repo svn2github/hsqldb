@@ -71,6 +71,7 @@ import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.StopWatch;
+import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users 20020130 - patch 476694 by velichko - transaction savepoints
 // additions to different parts to support savepoint transactions
@@ -149,6 +150,7 @@ class Database {
     private boolean                bReferentialIntegrity;
     SessionManager                 sessionManager;
     private HsqlDatabaseProperties databaseProperties;
+    HsqlNameManager                nameManager;
     DatabaseObjectNames            triggerNameList;
     DatabaseObjectNames            indexNameList;
     final static int               DATABASE_ONLINE       = 1;
@@ -242,6 +244,7 @@ class Database {
         tTable                = new HsqlArrayList();
         aAccess               = new UserManager();
         hAlias                = Library.getAliasMap();
+        nameManager           = new HsqlNameManager();
         triggerNameList       = new DatabaseObjectNames();
         indexNameList         = new DatabaseObjectNames();
         bReferentialIntegrity = true;

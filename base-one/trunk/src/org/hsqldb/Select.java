@@ -70,6 +70,7 @@ package org.hsqldb;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.Iterator;
+import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users 20010701 - patch 1.6.1 by hybris
 // basic implementation of LIMIT n m

@@ -32,6 +32,7 @@
 package org.hsqldb;
 
 import java.io.IOException;
+import org.hsqldb.lib.StringConverter;
 
 /**
  * Representation of instnace of BINARY field data
@@ -44,6 +45,7 @@ import java.io.IOException;
 public class Binary {
 
     private byte[] data;
+    int            hash;
 
     /**
      * This constructor is used only from classes implementing the JDBC
@@ -70,5 +72,24 @@ public class Binary {
 
     int getBytesLength() {
         return data.length;
+    }
+
+    public int hashCode() {
+
+        int h = 0;
+
+        if (hash == 0) {
+            for (int i = 0; i < data.length; i++) {
+                h = 31 * h + data[i];
+            }
+
+            hash = h;
+        }
+
+        return hash;
+    }
+
+    public String toString() {
+        return StringConverter.byteToHex(data);
     }
 }

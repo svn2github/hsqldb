@@ -416,7 +416,22 @@ class DatabaseManager {
 
         props.setProperty("url", url);
 
-        if (urlImage.startsWith(S_DOT, pos)) {
+        int semicolpos = url.indexOf(';', pos);
+
+        if (semicolpos < 0) {
+            semicolpos = url.length();
+        } else {
+            String arguments = urlImage.substring(semicolpos + 1,
+                                                  urlImage.length());
+            HsqlProperties extraProps =
+                HsqlProperties.delimitedArgPairsToProps(arguments, "=", ";",
+                    null);
+
+            //todo - check if properties have valid names / values
+            props.addProperties(extraProps);
+        }
+
+        if (semicolpos == pos + 1 && urlImage.startsWith(S_DOT, pos)) {
             type = S_DOT;
         } else if (urlImage.startsWith(S_MEM, pos)) {
             type = S_MEM;
@@ -455,21 +470,6 @@ class DatabaseManager {
         }
 
         props.setProperty("connection_type", type);
-
-        int semicolpos = url.indexOf(';', pos);
-
-        if (semicolpos < 0) {
-            semicolpos = url.length();
-        } else {
-            String arguments = urlImage.substring(semicolpos + 1,
-                                                  urlImage.length());
-            HsqlProperties extraProps =
-                HsqlProperties.delimitedArgPairsToProps(arguments, "=", ";",
-                    null);
-
-            //todo - check if properties have valid names / values
-            props.addProperties(extraProps);
-        }
 
         if (isNetwork) {
             int slashpos = url.indexOf('/', pos);
@@ -532,17 +532,17 @@ class DatabaseManager {
     static final String S_HTTP       = "http://";
     static final String S_HTTPS      = "https://";
     static final String S_URL_PREFIX = "jdbc:hsqldb:";
-    /*
+
     public static void main(String[] argv) {
 
+        parseURL("JDBC:hsqldb:../data/mydb.db", true);
+        parseURL("JDBC:hsqldb:../data/mydb.db;ifexists=true", true);
         parseURL("JDBC:hsqldb:HSQL://localhost:9000/mydb", true);
         parseURL(
             "JDBC:hsqldb:Http://localhost:8080/servlet/org.hsqldb.Servlet/mydb;ifexists=true",
             true);
-        parseURL(
-            "JDBC:hsqldb:Http://localhost/servlet/org.hsqldb.Servlet/", true);
-        parseURL(
-            "JDBC:hsqldb:hsql://myhost", true);
+        parseURL("JDBC:hsqldb:Http://localhost/servlet/org.hsqldb.Servlet/",
+                 true);
+        parseURL("JDBC:hsqldb:hsql://myhost", true);
     }
-    */
 }

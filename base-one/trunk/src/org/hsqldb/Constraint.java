@@ -68,6 +68,7 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.ArrayUtil;
+import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users 20020225 - patch 1.7.0 by boucherb@users - named constraints
 // fredt@users 20020320 - doc 1.7.0 - update
@@ -93,16 +94,16 @@ Referential Constraint 2 SET NULL
 Referential Constraint 3 NO ACTION
 Referential Constraint 4 SET DEFAULT
 */
-    static final int CASCADE     = 0,
-                             SET_NULL    = 2,
-                             NO_ACTION   = 3,
-                             SET_DEFAULT = 4;
-    static final int         FOREIGN_KEY = 0,
-                             MAIN        = 1,
-                             UNIQUE      = 2;
-    private ConstraintCore   core;
-    private HsqlName         constName;
-    private int              iType;
+    static final int       CASCADE     = 0,
+                           SET_NULL    = 2,
+                           NO_ACTION   = 3,
+                           SET_DEFAULT = 4;
+    static final int       FOREIGN_KEY = 0,
+                           MAIN        = 1,
+                           UNIQUE      = 2;
+    private ConstraintCore core;
+    private HsqlName       constName;
+    private int            iType;
 
     /**
      *  Constructor declaration

@@ -31,6 +31,8 @@
 
 package org.hsqldb;
 
+import org.hsqldb.HsqlNameManager.HsqlName;
+
 // fredt@users 20020420 - patch523880 by leptipre@users - VIEW support - modified
 // fredt - todo - disallow dropping tables used in views
 
@@ -56,7 +58,7 @@ class View extends Table {
 
         for (int i = 0; i < result.getColumnCount(); i++) {
             String name = result.sTable[i];
-            Table  t    = dDatabase.findUserTable(name);
+            Table  t    = database.findUserTable(name);
 
             if (t != null && t.isTemp()) {
                 throw Trace.error(Trace.TABLE_NOT_FOUND);

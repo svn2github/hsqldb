@@ -77,6 +77,7 @@ import org.hsqldb.lib.ObjectComparator;
 import org.hsqldb.lib.StringUtil;
 import org.hsqldb.store.ValuePool;
 import java.util.Stack;
+import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt - quoted identifiers
 // support for sql standard quoted identifiers for column and table names
@@ -102,9 +103,9 @@ import java.util.Stack;
  */
 class Parser {
 
-    private Database  dDatabase;
-    private Tokenizer tTokenizer;
-    private Session   cSession;
+    private Database  database;
+    private Tokenizer tokenizer;
+    private Session   session;
     private String    sTable;
     private String    sToken;
     private Object    oData;
@@ -120,19 +121,19 @@ class Parser {
      */
     Parser(Database db, Tokenizer t, Session session) {
 
-        dDatabase  = db;
-        tTokenizer = t;
-        cSession   = session;
+        database     = db;
+        tokenizer    = t;
+        this.session = session;
     }
 
     void checkTableWriteAccess(Table table,
                                int userRight) throws HsqlException {
 
         // session level user rights
-        cSession.checkReadWrite();
+        session.checkReadWrite();
 
         // object level user rights
-        cSession.check(table.getName(), userRight);
+        session.check(table.getName(), userRight);
 
         // object type
         if (table.isView()) {
@@ -150,12 +151,12 @@ class Parser {
         String        token;
 
         while (true) {
-            columns.add(tTokenizer.getString());
-            tTokenizer.checkUnexpectedParam("parametric column identifier");
+            columns.add(tokenizer.getString());
+            tokenizer.checkUnexpectedParam("parametric column identifier");
 
             i++;
 
-            token = tTokenizer.getString();
+            token = tokenizer.getString();
 
             if (token.equals(Token.T_COMMA)) {
                 continue;
@@ -179,14 +180,14 @@ class Parser {
         String  token;
         int[]   columntypes = t.getColumnTypes();
 
-        tTokenizer.getThis(Token.T_OPENBRACKET);
+        tokenizer.getThis(Token.T_OPENBRACKET);
 
         for (; i < len; i++) {
             int colindex;
 
             colindex      = columnmap[i];
             row[colindex] = getValue(columntypes[colindex]);
-            token         = tTokenizer.getString();
+            token         = tokenizer.getString();
 
             if (token.equals(Token.T_COMMA)) {
                 continue;
@@ -268,11 +269,11 @@ class Parser {
 // in other RDBMS's
 // "SELECT LIMIT n 0" discards the first n rows and returns the remaining rows
 // fredt@users 20020225 - patch 456679 by hiep256 - TOP keyword
-        String token = tTokenizer.getString();
+        String token = tokenizer.getString();
 
         if (token.equals(Token.T_LIMIT)) {
-            String limStart = tTokenizer.getString();
-            String limEnd   = tTokenizer.getString();
+            String limStart = tokenizer.getString();
+            String limEnd   = tokenizer.getString();
 
             try {
                 select.limitStart = Integer.parseInt(limStart);
@@ -283,9 +284,9 @@ class Parser {
                 throw Trace.error(Trace.WRONG_DATA_TYPE, "LIMIT n m");
             }
 
-            token = tTokenizer.getString();
+            token = tokenizer.getString();
         } else if (token.equals(Token.T_TOP)) {
-            String limEnd = tTokenizer.getString();
+            String limEnd = tokenizer.getString();
 
             try {
                 select.limitStart = 0;
@@ -296,13 +297,13 @@ class Parser {
                 throw Trace.error(Trace.WRONG_DATA_TYPE, "TOP m");
             }
 
-            token = tTokenizer.getString();
+            token = tokenizer.getString();
         }
 
         if (token.equals(Token.T_DISTINCT)) {
             select.isDistinctSelect = true;
         } else {
-            tTokenizer.back();
+            tokenizer.back();
         }
 
         // parse column list
@@ -313,17 +314,17 @@ class Parser {
 
             checkParamAmbiguity(!e.isParam(), "as a SELECT list item");
 
-            token = tTokenizer.getString();
+            token = tokenizer.getString();
 
             if (token.equals(Token.T_AS)) {
-                e.setAlias(tTokenizer.getName(),
-                           tTokenizer.wasQuotedIdentifier());
+                e.setAlias(tokenizer.getName(),
+                           tokenizer.wasQuotedIdentifier());
 
-                token = tTokenizer.getString();
-            } else if (tTokenizer.wasName()) {
-                e.setAlias(token, tTokenizer.wasQuotedIdentifier());
+                token = tokenizer.getString();
+            } else if (tokenizer.wasName()) {
+                e.setAlias(token, tokenizer.wasQuotedIdentifier());
 
-                token = tTokenizer.getString();
+                token = tokenizer.getString();
             }
 
             vcolumn.add(e);
@@ -332,31 +333,28 @@ class Parser {
         if (token.equals(Token.T_INTO)) {
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-            token = tTokenizer.getString();
+            token = tokenizer.getString();
 
             if (token.equals(Token.T_CACHED)) {
                 select.intoType = Table.CACHED_TABLE;
-                select.sIntoTable =
-                    new HsqlName(tTokenizer.getString(),
-                                 tTokenizer.wasQuotedIdentifier());
+                select.sIntoTable = database.nameManager.newHsqlName(
+                    tokenizer.getString(), tokenizer.wasQuotedIdentifier());
             } else if (token.equals(Token.T_TEMP)) {
                 select.intoType = Table.TEMP_TABLE;
-                select.sIntoTable =
-                    new HsqlName(tTokenizer.getString(),
-                                 tTokenizer.wasQuotedIdentifier());
+                select.sIntoTable = database.nameManager.newHsqlName(
+                    tokenizer.getString(), tokenizer.wasQuotedIdentifier());
             } else if (token.equals(Token.T_TEXT)) {
                 select.intoType = Table.TEXT_TABLE;
-                select.sIntoTable =
-                    new HsqlName(tTokenizer.getString(),
-                                 tTokenizer.wasQuotedIdentifier());
+                select.sIntoTable = database.nameManager.newHsqlName(
+                    tokenizer.getString(), tokenizer.wasQuotedIdentifier());
             } else {
-                select.sIntoTable =
-                    new HsqlName(token, tTokenizer.wasQuotedIdentifier());
+                select.sIntoTable = database.nameManager.newHsqlName(token,
+                        tokenizer.wasQuotedIdentifier());
             }
 
-            tTokenizer.checkUnexpectedParam("parametric table identifier");
+            tokenizer.checkUnexpectedParam("parametric table identifier");
 
-            token = tTokenizer.getString();
+            token = tokenizer.getString();
         }
 
         if (!token.equals(Token.T_FROM)) {
@@ -371,19 +369,19 @@ class Parser {
         vfilter.add(parseTableFilter(false));
 
         while (true) {
-            token = tTokenizer.getString();
+            token = tokenizer.getString();
 
             if (token.equals(Token.T_LEFT)) {
-                token = tTokenizer.getString();
+                token = tokenizer.getString();
 
                 if (token.equals(Token.T_OUTER)) {
-                    token = tTokenizer.getString();
+                    token = tokenizer.getString();
                 }
 
                 Trace.check(token.equals(Token.T_JOIN),
                             Trace.UNEXPECTED_TOKEN, token);
                 vfilter.add(parseTableFilter(true));
-                tTokenizer.getThis(Token.T_ON);
+                tokenizer.getThis(Token.T_ON);
 
                 condition = addCondition(condition, parseExpression());
 
@@ -392,9 +390,9 @@ class Parser {
                     throw Trace.error(Trace.OUTER_JOIN_CONDITION);
                 }
             } else if (token.equals(Token.T_INNER)) {
-                tTokenizer.getThis(Token.T_JOIN);
+                tokenizer.getThis(Token.T_JOIN);
                 vfilter.add(parseTableFilter(false));
-                tTokenizer.getThis(Token.T_ON);
+                tokenizer.getThis(Token.T_ON);
 
                 condition = addCondition(condition, parseExpression());
             } else if (token.equals(Token.T_COMMA)) {
@@ -404,7 +402,7 @@ class Parser {
             }
         }
 
-        tTokenizer.back();
+        tokenizer.back();
 
         int         len      = vfilter.size();
         TableFilter filter[] = new TableFilter[len];
@@ -468,11 +466,11 @@ class Parser {
         select.iResultLen = len;
 
         // where
-        token = tTokenizer.getString();
+        token = tokenizer.getString();
 
         if (token.equals(Token.T_WHERE)) {
             condition = addCondition(condition, parseExpression());
-            token     = tTokenizer.getString();
+            token     = tokenizer.getString();
         }
 
         select.eCondition = condition;
@@ -480,7 +478,7 @@ class Parser {
 // fredt@users 20020215 - patch 1.7.0 by fredt
 // to support GROUP BY with more than one column
         if (token.equals(Token.T_GROUP)) {
-            tTokenizer.getThis(Token.T_BY);
+            tokenizer.getThis(Token.T_BY);
 
             len = 0;
 
@@ -494,7 +492,7 @@ class Parser {
                 //e = doOrderGroup(e, vcolumn);
                 vcolumn.add(e);
 
-                token = tTokenizer.getString();
+                token = tokenizer.getString();
 
                 len++;
             } while (token.equals(Token.T_COMMA));
@@ -506,13 +504,13 @@ class Parser {
         if (token.equals(Token.T_HAVING)) {
             select.iHavingIndex    = vcolumn.size();
             select.havingCondition = parseExpression();
-            token                  = tTokenizer.getString();
+            token                  = tokenizer.getString();
 
             vcolumn.add(select.havingCondition);
         }
 
         if (token.equals(Token.T_ORDER)) {
-            tTokenizer.getThis(Token.T_BY);
+            tokenizer.getThis(Token.T_BY);
 
             len = 0;
 
@@ -522,14 +520,14 @@ class Parser {
                 checkParamAmbiguity(!e.isParam(), "as an ORDER BY list item");
 
                 e     = checkOrderByColumns(e, vcolumn);
-                token = tTokenizer.getString();
+                token = tokenizer.getString();
 
                 if (token.equals(Token.T_DESC)) {
                     e.setDescending();
 
-                    token = tTokenizer.getString();
+                    token = tokenizer.getString();
                 } else if (token.equals(Token.T_ASC)) {
-                    token = tTokenizer.getString();
+                    token = tokenizer.getString();
                 }
 
                 vcolumn.add(e);
@@ -546,32 +544,32 @@ class Parser {
         vcolumn.toArray(select.eColumn);
 
         if (token.equals(Token.T_UNION)) {
-            token = tTokenizer.getString();
+            token = tokenizer.getString();
 
             if (token.equals(Token.T_ALL)) {
                 select.iUnionType = Select.UNIONALL;
             } else {
                 select.iUnionType = Select.UNION;
 
-                tTokenizer.back();
+                tokenizer.back();
             }
 
-            tTokenizer.getThis(Token.T_SELECT);
+            tokenizer.getThis(Token.T_SELECT);
 
             select.sUnion = parseSelect();
         } else if (token.equals(Token.T_INTERSECT)) {
-            tTokenizer.getThis(Token.T_SELECT);
+            tokenizer.getThis(Token.T_SELECT);
 
             select.iUnionType = Select.INTERSECT;
             select.sUnion     = parseSelect();
         } else if (token.equals(Token.T_EXCEPT)
                    || token.equals(Token.T_MINUS)) {
-            tTokenizer.getThis(Token.T_SELECT);
+            tokenizer.getThis(Token.T_SELECT);
 
             select.iUnionType = Select.EXCEPT;
             select.sUnion     = parseSelect();
         } else {
-            tTokenizer.back();
+            tokenizer.back();
         }
 
         return select;
@@ -632,26 +630,28 @@ class Parser {
     private TableFilter parseTableFilter(boolean outerjoin)
     throws HsqlException {
 
-        String      token = tTokenizer.getString();
+        String      token = tokenizer.getString();
         Table       t     = null;
         Select      s     = null;
         SubQuery    sq;
         TableFilter tf;
 
         if (token.equals(Token.T_OPENBRACKET)) {
-            tTokenizer.getThis(Token.T_SELECT);
+            tokenizer.getThis(Token.T_SELECT);
 
             sq = parseSubquery();
 
-            tTokenizer.getThis(Token.T_CLOSEBRACKET);
+            tokenizer.getThis(Token.T_CLOSEBRACKET);
 
             s = sq.select;
 
             s.resolveAll();
 
             // it's not a problem that this table has not a unique name
-            t = new Table(dDatabase, new HsqlName("SYSTEM_SUBQUERY", false),
-                          Table.SYSTEM_TABLE, 0);
+            t = new Table(
+                database,
+                database.nameManager.newHsqlName("SYSTEM_SUBQUERY", false),
+                Table.SYSTEM_TABLE, 0);
             sq.table = t;
 
             t.addColumns(s);
@@ -663,35 +663,34 @@ class Parser {
             // subsequent access.
             t.createPrimaryKey();
         } else {
-            tTokenizer.checkUnexpectedParam("parametric table identifier");
+            tokenizer.checkUnexpectedParam("parametric table identifier");
 
-            t = dDatabase.getTable(token, cSession);
+            t = database.getTable(token, session);
 
-            cSession.check(t.getName(), UserManager.SELECT);
+            session.check(t.getName(), UserManager.SELECT);
 
 // fredt@users 20020420 - patch523880 by leptipre@users - VIEW support
             if (t.isView()) {
                 String Viewname    = token;
-                int    CurrentPos  = tTokenizer.getPosition();
-                int    sLength     = tTokenizer.getLength();
+                int    CurrentPos  = tokenizer.getPosition();
+                int    sLength     = tokenizer.getLength();
                 int    TokenLength = token.length();
                 int    NewCurPos   = CurrentPos;
 
-                token = tTokenizer.getString();
+                token = tokenizer.getString();
 
                 if (token.equals(Token.T_AS)) {
-                    Viewname  = tTokenizer.getName();
-                    NewCurPos = tTokenizer.getPosition();
-                } else if (tTokenizer.wasName()) {
+                    Viewname  = tokenizer.getName();
+                    NewCurPos = tokenizer.getPosition();
+                } else if (tokenizer.wasName()) {
                     Viewname  = token;
-                    NewCurPos = tTokenizer.getPosition();
+                    NewCurPos = tokenizer.getPosition();
                 } else {
-                    tTokenizer.back();
+                    tokenizer.back();
                 }
 
-                String sLeft = tTokenizer.getPart(0, CurrentPos
-                                                  - TokenLength);
-                String sRight = tTokenizer.getPart(NewCurPos, sLength);
+                String sLeft = tokenizer.getPart(0, CurrentPos - TokenLength);
+                String sRight = tokenizer.getPart(NewCurPos, sLength);
                 View             v         = (View) t;
                 String           sView     = v.getStatement();
                 HsqlStringBuffer sFromView = new HsqlStringBuffer(128);
@@ -702,22 +701,23 @@ class Parser {
                 sFromView.append(") ");
                 sFromView.append(Viewname);
                 sFromView.append(sRight);
-                tTokenizer.setString(sFromView.toString(),
-                                     CurrentPos - TokenLength + 1);
-                tTokenizer.getThis(Token.T_SELECT);
+                tokenizer.setString(sFromView.toString(),
+                                    CurrentPos - TokenLength + 1);
+                tokenizer.getThis(Token.T_SELECT);
 
                 sq = parseSubquery();
 
-                tTokenizer.getThis(Token.T_CLOSEBRACKET);
+                tokenizer.getThis(Token.T_CLOSEBRACKET);
 
                 s = sq.select;
 
                 s.resolveAll();
 
                 // it's not a problem that this table has not a unique name
-                t = new Table(dDatabase,
-                              new HsqlName("SYSTEM_SUBQUERY", false),
-                              Table.SYSTEM_TABLE, 0);
+                t = new Table(
+                    database,
+                    database.nameManager.newHsqlName(
+                        "SYSTEM_SUBQUERY", false), Table.SYSTEM_TABLE, 0);
                 sq.table = t;
 
                 t.addColumns(s);
@@ -736,14 +736,14 @@ class Parser {
 // TODO:  maybe check for unexpected param as alias?
 // Not very important, but there still is a distinction
 // i.e. "?" is a valid alias, but ? is, in essence, a reserved word
-        token = tTokenizer.getString();
+        token = tokenizer.getString();
 
         if (token.equals(Token.T_AS)) {
-            sAlias = tTokenizer.getName();
-        } else if (tTokenizer.wasName()) {
+            sAlias = tokenizer.getName();
+        } else if (tokenizer.wasName()) {
             sAlias = token;
         } else {
-            tTokenizer.back();
+            tokenizer.back();
         }
 
         // table filter, underlying table, six of one, ... of the other
@@ -805,7 +805,7 @@ class Parser {
 
         Expression r = readOr();
 
-        tTokenizer.back();
+        tokenizer.back();
 
         return r;
     }
@@ -817,10 +817,10 @@ class Parser {
 
         read();
 
-        if (tTokenizer.getString().equals(Token.T_DISTINCT)) {
+        if (tokenizer.getString().equals(Token.T_DISTINCT)) {
             distinct = true;
         } else {
-            tTokenizer.back();
+            tokenizer.back();
         }
 
         readThis(Expression.OPEN);
@@ -991,7 +991,7 @@ class Parser {
 
                             read();
                         } else {
-                            tTokenizer.back();
+                            tokenizer.back();
 
                             HsqlArrayList v = new HsqlArrayList();
 
@@ -999,7 +999,7 @@ class Parser {
 
                                 // part of bigger IN list TODO:
                                 // allow parametric list items
-                                tTokenizer.checkUnexpectedParam(
+                                tokenizer.checkUnexpectedParam(
                                     "parametric IN list item");
 
                                 Object value = getValue(Types.VARCHAR);
@@ -1156,8 +1156,8 @@ class Parser {
                 read();
 
                 if (iToken == Expression.OPEN) {
-                    Function f = new Function(dDatabase.getAlias(name),
-                                              cSession);
+                    Function f = new Function(database.getAlias(name),
+                                              session);
                     int len = f.getArgCount();
                     int i   = 0;
 
@@ -1229,10 +1229,10 @@ class Parser {
 
                 parameters.add(r);
 
-                // NOTE: 
+                // NOTE:
                 // Currently unused, but may be required for future work.
                 // Eventually, we may also wish to build a list of the
-                // parameters that apply only to a particular subquery               
+                // parameters that apply only to a particular subquery
                 if (subQueryStack != null &&!subQueryStack.isEmpty()) {
                     SubQuery sq = (SubQuery) subQueryStack.peek();
 
@@ -1370,17 +1370,17 @@ class Parser {
 // reordering for speed
     private void read() throws HsqlException {
 
-        sToken = tTokenizer.getString();
+        sToken = tokenizer.getString();
 
-        if (tTokenizer.wasValue()) {
+        if (tokenizer.wasValue()) {
             iToken = Expression.VALUE;
-            oData  = tTokenizer.getAsValue();
-            iType  = tTokenizer.getType();
-        } else if (tTokenizer.wasName()) {
+            oData  = tokenizer.getAsValue();
+            iType  = tokenizer.getType();
+        } else if (tokenizer.wasName()) {
             iToken = Expression.COLUMN;
             sTable = null;
-        } else if (tTokenizer.wasLongName()) {
-            sTable = tTokenizer.getLongNameFirst();
+        } else if (tokenizer.wasLongName()) {
+            sTable = tokenizer.getLongNameFirst();
 
 //            sToken = tTokenizer.getLongNameLast();
             if (sToken.equals(Token.T_ASTERISK)) {
@@ -1439,14 +1439,14 @@ class Parser {
                     break;
 
                 case Expression.IS :
-                    sToken = tTokenizer.getString();
+                    sToken = tokenizer.getString();
 
                     if (sToken.equals(Token.T_NOT)) {
                         iToken = Expression.NOT_EQUAL;
                     } else {
                         iToken = Expression.EQUAL;
 
-                        tTokenizer.back();
+                        tokenizer.back();
                     }
                     break;
 
@@ -1556,7 +1556,7 @@ class Parser {
 
         String token;
 
-        token = tTokenizer.getString();
+        token = tokenizer.getString();
 
         int id = Token.get(token);
 
@@ -1616,23 +1616,23 @@ class Parser {
         Expression condition;
 
         clearParameters();
-        tTokenizer.getThis(Token.T_FROM);
+        tokenizer.getThis(Token.T_FROM);
 
-        token = tTokenizer.getString();
+        token = tokenizer.getString();
 
-        tTokenizer.checkUnexpectedParam("parametric table specificiation");
+        tokenizer.checkUnexpectedParam("parametric table specificiation");
 
-        table = dDatabase.getTable(token, cSession);
+        table = database.getTable(token, session);
 
         checkTableWriteAccess(table, UserManager.DELETE);
 
-        token     = tTokenizer.getString();
+        token     = tokenizer.getString();
         condition = null;
 
         if (token.equals(Token.T_WHERE)) {
             condition = parseExpression();
         } else {
-            tTokenizer.back();
+            tokenizer.back();
         }
 
         if (cs == null) {
@@ -1657,7 +1657,7 @@ class Parser {
         enclosed = false;
         i        = 0;
 
-        tTokenizer.getThis(Token.T_OPENBRACKET);
+        tokenizer.getThis(Token.T_OPENBRACKET);
 
         for (; i < len; i++) {
             cve = parseExpression();
@@ -1669,7 +1669,7 @@ class Parser {
             cve.resolve(null);
 
             acve[i] = cve;
-            token   = tTokenizer.getString();
+            token   = tokenizer.getString();
 
             if (token.equals(Token.T_COMMA)) {
                 continue;
@@ -1706,17 +1706,17 @@ class Parser {
         Select        select;
 
         clearParameters();
-        tTokenizer.getThis(Token.T_INTO);
+        tokenizer.getThis(Token.T_INTO);
 
-        token = tTokenizer.getString();
+        token = tokenizer.getString();
 
-        tTokenizer.checkUnexpectedParam("parametric table specificiation");
+        tokenizer.checkUnexpectedParam("parametric table specificiation");
 
-        t = dDatabase.getTable(token, cSession);
+        t = database.getTable(token, session);
 
         checkTableWriteAccess(t, UserManager.INSERT);
 
-        token  = tTokenizer.getString();
+        token  = tokenizer.getString();
         cNames = null;
         ccl    = null;
         cm     = t.getColumnMap();
@@ -1739,7 +1739,7 @@ class Parser {
                 ccl[ci] = true;
             }
 
-            token = tTokenizer.getString();
+            token = tokenizer.getString();
         }
 
         if (token.equals(Token.T_VALUES)) {
@@ -1817,14 +1817,14 @@ class Parser {
 
         clearParameters();
 
-        token = tTokenizer.getString();
+        token = tokenizer.getString();
 
-        tTokenizer.checkUnexpectedParam("parametric table identifier");
+        tokenizer.checkUnexpectedParam("parametric table identifier");
 
-        table = dDatabase.getTable(token, cSession);
+        table = database.getTable(token, session);
 
         checkTableWriteAccess(table, UserManager.UPDATE);
-        tTokenizer.getThis(Token.T_SET);
+        tokenizer.getThis(Token.T_SET);
 
         ciList  = new HsqlArrayList();
         cveList = new HsqlArrayList();
@@ -1834,10 +1834,10 @@ class Parser {
         do {
             len++;
 
-            int ci = table.getColumnNr(tTokenizer.getString());
+            int ci = table.getColumnNr(tokenizer.getString());
 
             ciList.add(ValuePool.getInt(ci));
-            tTokenizer.getThis(Token.T_EQUALS);
+            tokenizer.getThis(Token.T_EQUALS);
 
             cve = parseExpression();
 
@@ -1845,7 +1845,7 @@ class Parser {
             // cve.resolve(filter);
             cveList.add(cve);
 
-            token = tTokenizer.getString();
+            token = tokenizer.getString();
         } while (token.equals(Token.T_COMMA));
 
         condition = null;
@@ -1857,7 +1857,7 @@ class Parser {
             //condition.resolve(filter);
             //filter.setCondition(condition);
         } else {
-            tTokenizer.back();
+            tokenizer.back();
         }
 
         cm   = new int[len];

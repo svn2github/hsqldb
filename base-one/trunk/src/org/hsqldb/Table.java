@@ -75,6 +75,7 @@ import org.hsqldb.lib.HsqlLinkedList;
 import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.StringUtil;
 import org.hsqldb.store.ValuePool;
+import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users 20020130 - patch 491987 by jimbag@users - made optional
 // fredt@users 20020405 - patch 1.7.0 by fredt - quoted identifiers
@@ -146,8 +147,8 @@ class Table {
 // boucherb@users - access changes in support of metadata 1.7.2
     protected int      iColumnCount;          // inclusive the hidden primary key
     protected int      iVisibleColumns;       // exclusive of hidden primary key
-    protected Database dDatabase;
-    protected Cache    cCache;
+    protected Database database;
+    protected Cache    cache;
     protected HsqlName tableName;             // SQL name
     protected int      tableType;
     protected int      ownerSessionId;        // fredt - set for temp tables only
@@ -169,7 +170,7 @@ class Table {
     Table(Database db, HsqlName name, int type,
             int sessionid) throws HsqlException {
 
-        dDatabase      = db;
+        database       = db;
         sqlEnforceSize = db.sqlEnforceSize;
         iIdentityId    = db.firstIdentity;
 
@@ -185,9 +186,9 @@ class Table {
                 break;
 
             case CACHED_TABLE :
-                cCache = db.logger.getCache();
+                cache = db.logger.getCache();
 
-                if (cCache != null) {
+                if (cache != null) {
                     isCached = true;
                 } else {
                     type = MEMORY_TABLE;
@@ -299,7 +300,7 @@ class Table {
 
         // Changing the Read-Only mode for the table is only allowed if the
         // the database can realize it.
-        if (!value && dDatabase.filesReadOnly && checkTableFileBased()) {
+        if (!value && database.filesReadOnly && checkTableFileBased()) {
             throw Trace.error(Trace.DATA_IS_READONLY);
         }
 
@@ -432,8 +433,9 @@ class Table {
      */
     void addColumn(String name, int type) throws HsqlException {
 
-        Column column = new Column(new HsqlName(name, false), true, type, 0,
-                                   0, false, false, null);
+        Column column =
+            new Column(database.nameManager.newHsqlName(name, false), true,
+                       type, 0, 0, false, false, null);
 
         addColumn(column);
     }
@@ -484,9 +486,10 @@ class Table {
 
         for (int i = 0; i < colCount; i++) {
             Column column = new Column(
-                new HsqlName(result.sLabel[i], result.isLabelQuoted[i]),
-                true, result.colType[i], result.colSize[i],
-                result.colScale[i], false, false, null);
+                database.nameManager.newHsqlName(
+                    result.sLabel[i], result.isLabelQuoted[i]), true,
+                        result.colType[i], result.colSize[i],
+                        result.colScale[i], false, false, null);
 
             addColumn(column);
         }
@@ -504,10 +507,11 @@ class Table {
 
         for (int i = 0; i < colCount; i++) {
             Expression e = select.eColumn[i];
-            Column column =
-                new Column(new HsqlName(e.getAlias(), e.isAliasQuoted()),
-                           true, e.getDataType(), e.getColumnSize(),
-                           e.getColumnScale(), false, false, null);
+            Column column = new Column(
+                database.nameManager.newHsqlName(
+                    e.getAlias(), e.isAliasQuoted()), true, e.getDataType(),
+                        e.getColumnSize(), e.getColumnScale(), false, false,
+                        null);
 
             addColumn(column);
         }
@@ -554,8 +558,7 @@ class Table {
 
     protected Table duplicate() throws HsqlException {
 
-        Table t = (new Table(dDatabase, tableName, tableType,
-                             ownerSessionId));
+        Table t = (new Table(database, tableName, tableType, ownerSessionId));
 
         return t;
     }
@@ -937,7 +940,7 @@ class Table {
             getIndex(i).setRoot(null);
         }
 
-        iIdentityId = dDatabase.firstIdentity;
+        iIdentityId = database.firstIdentity;
     }
 
     /**
@@ -959,7 +962,7 @@ class Table {
             Row r = null;
 
             if (p != -1) {
-                r = cCache.getRow(p, this);
+                r = cache.getRow(p, this);
             }
 
             Node f = null;
@@ -1060,9 +1063,9 @@ class Table {
         if (columns == null) {
             columns = new int[]{ iColumnCount };
 
-            Column column = new Column(HsqlName.newAutoName(DEFAULT_PK),
-                                       false, Types.INTEGER, 0, 0, true,
-                                       true, null);
+            Column column =
+                new Column(database.nameManager.newAutoName(DEFAULT_PK),
+                           false, Types.INTEGER, 0, 0, true, true, null);
 
             addColumn(column);
 
@@ -1081,8 +1084,8 @@ class Table {
 
 // tony_lai@users 20020820 - patch 595099
         HsqlName name = pkName != null ? pkName
-                                       : new HsqlName("SYS_PK",
-                                           tableName.name,
+                                       : database.nameManager.newHsqlName(
+                                           "SYS_PK", tableName.name,
                                            tableName.isNameQuoted);
 
         createIndexStructure(columns, name, true);
@@ -1527,7 +1530,7 @@ class Table {
 
         fireAll(TriggerDef.INSERT_BEFORE_ROW, row);
 
-        if (dDatabase.isReferentialIntegrity()) {
+        if (database.isReferentialIntegrity()) {
             for (int i = 0, size = vConstraint.size(); i < size; i++) {
                 ((Constraint) vConstraint.get(i)).checkInsert(row);
             }
@@ -1594,8 +1597,8 @@ class Table {
         }
 
         if (log &&!isTemp &&!isText &&!isReadOnly
-                && dDatabase.logger.hasLog()) {
-            dDatabase.logger.writeToLog(c, getInsertStatement(row));
+                && database.logger.hasLog()) {
+            database.logger.writeToLog(c, getInsertStatement(row));
         }
     }
 
@@ -1612,8 +1615,8 @@ class Table {
         indexRow(r);
 
         if (log &&!isTemp &&!isText &&!isReadOnly
-                && dDatabase.logger.hasLog()) {
-            dDatabase.logger.writeToLog(c, getInsertStatement(row));
+                && database.logger.hasLog()) {
+            database.logger.writeToLog(c, getInsertStatement(row));
         }
     }
 
@@ -1799,7 +1802,7 @@ class Table {
      */
     void fireAll(int trigVecIndx, Object row[]) {
 
-        if (!dDatabase.isReferentialIntegrity()) {    // reloading db
+        if (!database.isReferentialIntegrity()) {    // reloading db
             return;
         }
 
@@ -2261,7 +2264,7 @@ class Table {
     private void delete(Object row[], Session session,
                         boolean doit) throws HsqlException {
 
-        if (dDatabase.isReferentialIntegrity()) {
+        if (database.isReferentialIntegrity()) {
             checkCascadeDelete(row, session, doit);
         }
 
@@ -2277,7 +2280,7 @@ class Table {
     private void delete(Row r, Session session,
                         boolean doit) throws HsqlException {
 
-        if (dDatabase.isReferentialIntegrity()) {
+        if (database.isReferentialIntegrity()) {
             checkCascadeDelete(r.getData(), session, doit);
         }
 
@@ -2341,8 +2344,8 @@ class Table {
         }
 
         if (log &&!isTemp &&!isText &&!isReadOnly
-                && dDatabase.logger.hasLog()) {
-            dDatabase.logger.writeToLog(c, getDeleteStatement(row));
+                && database.logger.hasLog()) {
+            database.logger.writeToLog(c, getDeleteStatement(row));
         }
     }
 
@@ -2371,8 +2374,8 @@ class Table {
         }
 
         if (log &&!isTemp &&!isText &&!isReadOnly
-                && dDatabase.logger.hasLog()) {
-            dDatabase.logger.writeToLog(c, getDeleteStatement(row));
+                && database.logger.hasLog()) {
+            database.logger.writeToLog(c, getDeleteStatement(row));
         }
     }
 
@@ -2397,8 +2400,8 @@ class Table {
         r.delete();
 
         if (log &&!isTemp &&!isText &&!isReadOnly
-                && dDatabase.logger.hasLog()) {
-            dDatabase.logger.writeToLog(c, getDeleteStatement(row));
+                && database.logger.hasLog()) {
+            database.logger.writeToLog(c, getDeleteStatement(row));
         }
     }
 
@@ -2451,7 +2454,7 @@ class Table {
     private void update(Row oldr, Object[] newrow, int[] col, Session c,
                         boolean doit) throws HsqlException {
 
-        if (dDatabase.isReferentialIntegrity()) {
+        if (database.isReferentialIntegrity()) {
             checkCascadeUpdate(oldr.getData(), newrow, c, col, null, doit);
         }
 
@@ -2513,7 +2516,7 @@ class Table {
 
         Trace.check(!isReadOnly, Trace.DATA_IS_READONLY);
 
-        if (dDatabase.isReferentialIntegrity()) {
+        if (database.isReferentialIntegrity()) {
             for (int i = 0, size = vConstraint.size(); i < size; i++) {
                 Constraint v = (Constraint) vConstraint.get(i);
 
@@ -2709,7 +2712,7 @@ class Table {
     CachedRow getRow(int pos, Node primarynode) throws HsqlException {
 
         if (isCached) {
-            return cCache.getRow(pos, this);
+            return cache.getRow(pos, this);
         }
 
         return null;
@@ -2719,15 +2722,15 @@ class Table {
 
         int size = 0;
 
-        if (cCache != null) {
-            cCache.add(r);
+        if (cache != null) {
+            cache.add(r);
         }
     }
 
     void removeRow(CachedRow r) throws HsqlException {
 
-        if (cCache != null) {
-            cCache.free(r);
+        if (cache != null) {
+            cache.free(r);
         }
     }
 
@@ -2768,8 +2771,8 @@ class Table {
 
     void drop() throws HsqlException {
 
-        if (cCache != null &&!isEmpty()) {
-            cCache.remove(this);
+        if (cache != null &&!isEmpty()) {
+            cache.remove(this);
         }
     }
 }

@@ -39,6 +39,7 @@ import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.store.ValuePool;
 import org.hsqldb.lib.WrapperIterator;
+import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users - 1.7.2 - structural modifications to allow inheritance
 // boucherb@users - 1.7.2 - 20020225
@@ -165,8 +166,8 @@ class DatabaseInformationMain extends DatabaseInformation {
         sysTableHsqlNames  = new HsqlName[sysTableNames.length];
 
         for (int i = 0; i < sysTableNames.length; i++) {
-            sysTableHsqlNames[i] = HsqlName.newAutoName(null,
-                    sysTableNames[i]);
+            sysTableHsqlNames[i] =
+                HsqlNameManager.newHsqlSystemTableName(sysTableNames[i]);
         }
 
         // build the set of non-cached tables

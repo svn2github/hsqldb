@@ -124,7 +124,7 @@ final class DITableInfo {
      */
     Integer getBRIScope() {
 
-        return (table.dDatabase.databaseReadOnly || (table.isTemp() && table.tableType != Table.SYSTEM_TABLE))
+        return (table.database.databaseReadOnly || (table.isTemp() && table.tableType != Table.SYSTEM_TABLE))
                ? ValuePool.getInt(DatabaseMetaData.bestRowSession)
                : ValuePool.getInt(DatabaseMetaData.bestRowTemporary);
     }
@@ -136,9 +136,9 @@ final class DITableInfo {
      */
     Integer getCacheHash() {
 
-        return (table.cCache == null) ? null
-                                      : ValuePool.getInt(
-                                          table.cCache.hashCode());
+        return (table.cache == null) ? null
+                                     : ValuePool.getInt(
+                                         table.cache.hashCode());
     }
 
     /**
@@ -148,9 +148,9 @@ final class DITableInfo {
      */
     String getCachePath() {
 
-        return (table.cCache == null) ? null
-                                      : new File(table.cCache.sName)
-                                          .getAbsolutePath();
+        return (table.cache == null) ? null
+                                     : new File(
+                                         table.cache.sName).getAbsolutePath();
     }
 
     /**

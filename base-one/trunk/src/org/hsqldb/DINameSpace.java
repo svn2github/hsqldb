@@ -39,6 +39,7 @@ import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HashSet;
+import org.hsqldb.HsqlNameManager.HsqlName;
 
 /**
  * Provides catalog and schema name related definitions and functionality,
@@ -286,7 +287,7 @@ final class DINameSpace {
 
         if (name == null) {
             try {
-                name = new HsqlName(s, false);
+                name = database.nameManager.newHsqlName(s, false);
 
                 map.put(s, name);
             } catch (Exception e) {}

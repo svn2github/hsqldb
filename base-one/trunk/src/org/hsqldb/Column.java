@@ -80,6 +80,7 @@ import org.hsqldb.lib.HsqlByteArrayOutputStream;
 import org.hsqldb.lib.HsqlByteArrayInputStream;
 import org.hsqldb.store.ValuePool;
 import java.lang.Math;
+import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users 20020320 - doc 1.7.0 - update
 // fredt@users 20020401 - patch 442993 by fredt - arithmetic expressions

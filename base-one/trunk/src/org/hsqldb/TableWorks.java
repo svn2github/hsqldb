@@ -69,6 +69,7 @@ package org.hsqldb;
 
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashMap;
+import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users 20020520 - patch 1.7.0 - ALTER TABLE support
 // tony_lai@users 20020820 - patch 595172 - drop constraint fix
@@ -174,8 +175,8 @@ class TableWorks {
                               "both tables must be permanent or temporary");
         }
 
-        int interval = table.dDatabase.getTableIndex(table)
-                       - table.dDatabase.getTableIndex(expTable);
+        int interval = table.database.getTableIndex(table)
+                       - table.database.getTableIndex(expTable);
         Index exportindex = (interval == 0)
                             ? expTable.getConstraintIndexForColumns(expcol,
                                 true)
@@ -190,12 +191,13 @@ class TableWorks {
         Index fkindex = table.getConstraintIndexForColumns(fkcol, false);
 
         if (fkindex == null) {
-            HsqlName iname = HsqlName.newAutoName("IDX");
+            HsqlName iname = table.database.nameManager.newAutoName("IDX");
 
             fkindex = createIndex(fkcol, iname, false);
         }
 
-        HsqlName pkname = HsqlName.newAutoName("REF", fkname.name);
+        HsqlName pkname = table.database.nameManager.newAutoName("REF",
+            fkname.name);
         Constraint c = new Constraint(pkname, fkname, expTable, table,
                                       expcol, fkcol, exportindex, fkindex,
                                       deleteAction, updateAction);
@@ -240,15 +242,15 @@ class TableWorks {
             tn.moveData(table, table.getColumnCount(), 0);
             tn.updateConstraints(table, table.getColumnCount(), 0);
 
-            int index = table.dDatabase.getTableIndex(table);
+            int index = table.database.getTableIndex(table);
 
-            table.dDatabase.getTables().set(index, tn);
+            table.database.getTables().set(index, tn);
 
             table = tn;
         }
 
-        table.dDatabase.indexNameList.addName(newindex.getName().name,
-                                              table.getName());
+        table.database.indexNameList.addName(newindex.getName().name,
+                                             table.getName());
 
         return newindex;
     }
@@ -283,7 +285,7 @@ class TableWorks {
         }
 
         // create an autonamed index
-        HsqlName   indexname     = HsqlName.newAutoName("IDX");
+        HsqlName   indexname = table.database.nameManager.newAutoName("IDX");
         Index      index         = createIndex(col, indexname, true);
         Constraint newconstraint = new Constraint(name, table, index);
 
@@ -314,14 +316,14 @@ class TableWorks {
             tn.moveData(table, table.getColumnCount(), 0);
             tn.updateConstraints(table, table.getColumnCount(), 0);
 
-            int i = table.dDatabase.getTableIndex(table);
+            int i = table.database.getTableIndex(table);
 
-            table.dDatabase.getTables().set(i, tn);
+            table.database.getTables().set(i, tn);
 
             table = tn;
         }
 
-        table.dDatabase.indexNameList.removeName(indexname);
+        table.database.indexNameList.removeName(indexname);
     }
 
     /**
@@ -343,9 +345,9 @@ class TableWorks {
         tn.moveData(table, colindex, adjust);
         tn.updateConstraints(table, colindex, adjust);
 
-        int i = table.dDatabase.getTableIndex(table);
+        int i = table.database.getTableIndex(table);
 
-        table.dDatabase.getTables().set(i, tn);
+        table.database.getTables().set(i, tn);
 
         table = tn;
     }

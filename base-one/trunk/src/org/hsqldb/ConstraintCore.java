@@ -67,6 +67,8 @@
 
 package org.hsqldb;
 
+import org.hsqldb.HsqlNameManager.HsqlName;
+
 /**
  * This class consists of the data structure for a Constraint. This
  * structure is shared between two Constraint Objects that together form a

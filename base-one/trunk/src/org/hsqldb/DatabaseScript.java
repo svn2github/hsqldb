@@ -74,6 +74,7 @@ import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HsqlStringBuffer;
+import org.hsqldb.HsqlNameManager.HsqlName;
 
 /**
  * Script generation.

@@ -76,6 +76,7 @@ import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.lib.StringUtil;
+import org.hsqldb.HsqlNameManager.HsqlName;
 
 /**
  * Provides SQL Interpreter services relative to a Session and
@@ -654,9 +655,12 @@ class DatabaseCommandInterpreter {
 
             // dynamically instantiate it
             o = (Trigger) cl.newInstance();
-            td = new TriggerDef(triggerName, isQuoted, sWhen, sOper,
-                                isForEach, t, o, "\"" + className + "\"",
-                                isNowait, queueSize);
+
+            HsqlName name = database.nameManager.newHsqlName(triggerName,
+                isQuoted);
+
+            td = new TriggerDef(name, sWhen, sOper, isForEach, t, o,
+                                "\"" + className + "\"", isNowait, queueSize);
 
             if (td.isValid()) {
                 t.addTrigger(td);
@@ -815,9 +819,10 @@ class DatabaseCommandInterpreter {
             tokenizer.back();
         }
 
-        return new Column(new HsqlName(columnName, isQuoted), isNullable,
-                          type, length, scale, isIdentity, isPrimaryKey,
-                          defaultValue);
+        return new Column(
+            database.nameManager.newHsqlName(columnName, isQuoted),
+            isNullable, type, length, scale, isIdentity, isPrimaryKey,
+            defaultValue);
     }
 
     /**
@@ -926,8 +931,8 @@ class DatabaseCommandInterpreter {
             i++;
 
             if (token.equals(Token.T_CONSTRAINT)) {
-                cname = new HsqlName(tokenizer.getName(),
-                                     tokenizer.wasQuotedIdentifier());
+                cname = database.nameManager.newHsqlName(tokenizer.getName(),
+                        tokenizer.wasQuotedIdentifier());
                 token = tokenizer.getString();
             }
 
@@ -955,7 +960,7 @@ class DatabaseCommandInterpreter {
                     int col[] = processColumnList(t);
 
                     if (cname == null) {
-                        cname = HsqlName.newAutoName("CT");
+                        cname = database.nameManager.newAutoName("CT");
                     }
 
                     tempConst = new TempConstraint(cname, col, null, null,
@@ -1265,7 +1270,7 @@ class DatabaseCommandInterpreter {
         tokenizer.back();
 
         if (cname == null) {
-            cname = HsqlName.newAutoName("FK");
+            cname = database.nameManager.newAutoName("FK");
         }
 
         return new TempConstraint(cname, localcol, expTable, expcol,
@@ -1293,8 +1298,9 @@ class DatabaseCommandInterpreter {
 
         checkViewExists(token, false);
 
-        viewHsqlName = new HsqlName(token, tokenizer.wasQuotedIdentifier());
-        view         = new View(database, viewHsqlName);
+        viewHsqlName = database.nameManager.newHsqlName(token,
+                tokenizer.wasQuotedIdentifier());
+        view = new View(database, viewHsqlName);
 
         tokenizer.getThis(Token.T_AS);
         tokenizer.setPartMarker();
@@ -2022,8 +2028,8 @@ class DatabaseCommandInterpreter {
                                       boolean isQuoted) throws HsqlException {
 
         return HsqlName.isReservedIndexName(name)
-               ? HsqlName.newAutoName("USER", name)
-               : new HsqlName(name, isQuoted);
+               ? database.nameManager.newAutoName("USER", name)
+               : database.nameManager.newHsqlName(name, isQuoted);
     }
 
     private Table newTable(int type, String name,
@@ -2032,7 +2038,7 @@ class DatabaseCommandInterpreter {
         HsqlName tableHsqlName;
         int      sid;
 
-        tableHsqlName = new HsqlName(name, quoted);
+        tableHsqlName = database.nameManager.newHsqlName(name, quoted);
         sid           = session.getId();
 
         switch (type) {
@@ -2320,7 +2326,8 @@ class DatabaseCommandInterpreter {
         HsqlName cname;
 
         token = tokenizer.getName();
-        cname = new HsqlName(token, tokenizer.wasQuotedIdentifier());
+        cname = database.nameManager.newHsqlName(token,
+                tokenizer.wasQuotedIdentifier());
         token = tokenizer.getString();
 
         switch (Token.get(token)) {
@@ -2742,7 +2749,7 @@ class DatabaseCommandInterpreter {
         col = processColumnList(t);
 
         if (n == null) {
-            n = HsqlName.newAutoName("CT");
+            n = database.nameManager.newAutoName("CT");
         }
 
         session.commit();
@@ -2756,7 +2763,7 @@ class DatabaseCommandInterpreter {
         TempConstraint tc;
 
         if (n == null) {
-            n = HsqlName.newAutoName("FK");
+            n = database.nameManager.newAutoName("FK");
         }
 
         tc = processCreateFK(t, n);

@@ -408,7 +408,7 @@ extends org.hsqldb.DatabaseInformationMain {
             table = (Table) tables.next();
 
             if (table.isCached() && isAccessibleTable(table)) {
-                cache = table.cCache;
+                cache = table.cache;
 
                 if (cache != null) {
                     cacheSet.add(cache);
@@ -1282,8 +1282,8 @@ extends org.hsqldb.DatabaseInformationMain {
             row[itable_schem] = ns.getSchemaName(table);
             row[itable_name]  = table.getName().name;
 
-            if (table.cCache != null && table.cCache instanceof TextCache) {
-                tc              = (TextCache) table.cCache;
+            if (table.cache != null && table.cache instanceof TextCache) {
+                tc              = (TextCache) table.cache;
                 row[idsd]       = table.getDataSource();
                 row[ifile_path] = new File(tc.sName).getAbsolutePath();
                 row[ifile_enc]  = tc.stringEncoding;
