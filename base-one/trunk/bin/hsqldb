@@ -32,11 +32,11 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.6 2004/02/20 00:03:34 unsaved Exp $
+# $Id: hsqldb,v 1.7 2004/02/20 00:05:19 unsaved Exp $
 
 
 # This stuff will be ignored by systems that don't use chkconfig.
-# chkconfig: - 87 13
+# chkconfig: 345 87 13
 # description: Hsqldb, A High Performance Java Database
 # pidfile: /var/run/hsqldb.pid
 # config: /etc/sysconfig/hsqldb
@@ -45,6 +45,9 @@
 # First, you have to place this where init scripts belong for your kind
 # of UNIX.  
 # See the 'THISDIR' setting below for exactly where.
+# Then you need to set up your SqlTool authentication file (see the
+# SqlTool docs about that), and the config file for this init script.
+# There is a commented sample config file with the hsqldb distro.
 #
 # If using a BSD variant, you must set "enable_hsqldb" to "YES" in
 # /etc/rc.conf.
@@ -71,6 +74,10 @@
 set +u
 
 SYNTAX_MSG='SYNTAX:  /path/to/this/script/hsqldb start|stop|restart|status'
+
+# Time to allow for java process to die, if it's not able to start up,
+# And for it to shutdown after it receives the last SQL "shutdown" command.
+CROAKTIME=1
 
 CFGFILE=
 LOGFILE=
@@ -227,7 +234,7 @@ running with pid $HSQLDB_PID."
         echo "There is already a hsqldb server running with pid $HSQLDB_PID."
             exit 1
         }
-        [ -n "$HSQLDB_OWNER" ] && {
+        if [ -n "$HSQLDB_OWNER" ]; then
             touch "$PIDFILE" || {
                 echo "Failed to create pid file" 1>&2
                 exit 1
@@ -238,22 +245,31 @@ running with pid $HSQLDB_PID."
             }
             # Some OSes choke if there are newlines in this string.
             nohup su -c "cd '$SERVER_HOME' && echo "'$$'" > '$PIDFILE' && exec $JAVA_HOME/bin/java -classpath '$HSQLDB_HOME/lib/hsqldb.jar' org.hsqldb.Server" "$HSQLDB_OWNER" >> "$LOGFILE" 2>&1 &
-            exit 0
-        }
-        cd "$SERVER_HOME" || {
-            echo "Failed to cd to '$SERVER_HOME'" 1>&2
-            exit 1
-        }
-        export JAVA_HOME
-        export HSQLDB_HOME
-        export PIDFILE
-        nohup sh -c '
-            echo $$ > "$PIDFILE" || {
-                echo "Failed to write pid to pid file" 1>&2
+        else
+            cd "$SERVER_HOME" || {
+                echo "Failed to cd to '$SERVER_HOME'" 1>&2
                 exit 1
             }
-            exec $JAVA_HOME/bin/java -classpath "$HSQLDB_HOME/lib/hsqldb.jar"  org.hsqldb.Server
-        ' >> "$LOGFILE" 2>&1 &
+            export JAVA_HOME
+            export HSQLDB_HOME
+            export PIDFILE
+            nohup sh -c '
+                echo $$ > "$PIDFILE" || {
+                    echo "Failed to write pid to pid file" 1>&2
+                    exit 1
+                }
+                exec $JAVA_HOME/bin/java -classpath "$HSQLDB_HOME/lib/hsqldb.jar"  org.hsqldb.Server
+            ' >> "$LOGFILE" 2>&1 &
+        fi
+        sleep $CROAKTIME  # Wait long enough for it to croak, if it's gonna.
+        # There are many reasons why we could fail to read the pid file,
+        # but regardless of why, the pid file does not contain a valid pid.
+        kill -0 "`cat $PIDFILE`" > /dev/null 2>&1 || {
+            rm -f "$PIDFILE"
+    echo "Failed to start an org.hsqldb.Server.  See log file at '$LOGFILE'."
+            exit 1
+        }
+        echo "org.hsqldb.Server started with pid `cat $PIDFILE`"
         exit 0
     ;;
     stop)
@@ -276,17 +292,21 @@ running with pid $HSQLDB_PID."
         export PATH   # Required only for some funny init environments.
         ERRORS=
         for urlid in $SHUTDOWN_URLIDS; do
-            THISONEFAILED=
             echo "Shutting down database instance '$urlid'..."
             java org.hsqldb.util.SqlTool $AUTH_FILE_SWITCH --noinput \
-                    --sql 'shutdown;' $urlid || THISONEFAILED=1
-            if [ -n "$THISONEFAILED" ]; then
-                ERRORS=1
-            else
-                echo 'done.'
-            fi
+                    --sql 'shutdown;' $urlid
         done
-        [ -n "$ERRORS" ] || rm -f "$PIDFILE"
+        sleep $CROAKTIME  # Give it time to die.
+        kill -0 "$HSQLDB_PID" > /dev/null 2>&1 && {
+            echo "WARNING:  hsqldb is still running!" 1>&2
+            exit 1
+        }
+        rm -f "$PIDFILE" || {
+            echo "Failed to remove pid file '$PIDFILE'" 1>&2
+            exit 1
+        }
+        echo 'Success!'
+        exit 0
     ;;
     restart)
         "$THISDIR"/hsqldb stop || exit $?
