@@ -217,7 +217,7 @@ import org.hsqldb.lib.StringConverter;
  * <a href="http://java.sun.com/j2se/1.4/docs/api/java/sql/ResultSet.html">
  * <code>ResultSet</code></a> interface.  For this reason, when the
  * product is compiled under JDK 1.1.x, these values are defined
- * in <code>org.hsqldb.jdbcResultSet</code>. <p>
+ * in {@link org.hsqldb.jdbcResultSet jdbcResultSet}. <p>
  *
  * In a JRE 1.1.x environment, calling JDBC 2 methods that take or return the
  * JDBC2-only <code>ResultSet</code> values can be achieved by referring
@@ -1233,10 +1233,9 @@ public class jdbcConnection implements Connection {
      * {@link jdbcDatabaseMetaData#getColumns getColumns},
      * {@link jdbcDatabaseMetaData#getColumns getPrimaryKeys},
      * and {@link jdbcDatabaseMetaData#getIndexInfo getIndexInfo}.
-     * Also, the
-     * majority of methods returning <code>ResultSet</code> throw a
-     * <code>SQLException</code> when accessed by a non-admin user.
-     * In order to provide non-admin users access to these methods,
+     * Also, the majority of methods returning <code>ResultSet</code>
+     * throw a <code>SQLException</code> when accessed by a non-admin
+     * user. In order to provide non-admin users access to these methods,
      * an admin user must explicitly grant SELECT to such users or to
      * the PUBLIC user on each HSQLDB system table corresponding to a
      * DatabaseMetaData method that returns <code>ResultSet</code>.
@@ -1248,7 +1247,8 @@ public class jdbcConnection implements Connection {
      * GRANT SELECT ON SYSTEM_TABLES TO PUBLIC
      * </code> <p>
      *
-     * Care should be taken when making such grants, however, since
+     * Under 1.7.1 and previous verersions of the database engine,
+     * care should be taken when making such grants, however, since
      * HSQLDB makes no attempt to filter such information, based on
      * the grants of the accessing user. That is, in the example
      * above, getTables will return information about all tables
@@ -1256,66 +1256,24 @@ public class jdbcConnection implements Connection {
      * regardless of whether the calling user has any rights on any
      * of the tables. <p>
      *
+     * <hr>
+     *
      * Starting with HSQLDB 1.7.2, an option is provided to
-     * plug in alternate meta-data implementations, including
-     * a pre-written full and accurate <code>AbstractTableProducer</code>
-     * implementation that makes all DatabaseMetaData information
-     * provided through system tables accessible to all database users,
-     * regardless of admin status.  This works through the
-     * {@link AbstractTableProducer#createSystemTableProducer
-     * AbstractTableProducer.createSystemTableProducer} factory method.
-     * The factory method searches for and dynamically constructs a
-     * system table producer implementation when opening a database,
-     * using the following steps : <p>
+     * plug in alternate meta-data implementations. <p>
      *
-     * <ol>
-     * <li>The database properties object is queried for a value corresponding
-     *     to the key: "hsqldb.system_table_producer" with default value
-     *     "org.hsqldb.DatabaseInformationFull"
-     *
-     * <li>If a class whose fully qualified name matches the
-     *     "hsqldb.system_table_producer" property can be
-     *     found by the <code>ClassLoader</code> object specified by
-     *     the database classLoader member attribute, the found class
-     *     descends from AbstractTableProducer and it has a constructor
-     *     that takes a <code>Database</code> object as the single
-     *     parameter, then an instance of that class is reflectively
-     *     instantiated and set as the value of database <code>dInfo</code>
-     *     <code>AbstractTableProducer</code> member attribute.
-     *
-     * <li>If 2.) fails, then the process is repeated using the value
-     *     "org.hsqldb.DatabaseInformation"  This class provides the
-     *     1.7.1 system table implementation.
-     *
-     * <li>If 3.) fails, the database fails to open.
-     * </ol>
-     *
-     * With the <code>org.hsqldb.DatabaseInformationFull</code> implementation
-     * installed, <code>jdbcDatabaseMetaData</code> methods returning
-     * <code>ResultSet</code> yield results that have been automatically
-     * pre-filtered to omit entries to which connected users have not been
-     * granted access, regardless of the filter parameters specified to those
-     * methods. That is, unlike the original implementation, supplied filter
-     * parameters only further restrict results that already comply with the
-     * security set up by administration, and will never erronously indicate
-     * greater access than has been granted. Also in the full implementation,
-     * MetaData is reported to all users about all system tables, unless
-     * SELECT is explicitly revoked.  Finally, the full implementation
-     * provides a number of system tables that are not used directly by
-     * the <code>jdbcDatabaseMetaData</code> class but that provide extended
-     * information about the database that was not available in previous
-     * releases, such as information about the triggers and aliases defined
-     * in the database.<p>
+     * For discussion in greater detail, please follow the link to the
+     * overview for jdbcDatabaseMetaData, below.
      *
      * </span> <!-- end release-specific documentation -->
      *
      * @return a DatabaseMetaData object for this Connection
+     * @throws SQLException if a database access error occurs
      * @see jdbcDatabaseMetaData
-     * @see AbstractTableProducer
      * @see DatabaseInformation
+     * @see DatabaseInformationMain
      * @see DatabaseInformationFull
      */
-    public DatabaseMetaData getMetaData() {
+    public DatabaseMetaData getMetaData() throws SQLException {
 
         if (Trace.TRACE) {
             Trace.trace();

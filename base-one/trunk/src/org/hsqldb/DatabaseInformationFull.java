@@ -49,9 +49,10 @@ import org.hsqldb.lib.ValuePool;
 // boucherb@users - 1.7.2 - 20020304 - bug fixes, refinements, better java docs
 
 /**
- * Extends DatabaseInformationMain to provide additional system table support.
+ * Extends DatabaseInformationMain to provide additional system table 
+ * support. <p>
  *
- * @author Campbell Boucher-Burnet, Camco & Associates Consulting
+ * @author boucherb@users.sourceforge.net
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
@@ -846,13 +847,33 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
 
             props     = database.getProperties();
             nameSpace = "database.properties";
+            
+            // hsqldb.catalogs
+            row         = t.getNewRow();
+            row[iscope] = scope;
+            row[ins]    = nameSpace;
+            row[iname]  = "hsqldb.catalogs";
+            row[ivalue] = props.getProperty("hsqldb.catalogs","false");
+            row[iclass] = "boolean";
+            
+            rsp.add(row);
+            
+            // hsqldb.schemas
+            row         = t.getNewRow();
+            row[iscope] = scope;
+            row[ins]    = nameSpace;
+            row[iname]  = "hsqldb.schemas";
+            row[ivalue] = props.getProperty("hsqldb.schemas","false");
+            row[iclass] = "boolean"; 
+            
+            rsp.add(row);
 
             // sql.month
             row         = t.getNewRow();
             row[iscope] = scope;
             row[ins]    = nameSpace;
             row[iname]  = "sql.month";
-            row[ivalue] = props.getProperty("sql.month");
+            row[ivalue] = props.getProperty("sql.month","false");
             row[iclass] = "boolean";
 
             rsp.add(row);
@@ -862,7 +883,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
             row[iscope] = scope;
             row[ins]    = nameSpace;
             row[iname]  = "sql.enforce_size";
-            row[ivalue] = props.getProperty("sql.enforce_size");
+            row[ivalue] = props.getProperty("sql.enforce_size","false");
             row[iclass] = "boolean";
 
             rsp.add(row);
@@ -872,7 +893,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
             row[iscope] = scope;
             row[ins]    = nameSpace;
             row[iname]  = "sql.compare_in_locale";
-            row[ivalue] = props.getProperty("sql.compare_in_locale");
+            row[ivalue] = props.getProperty("sql.compare_in_locale","false");
             row[iclass] = "boolean";
 
             rsp.add(row);
@@ -882,7 +903,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
             row[iscope] = scope;
             row[ins]    = nameSpace;
             row[iname]  = "sql.strict_fk";
-            row[ivalue] = props.getProperty("sql.strict_fk");
+            row[ivalue] = props.getProperty("sql.strict_fk","false");
             row[iclass] = "boolean";
 
             rsp.add(row);
@@ -892,7 +913,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
             row[iscope] = scope;
             row[ins]    = nameSpace;
             row[iname]  = "sql.strong_fk";
-            row[ivalue] = props.getProperty("sql.strong_fk");
+            row[ivalue] = props.getProperty("sql.strong_fk","false");
             row[iclass] = "boolean";
 
             rsp.add(row);
@@ -912,7 +933,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
             row[iscope] = scope;
             row[ins]    = nameSpace;
             row[iname]  = "hsqldb.gc_interval";
-            row[ivalue] = props.getProperty("hsqldb.gc_interval");
+            row[ivalue] = props.getProperty("hsqldb.gc_interval","0");
             row[iclass] = "int";
 
             rsp.add(row);

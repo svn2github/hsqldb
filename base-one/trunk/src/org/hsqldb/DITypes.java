@@ -36,7 +36,7 @@ package org.hsqldb;
  * inteface type reporting. The actual type constant values are equivalent
  * to those defined in the latest java.sql.Types, where available,
  * or those defined by ansi/iso SQL 200n otherwise. A type sub-identifer
- * has been added to differential special HSQLDB-specific types.
+ * has been added to differentiate HSQLDB-specific type specializations.
  *
  * @author  boucherb@users.sourceforge.net
  * @version 1.7.2
@@ -297,7 +297,7 @@ public interface DITypes {
     int TYPE_SUB_IDENTITY = TYPE_SUB_DEFAULT << 1;
 
     /**
-     * The IDENTITY type sub-identifier. This indicates that an HSQLDB type
+     * The IGNORECASE type sub-identifier. This indicates that an HSQLDB type
      * with this sub-type, if supported,  is the closest thing HSQLDB offerers
      * to the JDBC/SQL200n type, except that case is ignored in comparisons
      */

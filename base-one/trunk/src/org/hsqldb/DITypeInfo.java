@@ -48,20 +48,40 @@ import org.hsqldb.resources.BundleHandler;
  */
 final class DITypeInfo implements DITypes {
 
+    /** BundleHandler id for create params resource bundle. */    
     private int hnd_create_params = -1;
+    /** BundleHandler id for local names resource bundle. */    
     private int hnd_local_names   = -1;
+    /** BundleHandler id for data type remarks resource bundle. */    
     private int hnd_remarks       = -1;
+    /** The SQL type code on which this object is reporting. */    
     private int type              = NULL;
+    /** The HSQLDB subtype code on which this object is reporting. */    
     private int typeSub           = TYPE_SUB_DEFAULT;
 
+    /** Creates a new DITypeInfo object having the default Locale. */    
     public DITypeInfo() {
         setLocale(Locale.getDefault());
     }
 
+    /** 
+     * Retrieves the maximum Integer.MAX_VALUE bounded length, in bytes, for
+     * character types. <p>
+     *
+     * @return the maximum Integer.MAX_VALUE bounded length, in
+     *    bytes, for character types
+     */    
     Integer getCharOctLen() {
         return null;
     }
 
+    /** 
+     * Retrieves the maximum Long.MAX_VALUE bounded length, in bytes, for
+     * character types. <p>
+     *
+     * @return the maximum Long.MAX_VALUE bounded length, in
+     *    bytes, for character types
+     */    
     Long getCharOctLenAct() {
 
         switch (type) {
@@ -79,6 +99,19 @@ final class DITypeInfo implements DITypes {
         }
     }
 
+    /** 
+     * Retrieves the fully-qualified name of the Java class whose instances
+     * are manufactured by HSQLDB to store table column values in 
+     * memory. <p>
+     *
+     * This is also typically the fully-qualified name of the Java class whose
+     * instances are manufactured by HSQLDB in response to
+     * jdbcResultSet.getObject(int). <p>
+     *
+     * @return the fully-qualified name of the Java class whose
+     *    instances are manufactured by HSQLDB to store
+     *    table column values in memory
+     */    
     String getColStClsName() {
 
         switch (type) {
@@ -133,6 +166,16 @@ final class DITypeInfo implements DITypes {
         }
     }
 
+    /** 
+     * Retrieves a character sequence representing a localized CSV list, in
+     * DDL declaraion order, of the create parameters for the type. <p>
+     *
+     * This value is meant for human consumption only. <p>
+     *
+     * @return a character sequence representing a localized CSV
+     *    list, in DDL declaraion order, of the create
+     *    parameters for the type.
+     */    
     String getCreateParams() {
 
         String key;
@@ -163,6 +206,31 @@ final class DITypeInfo implements DITypes {
         return BundleHandler.getString(hnd_create_params, key);
     }
 
+    /** 
+     * Retrieves the fully-qualified name of the HSQLDB-provided java.sql
+     * interface implementation class whose instances would be manufactured
+     * by HSQLDB to retrieve column values of this type, if the
+     * the type does not have a standard Java mapping.  <p>
+     *
+     * This value is simply the expected class name, regardless of whether 
+     * HSQLDB, the specific HSQLDB distribution instance or the hosting JVM 
+     * actually provide or support such implementations. That is, as of a 
+     * specific release, HSQLDB may not yet provide such an implementation
+     * or may not automatically map to it or may not support it as a table 
+     * column type, the version of java.sql may not define the interface to 
+     * implement and the HSQLDB jar may not contain the implementation 
+     * classes, even if they are defined in the corresponding release
+     * and build options and are supported under the hosting JVM's java.sql
+     * version.<p>
+     *
+     * @return the fully-qualified name of the HSQLDB-provided java.sql
+     *    interface implementation class whose instances would
+     *    be manufactured by HSQLDB to retrieve column values of
+     *    this type, given that the the type does not have a
+     *    standard Java mapping and regardless of whether a class
+     *    with the indicated name is actually implemented or
+     *    available on the class path
+     */    
     String getCstMapClsName() {
 
         switch (type) {
@@ -190,14 +258,33 @@ final class DITypeInfo implements DITypes {
         }
     }
 
+    /** 
+     * Retrieves the data type, as an Integer. <p>
+     *
+     * @return the data type, as an Integer.
+     */    
     Integer getDataType() {
         return ValuePool.getInt(type);
     }
 
+    /** 
+     * Retrieves the data subtype, as an Integer. <p>
+     *
+     * @return the data subtype, as an Integer
+     */    
     Integer getDataTypeSub() {
         return ValuePool.getInt(typeSub);
     }
 
+    /** 
+     * Retrieves the implied or single permitted scale for exact numeric 
+     * types, when no scale is declared or no scale declaration is 
+     * permitted. <p>
+     *
+     * @return the implied or single permitted scale for exact numeric
+     *    types, when no scale is declared or no scale declaration
+     *    is permitted
+     */    
     Integer getDefaultScale() {
 
         switch (type) {
@@ -213,10 +300,20 @@ final class DITypeInfo implements DITypes {
         }
     }
 
+    /** 
+     * Retrieves null (not implemented). <p>
+     *
+     * @return null (not implemented)
+     */    
     Integer getIntervalPrecision() {
         return null;
     }
 
+    /** 
+     * Retrieves the character(s) prefixing a literal of this type. <p>
+     *
+     * @return the character(s) prefixing a literal of this type.
+     */    
     String getLiteralPrefix() {
 
         switch (type) {
@@ -254,6 +351,11 @@ final class DITypeInfo implements DITypes {
         }
     }
 
+    /** 
+     * Retrieves the character(s) terminating a literal of this type. <p>
+     *
+     * @return the character(s) terminating a literal of this type
+     */    
     String getLiteralSuffix() {
 
         switch (type) {
@@ -281,6 +383,12 @@ final class DITypeInfo implements DITypes {
         }
     }
 
+    /** 
+     * Retrieves a localized representation of the type's name, for human
+     * consumption only. <p>
+     *
+     * @return a localized representation of the type's name
+     */    
     String getLocalName() {
 
         String key = this.getTypeName();
@@ -292,6 +400,13 @@ final class DITypeInfo implements DITypes {
         return BundleHandler.getString(hnd_local_names, key);
     }
 
+    /** 
+     * Retrieves the maximum Short.MAX_VALUE bounded scale supported 
+     * for the type. <p>
+     *
+     * @return the maximum Short.MAX_VALUE bounded scale supported
+     *    for the type
+     */    
     Integer getMaxScale() {
 
         switch (type) {
@@ -320,6 +435,13 @@ final class DITypeInfo implements DITypes {
         }
     }
 
+    /** 
+     * Retrieves the maximum Integer.MAX_VALUE bounded scale supported for 
+     * the type. <p>
+     *
+     * @return the maximum Integer.MAX_VALUE bounded scale supported
+     *    for the type
+     */    
     Integer getMaxScaleAct() {
 
         switch (type) {
@@ -333,6 +455,13 @@ final class DITypeInfo implements DITypes {
         }
     }
 
+    /** 
+     * Retrieves the minumum Short.MIN_VALUE bounded scale supported for 
+     * the type. <p>
+     *
+     * @return the minumum Short.MIN_VALUE bounded scale
+     *    supported for the type
+     */    
     Integer getMinScale() {
 
         switch (type) {
@@ -361,6 +490,13 @@ final class DITypeInfo implements DITypes {
         }
     }
 
+    /** 
+     * Retrieves the minumum Integer.MIN_VALUE bounded scale supported 
+     * for the type. <p>
+     *
+     * @return the minumum Integer.MIN_VALUE bounded scale supported
+     *    for the type
+     */    
     Integer getMinScaleAct() {
 
         switch (type) {
@@ -374,6 +510,12 @@ final class DITypeInfo implements DITypes {
         }
     }
 
+    /** 
+     * Retrieves the DatabaseMetaData default nullability code for 
+     * the type. <p>
+     *
+     * @return the DatabaseMetaData nullability code for the type.
+     */    
     Integer getNullability() {
 
         return (typeSub == TYPE_SUB_IDENTITY)
@@ -381,6 +523,13 @@ final class DITypeInfo implements DITypes {
                : ValuePool.getInt(DatabaseMetaData.columnNullable);
     }
 
+    /** 
+     * Retrieves the number base which is to be used to interpret the value
+     * reported by getPrecision(). <p>
+     *
+     * @return the number base which is to be used to interpret the
+     *    value reported by getPrecision()
+     */    
     Integer getNumPrecRadix() {
 
         switch (type) {
@@ -401,6 +550,13 @@ final class DITypeInfo implements DITypes {
         }
     }
 
+    /** 
+     * Retrieves the maximum Integer.MAX_VALUE bounded length or precision for
+     * the type. <p>
+     *
+     * @return the maximum Integer.MAX_VALUE bounded length or
+     *    precision for the type
+     */    
     Integer getPrecision() {
 
         switch (type) {
@@ -465,6 +621,13 @@ final class DITypeInfo implements DITypes {
         }
     }
 
+    /** 
+     * Retrieves the maximum Long.MAX_VALUE bounded length or precision for
+     * the type. <p>
+     *
+     * @return the maximum Long.MAX_VALUE bounded length or
+     *    precision for the type
+     */    
     Long getPrecisionAct() {
 
         switch (type) {
@@ -479,6 +642,11 @@ final class DITypeInfo implements DITypes {
         }
     }
 
+    /** 
+     * Retrieves the localized remarks (if any) on the type. <p>
+     *
+     * @return the localized remarks on the type.
+     */    
     String getRemarks() {
 
         String key = this.getTypeName();
@@ -490,6 +658,11 @@ final class DITypeInfo implements DITypes {
         return BundleHandler.getString(hnd_remarks, key);
     }
 
+    /**
+     * Retrieves the DatabaseMetaData searchability code for the type. <p>
+     *
+     * @return the DatabaseMetaData searchability code for the type
+     */    
     Integer getSearchability() {
 
         switch (type) {
@@ -509,6 +682,11 @@ final class DITypeInfo implements DITypes {
         }
     }
 
+    /** 
+     * Retrieves the SQL CLI data type code for the type. <p>
+     *
+     * @return the SQL CLI data type code for the type
+     */    
     Integer getSqlDataType() {
 
         // values from SQL200n SQL CLI spec, or DITypes (which in turn borrows
@@ -612,6 +790,11 @@ final class DITypeInfo implements DITypes {
         }
     }
 
+    /** 
+     * Retrieves the SQL CLI datetime subcode for the type. <p>
+     *
+     * @return the SQL CLI datetime subcode for the type
+     */    
     Integer getSqlDateTimeSub() {
 
         switch (type) {
@@ -630,6 +813,14 @@ final class DITypeInfo implements DITypes {
         }
     }
 
+    /** 
+     * Retrieve the fully qualified name of the recommended standard Java 
+     * primitive, class or java.sql interface mapping for the type. <p>
+     *
+     * @return the fully qualified name of the recommended standard Java
+     *    primitive, class or java.sql interface mapping for
+     *    the type
+     */    
     String getStdMapClsName() {
 
         switch (type) {
@@ -713,10 +904,24 @@ final class DITypeInfo implements DITypes {
         }
     }
 
+    /** 
+     * Retrieves the data type as an int. <p>
+     *
+     * @return the data type as an int
+     */    
     int getTypeCode() {
         return type;
     }
 
+    /** 
+     * Retrieves the canonical data type name HSQLDB associates with 
+     * the type.  <p>
+     *
+     * This typically matches the designated JDBC name, with one or
+     * two exceptions. <p>
+     *
+     * @return the canonical data type name HSQLDB associates with the type
+     */    
     String getTypeName() {
 
         switch (type) {
@@ -822,10 +1027,20 @@ final class DITypeInfo implements DITypes {
         }
     }
 
+    /** 
+     * Retrieves the HSQLDB data subtype as an int. <p>
+     *
+     * @return the HSQLDB data subtype as an int
+     */    
     int getTypeSub() {
         return this.typeSub;
     }
 
+    /** 
+     * Retrieves whether the type is an IDENTITY type. <p>
+     *
+     * @return whether the type is an IDENTITY type.
+     */    
     Boolean isAutoIncrement() {
 
         switch (type) {
@@ -848,6 +1063,12 @@ final class DITypeInfo implements DITypes {
         }
     }
 
+    /** Retrieves whether the type is case-sensitive in collations and 
+     * comparisons. <p>
+     *
+     * @return whether the type is case-sensitive in collations and
+     *    comparisons.
+     */    
     Boolean isCaseSensitive() {
 
         switch (type) {
@@ -877,11 +1098,28 @@ final class DITypeInfo implements DITypes {
         }
     }
 
+    /** 
+     * Retrieves whether, under the current release, class path and hosting 
+     * JVM, HSQLDB supports storing this type in table columns. <p>
+     *
+     * This value also typically represents whether HSQLDB supports retrieving
+     * values of this type in the columns of ResultSets.
+     * @return whether, under the current release, class path
+     *    and hosting JVM, HSQLDB supports storing this
+     *    type in table columns
+     */    
     Boolean isColStClsSupported() {
         return ValuePool.getBoolean(type == NULL ? true
                                                  : getColStClsName() != null);
     }
 
+    /**
+     * Retrieves whether values of this type have a fixed precision and 
+     * scale. <p>
+     *
+     * @return whether values of this type have a fixed
+     *    precision and scale.
+     */    
     Boolean isFixedPrecisionScale() {
 
         switch (type) {
@@ -902,6 +1140,15 @@ final class DITypeInfo implements DITypes {
         }
     }
 
+    /** 
+     * Retrieve whether the fully qualified name reported by getStdMapClsName()
+     * is supported as a jdbcResultSet.getXXX return type under the current
+     * HSQLDB release, class path and hosting JVM. <p>
+     *
+     * @return whether the fully qualified name reported by getStdMapClsName()
+     * is supported as a jdbcResultSet.getXXX return type under the current
+     * HSQLDB release, class path and hosting JVM.
+     */    
     Boolean isStdMapClsSupported() {
 
         // its ok to use Class.forName here instead of nameSpace.classForName,
@@ -980,6 +1227,14 @@ final class DITypeInfo implements DITypes {
         return ValuePool.getBoolean(isSup);
     }
 
+    /** Retrieves whether, under the current release, class path and 
+     * hosting JVM, HSQLDB supports passing or receiving this type as 
+     * the value of a procedure column. <p>
+     *
+     * @return whether, under the current release, class path and
+     *    hosting JVM, HSQLDB supports passing or receiving
+     *    this type as the value of a procedure column.
+     */    
     Boolean isSupportedAsPCol() {
 
         switch (type) {
@@ -996,6 +1251,14 @@ final class DITypeInfo implements DITypes {
         }
     }
 
+    /** Retrieves whether, under the current release, class path and 
+     * hosting JVM, HSQLDB supports this as the type of a table 
+     * column. <p>
+     *
+     * @return whether, under the current release, class path
+     *    and hosting JVM, HSQLDB supports this type
+     *    as the values of a table column
+     */    
     Boolean isSupportedAsTCol() {
 
         String columnTypeName;
@@ -1010,6 +1273,11 @@ final class DITypeInfo implements DITypes {
                                     && columnTypeName.length() > 0);
     }
 
+    /** 
+     * Retrieves whether values of this type are unsigned. <p>
+     *
+     * @return whether values of this type are unsigned
+     */    
     Boolean isUnsignedAttribute() {
 
         switch (type) {
@@ -1030,6 +1298,12 @@ final class DITypeInfo implements DITypes {
         }
     }
 
+    /** Assigns the Locale object used to retrieve this object's 
+     * resource bundle dependent values. <p>
+     *
+     * @param l the Locale object used to retrieve this object's resource 
+     *      bundle dependent values
+     */    
     void setLocale(Locale l) {
 
         Locale oldLocale;
@@ -1051,10 +1325,20 @@ final class DITypeInfo implements DITypes {
         }
     }
 
+    /** Assigns the SQL data type code on which this object is to report. <p>
+     *
+     * @param type the SQL data type code on which this object is to report
+     */    
     void setTypeCode(int type) {
         this.type = type;
     }
 
+    /** Assigns the HSQLDB data subtype code on which this object is 
+     * to report. <p>
+     *
+     * @param typeSub the HSQLDB data subtype code on which this object
+     *      is to report
+     */    
     void setTypeSub(int typeSub) {
         this.typeSub = typeSub;
     }

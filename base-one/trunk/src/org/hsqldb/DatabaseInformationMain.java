@@ -32,6 +32,7 @@
 package org.hsqldb;
 
 import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Enumeration;
 import org.hsqldb.lib.HsqlArrayList;
@@ -48,7 +49,7 @@ import org.hsqldb.lib.CompositeEnumeration;
 // - completed Fred's work on allowing inheritance
 // boucherb@users - 1.7.2 - 20020304 - bug fixes, refinements, better java docs
 
-/**
+/** 
  * Produces tables which form a view of the system data dictionary. <p>
  *
  * Implementations use a group of arrays of equal size to store various
@@ -94,7 +95,13 @@ import org.hsqldb.lib.CompositeEnumeration;
  *
  * When a call to getSystemTable(String, Session) is made, if the isDirty flag
  * is true, then the contents of all cached tables are cleared and the
- * sysTableUsers slot for all tables is set to null. <p>
+ * sysTableUsers slot for all tables is set to null. This also has the
+ * effect of clearing the isDirty and isDirtyNextIdentity flags<p>
+ *
+ * if the isDirtyNextIdentity flag is true at this point, then the contents
+ * of all next identity value dependent cached tables are cleared and the
+ * sysTableUsers slot for these tables are set to null.  Currently,
+ * the only member of this set is the SYSTEM_TABLES system table.
  *
  * If a table has non-cached contents, its contents are cleared and
  * rebuilt. <p>
@@ -104,7 +111,6 @@ import org.hsqldb.lib.CompositeEnumeration;
  * in that slot, the table contents are cleared and rebuilt. <p>
  *
  * (fredt@users) <p>
- *
  * @author boucherb@users.sourceforge.net
  * @version 1.7.2
  * @since HSQLDB 1.7.2
@@ -170,41 +176,29 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         nonCachedTablesSet.add("SYSTEM_CACHEINFO");
         nonCachedTablesSet.add("SYSTEM_CONNECTIONINFO");
         nonCachedTablesSet.add("SYSTEM_SESSIONS");
-
-        // for NEXT_IDENTITY column
-        // TODO:
-        // maybe split out dynamic table info into separate system table?
-        nonCachedTablesSet.add("SYSTEM_TABLES");
         nonCachedTablesSet.add("SYSTEM_PROPERTIES");
     }
 
-    /**
+    /** 
      * Constructs a table producer which provides system tables
      * for the specified <code>Database</code> object. <p>
      *
-     * <b>Note:</b> it is important to observe that by specifying an instance
-     * of this class or its descendents to handle system table production,
-     * the default permissions (and possibly aliases) of an existing indicated
-     * database may be upgraded, meaning that metadata reporting may be rendered
-     * insecure if the same database is opened again using a less capable
-     * system table producer instance (A.K.A. a 1.7.1 or lower distribution).
-     * If it is possible that this situation might arise, then care must be
-     * taken to resolve these issues, possibly by manual modification of the
-     * database's REDO log (script file), specifically the removal of all
-     * grants on system tables to PUBLIC (and possibly the removal of certain
-     * class grants). <p>
-     *
-     * For now: BE WARNED. <p>
-     *
-     * In a future release, it may be that system-generated permissions
-     * and aliases are not recorded in the REDO log, removing the associated
-     * <em>dangers</em>. This may well be possible to implement with little or
-     * no side-effects, since these permissions and aliases must always be
-     * present for proper core operation.  That is, they can and probably
-     * should be programatically reintroduced on each startup and protected
-     * from modification for the life of the database instance, separate from
-     * permissions and aliases introduced externally via user SQL. <p>
-     *
+     * <b>Note:</b> before 1.7.2 Alpha N, it was important to observe that
+     * by specifying an instance of this class or one of its descendents to 
+     * handle system table production, the new set of builtin permissions 
+     * and aliases would overwrite those of an existing database, meaning that 
+     * metadata reporting might have been rendered less secure if the same 
+     * database were then opened again using a lower numbered system table 
+     * producer instance (i.e. one in a 1.7.1 or earlier distribution).  
+     * As of 1.7.2 Alpha N, system-generated permissions and aliases are no 
+     * longer recorded in the checkpoint script, obseleting this issue.  
+     * Checkpointing of system-generated grants and aliases was removed 
+     * because their existence is very close to a core requirment for correct 
+     * operation and they are reintroduced to the system at each startup.  
+     * In a future release, it may even be an exception condition to attempt 
+     * to remove or alter system-generated grants and aliases, 
+     * respectvely. <p>
+     * 
      * @param db the <code>Database</code> object for which this object
      *      produces system tables
      * @throws SQLException if a database access error occurs
@@ -287,10 +281,10 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         }
     }
 
-    /**
+    /** 
      * Retrieves an enumeration over all of the tables in this database.
-     * This includes all tables, views, system tables and system views,
-     * inlcuding temporary tables. <p>
+     * This means all user tables, views, system tables, system views,
+     * including temporary and text tables. <p>
      *
      * @return an enumeration over all of the tables in this database
      */
@@ -299,7 +293,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
                                         new HsqlEnumeration(sysTables, true));
     }
 
-    /**
+    /** 
      * Clears the contents of cached system tables and resets user slots
      * to null. <p>
      *
@@ -320,6 +314,26 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         }
 
         isDirty = false;
+        isDirtyNextIdentity = false;
+    }
+    
+    /** 
+     * Clears the contents of the cached system tables that are dependent on the
+     * next identity value of any user table and resets the corresponding user
+     * slots to null. <p>
+     *
+     * @throws SQLException if a database access error occurs
+     */    
+    protected final void cacheClearNextIdentityDependent() throws SQLException {
+
+            Table t = sysTables[SYSTEM_TABLES];
+            
+            if (t != null) {
+                t.clearAllRows();
+            }
+            
+            sysTableSessions[SYSTEM_TABLES] = -1;
+            isDirtyNextIdentity = false;              
     }
 
     /**
@@ -352,14 +366,14 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
 //            for user tables and views, meaning that even under highly
 //            constrained use cases where the notion of DatabaseMetaData can
 //            be discarded (i.e. the engine operates in a distribution where
-//            DatabaseInforationMain/Full and jdbcDatabaseInformation have been
+//            DatabaseInforationMain/Full and jdbcDatabaseMetaData have been
 //            dropped from the JAR), it is still impossible to produce a
 //            database which will be incompatible in terms of system table <=>
 //            user table name clashes, if/when imported into a more
 //            capable operating environment.
 //
 //        2.) DatabaseInformationMain builds on DatabaseInformation, providing
-//            only what is needed for comprehensive operation under
+//            at minimum what is needed for comprehensive operation under
 //            JDK 1.1/JDBC 1 and provides, at minimum, what was provided under
 //            earlier implementations.
 //
@@ -440,11 +454,18 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
 
         ns = new DINameSpace(database);
 
-        // flag the Session-dependent cached tables
-        sysTableSessionDependent[SYSTEM_COLUMNPRIVILEGES] =
+        // flag the Session-dependent cached tables 
+        sysTableSessionDependent[SYSTEM_ALIASES] =
+            sysTableSessionDependent[SYSTEM_CLASSPRIVILEGES] =
+            sysTableSessionDependent[SYSTEM_BESTROWIDENTIFIER]=
+            sysTableSessionDependent[SYSTEM_COLUMNPRIVILEGES] =
+            sysTableSessionDependent[SYSTEM_COLUMNS] =
             sysTableSessionDependent[SYSTEM_CROSSREFERENCE] =
             sysTableSessionDependent[SYSTEM_INDEXINFO] =
             sysTableSessionDependent[SYSTEM_PRIMARYKEYS] =
+            sysTableSessionDependent[SYSTEM_PROCEDURES] =
+            sysTableSessionDependent[SYSTEM_PROCEDURECOLUMNS] =
+            sysTableSessionDependent[SYSTEM_TABLEPRIVILEGES]=
             sysTableSessionDependent[SYSTEM_TABLES] =
             sysTableSessionDependent[SYSTEM_TRIGGERCOLUMNS] =
             sysTableSessionDependent[SYSTEM_TRIGGERS] =
@@ -590,14 +611,22 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
 
         if (isDirty) {
             cacheClear();
-
+            
             if (Trace.TRACE) {
                 Trace.trace("System table cache cleared.");
             }
         }
 
-        int     oldSessionId = sysTableSessions[tableIndex];
-        boolean tableValid   = oldSessionId != -1;
+        if (isDirtyNextIdentity) {
+            cacheClearNextIdentityDependent();                        
+            
+            if (Trace.TRACE) {
+                Trace.trace("cleared next identity dependent cache items.");
+            }
+        }
+
+        int oldSessionId = sysTableSessions[tableIndex];
+        boolean tableValid = oldSessionId != -1;
 
         // user has changed and table is user-dependent
         if (session.getId() != oldSessionId
@@ -633,7 +662,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         return t;
     }
 
-    /**
+    /** 
      * Retrieves a <code>Table</code> object describing the optimal
      * set of visible columns that uniquely identifies a row
      * for each accessible table defined within this database. <p>
@@ -656,7 +685,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      * TABLE_NAME     VARCHAR   simple table name
      * NULLABLE       SMALLINT  is column nullable?
      * IN_KEY         BOOLEAN   column belongs to a primary or alternate key?
-     * </pre> <p>
+     * </pre> <p>     
      *
      * <b>Notes:</b><p>
      *
@@ -849,8 +878,8 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         // Do it.
         while (tables.hasMoreElements()) {
             table = (Table) tables.nextElement();
-
-            if (!isAccessibleTable(table)) {
+            
+            if (table.isView() ||!isAccessibleTable(table)) {
                 continue;
             }
 
@@ -894,7 +923,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         return t;
     }
 
-    /**
+    /** 
      * Retrieves a <code>Table</code> object naming the accessible catalogs
      * defined within this database. <p>
      *
@@ -941,7 +970,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         return t;
     }
 
-    /**
+    /** 
      * Retrieves a <code>Table</code> object describing the visible
      * access rights for all visible columns of all accessible
      * tables defined within this database.<p>
@@ -958,7 +987,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      * GRANTEE      VARCHAR   grantee of access
      * PRIVILEGE    VARCHAR   name of access
      * IS_GRANTABLE VARCHAR   grantable?: "YES" - grant to others, else "NO"
-     * </pre>
+     * </pre>   
      *
      * <b>Note:</b> As of 1.7.2, HSQLDB does not support column level
      * privileges. However, it does support table-level privileges, so they
@@ -1003,7 +1032,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             return t;
         }
 
-        java.sql.ResultSet rs;
+        ResultSet rs;
 
         // - used appends to make class file constant pool smaller
         // - saves ~ 100 bytes jar space
@@ -1027,7 +1056,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         return t;
     }
 
-    /**
+    /** 
      * Retrieves a <code>Table</code> object describing the
      * visible columns of all accessible tables defined
      * within this database.<p>
@@ -1057,6 +1086,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      * SCOPE_SCHEMA      VARCHAR   schema of REF attribute scope table
      * SCOPE_TABLE       VARCHAR   name of REF attribute scope table
      * SOURCE_DATA_TYPE  VARCHAR   source type of REF attribute
+     * TYPE_SUB          INTEGER   HSQLDB data subtype code
      * <pre> <p>
      *
      * @return a <code>Table</code> object describing the
@@ -1093,6 +1123,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             addColumn(t, "SCOPE_SCHEMA", VARCHAR);
             addColumn(t, "SCOPE_TABLE", VARCHAR);
             addColumn(t, "SOURCE_DATA_TYPE", VARCHAR);
+            addColumn(t, "TYPE_SUB", INTEGER, false);            // not null
 
             // order: TABLE_SCHEM, TABLE_NAME, ORDINAL_POSITION
             // added for unique: TABLE_CAT
@@ -1142,6 +1173,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         final int ichar_octet_length = 15;
         final int iordinal_position  = 16;
         final int iis_nullable       = 17;
+        final int itype_sub          = 22;
 
         // Initialization
         tables = allTables();
@@ -1182,6 +1214,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
                 row[ichar_octet_length] = ti.getColCharOctLen(i);
                 row[iordinal_position]  = ValuePool.getInt(i + 1);
                 row[iis_nullable]       = ti.getColIsNullable(i);
+                row[itype_sub]          = ti.getColDataTypeSub(i);
 
                 t.insert(row, session);
             }
@@ -1591,7 +1624,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         while (tables.hasMoreElements()) {
             table = (Table) tables.nextElement();
 
-            if (!isAccessibleTable(table)) {
+            if (table.isView() ||!isAccessibleTable(table)) {
                 continue;
             }
 
@@ -1741,6 +1774,11 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
 
         while (tables.hasMoreElements()) {
             table = (Table) tables.nextElement();
+            
+            if (table.isView()) {
+                continue;
+            }
+            
             index = table.getPrimaryIndex();
 
             if (index == null) {
@@ -2452,7 +2490,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             return t;
         }
 
-        java.sql.ResultSet rs;
+        ResultSet rs;
 
         // - used appends to make class file constant pool smaller
         // - saves ~ 150 bytes jar space
@@ -2489,7 +2527,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      * be no support at all) in various capacities. <p>
      *
      * <pre>
-     * TYPE_NAME          VARCHAR   the canonical name used DDL statements.
+     * TYPE_NAME          VARCHAR   the canonical name used in DDL statements.
      * DATA_TYPE          SMALLINT  data type code from DITypes
      * PRECISION          INTEGER   max column size.
      *                              number => max. precision.

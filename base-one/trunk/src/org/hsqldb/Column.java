@@ -301,6 +301,20 @@ class Column {
     int getType() {
         return colType;
     }
+    
+    int getDIType() {
+        return colType == VARCHAR_IGNORECASE ? DITypes.VARCHAR : colType;
+    }
+    
+    int getDITypeSub() {
+        
+        if (colType == VARCHAR_IGNORECASE) {
+            return DITypes.TYPE_SUB_IGNORECASE;
+        } else if (isIdentity) {
+            return DITypes.TYPE_SUB_IDENTITY;
+        }
+        return DITypes.TYPE_SUB_DEFAULT;
+    }
 
     /**
      *  Size of the column in DDL (0 if not defined).

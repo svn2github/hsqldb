@@ -51,6 +51,7 @@ class View extends Table {
         super(db, name, VIEW, 0);
 
         sStatement = "";
+        isReadOnly = true;
     }
 
     void addColumns(Result result) throws SQLException {
@@ -104,5 +105,9 @@ class View extends Table {
 
     String getStatement() {
         return sStatement;
+    }
+
+    void setDataReadOnly(boolean value) throws SQLException {
+        throw Trace.error(Trace.NOT_A_TABLE);
     }
 }

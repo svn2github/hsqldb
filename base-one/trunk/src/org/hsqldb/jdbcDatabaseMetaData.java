@@ -6201,7 +6201,9 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @param c the connection this object will use to retrieve
      *         instance-specific metadata
      */
-    jdbcDatabaseMetaData(jdbcConnection c) {
+    jdbcDatabaseMetaData(jdbcConnection c) throws SQLException {
+        Trace.doAssert(c != null, "connection is null");
+        Trace.doAssert(!c.isClosed(), "connection is closed");
         connection = c;
     }
 
@@ -6210,16 +6212,18 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <code>op</code>(erator) and<code>val</code>(ue) arguments to be
      * included in a SQL "WHERE" clause, using the conventions laid out for
      * JDBC DatabaseMetaData filter parameter values. <p>
+     *
      * @return an "AND" predicate built from the arguments
-     * @param id the simple, non-quoted identifier of a system table column to filter on <p>
+     * @param id the simple, non-quoted identifier of a system table 
+     *      column to filter on <p>
      *
      *      No checking is done for column name validity. <br>
      *      (How could there be? No table names are provided)<p>
      *
      *      Setting this to <code>null</code> or the empty string causes the
      *      entire expression to be set to the empty string
-     * @param op the operation to perform between the system table column name value and
-     *      the <code>val</code> argument <p>
+     * @param op the operation to perform between the system table column 
+     *      name value and the <code>val</code> argument <p>
      *
      *      <code>null</code> or the empty string causes the entire expression
      *      to be set to the empty string
@@ -6233,15 +6237,17 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *              to be built so that the IS NULL operation will occur
      *              against the specified column.
      *          <LI>instanceof String causes the returned expression to be
-     *              built so that the specified operation will occur between the
-     *              specified column and the specified value, converted to a SQL
-     *              string (single quoted, with internal single quotes escaped by
-     *              doubling). If <code>op</code> is "LIKE" and <code>val</code>
-     *              does not contain any unescaped "%" or "_" wild card characters,
-     *              then <code>op</code> is silently converted to "=".
+     *              built so that the specified operation will occur between 
+     *              the specified column and the specified value, converted to 
+     *              a SQL string (single quoted, with internal single quotes 
+     *              escaped by doubling). If <code>op</code> is "LIKE" and 
+     *              <code>val</code> does not contain any unescaped "%" or 
+     *              "_" wild card characters, then <code>op</code> is silently 
+     *              converted to "=".
      *          <LI>!instanceof String causes an expression to
      *              built so that the specified operation will occur
-     *              between the specified column and <code>String.valueOf(val)</code>
+     *              between the specified column and 
+     *             <code>String.valueOf(val)</code>
      *      </UL>
      */
     private static String and(String id, String op, Object val) {
@@ -6281,7 +6287,8 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
     /**
      * Retrieves whether the specified string, s, contains the character, ch,
      * without being escaped by the value returned by
-     * {@link #getSearchStringEscape() getSearchStringEscape()}.
+     * the HSQLDB search string escape character, "\" <p>
+     *
      * @param s The string to test
      * @param ch The character to test for
      * @return true if there is at least one occurence of ch in s not
@@ -6314,13 +6321,25 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @param statement SQL statement to execute
      * @throws SQLException is a database error occurs
      */
-    private ResultSet execute(String statement) throws SQLException {
+    private ResultSet execute(String sql) throws SQLException {
 
         if (Trace.TRACE) {
-            Trace.trace(statement);
+            Trace.trace(sql);
         }
 
-        return connection.execute(statement);
+        // NOTE:
+        // Need to create a jdbcStatement here so jdbcResultSet can return
+        // its Statement object on call to getStatement(). 
+        // The native jdbcConnection.execute() method does not  
+        // automatically assign a Statement object for the ResultSet, but 
+        // jdbcStatement does.  That is, without this, there is no way for the 
+        // jdbcResultSet to find its way back to its Connection (or Statement)
+        // Also, cannot use single, shared jdbcStatement object, as each
+        // fetchResult() closes any old jdbcResultSet before fetching the 
+        // next, causing the jdbcResultSet's Result object to be nullified
+        final int scroll = ResultSet.TYPE_SCROLL_INSENSITIVE;
+        final int concur = ResultSet.CONCUR_READ_ONLY;
+        return connection.createStatement(scroll,concur).executeQuery(sql);
     }
 
     /**

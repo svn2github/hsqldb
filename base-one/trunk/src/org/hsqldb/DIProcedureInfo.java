@@ -43,7 +43,7 @@ import org.hsqldb.resources.BundleHandler;
 
 /**
  * Provides information about Java Methods in context of
- * their being used as callable HSQLDB SQL routines and SQL functions.
+ * their being used as callable HSQLDB SQL routines and SQL functions. <p>
  *
  * @author  boucherb@users.sourceforge.net
  * @version 1.7.2

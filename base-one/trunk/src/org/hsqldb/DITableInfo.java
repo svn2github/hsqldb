@@ -39,24 +39,44 @@ import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.ValuePool;
 import org.hsqldb.resources.BundleHandler;
 
-/**
- * Provides extended information about HSQLDB tables and their columns/indices
- * @author  boucherb@users.sourceforge.net
+/** 
+ * Provides extended information about HSQLDB tables and their
+ * columns/indices. <p>
+ *
+ * @author boucherb@users.sourceforge.net
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
 final class DITableInfo implements DITypes {
 
+    /** Used in buffer size and character octet length determinations. */    
     private static final int        HALF_MAX_INT = Integer.MAX_VALUE >>> 1;
+    /** BundleHandler id for column remarks resource bundle. */    
     private int                     hnd_column_remarks = -1;
+    /** BundleHandler id for table remarks resource bundle. */    
     private int                     hnd_table_remarks  = -1;
+    /** The Table object upon which this object is reporting. */    
     private Table                   table;
+    /** Provides intrinsic type infformation support. */    
     private static final DITypeInfo ti = new DITypeInfo();
 
-    public DITableInfo() {
+    /** 
+     * Creates a new DITableInfo object with the default Locale and reporting
+     * on no table.  It is absolutely essential the a valid Table object is 
+     * assigned to this object, using the setTable method, before any Table, 
+     * Column or Index oriented value retrieval methods are called; this class 
+     * contains no assertions or exception handling related to a null or 
+     * invalid table member attribute.
+     */    
+    DITableInfo() {
         setLocale(Locale.getDefault());
     }
 
+    /** 
+     * Sets the Locale for table and column remarks. <p>
+     *
+     * @param l The Locale object
+     */    
     void setLocale(Locale l) {
 
         Locale oldLocale;
@@ -75,10 +95,29 @@ final class DITableInfo implements DITypes {
         }
     }
 
+    /** 
+     * Retrieves whether the best row identifier column is
+     * a pseudo column, like an Oracle ROWID. <p>
+     *
+     * Currently, this always returns an Integer whose value is
+     * DatabaseMetaData.bestRowNotPseudo, as HSQLDB does not support
+     * pseudo columns such as ROWID. <p>
+     *
+     * @return whether the best row identifier column is
+     * a pseudo column
+     */    
     Integer getBRIPseudo() {
         return ValuePool.getInt(DatabaseMetaData.bestRowNotPseudo);
     }
 
+    /** 
+     * Retrieves the scope of the best row identifier. <p>
+     *
+     * This implements the rules described in
+     * DatabaseInformationMain.SYSTEM_BESTROWIDENTIFIER. <p>
+     *
+     * @return the scope of the best row identifier
+     */    
     Integer getBRIScope() {
 
         return (table.dDatabase.databaseReadOnly || (table.isTemp() && table.tableType != Table.SYSTEM_TABLE))
@@ -86,6 +125,11 @@ final class DITableInfo implements DITypes {
                : ValuePool.getInt(DatabaseMetaData.bestRowTemporary);
     }
 
+    /** 
+     * Retrieves the hashCode() value for the table's Cache object. <p>
+     *
+     * @return the hashCode() value for the table's Cache object.
+     */    
     Integer getCacheHash() {
 
         return (table.cCache == null) ? null
@@ -93,6 +137,11 @@ final class DITableInfo implements DITypes {
                                           table.cCache.hashCode());
     }
 
+    /** 
+     * Retrieves the absolute path of the the table's data file. <p>
+     *
+     * @return the absolute path of the the table's data file
+     */    
     String getCachePath() {
 
         return (table.cCache == null) ? null
@@ -100,6 +149,14 @@ final class DITableInfo implements DITypes {
                                           .getAbsolutePath();
     }
 
+    /** 
+     * Retrieves, if definitely known, the transfer size for values of the
+     * specified column, in bytes. <p>
+     *
+     * @param i zero-based column index
+     * @return the transfer size for values of the
+     * specified column, in bytes
+     */    
     Integer getColBufLen(int i) {
 
         int    size;
@@ -107,7 +164,7 @@ final class DITableInfo implements DITypes {
         Column column;
 
         column = table.getColumn(i);
-        type   = column.getType();
+        type   = column.getDIType();
 
         switch (type) {
 
@@ -168,6 +225,16 @@ final class DITableInfo implements DITypes {
                           : null;
     }
 
+    /** 
+     * Retrieves the declared size, in bytes, for character-valued 
+     * columns. <p>
+     *
+     * If the size cannot be represented in the range [0,Integer.MAX_VALUE],
+     * this returns null. <p>
+     *
+     * @param i zero-based column index
+     * @return the size, in bytes, for character-valued columns
+     */    
     Integer getColCharOctLen(int i) {
 
         int    size;
@@ -175,7 +242,7 @@ final class DITableInfo implements DITypes {
         Column column;
 
         column = table.getColumn(i);
-        type   = column.getType();
+        type   = column.getDIType();      
 
         switch (type) {
 
@@ -205,30 +272,93 @@ final class DITableInfo implements DITypes {
                            : ValuePool.getInt(size);
     }
 
+    /** 
+     * Retrieves the SQL data type code for the specified column. <p>
+     *
+     * @param i zero-based column index
+     * @return the SQL data type code for the specified column
+     */    
     Integer getColDataType(int i) {
-        return ValuePool.getInt(table.getColumn(i).getType());
+        return ValuePool.getInt(table.getColumn(i).getDIType());
     }
 
+    /** 
+     * Retrieves the SQL data type name for the specified column. <p>
+     *
+     * @param i zero-based column index
+     * @return the SQL data type name for the specified column
+     */    
     String getColDataTypeName(int i) {
-        return Column.getTypeString(table.getColumn(i).getType());
+        Column column = table.getColumn(i);
+        ti.setTypeCode(column.getDIType());
+        ti.setTypeSub(column.getDITypeSub());
+        return ti.getTypeName();
+    }
+    
+    /** 
+     * Retrieves the HSQLDB data subtype code for the specified column. <p>
+     *
+     * @param i zero-based column index
+     * @return the HSQLDB data subtype code for the specified column
+     */     
+    Integer getColDataTypeSub(int i) {
+        return ValuePool.getInt(table.getColumn(i).getDITypeSub());
     }
 
+    /** 
+     * Retrieves the declared default value expression for the column. <p>
+     *
+     * @param i zero-based column index
+     * @return the declared default value expression for the column
+     */    
     String getColDefault(int i) {
         return table.getColumn(i).getDefaultString();
     }
+    
+    /** 
+     * Retrieves whether the specified column is the identity column for
+     * the table. <p>
+     *
+     * @param i zero-based column index
+     * @return whether the specified column is the identity column for
+     * the table.
+     */    
+    Boolean getColIsIdentity(int i) {        
+        return ValuePool.getBoolean(table.getColumn(i).isIdentity());
+    }
 
+    /** 
+     * Retrieves whether the specified column is nullable. <p>
+     *
+     * If the column is nullable, "YES" is retrieved, else "NO". <p>
+     *
+     * @param i zero-based column index
+     * @return the nullability of the specified column
+     */    
     String getColIsNullable(int i) {
 
         Column column = table.getColumn(i);
 
-        return (column.isNullable() ||!column.isIdentity()) ? "YES"
+        return (column.isNullable() &&!column.isIdentity()) ? "YES" 
                                                             : "NO";
     }
 
+    /** 
+     * Retrieves the simple name of the specified column. <p>
+     *
+     * @param i zero-based column index
+     * @return the simple name of the specified column.
+     */    
     String getColName(int i) {
         return table.getColumn(i).columnName.name;
     }
 
+    /** 
+     * Retrieves the specified column's nullablility. <p>
+     *
+     * @param i zero-based column index
+     * @return the specified column's nullablilit
+     */    
     Integer getColNullability(int i) {
 
         Column column = table.getColumn(i);
@@ -238,13 +368,28 @@ final class DITableInfo implements DITypes {
                : ValuePool.getInt(DatabaseMetaData.columnNoNulls);
     }
 
+    /** 
+     * Retrieves the number base that should be used to interpret the 
+     * specified column's numeric precision, as reported by getColSize(int).
+     *
+     * @param i zero-based column index
+     * @return the number base that should be used to
+     *    interpret the column's numeric precision,
+     *    as reported by getColSize(int).
+     */    
     Integer getColPrecRadix(int i) {
 
-        ti.setTypeCode(table.getColumn(i).getType());
+        ti.setTypeCode(table.getColumn(i).getDIType());
 
         return ti.getNumPrecRadix();
     }
 
+    /** Retrieves the remarks, if any, recorded against the specified 
+     * column. <p>
+     *
+     * @param i zero-based column index
+     * @return the remarks recorded against the specified column.
+     */    
     String getColRemarks(int i) {
 
         String key;
@@ -258,13 +403,22 @@ final class DITableInfo implements DITypes {
         return BundleHandler.getString(hnd_column_remarks, key);
     }
 
+    /** 
+     * Retreives the declared (but not currently enforced) or implicit fixed 
+     * number of digits to the right of the decimal point for exact numeric 
+     * types.
+     *
+     * @param i zero-based column index
+     * @return the fixed number of digits to the right of the decimal point
+     * for exact numeric types.
+     */    
     Integer getColScale(int i) {
 
         Column column;
         int    type;
 
         column = table.getColumn(i);
-        type   = column.getType();
+        type   = column.getDIType();
 
         switch (type) {
 
@@ -279,18 +433,44 @@ final class DITableInfo implements DITypes {
         }
     }
 
+    /** 
+     * Retrieves null (not implemented). <p>
+     *
+     * @param i zero-based column index
+     * @return null (not implemented)
+     */    
     String getColScopeCat(int i) {
         return null;
     }
 
+    /** 
+     * Retrieves null (not implemented). <p>
+     *
+     * @param i zero-based column index
+     * @return null (not implemented)
+     */    
     String getColScopeSchem(int i) {
         return null;
     }
 
+    /** 
+     * Retrieves null (not implemented). <p>
+     *
+     * @param i zero-based column index
+     * @return null (not implemented)
+     */    
     String getColScopeTable(int i) {
         return null;
     }
 
+    /** 
+     * Retrieves either the declared or maximum length/precision for
+     * the specified column. <p>
+     *
+     * @param i zero-based column index
+     * @return the declared or maximum length/precision for
+     *    the specified column
+     */    
     Integer getColSize(int i) {
 
         Column column;
@@ -298,7 +478,7 @@ final class DITableInfo implements DITypes {
         int    size;
 
         column = table.getColumn(i);
-        type   = column.getType();
+        type   = column.getDIType();      
 
         switch (type) {
 
@@ -333,24 +513,46 @@ final class DITableInfo implements DITypes {
         return ValuePool.getInt(size);
     }
 
-    Integer getColSqlDataType(int i) {
+    /** 
+     * Retrieves the SQL CLI data type code for the specified column. <p>
+     *
+     * @param i zero-based column index
+     * @return the SQL CLI data type code for the specified column
+     */    
+    Integer getColSqlDataType(int i) {                
 
-        ti.setTypeCode(table.getColumn(i).getType());
+        ti.setTypeCode(table.getColumn(i).getDIType());
 
         return ti.getSqlDataType();
     }
 
+    /** 
+     * Retrieves the SQL CLI datetime subtype for the specified column. <p>
+     *
+     * @param i zero-based column index
+     * @return the SQL CLI datetime subtype for the specified column
+     */    
     Integer getColSqlDateTimeSub(int i) {
 
-        ti.setTypeCode(table.getColumn(i).getType());
+        ti.setTypeCode(table.getColumn(i).getDIType());
 
         return ti.getSqlDateTimeSub();
     }
 
+    /** 
+     * Retrieves the full data source descriptor for [TEMP] TEXT tables. <p>
+     *
+     * @return the full data source descriptor
+     */    
     String getDataSource() {
         return table.getDataSource();
     }
 
+    /** 
+     * Retrieves the HSQLDB-specific type of the table. <p>
+     *
+     * @return the HSQLDB-specific type of the table
+     */    
     String getHsqlType() {
 
         switch (table.tableType) {
@@ -375,53 +577,120 @@ final class DITableInfo implements DITypes {
         }
     }
 
+    /** 
+     * Retrieves null (not implemented). <p>
+     *
+     * @param i zero-based index specifier
+     * @return null (not implemented)
+     */    
     Integer getIndexCardinality(int i) {
-
-        // not supported yet: need cardinality attribute
-        // in Index objects first, or system statistics table
-        // and ANALYZE command to update values in system
-        // statistics table
+        // TODO:     - implement cardinality for all table and index types
+        // REQUIRES: - checkpoint of cardinality for CACHED tables
+        //           - maybe extend SET TABLE <table-name> INDEX ... DDL to
+        //           include index cardinality as well as index roots?
+        // REQUIRES: completion of TODOs in Index for non-unique indices
+        // REQUIRES: setIndexInfoDirty() for DatabaseInformation and related
+        //           support  code.  That is global setDirty on every update  
+        //           DML ruins DatabaseInforamation system table caching 
+        //           effect
+//      return ValuePool.getInt(index.getCardinality());
         return null;
     }
 
+    /** 
+     * Retrieves the sort-direction for the specified column in the
+     * specified index. <p>
+     *
+     * @param i zero-based index specifier
+     * @param columnPosition zero-based ordinal position of column in index
+     * @return the sort-direction for the specified column in the
+     * specified index
+     */    
     String getIndexColDirection(int i, int columnPosition) {
 
         // so far, hsqldb only supports completely ascending indexes
         return "A";
     }
 
+    /** 
+     * Retrieves an array map from the zero-based ordinal positions of the
+     * columns in the specfied Index to the zero-based ordinal positions of
+     * the same columns in the table. <p>
+     *
+     * @param i zero-based index specifier
+     * @return an array map from the zero-based ordinal positions of
+     *    the columns in the specfied Index to the zero-based
+     *    ordinal positions of the same columns in the table
+     */    
     int[] getIndexColumns(int i) {
         return table.getIndex(i).getColumns();
     }
 
+    /** 
+     * Retreives the simple name of the specified Index. <p>
+     *
+     * @param i zero-based index specifier
+     * @return the simple name of the specified Index
+     */    
     String getIndexName(int i) {
 
-        HsqlArrayList vIndex = table.vIndex;
-        Index         index  = (vIndex == null) ? null
-                                                : (Index) vIndex.get(i);
-
-        return (index == null) ? null
-                               : index.getName().name;
+        return table.getIndex(i).getName().name;
     }
 
+    /** 
+     * Retreives null (not implemented). <p>
+     *
+     * @param i zero-based index specifier
+     * @return null (not implemented)
+     */    
     Integer getIndexPages(int i) {
 
         // not supported yet: hsqldb does not even know what a "page" is
         return null;
     }
 
+    /** 
+     * Retrieves the DatabaseMetaData type code of the specified Index. <p>
+     *
+     * @param i zero-based index specifier
+     * @return the DatabaseMetaData type code of the specified Index
+     */    
     Integer getIndexType(int i) {
         return ValuePool.getInt(DatabaseMetaData.tableIndexOther);
     }
 
+    /** 
+     * Retrieves the number of visible columns in the specified Index.  That 
+     * is, this retrieves one less than the physical number of columns if the 
+     * table maintains an internal primary index on an internal identity 
+     * column, as is the case when the table has no declared primary key or 
+     * identity column. <p>
+     *
+     * @param i zero-based index specifier
+     * @return the number of visible columns in the specified Index
+     */    
     int getIndexVisibleColumns(int i) {
         return table.getIndex(i).getVisibleColumns();
     }
 
+    /** 
+     * Retrieves the simple name of the table. <p>
+     *
+     * @return the simple name of the table
+     */    
     String getName() {
         return table.getName().name;
     }
 
+    /** 
+     * Retrieves the value of the next automatically assigned identity. <p>
+     *
+     * Be aware that this is not necessarily the value that will be assigned
+     * to the identity column during the next insert or update.  This value is
+     * used iff NULL is either implicitly or explicity assigned. <p>
+     *
+     * @return the value of the next automatically assigned identity
+     */    
     Long getNextIdentity() {
 
         Index pi;
@@ -437,6 +706,11 @@ final class DITableInfo implements DITypes {
                : null;
     }
 
+    /** 
+     * Retrieves the remarks (if any) recorded against the Table. <p>
+     *
+     * @return the remarks recorded against the Table
+     */    
     String getRemark() {
 
         return (table.tableType == Table.SYSTEM_TABLE)
@@ -444,6 +718,14 @@ final class DITableInfo implements DITypes {
                : null;
     }
 
+    /** 
+     * Retrieves the standard JDBC type of the table. <p>
+     *
+     * "TABLE" for user-defined tables, "VIEW" for user-defined views, 
+     * and so on.
+     *
+     * @return the standard JDBC type of the table
+     */    
     String getStandardType() {
 
         switch (table.tableType) {
@@ -463,21 +745,52 @@ final class DITableInfo implements DITypes {
         }
     }
 
+    /** 
+     * Retrieves the Table object on which this object is currently 
+     * reporting. <p>
+     *
+     * @return the Table object on which this object
+     *    is currently reporting
+     */    
     Table getTable() {
         return this.table;
     }
 
+    /** 
+     * Retrieves, for [TEMP] TEXT tables, whether the table's data source
+     * descriptor requests descending read semantics.  That is, when this
+     * value is true, it indicate that the text file is to be read from
+     * the bottom up. <p>
+     *
+     * @return whether the table's data source
+     *    descriptor requests descending
+     *    read semantics
+     */    
     Boolean isDataSourceDescending() {
         return ValuePool.getBoolean(table.isDescDataSource());
     }
 
+    /** 
+     * Retrieves whether the specified Index is non-unique. <p>
+     *
+     * @param i zero-based index specifier
+     * @return whether the specified Index is non-unique
+     */    
     Boolean isIndexNonUnique(int i) {
         return ValuePool.getBoolean(!table.getIndex(i).isUnique());
     }
 
+    /** 
+     * Retrieves whether the table's primary index is also the table's
+     * primary key. <p>
+     *
+     * @return whether the table's primary index is also
+     *    the table's primary key.
+     */    
     boolean isPrimaryIndexPrimaryKey() {
 
         Index index;
+        Column column;
         int[] icols;
         int   vcols;
 
@@ -496,7 +809,14 @@ final class DITableInfo implements DITypes {
         icols = index.getColumns();
 
         for (int i = 0; i < vcols; i++) {
-            if (table.getColumn(icols[i]).isNullable()) {
+            column = table.getColumn(icols[i]);
+            if (column.isIdentity()) {
+                // if exists, identity column is always the single
+                // column of both the primary index and the primary
+                // key...
+                break;                 
+            } 
+            if (column.isNullable()) {
                 return false;
             }
         }
@@ -504,10 +824,25 @@ final class DITableInfo implements DITypes {
         return true;
     }
 
+    /** 
+     * Retrieves whether the table is in data read-only mode.  This value does
+     * not reflect the various read-only modes of the database or the
+     * read-only mode of the connection. <p>
+     *
+     * @return whether the table is in data read-only mode
+     */    
     Boolean isReadOnly() {
-        return ValuePool.getBoolean(table.isDataReadOnly() || table.isView());
+        return ValuePool.getBoolean(table.isDataReadOnly());
     }
 
+    /** 
+     * Retrieves a list of the table's Iidices that are visible in the SQL
+     * environment.  This excludes any system-defined index that is not part
+     * of a constraint that is visible in the SQL environment. <p>
+     *
+     * @return a list of the table's indices that are visible
+     *    in the SQL environment
+     */    
     HsqlArrayList listVisibleIndicies() {
 
         HsqlArrayList vIndex;
@@ -537,18 +872,22 @@ final class DITableInfo implements DITypes {
         return list;
     }
 
+    /** 
+     * Assigns the Table object on which this object is to report. <p>
+     *
+     * @param table the Table object on which this object is to report
+     */    
     void setTable(Table table) {
         this.table = table;
     }
 
-    /**
+    /** 
      * Retrieves a new <code>Result</code> object whose metadata matches that
      * of the specified table. <p>
      *
-     * @param t The table from which to construct the new Result object
+     * @param t The Table from which to construct the new Result object
      * @return a new <code>Result</code> object whose metadata matches that
-     * of the specified table.
-     *
+     * of the specified Table.
      */
     static Result createResultProto(Table t) {
 

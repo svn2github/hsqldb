@@ -76,6 +76,7 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Random;
 import java.text.SimpleDateFormat;
+import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HsqlHashMap;
 import org.hsqldb.lib.ValuePool;
 import org.hsqldb.lib.HsqlObjectToIntMap;
@@ -1437,7 +1438,7 @@ public class Library {
      * @return the database's major version as an <code>int</code> value
      * @since HSQLDB 1.7.2
      */
-    public static int getDatabaseMinorVersion() throws SQLException {
+    public static int getDatabaseMinorVersion() {
         return 7;
     }
 
@@ -1457,13 +1458,223 @@ public class Library {
     /**
      * Retrieves whether this database is in read-only mode. <p>
      *
-     * @param conn the <code>Connection</code> object for which to retrieve
+     * @param c the <code>Connection</code> object for which to retrieve
      *      the current database read-only status
      * @return <code>true</code> if so; <code>false</code> otherwise
      * @since HSQLDB 1.7.2
      */
     public static boolean isReadOnlyDatabase(Connection c) {
+
+        // REMIND:  What about filesReadOnly?  how to resolve?
         return ((jdbcConnection) c).dDatabase.databaseReadOnly;
+    }
+
+    /**
+     * Retrieves whether the files of this database are in read-only mode. <p>
+     *
+     * @param c the <code>Connection</code> object for which to retrieve
+     *      the current database files read-only status
+     * @return <code>true</code> if so; <code>false</code> otherwise
+     * @since HSQLDB 1.7.2
+     */
+    public static boolean isReadOnlyDatabaseFiles(Connection c) {
+        return ((jdbcConnection) c).dDatabase.filesReadOnly;
+    }
+
+// boucherb@users - patch 1.7.2 - ResultSetMetaData
+// TODO: encode data type subcode and table column nullability in
+// Result.colType array values in order to avoid database
+// call back for certain ResultSetMetaData values.
+//
+// One possible encoding might be:
+// nullability:    (colType[i] & 0x00f00000) >>> 20
+// data type sub:  (colType[i] & 0x000f0000) >>> 16
+// data type code: (colType[i] & 0x0000ffff)
+//
+// An even denser encoding might be:
+// decl. size:      (colType[i] & 0xff000000) >>> 24
+// - allows transmitting decl. length/precision up to 255...
+// - for types with create params, zero might mean: call back to db required
+// ext:             (colType[i] & 0x00ff0000)
+// read-only:       (ext & 0x00800000) != 0
+// autoincrement:   (ext & 0x00400000) != 0
+// nullability:     (ext & 0x00300000) >>> 20
+// data type sub:   (ext & 0x000f0000) >>> 16
+// data type code:  (colType[i] & 0x0000ffff)
+
+    /**
+     * Retrieves a Result object describing the connection-dependent column
+     * metadata for each requested (table,column) pair. <p>
+     *
+     * @param c the <code>Connection</code> object on which to retrieve
+     *      the connection-dependent column metadata
+     * @param columns a character sequence whose content is a CSV list of
+     *    SQL strings representing requests for conection-dependent
+     *    column metadata regarding (table-name, column-name) pairs. <p>
+     *
+     *    Example 1 (as the content of Java String): <p>
+     *
+     *    'table-name-1','column-name-1','table-name-2','column-name-2'<p>
+     *
+     *    Example 2 (on the SQL command line): <p>
+     *
+     *    call "org.hsqldb.Library.getCDColumnMetaData"(
+     *      '''table-name-1'',''column-name-1'',
+     *      ''table-name-2'',''column-name-2''') <p>
+     *
+     *    <b>Note:</b> since it may be difficult to tell using certain viewers,
+     *    text encodings or fonts, please realize that, in the second example,
+     *    the parameter string contains no double quote characters,
+     *    only single-quote characters.<p>
+     *
+     * @throws SQLException if a database access error occurs
+     * @return A Result object describing the
+     *    connection-dependent column metadata
+     *    for each requested (table-name,column-name) pair
+     */
+    public static Object getCDColumnMetaData(Connection c,
+            String columns) throws SQLException {
+
+        Session             session;
+        Database            database;
+        DatabaseInformation dInfo;
+        HsqlProperties      props;
+        HsqlArrayList       columnList;
+        Tokenizer           tokenizer;
+        String              token;
+        String              catalog;
+        String              tableName;
+        String              columnName;
+        int                 len;
+        boolean             reportCatalogs;
+        boolean             reportSchemas;
+        Result              result;
+        Table               table;
+        Column              column;
+        Object[]            row;
+
+        tokenizer  = new Tokenizer(columns);
+        len        = tokenizer.getLength();
+        columnList = new HsqlArrayList();
+
+        while (tokenizer.getPosition() < len) {
+            token = tokenizer.getString();
+
+            columnList.add(token);
+
+            if (tokenizer.getPosition() < len) {
+                tokenizer.getThis(",");
+            }
+        }
+
+        len = columnList.size();
+
+        Trace.doAssert((len & 0x1) == 0,
+                       "must be a valid list of table/column name pairs");
+
+        session           = ((jdbcConnection) c).cSession;
+        database          = ((jdbcConnection) c).dDatabase;
+        dInfo             = database.dInfo;
+        props             = database.getProperties();
+        reportCatalogs    = props.isPropertyTrue("hsqldb.catalogs");
+        reportSchemas     = props.isPropertyTrue("hsqldb.schemas");
+        catalog           = reportCatalogs ? database.getName()
+                                           : "";
+        result            = new Result(5);
+        result.colType[0] = DITypes.VARCHAR;
+        result.colType[1] = DITypes.VARCHAR;
+        result.colType[2] = DITypes.BIT;
+        result.colType[3] = DITypes.BIT;
+        result.colType[4] = DITypes.BIT;
+        result.sTable[0]  = "";
+        result.sTable[1]  = "";
+        result.sTable[2]  = "";
+        result.sTable[3]  = "";
+        result.sTable[4]  = "";
+        result.sName      = result.sTable;
+        result.sLabel[0]  = "CATALOG";
+        result.sLabel[1]  = "SCHEMA";
+        result.sLabel[2]  = "IS_IDENTITY";
+        result.sLabel[3]  = "IS_NULLABLE";
+        result.sLabel[4]  = "IS_READONLY";
+
+        for (int i = 0; i < len; ) {
+            tableName  = (String) columnList.get(i++);
+            columnName = (String) columnList.get(i++);
+            row        = new Object[5];
+
+            if (dInfo.isSystemTable(tableName)) {
+                try {
+                    table = dInfo.getSystemTable(tableName, session);
+                } catch (Exception e) {
+                    table = null;
+                }
+            } else {
+
+                // TODO:  non-admin users can create TEMP tables but
+                //        we need to update access checks to allow
+                //        non-admin users to update temp tables they
+                //        create
+                table = database.findUserTable(tableName);
+            }
+
+            if (table == null ||!session.isAccessible(table.getName())) {
+                row[0] = "";
+                row[1] = "";
+                row[2] = Boolean.FALSE;
+                row[3] = null;
+                row[4] = Boolean.TRUE;
+            } else {
+                try {
+                    column = table.getColumn(table.getColumnNr(columnName));
+                } catch (Exception e) {
+                    column = null;
+                }
+
+                if (column == null) {
+                    row[0] = "";
+                    row[1] = "";
+                    row[2] = Boolean.FALSE;
+                    row[3] = null;
+                    row[4] = Boolean.TRUE;
+                } else {
+                    row[0] = catalog;
+
+                    if (reportSchemas) {
+
+                        // REMIND: Maybe use/reference DINameSpace here?
+                        //         Maybe break out constants to interface?
+                        // This seems like a good code reuse opportunity,
+                        // but is avoided because of suspected overhead
+                        // and the fact that there is no guarantee yet that
+                        // DINameSpace is CORE (always included in jar)
+                        if (table.tableType == Table.SYSTEM_TABLE) {
+                            row[1] = "DEFINITION_SCHEMA";
+                        } else if (table.equals(tableName, session)) {
+                            row[1] = session.getUsername();
+                        } else {
+                            row[1] = "PUBLIC";
+                        }
+                    } else {
+                        row[1] = "";
+                    }
+
+                    row[2] = ValuePool.getBoolean(column.isIdentity());
+                    row[3] = ValuePool.getBoolean(column.isNullable()
+                                                  &&!column.isIdentity());
+                    row[4] =
+                        ValuePool.getBoolean(database.databaseReadOnly
+                                             || table.isDataReadOnly()
+                                             || (database.filesReadOnly
+                                                 && (table.isCached()
+                                                     || table.isText())));
+                }
+            }
+
+            result.add(row);
+        }
+
+        return result;
     }
 
 /*
@@ -1532,7 +1743,9 @@ public class Library {
     static final int                user                      = 54;
     static final int                week                      = 55;
     static final int                year                      = 56;
-    static final HsqlObjectToIntMap functionMap = new HsqlObjectToIntMap(113);
+    static final int                getCDColumnMetaData       = 57;
+    static final int                isReadOnlyDatabaseFiles   = 58;
+    static final HsqlObjectToIntMap functionMap = new HsqlObjectToIntMap(117);
     static final Double             piValue = new Double(Library.pi());
 
     static {
@@ -1594,9 +1807,11 @@ public class Library {
         functionMap.put("user", user);
         functionMap.put("week", week);
         functionMap.put("year", year);
+        functionMap.put("getCDColumnMetaData", getCDColumnMetaData);
+        functionMap.put("isReadOnlyDatabaseFiles", isReadOnlyDatabaseFiles);
     }
 
-    public static Object invoke(int fID, Object[] parms) throws SQLException {
+    static Object invoke(int fID, Object[] parms) throws SQLException {
 
         try {
             switch (fID) {
@@ -1801,9 +2016,18 @@ public class Library {
                 case year : {
                     return new Integer(year((Date) parms[0]));
                 }
+                case getCDColumnMetaData : {
+                    return getCDColumnMetaData((Connection) parms[0],
+                                               (String) parms[1]);
+                }
+                case isReadOnlyDatabaseFiles : {
+                    return isReadOnlyDatabaseFiles((Connection) parms[0])
+                           ? Boolean.TRUE
+                           : Boolean.FALSE;
+                }
                 default : {
                     throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED,
-                                      "org.hsqldb.Library" + fID);
+                                      "org.hsqldb.Library: fID: " + fID);
                 }
             }
         } catch (Exception e) {

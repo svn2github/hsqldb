@@ -44,7 +44,7 @@ import org.hsqldb.lib.HsqlHashSet;
 /**
  * Provides catalog and schema name related definitions and functionality,
  * as well as accessibility, enumeration and alias mapping functions regarding
- * Java Classes and Methods within the context of this name space.
+ * Java Classes and Methods within the context of this name space. <p>
  *
  * @author  boucherb@users.sourceforge.net
  * @version 1.7.2
@@ -55,11 +55,24 @@ final class DINameSpace {
     /** The Database for which the name space functionality is provided */
     private Database database;
 
-    /** controls reporting of Catalog */
-    private boolean reportCatalogs = false;
-
-    /** Controls reporting of Schema */
-    private boolean reportSchemas = false;
+// NO:   Properties are not initialized until log open, but DatabaseInformation
+//       must be constructed before this happens to provide at least 
+//       structurally complete (if not contentful) system tables, just in case
+//       there are views referencing them.  Better just to check the 
+//       database properties each time, as we might decide to introduce SQL
+//       syntax to allow these values to change at runtime.  New methods,
+//       isReportCatalogs() and isReportSchemas() have been introduced to do 
+//       this.    
+// TODO: Make this more efficient.  It seems like we've gone back a step, 
+//       since hitting the database properties object for every row of almost 
+//       every system table seems like a big waste of CPU.  Consider messaging 
+//       this object any time there is a change instead?  
+//    
+//    /** controls reporting of Catalog */
+//    private boolean reportCatalogs;
+//
+//    /** Controls reporting of Schema */
+//    private boolean reportSchemas;
 
     /**
      * Set { <code>Class</code> FQN <code>String</code> objects }. <p>
@@ -137,9 +150,10 @@ final class DINameSpace {
         Trace.doAssert(database != null, "database is null");
 
         this.database  = database;
-        p              = database.getProperties();
-        reportCatalogs = p.isPropertyTrue("hsqldb.catalogs", reportCatalogs);
-        reportSchemas  = p.isPropertyTrue("hsqldb.schemas", reportSchemas);
+// NO:  This is too early        
+//        p              = database.getProperties();
+//        reportCatalogs = p.isPropertyTrue("hsqldb.catalogs");
+//        reportSchemas  = p.isPropertyTrue("hsqldb.schemas");
     }
 
     /**
@@ -201,8 +215,8 @@ final class DINameSpace {
      * @throws SQLException never (reserved for future use)
      */
     Enumeration enumCatalogNames() throws SQLException {
-        return reportCatalogs ? new HsqlEnumeration(database.getName())
-                              : new HsqlEnumeration();
+        return isReportCatalogs() ? new HsqlEnumeration(database.getName())
+                                  : new HsqlEnumeration();
     }
 
     /**
@@ -215,8 +229,8 @@ final class DINameSpace {
      * @throws SQLException never (reserved for future use)
      */
     Enumeration enumSysSchemaNames() throws SQLException {
-        return reportSchemas ? sysSchemas.elements()
-                             : new HsqlEnumeration();
+        return isReportSchemas() ? sysSchemas.elements()
+                                 : new HsqlEnumeration();
     }
 
     /**
@@ -236,7 +250,7 @@ final class DINameSpace {
         HsqlArrayList userNames;
         UserManager   userManager;
 
-        if (!reportSchemas || session == null) {
+        if (!isReportSchemas() || session == null) {
             return new HsqlEnumeration();
         }
 
@@ -299,7 +313,7 @@ final class DINameSpace {
      */
     Table findPubSchemaTable(String name) {
 
-        return (!reportSchemas || name == null ||!name.startsWith(PUB_SCHEMA_DOT))
+        return (!isReportSchemas() || name == null ||!name.startsWith(PUB_SCHEMA_DOT))
                ? null
                : database.findUserTable(name.substring(PUB_SCHEMA_DOT_LEN));
     }
@@ -320,7 +334,7 @@ final class DINameSpace {
 
         String prefix;
 
-        if (!reportSchemas || name == null || session == null) {
+        if (!isReportSchemas() || name == null || session == null) {
             return null;
         }
 
@@ -349,8 +363,8 @@ final class DINameSpace {
      *      is to be retrieved
      */
     String getCatalogName(Object o) {
-        return (!reportCatalogs || o == null) ? null
-                                              : database.getName();
+        return (!isReportCatalogs() || o == null) ? null
+                                                  : database.getName();
     }
 
     /**
@@ -470,7 +484,7 @@ final class DINameSpace {
 
         Class c;
 
-        if (!reportSchemas || o == null) {
+        if (!isReportSchemas() || o == null) {
             return null;
         }
 
@@ -604,7 +618,7 @@ final class DINameSpace {
      */
     String withoutCatalog(String name) {
 
-        if (!reportCatalogs) {
+        if (!isReportCatalogs()) {
             return name;
         }
 
@@ -631,7 +645,7 @@ final class DINameSpace {
      */
     String withoutDefnSchema(String name) {
 
-        return reportSchemas && name.startsWith(DEFN_SCHEMA_DOT)
+        return isReportSchemas() && name.startsWith(DEFN_SCHEMA_DOT)
                ? name.substring(DEFN_SCHEMA_DOT_LEN)
                : name;
     }
@@ -647,7 +661,7 @@ final class DINameSpace {
      */
     String withoutInfoSchema(String name) {
 
-        return reportSchemas && name.startsWith(INFO_SCHEMA_DOT)
+        return isReportSchemas() && name.startsWith(INFO_SCHEMA_DOT)
                ? name.substring(INFO_SCHEMA_DOT_LEN)
                : name;
     }
@@ -970,5 +984,21 @@ final class DINameSpace {
      */
     HsqlArrayList listVisibleSessions(Session session) {
         return database.sessionManager.listVisibleSessions(session);
+    }
+    
+    /** 
+     * Retrieves whether this object is reporting catalog qualifiers.
+     * @return true if this object is reporting catalog qualifiers, else false.
+     */    
+    boolean isReportCatalogs() {
+       return database.getProperties().isPropertyTrue("hsqldb.catalogs"); 
+    }
+    
+    /** 
+     * Retrieves whether this object is reporting schema qualifiers.
+     * @return true if this object is reporting schema qualifiers, else false.
+     */    
+    boolean isReportSchemas() {
+        return database.getProperties().isPropertyTrue("hsqldb.schemas"); 
     }
 }

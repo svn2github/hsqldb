@@ -243,10 +243,10 @@ class Table {
 // ----------------------------------------------------------------------------
 // akede@users - 1.7.2 patch Files readonly
         // Changing the mode of the table if necessary
-        if (db.isFilesReadOnly() && checkTableFileBased())
-        {
+        if (db.isFilesReadOnly() && checkTableFileBased()) {
             this.isReadOnly = true;
         }
+
 // ----------------------------------------------------------------------------
     }
 
@@ -296,23 +296,24 @@ class Table {
 // ----------------------------------------------------------------------------
 // akede@users - 1.7.2 patch Files readonly
     void setDataReadOnly(boolean value) throws SQLException {
+
         // Changing the Read-Only mode for the table is only allowed if the
         // the database can realize it.
-        if (dDatabase.isFilesReadOnly() && checkTableFileBased() && !value)
-        {
+        if (!value && dDatabase.isFilesReadOnly() && checkTableFileBased()) {
             throw Trace.error(Trace.DATA_IS_READONLY);
         }
+
         isReadOnly = value;
     }
 
-    /** Text or Chached Tables are normally file based
+    /**
+     * Text or Chached Tables are normally file based
      */
     boolean checkTableFileBased() {
         return isCached | isText;
     }
 
 // ----------------------------------------------------------------------------
-
     int getOwnerSessionId() {
         return ownerSessionId;
     }
@@ -784,7 +785,7 @@ class Table {
             }
 
             // ignore if called prior to completion of primary key construction
-            if ( colNullable == null ) {
+            if (colNullable == null) {
                 continue;
             }
 
@@ -1655,20 +1656,37 @@ class Table {
                 }
             }
 
+            // only do this if id is for a visible column
             if (c != null) {
-                c.setLastIdentity(id);    // don't do this if id is internal column
+                c.setLastIdentity(id);
             }
         }
 
         if (iIdentityId >= nextId) {
             iIdentityId++;
+
+// boucherb@users - patch 1.7.2 - more efficient SYSTEM_TABLE production
+            // only do this if id is for a visible column
+            // - represents a very small hit compared
+            // to all of the code above and saves quite a bit over
+            // the technique of regenerating SYSTEM_TABLES at every
+            // request by including it in the set of non-cached
+            // system tables
+            if (c != null) {
+                DatabaseInformation di = dDatabase.dInfo;
+
+                if (di != null) {
+                    di.setDirtyNextIdentity();
+                }
+            }
+
+// --
         }
     }
 
     /**
      *  Enforce max field sizes according to SQL column definition.
-     *  SQL92 13.8 : default values first, then any provided values, then
-     *  size enforcement
+     *  SQL92 13.8
      */
     void enforceFieldValueLimits(Object[] row) throws SQLException {
 
