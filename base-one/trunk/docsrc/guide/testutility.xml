@@ -1,10 +1,10 @@
-<!-- $Id: testutility.xml,v 1.5 2004/04/21 19:21:24 unsaved Exp $ -->
+<!-- $Id: testutility.xml,v 1.6 2004/04/22 03:06:27 unsaved Exp $ -->
 
 <appendix>
     <title>Hsqldb Test Utility</title>
     <appendixinfo>
-        <edition>$Revision: 1.5 $</edition>
-        <pubdate>$Date: 2004/04/21 19:21:24 $</pubdate>
+        <edition>$Revision: 1.6 $</edition>
+        <pubdate>$Date: 2004/04/22 03:06:27 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Test</keyword>
@@ -54,7 +54,7 @@
         </informalexample></listitem><listitem><informalexample><programlisting>
 /*e*/ SQL statement that should produce an error when executing</programlisting>
         </informalexample></listitem><listitem><informalexample><programlisting>
-/*r &lt;string1&gt;,&lt;string2&gt; SQL statement returning a single row ResultSet equal to the specified value</programlisting>
+/*r &lt;string1&gt;,&lt;string2&gt;*/ SQL statement returning a single row ResultSet equal to the specified value</programlisting>
         </informalexample></listitem><listitem><informalexample><programlisting>
 /*r
     &lt;string1&gt;,&lt;string2&gt;
