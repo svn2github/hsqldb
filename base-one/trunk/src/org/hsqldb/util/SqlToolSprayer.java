@@ -1,3 +1,34 @@
+/* Copyright (c) 2001-2004, The HSQL Development Group
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * Neither the name of the HSQL Development Group nor the names of its
+ * contributors may be used to endorse or promote products derived from this
+ * software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL HSQL DEVELOPMENT GROUP, HSQLDB.ORG, 
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
 package org.hsqldb.util;
 
 import java.util.Date;
@@ -6,7 +37,7 @@ import java.util.Properties;
 import java.io.FileInputStream;
 import java.io.File;
 
-/* $Id: SqlToolSprayer.java,v 1.2 2004/05/14 20:29:26 unsaved Exp $ */
+/* $Id: SqlToolSprayer.java,v 1.3 2004/06/19 16:21:49 fredt Exp $ */
 
 /**
  * Sql Tool Sprayer.
@@ -23,7 +54,7 @@ import java.io.File;
  * </UL>
  *
  * @see @main()
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  * @author Blaine Simpson
  */
 public class SqlToolSprayer {
@@ -55,14 +86,21 @@ public class SqlToolSprayer {
                 ? null
                 : new File(System.getProperty("sqltoolsprayer.monfile"));
         ArrayList urlids = new ArrayList();
-        if (propfile != null) try {
-            getUrlsFromPropFile(propfile, urlids);
-        } catch (Exception e) {
-            System.err.println("Failed to load property file '" + propfile
-                    + "':  " + e);
-            System.exit(3);
+
+        if (propfile != null) {
+            try {
+                getUrlsFromPropFile(propfile, urlids);
+            } catch (Exception e) {
+                System.err.println("Failed to load property file '"
+                                   + propfile + "':  " + e);
+                System.exit(3);
+            }
         }
-        for (int i = 1; i < sa.length; i++) urlids.add(sa[i]);
+
+        for (int i = 1; i < sa.length; i++) {
+            urlids.add(sa[i]);
+        }
+
         boolean status[] = new boolean[urlids.size()];
         for (int i = 0; i < status.length; i++) {
             status[i] = false;
@@ -91,7 +129,10 @@ public class SqlToolSprayer {
             }
             onefailed = false;
             for (int i = 0; i < status.length; i++) {
-                if (status[i]) continue;
+                if (status[i]) {
+                    continue;
+                }
+
                 sqlToolArgs[sqlToolArgs.length - 1] = (String) urlids.get(i);
                 try {
                     SqlTool.main(sqlToolArgs);
@@ -102,17 +143,28 @@ public class SqlToolSprayer {
                     onefailed = true;
                 }
             }
-            if (!onefailed) break;
-            if (maxtime == 0 || (new Date()).getTime() > startTime + maxtime)
+
+            if (!onefailed) {
                 break;
+            }
+
+            if (maxtime == 0
+                    || (new Date()).getTime() > startTime + maxtime) {
+                break;
+            }
+
             try {
                 Thread.sleep(period);
             } catch (InterruptedException ie) {}
         }
         ArrayList failedUrlids = new ArrayList();
         // If all statuses true, then System.exit(0);
-        for (int i = 0; i < status.length; i++)
-            if (status[i] != true) failedUrlids.add((String) urlids.get(i));
+        for (int i = 0; i < status.length; i++) {
+            if (status[i] != true) {
+                failedUrlids.add((String) urlids.get(i));
+            }
+        }
+
         if (failedUrlids.size() > 0) {
             System.err.println("Failed instances:   " + failedUrlids);
             System.exit(1);
@@ -129,7 +181,11 @@ public class SqlToolSprayer {
         while (true) {
             i++;
             val = p.getProperty("server.urlid." + i);
-            if (val == null) return;
+
+            if (val == null) {
+                return;
+            }
+
             al.add(val);
         }
     }
