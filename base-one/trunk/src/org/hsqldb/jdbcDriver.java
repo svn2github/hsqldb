@@ -171,28 +171,30 @@ public class jdbcDriver implements Driver {
     public Connection connect(String url,
                               Properties info) throws SQLException {
 
+        String         spec;
+        String         specProps;
+        int            pos;
+        HsqlProperties props;
+
         if (!acceptsURL(url)) {
             return null;
         }
 
-        String s = url.substring(sStartURL.length());
+        spec = url.substring(sStartURL.length());
+        pos  = spec.indexOf(';');
 
-        if (s.indexOf(';') > -1) {
-            String additionalProperties = s.substring(s.indexOf(';') + 1,
-                s.length());
-
-            s = s.substring(0, s.indexOf(';'));
-
-            HsqlProperties props =
-                HsqlProperties.delimitedArgPairsToProps(additionalProperties,
-                    "=", ";", null);
+        if ( pos > -1) {
+            specProps = spec.substring(pos, spec.length());
+            spec      = spec.substring(0, pos);
+            props     = HsqlProperties
+                .delimitedArgPairsToProps(specProps, "=", ";", null);
 
             props.addProperties(info);
 
             info = props.getProperties();
         }
 
-        return new jdbcConnection(s, info);
+        return new jdbcConnection(spec, info);
     }
 
     /**
@@ -211,7 +213,8 @@ public class jdbcDriver implements Driver {
             Trace.trace(url);
         }
 
-        return url.toLowerCase().startsWith(sStartURL);
+        return url != null 
+            &&url.regionMatches(true, 0, sStartURL, 0, sStartURL.length());
     }
 
     /**
@@ -249,7 +252,7 @@ public class jdbcDriver implements Driver {
         String[]           choices = new String[] {
             "true", "false"
         };
-        DriverPropertyInfo pinfo[] = new DriverPropertyInfo[2];
+        DriverPropertyInfo pinfo[] = new DriverPropertyInfo[4];
         DriverPropertyInfo p;
 
         p          = new DriverPropertyInfo("user", null);
@@ -264,12 +267,12 @@ public class jdbcDriver implements Driver {
         p.value    = info.getProperty("strict_md");
         p.required = false;
         p.choices  = choices;
-        pinfo[1]   = p;
+        pinfo[2]   = p;
         p          = new DriverPropertyInfo("get_column_name", null);
         p.value    = info.getProperty("get_column_name");
         p.required = false;
         p.choices  = choices;
-        pinfo[1]   = p;
+        pinfo[3]   = p;
 
         return pinfo;
     }
