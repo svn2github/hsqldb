@@ -201,7 +201,7 @@ class Column {
         hTypes.put("long", new Integer(Types.BIGINT));
         hTypes.put("java.lang.Long", new Integer(Types.BIGINT));
         hTypes.put("BINARY", new Integer(Types.BINARY));
-        hTypes.put("B[", new Integer(Types.BINARY));
+        hTypes.put("[B", new Integer(Types.BINARY));
         hTypes.put("VARBINARY", new Integer(Types.VARBINARY));
         hTypes.put("LONGVARBINARY", new Integer(Types.LONGVARBINARY));
         hTypes.put("OTHER", new Integer(Types.OTHER));
