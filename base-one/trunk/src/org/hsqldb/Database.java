@@ -67,12 +67,13 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlHashMap;
-import org.hsqldb.lib.StopWatch;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Enumeration;
+import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.HsqlObjectToIntMap;
+import org.hsqldb.lib.StopWatch;
 
 /**
  *  Database is the root class for HSQL Database Engine database. <p>
@@ -126,9 +127,9 @@ class Database {
     private HsqlArrayList          cSession;
     private HsqlDatabaseProperties databaseProperties;
     private Session                sysSession;
-    private Tokenizer              tokenizer     = new Tokenizer();
-    DatabaseObjectNames triggerNameList          = new DatabaseObjectNames();
-    DatabaseObjectNames            indexNameList = new DatabaseObjectNames();
+    private Tokenizer              tokenizer;
+    DatabaseObjectNames            triggerNameList;
+    DatabaseObjectNames            indexNameList;
 
     //for execute()
     private static final int CALL                  = 1;
@@ -172,65 +173,65 @@ class Database {
     private static final int SOURCE                = 44;
 
     //for process*()
-    private static final int         TABLE       = 21;
-    private static final int         TEXT        = 29;
-    private static final int         TRIGGER     = 33;
-    private static final int         UNIQUE      = 28;
-    private static final int         USER        = 34;
-    private static final int         VIEW        = 32;
-    private static final int         WRITE_DELAY = 45;
-    private static final HsqlHashMap hCommands   = new HsqlHashMap(67, 1);
+    private static final int TABLE       = 21;
+    private static final int TEXT        = 29;
+    private static final int TRIGGER     = 33;
+    private static final int UNIQUE      = 28;
+    private static final int USER        = 34;
+    private static final int VIEW        = 32;
+    private static final int WRITE_DELAY = 45;
+    private static final HsqlObjectToIntMap commandSet =
+        new HsqlObjectToIntMap(67);
 
     static {
-        hCommands.put("ALTER", new Integer(ALTER));
-        hCommands.put("CALL", new Integer(CALL));
-        hCommands.put("CHECKPOINT", new Integer(CHECKPOINT));
-        hCommands.put("COMMIT", new Integer(COMMIT));
-        hCommands.put("CONNECT", new Integer(CONNECT));
-        hCommands.put("CREATE", new Integer(CREATE));
-        hCommands.put("DELETE", new Integer(DELETE));
-        hCommands.put("DISCONNECT", new Integer(DISCONNECT));
-        hCommands.put("DROP", new Integer(DROP));
-        hCommands.put("GRANT", new Integer(GRANT));
-        hCommands.put("INSERT", new Integer(INSERT));
-        hCommands.put("REVOKE", new Integer(REVOKE));
-        hCommands.put("ROLLBACK", new Integer(ROLLBACK));
-        hCommands.put("SAVEPOINT", new Integer(SAVEPOINT));
-        hCommands.put("SCRIPT", new Integer(SCRIPT));
-        hCommands.put("SELECT", new Integer(SELECT));
-        hCommands.put("SET", new Integer(SET));
-        hCommands.put("SHUTDOWN", new Integer(SHUTDOWN));
-        hCommands.put("UPDATE", new Integer(UPDATE));
-        hCommands.put(";", new Integer(SEMICOLON));
+        commandSet.put("ALTER", ALTER);
+        commandSet.put("CALL", CALL);
+        commandSet.put("CHECKPOINT", CHECKPOINT);
+        commandSet.put("COMMIT", COMMIT);
+        commandSet.put("CONNECT", CONNECT);
+        commandSet.put("CREATE", CREATE);
+        commandSet.put("DELETE", DELETE);
+        commandSet.put("DISCONNECT", DISCONNECT);
+        commandSet.put("DROP", DROP);
+        commandSet.put("GRANT", GRANT);
+        commandSet.put("INSERT", INSERT);
+        commandSet.put("REVOKE", REVOKE);
+        commandSet.put("ROLLBACK", ROLLBACK);
+        commandSet.put("SAVEPOINT", SAVEPOINT);
+        commandSet.put("SCRIPT", SCRIPT);
+        commandSet.put("SELECT", SELECT);
+        commandSet.put("SET", SET);
+        commandSet.put("SHUTDOWN", SHUTDOWN);
+        commandSet.put("UPDATE", UPDATE);
+        commandSet.put(";", SEMICOLON);
 
         //
-        hCommands.put("TABLE", new Integer(TABLE));
-        hCommands.put("INDEX", new Integer(INDEX));
-        hCommands.put("RENAME", new Integer(RENAME));
-        hCommands.put("ADD", new Integer(ADD));
-        hCommands.put("CONSTRAINT", new Integer(CONSTRAINT));
-        hCommands.put("FOREIGN", new Integer(FOREIGN));
-        hCommands.put("COLUMN", new Integer(COLUMN));
-        hCommands.put("UNIQUE", new Integer(UNIQUE));
-        hCommands.put("TEXT", new Integer(TEXT));
-        hCommands.put("MEMORY", new Integer(MEMORY));
-        hCommands.put("CACHED", new Integer(CACHED));
-        hCommands.put("VIEW", new Integer(VIEW));
-        hCommands.put("TRIGGER", new Integer(TRIGGER));
-        hCommands.put("USER", new Integer(USER));
-        hCommands.put("ALIAS", new Integer(ALIAS));
-        hCommands.put("PRIMARY", new Integer(PRIMARY));
-        hCommands.put("PASSWORD", new Integer(PASSWORD));
-        hCommands.put("READONLY", new Integer(READONLY));
-        hCommands.put("LOGSIZE", new Integer(LOGSIZE));
-        hCommands.put("LOGTYPE", new Integer(LOGTYPE));
-        hCommands.put("IGNORECASE", new Integer(IGNORECASE));
-        hCommands.put("MAXROWS", new Integer(MAXROWS));
-        hCommands.put("AUTOCOMMIT", new Integer(AUTOCOMMIT));
-        hCommands.put("SOURCE", new Integer(SOURCE));
-        hCommands.put("WRITE_DELAY", new Integer(WRITE_DELAY));
-        hCommands.put("REFERENTIAL_INTEGRITY",
-                      new Integer(REFERENTIAL_INTEGRITY));
+        commandSet.put("TABLE", TABLE);
+        commandSet.put("INDEX", INDEX);
+        commandSet.put("RENAME", RENAME);
+        commandSet.put("ADD", ADD);
+        commandSet.put("CONSTRAINT", CONSTRAINT);
+        commandSet.put("FOREIGN", FOREIGN);
+        commandSet.put("COLUMN", COLUMN);
+        commandSet.put("UNIQUE", UNIQUE);
+        commandSet.put("TEXT", TEXT);
+        commandSet.put("MEMORY", MEMORY);
+        commandSet.put("CACHED", CACHED);
+        commandSet.put("VIEW", VIEW);
+        commandSet.put("TRIGGER", TRIGGER);
+        commandSet.put("USER", USER);
+        commandSet.put("ALIAS", ALIAS);
+        commandSet.put("PRIMARY", PRIMARY);
+        commandSet.put("PASSWORD", PASSWORD);
+        commandSet.put("READONLY", READONLY);
+        commandSet.put("LOGSIZE", LOGSIZE);
+        commandSet.put("LOGTYPE", LOGTYPE);
+        commandSet.put("IGNORECASE", IGNORECASE);
+        commandSet.put("MAXROWS", MAXROWS);
+        commandSet.put("AUTOCOMMIT", AUTOCOMMIT);
+        commandSet.put("SOURCE", SOURCE);
+        commandSet.put("WRITE_DELAY", WRITE_DELAY);
+        commandSet.put("REFERENTIAL_INTEGRITY", REFERENTIAL_INTEGRITY);
     }
 
     /**
@@ -249,7 +250,7 @@ class Database {
             Trace.trace();
         }
 
-        sName = name;
+        sName = name.trim();
 
         open();
     }
@@ -269,6 +270,9 @@ class Database {
         cSession              = new HsqlArrayList();
         hAlias                = Library.getAliasMap();
         logger                = new Logger();
+        tokenizer             = new Tokenizer();
+        triggerNameList       = new DatabaseObjectNames();
+        indexNameList         = new DatabaseObjectNames();
         bReferentialIntegrity = true;
         dInfo = new DatabaseInformation(this, tTable, aAccess);
 
@@ -281,7 +285,9 @@ class Database {
 
         databaseProperties = new HsqlDatabaseProperties(sName);
 
-        if (sName.equals(".")) {
+        if (sName.length() == 0) {
+            throw Trace.error(Trace.GENERAL_ERROR, "bad database name");
+        } else if (sName.equals(".")) {
             newdatabase = true;
 
             databaseProperties.setProperty("sql.strict_fk", true);
@@ -495,15 +501,7 @@ class Database {
                     break;
                 }
 
-                Integer command = (Integer) hCommands.get(sToken);
-
-                if (command == null) {
-                    throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-                }
-
-                int cmd = command.intValue();
-
-                switch (cmd) {
+                switch (commandSet.get(sToken)) {
 
                     case SELECT :
                         rResult = p.processSelect();
@@ -591,6 +589,9 @@ class Database {
 
                     case SEMICOLON :
                         break;
+
+                    default :
+                        throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
                 }
 
                 if (session.getScripting()) {
@@ -858,6 +859,9 @@ class Database {
      *  Responsible for handling the parse and execution of CREATE SQL
      *  statements.
      *
+     *  All CREATE command require an ADMIN user except
+     *  CREATE TEMP [MEMORY] TABLE
+     *
      * @param  c the tokenized representation of the statement being processed
      * @param  session
      * @return
@@ -867,28 +871,19 @@ class Database {
                                  Session session) throws SQLException {
 
         session.checkReadWrite();
-        session.checkAdmin();
 
-        String sToken = c.getString();
-
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+        String  sToken = c.getString();
         boolean isTemp = false;
 
         if (sToken.equals("TEMP")) {
             isTemp = true;
             sToken = c.getString();
 
-            int     cmd     = -1;
-            Integer command = (Integer) hCommands.get(sToken);
+            switch (commandSet.get(sToken)) {
 
-            if (command != null) {
-                cmd = command.intValue();
-            }
-
-            switch (cmd) {
-
-                case TABLE :
                 case TEXT :
+                    session.checkAdmin();
+                case TABLE :
                 case MEMORY :
                     session.setScripting(false);
                     break;
@@ -897,23 +892,15 @@ class Database {
                     throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
             }
         } else {
-            session.checkReadWrite();
             session.checkAdmin();
             session.setScripting(true);
         }
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-        int     cmd     = -1;
-        Integer command = (Integer) hCommands.get(sToken);
-
-        if (command != null) {
-            cmd = command.intValue();
-        }
-
         boolean unique    = false;
         int     tableType = 0;
 
-        switch (cmd) {
+        switch (commandSet.get(sToken)) {
 
             case TABLE :
                 tableType = isTemp ? Table.TEMP_TABLE
@@ -1451,10 +1438,9 @@ class Database {
                           defaultvalue);
     }
 
-    HsqlArrayList processCreateConstraints(Tokenizer c, Session session,
-                                           Table t, boolean constraint,
-                                           int[] primarykeycolumn)
-                                           throws SQLException {
+    private HsqlArrayList processCreateConstraints(Tokenizer c,
+            Session session, Table t, boolean constraint,
+            int[] primarykeycolumn) throws SQLException {
 
         String sToken;
 
@@ -1490,14 +1476,7 @@ class Database {
                 sToken = c.getString();
             }
 
-            int     cmd     = -1;
-            Integer command = (Integer) hCommands.get(sToken);
-
-            if (command != null) {
-                cmd = command.intValue();
-            }
-
-            switch (cmd) {
+            switch (commandSet.get(sToken)) {
 
                 case PRIMARY : {
                     c.getThis("KEY");
@@ -1664,14 +1643,7 @@ class Database {
 
 // fredt@users 20020225 - comment
 // we can check here for reserved words used with quotes as column names
-            int     cmd     = -1;
-            Integer command = (Integer) hCommands.get(sToken);
-
-            if (command != null) {
-                cmd = command.intValue();
-            }
-
-            switch (cmd) {
+            switch (commandSet.get(sToken)) {
 
                 case CONSTRAINT :
                 case PRIMARY :
@@ -1983,15 +1955,9 @@ class Database {
         session.checkAdmin();
         session.setScripting(true);
 
-        String  sToken  = c.getString();
-        int     cmd     = -1;
-        Integer command = (Integer) hCommands.get(sToken);
+        String sToken = c.getString();
 
-        if (command != null) {
-            cmd = command.intValue();
-        }
-
-        switch (cmd) {
+        switch (commandSet.get(sToken)) {
 
             case TABLE :
                 processAlterTable(c, session);
@@ -2018,14 +1984,7 @@ class Database {
 
         session.setScripting(!t.isTemp());
 
-        int     cmd     = -1;
-        Integer command = (Integer) hCommands.get(sToken);
-
-        if (command != null) {
-            cmd = command.intValue();
-        }
-
-        switch (cmd) {
+        switch (commandSet.get(sToken)) {
 
             default :
                 throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
@@ -2038,14 +1997,7 @@ class Database {
             case ADD : {
                 sToken = c.getString();
 
-                int     subcmd     = -1;
-                Integer subCommand = (Integer) hCommands.get(sToken);
-
-                if (subCommand != null) {
-                    subcmd = subCommand.intValue();
-                }
-
-                switch (subcmd) {
+                switch (commandSet.get(sToken)) {
 
                     default :
                         throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
@@ -2056,14 +2008,7 @@ class Database {
 
                         sToken = c.getString();
 
-                        int     ssubcmd     = -1;
-                        Integer ssubCommand = (Integer) hCommands.get(sToken);
-
-                        if (ssubCommand != null) {
-                            ssubcmd = ssubCommand.intValue();
-                        }
-
-                        switch (ssubcmd) {
+                        switch (commandSet.get(sToken)) {
 
                             default :
                                 throw Trace.error(Trace.UNEXPECTED_TOKEN,
@@ -2122,14 +2067,7 @@ class Database {
             case DROP : {
                 sToken = c.getString();
 
-                int     subcmd     = -1;
-                Integer subCommand = (Integer) hCommands.get(sToken);
-
-                if (subCommand != null) {
-                    subcmd = subCommand.intValue();
-                }
-
-                switch (subcmd) {
+                switch (commandSet.get(sToken)) {
 
                     default :
                         throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
@@ -2210,17 +2148,10 @@ class Database {
         session.checkAdmin();
         session.setScripting(true);
 
-        String  sToken  = c.getString();
-        int     cmd     = -1;
-        Integer command = (Integer) hCommands.get(sToken);
-
-        if (command != null) {
-            cmd = command.intValue();
-        }
-
+        String  sToken = c.getString();
         boolean isview = false;
 
-        switch (cmd) {
+        switch (commandSet.get(sToken)) {
 
             case VIEW :
                 isview = true;
@@ -2410,15 +2341,9 @@ class Database {
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
         session.setScripting(true);
 
-        String  sToken  = c.getString();
-        int     cmd     = -1;
-        Integer command = (Integer) hCommands.get(sToken);
+        String sToken = c.getString();
 
-        if (command != null) {
-            cmd = command.intValue();
-        }
-
-        switch (cmd) {
+        switch (commandSet.get(sToken)) {
 
             case PASSWORD : {
                 session.checkReadWrite();
@@ -2485,14 +2410,7 @@ class Database {
 
                 session.setScripting(!t.isTemp());
 
-                int     subcmd     = -1;
-                Integer subCommand = (Integer) hCommands.get(sToken);
-
-                if (subCommand != null) {
-                    subcmd = subCommand.intValue();
-                }
-
-                switch (subcmd) {
+                switch (commandSet.get(sToken)) {
 
                     case SOURCE : {
                         if (!t.isTemp()) {

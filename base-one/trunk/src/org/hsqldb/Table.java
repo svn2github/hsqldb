@@ -1867,9 +1867,25 @@ class Table {
                     continue;
                 }
 
-                int  m_columns[] = c.getMainColumns();
-                int  r_columns[] = c.getRefColumns();
-                Node refnode     = c.findFkRef(orow, false);
+                int m_columns[] = c.getMainColumns();
+                int r_columns[] = c.getRefColumns();
+
+                // fredt - find out if the FK columns have actually changed
+                boolean nochange = true;
+
+                for (int j = 0; j < m_columns.length; j++) {
+                    if (!orow[m_columns[j]].equals(nrow[m_columns[j]])) {
+                        nochange = false;
+
+                        break;
+                    }
+                }
+
+                if (nochange) {
+                    continue;
+                }
+
+                Node refnode = c.findFkRef(orow, false);
 
                 if (refnode == null) {
 

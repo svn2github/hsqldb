@@ -72,6 +72,7 @@ import java.sql.Types;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HsqlLinkedList;
 import org.hsqldb.lib.HsqlStringBuffer;
+import org.hsqldb.lib.HsqlObjectToIntMap;
 import org.hsqldb.lib.StringUtil;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt - quoted identifiers
@@ -1670,11 +1671,9 @@ class Parser {
         } else if (sToken.length() == 0) {
             iToken = Expression.END;
         } else {
-            Integer n = (Integer) tokenTable.get(sToken);
+            iToken = tokenSet.get(sToken);
 
-            if (n != null) {
-                iToken = n.intValue();
-            } else {
+            if (iToken == -1) {
                 iToken = Expression.END;
             }
 
@@ -1736,43 +1735,43 @@ class Parser {
         }
     }
 
-    private static java.util.Hashtable tokenTable =
-        new java.util.Hashtable(37);
+    private static HsqlObjectToIntMap tokenSet =
+        new HsqlObjectToIntMap(37);
 
     static {
-        tokenTable.put(",", new Integer(Expression.COMMA));
-        tokenTable.put("=", new Integer(Expression.EQUAL));
-        tokenTable.put("!=", new Integer(Expression.NOT_EQUAL));
-        tokenTable.put("<>", new Integer(Expression.NOT_EQUAL));
-        tokenTable.put("<", new Integer(Expression.SMALLER));
-        tokenTable.put(">", new Integer(Expression.BIGGER));
-        tokenTable.put("<=", new Integer(Expression.SMALLER_EQUAL));
-        tokenTable.put(">=", new Integer(Expression.BIGGER_EQUAL));
-        tokenTable.put("AND", new Integer(Expression.AND));
-        tokenTable.put("NOT", new Integer(Expression.NOT));
-        tokenTable.put("OR", new Integer(Expression.OR));
-        tokenTable.put("IN", new Integer(Expression.IN));
-        tokenTable.put("EXISTS", new Integer(Expression.EXISTS));
-        tokenTable.put("BETWEEN", new Integer(Expression.BETWEEN));
-        tokenTable.put("+", new Integer(Expression.PLUS));
-        tokenTable.put("-", new Integer(Expression.NEGATE));
-        tokenTable.put("*", new Integer(Expression.MULTIPLY));
-        tokenTable.put("/", new Integer(Expression.DIVIDE));
-        tokenTable.put("||", new Integer(Expression.STRINGCONCAT));
-        tokenTable.put("(", new Integer(Expression.OPEN));
-        tokenTable.put(")", new Integer(Expression.CLOSE));
-        tokenTable.put("SELECT", new Integer(Expression.SELECT));
-        tokenTable.put("LIKE", new Integer(Expression.LIKE));
-        tokenTable.put("COUNT", new Integer(Expression.COUNT));
-        tokenTable.put("SUM", new Integer(Expression.SUM));
-        tokenTable.put("MIN", new Integer(Expression.MIN));
-        tokenTable.put("MAX", new Integer(Expression.MAX));
-        tokenTable.put("AVG", new Integer(Expression.AVG));
-        tokenTable.put("IFNULL", new Integer(Expression.IFNULL));
-        tokenTable.put("CONVERT", new Integer(Expression.CONVERT));
-        tokenTable.put("CAST", new Integer(Expression.CAST));
-        tokenTable.put("CASEWHEN", new Integer(Expression.CASEWHEN));
-        tokenTable.put("CONCATE", new Integer(Expression.CONCAT));
-        tokenTable.put("IS", new Integer(Expression.IS));
+        tokenSet.put(",", Expression.COMMA);
+        tokenSet.put("=", Expression.EQUAL);
+        tokenSet.put("!=", Expression.NOT_EQUAL);
+        tokenSet.put("<>", Expression.NOT_EQUAL);
+        tokenSet.put("<", Expression.SMALLER);
+        tokenSet.put(">", Expression.BIGGER);
+        tokenSet.put("<=", Expression.SMALLER_EQUAL);
+        tokenSet.put(">=", Expression.BIGGER_EQUAL);
+        tokenSet.put("AND", Expression.AND);
+        tokenSet.put("NOT", Expression.NOT);
+        tokenSet.put("OR", Expression.OR);
+        tokenSet.put("IN", Expression.IN);
+        tokenSet.put("EXISTS", Expression.EXISTS);
+        tokenSet.put("BETWEEN", Expression.BETWEEN);
+        tokenSet.put("+", Expression.PLUS);
+        tokenSet.put("-", Expression.NEGATE);
+        tokenSet.put("*", Expression.MULTIPLY);
+        tokenSet.put("/", Expression.DIVIDE);
+        tokenSet.put("||", Expression.STRINGCONCAT);
+        tokenSet.put("(", Expression.OPEN);
+        tokenSet.put(")", Expression.CLOSE);
+        tokenSet.put("SELECT", Expression.SELECT);
+        tokenSet.put("LIKE", Expression.LIKE);
+        tokenSet.put("COUNT", Expression.COUNT);
+        tokenSet.put("SUM", Expression.SUM);
+        tokenSet.put("MIN", Expression.MIN);
+        tokenSet.put("MAX", Expression.MAX);
+        tokenSet.put("AVG", Expression.AVG);
+        tokenSet.put("IFNULL", Expression.IFNULL);
+        tokenSet.put("CONVERT", Expression.CONVERT);
+        tokenSet.put("CAST", Expression.CAST);
+        tokenSet.put("CASEWHEN", Expression.CASEWHEN);
+        tokenSet.put("CONCATE", Expression.CONCAT);
+        tokenSet.put("IS", Expression.IS);
     }
 }

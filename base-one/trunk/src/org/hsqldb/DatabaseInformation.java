@@ -68,7 +68,9 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlHashMap;
+
+//import org.hsqldb.lib.HsqlHashMap;
+import org.hsqldb.lib.HsqlObjectToIntMap;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.sql.DatabaseMetaData;
@@ -130,36 +132,37 @@ class DatabaseInformation {
     // static final String META_FIXED_PREC_SCALE="MONEY";
     // static final String META_ORDINAL_POSITION="SEQ_IN_INDEX";
     // static final String META_ASC_OR_DESC="COLLATION";
-    static final String        META_SCHEM            = "SCHEM";
-    static final String        META_CAT              = "CAT";
-    static final String        META_COLUMN_SIZE      = "COLUMN_SIZE";
-    static final String        META_BUFFER_LENGTH    = "BUFFER_LENGTH";
-    static final String        META_DECIMAL_DIGITS   = "DECIMAL_DIGITS";
-    static final String        META_NUM_PREC_RADIX   = "NUM_PREC_RADIX";
-    static final String        META_FIXED_PREC_SCALE = "FIXED_PREC_SCALE";
-    static final String        META_ORDINAL_POSITION = "ORDINAL_POSITION";
-    static final String        META_ASC_OR_DESC      = "ASC_OR_DESC";
-    private static HsqlHashMap sysTableNames;
-    private static final int   SYSTEM_PROCEDURES        = 1;
-    private static final int   SYSTEM_PROCEDURECOLUMNS  = 2;
-    private static final int   SYSTEM_TABLES            = 3;
-    private static final int   SYSTEM_SCHEMAS           = 4;
-    private static final int   SYSTEM_CATALOGS          = 5;
-    private static final int   SYSTEM_TABLETYPES        = 6;
-    private static final int   SYSTEM_COLUMNS           = 7;
-    private static final int   SYSTEM_COLUMNPRIVILEGES  = 8;
-    private static final int   SYSTEM_TABLEPRIVILEGES   = 9;
-    private static final int   SYSTEM_BESTROWIDENTIFIER = 10;
-    private static final int   SYSTEM_VERSIONCOLUMNS    = 11;
-    private static final int   SYSTEM_PRIMARYKEYS       = 12;
-    private static final int   SYSTEM_IMPORTEDKEYS      = 13;
-    private static final int   SYSTEM_EXPORTEDKEYS      = 14;
-    private static final int   SYSTEM_CROSSREFERENCE    = 15;
-    private static final int   SYSTEM_TYPEINFO          = 16;
-    private static final int   SYSTEM_INDEXINFO         = 17;
-    private static final int   SYSTEM_UDTS              = 18;
-    private static final int   SYSTEM_CONNECTIONINFO    = 19;
-    private static final int   SYSTEM_USERS             = 20;
+    static final String               META_SCHEM          = "SCHEM";
+    static final String               META_CAT            = "CAT";
+    static final String               META_COLUMN_SIZE    = "COLUMN_SIZE";
+    static final String               META_BUFFER_LENGTH  = "BUFFER_LENGTH";
+    static final String               META_DECIMAL_DIGITS = "DECIMAL_DIGITS";
+    static final String               META_NUM_PREC_RADIX = "NUM_PREC_RADIX";
+    static final String META_FIXED_PREC_SCALE = "FIXED_PREC_SCALE";
+    static final String META_ORDINAL_POSITION = "ORDINAL_POSITION";
+    static final String               META_ASC_OR_DESC    = "ASC_OR_DESC";
+    private static HsqlObjectToIntMap sysTableNames;
+    private static HsqlName[]         sysTableHsqlNames;
+    private static final int          SYSTEM_PROCEDURES        = 1;
+    private static final int          SYSTEM_PROCEDURECOLUMNS  = 2;
+    private static final int          SYSTEM_TABLES            = 3;
+    private static final int          SYSTEM_SCHEMAS           = 4;
+    private static final int          SYSTEM_CATALOGS          = 5;
+    private static final int          SYSTEM_TABLETYPES        = 6;
+    private static final int          SYSTEM_COLUMNS           = 7;
+    private static final int          SYSTEM_COLUMNPRIVILEGES  = 8;
+    private static final int          SYSTEM_TABLEPRIVILEGES   = 9;
+    private static final int          SYSTEM_BESTROWIDENTIFIER = 10;
+    private static final int          SYSTEM_VERSIONCOLUMNS    = 11;
+    private static final int          SYSTEM_PRIMARYKEYS       = 12;
+    private static final int          SYSTEM_IMPORTEDKEYS      = 13;
+    private static final int          SYSTEM_EXPORTEDKEYS      = 14;
+    private static final int          SYSTEM_CROSSREFERENCE    = 15;
+    private static final int          SYSTEM_TYPEINFO          = 16;
+    private static final int          SYSTEM_INDEXINFO         = 17;
+    private static final int          SYSTEM_UDTS              = 18;
+    private static final int          SYSTEM_CONNECTIONINFO    = 19;
+    private static final int          SYSTEM_USERS             = 20;
 
     // supported table types
     private static final String[] tableTypes = new String[] {
@@ -167,8 +170,6 @@ class DatabaseInformation {
     };
 
     static {
-        sysTableNames = new HsqlHashMap(37);
-
         String sysNames[] = {
             "SYSTEM_PROCEDURES", "SYSTEM_PROCEDURECOLUMNS", "SYSTEM_TABLES",
             "SYSTEM_SCHEMAS", "SYSTEM_CATALOGS", "SYSTEM_TABLETYPES",
@@ -180,14 +181,19 @@ class DatabaseInformation {
             "SYSTEM_UDTS", "SYSTEM_CONNECTIONINFO", "SYSTEM_USERS"
         };
 
+        sysTableHsqlNames = new HsqlName[sysNames.length];
+        sysTableNames     = new HsqlObjectToIntMap(37);
+
         for (int i = 0; i < sysNames.length; i++) {
-            sysTableNames.put(sysNames[i], new Integer(i + 1));
+            sysTableNames.put(sysNames[i], i + 1);
+
+            sysTableHsqlNames[i] = HsqlName.newAutoName(null, sysNames[i]);
         }
     }
 
     static boolean isSystemTable(String name) {
-        return sysTableNames.get(name) == null ? false
-                                               : true;
+        return sysTableNames.get(name) == -1 ? false
+                                             : true;
     }
 
     /**
@@ -204,17 +210,16 @@ class DatabaseInformation {
     Table getSystemTable(String tablename,
                          Session session) throws SQLException {
 
-        HsqlName name    = new HsqlName(tablename, false);
-        Integer  tableId = (Integer) sysTableNames.get(tablename);
+        int tableId = sysTableNames.get(tablename);
 
-        if (tableId == null) {
+        if (tableId == -1) {
             return null;
         }
 
-        int   tableIdValue = tableId.intValue();
-        Table t            = createTable(name);
+        HsqlName name = sysTableHsqlNames[tableId-1];
+        Table    t    = createTable(name);
 
-        switch (tableIdValue) {
+        switch (tableId) {
 
             case SYSTEM_PROCEDURES : {
                 t.addColumn("PROCEDURE_" + META_CAT, Types.VARCHAR);
@@ -509,7 +514,7 @@ class DatabaseInformation {
                 t.addColumn("TABLE_NAME", Types.VARCHAR);
                 t.createPrimaryKey();
 
-                if (tableIdValue == SYSTEM_VERSIONCOLUMNS) {
+                if (tableId == SYSTEM_VERSIONCOLUMNS) {
                     return t;
                 }
             {

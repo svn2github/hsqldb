@@ -513,13 +513,7 @@ class DatabaseScript {
         HsqlArrayList    uv = dDatabase.getUserManager().getUsers();
 
         for (int i = 0, vSize = uv.size(); i < vSize; i++) {
-            User u = (User) uv.get(i);
-            /*
-            // todo: this is not a nice implementation
-            if (u == null) {
-                continue;
-            }
-            */
+            User   u    = (User) uv.get(i);
             String name = u.getName();
 
             if (!views &&!name.equals("PUBLIC")) {
@@ -551,12 +545,6 @@ class DatabaseScript {
                 Object object = e.nextElement();
                 int    right  = ((Integer) (rights.get(object))).intValue();
 
-                //  zero rights will have been removed
-                /*
-                if (right == 0) {
-                    continue;
-                }
-                */
                 a = new HsqlStringBuffer(64);
 
                 a.append("GRANT ");
@@ -572,11 +560,15 @@ class DatabaseScript {
                     a.append((String) object);
                     a.append('\"');
                 } else {
+
+                    // either table != null or issystem == true
                     Table table =
                         dDatabase.findUserTable(((HsqlName) object).name);
+                    boolean issystem = DatabaseInformation.isSystemTable(
+                        ((HsqlName) object).name);
 
                     // assumes all non String objects are table names
-                    if (views == table.isView()) {
+                    if (issystem || views == table.isView()) {
                         a.append(((HsqlName) object).statementName);
                     } else {
                         continue;

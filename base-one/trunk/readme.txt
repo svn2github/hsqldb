@@ -1,5 +1,20 @@
 Readme File
 
+HSQLDB 1.7.2 ALPHA_M
+
+2003.01.23
+
+-fixed reported bugs in SHUTDOWN COMPACT
+-fixed reported bugs in GRANT statements on system tables
+-fixed bug that prevented UPDATE in some circumstances
+
+some enhancements that appeared in previous versions but not reported:
+
+-enhanced handling of DATE objects - comparability and normalisation
+-support for CLOB methods in Result
+-fixed bug in afterLast() followed by previous() in Result
+
+
 HSQLDB 1.7.2 ALPHA_L
 
 2003.01.16
