@@ -53,7 +53,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.82 2004/06/16 21:33:09 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.83 2004/07/04 15:27:31 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -89,7 +89,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.82 $
+ * @version $Revision: 1.83 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -131,8 +131,8 @@ public class SqlFile {
           + "                                                                 ";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.82 $".substring("$Revision: ".length(),
-                "$Revision: 1.82 $".length() - 2);
+        revnum = "$Revision: 1.83 $".substring("$Revision: ".length(),
+                "$Revision: 1.83 $".length() - 2);
     }
     private static String BANNER =
         "(SqlFile processor v. " + revnum + ")\n"
@@ -181,7 +181,7 @@ public class SqlFile {
         + "    \\w file/path.sql     Append current buffer to file\n"
         + "    \\i file/path.sql     Include/execute commands from external file\n"
         + "    \\d[tv*sa]            List names of Tbls/Views/all/System Tbls/Aliases\n"
-        + "    \\d OBJECT            Describe table or view\n"
+        + "    \\d OBJECTNAME        Describe table or view\n"
         + "    \\o [file/path.html]  Tee (or stop teeing) query output to specified file\n"
         + "    \\H                   Toggle HTML output mode\n"
         + "    \\! COMMAND ARGS      Execute external program (no support for stdin)\n"
