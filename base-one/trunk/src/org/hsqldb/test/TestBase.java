@@ -33,59 +33,68 @@ package org.hsqldb.test;
 
 import junit.framework.TestCase;
 import junit.framework.TestResult;
+import org.hsqldb.Server;
 import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.Statement;
 
 /**
- * HSQLDB TestBug808460 Junit test case. <p>
+ * HSQLDB TestBugBase Junit test case. <p>
  *
  * @author  boucherb@users.sourceforge.net
  * @version 1.7.2
  * @since 1.7.2
  */
-public class TestBug808460 extends TestBase {
+abstract public class TestBase extends TestCase {
 
-    public TestBug808460(String name) {
+    //  change the url to reflect your preferred db location and name
+    //  String url = "jdbc:hsqldb:hsql://localhost/yourtest";
+    String  serverProps;
+    String  url;
+    String  user     = "sa";
+    String  password = "";
+    Server  server;
+    boolean isNetwork = true;
+
+    public TestBase(String name) {
         super(name);
     }
 
-    /* Implements the TestBug808460 test */
-    public void test() throws Exception {
+    protected void setUp() {
 
-        Connection conn = newConnection();
-        Statement  stmt = conn.createStatement();
+        if (isNetwork) {
+            serverProps = "database.0=mem:test";
+            url         = "jdbc:hsqldb:hsql://localhost";
+            server      = new Server();
 
-        stmt.executeQuery("SELECT * FROM SYSTEM_SESSIONS");
-        conn.close();
+            server.putPropertiesFromString(serverProps);
+            server.setLogWriter(null);
+            server.setErrWriter(null);
+            server.start();
+        } else {
+            url = "jdbc:hsqldb:file:test";
+        }
 
-        conn = newConnection();
-        stmt = conn.createStatement();
-
-        stmt.executeQuery("SELECT * FROM SYSTEM_SESSIONS");
-        conn.close();
-    }
-
-    /* Runs TestBug808460 test from the command line*/
-    public static void main(String[] args) throws Exception {
-
-        TestResult            result;
-        TestCase              test;
-        java.util.Enumeration failures;
-        int                   count;
-
-        result = new TestResult();
-        test   = new TestBug808460("test");
-
-        test.run(result);
-
-        count = result.failureCount();
-
-        System.out.println("TestBug808460 failure count: " + count);
-
-        failures = result.failures();
-
-        while (failures.hasMoreElements()) {
-            System.out.println(failures.nextElement());
+        try {
+            Class.forName("org.hsqldb.jdbcDriver");
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println(this + ".setUp() error: " + e.getMessage());
         }
     }
+
+    protected void tearDown() {
+
+        server.stop();
+
+        server = null;
+    }
+
+    Connection newConnection() throws Exception {
+        return DriverManager.getConnection(url, user, password);
+    }
+
+    abstract public void test() throws Exception;
 }

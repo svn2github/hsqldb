@@ -45,7 +45,7 @@ import java.sql.Statement;
  *
  * @author  boucherb@users.sourceforge.net
  */
-public class TestBug785429 extends TestBugBase {
+public class TestBug785429 extends TestBase {
 
     Statement  stmt;
     Connection conn;

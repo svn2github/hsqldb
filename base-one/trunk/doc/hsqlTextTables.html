@@ -116,6 +116,8 @@ Finally, HSQLDB provides the ability to read a text file from the bottom up, by 
    
 <p>
       This feature provides functionality similar to the Unix tail command, by re-reading the file each time a select is executed. Using this feature sets the table to read-only mode. Afterwards, it will no longer be possible to change the read-only status with SET TABLE &lt;tablename&gt; READONLY TRUE.</p>
+<p>Text table source files are cached in memory. The maximum number of  rows of data that are in memory at any time is controlled by the textdb.cache_scale property. The default value for textdb.cache_scale is 10 and can be changed by setting the property in the .properties file for the database. The number of rows in memory is calculated as 3*(2**scale), which translates to 3072 rows for the default textdb.cache_scale setting (10). The property can also be set for individual text tables:</p>
+<pre>SET TABLE mytable SOURCE "myfile;ignore_first=true;all_quoted=true;cache_scale=12"</pre>
 <li>
       <h4>Text File Issues</h4>
    </li>
@@ -185,8 +187,10 @@ Finally, HSQLDB provides the ability to read a text file from the bottom up, by 
    textdb.all_quoted<br>
    textdb.ignore_first<br>
   textdb.encoding<br>
-   </code><br>
-   Authors: Bob Preston and Fred Toussi - 29 May 2002 - last updated by FT 21 Aug 2003</p>
+  textdb.cache_scale<br>
+  </code></p>
+<p><br>
+   Authors: Bob Preston and Fred Toussi - 29 May 2002 - last updated by FT 25 Sep 2003</p>
 <p>Copyright 2002-2003 Bob Preston and Fred Toussi. Permission is granted to distribute this document without any alteration under the terms of the HSQLDB license. Additional permission is granted to the HSQLDB Development Group to distribute this document with or without alterations under the terms of the HSQLDB license.</p>
 <p><a href="http://hsqldb.sourceforge.net">http://hsqldb.sourceforge.net&nbsp;</a></p>
 </body>

@@ -146,7 +146,8 @@ class Expression {
                      SUBSTRING = 66,
                      NULLIF    = 67,
                      CASE      = 68,
-                     COALESCE  = 69;
+                     COALESCE    = 69,
+                     ALTERNATIVE = 70;
 
     // temporary used during paring
     static final int PLUS         = 100,
@@ -198,44 +199,46 @@ class Expression {
     private static final int AGGREGATE_LEFT  = 1;
     private static final int AGGREGATE_RIGHT = 2;
     private static final int AGGREGATE_BOTH  = 3;
-    int                      iType;
+
+    // type
+    int exprType;
 
     // nodes
     private Expression eArg, eArg2;
     private int        aggregateSpec = AGGREGATE_NONE;
 
     // VALUE, VALUELIST
-    Object          oData;
+    Object          valueData;
     private HashMap hList;
     private boolean hListIsUpper;
-    private int     iDataType;
+    private int     dataType;
 
     // QUERY (correlated subquery)
-    Select sSelect;
+    Select subSelect;
 
     // FUNCTION
-    private Function fFunction;
+    private Function function;
 
     // LIKE
-    private char cLikeEscape;
+    private char likeEscapeChar;
 
     // COLUMN
-    private String      sCatalog;
-    private String      sSchema;
-    private String      sTable;
-    private String      sColumn;
-    private TableFilter tFilter;    // null if not yet resolved
+    private String      catalog;
+    private String      schema;
+    private String      tableName;
+    private String      columnName;
+    private TableFilter tableFilter;    // null if not yet resolved
 
     //
-    private int     iColumn;
+    private int     columnIndex;
     private boolean columnQuoted;
-    private int     iColumnSize;
-    private int     iColumnScale;
-    private String  sAlias;         // if it is a column of a select column list
+    private int     columnSize;
+    private int     columnScale;
+    private String  columnAlias;        // if it is a column of a select column list
     private boolean aliasQuoted;
 
     //
-    private boolean bDescending;    // if it is a column in a order by
+    private boolean isDescending;       // if it is a column in a order by
 
 // rougier@users 20020522 - patch 552830 - COUNT(DISTINCT)
     // {COUNT|SUM|MIN|MAX|AVG}(distinct ...)
@@ -254,8 +257,8 @@ class Expression {
      * @param f
      */
     Expression(Function f) {
-        iType     = FUNCTION;
-        fFunction = f;
+        exprType = FUNCTION;
+        function = f;
     }
 
     /**
@@ -264,13 +267,13 @@ class Expression {
      */
     Expression(Expression e) {
 
-        iType       = e.iType;
-        iDataType   = e.iDataType;
+        exprType       = e.exprType;
+        dataType       = e.dataType;
         eArg        = e.eArg;
         eArg2       = e.eArg2;
-        cLikeEscape = e.cLikeEscape;
-        sSelect     = e.sSelect;
-        fFunction   = e.fFunction;
+        likeEscapeChar = e.likeEscapeChar;
+        subSelect      = e.subSelect;
+        function       = e.function;
 
         checkAggregate();
     }
@@ -280,8 +283,8 @@ class Expression {
      * @param s
      */
     Expression(Select s) {
-        iType   = QUERY;
-        sSelect = s;
+        exprType  = QUERY;
+        subSelect = s;
     }
 
     /**
@@ -290,8 +293,8 @@ class Expression {
      */
     Expression(HsqlArrayList v) {
 
-        iType     = VALUELIST;
-        iDataType = Types.VARCHAR;
+        exprType = VALUELIST;
+        dataType = Types.VARCHAR;
 
         int size = v.size();
 
@@ -313,7 +316,7 @@ class Expression {
      */
     Expression(int type, Expression e, Expression e2) {
 
-        iType = type;
+        exprType = type;
         eArg  = e;
         eArg2 = e2;
 
@@ -327,13 +330,13 @@ class Expression {
      */
     Expression(String table, String column) {
 
-        sTable = table;
+        tableName = table;
 
         if (column == null) {
-            iType = ASTERIX;
+            exprType = ASTERIX;
         } else {
-            iType   = COLUMN;
-            sColumn = column;
+            exprType   = COLUMN;
+            columnName = column;
         }
     }
 
@@ -344,28 +347,28 @@ class Expression {
      */
     Expression(String table, String column, boolean isquoted) {
 
-        sTable = table;
+        tableName = table;
 
         if (column == null) {
-            iType = ASTERIX;
+            exprType = ASTERIX;
         } else {
-            iType        = COLUMN;
-            sColumn      = column;
+            exprType     = COLUMN;
+            columnName   = column;
             columnQuoted = isquoted;
         }
     }
 
     Expression(String table, Column column) {
 
-        sTable = table;
+        tableName = table;
 
         if (column == null) {
-            iType = ASTERIX;
+            exprType = ASTERIX;
         } else {
-            iType        = COLUMN;
-            sColumn      = column.columnName.name;
+            exprType     = COLUMN;
+            columnName   = column.columnName.name;
             columnQuoted = column.columnName.isNameQuoted;
-            iDataType    = column.getType();
+            dataType     = column.getType();
         }
     }
 
@@ -377,9 +380,9 @@ class Expression {
      */
     Expression(int datatype, Object o) {
 
-        iType     = VALUE;
-        iDataType = datatype;
-        oData     = o;
+        exprType  = VALUE;
+        dataType  = datatype;
+        valueData = o;
     }
 
     /**
@@ -402,7 +405,7 @@ class Expression {
 
     private void checkAggregate() {
 
-        if (isAggregate(iType)) {
+        if (isAggregate(exprType)) {
             aggregateSpec = AGGREGATE_SELF;
         } else {
             aggregateSpec = AGGREGATE_NONE;
@@ -436,14 +439,14 @@ class Expression {
             buf.append("SET TRUE, WAS: ");
         }
 
-        lIType = oldIType == -1 ? iType
+        lIType = oldIType == -1 ? exprType
                                 : oldIType;
 
         switch (lIType) {
 
             case FUNCTION :
                 buf.append("FUNCTION ");
-                buf.append(fFunction);
+                buf.append(function);
 
                 return buf.toString();
 
@@ -452,27 +455,26 @@ class Expression {
                     buf.append("PARAM ");
                 }
 
-                buf.append("VALUE = ").append(oData);
-                buf.append(", TYPE = ").append(
-                    Types.getTypeString(iDataType));
+                buf.append("VALUE = ").append(valueData);
+                buf.append(", TYPE = ").append(Types.getTypeString(dataType));
 
                 return buf.toString();
 
             case COLUMN :
                 buf.append("COLUMN ");
 
-                if (sTable != null) {
-                    buf.append(sTable);
+                if (tableName != null) {
+                    buf.append(tableName);
                     buf.append('.');
                 }
 
-                buf.append(sColumn);
+                buf.append(columnName);
 
                 return buf.toString();
 
             case QUERY :
                 buf.append("QUERY ");
-                buf.append(sSelect);
+                buf.append(subSelect);
 
                 return buf.toString();
 
@@ -589,13 +591,14 @@ class Expression {
                 buf.append("AVG ");
                 break;
 
+/*
             case IFNULL :
                 buf.append("IFNULL ");
                 break;
-
+*/
             case CONVERT :
                 buf.append("CONVERT ");
-                buf.append(Types.getTypeString(iDataType));
+                buf.append(Types.getTypeString(dataType));
                 buf.append(' ');
                 break;
 
@@ -630,7 +633,7 @@ class Expression {
      * @param c
      */
     void setLikeEscape(char c) {
-        cLikeEscape = c;
+        likeEscapeChar = c;
     }
 
     /**
@@ -640,7 +643,7 @@ class Expression {
      * @param type
      */
     void setDataType(int type) {
-        iDataType = type;
+        dataType = type;
     }
 
 // NOTES: boucherb@users.sourceforge.net 20030601
@@ -660,10 +663,10 @@ class Expression {
     void setTrue() {
 
         if (oldIType == -1) {
-            oldIType = iType;
+            oldIType = exprType;
         }
 
-        iType = TRUE;
+        exprType = TRUE;
     }
 
     /**
@@ -673,7 +676,7 @@ class Expression {
     void unsetTrue() {
 
         if (oldIType != -1) {
-            iType = oldIType;
+            exprType = oldIType;
         }
     }
 
@@ -691,14 +694,16 @@ class Expression {
             return true;
         }
 
-        return (iType == exp.iType) && similarTo(eArg, exp.eArg)
-               && similarTo(eArg2, exp.eArg2) && equals(oData, exp.oData)
-               && equals(hList, exp.hList) && iDataType == exp.iDataType
-               && equals(sSelect, exp.sSelect)
-               && equals(fFunction, exp.fFunction)
-               && cLikeEscape == exp.cLikeEscape
-               && equals(sTable, exp.sTable) && equals(sColumn, exp.sColumn)
-               && iDataType == exp.iDataType;
+        return (exprType == exp.exprType) && similarTo(eArg, exp.eArg)
+               && similarTo(eArg2, exp.eArg2)
+               && equals(valueData, exp.valueData)
+               && equals(hList, exp.hList) && dataType == exp.dataType
+               && equals(subSelect, exp.subSelect)
+               && equals(function, exp.function)
+               && likeEscapeChar == exp.likeEscapeChar
+               && equals(tableName, exp.tableName)
+               && equals(columnName, exp.columnName)
+               && dataType == exp.dataType;
     }
 
     static boolean equals(Object o1, Object o2) {
@@ -722,7 +727,7 @@ class Expression {
      */
     boolean canBeInGroupBy() {
 
-        if (iType == FUNCTION) {
+        if (exprType == FUNCTION) {
             return true;
         }
 
@@ -736,7 +741,7 @@ class Expression {
      */
     boolean canBeInOrderBy() {
 
-        if (iType == FUNCTION) {
+        if (exprType == FUNCTION) {
             return true;
         }
 
@@ -751,7 +756,7 @@ class Expression {
      */
     private boolean isColumn() {
 
-        switch (iType) {
+        switch (exprType) {
 
             case COLUMN :
                 return true;
@@ -776,11 +781,11 @@ class Expression {
      */
     boolean collectColumnName(HashSet columnNames) {
 
-        if (iType == COLUMN) {
-            columnNames.add(sColumn);
+        if (exprType == COLUMN) {
+            columnNames.add(columnName);
         }
 
-        return iType == COLUMN;
+        return exprType == COLUMN;
     }
 
     /**
@@ -808,7 +813,7 @@ class Expression {
      */
     boolean isConstant() {
 
-        switch (iType) {
+        switch (exprType) {
 
             case VALUE :
                 return true;
@@ -883,7 +888,7 @@ class Expression {
      */
     boolean isConditional() {
 
-        switch (iType) {
+        switch (exprType) {
 
             case TRUE :
             case FALSE :
@@ -936,7 +941,7 @@ class Expression {
      *
      */
     void setDescending() {
-        bDescending = true;
+        isDescending = true;
     }
 
     /**
@@ -946,7 +951,7 @@ class Expression {
      * @return
      */
     boolean isDescending() {
-        return bDescending;
+        return isDescending;
     }
 
     /**
@@ -956,12 +961,12 @@ class Expression {
      * @param s
      */
     void setAlias(String s, boolean isquoted) {
-        sAlias      = s;
+        columnAlias = s;
         aliasQuoted = isquoted;
     }
 
     String getDefinedAlias() {
-        return sAlias;
+        return columnAlias;
     }
 
     /**
@@ -972,16 +977,16 @@ class Expression {
      */
     String getAlias() {
 
-        if (sAlias != null) {
-            return sAlias;
+        if (columnAlias != null) {
+            return columnAlias;
         }
 
-        if (iType == VALUE) {
+        if (exprType == VALUE) {
             return "";
         }
 
-        if (iType == COLUMN) {
-            return sColumn;
+        if (exprType == COLUMN) {
+            return columnName;
         }
 
 // fredt@users 20020130 - patch 497872 by Nitin Chauhan - modified
@@ -1006,11 +1011,11 @@ class Expression {
      */
     boolean isAliasQuoted() {
 
-        if (sAlias != null) {
+        if (columnAlias != null) {
             return aliasQuoted;
         }
 
-        if (iType == COLUMN) {
+        if (exprType == COLUMN) {
             return columnQuoted;
         }
 
@@ -1033,7 +1038,7 @@ class Expression {
      * @return
      */
     int getType() {
-        return iType;
+        return exprType;
     }
 
     /**
@@ -1063,7 +1068,7 @@ class Expression {
      * @return
      */
     TableFilter getFilter() {
-        return tFilter;
+        return tableFilter;
     }
 
     /**
@@ -1074,8 +1079,8 @@ class Expression {
      */
     void checkResolved() throws HsqlException {
 
-        Trace.check((iType != COLUMN) || (tFilter != null),
-                    Trace.COLUMN_NOT_FOUND, sColumn);
+        Trace.check((exprType != COLUMN) || (tableFilter != null),
+                    Trace.COLUMN_NOT_FOUND, columnName);
 
         if (eArg != null) {
             eArg.checkResolved();
@@ -1085,12 +1090,12 @@ class Expression {
             eArg2.checkResolved();
         }
 
-        if (sSelect != null) {
-            sSelect.checkResolved();
+        if (subSelect != null) {
+            subSelect.checkResolved();
         }
 
-        if (fFunction != null) {
-            fFunction.checkResolved();
+        if (function != null) {
+            function.checkResolved();
         }
     }
 
@@ -1108,25 +1113,25 @@ class Expression {
             return;
         }
 
-        if ((f != null) && (iType == COLUMN)) {
-            String tableName = f.getName();
+        if ((f != null) && (exprType == COLUMN)) {
+            String filterName = f.getName();
 
-            if ((sTable == null) || tableName.equals(sTable)) {
+            if ((tableName == null) || filterName.equals(tableName)) {
                 Table table = f.getTable();
-                int   i     = table.searchColumn(sColumn);
+                int   i     = table.searchColumn(columnName);
 
                 if (i != -1) {
 
 // fredt@users 20011110 - fix for 471711 - subselects
                     // todo: other error message: multiple tables are possible
                     Trace.check(
-                        tFilter == null
-                        || tFilter.getName().equals(
-                            tableName), Trace.COLUMN_NOT_FOUND, sColumn);
+                        tableFilter == null
+                        || tableFilter.getName().equals(
+                            filterName), Trace.COLUMN_NOT_FOUND, columnName);
 
-                    tFilter = f;
-                    iColumn = i;
-                    sTable  = tableName;
+                    tableFilter = f;
+                    columnIndex = i;
+                    tableName   = filterName;
 
                     setTableColumnAttributes(table, i);
 
@@ -1147,13 +1152,13 @@ class Expression {
             eArg2.resolve(f);
         }
 
-        if (sSelect != null) {
-            sSelect.resolve(f, false);
-            sSelect.resolve();
+        if (subSelect != null) {
+            subSelect.resolve(f, false);
+            subSelect.resolve();
         }
 
-        if (fFunction != null) {
-            fFunction.resolve(f);
+        if (function != null) {
+            function.resolve(f);
         }
 
 // temp fix to allow leaf Expression objects to be resolved
@@ -1161,14 +1166,14 @@ class Expression {
 //        if (iDataType != Types.NULL) {
 //            return;
 //        }
-        switch (iType) {
+        switch (exprType) {
 
             case FUNCTION :
-                iDataType = fFunction.getReturnType();
+                dataType = function.getReturnType();
                 break;
 
             case QUERY : {
-                iDataType = sSelect.eColumn[0].iDataType;
+                dataType = subSelect.eColumn[0].dataType;
 
                 break;
             }
@@ -1177,12 +1182,12 @@ class Expression {
                     !eArg.isParam, Trace.COLUMN_TYPE_MISMATCH,
                     "it is ambiguous for a parameter marker to be the operand of a unary negation operation");
 
-                iDataType = eArg.iDataType;
+                dataType = eArg.dataType;
 
                 if (isFixedConstant()) {
-                    oData = getValue(iDataType);
+                    valueData = getValue(dataType);
                     eArg  = null;
-                    iType = VALUE;
+                    exprType  = VALUE;
                 }
                 break;
 
@@ -1196,40 +1201,40 @@ class Expression {
                     "it is ambiguous for both operands of a binary aritmetic operator to be parameter markers");
 
                 if (isFixedConstant()) {
-                    iDataType = Column.getCombinedNumberType(eArg.iDataType,
-                            eArg2.iDataType, iType);
-                    oData = getValue(iDataType);
+                    dataType = Column.getCombinedNumberType(eArg.dataType,
+                            eArg2.dataType, exprType);
+                    valueData = getValue(dataType);
                     eArg  = null;
                     eArg2 = null;
-                    iType = VALUE;
+                    exprType  = VALUE;
                 } else {
                     if (eArg.isParam) {
-                        eArg.iDataType = eArg2.iDataType;
+                        eArg.dataType = eArg2.dataType;
                     } else if (eArg2.isParam) {
-                        eArg2.iDataType = eArg.iDataType;
+                        eArg2.dataType = eArg.dataType;
                     }
 
                     // fredt@users 20011010 - patch 442993 by fredt
-                    iDataType = Column.getCombinedNumberType(eArg.iDataType,
-                            eArg2.iDataType, iType);
+                    dataType = Column.getCombinedNumberType(eArg.dataType,
+                            eArg2.dataType, exprType);
                 }
                 break;
 
             case CONCAT :
-                iDataType = Types.VARCHAR;
+                dataType = Types.VARCHAR;
 
                 if (isFixedConstant()) {
-                    oData = getValue(iDataType);
+                    valueData = getValue(dataType);
                     eArg  = null;
                     eArg2 = null;
-                    iType = VALUE;
+                    exprType  = VALUE;
                 } else {
                     if (eArg.isParam) {
-                        eArg.iDataType = Types.VARCHAR;
+                        eArg.dataType = Types.VARCHAR;
                     }
 
                     if (eArg2.isParam) {
-                        eArg2.iDataType = Types.VARCHAR;
+                        eArg2.dataType = Types.VARCHAR;
                     }
                 }
                 break;
@@ -1246,25 +1251,25 @@ class Expression {
                     "it is ambiguous for both expressions of a comparison-predicate to be parameter markers");
 
                 if (isFixedConditional()) {
-                    iType = test() ? TRUE
+                    exprType = test() ? TRUE
                                    : FALSE;
                     eArg  = null;
                     eArg2 = null;
                 } else if (eArg.isParam) {
-                    eArg.iDataType = eArg2.iDataType;
+                    eArg.dataType = eArg2.dataType;
 
-                    if (eArg2.iType == COLUMN) {
+                    if (eArg2.exprType == COLUMN) {
                         eArg.setTableColumnAttributes(eArg2);
                     }
                 } else if (eArg2.isParam) {
-                    eArg2.iDataType = eArg.iDataType;
+                    eArg2.dataType = eArg.dataType;
 
-                    if (eArg.iType == COLUMN) {
+                    if (eArg.exprType == COLUMN) {
                         eArg2.setTableColumnAttributes(eArg);
                     }
                 }
 
-                iDataType = Types.BIT;
+                dataType = Types.BIT;
                 break;
 
             case LIKE :
@@ -1274,49 +1279,49 @@ class Expression {
                     "it is ambiguous for both expressions of a LIKE comparison-predicate to be parameter markers");
 
                 if (isFixedConditional()) {
-                    iType = test() ? TRUE
+                    exprType = test() ? TRUE
                                    : FALSE;
                     eArg  = null;
                     eArg2 = null;
                 } else if (eArg.isParam) {
-                    eArg.iDataType = Types.VARCHAR;
+                    eArg.dataType = Types.VARCHAR;
                 } else if (eArg2.isParam) {
-                    eArg2.iDataType = Types.VARCHAR;
+                    eArg2.dataType = Types.VARCHAR;
                 }
 
-                iDataType = Types.BIT;
+                dataType = Types.BIT;
                 break;
 
             case AND :
             case OR :
                 if (isFixedConditional()) {
-                    iType = test() ? TRUE
+                    exprType = test() ? TRUE
                                    : FALSE;
                     eArg  = null;
                     eArg2 = null;
                 } else {
                     if (eArg.isParam) {
-                        eArg.iDataType = Types.BIT;
+                        eArg.dataType = Types.BIT;
                     }
 
                     if (eArg2.isParam) {
-                        eArg2.iDataType = Types.BIT;
+                        eArg2.dataType = Types.BIT;
                     }
                 }
 
-                iDataType = Types.BIT;
+                dataType = Types.BIT;
                 break;
 
             case NOT :
                 if (isFixedConditional()) {
-                    iType = test() ? TRUE
+                    exprType = test() ? TRUE
                                    : FALSE;
                     eArg  = null;
                 } else if (eArg.isParam) {
-                    eArg.iDataType = Types.BIT;
+                    eArg.dataType = Types.BIT;
                 }
 
-                iDataType = Types.BIT;
+                dataType = Types.BIT;
                 break;
 
             case IN :
@@ -1325,17 +1330,17 @@ class Expression {
                 // depends on how IN list evaluation plan is
                 // refactored
                 if (eArg.isParam) {
-                    eArg.iDataType = eArg2.iDataType;
+                    eArg.dataType = eArg2.dataType;
                 }
 
-                iDataType = Types.BIT;
+                dataType = Types.BIT;
                 break;
 
             case EXISTS :
 
                 // NOTE: no such thing as a param arg if expression is EXISTS
                 // Also, cannot detect if result is fixed value
-                iDataType = Types.BIT;
+                dataType = Types.BIT;
                 break;
 
             /** @todo fredt - set the correct return type */
@@ -1344,7 +1349,7 @@ class Expression {
                     !eArg.isParam, Trace.COLUMN_TYPE_MISMATCH,
                     "it is ambiguous for a parameter marker to be the argument of a set-function-reference");
 
-                iDataType = Types.INTEGER;
+                dataType = Types.INTEGER;
                 break;
 
             case MAX :
@@ -1355,7 +1360,7 @@ class Expression {
                     !eArg.isParam, Trace.COLUMN_TYPE_MISMATCH,
                     "it is ambiguous for a parameter marker to be the argument of a set-function-reference");
 
-                iDataType = SetFunction.getType(iType, eArg.iDataType);
+                dataType = SetFunction.getType(exprType, eArg.dataType);
                 break;
 
             case CONVERT :
@@ -1363,137 +1368,72 @@ class Expression {
                 // NOTE: both iDataType for this expr and for eArg (if isParm)
                 // are already set in Parser during read
                 if (eArg.isFixedConstant() || eArg.isFixedConditional()) {
-                    oData = getValue(iDataType);
-                    iType = VALUE;
+                    valueData = getValue(dataType);
+                    exprType  = VALUE;
                     eArg  = null;
-                }
-                break;
-
-            case IFNULL :
-                Trace.check(
-                    !(eArg.isParam && eArg2.isParam),
-                    Trace.COLUMN_TYPE_MISMATCH,
-                    "it is ambiguous for both operands of an IFNULL operation to be parameter markers");
-
-                if ((eArg.isFixedConstant() || eArg.isFixedConditional())
-                        && (eArg2.isFixedConstant()
-                            || eArg2.isFixedConditional())) {
-                    iType = VALUE;
-                    oData = eArg.getValue(eArg.iDataType);
-
-                    if (oData == null) {
-                        iDataType = eArg2.iDataType;
-                        oData     = eArg2.getValue(iDataType);
-                    } else {
-                        iDataType = eArg.iDataType;
-                    }
-                } else {
-                    if (eArg.isParam || eArg.iDataType == Types.NULL) {
-                        eArg.iDataType = eArg2.iDataType;
-                    } else if (eArg2.isParam
-                               || eArg2.iDataType == Types.NULL) {
-                        eArg2.iDataType = eArg.iDataType;
-                    }
-
-                    Trace.check(
-                        !(eArg.iDataType == Types.NULL && eArg.iDataType == Types.NULL),
-                        Trace.COLUMN_TYPE_MISMATCH,
-                        "it is ambiguous for both operands of an IFNULL operation to be of type NULL");
-
-                    if (Types.isNumberType(eArg.iDataType)
-                            && Types.isNumberType(eArg2.iDataType)) {
-                        iDataType =
-                            Column.getCombinedNumberType(eArg.iDataType,
-                                                         eArg2.iDataType,
-                                                         ADD);
-                    } else if (Types.isCharacterType(eArg.iDataType)
-                               && Types.isCharacterType(eArg2.iDataType)) {
-
-                        // Good enough for now
-                        iDataType = Types.LONGVARCHAR;
-                    } else if (Types.isDatetimeType(eArg.iDataType)
-                               && Types.isDatetimeType(eArg2.iDataType)) {
-
-                        // This should be OK.
-                        iDataType = Types.TIMESTAMP;
-                    } else {
-                        Trace.check(
-                            eArg.iDataType == eArg2.iDataType,
-                            Trace.COLUMN_TYPE_MISMATCH,
-                            "the output data type of an IFNULL operation is currently ambiguous when the input types are ",
-                            Types.getTypeString(eArg.iDataType), " and ",
-                            Types.getTypeString(eArg.iDataType));
-                    }
                 }
                 break;
 
             case CASEWHEN :
 
-                // We use CASEWHEN as both parent and leaf type.
+                // We use CASEWHEN as both parent type.
                 // In the parent, eArg is the condition, and eArg2 is
-                // the leaf, also tagged as type CASEWHEN, but its eArg is
+                // the leaf, tagged as type ALTERNATIVE, and its eArg is
                 // case 1 (how to get the value when the condition in
                 // the parent evaluates to true) and its eArg2 is case 2
                 // (how to get the value when the condition in
                 // the parent evaluates to true)
-                if (eArg2.eArg == null) {
-                    break;
-                }
-
                 if (eArg.isParam) {
 
                     // condition is a paramter marker,
                     // as in casewhen(?, v1, v1)
-                    eArg.iDataType = Types.BIT;
+                    eArg.dataType = Types.BIT;
                 }
 
-                Expression case1 = eArg2.eArg;
-                Expression case2 = eArg2.eArg2;
+                dataType = eArg2.dataType;
+                break;
+
+            case ALTERNATIVE : {
+                Expression case1 = eArg;
+                Expression case2 = eArg2;
 
                 Trace.check(
                     !(case1.isParam && case2.isParam),
                     Trace.COLUMN_TYPE_MISMATCH,
-                    "it is ambiguous for both the second and third operands of a CASEWHEN operation to be parameter markers");
+                    "it is ambiguous for both the alternative operands of a CASE operation to be parameter markers");
 
-                if (case1.isParam || case1.iDataType == Types.NULL) {
-                    case1.iDataType = case2.iDataType;
-                } else if (case2.isParam || case2.iDataType == Types.NULL) {
-                    case2.iDataType = case1.iDataType;
+                if (case1.isParam || case1.dataType == Types.NULL) {
+                    case1.dataType = case2.dataType;
+                } else if (case2.isParam || case2.dataType == Types.NULL) {
+                    case2.dataType = case1.dataType;
                 }
 
-                Trace.check(
-                    !(case1.iDataType == Types.NULL && case2.iDataType == Types.NULL),
-                    Trace.COLUMN_TYPE_MISMATCH,
-                    "it is ambiguous for both the second and third operands of a CASEWHEN operation to be NULL");
+                if (case1.dataType == Types.NULL
+                        && case2.dataType == Types.NULL) {
+                    dataType = Types.NULL;
+                }
 
-                if (Types.isNumberType(case1.iDataType)
-                        && Types.isNumberType(case2.iDataType)) {
-                    iDataType = Column.getCombinedNumberType(case1.iDataType,
-                            case2.iDataType, CASEWHEN);
-                } else if (Types.isCharacterType(case1.iDataType)
-                           && Types.isCharacterType(case2.iDataType)) {
+                if (Types.isNumberType(case1.dataType)
+                        && Types.isNumberType(case2.dataType)) {
+                    dataType = Column.getCombinedNumberType(case1.dataType,
+                            case2.dataType, ALTERNATIVE);
+                } else if (Types.isCharacterType(case1.dataType)
+                           && Types.isCharacterType(case2.dataType)) {
 
                     // Good enough for now?
-                    iDataType = Types.LONGVARCHAR;
-                } else if (Types.isDatetimeType(case1.iDataType)
-                           && Types.isDatetimeType(case2.iDataType)) {
-                    if (case1.iDataType == case2.iDataType) {
-                        iDataType = case1.iDataType;
-                    } else {
-
-                        // This should be OK.
-                        iDataType = Types.TIMESTAMP;
-                    }
+                    dataType = Types.LONGVARCHAR;
                 } else {
                     Trace.check(
-                        case1.iDataType == case2.iDataType,
+                        case1.dataType == case2.dataType,
                         Trace.COLUMN_TYPE_MISMATCH,
-                        "the output data type of a CASEWHEN operation is currently ambiguous when the operand types are ",
-                        Types.getTypeString(case1.iDataType), " and ",
-                        Types.getTypeString(case2.iDataType));
+                        "the output data type of a CASE operation is ambiguous when the alternative operand types are ",
+                        Types.getTypeString(case1.dataType), " and ",
+                        Types.getTypeString(case2.dataType));
                 }
+
                 break;
         }
+    }
     }
 
     /**
@@ -1504,14 +1444,14 @@ class Expression {
      */
     boolean isResolved() {
 
-        switch (iType) {
+        switch (exprType) {
 
             case VALUE :
             case NEGATE :
                 return true;
 
             case COLUMN :
-                return tFilter != null;
+                return tableFilter != null;
         }
 
         // todo: could recurse here, but never miss a 'false'!
@@ -1550,15 +1490,15 @@ class Expression {
      */
     String getTableName() {
 
-        if (iType == ASTERIX) {
-            return sTable;
+        if (exprType == ASTERIX) {
+            return tableName;
         }
 
-        if (iType == COLUMN) {
-            if (tFilter == null) {
-                return sTable;
+        if (exprType == COLUMN) {
+            if (tableFilter == null) {
+                return tableName;
             } else {
-                return tFilter.getTable().getName().name;
+                return tableFilter.getTable().getName().name;
             }
         }
 
@@ -1574,11 +1514,12 @@ class Expression {
      */
     String getColumnName() {
 
-        if (iType == COLUMN) {
-            if (tFilter == null) {
-                return sColumn;
+        if (exprType == COLUMN) {
+            if (tableFilter == null) {
+                return columnName;
             } else {
-                return tFilter.getTable().getColumn(iColumn).columnName.name;
+                return tableFilter.getTable().getColumn(
+                    columnIndex).columnName.name;
             }
         }
 
@@ -1592,7 +1533,7 @@ class Expression {
      * @return
      */
     int getColumnNr() {
-        return iColumn;
+        return columnIndex;
     }
 
     /**
@@ -1602,7 +1543,7 @@ class Expression {
      * @return
      */
     int getColumnSize() {
-        return iColumnSize;
+        return columnSize;
     }
 
     /**
@@ -1612,7 +1553,7 @@ class Expression {
      * @return
      */
     int getColumnScale() {
-        return iColumnScale;
+        return columnScale;
     }
 
     /**
@@ -1622,10 +1563,10 @@ class Expression {
      */
     void setDistinctAggregate(boolean type) {
 
-        isDistinctAggregate = type && (eArg.iType != ASTERIX);
+        isDistinctAggregate = type && (eArg.exprType != ASTERIX);
 
-        if (iType == COUNT) {
-            iDataType = type ? iDataType
+        if (exprType == COUNT) {
+            dataType = type ? dataType
                              : Types.INTEGER;
         }
     }
@@ -1640,7 +1581,7 @@ class Expression {
 
         int i = EQUAL;
 
-        switch (iType) {
+        switch (exprType) {
 
             case BIGGER_EQUAL :
                 i = SMALLER_EQUAL;
@@ -1665,7 +1606,7 @@ class Expression {
                 Trace.doAssert(false, "Expression.swapCondition");
         }
 
-        iType = i;
+        exprType = i;
 
         Expression e = eArg;
 
@@ -1680,7 +1621,7 @@ class Expression {
      * @return
      */
     int getDataType() {
-        return iDataType;
+        return dataType;
     }
 
     /**
@@ -1697,7 +1638,7 @@ class Expression {
 
         Object o = getValue();
 
-        if ((o == null) || (iDataType == type)) {
+        if ((o == null) || (dataType == type)) {
             return o;
         }
 
@@ -1722,7 +1663,7 @@ class Expression {
         }
 
         // handles results of aggregates plus NEGATE and CONVERT
-        switch (iType) {
+        switch (exprType) {
 
             case COUNT :
                 if (currValue == null) {
@@ -1743,11 +1684,11 @@ class Expression {
 
             case NEGATE :
                 return Column.negate(eArg.getAggregatedValue(currValue),
-                                     iDataType);
+                                     dataType);
 
             case CONVERT :
                 return Column.convertObject(
-                    eArg.getAggregatedValue(currValue), iDataType);
+                    eArg.getAggregatedValue(currValue), dataType);
         }
 
         // handle expressions
@@ -1759,12 +1700,12 @@ class Expression {
             case AGGREGATE_LEFT :
                 leftValue  = eArg.getAggregatedValue(currValue);
                 rightValue = eArg2 == null ? null
-                                           : eArg2.getValue(eArg.iDataType);
+                                           : eArg2.getValue(eArg.dataType);
                 break;
 
             case AGGREGATE_RIGHT :
                 leftValue  = eArg == null ? null
-                                          : eArg.getValue(eArg2.iDataType);
+                                          : eArg.getValue(eArg2.dataType);
                 rightValue = eArg2.getAggregatedValue(currValue);
                 break;
 
@@ -1781,7 +1722,7 @@ class Expression {
         }
 
         // handle other operations
-        switch (iType) {
+        switch (exprType) {
 
 // tony_lai@users having >>>
             case TRUE :
@@ -1814,8 +1755,8 @@ class Expression {
                 // todo: now for all tests a new 'like' object required!
                 String s = (String) Column.convertObject(rightValue,
                     Types.VARCHAR);
-                int type = eArg.iDataType;
-                Like l = new Like(s, cLikeEscape,
+                int type = eArg.dataType;
+                Like l = new Like(s, likeEscapeChar,
                                   type == Types.VARCHAR_IGNORECASE);
                 String c = (String) Column.convertObject(leftValue,
                     Types.VARCHAR);
@@ -1824,12 +1765,12 @@ class Expression {
                                     : Boolean.FALSE;
 
             case IN :
-                return eArg2.testValueList(leftValue, eArg.iDataType)
+                return eArg2.testValueList(leftValue, eArg.dataType)
                        ? Boolean.TRUE
                        : Boolean.FALSE;
 
             case EXISTS :
-                Result r = eArg.sSelect.getResult(1);    // 1 is already enough
+                Result r = eArg.subSelect.getResult(1);    // 1 is already enough
 
                 return r.rRoot != null ? Boolean.TRUE
                                        : Boolean.FALSE;
@@ -1837,37 +1778,37 @@ class Expression {
 
         // handle comparisons
         // convert vals
-        if (isCompare(iType)) {
-            int valueType = eArg.isColumn() ? eArg.iDataType
-                                            : eArg2.iDataType;
+        if (isCompare(exprType)) {
+            int valueType = eArg.isColumn() ? eArg.dataType
+                                            : eArg2.dataType;
 
-            return compareValues(leftValue, rightValue, valueType, iType)
+            return compareValues(leftValue, rightValue, valueType, exprType)
                    ? Boolean.TRUE
                    : Boolean.FALSE;
         }
 
         // handle arithmetic and concat operations
         if (leftValue != null) {
-            leftValue = Column.convertObject(leftValue, iDataType);
+            leftValue = Column.convertObject(leftValue, dataType);
         }
 
         if (rightValue != null) {
-            rightValue = Column.convertObject(rightValue, iDataType);
+            rightValue = Column.convertObject(rightValue, dataType);
         }
 
-        switch (iType) {
+        switch (exprType) {
 
             case ADD :
-                return Column.add(leftValue, rightValue, iDataType);
+                return Column.add(leftValue, rightValue, dataType);
 
             case SUBTRACT :
-                return Column.subtract(leftValue, rightValue, iDataType);
+                return Column.subtract(leftValue, rightValue, dataType);
 
             case MULTIPLY :
-                return Column.multiply(leftValue, rightValue, iDataType);
+                return Column.multiply(leftValue, rightValue, dataType);
 
             case DIVIDE :
-                return Column.divide(leftValue, rightValue, iDataType);
+                return Column.divide(leftValue, rightValue, dataType);
 
             case CONCAT :
                 return Column.concat(leftValue, rightValue);
@@ -1895,11 +1836,11 @@ class Expression {
 
         if (aggregateSpec == AGGREGATE_SELF) {
             if (currValue == null) {
-                currValue = new SetFunction(iType, eArg.iDataType,
+                currValue = new SetFunction(exprType, eArg.dataType,
                                             isDistinctAggregate);
             }
 
-            Object newValue = eArg.iType == ASTERIX ? INTEGER_1
+            Object newValue = eArg.exprType == ASTERIX ? INTEGER_1
                                                     : eArg.getValue();
 
             ((SetFunction) currValue).add(newValue);
@@ -1949,32 +1890,32 @@ class Expression {
 
     Object getValue() throws HsqlException {
 
-        switch (iType) {
+        switch (exprType) {
 
             case VALUE :
-                return oData;
+                return valueData;
 
             case COLUMN :
                 try {
-                    return tFilter.oCurrentData[iColumn];
+                    return tableFilter.oCurrentData[columnIndex];
                 } catch (NullPointerException e) {
-                    throw Trace.error(Trace.COLUMN_NOT_FOUND, sColumn);
+                    throw Trace.error(Trace.COLUMN_NOT_FOUND, columnName);
                 }
             case FUNCTION :
-                return fFunction.getValue();
+                return function.getValue();
 
             case QUERY :
-                return sSelect.getValue(iDataType);
+                return subSelect.getValue(dataType);
 
             case NEGATE :
-                return Column.negate(eArg.getValue(iDataType), iDataType);
+                return Column.negate(eArg.getValue(dataType), dataType);
 
             case EXISTS :
                 return test() ? Boolean.TRUE
                               : Boolean.FALSE;
 
             case CONVERT :
-                return eArg.getValue(iDataType);
+                return eArg.getValue(dataType);
 
             case CASEWHEN :
                 if (eArg.test()) {
@@ -1995,34 +1936,35 @@ class Expression {
                b = null;
 
         if (eArg != null) {
-            a = eArg.getValue(iDataType);
+            a = eArg.getValue(dataType);
         }
 
         if (eArg2 != null) {
-            b = eArg2.getValue(iDataType);
+            b = eArg2.getValue(dataType);
         }
 
-        switch (iType) {
+        switch (exprType) {
 
             case ADD :
-                return Column.add(a, b, iDataType);
+                return Column.add(a, b, dataType);
 
             case SUBTRACT :
-                return Column.subtract(a, b, iDataType);
+                return Column.subtract(a, b, dataType);
 
             case MULTIPLY :
-                return Column.multiply(a, b, iDataType);
+                return Column.multiply(a, b, dataType);
 
             case DIVIDE :
-                return Column.divide(a, b, iDataType);
+                return Column.divide(a, b, dataType);
 
             case CONCAT :
                 return Column.concat(a, b);
 
+/*
             case IFNULL :
                 return (a == null) ? b
                                    : a;
-
+*/
             default :
 
                 // must be comparion
@@ -2042,7 +1984,7 @@ class Expression {
      */
     boolean test() throws HsqlException {
 
-        switch (iType) {
+        switch (exprType) {
 
             case TRUE :
                 return true;
@@ -2065,18 +2007,18 @@ class Expression {
 
                 // todo: now for all tests a new 'like' object required!
                 String s    = (String) eArg2.getValue(Types.VARCHAR);
-                int    type = eArg.iDataType;
-                Like l = new Like(s, cLikeEscape,
+                int    type = eArg.dataType;
+                Like l = new Like(s, likeEscapeChar,
                                   type == Types.VARCHAR_IGNORECASE);
                 String c = (String) eArg.getValue(Types.VARCHAR);
 
                 return l.compare(c);
 
             case IN :
-                return eArg2.testValueList(eArg.getValue(), eArg.iDataType);
+                return eArg2.testValueList(eArg.getValue(), eArg.dataType);
 
             case EXISTS :
-                Result r = eArg.sSelect.getResult(1);    // 1 is already enough
+                Result r = eArg.subSelect.getResult(1);    // 1 is already enough
 
                 return r.rRoot != null;
         }
@@ -2084,7 +2026,7 @@ class Expression {
         Trace.check(eArg != null, Trace.GENERAL_ERROR);
 
         Object o    = eArg.getValue();
-        int    type = eArg.iDataType;
+        int    type = eArg.dataType;
 
         Trace.check(eArg2 != null, Trace.GENERAL_ERROR);
 
@@ -2093,31 +2035,32 @@ class Expression {
         if (o == null || o2 == null) {
 
 // fredt@users - patch 1.7.2 - SQL CONFORMANCE - do not join tables on nulls apart from outer joins
-            if (iType == EQUAL && eArg.tFilter != null
-                    && eArg2.tFilter != null &&!eArg.tFilter.isOuterJoin
-                    &&!eArg2.tFilter.isOuterJoin) {
+            if (exprType == EQUAL && eArg.tableFilter != null
+                    && eArg2.tableFilter != null
+                    &&!eArg.tableFilter.isOuterJoin
+                    &&!eArg2.tableFilter.isOuterJoin) {
 
                 // here we should have (eArg.iType == COLUMN && eArg2.iType == COLUMN)
                 return false;
             }
 
-            if (eArg.tFilter != null) {
-                if (eArg.tFilter.isCurrentOuter) {
+            if (eArg.tableFilter != null) {
+                if (eArg.tableFilter.isCurrentOuter) {
                     if (eArg.isInJoin || eArg2.isInJoin) {
                         return true;
                     }
                 } else {
 
                     // this is used in WHERE <OUTER JOIN COL> IS [NOT] NULL
-                    eArg.tFilter.nonJoinIsNull =
+                    eArg.tableFilter.nonJoinIsNull =
                         !(eArg.isInJoin || eArg2.isInJoin) && o2 == null;
                 }
             }
 
-            return testNull(o, o2, iType);
+            return testNull(o, o2, exprType);
         }
 
-        return compareValues(o, o2, type, iType);
+        return compareValues(o, o2, type, exprType);
     }
 
     private static boolean compareValues(Object o, Object o2, int valueType,
@@ -2208,9 +2151,9 @@ class Expression {
     private boolean testValueList(Object o,
                                   int datatype) throws HsqlException {
 
-        if (iType == VALUELIST) {
-            if (datatype != iDataType) {
-                o = Column.convertObject(o, iDataType);
+        if (exprType == VALUELIST) {
+            if (datatype != dataType) {
+                o = Column.convertObject(o, dataType);
             }
 
             if (o != null && datatype == Types.VARCHAR_IGNORECASE) {
@@ -2233,10 +2176,10 @@ class Expression {
             }
 
             return hList.containsKey(o);
-        } else if (iType == QUERY) {
+        } else if (exprType == QUERY) {
 
             // todo: convert to valuelist before if everything is resolvable
-            Result r = sSelect.getResult(0);
+            Result r = subSelect.getResult(0);
 
             // fredt - reduce the size if possible
             r.removeDuplicates();
@@ -2287,7 +2230,14 @@ class Expression {
             }
         }
 
-        return iType != Expression.OR;
+        return exprType != Expression.OR;
+    }
+
+    /**
+     * Sets the left leaf.
+     */
+    void setLeftExpression(Expression e) {
+        eArg = e;
     }
 
 // boucherb@users 20030417 - patch 1.7.2 - compiled statement support
@@ -2306,7 +2256,7 @@ class Expression {
 //-------------------------------------------------------------------
 //-------------------------------------------------------------------
     void bind(Object o) throws HsqlException {
-        oData = o;
+        valueData = o;
     }
 
 //-------------------------------------------------------------------
@@ -2316,7 +2266,7 @@ class Expression {
 
     boolean isFixedConstant() {
 
-        switch (iType) {
+        switch (exprType) {
 
             case VALUE :
                 return !isParam;
@@ -2337,7 +2287,7 @@ class Expression {
 
     boolean isFixedConditional() {
 
-        switch (iType) {
+        switch (exprType) {
 
             case TRUE :
             case FALSE :
@@ -2370,18 +2320,18 @@ class Expression {
     boolean isProcedureCall() {
 
         // valid only after expression has been resolved
-        return iType == FUNCTION && iDataType == Types.NULL;
+        return exprType == FUNCTION && dataType == Types.NULL;
     }
 
     void setTableColumnAttributes(Expression e) {
 
-        iColumnSize  = e.iColumnSize;
-        iColumnScale = e.iColumnScale;
+        columnSize  = e.columnSize;
+        columnScale = e.columnScale;
         isIdentity   = e.isIdentity;
         nullability  = e.nullability;
         isWritable   = e.isWritable;
-        sCatalog     = e.sCatalog;
-        sSchema      = e.sSchema;
+        catalog     = e.catalog;
+        schema      = e.schema;
     }
 
     void setTableColumnAttributes(Table t, int i) {
@@ -2389,9 +2339,9 @@ class Expression {
         Column c;
 
         c            = t.getColumn(i);
-        iDataType    = c.getType();
-        iColumnSize  = c.getSize();
-        iColumnScale = c.getScale();
+        dataType    = c.getType();
+        columnSize  = c.getSize();
+        columnScale = c.getScale();
         isIdentity   = c.isIdentity();
 
         // IDENTITY columns are not nullable;
@@ -2399,8 +2349,8 @@ class Expression {
         nullability = c.isNullable() &&!isIdentity ? NULLABLE
                                                    : NO_NULLS;
         isWritable  = t.isWritable();
-        sCatalog    = t.getCatalogName();
-        sSchema     = t.getSchemaName();
+        catalog     = t.getCatalogName();
+        schema      = t.getSchemaName();
     }
 
     String getValueClassName() {
@@ -2413,17 +2363,17 @@ class Expression {
             return valueClassName;
         }
 
-        if (fFunction != null) {
-            valueClassName = fFunction.getReturnClass().getName();
+        if (function != null) {
+            valueClassName = function.getReturnClass().getName();
 
             return valueClassName;
         }
 
-        if (iDataType == Types.VARCHAR_IGNORECASE) {
+        if (dataType == Types.VARCHAR_IGNORECASE) {
             ditype    = Types.VARCHAR;
             ditypesub = Types.TYPE_SUB_IGNORECASE;
         } else {
-            ditype    = iDataType;
+            ditype    = dataType;
             ditypesub = Types.TYPE_SUB_DEFAULT;
         }
 

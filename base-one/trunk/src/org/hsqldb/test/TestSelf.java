@@ -106,7 +106,7 @@ import org.hsqldb.jdbcDriver;
  *
  * @version 1.7.2
  */
-class TestSelf {
+class TestSelf extends TestUtil {
 
     /**
      *  This test in invoked from the command line using:
@@ -259,43 +259,6 @@ class TestSelf {
         String path = "TestSelf.txt";
 
         testScript(cConnection, path);
-    }
-
-    static void testScript(Connection cConnection, String path) {
-
-        try {
-            Statement sStatement = cConnection.createStatement();
-            File      testfile   = new File(path);
-            LineNumberReader read =
-                new LineNumberReader(new FileReader(testfile));
-            String s = "";
-
-            print("Opened test script file: " + testfile.getAbsolutePath());
-
-            int startlineno = 1;
-
-            for (int lineno = 1; ; lineno++) {
-                String line = read.readLine();
-
-                if (line == null) {
-                    break;
-                }
-
-                if (line.startsWith(" ")) {
-                    s += line;
-                } else {
-                    test(sStatement, s, startlineno);
-
-                    startlineno = lineno;
-                    s           = line;
-                }
-            }
-
-            sStatement.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-            print("test script file error: " + e.getMessage());
-        }
     }
 
     static byte[] b1   = {
@@ -826,116 +789,6 @@ class TestSelf {
     /**
      *  Method declaration
      *
-     * @param  stat
-     * @param  s
-     * @throws  Exception
-     */
-    static void test(Statement stat, String s, int line) throws Exception {
-
-        String result = "";
-        char   type   = ' ';
-
-        if (s.trim().length() == 0) {
-            return;
-        }
-
-        if (s.startsWith("/*")) {
-            type = s.charAt(2);
-
-            int end = s.indexOf("*/");
-
-            result = s.substring(3, end);
-        }
-
-        try {
-            stat.execute(s);
-
-            int       u = stat.getUpdateCount();
-            int       i = 0;
-            ResultSet r;
-
-            switch (type) {
-
-                case ' ' :
-                    break;
-
-                case 'u' :
-                    if (u != Integer.parseInt(result)) {
-                        throw new Exception("Line: " + line + " "
-                                            + "Expected update count="
-                                            + result
-                                            + " but update count was " + u
-                                            + " / " + s);
-                    }
-                    break;
-
-                case 'r' :
-                    if (u != -1) {
-                        throw new Exception("Line: " + line + " "
-                                            + "Expected ResultSet"
-                                            + " but update count was " + u
-                                            + " / " + s);
-                    }
-
-                    r = stat.getResultSet();
-
-                    r.next();
-
-                    String col = r.getString(1);
-
-                    if (r.wasNull() || col == null) {
-                        if (!result.equals("")) {
-                            throw new Exception("Line: " + line + " "
-                                                + "Expected " + result
-                                                + " but got null / " + s);
-                        }
-                    } else if (!col.equals(result)) {
-                        throw new Exception("Line: " + line + " "
-                                            + "Expected >" + result + "<"
-                                            + " but got >" + col + "< / "
-                                            + s);
-                    }
-                    break;
-
-                case 'c' :
-                    if (u != -1) {
-                        throw new Exception("Line: " + line + " "
-                                            + "Expected ResultSet"
-                                            + " but update count was " + u
-                                            + " / " + s);
-                    }
-
-                    r = stat.getResultSet();
-
-                    while (r.next()) {
-                        i++;
-                    }
-
-                    if (i != Integer.parseInt(result)) {
-                        throw new Exception("Line: " + line + " "
-                                            + "Expected " + result + " rows "
-                                            + " but got " + i + " rows / "
-                                            + s);
-                    }
-                    break;
-
-                case 'e' :
-                    throw new Exception("Line: " + line + " "
-                                        + "Expected error "
-                                        + "but got no error / " + s);
-            }
-        } catch (SQLException e) {
-            if (type != 'e') {
-                throw new Exception("Line: " + line + " " + "Expected "
-                                    + type + "/" + result + " but got error "
-                                    + e.getMessage() + " / " + s);
-            }
-        }
-    }
-
-    /**
-     *  Method declaration
-     *
      * @param  s
      * @param  i
      * @param  max
@@ -953,14 +806,5 @@ class TestSelf {
         }
 
         System.out.print(" rows/s                \r");
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @param  s
-     */
-    private static void print(String s) {
-        System.out.println(s);
     }
 }

@@ -1497,7 +1497,7 @@ class Column {
 
         switch (expType) {
 
-            case Expression.CASEWHEN :
+            case Expression.ALTERNATIVE :
             case Expression.DIVIDE :
                 return (typeWidth1 > typeWidth2) ? type1
                                                  : type2;

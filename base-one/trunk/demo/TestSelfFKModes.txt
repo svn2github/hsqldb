@@ -48,7 +48,7 @@ create table testB(id integer, parent integer default 20, ref integer,
 -- CHAINED SELF REFERENCING FK
 -- ON DELETE CASCADE
 drop table testA if exists;
-create table testA(a int primary key,b int,
+create cached table testA(a int primary key,b int,
     foreign key(b) references testA(a) on update cascade on delete cascade);
 insert into testA(a,b) values(1,1);
 insert into testA(a,b) values(2,1);

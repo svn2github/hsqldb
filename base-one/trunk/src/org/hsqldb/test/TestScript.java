@@ -31,61 +31,22 @@
 
 package org.hsqldb.test;
 
-import junit.framework.TestCase;
-import junit.framework.TestResult;
-import java.sql.Connection;
-import java.sql.Statement;
+import java.sql.*;
 
-/**
- * HSQLDB TestBug808460 Junit test case. <p>
- *
- * @author  boucherb@users.sourceforge.net
- * @version 1.7.2
- * @since 1.7.2
- */
-public class TestBug808460 extends TestBase {
+public class TestScript extends TestBase {
 
-    public TestBug808460(String name) {
+//    String path = "TestSelfReports.txt";
+    String path = "TestCasewhen.txt";
+
+    public TestScript(String name) {
         super(name);
     }
 
-    /* Implements the TestBug808460 test */
-    public void test() throws Exception {
+    public void test() throws java.lang.Exception {
 
         Connection conn = newConnection();
         Statement  stmt = conn.createStatement();
 
-        stmt.executeQuery("SELECT * FROM SYSTEM_SESSIONS");
-        conn.close();
-
-        conn = newConnection();
-        stmt = conn.createStatement();
-
-        stmt.executeQuery("SELECT * FROM SYSTEM_SESSIONS");
-        conn.close();
-    }
-
-    /* Runs TestBug808460 test from the command line*/
-    public static void main(String[] args) throws Exception {
-
-        TestResult            result;
-        TestCase              test;
-        java.util.Enumeration failures;
-        int                   count;
-
-        result = new TestResult();
-        test   = new TestBug808460("test");
-
-        test.run(result);
-
-        count = result.failureCount();
-
-        System.out.println("TestBug808460 failure count: " + count);
-
-        failures = result.failures();
-
-        while (failures.hasMoreElements()) {
-            System.out.println(failures.nextElement());
-        }
+        TestUtil.testScript(conn, path);
     }
 }

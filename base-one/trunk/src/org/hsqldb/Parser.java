@@ -1322,7 +1322,8 @@ class Parser {
                 readThis(Expression.COMMA);
 
                 // thenelse part is never evaluated; only init
-                thenelse = new Expression(type, thenelse, readOr());
+                thenelse = new Expression(Expression.ALTERNATIVE, thenelse,
+                                          readOr());
                 r        = new Expression(type, r, thenelse);
 
                 readThis(Expression.CLOSE);
@@ -1361,7 +1362,8 @@ class Parser {
 
                 readThis(Expression.ENDWHEN);
 
-                thenelse = new Expression(type, thenelse, exprelse);
+                thenelse = new Expression(Expression.ALTERNATIVE, thenelse,
+                                          exprelse);
                 r        = new Expression(type, r, thenelse);
 
                 break;
@@ -1377,7 +1379,7 @@ class Parser {
                 readThis(Expression.COMMA);
 
                 Expression thenelse =
-                    new Expression(Expression.CASEWHEN,
+                    new Expression(Expression.ALTERNATIVE,
                                    new Expression(Types.NULL, null), r);
 
                 r = new Expression(Expression.EQUAL, r, readOr());
@@ -1389,23 +1391,41 @@ class Parser {
             }
             case Expression.COALESCE :
             case Expression.IFNULL : {
+                Expression leaf = null;
 
                 // turn into a CASEWHEN
                 read();
                 readThis(Expression.OPEN);
 
-                r = readOr();
+                Expression left = readOr();
 
+                while (true) {
                 readThis(Expression.COMMA);
 
-                Expression thenelse = new Expression(Expression.CASEWHEN,
-                                                     readOr(), r);
+                    Expression right = readOr();
+                    Expression thenelse =
+                        new Expression(Expression.ALTERNATIVE, right, left);
+                    Expression equals =
+                        new Expression(Expression.EQUAL, left,
+                                       new Expression(Types.NULL, null));
+                    Expression coalesce = new Expression(Expression.CASEWHEN,
+                                                         equals, thenelse);
 
-                r = new Expression(Expression.EQUAL, r,
-                                   new Expression(Types.NULL, null));
-                r = new Expression(Expression.CASEWHEN, r, thenelse);
+                    if (leaf == null) {
+                        r = coalesce;
+                    } else {
+                        leaf.setLeftExpression(coalesce);
+                    }
 
+                    leaf = thenelse;
+                    left = right;
+
+                    if (iToken == Expression.CLOSE) {
                 readThis(Expression.CLOSE);
+
+                        break;
+                    }
+                }
 
                 break;
             }
