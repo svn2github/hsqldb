@@ -1012,7 +1012,7 @@ public class BaseHashMap {
      * Iterator returns Object, int or long and is used both for keys and
      * values
      */
-    public class BaseHashIterator implements org.hsqldb.lib.Iterator {
+    protected class BaseHashIterator implements org.hsqldb.lib.Iterator {
 
         boolean keys;
         int     lookup = -1;
