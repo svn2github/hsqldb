@@ -101,11 +101,12 @@ example:
     </target>
 
     <target name="lib" depends="switchtojdk11,switchtojdk12,switchtojdk14">
-      <javac srcdir="${src}/org/hsqldb/lib"
+      <javac srcdir="${src}"
              destdir="classes"
                  debug="${build.debug}"
                  optimize="${build.optimize}"
        >
+	<include name="org/hsqldb/lib/**"/>
       </javac>
     </target>
 
@@ -140,11 +141,12 @@ example:
    </target>
 
     <target name="util" depends="lib">
-      <javac srcdir="${src}/org/hsqldb/util"
+      <javac srcdir="${src}"
              destdir="classes"
                  debug="${build.debug}"
                  optimize="${build.optimize}"
        >
+	 <include name="org/hsqldb/util/**"/>
          <exclude name="*Swing.java"/>
       </javac>
       <copy todir="classes/org/hsqldb/util">
