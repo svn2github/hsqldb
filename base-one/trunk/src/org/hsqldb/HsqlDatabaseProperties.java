@@ -170,6 +170,9 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         // this property is either 1 or 8
         setProperty("hsqldb.cache_file_scale", "1");
 
+        // this property is between 6 - 20, default 10
+        setProperty("hsqldb.cache_size_scale", "10");
+
         // number of rows from CACHED tables kept constantly in memory
         // the number of rows in up to 3 * (2 to the power of
         // cache_scale value).
