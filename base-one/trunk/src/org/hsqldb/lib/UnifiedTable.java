@@ -36,6 +36,7 @@ import java.util.Hashtable;
 
 // fredt@users - patch 1.7.2 - added support for Object storage and row removal
 // also changes so that no new object is created for each search.
+// any Object can be stored but currently only String columns are searchable
 
 /**
  * Provides a reflection-based abstraction of Java array objects, allowing
@@ -124,7 +125,7 @@ public class UnifiedTable {
                 return new PrimDoubleCellComparator(targetColumn);
 
             default :
-                return new PrimObjectCellComparator(targetColumn);
+                return new PrimStringCellComparator(targetColumn);
         }
     }
 
@@ -328,7 +329,8 @@ public class UnifiedTable {
         return binarySearch();
     }
 
-    public int search(Comparable value) {
+    // in JAVA 2 argument can be any Comparable object
+    public int search(String value) {
 
         if (rowComparator == null) {
             throw new IllegalArgumentException("Table is not sorted");
@@ -973,12 +975,12 @@ public class UnifiedTable {
         }
     }
 
-    class PrimObjectCellComparator extends SingleCellComparator {
+    class PrimStringCellComparator extends SingleCellComparator {
 
         private Object[]   myTableData;
-        private Comparable mySearchTarget;
+        private String mySearchTarget;
 
-        PrimObjectCellComparator(int targetColumn) {
+        PrimStringCellComparator(int targetColumn) {
 
             super(targetColumn);
 
@@ -990,7 +992,7 @@ public class UnifiedTable {
          */
         public boolean lessThan(int i, int j) {
             return compare(
-                (Comparable) myTableData[i * columns + targetColumn], (Comparable) myTableData[j * columns + targetColumn]) < 0;
+                (String) myTableData[i * columns + targetColumn], (String) myTableData[j * columns + targetColumn]) < 0;
         }
 
         /**
@@ -1000,7 +1002,7 @@ public class UnifiedTable {
          */
         public boolean lessThan(int i) {
             return compare(
-                (Comparable) myTableData[i * columns + targetColumn], mySearchTarget) < 0;
+                (String) myTableData[i * columns + targetColumn], mySearchTarget) < 0;
         }
 
         /**
@@ -1010,10 +1012,10 @@ public class UnifiedTable {
          */
         public boolean greaterThan(int i) {
             return compare(
-                (Comparable) myTableData[i * columns + targetColumn], mySearchTarget) > 0;
+                (String) myTableData[i * columns + targetColumn], mySearchTarget) > 0;
         }
 
-        private int compare(Comparable a, Comparable b) {
+        private int compare(String a, String b) {
 
             if (a == b) {
                 return 0;
@@ -1039,7 +1041,7 @@ public class UnifiedTable {
          * Sets the target object in a search operation.
          */
         public void setSearchTarget(Object target) {
-            mySearchTarget = (Comparable) target;
+            mySearchTarget = (String) target;
         }
     }
 

@@ -782,6 +782,8 @@ class Table {
         for (int i = 0; i < iIndexCount; i++) {
             getIndex(i).setRoot(null);
         }
+
+        iIdentityId = 0;
     }
 
     /**
@@ -1438,6 +1440,24 @@ class Table {
     }
 
     /**
+     *  Low level method for row insert.
+     *  UNIQUE or PRIMARY constraints are enforced by attempting to
+     *  add the row to the indexes.
+     */
+    void insertNoCheckRollback(Object row[], Session c,
+                       boolean log) throws SQLException {
+
+        Row r = Row.newRow(this, row);
+
+        indexRow(r);
+
+        if (log &&!isTemp &&!isText &&!isReadOnly
+                && dDatabase.logger.hasLog()) {
+            dDatabase.logger.writeToLog(c, getInsertStatement(row));
+        }
+    }
+
+    /**
      * Used by TextCache to insert a row into the indexes when the source
      * file is first read.
      */
@@ -1675,7 +1695,7 @@ class Table {
      *
      *  Support added for SET NULL and SET DEFAULT by kloska@users involves
      *  switching to checkCascadeUpdate(,,,,) when these rules are encountered
-     *  in the a table.(fredt@users)
+     *  in the constraint.(fredt@users)
      *
      * @param  row
      * @param  session
@@ -1808,7 +1828,7 @@ class Table {
      * Check or perform and update cascade operation on a single row.
      *   Check or cascade an update (delete/insert) operation.
      *   The method takes a pair of rows (new data,old data) and checks
-     *   if <code>Constraints</code> permit the update operation.
+     *   if Constraints permit the update operation.
      *   A boolean arguement determines if the operation should
      *   realy take place or if we just have to check for constraint violation.
      *
@@ -1818,11 +1838,11 @@ class Table {
      *   @param nrow Object[]; new row data to be inserted.
      *   @param session Session; current database session
      *   @param cols int[]; indices of the columns actually changed.
-     *   @param ref Table; This should be initialized to <code>null</code> when the
+     *   @param ref Table; This should be initialized to null when the
      *   method is called from the 'outside'. During recursion this will be the
-     *   current table (i.e. <code>this</code>) to indicate from where we came.
+     *   current table (i.e. this) to indicate from where we came.
      *   Foreign keys to this table do not have to be checked since they have
-     *   triggered the update and are valid <i>per definitionem</i>.
+     *   triggered the update and are valid by definition.
      *
      *   @param update boolean; if true the update will take place. Otherwise
      *   we just check for referential integrity.
@@ -2133,6 +2153,38 @@ class Table {
      * Low level row delete method. Removes the row from the indexes and
      * from the Cache.
      */
+    private void deleteNoCheck(Row r, Session c,
+                               boolean log) throws SQLException {
+
+        Node     node;
+        Object[] row = r.getData();
+
+        r = r.getUpdatedRow();
+
+        for (int i = iIndexCount - 1; i >= 0; i--) {
+            node = r.getNode(i);
+
+            getIndex(i).delete(node);
+        }
+
+        r = r.getUpdatedRow();
+
+        r.delete();
+
+        if (c != null) {
+            c.addTransactionDelete(this, row);
+        }
+
+        if (log &&!isTemp &&!isText &&!isReadOnly
+                && dDatabase.logger.hasLog()) {
+            dDatabase.logger.writeToLog(c, getDeleteStatement(row));
+        }
+    }
+
+    /**
+     * Low level row delete method. Removes the row from the indexes and
+     * from the Cache.
+     */
     void deleteNoCheck(Object row[], Session c,
                        boolean log) throws SQLException {
 
@@ -2163,13 +2215,11 @@ class Table {
      * Low level row delete method. Removes the row from the indexes and
      * from the Cache.
      */
-    private void deleteNoCheck(Row r, Session c,
-                               boolean log) throws SQLException {
+    void deleteNoCheckRollback(Object row[], Session c,
+                       boolean log) throws SQLException {
 
-        Node     node;
-        Object[] row = r.getData();
-
-        r = r.getUpdatedRow();
+        Node node = getIndex(0).search(row);
+        Row  r    = node.getRow();
 
         for (int i = iIndexCount - 1; i >= 0; i--) {
             node = r.getNode(i);
@@ -2181,53 +2231,10 @@ class Table {
 
         r.delete();
 
-        if (c != null) {
-            c.addTransactionDelete(this, row);
-        }
-
         if (log &&!isTemp &&!isText &&!isReadOnly
                 && dDatabase.logger.hasLog()) {
             dDatabase.logger.writeToLog(c, getDeleteStatement(row));
         }
-    }
-
-    /**
-     *  Highest level multiple row update method. Corresponds to an SQL
-     *  UPDATE.
-     */
-    int update(Result del, Result ins, int[] col,
-               Session c) throws SQLException {
-
-        Record nd    = del.rRoot;
-        Record ni    = ins.rRoot;
-        int    count = 0;
-
-        while (nd != null && ni != null) {
-            enforceFieldValueLimits(ni.data, col);
-            setIdentityColumn(ni.data, null);
-            update(nd.data, ni.data, col, c, false);
-
-            nd = nd.next;
-            ni = ni.next;
-        }
-
-        fireAll(TriggerDef.UPDATE_BEFORE);
-
-        nd = del.rRoot;
-        ni = ins.rRoot;
-
-        while (nd != null && ni != null) {
-            update(nd.data, ni.data, col, c, true);
-
-            nd = nd.next;
-            ni = ni.next;
-
-            count++;
-        }
-
-        fireAll(TriggerDef.UPDATE_AFTER);
-
-        return count;
     }
 
     /**
@@ -2276,23 +2283,7 @@ class Table {
      *  constraint checks. Parameter doit indicates whether only to check
      *  integrity or to perform the update.
      */
-    private void update(Object[] oldrow, Object[] newrow, int[] col,
-                        Session c, boolean doit) throws SQLException {
 
-        if (dDatabase.isReferentialIntegrity()) {
-            checkCascadeUpdate(oldrow, newrow, c, col, null, doit);
-        }
-
-        if (doit) {
-            updateNoRefCheck(oldrow, newrow, c, true);
-        }
-    }
-
-    /**
-     *  High level row update method. Fires triggers and performs integrity
-     *  constraint checks. Parameter doit indicates whether only to check
-     *  integrity or to perform the update.
-     */
     private void update(Row oldr, Object[] newrow, int[] col, Session c,
                         boolean doit) throws SQLException {
 
@@ -2308,6 +2299,7 @@ class Table {
     /**
      * Mid level row update method. Fires triggers.
      */
+/*
     private void updateNoRefCheck(Object[] oldrow, Object[] newrow,
                                   Session c,
                                   boolean log) throws SQLException {
@@ -2316,7 +2308,7 @@ class Table {
         updateNoCheck(oldrow, newrow, c, log);
         fireAll(TriggerDef.UPDATE_AFTER_ROW, oldrow);
     }
-
+*/
     /**
      * Mid level row update method. Fires triggers.
      */
@@ -2331,12 +2323,13 @@ class Table {
     /**
      * Low level row update method. Updates the row and the indexes.
      */
+/*
     private void updateNoCheck(Object[] oldrow, Object[] newrow, Session c,
                                boolean log) throws SQLException {
         deleteNoCheck(oldrow, c, log);
         insertNoCheck(newrow, c, log);
     }
-
+*/
     /**
      * Low level row update method. Updates the row and the indexes.
      */
@@ -2361,31 +2354,6 @@ class Table {
                 v.checkUpdate(col, deleted, inserted);
             }
         }
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @param  row
-     * @return
-     * @throws  SQLException
-     */
-    String getInsertStatement(Object row[]) throws SQLException {
-
-        HsqlStringBuffer a = new HsqlStringBuffer(128);
-
-        a.append("INSERT INTO ");
-        a.append(tableName.statementName);
-        a.append(" VALUES(");
-
-        for (int i = 0; i < iVisibleColumns; i++) {
-            a.append(Column.createSQLString(row[i], getColumn(i).getType()));
-            a.append(',');
-        }
-
-        a.setCharAt(a.length() - 1, ')');
-
-        return a.toString();
     }
 
     /**
@@ -2489,6 +2457,31 @@ class Table {
      */
     protected Index getIndex(int i) {
         return (Index) vIndex.get(i);
+    }
+
+    /**
+     *  Method declaration
+     *
+     * @param  row
+     * @return
+     * @throws  SQLException
+     */
+    String getInsertStatement(Object row[]) throws SQLException {
+
+        HsqlStringBuffer a = new HsqlStringBuffer(128);
+
+        a.append("INSERT INTO ");
+        a.append(tableName.statementName);
+        a.append(" VALUES(");
+
+        for (int i = 0; i < iVisibleColumns; i++) {
+            a.append(Column.createSQLString(row[i], getColumn(i).getType()));
+            a.append(',');
+        }
+
+        a.setCharAt(a.length() - 1, ')');
+
+        return a.toString();
     }
 
     /**
@@ -2606,11 +2599,7 @@ class Table {
 
         Trace.check(isTemp, Trace.OPERATION_NOT_SUPPORTED);
 
-        for (int i = 0; i < iIndexCount; i++) {
-            getIndex(i).setRoot(null);
-        }
-
-        iIdentityId = 0;
+        setIndexRootsNull();
     }
 
     void drop() throws SQLException {

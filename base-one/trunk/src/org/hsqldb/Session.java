@@ -90,14 +90,14 @@ class Session {
     private Database       dDatabase;
     private User           uUser;
     private HsqlArrayList  tTransaction;
-    boolean                bAutoCommit;
-    private boolean        bNestedTransaction;
-    private boolean        bNestedOldAutoCommit;
-    private int            iNestedOldTransIndex;
-    private boolean        bReadOnly;
+    private boolean        isAutoCommit;
+    private boolean        isNestedTransaction;
+    private boolean        isNestedOldAutoCommit;
+    private int            nestedOldTransIndex;
+    private boolean        isReadOnly;
     private int            iMaxRows;
     private Object         iLastIdentity;
-    private boolean        bClosed;
+    private boolean        isClosed;
     private int            iId;
     private UnifiedTable   savepoints;
     private boolean        script;
@@ -119,7 +119,7 @@ class Session {
      * @param  id
      */
     Session(Session c, int id) {
-        this(c.dDatabase, c.uUser, true, c.bReadOnly, id);
+        this(c.dDatabase, c.uUser, true, c.isReadOnly, id);
     }
 
     /**
@@ -138,8 +138,8 @@ class Session {
         dDatabase    = db;
         uUser        = user;
         tTransaction = new HsqlArrayList();
-        bAutoCommit  = autocommit;
-        bReadOnly    = readonly;
+        isAutoCommit  = autocommit;
+        isReadOnly    = readonly;
         savepoints   = new UnifiedTable(Object.class, 2, 4, 4);
 
         savepoints.sort(0, true);
@@ -161,7 +161,7 @@ class Session {
      */
     void disconnect() {
 
-        if (bClosed) {
+        if (isClosed) {
             return;
         }
 
@@ -173,7 +173,7 @@ class Session {
         tTransaction  = null;
         savepoints    = null;
         intConnection = null;
-        bClosed       = true;
+        isClosed       = true;
     }
 
     /**
@@ -182,7 +182,7 @@ class Session {
      * @return
      */
     boolean isClosed() {
-        return bClosed;
+        return isClosed;
     }
 
     /**
@@ -264,7 +264,7 @@ class Session {
      * @throws  SQLException
      */
     void checkReadWrite() throws SQLException {
-        Trace.check(!bReadOnly, Trace.DATABASE_IS_READONLY);
+        Trace.check(!isReadOnly, Trace.DATABASE_IS_READONLY);
     }
 
     /**
@@ -285,8 +285,8 @@ class Session {
      */
     void addTransactionDelete(Table table, Object row[]) throws SQLException {
 
-        if (!bAutoCommit) {
-            Transaction t = new Transaction(true, table, row);
+        if (!isAutoCommit) {
+            Transaction t = new Transaction(true, isNestedTransaction,table, row);
 
             tTransaction.add(t);
         }
@@ -301,8 +301,8 @@ class Session {
      */
     void addTransactionInsert(Table table, Object row[]) throws SQLException {
 
-        if (!bAutoCommit) {
-            Transaction t = new Transaction(false, table, row);
+        if (!isAutoCommit) {
+            Transaction t = new Transaction(false,isNestedTransaction, table, row);
 
             tTransaction.add(t);
         }
@@ -316,10 +316,10 @@ class Session {
      */
     void setAutoCommit(boolean autocommit) throws SQLException {
 
-        if (autocommit != bAutoCommit) {
+        if (autocommit != isAutoCommit) {
             commit();
 
-            bAutoCommit = autocommit;
+            isAutoCommit = autocommit;
         }
     }
 
@@ -340,7 +340,7 @@ class Session {
         while (i-- > 0) {
             Transaction t = (Transaction) tTransaction.get(i);
 
-            t.rollback();
+            t.rollback(this);
         }
 
         tTransaction.clear();
@@ -389,7 +389,7 @@ class Session {
         while (i-- > j) {
             Transaction t = (Transaction) tTransaction.get(i);
 
-            t.rollback();
+            t.rollback(this);
             tTransaction.remove(i);
         }
 
@@ -412,14 +412,14 @@ class Session {
      */
     void beginNestedTransaction() throws SQLException {
 
-        Trace.doAssert(!bNestedTransaction, "beginNestedTransaction");
+        Trace.doAssert(!isNestedTransaction, "beginNestedTransaction");
 
-        bNestedOldAutoCommit = bAutoCommit;
+        isNestedOldAutoCommit = isAutoCommit;
 
         // now all transactions are logged
-        bAutoCommit          = false;
-        iNestedOldTransIndex = tTransaction.size();
-        bNestedTransaction   = true;
+        isAutoCommit          = false;
+        nestedOldTransIndex = tTransaction.size();
+        isNestedTransaction   = true;
     }
 
     /**
@@ -430,23 +430,24 @@ class Session {
      */
     void endNestedTransaction(boolean rollback) throws SQLException {
 
-        Trace.doAssert(bNestedTransaction, "endNestedTransaction");
+        Trace.doAssert(isNestedTransaction, "endNestedTransaction");
 
         if (rollback) {
             int i = tTransaction.size();
 
-            while (--i >= iNestedOldTransIndex) {
+            while (--i >= nestedOldTransIndex) {
                 Transaction t = (Transaction) tTransaction.get(i);
 
-                t.rollback();
+                t.rollback(this);
             }
         }
 
-        bNestedTransaction = false;
-        bAutoCommit        = bNestedOldAutoCommit;
+        // reset after the rollback
+        isNestedTransaction = false;
+        isAutoCommit        = isNestedOldAutoCommit;
 
-        if (bAutoCommit == true) {
-            tTransaction.setSize(iNestedOldTransIndex);
+        if (isAutoCommit == true) {
+            tTransaction.setSize(nestedOldTransIndex);
         }
     }
 
@@ -456,7 +457,7 @@ class Session {
      * @param  readonly
      */
     void setReadOnly(boolean readonly) {
-        bReadOnly = readonly;
+        isReadOnly = readonly;
     }
 
     /**
@@ -465,7 +466,7 @@ class Session {
      * @return
      */
     boolean isReadOnly() {
-        return bReadOnly || dDatabase.bReadOnly;
+        return isReadOnly || dDatabase.bReadOnly;
     }
 
     /**
@@ -492,7 +493,7 @@ class Session {
      * @return
      */
     boolean isNestedTransaction() {
-        return bNestedTransaction;
+        return isNestedTransaction;
     }
 
     /**
@@ -501,7 +502,7 @@ class Session {
      * @return
      */
     boolean getAutoCommit() {
-        return bAutoCommit;
+        return isAutoCommit;
     }
 
     /**

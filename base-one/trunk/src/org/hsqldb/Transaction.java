@@ -77,7 +77,8 @@ import java.sql.SQLException;
  */
 class Transaction {
 
-    private boolean bDelete;
+    private boolean isDelete;
+    private boolean isNested;
     private Table   tTable;
     private Object  oRow[];
 
@@ -89,9 +90,10 @@ class Transaction {
      * @param table
      * @param row
      */
-    Transaction(boolean delete, Table table, Object row[]) {
+    Transaction(boolean delete, boolean nested, Table table, Object row[]) {
 
-        bDelete = delete;
+        isDelete = delete;
+        isNested = nested;
         tTable  = table;
         oRow    = row;
     }
@@ -102,13 +104,13 @@ class Transaction {
      *
      * @throws SQLException
      */
-    void rollback() {
+    void rollback(Session session) {
 
         try {
-            if (bDelete) {
-                tTable.insertNoCheck(oRow, null, false);
+            if (isDelete) {
+                tTable.insertNoCheckRollback(oRow, session, isNested);
             } else {
-                tTable.deleteNoCheck(oRow, null, false);
+                tTable.deleteNoCheckRollback(oRow, session, isNested);
             }
         } catch (Exception e) {}
     }

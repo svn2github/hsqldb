@@ -542,40 +542,6 @@ public class ArrayUtil {
     }
 
     /**
-     * Retrieves the keys of the <code>Hashtable</code> supplied by the
-     * <code>h</code> argument, sorted in ascending
-     * <code>Comparable.compareTo()</code> order. <p>
-     *
-     * Using this method to good effect of course requires that all of the
-     * keys implement <code>Comparable</code>.  This is a convenience
-     * method which builds upon <code>sortArray(Object[])</code>. <p>
-     *
-     * @param h the Hashtable whose keys are to be retrieved as a sorted
-     *      Object[]
-     * @return an Object[] containing the keys of the <code>h</code>
-     *      argument in ascending <code>Comparable.compareTo()</code> order
-     */
-    public static Object[] getSortedKeys(java.util.Hashtable h) {
-
-        int                   size  = h.size();
-        java.util.Enumeration e     = h.keys();
-        int                   count = 0;
-        Object[]              keys  = new Object[size];
-
-        while (e.hasMoreElements()) {
-            keys[count++] = e.nextElement();
-        }
-
-        try {
-            sortArray(keys);
-        } catch (Exception ex) {
-            keys = new Object[]{};
-        }
-
-        return keys;
-    }
-
-    /**
      * The whole-array front-end to fastQuickSort().<p>
      *
      * This method sorts the entire array supplied by the <code>a</code>

@@ -4743,6 +4743,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
      * @param table
      * @throws SQLException
      */
+/*
     private static void _insertSorted(HsqlHashMap rows,
                                       Table table) throws SQLException {
 
@@ -4758,7 +4759,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
             table.insert((Object[]) rows.get(keyArray[i]), null);
         }
     }
-
+*/
     /**
      * @param list
      * @return
@@ -7839,6 +7840,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
                                                : ValuePool.getLong(
                                                    tempLastId.longValue());
             row[it_size]   = ValuePool.getInt(session.getTransactionSize());
+            // fredt - this is redundant as nested transactions do not endure beyond a single statement
             row[it_nested] = valueOf(session.isNestedTransaction());
 
             r.add(row);

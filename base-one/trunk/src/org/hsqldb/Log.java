@@ -95,7 +95,6 @@ import org.hsqldb.lib.StopWatch;
 // fredt@users 20021208 - ongoing revamp
 // fredt@users 20021212 - do not rewrite the *.backup file if the *.data
 // file has not been updated in the current seesion.
-
 /*
 todo - when a *.script file that has no properties file is opened, it is
 always assumed that the cache_version is 1.6.0, which may not be true;
@@ -149,7 +148,6 @@ class Log implements Runnable {
     int            logType;
     private Thread tRunner;
     volatile int   writeDelay = 60;
-    private int    mLastId;
     private Cache  cCache;
 
     // used for tracing
@@ -505,19 +503,11 @@ class Log implements Runnable {
             return;
         }
 
-        int id = 0;
-
-        if (c != null) {
-            id = c.getId();
-        }
-
-        if (id != mLastId) {
-            s       = "/*C" + id + "*/" + s;
-            mLastId = id;
-        }
+        int id = (c == null) ? 0
+                             : c.getId();
 
         try {
-            dbScriptWriter.writeLogStatement(s);
+            dbScriptWriter.writeLogStatement(s, id);
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR, sFileLog);
         }

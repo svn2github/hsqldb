@@ -100,6 +100,9 @@ class DatabaseScriptWriter {
     volatile boolean busyWriting;
     static final int INSERT = 0;
 
+    /** the ID of the last session that wrote to log */
+    int sessionId;
+
     // todo - perhaps move this global into a lib utility class
     static byte[] lineSep;
 
@@ -228,8 +231,7 @@ class DatabaseScriptWriter {
 
     protected void writeDDL() throws IOException, SQLException {
 
-        Result ddlPart = DatabaseScript.getScript(db,
-            !includeCachedData);
+        Result ddlPart = DatabaseScript.getScript(db, !includeCachedData);
 
         writeSingleColumnResult(ddlPart);
     }
@@ -314,7 +316,19 @@ class DatabaseScriptWriter {
 
     protected void writeDataTerm() throws IOException {}
 
-    void writeLogStatement(String s) throws IOException, SQLException {
+    void writeLogStatement(String s,
+                           int sid) throws IOException, SQLException {
+
+        if (sid != sessionId) {
+            s         = "/*C" + sid + "*/" + s;
+            sessionId = sid;
+        }
+
+        writeLogStatement(s);
+    }
+
+    private void writeLogStatement(String s)
+    throws IOException, SQLException {
 
         busyWriting = true;
 

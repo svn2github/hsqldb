@@ -150,11 +150,9 @@ class TableWorks {
         boolean strict =
             table.dDatabase.getProperties().isPropertyTrue("sql.strict_fk");
 
-        strict = strict || (!expTable.isTemp() && table.isTemp());
-
-        if (expTable.isTemp() &&!table.isTemp()) {
+        if (expTable.isTemp() != table.isTemp()) {
             throw Trace.error(Trace.FOREIGN_KEY_NOT_ALLOWED,
-                              "referenced table cannot be TEMPORARY");
+                              "both tables must be permanent or temporary");
         }
 
         if (strict && (exportindex == null ||!exportindex.isUnique())) {
