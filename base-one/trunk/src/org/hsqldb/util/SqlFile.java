@@ -52,7 +52,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.65 2004/06/05 16:33:34 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.66 2004/06/05 16:41:50 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -88,7 +88,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.65 $
+ * @version $Revision: 1.66 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -109,8 +109,8 @@ public class SqlFile {
         "                                                                 ";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.65 $".substring("$Revision: ".length(),
-                "$Revision: 1.65 $".length() - 2);
+        revnum = "$Revision: 1.66 $".substring("$Revision: ".length(),
+                "$Revision: 1.66 $".length() - 2);
     }
     private static String BANNER =
         "SqlFile processor v. " + revnum + ".\n"
@@ -155,6 +155,7 @@ public class SqlFile {
         + "    \\H                   Toggle HTML output mode\n"
         + "    \\! COMMAND ARGS      Execute external program (no support for stdin)\n"
         + "    \\* [true|false]      Continue upon errors (a.o.t. abort upon error)\n"
+        + "    \\a [true|false]      Auto-commit JDBC DML commands\n"
         + "    \\s                   * Show previous commands (i.e. command history)\n"
         + "    \\-[3]                * reload a command to buffer (for / commands)\n"
         + "    \\q                   Quit (alternatively, end input like Ctrl-Z or Ctrl-D)\n\n"
@@ -212,11 +213,22 @@ public class SqlFile {
      * Process all the commands on stdin.
      *
      * @param conn The JDBC connection to use for SQL Commands.
-     * @see #execute(Connection,PrintStream,PrintStream)
+     * @see #execute(Connection,PrintStream,PrintStream,boolean)
      */
-    public void execute(Connection conn)
+    public void execute(Connection conn, Boolean coeOverride)
     throws IOException, SqlToolError, SQLException {
-        execute(conn, System.out, System.err);
+        execute(conn, System.out, System.err, coeOverride);
+    }
+
+    /**
+     * Process all the commands on stdin.
+     *
+     * @param conn The JDBC connection to use for SQL Commands.
+     * @see #execute(Connection,PrintStream,PrintStream,boolean)
+     */
+    public void execute(Connection conn, boolean coeOverride)
+    throws IOException, SqlToolError, SQLException {
+        execute(conn, System.out, System.err, new Boolean(coeOverride));
     }
 
     private String      curCommand   = null;
@@ -247,7 +259,7 @@ public class SqlFile {
      * @param conn The JDBC connection to use for SQL Commands.
      */
     public synchronized void execute(Connection conn, PrintStream stdIn,
-                                     PrintStream errIn)
+                                     PrintStream errIn, Boolean coeOverride)
     throws IOException, SqlToolError, SQLException {
         psStd      = stdIn;
         psErr      = errIn;
@@ -257,10 +269,13 @@ public class SqlFile {
         String trimmedCommand;
         String trimmedInput;
         String deTerminated;
-        continueOnError = interactive;
         boolean inComment = false;  // Globbling up a comment
         int postCommentIndex;
+        boolean gracefulExit = false;
 
+        continueOnError = (coeOverride == null)
+                ? interactive
+                : coeOverride.booleanValue();
         plMode = userVars != null && userVars.size() > 0;
         String specifiedCharSet = System.getProperty("sqlfile.charset");
         try {
@@ -354,6 +369,7 @@ public class SqlFile {
                             try {
                                 processSpecial(trimmedInput.substring(1));
                             } catch (QuitNow qn) {
+                                gracefulExit = true;
                                 return;
                             } catch (BadSpecial bs) {
                                 errprintln("Error at '" + ((file == null)
@@ -430,9 +446,14 @@ public class SqlFile {
                 throw new SqlToolError(
                         "Unterminated input:  [" + stringBuffer + ']');
             }
+            gracefulExit = true;
         } finally {
             if (br != null) {
                 br.close();
+            }
+            if ((!gracefulExit) && curConn.getAutoCommit() == false) {
+                errprintln("Rolling back transactions.");
+                curConn.rollback();
             }
         }
     }
@@ -637,7 +658,7 @@ public class SqlFile {
                 }
                 try {
                     (new SqlFile(new File(other), false, userVars)).
-                            execute(curConn);
+                            execute(curConn, continueOnError);
                 } catch (Exception e) {
                     throw new BadSpecial(
                             "Failed to execute SQL from file '" + other + "':  "
@@ -650,6 +671,13 @@ public class SqlFile {
                 } else {
                     stdprintln(other);
                 }
+                return;
+            case 'a':
+                if (other != null) {
+                    curConn.setAutoCommit(
+                            Boolean.valueOf(other).booleanValue());
+                }
+                stdprintln("Auto-commit is set to: " + curConn.getAutoCommit());
                 return;
             case '*':
                 if (other != null) {
@@ -828,7 +856,8 @@ public class SqlFile {
                 for (int i = 0; i < values.length; i++) {
                     varVal = values[i];
                     userVars.put(varName, varVal);
-                    (new SqlFile(tmpFile, false, userVars)).execute(curConn);
+                    (new SqlFile(tmpFile, false, userVars)).
+                            execute(curConn, continueOnError);
                 }
             } catch (Exception e) {
                 throw new BadSpecial(
@@ -867,7 +896,8 @@ public class SqlFile {
             }
             try {
                 if (eval(values)) {
-                    (new SqlFile(tmpFile, false, userVars)).execute(curConn);
+                    (new SqlFile(tmpFile, false, userVars)).
+                        execute(curConn, continueOnError);
                 }
             } catch (BadSpecial bs) {
                 throw new BadSpecial("Malformatted PL while command (3): "
@@ -904,7 +934,8 @@ public class SqlFile {
             }
             try {
                 while (eval(values)) {
-                    (new SqlFile(tmpFile, false, userVars)).execute(curConn);
+                    (new SqlFile(tmpFile, false, userVars)).
+                            execute(curConn, continueOnError);
                 }
             } catch (BadSpecial bs) {
                 throw new BadSpecial("Malformatted PL while command (3): "
