@@ -2721,12 +2721,12 @@ class DatabaseCommandInterpreter {
         String  indexName = tokenizer.getString();
         String  token     = tokenizer.getString();
         boolean ifExists  = false;
+        String  tableName = null;
 
         // accept a table name - no check performed if it is the right table
         if (token.equals(Token.T_ON)) {
-            database.getUserTable(session, tokenizer.getString());
-
-            token = tokenizer.getString();
+            tableName = tokenizer.getString();
+            token     = tokenizer.getString();
         }
 
         if (token.equals(Token.T_IF)) {
@@ -2738,7 +2738,7 @@ class DatabaseCommandInterpreter {
         }
 
         session.checkDDLWrite();
-        database.dropIndex(session, indexName, ifExists);
+        database.dropIndex(session, indexName, null, ifExists);
     }
 
     private Result processExplainPlan() throws IOException, HsqlException {

@@ -143,8 +143,10 @@ public class Column {
     long                    identityIncrement;
     static final BigInteger MAX_LONG = BigInteger.valueOf(Long.MAX_VALUE);
     static final BigInteger MIN_LONG = BigInteger.valueOf(Long.MIN_VALUE);
-    static final BigInteger MAX_INT  = BigInteger.valueOf(Integer.MAX_VALUE);
-    static final BigInteger MIN_INT  = BigInteger.valueOf(Integer.MIN_VALUE);
+    static final BigInteger MAX_INT = BigInteger.valueOf(Integer.MAX_VALUE);
+    static final BigInteger MIN_INT = BigInteger.valueOf(Integer.MIN_VALUE);
+    static final BigDecimal BIG_DECIMAL_0 = new BigDecimal(0);
+    static final BigDecimal BIG_DECIMAL_1 = new BigDecimal(1);
 
     /**
      *  Creates a column defined in DDL statement.
@@ -838,6 +840,12 @@ public class Column {
                     return null;
 
                 case Types.TINYINT :
+                    if (o instanceof java.lang.Boolean) {
+                        return ((Boolean) o).booleanValue()
+                               ? ValuePool.getInt(1)
+                               : ValuePool.getInt(0);
+                    }
+
                     if (o instanceof java.lang.String) {
                         o = Library.trim((String) o, " ", true, true);
 
@@ -869,6 +877,12 @@ public class Column {
                     break;
 
                 case Types.SMALLINT :
+                    if (o instanceof java.lang.Boolean) {
+                        return ((Boolean) o).booleanValue()
+                               ? ValuePool.getInt(1)
+                               : ValuePool.getInt(0);
+                    }
+
                     if (o instanceof java.lang.String) {
                         o = Library.trim((String) o, " ", true, true);
 
@@ -902,6 +916,12 @@ public class Column {
                     break;
 
                 case Types.INTEGER :
+                    if (o instanceof java.lang.Boolean) {
+                        return ((Boolean) o).booleanValue()
+                               ? ValuePool.getInt(1)
+                               : ValuePool.getInt(0);
+                    }
+
                     if (o instanceof java.lang.Integer) {
                         return o;
                     }
@@ -938,6 +958,12 @@ public class Column {
                     break;
 
                 case Types.BIGINT :
+                    if (o instanceof java.lang.Boolean) {
+                        return ((Boolean) o).booleanValue()
+                               ? ValuePool.getLong(1)
+                               : ValuePool.getLong(0);
+                    }
+
                     if (o instanceof java.lang.Long) {
                         return o;
                     }
@@ -962,6 +988,12 @@ public class Column {
                 case Types.REAL :
                 case Types.FLOAT :
                 case Types.DOUBLE :
+                    if (o instanceof java.lang.Boolean) {
+                        return ((Boolean) o).booleanValue()
+                               ? ValuePool.getDouble(1)
+                               : ValuePool.getDouble(0);
+                    }
+
                     if (o instanceof java.lang.Double) {
                         return o;
                     }
@@ -984,6 +1016,11 @@ public class Column {
 
                 case Types.NUMERIC :
                 case Types.DECIMAL :
+                    if (o instanceof java.lang.Boolean) {
+                        return ((Boolean) o).booleanValue() ? BIG_DECIMAL_1
+                                                            : BIG_DECIMAL_0;
+                    }
+
                     if (o instanceof java.math.BigDecimal) {
                         return o;
                     }
@@ -1425,7 +1462,6 @@ public class Column {
             BigDecimal bd     = (BigDecimal) o;
             int        signum = bd.signum();
             BigDecimal bo     = new BigDecimal(val + signum);
-            double     test   = bo.doubleValue();
 
             if (bo.compareTo(bd) != signum) {
                 throw Trace.error(Trace.NUMERIC_VALUE_OUT_OF_RANGE);

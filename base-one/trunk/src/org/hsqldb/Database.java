@@ -599,7 +599,7 @@ public class Database {
      * @throws HsqlException if the index does not exist, the session lacks
      *        the permission or the operation violates database integrity
      */
-    void dropIndex(Session session, String indexname,
+    void dropIndex(Session session, String indexname, String tableName,
                    boolean ifExists) throws HsqlException {
 
         Table t = findUserTableForIndex(session, indexname);
@@ -610,6 +610,10 @@ public class Database {
             } else {
                 throw Trace.error(Trace.INDEX_NOT_FOUND, indexname);
             }
+        }
+
+        if (tableName != null &&!t.getName().name.equals(tableName)) {
+            throw Trace.error(Trace.INDEX_NOT_FOUND, indexname);
         }
 
         t.checkDropIndex(indexname, null);
