@@ -169,6 +169,8 @@ class Database {
     Database(String type, String path, String name,
              boolean ifexists) throws HsqlException {
 
+        setState(Database.DATABASE_SHUTDOWN);
+
         if (Trace.TRACE) {
             Trace.trace();
         }
@@ -203,7 +205,6 @@ class Database {
         databaseProperties       = new HsqlDatabaseProperties(this);
 
         databaseProperties.load();
-        setState(Database.DATABASE_SHUTDOWN);
     }
 
     /**
@@ -218,9 +219,7 @@ class Database {
             return;
         }
 
-        setState(DATABASE_OPENING);
         reopen();
-        setState(DATABASE_ONLINE);
     }
 
     /**
@@ -231,23 +230,21 @@ class Database {
      * @throws HsqlException if a database access error occurs
      */
     void reopen() throws HsqlException {
-
-        boolean error = false;
-
+        setState(DATABASE_OPENING);
         try {
             User sysUser;
 
             compiledStatementManager.reset();
 
-            tTable                = new HsqlArrayList();
-            userManager           = new UserManager();
-            hAlias                = Library.getAliasMap();
-            nameManager           = new HsqlNameManager();
-            triggerNameList       = new DatabaseObjectNames();
-            indexNameList         = new DatabaseObjectNames();
+            tTable = new HsqlArrayList();
+            userManager = new UserManager();
+            hAlias = Library.getAliasMap();
+            nameManager = new HsqlNameManager();
+            triggerNameList = new DatabaseObjectNames();
+            indexNameList = new DatabaseObjectNames();
             bReferentialIntegrity = true;
-            sysUser               = userManager.createSysUser(this);
-            sessionManager        = new SessionManager(this, sysUser);
+            sysUser = userManager.createSysUser(this);
+            sessionManager = new SessionManager(this, sysUser);
             dInfo = DatabaseInformation.newDatabaseInformation(this);
 
             if (sType != DatabaseManager.S_MEM) {
@@ -262,13 +259,14 @@ class Database {
             dInfo.setWithContent(true);
         } catch (HsqlException e) {
             logger.closeLog(this.CLOSEMODE_IMMEDIATELY);
-
+            setState(DATABASE_SHUTDOWN);
             throw e;
-        } catch (Throwable e) {
+        } catch (Throwable e){
             logger.closeLog(this.CLOSEMODE_IMMEDIATELY);
-
+            setState(DATABASE_SHUTDOWN);
             throw Trace.error(Trace.GENERAL_ERROR, e.toString());
         }
+        setState(DATABASE_ONLINE);
     }
 
     /**
@@ -689,6 +687,12 @@ class Database {
         }
     }
 
+    // tony_lai@users 20020820
+    // The database re-open and close has been moved from
+    // Log#close(int closemode) for saving memory usage.
+    // Doing so the instances of Log and other objects are no longer
+    // referenced, and therefore can be garbage collected if necessary.
+
     /**
      *  Closes this Database using the specified mode. <p>
      *
@@ -716,16 +720,15 @@ class Database {
 
         setState(DATABASE_CLOSING);
 
-        try {
-            logger.closeLog(closemode);
+        // fredt - impact of possible error conditions in closing the log
+        // should be investigated for the CLOSEMODE_COMPACT mode
+        logger.closeLog(closemode);
 
-            // tony_lai@users 20020820
-            // The database re-open and close has been moved from
-            // Log#close(int closemode) for saving memory usage.
-            // Doing so the instances of Log and other objects are no longer
-            // referenced, and therefore can be garbage collected if necessary.
+        try {
+
             if (closemode == CLOSEMODE_COMPACT) {
                 reopen();
+                setState(DATABASE_CLOSING);
                 logger.closeLog(CLOSEMODE_NORMAL);
             }
         } catch (Throwable t) {
@@ -740,6 +743,10 @@ class Database {
 
         logger.releaseLock();
         setState(DATABASE_SHUTDOWN);
+
+        // fredt - this should change to avoid removing a db from the
+        // DatabaseManager repository if there are pending getDatabase()
+        // calls
         DatabaseManager.removeDatabase(this);
 
         if (he != null) {

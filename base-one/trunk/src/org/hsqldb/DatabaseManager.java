@@ -187,13 +187,7 @@ class DatabaseManager {
                     break;
 
                 case Database.DATABASE_SHUTDOWN :
-                    try {
-                        db.open();
-                    } catch (HsqlException e) {
-                        removeDatabase(db);
-
-                        throw e;
-                    }
+                    db.open();
                     break;
 
                 // Database.close is invoked external to Database only from
