@@ -124,8 +124,7 @@ public class ValuePool {
     }
 
     public static synchronized String getString(String val) {
-
-        if (val.length() > maxStringLength) {
+        if ( val == null || val.length() > maxStringLength) {
             return val;
         }
 
@@ -138,6 +137,10 @@ public class ValuePool {
 
     public static synchronized java.math.BigDecimal getBigDecimal(
             java.math.BigDecimal val) {
+        if ( val == null) {
+            return val;
+        }
+
         return (java.math.BigDecimal) bigdecimalPool.getOrAddObject(val);
     }
 

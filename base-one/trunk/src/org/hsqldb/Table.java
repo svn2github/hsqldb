@@ -126,6 +126,7 @@ class Table {
     int           iIndexCount;                // size of vIndex
     int[]         bestRowIdentifierCols;      // column set for best index
     boolean       bestRowIdentifierStrict;    // true if it has no nullable column
+    int[]         bestIndexForColumn;         // index of the 'best' index for each column
     int           iIdentityColumn;            // -1 means no such row
     long          iIdentityId;                // next value of identity column
 
@@ -364,8 +365,8 @@ class Table {
 
         Index currentIndex = getPrimaryIndex();
 
-        if (ArrayUtil.haveEquality(currentIndex.getColumns(), col,
-                                   col.length, unique)) {
+        if (ArrayUtil.areEqual(currentIndex.getColumns(), col, col.length,
+                               unique)) {
             return currentIndex;
         }
 
@@ -374,8 +375,8 @@ class Table {
 
             currentIndex = c.getMainIndex();
 
-            if (ArrayUtil.haveEquality(currentIndex.getColumns(), col,
-                                       col.length, unique)) {
+            if (ArrayUtil.areEqual(currentIndex.getColumns(), col,
+                                   col.length, unique)) {
                 return currentIndex;
             }
         }
@@ -790,31 +791,56 @@ class Table {
         return bestRowIdentifierStrict;
     }
 
+    /**
+     * This method is called whenever there is a change to table structure and
+     * serves two porposes: (a) to reset the best set of columns that identify
+     * the rows of the table (b) to reset the best index that can be used
+     * to find rows of the table given a column value.
+     *
+     * (a) gives most weight to a primary key index, followed by a unique
+     * address with the lowest count of nullable columns. Otherwise there is
+     * no best row identifier.
+     *
+     * (b) finds for each column an index with a corresponding first column.
+     * It uses any type of visible index and accepts the first one (it doesn't
+     * make any difference to performance).
+     */
     private void resetBestRowIdentifiers() {
 
         int[]   briCols    = null;
         boolean isStrict   = false;
         int     nNullCount = 0;
 
+        // ignore if called prior to completion of primary key construction
+        if (colNullable == null) {
+            return;
+        }
+
+        bestIndexForColumn = new int[vColumn.size()];
+
+        for (int i = 0; i < bestIndexForColumn.length; i++) {
+            bestIndexForColumn[i] = -1;
+        }
+
         for (int i = 0; i < vIndex.size(); i++) {
             Index index = (Index) vIndex.get(i);
-
-            if (!index.isUnique()) {
-                continue;
-            }
+            int[] cols  = index.getColumns();
 
             // ignore system primary keys
             if (i == 0 && getPrimaryKey() == null) {
                 continue;
             }
 
-            // ignore if called prior to completion of primary key construction
-            if (colNullable == null) {
+            if (bestIndexForColumn[cols[0]] == -1) {
+                bestIndexForColumn[cols[0]] = i;
+            }
+
+            if (!index.isUnique()) {
                 continue;
             }
 
-            int[] cols   = index.getColumns();
-            int   nnullc = 0;
+
+            int nnullc = 0;
 
             for (int j = 0; j < cols.length; j++) {
                 if (!colNullable[cols[j]]) {
@@ -853,7 +879,7 @@ class Table {
     }
 
     /**
-     *  Method declaration
+     *  Used in TableFilter to get an index for the column
      *
      * @param  column
      * @return
@@ -861,15 +887,21 @@ class Table {
      */
     Index getIndexForColumn(int column) throws HsqlException {
 
+        int i = bestIndexForColumn[column];
+
+        return i == -1 ? null
+                       : getIndex(i);
+/*
         for (int i = 0; i < iIndexCount; i++) {
             Index h = getIndex(i);
-
-            if (h.getColumns()[0] == column) {
+            int[] cols = h.getColumns();
+            if (cols[0] == column) {
                 return h;
             }
         }
 
         return null;
+*/
     }
 
     /**

@@ -314,7 +314,7 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
                     case Types.VARBINARY :
                     case Types.LONGVARBINARY :
                         s += 4;
-                        s += ((byte[]) o).length;
+                        s += ((Binary) o).getBytesLength();
                         break;
 
                     case Types.OTHER :

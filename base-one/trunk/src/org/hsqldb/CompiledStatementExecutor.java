@@ -78,12 +78,10 @@ public class CompiledStatementExecutor {
      */
     Result execute(CompiledStatement cs) {
 
-        Result   result;
+        Result   result = null;
         SubQuery sq;
 
         DatabaseManager.gc();
-
-        result = null;
 
         try {
             cs.buildSubQueryResults();
@@ -148,15 +146,12 @@ public class CompiledStatementExecutor {
     private Result executeCallStatement(CompiledStatement cs)
     throws HsqlException {
 
-        Expression e;    // representing CALL
-        Object     o;    // expression return value
-        Result     r;
-        Object[]   row;
-
-        e = cs.expression;
+        Expression e = cs.expression;    // representing CALL
 
         //e.resolve(null);
-        o = e.getValue();
+        Object   o = e.getValue();       // expression return value
+        Result   r;
+        Object[] row;
 
         if (o instanceof Result) {
             return (Result) o;
@@ -194,16 +189,11 @@ public class CompiledStatementExecutor {
     private Result executeDeleteStatement(CompiledStatement cs)
     throws HsqlException {
 
-        Table          t;
-        TableFilter    f;
-        Expression     c;      // delete condition
-        HsqlLinkedList del;    // tuples to delete
-        int            count;
-
-        t     = cs.targetTable;
-        f     = cs.tf;
-        c     = cs.condition;
-        count = 0;
+        Table          t     = cs.targetTable;
+        TableFilter    f     = cs.tf;
+        Expression     c     = cs.condition;    // delete condition
+        int            count = 0;
+        HsqlLinkedList del;                     // tuples to delete
 
         if (f.findFirst()) {
             del = new HsqlLinkedList();
@@ -265,25 +255,16 @@ public class CompiledStatementExecutor {
     private Result executeInsertSelectStatement(CompiledStatement cs)
     throws HsqlException {
 
-        Table     t;
-        Select    s;
-        Result    r;
-        Record    rc;
-        int[]     cm;     // column map
-        boolean[] ccl;    // column check list
-        int[]     ct;     // column types
+        Table     t   = cs.targetTable;
+        Select    s   = cs.select;
+        int[]     ct  = t.getColumnTypes();    // column types
+        Result    r   = s.getResult(session.getMaxRows());
+        Record    rc  = r.rRoot;
+        int[]     cm  = cs.columnMap;          // column map
+        boolean[] ccl = cs.checkColumns;       // column check list
+        int       len = cm.length;
         Object[]  row;
-        int       len;
         int       count;
-
-        t   = cs.targetTable;
-        s   = cs.select;
-        ct  = t.getColumnTypes();
-        r   = s.getResult(session.getMaxRows());
-        rc  = r.rRoot;
-        cm  = cs.columnMap;
-        ccl = cs.checkColumns;
-        len = cm.length;
 
         session.beginNestedTransaction();
 
@@ -332,21 +313,14 @@ public class CompiledStatementExecutor {
     private Result executeInsertValuesStatement(CompiledStatement cs)
     throws HsqlException {
 
-        Object[]     row;
-        int[]        cm;    // column map
-        Table        t;
-        Expression[] acve;
+        Table        t    = cs.targetTable;
+        Object[]     row  = t.getNewRow(cs.checkColumns);
+        int[]        cm   = cs.columnMap;        // column map
+        Expression[] acve = cs.columnValues;
         Expression   cve;
-        int[]        ct;    // column types
-        int          ci;    // column index
-        int          len;
-
-        t    = cs.targetTable;
-        row  = t.getNewRow(cs.checkColumns);
-        cm   = cs.columnMap;
-        acve = cs.columnValues;
-        ct   = t.getColumnTypes();
-        len  = acve.length;
+        int[]        ct = t.getColumnTypes();    // column types
+        int          ci;                         // column index
+        int          len = acve.length;
 
         for (int i = 0; i < len; i++) {
             cve     = acve[i];
@@ -386,29 +360,21 @@ public class CompiledStatementExecutor {
     private Result executeUpdateStatement(CompiledStatement cs)
     throws HsqlException {
 
-        Table          t;
-        TableFilter    f;
-        int[]          cm;    // column map
-        Expression[]   acve;
+        Table          t    = cs.targetTable;
+        TableFilter    f    = cs.tf;
+        int[]          cm   = cs.columnMap;    // column map
+        Expression[]   acve = cs.columnValues;
         Expression     cve;
-        Expression     c;     // update condition
-        int[]          ct;    // column types
-        int            ci;    // column index
-        int            len;
+        Expression     c = cs.condition;       // update condition
+        int[]          ct;                     // column types
+        int            ci;                     // column index
+        int            len   = acve.length;
+        int            count = 0;
         HsqlLinkedList del;
         Result         ins;
         int            size;
-        int            count;
         Row            row;
         Object[]       ni;
-
-        t     = cs.targetTable;
-        cm    = cs.columnMap;
-        acve  = cs.columnValues;
-        c     = cs.condition;
-        len   = acve.length;
-        f     = cs.tf;
-        count = 0;
 
         if (f.findFirst()) {
             del  = new HsqlLinkedList();

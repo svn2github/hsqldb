@@ -953,8 +953,12 @@ class DatabaseCommandInterpreter {
 
                     mainConst = (TempConstraint) tcList.get(0);
 
-                    Trace.check(mainConst.localCol == null,
-                                Trace.SECOND_PRIMARY_KEY);
+                    if (mainConst.localCol != null) {
+                        if (!ArrayUtil.areEqual(mainConst.localCol, col,
+                                                col.length, true)) {
+                            throw Trace.error(Trace.SECOND_PRIMARY_KEY);
+                        }
+                    }
 
                     mainConst.localCol = col;
                     mainConst.name     = pkHsqlName;

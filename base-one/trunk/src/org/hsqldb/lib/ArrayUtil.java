@@ -248,20 +248,20 @@ public class ArrayUtil {
     }
 
     /**
-     * For sets == true returns true if a and b are identical (have the
+     * For full == true returns true if a and b are identical (have the
      * same length and contain the same integers in the same sequence).
      *
-     * For sets == false returns the result
+     * For full == false returns the result
      * of haveEqualArrays(a,b,count)
      *
-     * For sets == true, the array lengths must be the same as count
+     * For full == true, the array lengths must be the same as count
      *
      */
-    public static boolean haveEquality(int[] a, int[] b, int count,
-                                       boolean sets) {
+    public static boolean areEqual(int[] a, int[] b, int count,
+                                       boolean full) {
 
         if (ArrayUtil.haveEqualArrays(a, b, count)) {
-            if (sets) {
+            if (full) {
                 return a.length == b.length && count == a.length;
             }
 
