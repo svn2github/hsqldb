@@ -73,6 +73,10 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Enumeration;
 
+// fredt@users 20010701 - patch 1.6.1 by hybris
+// basic implementation of LIMIT n m
+// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+// type and logging attributes of sIntotable
 // fred@users 20020522 - patch 1.7.0 - aggregate functions with DISTINCT
 // rougier@users 20020522 - patch 552830 - COUNT(DISTINCT)
 // tony_lai@users 20021020 - patch 1.7.2 - improved aggregates and HAVING
@@ -92,34 +96,24 @@ class Select {
     private HsqlHashMap groupColumnNames;
     private int         aggregateCount;
     TableFilter         tFilter[];
-    Expression          eCondition;         // null means no condition
-    Expression          havingCondition;    // null means none
-    Expression          eColumn[];          // 'result', 'group' and 'order' columns
-    int                 iResultLen;         // number of columns that are 'result'
-    int                 iGroupLen;          // number of columns that are 'group'
-
-    // tony_lai@users having
-    int      iHavingIndex = -1;             // -1 means no having
-    int      iOrderLen;                     // number of columns that are 'order'
-    Select   sUnion;                        // null means no union select
-    HsqlName sIntoTable;                    // null means not select..into
-
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-// type and logging attributes of sIntotable
-    int intoType = Table.MEMORY_TABLE;
-
-//    boolean          intoTemp;
-    boolean          isIntoTableQuoted;
-    int              iUnionType;
-    static final int UNION     = 1,
-                     UNIONALL  = 2,
-                     INTERSECT = 3,
-                     EXCEPT    = 4;
-
-// fredt@users 20010701 - patch 1.6.1 by hybris
-// basic implementation of LIMIT n m
-    int limitStart = 0;                     // set only by the LIMIT keyword
-    int limitCount = 0;                     // set only by the LIMIT keyword
+    Expression          eCondition;           // null means no condition
+    Expression          havingCondition;      // null means none
+    Expression          eColumn[];            // 'result', 'group' and 'order' columns
+    int                 iResultLen;           // number of columns that are 'result'
+    int                 iGroupLen;            // number of columns that are 'group'
+    int                 iHavingIndex = -1;    // -1 means no having
+    int                 iOrderLen;            // number of columns that are 'order'
+    Select              sUnion;               // null means no union select
+    HsqlName            sIntoTable;           // null means not select..into
+    int                 intoType = Table.MEMORY_TABLE;
+    boolean             isIntoTableQuoted;
+    int                 iUnionType;
+    static final int    UNION      = 1,
+                        UNIONALL   = 2,
+                        INTERSECT  = 3,
+                        EXCEPT     = 4;
+    int                 limitStart = 0;       // set only by the LIMIT keyword
+    int                 limitCount = 0;       // set only by the LIMIT keyword
 
     /**
      * Set to preprocess mode

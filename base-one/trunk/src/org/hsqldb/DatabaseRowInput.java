@@ -90,13 +90,15 @@ import org.hsqldb.lib.HsqlByteArrayInputStream;
  */
 abstract class DatabaseRowInput extends HsqlByteArrayInputStream {
 
-    static final int NO_POS  = -1;
-    protected int    filePos = NO_POS;
-    protected int    nextPos = NO_POS;
-    protected int    size;
+    static final int NO_POS = -1;
+
+    // fredt - initialisation may be unnecessary as it's done in resetRow()
+    protected int filePos = NO_POS;
+    protected int nextPos = NO_POS;
+    protected int size;
 
     // the last column is a SYSTEM_ID that has to be created at read time
-    protected boolean makeSystemId = false;
+    protected boolean makeSystemId;
 
     static DatabaseRowInputInterface newDatabaseRowInput(int cachedRowType)
     throws SQLException {

@@ -160,7 +160,7 @@ class Index {
      * @param name
      * @param isquoted
      */
-    void setName(String name, boolean isquoted) {
+    void setName(String name, boolean isquoted) throws SQLException {
         indexName.rename(name, isquoted);
     }
 

@@ -35,6 +35,7 @@ package org.hsqldb;
 // fredt@users 20020130 - patch 1.7.0 by fredt
 // added new class as jdk 1.1 does not allow use of LinkedList
 import org.hsqldb.lib.HsqlDeque;
+import java.sql.SQLException;
 
 /**
  *  TriggerDef class declaration Definition and execution of triggers
@@ -109,7 +110,7 @@ class TriggerDef extends Thread {
     public TriggerDef(String sName, boolean namequoted, String sWhen,
                       String sOper, boolean bForEach, Table pTab,
                       Trigger pTrig, String sFire, boolean bNowait,
-                      int nQueueSize) {
+                      int nQueueSize) throws SQLException {
 
         name          = new HsqlName(sName, namequoted);
         when          = sWhen.toUpperCase();

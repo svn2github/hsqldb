@@ -443,7 +443,7 @@ public class TestDataStructures {
 
         d = new HsqlArrayList();
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 12; i++) {
             d.add(new Integer(i));
         }
 

@@ -195,7 +195,7 @@ class Constraint {
      * @param name
      * @param isquoted
      */
-    private void setName(String name, boolean isquoted) {
+    private void setName(String name, boolean isquoted) throws SQLException {
         constName.rename(name, isquoted);
     }
 

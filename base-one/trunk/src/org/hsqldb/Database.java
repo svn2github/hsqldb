@@ -1109,8 +1109,8 @@ class Database {
         HsqlName indexname;
         int      col[] = processColumnList(c, t);
 
-        if (HsqlName.isReservedName(name)) {
-            indexname = HsqlName.makeAutoName("USER", name);
+        if (HsqlName.isReservedIndexName(name)) {
+            indexname = HsqlName.newAutoName("USER", name);
         } else {
             indexname = new HsqlName(name, namequoted);
         }
@@ -1627,7 +1627,7 @@ class Database {
                             int col[] = processColumnList(c, t);
 
                             if (cname == null) {
-                                cname = HsqlName.makeAutoName("CT");
+                                cname = HsqlName.newAutoName("CT");
                             }
 
                             tempConst =
@@ -1858,7 +1858,7 @@ class Database {
         c.back();
 
         if (cname == null) {
-            cname = HsqlName.makeAutoName("FK");
+            cname = HsqlName.newAutoName("FK");
         }
 
         return new TempConstraint(cname, localcol, expTable, expcol,
@@ -2156,11 +2156,11 @@ class Database {
             throw Trace.error(Trace.INDEX_ALREADY_EXISTS, indexname);
         }
 
-        if (HsqlName.isReservedName(indexname)) {
+        if (HsqlName.isReservedIndexName(indexname)) {
             throw Trace.error(Trace.SYSTEM_INDEX, indexname);
         }
 
-        if (HsqlName.isReservedName(newname)) {
+        if (HsqlName.isReservedIndexName(newname)) {
             throw Trace.error(Trace.BAD_INDEX_CONSTRAINT_NAME, indexname);
         }
 
@@ -2820,7 +2820,7 @@ class Database {
         for (int i = 0; i < tTable.size(); i++) {
             toDrop = (Table) tTable.get(i);
 
-            if (toDrop.equals(name, session) && (isView == toDrop.isView())) {
+            if (toDrop.equals(name, session) && isView == toDrop.isView()) {
                 dropIndex = i;
 
                 break;

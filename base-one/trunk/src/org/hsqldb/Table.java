@@ -89,6 +89,7 @@ import org.hsqldb.lib.StringUtil;
 // tony_lai@users 20020820 - patch 595172 - drop constraint fix
 // kloska@users 20021030 - PATCH 1.7.2 - ON UPDATE CASCADE | SET NULL | SET DEFAULT
 // kloska@users 20021112 - PATCH 1.7.2 - ON DELETE SET NULL | SET DEFAULT
+// fredt@users 20021210 - patch 1.7.2 - better ADD / DROP INDEX for non-CACHED tables
 
 /**
  *  Holds the data structures and methods for creation of a database table.
@@ -392,6 +393,7 @@ class Table {
         vColumn.add(column);
 
         iColumnCount++;
+        iVisibleColumns++;
     }
 
     /**
@@ -432,11 +434,11 @@ class Table {
      * @param isquoted
      * @throws  SQLException
      */
-    void setName(String name, boolean isquoted) {
+    void setName(String name, boolean isquoted) throws SQLException {
 
         tableName.rename(name, isquoted);
 
-        if (HsqlName.isReservedName(getPrimaryIndex().getName().name)) {
+        if (HsqlName.isReservedIndexName(getPrimaryIndex().getName().name)) {
             getPrimaryIndex().getName().rename("SYS_PK", name, isquoted);
         }
     }
@@ -638,7 +640,7 @@ class Table {
      */
     int searchColumn(String c) {
 
-        for (int i = 0; i < iColumnCount; i++) {
+        for (int i = 0; i < this.iVisibleColumns; i++) {
             if (c.equals(((Column) vColumn.get(i)).columnName.name)) {
                 return i;
             }
@@ -848,16 +850,16 @@ class Table {
 
         Trace.doAssert(iPrimaryKey == null, "Table.createPrimaryKey(column)");
 
-        iVisibleColumns = iColumnCount;
-
         if (columns == null) {
             columns = new int[]{ iColumnCount };
 
-            Column column = new Column(new HsqlName(DEFAULT_PK, false),
+            Column column = new Column(HsqlName.newAutoName(DEFAULT_PK),
                                        false, Types.INTEGER, 0, 0, true,
                                        true, null);
 
             addColumn(column);
+
+            iVisibleColumns--;
         } else {
             for (int i = 0; i < columns.length; i++) {
                 getColumn(columns[i]).setNullable(false);
@@ -873,7 +875,7 @@ class Table {
                                            tableName.name,
                                            tableName.isNameQuoted);
 
-        createIndexPrivate(columns, name, true);
+        createIndexStructure(columns, name, true);
 
         colTypes = new int[iColumnCount];
 
@@ -902,7 +904,8 @@ class Table {
             return null;
         }
 
-        return createIndexPrivate(colarr, index.getName(), index.isUnique());
+        return createIndexStructure(colarr, index.getName(),
+                                    index.isUnique());
     }
 
     /**
@@ -915,7 +918,7 @@ class Table {
     Index createIndex(int column[], HsqlName name,
                       boolean unique) throws SQLException {
 
-        Index newindex     = createIndexPrivate(column, name, unique);
+        Index newindex     = createIndexStructure(column, name, unique);
         Index primaryindex = getPrimaryIndex();
         Node  n            = primaryindex.first();
         int   error        = 0;
@@ -944,6 +947,7 @@ class Table {
             error = Trace.VIOLATION_OF_UNIQUE_INDEX;
         }
 
+        // backtrack on error
         Node lastnode = n;
 
         n = primaryindex.first();
@@ -976,8 +980,8 @@ class Table {
      * @return                Description of the Return Value
      * @throws  SQLException
      */
-    Index createIndexPrivate(int column[], HsqlName name,
-                             boolean unique) throws SQLException {
+    Index createIndexStructure(int column[], HsqlName name,
+                               boolean unique) throws SQLException {
 
         Trace.doAssert(iPrimaryKey != null, "createIndex");
 

@@ -167,7 +167,7 @@ class TableWorks {
                         : table.getIndexForColumns(fkcol, false);
 
         if (fkindex == null) {
-            HsqlName iname = HsqlName.makeAutoName("IDX");
+            HsqlName iname = HsqlName.newAutoName("IDX");
 
             fkindex = createIndex(fkcol, iname, false);
         }
@@ -176,14 +176,14 @@ class TableWorks {
             table.dDatabase.getProperties().isPropertyTrue("sql.strong_fk");
 
         if (exportindex == null || (strong &&!exportindex.isUnique())) {
-            HsqlName   iname = HsqlName.makeAutoName("FK");
+            HsqlName   iname = HsqlName.newAutoName("FK");
             TableWorks tw    = new TableWorks(expTable);
 
             exportindex = tw.createIndex(expcol, iname, strong);
             expTable    = tw.getTable();
         }
 
-        HsqlName pkname = HsqlName.makeAutoName("REF", fkname.name);
+        HsqlName pkname = HsqlName.newAutoName("REF", fkname.name);
         Constraint c = new Constraint(pkname, fkname, expTable, table,
                                       expcol, fkcol, exportindex, fkindex,
                                       deleteAction, updateAction);
@@ -222,7 +222,7 @@ class TableWorks {
         } else {
             Table tn = table.moveDefinition(null, null,
                                             table.getColumnCount(), 0);
-            Index newindex = tn.createIndexPrivate(col, name, unique);
+            Index newindex = tn.createIndexStructure(col, name, unique);
 
             tn.moveData(table, table.getColumnCount(), 0);
             tn.updateConstraints(table, table.getColumnCount(), 0);
@@ -267,7 +267,7 @@ class TableWorks {
         }
 
         // create an autonamed index
-        HsqlName   indexname     = HsqlName.makeAutoName("IDX");
+        HsqlName   indexname     = HsqlName.newAutoName("IDX");
         Index      index         = createIndex(col, indexname, true);
         Constraint newconstraint = new Constraint(name, table, index);
 
@@ -367,7 +367,7 @@ class TableWorks {
             // fredt - todo - use of auto main indexes for FK's will be
             // deprecated so that there is no need to drop an index on the
             // main (pk) table
-            if (mainIndex.getName().isReservedName()) {
+            if (mainIndex.getName().isReservedIndexName()) {
                 boolean candrop = false;
 
                 try {
@@ -395,7 +395,7 @@ class TableWorks {
             // drop the reference index if automatic and unused elsewhere
             Index refIndex = c.getRefIndex();
 
-            if (refIndex.getName().isReservedName()) {
+            if (refIndex.getName().isReservedIndexName()) {
                 try {
 
                     // drop unless the index is used by other constraints

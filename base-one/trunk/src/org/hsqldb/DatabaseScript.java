@@ -129,7 +129,7 @@ class DatabaseScript {
             for (int j = 1; j < t.getIndexCount(); j++) {
                 Index index = t.getIndex(j);
 
-                if (HsqlName.isReservedName(index.getName().name)) {
+                if (HsqlName.isReservedIndexName(index.getName().name)) {
 
                     // the following are autocreated with the table
                     // indexes for primary keys

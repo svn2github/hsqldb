@@ -78,7 +78,11 @@ class CachedDataRow extends CachedRow {
         tTable      = t;
         iPos        = in.getPos();
         storageSize = in.getSize();
-        oData       = in.readData(tTable.getColumnTypes());
+
+        ((TextDatabaseRowInput) in).setSystemId(t.iVisibleColumns
+         != t.iColumnCount);
+
+        oData = in.readData(tTable.getColumnTypes());
     }
 
     void setNewNodes() {

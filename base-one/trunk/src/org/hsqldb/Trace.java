@@ -175,6 +175,7 @@ public class Trace extends PrintWriter {
                                 INVALID_ORDER_BY_IN_DISTINCT_SELECT = 71,
                                 OUT_OF_MEMORY                       = 72,
                                 OPERATION_NOT_SUPPORTED             = 73,
+                                INVALID_IDENTIFIER                  = 74,
 
     // use empty range for new messages
     // TLS error messages
@@ -244,9 +245,10 @@ public class Trace extends PrintWriter {
         "37000 Cannot be in ORDER BY clause",
         "37000 ORDER BY item does not appear in the SELECT DISTINCT list",
         "S1000 Out of Memory", "S1000 This operation is not supported",
+        "22019 Invalid identifier",
 
         //
-        "", "", "", "", "", "", "",
+        "", "", "", "", "", "",
 
         //
         "37000 invalid character encoding",

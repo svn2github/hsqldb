@@ -212,7 +212,18 @@ public class Servlet extends javax.servlet.http.HttpServlet {
         int                len   = request.getContentLength();
         byte               b[]   = new byte[len];
 
-        input.read(b, 0, len);
+        // fredt@users - the servlet container, Resin does not return all the
+        // bytes with one call to input.read(b,0,len) when len > 8192 bytes,
+        // so the loop is added as as workaround
+        for (int off = 0, bytesread = 0; off < len; off += bytesread) {
+            bytesread = input.read(b, off, len - off);
+
+            // fredt@users - it must read more bytes until the for loop exits
+            // otherwise an exception is thrown as the input is truncated
+            if (bytesread == 0 || bytesread == -1) {
+                throw new ServletException();
+            }
+        }
 
         String s = new String(b);
         int    p = s.indexOf('+');
