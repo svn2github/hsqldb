@@ -68,7 +68,6 @@
 package org.hsqldb;
 
 import java.io.IOException;
-import java.util.Enumeration;
 
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.Iterator;
@@ -251,20 +250,7 @@ public class Database {
             databaseProperties = new HsqlDatabaseProperties(this);
 
             databaseProperties.load();
-
-// loosecannon1@users 1.7.2 patch properties on the JDBC URL
-            // overload file database properties with any passed on URL line // todo fred - do not store password etc
-            if (urlProperties != null) {
-                for (Enumeration e = urlProperties.propertyNames();
-                        e.hasMoreElements(); ) {
-                    String propertyName = (String) e.nextElement();
-
-                    databaseProperties.setProperty(
-                        propertyName,
-                        urlProperties.getProperty(propertyName));
-                }
-            }
-
+            databaseProperties.setURLProperties(urlProperties);
             compiledStatementManager.reset();
 
             tTable                = new HsqlArrayList();

@@ -1,18 +1,14 @@
 Readme File
 
 
-2003.02.11
+2004.02.14
 
 BOOLEAN is now the default SQL type for boolean values. BIT is treated as an alias
 for BOOLEAN in table definitin and queries.
 
 More extensive error message when internal asserts fail.
 
-2003.02.09
-
 Added logging for sequence generation
-
-2003.02.07
 
 Refactoring groups of classes into new packages
 Bug fixes and enhancements

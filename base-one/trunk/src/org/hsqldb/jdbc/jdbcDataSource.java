@@ -203,7 +203,7 @@ implements Serializable, Referenceable, DataSource {
      * @see #setLogWriter
      */
     public java.io.PrintWriter getLogWriter() throws java.sql.SQLException {
-        return null;
+        return logWriter;
     }
 
     public Reference getReference() throws NamingException {

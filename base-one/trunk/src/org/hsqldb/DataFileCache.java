@@ -422,4 +422,20 @@ public class DataFileCache extends Cache {
             raFile.close();
         } catch (IOException e) {}
     }
+
+    /**
+     * Calculates the number of bytes required to store a Row in this object's
+     * database file.
+     */
+    protected void setStorageSize(CachedRow r) throws HsqlException {
+
+        // iSize = 4 bytes, each index = 32 bytes
+        Table t    = r.getTable();
+        int   size = rowStoreExtra + 16 * t.getIndexCount();
+
+        size += rowOut.getSize(r);
+        size = ((size + cachedRowPadding - 1) / cachedRowPadding)
+               * cachedRowPadding;    // align to 8 byte blocks
+        r.storageSize = size;
+    }
 }

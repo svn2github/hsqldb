@@ -31,42 +31,71 @@
 
 package org.hsqldb;
 
+import java.util.Enumeration;
+
 import org.hsqldb.lib.HashSet;
+
+// loosecannon1@users 1.7.2 patch properties on the JDBC URL
 
 /**
  * Manages a .properties file for a database.
  *
- * @version 1.7.0
+ * @author fredt@users
+ * @version 1.7.2
+ * @since 1.7.0
  */
 class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
-    private static HashSet nonSetProperties   = new HashSet();
-    private static HashSet booleanProperties  = new HashSet();
-    private static HashSet integralProperties = new HashSet();
+    private static HashSet fullyProtectedProperties = new HashSet();
+    private static HashSet setProtectedProperties   = new HashSet();
+    private static HashSet booleanProperties        = new HashSet();
+    private static HashSet integralProperties       = new HashSet();
+    private static HashSet stringProperties         = new HashSet();
 
     static {
-        String[] nonSetPropertiesNames = {
+
+        // properties that are not user-defined or only modified in the
+        // *.properties file
+        String[] fullyProtectedPropertiesNames = {
             "version", "hsqldb.compatible_version", "hsqldb.cache_version",
-            "hsqldb.log_size", "hsqldb.original_version",
-            "hsqldb.script_format", "hsqldb.files_readonly", "readonly",
-            "modified", "sql.compare_in_locale"
+            "hsqldb.original_version", "readonly", "modified",
+            "sql.compare_in_locale"
         };
 
-        nonSetProperties.addAll(nonSetPropertiesNames);
+        fullyProtectedProperties.addAll(fullyProtectedPropertiesNames);
 
+        // properties that cannot be modified by SET PROPERTY command
+        String[] setProtectedPropertiesNames = {
+            "hsqldb.log_size", "hsqldb.script_format"
+        };
+
+        setProtectedProperties.addAll(setProtectedPropertiesNames);
+
+        // user defined boolean properties
         String[] booleanPropertiesNames = {
             "hsqldb.schemas", "hsqldb.catalogs", "sql.enforce_size",
-            "sql.enforce_strict_size"
+            "sql.enforce_strict_size", "textdb.quoted", "textdb.all_quoted",
+            "textdb.ignore_first",
         };
 
         booleanProperties.addAll(booleanPropertiesNames);
 
+        // user defined integral properties
         String[] integralPropertiesNames = {
             "runtime.gc_interval", "hsqldb.cache_file_scale",
-            "hsqldb.cache_scale", "hsqldb.first_identity"
+            "hsqldb.cache_scale", "hsqldb.first_identity", "hsqldb.log_size",
+            "textdb.cache_scale"
         };
 
         integralProperties.addAll(integralPropertiesNames);
+
+        // user defined string properties
+        String[] stringPropertiesNames = {
+            "hsqldb.script_format", "textdb.fs", "textdb.vs", "textdb.lvs",
+            "textdb.encoding"
+        };
+
+        stringProperties.addAll(stringPropertiesNames);
     }
 
     private Database database;
@@ -271,8 +300,29 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         }
     }
 
+    /**
+     *  overload file database properties with any passed on URL line
+     *  do not store password etc
+     */
+    void setURLProperties(HsqlProperties props) {
+
+        if (props != null) {
+            for (Enumeration e =
+                    props.propertyNames(); e.hasMoreElements(); ) {
+                String propertyName = (String) e.nextElement();
+
+                if (isBoolean(propertyName) || isIntegral(propertyName)
+                        || isString(propertyName)) {
+                    setProperty(propertyName,
+                                props.getProperty(propertyName));
+                }
+            }
+        }
+    }
+
     boolean isSetPropertyAllowed(String property) {
-        return !nonSetProperties.contains(property);
+        return !(fullyProtectedProperties.contains(property)
+                 || setProtectedProperties.contains(property));
     }
 
     boolean isBoolean(String property) {
@@ -280,6 +330,10 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
     }
 
     boolean isIntegral(String property) {
+        return integralProperties.contains(property);
+    }
+
+    boolean isString(String property) {
         return integralProperties.contains(property);
     }
 

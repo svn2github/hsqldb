@@ -84,7 +84,7 @@ public class TestCacheSize {
 
     // type of the big table {MEMORY | CACHED | TEXT}
     String tableType  = "CACHED";
-    int    cacheScale = 16;
+    int    cacheScale = 12;
 
     // script format {TEXT, BINARY, COMPRESSED}
     String  logType       = "TEXT";
@@ -102,7 +102,7 @@ public class TestCacheSize {
     int     deleteWhileInsertInterval = 10000;
 
     // size of the tables used in test
-    int bigrows   = 40000;
+    int bigrows   = 100000;
     int smallrows = 0xfff;
 
     // if the extra table needs to be created and filled up
@@ -192,6 +192,8 @@ public class TestCacheSize {
                        + " firstname VARCHAR, " + " lastname VARCHAR, "
                        + " zip INTEGER, " + " filler VARCHAR, "
                        + " PRIMARY KEY (id1,id2) ); ";
+        String mdd13 = "SET TABLE test2 SOURCE \"test2.csv;cache_scale="
+                       + cacheScale + "\";";
 
         try {
             System.out.println("Connecting");
@@ -243,6 +245,11 @@ public class TestCacheSize {
             if (multikeytable) {
                 sStatement.execute(mddl1);
                 sStatement.execute(mddl2);
+
+                if (tableType.equals("TEXT")) {
+                    sStatement.execute(mdd13);
+                }
+
                 System.out.println("multi key table");
             }
 

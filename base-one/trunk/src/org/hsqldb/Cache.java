@@ -177,9 +177,9 @@ abstract class Cache {
     int                         cacheScale;
     int                         cacheSizeScale;
     int                         cacheFileScale;
-    int                         cachedRowPadding = 8;
+    protected int               cachedRowPadding = 8;
     int                         cachedRowType = RowOutputBase.CACHED_ROW_160;
-    int                         rowStoreExtra;
+    protected int               rowStoreExtra;
     int                         cacheLength;
     int                         maxCacheSize;     // number of Rows
     long                        maxCacheBytes;    // number of bytes
@@ -210,13 +210,14 @@ abstract class Cache {
     int       iCacheSize;
 
     // reusable input / output streams
-    RowInputInterface  rowIn;
-    RowOutputInterface rowOut;
+    RowInputInterface            rowIn;
+    protected RowOutputInterface rowOut;
 
     // for testing
     StopWatch saveAllTimer = new StopWatch(false);
     StopWatch makeRowTimer = new StopWatch(false);
     StopWatch sortTimer    = new StopWatch(false);
+    StopWatch rankTimer    = new StopWatch(false);
     int       makeRowCount = 0;
     int       saveRowCount = 0;
 
@@ -297,21 +298,7 @@ abstract class Cache {
 
     abstract void free(CachedRow r) throws HsqlException;
 
-    /**
-     * Calculates the number of bytes required to store a Row in this object's
-     * database file.
-     */
-    protected void setStorageSize(CachedRow r) throws HsqlException {
-
-        // iSize = 4 bytes, each index = 32 bytes
-        Table t    = r.getTable();
-        int   size = rowStoreExtra + 16 * t.getIndexCount();
-
-        size += rowOut.getSize(r);
-        size = ((size + cachedRowPadding - 1) / cachedRowPadding)
-               * cachedRowPadding;    // align to 8 byte blocks
-        r.storageSize = size;
-    }
+    protected abstract void setStorageSize(CachedRow r) throws HsqlException;
 
     /**
      * Adds a new Row to the Cache. This is used when a new database row is
@@ -326,6 +313,7 @@ abstract class Cache {
         }
 
         setStorageSize(r);
+        resetAccessCount();
 
         r.iLastAccess = currentAccessCount++;
 
@@ -371,6 +359,8 @@ abstract class Cache {
         CachedRow r = getRow(pos);
 
         if (r != null) {
+            resetAccessCount();
+
             r.iLastAccess = currentAccessCount++;
 
             return r;
@@ -404,8 +394,11 @@ abstract class Cache {
 
             iCacheSize++;
 
-            rData[k]      = r;
-            rFirst        = r;
+            rData[k] = r;
+            rFirst   = r;
+
+            resetAccessCount();
+
             r.iLastAccess = currentAccessCount++;
         }
 
@@ -445,7 +438,10 @@ abstract class Cache {
      * Reduces the number of rows held in this Cache object. <p>
      *
      * Cleanup is done by checking the accessCount of the Rows and removing
-     * the third of the rows that have been accessed less recently.
+     * the rows with the lowest access count.
+     *
+     * Index operations require that up to 5 recently accessed rows remain
+     * in the cache.
      *
      */
     private void cleanUp() throws HsqlException {
@@ -456,17 +452,23 @@ abstract class Cache {
             rFirst         = rFirst.rNext;
         }
 
-        int minAccess = ArrayCounter.rank(accessCount, maxCacheSize / 8,
-                                          firstAccessCount,
-                                          currentAccessCount, 10);
+        rankTimer.start();
 
-        firstAccessCount = minAccess;
+        // In _theory_ it is possible that the target access count is shared
+        // by many elements. So remove the next access count to account for
+        // this condition.
+        firstAccessCount =
+            ArrayCounter.rank(
+                accessCount, maxCacheSize / 8, firstAccessCount,
+                currentAccessCount, maxCacheSize / 512) + 1;
+
+        rankTimer.stop();
 
         // put all low rows in the array
         int removecount = 0;
 
         for (int i = 0; i < iCacheSize; i++) {
-            if (rFirst.iLastAccess < minAccess) {
+            if (rFirst.iLastAccess < firstAccessCount) {
                 rowTable[removecount++] = rFirst;
             }
 
@@ -478,6 +480,8 @@ abstract class Cache {
         Sort.sort(rowTable, rowComparator, 0, removecount - 1);
         sortTimer.stop();
         saveAllTimer.start();
+
+        int removedRows = 0;
 
         for (int i = 0; i < removecount; i++) {
             CachedRow r = rowTable[i];
@@ -491,6 +495,8 @@ abstract class Cache {
 
                 if (!r.isRoot()) {
                     remove(r);
+
+                    removedRows++;
                 }
             } catch (Exception e) {
                 throw Trace.error(Trace.FILE_IO_ERROR, Trace.Cache_cleanUp,
@@ -502,7 +508,9 @@ abstract class Cache {
         }
 
         saveAllTimer.stop();
-        resetAccessCount();
+
+//        Trace.printSystemOut("cache.cleanup() total saveRowCount: ", saveRowCount);
+//        Trace.printSystemOut("cache.cleanup() removed row count for this call: ", removedRows);
         initBuffers();
     }
 
@@ -568,17 +576,17 @@ abstract class Cache {
      */
     private void resetAccessCount() throws HsqlException {
 
-        if (currentAccessCount < Integer.MAX_VALUE / 2) {
+        if (currentAccessCount != Integer.MAX_VALUE) {
             return;
         }
 
-        currentAccessCount >>= 8;
-        firstAccessCount   >>= 8;
+        currentAccessCount >>= 2;
+        firstAccessCount   >>= 2;
 
         int i = iCacheSize;
 
         while (i-- > 0) {
-            rFirst.iLastAccess >>= 8;
+            rFirst.iLastAccess >>= 2;
             rFirst             = rFirst.rNext;
         }
     }
@@ -639,6 +647,8 @@ abstract class Cache {
                              + makeRowCount);
         Trace.printSystemOut(
             sortTimer.elapsedTimeToMessage("Cache.sort() total time"));
+        Trace.printSystemOut(
+            rankTimer.elapsedTimeToMessage("Cache.rank() total time"));
     }
 
     abstract protected void saveRow(CachedRow r)

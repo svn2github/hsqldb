@@ -41,7 +41,6 @@ import java.util.Calendar;
 
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.StringConverter;
-import org.hsqldb.store.ValuePool;
 import org.hsqldb.Binary;
 import org.hsqldb.Column;
 import org.hsqldb.HsqlDateTime;
@@ -565,7 +564,7 @@ implements java.sql.PreparedStatement {
      */
     public void setDouble(int parameterIndex, double x) throws SQLException {
 
-        Double d = ValuePool.getDouble(Double.doubleToLongBits(x));
+        Double d = new Double(x);
 
         setParameter(parameterIndex, d);
     }
@@ -588,10 +587,7 @@ implements java.sql.PreparedStatement {
      */
     public void setBigDecimal(int parameterIndex,
                               BigDecimal x) throws SQLException {
-
-        BigDecimal bd = ValuePool.getBigDecimal(x);
-
-        setParameter(parameterIndex, bd);
+        setParameter(parameterIndex, x);
     }
 
     /**
@@ -618,10 +614,7 @@ implements java.sql.PreparedStatement {
      * @exception SQLException if a database access error occurs
      */
     public void setString(int parameterIndex, String x) throws SQLException {
-
-        String s = ValuePool.getString(x);
-
-        setParameter(parameterIndex, s);
+        setParameter(parameterIndex, x);
     }
 
     /**
@@ -1878,7 +1871,7 @@ implements java.sql.PreparedStatement {
             case Types.TINYINT :
             case Types.SMALLINT :
             case Types.INTEGER :
-                Object o = ValuePool.getInt(value);
+                Object o = new Integer(value);
 
                 parameterValues[i - 1] = o;
                 break;
@@ -1905,7 +1898,7 @@ implements java.sql.PreparedStatement {
         switch (outType) {
 
             case Types.BIGINT :
-                Object o = ValuePool.getLong(value);
+                Object o = new Long(value);
 
                 parameterValues[i - 1] = o;
                 break;

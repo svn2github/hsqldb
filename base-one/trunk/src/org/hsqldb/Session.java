@@ -1056,8 +1056,8 @@ public class Session implements SessionInterface {
         record       = cmd.rRoot;
 
         while (record != null) {
-            Result            in;
-            Object[]          pvals = record.data;
+            Result   in;
+            Object[] pvals = record.data;
 
             try {
                 for (int i = 0; i < parameters.length; i++) {
@@ -1066,7 +1066,7 @@ public class Session implements SessionInterface {
 
                 in = compiledStatementExecutor.execute(cs);
             } catch (Throwable t) {
-                in         = new Result(ResultConstants.ERROR);
+                in = new Result(ResultConstants.ERROR);
 
                 // t.printStackTrace();
                 // Trace.printSystemOut(t.toString());
@@ -1082,25 +1082,26 @@ public class Session implements SessionInterface {
             // a BatchUpdateException if a batch status value of
             // esultConstants.EXECUTE_FAILED is encountered in the result
             if (in.iMode == ResultConstants.UPDATECOUNT) {
-                    updateCounts[count++] = in.iUpdateCount;
-
+                updateCounts[count++] = in.iUpdateCount;
             } else if (in.iMode == ResultConstants.DATA) {
 
-                    // FIXME:  we don't have what it takes yet
-                    // to differentiate between things like
-                    // stored procedure calls to methods with
-                    // void return type and select statements with
-                    // a single row/column containg null
-                    updateCounts[count++] = ResultConstants.SUCCESS_NO_INFO;
-
+                // FIXME:  we don't have what it takes yet
+                // to differentiate between things like
+                // stored procedure calls to methods with
+                // void return type and select statements with
+                // a single row/column containg null
+                updateCounts[count++] = ResultConstants.SUCCESS_NO_INFO;
             } else {
-                updateCounts = ArrayUtil.arraySlice(updateCounts,0, count);
-                    break;
-                }
+                updateCounts = ArrayUtil.arraySlice(updateCounts, 0, count);
+
+                break;
+            }
 
             record = record.next;
         }
+
         out = new Result(ResultConstants.SQLEXECUTE, updateCounts, 0);
+
         return out;
     }
 
@@ -1122,7 +1123,7 @@ public class Session implements SessionInterface {
             try {
                 in = dbCommandInterpreter.execute(sql);
             } catch (Throwable t) {
-                in          = new Result(ResultConstants.ERROR);
+                in = new Result(ResultConstants.ERROR);
 
                 // if (t instanceof OutOfMemoryError) {
                 // System.gc();
@@ -1136,24 +1137,26 @@ public class Session implements SessionInterface {
             // a BatchUpdateException if a batch status value of
             // ResultConstants.EXECUTE_FAILED is encountered
             if (in.iMode == ResultConstants.UPDATECOUNT) {
-                    updateCounts[count++] = in.iUpdateCount;
-
+                updateCounts[count++] = in.iUpdateCount;
             } else if (in.iMode == ResultConstants.DATA) {
 
-                    // FIXME:  we don't have what it takes yet
-                    // to differentiate between things like
-                    // stored procedure calls to methods with
-                    // void return type and select statements with
-                    // a single row/column containg null
-                    updateCounts[count++] = ResultConstants.SUCCESS_NO_INFO;
+                // FIXME:  we don't have what it takes yet
+                // to differentiate between things like
+                // stored procedure calls to methods with
+                // void return type and select statements with
+                // a single row/column containg null
+                updateCounts[count++] = ResultConstants.SUCCESS_NO_INFO;
             } else {
-                updateCounts = ArrayUtil.arraySlice(updateCounts,0, count);
-                    break;
-                }
+                updateCounts = ArrayUtil.arraySlice(updateCounts, 0, count);
+
+                break;
+            }
+
             record = record.next;
         }
 
         out = new Result(ResultConstants.SQLEXECUTE, updateCounts, 0);
+
         return out;
     }
 

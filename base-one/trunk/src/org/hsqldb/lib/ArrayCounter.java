@@ -54,26 +54,26 @@ public class ArrayCounter {
      * last segment will be smaller that the rest.
      *
      */
-    public static int[] countSegments(int[] array, int segments, int min,
-                                      int max) {
+    public static int[] countSegments(int[] array, int segments, int start,
+                                      int limit) {
 
-        int counts[] = new int[segments];
-        int interval = calcInterval(segments, min, max);
-        int index    = 0;
-        int element  = 0;
+        int  counts[] = new int[segments];
+        long interval = calcInterval(segments, start, limit);
+        int  index    = 0;
+        int  element  = 0;
 
         if (interval <= 0) {
-            return null;
+            return counts;
         }
 
         for (int i = 0; i < array.length; i++) {
             element = array[i];
 
-            if (element < min || element >= max) {
+            if (element < start || element >= limit) {
                 continue;
             }
 
-            index = (element - min) / interval;
+            index = (int) ((element - start) / interval);
 
             counts[index]++;
         }
@@ -82,10 +82,10 @@ public class ArrayCounter {
     }
 
     /**
-     * With an unsorted int[] array and with count a positive integer in the
-     * range (1,array.length), finds the value in the range (min,max) of the
+     * With an unsorted int[] array and with target a positive integer in the
+     * range (1,array.length), finds the value in the range (start,limit) of the
      * largest element (rank) where the count of all smaller elements in that
-     * range is less than or equals count.<p>
+     * range is less than or equals target.<p>
      *
      * In statistics, this can be used to calculate a median or quadrile value.
      * A usage example applied to an array of age values is to determine,
@@ -96,44 +96,51 @@ public class ArrayCounter {
      * 6000.
      *
      */
-    public static int rank(int[] array, int count, int min, int max,
+    public static int rank(int[] array, int target, int start, int limit,
                            int margin) {
 
         final int segments     = 256;
         int       elementCount = 0;
-        int       currentMax   = max;
+        int       currentLimit = limit;
 
         for (;;) {
-            int[] counts   = countSegments(array, segments, min, currentMax);
-            int   interval = calcInterval(segments, min, currentMax);
-
-            if (counts == null) {
-                return min;
-            }
+            long interval = calcInterval(segments, start, currentLimit);
+            int[] counts = countSegments(array, segments, start,
+                                         currentLimit);
 
             for (int i = 0; i < counts.length; i++) {
-                if (elementCount + counts[i] < count) {
+                if (elementCount + counts[i] < target) {
                     elementCount += counts[i];
-                    min          += interval;
+                    start        += interval;
                 } else {
                     break;
                 }
             }
 
-            if (elementCount + margin >= count) {
-                return min;
+            if (elementCount + margin >= target) {
+                return start;
             }
 
-            currentMax = min + interval < max ? min + interval
-                                              : max;
+            if (interval <= 1) {
+                return start;
+            }
+
+            currentLimit = start + interval < limit ? (int) (start + interval)
+                                                    : limit;
         }
     }
 
-    static int calcInterval(int segments, int min, int max) {
+    static long calcInterval(int segments, int start, int limit) {
 
-        int partSegment = ((max - min) % (segments)) == 0 ? 0
-                                                          : 1;
+        long range = limit - start;
 
-        return ((max - min) / segments) + partSegment;
+        if (range < 0) {
+            return 0;
+        }
+
+        int partSegment = (range % segments) == 0 ? 0
+                                                  : 1;
+
+        return (range / segments) + partSegment;
     }
 }

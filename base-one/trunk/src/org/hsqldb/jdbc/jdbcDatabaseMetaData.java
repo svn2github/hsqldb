@@ -32,7 +32,6 @@
 package org.hsqldb.jdbc;
 
 import org.hsqldb.lib.StringUtil;
-import org.hsqldb.store.ValuePool;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -395,6 +394,8 @@ import org.hsqldb.Column;
  * @see DatabaseInformationFull
  */
 public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
+
+    final static Integer INT_COLUMNS_NO_NULLS = new Integer(columnNoNulls);
 
     // -----------------------------------------------------------------------
     // private attributes
@@ -3737,7 +3738,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         }
 
         Integer Nullable = (nullable) ? null
-                                      : ValuePool.getInt(columnNoNulls);
+                                      : INT_COLUMNS_NO_NULLS;
         StringBuffer select = toQueryPrefix(
             "SYSTEM_BESTROWIDENTIFIER").append(
             and("TABLE_CAT", "=", catalog)).append(

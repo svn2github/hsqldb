@@ -1103,8 +1103,10 @@ public class jdbcStatement implements java.sql.Statement {
 
         checkClosed();
         connection.clearWarningsNoCheck();
+
         batchCount = batchResultOut.getSize();
-        if ( batchCount == 0) {
+
+        if (batchCount == 0) {
             throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT,
                                         "Empty batch");
         }
@@ -1127,7 +1129,7 @@ public class jdbcStatement implements java.sql.Statement {
 
 //#ifdef JAVA2
         if (updateCounts.length != batchCount) {
-                throw new java.sql.BatchUpdateException(updateCounts);
+            throw new java.sql.BatchUpdateException(updateCounts);
         }
 
 //#endif JAVA2
