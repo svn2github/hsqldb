@@ -252,7 +252,7 @@ class Result {
                 }
                 default :
                     throw new HsqlException(
-                        "trying to use unsuppoted result mode", "", 0);
+                        "trying to use unsuppoted result mode: " + iMode, null, 0);
             }
         } catch (IOException e) {
             throw Trace.error(Trace.TRANSFER_CORRUPTED);
@@ -831,7 +831,7 @@ class Result {
             }
             default :
                 throw new HsqlException(
-                    "trying to use unsuppoted result mode", "", 0);
+                    "trying to use unsuppoted result mode: " + iMode, null, 0);
         }
 
         out.writeIntData(out.size(), 0);

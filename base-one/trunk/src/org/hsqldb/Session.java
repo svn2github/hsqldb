@@ -690,7 +690,7 @@ class Session implements SessionInterface {
         token     = tokenizer.getString();
 
         // get first token and its command id
-        cmd   = Token.get(token);
+        cmd     = Token.get(token);
         isCmdOk = true;
 
         switch (cmd) {
@@ -722,7 +722,7 @@ class Session implements SessionInterface {
             }
             default : {
                 isCmdOk = false;
-                cs    = null;
+                cs      = null;
 
                 break;
             }
@@ -737,14 +737,12 @@ class Session implements SessionInterface {
 
         // fredt - now accepts semicolon and whitespace at the end of statement
         // fredt - investigate if it should or not
-
         while (tokenizer.getPosition() < tokenizer.getLength()) {
-
             token = tokenizer.getString();
 
-            Trace.check(token.length() == 0 || token.equals(Token.T_SEMICOLON),
-                        Trace.UNEXPECTED_TOKEN,
-                        token);
+            Trace.check(
+                token.length() == 0 || token.equals(Token.T_SEMICOLON),
+                Trace.UNEXPECTED_TOKEN, token);
         }
 
         // - need to be able to key cs against its sql in statement pool
@@ -1111,7 +1109,7 @@ class Session implements SessionInterface {
                         break;
                 }
             } catch (HsqlException e) {
-                return new Result(e,null);
+                return new Result(e, null);
             }
         }
 

@@ -546,7 +546,7 @@ class TableFilter {
         sb.append("bOuterJoin=[").append(bOuterJoin).append("]\n");
         sb.append("eStart=[").append(eStart).append("]\n");
         sb.append("eEnd=[").append(eEnd).append("]\n");
-        sb.append("eAnd=[").append(eEnd).append("]\n");
+        sb.append("eAnd=[").append(eAnd).append("]\n");
         sb.append("sSelect=[").append(sSelect).append("]");
 
         return sb.toString();
