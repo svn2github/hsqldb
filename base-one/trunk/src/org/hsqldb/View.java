@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2002, The HSQL Development Group
+/* Copyright (c) 2001-2003, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,7 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users 20020420 - patch523880 by leptipre@users - VIEW support - modified
@@ -48,73 +49,92 @@ class View extends Table {
     Select         viewSelect;
     private String sStatement;
 
-    View(Database db, HsqlName name) throws HsqlException {
+    View(Database db, HsqlName name, String definition,
+            HsqlArrayList colList) throws HsqlException {
 
         super(db, name, VIEW, 0);
 
-        sStatement = "";
         isReadOnly = true;
+
+        setStatement(definition, colList);
     }
 
-    void addColumns(Result.ResultMetaData metadata,
-                    int columns) throws HsqlException {
+    /**
+     * Tokenize the SELECT statement to get rid of any comment line that
+     * may exist at the end. Store the result for crating the Select and
+     * logging the DDL at checkpoints.<p>
+     *
+     * Create the SYSTEM_SUBQUERY working table and the Select object used.
+     *
+     * @param s
+     * @param colList
+     *
+     * @throws HsqlException
+     */
+    void setStatement(String s, HsqlArrayList colList) throws HsqlException {
 
-        for (int i = 0; i < columns; i++) {
-            String name = metadata.sTable[i];
-            Table  t    = database.findUserTable(name);
+        int       position;
+        String    str;
+        Tokenizer tokenizer = new Tokenizer(s);
 
-            if (t != null && t.isTemp()) {
-                throw Trace.error(Trace.TABLE_NOT_FOUND);
+        // fredt@users - this establishes the end of the actual statement
+        // to get rid of any end semicolon or comment line after the end
+        // of statement
+        do {
+            position = tokenizer.getPosition();
+            str      = tokenizer.getString();
+        } while (str.length() != 0 || tokenizer.wasValue());
+
+        sStatement = s.substring(0, position).trim();
+
+        // create the working table
+        tokenizer.reset(sStatement);
+        tokenizer.getThis(Token.T_SELECT);
+
+        Parser p = new Parser(this.database, tokenizer,
+                              database.sessionManager.getSysSession());
+        SubQuery sq = p.parseSubquery(null, true, Expression.QUERY);
+
+        workingTable = sq.table;
+        viewSelect   = sq.select;
+
+        viewSelect.prepareResult();
+
+        Result.ResultMetaData metadata = viewSelect.resultMetaData;
+        int                   columns  = viewSelect.iResultLen;
+
+        if (colList != null) {
+            if (colList.size() != columns) {
+                throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
             }
 
-            if (metadata.sLabel[i] == null) {
+            for (int i = 0; i < columns; i++) {
+                HsqlName name = (HsqlName) colList.get(i);
 
-                // fredt - this does not guarantee the uniqueness of column
-                // names but addColumns() will throw if names are not unique.
-                metadata.sLabel[i] = "COL_" + String.valueOf(i);
+                metadata.sLabel[i]        = name.name;
+                metadata.isLabelQuoted[i] = name.isNameQuoted;
+
+                viewSelect.eColumn[i].setAlias(name.name, name.isNameQuoted);
+                workingTable.renameColumn(workingTable.getColumn(i),
+                                          name.name, name.isNameQuoted);
+            }
+        }
+
+        // check the tableFilters to ensure all tables are user tables
+        int filtercount = viewSelect.tFilter.length;
+
+        for (int i = 0; i < filtercount; i++) {
+            Table table = viewSelect.tFilter[i].getTable();
+
+            if (table.isSystem()) {
+                throw Trace.error(Trace.TABLE_NOT_FOUND,
+                                  new Object[]{ table.tableName.name });
             }
         }
 
         super.addColumns(metadata, columns);
 
         iVisibleColumns = iColumnCount;
-    }
-
-    /**
-     * Tokenize the SELECT statement to get rid of any comment line that
-     * may exist at the end. Store the result
-     * for performing selects and logging the DDL at checkpoints.
-     *
-     * @param s
-     *
-     * @throws HsqlException
-     */
-    void setStatement(String s) throws HsqlException {
-
-        int       position;
-        String    str;
-        Tokenizer t = new Tokenizer(s);
-
-        // fredt@users - this establishes the end of the actual statement
-        // to get rid of any end semicolon or comment line after the end
-        // of statement
-        do {
-            position = t.getPosition();
-            str      = t.getString();
-        } while (str.length() != 0 || t.wasValue());
-
-        sStatement = s.substring(0, position).trim();
-
-        // create the working table
-        t.reset(sStatement);
-        t.getThis(Token.T_SELECT);
-
-        Parser p = new Parser(this.database, t,
-                              database.sessionManager.getSysSession());
-        SubQuery sq = p.parseSubquery(null, true, Expression.QUERY);
-
-        workingTable = sq.table;
-        viewSelect   = sq.select;
     }
 
     String getStatement() {

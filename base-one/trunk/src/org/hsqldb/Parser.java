@@ -158,19 +158,24 @@ class Parser {
         table.checkDataReadOnly();
     }
 
-    HsqlArrayList getColumnNames() throws HsqlException {
+    static HsqlArrayList getColumnNames(Database db, Tokenizer t,
+                                        boolean full) throws HsqlException {
 
         HsqlArrayList columns = new HsqlArrayList();
-        int           i       = 0;
-        String        token;
 
         while (true) {
-            columns.add(tokenizer.getString());
-            tokenizer.checkUnexpectedParam("parametric column identifier");
+            if (full) {
+                String   token  = t.getIdentifier();
+                boolean  quoted = t.wasQuotedIdentifier();
+                HsqlName name   = db.nameManager.newHsqlName(token, quoted);
 
-            i++;
+                columns.add(name);
+            } else {
+                columns.add(t.getString());
+                t.checkUnexpectedParam("parametric column identifier");
+            }
 
-            token = tokenizer.getString();
+            String token = t.getString();
 
             if (token.equals(Token.T_COMMA)) {
                 continue;
@@ -216,6 +221,19 @@ class Parser {
                 database,
                 database.nameManager.newHsqlName("SYSTEM_SUBQUERY", false),
                 Table.SYSTEM_SUBQUERY, 0);
+
+            for (int i = 0; i < s.iResultLen; i++) {
+                String colname = s.eColumn[i].getAlias();
+
+                if (colname == null || colname.length() == 0) {
+
+                    // fredt - this does not guarantee the uniqueness of column
+                    // names but addColumns() will throw if names are not unique.
+                    colname = "COL_" + String.valueOf(i + 1);
+
+                    s.eColumn[i].setAlias(colname, false);
+                }
+            }
 
             table.addColumns(s);
 
@@ -2097,7 +2115,7 @@ class Parser {
         len    = t.getColumnCount();
 
         if (token.equals(Token.T_OPENBRACKET)) {
-            cNames = getColumnNames();
+            cNames = getColumnNames(database, tokenizer, false);
 
             if (cNames.size() > len) {
                 throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);

@@ -1,6 +1,17 @@
 Readme File
 
-2003.10.20
+2003.10.24
+
+Fixed some reported and unreported bugs.
+
+View definitions can now have a column name list:
+
+CREATE VIEW <viewname> [(<colnmae>, ...)] AS SELECT ....
+
+
+2003.10.21
+
+HSQLDB 1.7.2 ALPHA_S
 
 Fixed name resolution issues in some IN (SELECT ...) and EXISTS (SELECT ...)
 queries. Optimisation of these queries when not correlated.

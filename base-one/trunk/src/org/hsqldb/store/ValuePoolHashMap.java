@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2002, The HSQL Development Group
+/* Copyright (c) 2001-2003, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -109,8 +109,8 @@ public class ValuePoolHashMap extends BaseHashMap {
         Long testValue;
         int index = hashIndex.getHashIndex((int) (longKey
             ^ (longKey >>> 32)));
-        int  lookup     = hashIndex.hashTable[index];
-        int  lastLookup = -1;
+        int lookup     = hashIndex.hashTable[index];
+        int lastLookup = -1;
 
         for (; lookup >= 0;
                 lastLookup = lookup,
@@ -191,9 +191,9 @@ public class ValuePoolHashMap extends BaseHashMap {
 
         java.sql.Date testValue;
         int           hash       = (int) longKey ^ (int) (longKey >> 32);
-        int index      = hashIndex.getHashIndex((int) longKey);
-        int lookup     = hashIndex.hashTable[index];
-        int lastLookup = -1;
+        int           index      = hashIndex.getHashIndex((int) longKey);
+        int           lookup     = hashIndex.hashTable[index];
+        int           lastLookup = -1;
 
         for (; lookup >= 0;
                 lastLookup = lookup,
@@ -226,8 +226,8 @@ public class ValuePoolHashMap extends BaseHashMap {
         Double testValue;
         int index = hashIndex.getHashIndex((int) (longKey
             ^ (longKey >>> 32)));
-        int    lookup     = hashIndex.hashTable[index];
-        int    lastLookup = -1;
+        int lookup     = hashIndex.hashTable[index];
+        int lastLookup = -1;
 
         for (; lookup >= 0;
                 lastLookup = lookup,

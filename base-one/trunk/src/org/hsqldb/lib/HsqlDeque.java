@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2002, The HSQL Development Group
+/* Copyright (c) 2001-2003, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,8 +48,8 @@ import java.util.NoSuchElementException;
 public class HsqlDeque extends BaseList implements HsqlList {
 
     private Object[] list;
-    private int      firstindex = 0;                   // index of first list element
-    private int      endindex   = 0;                   // index of last list element + 1
+    private int      firstindex = 0;    // index of first list element
+    private int      endindex   = 0;    // index of last list element + 1
 
     // can grow to fill list
     // if elementCount == 0 then firstindex == endindex

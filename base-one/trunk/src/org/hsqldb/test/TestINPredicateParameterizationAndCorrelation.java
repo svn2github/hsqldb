@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2002, The HSQL Development Group
+/* Copyright (c) 2001-2003, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -154,7 +154,7 @@ public class TestINPredicateParameterizationAndCorrelation extends TestBase {
         pstmt.setInt(5, 2);
         pstmt.setInt(6, 4);
 
-        rs          = pstmt.executeQuery();
+        rs = pstmt.executeQuery();
 
         rs.next();
 

@@ -386,8 +386,6 @@ class Column {
                 double ad = -((Number) a).doubleValue();
 
                 return ValuePool.getDouble(Double.doubleToLongBits(ad));
-
-//                return new Double(-((Number) a).doubleValue());
             }
             case Types.NUMERIC :
             case Types.DECIMAL :

@@ -282,6 +282,10 @@ class Table {
         return isTemp;
     }
 
+    final boolean isSystem() {
+        return tableType == SYSTEM_TABLE || tableType == SYSTEM_SUBQUERY;
+    }
+
     final boolean isView() {
         return isView;
     }
@@ -2637,6 +2641,15 @@ class Table {
      */
     Column getColumn(int i) {
         return (Column) vColumn.get(i);
+    }
+
+    void renameColumn(Column column, String newName,
+                      boolean isquoted) throws HsqlException {
+
+        int i = getColumnNr(column.columnName.name);
+
+        vColumn.setKey(i, newName);
+        column.columnName.rename(newName, isquoted);
     }
 
     /**

@@ -242,8 +242,19 @@ class DatabaseScript {
 
                 a.append(Token.T_CREATE).append(' ').append(
                     Token.T_VIEW).append(' ');
-                a.append(v.getName().statementName);
-                a.append(' ').append(Token.T_AS).append(' ');
+                a.append(v.getName().statementName).append(' ').append('(');
+
+                int count = v.getColumnCount();
+
+                for (int j = 0; j < count; j++) {
+                    a.append(v.getColumn(j).columnName.statementName);
+
+                    if (j < count - 1) {
+                        a.append(',');
+                    }
+                }
+
+                a.append(')').append(' ').append(Token.T_AS).append(' ');
                 a.append(v.getStatement());
                 addRow(r, a.toString());
             }

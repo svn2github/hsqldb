@@ -1401,27 +1401,25 @@ class DatabaseCommandInterpreter {
      */
     private void processCreateView() throws HsqlException {
 
-        View     view;
-        String   token;
-        int      logposition;
-        HsqlName viewHsqlName;
-        Parser parser;
-        Select select;
-
-        token       = tokenizer.getName();
-        logposition = tokenizer.getPartMarker();
+        String token       = tokenizer.getName();
+        int    logposition = tokenizer.getPartMarker();
 
         checkViewExists(token, false);
 
-        viewHsqlName = database.nameManager.newHsqlName(token,
-                tokenizer.wasQuotedIdentifier());
-        view = new View(database, viewHsqlName);
+        HsqlName viewHsqlName = database.nameManager.newHsqlName(token,
+            tokenizer.wasQuotedIdentifier());
+        HsqlArrayList colList = null;
+
+        if (tokenizer.isGetThis(Token.T_OPENBRACKET)) {
+            colList = Parser.getColumnNames(database, tokenizer, true);
+        }
 
         tokenizer.getThis(Token.T_AS);
         tokenizer.setPartMarker();
         tokenizer.getThis(Token.T_SELECT);
 
-        parser = new Parser(database, tokenizer, session);
+        Parser parser = new Parser(database, tokenizer, session);
+        Select select;
 
         try {
 
@@ -1437,8 +1435,9 @@ class DatabaseCommandInterpreter {
             throw e;
         }
 
-        view.setStatement(tokenizer.getLastPart());
-        view.addColumns(select.resultMetaData, select.iResultLen);
+        View view = new View(database, viewHsqlName, tokenizer.getLastPart(),
+                             colList);
+
         session.commit();
         database.linkTable(view);
         tokenizer.setPartMarker(logposition);
@@ -1663,11 +1662,7 @@ class DatabaseCommandInterpreter {
 
         session.commit();
         session.setScripting(!t.isTemp());
-
-        int i = t.getColumnNr(column.columnName.name);
-
-        t.vColumn.setKey(i, newName);
-        column.columnName.rename(newName, isquoted);
+        t.renameColumn(column, newName, isquoted);
     }
 
     /**
