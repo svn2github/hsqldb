@@ -107,3 +107,22 @@ insert into GroupSubject values (null, null, 100, 200);
  NULL,NULL,100,200
 */select * from GroupSubject
 
+-- MULTIPLE FK ISSUE
+drop table testA if exists;
+drop table testB if exists;
+drop table testC if exists;
+create table testA(id integer primary key);
+create table testB(id integer, foreign key (id) references testA(id) on delete cascade);
+create table testC(id integer, foreign key (id) references testA(id));
+insert into testA values(1);
+insert into testA values(2);
+insert into testB values(1);
+insert into testB values(2);
+insert into testC values(1);
+/*e*/delete from testA
+/*c2*/select * from testB
+/*c1*/select * from testC
+/*u1*/delete from testA where id=2
+/*c1*/select * from testA
+/*c1*/select * from testB
+/*c1*/select * from testC

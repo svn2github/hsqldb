@@ -2157,7 +2157,7 @@ public class Table extends BaseTable {
 
             // if (reftable == this) we don't need to go further and can return ??
             if (delete == false && hasref == false) {
-                return;
+                continue;
             }
 
             Index    refindex    = c.getRefIndex();
