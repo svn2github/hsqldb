@@ -1,4 +1,4 @@
-Build instructions for HSQLDB 1.7.3
+Build instructions for HSQLDB 1.8.0
 
 A jar file for HSQLDB is provided in the /lib directory of the 
 .zip package. This jar contains both the database and the 
@@ -13,7 +13,7 @@ For use with JRE 1.1.x, 1.2.x or 1.3.x recompilation is necessary.
 For all the older versions, always use JDK 1.3.x to build the jar.
 The default build with JDK 1.3.x is not compatible to run under
 1.1. If you require this compatibility, you should use the following
-ant command prior to the build:
+ant command prior to the build (note the digit 1 in java1):
 ant switchtojava1target
 The jars compiled after this switch will run under JRE 1.3 too, but
 they use some deprecated JDK 1.1 methods.

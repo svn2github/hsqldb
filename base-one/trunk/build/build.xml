@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <!-- author fredt@users.sourceforge.net 2001 - 2004 -->
 <!-- additional targets by unsaved@users.sourceforge.net 2004 -->
+<!-- additional ImageIcons by weconsultants@users.sourceforge.net 20041109 -->
 
 <project name="hsqldb" default="help" basedir="../">
    <!-- This loads properties in the same exact way as if you ran
@@ -24,13 +25,13 @@
    <target name='explainjars'
            description="List description of jars that you can build">
      <echo>
-hsqldb.jar     : default distribution jar
-hsqljdbc.jar   : JDBC client only (no direct urls of form jdbc:hsqldb:mem/file/res:*)
-hsqldbmain.jar : no utility programs
-hsqldbmin.jar  : no utility or server programs
-hsqldbtest.jar : all including test classes
-hsqldbz.jar    : min jar plus necessary util classes for Zaurus
-hsqlsqltool.jar: SqlTool client only (no direct urls of form jdbc:hsqldb:mem/file/res:*)
+hsqldb.jar     	: default distribution jar
+hsqljdbc.jar   	: JDBC client only (no direct urls of form jdbc:hsqldb:mem/file/res:*)
+hsqldbmain.jar	: no utility programs
+hsqldbmin.jar  	: no utility or server programs
+hsqldbtest.jar 	: all including test classes
+hsqldbz.jar		: min jar plus necessary util classes for Zaurus
+hsqlsqltool.jar	: SqlTool client only (no direct urls of form jdbc:hsqldb:mem/file/res:*)
 
 jars built with JDK 1.2 OR 1.3 can now be used with JRE 1.1.
 
@@ -104,7 +105,9 @@ examples:
                     ${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java
                     ${src}/org/hsqldb/jdbc/jdbcResultSet.java
                     ${src}/org/hsqldb/jdbc/jdbcStatement.java
-                    ${src}/org/hsqldb/rowio/RowInputTextLog.java +JAVA1TARGET"/>
+                    ${src}/org/hsqldb/rowio/RowInputTextLog.java
+                    ${src}/org/hsqldb/util/ConnectionDialogCommon.java
+                    +JAVA1TARGET"/>
        </java>
     </target>
 
@@ -115,7 +118,9 @@ examples:
                     ${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java
                     ${src}/org/hsqldb/jdbc/jdbcResultSet.java
                     ${src}/org/hsqldb/jdbc/jdbcStatement.java
-                    ${src}/org/hsqldb/rowio/RowInputTextLog.java -JAVA1TARGET"/>
+                    ${src}/org/hsqldb/rowio/RowInputTextLog.java
+                    ${src}/org/hsqldb/util/ConnectionDialogCommon.java
+                    -JAVA1TARGET"/>
        </java>
     </target>
 
@@ -137,7 +142,7 @@ examples:
        </java>
     </target>
 
-    <target name="switchtojdk11" depends="codeswitcher,switchtojava1target"
+    <target name="switchtojdk11" depends="codeswitcher"
             description="self explanatory" unless="ant.java.iscjavamodern">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes" >
          <arg line="${src}/org/hsqldb/jdbc/jdbcStubs.java
@@ -147,13 +152,14 @@ examples:
                     ${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java
                     ${src}/org/hsqldb/jdbc/jdbcResultSet.java
                     ${src}/org/hsqldb/jdbc/jdbcStatement.java
+                    ${src}/org/hsqldb/lib/SimpleLog.java
                     ${src}/org/hsqldb/rowio/RowInputTextLog.java
                     ${src}/org/hsqldb/HsqlDateTime.java -JAVA2 -JDBC3"/>
        </java>
        <available classname="java.util.Vector" property="noswing"/>
     </target>
 
-    <target name="switchtojdk12" depends="codeswitcher,switchoffjava1target"
+    <target name="switchtojdk12" depends="codeswitcher"
             description="self explanatory" if="ant.java.iscjava12">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes" >
          <arg line="${src}/org/hsqldb/jdbc/jdbcStubs.java
@@ -163,6 +169,7 @@ examples:
                     ${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java
                     ${src}/org/hsqldb/jdbc/jdbcResultSet.java
                     ${src}/org/hsqldb/jdbc/jdbcStatement.java
+                    ${src}/org/hsqldb/lib/SimpleLog.java
                     ${src}/org/hsqldb/rowio/RowInputTextLog.java
                     ${src}/org/hsqldb/HsqlDateTime.java +JAVA2 -JDBC3"/>
        </java>
@@ -178,6 +185,7 @@ examples:
                     ${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java
                     ${src}/org/hsqldb/jdbc/jdbcResultSet.java
                     ${src}/org/hsqldb/jdbc/jdbcStatement.java
+                    ${src}/org/hsqldb/lib/SimpleLog.java
                     ${src}/org/hsqldb/rowio/RowInputTextLog.java
                     ${src}/org/hsqldb/HsqlDateTime.java +JAVA2 +JDBC3"/>
        </java>
@@ -230,8 +238,8 @@ examples:
          <exclude name="org/hsqldb/jdbc/jdbcParameterMetaData.java"/>
          <exclude name="org/hsqldb/jdbc/jdbcSavepoint.java"/>
          <exclude name="org/hsqldb/HsqlSocketFactorySecure.java" unless="ant.java.hasjsse"/>
-         <exclude name="org/hsqldb/NIOLockFile.java"/>
-         <exclude name="org/hsqldb/NIOScaledRAFile.java"/>
+         <exclude name="org/hsqldb/persist/NIOLockFile.java"/>
+         <exclude name="org/hsqldb/persist/NIOScaledRAFile.java"/>
       </javac>
       <copy todir="${basedir}/classes/org/hsqldb/resources">
          <fileset dir="${src}/org/hsqldb/resources" includes="*.properties"/>
@@ -260,8 +268,8 @@ examples:
       <include name="org/hsqldb/jdbc/jdbcDataSource*.java"/>
       <include name="org/hsqldb/jdbc/jdbcParameterMetaData.java"/>
       <include name="org/hsqldb/jdbc/jdbcSavepoint.java"/>
-      <include name="org/hsqldb/NIOLockFile.java"/>
-      <include name="org/hsqldb/NIOScaledRAFile.java"/>
+      <include name="org/hsqldb/persist/NIOLockFile.java"/>
+      <include name="org/hsqldb/persist/NIOScaledRAFile.java"/>
       </javac>
    </target>
 
@@ -293,6 +301,17 @@ examples:
       <copy todir="classes/org/hsqldb/util">
       <fileset dir="${src}/org/hsqldb/util">
          <include name="hsqldb.gif"/>
+         <include name="Bold.gif"/>
+         <include name="Clear.png"/>
+         <include name="Close.png"/>
+         <include name="Colors.png"/>
+         <include name="GreenCircle.gif"/>
+         <include name="Hourglass.gif"/>
+         <include name="hsqldb.gif"/>
+         <include name="Italic.gif"/>
+         <include name="problems.gif"/>
+         <include name="RedCircle.gif"/>
+         <include name="run_exc.gif"/>
       </fileset>
     </copy>
     </target>
@@ -597,6 +616,8 @@ examples:
              <attribute name='Main-Class' value='org.hsqldb.util.DatabaseManager'/>
          </manifest>
          <include name="org/hsqldb/util/*.class"/>
+         <include name="org/hsqldb/util/*.gif"/>
+         <include name="org/hsqldb/util/*.png"/>
          <include name="org/hsqldb/lib/java/*.class"/>
          <exclude name="org/hsqldb/util/Files.class"/>
          <exclude name="org/hsqldb/util/ShutdownServer.class"/>
@@ -605,7 +626,9 @@ examples:
          <exclude name="org/hsqldb/util/Zaurus*.*"/>
          <exclude name="org/hsqldb/test/*.class"/>
          <exclude name="org/hsqldb/sample/*.class"/>
+         <exclude name="org/hsqldb/index/*.class"/>
          <exclude name="org/hsqldb/jdbc/*.class"/>
+         <exclude name="org/hsqldb/persist/*.class"/>
          <exclude name="org/hsqldb/rowio/*.class"/>
          <exclude name="org/hsqldb/scriptio/*.class"/>
          <exclude name="org/hsqldb/*.class"/>
@@ -615,7 +638,7 @@ examples:
     <target name="javadoc" depends="-preparedoc"
             description="Create javadoc for the distribution package">
       <javadoc
-                   sourcefiles="${src}/org/hsqldb/jdbcDriver.java,
+		   sourcefiles="${src}/org/hsqldb/jdbcDriver.java,
                         ${src}/org/hsqldb/Trigger.java,
 		   				${src}/org/hsqldb/Server.java,
 		   				${src}/org/hsqldb/WebServer.java,
