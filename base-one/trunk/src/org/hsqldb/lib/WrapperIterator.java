@@ -122,9 +122,21 @@ public class WrapperIterator implements Iterator {
                     return false;
                 }
 
-                return it2.hasNext();
+                if (it2.hasNext()) {
+                    return true;
+                }
+
+                it2 = null;
+
+                return false;
             } else {
-                return it1.hasNext();
+                if (it1.hasNext()) {
+                    return true;
+                }
+
+                it1 = null;
+
+                return hasNext();
             }
         }
 
@@ -166,6 +178,8 @@ public class WrapperIterator implements Iterator {
                 }
 
                 it2 = null;
+
+                next();
             } else {
                 if (it1.hasNext()) {
                     return it1.next();
