@@ -1,4 +1,4 @@
-<!-- $Id: unix.xml,v 1.15 2004/05/14 20:48:58 unsaved Exp $ -->
+<!-- $Id: unix.xml,v 1.16 2004/05/14 20:54:32 unsaved Exp $ -->
 
 <chapter>
     <title>UNIX Quick Start</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.15 $</edition>
-        <pubdate>$Date: 2004/05/14 20:48:58 $</pubdate>
+        <edition>$Revision: 1.16 $</edition>
+        <pubdate>$Date: 2004/05/14 20:54:32 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>UNIX</keyword>
@@ -124,9 +124,9 @@
             directory of the lib directory that contains
             <filename>hsqldb.jar</filename>.
             E.g., if your path to <filename>hsqldb.jar</filename> is
-            <filename>/a/b/c/lib/jar</filename>, then your
+            <filename>/a/b/hsqldb/lib/hsqldb.jar</filename>, then your
             <emphasis role='bold'>HSQLDB_HOME</emphasis> is
-            <filename>/a/b/c</filename>.
+            <filename>/a/b/hsqldb</filename>.
         </para></important> <para>
             If the description of your distribution says that the hsqldb.jar
             file will work for your Java version, then you are finished with
@@ -261,7 +261,7 @@
                 <emphasis role='bold'>HSQLDB_HOME</emphasis> (as described 
                 above) plus "/lib/hsqldb.jar", like
                 </para><informalexample><screen>
-    export CLASSPATH; CLASSPATH=/path/to/hsqldb/install/home/lib/hsqldb.jar</screen>
+    export CLASSPATH; CLASSPATH=/path/to/hsqldb/lib/hsqldb.jar</screen>
                 </informalexample><para>
                 In <emphasis role='bold'>HSQLDB_OWNER</emphasis>'s home
                 directory, run</para>
@@ -480,7 +480,25 @@
                 defined, set a property of name 
                 <literal>server.urlid.X</literal> to the urlid for an 
                 Administrative user for that database instance.
-            </para></step> <step><para>
+                </para>
+                <example><title>server.properties fragment</title>
+                    <programlisting>
+    server.database.0=file://home/hsqldb/data/db1
+    server.urlid.0=localhostdb1</programlisting>
+                </example>
+                <para>
+                For this example, you would need to define the urlid
+                <literal>localhostdb1</literal> in your
+                <filename>sqltool.rc</filename> file.
+                </para>
+                <example><title>example sqltool.rc stanza</title>
+                    <programlisting>
+    urlid localhostdb1
+    url jdbc:hsqldb:hsql://localhost
+    username sa
+    password secret</programlisting>
+                </example>
+            </step> <step><para>
                 Tell your OS to run the init script upon system startup and 
                 shutdown.
                 If using a BSD variant, you must set "enable_hsqldb" to "YES" 
