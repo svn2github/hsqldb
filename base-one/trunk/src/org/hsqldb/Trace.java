@@ -315,7 +315,7 @@ public class Trace extends PrintWriter {
     //
     INTERNAL_unknown_internal_statement_type                       = 201,
                   INTERNAL_session_operation_not_supported         = 202,
-                  INTERNAL_ivalid_compiled_statement_id            = 203,
+                  INVALID_PREPARED_STATEMENT                       = 203,
                   DatabaseCommandInterpreter_processCreateTrigger1 = 204,
                   DatabaseCommandInterpreter_processCreateTrigger2 = 205,
                   DatabaseCommandInterpreter_processSavepoint      = 206,
@@ -544,7 +544,7 @@ public class Trace extends PrintWriter {
         "reserved 200",    //
         "S1000 Internal Error : Unknown SQL Statement Type:",                                                                   //
         "S1000 Internal Error : Unknown Session Operation Type:",                                                               //
-        "S1000 Internal Error : Invalid Compiled Statement ID:",                                                                //
+        "S1000 prepared statement is no longer valid",    //
         "parsing trigger command ",    //DatabaseCommandInterpreter_processCreateTrigger1
         "loading trigger class ",    //DatabaseCommandInterpreter_processCreateTrigger2
         "missing or zero-length savepoint name",    //DatabaseCommandInterpreter_processSavepoint

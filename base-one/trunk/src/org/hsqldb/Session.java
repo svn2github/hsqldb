@@ -1029,13 +1029,14 @@ public class Session implements SessionInterface {
         cs   = compiledStatementManager.getStatement(csid);
 
         if (cs == null) {
-            out = sqlPrepare(cs.sql);
+            cs = recompileStatement(csid);
 
-            if (out.iMode == ResultConstants.ERROR) {
-                return out;
+            if (cs == null) {
+
+                // invalid sql has been removed already
+                return Trace.toResult(
+                    Trace.error(Trace.INVALID_PREPARED_STATEMENT));
             }
-
-            compiledStatementManager.getStatement(csid);
         }
 
         parameters   = cs.parameters;
@@ -1166,22 +1167,14 @@ public class Session implements SessionInterface {
         cs    = compiledStatementManager.getStatement(csid);
 
         if (cs == null) {
-            String sql = compiledStatementManager.getSql(csid);
+            cs = recompileStatement(csid);
 
-            if (sql == null) {
-                cmd.getStatementID();
+            if (cs == null) {
+
+                // invalid sql has been removed already
+                return Trace.toResult(
+                    Trace.error(Trace.INVALID_PREPARED_STATEMENT));
             }
-
-            Result r = sqlPrepare(sql);
-
-            if (r.iMode == ResultConstants.ERROR) {
-
-                // sql is invalid due to DDL changes
-                // maybe compiledStatementManager.freeStatement(csid,iId);?
-                return r;
-            }
-
-            cs = compiledStatementManager.getStatement(csid);
         }
 
         parameters = cs.parameters;
@@ -1199,6 +1192,32 @@ public class Session implements SessionInterface {
         }
 
         return compiledStatementExecutor.execute(cs);
+    }
+
+    /**
+     * Recompile a prepard statement or free it if no longer valid
+     */
+    private CompiledStatement recompileStatement(int csid) {
+
+        String sql = compiledStatementManager.getSql(csid);
+
+        if (sql == null) {
+
+            // invalid sql has been removed already
+            return null;
+        }
+
+        Result r = sqlPrepare(sql);
+
+        if (r.iMode == ResultConstants.ERROR) {
+
+            // sql is invalid due to DDL changes
+            compiledStatementManager.freeStatement(csid, sessionId);
+
+            return null;
+        }
+
+        return compiledStatementManager.getStatement(csid);
     }
 
     /**
