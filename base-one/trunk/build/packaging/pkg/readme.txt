@@ -1,6 +1,6 @@
 README FOR THE SOLARIS HSQLDB PACKAGE
 
-$Id: readme.txt,v 1.8 2002/11/10 22:05:01 unsaved Exp $
+$Id: readme.txt,v 1.9 2002/11/10 22:30:49 unsaved Exp $
 
 
 JAVA SUPPORT
@@ -162,7 +162,9 @@ propertly in some future version.
 To build a Solaris package, you need to do a cvs checkout of the
 hsqldb-dev module (HEAD or tag hsqldb_1_7_1_EXT, depending on what you
 want).  For suggestions of the checkout command, click the CVS tab at
-http://sourceforge.net/projects/hsqldb .
+http://sourceforge.net/projects/hsqldb.  You MUST!! put the
+hsqldb*.jar files into place before running pkgbuild, or your resultant
+package will not contain any hsqldb*.jar files.
 
 .../build/packaging/pkg/pkgbuild is the main script to build a Solaris 
 package.  Give the -p switch to rebuild the prototype file 
