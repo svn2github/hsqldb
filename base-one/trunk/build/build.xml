@@ -276,9 +276,6 @@ examples:
             <pathelement location="lib/dbunit.jar"/>
          </classpath>
          <include name="org/hsqldb/test/**"/>
-         <!-- This line does nothing.
-         <exclude name="org/hsqldb/test/TestSqlPersistent.java"/>
-         -->
          <exclude name="org/hsqldb/test/TestJDBCSavepoints.java"/>
          <exclude name="org/hsqldb/test/ExecHarness.java"/>
          <exclude name="org/hsqldb/test/SqlTool*.java"/>
