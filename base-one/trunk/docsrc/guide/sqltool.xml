@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.13 2004/06/04 01:18:58 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.14 2004/06/06 02:35:23 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.13 $</edition>
-        <pubdate>$Date: 2004/06/04 01:18:58 $</pubdate>
+        <edition>$Revision: 1.14 $</edition>
+        <pubdate>$Date: 2004/06/06 02:35:23 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>HOWTO</keyword>
@@ -829,7 +829,7 @@
                 </simpara></listitem></varlistentry>
                 <varlistentry><term>TOKEN1 &gt; TOKEN2</term><listitem><simpara>
                     True if the TOKEN1 string is longer than TOKEN2 or is
-                    the same length but is longer according to a string sort.
+                    the same length but is greater according to a string sort.
                 </simpara></listitem></varlistentry>
                 <varlistentry><term>TOKEN1 &lt; TOKEN2</term><listitem><simpara>
                     Similarly to TOKEN1 &gt; TOKEN2.
