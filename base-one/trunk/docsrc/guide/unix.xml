@@ -1,4 +1,4 @@
-<!-- $Id: unix.xml,v 1.2 2004/04/22 03:06:27 unsaved Exp $ -->
+<!-- $Id: unix.xml,v 1.3 2004/04/22 17:38:48 unsaved Exp $ -->
 
 <chapter>
     <title>UNIX Quick Start</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.2 $</edition>
-        <pubdate>$Date: 2004/04/22 03:06:27 $</pubdate>
+        <edition>$Revision: 1.3 $</edition>
+        <pubdate>$Date: 2004/04/22 17:38:48 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>UNIX</keyword>
@@ -72,27 +72,27 @@
             This package is only for use by a Solaris super-user.
             It's a System V package.
             Download then uncompress the package with uncompress or gunzip
-            </para><screen>
+            </para><informalexample><screen>
     uncompress filename.pkg.Z</screen>
-            <para>
+            </informalexample><para>
                 You can read about the package by running
-            </para><screen>
-    pkginfo -l -d filename.pkg
-            </screen><para>
+            </para><informalexample><screen>
+    pkginfo -l -d filename.pkg</screen>
+            </informalexample><para>
                 Run pkgadd as root to install.
-            </para><screen>
+            </para><informalexample><screen>
     pkgadd filename.pkg</screen>
-        </listitem></varlistentry>
+        </informalexample></listitem></varlistentry>
         <varlistentry><term>Installing from a .rpm file</term><listitem><para>
             This is a Linux rpm package.
             After you download the rpm, you can read about it by running
-            </para><screen>
+            </para><informalexample><screen>
     rpm -qip /path/to/file.rpm</screen>
-            <para>
+            </informalexample><para>
             Rpms can be installed or upgraded by running
-            </para><screen>
-    $rpm -Uvh /path/to/file.rpm</screen>
-            <para>
+                </para><informalexample><screen>
+    rpm -Uvh /path/to/file.rpm</screen>
+                </informalexample><para>
                 as root.
             </para>
         </listitem></varlistentry>
@@ -102,10 +102,10 @@
             You don't need to create the
             <emphasis role='bold'>HSQLDB_HOME</emphasis> directory because
             the extraction will create it for you with the right name)
-            </para><screen>
+            </para><informalexample><screen>
     cd parent/of/new/hsqldb/home
     unzip /path/to/file.zip</screen>
-            <para>
+            </informalexample><para>
             All the files in the zip archive will be extracted to underneath
             the new <filename>hsqldb</filename> directory.
             </para>
@@ -142,7 +142,8 @@
             and see if it works, or build your own.
         </para> <para>
             To use the supplied <filename>hsqldb.jar</filename>, just skip to
-            the next section of this document.
+            the <link linkend='instance_setup-section'> next section of this 
+            document</link>.
             Otherwise build a new <filename>hsqldb.jar</filename>.
         </para><procedure>
             <title>Building hsqldb.jar</title>
@@ -151,13 +152,13 @@
                 binary version from <ulink url='http://ant.apache.org'/>.
                 cd to where you want Ant to live, and extract from the archive 
                 with
-                </para><screen>
+                </para><informalexample><screen>
     unzip /path/to/file.zip</screen>
-                <para>or</para><screen>
+                </informalexample><para>or</para><informalexample><screen>
     tar -xzf /path/to/file.tar.gz</screen>
-                <para>or</para><screen>
+                </informalexample><para>or</para><informalexample><screen>
     gunzip2 -c /path/to/file.tar.bz2 | tar -xzf -</screen>
-                <para>
+                </informalexample><para>
                 Everything will be installed into a new subdirectory named
                 <filename>apache-ant- + version</filename>.
                 You can rename the directory after the extraction if you wish.
@@ -184,9 +185,9 @@
                 Make sure that the bin directory under your Ant home is in your 
                 search path.
                 Run the following command.
-                </para><programlisting>
+                </para><informalexample><programlisting>
     ant jar</programlisting>
-                <para>
+                </informalexample><para>
                 This will build a new
 <emphasis role='bold'>HSQLDB_HOME</emphasis><filename>/lib/hsqldb.jar</filename>.
                 </para>
@@ -194,7 +195,7 @@
         </procedure>
     </section>
 
-    <section>
+    <section id='instance_setup-section'>
         <title>
             Setting up a Hsqldb Persistent Database Instance and a Hsqldb
             Server
@@ -208,12 +209,59 @@
             (make use of your packaging utilities).
             If you do, then I suggest that you still read this section while
             you poke around, in order to understand your setup.
-        </para> <para>
-            Create user hsqldb...
-            In this chapter, I refer to this user as the 
-            <emphasis role='bold'>HSQLDB_OWNER</emphasis>, since that user will
-            own the database instance files and processes.
-        </para>
+        </para> <procedure>
+            <step><para>
+                Select a UNIX user to run the database as.
+                If this database is for the use of multiple users, or is a
+                production system (or to emulate a production system), you
+                should dedicate a UNIX user for this purpose.
+                In my examples, I use the user name <literal>hsqldb</literal>.
+                In this chapter, I refer to this user as the 
+                <emphasis role='bold'>HSQLDB_OWNER</emphasis>, since that user 
+                will own the database instance files and processes.
+                </para> <para>
+                If the account doesn't exist, then create it.
+                On all system-5 UNIXes and most hybrids (including Linux), 
+                you can run (as root) something like
+                </para><informalexample><screen>
+    useradd -m -C 'HSQLDB Database Owner' -s /bin/ksh -m hsqldb</screen>
+                </informalexample><para>
+                    (BSD-variant users can use a similar
+                    <literal>pw useradd hsqldb...</literal> command).
+                </para>
+            </step><step><para>
+                Become the <emphasis role='bold'>HSQLDB_OWNER</emphasis>.
+                Download this <ulink url='sample-server.properties'>
+                sample <filename>server.properties</filename> file</ulink> to
+                <emphasis role='bold'>HSQLDB_OWNER</emphasis>'s home
+                directory and rename it to 
+                <filename>server.properties</filename>.
+                TODO:  List the server.properties here and point out the
+                meaning of things, especially that the file path makes the
+                database instance a persistent database.
+            </para></step><step><para>
+                Set the environmental variable <literal>HSQLDB_HOME</literal>
+                to the real value of
+                <emphasis role='bold'>HSQLDB_HOME</emphasis> as described 
+                above, like
+                </para><informalexample><screen>
+    HSQLDB_HOME=/path/to/hsqldb/install/home</screen>
+                </informalexample><para>
+                We are only setting this so we can use this variable for
+                the commands we'll give latter on.
+                Neither Java nor HSQLDB itself uses this environmental
+                variable.
+                </para>
+                In <emphasis role='bold'>HSQLDB_OWNER</emphasis>'s home
+                directory, run<informalexample><screen>
+    java -classpath $HSQLDB_HOME/lib/hsqldb.jar Server</screen>
+                </informalexample><para>
+                    This will create your database instance and start it up.
+                    Use <literal>Ctrl Z</literal> to move the database process
+                    to the background so we can continue.
+                </para>
+            </step>
+        </procedure>
     </section>
 
     <section>
@@ -222,14 +270,21 @@
             Download this sample <ulink url='sqltool.rc'/> file to the
             <emphasis role='bold'>HSQLDB_OWNER</emphasis>'s home directory.
         </para> <para>
-            Run Sql Tool...
-            If security is of any concern to you at all, then immediately after
-            starting your database for the first time, you should change the
-            privileged password in the database.
-            Connect up as user "sa" with no password, perhaps using one of the
-            utilities described above.
-            Execute the command <literal>set password "newpassword"</literal>.
-            Fix the password in the <filename>sqltool.rc</filename> file
+            Run Sql Tool.
+        </para><informalexample><screen>
+    java org.hsqldb.util.SqlTool localhost-sa</screen>
+        </informalexample><para>
+            If you get a prompt, then all is well.
+            If security is of any concern to you at all, then you should change 
+            the privileged password in the database.
+            Execute the command
+            </para><informalexample><programlisting>
+    set password "newpassword";</programlisting>
+            </informalexample><para>
+            When you're finised playing, exit with the command
+            <literal>\q</literal>.
+            If you changed the <literal>sa</literal> password, then you need to
+            fix the password in the <filename>sqltool.rc</filename> file
             accordingly.
         </para> <para>
             You can, of course, also access the database with any JDBC client
