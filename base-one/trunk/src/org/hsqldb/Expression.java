@@ -70,6 +70,7 @@ package org.hsqldb;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashMap;
+import org.hsqldb.store.ValuePool;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt
 // to preserve column size etc. when SELECT INTO TABLE is used
@@ -188,8 +189,8 @@ class Expression {
 // rougier@users 20020522 - patch 552830 - COUNT(DISTINCT)
     // {COUNT|SUM|MIN|MAX|AVG}(distinct ...)
     private boolean      isDistinctAggregate;
-    static final Integer INTEGER_0 = new Integer(0);
-    static final Integer INTEGER_1 = new Integer(1);
+    static final Integer INTEGER_0 = ValuePool.getInt(0);
+    static final Integer INTEGER_1 = ValuePool.getInt(1);
 
     // PARAM
 

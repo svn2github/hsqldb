@@ -68,10 +68,11 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.IntKeyHashMap;
 import java.io.IOException;
 import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.StopWatch;
+import org.hsqldb.store.ValuePool;
 
 class ScriptRunner {
 
@@ -93,9 +94,9 @@ class ScriptRunner {
             return;
         }
 
-        HashMap sessionMap = new HashMap();
-        Session sysSession = database.sessionManager.getSysSession();
-        Session current    = sysSession;
+        IntKeyHashMap sessionMap = new IntKeyHashMap();
+        Session       sysSession = database.sessionManager.getSysSession();
+        Session       current    = sysSession;
 
         database.setReferentialIntegrity(false);
 
@@ -113,7 +114,7 @@ class ScriptRunner {
                 }
 
                 if (s.startsWith("/*C")) {
-                    Integer id = new Integer(s.substring(3, s.indexOf('*',
+                    int id = Integer.parseInt(s.substring(3, s.indexOf('*',
                         4)));
 
                     current = (Session) sessionMap.get(id);
@@ -131,7 +132,8 @@ class ScriptRunner {
                 if (s.length() != 0) {
                     Result result = current.sqlExecuteDirect(s);
 
-                    if (result != null && result.iMode == ResultConstants.ERROR) {
+                    if (result != null
+                            && result.iMode == ResultConstants.ERROR) {
                         Trace.printSystemOut("error in " + scriptFilename
                                              + " line: "
                                              + scr.getLineNumber());

@@ -82,6 +82,7 @@ import org.hsqldb.store.ValuePool;
 import org.hsqldb.lib.IntValueHashMap;
 import java.sql.Date;
 import java.sql.Time;
+import org.hsqldb.store.ValuePool;
 
 // fredt@users 20020210 - patch 513005 by sqlbob@users (RMP) - ABS function
 // fredt@users 20020305 - patch 1.7.0 - change to 2D string arrays
@@ -158,7 +159,7 @@ public class Library {
 
 // fredt@users 20010701 - patch 418023 by deforest@users
 // the definition for SUBSTR was added
-    static final String    sString[][]     = {
+    static final String sString[][]   = {
         {
             "ASCII", "org.hsqldb.Library.ascii"
         }, {
@@ -207,7 +208,7 @@ public class Library {
             "UPPER", "org.hsqldb.Library.ucase"
         }
     };
-    static final String    sTimeDate[][]   = {
+    static final String sTimeDate[][] = {
         {
             "CURDATE", "org.hsqldb.Library.curdate"
         }, {
@@ -240,7 +241,7 @@ public class Library {
             "YEAR", "org.hsqldb.Library.year"
         }
     };
-    static final String    sSystem[][]     = {
+    static final String sSystem[][]   = {
         {
             "DATABASE", "org.hsqldb.Library.database"
         }, {
@@ -519,7 +520,7 @@ public class Library {
             return null;
         }
 
-        return new Integer(s.charAt(0));
+        return ValuePool.getInt(s.charAt(0));
     }
 
     /**
@@ -758,7 +759,7 @@ public class Library {
      */
     public static Integer length(String s) {
         return s == null ? null
-                         : new Integer(s.length());
+                         : ValuePool.getInt(s.length());
     }
 
     /**
@@ -1337,7 +1338,6 @@ public class Library {
     }
 
     // SYSTEM
-
     /*
      * All system functions that return Session dependent information are
      * dummies here.
@@ -1812,13 +1812,14 @@ public class Library {
                     return ascii((String) parms[0]);
                 }
                 case bitand : {
-                    return new Integer(
+                    return ValuePool.getInt(
                         bitand(((Number) parms[0]).intValue(),
                                ((Number) parms[1]).intValue()));
                 }
                 case bitor : {
-                    return new Integer(bitor(((Number) parms[0]).intValue(),
-                                             ((Number) parms[1]).intValue()));
+                    return ValuePool.getInt(
+                        bitor(((Number) parms[0]).intValue(),
+                              ((Number) parms[1]).intValue()));
                 }
                 case character : {
                     return character(((Number) parms[0]).intValue());
@@ -1916,8 +1917,10 @@ public class Library {
                     return ValuePool.getInt(minute((Time) parms[0]));
                 }
                 case mod : {
-                    return new Integer(mod(((Number) parms[0]).intValue(),
-                                           ((Number) parms[1]).intValue()));
+                    return ValuePool.getInt(
+                        mod(
+                        ((Number) parms[0]).intValue(),
+                        ((Number) parms[1]).intValue()));
                 }
                 case month : {
                     return ValuePool.getInt(month((Date) parms[0]));
@@ -1996,7 +1999,7 @@ public class Library {
                     return ValuePool.getInt(week((Date) parms[0]));
                 }
                 case year : {
-                    return new Integer(year((Date) parms[0]));
+                    return ValuePool.getInt(year((Date) parms[0]));
                 }
                 case getCDColumnMetaData : {
                     return getCDColumnMetaData((Connection) parms[0],

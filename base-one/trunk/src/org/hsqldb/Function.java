@@ -73,6 +73,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Hashtable;
 import java.util.Date;
 import java.util.Calendar;
+import org.hsqldb.store.ValuePool;
 
 // fredt@users 20020912 - patch 1.7.1 - shortcut treatment of identity() call
 // fredt@users 20020912 - patch 1.7.1 - cache java.lang.reflect.Method objects
@@ -288,7 +289,7 @@ class Function {
 
         try {
             if (fID == Library.month) {
-                return new Integer(
+                return ValuePool.getInt(
                     Library.getDateTimePart((Date) oArg[0], Calendar.MONTH)
                     + cSession.getDatabase().sqlMonth);
             }
@@ -348,11 +349,11 @@ class Function {
      */
     void resolve(TableFilter f) throws HsqlException {
         int i;
-        
+
         i = bConnection ? 1 : 0;
 
         for (; i < iArgCount; i++) {
-            if (eArg[i] != null) {                
+            if (eArg[i] != null) {
                 if (eArg[i].isParam()) {
                     eArg[i].setDataType(iArgType[i]);
                 } else {

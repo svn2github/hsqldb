@@ -70,6 +70,7 @@ package org.hsqldb;
 import java.io.IOException;
 import java.math.BigDecimal;
 import org.hsqldb.lib.HsqlByteArrayInputStream;
+import org.hsqldb.store.ValuePool;
 
 /**
  * Base class for reading the data for a database row in different formats.
@@ -205,7 +206,7 @@ abstract class DatabaseRowInput extends HsqlByteArrayInputStream {
         if (makeSystemId) {
             l--;
 
-            data[l] = new Integer(getPos());
+            data[l] = ValuePool.getInt(getPos());
         }
 
         Object o;

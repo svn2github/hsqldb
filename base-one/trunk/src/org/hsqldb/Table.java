@@ -74,6 +74,7 @@ import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HsqlLinkedList;
 import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.StringUtil;
+import org.hsqldb.store.ValuePool;
 
 // fredt@users 20020130 - patch 491987 by jimbag@users - made optional
 // fredt@users 20020405 - patch 1.7.0 by fredt - quoted identifiers
@@ -1104,9 +1105,8 @@ class Table {
     private Index createAdjustedIndex(Index index, int colindex,
                                       int adjust) throws HsqlException {
 
-        int[] indexcolumns =
-            (int[]) ArrayUtil.resizeArray(index.getColumns(),
-                                              index.getVisibleColumns());
+        int[] indexcolumns = (int[]) ArrayUtil.resizeArray(index.getColumns(),
+            index.getVisibleColumns());
         int[] colarr = ArrayUtil.toAdjustedColumnArray(indexcolumns,
             colindex, adjust);
 
@@ -1637,9 +1637,9 @@ class Table {
 
             if (id == null) {
                 if (colTypes[iIdentityColumn] == Types.INTEGER) {
-                    id = new Integer((int) iIdentityId);
+                    id = ValuePool.getInt((int) iIdentityId);
                 } else {
-                    id = new Long(iIdentityId);
+                    id = ValuePool.getLong(iIdentityId);
                 }
 
                 row[iIdentityColumn] = id;

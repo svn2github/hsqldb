@@ -71,6 +71,7 @@ import java.math.BigDecimal;
 import java.util.NoSuchElementException;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.IntValueHashMap;
+import org.hsqldb.store.ValuePool;
 
 // fredt@users 20020218 - patch 455785 by hjbusch@users - large DECIMAL inserts
 // also Long.MIM_VALUE (bug 473388) inserts - applied to different parts
@@ -460,7 +461,7 @@ class Tokenizer {
                 // to a wider type.
                 if (sToken.length() < 11) {
                     try {
-                        return new Integer(sToken);
+                        return ValuePool.getInt(Integer.parseInt(sToken));
                     } catch (Exception e1) {}
                 }
 
@@ -468,7 +469,7 @@ class Tokenizer {
                     try {
                         iType = LONG;
 
-                        return new Long(sToken);
+                        return ValuePool.getLong(Long.parseLong(sToken));
                     } catch (Exception e2) {}
                 }
 
@@ -477,8 +478,12 @@ class Tokenizer {
                 return new BigDecimal(sToken);
 
             case FLOAT :
-                return new Double(sToken);
+                double d = Double.parseDouble(sToken);
+                long   l = Double.doubleToLongBits(d);
 
+                return ValuePool.getDouble(l);
+
+//                return new Double(sToken);
             case DECIMAL :
                 return new BigDecimal(sToken);
 

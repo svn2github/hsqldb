@@ -1075,7 +1075,7 @@ class Session implements SessionInterface {
         };
 
         Object[] row = new Object[] {
-            dDatabase.getPath(), getUsername(), new Integer(iId),
+            dDatabase.getPath(), getUsername(), ValuePool.getInt(iId),
             iLastIdentity, ValuePool.getBoolean(isAutoCommit),
             ValuePool.getBoolean(dDatabase.databaseReadOnly),
             ValuePool.getBoolean(isReadOnly)

@@ -76,6 +76,7 @@ import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.StringUtil;
+import org.hsqldb.store.ValuePool;
 
 // fredt@users 20020130 - patch 497872 by Nitin Chauhan - loop optimisation
 // fredt@users 20020320 - doc 1.7.0 - update
@@ -104,7 +105,7 @@ class UserManager {
 
     /** Combined flag permitting any action. */
     static final int     ALL         = SELECT | DELETE | INSERT | UPDATE;
-    static final Integer INTEGER_ALL = new Integer(ALL);
+    static final Integer INTEGER_ALL = ValuePool.getInt(ALL);
 
     //
     static final String S_R_ALL    = "ALL";

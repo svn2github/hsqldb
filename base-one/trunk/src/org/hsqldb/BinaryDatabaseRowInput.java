@@ -33,7 +33,7 @@ package org.hsqldb;
 
 import java.io.DataInputStream;
 import java.io.IOException;
-
+import org.hsqldb.store.ValuePool;
 /**
  *  Provides methods for reading the data for a row from a
  *  byte array. The format of data is that used for storage of cached
@@ -83,38 +83,49 @@ implements org.hsqldb.DatabaseRowInputInterface {
     }
 
     protected Integer readSmallint() throws IOException, HsqlException {
-        return Integer.valueOf(readNumericString());
+        int val = Integer.parseInt(readNumericString());
+        return org.hsqldb.store.ValuePool.getInt(val);
     }
 
     protected Integer readInteger() throws IOException, HsqlException {
-        return new Integer(readIntData());
+        return org.hsqldb.store.ValuePool.getInt(readInt());
     }
 
     protected Long readBigint() throws IOException, HsqlException {
-        return Long.valueOf(readNumericString());
+//        return Long.valueOf(readNumericString());
+        long l = Long.parseLong(readNumericString());
+        return org.hsqldb.store.ValuePool.getLong(l);
     }
 
     protected Double readReal(int type) throws IOException, HsqlException {
 
         if (type == Types.REAL) {
-            return Double.valueOf(readNumericString());
+
+//            return Double.valueOf(readNumericString());
+
+            double d = Double.parseDouble(readNumericString());
+            long l = Double.doubleToLongBits(d);
+            return ValuePool.getDouble(l);
 
             // some JDKs have a problem with this:
             // o=new Double(readDouble());
         } else {
-            return new Double(Double.longBitsToDouble(readLong()));
+//            return new Double(Double.longBitsToDouble(readLong()));
+            long l = readLong();
+            return ValuePool.getDouble(l);
         }
     }
 
     protected java.math.BigDecimal readDecimal()
     throws IOException, HsqlException {
-        return new java.math.BigDecimal(readNumericString());
+        return ValuePool.getBigDecimal(new java.math.BigDecimal(readNumericString()));
     }
 
     protected Boolean readBit() throws IOException, HsqlException {
         return Boolean.valueOf(readString());
     }
 
+/** @todo fredt - get time and data longs then normalise before fetching value */
     protected java.sql.Time readTime() throws IOException, HsqlException {
         return java.sql.Time.valueOf(readString());
     }

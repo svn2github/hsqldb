@@ -78,6 +78,7 @@ import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.StringConverter;
 import org.hsqldb.lib.HsqlByteArrayOutputStream;
 import org.hsqldb.lib.HsqlByteArrayInputStream;
+import org.hsqldb.store.ValuePool;
 
 // fredt@users 20020320 - doc 1.7.0 - update
 // fredt@users 20020401 - patch 442993 by fredt - arithmetic expressions
@@ -162,54 +163,55 @@ class Column {
     static {
         hTypes = new HashMap(67, 1);
 
-        hTypes.put("INTEGER", new Integer(Types.INTEGER));
-        hTypes.put("INT", new Integer(Types.INTEGER));
-        hTypes.put("int", new Integer(Types.INTEGER));
-        hTypes.put("java.lang.Integer", new Integer(Types.INTEGER));
-        hTypes.put("IDENTITY", new Integer(Types.INTEGER));
-        hTypes.put("DOUBLE", new Integer(Types.DOUBLE));
-        hTypes.put("double", new Integer(Types.DOUBLE));
-        hTypes.put("java.lang.Double", new Integer(Types.DOUBLE));
-        hTypes.put("FLOAT", new Integer(Types.FLOAT));
-        hTypes.put("REAL", new Integer(Types.REAL));
-        hTypes.put("VARCHAR", new Integer(Types.VARCHAR));
-        hTypes.put("java.lang.String", new Integer(Types.VARCHAR));
-        hTypes.put("CHAR", new Integer(Types.CHAR));
-        hTypes.put("CHARACTER", new Integer(Types.CHAR));
-        hTypes.put("LONGVARCHAR", new Integer(Types.LONGVARCHAR));
-        hTypes.put("VARCHAR_IGNORECASE", new Integer(VARCHAR_IGNORECASE));
-        hTypes.put("DATE", new Integer(Types.DATE));
-        hTypes.put("java.sql.Date", new Integer(Types.DATE));
-        hTypes.put("TIME", new Integer(Types.TIME));
-        hTypes.put("java.sql.Time", new Integer(Types.TIME));
-        hTypes.put("TIMESTAMP", new Integer(Types.TIMESTAMP));
-        hTypes.put("java.sql.Timestamp", new Integer(Types.TIMESTAMP));
-        hTypes.put("DATETIME", new Integer(Types.TIMESTAMP));
-        hTypes.put("DECIMAL", new Integer(Types.DECIMAL));
-        hTypes.put("java.math.BigDecimal", new Integer(Types.DECIMAL));
-        hTypes.put("NUMERIC", new Integer(Types.NUMERIC));
-        hTypes.put("BIT", new Integer(Types.BIT));
-        hTypes.put("boolean", new Integer(Types.BIT));
-        hTypes.put("java.lang.Boolean", new Integer(Types.BIT));
-        hTypes.put("TINYINT", new Integer(Types.TINYINT));
-        hTypes.put("byte", new Integer(Types.TINYINT));
-        hTypes.put("java.lang.Byte", new Integer(Types.TINYINT));
-        hTypes.put("SMALLINT", new Integer(Types.SMALLINT));
-        hTypes.put("short", new Integer(Types.SMALLINT));
-        hTypes.put("java.lang.Short", new Integer(Types.SMALLINT));
-        hTypes.put("BIGINT", new Integer(Types.BIGINT));
-        hTypes.put("long", new Integer(Types.BIGINT));
-        hTypes.put("java.lang.Long", new Integer(Types.BIGINT));
-        hTypes.put("BINARY", new Integer(Types.BINARY));
-        hTypes.put("[B", new Integer(Types.BINARY));
-        hTypes.put("VARBINARY", new Integer(Types.VARBINARY));
-        hTypes.put("LONGVARBINARY", new Integer(Types.LONGVARBINARY));
-        hTypes.put("OTHER", new Integer(Types.OTHER));
-        hTypes.put("OBJECT", new Integer(Types.OTHER));
-        hTypes.put("java.lang.Object", new Integer(Types.OTHER));
-        hTypes.put("NULL", new Integer(Types.NULL));
-        hTypes.put("void", new Integer(Types.NULL));
-        hTypes.put("java.lang.Void", new Integer(Types.NULL));
+        hTypes.put("INTEGER", ValuePool.getInt(Types.INTEGER));
+        hTypes.put("INT", ValuePool.getInt(Types.INTEGER));
+        hTypes.put("int", ValuePool.getInt(Types.INTEGER));
+        hTypes.put("java.lang.Integer", ValuePool.getInt(Types.INTEGER));
+        hTypes.put("IDENTITY", ValuePool.getInt(Types.INTEGER));
+        hTypes.put("DOUBLE", ValuePool.getInt(Types.DOUBLE));
+        hTypes.put("double", ValuePool.getInt(Types.DOUBLE));
+        hTypes.put("java.lang.Double", ValuePool.getInt(Types.DOUBLE));
+        hTypes.put("FLOAT", ValuePool.getInt(Types.FLOAT));
+        hTypes.put("REAL", ValuePool.getInt(Types.REAL));
+        hTypes.put("VARCHAR", ValuePool.getInt(Types.VARCHAR));
+        hTypes.put("java.lang.String", ValuePool.getInt(Types.VARCHAR));
+        hTypes.put("CHAR", ValuePool.getInt(Types.CHAR));
+        hTypes.put("CHARACTER", ValuePool.getInt(Types.CHAR));
+        hTypes.put("LONGVARCHAR", ValuePool.getInt(Types.LONGVARCHAR));
+        hTypes.put("VARCHAR_IGNORECASE",
+                   ValuePool.getInt(VARCHAR_IGNORECASE));
+        hTypes.put("DATE", ValuePool.getInt(Types.DATE));
+        hTypes.put("java.sql.Date", ValuePool.getInt(Types.DATE));
+        hTypes.put("TIME", ValuePool.getInt(Types.TIME));
+        hTypes.put("java.sql.Time", ValuePool.getInt(Types.TIME));
+        hTypes.put("TIMESTAMP", ValuePool.getInt(Types.TIMESTAMP));
+        hTypes.put("java.sql.Timestamp", ValuePool.getInt(Types.TIMESTAMP));
+        hTypes.put("DATETIME", ValuePool.getInt(Types.TIMESTAMP));
+        hTypes.put("DECIMAL", ValuePool.getInt(Types.DECIMAL));
+        hTypes.put("java.math.BigDecimal", ValuePool.getInt(Types.DECIMAL));
+        hTypes.put("NUMERIC", ValuePool.getInt(Types.NUMERIC));
+        hTypes.put("BIT", ValuePool.getInt(Types.BIT));
+        hTypes.put("boolean", ValuePool.getInt(Types.BIT));
+        hTypes.put("java.lang.Boolean", ValuePool.getInt(Types.BIT));
+        hTypes.put("TINYINT", ValuePool.getInt(Types.TINYINT));
+        hTypes.put("byte", ValuePool.getInt(Types.TINYINT));
+        hTypes.put("java.lang.Byte", ValuePool.getInt(Types.TINYINT));
+        hTypes.put("SMALLINT", ValuePool.getInt(Types.SMALLINT));
+        hTypes.put("short", ValuePool.getInt(Types.SMALLINT));
+        hTypes.put("java.lang.Short", ValuePool.getInt(Types.SMALLINT));
+        hTypes.put("BIGINT", ValuePool.getInt(Types.BIGINT));
+        hTypes.put("long", ValuePool.getInt(Types.BIGINT));
+        hTypes.put("java.lang.Long", ValuePool.getInt(Types.BIGINT));
+        hTypes.put("BINARY", ValuePool.getInt(Types.BINARY));
+        hTypes.put("[B", ValuePool.getInt(Types.BINARY));
+        hTypes.put("VARBINARY", ValuePool.getInt(Types.VARBINARY));
+        hTypes.put("LONGVARBINARY", ValuePool.getInt(Types.LONGVARBINARY));
+        hTypes.put("OTHER", ValuePool.getInt(Types.OTHER));
+        hTypes.put("OBJECT", ValuePool.getInt(Types.OTHER));
+        hTypes.put("java.lang.Object", ValuePool.getInt(Types.OTHER));
+        hTypes.put("NULL", ValuePool.getInt(Types.NULL));
+        hTypes.put("void", ValuePool.getInt(Types.NULL));
+        hTypes.put("java.lang.Void", ValuePool.getInt(Types.NULL));
     }
 
 // fredt@users 20020130 - patch 491987 by jimbag@users
@@ -453,8 +455,9 @@ class Column {
                 double ad = ((Number) a).doubleValue();
                 double bd = ((Number) b).doubleValue();
 
-                return new Double(ad + bd);
+                return ValuePool.getDouble(Double.doubleToLongBits(ad + bd));
 
+//                return new Double(ad + bd);
             case Types.VARCHAR :
             case Types.CHAR :
             case Types.LONGVARCHAR :
@@ -474,13 +477,13 @@ class Column {
                 int ai = ((Number) a).intValue();
                 int bi = ((Number) b).intValue();
 
-                return new Integer(ai + bi);
+                return ValuePool.getInt(ai + bi);
 
             case Types.BIGINT :
                 long longa = ((Number) a).longValue();
                 long longb = ((Number) b).longValue();
 
-                return new Long(longa + longb);
+                return ValuePool.getLong(longa + longb);
 
             default :
                 throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, type);
@@ -528,8 +531,11 @@ class Column {
             case Types.REAL :
             case Types.FLOAT :
             case Types.DOUBLE :
-                return new Double(-((Number) a).doubleValue());
+                double ad = -((Number) a).doubleValue();
 
+                return ValuePool.getDouble(Double.doubleToLongBits(ad));
+
+//                return new Double(-((Number) a).doubleValue());
             case Types.NUMERIC :
             case Types.DECIMAL :
                 return ((BigDecimal) a).negate();
@@ -537,10 +543,10 @@ class Column {
             case Types.TINYINT :
             case Types.SMALLINT :
             case Types.INTEGER :
-                return new Integer(-((Number) a).intValue());
+                return ValuePool.getInt(-((Number) a).intValue());
 
             case Types.BIGINT :
-                return new Long(-((Number) a).longValue());
+                return ValuePool.getLong(-((Number) a).longValue());
 
             default :
                 throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, type);
@@ -580,7 +586,7 @@ class Column {
                 double ad = ((Number) a).doubleValue();
                 double bd = ((Number) b).doubleValue();
 
-                return new Double(ad * bd);
+                return ValuePool.getDouble(Double.doubleToLongBits(ad * bd));
 
             case Types.NUMERIC :
             case Types.DECIMAL :
@@ -595,13 +601,13 @@ class Column {
                 int ai = ((Number) a).intValue();
                 int bi = ((Number) b).intValue();
 
-                return new Integer(ai * bi);
+                return ValuePool.getInt(ai * bi);
 
             case Types.BIGINT :
                 long longa = ((Number) a).longValue();
                 long longb = ((Number) b).longValue();
 
-                return new Long(longa * longb);
+                return ValuePool.getLong(longa * longb);
 
             default :
                 throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, type);
@@ -634,7 +640,7 @@ class Column {
                 double ad = ((Number) a).doubleValue();
                 double bd = ((Number) b).doubleValue();
 
-                return new Double(ad / bd);
+                return ValuePool.getDouble(Double.doubleToLongBits(ad / bd));
 
             case Types.NUMERIC :
             case Types.DECIMAL :
@@ -655,14 +661,14 @@ class Column {
 
                 Trace.check(bi != 0, Trace.DIVISION_BY_ZERO);
 
-                return new Integer(ai / bi);
+                return ValuePool.getInt(ai / bi);
 
             case Types.BIGINT :
                 long longa = ((Number) a).longValue();
                 long longb = ((Number) b).longValue();
 
                 return (longb == 0) ? null
-                                    : new Long(longa / longb);
+                                    : ValuePool.getLong(longa / longb);
 
             default :
                 throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, type);
@@ -696,7 +702,7 @@ class Column {
                 double ad = ((Number) a).doubleValue();
                 double bd = ((Number) b).doubleValue();
 
-                return new Double(ad - bd);
+                return ValuePool.getDouble(Double.doubleToLongBits(ad - bd));
 
             case Types.NUMERIC :
             case Types.DECIMAL :
@@ -711,13 +717,13 @@ class Column {
                 int ai = ((Number) a).intValue();
                 int bi = ((Number) b).intValue();
 
-                return new Integer(ai - bi);
+                return ValuePool.getInt(ai - bi);
 
             case Types.BIGINT :
                 long longa = ((Number) a).longValue();
                 long longb = ((Number) b).longValue();
 
-                return new Long(longa - longb);
+                return ValuePool.getLong(longa - longb);
 
             default :
                 throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, type);
@@ -751,9 +757,12 @@ class Column {
             case Types.REAL :
             case Types.FLOAT :
             case Types.DOUBLE :
-                return new Double(((Number) a).doubleValue()
-                                  + ((Number) b).doubleValue());
+                double ad = ((Number) a).doubleValue();
+                double bd = ((Number) b).doubleValue();
 
+                return ValuePool.getDouble(Double.doubleToLongBits(ad + bd));
+
+//                return new Double(((Number) a).doubleValue() + ((Number) b).doubleValue());
             case Types.NUMERIC :
             case Types.DECIMAL :
                 return ((BigDecimal) a).add((BigDecimal) b);
@@ -761,12 +770,12 @@ class Column {
             case Types.TINYINT :
             case Types.SMALLINT :
             case Types.INTEGER :
-                return new Integer(((Number) a).intValue()
-                                   + ((Number) b).intValue());
+                return ValuePool.getInt(((Number) a).intValue()
+                                        + ((Number) b).intValue());
 
             case Types.BIGINT :
-                return new Long(((Number) a).longValue()
-                                + ((Number) b).longValue());
+                return ValuePool.getLong(((Number) a).longValue()
+                                         + ((Number) b).longValue());
 
             default :
                 throw Trace.error(Trace.SUM_OF_NON_NUMERIC);
@@ -798,8 +807,12 @@ class Column {
             case Types.REAL :
             case Types.FLOAT :
             case Types.DOUBLE :
-                return new Double(((Double) a).doubleValue() / count);
+                double ad = ((Double) a).doubleValue();
 
+                return ValuePool.getDouble(Double.doubleToLongBits(ad
+                        / count));
+
+//                return new Double(((Double) a).doubleValue() / count);
             case Types.NUMERIC :
             case Types.DECIMAL :
                 return ((BigDecimal) a).divide(new BigDecimal(count),
@@ -808,10 +821,10 @@ class Column {
             case Types.TINYINT :
             case Types.SMALLINT :
             case Types.INTEGER :
-                return new Integer(((Number) a).intValue() / count);
+                return ValuePool.getInt(((Number) a).intValue() / count);
 
             case Types.BIGINT :
-                return new Long(((Long) a).longValue() / count);
+                return ValuePool.getLong(((Long) a).longValue() / count);
 
             default :
                 throw Trace.error(Trace.SUM_OF_NON_NUMERIC);
@@ -1080,7 +1093,9 @@ class Column {
 
                 case Types.TINYINT :
                     if (o instanceof java.lang.String) {
-                        o = new Integer((String) o);
+                        int val = Integer.parseInt((String) o);
+
+                        o = ValuePool.getInt(val);
                     }
 
                     if (o instanceof java.lang.Integer
@@ -1097,13 +1112,15 @@ class Column {
 
                     // fredt@users - direct conversion for JDBC setObject()
                     if (o instanceof java.lang.Byte) {
-                        return new Integer(((Number) o).intValue());
+                        return ValuePool.getInt(((Number) o).intValue());
                     }
                     break;
 
                 case Types.SMALLINT :
                     if (o instanceof java.lang.String) {
-                        o = new Integer((String) o);
+                        int val = Integer.parseInt((String) o);
+
+                        o = ValuePool.getInt(val);
                     }
 
                     if (o instanceof java.lang.Integer
@@ -1122,13 +1139,15 @@ class Column {
                     // fredt@users - direct conversion for JDBC setObject()
                     if (o instanceof java.lang.Byte
                             || o instanceof java.lang.Short) {
-                        return new Integer(((Number) o).intValue());
+                        return ValuePool.getInt(((Number) o).intValue());
                     }
                     break;
 
                 case Types.INTEGER :
                     if (o instanceof java.lang.String) {
-                        return new Integer((String) o);
+                        int val = Integer.parseInt((String) o);
+
+                        return ValuePool.getInt(val);
                     }
 
                     if (o instanceof java.lang.Integer) {
@@ -1144,7 +1163,7 @@ class Column {
                         }
 
                         // fredt@users - narrowing needed for function calls
-                        return new Integer(((Number) o).intValue());
+                        return ValuePool.getInt(((Number) o).intValue());
                     }
                     break;
 
@@ -1154,11 +1173,11 @@ class Column {
                     }
 
                     if (o instanceof java.lang.String) {
-                        return new Long((String) o);
+                        return ValuePool.getLong(Long.parseLong((String) o));
                     }
 
                     if (o instanceof java.lang.Integer) {
-                        return new Long(((Integer) o).longValue());
+                        return ValuePool.getLong(((Integer) o).longValue());
                     }
                     break;
 
@@ -1170,7 +1189,10 @@ class Column {
                     }
 
                     if (o instanceof java.lang.String) {
-                        return new Double((String) o);
+                        double d = Double.parseDouble((String) o);
+                        long   l = Double.doubleToLongBits(d);
+
+                        return ValuePool.getDouble(l);
                     }
 
                     if (o instanceof java.lang.Number) {
@@ -1297,15 +1319,20 @@ class Column {
                 return convertObject(s, type);
 
             case Types.INTEGER :
-                return new Integer(s);
+                int val = Integer.parseInt(s);
+
+                return ValuePool.getInt(val);
 
             case Types.BIGINT :
-                return new Long(s);
+                return ValuePool.getLong(Long.parseLong(s));
 
             case Types.REAL :
             case Types.FLOAT :
             case Types.DOUBLE :
-                return new Double(s);
+                double d = Double.parseDouble(s);
+                long   l = Double.doubleToLongBits(d);
+
+                return ValuePool.getDouble(l);
 
             case VARCHAR_IGNORECASE :
             case Types.VARCHAR :

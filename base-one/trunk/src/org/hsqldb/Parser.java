@@ -75,6 +75,7 @@ import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.lib.ObjectComparator;
 import org.hsqldb.lib.StringUtil;
+import org.hsqldb.store.ValuePool;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt - quoted identifiers
 // support for sql standard quoted identifiers for column and table names
@@ -1817,7 +1818,7 @@ class Parser {
 
             int ci = table.getColumnNr(tTokenizer.getString());
 
-            ciList.add(new Integer(ci));
+            ciList.add(ValuePool.getInt(ci));
             tTokenizer.getThis(Token.T_EQUALS);
 
             cve = parseExpression();

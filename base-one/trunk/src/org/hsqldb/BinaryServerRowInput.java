@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import org.hsqldb.lib.StringConverter;
+import org.hsqldb.store.ValuePool;
 
 /**
  *  Provides methods for reading the data for a row from a
@@ -60,9 +61,10 @@ implements org.hsqldb.DatabaseRowInputInterface {
      * uses the byte[] buffer from out. At each reset, the buffer is set
      * to the current one for out.
      */
-
     public BinaryServerRowInput(BinaryServerRowOutput out) {
+
         super(out.getBuffer());
+
         this.out = out;
     }
 
@@ -89,7 +91,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         String s      = StringConverter.readUTF(buf, pos, length);
 
 // fredt - memory opt tests
-        s   = org.hsqldb.store.ValuePool.getString(s);
+        s   = ValuePool.getString(s);
         pos += length;
 
         return s;
@@ -111,28 +113,28 @@ implements org.hsqldb.DatabaseRowInputInterface {
 
 // fredt - memory opt tests
 //        return new Integer(readShort());
-        return org.hsqldb.store.ValuePool.getInt(readShort());
+        return ValuePool.getInt(readShort());
     }
 
     protected Integer readInteger() throws IOException, HsqlException {
 
 // fredt - memory opt tests
 //        return new Integer(readInt());
-        return org.hsqldb.store.ValuePool.getInt(readInt());
+        return ValuePool.getInt(readInt());
     }
 
     protected Long readBigint() throws IOException, HsqlException {
 
 // fredt - memory opt tests
 //        return new Long(readLong());
-        return org.hsqldb.store.ValuePool.getLong(readLong());
+        return ValuePool.getLong(readLong());
     }
 
     protected Double readReal(int type) throws IOException, HsqlException {
 
 // fredt - memory opt tests
 //        return new Double(Double.longBitsToDouble(readLong()));
-        return org.hsqldb.store.ValuePool.getDouble(readLong());
+        return ValuePool.getDouble(readLong());
     }
 
     protected BigDecimal readDecimal() throws IOException, HsqlException {
@@ -143,8 +145,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
 
 // fredt - memory opt tests
 //        return new BigDecimal(bigint, scale);
-        return org.hsqldb.store.ValuePool.getBigDecimal(new BigDecimal(bigint,
-                scale));
+        return ValuePool.getBigDecimal(new BigDecimal(bigint, scale));
     }
 
     protected Boolean readBit() throws IOException, HsqlException {
@@ -152,6 +153,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
                              : Boolean.FALSE;
     }
 
+/** @todo fredt - get time and data longs then normalise before fetching value */
     protected java.sql.Time readTime() throws IOException, HsqlException {
         return new java.sql.Time(readLong());
     }
@@ -160,7 +162,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
 
 // fredt - memory opt tests
 //        return new java.sql.Date(readLong());
-        return org.hsqldb.store.ValuePool.getDate(readLong());
+        return ValuePool.getDate(readLong());
     }
 
     protected java.sql.Timestamp readTimestamp()
@@ -182,19 +184,18 @@ implements org.hsqldb.DatabaseRowInputInterface {
         return readByteArray();
     }
 
-        /**
+    /**
      *  Used to reset the row, ready for a new row to be written into the
      *  byte[] buffer by an external routine.
      *
      */
     public void resetRow(int filepos, int rowsize) throws IOException {
 
-        if (out != null ){
+        if (out != null) {
             out.reset();
             out.ensureRoom(rowsize);
         }
-        super.resetRow(filepos,rowsize);
+
+        super.resetRow(filepos, rowsize);
     }
-
-
 }

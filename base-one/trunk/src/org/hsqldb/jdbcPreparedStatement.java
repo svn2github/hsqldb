@@ -684,8 +684,8 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 // fredt@users 20020325 - patch 448691 NaN by fredt
 // fredt@users 20021013 - patch 1.7.1 - NaN and infinity preserved
     public void setFloat(int parameterIndex, float x) throws SQLException {
-
-        setParameter(parameterIndex, new Double(x));
+        long l = Double.doubleToLongBits((double)x);
+        setParameter(parameterIndex, ValuePool.getDouble(l));
 /*
         if (Float.isInfinite(x) || Float.isNaN(x)) {
             setNull(parameterIndex);
@@ -728,7 +728,8 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 // fredt@users 20021013 - patch 1.7.1 - NaN and infinity preserved
     public void setDouble(int parameterIndex, double x) throws SQLException {
 
-        setParameter(parameterIndex, new Double(x));
+        long l = Double.doubleToLongBits(x);
+        setParameter(parameterIndex, ValuePool.getDouble(l));
 /*
         if (Double.isInfinite(x) || Double.isNaN(x)) {
             setNull(parameterIndex);
@@ -763,7 +764,8 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      */
     public void setBigDecimal(int parameterIndex,
                               BigDecimal x) throws SQLException {
-        setParameter(parameterIndex, x);
+        BigDecimal bd = ValuePool.getBigDecimal(x);
+                setParameter(parameterIndex, bd);
     }
 
     /**
@@ -785,7 +787,8 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @exception SQLException if a database access error occurs
      */
     public void setString(int parameterIndex, String x) throws SQLException {
-        setParameter(parameterIndex, x);
+        String s = ValuePool.getString(x);
+        setParameter(parameterIndex, s);
     }
 
     /**
