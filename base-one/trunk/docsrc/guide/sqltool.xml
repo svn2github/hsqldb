@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.37 2004/06/11 13:51:23 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.38 2004/06/11 14:01:32 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.37 $</edition>
-        <pubdate>$Date: 2004/06/11 13:51:23 $</pubdate>
+        <edition>$Revision: 1.38 $</edition>
+        <pubdate>$Date: 2004/06/11 14:01:32 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -295,7 +295,8 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
         </simpara>
         <important><simpara>
             Every command (regardless of type) and comment must begin at the
-            beginning of a line.
+            beginning of a line or immediately after a comment ends with
+            "*/").
         </simpara><simpara>
             You can't nest commands or comments.
             You can only start new commands (and comments) after the preceding
