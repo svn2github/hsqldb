@@ -786,7 +786,8 @@ class Parser {
         if (!e2.setForOuterJoin()) {
             throw Trace.error(Trace.OUTER_JOIN_CONDITION);
         }
-        return addCondition(e1,e2);
+
+        return addCondition(e1, e2);
     }
 
     /**

@@ -98,7 +98,6 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 // boucherb@users 20030425 - DDL methods are moved to DatabaseCommandInterpreter.java
 // boucherb@users 20030425 - refactoring DDL into smaller units
 // fredt@users 20030609 - support for ALTER COLUMN SET/DROP DEFAULT / RENAME TO
-
 class DatabaseCommandInterpreter {
 
     protected Database database;
@@ -2798,7 +2797,6 @@ class DatabaseCommandInterpreter {
         tc = processCreateFK(t, n);
 
         t.checkColumnsMatch(tc.localCol, tc.expTable, tc.expCol);
-
 /*
         if (tc.deleteAction == Constraint.SET_DEFAULT
                 || tc.deleteAction == Constraint.SET_NULL

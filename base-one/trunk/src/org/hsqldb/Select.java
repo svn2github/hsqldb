@@ -499,12 +499,12 @@ class Select {
 // fredt@users 20030810 - patch 1.7.2 - OUTER JOIN rewrite
     private void buildResult(Result r, int limitcount) throws HsqlException {
 
-        GroupedResult gResult = new GroupedResult(this, r);
-        final int     len     = eColumn.length;
-        final int     filter  = tFilter.length;
-        boolean       first[] = new boolean[filter];
-        boolean       outer[] = new boolean[filter];
-        int           level   = 0;
+        GroupedResult gResult     = new GroupedResult(this, r);
+        final int     len         = eColumn.length;
+        final int     filter      = tFilter.length;
+        boolean       first[]     = new boolean[filter];
+        boolean       outerused[] = new boolean[filter];
+        int           level       = 0;
 
         while (level >= 0 &&!isPreProcess) {
 
@@ -514,7 +514,7 @@ class Select {
             boolean     outerfound;
 
             if (!first[level]) {
-                if (level != 0 && outer[level - 1]) {
+                if (level != 0 && outerused[level - 1]) {
 
                     // don't attempt to find if the left side was outer and returned nulls
                     found           = false;
@@ -525,17 +525,18 @@ class Select {
 
                 // if outer join, and no inner result, get next outer row
                 // nonJoinIsNull disallows getting the next outer row in some circumstances
-                outer[level] = outerfound = t.isOuterJoin &&!found
-                                            &&!outer[level]
-                                            &&!t.nonJoinIsNull
-                                            && t.nextOuter();
+                outerused[level] = outerfound = t.isOuterJoin &&!found
+                                                &&!outerused[level]
+                                                &&!t.nonJoinIsNull
+                                                && t.nextOuter();
                 first[level] = found;
             } else {
                 found = t.next();
-                outer[level] = outerfound = t.isOuterJoin &&!found
-                                            &&!first[level] &&!outer[level]
-                                            &&!t.nonJoinIsNull
-                                            && t.nextOuter();
+                outerused[level] = outerfound = t.isOuterJoin &&!found
+                                                &&!first[level]
+                                                &&!outerused[level]
+                                                &&!t.nonJoinIsNull
+                                                && t.nextOuter();
                 first[level] = found;
             }
 
@@ -549,6 +550,10 @@ class Select {
                 level++;
 
                 continue;
+            } else {
+                while (outerused[level]) {
+                    outerused[level--] = false;
+                }
             }
 
             // apply condition

@@ -69,6 +69,7 @@ package org.hsqldb.test;
 
 import java.sql.*;
 import java.io.*;
+import org.hsqldb.lib.*;
 import org.hsqldb.jdbcDriver;
 
 /**
@@ -183,25 +184,29 @@ class TestSelf {
             String     user        = "sa";
             String     password    = "";
             Connection cConnection = null;
+            String[]   filelist;
 
-            print("Openning DB");
+            filelist = new File(
+                new File(
+                    "TestSelf.txt").getAbsoluteFile().getParent()).list();
 
-            cConnection = DriverManager.getConnection(url, user, password);
+            Sort.sort((Object[]) filelist, new Sort.StringComparator(), 0,
+                      filelist.length - 1);
 
-            testScript(cConnection, "TestSelfCreate.txt");
-            cConnection.close();
-            print("Openning DB");
+            for (int i = 0; i < filelist.length; i++) {
+                String fname = filelist[i];
 
-            cConnection = DriverManager.getConnection(url, user, password);
+                if (fname.startsWith("TestSelf") && fname.endsWith(".txt")
+                        &&!fname.equals("TestSelf.txt")) {
+                    print("Openning DB");
 
-            testScript(cConnection, "TestSelfModify.txt");
-            cConnection.close();
-            print("Openning DB");
+                    cConnection = DriverManager.getConnection(url, user,
+                            password);
 
-            cConnection = DriverManager.getConnection(url, user, password);
-
-            testScript(cConnection, "TestSelfVerify.txt");
-            cConnection.close();
+                    testScript(cConnection, fname);
+                    cConnection.close();
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
             print("TestSelf init error: " + e.getMessage());

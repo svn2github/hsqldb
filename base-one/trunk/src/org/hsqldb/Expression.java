@@ -2047,12 +2047,16 @@ class Expression {
         if (o == null || o2 == null) {
 
 // fredt@users - patch 1.7.2 - SQL CONFORMANCE - do not join tables on nulls apart from outer joins
-            boolean result = testNull(o, o2, iType);
+            if (iType == EQUAL && eArg.tFilter != null
+                    && eArg2.tFilter != null &&!eArg.tFilter.isOuterJoin
+                    &&!eArg2.tFilter.isOuterJoin) {
+
+                // here we should have (eArg.iType == COLUMN && eArg2.iType == COLUMN)
+                return false;
+            }
 
             if (eArg.tFilter.isCurrentOuter) {
                 if (eArg.isInJoin || eArg2.isInJoin) {
-
-                    // here we should have (eArg.iType == COLUMN && eArg2.iType == COLUMN)
                     return true;
                 }
             } else {
@@ -2062,7 +2066,7 @@ class Expression {
                     !(eArg.isInJoin || eArg2.isInJoin) && o2 == null;
             }
 
-            return result;
+            return testNull(o, o2, iType);
         }
 
         int result = Column.compare(o, o2, type);

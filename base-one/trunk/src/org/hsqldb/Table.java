@@ -1920,7 +1920,7 @@ class Table {
     }
 
     /** @todo fredt - reused structure to be reviewed for multi-threading */
-    HashMappedList constraintPath = new HashMappedList();
+    HashSet constraintPath = new HashSet();
 
 // fredt@users 20020225 - patch 1.7.0 - CASCADING DELETES
 
@@ -1941,8 +1941,8 @@ class Table {
      * @param  delete
      * @throws  HsqlException
      */
-    void checkCascadeDelete(Row row, Session session,
-                            boolean doIt) throws HsqlException {
+    void checkCascadeDelete(Row row, Session session, boolean doIt,
+                            HashSet path) throws HsqlException {
 
         for (int i = 0, cSize = vConstraint.size(); i < cSize; i++) {
             Constraint c = (Constraint) vConstraint.get(i);
@@ -1965,7 +1965,6 @@ class Table {
             boolean hasref =
                 reftable.getNextConstraintIndex(0, Constraint.MAIN) != -1;
 
-            // fredt - todo - to avoid infinite recursion on same table FK's
             // if (reftable == this) we don't need to go further and can return ??
             if (doIt == false && hasref == false) {
                 return;
@@ -1983,9 +1982,8 @@ class Table {
 
             // walk the index for all the nodes that reference delnode
             for (Node n = refnode;
-                    !n.isDeleted() /* n.getRow().getData() != null */ && refindex
-                        .comparePartialRowNonUnique(m_objects, n
-                            .getData()) == 0; ) {
+                    !n.isDeleted() && refindex.comparePartialRowNonUnique(
+                        m_objects, n.getData()) == 0; ) {
 
                 // deleting rows can free n out of the cache so we
                 // make sure it is loaded with up-to-date left-right-parent
@@ -1994,9 +1992,9 @@ class Table {
                 // get the next node before n is deleted
                 Node nextn = refindex.next(n);
 
-                // -- if the constraint is an 'SET [DEFAULT|NULL]' constraint we have to remember
+                // -- if the constraint is a 'SET [DEFAULT|NULL]' constraint we have to remember
                 // -- a new record to be inserted after deleting the current. We also have to
-                // -- switch over to the 'checkCascadeUpdate' method afterwords
+                // -- switch over to the 'checkCascadeUpdate' method afterwards
                 if (c.getDeleteAction() == Constraint.SET_NULL
                         || c.getDeleteAction() == Constraint.SET_DEFAULT) {
                     Object[] rnd = reftable.getNewRow();
@@ -2018,35 +2016,55 @@ class Table {
                     }
 
                     if (hasref) {
-                        if (constraintPath.add(c, c)) {
+
+                        // fredt - avoid infinite recursion on same table
+                        if (path.add(c)) {
                             reftable.checkCascadeUpdate(n.getRow(), rnd,
                                                         session, r_columns,
-                                                        null, doIt);
-                            constraintPath.remove(c);
+                                                        null, doIt, path);
+                            path.remove(c);
+
+                            // get updated node in case they moved out of cache
+                            n     = n.getUpdatedNode();
+                            nextn = nextn == null ? null
+                                                  : nextn.getUpdatedNode();
                         }
                     }
 
                     if (doIt) {
-                        ri.add(rnd);
+
+                        //  foreign key referencing own table - do not update the row to be deleted
+                        if (reftable != this
+                                || n.getRow() != row.getUpdatedRow()) {
+                            ri.add(rnd);
+                        }
                     }
-                } else if (hasref /* && reftable != this */) {
+                } else if (hasref) {
 
                     // fredt - avoid infinite recursion on same table
-                    if (constraintPath.add(c, c)) {
+                    if (path.add(c)) {
                         reftable.checkCascadeDelete(n.getRow(), session,
-                                                    doIt);
-                        constraintPath.remove(c);
+                                                    doIt, path);
+                        path.remove(c);
+
+                        // get updated node in case they moved out of cache
+                        n     = n.getUpdatedNode();
+                        nextn = nextn == null ? null
+                                              : nextn.getUpdatedNode();
                     }
                 }
 
                 if (doIt) {
-                    if ( ! n.isDeleted() ) {
+                    if (!n.isDeleted()) {
                         reftable.deleteNoRefCheck(n.getRow(), session);
                     }
+
                     //  foreign key referencing own table
+/*
                     if (reftable == this) {
                         nextn = c.findFkRef(row.getData(), true);
                     }
+*/
                 }
 
                 if (nextn == null) {
@@ -2098,14 +2116,11 @@ class Table {
      *
      */
 
-// fredt - cyclic conditions are avoided by limits imposed on the definition
-// of cascading updates in DDL.  CASCASE is allowed only for backward
-// referencing FK's (is disallowed in ALTER TABLE when FK is forward
-// referencing) so any cyclic condition will be limited to same-table FK's
-// which can be spotted within this routine.
+// fredt - cyclic conditions are now avoided by checking for second visit
+// to each constraint
     void checkCascadeUpdate(Row orow, Object[] nrow, Session session,
-                            int[] cols, Table ref,
-                            boolean update) throws HsqlException {
+                            int[] cols, Table ref, boolean update,
+                            HashSet path) throws HsqlException {
 
         // -- We iterate through all constraints associated with this table
         // --
@@ -2233,10 +2248,10 @@ class Table {
                                     .getColumn(r_columns[j]).getType());
                         }
 
-                        if (constraintPath.add(c, c)) {
+                        if (path.add(c)) {
                             reftable.checkCascadeUpdate(n.getRow(), rnd,
                                                         session, r_columns,
-                                                        null, update);
+                                                        null, update, path);
                         }
                     } else {
 
@@ -2246,10 +2261,10 @@ class Table {
                             rnd[r_columns[j]] = nrow[m_columns[j]];
                         }
 
-                        if (constraintPath.add(c, c)) {
+                        if (path.add(c)) {
                             reftable.checkCascadeUpdate(n.getRow(), rnd,
                                                         session, common,
-                                                        this, update);
+                                                        this, update, path);
                         }
                     }
 
@@ -2322,10 +2337,10 @@ class Table {
 
         if (database.isReferentialIntegrity()) {
             constraintPath.clear();
-            checkCascadeDelete(r, session, doit);
+            checkCascadeDelete(r, session, doit, constraintPath);
         }
 
-        if (doit && !r.isDeleted() ) {
+        if (doit &&!r.isDeleted()) {
             deleteNoRefCheck(r, session);
         }
     }
@@ -2474,7 +2489,8 @@ class Table {
 
             if (database.isReferentialIntegrity()) {
                 constraintPath.clear();
-                checkCascadeUpdate(row, ni.data, c, col, null, false);
+                checkCascadeUpdate(row, ni.data, c, col, null, false,
+                                   constraintPath);
             }
 
             ni = ni.next;
@@ -2489,7 +2505,8 @@ class Table {
             Row row = (Row) it.next();
 
             constraintPath.clear();
-            checkCascadeUpdate(row, ni.data, c, col, null, true);
+            checkCascadeUpdate(row, ni.data, c, col, null, true,
+                               constraintPath);
             deleteNoCheck(row, c, true);
 
             ni = ni.next;

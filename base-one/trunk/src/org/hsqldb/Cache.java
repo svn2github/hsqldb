@@ -72,6 +72,7 @@ import org.hsqldb.lib.ObjectComparator;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.lib.ArrayCounter;
+import org.hsqldb.lib.Sort;
 
 // fredt@users 20011220 - patch 437174 by hjbusch@users - cache update
 // most changes and comments by HJB are kept unchanged
@@ -463,7 +464,7 @@ abstract class Cache {
 
         rowComparator.setType(rowComparator.COMPARE_POSITION);
         sortTimer.start();
-        sort(rowTable, rowComparator, 0, removecount - 1);
+        Sort.sort(rowTable, rowComparator, 0, removecount - 1);
         sortTimer.stop();
         saveAllTimer.start();
 
@@ -516,7 +517,7 @@ abstract class Cache {
         // sort by access count
         rowComparator.setType(rowComparator.COMPARE_LAST_ACCESS);
         sortTimer.start();
-        sort(rowTable, rowComparator, 0, iCacheSize - 1);
+        Sort.sort(rowTable, rowComparator, 0, iCacheSize - 1);
         sortTimer.stop();
 
         // sort by file position
@@ -524,7 +525,7 @@ abstract class Cache {
 
         rowComparator.setType(rowComparator.COMPARE_POSITION);
         sortTimer.start();
-        sort(rowTable, rowComparator, 0, removecount - 1);
+        Sort.sort(rowTable, rowComparator, 0, removecount - 1);
         sortTimer.stop();
         saveAllTimer.start();
 
@@ -710,7 +711,7 @@ abstract class Cache {
         rowComparator.setType(rowComparator.COMPARE_POSITION);
 
         if (j != 0) {
-            sort(rowTable, rowComparator, 0, j - 1);
+            Sort.sort(rowTable, rowComparator, 0, j - 1);
         }
 
         for (int i = 0; i < j; i++) {
@@ -747,90 +748,6 @@ abstract class Cache {
     throws IOException, HsqlException;
 
     abstract void backup(String newName) throws HsqlException;
-
-    /**
-     * FastQSorts the [l,r] partition of the specfied array of Rows, based on
-     * the contained Row objects' iPos (file offset) values.
-     *
-     */
-    private static final void sort(Object w[], ObjectComparator comparator,
-                                   int l, int r) throws HsqlException {
-
-        int    i;
-        int    j;
-        Object p;
-
-        while (r - l > 10) {
-            i = (r + l) >> 1;
-
-            if (comparator.compare(w[l], w[r]) > 0) {
-                swap(w, l, r);
-            }
-
-            if (comparator.compare(w[i], w[l]) < 0) {
-                swap(w, l, i);
-            } else if (comparator.compare(w[i], w[r]) > 0) {
-                swap(w, i, r);
-            }
-
-            j = r - 1;
-
-            swap(w, i, j);
-
-            p = w[j];
-            i = l;
-
-            while (true) {
-                if (Trace.STOP) {
-                    Trace.stop();
-                }
-
-                while (comparator.compare(w[++i], p) < 0) {
-                    ;
-                }
-
-                while (comparator.compare(w[--j], p) > 0) {
-                    ;
-                }
-
-                if (i >= j) {
-                    break;
-                }
-
-                swap(w, i, j);
-            }
-
-            swap(w, i, r - 1);
-            sort(w, comparator, l, i - 1);
-
-            l = i + 1;
-        }
-
-        for (i = l + 1; i <= r; i++) {
-            if (Trace.STOP) {
-                Trace.stop();
-            }
-
-            Object t = w[i];
-
-            for (j = i - 1; j >= l && comparator.compare(w[j], t) > 0; j--) {
-                w[j + 1] = w[j];
-            }
-
-            w[j + 1] = t;
-        }
-    }
-
-    /**
-     * Swaps the a'th and b'th elements of the specified Row array.
-     */
-    private static void swap(Object w[], int a, int b) {
-
-        Object t = w[a];
-
-        w[a] = w[b];
-        w[b] = t;
-    }
 
     /**
      * Getter for iFreePos member
