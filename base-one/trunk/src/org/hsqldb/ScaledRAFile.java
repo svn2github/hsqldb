@@ -111,8 +111,9 @@ class ScaledRAFile {
     void seek(long position) throws IOException {
 
         if (file.length() < position) {
-            file.seek(file.length());
 /*
+            file.seek(file.length());
+
             for (long ix = file.length(); ix < position; ix++) {
                 file.write(0);
             }

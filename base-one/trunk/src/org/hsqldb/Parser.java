@@ -407,7 +407,7 @@ class Parser {
                     tokenizer.wasQuotedIdentifier());
             token = tokenizer.getString();
 
-            if ("?".equals(sToken)) {
+            if (Token.T_QUESTION.equals(sToken)) {
                 throw Trace.error(Trace.UNEXPECTED_TOKEN,
                                   Trace.PARAMETRIC_TABLE_NAME);
             }
@@ -2055,7 +2055,7 @@ class Parser {
         } else if (tokenizer.wasLongName()) {
             sTable = tokenizer.getLongNameFirst();
 
-            if (sToken.equals(Token.T_ASTERISK)) {
+            if (sToken.equals(Token.T_MULTIPLY)) {
                 iToken = Expression.MULTIPLY;
             } else {
                 iToken = Expression.COLUMN;
@@ -2163,9 +2163,9 @@ class Parser {
         tokenSet.put(Token.T_IN, Expression.IN);
         tokenSet.put(Token.T_EXISTS, Expression.EXISTS);
         tokenSet.put(Token.T_BETWEEN, Expression.BETWEEN);
-        tokenSet.put("+", Expression.PLUS);
+        tokenSet.put(Token.T_PLUS, Expression.PLUS);
         tokenSet.put("-", Expression.NEGATE);
-        tokenSet.put("*", Expression.MULTIPLY);
+        tokenSet.put(Token.T_MULTIPLY, Expression.MULTIPLY);
         tokenSet.put("/", Expression.DIVIDE);
         tokenSet.put("||", Expression.STRINGCONCAT);
         tokenSet.put(Token.T_OPENBRACKET, Expression.OPEN);
@@ -2198,7 +2198,7 @@ class Parser {
         tokenSet.put(Token.T_FOR, Expression.FOR);
         tokenSet.put(Token.T_AS, Expression.AS);
         tokenSet.put(Token.T_IS, Expression.IS);
-        tokenSet.put("?", Expression.PARAM);
+        tokenSet.put(Token.T_QUESTION, Expression.PARAM);
     }
 
 // boucherb@users 20030411 - patch 1.7.2 - for prepared statements

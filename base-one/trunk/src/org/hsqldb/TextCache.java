@@ -267,9 +267,9 @@ public class TextCache extends DataFileCache {
     void open(boolean readonly) throws HsqlException {
 
         try {
-            rFile = ScaledRAFile.newScaledRAFile(sName, readonly, 1,
-                                                 ScaledRAFile.DATA_FILE_RAF);
-            fileFreePosition = (int) rFile.length();
+            dataFile = ScaledRAFile.newScaledRAFile(sName, readonly, 1,
+                    ScaledRAFile.DATA_FILE_RAF);
+            fileFreePosition = (int) dataFile.length();
 
             if ((fileFreePosition == 0) && ignoreFirst) {
                 byte[] buf = null;
@@ -280,7 +280,7 @@ public class TextCache extends DataFileCache {
                     buf = ignoredFirst.getBytes();
                 }
 
-                rFile.write(buf, 0, buf.length);
+                dataFile.write(buf, 0, buf.length);
 
                 fileFreePosition = ignoredFirst.length();
             }
@@ -307,18 +307,18 @@ public class TextCache extends DataFileCache {
      */
     void close() throws HsqlException {
 
-        if (rFile == null) {
+        if (dataFile == null) {
             return;
         }
 
         try {
             saveAll();
 
-            boolean empty = (rFile.length() <= NL.length());
+            boolean empty = (dataFile.length() <= NL.length());
 
-            rFile.close();
+            dataFile.close();
 
-            rFile = null;
+            dataFile = null;
 
             if (empty &&!readOnly) {
                 FileUtil.delete(sName);
@@ -337,7 +337,7 @@ public class TextCache extends DataFileCache {
      */
     void purge() throws HsqlException {
 
-        if (rFile == null) {
+        if (dataFile == null) {
             return;
         }
 
@@ -345,9 +345,9 @@ public class TextCache extends DataFileCache {
             if (readOnly) {
                 close();
             } else {
-                rFile.close();
+                dataFile.close();
 
-                rFile = null;
+                dataFile = null;
 
                 FileUtil.delete(sName);
             }
@@ -377,8 +377,8 @@ public class TextCache extends DataFileCache {
             try {
                 out.fill(' ', length);
                 out.write(ScriptWriterText.BYTES_LINE_SEP);
-                rFile.seek(pos);
-                rFile.write(out.getBuffer(), 0, out.size());
+                dataFile.seek(pos);
+                dataFile.write(out.getBuffer(), 0, out.size());
             } catch (IOException e) {
                 throw (Trace.error(Trace.FILE_IO_ERROR, e.toString()));
             }
@@ -408,12 +408,12 @@ public class TextCache extends DataFileCache {
                 int c;
                 int next;
 
-                rFile.seek(pos);
+                dataFile.seek(pos);
 
                 //-- The following should work for DOS, MAC, and Unix line
                 //-- separators regardless of host OS.
                 while (true) {
-                    next = rFile.read();
+                    next = dataFile.read();
 
                     if (next == -1) {
                         break;
@@ -454,7 +454,7 @@ public class TextCache extends DataFileCache {
 
                         //-- Check for newline
                         try {
-                            next = rFile.read();
+                            next = dataFile.read();
 
                             if (next == -1) {
                                 break;

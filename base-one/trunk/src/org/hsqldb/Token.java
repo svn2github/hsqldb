@@ -54,6 +54,10 @@ public class Token {
     static final String T_EQUALS       = "=";
     static final String T_OPENBRACKET  = "(";
     static final String T_SEMICOLON    = ";";
+    static final String T_MULTIPLY     = "*";
+    static final String T_PERCENT      = "%";
+    static final String T_PLUS         = "+";
+    static final String T_QUESTION     = "?";
 
     // SQL 200n reserved tokens
     static final String        T_ADD                             = "ADD";         //reserved

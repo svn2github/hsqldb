@@ -1012,16 +1012,15 @@ public class Expression {
             return true;
         }
 
-        return (exprType == exp.exprType) && similarTo(eArg, exp.eArg)
-               && similarTo(eArg2, exp.eArg2)
+        /** @todo fredt - equals() method for valueList, subSelect and function are needed */
+        return exprType == exp.exprType && dataType == exp.dataType
                && equals(valueData, exp.valueData)
                && equals(valueList, exp.valueList)
-               && dataType == exp.dataType
                && equals(subSelect, exp.subSelect)
                && equals(function, exp.function)
                && equals(tableName, exp.tableName)
                && equals(columnName, exp.columnName)
-               && dataType == exp.dataType;
+               && similarTo(eArg, exp.eArg) && similarTo(eArg2, exp.eArg2);
     }
 
     static boolean equals(Object o1, Object o2) {

@@ -145,6 +145,10 @@ public class ScriptRunner {
 
                         // catch out-of-memory errors and terminate
                         if (result.getStatementID() == Trace.OUT_OF_MEMORY) {
+                            Trace.printSystemOut("out of memory processing "
+                                                 + scriptFilename + " line: "
+                                                 + scr.getLineNumber());
+
                             throw Trace.error(result);
                         }
 

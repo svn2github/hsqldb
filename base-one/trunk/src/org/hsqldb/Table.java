@@ -1777,15 +1777,15 @@ public class Table extends BaseTable {
         return count;
     }
 
+    /**
+     * Used by ScriptReaderBinary to unconditionally insert a row into
+     * the table when the .script file is read.
+     */
     public void insertFromScript(Object[] data) throws HsqlException {
         updateIdentityValue(data);
         insert(data);
     }
 
-    /**
-     * Used by ScriptReaderBinary to unconditionally insert a row into
-     * the table when the .script file is read.
-     */
     public void insertWithIdentity(Session session,
                                    Object[] data) throws HsqlException {
         setIdentityColumn(session, data);
@@ -2644,21 +2644,19 @@ public class Table extends BaseTable {
     private void deleteNoCheck(Session session, Row row,
                                boolean log) throws HsqlException {
 
-        Object[] data = row.getData();
-
-        row = row.getUpdatedRow();
-
         if (row.isDeleted()) {
             return;
         }
+
+        Object[] data = row.getData();
+
+        row = row.getUpdatedRow();
 
         for (int i = getIndexCount() - 1; i >= 0; i--) {
             Node node = row.getNode(i);
 
             getIndex(i).delete(node);
         }
-
-        row = row.getUpdatedRow();
 
         row.delete();
 
@@ -2686,8 +2684,6 @@ public class Table extends BaseTable {
 
             getIndex(i).delete(node);
         }
-
-        row = row.getUpdatedRow();
 
         row.delete();
 
@@ -3029,8 +3025,6 @@ public class Table extends BaseTable {
 
                 getIndex(i).delete(n);
             }
-
-            row = row.getUpdatedRow();
 
             row.delete();
 

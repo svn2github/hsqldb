@@ -678,19 +678,74 @@ public class Tokenizer {
             switch (c) {
 
                 case '(' :
-                case ')' :
-                case ',' :
-                case '*' :
-                case '=' :
-                case ';' :
-                case '+' :
-                case '%' :
-                case '?' :
-                    iType = SPECIAL;
+                    sToken = Token.T_OPENBRACKET;
+                    iType  = SPECIAL;
 
                     iIndex++;
 
-                    sToken = String.valueOf(c);
+                    return;
+
+                case ')' :
+                    sToken = Token.T_CLOSEBRACKET;
+                    iType  = SPECIAL;
+
+                    iIndex++;
+
+                    return;
+
+                case ',' :
+                    sToken = Token.T_COMMA;
+                    iType  = SPECIAL;
+
+                    iIndex++;
+
+                    return;
+
+                case '*' :
+                    sToken = Token.T_MULTIPLY;
+                    iType  = SPECIAL;
+
+                    iIndex++;
+
+                    return;
+
+                case '=' :
+                    sToken = Token.T_EQUALS;
+                    iType  = SPECIAL;
+
+                    iIndex++;
+
+                    return;
+
+                case ';' :
+                    sToken = Token.T_SEMICOLON;
+                    iType  = SPECIAL;
+
+                    iIndex++;
+
+                    return;
+
+                case '+' :
+                    sToken = Token.T_PLUS;
+                    iType  = SPECIAL;
+
+                    iIndex++;
+
+                    return;
+
+                case '%' :
+                    sToken = Token.T_PERCENT;
+                    iType  = SPECIAL;
+
+                    iIndex++;
+
+                    return;
+
+                case '?' :
+                    sToken = Token.T_QUESTION;
+                    iType  = SPECIAL;
+
+                    iIndex++;
 
                     return;
 

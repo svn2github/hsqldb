@@ -296,6 +296,13 @@ public class DatabaseScript {
         // rights for classes, tables and views
         addRightsStatements(dDatabase, r);
 
+        if (dDatabase.logger.hasLog()) {
+            int    delay     = dDatabase.logger.lLog.writeDelay;
+            String statement = "SET WRITE_DELAY " + delay;
+
+            addRow(r, statement);
+        }
+
         return r;
     }
 

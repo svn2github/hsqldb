@@ -31,17 +31,13 @@
 
 package org.hsqldb.scriptio;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 
 import org.hsqldb.Database;
 import org.hsqldb.HsqlException;
 import org.hsqldb.Table;
 import org.hsqldb.NumberSequence;
-import org.hsqldb.Trace;
 import org.hsqldb.rowio.RowOutputTextLog;
-
-import java.io.BufferedOutputStream;
 
 /**
  * Handles all logging to file operations. A log consists of three blocks:<p>
@@ -87,29 +83,7 @@ public class ScriptWriterText extends ScriptWriterBase {
     }
 
     protected void initBuffers() {
-
         rowOut = new RowOutputTextLog();
-
-//        rowOut.setSystemId(true);
-    }
-
-    /**
-     *  File is opened in append mode although in current usage the file
-     *  never pre-exists
-     */
-    protected void openFile() throws HsqlException {
-
-        try {
-            FileOutputStream fos = new FileOutputStream(outFile, true);
-
-            outDescriptor = fos.getFD();
-            fileStreamOut = new BufferedOutputStream(fos, 2 << 12);
-        } catch (IOException e) {
-            throw Trace.error(Trace.FILE_IO_ERROR, Trace.Message_Pair,
-                              new Object[] {
-                e.getMessage(), outFile
-            });
-        }
     }
 
     public void writeRow(int sid, Table table,

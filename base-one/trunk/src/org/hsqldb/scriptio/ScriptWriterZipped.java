@@ -63,11 +63,16 @@ class ScriptWriterZipped extends ScriptWriterBinary {
     protected void openFile() throws HsqlException {
 
         try {
-            fileStreamOut = new DeflaterOutputStream(
-                new FileOutputStream(outFile, true),
-                new Deflater(Deflater.DEFAULT_COMPRESSION), bufferSize);
+            FileOutputStream fos = new FileOutputStream(outFile, true);
+
+            outDescriptor = fos.getFD();
+            fileStreamOut = new DeflaterOutputStream(fos,
+                    new Deflater(Deflater.DEFAULT_COMPRESSION), bufferSize);
         } catch (IOException e) {
-            throw Trace.error(Trace.FILE_IO_ERROR, outFile);
+            throw Trace.error(Trace.FILE_IO_ERROR, Trace.Message_Pair,
+                              new Object[] {
+                e.getMessage(), outFile
+            });
         }
     }
 

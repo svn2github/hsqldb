@@ -31,8 +31,6 @@
 
 package org.hsqldb;
 
-import java.io.IOException;
-
 import org.hsqldb.lib.FileUtil;
 
 // tony_lai@users 20020820 - patch 595099 - user define PK name

@@ -54,10 +54,7 @@ class ScriptWriterBinary extends ScriptWriterBase {
     }
 
     protected void initBuffers() {
-
         rowOut = new RowOutputBinary();
-
-//        rowOut.setSystemId(true);
     }
 
     protected void writeSingleColumnResult(Result r)

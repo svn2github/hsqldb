@@ -106,13 +106,13 @@ public class DataFileCache extends Cache {
             int fileType = isNio ? ScaledRAFile.DATA_FILE_NIO
                                  : ScaledRAFile.DATA_FILE_RAF;
 
-            rFile = ScaledRAFile.newScaledRAFile(sName, readonly, 1,
-                                                 fileType);
+            dataFile = ScaledRAFile.newScaledRAFile(sName, readonly, 1,
+                    fileType);
 
             if (exists) {
-                rFile.seek(FREE_POS_POS);
+                dataFile.seek(FREE_POS_POS);
 
-                fileFreePosition = rFile.readInt();
+                fileFreePosition = dataFile.readInt();
             } else {
 
 // erik - iFreePos = INITIAL_FREE_POS / cacheFileScale;
@@ -145,17 +145,17 @@ public class DataFileCache extends Cache {
      */
     void close() throws HsqlException {
 
-        if (rFile == null || rFile.readOnly) {
+        if (dataFile == null || dataFile.readOnly) {
             return;
         }
 
         try {
-            rFile.seek(FREE_POS_POS);
-            rFile.writeInt(fileFreePosition);
+            dataFile.seek(FREE_POS_POS);
+            dataFile.writeInt(fileFreePosition);
             saveAll();
-            rFile.close();
+            dataFile.close();
 
-            rFile = null;
+            dataFile = null;
 
             boolean empty = fileFreePosition == INITIAL_FREE_POS;
 
@@ -199,7 +199,7 @@ public class DataFileCache extends Cache {
             // open as readonly
             open(true);
 
-            boolean        isNio = rFile.isNio;
+            boolean        isNio = dataFile.isNio;
             DataFileDefrag dfd   = new DataFileDefrag();
 
             indexRoots = dfd.defrag(dDatabase, sName);
@@ -260,14 +260,14 @@ public class DataFileCache extends Cache {
 
         Trace.printSystemOut("DataFileCache.closeFile()");
 
-        if (rFile == null) {
+        if (dataFile == null) {
             return;
         }
 
         try {
-            rFile.close();
+            dataFile.close();
 
-            rFile = null;
+            dataFile = null;
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR,
                               Trace.DataFileCache_closeFile, new Object[] {
@@ -304,7 +304,12 @@ public class DataFileCache extends Cache {
         fRoot = n;
 
         // it's possible to remove roots too
-        remove(r);
+        // a newer copy of the row may be in cache
+        r = getRow(r.iPos);
+
+        if (r != null) {
+            remove(r);
+        }
     }
 
     /**
@@ -377,12 +382,12 @@ public class DataFileCache extends Cache {
         try {
 
 // erik -  rFile.readSeek(pos*cacheFileScale);
-            rFile.seek(pos);
+            dataFile.seek(pos);
 
-            int size = rFile.readInt();
+            int size = dataFile.readInt();
 
             rowIn.resetRow(pos, size);
-            rFile.read(rowIn.getBuffer(), 4, size - 4);
+            dataFile.read(rowIn.getBuffer(), 4, size - 4);
 
             r = new CachedRow(t, rowIn);
         } catch (IOException e) {
@@ -404,10 +409,10 @@ public class DataFileCache extends Cache {
         rowOut.reset();
 
 // erik - multiply position by cacheFileScale   rFile.seek(r.iPos * cacheFileScale);
-        rFile.seek(r.iPos);
+        dataFile.seek(r.iPos);
         r.write(rowOut);
-        rFile.write(rowOut.getOutputStream().getBuffer(), 0,
-                    rowOut.getOutputStream().size());
+        dataFile.write(rowOut.getOutputStream().getBuffer(), 0,
+                       rowOut.getOutputStream().size());
     }
 
     /**

@@ -196,7 +196,7 @@ abstract class Cache {
 
     // variable fields
 // boucherb@users - access changed for metadata 1.7.2
-    protected ScaledRAFile rFile;
+    protected ScaledRAFile dataFile;
     protected int          fileFreePosition;
 
 // ---------------------------------------------------
@@ -409,7 +409,7 @@ abstract class Cache {
         return r;
     }
 
-    private CachedRow getRow(int pos) {
+    CachedRow getRow(int pos) {
 
         // HJB-2001-06-21
         int       k     = (pos >> 3) & multiplierMask;

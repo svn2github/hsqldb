@@ -68,9 +68,7 @@ package org.hsqldb;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.Socket;
 
 import org.hsqldb.lib.ArrayUtil;
