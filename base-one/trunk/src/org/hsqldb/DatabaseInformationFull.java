@@ -36,6 +36,7 @@ import java.lang.reflect.Method;
 import java.sql.DatabaseMetaData;
 import java.sql.Timestamp;
 import java.util.Hashtable;
+import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HashMap;
@@ -478,7 +479,7 @@ extends org.hsqldb.DatabaseInformationMain {
 
             row[icache_class]  = cache.getClass().getName();
             row[icache_hash]   = ValuePool.getInt(cache.hashCode());
-            row[icache_file]   = (new File(cache.sName)).getAbsolutePath();
+            row[icache_file] = FileUtil.canonicalOrAbsolutePath(cache.sName);
             row[icache_length] = ValuePool.getInt(cache.cacheLength);
             row[icache_size]   = ValuePool.getInt(cache.iCacheSize);
             row[ifree_bytes]   = ValuePool.getInt(iFreeBytes);
@@ -1269,11 +1270,12 @@ extends org.hsqldb.DatabaseInformationMain {
         }
 
         // intermediate holders
-        Iterator    tables;
-        Table       table;
-        Object      row[];
-        DITableInfo ti;
-        TextCache   tc;
+        Iterator tables;
+        Table    table;
+        Object   row[];
+
+//        DITableInfo ti;
+        TextCache tc;
 
         // column number mappings
         final int itable_cat   = 0;
@@ -1309,7 +1311,7 @@ extends org.hsqldb.DatabaseInformationMain {
             if (table.cache != null && table.cache instanceof TextCache) {
                 tc              = (TextCache) table.cache;
                 row[idsd]       = table.getDataSource();
-                row[ifile_path] = new File(tc.sName).getAbsolutePath();
+                row[ifile_path] = FileUtil.canonicalOrAbsolutePath(tc.sName);
                 row[ifile_enc]  = tc.stringEncoding;
                 row[ifs]        = tc.fs;
                 row[ivfs]       = tc.vs;
@@ -2245,7 +2247,7 @@ extends org.hsqldb.DatabaseInformationMain {
             addColumn(t, "INCREMENT", Types.VARCHAR, true);         // not null
             addColumn(t, "CYCLE_OPTION", Types.VARCHAR, true);      // not null
 
-            // HSQLDB-specific            
+            // HSQLDB-specific
             addColumn(t, "START_WITH", Types.VARCHAR, true);        // not null
 
             // order SEQUENCE_CATALOG, SEQUENCE_SCHEMA, SEQUENCE_NAME
@@ -2365,7 +2367,11 @@ extends org.hsqldb.DatabaseInformationMain {
      *      value of GRANTEE forthe usage privilege being described. <p>
      *
      * <li> The value of GRANTEE is the &lt;authorization identifier&gt; of some
+<<<<<<< DatabaseInformationFull.java
+     *      user or role, or PUBLIC to indicate all users, to whom the usage
+=======
      *      user or role, or  PUBLIC  to indicate all users, to whom the usage
+>>>>>>> 1.39
      *      privilege being described is granted. <p>
      *
      * <li> The values of OBJECT_CATALOG, OBJECT_SCHEMA, and OBJECT_NAME are the
@@ -2429,7 +2435,7 @@ extends org.hsqldb.DatabaseInformationMain {
             addColumn(t, "GRANTEE", Types.VARCHAR, false);         // not null
             addColumn(t, "OBJECT_CATALOG", Types.VARCHAR);
             addColumn(t, "OBJECT_SCHEMA", Types.VARCHAR);
-            addColumn(t, "OBJECT_NAME", Types.VARCHAR, false);     // not null           
+            addColumn(t, "OBJECT_NAME", Types.VARCHAR, false);     // not null
             addColumn(t, "OBJECT_TYPE", Types.VARCHAR, false);     // not null
             addColumn(t, "IS_GRANTABLE", Types.VARCHAR, false);    // not null
 
@@ -2659,7 +2665,7 @@ extends org.hsqldb.DatabaseInformationMain {
         Object[]             resultRow;
         Object[]             row;
 
-        // column number mappings      
+        // column number mappings
         final int icons_cat   = 0;
         final int icons_schem = 1;
         final int icons_name  = 2;
@@ -2962,7 +2968,7 @@ extends org.hsqldb.DatabaseInformationMain {
             return t;
         }
 
-        // 
+        //
         Result rs = session.sqlExecuteDirectNoPreChecks(
             "select DISTINCT CONSTRAINT_CATALOG, CONSTRAINT_SCHEMA, "
             + "CONSTRAINT_NAME, TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME "
@@ -3089,10 +3095,10 @@ extends org.hsqldb.DatabaseInformationMain {
             addColumn(t, "TABLE_CATALOG", Types.VARCHAR);
             addColumn(t, "TABLE_SCHEMA", Types.VARCHAR);
             addColumn(t, "TABLE_NAME", Types.VARCHAR, false);            // not null
-            addColumn(t, "IS_DEFERRABLE", Types.VARCHAR, false);         // not null  
+            addColumn(t, "IS_DEFERRABLE", Types.VARCHAR, false);         // not null
             addColumn(t, "INITIALLY_DEFERRED", Types.VARCHAR, false);    // not null
 
-            // false PK, as CONSTRAINT_CATALOG, CONSTRAINT_SCHEMA, 
+            // false PK, as CONSTRAINT_CATALOG, CONSTRAINT_SCHEMA,
             // TABLE_CATALOG and/or TABLE_SCHEMA may be null
             t.createPrimaryKey(null, new int[] {
                 0, 1, 2, 4, 5, 6
@@ -3277,7 +3283,7 @@ extends org.hsqldb.DatabaseInformationMain {
             return t;
         }
 
-        // 
+        //
         Result rs = session.sqlExecuteDirectNoPreChecks(
             "select DISTINCT VIEW_CATALOG, VIEW_SCHEMA, "
             + "VIEW_NAME, TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME "
