@@ -42,7 +42,7 @@ import java.io.FileNotFoundException;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
-// $Id: SqlToolHarness.java,v 1.3 2004/06/16 17:32:42 unsaved Exp $
+// $Id: SqlToolHarness.java,v 1.4 2004/06/16 17:36:12 unsaved Exp $
 
 /**
  * Runs SqlTool tests based upon metacommands embedded in comments in SQL 
@@ -98,7 +98,7 @@ public class SqlToolHarness {
     throws IOException, InterruptedException {
         Metadata md = new Metadata(file);
         if (Verbose) {
-            System.err.println("METADATA:\n" + md);
+            System.err.println("HARNESS METADATA:\n" + md);
         }
         execHarness.clear();
         String[] args = new String[md.jvmargs.length + 1
@@ -251,13 +251,13 @@ public class SqlToolHarness {
                     + ExecHarness.stringArrayToString(toolargs) + '\n');
             sb.append("    JVMARGS: "
                     + ExecHarness.stringArrayToString(jvmargs) + '\n');
-            sb.append("    REQUIRESTDOUTPATTERNS: "
+            sb.append("    REQUIRE_STDOUT_PATTERNS: "
                     + patternArrayToString(requireStdoutPatterns) + '\n');
-            sb.append("    REJECTSTDOUTPATTERNS: "
+            sb.append("    REJECT_STDOUT_PATTERNS: "
                     + patternArrayToString(rejectStdoutPatterns) + '\n');
-            sb.append("    REQUIREERROUTPATTERNS: "
+            sb.append("    REQUIRE_ERROUT_PATTERNS: "
                     + patternArrayToString(requireErroutPatterns) + '\n');
-            sb.append("    REJECTERROUTPATTERNS: "
+            sb.append("    REJECT_ERROUT_PATTERNS: "
                     + patternArrayToString(rejectErroutPatterns) + '\n');
             sb.append("    INPUTASFILE: " + inputAsFile + '\n');
             sb.append("    EXITVALUE: " + exitValue + '\n');
