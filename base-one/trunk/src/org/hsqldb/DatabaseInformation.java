@@ -88,46 +88,47 @@ import org.hsqldb.lib.HsqlObjectToIntMap;
 class DatabaseInformation {
 
     // ids for system table names strictly in order of sysName[]
-    protected static final int SYSTEM_BESTROWIDENTIFIER = 1;
-    protected static final int SYSTEM_CATALOGS          = 2;
-    protected static final int SYSTEM_COLUMNPRIVILEGES  = 3;
-    protected static final int SYSTEM_COLUMNS           = 4;
-    protected static final int SYSTEM_CROSSREFERENCE    = 5;
-    protected static final int SYSTEM_INDEXINFO         = 6;
-    protected static final int SYSTEM_PRIMARYKEYS       = 7;
-    protected static final int SYSTEM_PROCEDURECOLUMNS  = 8;
-    protected static final int SYSTEM_PROCEDURES        = 9;
-    protected static final int SYSTEM_SCHEMAS           = 10;
-    protected static final int SYSTEM_SUPERTABLES       = 11;
-    protected static final int SYSTEM_SUPERTYPES        = 12;
-    protected static final int SYSTEM_TABLEPRIVILEGES   = 13;
-    protected static final int SYSTEM_TABLES            = 14;
-    protected static final int SYSTEM_TABLETYPES        = 15;
-    protected static final int SYSTEM_TYPEINFO          = 16;
-    protected static final int SYSTEM_UDTATTRIBUTES     = 17;
-    protected static final int SYSTEM_UDTS              = 18;
-    protected static final int SYSTEM_USERS             = 19;
-    protected static final int SYSTEM_VERSIONCOLUMNS    = 20;
+    protected static final int SYSTEM_BESTROWIDENTIFIER = 0;
+    protected static final int SYSTEM_CATALOGS          = 1;
+    protected static final int SYSTEM_COLUMNPRIVILEGES  = 2;
+    protected static final int SYSTEM_COLUMNS           = 3;
+    protected static final int SYSTEM_CROSSREFERENCE    = 4;
+    protected static final int SYSTEM_INDEXINFO         = 5;
+    protected static final int SYSTEM_PRIMARYKEYS       = 6;
+    protected static final int SYSTEM_PROCEDURECOLUMNS  = 7;
+    protected static final int SYSTEM_PROCEDURES        = 8;
+    protected static final int SYSTEM_SCHEMAS           = 9;
+    protected static final int SYSTEM_SUPERTABLES       = 10;
+    protected static final int SYSTEM_SUPERTYPES        = 11;
+    protected static final int SYSTEM_TABLEPRIVILEGES   = 12;
+    protected static final int SYSTEM_TABLES            = 13;
+    protected static final int SYSTEM_TABLETYPES        = 14;
+    protected static final int SYSTEM_TYPEINFO          = 15;
+    protected static final int SYSTEM_UDTATTRIBUTES     = 16;
+    protected static final int SYSTEM_UDTS              = 17;
+    protected static final int SYSTEM_USERS             = 18;
+    protected static final int SYSTEM_VERSIONCOLUMNS    = 19;
 
     // HSQLDB-specific
-    protected static final int SYSTEM_ALIASES         = 21;
-    protected static final int SYSTEM_BYTECODE        = 22;
-    protected static final int SYSTEM_CACHEINFO       = 23;
-    protected static final int SYSTEM_CLASSPRIVILEGES = 24;
-    protected static final int SYSTEM_CONNECTIONINFO  = 25;
-    protected static final int SYSTEM_PROPERTIES      = 26;
-    protected static final int SYSTEM_SESSIONS        = 27;
-    protected static final int SYSTEM_TRIGGERCOLUMNS  = 28;
-    protected static final int SYSTEM_TRIGGERS        = 29;
-    protected static final int SYSTEM_ALLTYPEINFO     = 30;
-    protected static final int SYSTEM_VIEWSOURCE      = 31;
+    protected static final int SYSTEM_ALIASES         = 20;
+    protected static final int SYSTEM_BYTECODE        = 21;
+    protected static final int SYSTEM_CACHEINFO       = 22;
+    protected static final int SYSTEM_CLASSPRIVILEGES = 23;
+    protected static final int SYSTEM_CONNECTIONINFO  = 24;
+    protected static final int SYSTEM_PROPERTIES      = 25;
+    protected static final int SYSTEM_SESSIONS        = 26;
+    protected static final int SYSTEM_TRIGGERCOLUMNS  = 27;
+    protected static final int SYSTEM_TRIGGERS        = 28;
+    protected static final int SYSTEM_ALLTYPEINFO     = 29;
+    protected static final int SYSTEM_VIEWSOURCE      = 30;
 
     // system table names strictly in order of their ids
     protected static final String sysNames[] = {
         "SYSTEM_BESTROWIDENTIFIER",                   //
         "SYSTEM_CATALOGS",                            //
         "SYSTEM_COLUMNPRIVILEGES",                    //
-        "SYSTEM_COLUMNS", "SYSTEM_CROSSREFERENCE",    //
+        "SYSTEM_COLUMNS",                             //
+        "SYSTEM_CROSSREFERENCE",                      //
         "SYSTEM_INDEXINFO",                           //
         "SYSTEM_PRIMARYKEYS",                         //
         "SYSTEM_PROCEDURECOLUMNS",                    //
@@ -248,7 +249,7 @@ class DatabaseInformation {
         sysTableNames = new HsqlObjectToIntMap(47);
 
         for (int i = 0; i < sysNames.length; i++) {
-            sysTableNames.put(sysNames[i], i + 1);
+            sysTableNames.put(sysNames[i], i);
         }
     }
 

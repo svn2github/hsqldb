@@ -4,6 +4,8 @@
 
 <project name="hsqldb" default="help" basedir="../">
    <property name="src" value="${basedir}/src"/>
+   <property name="build.debug" value="off"/>
+
    <target name="init">
    </target>
 
@@ -109,6 +111,7 @@ example:
       >
          <include name="org/hsqldb/lib/**"/>
          <include name="org/hsqldb/lib/java/**"/>
+         <include name="org/hsqldb/lib/enum/**"/>
       </javac>
     </target>
 
@@ -123,6 +126,7 @@ example:
          </classpath>
          <include name="*.java"/>
          <include name="org/hsqldb/*.java"/>
+         <include name="org/hsqldb/resources/*.java"/>
          <exclude name="org/hsqldb/lib/*.java"/>
          <exclude name="org/hsqldb/test/*.java"/>
          <exclude name="org/hsqldb/sample/*.java"/>
@@ -130,6 +134,9 @@ example:
          <exclude name="org/hsqldb/jdbcDataSource*.java"/>
          <exclude name="org/hsqldb/jdbcStubs.java"/>
       </javac>
+      <copy todir="${basedir}/classes/org/hsqldb/resources">
+         <fileset dir="${src}/org/hsqldb/resources" includes="*.properties"/>
+      </copy>      
     </target>
 
    <target name="classes14" depends="classes" if="ant.java.iscjava14">

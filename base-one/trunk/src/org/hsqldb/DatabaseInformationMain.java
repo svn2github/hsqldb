@@ -172,7 +172,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             return null;
         }
 
-        HsqlName name = sysTableHsqlNames[tableId - 1];
+        HsqlName name = sysTableHsqlNames[tableId];
         Table    t    = createTable(name);
 
         switch (tableId) {
@@ -336,7 +336,6 @@ class DatabaseInformationMain extends DatabaseInformation {
                 t.addColumn("SCOPE_SCHEMA", Types.VARCHAR);
                 t.addColumn("SCOPE_TABLE", Types.VARCHAR);
                 t.addColumn("SOURCE_DATA_TYPE", Types.VARCHAR);
-                t.addColumn("SCOPE_CATLOG ", Types.SMALLINT);
                 t.createPrimaryKey();
 
                 for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
