@@ -125,7 +125,7 @@ class Table {
     protected int[]         iPrimaryKey;        // column numbers for primary key
     private int             iIndexCount;        // size of vIndex
     protected int           iIdentityColumn;    // -1 means no such row
-    protected int           iIdentityId;        // next value of identity column
+    protected long          iIdentityId;        // next value of identity column
 
 // -----------------------------------------------------------------------
     HsqlArrayList     vConstraint;              // constrainst for the table
@@ -408,9 +408,12 @@ class Table {
             throw Trace.error(Trace.COLUMN_ALREADY_EXISTS);
         }
 
+// Roberto
         if (column.isIdentity()) {
-            Trace.check(column.getType() == Types.INTEGER,
-                        Trace.WRONG_DATA_TYPE, column.columnName.name);
+            Trace.check(
+                column.getType() == Types.INTEGER
+                || column.getType() == Types.BIGINT, Trace.WRONG_DATA_TYPE,
+                    column.columnName.name);
             Trace.check(iIdentityColumn == -1, Trace.SECOND_PRIMARY_KEY,
                         column.columnName.name);
 
@@ -1467,26 +1470,36 @@ class Table {
      * If there is an identity column (visible or hidden) on the table, sets
      * the value and/or adjusts the iIdentiy value for the table.
      */
-    protected void setIdentityColumn(Object[] row, Session c) {
+    protected void setIdentityColumn(Object[] row,
+                                     Session c) throws SQLException {
 
-        int nextId = iIdentityId;
+        long nextId = iIdentityId;
 
         if (iIdentityColumn != -1) {
             Number id = (Number) row[iIdentityColumn];
 
             if (id == null) {
-                row[iIdentityColumn] = new Integer(iIdentityId);
+                if (colTypes[iIdentityColumn] == Types.INTEGER) {
+                    id = new Integer((int) iIdentityId);
+                } else {
+                    id = new Long(iIdentityId);
+                }
+
+                row[iIdentityColumn] = id;
             } else {
-                int columnId = id.intValue();
+                long columnId = id.longValue();
+
+                if (iIdentityId < 0 )
+                    throw Trace.error(Trace.ACCESS_IS_DENIED);
 
                 if (iIdentityId < columnId) {
                     iIdentityId = columnId;
                 }
             }
-        }
 
-        if (c != null) {
-            c.setLastIdentity(iIdentityId);
+            if (c != null) {
+                c.setLastIdentity(id);
+            }
         }
 
         if (iIdentityId >= nextId) {

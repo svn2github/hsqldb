@@ -230,7 +230,7 @@ class Function {
         int i = 0;
 
         if (isIdentityFunction) {
-            return new Integer(cSession.getLastIdentity());
+            return cSession.getLastIdentity();
         }
 
         if (bConnection) {

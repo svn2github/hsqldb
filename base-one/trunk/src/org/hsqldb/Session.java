@@ -95,7 +95,7 @@ class Session {
     private int            iNestedOldTransIndex;
     private boolean        bReadOnly;
     private int            iMaxRows;
-    private int            iLastIdentity;
+    private Object         iLastIdentity;
     private boolean        bClosed;
     private int            iId;
     private UnifiedTable   savepoints;
@@ -189,7 +189,7 @@ class Session {
      *
      * @param  i
      */
-    void setLastIdentity(int i) {
+    void setLastIdentity(Object i) {
         iLastIdentity = i;
     }
 
@@ -198,7 +198,7 @@ class Session {
      *
      * @return
      */
-    int getLastIdentity() {
+    Object getLastIdentity() {
         return iLastIdentity;
     }
 
