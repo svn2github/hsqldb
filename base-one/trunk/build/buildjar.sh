@@ -28,6 +28,7 @@ progdir=`dirname $PRG`
 progname=`basename $0`
 
 VERBOSE=
+export VERBOSE
 JDKVER=
 while [ $# -gt 0 ]; do
     case "$1" in -*)	# Switch
@@ -60,13 +61,17 @@ dbhome="$progdir/.."
 
 dbhome=`cd ${dbhome}; pwd`
 
-$dbhome/build/switchjdk.sh $JDKVER || exit $?
+SWITCHERVERBOSE=
+[ -n "$VERBOSE" ] && SWITCHERVERBOSE=-v
+$dbhome/build/switchjdk.sh $SWITCHERVERBOSE $JDKVER || exit $?
 
 # Generic initialization for $CLASSPATH, etc.
 . ${dbhome}/lib/functions
 pre_main
 
 #############################   Main   ###########################
+
+[ -n "$VERBOSE" ] && set -x
 
 cd $dbhome || Failout "Failed to cd to '$dbhome'"
 rm -r -f classes
