@@ -386,6 +386,11 @@ examples:
              basedir="classes"
              compress="true"
          >
+         <manifest>
+             <!-- This attribute is completely ignored unless the user
+                  uses the jar like "java -jar .../hsqldb.jar" -->
+             <attribute name='Main-Class' value='org.hsqldb.util.SqlTool'/>
+         </manifest>
          <exclude name="org/hsqldb/jmx/**"/>
          <exclude name="org/hsqldb/util/*Swing.*" if="noswing"/>
          <exclude name="org/hsqldb/util/Zaurus*.*"/>
