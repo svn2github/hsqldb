@@ -1,4 +1,4 @@
-<!-- $Id: running.xml,v 1.9 2004/04/23 17:10:14 unsaved Exp $ -->
+<!-- $Id: running.xml,v 1.10 2004/05/26 09:05:50 fredt Exp $ -->
 
 <chapter>
     <title>Running and Using Hsqldb</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.9 $</edition>
-        <pubdate>$Date: 2004/04/23 17:10:14 $</pubdate>
+        <edition>$Revision: 1.10 $</edition>
+        <pubdate>$Date: 2004/05/26 09:05:50 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Guide</keyword>
@@ -141,7 +141,7 @@
             While the &quot;test&quot; database is operational, a
             <filename>test.log</filename> file is used to write the changes 
             made to data.
-            This file is removed at a normal SHUDOWN.
+            This file is removed at a normal SHUTDOWN.
             Otherwise (with abnormal shutdown) this file is used at the next 
             startup to redo the changes.
             A <filename>test.lck </filename>file is also used to record the fact 
