@@ -93,12 +93,6 @@ class TableWorks {
         return table;
     }
 
-// boucherb@users 20030402 - patch 1.7.2 added for reuse of TableWorks object
-// under command interpreter support
-    void setTable(Table table) {
-        this.table = table;
-    }
-
 // fredt@users 20020225 - patch 1.7.0 - require existing index for foreign key
 // fredt@users 20030309 - patch 1.7.2 - more rigorous rules
 
@@ -252,6 +246,7 @@ class TableWorks {
 
         table.database.indexNameList.addName(newindex.getName().name,
                                              table.getName());
+        table.database.recompileViews(table.getName().name);
 
         return newindex;
     }
@@ -331,15 +326,6 @@ class TableWorks {
         table.database.constraintNameList.addName(name.name, table.getName());
     }
 
-/** @todo
-     * when a new Table object is created as a result of structural changes
-     * or a column is added or removed
-     * the check constraint expression must be renewed to hold references
-     * to the new table (otherwise there will still remain references to the
-     * old Table object, resulting in memory leaks
-     */
-    void resetCheckConstraint(Constraint c) throws HsqlException {}
-
 // fredt@users 20020315 - patch 1.7.0 - drop index bug
 
     /**
@@ -372,6 +358,7 @@ class TableWorks {
         }
 
         table.database.indexNameList.removeName(indexname);
+        table.database.recompileViews(table.getName().name);
     }
 
     /**
@@ -388,32 +375,10 @@ class TableWorks {
             throw Trace.error(Trace.OPERATION_NOT_SUPPORTED);
         }
 
-        // only allow add column at the end if referenced in a view
-        if (colindex != table.getColumnCount()) {
-
-            /**
-             * // fredt - view checks - replace with check for column
-             * // being in a view and rebuild view
-             * Views[] views = table.database.getViewsWithTable(table,
-             *                              table.getColumn(colindex).
-             *                              columnName.name);
-             *
-             * if ( views != null ){
-             *   if (adjust == -1){
-             *        throw Trace.error(Trace.COLUMN_IS_REFERENCED,
-             *                views[0].getName().name);
-             *   } else {
-             *        recompile each view in views
-             *   }
-             * }
-             */
-
-            // use the restrictive check until we can recompile the views
-            table.database.checkTableIsInView(table, null);
-        }
-
-        // check constraint columns */
         if (adjust == -1) {
+            table.database.checkColumnIsInView(
+                table.getName().name,
+                table.getColumn(colindex).columnName.name);
             table.checkColumnInCheckConstraint(
                 table.getColumn(colindex).columnName.name);
         }
@@ -428,6 +393,8 @@ class TableWorks {
         table.database.getTables().set(i, tn);
 
         table = tn;
+
+        table.database.recompileViews(table.getName().name);
     }
 
     /**

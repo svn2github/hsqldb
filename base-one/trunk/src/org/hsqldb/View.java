@@ -32,7 +32,6 @@
 package org.hsqldb;
 
 import org.hsqldb.HsqlNameManager.HsqlName;
-import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.Iterator;
 
 // fredt@users 20020420 - patch523880 by leptipre@users - VIEW support - modified
@@ -42,14 +41,16 @@ import org.hsqldb.lib.Iterator;
  * Implementation of SQL VIEWS based on a SELECT query.
  *
  * @author leptipre@users
- * @version 1.7.0
+ * @version 1.7.2
+ * @since 1.7.0
  */
 class View extends Table {
 
     Table          workingTable;
     Select         viewSelect;
     SubQuery       viewSubQuery;
-    private String sStatement;
+    private String     statement;
+    private HsqlName[] colList;
 
     /**
      * List of subqueries in this view in order of materialization. Last
@@ -58,28 +59,27 @@ class View extends Table {
     SubQuery[] viewSubqueries;
 
     View(Database db, HsqlName name, String definition,
-            HsqlArrayList colList) throws HsqlException {
+            HsqlName[] columns) throws HsqlException {
 
         super(db, name, VIEW, 0);
 
         isReadOnly = true;
+        colList    = columns;
+        statement  = trimStatement(definition);
 
-        setStatement(definition, colList);
+        compile();
     }
 
     /**
      * Tokenize the SELECT statement to get rid of any comment line that
-     * may exist at the end. Store the result for crating the Select and
-     * logging the DDL at checkpoints.<p>
-     *
-     * Create the SYSTEM_SUBQUERY working table and the Select object used.
+     * may exist at the end.
      *
      * @param s
      * @param colList
      *
      * @throws HsqlException
      */
-    void setStatement(String s, HsqlArrayList colList) throws HsqlException {
+    static String trimStatement(String s) throws HsqlException {
 
         int       position;
         String    str;
@@ -93,10 +93,14 @@ class View extends Table {
             str      = tokenizer.getString();
         } while (str.length() != 0 || tokenizer.wasValue());
 
-        sStatement = s.substring(0, position).trim();
+        return s.substring(0, position).trim();
+    }
+
+    void compile() throws HsqlException {
 
         // create the working table
-        tokenizer.reset(sStatement);
+        Tokenizer tokenizer = new Tokenizer(statement);
+
         tokenizer.getThis(Token.T_SELECT);
 
         Parser p = new Parser(this.database, tokenizer,
@@ -116,12 +120,12 @@ class View extends Table {
         int                   columns  = viewSelect.iResultLen;
 
         if (colList != null) {
-            if (colList.size() != columns) {
+            if (colList.length != columns) {
                 throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
             }
 
             for (int i = 0; i < columns; i++) {
-                HsqlName name = (HsqlName) colList.get(i);
+                HsqlName name = colList[i];
 
                 metadata.sLabel[i]        = name.name;
                 metadata.isLabelQuoted[i] = name.isNameQuoted;
@@ -133,13 +137,13 @@ class View extends Table {
             }
         }
 
+        if (super.iColumnCount == 0) {
         super.addColumns(metadata, columns);
-
-        iVisibleColumns = iColumnCount;
+        }
     }
 
     String getStatement() {
-        return sStatement;
+        return statement;
     }
 
     void setDataReadOnly(boolean value) throws HsqlException {
@@ -150,7 +154,7 @@ class View extends Table {
      * Returns true if specified table is referenced by this view or any views
      * that this view references.
      */
-    boolean hasTable(Table table) {
+    boolean hasTable(String table) {
 
         for (int i = 0; i < viewSubqueries.length; i++) {
             Select select = viewSubqueries[i].select;
@@ -159,7 +163,7 @@ class View extends Table {
                 TableFilter tfilter[] = select.tFilter;
 
                 for (int j = 0; j < tfilter.length; j++) {
-                    if (table == tfilter[j].filterTable) {
+                    if (table.equals(tfilter[j].filterTable.tableName.name)) {
                         return true;
                     }
                 }
@@ -170,10 +174,9 @@ class View extends Table {
     }
 
     /**
-     * Returns true if given table or given column in table is in this view.
-     * When colname is null, only the table's presence is checked.
+     * Returns true if given column in table is in this view.
      */
-    boolean hasColumn(Table table, String colname) {
+    boolean hasColumn(String table, String colname) {
 
         if (hasTable(table)) {
             Expression.Collector coll = new Expression.Collector();
@@ -187,7 +190,7 @@ class View extends Table {
                 Expression e = (Expression) it.next();
 
                 if (e.getColumnName().equals(colname)
-                        && table.tableName.name.equals(e.getColumnName())) {
+                        && table.equals(e.getTableName())) {
                     return true;
                 }
             }

@@ -881,7 +881,7 @@ public class Database {
         }
 
         checkTableIsReferenced(toDrop);
-        checkTableIsInView(toDrop, null);
+        checkTableIsInView(toDrop.tableName.name);
         tTable.remove(dropIndex);
         removeExportedKeys(toDrop);
         userManager.removeDbObject(toDrop.getName());
@@ -942,23 +942,35 @@ public class Database {
     /**
      * Throws if the table is referenced in a view.
      */
-    void checkTableIsInView(Table table, String column) throws HsqlException {
+    void checkTableIsInView(String table) throws HsqlException {
+
+        View[] views = getViewsWithTable(table, null);
+
+        if (views != null) {
+                throw Trace.error(Trace.TABLE_REFERENCED_VIEW,
+                                  views[0].getName().name);
+        }
+    }
+
+    /**
+     * Throws if the column is referenced in a view.
+     */
+    void checkColumnIsInView(String table,
+                             String column) throws HsqlException {
 
         View[] views = getViewsWithTable(table, column);
 
         if (views != null) {
-            if (column == null) {
-                throw Trace.error(Trace.TABLE_REFERENCED_VIEW,
-                                  views[0].getName().name);
-            } else {
                 throw Trace.error(Trace.COLUMN_IS_REFERENCED,
                                   views[0].getName().name);
             }
         }
-    }
 
-    View[] getViewsWithTable(Table table,
-                             String column) throws HsqlException {
+    /**
+     * Returns an array of views that reference the specified table or
+     * the specified column if column parameter is not null.
+     */
+    private View[] getViewsWithTable(String table, String column) {
 
         HsqlArrayList list = null;
 
@@ -982,6 +994,21 @@ public class Database {
 
         return list == null ? null
                             : (View[]) list.toArray(new View[list.size()]);
+    }
+
+    /**
+     * After addition or removal of columns and indexes all views that
+     * reference the table should be recompiled.
+     */
+    void recompileViews(String table) throws HsqlException {
+
+        View[] viewlist = getViewsWithTable(table, null);
+
+        if (viewlist != null) {
+            for (int i = 0; i < viewlist.length; i++) {
+                viewlist[i].compile();
+            }
+        }
     }
 
     /**

@@ -718,8 +718,8 @@ class Parser {
      * Ambiguous reference to an alias and non-integer column index throw an
      * exception.
      *
-     * If select is a SET QUERY then only column indexes are allowed and the
-     * rest throw an exception.
+     * If select is a SET QUERY then only column indexes or names in the first
+     * query are allowed.
      *
      * @param  e                          search column expression
      * @param  vcolumn                    list of columns
@@ -732,56 +732,96 @@ class Parser {
             boolean union) throws HsqlException {
 
         if (e.getType() == Expression.VALUE) {
+            return resolveOrderByColumnIndex(e, vcolumn, visiblecols);
+        }
 
-            // order by 1,2,3
-            if (e.getDataType() == Types.INTEGER) {
-                int i = ((Integer) e.getValue()).intValue();
+        if (e.getType() != Expression.COLUMN) {
+            if (union) {
+                throw Trace.error(Trace.INVALID_ORDER_BY);
+            }
 
-                if (i <= vcolumn.size()) {
-                    Expression colexpr = (Expression) vcolumn.get(i - 1);
+            return e;
+        }
 
-                    colexpr.orderColumnIndex = i - 1;
+        String ordercolname   = e.getColumnName();
+        String ordertablename = e.getTableName();
+
+        // fully qualified column specification
+        if (ordertablename != null) {
+            for (int i = 0, size = visiblecols; i < size; i++) {
+                Expression colexpr = (Expression) vcolumn.get(i);
+
+                if (ordercolname.equals(colexpr.getColumnName())
+                        && ordertablename.endsWith(colexpr.getTableName())) {
+                    colexpr.orderColumnIndex = i;
 
                     return colexpr;
                 }
             }
 
-            throw Trace.error(Trace.INVALID_ORDER_BY);
-        } else if (e.getType() == Expression.COLUMN
-                   && e.getTableName() == null) {
+            if (union) {
+                throw Trace.error(Trace.INVALID_ORDER_BY, ordercolname);
+            }
 
-            // this could be an alias column
-            String     s     = e.getColumnName();
+            return e;
+        }
+
+        // column name only
             Expression found = e;
 
             for (int i = 0, size = vcolumn.size(); i < size; i++) {
                 Expression colexpr  = (Expression) vcolumn.get(i);
                 String     colalias = colexpr.getDefinedAlias();
+            String     colname  = colexpr.getColumnName();
 
-                if (s.equals(colalias)
-                        || (colalias == null
-                            && s.equals(colexpr.getColumnName()))) {
+            if (ordercolname.equals(colalias)
+                    || ordercolname.equals(colname)) {
 
                     // check for ambiguity if two displayed cols have the same name
                     // do not check beyond as a column may be repeated for grouping purposes
                     if (found != e && i < visiblecols) {
                         throw Trace.error(Trace.AMBIGUOUS_COLUMN_REFERENCE,
-                                          s);
+                                      ordercolname);
                     }
 
+                // choose the first expression
+                if (found == e) {
                     found = colexpr;
 
                     // set this for use in sorting
                     found.orderColumnIndex = i;
                 }
             }
-
-            e = found;
-        } else if (union) {
-            throw Trace.error(Trace.INVALID_ORDER_BY);
         }
 
-        return e;
+        if (union) {
+            if (found == e || found.orderColumnIndex >= visiblecols) {
+
+                // no column in select list is found
+                throw Trace.error(Trace.INVALID_ORDER_BY, ordercolname);
+            }
+        }
+
+        return found;
+    }
+
+    private static Expression resolveOrderByColumnIndex(Expression e,
+            HsqlArrayList vcolumn, int visiblecols) throws HsqlException {
+
+        // order by 1,2,3
+        if (e.getDataType() == Types.INTEGER) {
+            int i = ((Integer) e.getValue()).intValue();
+
+            if (0 < i && i <= visiblecols) {
+                Expression colexpr = (Expression) vcolumn.get(i - 1);
+
+                colexpr.orderColumnIndex = i - 1;
+
+                return colexpr;
+            }
+        }
+
+        throw Trace.error(Trace.INVALID_ORDER_BY);
     }
 
     /**

@@ -197,8 +197,11 @@ class ServerConnection implements Runnable {
                 dbID = server.dbID[dbIndex];
                 user = resultIn.getMainString();
 
-                server.printWithThread(mThread + ":trying to connect user "
+                if (!server.isSilent()) {
+                    server.printWithThread(mThread
+                                           + ":trying to connect user "
                                        + user);
+                }
 
                 session = DatabaseManager.newSession(dbID,
                                                      resultIn.getMainString(),

@@ -2,8 +2,9 @@ Readme File
 
 
 
-2004.03.20
+2004.03.21
 
+Improvements to ALTER tests with VIEWS
 Enhancements to Server
 
 Bug fixes for: 

@@ -1457,10 +1457,14 @@ class DatabaseCommandInterpreter {
 
         HsqlName viewHsqlName = database.nameManager.newHsqlName(token,
             tokenizer.wasQuotedIdentifier());
-        HsqlArrayList colList = null;
+        HsqlName[] colList = null;
 
         if (tokenizer.isGetThis(Token.T_OPENBRACKET)) {
-            colList = Parser.getColumnNames(database, tokenizer, true);
+            HsqlArrayList list = Parser.getColumnNames(database, tokenizer,
+                true);
+
+            colList = new HsqlName[list.size()];
+            colList = (HsqlName[]) list.toArray(colList);
         }
 
         tokenizer.getThis(Token.T_AS);

@@ -252,7 +252,7 @@ public class Expression {
 
     //
     private boolean isDescending;             // if it is a column in a order by
-    int             orderColumnIndex = -1;    // when it is a column index in an order by
+    int             orderColumnIndex = -1;    // >= 0 when it is used for order by
 
 // rougier@users 20020522 - patch 552830 - COUNT(DISTINCT)
     // {COUNT|SUM|MIN|MAX|AVG}(distinct ...)
@@ -2204,7 +2204,7 @@ public class Expression {
                 eArg.dataType = eArg2.dataType;
             }
         } else {    // eArg2.exprType == VALUELIST
-            Expression[] vl = eArg2.valueList;
+            Expression[] vl  = eArg2.valueList;
             int          len = vl.length;
 
             if (eArg.isParam) {
@@ -2623,7 +2623,7 @@ public class Expression {
 
             case IN :
                 return eArg2.testValueList(leftValue) ? Boolean.TRUE
-                       : Boolean.FALSE;
+                                                      : Boolean.FALSE;
 
             case EXISTS :
                 if (eArg.isCorrelated) {
@@ -3063,11 +3063,11 @@ public class Expression {
         }
 
         if (exprType == VALUELIST) {
-                try {
-                    o = Column.convertObject(o, this.dataType);
-                } catch (HsqlException e) {
-                    return false;
-                }
+            try {
+                o = Column.convertObject(o, this.dataType);
+            } catch (HsqlException e) {
+                return false;
+            }
 
             if (isFixedConstantValueList) {
                 return hList.contains(o);

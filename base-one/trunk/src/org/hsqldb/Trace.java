@@ -412,7 +412,7 @@ public class Trace extends PrintWriter {
         "37000 Not contained in aggregate function or group by clause",
         "37000 Cannot be in GROUP BY clause",                                                                                   //
         "37000 Cannot be in HAVING clause",    //
-        "37000 Cannot be in ORDER BY clause",    //
+        "37000 Cannot be in ORDER BY clause",    // INVALID_ORDER_BY 70
         "37000 ORDER BY item does not appear in the SELECT DISTINCT list",                                                      //
         "S1000 Out of Memory",    //
         "S1000 This operation is not supported",    //

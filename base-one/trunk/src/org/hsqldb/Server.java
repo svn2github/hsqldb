@@ -137,7 +137,7 @@ import org.hsqldb.resources.BundleHandler;
  * | -?             | --          | --       | prints this message          |
  * | -address       | name|number | any      | server inet address          |
  * | -port          | number      | 9001/544 | port at which server listens |
- * | -database.i    | [type]spec  | 0=test   | name of database i           |
+ * | -database.i    | [type]spec  | 0=test   | path of database i           |
  * | -dbname.i      | alias       | --       | url alias for database i     |
  * | -silent        | true|false  | true     | false => display all queries |
  * | -trace         | true|false  | false    | display JDBC trace messages  |
@@ -150,7 +150,10 @@ import org.hsqldb.resources.BundleHandler;
  * explanation:
  *
  * <ul>
- *   <li>The value of <em>i</em> is currently limited to the range 0..9. <p>
+ *   <li>Multiple databases can be served by each instance of the Server.
+ *       The value of <em>i</em> is currently limited to the range 0..9,
+ *       allowing up to 10 different databases. Any number is this range
+ *       can be used.<p>
  *
  *   <li>The value assigned to <em>database.i</em> is interpreted using the
  *       format <b>'[type]spec'</b>, where the optional <em>type</em> component
@@ -171,15 +174,18 @@ import org.hsqldb.resources.BundleHandler;
  *       connection url:
  *       'jdbc:hsqldb:hsql[s]://host[port][/<b>&lt;alias&gt;</b>]'. <p>
  *
- *   <li>The value of <em>database.0</em> is special in that the corresponding
- *       database instance is the one to which a connection is made when
+ *   <li>The value of <em>database.0</em> is special. If  <em>dbname.0</em>
+ *       is not specified, then this defaults to an empty string and
+ *       a connection is made to <em>database.0</em> path when
  *       the <b>&lt;alias&gt;</b> component of an HSQLDB HSQL protocol database
- *       connection url is omitted. <p>
+ *       connection url is omitted. If a <em>database</em> key/value pair is
+ *       found in the properties when the main method is called, this
+ *       pair is supersedes the <em>database.0</em> setting<p>
  *
  *       This behaviour allows the previous
  *       database connection url format to work with essentially unchanged
- *       semantics.
- * </ul> <p>
+ *       semantics.<p>
+ * </ul>
  *
  * From the 'server.properties' file, options can be set similarly, using a
  * slightly different format. <p>
@@ -246,13 +252,14 @@ public class Server implements HsqlSocketRequestHandler {
     HsqlProperties serverProperties;
 
 //
-    HashSet        serverConnSet;
+    HashSet serverConnSet;
 
 //
-    String[] dbAlias;
-    String[] dbType;
-    String[] dbPath;
-    int[]    dbID;
+    String[]         dbAlias;
+    String[]         dbType;
+    String[]         dbPath;
+    HsqlProperties[] dbProps;
+    int[]            dbID;
 
 //  Currently unused
     private int maxConnections;
@@ -265,12 +272,12 @@ public class Server implements HsqlSocketRequestHandler {
     protected ServerSocket      socket;
 
 //
-    private Thread       serverThread;
-    private Throwable    serverError;
-    private volatile int serverState;
+    private Thread           serverThread;
+    private Throwable        serverError;
+    private volatile int     serverState;
     private volatile boolean isSilent;
-    private PrintWriter  logWriter;
-    private PrintWriter  errWriter;
+    private PrintWriter      logWriter;
+    private PrintWriter      errWriter;
 
 //
 
@@ -377,7 +384,7 @@ public class Server implements HsqlSocketRequestHandler {
 
         if (fileProps != null) {
             server.print("Loaded properties from [" + propsPath
-                     + ".properties]");
+                         + ".properties]");
         } else {
             server.print("Could not load properties from file");
             server.print("Using cli/default properties only");
@@ -475,8 +482,9 @@ public class Server implements HsqlSocketRequestHandler {
      * Retrieves the url alias (external name) of the i'th database
      * that this Server hosts.
      *
-     * NB Campbell - this shouldn't be used externally as names without path
-     * strings can be returned. Use the validated dbPath and dbType arrays.
+     * NB Campbell - this shouldn't be used externally when ONLINE as names
+     * without path strings can be returned.
+     * Use the validated dbPath and dbType arrays.
      *
      * @return the url alias component of the i'th database
      *      that this Server hosts.
@@ -500,8 +508,8 @@ public class Server implements HsqlSocketRequestHandler {
      * Retrieves the HSQLDB path descriptor (uri) of the i'th
      * Database that this Server hosts.
      *
-     * NB Campbell - this shouldn't be used externally as orphan path
-     * strings are returned. Use the validated dbPath and dbType arrays.
+     * NB Campbell - this shouldn't be used externally when ONLINE as orphan
+     * path strings are returned. Use the validated dbPath and dbType arrays.
      *
      * @return the HSQLDB database path descriptor of the i'th database
      *      that this Server hosts
@@ -985,8 +993,6 @@ public class Server implements HsqlSocketRequestHandler {
      * can be used to bypass explicit selection, causing the ServerSocket
      * to be constructed without specifying an InetAddress.
      *
-     * NB Campbell - this should not be allowed once the server is started
-     *
      * @param address A string representing the desired InetAddress as would
      *    be retrieved by InetAddres.getByName(), or a null or empty string
      *    or "0.0.0.0" to signify that the server socket should be constructed
@@ -1010,8 +1016,6 @@ public class Server implements HsqlSocketRequestHandler {
     /**
      * Sets the external name (url alias) of the i'th hosted database.
      *
-     * NB Campbell - this should not be allowed once the server is started
-     *
      * @param name external name (url alias) of the i'th HSQLDB database
      *      instance this server is to host.
      * @throws RuntimeException if this server is running
@@ -1030,8 +1034,6 @@ public class Server implements HsqlSocketRequestHandler {
     /**
      * Sets the path of the hosted database.
      *
-     * NB Campbell - this should not be allowed once the server is started
-     *
      * @param path The path of the i'th HSQLDB database instance this server
      *      is to host.
      *
@@ -1048,8 +1050,6 @@ public class Server implements HsqlSocketRequestHandler {
 
     /**
      * Sets the name of the web page served when no page is specified.
-     *
-     * NB Campbell - this should not be allowed once the server is started
      *
      * @param file the name of the web page served when no page is specified
      *
@@ -1070,8 +1070,6 @@ public class Server implements HsqlSocketRequestHandler {
 
     /**
      * Sets the server listen port.
-     *
-     * NB Campbell - this should not be allowed once the server is started
      *
      * @param port the port at which this server listens
      *
@@ -1257,11 +1255,11 @@ public class Server implements HsqlSocketRequestHandler {
 
         serverThread.start();
 
-        try {
-            while (serverState == ServerConstants.SERVER_STATE_OPENING) {
-                this.wait(100);
-            }
-        } catch (Exception e) {}
+        while (serverState == ServerConstants.SERVER_STATE_OPENING) {
+            try {
+                wait(100);
+            } catch (Exception e) {}
+        }
 
         printWithThread("start() exiting");
 
@@ -1737,23 +1735,24 @@ public class Server implements HsqlSocketRequestHandler {
             StopWatch sw = new StopWatch();
             int       id;
 
-        try {
+            try {
                 id = DatabaseManager.getDatabase(dbType[i], dbPath[i], this,
-                                                 null);
+                                                 dbProps[i]);
                 dbID[i] = id;
                 success = true;
             } catch (HsqlException e) {
                 dbAlias[i] = null;
                 dbPath[i]  = null;
                 dbType[i]  = null;
+                dbProps[i] = null;
 
                 setServerError(e);
                 printError("Database [index=" + i + "db=" + dbType[i]
                            + dbPath[i] + ", alias=" + dbAlias[i]
                            + "] did not open");
 
-                    continue;
-                }
+                continue;
+            }
 
             sw.stop();
 
@@ -1770,10 +1769,10 @@ public class Server implements HsqlSocketRequestHandler {
 
             // database alias / path list is empty or without full info for any DB
             setServerError(Trace.error(Trace.SERVER_NO_DATABASE));
-            }
+        }
 
         return success;
-        }
+    }
 
     /**
      * Initialises the database attributes lists from the server properties object.
@@ -1784,6 +1783,7 @@ public class Server implements HsqlSocketRequestHandler {
         dbPath  = new String[dbAlias.length];
         dbType  = new String[dbAlias.length];
         dbID    = new int[dbAlias.length];
+        dbProps = new HsqlProperties[dbAlias.length];
 
         for (int i = 0; i < dbAlias.length; i++) {
             if (dbAlias[i] == null) {
@@ -1799,8 +1799,9 @@ public class Server implements HsqlSocketRequestHandler {
                 continue;
             }
 
-            dbPath[i] = dbURL.getProperty("database");
-            dbType[i] = dbURL.getProperty("connection_type");
+            dbPath[i]  = dbURL.getProperty("database");
+            dbType[i]  = dbURL.getProperty("connection_type");
+            dbProps[i] = dbURL;
         }
     }
 
@@ -2018,9 +2019,9 @@ public class Server implements HsqlSocketRequestHandler {
 
         serverConnectionThreadGroup = tg;
 
-            // Mount the databases this server is supposed to host.
-            // This may take some time if the databases are not all
-            // already open.
+        // Mount the databases this server is supposed to host.
+        // This may take some time if the databases are not all
+        // already open.
         if (openDatabases() == false) {
             setServerError(null);
             printError("run()/openDatabases(): ");
@@ -2110,10 +2111,10 @@ public class Server implements HsqlSocketRequestHandler {
                 try {
                     serverConnectionThreadGroup.destroy();
                     printWithThread(serverConnectionThreadGroup.getName()
-                          + " destroyed");
+                                    + " destroyed");
                 } catch (Throwable t) {
                     printWithThread(serverConnectionThreadGroup.getName()
-                          + " not destroyed");
+                                    + " not destroyed");
                     printWithThread(t.toString());
                 }
             }
