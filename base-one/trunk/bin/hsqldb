@@ -32,7 +32,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.20 2004/05/14 23:21:38 unsaved Exp $
+# $Id: hsqldb,v 1.21 2004/05/15 00:50:21 unsaved Exp $
 
 # UNIX init script for HSQLDB.
 
@@ -101,6 +101,10 @@ MAX_START_SECS=60
 # At this time, only the values "Server" or "WebServer" will work.
 TARGET_CLASS=Server
 
+CLIENT_JVMARGS=
+SERVER_JVMARGS=
+TLS_KEYSTORE=
+TLS_PASSWORD=
 CFGFILE=
 LOGFILE=
 PIDFILE=
@@ -272,7 +276,7 @@ running with pid $HSQLDB_PID."
         CLASSPATH="$HSQLDB_HOME/lib/hsqldb.jar"
         export CLASSPATH
         export PATH   # Required only for some funny init environments.
-        exec java $AUTH_FILE_SWITCH \
+        exec java $AUTH_FILE_SWITCH $CLIENT_JVMARGS \
             "-Dsqltoolsprayer.propfile=$PROPERTY_FILE" \
             "-Dsqltoolsprayer.monfile=$PIDFILE" \
             org.hsqldb.util.SqlToolSprayer ''
@@ -282,6 +286,9 @@ running with pid $HSQLDB_PID."
         echo "There is already a hsqldb server running with pid $HSQLDB_PID." 1>&2
             exit 1
         }
+        TLS_SWITCHES=
+        [ -n "$TLS_KEYSTORE" ] &&
+        TLS_SWITCHES="-Djavax.net.ssl.keyStore=$TLS_KEYSTORE -Djavax.net.ssl.keyStorePassword=$TLS_PASSWORD"
         if [ -n "$HSQLDB_OWNER" ]; then
             touch "$PIDFILE" || {
                 echo "Failed to create pid file" 1>&2
@@ -294,7 +301,7 @@ running with pid $HSQLDB_PID."
             # Some OSes choke if there are newlines in this string.
             # N.b.!!!  The shell of the -c command is the target user's default
             # login shell, so keep this command shell-independent!
-            nohup su -f "$HSQLDB_OWNER" -c "cd '$SERVER_HOME' && echo "'$$'" > '$PIDFILE' && exec $JAVA_HOME/bin/java -classpath '$HSQLDB_HOME/lib/hsqldb.jar' org.hsqldb.$TARGET_CLASS" >> "$LOGFILE" 2>&1 &
+            nohup su -f "$HSQLDB_OWNER" -c "cd '$SERVER_HOME' && echo "'$$'" > '$PIDFILE' && exec $JAVA_HOME/bin/java $SERVER_JVMARGS $TLS_SWITCHES -classpath '$HSQLDB_HOME/lib/hsqldb.jar' org.hsqldb.$TARGET_CLASS" >> "$LOGFILE" 2>&1 &
         else
             cd "$SERVER_HOME" || {
                 echo "Failed to cd to '$SERVER_HOME'" 1>&2
@@ -303,12 +310,14 @@ running with pid $HSQLDB_PID."
             export JAVA_HOME
             export HSQLDB_HOME
             export PIDFILE
+            export TLS_SWITCHES
+            export SERVER_JVMARGS
             nohup sh -c '
                 echo $$ > "$PIDFILE" || {
                     echo "Failed to write pid to pid file" 1>&2
                     exit 1
                 }
-                exec $JAVA_HOME/bin/java -classpath "$HSQLDB_HOME/lib/hsqldb.jar"  org.hsqldb.$TARGET_CLASS
+                exec $JAVA_HOME/bin/java $SERVER_JVMARGS $TLS_SWITCHES -classpath "$HSQLDB_HOME/lib/hsqldb.jar"  org.hsqldb.$TARGET_CLASS
             ' >> "$LOGFILE" 2>&1 &
         fi
         sleep $SU_ECHO_SECS  # Make sure bg commands have time to echo pid.
@@ -343,7 +352,7 @@ running with pid $HSQLDB_PID."
                 sleep 1
             done
         ) &
-        java $AUTH_FILE_SWITCH \
+        java $AUTH_FILE_SWITCH $CLIENT_JVMARGS \
             "-Dsqltoolsprayer.propfile=$PROPERTY_FILE" \
             "-Dsqltoolsprayer.monfile=$PIDFILE" \
             "-Dsqltoolsprayer.maxtime=${MAX_START_SECS}000" \
@@ -353,7 +362,8 @@ running with pid $HSQLDB_PID."
             exit 0
         }
         rm -f "$PIDCHECKER_FLAGFILE"
-        echo "Failed to start org.hsqldb.$TARGET_CLASS" 1>&2
+        echo "Failed to start org.hsqldb.$TARGET_CLASS.
+See log file '$LOGFILE'." 1>&2
         exit 1
     ;;
     stop)
@@ -373,7 +383,7 @@ running with pid $HSQLDB_PID."
         CLASSPATH="$HSQLDB_HOME/lib/hsqldb.jar"
         export CLASSPATH
         export PATH   # Required only for some funny init environments.
-        java $AUTH_FILE_SWITCH \
+        java $AUTH_FILE_SWITCH $CLIENT_JVMARGS \
             "-Dsqltoolsprayer.propfile=$PROPERTY_FILE" \
             org.hsqldb.util.SqlToolSprayer 'shutdown;' $SHUTDOWN_URLIDS
         sleep $MAX_TERMINATE_SECS  # Give the JVM a sec. or 2 to fully exit.
