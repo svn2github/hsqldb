@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: buildjar.sh,v 1.18 2002/12/06 20:01:00 unsaved Exp $
+# $Id: buildjar.sh,v 1.19 2002/12/06 20:07:13 unsaved Exp $
 
 # -----------------------------------------------------
 # If $JAVA_HOME is set, editing this script should not be required.
@@ -103,7 +103,7 @@ esac
 echo "Building for target '$JDKVER'"
 case "$JDKVER" in
     1.1) echo "    (Resultant jar can only be used with Java JRE < 1.2)";;
-    pre1.4) echo "    (Resultant jar can be used with any Java JRE < 1.4)";;
+    pre1.4) echo "    (Resultant jar can be used with any versoin Java JRE)";;
     1.4) echo "    (Resultant jar can only be used with Java JREs >= 1.4)";;
 esac
 
