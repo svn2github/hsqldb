@@ -406,7 +406,6 @@ class TableFilter {
      * @return true if row was found
      */
     boolean findFirst() throws HsqlException {
-
         nonJoinIsNull  = false;
         isCurrentOuter = false;
 
@@ -415,7 +414,7 @@ class TableFilter {
         }
 
         if (eStart == null) {
-            currentNode = filterIndex.findFirstNotNull();
+            currentNode = eEnd == null ?  filterIndex.first() : filterIndex.findFirstNotNull();
         } else {
             int    type = eStart.getArg().getDataType();
             Object o    = eStart.getArg2().getValue(type);
