@@ -45,7 +45,7 @@ import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
-/* $Id: SqlFile.java,v 1.39 2004/02/18 22:59:02 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.40 2004/02/19 16:22:28 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -81,7 +81,7 @@ import java.util.StringTokenizer;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.39 $
+ * @version $Revision: 1.40 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -628,22 +628,49 @@ public class SqlFile {
         psStd.println(htmlMode ? ("<P>" + s + "</P>") : s);
     }
 
+    static private final int
+        DEFAULT_ELEMENT = 0,
+        HSQLDB_ELEMENT  = 1,
+        ORACLE_ELEMENT  = 2
+    ;
+
+    /** Column numbering starting at 1. */
+    static private final int[][] listMDTableCols = {
+        { 2, 3 },    // Default
+        { 3 },       // HSQLDB
+        { 2, 3 },    // Oracle
+    };
+
+    /**
+     * Dimensions: [DB-TYPE][COLUMN IN TABLE MD RESULTSET][VALUES]
+     *     where 2nd dimension is column number starting at 0.
+     *     Nulls permitted.
+     */
+    static private final String[][][] requireMDTableVals = {
+        { null, null, null, { "TABLE" } },         // Default
+        { null, null, null, { "TABLE" } },         // HSQLDB
+        { null, null, null, { "TABLE" } },         // Oracle
+    };
+
+    /**
+     * Dimensions: [DB-TYPE][COLUMN IN TABLE MD RESULTSET][VALUES]
+     *     where 2nd dimension is column number starting at 0.
+     *     Nulls permitted.
+     */
+    static private final String[][][] prohibitMDTableVals = {
+        null,                               // Default
+        null,                               // HSQLDB
+        { null, {"SYS", "SYSTEM"} },        // Oracle
+    };
+
     /**
      * Lists available database tables.
      * This method needs work.  See the implementation comments.
      */
     private void listTables() throws SQLException {
-
-        /*
-         * Need to investigate what tables should be excluded for the major
-         * databases (perhaps hsqldb, Oracle, Postgresql, db2, mysql, msql)),
-         * see what tables need to be excluded for each, and what method that
-         * work can be done in.  It'd be simplest if that work can stay here.
-         *
-         * Need to do this because without it, for example, Oracle shows 
-         * hundreds of Database Dictionary tables.
-         */
-        int[] listTableCols = { 3 };
+        int[] listSet = null;
+        String[][] reqSet = null;
+        String[][] prohibSet = null;
         java.sql.DatabaseMetaData md = curConn.getMetaData();
         String dbProductName = md.getDatabaseProductName();
         //System.err.println("DB NAME = (" + dbProductName + ')');
@@ -651,14 +678,21 @@ public class SqlFile {
         // Database-specific table filtering.
         String excludePrefix = null;
         if (dbProductName.indexOf("HSQL") > -1) {
-            excludePrefix = "SYSTEM_";
+            listSet = listMDTableCols[HSQLDB_ELEMENT];
+            reqSet = requireMDTableVals[HSQLDB_ELEMENT]; 
+            prohibSet = prohibitMDTableVals[HSQLDB_ELEMENT]; 
         } else if (dbProductName.indexOf("Oracle") > -1) {
+            listSet = listMDTableCols[ORACLE_ELEMENT];
+            reqSet = requireMDTableVals[ORACLE_ELEMENT]; 
+            prohibSet = prohibitMDTableVals[ORACLE_ELEMENT]; 
         } else {
-            // Don't know the DB, so use no filter.
+            listSet = listMDTableCols[DEFAULT_ELEMENT];
+            reqSet = requireMDTableVals[DEFAULT_ELEMENT]; 
+            prohibSet = prohibitMDTableVals[DEFAULT_ELEMENT]; 
         }
         displayResultSet(
             null, md.getTables(null, null, null, null),
-            listTableCols, excludePrefix);
+            listSet, reqSet, prohibSet);
     }
 
     /**
@@ -668,29 +702,27 @@ public class SqlFile {
         Statement statement = curConn.createStatement();
 
         statement.execute(curCommand);
-        displayResultSet(statement, statement.getResultSet(), null, null);
+        displayResultSet(statement, statement.getResultSet(), null, null, null);
     }
 
     /**
      * Display the given result set for user.
+     * The last 3 params are to narrow down records and columns where
+     * that can not be done with a where clause (like in metadata queries).
      *
      * @param statement The SQL Statement that the result set is for.
      *                  (I think that this is just for reporting purposes.
      * @param r         The ResultSet to display.
      * @param incCols   Optional list of which columns to include (i.e., if
      *                  given, then other columns will be skipped).
-     * @param exclPref  Exclude prefix to filter out some records.  See impl.
-     *                  notes.
+     * @param requireVals  Require one of these Strings in the corresponding
+     *                  field, or skip the record.
+     * @param prohibVals  Prohibit any of these Strings in the corresponding
+     *                  field.  If match, skip the record.
      */
     private void displayResultSet(Statement statement, ResultSet r,
-                                  int[] incCols,
-                                  String exclPref) throws SQLException {
-        /*
-         * The last 2 params are so that this method will work for 
-         * metadata work.
-         * This reduces redundancy, but does make things a bit inelegant.
-         * Hopefully there's a better way to accomplish the same ends.
-         */
+                                  int[] incCols, String[][] requireVals,
+                                  String[][] prohibVals) throws SQLException {
         int updateCount = (statement == null) ? -1
                                               : statement.getUpdateCount();
         switch (updateCount) {
@@ -712,6 +744,7 @@ public class SqlFile {
                 int               insi;
                 boolean           skip;
                 String            dataType;
+                boolean           ok;
 
                 // STEP 1: GATHER DATA
                 if (!htmlMode) {
@@ -753,6 +786,30 @@ public class SqlFile {
                     fieldArray = new String[incCount];
                     insi       = -1;
                     for (int i = 1; i <= cols; i++) {
+                        val = r.getString(i);
+                        if (requireVals != null && requireVals.length >= i
+                                && requireVals[i - 1] != null) {
+                            ok = false;
+                            for (int j = 0; j < requireVals[i - 1].length; j++){
+                                if (requireVals[i - 1][j] != null
+                                        && requireVals[i - 1][j].equals(val)) {
+                                    ok = true;
+                                    break;
+                                }
+                            }
+                            if (!ok) {
+                                continue EACH_ROW;
+                            }
+                        }
+                        if (prohibVals != null && prohibVals.length >= i
+                                && prohibVals[i - 1] != null) {
+                            for (int j = 0; j < prohibVals[i - 1].length; j++){
+                                if (prohibVals[i - 1][j] != null
+                                        && prohibVals[i - 1][j].equals(val)) {
+                                    continue EACH_ROW;
+                                }
+                            }
+                        }
                         if (incCols != null) {
                             skip = true;
                             for (int j = 0; j < incCols.length; j++) {
@@ -763,11 +820,6 @@ public class SqlFile {
                             if (skip) {
                                 continue;
                             }
-                        }
-                        val = r.getString(i);
-                        if (exclPref != null && val != null
-                                && val.startsWith(exclPref)) {
-                            continue EACH_ROW;
                         }
                         fieldArray[++insi] = r.wasNull()
                                              ? (htmlMode ? "<I>null</I>"
