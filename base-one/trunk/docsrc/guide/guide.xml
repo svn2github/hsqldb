@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<!-- $Id: guide.xml,v 1.14 2004/04/20 04:31:43 unsaved Exp $ -->
+<!-- $Id: guide.xml,v 1.15 2004/04/20 05:36:02 unsaved Exp $ -->
 
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN"
 "http://www.oasis-open.org/docbook/xml/4.2CR1/docbookx.dtd" [
-    <!ENTITY revision "$Revision: 1.14 $">
-    <!ENTITY date "$Date: 2004/04/20 04:31:43 $">
+    <!ENTITY revision "$Revision: 1.15 $">
+    <!ENTITY date "$Date: 2004/04/20 05:36:02 $">
     <!ENTITY alts SYSTEM "../formats-section.xml">
     <!ENTITY docbasename "guide">
     <!ENTITY baseurl "http://hsqldb.sourceforge.net/alphadocs/&docbasename;">
@@ -71,13 +71,16 @@
             If you notice any mistakes in this document, please email the
             author listed at the beginning of the chapter.
             If you have problems with the procedures themselves, please
-            use the Hsqldb forums, mailing lists, bug trackers, etc. 
-            at <ulink url='http://sourceforge.net/projects/hsqldb'/>.
+            use the Hsqldb support failities which are listed at
+   <ulink url='http://sourceforge.net/support/getsupport.php?group_id=23316'/>.
         </para>
         &alts;
     </preface>
     &running-chapter.xml;
+    <!-- I probably will not get around to re-writing the Beginnner chapter
+         before release time.  -- blaine
     <chapter><title>Place-holder for Beginner's Guide</title></chapter>
+      -->
     &sqlissues-chapter.xml;
     &advancedtopics-chapter.xml;
     &texttables-chapter.xml;
