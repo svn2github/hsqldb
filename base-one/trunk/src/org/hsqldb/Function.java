@@ -582,7 +582,7 @@ class Function {
         }
 
         eArg[i]      = e;
-        hasAggregate = hasAggregate || e.isAggregate();
+        hasAggregate = hasAggregate || (e != null && e.isAggregate());
     }
 
     /**

@@ -658,9 +658,10 @@ Will not work if the index backs a UNIQUE of FOREIGN KEY constraint.
 </font>
 <hr>
 <font face="Arial" size="2"><br>
-<b><font color="#FF0000">SET PROPERTY</font></b><font color="#FF0000"> &lt;double quoted name&gt; &lt;double quoted value&gt;;
+<b><font color="#FF0000">SET PROPERTY</font></b><font color="#FF0000"> &lt;double quoted name&gt; &lt;value&gt;;
 </font></font>
-<p><font face="Arial" size="2">Sets a database property. Properties that can be set using this command are listed in <a href="hsqlAdvancedGuide.html">hsqlAdvancedGuide.html</a></font>
+<p><font face="Arial" size="2">Sets a database property. Properties that can be set using this command are either boolean or integral and are listed in <a href="hsqlAdvancedGuide.html">hsqlAdvancedGuide.html</a></font>
+
 <p> <font face="Arial" size="2"><br>
   <a name="SET_PROPERTY"></a>
 </font>
@@ -748,42 +749,38 @@ HSQLDB also recognises the following special indicators for separators: <br><br>
 <hr>
 <font face="Arial" size="2"><br>
 <b>SHUTDOWN</b> [ IMMEDIATELY | COMPACT<font color="#FF0000"> | SCRIPT</font>] ;
-</font><font face="Arial, Helvetica" size="2">
-<p><font face="Arial">Closes the current database.
 </font>
-<p><font face="Arial">SHUTDOWN performs a checkpoint to creates a new .script file that has the minimum size and contains the data for memory tables only. It then backs up the .data file containing the CACHED TABLE data in zipped format to the  .backup file and closes the database. 
+<p><font face="Arial" size="2">Closes the current database.
 </font>
-<p><font face="Arial">SHUTDOWN IMMEDIATELY just closes the database files 
+<p><font face="Arial" size="2">SHUTDOWN performs a checkpoint to creates a new .script file that has the minimum size and contains the data for memory tables only. It then backs up the .data file containing the CACHED TABLE data in zipped format to the  .backup file and closes the database. 
+</font>
+<p><font face="Arial" size="2">SHUTDOWN IMMEDIATELY just closes the database files 
   (like when the Java process for the database is terminated); this command is used in tests of the recovery 
   mechanism.
 This command should not be used as the routine method of closing the database.</font>
-<p><font face="Arial">SHUTDOWN COMPACT writes out  a new .script file which contains the data for all the tables, including CACHED and TEXT tables. It then deletes the existing text table files and the  .data file before rewriting them. After this, it backs up the .data file in the same way as normal SHUTDOWN. This operation shrinks all files 
+<p><font face="Arial" size="2">SHUTDOWN COMPACT writes out  a new .script file which contains the data for all the tables, including CACHED and TEXT tables. It then deletes the existing text table files and the  .data file before rewriting them. After this, it backs up the .data file in the same way as normal SHUTDOWN. This operation shrinks all files 
   to the minimum size.</font>
-<p><font face="Arial, Helvetica" size="2">SHUTDOWN SCRIPT  is similar to SHUTDOWN COMPACT but after writing the script and deleting the existing files, it does not rewrite the .data and text table files.</font> After SHUTDOWN SCRIPT, only the .script and .properties file remain. At the next startup, these files are processed and the .data and .backup files are created.<br>
+<p><font face="Arial, Helvetica" size="2">SHUTDOWN SCRIPT  is similar to SHUTDOWN COMPACT but after writing the script and deleting the existing files, it does not rewrite the .data and text table files. After SHUTDOWN SCRIPT, only the .script and .properties file remain. At the next startup, these files are processed and the .data and .backup files are created.<br>
   This command produces a full script of the database which can be edited for special purposes.
-</font>
- <font face="Arial, Helvetica" size="2">
-<p><font face="Arial"> <br>
   </font>
-<p><font face="Arial">
+<p><font face="Arial" size="2">
   Only an administrator may use the SHUTDOWN command.</font>
-<p> <font face="Arial"><br>
+<p> <font face="Arial" size="2"><br>
   <a name="UPDATE"></a>
 </font>
 <hr>
-<font face="Arial"><br>
+<font face="Arial" size="2"><br>
 <b>UPDATE</b> table <b>SET</b> column = Expression [, ...] ;<br>
 [WHERE Expression] 
 </font>
-<p><font face="Arial">Modifies data of a table in the database. 
+<p><font face="Arial" size="2">Modifies data of a table in the database. 
 </font>
-<p><font face="Arial">See also: <a href="#SELECT">SELECT</a>, <a href="#INSERT">INSERT</a>, <a href="#DELETE">DELETE</a> 
+<p><font face="Arial" size="2">See also: <a href="#SELECT">SELECT</a>, <a href="#INSERT">INSERT</a>, <a href="#DELETE">DELETE</a> 
 </font>
-<p> <font face="Arial"><br>
+<p> <font face="Arial" size="2"><br>
   <a name="Datatypes"></a>
 </font>
 <hr>
-</font>
 <p><font face="Arial, Helvetica" size="2">
 <font face="Arial"><br>
    <b>Datatypes</b>: The types on the same line are equivalent. <br>
@@ -1126,7 +1123,7 @@ An important implication of this is the for accessing columns or aliases via JDB
 
 <p>SELECT COUNT(*) &quot;COUNT&quot; FROM MYTABLE;
 <p>Portability between different JRE locales is an issue when accented characters are used in unquoted  identifiers. Because native Java methods are used to convert the identifier to uppercase, the result may vary among different locales. It is recommended that accented characters are used only in quoted identifiers.
-<p>When using JDBC methods that take table, column, or index identifiers as arguments, treat the names as they are registered in the database. With these methods, unquoted identifiers should be used in all-uppercase to get the correct result. Quoted identifiers should be used in the exact case combination as they were defined - no quote character should be included around the name. JDBC methods that return a result set containing such identifiers return unquoted identifiers as all-uppercase and quoted identifiers in the exact case they are registered in the database <font color="#FF0000">(a change from 1.6.1 and previous versions)</font>.
+<p>When using JDBC DatabaseMetaData methods that take table, column, or index identifiers as arguments, treat the names as they are registered in the database. With these methods, unquoted identifiers should be used in all-uppercase to get the correct result. Quoted identifiers should be used in the exact case combination as they were defined - no quote character should be included around the name. JDBC methods that return a result set containing such identifiers return unquoted identifiers as all-uppercase and quoted identifiers in the exact case they are registered in the database <font color="#FF0000">(a change from 1.6.1 and previous versions)</font>.
 <p><font face="Arial">values: <br>
   A 'date' value starts and ends with ' (singlequote), the format is yyyy-mm-dd (see java.sql.Date). 
   <br>

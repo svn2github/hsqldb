@@ -735,12 +735,9 @@ extends org.hsqldb.DatabaseInformationMain {
      *     <LI>WRITEDELAY - does REDO log currently use buffered write strategy?
      *     <LI>IGNORECASE - currently ignoring case in character comparisons?
      *     <LI>REFERENTIAL_INTEGITY - currently enforcing referential integrity?
-     *     <LI>sql.month - TRUE: output range is 1..12; FALSE: 0..11
      *     <LI>sql.enforce_size - column length specifications enforced?
      *     <LI>sql.enforce_strict_size - strict column length specifications enforced?
      *     <LI>sql.compare_in_locale - is JVM Locale used in collations?
-     *     <LI>sql.strict_fk - TRUE: FK must reference pre-existing unique
-     *     <LI>sql.strong_fk - TRUE: autogen referenced unique, else plain index
      *     <LI>hsqldb.cache_scale - base-2 exponent of row cache size
      *     <LI>hsqldb.gc_interval - # new records forcing gc ({0|NULL}=>never)
      * </OL> <p>
@@ -869,16 +866,6 @@ extends org.hsqldb.DatabaseInformationMain {
 
         t.insert(row, session);
 
-        // sql.month
-        row         = t.getNewRow();
-        row[iscope] = scope;
-        row[ins]    = nameSpace;
-        row[iname]  = "sql.month";
-        row[ivalue] = props.getProperty("sql.month", "false");
-        row[iclass] = "boolean";
-
-        t.insert(row, session);
-
         // sql.enforce_size
         row         = t.getNewRow();
         row[iscope] = scope;
@@ -915,16 +902,6 @@ extends org.hsqldb.DatabaseInformationMain {
         row[ins]    = nameSpace;
         row[iname]  = "hsqldb.files_readonly";
         row[ivalue] = props.getProperty("hsqldb.files_readonly", "false");
-        row[iclass] = "boolean";
-
-        t.insert(row, session);
-
-        // hsqldb.files_in_jar
-        row         = t.getNewRow();
-        row[iscope] = scope;
-        row[ins]    = nameSpace;
-        row[iname]  = "hsqldb.files_in_jar";
-        row[ivalue] = props.getProperty("hsqldb.files_in_jar", "false");
         row[iclass] = "boolean";
 
         t.insert(row, session);

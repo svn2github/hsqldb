@@ -1844,13 +1844,16 @@ class DatabaseCommandInterpreter {
                 Trace.check(!p.isProtected(token), Trace.ACCESS_IS_DENIED,
                             token);
 
-                String value = tokenizer.getString().toLowerCase();
+                boolean isboolean  = p.isBoolean(token);
+                boolean isintegral = p.isIntegral(token);
 
-                if (!tokenizer.wasQuotedIdentifier()) {
-                    throw Trace.error(Trace.QUOTED_IDENTIFIER_REQUIRED);
-                }
+                Trace.check(isboolean || isintegral, Trace.ACCESS_IS_DENIED,
+                            token);
 
-                p.setProperty(token, value);
+                Object value = tokenizer.getInType(isboolean ? Types.BIT
+                                                             : Types.INTEGER);
+
+                p.setProperty(token, value.toString().toLowerCase());
 
                 token = tokenizer.getString();
 

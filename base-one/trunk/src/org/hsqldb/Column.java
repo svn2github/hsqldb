@@ -971,6 +971,8 @@ class Column {
 
                 case Types.TINYINT :
                     if (o instanceof java.lang.String) {
+                        o = Library.trim((String) o, " ", true, true);
+
                         int val = Integer.parseInt((String) o);
 
                         o = ValuePool.getInt(val);
@@ -1000,6 +1002,8 @@ class Column {
 
                 case Types.SMALLINT :
                     if (o instanceof java.lang.String) {
+                        o = Library.trim((String) o, " ", true, true);
+
                         int val = Integer.parseInt((String) o);
 
                         o = ValuePool.getInt(val);
@@ -1035,6 +1039,8 @@ class Column {
                     }
 
                     if (o instanceof java.lang.String) {
+                        o = Library.trim((String) o, " ", true, true);
+
                         int val = Integer.parseInt((String) o);
 
                         return ValuePool.getInt(val);
@@ -1069,6 +1075,8 @@ class Column {
                     }
 
                     if (o instanceof java.lang.String) {
+                        o = Library.trim((String) o, " ", true, true);
+
                         long val = Long.parseLong((String) o);
 
                         return ValuePool.getLong(val);
@@ -1091,6 +1099,7 @@ class Column {
                     }
 
                     if (o instanceof java.lang.String) {
+                        o = Library.trim((String) o, " ", true, true);
 
                         // jdk 1.1 compat
                         // double d = Double.parseDouble((String) o);
@@ -1119,6 +1128,8 @@ class Column {
                     }
 
                     if (o instanceof java.lang.String) {
+                        o = Library.trim((String) o, " ", true, true);
+
                         return org.hsqldb.lib.BooleanConverter.getBoolean(
                             (String) o);
                     }
@@ -1312,7 +1323,9 @@ class Column {
 
             case Types.NUMERIC :
             case Types.DECIMAL :
-                return new BigDecimal(s.trim());
+                s = Library.trim(s, " ", true, true);
+
+                return new BigDecimal(s);
 
             case Types.BOOLEAN :
             case Types.BIT :

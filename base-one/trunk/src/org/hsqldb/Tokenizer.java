@@ -448,6 +448,20 @@ class Tokenizer {
         return ((Number) o).intValue();
     }
 
+    Object getInType(int type) throws HsqlException {
+
+        getToken();
+
+        Object o = getAsValue();
+        int    t = getType();
+
+        if (t != type) {
+            throw Trace.error(Trace.WRONG_DATA_TYPE, Types.getTypeString(t));
+        }
+
+        return o;
+    }
+
     /**
      *
      *

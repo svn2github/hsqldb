@@ -77,16 +77,32 @@ import org.hsqldb.lib.HashSet;
 class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
     private static HashSet protectedProperties = new HashSet();
+    private static HashSet booleanProperties   = new HashSet();
+    private static HashSet integralProperties  = new HashSet();
 
     static {
         String[] protectedPropertiesNames = {
             "version", "hsqldb.compatible_version", "hsqldb.cache_version",
-            "hsqldb.original_version", "hsqldb.script_format",
-            "hsqldb.files_readonly", "readonly", "modified",
-            "sql.compare_in_locale"
+            "hsqldb.log_size", "hsqldb.original_version",
+            "hsqldb.script_format", "hsqldb.files_readonly", "readonly",
+            "modified", "sql.compare_in_locale"
         };
 
         protectedProperties.addAll(protectedPropertiesNames);
+
+        String[] booleanPropertiesNames = {
+            "hsqldb.schemas", "hsqldb.catalogs", "sql.enforce_size",
+            "sql.enforce_strict_size"
+        };
+
+        booleanProperties.addAll(booleanPropertiesNames);
+
+        String[] integralPropertiesNames = {
+            "runtime.gc_interval", "hsqldb.cache_file_scale",
+            "hsqldb.cache_scale", "hsqldb.first_identity"
+        };
+
+        integralProperties.addAll(integralPropertiesNames);
     }
 
     private Database database;
@@ -97,9 +113,6 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
         database = db;
 
-        // month 1-12 instead of 0-11
-        setProperty("sql.month", true);
-
         // char trimming and padding to size and varchar trimming to size
         setProperty("sql.enforce_size", false);
 
@@ -109,6 +122,7 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         // char and varchar sorting in charset of the current jvm Locale
         setProperty("sql.compare_in_locale", false);
 
+        // removed from 1.7.2 - sql.month is always true (1-12)
         // removed from 1.7.2 - sql.strict_fk is always enforced
         // if true, requires a pre-existing unique index for foreign key
         // referenced column and returns an error if index does not exist
@@ -259,10 +273,6 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
     private void setDatabaseVariables() {
 
-        if (isPropertyTrue("sql.month")) {
-            database.sqlMonth = 1;
-        }
-
         if (isPropertyTrue("readonly")) {
             database.setReadOnly();
         }
@@ -298,6 +308,14 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
     boolean isProtected(String property) {
         return protectedProperties.contains(property);
+    }
+
+    boolean isBoolean(String property) {
+        return booleanProperties.contains(property);
+    }
+
+    boolean isIntegral(String property) {
+        return integralProperties.contains(property);
     }
 
     public String setProperty(String key, String value) {
