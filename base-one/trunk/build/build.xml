@@ -836,7 +836,7 @@ message="To use the DocBook targets, you must set property 'docbook.xsl.home"/>
              target can just wipe out the docwork and doc directories. -->
         <delete quiet='true' includeEmptyDirs='true'>
             <fileset dir='doc'
-                includes='*.gif, *.css, sqltool/**'/>
+                includes='*.gif, *.css, guide/**'/>
         </delete>
         <delete dir='docwork' quiet='true' includeEmptyDirs='true'/>
     </target>
