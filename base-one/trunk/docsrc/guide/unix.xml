@@ -1,4 +1,4 @@
-<!-- $Id: unix.xml,v 1.8 2004/04/23 01:06:42 unsaved Exp $ -->
+<!-- $Id: unix.xml,v 1.9 2004/04/23 01:09:53 unsaved Exp $ -->
 
 <chapter>
     <title>UNIX Quick Start</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.8 $</edition>
-        <pubdate>$Date: 2004/04/23 01:06:42 $</pubdate>
+        <edition>$Revision: 1.9 $</edition>
+        <pubdate>$Date: 2004/04/23 01:09:53 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>UNIX</keyword>
@@ -270,8 +270,10 @@
     java org.hsqldb.Server</screen>
                 </informalexample><para>
                     This will create your database instance and start it up.
-                    Use <literal>Ctrl Z</literal> to move the database process
-                    to the background so we can continue.
+                    Use <literal>Ctrl Z</literal> then the 
+                    <literal>bg</literal> command to move the
+                    <classname>Server</classname> process to the background so 
+                    we can continue.
                 </para>
             </step>
         </procedure>
@@ -331,9 +333,10 @@
             <classname>SqlTool</classname>.
         </para> <para>
             You can use any normal UNIX account to run the JDBC clients,
-            including <classname>SqlTool</classname>, as long as the account has
-            read access to the <filename>hsqldb.jar</filename> file and to an 
-            <filename>sqltool.rc</filename> file.
+            including <classname>SqlTool</classname>, as long as the account 
+            has read access to the <filename>hsqldb.jar</filename> file and to 
+            an <filename>sqltool.rc</filename> file.
+            Remember to set and export the CLASSPATH environmental variable.
             See the <link linkend='sqltool-chapter' endterm='sqltool-title'/>
             chapter about where to put <filename>sqltool.rc</filename>, how to
             execute sql files, and other <classname>SqlTool</classname> 
