@@ -1054,7 +1054,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         return "BEFORE,BIGINT,BINARY,CACHED,DATETIME,"
                + "LIMIT,LONGVARBINARY,LONGVARCHAR,OBJECT,OTHER,SAVEPOINT,"
-               + "TEMP,TEXT,TRIGGER,TINYINT,VARBINARY,VARCHAR_IGNORECASE";
+               + "TEMP,TEXT,TOP,TRIGGER,TINYINT,VARBINARY,VARCHAR_IGNORECASE";
     }
 
     /**
