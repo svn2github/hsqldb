@@ -64,7 +64,7 @@ public class TestSubQueriesInPreparedStatements {
         stmnt = conn.createStatement();
 
         stmnt.executeUpdate("drop table t if exists");
-        stmnt.executeUpdate("create table t(i int)");
+        stmnt.executeUpdate("create table t(i decimal)");
 
         pstmnt = conn.prepareStatement("insert into t values(?)");
 

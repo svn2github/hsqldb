@@ -330,9 +330,7 @@ implements java.sql.PreparedStatement {
         }
 
         if (resultIn.iMode == ResultConstants.ERROR) {
-            throw new SQLException(resultIn.getMainString(),
-                                   resultIn.getSubString(),
-                                   resultIn.getStatementID());
+            jdbcDriver.throwError(resultIn);
         }
 
         return resultIn.iMode == ResultConstants.DATA ? true
@@ -371,9 +369,7 @@ implements java.sql.PreparedStatement {
         }
 
         if (resultIn.iMode == ResultConstants.ERROR) {
-            throw new SQLException(resultIn.getMainString(),
-                                   resultIn.getSubString(),
-                                   resultIn.getStatementID());
+            jdbcDriver.throwError(resultIn);
         } else if (resultIn.iMode != ResultConstants.DATA) {
             String msg = "Expected but did not recieve a result set";
 
@@ -419,9 +415,7 @@ implements java.sql.PreparedStatement {
         }
 
         if (resultIn.iMode == ResultConstants.ERROR) {
-            throw new SQLException(resultIn.getMainString(),
-                                   resultIn.getSubString(),
-                                   resultIn.getStatementID());
+            jdbcDriver.throwError(resultIn);
         } else if (resultIn.iMode != ResultConstants.UPDATECOUNT) {
             String msg = "Expected but did not recieve a row update count";
 

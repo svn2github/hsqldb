@@ -385,56 +385,37 @@ public class jdbcResultSet implements ResultSet {
 // - rResult access changed to allow getting internal result object
 // from Parser.processCall()
 
-    /**
-     * The internal representation.  Basically, a linked list of records,
-     * each containing an Object[] payload representing the data for a row,
-     * plus some metadata.
-     */
+    /** The internal representation. */
     protected Result rResult;
 
     /**
-     * The record containing the data for the row, if any,
-     * upon which this ResultSet is currently positioned.
+     * The current record containing the data for the row
      */
     private Record nCurrent;
 
-    /**
-     * The offset of the row, if any, upon which this ResultSet is currently
-     * positioned.
-     */
+    /** The offset of the row, which this ResultSet is currently positioned. */
     private int iCurrentRow;
 
-    /**
-     * If a result of updating the database, then this is the number of rows
-     * updated.
-     */
+    /** When the result of updating the database, the number of updated rows. */
     private int iUpdateCount;
 
-    /**
-     * Is current row before the first row?
-     */
+    /** Is current row before the first row? */
     private boolean bInit;    // false if before first row
 
     /** How many columns does this ResultSet have? */
     int iColumnCount;
 
-    /**
-     * Did the last getXXX method encounter a null value? <p>
-     *
-     * This is important for methods that return primitive values, since
-     * there is no other way to check for this condition in those cases.
-     */
+    /** Did the last getXXX method encounter a null value? */
     private boolean bWasNull;
 
-    /** The one and only ResultSetMetaData object for this ResultSet */
+    /** The ResultSetMetaData object for this ResultSet */
     private ResultSetMetaData rsmd;
-
-// fredt@users 20020222 - patch 489917 by jytou@users - made optional
-// see setGetColumnName in package private internal implementation
-// methods section
 
     /** Properties of this ResultSet's parent Connection. */
     private HsqlProperties connProperties;
+
+    /** Compatibility flag to use uppercase version of column names */
+    private boolean toUpperColumnName;
 
     /**
      * The Statement that generated this result. <p>
@@ -1813,7 +1794,13 @@ public class jdbcResultSet implements ResultSet {
         }
 
         for (int i = 0; i < iColumnCount; i++) {
-            if (columnName.equals(rResult.metaData.sLabel[i])) {
+            String name = rResult.metaData.sLabel[i];
+
+            if (toUpperColumnName) {
+                name = name.toUpperCase();
+            }
+
+            if (columnName.equals(name)) {
                 return i + 1;
             }
         }
@@ -5633,12 +5620,7 @@ public class jdbcResultSet implements ResultSet {
         if (r.iMode == ResultConstants.UPDATECOUNT) {
             iUpdateCount = r.iUpdateCount;
         } else if (r.iMode == ResultConstants.ERROR) {
-
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-// tony_lai@users 20020820 - patch 595073
-//            throw (Trace.getError(r.errorCode, r.sError));
-            throw new SQLException(r.getMainString(), null,
-                                   r.getStatementID());
+            jdbcDriver.throwError(r);
         } else {
             if (s != null) {
                 this.rsType = s.rsType;
@@ -5647,6 +5629,8 @@ public class jdbcResultSet implements ResultSet {
             iUpdateCount = -1;
             rResult      = r;
             iColumnCount = r.getColumnCount();
+            toUpperColumnName =
+                connProperties.isPropertyTrue("toupper_column_name");
         }
 
         bWasNull = false;

@@ -239,11 +239,11 @@ class Result {
             int out = nullability[i];    // always between 0x00 and 0x02
 
             if (isIdentity[i]) {
-                out &= 0x00000010;
+                out |= 0x00000010;
             }
 
             if (isWritable[i]) {
-                out &= 0x00000020;
+                out |= 0x00000020;
             }
 
             return out;

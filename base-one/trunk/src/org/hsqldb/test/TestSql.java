@@ -43,9 +43,9 @@ import junit.framework.*;
 public class TestSql extends TestCase {
 
     String path = "test3";
+    protected String url  = "jdbc:hsqldb:hsql://localhost/yourtest";
 
-//    protected String url = "jdbc:hsqldb:hsql://localhost";
-    String     url = "jdbc:hsqldb:test3";
+//    protected String     url = "jdbc:hsqldb:test3";
     String     user;
     String     password;
     Statement  stmnt;
@@ -86,7 +86,7 @@ public class TestSql extends TestCase {
     }
 
     public void testMetaData() {
-
+        String ddl0 = "DROP TABLE ADDRESSBOOK IF EXISTS; DROP TABLE ADDRESSBOOK_CATEGORY IF EXISTS; DROP TABLE USER IF EXISTS;";
         String ddl1 =
             "CREATE TABLE USER(USER_ID INTEGER NOT NULL PRIMARY KEY,LOGIN_ID VARCHAR(128) NOT NULL,USER_NAME VARCHAR(254) DEFAULT ' ' NOT NULL,CREATE_DATE TIMESTAMP DEFAULT 'CURRENT_TIMESTAMP' NOT NULL,UPDATE_DATE TIMESTAMP DEFAULT 'CURRENT_TIMESTAMP' NOT NULL,LAST_ACCESS_DATE TIMESTAMP,CONSTRAINT IXUQ_LOGIN_ID0 UNIQUE(LOGIN_ID))";
         String ddl2 =
@@ -100,6 +100,7 @@ public class TestSql extends TestCase {
         String result5 = "5";
 
         try {
+            stmnt.execute(ddl0);
             stmnt.execute(ddl1);
             stmnt.execute(ddl2);
             stmnt.execute(ddl3);
@@ -224,13 +225,14 @@ public class TestSql extends TestCase {
             }
 
             {
-                stmnt.executeQuery("CREATE TABLE T (A CHAR, B CHAR);");
+                stmnt.execute("DROP TABLE T IF EXISTS;");
+                stmnt.executeQuery("CREATE TABLE T (I IDENTITY, A CHAR, B CHAR);");
                 stmnt.executeQuery(
-                    "INSERT INTO T VALUES ('get_column_name', '"
+                    "INSERT INTO T VALUES (NULL, 'get_column_name', '"
                     + getColumnName + "');");
 
                 ResultSet rs = stmnt.executeQuery(
-                    "SELECT A, B, A \"aliasA\", B \"aliasB\" FROM T;");
+                    "SELECT I, A, B, A \"aliasA\", B \"aliasB\" FROM T;");
                 ResultSetMetaData rsmd = rs.getMetaData();
 
                 result5 = "";
@@ -247,7 +249,7 @@ public class TestSql extends TestCase {
                 rs.close();
 
                 rs = stmnt.executeQuery(
-                    "SELECT A, B, A \"aliasA\", B \"aliasB\" FROM T;");;
+                    "SELECT I, A, B, A \"aliasA\", B \"aliasB\" FROM T;");;
                 rsmd = rs.getMetaData();
 
                 for (; rs.next(); ) {
@@ -260,7 +262,7 @@ public class TestSql extends TestCase {
                 }
 
                 // most of these will throw if strict_md is true
-                rsmd.isAutoIncrement(1);
+                System.out.println(rsmd.isAutoIncrement(1));
                 rsmd.isCaseSensitive(1);
                 rsmd.isCurrency(1);
                 rsmd.isDefinitelyWritable(1);

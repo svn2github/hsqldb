@@ -71,7 +71,7 @@ public class TestAllTypes {
     int     deleteWhileInsertInterval = 10000;
 
     //
-    int bigrows = 10000;
+    int bigrows = 100;
 
     protected void setUp() {
 
