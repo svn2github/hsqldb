@@ -36,8 +36,9 @@ package org.hsqldb.lib;
  * {@link ObjectComparator ObjectComparator}.  This implementation
  * is non-blocking, dynamically resizing and thread-safe.
  *
+ * @author boucherb@users.sourceforge.net
  * @version 1.7.2
- * @since HSQLDB 1.7.2
+ * @since 1.7.2
  */
 public class HsqlArrayHeap implements HsqlHeap {
 

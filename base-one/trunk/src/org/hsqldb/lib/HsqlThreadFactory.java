@@ -39,7 +39,7 @@ package org.hsqldb.lib;
  *
  * @author boucherb@users.sourceforge.net
  * @version 1.7.2
- * @since HSQLDB 1.7.2
+ * @since 1.7.2
  */
 class HsqlThreadFactory implements ThreadFactory {
 

@@ -52,41 +52,56 @@ import org.hsqldb.lib.FileUtil;
  * with index on zip only: 211 s
  * foreign key, referential_integrity true: 216 s
  *
+ * The above have improved a lot in 1.7.2
+ *
  * @author fredt@users
  */
 public class TestCacheSize {
 
-    protected boolean filedb   = true;
+    // program can edit the *.properties file to set cache_size
+    protected boolean filedb = true;
+
+    // shutdown performed mid operation - not for mem: or hsql: URL's
     protected boolean shutdown = true;
-    protected String  url      = "jdbc:hsqldb:";
+
+    // fixed
+    protected String url = "jdbc:hsqldb:";
 
 //    protected String  filepath = "hsql://localhost/mytest";
 //    protected String filepath = "mem:test";
     protected String filepath = "/hsql/testcache/test";
-    String           user;
-    String           password;
-    Statement        sStatement;
-    Connection       cConnection;
 
-    // prameters
-    boolean reportProgress  = false;
-    String  tableType       = "CACHED";
-    int     cacheScale      = 14;
-    String  logType         = "TEXT";
-    int     writeDelay      = 60;
-    boolean indexZip        = true;
-    boolean indexLastName   = false;
-    boolean addForeignKey   = false;
-    boolean refIntegrity    = true;
-    boolean createTempTable = false;
+    // frequent reporting of progress
+    boolean reportProgress = false;
 
-    // introduces fragmentation to the .data file
-    boolean deleteWhileInsert         = false;
+    // type of the big table {MEMORY | CACHED | TEXT}
+    String tableType  = "CACHED";
+    int    cacheScale = 16;
+
+    // script format {TEXT, BINARY, COMPRESSED}
+    String  logType       = "COMPRESSED";
+    int     writeDelay    = 60;
+    boolean indexZip      = true;
+    boolean indexLastName = false;
+    boolean addForeignKey = false;
+    boolean refIntegrity  = true;
+
+    // speeds up inserts when tableType=="CACHED"
+    boolean createTempTable = true;
+
+    // introduces fragmentation to the .data file during insert
+    boolean deleteWhileInsert         = true;
     int     deleteWhileInsertInterval = 10000;
 
-    //
-    int bigrows   = 40000;
+    // size of the tables used in test
+    int bigrows   = 20000;
     int smallrows = 0xfff;
+
+    //
+    String     user;
+    String     password;
+    Statement  sStatement;
+    Connection cConnection;
 
     protected void setUp() {
 
@@ -389,6 +404,27 @@ public class TestCacheSize {
 
         System.out.println("Select random id " + i + " rows : "
                            + sw.elapsedTime() + " rps: "
+                           + (i * 1000 / (sw.elapsedTime() + 1)));
+        sw.zero();
+
+        try {
+            PreparedStatement ps = cConnection.prepareStatement(
+                "SELECT zip FROM zip WHERE zip = ?");
+
+            for (i = 0; i < bigrows; i++) {
+                ps.setInt(1, randomgen.nextInt(smallrows - 1));
+                ps.execute();
+
+                if (reportProgress && (i + 1) % 10000 == 0
+                        || (slow && (i + 1) % 100 == 0)) {
+                    System.out.println("Select " + (i + 1) + " : "
+                                       + (sw.elapsedTime() + 1));
+                }
+            }
+        } catch (SQLException e) {}
+
+        System.out.println("Select random zip from zip table " + i
+                           + " rows : " + sw.elapsedTime() + " rps: "
                            + (i * 1000 / (sw.elapsedTime() + 1)));
     }
 

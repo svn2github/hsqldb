@@ -31,7 +31,8 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.UnifiedTable;
+//import org.hsqldb.lib.UnifiedTable;
+import org.hsqldb.lib.DoubleIntTable;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import org.hsqldb.lib.HsqlArrayList;
@@ -56,7 +57,7 @@ class DataFileDefrag {
     HsqlArrayList defrag(Database db, ScaledRAFile sourcenotused,
                          String filename) throws IOException, HsqlException {
 
-        System.out.println("Transfer begins");
+        System.out.println("Defrag Transfer begins");
 
         HsqlArrayList rootsList = new HsqlArrayList();
         HsqlArrayList tTable    = db.getTables();
@@ -119,15 +120,15 @@ class DataFileDefrag {
         }
     }
 
+/** @todo fredt - use an upward estimate of number of rows based on Index */
     int[] writeTableToDataFile(Table table,
                                ScaledRAFile destFile)
                                throws IOException, HsqlException {
 
-        BinaryServerRowOutput rowOut = new BinaryServerRowOutput();
-        UnifiedTable pointerLookup = new UnifiedTable(int.class, 2, 1000000,
-            100000);
-        int[] rootsArray = table.getIndexRootsArray();
-        Index index      = table.getPrimaryIndex();
+        BinaryServerRowOutput rowOut        = new BinaryServerRowOutput();
+        DoubleIntTable        pointerLookup = new DoubleIntTable(1000000);
+        int[]                 rootsArray    = table.getIndexRootsArray();
+        Index                 index         = table.getPrimaryIndex();
 
 // erik        long  pos         = destFile.getFilePointer() / cacheFileScale;
         long  pos         = destFile.getFilePointer();
@@ -142,7 +143,7 @@ class DataFileDefrag {
             pointerPair[0] = row.iPos;
             pointerPair[1] = (int) pos;
 
-            pointerLookup.addRow(pointerPair);
+            pointerLookup.add(row.iPos, (int) pos);
 
 // erik            pos += row.storageSize / cacheFileScale;
             pos += row.storageSize;
@@ -157,10 +158,8 @@ class DataFileDefrag {
             n = index.next(n);
         }
 
-        System.out.println(table.getName().name + " list done");
-        System.out.println("sort begins: " + stopw.elapsedTime());
-        pointerLookup.sort(0, true);
-        System.out.println("sort ends: " + stopw.elapsedTime());
+        System.out.println(table.getName().name + " list done "
+                           + stopw.elapsedTime());
 
         count = 0;
 
@@ -190,14 +189,7 @@ class DataFileDefrag {
             destFile.write(rowOut.getOutputStream().getBuffer(), 0,
                            rowOut.size());
 
-/*
-            if (rowOut.size() != row.storageSize) {
-                System.out.println("MISMATCH AT " + count);
-            }
-*/
-            if ((count + 1) % 50000 == 0) {
-
-//                System.gc();
+            if ((count) % 50000 == 0) {
                 System.out.println(count + " rows " + stopw.elapsedTime());
             }
 
@@ -205,13 +197,13 @@ class DataFileDefrag {
         }
 
         for (int i = 0; i < rootsArray.length; i++) {
-            int lookupIndex = pointerLookup.search(rootsArray[i]);
+            int lookupIndex = pointerLookup.find(0, rootsArray[i]);
 
             if (lookupIndex == -1) {
                 throw new HsqlException("", "", 0);
             }
 
-            rootsArray[i] = pointerLookup.getIntCell(lookupIndex, 1);
+            rootsArray[i] = pointerLookup.get(lookupIndex, 1);
         }
 
         Trace.printSystemOut(table.getName().name + " : table converted");

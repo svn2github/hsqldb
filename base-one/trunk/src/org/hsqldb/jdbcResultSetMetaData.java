@@ -682,7 +682,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
 
         column--;
 
-        if (!reportCDependent && isTableColumn(column)) {
+        if (!reportCDependent &&!isTableColumn(column)) {
 
             // return false;
             throw cDependentException;
@@ -860,7 +860,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
 
         column--;
 
-        if (!reportCDependent && isTableColumn(column)) {
+        if (!reportCDependent &&!isTableColumn(column)) {
 
             // return columnNullableUnknown;
             throw cDependentException;
@@ -1109,7 +1109,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         // 2.) not currently reporting schema names
         // 3.) result column does not directly correspond to a table column
 // CHECKME:  Which is right?  Probably this way until we fully support schemas
-//        if (!reportCDependent && isTableColumn(column)) {
+//        if (!reportCDependent && !isTableColumn(column)) {
 //            throw cDependentException;
 //        }
         return columnMetaData[--column].schemaName;
@@ -1275,7 +1275,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         // 2.) not currently reporting catalog name
         // 3.) column does not directly correspond to a table column
 // CHECKME:  Which is right? Probably this way until we fully support catalogs
-//        if (!reportCDependent && isTableColumn(column)) {
+//        if (!reportCDependent && !isTableColumn(column)) {
 //            throw cDependentException;
 //        }
         return columnMetaData[--column].catalogName;
@@ -1401,7 +1401,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
 
         column--;
 
-        if (!reportCDependent && isTableColumn(column)) {
+        if (!reportCDependent &&!isTableColumn(column)) {
 
             // return false;
             throw cDependentException;
@@ -1457,7 +1457,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
 
         column--;
 
-        if (!reportCDependent && isTableColumn(column)) {
+        if (!reportCDependent &&!isTableColumn(column)) {
 
             // return true;
             throw cDependentException;

@@ -40,7 +40,7 @@ import java.util.NoSuchElementException;
  * instead if its better suited.
  *
  * @author dnordahl@users
- * @version 6/11/2002
+ * @version 1.7.2
  */
 public class HsqlArrayList extends BaseList implements HsqlList {
 

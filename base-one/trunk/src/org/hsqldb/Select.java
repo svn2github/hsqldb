@@ -342,7 +342,7 @@ class Select {
         buildResult(r, getLimitCount(maxrows));
 
         // the result is perhaps wider (due to group and order by)
-        // but don't tell this anybody else
+        // so use the visible columns to remove duplicates
         if (isDistinctSelect) {
             r.removeDuplicates(iResultLen);
         }

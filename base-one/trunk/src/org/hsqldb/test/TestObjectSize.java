@@ -67,7 +67,6 @@
 
 package org.hsqldb.test;
 
-import org.hsqldb.lib.UnifiedTable;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.IntKeyIntValueHashMap;
 import org.hsqldb.lib.IntValueHashMap;

@@ -752,7 +752,7 @@ public class BaseHashMap {
         removeFromElementArrays(lookup);
     }
 
-    protected Object remove(int lookup) {
+    protected Object removeLookup(int lookup) {
 
         if (isObjectKey) {
             return addOrRemove(0, 0, objectKeyTable[lookup], null, true);
@@ -926,6 +926,8 @@ public class BaseHashMap {
             removed = false;
 
             if (hasNext()) {
+                counter++;
+
                 lookup = nextLookup(lookup);
 
                 if (keys) {
@@ -947,6 +949,8 @@ public class BaseHashMap {
             removed = false;
 
             if (hasNext()) {
+                counter++;
+
                 lookup = nextLookup(lookup);
 
                 if (keys) {
@@ -963,9 +967,11 @@ public class BaseHashMap {
                 throw new NoSuchElementException("Hash Iterator");
             }
 
+            counter--;
+
             removed = true;
 
-            BaseHashMap.this.remove(lookup);
+            BaseHashMap.this.removeLookup(lookup);
         }
     }
 }

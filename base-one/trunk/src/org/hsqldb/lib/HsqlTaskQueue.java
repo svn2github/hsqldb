@@ -35,6 +35,10 @@ package org.hsqldb.lib;
  * Provides very simple queued execution of Runnable objects in a background
  * thread. The underlying queue is an HsqlDeque instance, an array-based
  * circular queue implementation with automatic capacity expansion.
+ *
+ * @author boucherb@users.sourceforge.net
+ * @version 1.7.2
+ * @since 1.7.2
  */
 public class HsqlTaskQueue {
 

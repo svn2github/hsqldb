@@ -31,7 +31,7 @@
 
 package org.hsqldb.test;
 
-import org.hsqldb.lib.UnifiedTable;
+import org.hsqldb.lib.DoubleIntTable;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.IntKeyIntValueHashMap;
 import org.hsqldb.lib.IntValueHashMap;
@@ -99,38 +99,31 @@ public class TestLibSpeed {
             "ROUNDMAGIC", "org.hsqldb.Library.roundMagic"
         }
     };
-    static UnifiedTable uniTableSet = new UnifiedTable(Object.class, 1,
-        sNumeric.length);
-    static HashSet hashSet = new HashSet();
-    static UnifiedTable uniTableLookup = new UnifiedTable(int.class, 2,
-        sNumeric.length);
-    static IntKeyIntValueHashMap hashLookup = new IntKeyIntValueHashMap();
-    static IntValueHashMap mapLookup = new IntValueHashMap(sNumeric.length);
-    static IntKeyHashMap         hashObjectLookup = new IntKeyHashMap();
+    static HashSet      hashSet      = new HashSet();
+    static DoubleIntTable doubleIntLookup =
+        new DoubleIntTable(sNumeric.length);
+    static IntKeyIntValueHashMap intKeyIntValueHashLookup =
+        new IntKeyIntValueHashMap();
+    static IntValueHashMap intValueHashLookup =
+        new IntValueHashMap(sNumeric.length);
+    static IntKeyHashMap intKeyHashLookup = new IntKeyHashMap();
 
     static {
         java.util.Random randomgen = new java.util.Random();
-
-        uniTableSet.setCount(sNumeric.length);
-
-        int[] row = new int[2];
+        int[]            row       = new int[2];
 
         for (int i = 0; i < sNumeric.length; i++) {
             hashSet.add(sNumeric[i][0]);
-            uniTableSet.setCell(i, 0, sNumeric[i][0]);
-            hashLookup.put(randomgen.nextInt(sNumeric.length), i);
-            hashObjectLookup.put(i, new Integer(i));
-
-            row[0] = randomgen.nextInt(sNumeric.length);
-            row[1] = i;
-
-            uniTableLookup.addRow(row);
-            mapLookup.put(sNumeric[i][0], randomgen.nextInt(sNumeric.length));
+            intKeyIntValueHashLookup.put(randomgen.nextInt(sNumeric.length),
+                                         i);
+            intKeyHashLookup.put(i, new Integer(i));
+            doubleIntLookup.add(randomgen.nextInt(sNumeric.length), i);
+            intValueHashLookup.put(sNumeric[i][0],
+                                   randomgen.nextInt(sNumeric.length));
         }
-
-        uniTableSet.sort(0, true);
-        uniTableLookup.sort(0, true);
     }
+
+    static int count = 100000;
 
     public TestLibSpeed() {
 
@@ -143,7 +136,7 @@ public class TestLibSpeed {
         for (int k = 0; k < 3; k++) {
             sw.zero();
 
-            for (int j = 0; j < 100000; j++) {
+            for (int j = 0; j < count; j++) {
                 for (int i = 0; i < sNumeric.length; i++) {
                     int r = randomgen.nextInt(sNumeric.length);
 
@@ -156,54 +149,25 @@ public class TestLibSpeed {
             System.out.println("HashSet contains " + sw.elapsedTime());
             sw.zero();
 
-            for (int j = 0; j < 100000; j++) {
+            for (int j = 0; j < count; j++) {
                 for (int i = 0; i < sNumeric.length; i++) {
                     int r = randomgen.nextInt(sNumeric.length);
 
-                    uniTableSet.search(sNumeric[r][0]);
+                    intKeyIntValueHashLookup.get(r, -1);
 
                     dummy += r;
                 }
             }
 
-            System.out.println("UnifiedTable contains " + sw.elapsedTime());
-            sw.zero();
-
-            for (int j = 0; j < 100000; j++) {
-                for (int i = 0; i < sNumeric.length; i++) {
-                    int r = randomgen.nextInt(sNumeric.length);
-
-                    dummy += r;
-                }
-            }
-
-            System.out.println("emptyOp " + sw.elapsedTime());
-        }
-
-        System.out.println("integer lookup ");
-
-        for (int k = 0; k < 3; k++) {
-            sw.zero();
-
-            for (int j = 0; j < 100000; j++) {
-                for (int i = 0; i < sNumeric.length; i++) {
-                    int r = randomgen.nextInt(sNumeric.length);
-
-                    hashLookup.get(r, -1);
-
-                    dummy += r;
-                }
-            }
-
-            System.out.println("IntToIntHashMap Lookup with array "
+            System.out.println("IntKeyIntValueHashMap Lookup with array "
                                + sw.elapsedTime());
             sw.zero();
 
-            for (int j = 0; j < 100000; j++) {
+            for (int j = 0; j < count; j++) {
                 for (int i = 0; i < sNumeric.length; i++) {
                     int r = randomgen.nextInt(sNumeric.length);
 
-                    hashObjectLookup.get(r);
+                    intKeyHashLookup.get(r);
 
                     dummy += r;
                 }
@@ -212,34 +176,34 @@ public class TestLibSpeed {
             System.out.println("IntKeyHashMap Lookup " + sw.elapsedTime());
             sw.zero();
 
-            for (int j = 0; j < 100000; j++) {
+            for (int j = 0; j < count; j++) {
                 for (int i = 0; i < sNumeric.length; i++) {
                     int r = randomgen.nextInt(sNumeric.length);
 
-                    uniTableLookup.search(r);
+                    doubleIntLookup.find(0, r);
 
                     dummy += r;
                 }
             }
 
-            System.out.println("UnifiedTable Lookup " + sw.elapsedTime());
+            System.out.println("DoubleIntTable Lookup " + sw.elapsedTime());
             sw.zero();
 
-            for (int j = 0; j < 100000; j++) {
+            for (int j = 0; j < count; j++) {
                 for (int i = 0; i < sNumeric.length; i++) {
                     int r = randomgen.nextInt(sNumeric.length);
 
-                    mapLookup.get(sNumeric[r][0],0);
+                    intValueHashLookup.get(sNumeric[r][0], 0);
 
                     dummy += r;
                 }
             }
 
-            System.out.println("HsqlObjectToIntMap Lookup "
+            System.out.println("IntKeyIntValueHashMap Lookup "
                                + sw.elapsedTime());
             sw.zero();
 
-            for (int j = 0; j < 100000; j++) {
+            for (int j = 0; j < count; j++) {
                 for (int i = 0; i < sNumeric.length; i++) {
                     int r = randomgen.nextInt(sNumeric.length);
 
@@ -248,20 +212,19 @@ public class TestLibSpeed {
             }
 
             System.out.println("emptyOp " + sw.elapsedTime());
-            System.out.println("IntKeyHashMap Lookup " + sw.elapsedTime());
             sw.zero();
 
-            for (int j = 0; j < 100000; j++) {
+            for (int j = 0; j < count; j++) {
                 for (int i = 0; i < sNumeric.length; i++) {
                     int r = randomgen.nextInt(sNumeric.length);
 
-                    uniTableLookup.search(r);
+                    doubleIntLookup.find(0, r);
 
                     dummy += r;
                 }
             }
 
-            System.out.println("UnifiedTable Lookup " + sw.elapsedTime());
+            System.out.println("DoubleIntTable Lookup " + sw.elapsedTime());
             sw.zero();
             System.out.println("Object Cache Test " + sw.elapsedTime());
         }

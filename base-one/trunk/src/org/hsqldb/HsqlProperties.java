@@ -402,49 +402,6 @@ public class HsqlProperties {
         return stringProps.propertyNames();
     }
 /*
-    public String addSystemProperty(String key, int def) {
-
-        String sdef  = String.valueOf(def);
-        String sprop = null;
-
-        try {
-            sprop = System.getProperty(key, sdef);
-        } catch (Exception e) {}
-
-        if (sprop != null) {
-            try {
-                return setProperty(key, Integer.parseInt(sprop));
-            } catch (Exception e) {}
-        }
-
-        return setProperty(key, sdef);
-    }
-
-    public String addSystemProperty(String key, boolean def) {
-
-        String sdef  = String.valueOf(def);
-        String sprop = null;
-
-        try {
-            sprop = System.getProperty(key, sdef);
-        } catch (Exception e) {}
-
-        return setProperty(key, sprop == null ? def
-                                              : "true".equals(sprop));
-    }
-
-    public String addSystemProperty(String key, String def) {
-
-        String sprop = null;
-
-        try {
-            sprop = System.getProperty(key, def);
-        } catch (Exception e) {}
-
-        return setProperty(key, sprop == null ? def
-                                              : sprop);
-    }
-
     public static void main(String[] argv) {
 
         HsqlProperties props = delimitedArgPairsToProps(

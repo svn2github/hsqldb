@@ -330,7 +330,7 @@ class DiskNode extends Node {
     }
 
     void writeTranslate(DatabaseRowOutputInterface out,
-                        org.hsqldb.lib.UnifiedTable lookup)
+                        org.hsqldb.lib.DoubleIntTable lookup)
                         throws IOException, HsqlException {
 
         out.writeIntData(iBalance);
@@ -341,19 +341,19 @@ class DiskNode extends Node {
 
     private void writeTranslatePointer(int pointer,
                                        DatabaseRowOutputInterface out,
-                                       org.hsqldb.lib.UnifiedTable lookup)
+                                       org.hsqldb.lib.DoubleIntTable lookup)
                                        throws IOException, HsqlException {
 
         int newPointer = 0;
 
         if (pointer != Node.NO_POS) {
-            int i = lookup.search(pointer);
+            int i = lookup.find(0, pointer);
 
             if (i == -1) {
-                throw new HsqlException("","", 0);
+                throw new HsqlException("", "", 0);
             }
 
-            newPointer = lookup.getIntCell(i, 1);
+            newPointer = lookup.get(i, 1);
         }
 
         out.writeIntData(newPointer);

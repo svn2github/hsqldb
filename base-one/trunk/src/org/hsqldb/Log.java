@@ -318,7 +318,7 @@ class Log {
         bRestoring = false;
 
         if (needbackup) {
-            close(false);
+            close(false, true);
             pProperties.setProperty("modified", "yes");
             pProperties.save();
 
@@ -330,13 +330,6 @@ class Log {
         }
 
         openLog();
-/*
-        if (newdb) {
-            dbScriptWriter.writeAll();
-        }
-
-        return newdb;
-*/
     }
 
     Cache getCache() throws HsqlException {
@@ -371,9 +364,10 @@ class Log {
      *  Method declaration
      *
      * @param  compact
+     * @param  cache
      * @throws  HsqlException
      */
-    void close(boolean compact) throws HsqlException {
+    void close(boolean compact, boolean cache) throws HsqlException {
 
         if (Trace.TRACE) {
             Trace.trace();
@@ -392,17 +386,17 @@ class Log {
         writeScript(compact);
 
         // flush the cache (important: after writing the script)
-        if (cCache != null) {
+        if (cache && cCache != null) {
             needsbackup = cCache.fileModified;
 
-            cCache.flush();
+            cCache.close();
         }
 
         closeAllTextCaches(compact);
 
         // create '.backup.new' using the '.data'
-        if (needsbackup &&!compact) {
-            backup();
+        if (cache && needsbackup &&!compact) {
+            cCache.backup(sFileBackup + ".new");
         }
 
         // we have the new files
@@ -413,7 +407,7 @@ class Log {
         FileUtil.renameOverwrite(sFileScript + ".new", sFileScript);
         FileUtil.delete(sFileLog);
 
-        if (needsbackup &&!compact) {
+        if (cache && needsbackup &&!compact) {
             FileUtil.renameOverwrite(sFileBackup + ".new", sFileBackup);
         }
 
@@ -445,27 +439,20 @@ class Log {
      */
     void checkpoint(boolean defrag) throws HsqlException {
 
-        if (defrag) {
-            HsqlArrayList rootsArray = cCache.defrag();
-
-            for (int i = 0; i < rootsArray.size(); i++) {
-                int[] roots = (int[]) rootsArray.get(i);
-
-                if (roots != null) {
-                    Trace.printSystemOut(
-                        org.hsqldb.lib.StringUtil.getList(roots, " ", ""));
-                }
-            }
-
-            DataFileDefrag.updateTableIndexRoots(dDatabase.getTables(),
-                                                 rootsArray);
+        if (filesReadOnly) {
+            return;
         }
 
-        close(false);
+        if (defrag) {
+            cCache.defrag();
+        }
+
+        // close as normal
+        close(false, !defrag);
         pProperties.setProperty("modified", "yes");
         pProperties.save();
 
-        if (cCache != null) {
+        if (!defrag && cCache != null) {
             cCache.open(false);
         }
 
@@ -547,29 +534,6 @@ class Log {
 
         shutdownAllTextCaches();
         closeLog();
-    }
-
-    /**
-     *  Saves the *.data file as compressed *.backup.
-     *
-     * @throws  HsqlException
-     */
-    private void backup() throws HsqlException {
-
-        try {
-            if (Trace.TRACE) {
-                defaultTimer.zero();
-            }
-
-            // create a '.new' file; rename later
-            FileUtil.compressFile(sFileCache, sFileBackup + ".new");
-
-            if (Trace.TRACE) {
-                Trace.trace(defaultTimer.elapsedTime());
-            }
-        } catch (Exception e) {
-            throw Trace.error(Trace.FILE_IO_ERROR, sFileBackup);
-        }
     }
 
     /**
@@ -721,7 +685,7 @@ class Log {
         TextCache c = (TextCache) textCacheList.remove(table);
 
         if (c != null) {
-            c.flush();
+            c.close();
         }
     }
 
@@ -733,7 +697,7 @@ class Log {
             if (compact) {
                 ((TextCache) it.next()).purge();
             } else {
-                ((TextCache) it.next()).flush();
+                ((TextCache) it.next()).close();
             }
         }
     }

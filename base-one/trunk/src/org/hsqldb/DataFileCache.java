@@ -123,11 +123,11 @@ public class DataFileCache extends Cache {
         }
     }
 
-/**
- *  Writes out all cached rows that have been modified and the free
- *  position pointer for the *.data file and then closes the file.
- */
-    void flush() throws HsqlException {
+    /**
+     *  Writes out all cached rows that have been modified and the free
+     *  position pointer for the *.data file and then closes the file.
+     */
+    void close() throws HsqlException {
 
         if (rFile == null || rFile.readOnly) {
             return;
@@ -152,21 +152,27 @@ public class DataFileCache extends Cache {
         }
     }
 
-/**
- *  Writes out all the rows to a new file without fragmentation and
- *  returns an ArrayList containing new positions for index roots.
- */
-    HsqlArrayList defrag() throws HsqlException {
+    /**
+     *  Writes out all the rows to a new file without fragmentation and
+     *  returns an ArrayList containing new positions for index roots.
+     *  Is called with the cache file closed.
+     */
+    void defrag() throws HsqlException {
+
+        close();
+
+        // if *.data file was deleted because it was empty
+        if (!FileUtil.exists(sName)) {
+            init();
+            open(cacheReadonly);
+            Trace.printSystemOut("opened chache");
+        }
 
         HsqlArrayList indexRoots = null;
 
         try {
-            flush();
 
-            if (!FileUtil.exists(sName)) {
-                return null;
-            }
-
+            // open as readonly
             open(true);
 
             DataFileDefrag dfd = new DataFileDefrag();
@@ -174,24 +180,43 @@ public class DataFileCache extends Cache {
             indexRoots = dfd.defrag(dDatabase, rFile, sName);
 
             closeFile();
-            Trace.printSystemOut("closed source");
-            new File(sName).delete();
-            new File(sName + ".new").renameTo(new File(sName));
-            init();
-            open(cacheReadonly);
-            Trace.printSystemOut("opened new file");
+            Trace.printSystemOut("closed old cache");
+            FileUtil.renameOverwrite(sName + ".new", sName);
+
+            String backupName = dDatabase.getPath() + ".backup";
+
+            backup(backupName + ".new");
+            FileUtil.renameOverwrite(backupName + ".new", backupName);
+            dbProps.setProperty("hsqldb.cache_version", "1.7.0");
+
+            for (int i = 0; i < indexRoots.size(); i++) {
+                int[] roots = (int[]) indexRoots.get(i);
+
+                if (roots != null) {
+                    Trace.printSystemOut(
+                        org.hsqldb.lib.StringUtil.getList(roots, " ", ""));
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
             Trace.throwerror(Trace.FILE_IO_ERROR,
                              "error " + e + " defrag file " + sName);
-        }
+        } finally {
+            init();
+            open(cacheReadonly);
 
-        return indexRoots;
+            if (indexRoots != null) {
+                DataFileDefrag.updateTableIndexRoots(dDatabase.getTables(),
+                                                     indexRoots);
+            }
+
+            Trace.printSystemOut("opened chache");
+        }
     }
 
-/**
- *  Closes this object's database file without flushing pending writes.
- */
+    /**
+     *  Closes this object's database file without flushing pending writes.
+     */
     void closeFile() throws HsqlException {
 
         System.out.println("DataFileCache.closeFile()");
@@ -210,14 +235,14 @@ public class DataFileCache extends Cache {
         }
     }
 
-/**
- * Used when a row is deleted as a result of some DML or DDL command.
- * Adds the file space for the row to the list of free positions.
- * If there exists more than MAX_FREE_COUNT free positions,
- * then they are probably all too small, so we start a new list. <p>
- * todo: This is wrong when deleting lots of records <p>
- * Then remove the row from the cache data structures.
- */
+    /**
+     * Used when a row is deleted as a result of some DML or DDL command.
+     * Adds the file space for the row to the list of free positions.
+     * If there exists more than MAX_FREE_COUNT free positions,
+     * then they are probably all too small, so we start a new list. <p>
+     * todo: This is wrong when deleting lots of records <p>
+     * Then remove the row from the cache data structures.
+     */
     void free(CachedRow r) throws HsqlException {
 
         fileModified = true;
@@ -241,13 +266,13 @@ public class DataFileCache extends Cache {
         remove(r);
     }
 
-/**
- * Allocates file space for the row. <p>
- *
- * A Row is added by walking the list of CacheFree objects to see if
- * there is available space to store it, reusing space if it exists.
- * Otherwise the file is grown to accommodate it.
- */
+    /**
+     * Allocates file space for the row. <p>
+     *
+     * A Row is added by walking the list of CacheFree objects to see if
+     * there is available space to store it, reusing space if it exists.
+     * Otherwise the file is grown to accommodate it.
+     */
     int setFilePos(CachedRow r) throws HsqlException {
 
         int       rowSize = r.storageSize;
@@ -301,10 +326,10 @@ public class DataFileCache extends Cache {
         return i;
     }
 
-/**
- * Constructs a new Row for the specified table, using row data read
- * at the specified position (pos) in this object's database file.
- */
+    /**
+     * Constructs a new Row for the specified table, using row data read
+     * at the specified position (pos) in this object's database file.
+     */
     protected CachedRow makeRow(int pos, Table t) throws HsqlException {
 
         CachedRow r = null;
@@ -330,10 +355,10 @@ public class DataFileCache extends Cache {
         return r;
     }
 
-/**
- * Writes out the specified Row. Will write only the Nodes or both Nodes
- * and table row data depending on what is not already persisted to disk.
- */
+    /**
+     * Writes out the specified Row. Will write only the Nodes or both Nodes
+     * and table row data depending on what is not already persisted to disk.
+     */
     protected void saveRow(CachedRow r) throws IOException, HsqlException {
 
         rowOut.reset();
@@ -343,5 +368,21 @@ public class DataFileCache extends Cache {
         r.write(rowOut);
         rFile.write(rowOut.getOutputStream().getBuffer(), 0,
                     rowOut.getOutputStream().size());
+    }
+
+    /**
+     *  Saves the *.data file as compressed *.backup.
+     *
+     * @throws  HsqlException
+     */
+    void backup(String newName) throws HsqlException {
+
+        try {
+
+            // create a '.new' file; rename later
+            FileUtil.compressFile(sName, newName);
+        } catch (Exception e) {
+            throw Trace.error(Trace.FILE_IO_ERROR, "creating " + newName);
+        }
     }
 }

@@ -135,15 +135,15 @@ class Logger {
                 break;
 
             case Database.CLOSEMODE_NORMAL :
-                lLog.close(false);
+                lLog.close(false, true);
                 break;
 
             case Database.CLOSEMODE_COMPACT :
-                lLog.close(true);
+                lLog.close(true, true);
                 break;
 
             case 2 :
-                lLog.close(false);
+                lLog.close(false, true);
                 break;
         }
 

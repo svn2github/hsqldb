@@ -35,6 +35,7 @@ package org.hsqldb.lib;
  * Collection of static helper methods for converting types into boolean;
  *
  * @author: Nitin Chauhan
+ * @version 1.7.2
  */
 public final class BooleanConverter {
 

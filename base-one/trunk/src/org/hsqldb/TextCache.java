@@ -286,7 +286,7 @@ class TextCache extends DataFileCache {
      *  such rows have already been saved, so this method just removes a
      *  source file that has no rows.
      */
-    void flush() throws HsqlException {
+    void close() throws HsqlException {
 
         if (rFile == null) {
             return;
@@ -321,7 +321,7 @@ class TextCache extends DataFileCache {
 
         try {
             if (readOnly) {
-                flush();
+                close();
             } else {
                 rFile.close();
 

@@ -76,7 +76,7 @@ import java.security.NoSuchAlgorithmException;
  *
  * @author boucherb@users.sourceforge.net
  * @version 1.7.2
- * @since HSQLDB 1.7.2
+ * @since 1.7.2
  */
 public final class MD5 {
 

@@ -70,7 +70,6 @@ package org.hsqldb;
 import java.io.IOException;
 import org.hsqldb.lib.ObjectComparator;
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.UnifiedTable;
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.lib.ArrayCounter;
 
@@ -278,9 +277,9 @@ abstract class Cache {
 
     abstract void open(boolean readonly) throws HsqlException;
 
-    abstract void flush() throws HsqlException;
+    abstract void close() throws HsqlException;
 
-    abstract HsqlArrayList defrag() throws HsqlException;
+    abstract void defrag() throws HsqlException;
 
     abstract void closeFile() throws HsqlException;
 
@@ -746,6 +745,8 @@ abstract class Cache {
 
     abstract protected void saveRow(CachedRow r)
     throws IOException, HsqlException;
+
+    abstract void backup(String newName) throws HsqlException;
 
     /**
      * FastQSorts the [l,r] partition of the specfied array of Rows, based on
