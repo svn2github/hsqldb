@@ -144,8 +144,8 @@ extends org.hsqldb.DatabaseInformationMain {
             case SYSTEM_CHECK_COLUMN_USAGE :
                 return SYSTEM_CHECK_COLUMN_USAGE();
 
-            case SYSTEM_CHECK_CONSTRAINT_ROUTINE_USAGE :
-                return SYSTEM_CHECK_CONSTRAINT_ROUTINE_USAGE();
+            case SYSTEM_CHECK_ROUTINE_USAGE :
+                return SYSTEM_CHECK_ROUTINE_USAGE();
 
             case SYSTEM_CHECK_TABLE_USAGE :
                 return SYSTEM_CHECK_TABLE_USAGE();
@@ -332,19 +332,19 @@ extends org.hsqldb.DatabaseInformationMain {
      * columns: <p>
      *
      * <pre>
-     * CACHE_CLASS        VARCHAR   FQN of Cache class
-     * CACHE_HASH         INTEGER   in-memory hashCode() value of Cache object
-     * CACHE_FILE         VARCHAR   absolute path of cache data file
-     * CACHE_LENGTH       INTEGER   number of data bytes currently cached
-     * CACHE_SIZE         INTEGER   number of rows currently cached
-     * FREE_BYTES         INTEGER   total bytes in available allocation units
-     * SMALLEST_FREE_ITEM INTEGER   bytes of smallest available allocation unit
-     * LARGEST_FREE_ITEM  INTEGER   bytes of largest available allocation unit
-     * FREE_COUNT         INTEGER   total # of allocation units available
-     * FREE_POS           INTEGER   largest file position allocated + 1
-     * MAX_CACHE_SIZE     INTEGER   maximum allowable cached Row objects
-     * MULTIPLIER_MASK    VARCHAR   binary mask for calc'n of row data indices
-     * WRITER_LENGTH      INTEGER   length of row write buffer array
+     * CACHE_CLASS         VARCHAR   FQN of Cache class
+     * CACHE_HASH          INTEGER   in-memory hashCode() value of Cache object
+     * CACHE_FILE          VARCHAR   absolute path of cache data file
+     * CACHE_LENGTH        INTEGER   number of data bytes currently cached
+     * CACHE_SIZE          INTEGER   number of rows currently cached
+     * FREE_BYTES          INTEGER   total bytes in available allocation units
+     * SMALLEST_FREE_ITEM  INTEGER   bytes of smallest available allocation unit
+     * LARGEST_FREE_ITEM   INTEGER   bytes of largest available allocation unit
+     * FREE_COUNT          INTEGER   total # of allocation units available
+     * FREE_POS            INTEGER   largest file position allocated + 1
+     * MAX_CACHE_SIZE      INTEGER   maximum allowable cached Row objects
+     * MAX_CACHE_BYTE_SIZE INTEGER   maximum allowable size of cached Row objects
+     * WRITER_LENGTH       INTEGER   length of row write buffer array
      * </pre> <p>
      *
      * <b>Notes:</b> <p>
@@ -384,7 +384,7 @@ extends org.hsqldb.DatabaseInformationMain {
             addColumn(t, "FREE_COUNT", Types.INTEGER, false);            // not null
             addColumn(t, "FREE_POS", Types.INTEGER, false);              // not null
             addColumn(t, "MAX_CACHE_SIZE", Types.INTEGER, false);        // not null
-            addColumn(t, "MULTIPLIER_MASK", Types.VARCHAR, false);       // not null
+            addColumn(t, "MAX_CACHE_BYTE_SIZE", Types.BIGINT, false);    // not null
             addColumn(t, "WRITER_LENGTH", Types.INTEGER, false);         // not null
 
             // order: CACHE_CLASS, CACHE_FILE
@@ -409,19 +409,19 @@ extends org.hsqldb.DatabaseInformationMain {
         long      lSmallestFreeItem;
 
         // column number mappings
-        final int icache_class   = 0;
-        final int icache_hash    = 1;
-        final int icache_file    = 2;
-        final int icache_length  = 3;
-        final int icache_size    = 4;
-        final int ifree_bytes    = 5;
-        final int is_free_item   = 6;
-        final int il_free_item   = 7;
-        final int ifree_count    = 8;
-        final int ifree_pos      = 9;
-        final int imax_cache_sz  = 10;
-        final int imult_mask     = 11;
-        final int iwriter_length = 12;
+        final int icache_class     = 0;
+        final int icache_hash      = 1;
+        final int icache_file      = 2;
+        final int icache_length    = 3;
+        final int icache_size      = 4;
+        final int ifree_bytes      = 5;
+        final int is_free_item     = 6;
+        final int il_free_item     = 7;
+        final int ifree_count      = 8;
+        final int ifree_pos        = 9;
+        final int imax_cache_sz    = 10;
+        final int imax_cache_bytes = 11;
+        final int iwriter_length   = 12;
 
         // Initialization
         cacheSet = new HashSet();
@@ -470,21 +470,20 @@ extends org.hsqldb.DatabaseInformationMain {
                 lSmallestFreeItem = 0;
             }
 
-            row[icache_class]  = cache.getClass().getName();
-            row[icache_hash]   = ValuePool.getInt(cache.hashCode());
+            row[icache_class]     = cache.getClass().getName();
+            row[icache_hash]      = ValuePool.getInt(cache.hashCode());
             row[icache_file] = FileUtil.canonicalOrAbsolutePath(cache.sName);
-            row[icache_length] = ValuePool.getInt(cache.cacheBytesLength);
-            row[icache_size]   = ValuePool.getInt(cache.iCacheSize);
-            row[ifree_bytes]   = ValuePool.getInt(iFreeBytes);
-            row[is_free_item]  = ValuePool.getInt((int) lSmallestFreeItem);
-            row[il_free_item]  = ValuePool.getInt(iLargestFreeItem);
-            row[ifree_count]   = ValuePool.getInt(cache.iFreeCount);
-            row[ifree_pos]     = ValuePool.getInt(cache.iFreePos);
-            row[imax_cache_sz] = ValuePool.getInt(cache.maxCacheSize);
-            row[imult_mask]    = Integer.toHexString(cache.multiplierMask);
-
-// now obsolete
-            row[iwriter_length] = ValuePool.getInt(0);
+            row[icache_length]    = ValuePool.getLong(cache.cacheBytesLength);
+            row[icache_size]      = ValuePool.getInt(cache.iCacheSize);
+            row[ifree_bytes]      = ValuePool.getInt(iFreeBytes);
+            row[is_free_item]     = ValuePool.getInt((int) lSmallestFreeItem);
+            row[il_free_item]     = ValuePool.getInt(iLargestFreeItem);
+            row[ifree_count]      = ValuePool.getInt(cache.iFreeCount);
+            row[ifree_pos]        = ValuePool.getInt(cache.iFreePos);
+            row[imax_cache_sz]    = ValuePool.getInt(cache.maxCacheSize);
+            row[imax_cache_bytes] = ValuePool.getLong(cache.maxCacheBytes);
+            row[iwriter_length] = ValuePool.getInt(
+                cache.rowOut.getOutputStream().getBuffer().length);
 
             t.insert(row, session);
         }
@@ -2494,13 +2493,13 @@ extends org.hsqldb.DatabaseInformationMain {
      *
      * </ol>
      */
-    Table SYSTEM_CHECK_CONSTRAINT_ROUTINE_USAGE() throws HsqlException {
+    Table SYSTEM_CHECK_ROUTINE_USAGE() throws HsqlException {
 
-        Table t = sysTables[SYSTEM_CHECK_CONSTRAINT_ROUTINE_USAGE];
+        Table t = sysTables[SYSTEM_CHECK_ROUTINE_USAGE];
 
         if (t == null) {
             t = createBlankTable(
-                sysTableHsqlNames[SYSTEM_CHECK_CONSTRAINT_ROUTINE_USAGE]);
+                sysTableHsqlNames[SYSTEM_CHECK_ROUTINE_USAGE]);
 
             addColumn(t, "CONSTRAINT_CATALOG", Types.VARCHAR);
             addColumn(t, "CONSTRAINT_SCHEMA", Types.VARCHAR);

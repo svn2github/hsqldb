@@ -1745,7 +1745,7 @@ public class Expression {
                 break;
             }
             case NEGATE :
-                Trace.check(!eArg.isParam, Trace.COLUMN_TYPE_MISMATCH,
+                Trace.check(!eArg.isParam, Trace.UNRESOLVED_PARAMETER_TYPE,
                             Trace.getMessage(Trace.Expression_resolveTypes1));
 
                 dataType = eArg.dataType;
@@ -1771,7 +1771,7 @@ public class Expression {
             case MULTIPLY :
             case DIVIDE :
                 Trace.check(!(eArg.isParam && eArg2.isParam),
-                            Trace.COLUMN_TYPE_MISMATCH,
+                            Trace.UNRESOLVED_PARAMETER_TYPE,
                             Trace.getMessage(Trace.Expression_resolveTypes2));
 
                 if (isFixedConstant()) {
@@ -1820,7 +1820,7 @@ public class Expression {
             case SMALLER_EQUAL :
             case NOT_EQUAL :
                 Trace.check(!(eArg.isParam && eArg2.isParam),
-                            Trace.COLUMN_TYPE_MISMATCH,
+                            Trace.UNRESOLVED_PARAMETER_TYPE,
                             Trace.getMessage(Trace.Expression_resolveTypes3));
 
                 if (isFixedConditional()) {
@@ -1938,7 +1938,7 @@ public class Expression {
 
             /** @todo fredt - set the correct return type */
             case COUNT :
-                Trace.check(!eArg.isParam, Trace.COLUMN_TYPE_MISMATCH,
+                Trace.check(!eArg.isParam, Trace.UNRESOLVED_PARAMETER_TYPE,
                             Trace.getMessage(Trace.Expression_resolveTypes4));
 
                 dataType = Types.INTEGER;
@@ -1948,8 +1948,8 @@ public class Expression {
             case MIN :
             case SUM :
             case AVG :
-                Trace.check(!eArg.isParam, Trace.COLUMN_TYPE_MISMATCH,
-                            Trace.getMessage(Trace.Expression_resolveTypes5));
+                Trace.check(!eArg.isParam, Trace.UNRESOLVED_PARAMETER_TYPE,
+                            Trace.getMessage(Trace.Expression_resolveTypes4));
 
                 dataType = SetFunction.getType(exprType, eArg.dataType);
                 break;
@@ -1989,7 +1989,7 @@ public class Expression {
                 Expression case2 = eArg2;
 
                 Trace.check(!(case1.isParam && case2.isParam),
-                            Trace.COLUMN_TYPE_MISMATCH,
+                            Trace.UNRESOLVED_PARAMETER_TYPE,
                             Trace.getMessage(Trace.Expression_resolveTypes6));
 
                 if (case1.isParam || case1.dataType == Types.NULL) {
@@ -2015,7 +2015,7 @@ public class Expression {
                 } else {
                     Trace.check(
                         case1.dataType == case2.dataType,
-                        Trace.COLUMN_TYPE_MISMATCH,
+                        Trace.UNRESOLVED_PARAMETER_TYPE,
                         Trace.getMessage(
                             Trace.Expression_resolveTypes7, true,
                             new String[] {
@@ -2032,7 +2032,7 @@ public class Expression {
     void resolveTypeForLike() throws HsqlException {
 
         Trace.check(!(eArg.isParam && eArg2.isParam),
-                    Trace.COLUMN_TYPE_MISMATCH,
+                    Trace.UNRESOLVED_PARAMETER_TYPE,
                     Trace.getMessage(Trace.Expression_resolveTypeForLike));
 
         if (isFixedConditional()) {
@@ -2209,10 +2209,10 @@ public class Expression {
 
             if (eArg.isParam) {
                 Trace.check(
-                    len > 0, Trace.COLUMN_TYPE_MISMATCH,
+                    len > 0, Trace.UNRESOLVED_PARAMETER_TYPE,
                     Trace.getMessage(Trace.Expression_resolveTypeForIn1));
                 Trace.check(
-                    !vl[0].isParam, Trace.COLUMN_TYPE_MISMATCH,
+                    !vl[0].isParam, Trace.UNRESOLVED_PARAMETER_TYPE,
                     Trace.getMessage(Trace.Expression_resolveTypeForIn2));
 
                 Expression e  = vl[0];

@@ -73,9 +73,8 @@ final class DITableInfo {
      */
     DITableInfo() {
 
-        // fredt - removed from here - should be set in a database-wide
-        // context, depending on some property database property
-//        setLocale(Locale.getDefault());
+/** @todo fredt - remove from here: should be set in a database-wide context */
+        setLocale(Locale.getDefault());
     }
 
     /**

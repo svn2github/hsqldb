@@ -505,7 +505,7 @@ public class Library {
      * integer values.
      * @param i the first value
      * @param j the second value
-     * @return he bit-wise logical <em>and</em> of
+     * @return the bit-wise logical <em>and</em> of
      *      <code>i</code> and <code>j</code>
      */
     public static int bitand(int i, int j) {
@@ -518,7 +518,7 @@ public class Library {
      *
      * @param i the first value
      * @param j the second value
-     * @return he bit-wise logical <em>and</em> of
+     * @return the bit-wise logical <em>and</em> of
      *      <code>i</code> and <code>j</code>
      */
     public static int bitor(int i, int j) {
@@ -795,6 +795,13 @@ public class Library {
                          : ValuePool.getInt(s.length() * 2);
     }
 
+    /**
+     * Returns the number of bits in the given <code>String</code>.
+     * This includes trailing blanks.
+     *
+     * @param s the <code>String</code> for which to determine length
+     * @return the length of <code>s</code>, including trailing blanks
+     */
     public static Integer bitLength(String s) {
         return s == null ? null
                          : ValuePool.getInt(s.length() * 16);
@@ -1399,48 +1406,50 @@ public class Library {
     // date calculations.
 
     /**
-     * Method that calculates the number of units elapsed between two dates.
-     * contributed by Michael Landon
+     * Method that calculates the number of units elapsed between two dates.<p>
+     *
+     * Contributed by Michael Landon<p>
      *
      * @param datepart Specifies the unit in which the interval is to be measured.
-     * @param d1 The starting date for the interval. This value is
+     * @param d1 The starting datetime value for the interval. This value is
      *           subtracted from d2 to return the number of
      *           date-parts between the two arguments.
-     * @param d2 The ending date for the interval. d1 is subtracted
+     * @param d2 The ending datetime for the interval. d1 is subtracted
      *           from this value to return the number of date-parts
      *           between the two arguments.
      */
-    public static long datediff(String datepart, Timestamp d1,
-                                Timestamp d2) throws Exception {
+    public static Long datediff(String datepart, Timestamp d1,
+                                Timestamp d2) throws HsqlException {
 
         // make sure we've got valid data
-        if (datepart == null || d1 == null || d2 == null) {
-            throw new Exception("Invalid argument");
+        if (d1 == null || d2 == null) {
+            return null;
         }
 
         if ("yy".equalsIgnoreCase(datepart)
                 || "year".equalsIgnoreCase(datepart)) {
-            return getElapsed(Calendar.YEAR, d1, d2);
+            return ValuePool.getLong(getElapsed(Calendar.YEAR, d1, d2));
         } else if ("mm".equalsIgnoreCase(datepart)
                    || "month".equalsIgnoreCase(datepart)) {
-            return getElapsed(Calendar.MONTH, d1, d2);
+            return ValuePool.getLong(getElapsed(Calendar.MONTH, d1, d2));
         } else if ("dd".equalsIgnoreCase(datepart)
                    || "day".equalsIgnoreCase(datepart)) {
-            return getElapsed(Calendar.DATE, d1, d2);
+            return ValuePool.getLong(getElapsed(Calendar.DATE, d1, d2));
         } else if ("hh".equalsIgnoreCase(datepart)
                    || "hour".equalsIgnoreCase(datepart)) {
-            return getElapsed(Calendar.HOUR, d1, d2);
+            return ValuePool.getLong(getElapsed(Calendar.HOUR, d1, d2));
         } else if ("mi".equalsIgnoreCase(datepart)
                    || "minute".equalsIgnoreCase(datepart)) {
-            return getElapsed(Calendar.MINUTE, d1, d2);
+            return ValuePool.getLong(getElapsed(Calendar.MINUTE, d1, d2));
         } else if ("ss".equalsIgnoreCase(datepart)
                    || "second".equalsIgnoreCase(datepart)) {
-            return getElapsed(Calendar.SECOND, d1, d2);
+            return ValuePool.getLong(getElapsed(Calendar.SECOND, d1, d2));
         } else if ("ms".equalsIgnoreCase(datepart)
                    || "millisecond".equalsIgnoreCase(datepart)) {
-            return getElapsed(Calendar.MILLISECOND, d1, d2);
+            return ValuePool.getLong(getElapsed(Calendar.MILLISECOND, d1,
+                                                d2));
         } else {
-            throw new Exception("Unrecognized date-part [" + datepart + "]");
+            throw Trace.error(Trace.INVALID_CONVERSION);
         }
     }
 
@@ -1843,9 +1852,9 @@ public class Library {
                     return null;
                 }
                 case datediff : {
-                    return ValuePool.getLong(datediff((String) params[0],
-                                                      (Timestamp) params[1],
-                                                      (Timestamp) params[2]));
+                    return datediff((String) params[0],
+                                    (Timestamp) params[1],
+                                    (Timestamp) params[2]);
                 }
                 case dayname : {
                     return dayname((Date) params[0]);

@@ -1147,11 +1147,13 @@ class Parser {
                                       readConcat());
 
         if (l.getArg().isParam() && l.getArg2().isParam()) {
-            throw Trace.error(Trace.Parser_ambiguous_between1);
+            throw Trace.error(Trace.UNRESOLVED_PARAMETER_TYPE,
+                              Trace.Parser_ambiguous_between1);
         }
 
         if (h.getArg().isParam() && h.getArg2().isParam()) {
-            throw Trace.error(Trace.Parser_ambiguous_between2);
+            throw Trace.error(Trace.UNRESOLVED_PARAMETER_TYPE,
+                              Trace.Parser_ambiguous_between1);
         }
 
         return new Expression(Expression.AND, l, h);
@@ -1361,7 +1363,8 @@ class Parser {
 
                 r = readTerm();
 
-                Trace.check(!r.isParam(), Trace.Expression_resolveTypes1);
+                Trace.check(!r.isParam(), Trace.UNRESOLVED_PARAMETER_TYPE,
+                            Trace.getMessage(Trace.Expression_resolveTypes1));
 
                 break;
             }

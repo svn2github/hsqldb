@@ -955,7 +955,9 @@ final class DINameSpace {
         Iterator methods;
         String   className;
 
-        out        = new WrapperIterator();
+        out = new WrapperIterator(
+            enumRoutineMethods("org.hsqldb.Library", andAliases),
+            enumRoutineMethods("java.Math", andAliases));
         classNames = session.getGrantedClassNames(true).iterator();
 
         while (classNames.hasNext()) {

@@ -208,7 +208,7 @@ abstract class Cache {
     CacheFree fRoot;
     int       iFreeCount;
     int       iCacheSize;
-    int       cacheBytesLength;
+    long      cacheBytesLength;
 
     // reusable input / output streams
     RowInputInterface            rowIn;
@@ -459,7 +459,7 @@ abstract class Cache {
         int tempfirstaccess = firstAccessCount;
 
         // put access count in the array
-        for (int i = 0; i < maxCacheSize; i++) {
+        for (int i = 0; i < iCacheSize; i++) {
             accessCount[i] = rFirst.iLastAccess;
             rFirst         = rFirst.rNext;
         }
