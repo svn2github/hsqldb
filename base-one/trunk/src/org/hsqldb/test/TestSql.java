@@ -411,6 +411,9 @@ public class TestSql extends TestBase {
             ps.setObject(9, new java.sql.Timestamp(System.currentTimeMillis()
                                                    + 2));
             ps.execute();
+            ps.setObject(1, new Float(0), Types.INTEGER);
+            ps.setObject(4, new Float(1), Types.INTEGER);
+            ps.execute();
 
             ResultSet rs =
                 stmnt.executeQuery("SELECT d, f, l, i, s*2, t FROM t1");

@@ -448,7 +448,7 @@ public class Column {
 
 // fredt@users - type conversion - may need to apply to other arithmetic operations too
         if (!(a instanceof Number && b instanceof Number)) {
-            a = Column.convertObject(b, type);
+            a = Column.convertObject(a, type);
             b = Column.convertObject(b, type);
         }
 
@@ -1397,8 +1397,8 @@ public class Column {
             return ValuePool.getInt(val);
         }
 
-        if (o instanceof Double) {
-            double d = ((Double) o).doubleValue();
+        if (o instanceof Double || o instanceof Float) {
+            double d = ((Number) o).doubleValue();
 
             if (Double.isNaN(d) || d >= (double) Integer.MAX_VALUE + 1
                     || d <= (double) Integer.MIN_VALUE - 1) {
@@ -1429,8 +1429,8 @@ public class Column {
             return ValuePool.getLong(val);
         }
 
-        if (o instanceof Double) {
-            double d = ((Double) o).doubleValue();
+        if (o instanceof Double || o instanceof Float) {
+            double d = ((Number) o).doubleValue();
 
             if (Double.isNaN(d) || d >= (double) Long.MAX_VALUE + 1
                     || d <= (double) Long.MIN_VALUE - 1) {

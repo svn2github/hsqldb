@@ -145,7 +145,7 @@ public class DataFileCache extends Cache {
      */
     void close() throws HsqlException {
 
-        if (dataFile == null || dataFile.readOnly) {
+        if (dataFile == null || dataFile.isReadOnly()) {
             return;
         }
 
@@ -199,7 +199,7 @@ public class DataFileCache extends Cache {
             // open as readonly
             open(true);
 
-            boolean        isNio = dataFile.isNio;
+            boolean        wasNio = dataFile.wasNio();
             DataFileDefrag dfd   = new DataFileDefrag();
 
             indexRoots = dfd.defrag(dDatabase, sName);
@@ -207,7 +207,7 @@ public class DataFileCache extends Cache {
             closeFile();
             Trace.printSystemOut("closed old cache");
 
-            if (isNio) {
+            if (wasNio) {
                 System.gc();
                 FileUtil.renameOverwrite(sName, sName + ".old");
 

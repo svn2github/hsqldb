@@ -58,7 +58,7 @@ class ScaledRAFile {
     static final int       DATA_FILE_NIO = 1;
     final RandomAccessFile file;
     final int              scale;
-    final boolean          readOnly;
+    final private boolean  readOnly;
     final String           fileName;
     boolean                isNio;
     boolean                bufferDirty = true;
@@ -233,5 +233,13 @@ class ScaledRAFile {
 
     void close() throws IOException {
         file.close();
+    }
+
+    public boolean isReadOnly() {
+        return readOnly;
+    }
+
+    public boolean wasNio() {
+        return false;
     }
 }

@@ -476,7 +476,7 @@ class Constraint {
 
         core.checkFilter.currentData = row;
 
-        if (Boolean.FALSE.equals(core.check.test(session))) {
+        if (!core.check.testCondition(session)) {
             core.checkFilter.currentRow = null;
 
             throw Trace.error(Trace.CHECK_CONSTRAINT_VIOLATION,

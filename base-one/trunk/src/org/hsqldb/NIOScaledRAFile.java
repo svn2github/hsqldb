@@ -54,6 +54,7 @@ class NIOScaledRAFile extends ScaledRAFile {
     MappedByteBuffer  buffer;
     FileChannel       channel;
     long              bufferLength;
+    boolean           wasNio;
     final static long MAX_NIO_LENGTH = (1L << 28);
 
     /**
@@ -71,7 +72,7 @@ class NIOScaledRAFile extends ScaledRAFile {
             return;
         }
 
-        isNio   = true;
+        wasNio  = isNio = true;
         channel = file.getChannel();
 
         enlargeBuffer(super.length(), 0);
@@ -115,9 +116,10 @@ class NIOScaledRAFile extends ScaledRAFile {
 
         if (bufferLength <= MAX_NIO_LENGTH) {
             try {
-                buffer = channel.map(readOnly ? FileChannel.MapMode.READ_ONLY
-                                              : FileChannel.MapMode
-                                                  .READ_WRITE, 0, newSize);
+                buffer = channel.map(isReadOnly()
+                                     ? FileChannel.MapMode.READ_ONLY
+                                     : FileChannel.MapMode.READ_WRITE, 0,
+                                     newSize);
             } catch (Exception e) {
                 Trace.printSystemOut("NIO enlargeBuffer() failed:  "
                                      + newSize);
@@ -277,5 +279,9 @@ class NIOScaledRAFile extends ScaledRAFile {
         Trace.printSystemOut("NIO next file.close()");
         file.close();
         System.gc();
+    }
+
+    public boolean wasNio() {
+        return wasNio;
     }
 }
