@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: SqlTool.java,v 1.3 2004/01/19 19:50:52 unsaved Exp $
  *
  * Copyright (c) 2001-2003, The HSQL Development Group
  * All rights reserved.
@@ -47,7 +47,7 @@ import java.util.StringTokenizer;
  *  immediately after the description, just like's Sun's examples in
  *  their Coding Conventions document).
  *
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  */
 public class SqlTool {
     final static private String DEFAULT_JDBC_DRIVER = "org.hsqldb.jdbcDriver";
@@ -152,7 +152,9 @@ public class SqlTool {
             + "    --driver a.b.c.Driver    JDBC driver class ["
             +           DEFAULT_JDBC_DRIVER + "]\n"
         + "    urlid                    ID of url/userame/password in rcfile\n"
-            + "    file1.sql...             SQL files to be executed";
+            + "    file1.sql...             SQL files to be executed [stdin]\n"
+            + "                             "
+            + "(Use '-' for non-interactively stdin)";
 
     private static class BadCmdline extends Exception {};
     private static BadCmdline bcl = new BadCmdline();
@@ -171,6 +173,7 @@ public class SqlTool {
         File[] scriptFiles = { null };
         int i = -1;
         boolean listMode = false;
+        boolean interactive = false;
 
         try {
             while ((i + 1 < arg.length) && arg[i+1].startsWith("--")) {
@@ -206,15 +209,20 @@ public class SqlTool {
             }
             int scriptIndex = 0;
             if (arg.length > i + 1) {
-                scriptFiles = new File[arg.length - i - 1];
-                if (debug) {
-                    System.err.println(
-                            "scriptFiles has " + scriptFiles.length 
-                                    + " elements");
+                interactive = false;
+                if (arg.length != i + 2 || !arg[i + 1].equals("-")) {
+                    scriptFiles = new File[arg.length - i - 1];
+                    if (debug) {
+                        System.err.println(
+                                "scriptFiles has " + scriptFiles.length 
+                                        + " elements");
+                    }
+                    while (i + 1 < arg.length) {
+                        scriptFiles[scriptIndex++]  = new File(arg[++i]);
+                    }
                 }
-                while (i + 1 < arg.length) {
-                    scriptFiles[scriptIndex++]  = new File(arg[++i]);
-                }
+            } else {
+                interactive = true;
             }
         } catch (BadCmdline bcl) {
             System.err.println(SYNTAX_MESSAGE);
@@ -253,16 +261,22 @@ public class SqlTool {
 
         SqlFile[] sqlFiles = new SqlFile[scriptFiles.length];
         try {
-            for (int j = 0; j < scriptFiles.length; j++)
-                sqlFiles[j] =
-                        new SqlFile(scriptFiles[j], (scriptFiles == null));
+            for (int j = 0; j < scriptFiles.length; j++) {
+                sqlFiles[j] = new SqlFile(scriptFiles[j], interactive);
+            }
         } catch (IOException ioe) {
             System.err.println(ioe.getMessage());
             System.exit(2);
         }
 
-        for (int j = 0; j < scriptFiles.length; j++)
-            sqlFiles[j].execute(conn);
+        try {
+            for (int j = 0; j < scriptFiles.length; j++) {
+                sqlFiles[j].execute(conn);
+            }
+        } catch (IOException ioe) {
+            System.err.println("Failed to execute SQL:  " + ioe.getMessage());
+            System.exit(2);
+        }
         System.exit(0);
     }
 }
