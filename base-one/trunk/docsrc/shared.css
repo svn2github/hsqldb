@@ -49,3 +49,8 @@ div.section h2.title {
     padding: 2px;
     border: none;
 }
+
+span.remark        {
+    font-weight: bold;
+    color: orange;
+}
