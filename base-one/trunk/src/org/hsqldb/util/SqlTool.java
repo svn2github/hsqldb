@@ -1,5 +1,5 @@
 /*
- * $Id: SqlTool.java,v 1.4 2004/01/19 20:26:53 unsaved Exp $
+ * $Id: SqlTool.java,v 1.5 2004/01/19 23:09:38 unsaved Exp $
  *
  * Copyright (c) 2001-2003, The HSQL Development Group
  * All rights reserved.
@@ -48,7 +48,7 @@ import java.util.StringTokenizer;
  *  immediately after the description, just like's Sun's examples in
  *  their Coding Conventions document).
  *
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  */
 public class SqlTool {
     final static private String DEFAULT_JDBC_DRIVER = "org.hsqldb.jdbcDriver";
@@ -144,7 +144,8 @@ public class SqlTool {
     }
 
     static final private String SYNTAX_MESSAGE =
-            "Usage: java SqlTool [--optname [optval...]] urlid [file1.sql...]\n"
+            "Usage: java org.hsqldb.util.SqlTool [--optname [optval...]] "
+            + "urlid [file1.sql...]\n"
             + "where arguments are:\n"
             + "    --help                   Prints this message\n"
             + "    --list                   List urlids in the rcfile\n"
@@ -257,7 +258,7 @@ public class SqlTool {
                     + ".  " + e.getMessage());
             //e.printStackTrace();
             // Let's not continuing as if nothing is wrong.
-            throw new RuntimeException(e);
+            throw new RuntimeException(e.getMessage());
         }
 
         SqlFile[] sqlFiles = new SqlFile[scriptFiles.length];
