@@ -4,12 +4,18 @@
 
 a:visited { color: #083194; }
 
-span.guimenu     { font-family: monospace; font-style: italic; }
-span.guimenuitem { font-family: monospace; font-style: italic; }
-span.guilabel    { font-family: monospace; font-style: italic; }
-span.guibutton   { font-family: monospace; font-style: italic; }
-span.guiicon     { font-family: monospace; font-style: italic; }
-span.guisubmenu  { font-family: monospace; font-style: italic; }
+span.guimenu
+    { font-family: monospace; font-style: italic; font-weight: bold; }
+span.guimenuitem
+    { font-family: monospace; font-style: italic; font-weight: bold; }
+span.guilabel
+    { font-family: monospace; font-style: italic; font-weight: bold; }
+span.guibutton
+    { font-family: monospace; font-style: italic; font-weight: bold; }
+span.guiicon
+    { font-family: monospace; font-style: italic; font-weight: bold; }
+span.guisubmenu
+    { font-family: monospace; font-style: italic; font-weight: bold; }
 span.term        {
     font-family: monospace;
     font-weight: bold;
