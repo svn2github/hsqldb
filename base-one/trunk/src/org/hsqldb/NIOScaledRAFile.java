@@ -51,9 +51,10 @@ import java.nio.channels.FileChannel;
  */
 class NIOScaledRAFile extends ScaledRAFile {
 
-    MappedByteBuffer buffer;
-    FileChannel      channel;
-    long             bufferLength;
+    MappedByteBuffer  buffer;
+    FileChannel       channel;
+    long              bufferLength;
+    final static long MAX_NIO_LENGTH = (1L << 28);
 
     /**
      * Public constructor for access by reflection
@@ -64,7 +65,7 @@ class NIOScaledRAFile extends ScaledRAFile {
 
         super(name, mode, multiplier);
 
-        if (super.length() > (1L << 29)) {
+        if (super.length() > MAX_NIO_LENGTH) {
             Trace.printSystemOut("Initiatiated without nio");
 
             return;
@@ -85,17 +86,6 @@ class NIOScaledRAFile extends ScaledRAFile {
 
         for (int scale = 20; ; scale++) {
             bufsize = 1L << scale;
-
-            if (bufsize > Integer.MAX_VALUE) {
-                bufsize = Integer.MAX_VALUE;
-
-                if (bufsize < newsize) {
-                    throw new IOException(
-                        Trace.getMessage(Trace.FILE_IO_ERROR));
-                }
-
-                break;
-            }
 
             if (bufsize >= newsize) {
                 break;
@@ -119,23 +109,38 @@ class NIOScaledRAFile extends ScaledRAFile {
 
         Trace.printSystemOut("NIO next enlargeBuffer():  " + newSize);
 
-        if (bufferLength > 1L << 24) {
+        if (bufferLength > (1L << 24)) {
             System.gc();
         }
 
-        try {
-            buffer = channel.map(readOnly ? FileChannel.MapMode.READ_ONLY
-                                          : FileChannel.MapMode.READ_WRITE, 0,
-                                          newSize);
-        } catch (Exception e) {
-            Trace.printSystemOut("NIO enlargeBuffer() failed:  " + newSize);
-            super.seek(position);
+        if (bufferLength <= MAX_NIO_LENGTH) {
+            try {
+                buffer = channel.map(readOnly ? FileChannel.MapMode.READ_ONLY
+                                              : FileChannel.MapMode
+                                                  .READ_WRITE, 0, newSize);
+            } catch (Exception e) {
+                Trace.printSystemOut("NIO enlargeBuffer() failed:  "
+                                     + newSize);
+
+                isNio   = false;
+                buffer  = null;
+                channel = null;
+
+                System.gc();
+                super.seek(position);
+
+                return;
+            }
+        } else {
+            Trace.printSystemOut("Stopped NIO at enlargeBuffer():  "
+                                 + newSize);
 
             isNio   = false;
             buffer  = null;
             channel = null;
 
             System.gc();
+            super.seek(position);
 
             return;
         }
@@ -176,7 +181,7 @@ class NIOScaledRAFile extends ScaledRAFile {
             return super.getFilePointer();
         }
 
-        return (buffer.position() + scale - 1) / scale;
+        return buffer.position();
     }
 
     int read() throws IOException {

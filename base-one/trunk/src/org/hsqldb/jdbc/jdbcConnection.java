@@ -2375,14 +2375,14 @@ public class jdbcConnection implements Connection {
      */
     public jdbcConnection(HsqlProperties props) throws SQLException {
 
-        String  user     = (String) props.getProperty("user");
-        String  password = (String) props.getProperty("password");
+        String  user     = props.getProperty("user");
+        String  password = props.getProperty("password");
         boolean ifExists = props.isPropertyTrue("ifexists");
-        String  connType = (String) props.getProperty("connection_type");
+        String  connType = props.getProperty("connection_type");
         String  host     = props.getProperty("host");
         int     port     = props.getIntegerProperty("port", 0);
         String  path     = props.getProperty("path");
-        String  database = (String) props.getProperty("database");
+        String  database = props.getProperty("database");
         boolean isTLS = (connType == DatabaseManager.S_HSQLS
                          || connType == DatabaseManager.S_HTTPS);
 

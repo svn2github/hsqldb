@@ -40,6 +40,8 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.sql.DriverManager;
 import java.util.Properties;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 
 // fredt@users 20020320 - patch 1.7.0 - JDBC 2 support and error trapping
 // fredt@users 20021030 - patch 1.7.2 - updates
@@ -52,20 +54,39 @@ import java.util.Properties;
  */
 public class JavaSystem {
 
+    public static BigInteger getUnscaledValue(BigDecimal o) {
+
+//#ifdef DEPRECATEDJAVA
+/*
+        int scale = o.scale();
+        return o.movePointRight(scale).toBigInteger();
+    }
+ */
+
+//#else
+        return o.unscaledValue();
+
+//#endif
+    }
+
     public static void setLogToSystem(boolean value) {
 
 //#ifdef DEPRECATEDJAVA
 /*
+        try {
             PrintStream newOutStream = (value) ? System.out
                                                : null;
             DriverManager.setLogStream(newOutStream);
+        } catch (Exception e){}
 */
 
 //#else
-        PrintWriter newPrintWriter = (value) ? new PrintWriter(System.out)
-                                             : null;
+        try {
+            PrintWriter newPrintWriter = (value) ? new PrintWriter(System.out)
+                                                 : null;
 
-        DriverManager.setLogWriter(newPrintWriter);
+            DriverManager.setLogWriter(newPrintWriter);
+        } catch (Exception e) {}
 
 //#endif
     }

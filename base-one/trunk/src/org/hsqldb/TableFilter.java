@@ -499,8 +499,8 @@ class TableFilter {
             currentNode = filterIndex.next(currentNode);
         }
 
-        currentData = emptyData;
         currentRow  = null;
+        currentData = emptyData;
 
         return false;
     }
@@ -533,8 +533,8 @@ class TableFilter {
             currentNode = filterIndex.next(currentNode);
         }
 
-        currentData = emptyData;
         currentRow  = null;
+        currentData = emptyData;
 
         return false;
     }

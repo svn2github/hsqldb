@@ -6,6 +6,13 @@ area is in changelog_1_7_2.txt.
 
 Fred Toussi (fredt@users.sourceforge.net)
 
+2004.11.25 UPDATED RELEASE 1.7.2.8
+
+Fixed bug LIMIT and TOP with UNION
+Fixed bug running Database Manager as applet
+Enhancement to allow a table with a label used in DELET and UPDATE
+Enhancement to reduce memory use when restoring long log with too many connections
+
 2004.10.28 UPDATED RELEASE 1.7.2.7
 
 Fixed new bug with TEXT TABLES without primary key

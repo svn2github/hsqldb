@@ -893,6 +893,29 @@ class Parser {
         throw Trace.error(Trace.INVALID_ORDER_BY);
     }
 
+    private TableFilter parseSimpleTableFilter(int type)
+    throws HsqlException {
+
+        String alias = null;
+        String token = tokenizer.getString();
+        Table  table = database.getTable(session, token);
+
+        checkTableWriteAccess(table, type);
+
+//
+        token = tokenizer.getString();
+
+        if (token.equals(Token.T_AS)) {
+            alias = tokenizer.getName();
+        } else if (tokenizer.wasName()) {
+            alias = token;
+        } else {
+            tokenizer.back();
+        }
+
+        return new TableFilter(table, alias, false);
+    }
+
     /**
      * Retrieves a TableFilter object newly constructed from the current
      * parse context. <p>
@@ -1135,37 +1158,8 @@ class Parser {
                 return new Expression(type, s, null);
             }
             default : {
-                Expression a = readConcat();
-
-                if (iToken == Expression.IS) {
-                    read();
-
-                    boolean not;
-
-                    if (iToken == Expression.NOT) {
-                        not = true;
-
-                        read();
-                    } else {
-                        not = false;
-                    }
-
-                    Trace.check(iToken == Expression.VALUE && oData == null,
-                                Trace.UNEXPECTED_TOKEN);
-                    read();
-
-                    // TODO: the TableFilter needs a right hand side to avoid null pointer exceptions...
-                    a = new Expression(Expression.IS_NULL, a,
-                                       new Expression(Types.NULL, null));
-
-                    if (not) {
-                        a = new Expression(Expression.NOT, a, null);
-                    }
-
-                    return a;
-                }
-
-                boolean not = false;
+                Expression a   = readConcat();
+                boolean    not = false;
 
                 if (iToken == Expression.NOT) {
                     not = true;
@@ -1672,8 +1666,9 @@ class Parser {
 
                 while (true) {
                     Expression current = readOr();
-                    Expression condition = new Expression(Expression.IS_NULL,
-                                                          current, null);
+                    Expression condition =
+                        new Expression(Expression.EQUAL, current,
+                                       new Expression(Types.NULL, null));
                     Expression alternatives =
                         new Expression(Expression.ALTERNATIVE,
                                        new Expression(Types.NULL, null),
@@ -2122,11 +2117,22 @@ class Parser {
                 case Expression.TRAILING :
                 case Expression.BOTH :
                 case Expression.AS :
-                case Expression.IS :
                     break;            // nothing else required, iToken initialized properly
 
                 case Expression.MULTIPLY :
                     sTable = null;    // in case of ASTERIX
+                    break;
+
+                case Expression.IS :
+                    sToken = tokenizer.getString();
+
+                    if (sToken.equals(Token.T_NOT)) {
+                        iToken = Expression.NOT_EQUAL;
+                    } else {
+                        iToken = Expression.EQUAL;
+
+                        tokenizer.back();
+                    }
                     break;
 
                 default :
@@ -2282,20 +2288,15 @@ class Parser {
      */
     CompiledStatement compileDeleteStatement() throws HsqlException {
 
-        String     token;
-        Table      table;
-        Expression condition;
+        String      token;
+        Expression  condition = null;
+        TableFilter tableFilter;
 
         clearParameters();
         tokenizer.getThis(Token.T_FROM);
 
-        token = tokenizer.getString();
-        table = database.getTable(session, token);
-
-        checkTableWriteAccess(table, UserManager.DELETE);
-
-        token     = tokenizer.getString();
-        condition = null;
+        tableFilter = parseSimpleTableFilter(UserManager.DELETE);
+        token       = tokenizer.getString();
 
         if (token.equals(Token.T_WHERE)) {
             condition = parseExpression();
@@ -2303,7 +2304,7 @@ class Parser {
             tokenizer.back();
         }
 
-        CompiledStatement cs = new CompiledStatement(table, condition,
+        CompiledStatement cs = new CompiledStatement(tableFilter, condition,
             getParameters());
 
         cs.subqueries = getSortedSubqueries();
@@ -2475,7 +2476,6 @@ class Parser {
 
         String       token;
         Table        table;
-        String       alias = null;
         int[]        colList;
         Expression[] exprList;
         int          len;
@@ -2484,16 +2484,11 @@ class Parser {
 
         clearParameters();
 
-        token = tokenizer.getString();
-        table = database.getTable(session, token);
+        TableFilter tableFilter = parseSimpleTableFilter(UserManager.UPDATE);
 
-        checkTableWriteAccess(table, UserManager.UPDATE);
+        table = tableFilter.filterTable;
 
-        if (!tokenizer.isGetThis(Token.T_SET)) {
-            alias = tokenizer.getIdentifier();
-
-            tokenizer.getThis(Token.T_SET);
-        }
+        tokenizer.getThis(Token.T_SET);
 
         colList  = table.getNewColumnMap();
         exprList = new Expression[colList.length];
@@ -2531,7 +2526,7 @@ class Parser {
         colList  = (int[]) ArrayUtil.resizeArray(colList, len);
         exprList = (Expression[]) ArrayUtil.resizeArray(exprList, len);
 
-        CompiledStatement cs = new CompiledStatement(table, alias, colList,
+        CompiledStatement cs = new CompiledStatement(tableFilter, colList,
             exprList, condition, getParameters());
 
         cs.subqueries = getSortedSubqueries();

@@ -80,9 +80,9 @@ abstract public class ScriptReaderBase {
         // it is not subject to the same security restrictions
         dataStreamIn = db.isFilesInJar()
                        ? new BufferedInputStream(
-                           getClass().getResourceAsStream(fileName), 2 << 12)
+                           getClass().getResourceAsStream(fileName), 1 << 13)
                        : new BufferedInputStream(
-                           new FileInputStream(fileName), 2 << 12);
+                           new FileInputStream(fileName), 1 << 13);
     }
 
     public void readAll(Session session) throws IOException, HsqlException {
@@ -102,7 +102,10 @@ abstract public class ScriptReaderBase {
         return lineCount;
     }
 
-    public void close() throws IOException {
-        dataStreamIn.close();
+    public void close() {
+
+        try {
+            dataStreamIn.close();
+        } catch (Exception e) {}
     }
 }

@@ -68,7 +68,6 @@ package org.hsqldb;
 
 import java.io.IOException;
 
-import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.IntKeyHashMap;
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.scriptio.ScriptReaderBase;
@@ -90,28 +89,23 @@ public class ScriptRunner {
      *
      * @throws  HsqlException
      */
-    public static void runScript(Database database, String scriptFilename,
+    public static void runScript(Database database, String logFilename,
                                  int logType) throws HsqlException {
-
-        if (database.isFilesInJar()) {
-            if (ScriptRunner.class.getClassLoader().getResource(
-                    scriptFilename) == null) {
-                return;
-            }
-        } else if (!FileUtil.exists(scriptFilename)) {
-            return;
-        }
 
         IntKeyHashMap sessionMap = new IntKeyHashMap();
         Session sysSession = database.getSessionManager().getSysSession();
         Session       current    = sysSession;
+        int           currentId  = 0;
 
         database.setReferentialIntegrity(false);
 
+        ScriptReaderBase scr = null;
+
         try {
             StopWatch sw = new StopWatch();
-            ScriptReaderBase scr = ScriptReaderBase.newScriptReader(database,
-                scriptFilename, logType);
+
+            scr = ScriptReaderBase.newScriptReader(database, logFilename,
+                                                   logType);
 
             while (true) {
                 String s = scr.readLoggedStatement();
@@ -121,17 +115,16 @@ public class ScriptRunner {
                 }
 
                 if (s.startsWith("/*C")) {
-                    int id = Integer.parseInt(s.substring(3, s.indexOf('*',
-                        4)));
-
-                    current = (Session) sessionMap.get(id);
+                    currentId = Integer.parseInt(s.substring(3,
+                            s.indexOf('*', 4)));
+                    current = (Session) sessionMap.get(currentId);
 
                     if (current == null) {
                         current =
                             database.getSessionManager().newSession(database,
                                 sysSession.getUser(), false);
 
-                        sessionMap.put(id, current);
+                        sessionMap.put(currentId, current);
                     }
 
                     s = s.substring(s.indexOf('/', 1) + 1);
@@ -146,7 +139,7 @@ public class ScriptRunner {
                         // catch out-of-memory errors and terminate
                         if (result.getStatementID() == Trace.OUT_OF_MEMORY) {
                             Trace.printSystemOut("out of memory processing "
-                                                 + scriptFilename + " line: "
+                                                 + logFilename + " line: "
                                                  + scr.getLineNumber());
 
                             throw Trace.error(result);
@@ -155,25 +148,25 @@ public class ScriptRunner {
 /** @todo fredt - must display the error through different method as printSystemOut does not normally print */
 
                         // stop processing on bad log line
-                        Trace.printSystemOut("error in " + scriptFilename
+                        Trace.printSystemOut("error in " + logFilename
                                              + " line: "
                                              + scr.getLineNumber());
                         Trace.printSystemOut(result.getMainString());
 
                         break;
                     }
+
+                    if (current.isClosed()) {
+                        sessionMap.remove(currentId);
+                    }
                 }
             }
-
+        } catch (IOException e) {
+            Trace.printSystemOut("error in " + logFilename);
+        } finally {
             scr.close();
             database.getSessionManager().closeAllSessions();
-        } catch (IOException e) {
-            throw Trace.error(Trace.FILE_IO_ERROR,
-                              Trace.Generic_reading_file_error, new Object[] {
-                scriptFilename, e
-            });
+            database.setReferentialIntegrity(true);
         }
-
-        database.setReferentialIntegrity(true);
     }
 }

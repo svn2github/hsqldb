@@ -672,7 +672,7 @@ public class DatabaseManager {
     // Timer
     private static final HsqlTimer timer = new HsqlTimer();
 
-    static HsqlTimer getTimer() {
+    public static HsqlTimer getTimer() {
         return timer;
     }
 

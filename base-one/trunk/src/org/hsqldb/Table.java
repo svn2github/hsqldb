@@ -126,7 +126,7 @@ public class Table extends BaseTable {
     // main properties
 // boucherb@users - access changed in support of metadata 1.7.2
     public HashMappedList columnList;                 // columns in table
-    private Index[]       indexList;                  // vIndex(0) is the primary key index
+    Index[]               indexList;                  // vIndex(0) is the primary key index
     private int[]         primaryKeyCols;             // column numbers for primary key
     int[]                 bestRowIdentifierCols;      // column set for best index
     boolean               bestRowIdentifierStrict;    // true if it has no nullable column

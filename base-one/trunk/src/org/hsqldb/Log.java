@@ -232,8 +232,10 @@ class Log {
             throw Trace.error(Trace.FILE_IO_ERROR, e.getMessage());
         }
 
-        ScriptRunner.runScript(dDatabase, sFileLog,
-                               ScriptWriterBase.SCRIPT_TEXT_170);
+        if (!dDatabase.isFilesInJar() && FileUtil.exists(sFileLog)) {
+            ScriptRunner.runScript(dDatabase, sFileLog,
+                                   ScriptWriterBase.SCRIPT_TEXT_170);
+        }
 
         bRestoring = false;
     }

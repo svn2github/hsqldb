@@ -189,7 +189,7 @@ final class CompiledStatementExecutor {
     throws HsqlException {
 
         Table       table  = cs.targetTable;
-        TableFilter filter = cs.tf;
+        TableFilter filter = cs.targetFilter;
         int         count  = 0;
 
         if (filter.findFirst()) {
@@ -359,7 +359,7 @@ final class CompiledStatementExecutor {
     throws HsqlException {
 
         Table       table  = cs.targetTable;
-        TableFilter filter = cs.tf;
+        TableFilter filter = cs.targetFilter;
         int         count  = 0;
 
         if (filter.findFirst()) {

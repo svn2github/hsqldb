@@ -50,6 +50,7 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
     public static final int FILES_NOT_MODIFIED       = 0;
     public static final int FILES_MODIFIED           = 1;
     public static final int FILES_MODIFIED_NEW       = 2;
+    public static final int FILES_NEW                = 3;
     private static HashSet  fullyProtectedProperties = new HashSet();
     private static HashSet  setProtectedProperties   = new HashSet();
     private static HashSet  booleanProperties        = new HashSet();
@@ -391,6 +392,8 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
             value = "yes";
         } else if (mode == FILES_MODIFIED_NEW) {
             value = "yes-new-files";
+        } else if (mode == FILES_NEW) {
+            value = "no-new-files";
         }
 
         setProperty("modified", value);
@@ -405,6 +408,8 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
             return FILES_MODIFIED;
         } else if ("yes-new-files".equals(value)) {
             return FILES_MODIFIED_NEW;
+        } else if ("no-new-files".equals(value)) {
+            return FILES_NEW;
         }
 
         return FILES_NOT_MODIFIED;

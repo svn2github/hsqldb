@@ -33,7 +33,6 @@ package org.hsqldb.lib;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.Random;
 
 import org.hsqldb.lib.java.JavaSystem;
@@ -101,6 +100,17 @@ public class FileUtil {
      */
     static public boolean exists(String filename) {
         return (new File(filename)).exists();
+    }
+
+    public static boolean exists(String fileName, boolean resource,
+                                 Class cla) throws IOException {
+
+        if (fileName == null || fileName.length() == 0) {
+            return false;
+        }
+
+        return resource ? null != cla.getResource(fileName)
+                        : FileUtil.exists(fileName);
     }
 
     /**

@@ -484,12 +484,12 @@ class Select {
 
         Result r;
 
+        maxrows = getLimitCount(maxrows);
+
         if (unionType == NOUNION) {
-            maxrows = getLimitCount(maxrows);
-            r       = getSingleResult(session, maxrows);
+            r = getSingleResult(session, maxrows);
         } else {
-            maxrows = Integer.MAX_VALUE;
-            r       = getResultMain(session);
+            r = getResultMain(session);
         }
 
         sortResult(r);

@@ -194,20 +194,8 @@ public class HsqlProperties {
     }
 
     public boolean checkFileExists() throws IOException {
-        return checkFileExists(fileName, resource, getClass());
-    }
-
-    public static boolean checkFileExists(String fileName, boolean resource,
-                                          Class cla) throws IOException {
-
-        if (fileName == null || fileName.length() == 0) {
-            return false;
-        }
-
-        String propFilename = fileName + ".properties";
-
-        return resource ? null != cla.getResource(propFilename)
-                        : FileUtil.exists(propFilename);
+        return FileUtil.exists(fileName + ".properties", resource,
+                               getClass());
     }
 
     public boolean load() throws Exception {

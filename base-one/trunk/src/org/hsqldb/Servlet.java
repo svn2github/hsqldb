@@ -83,6 +83,7 @@ import org.hsqldb.rowio.RowOutputBinary;
 // fredt@users 20020130 - patch 475586 by wreissen@users
 // fredt@users 20020328 - patch 1.7.0 by fredt - error trapping
 // fredt@users 20030630 - patch 1.7.2 - new protocol, persistent sessions
+// fredt@users 20041112 - patch by Willian Crick - use web_inf directory
 
 /**
  * Servlet can act as an interface between the client and the database for the
@@ -98,16 +99,29 @@ import org.hsqldb.rowio.RowOutputBinary;
  * <pre>
  * jdbc:hsqldb:http://localhost.com:8080/servlet/org.hsqldb.Servlet
  * </pre>
- * The database name is taken from the servlet engine property:
+ * The database path/name is taken from the servlet engine property:
  * <pre>
  * hsqldb.server.database
  * </pre>
  * <p>
+ * If the database is deployed in the WEB-INF directory of the servlet container,
+ * the property:
+ * <pre>
+ *  hsqldb.server.use_web-inf_path
+ * </pre>
+ * should be set "true" in the web.xml file of the servlet container.
+ * In this case, the database path should begin with a "/".
+ *
  * From version 1.7.2 JDBC connections via the HTTP protocol are persistent
  * in the JDBC sense. The JDBC Connection that is established can support
  * transactions spanning several Statement calls and real PreparedStatement
  * calls are supported. This class has been rewritten to support the new
- * features. (fredt@users)
+ * features.
+ *
+ *
+ *
+ *
+ *  (fredt@users)
  *
  * @version 1.7.2
  */
@@ -144,6 +158,15 @@ public class Servlet extends javax.servlet.http.HttpServlet {
             dbStr = ".";
         }
 
+// begin WEB-INF patch */
+        String useWebInfStr =
+            getInitParameter("hsqldb.server.use_web-inf_path");
+
+        if (!dbStr.equals(".") && "true".equalsIgnoreCase(useWebInfStr)) {
+            dbStr = getServletContext().getRealPath("/") + "WEB-INF" + dbStr;
+        }
+
+// end WEB-INF patch
         HsqlProperties dbURL = DatabaseManager.parseURL(dbStr, false);
 
         log("Database filename = " + dbStr);

@@ -65,7 +65,7 @@ final class CompiledStatement {
     Table targetTable;
 
     /** table filter for UPDATE and DELETE */
-    TableFilter tf;
+    TableFilter targetFilter;
 
     /** condition expression for UPDATE and DELETE */
     Expression condition;
@@ -161,22 +161,22 @@ final class CompiledStatement {
     /**
      * Initializes this as a DELETE statement
      *
-     * @param targetTable
+     * @param targetFilter
      * @param deleteCondition
      * @param parameters
      */
-    CompiledStatement(Table targetTable, Expression deleteCondition,
+    CompiledStatement(TableFilter targetFilter, Expression deleteCondition,
                       Expression[] params) throws HsqlException {
 
-        this.targetTable = targetTable;
-        tf               = new TableFilter(targetTable, null, false);
+        this.targetFilter = targetFilter;
+        targetTable       = targetFilter.filterTable;
 
         if (deleteCondition != null) {
             condition = new Expression(deleteCondition);
 
-            condition.resolveTables(tf);
+            condition.resolveTables(targetFilter);
             condition.resolveTypes();
-            tf.setConditions(condition);
+            targetFilter.setConditions(condition);
         }
 
         setParameters(params);
@@ -193,14 +193,14 @@ final class CompiledStatement {
      * @param updateCondition
      * @param params
      */
-    CompiledStatement(Table targetTable, String alias, int[] columnMap,
+    CompiledStatement(TableFilter targetFilter, int[] columnMap,
                       Expression[] columnValues, Expression updateCondition,
                       Expression[] params) throws HsqlException {
 
-        this.targetTable  = targetTable;
+        this.targetFilter = targetFilter;
+        targetTable       = targetFilter.filterTable;
         this.columnMap    = columnMap;
         this.columnValues = columnValues;
-        tf                = new TableFilter(targetTable, alias, false);
 
         for (int i = 0; i < columnValues.length; i++) {
             Expression cve = columnValues[i];
@@ -212,7 +212,7 @@ final class CompiledStatement {
             if (cve.isParam()) {
                 cve.setTableColumnAttributes(targetTable, columnMap[i]);
             } else {
-                cve.resolveTables(tf);
+                cve.resolveTables(targetFilter);
                 cve.resolveTypes();
             }
         }
@@ -220,9 +220,9 @@ final class CompiledStatement {
         if (updateCondition != null) {
             condition = new Expression(updateCondition);
 
-            condition.resolveTables(tf);
+            condition.resolveTables(targetFilter);
             condition.resolveTypes();
-            tf.setConditions(condition);
+            targetFilter.setConditions(condition);
         }
 
         setParameters(params);
@@ -576,7 +576,7 @@ final class CompiledStatement {
                 appendColumns(sb).append('\n');
                 appendTable(sb).append('\n');
                 appendCondition(sb);
-                sb.append(tf).append('\n');
+                sb.append(targetFilter).append('\n');
                 appendParms(sb).append('\n');
                 appendSubqueries(sb).append(']');
 
@@ -587,7 +587,7 @@ final class CompiledStatement {
                 sb.append('[').append('\n');
                 appendTable(sb).append('\n');
                 appendCondition(sb);
-                sb.append(tf).append('\n');
+                sb.append(targetFilter).append('\n');
                 appendParms(sb).append('\n');
                 appendSubqueries(sb).append(']');
 

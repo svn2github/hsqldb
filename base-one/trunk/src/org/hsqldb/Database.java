@@ -70,6 +70,7 @@ import java.io.IOException;
 
 import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.HsqlNameManager.HsqlName;
 
@@ -206,8 +207,8 @@ public class Database {
 
         try {
             isNew = (sType == DatabaseManager.S_MEM
-                     ||!HsqlProperties.checkFileExists(path, isFilesInJar(),
-                         getClass()));
+                     ||!FileUtil.exists(path + ".properties", isFilesInJar(),
+                                        getClass()));
         } catch (IOException e) {}
 
         if (isNew && ifexists) {
@@ -243,8 +244,8 @@ public class Database {
             User sysUser;
 
             isNew = (sType == DatabaseManager.S_MEM
-                     ||!HsqlProperties.checkFileExists(sPath, isFilesInJar(),
-                         getClass()));
+                     ||!FileUtil.exists(sPath + ".properties",
+                                        isFilesInJar(), getClass()));
             databaseProperties = new HsqlDatabaseProperties(this);
 
             databaseProperties.load();

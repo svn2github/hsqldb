@@ -139,8 +139,10 @@ public class ScriptReaderText extends ScriptReaderBase {
         d = new BufferedReader(new InputStreamReader(dataStreamIn));
     }
 
-    public void close() throws IOException {
-        d.close();
-        super.close();
+    public void close() {
+
+        try {
+            d.close();
+        } catch (Exception e) {}
     }
 }
