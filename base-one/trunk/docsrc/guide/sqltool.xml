@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.32 2004/06/10 02:17:26 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.33 2004/06/10 04:58:26 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.32 $</edition>
-        <pubdate>$Date: 2004/06/10 02:17:26 $</pubdate>
+        <edition>$Revision: 1.33 $</edition>
+        <pubdate>$Date: 2004/06/10 04:58:26 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -833,13 +833,18 @@
                     false so that real errors are caught.
                     </simpara>
                     <tip><simpara>
-                        In general, put an explicit <literal>\* false</literal>
-                        at the top of your SQL files, and turn on
+                        It depends on what you want your SQL files to do, of
+                        course, but I usually want my SQL files to abort when
+                        an error is countered, without necessarily killing the
+                        SqlTool session.
+                        If this is the behavior that you want, then
+                        put an explicit <literal>\* false</literal>
+                        at the top of your SQL file and turn on
                         continue-upon-error only for sections where you really
                         want to permit errors, or where you are using PL
                         commands to handle errors manually.
-                        This way, errors generated inside your SQL file will be
-                        handled properly whether your script is called by
+                        This will give the desired behavior whether your 
+                        script is called by
                         somebody interactively, from the SqlTool command-line, 
                         or included in another SQL file (i.e. nested).
                     </simpara></tip>
