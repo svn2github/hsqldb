@@ -103,8 +103,8 @@ public class TestSqlPersistent extends TestCase {
             sStatement.execute(sqlString);
 
             sqlString = "INSERT INTO PREFERENCE "
-                        + "(User_Id,Pref_Name,Pref_Value) "
-                        + "VALUES (?,?,?)";
+                        + "(User_Id,Pref_Name,Pref_Value,DateCreated) "
+                        + "VALUES (?,?,?,current_timestamp)";
 
             PreparedStatement ps = cConnection.prepareStatement(sqlString);
 

@@ -40,17 +40,26 @@ package org.hsqldb.store;
  * @since 1.7.2
  *
  */
-
-/** @todo fredt - check accessCount and reset on each getOrAddXXX() */
+/*
+ * implementation notes:
+ *
+ * NB: As of this version this class cannot be used for mixed object types
+ * It is relativly easy to support this by adding an 'instanceof' test inside
+ * each getOrAddXxxx method before casting the Set values to the target type
+ * for comparison purposes.
+ *
+ * superclass is used as an Object Set
+ * getOrAddXxxx methods are implemented directly for speed
+ * the superclass infrastructure is otherwise used
+ */
 public class ValuePoolHashMap extends BaseHashMap {
 
     public ValuePoolHashMap(int initialCapacity, int maxCapacity,
                             int purgePolicy) throws IllegalArgumentException {
 
         super(initialCapacity, 1, BaseHashMap.objectKeyOrValue,
-              BaseHashMap.noKeyOrValue);
+              BaseHashMap.noKeyOrValue, true);
 
-        this.accessTable = new int[initialCapacity];
         this.maxCapacity = maxCapacity;
         this.purgePolicy = purgePolicy;
     }
@@ -90,6 +99,10 @@ public class ValuePoolHashMap extends BaseHashMap {
             testValue = (Integer) objectKeyTable[lookup];
 
             if (testValue.intValue() == intKey) {
+                if (accessCount == Integer.MAX_VALUE) {
+                    resetAccessCount();
+                }
+
                 accessTable[lookup] = accessCount++;
 
                 return testValue;
@@ -105,7 +118,12 @@ public class ValuePoolHashMap extends BaseHashMap {
         lookup                 = hashIndex.linkNode(index, lastLookup);
         testValue              = new Integer(intKey);
         objectKeyTable[lookup] = testValue;
-        accessTable[lookup]    = accessCount++;
+
+        if (accessCount == Integer.MAX_VALUE) {
+            resetAccessCount();
+        }
+
+        accessTable[lookup] = accessCount++;
 
         return testValue;
     }
@@ -124,6 +142,10 @@ public class ValuePoolHashMap extends BaseHashMap {
             testValue = (Long) objectKeyTable[lookup];
 
             if (testValue.longValue() == longKey) {
+                if (accessCount == Integer.MAX_VALUE) {
+                    resetAccessCount();
+                }
+
                 accessTable[lookup] = accessCount++;
 
                 return testValue;
@@ -139,7 +161,12 @@ public class ValuePoolHashMap extends BaseHashMap {
         lookup                 = hashIndex.linkNode(index, lastLookup);
         testValue              = new Long(longKey);
         objectKeyTable[lookup] = testValue;
-        accessTable[lookup]    = accessCount++;
+
+        if (accessCount == Integer.MAX_VALUE) {
+            resetAccessCount();
+        }
+
+        accessTable[lookup] = accessCount++;
 
         return testValue;
     }
@@ -173,6 +200,10 @@ public class ValuePoolHashMap extends BaseHashMap {
             testValue = (String) objectKeyTable[lookup];
 
             if (key.equals(testValue)) {
+                if (accessCount == Integer.MAX_VALUE) {
+                    resetAccessCount();
+                }
+
                 accessTable[lookup] = accessCount++;
 
                 return testValue;
@@ -188,7 +219,12 @@ public class ValuePoolHashMap extends BaseHashMap {
         testValue              = key.toString();
         lookup                 = hashIndex.linkNode(index, lastLookup);
         objectKeyTable[lookup] = testValue;
-        accessTable[lookup]    = accessCount++;
+
+        if (accessCount == Integer.MAX_VALUE) {
+            resetAccessCount();
+        }
+
+        accessTable[lookup] = accessCount++;
 
         return testValue;
     }
@@ -207,6 +243,10 @@ public class ValuePoolHashMap extends BaseHashMap {
             testValue = (java.sql.Date) objectKeyTable[lookup];
 
             if (testValue.getTime() == longKey) {
+                if (accessCount == Integer.MAX_VALUE) {
+                    resetAccessCount();
+                }
+
                 accessTable[lookup] = accessCount++;
 
                 return testValue;
@@ -222,7 +262,12 @@ public class ValuePoolHashMap extends BaseHashMap {
         lookup                 = hashIndex.linkNode(index, lastLookup);
         testValue              = new java.sql.Date(longKey);
         objectKeyTable[lookup] = testValue;
-        accessTable[lookup]    = accessCount++;
+
+        if (accessCount == Integer.MAX_VALUE) {
+            resetAccessCount();
+        }
+
+        accessTable[lookup] = accessCount++;
 
         return testValue;
     }
@@ -241,6 +286,10 @@ public class ValuePoolHashMap extends BaseHashMap {
             testValue = (Double) objectKeyTable[lookup];
 
             if (Double.doubleToLongBits(testValue.doubleValue()) == longKey) {
+                if (accessCount == Integer.MAX_VALUE) {
+                    resetAccessCount();
+                }
+
                 accessTable[lookup] = accessCount++;
 
                 return testValue;
@@ -256,7 +305,12 @@ public class ValuePoolHashMap extends BaseHashMap {
         lookup                 = hashIndex.linkNode(index, lastLookup);
         testValue              = new Double(Double.longBitsToDouble(longKey));
         objectKeyTable[lookup] = testValue;
-        accessTable[lookup]    = accessCount++;
+
+        if (accessCount == Integer.MAX_VALUE) {
+            resetAccessCount();
+        }
+
+        accessTable[lookup] = accessCount++;
 
         return testValue;
     }
@@ -274,6 +328,10 @@ public class ValuePoolHashMap extends BaseHashMap {
             testValue = objectKeyTable[lookup];
 
             if (testValue.equals(key)) {
+                if (accessCount == Integer.MAX_VALUE) {
+                    resetAccessCount();
+                }
+
                 accessTable[lookup] = accessCount++;
 
                 return testValue;
@@ -288,7 +346,12 @@ public class ValuePoolHashMap extends BaseHashMap {
 
         lookup                 = hashIndex.linkNode(index, lastLookup);
         objectKeyTable[lookup] = key;
-        accessTable[lookup]    = accessCount++;
+
+        if (accessCount == Integer.MAX_VALUE) {
+            resetAccessCount();
+        }
+
+        accessTable[lookup] = accessCount++;
 
         return key;
     }

@@ -167,6 +167,17 @@ public class jdbcStatement implements java.sql.Statement {
      * Executes the given SQL statement, which returns a single
      * <code>ResultSet</code> object. <p>
      * <!-- end generic documentation -->
+     * <!-- start release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
+     *
+     * This method should not be used for statements other than SELECT queries.<p>
+     *
+     * Including 1.7.2, HSQLDB does not throw an exception when the statement
+     * is a DDL statement or an UPDATE or DELETE statement. This will certainly
+     * change in future version.
+     * </div>
+     * <!-- end release-specific documentation -->
      *
      * @param sql an SQL statement to be sent to the database, typically a
      *      static SQL <code>SELECT</code> statement

@@ -168,8 +168,6 @@ implements org.hsqldb.rowio.RowInputInterface {
 
     protected java.sql.Date readDate() throws IOException, HsqlException {
 
-// fredt - memory opt tests
-//        return new java.sql.Date(readLong());
         long date = HsqlDateTime.getNormalisedDate(readLong());
 
         return ValuePool.getDate(date);

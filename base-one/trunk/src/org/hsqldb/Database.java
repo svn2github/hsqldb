@@ -138,10 +138,10 @@ public class Database {
      * true means that all CACHED and TEXT tables are readonly.
      *  MEMORY tables are updatable but updates are not persisted.
      */
-    boolean filesReadOnly;
+    private boolean filesReadOnly;
 
     /** true means filesReadOnly but CACHED and TEXT tables are disallowed */
-    boolean                        filesInJar;
+    private boolean                filesInJar;
     boolean                        sqlEnforceSize;
     boolean                        sqlEnforceStrictSize;
     int                            sqlMonth;
@@ -1078,7 +1078,9 @@ public class Database {
      */
     void setMetaDirty(boolean resetPrepared) {
 
-        dInfo.setDirty();
+        if (dInfo != null) {
+            dInfo.setDirty();
+        }
 
         if (resetPrepared) {
             this.compiledStatementManager.resetStatements();

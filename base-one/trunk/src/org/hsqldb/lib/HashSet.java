@@ -53,7 +53,7 @@ public class HashSet extends BaseHashMap implements Set {
     public HashSet(int initialCapacity,
                    float loadFactor) throws IllegalArgumentException {
         super(initialCapacity, loadFactor, BaseHashMap.objectKeyOrValue,
-              BaseHashMap.noKeyOrValue);
+              BaseHashMap.noKeyOrValue, false);
     }
 
     public boolean contains(Object key) {

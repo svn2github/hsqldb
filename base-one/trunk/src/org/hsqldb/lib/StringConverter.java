@@ -619,17 +619,15 @@ public class StringConverter {
      *
      * @return int count
      */
-    static int count(String s, char c) {
+    static int count(final String s, final char c) {
 
+        int pos   = 0;
         int count = 0;
 
         if (s != null) {
-            for (int i = s.length(); --i >= 0; ) {
-                char chr = s.charAt(i);
-
-                if (chr == c) {
-                    count++;
-                }
+            while ((pos = s.indexOf(c, pos)) > -1) {
+                count++;
+                pos++;
             }
         }
 

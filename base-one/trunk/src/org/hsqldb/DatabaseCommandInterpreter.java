@@ -897,6 +897,11 @@ class DatabaseCommandInterpreter {
             tokenizer.back();
         }
 
+        // make sure IDENTITY and DEFAULT are not used together
+        if (isIdentity && defaultExpr != null) {
+            throw Trace.error(Trace.UNEXPECTED_TOKEN, Token.T_DEFAULT);
+        }
+
         return new Column(
             database.nameManager.newHsqlName(columnName, isQuoted),
             isNullable, type, length, scale, isIdentity, identityStart,

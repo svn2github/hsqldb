@@ -76,7 +76,7 @@ public class HsqlDateTime {
      */
     private static Calendar today          = new GregorianCalendar();
     private static Calendar tempCalDefault = new GregorianCalendar();
-    private static Calendar tempCalGMT1 =
+    private static Calendar tempCalGMT =
         new GregorianCalendar(TimeZone.getTimeZone("GMT"));
     private static Date tempDate = new Date(0);
     private static Date currentDate;
@@ -427,11 +427,11 @@ public class HsqlDateTime {
 
     public static Timestamp getNormalisedTimestamp(Time t) {
 
-        synchronized (tempCalGMT1) {
-            setTimeInMillis(tempCalGMT1, System.currentTimeMillis());
-            resetToDate(tempCalGMT1);
+        synchronized (tempCalGMT) {
+            setTimeInMillis(tempCalGMT, System.currentTimeMillis());
+            resetToDate(tempCalGMT);
 
-            long value = getTimeInMillis(tempCalGMT1) + t.getTime();
+            long value = getTimeInMillis(tempCalGMT) + t.getTime();
 
             return new Timestamp(value);
         }

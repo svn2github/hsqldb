@@ -344,7 +344,8 @@ class Parser {
 
         if (token.equals(Token.T_DISTINCT)) {
             select.isDistinctSelect = true;
-        } else {
+        } else if (token.equals(Token.T_ALL)) {}
+        else {
             tokenizer.back();
         }
 
@@ -584,24 +585,14 @@ class Parser {
                 break;
 
             case Token.INTERSECT :
-                token = tokenizer.getString();
-
-                if (token.equals(Token.T_DISTINCT)) {}
-                else {
-                    tokenizer.back();
-                }
+                tokenizer.isGetThis(Token.T_DISTINCT);
 
                 unionType = Select.INTERSECT;
                 break;
 
             case Token.EXCEPT :
             case Token.MINUS :
-                token = tokenizer.getString();
-
-                if (token.equals(Token.T_DISTINCT)) {}
-                else {
-                    tokenizer.back();
-                }
+                tokenizer.isGetThis(Token.T_DISTINCT);
 
                 unionType = Select.EXCEPT;
                 break;
@@ -1033,9 +1024,12 @@ class Parser {
 
         read();
 
-        if (tokenizer.getString().equals(Token.T_DISTINCT)) {
+        String token = tokenizer.getString();
+
+        if (token.equals(Token.T_DISTINCT)) {
             distinct = true;
-        } else {
+        } else if (token.equals(Token.T_ALL)) {}
+        else {
             tokenizer.back();
         }
 

@@ -75,7 +75,7 @@ public class Testdb {
                         // when program ends
     }
 
-//use for SQL commands CREATE and SELECT
+//use for SQL command SELECT
     public synchronized void query(String expression) throws SQLException {
 
         Statement st = null;
@@ -96,7 +96,7 @@ public class Testdb {
                         // completely examined.
     }
 
-//use for SQL commands DROP and INSERT and UPDATE
+//use for SQL commands CREATE, DROP, INSERT and UPDATE
     public synchronized void update(String expression) throws SQLException {
 
         Statement st = null;
@@ -155,7 +155,7 @@ public class Testdb {
             //
             // by declaring the id column IDENTITY, the db will automatically
             // generate unique values for new rows- useful for row keys
-            db.query(
+            db.update(
                 "CREATE TABLE sample_table ( id INTEGER IDENTITY, str_col VARCHAR(256), num_col INTEGER)");
         } catch (SQLException ex2) {
 

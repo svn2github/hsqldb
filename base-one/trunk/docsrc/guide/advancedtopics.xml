@@ -1,4 +1,4 @@
-<!-- $Id: advancedtopics.xml,v 1.16 2004/07/15 15:45:07 fredt Exp $ -->
+<!-- $Id: advancedtopics.xml,v 1.17 2004/07/15 17:41:12 fredt Exp $ -->
 
 <chapter id='advanced-chapter'>
     <title id='advanced-title'>Advanced Topics</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.16 $</edition>
-        <pubdate>$Date: 2004/07/15 15:45:07 $</pubdate>
+        <edition>$Revision: 1.17 $</edition>
+        <pubdate>$Date: 2004/07/15 17:41:12 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Advanced</keyword>
@@ -579,7 +579,7 @@
                         </para> </entry>
                     </row>
                     <row>
-                        <entry><property>hsqldb.files_readonly</property></entry>
+                        <entry><property>hsqldb.files_read_only</property></entry>
                         <entry><literal>false</literal></entry>
                         <entry>database files will not be written to</entry>
                     </row>

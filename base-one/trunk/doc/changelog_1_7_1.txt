@@ -1,7 +1,15 @@
 
 Version 1.7.1 improves performance and fixes several bugs that have come to light since the release of 1.7.0. It does not feature any major new functionality in the database engine.
 
-The Transfer Tool was enhanced for this version by Nicolas Bazin and Bob Preston
+*Over ten-fold speedup of function calls in queries introduced in 1.7.1.
+
+*Up to 30% reduction in memory used by indexes and table rows, resulting in smaller overall memory footprint in 1.7.1.
+
+*Linux scripts for starting and shutting down server instances in 1.7.1.
+
+*Linux build scripts in 1.7.1.
+
+*The Transfer Tool was enhanced for this version by Nicolas Bazin and Bob Preston.
 
 HSQLDB version 1.7.0 CHANGELOG SINCE VERSION 1.60
 

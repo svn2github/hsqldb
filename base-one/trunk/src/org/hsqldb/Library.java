@@ -607,7 +607,7 @@ public class Library {
             return s1;
         }
 
-        return s1 + s2;
+        return s1.concat(s2);
     }
 
     /**

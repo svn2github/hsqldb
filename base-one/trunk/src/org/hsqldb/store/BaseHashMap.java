@@ -43,7 +43,7 @@ public class BaseHashMap {
  * and a HashIndex instance for looking up the keys into this table. Instances
  * that are maps also have a valueTable the same size as the keyTable.
  *
- * Special getOrAddXXX() methods are used for object maps.
+ * Special getOrAddXXX() methods are used for object maps in some subclasses.
  *
  * @author fredt@users
  * @version 1.7.2
@@ -63,7 +63,8 @@ public class BaseHashMap {
 
     implemented types of valueTable:
     {objectValueTable: variable size Object[] array for values |
-    intValueTable: variable size int[] for values }
+    intValueTable: variable size int[] for values |
+    longValueTable: variable size long[] for values}
 
     valueTable does not exist for sets or for object pools
 
@@ -74,7 +75,7 @@ public class BaseHashMap {
 
     access count table:
     {none |
-    variable size int[] array for access count} same size as keyTable
+    variable size int[] array for access count} same size as xxxKeyTable
 */
 
     //
@@ -112,7 +113,7 @@ public class BaseHashMap {
 
     //
     boolean hasZeroKey;
-    int     zeroKeyIndex;
+    int     zeroKeyIndex = -1;
 
     // keyOrValueTypes
     protected static final int noKeyOrValue     = 0;
@@ -127,7 +128,9 @@ public class BaseHashMap {
     protected static final int PURGE_QUARTER = 3;
 
     protected BaseHashMap(int initialCapacity, float loadFactor, int keyType,
-                          int valueType) throws IllegalArgumentException {
+                          int valueType,
+                          boolean accessCount)
+                          throws IllegalArgumentException {
 
         if (initialCapacity <= 0 || loadFactor <= 0.0) {
             throw new IllegalArgumentException();
@@ -172,6 +175,10 @@ public class BaseHashMap {
             longValueTable = new long[arraySize];
         } else {
             isNoValue = true;
+        }
+
+        if (accessCount) {
+            accessTable = new int[arraySize];
         }
     }
 
@@ -257,6 +264,9 @@ public class BaseHashMap {
         return lookup;
     }
 
+    /**
+     * generic method for adding or removing keys
+     */
     protected Object addOrRemove(long longKey, long longValue,
                                  Object objectKey, Object objectValue,
                                  boolean remove) {
@@ -299,7 +309,8 @@ public class BaseHashMap {
                 if (isObjectKey) {
                     objectKeyTable[lookup] = null;
                 } else if (longKey == 0) {
-                    hasZeroKey = false;
+                    hasZeroKey   = false;
+                    zeroKeyIndex = -1;
                 } else if (isIntKey) {
                     intKeyTable[lookup] = 0;
                 } else {
@@ -316,6 +327,10 @@ public class BaseHashMap {
                 }
 
                 hashIndex.unlinkNode(index, lastLookup, lookup);
+
+                if (accessTable != null) {
+                    accessTable[lookup] = 0;
+                }
 
                 return returnValue;
             }
@@ -338,10 +353,14 @@ public class BaseHashMap {
         }
 
         if (hashIndex.elementCount >= threshold) {
-            reset();
 
-            return addOrRemove(longKey, longValue, objectKey, objectValue,
-                               remove);
+            // should throw maybe, if reset returns false?
+            if (reset()) {
+                return addOrRemove(longKey, longValue, objectKey,
+                                   objectValue, remove);
+            } else {
+                return null;
+            }
         }
 
         lookup = hashIndex.linkNode(index, lastLookup);
@@ -451,7 +470,7 @@ public class BaseHashMap {
         hashIndex.reset((int) (newCapacity * loadFactor), newCapacity);
 
         hasZeroKey   = false;
-        zeroKeyIndex = 0;
+        zeroKeyIndex = -1;
         threshold    = newCapacity;
 
         for (int lookup = -1;
@@ -755,15 +774,26 @@ public class BaseHashMap {
         accessCount  = 0;
         accessMin    = accessCount;
         hasZeroKey   = false;
-        zeroKeyIndex = 0;
+        zeroKeyIndex = -1;
 
         clearElementArrays(0, hashIndex.linkTable.length);
         hashIndex.clear();
     }
 
     /**
+     * Return the max accessCount value for count elements with the lowest
+     * access count
+     */
+    protected int getAccessCountCeiling(int count, int margin) {
+        return ArrayCounter.rank(accessTable, count, accessMin, accessCount,
+                                 margin);
+    }
+
+    /**
      * Clear approximately count elements from the map, starting with
      * those with low accessTable ranking.
+     *
+     * Only for maps with Object key table
      */
     protected void clear(int count) {
 
@@ -773,9 +803,8 @@ public class BaseHashMap {
             margin = 64;
         }
 
-        int accessBase = ArrayCounter.rank(accessTable, count, accessMin,
-                                           accessCount, margin);
-        int maxlookup = hashIndex.newNodePointer;
+        int accessBase = getAccessCountCeiling(count, margin);
+        int maxlookup  = hashIndex.newNodePointer;
 
         for (int lookup = 0; lookup < maxlookup; lookup++) {
             Object o = objectKeyTable[lookup];
@@ -877,6 +906,10 @@ public class BaseHashMap {
         return false;
     }
 
+    /**
+     * Iterator returns Object, int or long and is used both for keys and
+     * values
+     */
     protected class BaseHashIterator implements org.hsqldb.lib.Iterator {
 
         boolean keys;

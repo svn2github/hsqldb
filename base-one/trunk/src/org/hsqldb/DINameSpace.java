@@ -1010,8 +1010,8 @@ final class DINameSpace {
      * @return the set of distinct, visible sessions connected
      *        to this object's database, as a list.
      */
-    HsqlArrayList listVisibleSessions(Session session) {
-        return database.sessionManager.listVisibleSessions(session);
+    Session[] listVisibleSessions(Session session) {
+        return database.sessionManager.getVisibleSessions(session);
     }
 
     /**

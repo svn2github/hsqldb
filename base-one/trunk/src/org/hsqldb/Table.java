@@ -253,7 +253,7 @@ public class Table extends BaseTable {
 // ----------------------------------------------------------------------------
 // akede@users - 1.7.2 patch Files readonly
         // Changing the mode of the table if necessary
-        if (db.filesReadOnly && checkTableFileBased()) {
+        if (db.isFilesReadOnly() && checkTableFileBased()) {
             this.isReadOnly = true;
         }
 
@@ -322,7 +322,7 @@ public class Table extends BaseTable {
 
         // Changing the Read-Only mode for the table is only allowed if the
         // the database can realize it.
-        if (!value && database.filesReadOnly && checkTableFileBased()) {
+        if (!value && database.isFilesReadOnly() && checkTableFileBased()) {
             throw Trace.error(Trace.DATA_IS_READONLY);
         }
 
@@ -1744,8 +1744,7 @@ public class Table extends BaseTable {
 
         indexRow(row);
 
-        if (log &&!isTemp &&!isText &&!isReadOnly
-                && database.logger.hasLog()) {
+        if (log &&!isTemp &&!isText &&!isReadOnly) {
             database.logger.writeInsertStatement(session, this, data);
         }
     }
@@ -2639,8 +2638,7 @@ public class Table extends BaseTable {
             session.addTransactionDelete(this, data);
         }
 
-        if (log &&!isTemp &&!isText &&!isReadOnly
-                && database.logger.hasLog()) {
+        if (log &&!isTemp &&!isText &&!isReadOnly) {
             database.logger.writeDeleteStatement(session, this, data);
         }
     }
@@ -3042,7 +3040,7 @@ public class Table extends BaseTable {
 
     boolean isWritable() {
         return !isReadOnly &&!database.databaseReadOnly
-               &&!(database.filesReadOnly && (isCached || isText));
+               &&!(database.isFilesReadOnly() && (isCached || isText));
     }
 
     /**

@@ -177,6 +177,9 @@ public class TestUtil {
         if (pSection == null) {    //it was not possible to sucessfully parse the section
             print("The section starting at line " + line
                   + " could not be parsed, " + "and so was not processed.\n");
+        } else if (pSection.getClass().getName().equals(
+                "org.hsqldb.test.IgnoreParsedSection")) {
+            print("Line " + line + ": " + pSection.getResultString());
         } else if (!pSection.test(stat)) {
             print("section starting at line " + line);
             print("returned an unexpected result:");
@@ -205,6 +208,18 @@ public class TestUtil {
         //...and check it for the type...
         if (topLine.startsWith("/*")) {
             type = topLine.charAt(2);
+
+            //if the type code is invalid return null
+            if (!ParsedSection.isValidCode(type)) {
+                return null;
+            }
+
+            //if the type code is UPPERCASE and system property IgnoreCodeCase
+            //has been set to true, make the type code lowercase
+            if ((Character.isUpperCase(type))
+                    && (Boolean.getBoolean("IgnoreCodeCase"))) {
+                type = Character.toLowerCase(type);
+            }
 
             //...strip out the type declaration...
             topLine = topLine.substring(3);
@@ -249,7 +264,11 @@ public class TestUtil {
                 return new BlankParsedSection(rows);
 
             default :
-                return null;
+
+                //if we arrive here, then we should have a valid code,
+                //since we validated it earlier, so return an 
+                //IgnoreParsedSection object
+                return new IgnoreParsedSection(rows, type);
         }
     }
 }
@@ -261,12 +280,8 @@ public class TestUtil {
 abstract class ParsedSection {
 
     /**
-     * Type of this test.  Allowed values are:
-     * 'u' (update)
-     * 'c' (count)
-     * 'e' (exception)
-     * 'r' (results)
-     * ' ' (not a test)
+     * Type of this test.
+     * @see isValidCase() for allowed values
      */
     protected char type = ' ';
 
@@ -407,6 +422,33 @@ abstract class ParsedSection {
         }
 
         return true;
+    }
+
+    /**
+     * Checks that the type code letter is valid
+     * @param aCode type code to validate.
+     * @return true if the type code is valid, otherwise false.
+     */
+    protected static boolean isValidCode(char aCode) {
+
+        /* Allowed values for test codes are:
+         * (note that UPPERCASE codes, while valid are only processed if the
+         * system property IgnoreCodeCase has been set to true)
+         *
+         * 'u' ('U') - update
+         * 'c' ('C') - count
+         * 'e' ('E') - exception
+         * 'r' ('R') - results
+         * ' ' - not a test
+         */
+        char testChar = Character.toLowerCase(aCode);
+
+        if ((testChar == ' ') || (testChar == 'r') || (testChar == 'e')
+                || (testChar == 'c') || (testChar == 'u')) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }
 
@@ -714,5 +756,20 @@ class BlankParsedSection extends ParsedSection {
 
     protected String getResultString() {
         return "No result specified for this section";
+    }
+}
+
+/** Represents a ParsedSection that is to be ignored */
+class IgnoreParsedSection extends ParsedSection {
+
+    protected IgnoreParsedSection(String[] lines, char aType) {
+
+        super(lines);
+
+        type = aType;
+    }
+
+    protected String getResultString() {
+        return "This section, of type '" + getType() + "' was ignored";
     }
 }

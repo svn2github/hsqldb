@@ -167,7 +167,12 @@ public abstract class ScriptWriterBase {
             }
 
             try {
-                fileStreamOut.flush();
+
+                // Group One
+                if (fileStreamOut != null) {
+                    fileStreamOut.flush();
+                }
+
                 outDescriptor.sync();
             } catch (IOException e) {
                 Trace.printSystemOut("flush() or sync() error: "
@@ -182,8 +187,12 @@ public abstract class ScriptWriterBase {
     public void close() throws HsqlException {
 
         try {
-            fileStreamOut.flush();
-            fileStreamOut.close();
+
+            // Group One
+            if (fileStreamOut != null) {
+                fileStreamOut.flush();
+                fileStreamOut.close();
+            }
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR);
         }

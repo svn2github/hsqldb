@@ -1,4 +1,4 @@
-<!-- $Id: sqlissues.xml,v 1.14 2004/07/15 14:50:10 fredt Exp $ -->
+<!-- $Id: sqlissues.xml,v 1.15 2004/07/15 19:45:50 fredt Exp $ -->
 
 <chapter id='sql_issues-chapter'>
     <title id='sql_issues-title'>SQL Issues</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.14 $</edition>
-        <pubdate>$Date: 2004/07/15 14:50:10 $</pubdate>
+        <edition>$Revision: 1.15 $</edition>
+        <pubdate>$Date: 2004/07/15 19:45:50 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>SQL</keyword>
@@ -618,7 +618,7 @@
                 row insert query, you will get two different values, not
                 the same value as required by the standard.
             </para> <para>
-                You can query the SYTEM_SEQUENCES table for the next value
+                You can query the SYSTEM_SEQUENCES table for the next value
                 that will be returned from any of the defined sequences.
                 The SEQUENCE_NAME column contains the name and the
                 NEXT_VALUE column contains the next value to be returned.

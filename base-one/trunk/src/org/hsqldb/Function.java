@@ -311,8 +311,9 @@ class Function {
                                             : Boolean.FALSE;
 
             case Library.isReadOnlyDatabaseFiles :
-                return session.getDatabase().filesReadOnly ? Boolean.TRUE
-                                                           : Boolean.FALSE;
+                return session.getDatabase().isFilesReadOnly() ? Boolean.TRUE
+                                                               : Boolean
+                                                               .FALSE;
 
             case Library.now :
                 return session.getCurrentTimestamp();

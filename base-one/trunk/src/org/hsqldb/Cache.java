@@ -260,7 +260,7 @@ abstract class Cache {
      */
     protected void init() {
 
-        cacheReadonly = dDatabase.filesReadOnly;
+        cacheReadonly = dDatabase.isFilesReadOnly();
 
         int lookupTableLength = 1 << cacheScale;
         int avgRowBytes       = 1 << cacheSizeScale;

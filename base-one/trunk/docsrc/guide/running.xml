@@ -1,4 +1,4 @@
-<!-- $Id: running.xml,v 1.10 2004/05/26 09:05:50 fredt Exp $ -->
+<!-- $Id: running.xml,v 1.11 2004/06/28 16:09:58 unsaved Exp $ -->
 
 <chapter>
     <title>Running and Using Hsqldb</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.10 $</edition>
-        <pubdate>$Date: 2004/05/26 09:05:50 $</pubdate>
+        <edition>$Revision: 1.11 $</edition>
+        <pubdate>$Date: 2004/06/28 16:09:58 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Guide</keyword>
@@ -244,7 +244,7 @@
                     <filename>hsqldb.jar</filename>.
                     Full information on how to connect to a server is provided 
                     in the Java Documentation for 
-                    <ulink url='../src/org/hsqldb/jdbcConnection.html'>
+                    <ulink url='../src/org/hsqldb/jdbc/jdbcConnection.html'>
                     <classname>jdbcConnection</classname></ulink> (located in 
                     the <filename>/doc/src</filename> directory of HSQLDB 
                     distribution.
@@ -340,7 +340,7 @@
                 When using relative paths, these paths will be taken relative to
                 the directory in which the shell command to start the Java Virtual
                 Machine was executed. Refer to Javadoc for
-                <ulink url='../src/org/hsqldb/jdbcConnection.html'>
+                <ulink url='../src/org/hsqldb/jdbc/jdbcConnection.html'>
                 <classname>jdbcConnection</classname></ulink> for more details.
             </para>
         </section>
@@ -429,17 +429,17 @@
         <para>
             Once a connection is established to a database in any mode, JDBC 
             methods are used to interact with the database.
-            The Javadoc for <ulink url='../src/org/hsqldb/jdbcConnection.html'>
+            The Javadoc for <ulink url="../src/org/hsqldb/jdbc/jdbcConnection.html">
             <classname>jdbcConnection</classname> </ulink>,
             <ulink url="../src/org/hsqldb/jdbcDriver.html">
             <classname>jdbcDriver</classname></ulink>,
-            <ulink url="../src/org/hsqldb/jdbcDatabaseMetaData.html">
+            <ulink url="../src/org/hsqldb/jdbc/jdbcDatabaseMetaData.html">
             <classname>jdbcDatabaseMetadata</classname></ulink>,
-            <ulink url="../src/org/hsqldb/jdbcResultSet.html">
+            <ulink url="../src/org/hsqldb/jdbc/jdbcResultSet.html">
             <classname>jdbcResultSet</classname> </ulink>,
-            <ulink url="../src/org/hsqldb/jdbcStatement.html">
+            <ulink url="../src/org/hsqldb/jdbc/jdbcStatement.html">
             <classname>jdbcStatement</classname></ulink>,
-            and <ulink url="../src/org/hsqldb/jdbcPreparedStatement.html">
+            and <ulink url="../src/org/hsqldb/jdbc/jdbcPreparedStatement.html">
             <classname>jdbcPreparedStatement</classname></ulink> list all the 
             supported JDBC methods together with information that is specific 
             to HSQLDB.

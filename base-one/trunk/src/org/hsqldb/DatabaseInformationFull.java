@@ -1229,9 +1229,9 @@ extends org.hsqldb.DatabaseInformationMain {
         }
 
         // intermediate holders
-        HsqlArrayList sessions;
-        Session       s;
-        Object[]      row;
+        Session[] sessions;
+        Session   s;
+        Object[]  row;
 
         // column number mappings
         final int isid      = 0;
@@ -1248,8 +1248,8 @@ extends org.hsqldb.DatabaseInformationMain {
         sessions = ns.listVisibleSessions(session);
 
         // Do it.
-        for (int i = 0; i < sessions.size(); i++) {
-            s              = (Session) sessions.get(i);
+        for (int i = 0; i < sessions.length; i++) {
+            s              = sessions[i];
             row            = t.getNewRow();
             row[isid]      = ValuePool.getInt(s.getId());
             row[ict]       = new Timestamp(s.getConnectTime());
@@ -2402,7 +2402,7 @@ extends org.hsqldb.DatabaseInformationMain {
         }
 
         Result rs = session.sqlExecuteDirectNoPreChecks(
-            "select 'SYS', 'PUBLIC', SEQUENCE_CATLOG, SEQUENCE_SCHEMA, "
+            "select 'SYS', 'PUBLIC', SEQUENCE_CATALOG, SEQUENCE_SCHEMA, "
             + "SEQUENCE_NAME, 'SEQUENCE', 'FALSE' from  SYSTEM_SEQUENCES");
 
         t.insert(rs);

@@ -58,7 +58,7 @@ public class IntValueHashMap extends BaseHashMap {
     public IntValueHashMap(int initialCapacity,
                            float loadFactor) throws IllegalArgumentException {
         super(initialCapacity, loadFactor, BaseHashMap.objectKeyOrValue,
-              BaseHashMap.intKeyOrValue);
+              BaseHashMap.intKeyOrValue, false);
     }
 
     public int get(Object key) throws NoSuchElementException {

@@ -45,6 +45,19 @@ package org.hsqldb.store;
  * @version 1.7.2
  * @since 1.7.2
  */
+
+/**
+ * implementation notes:
+ *
+ * In future versions we may use a single Set as the underlying store.
+ * this may have a slight impact on speed but is probably memory efficient
+ * (depends on usage pattern anyway) and it would be easier to configure
+ * the pool size.
+ *
+ * It is also worth considering using a fixed array for the int and long
+ * objects in the low range (-100, +100) for speed. This needs some usage tests
+ *
+ */
 public class ValuePool {
 
     //

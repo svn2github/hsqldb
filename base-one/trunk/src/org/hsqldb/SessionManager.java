@@ -156,23 +156,9 @@ public class SessionManager {
      * @param session The Session determining visibility
      * @return the Sessions visible to the specified Session
      */
-    HsqlArrayList listVisibleSessions(Session session) {
-
-        HsqlArrayList out = new HsqlArrayList();
-        Session       observed;
-        boolean       isObserverAdmin = session.isAdmin();
-        int           observerId      = session.getId();
-        Iterator      it              = sessionMap.values().iterator();
-
-        for (; it.hasNext(); ) {
-            observed = (Session) it.next();
-
-            if (isObserverAdmin || observed.getId() == observerId) {
-                out.add(observed);
-            }
-        }
-
-        return out;
+    Session[] getVisibleSessions(Session session) {
+        return session.isAdmin() ? getAllSessions()
+                                 : new Session[]{ session };
     }
 
     /**
@@ -181,5 +167,17 @@ public class SessionManager {
      */
     Session getSession(int id) {
         return (Session) sessionMap.get(id);
+    }
+
+    Session[] getAllSessions() {
+
+        Session[] sessions = new Session[sessionMap.size()];
+        Iterator  it       = sessionMap.values().iterator();
+
+        for (int i = 0; it.hasNext(); i++) {
+            sessions[i] = (Session) it.next();
+        }
+
+        return sessions;
     }
 }

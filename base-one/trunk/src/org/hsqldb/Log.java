@@ -171,7 +171,7 @@ class Log {
         sName       = name;
         pProperties = db.getProperties();
 
-        if (!db.filesReadOnly) {
+        if (!db.isFilesReadOnly()) {
             Runnable r = new LogSyncRunner();
 
             timerTask = timer.schedulePeriodicallyAfter(0, 1000, r, false);
@@ -224,7 +224,7 @@ class Log {
         bRestoring = true;
 
         try {
-            if (dDatabase.filesInJar || FileUtil.exists(sFileScript)) {
+            if (dDatabase.isFilesInJar() || FileUtil.exists(sFileScript)) {
                 ScriptReaderBase scr =
                     ScriptReaderBase.newScriptReader(dDatabase, sFileScript,
                                                      scriptFormat);
@@ -258,7 +258,7 @@ class Log {
         maxLogSize = logMegas * 1024 * 1024;
         scriptFormat = pProperties.getIntegerProperty("hsqldb.script_format",
                 ScriptWriterBase.SCRIPT_TEXT_170);
-        filesReadOnly = dDatabase.filesReadOnly;;
+        filesReadOnly = dDatabase.isFilesReadOnly();
         sFileScript   = sName + ".script";
         sFileLog      = sName + ".log";
         sFileCache    = sName + ".data";
@@ -321,7 +321,7 @@ class Log {
 
     Cache getCache() throws HsqlException {
 
-        if (dDatabase.filesInJar) {
+        if (dDatabase.isFilesInJar()) {
             return null;
         }
 
@@ -623,13 +623,10 @@ class Log {
 
             dbScriptWriter.setWriteDelay(writeDelay);
 
-            HsqlArrayList sessions =
-                dDatabase.sessionManager.listVisibleSessions(
-                    dDatabase.sessionManager.getSysSession());
-            Iterator it = sessions.iterator();
+            Session[] sessions = dDatabase.sessionManager.getAllSessions();
 
-            for (; it.hasNext(); ) {
-                Session session = (Session) it.next();
+            for (int i = 0; i < sessions.length; i++) {
+                Session session = sessions[i];
 
                 if (session.isAutoCommit() == false) {
                     dbScriptWriter.writeLogStatement(
@@ -697,8 +694,8 @@ class Log {
             }
         }
 
-        Cache c;
-        int   type;
+        TextCache c;
+        int       type;
 
         if (reversed) {
             c = new TextCache(source, table);

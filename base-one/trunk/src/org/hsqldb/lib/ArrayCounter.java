@@ -87,12 +87,12 @@ public class ArrayCounter {
      * range (1,array.length), finds the value in the range (start,limit) of the
      * largest element (rank) where the count of all smaller elements in that
      * range is less than or equals target. Parameter margin indicates the
-     * margin of error<p>
+     * margin of error in target<p>
      *
      * In statistics, this can be used to calculate a median or quadrile value.
      * A usage example applied to an array of age values is to determine
      * the maximum age of a given number of people. With the example array
-     * given in countSegments, rank(array, 6000, 18, 65) will return an age
+     * given in countSegments, rank(array, 6000, 18, 65, 0) will return an age
      * value between 18-64 (inclusive) and the count of all people aged between
      * 18 and the returned value(exclusive) will be less than or equal
      * 6000.

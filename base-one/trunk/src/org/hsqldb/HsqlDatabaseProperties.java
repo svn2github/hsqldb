@@ -62,8 +62,8 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         // *.properties file
         String[] fullyProtectedPropertiesNames = {
             "version", "hsqldb.compatible_version", "hsqldb.cache_version",
-            "hsqldb.original_version", "readonly", "modified",
-            "sql.compare_in_locale", "textdb.allow_full_path"
+            "hsqldb.original_version", "hsqldb.files_read_only", "readonly",
+            "modified", "sql.compare_in_locale", "textdb.allow_full_path"
         };
 
         fullyProtectedProperties.addAll(fullyProtectedPropertiesNames);
@@ -278,6 +278,10 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         return true;
     }
 
+    /**
+     * Sets the database member variables after creating the properties object
+     * of openning a properties file
+     */
     private void setDatabaseVariables() {
 
         if (isPropertyTrue("readonly")) {
@@ -293,6 +297,8 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
             isPropertyTrue("sql.enforce_strict_size");
         database.firstIdentity = getIntegerProperty("hsqldb.first_identity",
                 0);
+
+        database.setMetaDirty(false);
     }
 
     public void save() throws HsqlException {
