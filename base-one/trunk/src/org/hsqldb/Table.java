@@ -155,7 +155,6 @@ public class Table extends BaseTable {
     // properties for subclasses
     protected int      columnCount;                   // inclusive the hidden primary key
     protected int      visibleColumnCount;            // exclusive of hidden primary key
-    protected int      triggerCount;                  // count of named triggers
     protected Database database;
     protected Cache    cache;
     protected HsqlName tableName;                     // SQL name
@@ -1670,19 +1669,18 @@ public class Table extends BaseTable {
     private void insertRow(Session session,
                            Object data[]) throws HsqlException {
 
-        fireAll(Trigger.INSERT_BEFORE_ROW, null, data);
-        setIdentityColumn(session, data);
-        enforceFieldValueLimits(data);
-        enforceNullConstraints(data);
-
-        if (database.isReferentialIntegrity()) {
-            for (int i = 0, size = constraintList.length; i < size; i++) {
-                constraintList[i].checkInsert(data, session);
-            }
+        if (triggerLists[Trigger.INSERT_BEFORE_ROW] != null) {
+            fireAll(Trigger.INSERT_BEFORE_ROW, null, data);
         }
 
+        setIdentityColumn(session, data);
+        checkRowData(session, data);
         insertNoCheck(session, data);
-        fireAll(Trigger.INSERT_AFTER_ROW, null, data);
+
+        if (triggerLists[Trigger.INSERT_AFTER_ROW] != null) {
+            fireAll(Trigger.INSERT_AFTER_ROW, null, data);
+            checkRowData(session, data);
+        }
     }
 
     /**
@@ -1995,7 +1993,7 @@ public class Table extends BaseTable {
      */
     void fireAll(int trigVecIndx, Object oldrow[], Object newrow[]) {
 
-        if (triggerCount == 0 ||!database.isReferentialIntegrity()) {
+        if (!database.isReferentialIntegrity()) {
 
             // isReferentialIntegrity is false when reloading db
             return;
@@ -2019,7 +2017,7 @@ public class Table extends BaseTable {
      */
     void fireAll(int trigVecIndex) {
 
-        if (triggerCount != 0) {
+        if (triggerLists[trigVecIndex] != null) {
             fireAll(trigVecIndex, null, null);
         }
     }
@@ -2034,8 +2032,6 @@ public class Table extends BaseTable {
         }
 
         triggerLists[trigDef.vectorIndex].add(trigDef);
-
-        triggerCount++;
     }
 
     /**
@@ -2068,10 +2064,6 @@ public class Table extends BaseTable {
             if (v.isEmpty()) {
                 triggerLists[tv] = null;
             }
-        }
-
-        if (removed) {
-            triggerCount--;
         }
     }
 
@@ -2788,9 +2780,34 @@ public class Table extends BaseTable {
             Row      row  = (Row) rowSet.getKey(i);
             Object[] data = (Object[]) rowSet.get(i);
 
-            fireAll(Trigger.UPDATE_BEFORE_ROW, row.getData(), data);
+            if (triggerLists[Trigger.UPDATE_BEFORE_ROW] != null) {
+                fireAll(Trigger.UPDATE_BEFORE_ROW, row.getData(), data);
+                checkRowData(session, data);
+            }
+
             insertNoCheck(session, data);
-            fireAll(Trigger.UPDATE_AFTER_ROW, row.getData(), data);
+
+            if (triggerLists[Trigger.UPDATE_AFTER_ROW] != null) {
+                fireAll(Trigger.UPDATE_AFTER_ROW, row.getData(), data);
+                checkRowData(session, data);
+            }
+        }
+    }
+
+    void checkRowData(Session session, Object[] data) throws HsqlException {
+
+        // set identity column where null and check columns
+        enforceFieldValueLimits(data);
+        enforceNullConstraints(data);
+
+        for (int j = 0; j < constraintList.length; j++) {
+            Constraint c = constraintList[j];
+
+            if (c.getType() == Constraint.CHECK) {
+                c.checkCheckConstraint(data, session);
+
+                continue;
+            }
         }
     }
 

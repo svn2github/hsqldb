@@ -139,7 +139,6 @@ import org.hsqldb.resources.BundleHandler;
  * | -dbname.i      | alias       | --       | url alias for database i     |
  * | -silent        | true|false  | true     | false => display all queries |
  * | -trace         | true|false  | false    | display JDBC trace messages  |
- * | -tls           | true|false  | false    | TLS/SSL (secure) sockets     |
  * | -no_system_exit| true|false  | false    | do not issue System.exit()   |
  * +----------------+-------------+----------+------------------------------+
  * </pre>

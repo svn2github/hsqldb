@@ -104,6 +104,22 @@ import org.hsqldb.resources.BundleHandler;
  *  addition, a list mapping different file endings to their mime types may be
  *  included in this file. (fredt@users) <p>
  *
+ * From the command line, the options are as follows: <p>
+ * <pre>
+ * +----------------+-------------+----------+------------------------------+
+ * |    OPTION      |    TYPE     | DEFAULT  |         DESCRIPTION          |
+ * +----------------+-------------+----------+------------------------------|
+ * | -?             | --          | --       | prints this message          |
+ * | -address       | name|number | any      | server inet address          |
+ * | -port          | number      | 80       | port at which server listens |
+ * | -database.i    | [type]spec  | 0=test   | path of database i           |
+ * | -dbname.i      | alias       | --       | url alias for database i     |
+ * | -silent        | true|false  | true     | false => display all queries |
+ * | -trace         | true|false  | false    | display JDBC trace messages  |
+ * | -no_system_exit| true|false  | false    | do not issue System.exit()   |
+ * +----------------+-------------+----------+------------------------------+
+ * </pre>
+ *
  *  Example of the webserver.properties file:
  *
  * <pre>

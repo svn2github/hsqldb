@@ -167,7 +167,7 @@ public class HSQLClientConnection implements SessionInterface {
             write(r);
 
             return read();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             throw Trace.error(Trace.CONNECTION_IS_BROKEN, e.getMessage());
         }
     }
