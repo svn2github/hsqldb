@@ -1,5 +1,5 @@
 /*
- * $Id: SqlFile.java,v 1.22 2004/01/26 05:40:19 unsaved Exp $
+ * $Id: SqlFile.java,v 1.23 2004/01/26 19:30:37 unsaved Exp $
  *
  * Copyright (c) 2001-2003, The HSQL Development Group
  * All rights reserved.
@@ -204,7 +204,7 @@ public class SqlFile {
                     if (interactive) {
                         setHist(curBuffer.toString());
                         curBuffer.setLength(0);
-                        stdprint("Buffer stored into history then cleared");
+                        stdprint("Buffer stored into history then cleared.");
                     }
                     continue;
                 }
