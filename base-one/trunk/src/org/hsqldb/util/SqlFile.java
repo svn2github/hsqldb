@@ -1,5 +1,5 @@
 /*
- * $Id: SqlFile.java,v 1.5 2004/01/20 01:48:26 unsaved Exp $
+ * $Id: SqlFile.java,v 1.6 2004/01/20 17:06:18 unsaved Exp $
  *
  * Copyright (c) 2001-2003, The HSQL Development Group
  * All rights reserved.
@@ -59,27 +59,30 @@ public class SqlFile {
     private Connection conn = null;
 
     final private static String BANNER =
-"********   N.b I have updated this explanations, but the behavior of\n" +
+"********   N.b. I have updated this explanations, but the behavior of\n" +
 "           command termination has not been fixed yet.   ***********\n\n" +
-            "SqlFile processor.  Enter \"\\?;\" for help, \"\\q;\" to quit.\n"
-       + "REMEMBER TO TERMINATE EVERY COMMAND WITH EITHER\n"
+            "SqlFile processor.  Enter \"\\?\" for help, \"\\q\" to quit.\n"
+       + "REMEMBER TO TERMINATE EVERY SQL STATEMENT WITH EITHER\n"
        + "    ';' AT THE END OF A LINE in order to execute it\n"
        + "OR\n"
-       + "    A BLANK LINE to clear the command without executing.\n";
+       + "    A BLANK LINE to clear the command without executing.\n"
+       + "Just hit the ENTER key after a Special command to execute it.";
     final private static String HELP_TEXT =
 "**********    MOST OF THE SPECIAL COMMANDS DO NOT WORK YET!!!  *******\n" +
-      "Lines ending with ';' cause the current command to be executed.\n"
-      + "An empty line within a command clears the command (but it can "
+      "SPECIAL Commands all begin with '\\', SQL Statements do not.\n\n"
+      + "SPECIAL Commands begin with '\\' and execute when you hit ENTER.\n"
+      + "SQL Statement lines ending with ';' cause the current statement to be executed.\n"
+      + "An empty line within an SQL Statement clears it (but it can "
       + "be recalled).\n\n"
-        + "SPECIAL Commands all begin with '\\', SQL Statements do not.\n\n"
         + "SPECIAL Commands:  (* commands only available for interactive use)\n"
-        + "    \\?;                   Help\n"
-        + "    \\! [command to run];  * Shell out\n"
-        + "    \\e;                   * Open last command in external editor\n"
-        + "    \\s;                   * Show previous commands \n"
-        + "    \\-;                   * reload last command\n"
-        + "    \\-2;                  * reload 2nd-to-last command, etc.\n"
-        + "    \\q;                   Quit (alternatively, end input,\n"
+        + "    \\?                   Help\n"
+        + "    \\! [command to run]  * Shell out\n"
+        + "    \\e                   * Open last command in external editor\n"
+        + "    \\p [line to print]   Print string to stdout\n"
+        + "    \\s                   * Show previous commands \n"
+        + "    \\-                   * reload last command\n"
+        + "    \\-2                  * reload 2nd-to-last command, etc.\n"
+        + "    \\q                   Quit (alternatively, end input,\n"
         + "                           like Ctrl-Z or Ctrl-D)\n\n"
         + "EXAMPLE:  To show previous commands then execute the 3rd-to-last:\n"
         + "    \\s\n"
