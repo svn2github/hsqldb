@@ -3286,7 +3286,8 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // So, what does it mean to say that "unknown" does not include
         // LONGVARCHAR and LONGVARBINARY?
         // boucherb@users 20020427
-        // fredt@users - changed
+        // fredt@users - changed to include all - means getMaxRowSize applies
+        // to Blobs too
         return true;
     }
 

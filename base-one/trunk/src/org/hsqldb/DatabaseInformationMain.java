@@ -171,7 +171,7 @@ class DatabaseInformationMain extends DatabaseInformation implements Types {
 
         // build the set of non-cached tables
         nonCachedTablesSet.add("SYSTEM_CACHEINFO");
-        nonCachedTablesSet.add("SYSTEM_CONNECTIONINFO");
+        nonCachedTablesSet.add("SYSTEM_SESSIONINFO");
         nonCachedTablesSet.add("SYSTEM_SESSIONS");
         nonCachedTablesSet.add("SYSTEM_PROPERTIES");
     }

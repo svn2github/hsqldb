@@ -286,7 +286,7 @@ class TestSelf {
             sStatement.execute(s);
 
             s = "insert into TabProfile values ( ?, ?, ?, ?,"
-                + "'\"John\" the bird''s best friend', 'M',?,?);";
+                + "'\"John\" the bird''s best friend', 'M',?,?)";
 
             PreparedStatement p = cConnection.prepareStatement(s);
 
@@ -449,11 +449,11 @@ class TestSelf {
 
             while (r.next()) {
                 r.getFloat(1);
-                r.getString("id");
-                r.getInt("DaT");
-                r.getInt("marotest_id");
+                r.getString("ID");
+                r.getInt("DAT");
+                r.getInt("MAROTEST_ID");
 
-                if (r.getShort("dat") != 0) {
+                if (r.getShort("DAT") != 0) {
                     throw new Exception("Bad update worked");
                 }
 
@@ -483,7 +483,7 @@ class TestSelf {
             // test database meta data
             DatabaseMetaData dbMeta = cConnection.getMetaData();
 
-            r = dbMeta.getColumns(null, "dbo", "MAROTEST", "%");
+            r = dbMeta.getColumns(null, "DBO", "MAROTEST", "%");
 
             while (r.next()) {
                 s = r.getString(4).trim();    // COLUMN_NAME

@@ -2639,6 +2639,11 @@ public class jdbcResultSet implements ResultSet {
         if (Trace.TRACE) {
             Trace.trace(rows);
         }
+        checkAvailable();
+        if ( rows > 1 || rows < 0 ){
+                    throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT);
+        }
+
     }
 
     /**

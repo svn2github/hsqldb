@@ -104,7 +104,8 @@ class Session implements SessionInterface {
     private boolean         isNestedOldAutoCommit;
     private int             nestedOldTransIndex;
     private boolean         isReadOnly;
-    private int             iMaxRows;
+    private int             currentMaxRows;
+    private int             sessionMaxRows;
     private Number          iLastIdentity;
     private boolean         isClosed;
     private int             iId;
@@ -259,7 +260,17 @@ class Session implements SessionInterface {
     }
 
     int getMaxRows() {
-        return iMaxRows;
+        return currentMaxRows;
+    }
+
+    /**
+     * NB this is dedicated to the SET MAXROWS sql statement and should not
+     * otherwise be called
+     */
+
+    void setSQLMaxRows(int rows) {
+        currentMaxRows =
+        sessionMaxRows = rows;
     }
 
     /**
@@ -712,6 +723,7 @@ class Session implements SessionInterface {
         // In addition to requiring that the compilation was successful,
         // we also require that the submitted sql represents a _single_
         // valid DML statement.
+        // fredt - won't accept semicolon at the end of statement
         if (!cmdok || tokenizer.getPosition() != tokenizer.getLength()) {
             throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
         }
@@ -733,7 +745,9 @@ class Session implements SessionInterface {
 
         int type = cmd.iMode;
 
-        iMaxRows = cmd.iUpdateCount;
+        if ( sessionMaxRows == 0 ) {
+            currentMaxRows = cmd.iUpdateCount;
+        }
 
         DatabaseManager.gc();
 

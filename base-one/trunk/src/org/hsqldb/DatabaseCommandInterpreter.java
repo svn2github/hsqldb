@@ -1751,17 +1751,17 @@ class DatabaseCommandInterpreter implements org.hsqldb.Types {
 
                 break;
             }
-/*
+
             case Token.MAXROWS : {
                 session.setScripting(false);
 
                 int i = Integer.parseInt(tokenizer.getString());
 
-                session.setMaxRows(i);
+                session.setSQLMaxRows(i);
 
                 break;
             }
-*/
+
             case Token.AUTOCOMMIT : {
                 session.setAutoCommit(processTrueOrFalse());
 

@@ -357,7 +357,6 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      */
 // fredt@users 20020428 - patch 1.7.0 - method orerrides the one in jdbcStatement
     public void setEscapeProcessing(boolean enable) throws SQLException {
-
         checkClosed();
     }
 
@@ -399,6 +398,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
     public synchronized boolean execute() throws SQLException {
 
         checkClosed();
+
         resultIn = null;
 
         try {
@@ -500,7 +500,40 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
     private void convertParameterTypes() throws HsqlException {
 
         for (int i = 0; i < types.length; i++) {
-            parameters[i] = Column.convertObject(parameters[i], types[i]);
+            int id = -2;
+
+            if (parameters[i] != null) {
+                String  type   = parameters[i].getClass().getName();
+                Integer lookup = (Integer) Column.hTypes.get(type);
+
+                if (lookup != null) {
+                    id = lookup.intValue();
+                }
+             } else {
+                id = -1;
+             }
+
+            switch (id) {
+
+                case Types.INTEGER :
+                case Types.DOUBLE :
+                case Types.VARCHAR :
+                case Types.DATE :
+                case Types.TIME :
+                case Types.TIMESTAMP :
+                case Types.DECIMAL :
+                case Types.BIT :
+                case Types.TINYINT :
+                case Types.SMALLINT :
+                case Types.BIGINT :
+                    parameters[i] = Column.convertObject(parameters[i],
+                                                         types[i]);
+                    break;
+                case -1 :
+                    break;
+                default :
+                    parameters[i] = Column.serializeToString(parameters[i]);
+            }
         }
     }
 
@@ -520,7 +553,6 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @exception SQLException if a database access error occurs
      */
     public void setNull(int parameterIndex, int sqlType) throws SQLException {
-
         setNull(parameterIndex);
     }
 
@@ -541,7 +573,6 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      */
     public void setBoolean(int parameterIndex,
                            boolean x) throws SQLException {
-
         setParameter(parameterIndex, x ? Boolean.TRUE
                                        : Boolean.FALSE);
     }
@@ -562,7 +593,6 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @exception SQLException if a database access error occurs
      */
     public void setByte(int parameterIndex, byte x) throws SQLException {
-
         setParameter(parameterIndex, ValuePool.getInt(x));
     }
 
@@ -582,7 +612,6 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @exception SQLException if a database access error occurs
      */
     public void setShort(int parameterIndex, short x) throws SQLException {
-
         setParameter(parameterIndex, ValuePool.getInt(x));
     }
 
@@ -602,7 +631,6 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @exception SQLException if a database access error occurs
      */
     public void setInt(int parameterIndex, int x) throws SQLException {
-
         setParameter(parameterIndex, ValuePool.getInt(x));
     }
 
@@ -622,7 +650,6 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @exception SQLException if a database access error occurs
      */
     public void setLong(int parameterIndex, long x) throws SQLException {
-
         setParameter(parameterIndex, ValuePool.getLong(x));
     }
 
@@ -730,7 +757,6 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      */
     public void setBigDecimal(int parameterIndex,
                               BigDecimal x) throws SQLException {
-
         setParameter(parameterIndex, x);
     }
 
@@ -753,7 +779,6 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @exception SQLException if a database access error occurs
      */
     public void setString(int parameterIndex, String x) throws SQLException {
-
         setParameter(parameterIndex, x);
     }
 
@@ -800,7 +825,6 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      */
     public void setDate(int parameterIndex,
                         java.sql.Date x) throws SQLException {
-
         setParameter(parameterIndex, x);
     }
 
@@ -821,7 +845,6 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      */
     public void setTime(int parameterIndex,
                         java.sql.Time x) throws SQLException {
-
         setParameter(parameterIndex, x);
     }
 
@@ -843,7 +866,6 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      */
     public void setTimestamp(int parameterIndex,
                              java.sql.Timestamp x) throws SQLException {
-
         setParameter(parameterIndex, x);
     }
 
@@ -1047,7 +1069,6 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      * @exception SQLException if a database access error occurs
      */
     public void clearParameters() throws SQLException {
-
         org.hsqldb.lib.ArrayUtil.arrayFill(parameters, null);
     }
 
@@ -1102,7 +1123,6 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
      */
     public void setObject(int parameterIndex, Object x, int targetSqlType,
                           int scale) throws SQLException {
-
         setObject(parameterIndex, x, targetSqlType);
     }
 

@@ -357,12 +357,11 @@ public class jdbcConnection implements Connection {
      *
      * The standard java.sql API documentation above suggests that if
      * the same SQL statement is executed many times, it may be more
-     * efficient to use a <code>PreparedStatement</code> object. As
-     * of HSQLDB 1.7.0, this is still not the case. Rather, the
-     * statement is stored on the client and is not sent to the
-     * database until the <code>PreparedStatement</code> object is
-     * executed. However, precompilation on the database <I>is</I> a
-     * feature slated to be part of the 1.7.x series. <p>
+     * efficient to use a <code>PreparedStatement</code> object. From
+     * HSQLDB 1.7.2, precompilation is supported. In previous versins, the
+     * statement was stored on the client and was not sent to the
+     * database until the <code>PreparedStatement</code> object was
+     * executed.<p>
      *
      * Up to 1.6.1, HSQLDB supported <code>TYPE_FORWARD_ONLY</code> -
      * <code>CONCUR_READ_ONLY</code> results only, so <code>ResultSet</code>
@@ -376,10 +375,8 @@ public class jdbcConnection implements Connection {
      * <b>Notes:</b> <p>
      *
      * Up to 1.6.1, calling this method returned <code>null</code> if the
-     * connection was already closed. This was possibly counter-intuitive
-     * to the expectation that an exception would be thrown for
-     * closed connections. Starting with 1.7.0. the behaviour is to throw a
-     * <code>SQLException</code> if the connection is closed. <p>
+     * connection was already closed. Starting with 1.7.0. the behaviour is
+     * to throw a <code>SQLException</code> if the connection is closed. <p>
      *
      * </span> <!-- end release-specific documentation -->
      *
