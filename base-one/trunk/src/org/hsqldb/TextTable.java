@@ -59,17 +59,22 @@ class TextTable extends org.hsqldb.Table {
         super(db, name, type, session);
     }
 
-    private void openCache(String source, boolean isDesc,
-                           boolean isRdOnly) throws SQLException {
+    /**
+     * This method does some of the work involved with managing the creation
+     * and openning of the cache, the rest is done in Log.java and
+     * TextCache.java.
+     *
+     * Better clarification of the role of the methods is needed.
+     */
+    private void openCache(String dataSourceNew, boolean isReversedNew,
+                           boolean isReadOnlyNew) throws SQLException {
 
-        if (source == null) {
-            source = "";
+        if (dataSourceNew == null) {
+            dataSourceNew = "";
         }
 
         // Close old cache:
-        if (dataSource.length() > 0) {
-            dDatabase.logger.closeTextCache(tableName);
-        }
+        dDatabase.logger.closeTextCache(tableName);
 
         cCache = null;
 
@@ -80,15 +85,15 @@ class TextTable extends org.hsqldb.Table {
         }
 
         // Open new cache:
-        if (source.length() > 0) {
+        if (dataSourceNew.length() > 0) {
             try {
-                cCache = dDatabase.logger.openTextCache(tableName, source,
-                        isRdOnly, isDesc);
+                cCache = dDatabase.logger.openTextCache(tableName,
+                        dataSourceNew, isReadOnlyNew, isReversedNew);
 
                 // force creation of Row objects with nextPos pointers
                 ((TextCache) cCache).setSourceIndexing(true);
 
-                // read and insert all the rows from the cvs file
+                // read and insert all the rows from the source file
                 PointerCachedDataRow row = (PointerCachedDataRow) getRow(0,
                     null);
 
@@ -100,28 +105,35 @@ class TextTable extends org.hsqldb.Table {
 
                 ((TextCache) cCache).setSourceIndexing(false);
             } catch (SQLException e) {
-                ((TextCache) cCache).setSourceIndexing(false);
-
-                if (!dataSource.equals(source) || isDesc != isReversed
-                        || isRdOnly != isReadOnly) {
+                if (!dataSource.equals(dataSourceNew)
+                        || isReversedNew != isReversed
+                        || isReadOnlyNew != isReadOnly) {
 
                     // Restore old cache.
+                    // fredt - todo - recursion works - but not very clearly
                     openCache(dataSource, isReversed, isReadOnly);
                 } else {
                     if (cCache != null) {
                         cCache.closeFile();
                     }
 
+                    //fredt added
+                    cCache     = null;
                     dataSource = "";
                     isReversed = false;
                 }
 
+                // fredt - todo - must make sure everything is in order
+                // here.
+                // At this point table should either have a valid (old) data
+                // source and cache or have an empty source and null cache.
+                // Have fixed the open cache issue when indexing throws.
                 throw e;
             }
         }
 
-        dataSource = source;
-        isReversed = (isDesc && source.length() > 0);
+        dataSource = dataSourceNew;
+        isReversed = (isReversedNew && dataSourceNew.length() > 0);
     }
 
     boolean equals(String other, Session c) {
@@ -154,7 +166,11 @@ class TextTable extends org.hsqldb.Table {
         return isEqual;
     }
 
-    protected void setDataSource(String source, boolean isDesc,
+    /**
+     * High level command to assign a data source to the table definition.
+     * Reassings only if the data source or direction has changed.
+     */
+    protected void setDataSource(String dataSourceNew, boolean isReversedNew,
                                  Session s) throws SQLException {
 
         if (isTemp) {
@@ -165,8 +181,9 @@ class TextTable extends org.hsqldb.Table {
         }
 
         //-- Open if descending, direction changed, or file changed.
-        if (isDesc || (isDesc != isReversed) ||!dataSource.equals(source)) {
-            openCache(source, isDesc, isReadOnly);
+        if (isReversedNew || (isReversedNew != isReversed)
+                ||!dataSource.equals(dataSourceNew)) {
+            openCache(dataSourceNew, isReversedNew, isReadOnly);
         }
 
         if (isReversed) {

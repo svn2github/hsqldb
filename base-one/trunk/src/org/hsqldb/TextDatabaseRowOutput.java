@@ -45,17 +45,19 @@ import org.hsqldb.lib.StringConverter;
  */
 class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
-    protected String fieldSep;
-    protected String varSep;
-    protected String longvarSep;
-    private boolean  fieldSepEnd;
-    private boolean  varSepEnd;
-    private boolean  longvarSepEnd;
-    private String   nextSep = "";
-    private boolean  nextSepEnd;
+    protected String  fieldSep;
+    protected String  varSep;
+    protected String  longvarSep;
+    private boolean   fieldSepEnd;
+    private boolean   varSepEnd;
+    private boolean   longvarSepEnd;
+    private String    nextSep = "";
+    private boolean   nextSepEnd;
+    protected boolean allQuoted;
 
     public TextDatabaseRowOutput(String fieldSep, String varSep,
-                                 String longvarSep) throws IOException {
+                                 String longvarSep,
+                                 boolean allQuoted) throws IOException {
 
         super();
 
@@ -78,6 +80,7 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
         this.fieldSep   = fieldSep;
         this.varSep     = varSep;
         this.longvarSep = longvarSep;
+        this.allQuoted  = allQuoted;
     }
 
     public void writePos(int pos) throws IOException {
@@ -104,6 +107,8 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
     public void writeString(String s) throws IOException {
 
+        s = checkConvertString(s, fieldSep);
+
         writeBytes(s);
 
         nextSep    = fieldSep;
@@ -116,6 +121,8 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
     protected void writeVarString(String s) throws IOException {
 
+        s = checkConvertString(s, varSep);
+
         writeBytes(s);
 
         nextSep    = varSep;
@@ -124,10 +131,24 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
     protected void writeLongVarString(String s) throws IOException {
 
+        s = checkConvertString(s, longvarSep);
+
         writeBytes(s);
 
         nextSep    = longvarSep;
         nextSepEnd = longvarSepEnd;
+    }
+
+    protected String checkConvertString(String s,
+                                        String sep) throws IOException {
+
+        if (s.indexOf('\n') != -1 || s.indexOf('\r') != -1) {
+            throw new IOException("end of line characters not allowed");
+        } else if (s.indexOf(sep) != -1) {
+            throw new IOException("separator not allowed in unquoted string");
+        }
+
+        return s;
     }
 
     protected void writeByteArray(byte b[]) throws IOException {
@@ -260,6 +281,8 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
         reset();
 
         try {
+            setSystemId(r.getTable().iColumnCount
+                        != r.getTable().iVisibleColumns);
             writeSize(0);
             writeData(r.getData(), r.getTable());
             writePos(0);

@@ -31,11 +31,13 @@
 
 package org.hsqldb.lib;
 
+import java.lang.reflect.*;
+
 /**
  * Collection of static methods for operations on arrays
  *
  * @author fredt@users
- * @version 1.7.0
+ * @version 1.7.2
  */
 public class ArrayUtil {
 
@@ -233,8 +235,23 @@ public class ArrayUtil {
         return k;
     }
 
-    public static void copyArray(int[] source, int[] dest, int count) {
+    public static void copyArray(Object source, Object dest, int count) {
         System.arraycopy(source, 0, dest, 0, count);
+    }
+
+    public static Object resizeArray(Object source, int newsize) {
+
+        Object newarray =
+            Array.newInstance(source.getClass().getComponentType(), newsize);
+        int oldsize = Array.getLength(source);
+
+        if (oldsize < newsize) {
+            newsize = oldsize;
+        }
+
+        System.arraycopy(source, 0, newarray, 0, newsize);
+
+        return newarray;
     }
 
     /**

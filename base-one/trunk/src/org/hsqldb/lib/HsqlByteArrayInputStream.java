@@ -37,8 +37,11 @@ import java.io.InputStream;
 import java.io.IOException;
 
 /**
- * This class is a both a replacement for java.io.ByteArrayInputStream
- * without synchronization and an implementation of java.io.DataInput
+ * This class is a replacement for both java.io.ByteArrayInputStream
+ * (without synchronization) and java.io.DataInputStream
+ *
+ * @author fredt@users
+ * @version 1.7.2
  */
 public class HsqlByteArrayInputStream extends InputStream
 implements DataInput {
@@ -199,8 +202,13 @@ implements DataInput {
 
     public String readUTF() throws IOException {
 
-        /** @todo: we won't need this */
-        throw new java.lang.RuntimeException("not implemented.");
+        int bytecount = this.readUnsignedShort();
+
+        if (pos + bytecount >= count) {
+            throw new EOFException();
+        }
+
+        return StringConverter.readUTF(buf, pos, bytecount);
     }
 
 // methods that extend java.io.InputStream

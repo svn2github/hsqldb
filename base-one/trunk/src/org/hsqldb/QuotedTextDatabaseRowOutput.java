@@ -34,6 +34,7 @@ package org.hsqldb;
 import java.io.IOException;
 import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.StringConverter;
+
 /**
  * This class quotes strings only if they contain the quote character or
  * the separator for the field. The quote character is doubled.
@@ -43,30 +44,23 @@ import org.hsqldb.lib.StringConverter;
 class QuotedTextDatabaseRowOutput extends org.hsqldb.TextDatabaseRowOutput {
 
     public QuotedTextDatabaseRowOutput(String fieldSep, String varSep,
-                                       String longvarSep) throws IOException {
-        super(fieldSep, varSep, longvarSep);
+                                       String longvarSep,
+                                       boolean allQuoted) throws IOException {
+        super(fieldSep, varSep, longvarSep, allQuoted);
     }
 
-    private String addQuotes(String s, String sep) {
+    protected String checkConvertString(String s,
+                                        String sep) throws IOException {
 
-        if ((s.indexOf('\"') != -1)
-                || ((sep.length() > 0) && (s.indexOf(sep) != -1))) {
-
-            StringConverter.toQuotedString(s,'\"',true);
+        if (s.indexOf('\n') != -1 || s.indexOf('\r') != -1) {
+            throw new IOException("end of line characters not allowed");
         }
 
-        return (s);
-    }
+        if (allQuoted || s.length() == 0 || s.indexOf('\"') != -1
+                || (sep.length() > 0 && s.indexOf(sep) != -1)) {
+            s = StringConverter.toQuotedString(s, '\"', true);
+        }
 
-    public void writeString(String s) throws IOException {
-        super.writeString(addQuotes(s, fieldSep));
-    }
-
-    protected void writeVarString(String s) throws IOException {
-        super.writeVarString(addQuotes(s, varSep));
-    }
-
-    protected void writeLongVarString(String s) throws IOException {
-        super.writeLongVarString(addQuotes(s, longvarSep));
+        return s;
     }
 }

@@ -814,6 +814,7 @@ class Tokenizer {
                 j = 0;
 
                 // fredt - loop assumes all occurences of quoteChar are paired
+                // this has already been checked by the preprocessing loop
                 for (int i = 0; i < chBuffer.length; i++, j++) {
                     if (chBuffer[i] == quoteChar) {
                         i++;

@@ -35,12 +35,10 @@ import java.io.*;
 import java.sql.SQLException;
 
 /**
- * Title:
- * Description:
- * Copyright:    Copyright (c) 2002
- * Company:
- * @author
- * @version 1.0
+ * Reader corresponding to BinaryDatabaseScritReader.
+ *
+ * @author fredt@users
+ * @version 1.7.2
  */
 class BinaryDatabaseScriptReader extends DatabaseScriptReader {
 

@@ -60,7 +60,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
     protected int     line;
     protected int     field;
     protected int     next = 0;
-    protected boolean emptyIsNull;
+    protected boolean allQuoted;
 
     /**
      * fredt@users - comment - in future may use a custom subclasse of
@@ -70,7 +70,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
      */
     public TextDatabaseRowInput(String fieldSep, String varSep,
                                 String longvarSep,
-                                boolean emptyIsNull) throws IOException {
+                                boolean allQuoted) throws IOException {
 
         super(new byte[0]);
 
@@ -90,13 +90,13 @@ implements org.hsqldb.DatabaseRowInputInterface {
             longvarSep    = longvarSep.substring(0, longvarSep.length() - 1);
         }
 
-        this.emptyIsNull = emptyIsNull;
-        this.fieldSep    = fieldSep;
-        this.varSep      = varSep;
-        this.longvarSep  = longvarSep;
-        fieldSepLen      = fieldSep.length();
-        varSepLen        = varSep.length();
-        longvarSepLen    = longvarSep.length();
+        this.allQuoted  = allQuoted;
+        this.fieldSep   = fieldSep;
+        this.varSep     = varSep;
+        this.longvarSep = longvarSep;
+        fieldSepLen     = fieldSep.length();
+        varSepLen       = varSep.length();
+        longvarSepLen   = longvarSep.length();
     }
 
     public void setSource(String text, int pos) {
@@ -120,8 +120,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
     protected String getField(String sep, int sepLen,
                               boolean isEnd) throws IOException {
 
-        String s = (emptyIsNull) ? null
-                                 : "";
+        String s = null;
 
         try {
             int start = next;
@@ -147,7 +146,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
             s    = text.substring(start, next);
             next += sepLen;
 
-            if (emptyIsNull && s.length() == 0) {
+            if (s.length() == 0) {
                 s = null;
             }
         } catch (Exception e) {

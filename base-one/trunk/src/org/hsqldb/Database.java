@@ -2484,9 +2484,7 @@ class Database {
                         sToken = c.getString();
 
                         if (!c.wasQuotedIdentifier()) {
-
-                            //fredt - can replace with a better message
-                            throw Trace.error(Trace.INVALID_ESCAPE);
+                            throw Trace.error(Trace.TEXT_TABLE_SOURCE);
                         }
 
                         boolean isDesc = false;

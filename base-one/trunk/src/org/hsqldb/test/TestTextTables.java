@@ -71,7 +71,7 @@ public class TestTextTables {
     boolean          createTempTable = false;
 
     // introduces fragmentation to the .data file
-    boolean deleteWhileInsert         = false;
+    boolean deleteWhileInsert         = true;
     int     deleteWhileInsertInterval = 10000;
 
     protected void setUp() {
@@ -118,10 +118,10 @@ public class TestTextTables {
      */
     public void testFillUp() {
 
-        StopWatch sw = new StopWatch();
-        int    bigrows   = 10000;
-        int    smallrows = 0xfff;
-        double value     = 0;
+        StopWatch sw        = new StopWatch();
+        int       bigrows   = 100000;
+        int       smallrows = 0xfff;
+        double    value     = 0;
         String ddl1 = "DROP TABLE test IF EXISTS;"
                       + "DROP TABLE zip IF EXISTS;";
         String ddl2 = "CREATE TABLE zip( zip INT IDENTITY );";
@@ -239,7 +239,8 @@ public class TestTextTables {
                 ps.execute();
 
                 if ((i + 1) % 10000 == 0) {
-                    System.out.println("Insert " + (i + 1) + " : "  + sw.elapsedTime() );
+                    System.out.println("Insert " + (i + 1) + " : "
+                                       + sw.elapsedTime());
                 }
 
                 // delete and add 4000 rows to introduce fragmentation

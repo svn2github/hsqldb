@@ -82,6 +82,14 @@ import org.hsqldb.lib.FileUtil;
 // fredt@users 20021215 - doc 1.7.2 - javadoc comments rewritten
 
 /**
+ * fredt - todo 20021022
+ * Check for MAX_INTEGER size.
+ * Optional file size limit below MAX_INTEGER.
+ * Optional defrag when limit reached.
+ * Store total amount of free.
+ */
+
+/**
  *
  * Handles cached table persistence with a *.data file and memory cache.<p>
  *
@@ -343,12 +351,11 @@ class Cache {
     }
 
     /**
-     * Marks space in this object's cache file as free. <p>
-     *
+     * Adds the file space for a row to the list of free positions.
      * If there exists more than MAX_FREE_COUNT free positions,
      * then they are probably all too small, so we start a new list. <p>
-     *
-     *  todo: This is wrong when deleting lots of records
+     * todo: This is wrong when deleting lots of records <p>
+     * Then remove the row from the cache data structures.
      */
     void free(CachedRow r) throws SQLException {
 

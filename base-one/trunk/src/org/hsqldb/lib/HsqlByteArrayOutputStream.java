@@ -34,14 +34,18 @@ package org.hsqldb.lib;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.io.UTFDataFormatException;
 import java.io.DataOutput;
 
 /**
- * This class is both a replacement for java.io.ByteArrayOuputStream
- * without synchronization and a partial implementation of java.io.DataOutput
- * interface.
+ * This class is a replacement for both java.io.ByteArrayOuputStream
+ * (without synchronization) and java.io.DataOutputStream
+ *
+ * @author fredt@users
+ * @version 1.7.2
  */
-public class HsqlByteArrayOutputStream extends java.io.OutputStream {
+public class HsqlByteArrayOutputStream extends java.io.OutputStream
+implements DataOutput {
 
     protected byte buf[];
     protected int  count;
@@ -86,9 +90,10 @@ public class HsqlByteArrayOutputStream extends java.io.OutputStream {
     public final void writeBytes(String s) {
 
         int len = s.length();
+        ensureRoom(len);
 
         for (int i = 0; i < len; i++) {
-            write((byte) s.charAt(i));
+            buf[count++] = (byte) s.charAt(i);
         }
     }
 
@@ -100,16 +105,78 @@ public class HsqlByteArrayOutputStream extends java.io.OutputStream {
         writeLong(Double.doubleToLongBits(v));
     }
 
+    public void writeBoolean(boolean v) throws IOException {
+
+        ensureRoom(1);
+
+        buf[count++] = (byte) (v ? 1
+                                  : 0);
+    }
+
+    public void writeByte(int v) throws IOException {
+
+        ensureRoom(1);
+
+        buf[count++] = (byte) (v);
+    }
+
+    public void writeChar(int v) throws IOException {
+
+        ensureRoom(2);
+
+        buf[count++] = (byte) (v >>> 8);
+        buf[count++] = (byte) v;
+    }
+
+    public void writeChars(String s) throws IOException {
+
+        int len = s.length();
+
+        ensureRoom(len * 2);
+
+        for (int i = 0; i < len; i++) {
+            int v = s.charAt(i);
+
+            buf[count++] = (byte) (v >>> 8);
+            buf[count++] = (byte) v;
+        }
+    }
+
+    public void writeUTF(String str) throws IOException {
+
+        int len = str.length();
+
+        if (len > 0xffff) {
+            throw new UTFDataFormatException();
+        }
+
+        ensureRoom(len * 3 + 2);
+
+        //
+        int initpos = count;
+
+        count += 2;
+
+        StringConverter.writeUTF(str, this);
+
+        int bytecount = count - initpos - 2;
+
+        if (bytecount > 0xffff) {
+            count = initpos;
+
+            throw new UTFDataFormatException();
+        }
+
+        buf[initpos++] = (byte) (bytecount >>> 8);
+        buf[initpos]   = (byte) bytecount;
+    }
+
     // methods that extend java.io.OutputStream
     public void write(int b) {
 
         ensureRoom(1);
 
         buf[count] = (byte) b;
-
-        if (buf[count] < 32) {
-            size();
-        }
 
         count++;
     }

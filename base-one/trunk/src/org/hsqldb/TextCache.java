@@ -44,7 +44,7 @@ import org.hsqldb.lib.FileUtil;
  * rows of data to the file in text table format.
  *
  * @author sqlbob@users (RMP)
- * @version 1.7.0
+ * @version 1.7.2
  */
 class TextCache extends org.hsqldb.Cache {
 
@@ -54,53 +54,19 @@ class TextCache extends org.hsqldb.Cache {
     private String                 fs;
     private String                 vs;
     private String                 lvs;
+    private String                 stringEncoding;
     protected boolean              readOnly;
     protected TextDatabaseRowInput rowIn;
     protected boolean              ignoreFirst;
     protected String               ignoredFirst = NL;
 
-    private class TextSource {
-
-        private String source;
-
-        TextSource(String s) {
-            source = s;
-        }
-
-        String getAttr(String id, String ret) {
-
-            id = ";" + id + "=";
-
-            int len = id.length();
-            int start;
-            int end;
-
-            if ((start = source.indexOf(id)) != -1) {
-                start += len;
-
-                if ((end = source.indexOf(";", start)) == -1) {
-                    end = source.length();
-                }
-
-                ret = source.substring(start, end);
-                source = source.substring(0, start - len)
-                         + source.substring(end);
-            }
-
-            return (ret);
-        }
-    }
-
     /**
-     *  TextCache constructor declaration <P>
+     *  The source string for a cached table is evaluated and the parameters
+     *  are used to open the source file.<p>
      *
-     *  The cache constructor sets up the initial parameters of the cache
-     *  object, setting the name used for the file, etc.
-     *
-     * @param  name              of database file
-     * @param  propPrefix        prefix for relevant properties
-     * @param  props             Description of the Parameter
-     * @exception  SQLException  Description of the Exception
+     *  Settings are used in this order: (1) settings specified in the
+     *  source string for the table (2) global database settings in
+     *  *.properties file (3) program defaults
      */
     TextCache(String name, Database db) throws SQLException {
 
@@ -109,78 +75,76 @@ class TextCache extends org.hsqldb.Cache {
         // fredt - write rows as soon as they are inserted
         storeOnInsert = true;
 
-        TextSource textSource = new TextSource(name);
+        HsqlProperties dbprops = db.getProperties();
+        HsqlProperties tableprops =
+            HsqlProperties.delimitedArgPairsToProps(name, "=", ";", null);
+
+        //-- Get file name
+        switch (tableprops.errorCodes.length) {
+
+            case 0 :
+                throw Trace.error(Trace.TEXT_TABLE_SOURCE, "no filename");
+            case 1 :
+
+                // source file name is the only key without a value
+                sName = tableprops.errorKeys[0].trim();
+                break;
+
+            default :
+                throw Trace.error(Trace.TEXT_TABLE_SOURCE,
+                                  "no value for: " + tableprops.errorKeys[1]);
+        }
 
         //-- Get separators:
-        fs = translateSep(textSource.getAttr("fs", null));
-        vs = textSource.getAttr("vs", fs);
+        fs = translateSep(tableprops.getProperty("fs",
+                dbprops.getProperty("textdb.fs", ",")));
+        vs = translateSep(tableprops.getProperty("vs",
+                dbprops.getProperty("textdb.vs", fs)));
+        lvs = translateSep(tableprops.getProperty("lvs",
+                dbprops.getProperty("textdb.lvs", fs)));
 
-        if (vs != fs) {
-            vs = translateSep(vs);
+        if (fs.length() == 0 || vs.length() == 0 || lvs.length() == 0) {
+            throw Trace.error(Trace.TEXT_TABLE_SOURCE,
+                              "zero length separator");
         }
 
-        String lvs = textSource.getAttr("lvs", fs);
+        //-- Get booleans
+        ignoreFirst = tableprops.isPropertyTrue("ignore_first",
+                dbprops.isPropertyTrue("textdb.ignore_first", false));
 
-        if (lvs != fs) {
-            lvs = translateSep(lvs);
-        }
+        boolean quoted = tableprops.isPropertyTrue("quoted",
+            dbprops.isPropertyTrue("textdb.quoted", true));
+        boolean allquoted = tableprops.isPropertyTrue("all_quoted",
+            dbprops.isPropertyTrue("textdb.all_quoted", false));
 
-        if (fs == null) {
-            fs = ",";
-        }
-
-        if (vs == null) {
-            vs = fs;
-        }
-
-        if (lvs == null) {
-            lvs = fs;
-        }
-
-        //-- Get boolean settings:
-        String skipFirst = textSource.getAttr("ignore_first", null);
-
-        if (skipFirst == null) {
-            skipFirst = "false";
-        }
-
-        ignoreFirst = skipFirst.equals("true");
-
-        String quoted = textSource.getAttr("quoted", null);
-
-        if (quoted == null) {
-            quoted = "true";
-        }
-
-        boolean emptyIsNull = textSource.getAttr("empty_is_null",
-            "true").equals("true");
-
-        // Get file name
-        sName = textSource.source;
-
-        if (sName.endsWith(";")) {
-            sName = sName.substring(0, sName.length() - 1);
-        }
+        //-- Get encoding
+        stringEncoding = translateSep(tableprops.getProperty("encoding",
+                dbprops.getProperty("textdb.encoding", "ASCII")));
 
         try {
-            if (quoted.equals("true")) {
+            if (quoted || allquoted) {
                 rowIn = new QuotedTextDatabaseRowInput(fs, vs, lvs,
-                                                       emptyIsNull);
-                rowOut = new QuotedTextDatabaseRowOutput(fs, vs, lvs);
+                                                       allquoted);
+                rowOut = new QuotedTextDatabaseRowOutput(fs, vs, lvs,
+                        allquoted);
             } else {
-                rowIn  = new TextDatabaseRowInput(fs, vs, lvs, emptyIsNull);
-                rowOut = new TextDatabaseRowOutput(fs, vs, lvs);
+                rowIn  = new TextDatabaseRowInput(fs, vs, lvs, false);
+                rowOut = new TextDatabaseRowOutput(fs, vs, lvs, false);
             }
         } catch (IOException e) {
-            throw (Trace.error(Trace.FILE_IO_ERROR,
-                               "invalid separator(s):" + e));
+            throw (Trace.error(Trace.TEXT_TABLE_SOURCE,
+                               "invalid file: " + e));
         }
     }
 
     private String translateSep(String sep) {
-        return (translateSep(sep, false));
+        return translateSep(sep, false);
     }
 
+    /**
+     * Translates the escaped characters in a separator string and returns
+     * the non-escaped string.
+     */
     private String translateSep(String sep, boolean isProperty) {
 
         if (sep == null) {
@@ -264,17 +228,11 @@ class TextCache extends org.hsqldb.Cache {
             sep = realSep.toString();
         }
 
-        return (sep);
+        return sep;
     }
 
     /**
-     *  open method declaration <P>
-     *
-     *  The open method creates or opens a database file.
-     *
-     * @param  readonly       Description of the Parameter
-     * @param  ignore1st      Description of the Parameter
-     * @throws  SQLException
+     *  Opens a data source file.
      */
     void open(boolean readonly) throws SQLException {
 
@@ -302,9 +260,9 @@ class TextCache extends org.hsqldb.Cache {
     }
 
     /**
-     *  The flush method saves all modified cached data to the file.
-     *
-     * @throws  SQLException
+     *  Writes newly created rows to disk. In the current implentation,
+     *  such rows have already been saved, so this method just removes a
+     *  source file that has no rows.
      */
     void flush() throws SQLException {
 
@@ -313,8 +271,6 @@ class TextCache extends org.hsqldb.Cache {
         }
 
         try {
-
-//            rFile.seek(0);
             saveAll();
 
             boolean empty = (rFile.length() <= NL.length());
@@ -332,6 +288,9 @@ class TextCache extends org.hsqldb.Cache {
         }
     }
 
+    /**
+     * Closes the source file and deletes it if it is not read-only.
+     */
     void purge() throws SQLException {
 
         if (rFile == null) {
@@ -354,6 +313,9 @@ class TextCache extends org.hsqldb.Cache {
         }
     }
 
+    /**
+     *
+     */
     void free(CachedRow r) throws SQLException {
 
         int pos    = r.iPos;
@@ -455,6 +417,11 @@ class TextCache extends org.hsqldb.Cache {
                         buffer.append('\n');
 
                         //-- Store first line.
+                        //-- Currently this is of no use as it is lost in
+                        // shutdown compact. We might want to store this in
+                        // the *.script file at that point to be reused for
+                        // reconstructing the data source file.
+                        //
                         if (ignoreFirst && pos == 0) {
                             ignoredFirst = buffer.toString();
                             blank        = true;
@@ -503,7 +470,7 @@ class TextCache extends org.hsqldb.Cache {
             throw Trace.error(Trace.FILE_IO_ERROR, "reading: " + e);
         }
 
-        return (r);
+        return r;
     }
 
     void setSourceIndexing(boolean mode) {

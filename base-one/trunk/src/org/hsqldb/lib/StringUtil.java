@@ -32,7 +32,7 @@
 package org.hsqldb.lib;
 
 /**
- * @version 1.7.0
+ * @version 1.7.2
  */
 public class StringUtil {
 
@@ -68,10 +68,12 @@ public class StringUtil {
     }
 
     /**
-     * Builds a CSV list from the String[].
+     * Builds a generalised separated list from the String[].
      *
-     * @param s  array of String objects
-     * @return a CSV list
+     * @param s array of string elements of the list
+     * @param separator string to use as separator
+     * @param quote string to use for quoting
+     * @return a separated list
      */
     public static String getList(String[] s, String separator, String quote) {
 

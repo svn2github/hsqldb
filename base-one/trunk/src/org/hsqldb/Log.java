@@ -672,7 +672,6 @@ class Log implements Runnable {
             }
         }
 
-        String    prefix = "textdb." + tablename.name.toLowerCase() + ".";
         TextCache c;
 
         if (reversed) {
@@ -684,7 +683,7 @@ class Log implements Runnable {
         c.open(readOnlyData || bReadOnly);
         textCacheList.put(tablename, c);
 
-        return (c);
+        return c;
     }
 
     void closeTextCache(HsqlName table) throws SQLException {

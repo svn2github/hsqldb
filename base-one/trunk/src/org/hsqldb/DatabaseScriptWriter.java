@@ -50,7 +50,9 @@ import org.hsqldb.lib.StringConverter;
  * written as binray in order to speed up shutdown and startup.<p>
  *
  * A related use for this class is for saving a current snapshot of the
- * database data to a user-defined file.<p>
+ * database data to a user-defined file. This happens in the SHUTDOWN COMPACT
+ * process or done as a result of the SCRIPT command. In this use use, the
+ * DATA block contains the CACHED table data as well.<p>
  *
  * DatabaseScriptReader and its subclasses read back the data at startup time.
  *

@@ -40,13 +40,14 @@ import java.util.Enumeration;
 import java.util.Properties;
 import org.hsqldb.lib.java.javaSystem;
 import org.hsqldb.lib.FileUtil;
+import org.hsqldb.lib.ArrayUtil;
 
 /**
  * Wrapper for java.util.Properties to limit values to String objects and
- * allow saving and loading.
+ * allow saving and loading.<p>
  *
  * @author fredt@users
- * @verison 1.7.0
+ * @verison 1.7.2
  */
 public class HsqlProperties {
 
@@ -62,8 +63,11 @@ public class HsqlProperties {
         catch (SecurityException e) {}
     }
 
+    public static int    NO_VALUE_FOR_KEY = 1;
     protected String     fileName;
     protected Properties stringProps;;
+    protected int[]      errorCodes = new int[0];
+    protected String[]   errorKeys  = new String[0];
 
     public HsqlProperties() {
         stringProps = new Properties();
@@ -158,23 +162,6 @@ public class HsqlProperties {
         stringProps.remove(key);
     }
 
-    public static HsqlProperties argArrayToProps(String[] arg, String type) {
-
-        HsqlProperties props = new HsqlProperties();
-
-        for (int i = 0; i < arg.length - 1; i++) {
-            String p = arg[i];
-
-            if ((p.charAt(0) == '-') && (!p.startsWith("-?"))) {
-                props.setProperty(type + "." + p.substring(1), arg[i + 1]);
-
-                i++;
-            }
-        }
-
-        return props;
-    }
-
     public void addProperties(HsqlProperties props) {
 
         Enumeration keys = props.stringProps.propertyNames();
@@ -219,9 +206,7 @@ public class HsqlProperties {
     }
 
     /**
-     *  Method declaration
-     *
-     * @throws  SQLException
+     *  Saves the properties using JDK2 method if present, otherwise JDK1.
      */
     public void save() throws Exception {
 
@@ -264,5 +249,116 @@ public class HsqlProperties {
         }
 
         fos.close();
+    }
+
+    /**
+     * Adds the error code and the key to the list of errors. This list
+     * is populated during construction or addition of elements and is used
+     * outside this class to act upon the errors.
+     */
+    private void addError(int code, String key) {
+
+        errorCodes = (int[]) ArrayUtil.resizeArray(errorCodes,
+                errorCodes.length + 1);
+        errorKeys = (String[]) ArrayUtil.resizeArray(errorKeys,
+                errorKeys.length + 1);
+        errorCodes[errorCodes.length - 1] = code;
+        errorKeys[errorKeys.length - 1]   = key;
+    }
+
+    /**
+     * Creates and populates an HsqlProperties Object from the arguments
+     * array of a Main method. Properties are in the form of "-key value"
+     * pairs. Each key is prefixed with the type argument and a dot before
+     * being inserted into the properties Object. <p>
+     *
+     * "-?" is treated as a key with no value and not inserted.
+     */
+    public static HsqlProperties argArrayToProps(String[] arg, String type) {
+
+        HsqlProperties props = new HsqlProperties();
+
+        for (int i = 0; i < arg.length - 1; i++) {
+            String p = arg[i];
+
+            if (p.startsWith("-?")) {
+                props.addError(NO_VALUE_FOR_KEY, p.substring(1));
+            } else if (p.charAt(0) == '-') {
+                props.setProperty(type + "." + p.substring(1), arg[i + 1]);
+
+                i++;
+            }
+        }
+
+        return props;
+    }
+
+    /**
+     * Creates and populates a new HsqlProperties Object using a string
+     * such as "key1=value1;key2=value2" <p>
+     *
+     * The string that represents the = sign above is specified as pairsep
+     * and the one that represents the semicolon is specified as delimiter,
+     * allowing any string to be used for either.<p>
+     *
+     * Leading and trailing spaces around the keys and values are discarded.<p>
+     *
+     * The string is parsed by (1) subdividing into segments by delimiter
+     * (2) subdividing each segment in two by finding the first instance of
+     * the pairsep (3) trimming each pair of segments from step 2 and
+     * inserting into the properties object.<p>
+     *
+     * Each key is prefixed with the type argument and a dot before being
+     * inserted.<p>
+     *
+     * Any key without a value is added to the list of errors.
+     */
+    public static HsqlProperties delimitedArgPairsToProps(String s,
+            String pairsep, String dlimiter, String type) {
+
+        HsqlProperties props       = new HsqlProperties();
+        int            currentpair = 0;
+
+        while (true) {
+            int nextpair = s.indexOf(dlimiter, currentpair);
+
+            if (nextpair == -1) {
+                nextpair = s.length();
+            }
+
+            // find value within the segment
+            int valindex = s.substring(0, nextpair).indexOf(pairsep,
+                                       currentpair);
+
+            if (valindex == -1) {
+                props.addError(NO_VALUE_FOR_KEY,
+                               s.substring(currentpair, nextpair));
+            } else {
+                String key = s.substring(currentpair, valindex).trim();
+                String value = s.substring(valindex + pairsep.length(),
+                                           nextpair).trim();
+
+                if (type != null) {
+                    key = type + "." + key;
+                }
+
+                props.setProperty(key, value);
+            }
+
+            if (nextpair == s.length()) {
+                break;
+            }
+
+            currentpair = nextpair + dlimiter.length();
+        }
+
+        return props;
+    }
+
+    public static void main(String[] argv) {
+
+        HsqlProperties props = delimitedArgPairsToProps(
+            "filename.cvs;a=123 ;  b=\\delta ;c= another; derrorkey", "=",
+            ";", "textdb");
     }
 }

@@ -85,7 +85,7 @@ import java.io.UTFDataFormatException;
  * formats and to and from byte arrays
  *
  *
- * @version 1.7.0
+ * @version 1.7.2
  */
 
 // fredt@users 20020328 - patch 1.7.0 by fredt - error trapping
@@ -101,9 +101,9 @@ public class StringConverter {
      * Compacts a hexadecimal string into a byte array
      *
      *
-     * @param s
+     * @param s hexadecimal string
      *
-     * @return
+     * @return byte array for the hex string
      * @throws SQLException
      */
     public static byte[] hexToByte(String s) throws IOException {
@@ -134,12 +134,12 @@ public class StringConverter {
     }
 
     /**
-     * Method declaration
+     * Converts a byte array into a hexadecimal string
      *
      *
-     * @param b
+     * @param b byte array
      *
-     * @return
+     * @return hex string
      */
     public static String byteToHex(byte b[]) {
 
@@ -157,22 +157,19 @@ public class StringConverter {
     }
 
     /**
-     * Method declaration
+     * Converts a Unicode string into UTF8 then convert into a hex string
      *
      *
-     * @param s
+     * @param s normal Unicode string
      *
-     * @return
+     * @return hex string representation of UTF8 encoding of the input
      */
     public static String unicodeToHexString(String s) {
 
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        DataOutputStream      out  = new DataOutputStream(bout);
+        HsqlByteArrayOutputStream bout = new HsqlByteArrayOutputStream();
 
         try {
-            out.writeUTF(s);
-            out.close();
-            bout.close();
+            writeUTF(s, bout);
         } catch (IOException e) {
             return null;
         }
@@ -181,7 +178,8 @@ public class StringConverter {
     }
 
     /**
-     * Method declaration
+     * Converts a hex string into a byte array then converts the byte array
+     * into a Unicode string.
      *
      *
      * @param s
@@ -191,11 +189,10 @@ public class StringConverter {
      */
     public static String hexStringToUnicode(String s) throws IOException {
 
-        byte[]               b   = hexToByte(s);
-        ByteArrayInputStream bin = new ByteArrayInputStream(b);
-        DataInputStream      in  = new DataInputStream(bin);
+        byte[]                   b   = hexToByte(s);
+        HsqlByteArrayInputStream bin = new HsqlByteArrayInputStream(b);
 
-        return in.readUTF();
+        return bin.readUTF();
     }
 
 // fredt@users 20011120 - patch 450455 by kibu@users - modified
@@ -205,16 +202,20 @@ public class StringConverter {
     /**
      * Hsqldb specific encoding used only for log files.
      *
-     * The SQL statements that go into the log file (input) are Unicode
-     * strings. input is converted into an ASCII string (output) with the
-     * following transformations.
-     * All characters outside the 0x20-7f range are converted to Java Unicode
+     * The SQL statements that need to be written to the log file (input) are
+     * Java Unicode strings. input is converted into a 7bit escaped ASCII
+     * string (output)with the following transformations.
+     * All characters outside the 0x20-7f range are converted to a
      * escape sequence and added to output.
      * If a backslash character is immdediately followed by 'u', the
-     * backslash character is converted to Java Unicode escape sequence and
+     * backslash character is converted to escape sequence and
      * added to output.
      * All the remaining characters in input are added to output without
-     * conversion. (fredt@users)
+     * conversion.
+     *
+     * The escape sequence is backslash, letter u, xxxx, where xxxx
+     * is the hex representation of the character code.
+     * (fredt@users)
      *
      * @param b output stream to wite to
      * @param s Java Unicode string
@@ -278,8 +279,8 @@ public class StringConverter {
     /**
      * Hsqldb specific decoding used only for log files.
      *
-     * This method converts the ASCII strings in a log file back into
-     * Java Unicode strings. See unicodeToAccii() above,
+     * This method converts the 7 bit escaped ASCII strings in a log file
+     * back into Java Unicode strings. See unicodeToAccii() above,
      *
      * @param s encoded ASCII string in byte array
      * @param offset position of first byte
@@ -478,14 +479,7 @@ public class StringConverter {
     }
 
     /**
-     * Method declaration
-     *
-     *
-     * @param x
-     *
-     * @return
-     *
-     * @throws SQLException
+     * Using a Reader and a Writer, returns a String from an InputStream
      */
     public static String inputStreamToString(InputStream x)
     throws IOException {
@@ -511,18 +505,16 @@ public class StringConverter {
         return write.toString();
     }
 
-    /**
-     * Method declaration
-     *
-     *
-     * @param name
-     *
-     * @return
-     *
-     */
-
 // fredt@users 20020130 - patch 497872 by Nitin Chauhan - modified
 // use of string buffer of ample size
+
+    /**
+     * Returns the quoted version of the string using the quotechar argument.
+     * doublequote argument indicates whether each instance of quotechar
+     * inside the string is doubled.<p>
+     *
+     * The reverse conversion is handled in Tokenizer.java
+     */
     public static String toQuotedString(String s, char quotechar,
                                         boolean doublequote) {
 

@@ -35,6 +35,9 @@ import org.hsqldb.lib.HsqlStringBuffer;
 import java.io.IOException;
 
 /**
+ * Fields in the source file need not be quoted. Methods in this class unquote
+ * the fields if they are quoted and handle quote character doubling in this
+ * case.
  *
  * @author sqlbob@users (RMP)
  * @version 1.7.0
@@ -48,9 +51,8 @@ class QuotedTextDatabaseRowInput extends org.hsqldb.TextDatabaseRowInput {
 
     public QuotedTextDatabaseRowInput(String fieldSep, String varSep,
                                       String longvarSep,
-                                      boolean emptyIsNull)
-                                      throws IOException {
-        super(fieldSep, varSep, longvarSep, emptyIsNull);
+                                      boolean allQuoted) throws IOException {
+        super(fieldSep, varSep, longvarSep, allQuoted);
     }
 
     public void setSource(String text, int pos) {
@@ -63,10 +65,10 @@ class QuotedTextDatabaseRowInput extends org.hsqldb.TextDatabaseRowInput {
     protected String getField(String sep, int sepLen,
                               boolean isEnd) throws IOException {
 
-        String s = (emptyIsNull) ? null
-                                 : "";
+        //fredt - now the only supported behaviour is emptyIsNull
+        String s = null;
 
-        if (next >= qtext.length) {
+        if (next >= qtext.length || qtext[next] != '\"') {
             return (super.getField(sep, sepLen, isEnd));
         }
 
@@ -141,7 +143,7 @@ class QuotedTextDatabaseRowInput extends org.hsqldb.TextDatabaseRowInput {
 
             s = ret.toString();
 
-            if (emptyIsNull && s.length() == 0) {
+            if (s.length() == 0) {
                 s = null;
             }
         } catch (Exception e) {
