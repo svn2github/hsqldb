@@ -1,4 +1,4 @@
-<!-- $Id$ -->
+<!-- $Id: sqlsyntax.xml,v 1.1 2004/04/17 20:48:56 unsaved Exp $ -->
 
 <chapter>
 <title>SQL Syntax</title>
@@ -26,9 +26,16 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
+        <editor>
+            <firstname>Blaine</firstname><surname>Simpson</surname>
+            <email>&blaineaddr;</email>
+            <affiliation>
+                <orgname>HSQLDB Development Group</orgname>
+            </affiliation>
+        </editor>
     </authorgroup>
-    <edition>$Revision$</edition>
-    <pubdate>$Date$</pubdate>
+    <edition>$Revision: 1.1 $</edition>
+    <pubdate>$Date: 2004/04/17 20:48:56 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Syntax</keyword>
