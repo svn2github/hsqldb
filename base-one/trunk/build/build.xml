@@ -92,6 +92,7 @@ example:
          <arg line="${src}/org/hsqldb/jdbcStubs.java
                     ${src}/org/hsqldb/jdbcConnection.java
                     ${src}/org/hsqldb/jdbcDatabaseMetaData.java
+                    ${src}/org/hsqldb/jdbcCallableStatement.java
                     ${src}/org/hsqldb/jdbcPreparedStatement.java
                     ${src}/org/hsqldb/jdbcResultSet.java
                     ${src}/org/hsqldb/jdbcStatement.java +JAVA2 -JDBC3"/>
@@ -103,6 +104,7 @@ example:
          <arg line="${src}/org/hsqldb/jdbcStubs.java
                     ${src}/org/hsqldb/jdbcConnection.java
                     ${src}/org/hsqldb/jdbcDatabaseMetaData.java
+                    ${src}/org/hsqldb/jdbcCallableStatement.java
                     ${src}/org/hsqldb/jdbcPreparedStatement.java
                     ${src}/org/hsqldb/jdbcResultSet.java
                     ${src}/org/hsqldb/jdbcStatement.java +JAVA2 +JDBC3"/>
@@ -139,6 +141,7 @@ example:
          <exclude name="org/hsqldb/sample/*.java"/>
          <exclude name="org/hsqldb/util/*.java"/>
          <exclude name="org/hsqldb/jdbcDataSource*.java"/>
+         <exclude name="org/hsqldb/jdbcParameterMetaData.java"/>
          <exclude name="org/hsqldb/HsqlSocketFactorySecure.java" unless="ant.java.hasjsse"/>
          <exclude name="org/hsqldb/NIOLockFile.java"/>
       </javac>
@@ -165,6 +168,7 @@ example:
                  optimize="${build.optimize}"
        >
       <include name="org/hsqldb/jdbcDataSource*.java"/>
+      <include name="org/hsqldb/jdbcParameterMetaData.java"/>
       <include name="org/hsqldb/NIOLockFile.java"/>
       </javac>
    </target>

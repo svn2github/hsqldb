@@ -495,7 +495,7 @@ public class jdbcConnection implements Connection {
         checkClosed();
 
         try {
-            return new jdbcPreparedStatement(this, sql,
+            return new jdbcCallableStatement(this, sql,
                                              jdbcResultSet.TYPE_FORWARD_ONLY);
         } catch (HsqlException e) {
             throw jdbcDriver.sqlException(e);
@@ -1442,7 +1442,11 @@ public class jdbcConnection implements Connection {
         checkTypeConcurrency(resultSetType, resultSetConcurrency);
         checkClosed();
 
-        return prepareCall(sql);
+        try {
+            return new jdbcCallableStatement(this, sql, resultSetType);
+        } catch (HsqlException e) {
+            throw jdbcDriver.sqlException(e);
+        }
     }
 
     /**
