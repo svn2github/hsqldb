@@ -1,4 +1,4 @@
-<!-- $Id: unix.xml,v 1.12 2004/04/23 16:49:44 unsaved Exp $ -->
+<!-- $Id: unix.xml,v 1.13 2004/04/26 15:52:28 unsaved Exp $ -->
 
 <chapter>
     <title>UNIX Quick Start</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.12 $</edition>
-        <pubdate>$Date: 2004/04/23 16:49:44 $</pubdate>
+        <edition>$Revision: 1.13 $</edition>
+        <pubdate>$Date: 2004/04/26 15:52:28 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>UNIX</keyword>
@@ -417,6 +417,11 @@
             <filename>server.properties</filename> file; and to shut down
             all of the database instances listed in your init script config
             file (the latter must all have entries in a sqltool.rc file).
+            If, due to firewall issues, you want to run a WebServer instead
+            of a Server, then make sure you have a healthy WebServer with
+            a webserver.properties set up, adjust your URLs in
+            <filename>sqltool.rc</filename>, and set TARGET_CLASS in the 
+            config file.
         </para>
         <section>
             <title>
