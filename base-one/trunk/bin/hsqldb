@@ -32,7 +32,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.17 2004/05/14 20:32:20 unsaved Exp $
+# $Id: hsqldb,v 1.18 2004/05/14 23:01:11 unsaved Exp $
 
 # UNIX init script for HSQLDB.
 
@@ -358,7 +358,8 @@ running with pid $HSQLDB_PID."
         AUTH_FILE_SWITCH=
         # N.b., there will be a problem if there are special characters or
         # spaces inside of $AUTH_FILE.
-        [ -n "$AUTH_FILE" ] && AUTH_FILE_SWITCH="--rcfile $AUTH_FILE"
+        [ -n "$AUTH_FILE" ] &&
+        AUTH_FILE_SWITCH="-Dsqltoolsprayer.rcfile=$AUTH_FILE"
         # Some shell implementations don't allow substitution on arg 0,
         # so, we'll set the search path.
         PATH="$JAVA_HOME/bin:$PATH"
@@ -367,7 +368,6 @@ running with pid $HSQLDB_PID."
         export CLASSPATH
         export PATH   # Required only for some funny init environments.
         ERRORS=
-        AUTH_FILE_SWITCH="-Dsqltoolsprayer.rcfile=$AUTH_FILE"
         java $AUTH_FILE_SWITCH \
             "-Dsqltoolsprayer.propfile=$PROPERTY_FILE" \
             org.hsqldb.util.SqlToolSprayer 'shutdown;' $SHUTDOWN_URLIDS
