@@ -52,7 +52,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.74 2004/06/07 22:46:21 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.75 2004/06/08 22:31:08 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -88,7 +88,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.74 $
+ * @version $Revision: 1.75 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -104,13 +104,15 @@ public class SqlFile {
     // Ascii field separator blanks
     final private static int SEP_LEN = 2;
     final private static String DIVIDER =
-        "-----------------------------------------------------------------";
+            "-----------------------------------------------------------------"
+          + "-----------------------------------------------------------------";
     final private static String SPACES =
-        "                                                                 ";
+            "                                                                 "
+          + "                                                                 ";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.74 $".substring("$Revision: ".length(),
-                "$Revision: 1.74 $".length() - 2);
+        revnum = "$Revision: 1.75 $".substring("$Revision: ".length(),
+                "$Revision: 1.75 $".length() - 2);
     }
     private static String BANNER =
         "(SqlFile processor v. " + revnum + ")\n"
@@ -1661,8 +1663,8 @@ public class SqlFile {
                     condlPrintln("", false);
                     if (!htmlMode) {
                         for (int i = 0; i < headerArray.length; i++) {
-                            condlPrint(((i > 0) ? spaces(2)
-                                   : "") + divider( maxWidth[i]), false);
+                            condlPrint(((i > 0) ? spaces(2) : "")
+                                    + divider(maxWidth[i]), false);
                         }
                         condlPrintln("", false);
                     }
