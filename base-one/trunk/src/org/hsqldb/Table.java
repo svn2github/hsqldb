@@ -120,40 +120,42 @@ class Table {
 
     // main properties
 // boucherb@users - access changed in support of metadata 1.7.2
-    protected HsqlArrayList vColumn;            // columns in table
-    protected HsqlArrayList vIndex;             // vIndex(0) is the primary key index
-    protected int[]         iPrimaryKey;        // column numbers for primary key
-    private int             iIndexCount;        // size of vIndex
-    protected int           iIdentityColumn;    // -1 means no such row
-    protected long          iIdentityId;        // next value of identity column
+    HsqlArrayList vColumn;                    // columns in table
+    HsqlArrayList vIndex;                     // vIndex(0) is the primary key index
+    int[]         iPrimaryKey;                // column numbers for primary key
+    int           iIndexCount;                // size of vIndex
+    int[]         bestRowIdentifierCols;      // column set for best index
+    boolean       bestRowIdentifierStrict;    // true if it has no nullable column
+    int           iIdentityColumn;            // -1 means no such row
+    long          iIdentityId;                // next value of identity column
 
 // -----------------------------------------------------------------------
-    HsqlArrayList     vConstraint;              // constrainst for the table
-    HsqlArrayList     vTrigs[];                 // array of trigger lists
-    private int[]     colTypes;                 // fredt - types of columns
-    private int[]     colSizes;                 // fredt - copy of SIZE values for columns
-    private boolean[] colNullable;              // fredt - modified copy of isNullable() values
-    private String[] colDefaults;               // fredt - copy of DEFAULT values
-    private int[]    defaultColumnMap;          // fred - holding 0,1,2,3,...
-    private boolean  hasDefaultValues;          //fredt - shortcut for above
+    HsqlArrayList     vConstraint;            // constrainst for the table
+    HsqlArrayList     vTrigs[];               // array of trigger lists
+    private int[]     colTypes;               // fredt - types of columns
+    private int[]     colSizes;               // fredt - copy of SIZE values for columns
+    private boolean[] colNullable;            // fredt - modified copy of isNullable() values
+    private String[] colDefaults;             // fredt - copy of DEFAULT values
+    private int[]    defaultColumnMap;        // fred - holding 0,1,2,3,...
+    private boolean  hasDefaultValues;        //fredt - shortcut for above
     private boolean  isSystem;
     private boolean  isText;
     private boolean  isView;
-    boolean          sqlEnforceSize;            // inherited for the database -
+    boolean          sqlEnforceSize;          // inherited for the database -
 
     // properties for subclasses
 // boucherb@users - access changes in support of metadata 1.7.2
-    protected int      iColumnCount;            // inclusive the hidden primary key
-    protected int      iVisibleColumns;         // exclusive of hidden primary key
+    protected int      iColumnCount;          // inclusive the hidden primary key
+    protected int      iVisibleColumns;       // exclusive of hidden primary key
     protected Database dDatabase;
     protected Cache    cCache;
-    protected HsqlName tableName;               // SQL name
+    protected HsqlName tableName;             // SQL name
     protected int      tableType;
-    protected int      ownerSessionId;          // fredt - set for temp tables only
+    protected int      ownerSessionId;        // fredt - set for temp tables only
     protected boolean  isReadOnly;
     protected boolean  isTemp;
     protected boolean  isCached;
-    protected int      indexType;               // fredt - type of index used
+    protected int      indexType;             // fredt - type of index used
 
     /**
      *  Constructor declaration
@@ -697,6 +699,88 @@ class Table {
     /**
      *  Method declaration
      *
+     * @return
+     * @throws  SQLException
+     */
+    int[] getPrimaryKey() {
+
+        if (iVisibleColumns != iColumnCount) {
+            return null;
+        }
+
+        return getIndex(0).getColumns();
+    }
+
+    int[] getBestRowIdentifiers() {
+        return bestRowIdentifierCols;
+    }
+
+    boolean isBestRowIdentifiersStrict() {
+        return bestRowIdentifierStrict;
+    }
+
+    void resetBestRowIdentifiers() {
+
+        int[]   briCols    = getPrimaryKey();
+        boolean isStrict   = false;
+        int     nNullCount = 0;
+
+        if (briCols != null) {
+            bestRowIdentifierCols   = briCols;
+            bestRowIdentifierStrict = true;
+
+            return;
+        }
+
+        for (int i = 1; i < vIndex.size(); i++) {
+            Index index = (Index) vIndex.get(i);
+
+            if (!index.isUnique()) {
+                continue;
+            }
+
+            int[] cols   = index.getColumns();
+            int   nnullc = 0;
+
+            for (int j = 0; j < cols.length; j++) {
+                if (!colNullable[cols[j]]) {
+                    nnullc++;
+                }
+            }
+
+            if (nnullc == cols.length) {
+                if (briCols == null || briCols.length != nNullCount
+                        || cols.length < briCols.length) {
+
+                    //  nothing found before ||
+                    //  found but has null columns ||
+                    //  found but has more columns than this index
+                    briCols    = cols;
+                    nNullCount = cols.length;
+                    isStrict   = true;
+                }
+
+                continue;
+            } else if (isStrict) {
+                continue;
+            } else if (briCols == null || cols.length < briCols.length
+                       || nnullc > nNullCount) {
+
+                //  nothing found before ||
+                //  found but has more columns than this index||
+                //  found but has fewer not null columns than this index
+                briCols    = cols;
+                nNullCount = nnullc;
+            }
+        }
+
+        bestRowIdentifierCols   = briCols;
+        bestRowIdentifierStrict = isStrict;
+    }
+
+    /**
+     *  Method declaration
+     *
      * @param  column
      * @return
      * @throws  SQLException
@@ -954,6 +1038,8 @@ class Table {
                 defaultColumnMap[i] = i;
             }
         }
+
+        resetBestRowIdentifiers();
     }
 
     /**
@@ -1044,6 +1130,8 @@ class Table {
 
         iIndexCount = vIndex.size();
 
+        resetBestRowIdentifiers();
+
         throw Trace.error(error);
     }
 
@@ -1090,20 +1178,19 @@ class Table {
 
         Index newindex = new Index(name, this, col, type, unique, s);
 
-// fredt@users 20020225 - comment
-// in future we can avoid duplicate indexes
-/*
+// fredt@users 20030219 - patch 1.7.2 - no duplicate indexes
         for (int i = 0; i < iIndexCount; i++) {
-            if ( newindex.isEquivalent(getIndex(i))){
-                return;
+            if (newindex.isEquivalent(getIndex(i))) {
+                throw Trace.error(Trace.INDEX_ALREADY_EXISTS);
             }
         }
-*/
 
 //        Trace.doAssert(isEmpty(), "createIndex");
         vIndex.add(newindex);
 
         iIndexCount = vIndex.size();
+
+        resetBestRowIdentifiers();
 
         return newindex;
     }
@@ -1242,6 +1329,8 @@ class Table {
                 vIndex.remove(todrop);
 
                 iIndexCount = vIndex.size();
+
+                resetBestRowIdentifiers();
 
                 break;
             }

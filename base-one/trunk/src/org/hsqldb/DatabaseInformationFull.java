@@ -1348,6 +1348,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
        t.createPrimaryKey(cols);
     }
 */
+
     /**
      * Retrieves a new <code>Result</code> object whose metadata matches that
      * of the specified table.
@@ -1410,11 +1411,9 @@ final class DatabaseInformationFull extends DatabaseInformation {
      * @throws SQLException - if there is no internal type code corresponding to the specified
      *        external type code
      */
-    private static int _findInternalType(int type) throws SQLException {
+    private static int findInternalType(int type) {
 
         int[] internalType = _hTNum.get(type);
-
-        Trace.doAssert(internalType != null, "no mapping for type: " + type);
 
         return internalType[0];
     }
@@ -2235,14 +2234,16 @@ final class DatabaseInformationFull extends DatabaseInformation {
      */
     private Integer getColScale(Column column) {
 
-        switch (_iInternalType) {
+        int internalType = getInternalType(column);
+
+        switch (internalType) {
 
             case I_DECIMAL :
             case I_NUMERIC : {
                 return ValuePool.getInt(column.getScale());
             }
             default :
-                return _getTIDefScale();
+                return getTIDefScale(internalType);
         }
     }
 
@@ -2319,7 +2320,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
 
         int size;
 
-        switch (_iInternalType) {
+        switch (getInternalType(column)) {
 
             // sized or decimal types
             case I_BINARY :
@@ -3182,6 +3183,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
      * @throws SQLException
      * @return
      */
+/*
     private Object[] _getBRIInfo() throws SQLException {
 
         HsqlArrayList vIndex;
@@ -3260,6 +3262,119 @@ final class DatabaseInformationFull extends DatabaseInformation {
 
         return info;
     }
+*/
+
+    /**
+     * @throws SQLException
+     * @return
+     */
+/*
+    private Object[] _getBRIInfo_version2() throws SQLException {
+
+        HsqlArrayList vIndex;
+        HsqlArrayList vColumn;
+        Index         index;
+        int[]         cols;
+        int           nnullCount;
+        Result        rAK;
+        int           bestAkColCount;
+        boolean       akFound;
+        Result        rUQ;
+        int           bestUqColCount;
+        double        typeFactor;
+        Object[]      info;
+
+        info = null;
+
+        if (_isTablePkVisible()) {
+            return new Object[] {
+                Boolean.TRUE, _table.iPrimaryKey
+            };
+        } else {
+            rAK            = new Result(3);
+            rAK.colType    = new int[] {
+                Types.INTEGER, Types.DOUBLE
+            };
+            rUQ            = new Result(4);
+            rUQ.colType    = new int[] {
+                Types.INTEGER, Types.INTEGER, Types.DOUBLE
+            };
+            vIndex         = _table.vIndex;
+            akFound        = false;
+            bestAkColCount = Integer.MAX_VALUE;
+            bestUqColCount = bestAkColCount;
+
+            for (int i = 0; i < vIndex.size(); i++) {
+                index = (Index) vIndex.get(i);
+
+                if (index == _table.getPrimaryIndex() ||!index.isUnique()) {
+                    continue;
+                }
+
+                nnullCount = 0;
+                typeFactor = 1D;
+                cols       = index.getColumns();
+                vColumn    = _table.vColumn;
+
+                for (int j = 0; j < cols.length; j++) {
+                    Column c = (Column) vColumn.get(cols[j]);
+
+                    if (c.isNullable()) {
+                        continue;
+                    }
+
+                    nnullCount++;
+
+                    //typeFactor *= _getBRITypeFactor(c);
+                }
+
+                if (nnullCount == cols.length
+                        && cols.length <= bestAkColCount) {
+                    rAK.add(new Object[] {
+                        new Integer(cols.length), new Double(typeFactor), cols
+                    });
+
+                    akFound        = true;
+                    bestAkColCount = cols.length;
+                } else if (!akFound && nnullCount > 0
+                           && cols.length <= bestUqColCount) {
+                    rUQ.add(new Object[] {
+                        new Integer(cols.length), new Integer(nnullCount),
+                        new Double(typeFactor), cols
+                    });
+
+                    bestUqColCount = cols.length;
+                }
+            }
+        }
+
+        if (akFound) {
+            rAK.sortResult(new int[] {
+                0, 1
+            }, new int[] {
+                1, 1
+            });
+
+            //rAK.print();
+            info = new Object[] {
+                Boolean.TRUE, rAK.rRoot.data[2]
+            };
+        } else if (rUQ.getSize() > 0) {
+            rUQ.sortResult(new int[] {
+                0, 1, 2
+            }, new int[] {
+                1, -1, 1
+            });
+
+            //rUQ.print();
+            info = new Object[] {
+                Boolean.FALSE, rUQ.rRoot.data[3]
+            };
+        }
+
+        return info;
+    }
+*/
 
     /**
      * @return
@@ -3596,6 +3711,10 @@ final class DatabaseInformationFull extends DatabaseInformation {
         return IA_JDBC_DATA_TYPES[_iInternalType];
     }
 
+    private Integer getTIDataType(int internalType) {
+        return IA_JDBC_DATA_TYPES[internalType];
+    }
+
     /**
      * @return
      *
@@ -3606,6 +3725,22 @@ final class DatabaseInformationFull extends DatabaseInformation {
     private Integer _getTIDefScale() {
 
         switch (_iInternalType) {
+
+            case I_BIGINT :
+            case I_INTEGER :
+            case I_INTEGER_IDENTITY :
+            case I_SMALLINT :
+            case I_TINYINT :
+                return ValuePool.getInt(0);
+
+            default :
+                return null;
+        }
+    }
+
+    private Integer getTIDefScale(int internalType) {
+
+        switch (internalType) {
 
             case I_BIGINT :
             case I_INTEGER :
@@ -4231,6 +4366,10 @@ final class DatabaseInformationFull extends DatabaseInformation {
         return SA_DATA_TYPE_NAMES[_iInternalType];
     }
 
+    private String getTITypeName(int internalType) {
+        return SA_DATA_TYPE_NAMES[internalType];
+    }
+
     /**
      * @return
      */
@@ -4757,6 +4896,7 @@ final class DatabaseInformationFull extends DatabaseInformation {
         }
     }
 */
+
     /**
      * @param list
      * @return
@@ -4810,11 +4950,16 @@ final class DatabaseInformationFull extends DatabaseInformation {
     }
 
     private boolean _isAccessible(Table table) throws SQLException {
+
         boolean access = _session.isAccessible(table.getName());
-        if (access == false )
+
+        if (access == false) {
             return access;
-        if (table.isTemp() && table.tableType != Table.SYSTEM_TABLE)
+        }
+
+        if (table.isTemp() && table.tableType != Table.SYSTEM_TABLE) {
             return (table.getOwnerSessionId() == _session.getId());
+        }
 
         return true;
     }
@@ -4908,6 +5053,14 @@ final class DatabaseInformationFull extends DatabaseInformation {
         _columnName = getColName(c);
     }
 */
+    private int getInternalType(Column c) {
+
+        if (c.isIdentity()) {
+            return I_INTEGER_IDENTITY;
+        } else {
+            return findInternalType(c.getType());
+        }
+    }
 
     /**
      * @param t
@@ -5526,10 +5679,11 @@ final class DatabaseInformationFull extends DatabaseInformation {
         // and produce a sorted set of rows for insertion into output table
         Enumeration tables;
         Table       table;
-        Object[]    briInfo;
-        int[]       columnPositions;
-        Object[]    row;
-        Result      r;
+
+//        Object[]    briInfo;
+        int[]    columnPositions;
+        Object[] row;
+        Result   r;
 
         // Column number mappings
         final int iscope          = 0;
@@ -5560,18 +5714,18 @@ final class DatabaseInformationFull extends DatabaseInformation {
                 continue;
             }
 
-            briInfo = _getBRIInfo();
+            columnPositions = table.getBestRowIdentifiers();
 
-            if (briInfo == null) {
+            if (columnPositions == null) {
                 continue;
             }
 
-            inKey           = (Boolean) briInfo[0];
-            columnPositions = (int[]) briInfo[1];
-            tableName       = _getTableName();
-            tableCatalog    = _getCatalogName(table);
-            tableSchema     = _getSchemaName(table);
-            scope           = _getBRIScope();
+            inKey        = table.isBestRowIdentifiersStrict() ? Boolean.TRUE
+                                                              : Boolean.FALSE;
+            tableName    = _getTableName();
+            tableCatalog = _getCatalogName(table);
+            tableSchema  = _getSchemaName(table);
+            scope        = _getBRIScope();
 
             for (int i = 0; i < columnPositions.length; i++) {
                 Column column = table.getColumn(columnPositions[i]);
@@ -5580,8 +5734,8 @@ final class DatabaseInformationFull extends DatabaseInformation {
                 row                  = t.getNewRow();
                 row[iscope]          = scope;
                 row[icolumn_name]    = columnName;
-                row[idata_type]      = _getTIDataType();
-                row[itype_name]      = _getTITypeName();
+                row[idata_type]      = getTIDataType(getInternalType(column));
+                row[itype_name]      = getTITypeName(getInternalType(column));
                 row[icolumn_size]    = getColSize(column);
                 row[ibuffer_length]  = getColBufLen(column);
                 row[idecimal_digits] = getColScale(column);
@@ -6409,8 +6563,8 @@ final class DatabaseInformationFull extends DatabaseInformation {
                 row[itable_schem]       = tableSchema;
                 row[itable_name]        = tableName;
                 row[icolumn_name]       = getColName(column);
-                row[idata_type]         = _getTIDataType();
-                row[itype_name]         = _getTITypeName();
+                row[idata_type] = getTIDataType(getInternalType(column));
+                row[itype_name] = getTITypeName(getInternalType(column));
                 row[icolumn_size]       = getColSize(column);
                 row[ibuffer_length]     = getColBufLen(column);
                 row[idecimal_digits]    = getColScale(column);
@@ -7836,7 +7990,8 @@ final class DatabaseInformationFull extends DatabaseInformation {
             row[ilast_id] = tempLastId == null ? null
                                                : ValuePool.getLong(
                                                    tempLastId.longValue());
-            row[it_size]   = ValuePool.getInt(session.getTransactionSize());
+            row[it_size] = ValuePool.getInt(session.getTransactionSize());
+
             // fredt - this is redundant as nested transactions do not endure beyond a single statement
             row[it_nested] = valueOf(session.isNestedTransaction());
 
