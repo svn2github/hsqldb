@@ -1,5 +1,5 @@
 /*
- * $Id: SqlFile.java,v 1.23 2004/01/26 19:30:37 unsaved Exp $
+ * $Id: SqlFile.java,v 1.24 2004/01/26 19:32:53 unsaved Exp $
  *
  * Copyright (c) 2001-2003, The HSQL Development Group
  * All rights reserved.
@@ -281,7 +281,7 @@ public class SqlFile {
             throw new BadSpecial("Null special command");
         StringTokenizer toker = new StringTokenizer(inString);
         arg1 = toker.nextToken();
-        if (toker.hasMoreTokens()) other = toker.nextToken().trim();
+        if (toker.hasMoreTokens()) other = toker.nextToken("").trim();
 
         switch (arg1.charAt(0)) {
             case 'q':
