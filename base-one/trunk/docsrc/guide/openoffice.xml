@@ -1,4 +1,4 @@
-<!-- $Id: openoffice.xml,v 1.2 2004/04/20 18:35:56 unsaved Exp $ -->
+<!-- $Id: openoffice.xml,v 1.3 2004/04/22 03:06:26 unsaved Exp $ -->
 
 <!--  TODO.
       This should really be rewritten with DocBook procedure elements.
@@ -17,8 +17,8 @@
                 <orgname>EDV - Systeme Kienlein</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.2 $</edition>
-        <pubdate>$Date: 2004/04/20 18:35:56 $</pubdate>
+        <edition>$Revision: 1.3 $</edition>
+        <pubdate>$Date: 2004/04/22 03:06:26 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>OpenOffice</keyword>
@@ -62,7 +62,7 @@
         <title>Setting up OpenOffice.org</title>
         <para>
             Start OOo with a text document and go to the Database-Explorer
-            (simpy by pressing F4).
+            (simply by pressing F4).
             In the left frame you see a tree-view with all known databases in
             OOo.
         </para> <para>
