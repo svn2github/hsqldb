@@ -66,13 +66,33 @@
 
 package org.hsqldb.util;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.applet.*;
-import java.sql.*;
-import java.net.*;
-import java.io.*;
-import java.util.*;
+import java.applet.Applet;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Properties;
+import java.awt.BorderLayout;
+import java.awt.Button;
+import java.awt.Choice;
+import java.awt.Event;
+import java.awt.Font;
+import java.awt.Frame;
+import java.awt.Label;
+import java.awt.Menu;
+import java.awt.MenuBar;
+import java.awt.Panel;
+import java.awt.SystemColor;
+import java.awt.TextArea;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 
 import org.hsqldb.lib.java.JavaSystem;
 

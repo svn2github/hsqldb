@@ -31,7 +31,7 @@
 
 package org.hsqldb.util;
 
-import java.sql.*;
+import java.sql.Types;
 
 // sqlbob@users 20020325 - patch 1.7.0 - reengineering
 

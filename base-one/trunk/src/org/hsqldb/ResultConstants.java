@@ -498,17 +498,17 @@ public interface ResultConstants {
 //     * tables described by the Information Schema of the connected data source.
 //     */
 //    int SQLTABLEPRIVILEGES  = SQL_API_BASE + 70;
-/*
-Codes for transaction termination:
+    /*
+     Codes for transaction termination:
 
-COMMIT 0
-ROLLBACK 1
-SAVEPOINT NAME ROLLBACK 2
-SAVEPOINT NAME RELEASE 4
-COMMIT AND CHAIN 6
-ROLLBACK AND CHAIN 7
-Implementation-defined termination type <0
-*/
+     COMMIT 0
+     ROLLBACK 1
+     SAVEPOINT NAME ROLLBACK 2
+     SAVEPOINT NAME RELEASE 4
+     COMMIT AND CHAIN 6
+     ROLLBACK AND CHAIN 7
+     Implementation-defined termination type <0
+     */
     int COMMIT                  = 0;
     int ROLLBACK                = 1;
     int SAVEPOINT_NAME_ROLLBACK = 2;

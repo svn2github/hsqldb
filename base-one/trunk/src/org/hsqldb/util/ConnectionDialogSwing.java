@@ -66,12 +66,25 @@
 
 package org.hsqldb.util;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.awt.Dimension;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
-import javax.swing.*;
-import javax.swing.border.*;
+import javax.swing.Box;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JTextField;
+import javax.swing.border.EmptyBorder;
 
 // sqlbob@users 20020325 - patch 1.7.0 - enhancements
 // sqlbob@users 20020407 - patch 1.7.0 - reengineering

@@ -45,13 +45,17 @@ import java.net.URL;
  *  class, despite the fact not all Database objects actually use file
  *  storage.<p>
  *
- *  The Logger class makes it possible avoid the necessity to test for a
+ *  The Logger class makes it possible to avoid testing for a
  *  null Log Database attribute again and again, in many different places,
  *  and generally avoids tight coupling between Database and Log, opening
  *  the doors for multiple logs/caches in the future. In this way, the
  *  Database class does not need to know the details of the Logging/Cache
  *  implementation, lowering its breakability factor and promoting
  *  long-term code flexibility.
+ *
+ * @author fredt@users
+ * @version 1.7.2
+ * @since 1.7.0
  */
 class Logger {
 
@@ -79,12 +83,7 @@ class Logger {
      */
     void openLog(Database db) throws HsqlException {
 
-        String path;
-
-        // NOTE:
-        // this method never gets called unless path is non-null
-        // so no check here
-        path = db.getPath();
+        String path = db.getPath();
 
         if (db.isFilesInJar()) {
             checkFilesInJar(path);
@@ -116,6 +115,7 @@ class Logger {
      *        deletes the existing *.data file that contains the data
      *        for all CACHED table before the normal checkpoint process
      *        which in turn creates a new, compact *.data file.
+     *        <LI> closemode 2 performs a SHUTDOWN SCRIPT.
      *      </OL>
      *
      * @return  true if closed with no problems or false if a problem was
@@ -192,7 +192,10 @@ class Logger {
      *      entry
      */
     void logConnectUser(Session session) throws HsqlException {
-        writeToLog(session, session.getUser().getConnectStatement());
+
+        if (lLog != null) {
+            writeToLog(session, session.getUser().getConnectStatement());
+        }
     }
 
     /**
@@ -232,6 +235,13 @@ class Logger {
 
         if (lLog != null) {
             lLog.writeSequenceStatement(c, s);
+        }
+    }
+
+    void writeCommit() throws HsqlException {
+
+        if (lLog != null) {
+            lLog.writeCommit();
         }
     }
 
@@ -333,26 +343,7 @@ class Logger {
             return;
         }
 
-        try {
-            lf = LockFile.newLockFile(path + ".lck");
-        } catch (Exception e) {
-            throw Trace.error(Trace.FILE_IO_ERROR, e.toString());
-        }
-
-        locked = false;
-        msg    = "";
-
-        try {
-            locked = lf.tryLock();
-        } catch (Exception e) {
-
-            // e.printStackTrace();
-            msg = e.toString();
-        }
-
-        if (!locked) {
-            throw Trace.error(Trace.DATABASE_ALREADY_IN_USE, lf + ": " + msg);
-        }
+        lf = LockFile.newLockFileLock(path + ".lck");
     }
 
     void releaseLock() {

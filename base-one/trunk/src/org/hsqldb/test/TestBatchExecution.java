@@ -31,9 +31,15 @@
 
 package org.hsqldb.test;
 
-import org.hsqldb.lib.StopWatch;
+import java.sql.Connection;
+import java.sql.Driver;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 
-import java.sql.*;
+import org.hsqldb.lib.StopWatch;
 
 /**
  * A quick test of the new CompiledStatement and batch execution facilities.
@@ -314,9 +320,7 @@ public class TestBatchExecution extends TestBase {
 
             con.setAutoCommit(false);
 
-            for (int i = 1; i <= 4;
-                    i++)    // [2, 3, 4]
-            {
+            for (int i = 1; i <= 4; i++) {    // [2, 3, 4]
                 prep.setInt(1, i);
                 prep.addBatch();
                 System.out.println("executeBatch() for " + i);

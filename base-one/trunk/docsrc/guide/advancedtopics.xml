@@ -1,4 +1,4 @@
-<!-- $Id: advancedtopics.xml,v 1.19 2004/08/12 20:43:19 fredt Exp $ -->
+<!-- $Id: advancedtopics.xml,v 1.21 2004/09/22 17:53:41 fredt Exp $ -->
 
 <chapter id='advanced-chapter'>
     <title id='advanced-title'>Advanced Topics</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.19 $</edition>
-        <pubdate>$Date: 2004/08/12 20:43:19 $</pubdate>
+        <edition>$Revision: 1.21 $</edition>
+        <pubdate>$Date: 2004/09/22 17:53:41 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Advanced</keyword>
@@ -544,8 +544,12 @@
             <para>
                 Properties that can be modified via
                 <literal>SET PROPERTY</literal> are indicated in the table
-                below.
-                The <literal>*.properties</literal> file can also be edited
+                below. Other properties are indicated as 
+				<literal>PROPERTIES FILE ONLY</literal> and can be modified only
+				by editing the .properties file after a shutdown and before
+				a restart. 
+
+                The <literal>*.properties</literal> file can be edited
                 after closing the database.
                 Only the user-defined values listed below should ever be
                 modified.
@@ -582,10 +586,11 @@
                             be closed with the
                             <literal>SHUTDOWN COMPACT</literal> command to
                             ensure consistency and compactness of the data.
+                            <literal>(PROPERTIES FILE ONLY)</literal>
                         </para> </entry>
                     </row>
                     <row>
-                        <entry><property>hsqldb.files_read_only</property></entry>
+                        <entry><property>hsqldb.files_readonly</property></entry>
                         <entry><literal>false</literal></entry>
                         <entry>database files will not be written to</entry>
                     </row>
@@ -597,6 +602,7 @@
                             database is shutdown.
                             CACHED and TEXT tables are always readonly when
                             this setting is true.
+                            <literal>(PROPERTIES FILE ONLY)</literal>
                         </para> </entry>
                     </row>
                     <row>
@@ -672,6 +678,7 @@
                             </para><para>
                             If set <literal>true</literal>, this setting
                             affects all the database in the JVM.
+                            <literal>(PROPERTIES FILE ONLY)</literal>
                         </para> </entry>
                     </row>
                     <row>
@@ -693,6 +700,7 @@
                             If the value is set via SET PROPERTY then it
                             becomes effective after the next database SHUTDOWN
                             or CHECKPOINT.
+                            <literal>(SET PROPERTY)</literal>
                         </para> </entry>
                     </row>
                     <row>
@@ -720,6 +728,7 @@
                             If the value is set via SET PROPERTY then it
                             becomes effective after the next database SHUTDOWN
                             or CHECKPOINT.
+                            <literal>(SET PROPERTY)</literal>
                         </para> </entry>
                     </row>
                     <row>
@@ -739,7 +748,7 @@
                         </para> </entry>
                     </row>
                     <row>
-                        <entry><property>hsqldb.gc_interval</property></entry>
+                        <entry><property>runtime.gc_interval</property></entry>
                         <entry><literal>0</literal></entry>
                         <entry>forced garbage collection</entry>
                     </row>
@@ -762,7 +771,7 @@
                             enlargement of the heap.
                             Typical values for this setting would probably be
                             between 10,000 to 100,000.
-                            <literal>(SET PROPERTY)</literal>
+                            <literal>(PROPERTIES FILE ONLY)</literal>
                         </para> </entry>
                     </row>
                     <row>

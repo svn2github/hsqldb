@@ -31,6 +31,7 @@
 
 package org.hsqldb.scriptio;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
@@ -41,14 +42,12 @@ import org.hsqldb.Database;
 import org.hsqldb.DatabaseScript;
 import org.hsqldb.HsqlException;
 import org.hsqldb.Result;
-import org.hsqldb.index.RowIterator;
 import org.hsqldb.Table;
 import org.hsqldb.Token;
 import org.hsqldb.Trace;
+import org.hsqldb.index.RowIterator;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.Iterator;
-
-import java.io.BufferedOutputStream;
 
 //import org.hsqldb.lib.StopWatch;
 

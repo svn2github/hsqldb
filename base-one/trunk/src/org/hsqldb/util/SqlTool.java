@@ -31,18 +31,18 @@
 
 package org.hsqldb.util;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.sql.DatabaseMetaData;
-import java.io.File;
-import java.io.IOException;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.util.StringTokenizer;
 import java.util.HashMap;
+import java.util.StringTokenizer;
 
-/* $Id: SqlTool.java,v 1.37 2004/06/10 16:16:17 unsaved Exp $ */
+/* $Id: SqlTool.java,v 1.39 2004/09/19 03:44:46 fredt Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -53,7 +53,7 @@ import java.util.HashMap;
  * See JavaDocs for the main method for syntax of how to run.
  *
  * @see @main()
- * @version $Revision: 1.37 $
+ * @version $Revision: 1.39 $
  * @author Blaine Simpson
  */
 public class SqlTool {
@@ -66,9 +66,10 @@ public class SqlTool {
     private static final String DEFAULT_RCFILE =
         System.getProperty("user.home") + "/sqltool.rc";
     private static String revnum = null;
+
     static {
-        revnum = "$Revision: 1.37 $".substring("$Revision: ".length(),
-                                               "$Revision: 1.37 $".length()
+        revnum = "$Revision: 1.39 $".substring("$Revision: ".length(),
+                                               "$Revision: 1.39 $".length()
                                                - 2);
     }
 
@@ -103,6 +104,7 @@ public class SqlTool {
 
             File file = new File((inFile == null) ? DEFAULT_RCFILE
                                                   : inFile);
+
             if (!file.canRead()) {
                 throw new IOException("Please set up authentication file '"
                                       + file + "'");
@@ -115,16 +117,22 @@ public class SqlTool {
             String          keyword, value;
             int             linenum = 0;
             BufferedReader  br = new BufferedReader(new FileReader(file));
+
             while ((s = br.readLine()) != null) {
                 ++linenum;
+
                 s = s.trim();
+
                 if (s.length() == 0) {
                     continue;
                 }
+
                 if (s.charAt(0) == '#') {
                     continue;
                 }
+
                 tokenizer = new StringTokenizer(s);
+
                 if (tokenizer.countTokens() == 1) {
                     keyword = tokenizer.nextToken();
                     value   = "";
@@ -135,15 +143,19 @@ public class SqlTool {
                     try {
                         br.close();
                     } catch (IOException e) {}
+
                     throw new Exception("Corrupt line " + linenum + " in '"
                                         + file + "':  " + s);
                 }
+
                 if (dbKey == null) {
                     if (keyword.equals("urlid")) {
                         System.out.println(value);
                     }
+
                     continue;
                 }
+
                 if (keyword.equals("urlid")) {
                     if (value.equals(dbKey)) {
                         if (id == null) {
@@ -153,6 +165,7 @@ public class SqlTool {
                             try {
                                 br.close();
                             } catch (IOException e) {}
+
                             throw new Exception("Key '" + dbKey
                                                 + " redefined at" + " line "
                                                 + linenum + " in '" + file);
@@ -160,8 +173,10 @@ public class SqlTool {
                     } else {
                         thisone = false;
                     }
+
                     continue;
                 }
+
                 if (thisone) {
                     if (keyword.equals("url")) {
                         url = value;
@@ -179,17 +194,21 @@ public class SqlTool {
                         try {
                             br.close();
                         } catch (IOException e) {}
+
                         throw new Exception("Bad line " + linenum + " in '"
                                             + file + "':  " + s);
                     }
                 }
             }
+
             try {
                 br.close();
             } catch (IOException e) {}
+
             if (dbKey == null) {
                 return;
             }
+
             if (url == null || username == null || password == null) {
                 throw new Exception("url or username or password not set "
                                     + "for '" + dbKey + "' in file '" + file
@@ -284,6 +303,7 @@ public class SqlTool {
                 ((retval == 0) ? System.out
                                : System.err).println(msg);
             }
+
             System.exit(retval);
         }
     }
@@ -319,100 +339,141 @@ public class SqlTool {
         boolean noautoFile  = false;
         boolean autoCommit  = false;
         Boolean coeOverride = null;
+
         noexit = System.getProperty("sqltool.noexit") != null;
+
         try {
             while ((i + 1 < arg.length) && arg[i + 1].startsWith("--")) {
                 i++;
+
                 if (arg[i].length() == 2) {
                     break;    // "--"
                 }
+
                 if (arg[i].substring(2).equals("help")) {
                     exitMain(0, SYNTAX_MESSAGE);
+
                     return;
                 }
+
                 if (arg[i].substring(2).equals("abortOnErr")) {
                     if (coeOverride != null) {
                         exitMain(
                             0, "Switches '--abortOnErr' and "
                             + "'--continueOnErr' are mutually exclusive");
+
                         return;
                     }
+
                     coeOverride = Boolean.FALSE;
+
                     continue;
                 }
+
                 if (arg[i].substring(2).equals("continueOnErr")) {
                     if (coeOverride != null) {
                         exitMain(
                             0, "Switches '--abortOnErr' and "
                             + "'--continueOnErr' are mutually exclusive");
+
                         return;
                     }
+
                     coeOverride = Boolean.TRUE;
+
                     continue;
                 }
+
                 if (arg[i].substring(2).equals("list")) {
                     listMode = true;
+
                     continue;
                 }
+
                 if (arg[i].substring(2).equals("rcfile")) {
                     if (++i == arg.length) {
                         throw bcl;
                     }
+
                     rcFile = arg[i];
+
                     continue;
                 }
+
                 if (arg[i].substring(2).equals("setvar")) {
                     if (++i == arg.length) {
                         throw bcl;
                     }
+
                     varSettings = arg[i];
+
                     continue;
                 }
+
                 if (arg[i].substring(2).equals("sql")) {
                     if (++i == arg.length) {
                         throw bcl;
                     }
+
                     sqlText = arg[i];
+
                     continue;
                 }
+
                 if (arg[i].substring(2).equals("debug")) {
                     debug = true;
+
                     continue;
                 }
+
                 if (arg[i].substring(2).equals("noAutoFile")) {
                     noautoFile = true;
+
                     continue;
                 }
+
                 if (arg[i].substring(2).equals("autoCommit")) {
                     autoCommit = true;
+
                     continue;
                 }
+
                 if (arg[i].substring(2).equals("noinput")) {
                     noinput = true;
+
                     continue;
                 }
+
                 if (arg[i].substring(2).equals("driver")) {
                     if (++i == arg.length) {
                         throw bcl;
                     }
+
                     driver = arg[i];
+
                     continue;
                 }
+
                 throw bcl;
             }
+
             if (!listMode) {
                 if (++i == arg.length) {
                     throw bcl;
                 }
+
                 targetDb = arg[i];
             }
+
             int scriptIndex = 0;
+
             if (sqlText != null) {
                 try {
                     tmpFile = File.createTempFile("sqltool-", ".sql");
 
                     //(new java.io.FileWriter(tmpFile)).write(sqlText);
                     java.io.FileWriter fw = new java.io.FileWriter(tmpFile);
+
                     fw.write("/* " + (new java.util.Date()) + ".  "
                              + SqlTool.class.getName()
                              + " command-line SQL. */\n\n");
@@ -422,68 +483,89 @@ public class SqlTool {
                 } catch (IOException ioe) {
                     exitMain(4, "Failed to write given sql to temp file: "
                              + ioe);
+
                     return;
                 }
             }
+
             interactive = (!noinput) && (arg.length <= i + 1);
+
             if ((arg.length > i + 1)
                     && (arg.length != i + 2 ||!arg[i + 1].equals("-"))) {
 
                 // I.e., if there are any SQL files specified.
                 noinput     = true;
                 scriptFiles = new File[arg.length - i - 1];
+
                 if (debug) {
                     System.err.println("scriptFiles has "
                                        + scriptFiles.length + " elements");
                 }
+
                 while (i + 1 < arg.length) {
                     scriptFiles[scriptIndex++] = new File(arg[++i]);
                 }
             }
         } catch (BadCmdline bcl) {
             exitMain(2, SYNTAX_MESSAGE);
+
             return;
         }
+
         ConnectData conData = null;
+
         try {
             conData = new ConnectData(rcFile, targetDb);
         } catch (Exception e) {
             exitMain(1, "Failed to retrieve connection info for database '"
                      + targetDb + "': " + e.getMessage());
+
             return;
         }
+
         if (listMode) {
             exitMain(0);
+
             return;
         }
+
         if (debug) {
             conData.report();
         }
+
         if (driver == null) {
 
             // If user didn't set driver on command-line.
             driver = ((conData.driver == null) ? DEFAULT_JDBC_DRIVER
                                                : conData.driver);
         }
+
         if (System.getProperty("sqlfile.charset") == null
                 && conData.charset != null) {
             System.setProperty("sqlfile.charset", conData.charset);
         }
+
         if (conData.truststore != null) {
             System.setProperty("javax.net.ssl.trustStore",
                                conData.truststore);
         }
+
         try {
+
             // As described in the JDBC FAQ:
             // http://java.sun.com/products/jdbc/jdbc-frequent.html;
             // Why doesn't calling class.forName() load my JDBC driver?
             // There is a bug in the JDK 1.1.x that can cause Class.forName()
             // to fail. // new org.hsqldb.jdbcDriver();
             Class.forName(driver).newInstance();
+
             conn = DriverManager.getConnection(conData.url, conData.username,
                                                conData.password);
+
             conn.setAutoCommit(autoCommit);
+
             DatabaseMetaData md = null;
+
             if (interactive && (md = conn.getMetaData()) != null) {
                 System.out.println("JDBC Connection established to a "
                                    + md.getDatabaseProductName() + " v. "
@@ -492,23 +574,29 @@ public class SqlTool {
                                    + "'.");
             }
         } catch (Exception e) {
+
             //e.printStackTrace();
             // Let's not continue as if nothing is wrong.
             exitMain(10,
                      "Failed to get a connection to " + conData.url + " as "
                      + conData.username + ".  " + e.getMessage());
+
             return;
         }
+
         File[] emptyFileArray      = {};
         File[] singleNullFileArray = { null };
         File   autoFile            = null;
+
         if (interactive &&!noautoFile) {
             autoFile = new File(System.getProperty("user.home")
                                 + "/auto.sql");
+
             if ((!autoFile.isFile()) ||!autoFile.canRead()) {
                 autoFile = null;
             }
         }
+
         if (scriptFiles == null) {
 
             // I.e., if no SQL files given on command-line.
@@ -516,47 +604,61 @@ public class SqlTool {
             scriptFiles = (noinput ? emptyFileArray
                                    : singleNullFileArray);
         }
+
         SqlFile[] sqlFiles =
             new SqlFile[scriptFiles.length + ((tmpFile == null) ? 0
                                                                 : 1) + ((autoFile == null) ? 0
                                                                                            : 1)];
         HashMap userVars = new HashMap();
+
         if (varSettings != null) {
             int             equals;
             String          curSetting, var, val;
             StringTokenizer allvars = new StringTokenizer(varSettings, ",");
+
             while (allvars.hasMoreTokens()) {
                 curSetting = allvars.nextToken().trim();
                 equals     = curSetting.indexOf('=');
+
                 if (equals < 1) {
                     exitMain(24, "Var settings not of format NAME=var[,...]");
+
                     return;
                 }
+
                 var = curSetting.substring(0, equals).trim();
                 val = curSetting.substring(equals + 1).trim();
+
                 if (var.length() < 1 || val.length() < 1) {
                     exitMain(24, "Var settings not of format NAME=var[,...]");
+
                     return;
                 }
+
                 userVars.put(var, val);
             }
         }
 
         // We print version before execing this one.
         int interactiveFileIndex = -1;
+
         try {
             int fileIndex = 0;
+
             if (autoFile != null) {
                 sqlFiles[fileIndex++] = new SqlFile(autoFile, false,
                                                     userVars);
             }
+
             if (tmpFile != null) {
                 sqlFiles[fileIndex++] = new SqlFile(tmpFile, false, userVars);
             }
+
             for (int j = 0; j < scriptFiles.length; j++) {
                 if (interactiveFileIndex < 0 && interactive) {
                     interactiveFileIndex = fileIndex;
                 }
+
                 sqlFiles[fileIndex++] = new SqlFile(scriptFiles[j],
                                                     interactive, userVars);
             }
@@ -564,20 +666,26 @@ public class SqlTool {
             try {
                 conn.close();
             } catch (Exception e) {}
+
             exitMain(2, ioe.getMessage());
+
             return;
         }
+
         int retval = 0;    // Value we will return via System.exit().
+
         try {
             for (int j = 0; j < sqlFiles.length; j++) {
                 if (j == interactiveFileIndex) {
                     System.out.print("SqlTool v. " + revnum
                                      + ".                        ");
                 }
+
                 sqlFiles[j].execute(conn, coeOverride);
             }
         } catch (IOException ioe) {
             System.err.println("Failed to execute SQL:  " + ioe.getMessage());
+
             retval = 3;
 
             // These two Exception types are handled properly inside of SqlFile.
@@ -602,7 +710,9 @@ public class SqlTool {
                 "Error occurred while trying to remove temp file '" + tmpFile
                 + "'");
         }
+
         exitMain(retval);
+
         return;
     }
 }

@@ -6,7 +6,7 @@ area will be found later in changelog_1_7_3.txt.
 
 Fred Toussi (fredt@users.sourceforge.net)
 
-2004.10.26 FIRST COMMIT 1.7.3
+2004.11.24 FIRST COMMIT 1.7.3.0
 
 Changed handling of the BOOLEAN type to allow the undefined state.
 This involves changes to the behariour of NOT and NULL, also CHECK conditions

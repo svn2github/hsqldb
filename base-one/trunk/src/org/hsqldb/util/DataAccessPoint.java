@@ -31,9 +31,8 @@
 
 package org.hsqldb.util;
 
-import java.sql.*;
-import java.util.*;
 import java.io.Serializable;
+import java.util.Vector;
 
 /**
  * Database Transfer Tool

@@ -31,7 +31,10 @@
 
 package org.hsqldb.util;
 
-import java.sql.*;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Types;
 
 // fredt@users 20020215 - patch 516309 by Nicolas Bazin - transfer PostgresSQL
 // sqlbob@users 20020325 - patch 1.7.0 - reengineering
@@ -87,9 +90,8 @@ class PostgresTransferHelper extends TransferHelper {
         String CompareString = "nextval(\'\"" + SeqName + "\"\'";
 
         if (columnType.indexOf(CompareString) >= 0) {
-            /*
-            ** We just found a increment
-            */
+
+            // We just found a increment
             columnType = "SERIAL";
         }
 

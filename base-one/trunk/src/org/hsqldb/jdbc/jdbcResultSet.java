@@ -72,12 +72,10 @@ import java.math.BigDecimal;
 import java.sql.*;     // for Array, Blob, Clob, Ref (jdk 1.1)
 import java.util.*;    // for Map (jdk 1.1)
 
-import org.hsqldb.types.Binary;
 import org.hsqldb.Column;
 import org.hsqldb.HsqlDateTime;
 import org.hsqldb.HsqlException;
 import org.hsqldb.HsqlProperties;
-import org.hsqldb.types.JavaObject;
 import org.hsqldb.Record;
 import org.hsqldb.Result;
 import org.hsqldb.ResultConstants;
@@ -85,6 +83,8 @@ import org.hsqldb.Trace;
 import org.hsqldb.Types;
 import org.hsqldb.lib.AsciiStringInputStream;
 import org.hsqldb.lib.StringInputStream;
+import org.hsqldb.types.Binary;
+import org.hsqldb.types.JavaObject;
 
 // fredt@users 20020320 - patch 1.7.0 - JDBC 2 support and error trapping
 // JDBC 2 methods can now be called from jdk 1.1.x - see javadoc comments
@@ -1570,7 +1570,11 @@ public class jdbcResultSet implements ResultSet {
             return ((Binary) o).getClonedBytes();
         }
 
-//#ifdef JAVA2
+//#ifdef JAVA1TARGET
+/*
+*/
+
+//#else
         else if (o instanceof java.sql.Date) {
             return ((java.sql.Date) o).clone();
         } else if (o instanceof java.sql.Time) {
@@ -1579,7 +1583,7 @@ public class jdbcResultSet implements ResultSet {
             return ((java.sql.Timestamp) o).clone();
         }
 
-//#endif JAVA2
+//#endif JAVA1TARGET
         else {
             return o;
         }
@@ -2349,11 +2353,7 @@ public class jdbcResultSet implements ResultSet {
      */
     public void setFetchSize(int rows) throws SQLException {
 
-        checkAvailable();
-
-        if (rows < 0
-                || (sqlStatement.maxRows != 0
-                    && rows > sqlStatement.maxRows)) {
+        if (rows < 0) {
             throw jdbcUtil.sqlException(Trace.INVALID_JDBC_ARGUMENT);
         }
     }
@@ -4917,7 +4917,11 @@ public class jdbcResultSet implements ResultSet {
         // no conversion necessary
         if (type == t) {
 
-//#ifdef JAVA2
+//#ifdef JAVA1TARGET
+/*
+*/
+
+//#else
             if (type == Types.DATE) {
                 o = ((java.sql.Date) o).clone();
             } else if (type == Types.TIME) {
@@ -4926,7 +4930,7 @@ public class jdbcResultSet implements ResultSet {
                 o = ((java.sql.Timestamp) o).clone();
             }
 
-//#endif JAVA2
+//#endif JAVA1TARGET
             return o;
         }
 

@@ -37,9 +37,9 @@ import java.io.FileInputStream;
 import java.io.RandomAccessFile;
 import java.sql.Timestamp;
 
-import org.hsqldb.lib.java.JavaSystem;
 import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.HsqlTimer;
+import org.hsqldb.lib.java.JavaSystem;
 
 /**
  * The base HSQLDB cooperative file locking implementation and factory. <p>
@@ -564,6 +564,34 @@ public class LockFile {
         return lf;
     }
 
+    public static LockFile newLockFileLock(String path) throws HsqlException {
+
+        LockFile lf = null;
+
+        try {
+            lf = LockFile.newLockFile(path + ".lck");
+        } catch (Exception e) {
+            throw Trace.error(Trace.FILE_IO_ERROR, e.toString());
+        }
+
+        boolean locked = false;
+        String  msg    = "";
+
+        try {
+            locked = lf.tryLock();
+        } catch (Exception e) {
+
+            // e.printStackTrace();
+            msg = e.toString();
+        }
+
+        if (!locked) {
+            throw Trace.error(Trace.DATABASE_ALREADY_IN_USE, lf + ": " + msg);
+        }
+
+        return lf;
+    }
+
     /**
      * Tests whether some other object is "equal to" this one.
      *
@@ -591,7 +619,7 @@ public class LockFile {
         // do faster tests first
         if (this == obj) {
             return true;
-        } else if (obj != null && obj instanceof LockFile) {
+        } else if (obj instanceof LockFile) {
             LockFile that = (LockFile) obj;
 
             return (f == null) ? that.f == null

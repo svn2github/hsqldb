@@ -33,13 +33,13 @@ package org.hsqldb.rowio;
 
 import java.io.IOException;
 
-import org.hsqldb.types.Binary;
 import org.hsqldb.Column;
 import org.hsqldb.HsqlDateTime;
 import org.hsqldb.HsqlException;
-import org.hsqldb.types.JavaObject;
 import org.hsqldb.Trace;
 import org.hsqldb.Types;
+import org.hsqldb.types.Binary;
+import org.hsqldb.types.JavaObject;
 
 /**
  *  Class for reading the data for a database row in text table format.

@@ -680,7 +680,7 @@ public class HsqlTimer implements ObjectComparator {
 //
 //        timer = new HsqlTimer();
 //
-//        // need this to run tests now, since 
+//        // need this to run tests now, since
 //        // taskRunnerThread is now daemon.
 //        // Otherwise, timer thread exits
 //        // immediately when this thread exits.
@@ -717,11 +717,11 @@ public class HsqlTimer implements ObjectComparator {
 //        tt1.tid = (Task) timer.schedulePeriodicallyAfter(0, 500, tt1, true);
 //
 //        timer.schedulePeriodicallyAfter(0,1, r, false);
-//        
+//
 //        try {
 //            sleeper.join();
 //        } catch (Exception e) {}
-//        
+//
 //        tt1.printstats();
 //        tt2.printstats();
 //

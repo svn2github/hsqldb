@@ -10,8 +10,10 @@ Fred Toussi (fredt@users.sourceforge.net)
 
 Fixed bug LIMIT and TOP with UNION
 Fixed bug running Database Manager as applet
-Enhancement to allow a table with a label used in DELET and UPDATE
+Enhancement to allow a table with a label used in DELETE and UPDATE
 Enhancement to reduce memory use when restoring long log with too many connections
+Enhancement to persist values set by SET LOGSIZE
+Minor internal enhancements and refactoring
 
 2004.10.28 UPDATED RELEASE 1.7.2.7
 

@@ -361,14 +361,14 @@ public final class Types {
             XML, TYPE_SUB_DEFAULT
         }
     };
-/*
- SQL specifies predefined data types named by the following <key word>s:
- CHARACTER, CHARACTER VARYING, CHARACTER LARGE OBJECT, BINARY LARGE OBJECT,
- NUMERIC, DECIMAL, SMALLINT, INTEGER, BIGINT, FLOAT, REAL, DOUBLE PRECISION,
- BOOLEAN, DATE, TIME, TIMESTAMP, and INTERVAL.
- SQL 200n adds DATALINK in Part 9: Management of External Data (SQL/MED)
- and adds XML in Part 14: XML-Related Specifications (SQL/XML)
-*/
+    /*
+     SQL specifies predefined data types named by the following <key word>s:
+     CHARACTER, CHARACTER VARYING, CHARACTER LARGE OBJECT, BINARY LARGE OBJECT,
+     NUMERIC, DECIMAL, SMALLINT, INTEGER, BIGINT, FLOAT, REAL, DOUBLE PRECISION,
+     BOOLEAN, DATE, TIME, TIMESTAMP, and INTERVAL.
+     SQL 200n adds DATALINK in Part 9: Management of External Data (SQL/MED)
+     and adds XML in Part 14: XML-Related Specifications (SQL/XML)
+     */
 
     // CLI type list from Table 37
     static final int SQL_CHARACTER                 = 1;

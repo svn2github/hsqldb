@@ -69,8 +69,8 @@ package org.hsqldb;
 import java.io.IOException;
 
 import org.hsqldb.lib.ArrayUtil;
-import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.FileUtil;
+import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.HsqlNameManager.HsqlName;
 

@@ -31,17 +31,17 @@
 
 package org.hsqldb.test;
 
-import junit.framework.TestCase;
-import junit.framework.TestResult;
-
-import org.hsqldb.WebServer;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Savepoint;
 import java.sql.Statement;
+
+import org.hsqldb.WebServer;
+
+import junit.framework.TestCase;
+import junit.framework.TestResult;
 
 /**
  * Tests JDBC java.sql.Savepoint support in context of new engine SQL-savepoint

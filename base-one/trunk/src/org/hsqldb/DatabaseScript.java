@@ -66,12 +66,12 @@
 
 package org.hsqldb;
 
-import org.hsqldb.HsqlNameManager.HsqlName;
-import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.HashMappedList;
+import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.lib.Iterator;
+import org.hsqldb.HsqlNameManager.HsqlName;
 
 /**
  * Script generation.

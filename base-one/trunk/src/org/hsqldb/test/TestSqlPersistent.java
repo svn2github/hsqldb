@@ -31,10 +31,19 @@
 
 package org.hsqldb.test;
 
-import java.sql.*;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
 
-import junit.framework.*;
+import junit.framework.TestCase;
+import junit.framework.TestResult;
 
 /**
  * Test sql statements via jdbc against a database with cached tables
@@ -72,13 +81,13 @@ public class TestSqlPersistent extends TestCase {
         }
     }
 
-/**
- *  demonstration of bug fix #482109 - inserting Integers
- *  and Strings with PreparedStatement.setObject() did not work;
- *  String, Integer and Array types are inserted and retrieved<b>
- *
- *  demonstration of retrieving values using different getXXX methods
- */
+    /**
+     *  demonstration of bug fix #482109 - inserting Integers
+     *  and Strings with PreparedStatement.setObject() did not work;
+     *  String, Integer and Array types are inserted and retrieved<b>
+     *
+     *  demonstration of retrieving values using different getXXX methods
+     */
     public void testInsertObject() {
 
         Object  stringValue        = null;

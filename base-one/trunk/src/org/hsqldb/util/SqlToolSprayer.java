@@ -31,13 +31,13 @@
 
 package org.hsqldb.util;
 
-import java.util.Date;
-import java.util.ArrayList;
-import java.util.Properties;
-import java.io.FileInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Properties;
 
-/* $Id: SqlToolSprayer.java,v 1.4 2004/06/19 16:32:55 fredt Exp $ */
+/* $Id: SqlToolSprayer.java,v 1.7 2004/09/22 17:53:49 fredt Exp $ */
 
 /**
  * Sql Tool Sprayer.
@@ -54,7 +54,7 @@ import java.io.File;
  * </UL>
  *
  * @see @main()
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.7 $
  * @author Blaine Simpson
  */
 public class SqlToolSprayer {
@@ -67,13 +67,16 @@ public class SqlToolSprayer {
         + "    sqltoolsprayer.monfile (filepath) [none]\n"
         + "    sqltoolsprayer.rcfile (filepath) [none.  SqlTool default used.]\n"
         + "    sqltoolsprayer.propfile (filepath) [none]";
+
     public static void main(String[] sa) {
 
         if (sa.length < 1) {
             System.err.println(SYNTAX_MSG);
             System.exit(4);
         }
+
         System.setProperty("sqltool.noexit", "true");
+
         long period = ((System.getProperty("sqltoolsprayer.period") == null)
                        ? 500
                        : Integer.parseInt(
@@ -91,6 +94,7 @@ public class SqlToolSprayer {
                                                                        System.getProperty(
                                                                            "sqltoolsprayer.monfile"));
         ArrayList urlids = new ArrayList();
+
         if (propfile != null) {
             try {
                 getUrlsFromPropFile(propfile, urlids);
@@ -100,13 +104,17 @@ public class SqlToolSprayer {
                 System.exit(3);
             }
         }
+
         for (int i = 1; i < sa.length; i++) {
             urlids.add(sa[i]);
         }
+
         boolean status[] = new boolean[urlids.size()];
+
         for (int i = 0; i < status.length; i++) {
             status[i] = false;
         }
+
         String[] withRcArgs    = {
             "--noinput", "--sql", sa[0], "--rcfile", rcFile, null
         };
@@ -117,37 +125,48 @@ public class SqlToolSprayer {
                                                   : withRcArgs;
         boolean  onefailed     = false;
         long     startTime     = (new Date()).getTime();
+
         while (true) {
             if (monitorFile != null &&!monitorFile.exists()) {
                 System.err.println("Required file is gone:  " + monitorFile);
                 System.exit(2);
             }
+
             onefailed = false;
+
             for (int i = 0; i < status.length; i++) {
                 if (status[i]) {
                     continue;
                 }
+
                 sqlToolArgs[sqlToolArgs.length - 1] = (String) urlids.get(i);
+
                 try {
                     SqlTool.main(sqlToolArgs);
+
                     status[i] = true;
+
                     System.err.println("Success for instance '"
                                        + urlids.get(i) + "'");
                 } catch (Exception e) {
                     onefailed = true;
                 }
             }
+
             if (!onefailed) {
                 break;
             }
+
             if (maxtime == 0
                     || (new Date()).getTime() > startTime + maxtime) {
                 break;
             }
+
             try {
                 Thread.sleep(period);
             } catch (InterruptedException ie) {}
         }
+
         ArrayList failedUrlids = new ArrayList();
 
         // If all statuses true, then System.exit(0);
@@ -156,10 +175,12 @@ public class SqlToolSprayer {
                 failedUrlids.add((String) urlids.get(i));
             }
         }
+
         if (failedUrlids.size() > 0) {
             System.err.println("Failed instances:   " + failedUrlids);
             System.exit(1);
         }
+
         System.exit(0);
     }
 
@@ -167,15 +188,21 @@ public class SqlToolSprayer {
             ArrayList al) throws Exception {
 
         Properties p = new Properties();
+
         p.load(new FileInputStream(fileName));
+
         int    i = -1;
         String val;
+
         while (true) {
             i++;
+
             val = p.getProperty("server.urlid." + i);
+
             if (val == null) {
                 return;
             }
+
             al.add(val);
         }
     }

@@ -31,14 +31,14 @@
 
 package org.hsqldb.jdbc;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.sql.ParameterMetaData;
 import java.sql.SQLException;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Method;
 
-import org.hsqldb.Types;
 import org.hsqldb.Result;
 import org.hsqldb.Trace;
+import org.hsqldb.Types;
 
 // fredt@users 20040412 - removed DITypeInfo dependencies
 // TODO: implement internal support for at least OUT return parameter

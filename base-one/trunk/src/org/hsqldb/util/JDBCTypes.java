@@ -66,8 +66,7 @@
 
 package org.hsqldb.util;
 
-import java.sql.*;
-import java.util.*;
+import java.util.Hashtable;
 
 /**
  * Base class for conversion from a different databases

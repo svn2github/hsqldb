@@ -63,7 +63,7 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         // *.properties file
         String[] fullyProtectedPropertiesNames = {
             "version", "hsqldb.compatible_version", "hsqldb.cache_version",
-            "hsqldb.original_version", "hsqldb.files_read_only", "readonly",
+            "hsqldb.original_version", "hsqldb.files_readonly", "readonly",
             "modified", "sql.compare_in_locale", "textdb.allow_full_path"
         };
 
@@ -164,7 +164,7 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
                 This was introduced as a result of tests by Karl Meissner
                 (meissnersd@users)
-        */
+         */
 
         // garbage collect per Record or Cache Row objects created
         // the default, "0" means no garbage collection is forced by

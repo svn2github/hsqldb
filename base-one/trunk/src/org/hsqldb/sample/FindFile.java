@@ -66,8 +66,13 @@
 
 package org.hsqldb.sample;
 
-import java.sql.*;
-import java.io.*;
+import java.io.File;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  * Extract a directory tree and store in an HSQLDB database.

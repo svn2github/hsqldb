@@ -31,9 +31,12 @@
 
 package org.hsqldb.util;
 
-import org.hsqldb.HsqlProperties;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
 
-import java.sql.*;
+import org.hsqldb.HsqlProperties;
 
 /*
  *  Shutdown class for Server, used by hsqldbserver to shutdown the server

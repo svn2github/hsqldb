@@ -31,10 +31,16 @@
 
 package org.hsqldb.test;
 
-import java.sql.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.LineNumberReader;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 
-import org.hsqldb.lib.*;
+import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.StringUtil;
 
 /**
  * Utility class providing methodes for submitting test statements or

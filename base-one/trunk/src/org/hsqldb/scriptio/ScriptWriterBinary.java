@@ -40,9 +40,9 @@ import org.hsqldb.Table;
 import org.hsqldb.rowio.RowOutputBinary;
 
 /**
-*  @author fredt@users
-*  @since 1.7.2
-*  @version 1.7.2
+ *  @author fredt@users
+ *  @since 1.7.2
+ *  @version 1.7.2
  */
 class ScriptWriterBinary extends ScriptWriterBase {
 

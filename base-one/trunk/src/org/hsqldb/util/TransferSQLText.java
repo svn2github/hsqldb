@@ -31,9 +31,17 @@
 
 package org.hsqldb.util;
 
-import java.sql.*;
-import java.util.*;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.NoSuchElementException;
+import java.util.StringTokenizer;
+import java.util.Vector;
 
 /**
  * @author Nicolas BAZIN, INGENICO
@@ -568,13 +576,17 @@ class TransferSQLText extends DataAccessPoint {
                     try {
                         while ((Token =
                                 Tokenizer.nextToken()).toUpperCase().equals(
-                                    "INDEX"));
+                                    "INDEX")) {
+                            ;
+                        }
 
                         String IndexdropCommand = "DROP INDEX " + Token
                                                   + " ;";
 
                         while ((Token = Tokenizer.nextToken(
-                                " (")).toUpperCase().equals("ON"));
+                                " (")).toUpperCase().equals("ON")) {
+                            ;
+                        }
 
                         name = Token;
 
@@ -663,7 +675,9 @@ class TransferSQLText extends DataAccessPoint {
         try {
             Tokenizer = new StringTokenizer(statement);
 
-            while (!Tokenizer.nextToken().toUpperCase().equals("FROM"));
+            while (!Tokenizer.nextToken().toUpperCase().equals("FROM")) {
+                ;
+            }
 
             tableName = Tokenizer.nextToken(" ;");
         } catch (NoSuchElementException NSE) {

@@ -31,11 +31,17 @@
 
 package org.hsqldb.test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.Random;
+import java.util.Vector;
 
-import org.hsqldb.lib.*;
+import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.HsqlLinkedList;
+import org.hsqldb.lib.HsqlList;
+import org.hsqldb.lib.StopWatch;
 
-import junit.framework.*;
+import junit.framework.TestCase;
 
 /**
  * Randomly excutes methods on the HsqlList data structures and compares the

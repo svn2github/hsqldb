@@ -31,14 +31,26 @@
 
 package org.hsqldb.util;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.image.*;
-import java.applet.*;
-import java.sql.*;
-import java.net.*;
-import java.io.*;
-import java.util.*;
+import java.sql.Connection;
+import java.awt.BorderLayout;
+import java.awt.Button;
+import java.awt.Choice;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.GridLayout;
+import java.awt.Insets;
+import java.awt.Label;
+import java.awt.Panel;
+import java.awt.SystemColor;
+import java.awt.TextField;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.WindowEvent;
 
 /**
  * Class declaration

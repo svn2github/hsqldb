@@ -66,8 +66,18 @@
 
 package org.hsqldb.util;
 
-import java.awt.*;
 import java.util.Vector;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Event;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.awt.Panel;
+import java.awt.Scrollbar;
+import java.awt.SystemColor;
 
 // sqlbob@users 20020401 - patch 1.7.0 by sqlbob (RMP) - enhancements
 

@@ -31,29 +31,29 @@
 
 package org.hsqldb.util;
 
-import java.io.IOException;
-import java.io.PrintStream;
-import java.io.File;
 import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.StringTokenizer;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.TreeMap;
 import java.util.Iterator;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.OutputStreamWriter;
-import java.io.FileOutputStream;
+import java.util.Map;
+import java.util.StringTokenizer;
+import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.88 2004/07/22 14:13:57 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.90 2004/09/19 03:44:46 fredt Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -89,7 +89,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.88 $
+ * @version $Revision: 1.90 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -111,6 +111,7 @@ public class SqlFile {
     private static class BooleanBucket {
 
         private boolean bPriv = false;
+
         public void set(boolean bIn) {
             bPriv = bIn;
         }
@@ -134,11 +135,13 @@ public class SqlFile {
         "                                                                 "
         + "                                                                 ";
     private static String revnum = null;
+
     static {
-        revnum = "$Revision: 1.88 $".substring("$Revision: ".length(),
-                                               "$Revision: 1.88 $".length()
+        revnum = "$Revision: 1.90 $".substring("$Revision: ".length(),
+                                               "$Revision: 1.90 $".length()
                                                - 2);
     }
+
     private static String BANNER =
         "(SqlFile processor v. " + revnum + ")\n"
         + "Distribution is permitted under the terms of the HSQLDB license.\n"
@@ -240,18 +243,22 @@ public class SqlFile {
         file        = inFile;
         interactive = inInteractive;
         userVars    = inVars;
+
         if (interactive) {
             String tmpStr = System.getProperty("sqltool.historyLength");
+
             try {
                 statementHistory =
                     new String[Integer.parseInt(System.getProperty("sqltool.historyLength"))];
             } catch (Throwable t) {
                 statementHistory = null;
             }
+
             if (statementHistory == null) {
                 statementHistory = new String[DEFAULT_HISTORY_SIZE];
             }
         }
+
         if (file != null &&!file.canRead()) {
             throw new IOException("Can't read SQL file '" + file + "'");
         }
@@ -331,6 +338,7 @@ public class SqlFile {
         psErr      = errIn;
         curConn    = conn;
         curLinenum = -1;
+
         String  inputLine;
         String  trimmedCommand;
         String  trimmedInput;
@@ -338,28 +346,37 @@ public class SqlFile {
         boolean inComment = false;    // Globbling up a comment
         int     postCommentIndex;
         boolean gracefulExit = false;
+
         continueOnError = (coeOverride == null) ? interactive
                                                 : coeOverride.booleanValue();
+
         if (userVars != null && userVars.size() > 0) {
             plMode = true;
         }
+
         String specifiedCharSet = System.getProperty("sqlfile.charset");
+
         charset = ((specifiedCharSet == null) ? DEFAULT_CHARSET
                                               : specifiedCharSet);
+
         try {
             br = new BufferedReader(new InputStreamReader((file == null)
                     ? System.in
                     : new FileInputStream(file), charset));
             curLinenum = 0;
+
             if (interactive) {
                 stdprintln(BANNER);
             }
+
             while (true) {
                 if (interactive) {
                     psStd.print((stringBuffer.length() == 0) ? primaryPrompt
                                                              : contPrompt);
                 }
+
                 inputLine = br.readLine();
+
                 if (inputLine == null) {
                     /*
                      * This is because interactive EOD on some OSes doesn't
@@ -370,11 +387,15 @@ public class SqlFile {
                     if (interactive) {
                         psStd.println();
                     }
+
                     break;
                 }
+
                 curLinenum++;
+
                 if (inComment) {
                     postCommentIndex = inputLine.indexOf("*/") + 2;
+
                     if (postCommentIndex > 1) {
 
                         // I see no reason to leave comments in history.
@@ -384,6 +405,7 @@ public class SqlFile {
                         // this line is either the beginning of a new SQL
                         // or Special command, or an empty line.
                         stringBuffer.setLength(0);
+
                         inComment = false;
                     } else {
 
@@ -391,8 +413,11 @@ public class SqlFile {
                         continue;
                     }
                 }
+
                 trimmedInput = inputLine.trim();
+
                 try {
+
                     // This is the try for SQLException.  SQLExceptions are
                     // normally thrown below in Statement processing, but
                     // could be called up above if a Special processing
@@ -401,6 +426,7 @@ public class SqlFile {
                         if (trimmedInput.startsWith("/*")) {
                             postCommentIndex = trimmedInput.indexOf("*/", 2)
                                                + 2;
+
                             if (postCommentIndex > 1) {
 
                                 // I see no reason to leave comments in
@@ -413,7 +439,9 @@ public class SqlFile {
 
                                 // Just so we get continuation lines:
                                 stringBuffer.append("COMMENT");
+
                                 inComment = true;
+
                                 continue;
                             }
                         }
@@ -423,6 +451,7 @@ public class SqlFile {
                         if (trimmedInput.length() == 0) {
                             continue;
                         }
+
                         if (trimmedInput.startsWith("* ")
                                 || trimmedInput.equals("*")) {
                             try {
@@ -439,12 +468,15 @@ public class SqlFile {
                                                              + inputLine
                                                              + "\"\n"
                                                              + bs.getMessage());
+
                                 if (!continueOnError) {
                                     throw new SqlToolError(bs);
                                 }
                             }
+
                             continue;
                         }
+
                         if (trimmedInput.charAt(0) == '\\') {
                             try {
                                 processSpecial(trimmedInput.substring(1));
@@ -457,12 +489,15 @@ public class SqlFile {
                                                              + inputLine
                                                              + "\"\n"
                                                              + bs.getMessage());
+
                                 if (!continueOnError) {
                                     throw new SqlToolError(bs);
                                 }
                             }
+
                             continue;
                         }
+
                         if (interactive && trimmedInput.charAt(0) == ':') {
                             try {
                                 processBuffer(trimmedInput.substring(1));
@@ -475,21 +510,26 @@ public class SqlFile {
                                                              + inputLine
                                                              + "\"\n"
                                                              + bs.getMessage());
+
                                 if (!continueOnError) {
                                     throw new SqlToolError(bs);
                                 }
                             }
+
                             continue;
                         }
                     }
+
                     if (trimmedInput.length() == 0) {
                         if (interactive &&!inComment) {
                             setBuf(stringBuffer.toString());
                             stringBuffer.setLength(0);
                             stdprintln("Current input moved into buffer.");
                         }
+
                         continue;
                     }
+
                     deTerminated = deTerminated(inputLine);
 
                     // A null terminal line (i.e., /\s*;\s*$/) is never useful.
@@ -497,9 +537,11 @@ public class SqlFile {
                         if (stringBuffer.length() > 0) {
                             stringBuffer.append('\n');
                         }
+
                         stringBuffer.append((deTerminated == null) ? inputLine
                                                                    : deTerminated);
                     }
+
                     if (deTerminated == null) {
                         continue;
                     }
@@ -508,12 +550,15 @@ public class SqlFile {
                     // SQL command.
                     curCommand     = stringBuffer.toString();
                     trimmedCommand = curCommand.trim();
+
                     if (trimmedCommand.length() == 0) {
                         throw new SQLException("Empty SQL Statement");
                     }
+
                     if (interactive) {
                         setBuf(curCommand);
                     }
+
                     processSQL();
                 } catch (SQLException se) {
                     errprintln("SQL Error at '" + ((file == null) ? "stdin"
@@ -524,11 +569,13 @@ public class SqlFile {
                                                                               + "\"\n"
                                                                                   + se
                                                                                   .getMessage());
+
                     if (!continueOnError) {
                         throw se;
                     }
                 } catch (BreakException be) {
                     String msg = be.getMessage();
+
                     if ((!recursed) && (msg != null &&!msg.equals("file"))) {
                         errprintln("Unsatisfied break statement"
                                    + ((msg == null) ? ""
@@ -537,11 +584,13 @@ public class SqlFile {
                     } else {
                         gracefulExit = true;
                     }
+
                     if (recursed ||!continueOnError) {
                         throw be;
                     }
                 } catch (ContinueException ce) {
                     String msg = ce.getMessage();
+
                     if (!recursed) {
                         errprintln("Unsatisfied continue statement"
                                    + ((msg == null) ? ""
@@ -550,6 +599,7 @@ public class SqlFile {
                     } else {
                         gracefulExit = true;
                     }
+
                     if (recursed ||!continueOnError) {
                         throw ce;
                     }
@@ -560,32 +610,43 @@ public class SqlFile {
                         throw ste;
                     }
                 }
+
                 stringBuffer.setLength(0);
             }
+
             if (inComment || stringBuffer.length() != 0) {
                 errprintln("Unterminated input:  [" + stringBuffer + ']');
+
                 throw new SqlToolError("Unterminated input:  ["
                                        + stringBuffer + ']');
             }
+
             gracefulExit = true;
         } catch (QuitNow qn) {
             gracefulExit = qn.getMessage() == null;
+
             if ((!recursed) &&!gracefulExit) {
                 errprintln("Aborting: " + qn.getMessage());
             }
+
             if (recursed ||!gracefulExit) {
                 throw qn;
             }
+
             return;
         } finally {
             closeQueryOutputStream();
+
             if (fetchingVar != null) {
                 errprintln("PL variable setting incomplete:  " + fetchingVar);
+
                 gracefulExit = false;
             }
+
             if (br != null) {
                 br.close();
             }
+
             if ((!gracefulExit) && possiblyUncommitteds.get()) {
                 errprintln("Rolling back SQL transaction.");
                 curConn.rollback();
@@ -604,14 +665,17 @@ public class SqlFile {
     private static String deTerminated(String inString) {
 
         int index = inString.lastIndexOf(';');
+
         if (index < 0) {
             return null;
         }
+
         for (int i = index + 1; i < inString.length(); i++) {
             if (!Character.isWhitespace(inString.charAt(i))) {
                 return null;
             }
         }
+
         return inString.substring(0, index);
     }
 
@@ -701,49 +765,62 @@ public class SqlFile {
         int    special;
         char   commandChar = 'i';
         String other       = null;
+
         if (inString.length() > 0) {
             commandChar = inString.charAt(0);
             other       = inString.substring(1);
+
             if (other.trim().length() == 0) {
                 other = null;
             }
         }
+
         switch (commandChar) {
 
             case ';' :
                 curCommand = commandFromHistory(0);
+
                 stdprintln("Executing command from buffer:\n" + curCommand
                            + '\n');
                 processSQL();
+
                 return;
 
             case 'a' :
             case 'A' :
                 stringBuffer.append(commandFromHistory(0));
+
                 if (other != null) {
                     String deTerminated = deTerminated(other);
+
                     if (!other.equals(";")) {
                         stringBuffer.append(((deTerminated == null) ? other
                                                                     : deTerminated));
                     }
+
                     if (deTerminated != null) {
 
                         // If we reach here, then stringBuffer contains a
                         // complete SQL command.
                         curCommand = stringBuffer.toString();
+
                         setBuf(curCommand);
                         stdprintln("Executing:\n" + curCommand + '\n');
                         processSQL();
                         stringBuffer.setLength(0);
+
                         return;
                     }
                 }
+
                 stdprintln("Appending to:\n" + stringBuffer);
+
                 return;
 
             case 'l' :
             case 'L' :
                 stdprintln("Current Buffer:\n" + commandFromHistory(0));
+
                 return;
 
             case 's' :
@@ -759,24 +836,32 @@ public class SqlFile {
                 boolean modeGlobal  = false;
                 boolean modeExecute = false;
                 int     modeLine    = 0;
+
                 try {
                     String       fromHist = commandFromHistory(0);
                     StringBuffer sb       = new StringBuffer(fromHist);
+
                     if (other == null) {
                         throw new BadSwitch(0);
                     }
+
                     String delim = other.substring(0, 1);
                     StringTokenizer toker = new StringTokenizer(other, delim,
                         true);
+
                     if (toker.countTokens() < 4
                             ||!toker.nextToken().equals(delim)) {
                         throw new BadSwitch(1);
                     }
+
                     String from = toker.nextToken().replace('$', '\n');
+
                     if (!toker.nextToken().equals(delim)) {
                         throw new BadSwitch(2);
                     }
+
                     String to = toker.nextToken().replace('$', '\n');
+
                     if (to.equals(delim)) {
                         to = "";
                     } else {
@@ -785,8 +870,10 @@ public class SqlFile {
                             throw new BadSwitch(3);
                         }
                     }
+
                     if (toker.countTokens() > 0) {
                         String opts = toker.nextToken("");
+
                         for (int j = 0; j < opts.length(); j++) {
                             switch (opts.charAt(j)) {
 
@@ -822,6 +909,7 @@ public class SqlFile {
                             }
                         }
                     }
+
                     if (modeIC) {
                         fromHist = fromHist.toUpperCase();
                         from     = from.toUpperCase();
@@ -832,17 +920,21 @@ public class SqlFile {
 
                     // lineStop is the \n AFTER what we consider.
                     int lineStop = -1;
+
                     if (modeLine > 0) {
                         for (int j = 1; j < modeLine; j++) {
                             lineStart = fromHist.indexOf('\n', lineStart) + 1;
+
                             if (lineStart < 1) {
                                 throw new BadSpecial(
                                     "There are not " + modeLine
                                     + " lines in the buffer.");
                             }
                         }
+
                         lineStop = fromHist.indexOf('\n', lineStart);
                     }
+
                     if (lineStop < 0) {
                         lineStop = fromHist.length();
                     }
@@ -850,8 +942,10 @@ public class SqlFile {
                     // System.err.println("["
                     // + fromHist.substring(lineStart, lineStop) + ']');
                     int i;
+
                     if (modeGlobal) {
                         i = lineStop;
+
                         while ((i = fromHist.lastIndexOf(from, i - 1))
                                 >= lineStart) {
                             sb.replace(i, i + from.length(), to);
@@ -860,10 +954,13 @@ public class SqlFile {
                                && i < lineStop) {
                         sb.replace(i, i + from.length(), to);
                     }
+
                     statementHistory[curHist] = sb.toString();
+
                     stdprintln((modeExecute ? "Executing"
                                             : "Current Buffer") + ":\n"
                                             + commandFromHistory(0));
+
                     if (modeExecute) {
                         stdprintln();
                     }
@@ -873,16 +970,21 @@ public class SqlFile {
                         + "Use '$' for line separations.  ["
                         + badswitch.getMessage() + ']');
                 }
+
                 if (modeExecute) {
                     curCommand = commandFromHistory(0);
+
                     processSQL();
                 }
+
                 return;
 
             case '?' :
                 stdprintln(BUFFER_HELP_TEXT);
+
                 return;
         }
+
         throw new BadSpecial("Unknown Buffer Command");
     }
 
@@ -901,38 +1003,51 @@ public class SqlFile {
         int    special;
         String arg1,
                other = null;
+
         if (inString.length() < 1) {
             throw new BadSpecial("Null special command");
         }
+
         if (plMode) {
             inString = dereference(inString, false);
         }
+
         StringTokenizer toker = new StringTokenizer(inString);
+
         arg1 = toker.nextToken();
+
         if (toker.hasMoreTokens()) {
             other = toker.nextToken("").trim();
         }
+
         switch (arg1.charAt(0)) {
 
             case 'q' :
                 if (other != null) {
                     throw new QuitNow(other);
                 }
+
                 throw new QuitNow();
             case 'H' :
                 htmlMode = !htmlMode;
+
                 stdprintln("HTML Mode is now set to: " + htmlMode);
+
                 return;
 
             case 'd' :
                 if (arg1.length() == 2) {
                     listTables(arg1.charAt(1), other);
+
                     return;
                 }
+
                 if (arg1.length() == 1 && other != null) {
                     describe(other);
+
                     return;
                 }
+
                 throw new BadSpecial("Describe commands must be like "
                                      + "'\\dX' or like '\\d OBJECTNAME'.");
             case 'o' :
@@ -941,19 +1056,24 @@ public class SqlFile {
                         throw new BadSpecial(
                             "There is no query output file to close");
                     }
+
                     closeQueryOutputStream();
+
                     return;
                 }
+
                 if (pwQuery != null) {
                     stdprintln(
                         "Closing current query output file and opening "
                         + "new one");
                     closeQueryOutputStream();
                 }
+
                 try {
                     pwQuery = new PrintWriter(
                         new OutputStreamWriter(
                             new FileOutputStream(other, true), charset));
+
                     /* Opening in append mode, so it's possible that we will
                      * be adding superfluous <HTML> and <BODY> tages.
                      * I think that browsers can handle that */
@@ -970,6 +1090,7 @@ public class SqlFile {
                     throw new BadSpecial("Failed to write to file '" + other
                                          + "':  " + e);
                 }
+
                 return;
 
             case 'w' :
@@ -977,13 +1098,16 @@ public class SqlFile {
                     throw new BadSpecial(
                         "You must supply a destination file name");
                 }
+
                 if (commandFromHistory(0).length() == 0) {
                     throw new BadSpecial("Empty command in buffer");
                 }
+
                 try {
                     PrintWriter pw = new PrintWriter(
                         new OutputStreamWriter(
                             new FileOutputStream(other, true), charset));
+
                     pw.println(commandFromHistory(0) + ';');
                     pw.flush();
                     pw.close();
@@ -991,25 +1115,30 @@ public class SqlFile {
                     throw new BadSpecial("Failed to append to file '" + other
                                          + "':  " + e);
                 }
+
                 return;
 
             case 'i' :
                 if (other == null) {
                     throw new BadSpecial("You must supply an SQL file name");
                 }
+
                 try {
                     SqlFile sf = new SqlFile(new File(other), false,
                                              userVars);
+
                     sf.recursed = true;
 
                     // Share the possiblyUncommitted state
                     sf.possiblyUncommitteds = possiblyUncommitteds;
                     sf.plMode               = plMode;
+
                     sf.execute(curConn, continueOnError);
                 } catch (ContinueException ce) {
                     throw ce;
                 } catch (BreakException be) {
                     String beMessage = be.getMessage();
+
                     if (beMessage != null &&!beMessage.equals("file")) {
                         throw be;
                     }
@@ -1019,6 +1148,7 @@ public class SqlFile {
                     throw new BadSpecial("Failed to execute SQL from file '"
                                          + other + "':  " + e.getMessage());
                 }
+
                 return;
 
             case 'p' :
@@ -1027,6 +1157,7 @@ public class SqlFile {
                 } else {
                     stdprintln(other, true);
                 }
+
                 return;
 
             case 'a' :
@@ -1034,8 +1165,10 @@ public class SqlFile {
                     curConn.setAutoCommit(
                         Boolean.valueOf(other).booleanValue());
                 }
+
                 stdprintln("Auto-commit is set to: "
                            + curConn.getAutoCommit());
+
                 return;
 
             case '*' :
@@ -1044,25 +1177,31 @@ public class SqlFile {
                     // But remember that we have to abort on some I/O errors.
                     continueOnError = Boolean.valueOf(other).booleanValue();
                 }
+
                 stdprintln("Continue-on-error is set to: " + continueOnError);
+
                 return;
 
             case 's' :
                 showHistory();
+
                 return;
 
             case '-' :
                 int     commandsAgo = 0;
                 String  numStr;
                 boolean executeMode = arg1.charAt(arg1.length() - 1) == ';';
+
                 if (executeMode) {
 
                     // Trim off terminating ';'
                     arg1 = arg1.substring(0, arg1.length() - 1);
                 }
+
                 numStr = (arg1.length() == 1) ? null
                                               : arg1.substring(1,
                                               arg1.length());
+
                 if (numStr == null) {
                     commandsAgo = 0;
                 } else {
@@ -1072,7 +1211,9 @@ public class SqlFile {
                         throw new BadSpecial("Malformatted command number");
                     }
                 }
+
                 setBuf(commandFromHistory(commandsAgo));
+
                 if (executeMode) {
                     processBuffer(";");
                 } else {
@@ -1081,10 +1222,12 @@ public class SqlFile {
                         + "to see buffer commands:\n"
                         + commandFromHistory(0));
                 }
+
                 return;
 
             case '?' :
                 stdprintln(HELP_TEXT);
+
                 return;
 
             case '!' :
@@ -1096,20 +1239,30 @@ public class SqlFile {
                                                                    : "") + ((other == null)
                                                                        ? ""
                                                                        : other);
+
                 try {
                     Process proc = Runtime.getRuntime().exec(extCommand);
+
                     proc.getOutputStream().close();
+
                     int i;
+
                     stream = proc.getInputStream();
+
                     while ((i = stream.read(ba)) > 0) {
                         stdprint(new String(ba, 0, i));
                     }
+
                     stream.close();
+
                     stream = proc.getErrorStream();
+
                     while ((i = stream.read(ba)) > 0) {
                         errprint(new String(ba, 0, i));
                     }
+
                     stream.close();
+
                     if (proc.waitFor() != 0) {
                         throw new BadSpecial("External command failed: '"
                                              + extCommand + "'");
@@ -1118,8 +1271,10 @@ public class SqlFile {
                     throw new BadSpecial("Failed to execute command '"
                                          + extCommand + "':  " + e);
                 }
+
                 return;
         }
+
         throw new BadSpecial("Unknown Special Command");
     }
 
@@ -1135,36 +1290,49 @@ public class SqlFile {
         String       varName, varValue;
         StringBuffer expandBuffer = new StringBuffer(inString);
         int          b, e;    // begin and end
+
         if (permitAlias && inString.charAt(0) == '*') {
             Iterator it = userVars.keySet().iterator();
+
             while (it.hasNext()) {
                 varName = (String) it.next();
+
                 if (inString.equals("*" + varName)) {
                     return (String) userVars.get(varName);
                 }
+
                 if (inString.startsWith("*" + varName + ' ')
                         || inString.startsWith("*" + varName + '\t')) {
                     expandBuffer.replace(0, varName.length() + 1,
                                          (String) userVars.get(varName));
+
                     return expandBuffer.toString();
                 }
             }
+
             return inString;
         }
+
         String s;
+
         while (true) {
             s = expandBuffer.toString();
+
             if ((b = s.indexOf("*{")) < 0
                     || ((e = s.indexOf('}', b + 2)) < 0)) {
                 break;
             }
+
             varName = s.substring(b + 2, e);
+
             if (!userVars.containsKey(varName)) {
                 throw new SQLException("Use of unset PL variable: "
                                        + varName);
             }
+
             expandBuffer.replace(b, e + 1, (String) userVars.get(varName));
         }
+
         return expandBuffer.toString();
     }
 
@@ -1185,32 +1353,42 @@ public class SqlFile {
 
         if (inString.length() < 1) {
             plMode = true;
+
             stdprintln("PL variable expansion mode is now on");
+
             return;
         }
+
         if (inString.charAt(0) == '?') {
             stdprintln(PL_HELP_TEXT);
+
             return;
         }
+
         if (plMode) {
             inString = dereference(inString, false);
         }
+
         StringTokenizer toker      = new StringTokenizer(inString);
         String          arg1       = toker.nextToken();
         String[]        tokenArray = null;
 
         // If user runs any PL command, we turn PL mode on.
         plMode = true;
+
         if (userVars == null) {
             userVars = new HashMap();
         }
+
         if (arg1.equals("end")) {
             throw new BadSpecial("PL end statements may only occur inside of "
                                  + "a PL block");
         }
+
         if (arg1.equals("continue")) {
             if (toker.hasMoreTokens()) {
                 String s = toker.nextToken("").trim();
+
                 if (s.equals("foreach") || s.equals("while")) {
                     throw new ContinueException(s);
                 } else {
@@ -1220,11 +1398,14 @@ public class SqlFile {
                         + "'while'");
                 }
             }
+
             throw new ContinueException();
         }
+
         if (arg1.equals("break")) {
             if (toker.hasMoreTokens()) {
                 String s = toker.nextToken("").trim();
+
                 if (s.equals("foreach") || s.equals("if")
                         || s.equals("while") || s.equals("file")) {
                     throw new BreakException(s);
@@ -1235,56 +1416,72 @@ public class SqlFile {
                         + "'if', 'while', 'file'");
                 }
             }
+
             throw new BreakException();
         }
+
         if (arg1.equals("list")) {
             if (toker.countTokens() == 0) {
                 stdprint(formatNicely(userVars));
             } else {
                 tokenArray = getTokenArray(toker.nextToken(""));
+
                 for (int i = 0; i < tokenArray.length; i++) {
                     stdprintln("    " + tokenArray[i] + ": ("
                                + userVars.get(tokenArray[i]) + ')');
                 }
             }
+
             return;
         }
+
         if (arg1.equals("foreach")) {
             if (toker.countTokens() < 2) {
                 throw new BadSpecial("Malformatted PL foreach command (1)");
             }
+
             String varName   = toker.nextToken();
             String parenExpr = toker.nextToken("").trim();
+
             if (parenExpr.length() < 2 || parenExpr.charAt(0) != '('
                     || parenExpr.charAt(parenExpr.length() - 1) != ')') {
                 throw new BadSpecial("Malformatted PL foreach command (2)");
             }
+
             String[] values = getTokenArray(parenExpr.substring(1,
                 parenExpr.length() - 1));
             File   tmpFile = null;
             String varVal;
+
             try {
                 tmpFile = plBlockFile("foreach");
             } catch (IOException ioe) {
                 throw new BadSpecial(
                     "Failed to write given PL block temp file: " + ioe);
             }
+
             String origval = (String) userVars.get(varName);
+
             try {
                 SqlFile sf;
+
                 for (int i = 0; i < values.length; i++) {
                     try {
                         varVal = values[i];
+
                         userVars.put(varName, varVal);
+
                         sf          = new SqlFile(tmpFile, false, userVars);
                         sf.plMode   = true;
                         sf.recursed = true;
 
                         // Share the possiblyUncommitted state
                         sf.possiblyUncommitteds = possiblyUncommitteds;
+
                         sf.execute(curConn, continueOnError);
                     } catch (ContinueException ce) {
                         String ceMessage = ce.getMessage();
+
                         if (ceMessage != null
                                 &&!ceMessage.equals("foreach")) {
                             throw ce;
@@ -1293,6 +1490,7 @@ public class SqlFile {
                 }
             } catch (BreakException be) {
                 String beMessage = be.getMessage();
+
                 if (beMessage != null &&!beMessage.equals("foreach")) {
                     throw be;
                 }
@@ -1302,48 +1500,60 @@ public class SqlFile {
                 throw new BadSpecial("Failed to execute SQL from PL block.  "
                                      + e.getMessage());
             }
+
             if (origval == null) {
                 userVars.remove(varName);
             } else {
                 userVars.put(varName, origval);
             }
+
             if (tmpFile != null &&!tmpFile.delete()) {
                 throw new BadSpecial(
                     "Error occurred while trying to remove temp file '"
                     + tmpFile + "'");
             }
+
             return;
         }
+
         if (arg1.equals("if")) {
             if (toker.countTokens() < 1) {
                 throw new BadSpecial("Malformatted PL if command (1)");
             }
+
             String parenExpr = toker.nextToken("").trim();
+
             if (parenExpr.length() < 2 || parenExpr.charAt(0) != '('
                     || parenExpr.charAt(parenExpr.length() - 1) != ')') {
                 throw new BadSpecial("Malformatted PL if command (2)");
             }
+
             String[] values = getTokenArray(parenExpr.substring(1,
                 parenExpr.length() - 1));
             File tmpFile = null;
+
             try {
                 tmpFile = plBlockFile("if");
             } catch (IOException ioe) {
                 throw new BadSpecial(
                     "Failed to write given PL block temp file: " + ioe);
             }
+
             try {
                 if (eval(values)) {
                     SqlFile sf = new SqlFile(tmpFile, false, userVars);
+
                     sf.plMode   = true;
                     sf.recursed = true;
 
                     // Share the possiblyUncommitted state
                     sf.possiblyUncommitteds = possiblyUncommitteds;
+
                     sf.execute(curConn, continueOnError);
                 }
             } catch (BreakException be) {
                 String beMessage = be.getMessage();
+
                 if (beMessage == null ||!beMessage.equals("if")) {
                     throw be;
                 }
@@ -1357,33 +1567,42 @@ public class SqlFile {
                 throw new BadSpecial("Failed to execute SQL from PL block.  "
                                      + e.getMessage());
             }
+
             if (tmpFile != null &&!tmpFile.delete()) {
                 throw new BadSpecial(
                     "Error occurred while trying to remove temp file '"
                     + tmpFile + "'");
             }
+
             return;
         }
+
         if (arg1.equals("while")) {
             if (toker.countTokens() < 1) {
                 throw new BadSpecial("Malformatted PL while command (1)");
             }
+
             String parenExpr = toker.nextToken("").trim();
+
             if (parenExpr.length() < 2 || parenExpr.charAt(0) != '('
                     || parenExpr.charAt(parenExpr.length() - 1) != ')') {
                 throw new BadSpecial("Malformatted PL while command (2)");
             }
+
             String[] values = getTokenArray(parenExpr.substring(1,
                 parenExpr.length() - 1));
             File tmpFile = null;
+
             try {
                 tmpFile = plBlockFile("while");
             } catch (IOException ioe) {
                 throw new BadSpecial(
                     "Failed to write given PL block temp file: " + ioe);
             }
+
             try {
                 SqlFile sf;
+
                 while (eval(values)) {
                     try {
                         sf          = new SqlFile(tmpFile, false, userVars);
@@ -1392,9 +1611,11 @@ public class SqlFile {
                         // Share the possiblyUncommitted state
                         sf.possiblyUncommitteds = possiblyUncommitteds;
                         sf.plMode               = true;
+
                         sf.execute(curConn, continueOnError);
                     } catch (ContinueException ce) {
                         String ceMessage = ce.getMessage();
+
                         if (ceMessage != null &&!ceMessage.equals("while")) {
                             throw ce;
                         }
@@ -1402,6 +1623,7 @@ public class SqlFile {
                 }
             } catch (BreakException be) {
                 String beMessage = be.getMessage();
+
                 if (beMessage != null &&!beMessage.equals("while")) {
                     throw be;
                 }
@@ -1414,20 +1636,26 @@ public class SqlFile {
                 throw new BadSpecial("Failed to execute SQL from PL block.  "
                                      + e.getMessage());
             }
+
             if (tmpFile != null &&!tmpFile.delete()) {
                 throw new BadSpecial(
                     "Error occurred while trying to remove temp file '"
                     + tmpFile + "'");
             }
+
             return;
         }
+
         if (toker.countTokens() < 1) {
             throw new BadSpecial("Unknown PL command (1)");
         }
+
         String operator = toker.nextToken();
+
         if (operator.length() != 1) {
             throw new BadSpecial("Unknown PL command (2)");
         }
+
         switch (operator.charAt(0)) {
 
             case '~' :
@@ -1435,8 +1663,11 @@ public class SqlFile {
                     throw new BadSpecial(
                         "PL ~ set command takes no other args");
                 }
+
                 userVars.remove(arg1);
+
                 fetchingVar = arg1;
+
                 return;
 
             case '=' :
@@ -1445,8 +1676,10 @@ public class SqlFile {
                 } else {
                     userVars.put(arg1, toker.nextToken("").trim());
                 }
+
                 return;
         }
+
         throw new BadSpecial("Unknown PL command (3)");
     }
 
@@ -1474,26 +1707,35 @@ public class SqlFile {
         // statement), we're at level 0 and return.
         int    nestlevel = 1;
         String curPlCommand;
+
         if (type == null
                 || ((!type.equals("foreach")) && (!type.equals("if"))
                     && (!type.equals("while")))) {
             throw new RuntimeException(
                 "Assertion failed.  Unsupported PL block type:  " + type);
         }
+
         File tmpFile = File.createTempFile("sqltool-", ".sql");
         PrintWriter pw = new PrintWriter(
             new OutputStreamWriter(new FileOutputStream(tmpFile), charset));
+
         pw.println("/* " + (new java.util.Date()) + ". "
                    + getClass().getName() + " PL block. */\n");
+
         while (true) {
             s = br.readLine();
+
             if (s == null) {
                 errprintln("Unterminated '" + type + "' PL block");
+
                 throw new SqlToolError("Unterminated '" + type
                                        + "' PL block");
             }
+
             curLinenum++;
+
             toker = new StringTokenizer(s);
+
             if (toker.countTokens() > 1 && toker.nextToken().equals("*")) {
                 curPlCommand = toker.nextToken();
 
@@ -1504,31 +1746,40 @@ public class SqlFile {
                     if (toker.countTokens() < 1) {
                         errprintln("PL end statement requires arg of "
                                    + "'foreach' or 'if' or 'while' (1)");
+
                         throw new SqlToolError(
                             "PL end statement requires arg "
                             + " of 'foreach' or 'if' or 'while' (1)");
                     }
+
                     String inType = toker.nextToken();
+
                     if (inType.equals(type)) {
                         nestlevel--;
+
                         if (nestlevel < 1) {
                             break;
                         }
                     }
+
                     if ((!inType.equals("foreach")) && (!inType.equals("if"))
                             && (!inType.equals("while"))) {
                         errprintln("PL end statement requires arg of "
                                    + "'foreach' or 'if' or 'while' (2)");
+
                         throw new SqlToolError(
                             "PL end statement requires arg of "
                             + "'foreach' or 'if' or 'while' (2)");
                     }
                 }
             }
+
             pw.println(s);
         }
+
         pw.flush();
         pw.close();
+
         return tmpFile;
     }
 
@@ -1559,12 +1810,14 @@ public class SqlFile {
         } else {
             psStd.println();
         }
+
         if (queryOutput && pwQuery != null) {
             if (htmlMode) {
                 pwQuery.println("<BR>");
             } else {
                 pwQuery.println();
             }
+
             pwQuery.flush();
         }
     }
@@ -1604,6 +1857,7 @@ public class SqlFile {
 
         psStd.print(htmlMode ? ("<P>" + s + "</P>")
                              : s);
+
         if (queryOutput && pwQuery != null) {
             pwQuery.print(htmlMode ? ("<P>" + s + "</P>")
                                    : s);
@@ -1620,6 +1874,7 @@ public class SqlFile {
 
         psStd.println(htmlMode ? ("<P>" + s + "</P>")
                                : s);
+
         if (queryOutput && pwQuery != null) {
             pwQuery.println(htmlMode ? ("<P>" + s + "</P>")
                                      : s);
@@ -1658,8 +1913,10 @@ public class SqlFile {
         //System.err.println("DB NAME = (" + dbProductName + ')');
         // Database-specific table filtering.
         String excludePrefix = null;
+
         if (c != '*') {
             types = new String[1];
+
             switch (c) {
 
                 case 's' :
@@ -1683,6 +1940,7 @@ public class SqlFile {
                                          + "'");
             }
         }
+
         if (dbProductName.indexOf("HSQL") > -1) {
             listSet = listMDTableCols[HSQLDB_ELEMENT];
         } else if (dbProductName.indexOf("Oracle") > -1) {
@@ -1690,6 +1948,7 @@ public class SqlFile {
         } else {
             listSet = listMDTableCols[DEFAULT_ELEMENT];
         }
+
         displayResultSet(null, md.getTables(null, null, null, types),
                          listSet, filter);
     }
@@ -1737,13 +1996,16 @@ public class SqlFile {
                                                  : inFilter.toUpperCase());
         int    updateCount = (statement == null) ? -1
                                                  : statement.getUpdateCount();
+
         switch (updateCount) {
 
             case -1 :
                 if (r == null) {
                     stdprintln("No result", true);
+
                     break;
                 }
+
                 ResultSetMetaData m        = r.getMetaData();
                 int               cols     = m.getColumnCount();
                 int               incCount = (incCols == null) ? cols
@@ -1765,75 +2027,97 @@ public class SqlFile {
                         maxWidth[i] = 0;
                     }
                 }
+
                 boolean[] rightJust = new boolean[incCount];
+
                 if (incCount > 1) {
                     insi        = -1;
                     headerArray = new String[incCount];
+
                     for (int i = 1; i <= cols; i++) {
                         if (incCols != null) {
                             skip = true;
+
                             for (int j = 0; j < incCols.length; j++) {
                                 if (i == incCols[j]) {
                                     skip = false;
                                 }
                             }
+
                             if (skip) {
                                 continue;
                             }
                         }
+
                         headerArray[++insi] = m.getColumnLabel(i);
                         dataType            = m.getColumnTypeName(i);
                         rightJust[insi] = dataType.equals("INTEGER")
                                           || dataType.equals("NUMBER");
+
                         if (htmlMode) {
                             continue;
                         }
+
                         if (headerArray[insi].length() > maxWidth[insi]) {
                             maxWidth[insi] = headerArray[insi].length();
                         }
                     }
                 }
+
                 boolean filteredOut;
+
                 EACH_ROW:
                 while (r.next()) {
                     fieldArray  = new String[incCount];
                     insi        = -1;
                     filteredOut = filter != null;
+
                     for (int i = 1; i <= cols; i++) {
                         val = r.getString(i);
+
                         if (fetchingVar != null) {
                             userVars.put(fetchingVar, val);
+
                             fetchingVar = null;
                         }
+
                         if (incCols != null) {
                             skip = true;
+
                             for (int j = 0; j < incCols.length; j++) {
                                 if (i == incCols[j]) {
                                     skip = false;
                                 }
                             }
+
                             if (skip) {
                                 continue;
                             }
                         }
+
                         if (val == null &&!r.wasNull()) {
                             val = "NON-CONVERTIBLE TYPE!";
                         }
+
                         if (filter != null
                                 && val.toUpperCase().indexOf(filter) > -1) {
                             filteredOut = false;
                         }
+
                         fieldArray[++insi] = (val == null)
                                              ? (htmlMode ? "<I>null</I>"
                                                          : "null")
                                              : val;
+
                         if (htmlMode) {
                             continue;
                         }
+
                         if (fieldArray[insi].length() > maxWidth[insi]) {
                             maxWidth[insi] = fieldArray[insi].length();
                         }
                     }
+
                     if (!filteredOut) {
                         rows.add(fieldArray);
                     }
@@ -1841,8 +2125,10 @@ public class SqlFile {
 
                 // STEP 2: DISPLAY DATA
                 condlPrintln("<TABLE border='1'>", true);
+
                 if (headerArray != null) {
                     condlPrint(htmlRow(COL_HEAD) + '\n' + PRE_TD, true);
+
                     for (int i = 0; i < headerArray.length; i++) {
                         condlPrint("<TD>" + headerArray[i] + "</TD>", true);
                         condlPrint(((i > 0) ? spaces(2)
@@ -1852,22 +2138,28 @@ public class SqlFile {
                                                 (i < headerArray.length - 1
                                                  || rightJust[i])), false);
                     }
+
                     condlPrintln("\n" + PRE_TR + "</TR>", true);
                     condlPrintln("", false);
+
                     if (!htmlMode) {
                         for (int i = 0; i < headerArray.length; i++) {
                             condlPrint(((i > 0) ? spaces(2)
                                                 : "") + divider(
                                                     maxWidth[i]), false);
                         }
+
                         condlPrintln("", false);
                     }
                 }
+
                 for (int i = 0; i < rows.size(); i++) {
                     condlPrint(htmlRow(((i % 2) == 0) ? COL_EVEN
                                                       : COL_ODD) + '\n'
                                                       + PRE_TD, true);
+
                     fieldArray = (String[]) rows.get(i);
+
                     for (int j = 0; j < fieldArray.length; j++) {
                         condlPrint("<TD>" + fieldArray[j] + "</TD>", true);
                         condlPrint(((j > 0) ? spaces(2)
@@ -1877,21 +2169,27 @@ public class SqlFile {
                                                 (j < fieldArray.length - 1
                                                  || rightJust[j])), false);
                     }
+
                     condlPrintln("\n" + PRE_TR + "</TR>", true);
                     condlPrintln("", false);
                 }
+
                 condlPrintln("</TABLE>", true);
+
                 if (rows.size() != 1) {
                     stdprintln("\n" + rows.size() + " rows", true);
                 }
+
                 condlPrintln("<HR>", true);
                 break;
 
             default :
                 if (fetchingVar != null) {
                     userVars.put(fetchingVar, Integer.toString(updateCount));
+
                     fetchingVar = null;
                 }
+
                 if (updateCount != 0) {
                     stdprintln(Integer.toString(updateCount) + " row"
                                + ((updateCount == 1) ? ""
@@ -1931,6 +2229,7 @@ public class SqlFile {
                        + "<TR style='background: silver; font: normal "
                        + "normal 10px/10px Arial, Helvitica, sans-serif;'>";
         }
+
         return null;
     }
 
@@ -1968,11 +2267,15 @@ public class SqlFile {
         if (!doPad) {
             return inString;
         }
+
         int len = fulllen - inString.length();
+
         if (len < 1) {
             return inString;
         }
+
         String pad = spaces(len);
+
         return ((rightJustify ? pad
                               : "") + inString + (rightJustify ? ""
                                                                : pad));
@@ -1987,31 +2290,40 @@ public class SqlFile {
         int      ctr = -1;
         String   s;
         String[] reversedList = new String[statementHistory.length];
+
         try {
             for (int i = curHist; i >= 0; i--) {
                 s = statementHistory[i];
+
                 if (s == null) {
                     return;
                 }
+
                 reversedList[++ctr] = s;
             }
+
             for (int i = statementHistory.length - 1; i > curHist; i--) {
                 s = statementHistory[i];
+
                 if (s == null) {
                     return;
                 }
+
                 reversedList[++ctr] = s;
             }
         } finally {
             if (ctr < 0) {
                 stdprintln("<<<    No history yet    >>>");
+
                 return;
             }
+
             for (int i = ctr; i >= 0; i--) {
                 psStd.println(((i == 0) ? "BUFR"
                                         : ("-" + i + "  ")) + " **********************************************\n"
                                         + reversedList[i]);
             }
+
             psStd.println(
                 "\n<<<  Copy a command to buffer like \"\\-3\"       "
                 + "Re-execute buffer like \":;\"  >>>");
@@ -2027,11 +2339,14 @@ public class SqlFile {
             throw new BadSpecial("History can only hold up to "
                                  + statementHistory.length + " commands");
         }
+
         String s =
             statementHistory[(statementHistory.length + curHist - commandsAgo) % statementHistory.length];
+
         if (s == null) {
             throw new BadSpecial("History doesn't go back that far");
         }
+
         return s;
     }
 
@@ -2042,9 +2357,11 @@ public class SqlFile {
     private void setBuf(String inString) {
 
         curHist++;
+
         if (curHist == statementHistory.length) {
             curHist = 0;
         }
+
         statementHistory[curHist] = inString;
     }
 
@@ -2056,7 +2373,9 @@ public class SqlFile {
     private void describe(String tableName) throws SQLException {
 
         Statement statement = curConn.createStatement();
+
         statement.execute("SELECT * FROM " + tableName + " WHERE 1 = 2");
+
         ResultSet         r    = statement.getResultSet();
         ResultSetMetaData m    = r.getMetaData();
         int               cols = m.getColumnCount();
@@ -2078,10 +2397,12 @@ public class SqlFile {
             if (htmlMode) {
                 continue;
             }
+
             if (headerArray[i].length() > maxWidth[i]) {
                 maxWidth[i] = headerArray[i].length();
             }
         }
+
         for (int i = 0; i < cols; i++) {
             fieldArray    = new String[4];
             fieldArray[0] = m.getColumnName(i + 1);
@@ -2092,7 +2413,9 @@ public class SqlFile {
                  ? (htmlMode ? "&nbsp;"
                              : "")
                  : "*");
+
             rows.add(fieldArray);
+
             for (int j = 0; j < fieldArray.length; j++) {
                 if (fieldArray[j].length() > maxWidth[j]) {
                     maxWidth[j] = fieldArray[j].length();
@@ -2103,6 +2426,7 @@ public class SqlFile {
         // STEP 2: DISPLAY DATA
         condlPrint("<TABLE border='1'>\n" + htmlRow(COL_HEAD) + '\n'
                    + PRE_TD, true);
+
         for (int i = 0; i < headerArray.length; i++) {
             condlPrint("<TD>" + headerArray[i] + "</TD>", true);
             condlPrint(((i > 0) ? spaces(2)
@@ -2111,20 +2435,26 @@ public class SqlFile {
                                             (i < headerArray.length - 1
                                              || rightJust[i])), false);
         }
+
         condlPrintln("\n" + PRE_TR + "</TR>", true);
         condlPrintln("", false);
+
         if (!htmlMode) {
             for (int i = 0; i < headerArray.length; i++) {
                 condlPrint(((i > 0) ? spaces(2)
                                     : "") + divider(maxWidth[i]), false);
             }
+
             condlPrintln("", false);
         }
+
         for (int i = 0; i < rows.size(); i++) {
             condlPrint(htmlRow(((i % 2) == 0) ? COL_EVEN
                                               : COL_ODD) + '\n'
                                               + PRE_TD, true);
+
             fieldArray = (String[]) rows.get(i);
+
             for (int j = 0; j < fieldArray.length; j++) {
                 condlPrint("<TD>" + fieldArray[j] + "</TD>", true);
                 condlPrint(((j > 0) ? spaces(2)
@@ -2133,9 +2463,11 @@ public class SqlFile {
                                                 (j < fieldArray.length - 1
                                                  || rightJust[j])), false);
             }
+
             condlPrintln("\n" + PRE_TR + "</TR>", true);
             condlPrintln("", false);
         }
+
         condlPrintln("\n</TABLE>\n<HR>", true);
         r.close();
         statement.close();
@@ -2146,14 +2478,18 @@ public class SqlFile {
         // I forget how to code a String array literal outside of a
         // definition.
         String[] mtString = {};
+
         if (inString == null) {
             return mtString;
         }
+
         StringTokenizer toker = new StringTokenizer(inString);
         String[]        sa    = new String[toker.countTokens()];
+
         for (int i = 0; i < sa.length; i++) {
             sa[i] = toker.nextToken();
         }
+
         return sa;
     }
 
@@ -2164,6 +2500,7 @@ public class SqlFile {
         boolean  negate = inTokens.length > 0 && inTokens[0].equals("!");
         String[] tokens = new String[negate ? (inTokens.length - 1)
                                             : inTokens.length];
+
         for (int i = 0; i < tokens.length; i++) {
             tokens[i] = (inTokens[i + (negate ? 1
                                               : 0)].length() > 1 && inTokens[i + (negate ? 1
@@ -2175,30 +2512,37 @@ public class SqlFile {
                                                                                                                       1)))
                                                                                                     : inTokens[i + (negate ? 1
                                                                                                                            : 0)];
+
             if (tokens[i] == null) {
                 tokens[i] = "";
             }
         }
+
         if (tokens.length == 1) {
             return (tokens[0].length() > 0 &&!tokens[0].equals("0")) ^ negate;
         }
+
         if (tokens.length == 3) {
             if (tokens[1].equals("==")) {
                 return tokens[0].equals(tokens[2]) ^ negate;
             }
+
             if (tokens[1].equals("!=") || tokens[1].equals("<>")
                     || tokens[1].equals("><")) {
                 return (!tokens[0].equals(tokens[2])) ^ negate;
             }
+
             if (tokens[1].equals(">")) {
                 return (tokens[0].length() > tokens[2].length() || ((tokens[0].length() == tokens[2].length()) && tokens[0].compareTo(tokens[2]) > 0))
                        ^ negate;
             }
+
             if (tokens[1].equals("<")) {
                 return (tokens[2].length() > tokens[0].length() || ((tokens[2].length() == tokens[0].length()) && tokens[2].compareTo(tokens[0]) > 0))
                        ^ negate;
             }
         }
+
         throw new BadSpecial("Unrecognized logical operation");
     }
 
@@ -2207,11 +2551,14 @@ public class SqlFile {
         if (pwQuery == null) {
             return;
         }
+
         if (htmlMode) {
             pwQuery.println("</BODY></HTML>");
             pwQuery.flush();
         }
+
         pwQuery.close();
+
         pwQuery = null;
     }
 
@@ -2224,7 +2571,9 @@ public class SqlFile {
         if ((printHtml &&!htmlMode) || (htmlMode &&!printHtml)) {
             return;
         }
+
         psStd.println(s);
+
         if (pwQuery != null) {
             pwQuery.println(s);
             pwQuery.flush();
@@ -2240,7 +2589,9 @@ public class SqlFile {
         if ((printHtml &&!htmlMode) || (htmlMode &&!printHtml)) {
             return;
         }
+
         psStd.print(s);
+
         if (pwQuery != null) {
             pwQuery.print(s);
             pwQuery.flush();
@@ -2252,10 +2603,13 @@ public class SqlFile {
         String       key;
         StringBuffer sb = new StringBuffer();
         Iterator     it = (new TreeMap(map)).keySet().iterator();
+
         while (it.hasNext()) {
             key = (String) it.next();
+
             sb.append("    " + key + ": (" + map.get(key) + ")\n");
         }
+
         return sb.toString();
     }
 }

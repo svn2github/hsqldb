@@ -31,8 +31,9 @@
 
 package org.hsqldb.util;
 
-import java.sql.*;
-import java.util.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Vector;
 
 /**
  * Helper class for transferring a result set

@@ -67,12 +67,14 @@
 package org.hsqldb.util;
 
 import java.util.Vector;
+import java.awt.Component;
 
-import javax.swing.table.*;
 import javax.swing.JTable;
 import javax.swing.event.TableModelEvent;
-
-import java.awt.Component;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableModel;
 
 // sqlbob@users 20020401 - patch 1.7.0 by sqlbob (RMP) - enhancements
 // deccles@users 20040412 - patch 933671 - various bug fixes

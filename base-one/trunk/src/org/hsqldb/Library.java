@@ -73,8 +73,8 @@ import java.sql.Timestamp;
 import java.text.FieldPosition;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Random;
 import java.util.Locale;
+import java.util.Random;
 
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.IntValueHashMap;
@@ -101,7 +101,7 @@ import org.hsqldb.store.ValuePool;
  * All methods here that have a Connection parameter are dummies and should
  * not be called from user supplied Java procedure or trigger code. Use real
  * SQL functions should be called instead in these instances.
-*
+ *
  * @version 1.7.2
  */
 public class Library {

@@ -512,4 +512,4 @@ public class TriggerSample implements Trigger {
     INSERT INTO trig_test VALUES (3)
     UPDATE trig_test SET int_field = int_field + 3
     DELETE FROM trig_test
-*/
+ */

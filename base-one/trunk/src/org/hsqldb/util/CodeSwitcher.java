@@ -66,8 +66,12 @@
 
 package org.hsqldb.util;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.LineNumberReader;
+import java.util.Vector;
 
 // fredt@users 20020315 - patch 1.7.0 - minor fixes
 // changed line separator to System based value

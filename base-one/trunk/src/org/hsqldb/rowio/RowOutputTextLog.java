@@ -37,12 +37,12 @@ import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
 
-import org.hsqldb.types.Binary;
 import org.hsqldb.CachedRow;
 import org.hsqldb.Column;
 import org.hsqldb.HsqlException;
-import org.hsqldb.types.JavaObject;
 import org.hsqldb.lib.StringConverter;
+import org.hsqldb.types.Binary;
+import org.hsqldb.types.JavaObject;
 
 /**
  * @author fredt@users

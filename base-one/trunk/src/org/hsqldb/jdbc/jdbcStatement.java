@@ -1092,13 +1092,17 @@ public class jdbcStatement implements java.sql.Statement {
 
         updateCounts = resultIn.getUpdateCounts();
 
-//#ifdef JAVA2
+//#ifdef JAVA1TARGET
+/*
+*/
+
+//#else
         if (updateCounts.length != batchCount) {
             throw new java.sql.BatchUpdateException("failed batch",
                     updateCounts);
         }
 
-//#endif JAVA2
+//#endif JAVA1TARGET
         return updateCounts;
     }
 

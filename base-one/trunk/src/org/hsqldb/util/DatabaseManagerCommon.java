@@ -66,10 +66,13 @@
 
 package org.hsqldb.util;
 
-import java.sql.Statement;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Random;
-import java.io.*;
 
 // sqlbob@users 20020401 - patch 1.7.0 by sqlbob (RMP) - enhancements
 // sqlbob@users 20020407 - patch 1.7.0 - reengineering

@@ -66,11 +66,17 @@
 
 package org.hsqldb.test;
 
-import java.sql.*;
-import java.io.*;
+import java.io.File;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.Date;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.sql.Types;
 
-import org.hsqldb.lib.*;
-import org.hsqldb.jdbcDriver;
+import org.hsqldb.lib.Sort;
 
 /**
  *  Main test class, containing several JDBC and script based tests to

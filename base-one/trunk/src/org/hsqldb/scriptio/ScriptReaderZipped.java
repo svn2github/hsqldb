@@ -31,6 +31,7 @@
 
 package org.hsqldb.scriptio;
 
+import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.zip.Inflater;
@@ -38,8 +39,6 @@ import java.util.zip.InflaterInputStream;
 
 import org.hsqldb.Database;
 import org.hsqldb.HsqlException;
-
-import java.io.BufferedInputStream;
 
 /**
  *
@@ -58,6 +57,6 @@ class ScriptReaderZipped extends ScriptReaderBinary {
 
         dataStreamIn = new BufferedInputStream(
             new InflaterInputStream(
-                new FileInputStream(fileName), new Inflater()), 2 << 12);
+                new FileInputStream(fileName), new Inflater()), 1 << 13);
     }
 }

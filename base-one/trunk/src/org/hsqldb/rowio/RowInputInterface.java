@@ -38,10 +38,10 @@ import org.hsqldb.HsqlException;
 /**
  * Public interface for reading the data for a database row.
  *
-* @author sqlbob@users (RMP)
-* @author fredt@users
-* @version 1.7.2
-* @since 1.7.0
+ * @author sqlbob@users (RMP)
+ * @author fredt@users
+ * @version 1.7.2
+ * @since 1.7.0
  */
 public interface RowInputInterface {
 

@@ -31,7 +31,12 @@
 
 package org.hsqldb.sample;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  * Title:        Testdb
@@ -45,11 +50,10 @@ import java.sql.*;
  */
 public class Testdb {
 
-    Connection conn;                                              //our connnection to the db - presist for life of program
+    Connection conn;                                                //our connnection to the db - presist for life of program
 
     // we dont want this garbage collected until we are done
-    public Testdb(String db_file_name_prefix) throws Exception    // note more general exception
-    {
+    public Testdb(String db_file_name_prefix) throws Exception {    // note more general exception
 
         // Load the HSQL Database Engine JDBC driver
         // hsqldb.jar should be in the class path or made part of the current jar

@@ -40,19 +40,19 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.Calendar;
 
+import org.hsqldb.Column;
+import org.hsqldb.HsqlDateTime;
+import org.hsqldb.HsqlException;
+import org.hsqldb.Result;
+import org.hsqldb.ResultConstants;
+import org.hsqldb.Trace;
+import org.hsqldb.Types;
 import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HsqlByteArrayOutputStream;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.StringConverter;
 import org.hsqldb.types.Binary;
-import org.hsqldb.Column;
-import org.hsqldb.HsqlDateTime;
-import org.hsqldb.HsqlException;
 import org.hsqldb.types.JavaObject;
-import org.hsqldb.Result;
-import org.hsqldb.ResultConstants;
-import org.hsqldb.Trace;
-import org.hsqldb.Types;
 
 // fredt@users 20020320 - patch 1.7.0 - JDBC 2 support and error trapping
 // JDBC 2 methods can now be called from jdk 1.1.x - see javadoc comments
@@ -1974,10 +1974,14 @@ implements java.sql.PreparedStatement {
                     } else if (outType == Types.TIMESTAMP
                                &&!connection.isNetConn) {
 
-//#ifdef JAVA2
+//#ifdef JAVA1TARGET
+/*
+*/
+
+//#else
                         o = ((java.sql.Timestamp) o).clone();
 
-//#endif JAVA2
+//#endif JAVA1TARGET
                     }
                 }
             }

@@ -248,7 +248,7 @@ import org.hsqldb.lib.StringUtil;
  *    +--test.lck
  * </pre>
  *
-* <b>Some Guidelines:</b> <p>
+ * <b>Some Guidelines:</b> <p>
  *
  * <ol>
  * <li> Both relative and absolute database file paths are supported. <p>
@@ -280,7 +280,7 @@ import org.hsqldb.lib.StringUtil;
  * The new <b>'jdbc:hsqldb:res:&lt;path&gt;'</b> database connection
  * <b>&lt;url&gt;</b> has different semantics than the
  * <b>'jdbc:hsqldb:file:&lt;path&gt;'</b> form. The semantics are similar to
- * those of a <b>'files_read_only'</b> database, but with some additional
+ * those of a <b>'files_readonly'</b> database, but with some additional
  * points to consider. <p>
  *
  * Specifically, the <b>'&lt;path&gt;'</b> component of a <b>res:</b> type

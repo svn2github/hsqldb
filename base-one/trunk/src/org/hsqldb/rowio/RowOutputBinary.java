@@ -36,13 +36,13 @@ import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-import org.hsqldb.types.Binary;
 import org.hsqldb.CachedRow;
 import org.hsqldb.HsqlException;
-import org.hsqldb.types.JavaObject;
 import org.hsqldb.Trace;
 import org.hsqldb.Types;
 import org.hsqldb.lib.StringConverter;
+import org.hsqldb.types.Binary;
+import org.hsqldb.types.JavaObject;
 
 /**
  *  Provides methods for writing the data for a row to a

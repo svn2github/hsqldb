@@ -68,16 +68,17 @@ package org.hsqldb;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.sql.Time;
-import java.sql.Timestamp;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.text.Collator;
 
 import org.hsqldb.lib.StringConverter;
 import org.hsqldb.store.ValuePool;
+import org.hsqldb.types.Binary;
+import org.hsqldb.types.JavaObject;
 import org.hsqldb.HsqlNameManager.HsqlName;
-import org.hsqldb.types.*;
 
 // fredt@users 20020130 - patch 491987 by jimbag@users
 // fredt@users 20020320 - doc 1.7.0 - update

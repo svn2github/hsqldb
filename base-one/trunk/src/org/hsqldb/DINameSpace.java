@@ -34,12 +34,12 @@ package org.hsqldb;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
-import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.WrapperIterator;
+import org.hsqldb.HsqlNameManager.HsqlName;
 
 // boucherb@users - 2004xxxx - patch 1.7.2
 // -- canonical database uri for catalog name reporting

@@ -71,8 +71,8 @@ import org.hsqldb.lib.AsciiStringInputStream;
  *
  * Currently, the interface methods for updating a CLOB value are
  * unsupported. However, the truncate method is supported for local use.
-* </div>
-* <!-- end release-specific documentation -->
+ * </div>
+ * <!-- end release-specific documentation -->
  *
  * @author  boucherb@users
  * @version 1.7.2

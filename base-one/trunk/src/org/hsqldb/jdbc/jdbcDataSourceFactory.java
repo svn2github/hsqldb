@@ -31,12 +31,12 @@
 
 package org.hsqldb.jdbc;
 
+import java.util.Hashtable;
+
 import javax.naming.Context;
 import javax.naming.Name;
 import javax.naming.Reference;
 import javax.naming.spi.ObjectFactory;
-
-import java.util.Hashtable;
 
 // boucherb@users 20040411 - doc 1.7.2 - javadoc updates toward 1.7.2 final
 

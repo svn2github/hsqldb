@@ -36,8 +36,12 @@ package org.hsqldb.test;
  *
  * Created on June 24, 2002, 8:48 AM
  */
-import java.io.*;
-import java.sql.*;
+import java.io.File;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  * Test case to demonstrate catastrophic bug in cascade delete code.

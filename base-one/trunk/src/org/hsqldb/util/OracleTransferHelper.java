@@ -31,7 +31,9 @@
 
 package org.hsqldb.util;
 
-import java.sql.*;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 
 // brian.porter@siteforce.de 20020703 - make sure date is loaded in the required format
 // Stephan Frind 20040508 - improvements
@@ -157,9 +159,8 @@ class OracleTransferHelper extends TransferHelper {
         String CompareString = "nextval(\'\"" + SeqName + "\"\'";
 
         if (columnType.indexOf(CompareString) >= 0) {
-            /*
-            ** We just found a increment
-            */
+
+            // We just found a increment
             columnType = "SERIAL";
         }
 

@@ -31,13 +31,15 @@
 
 package org.hsqldb.util;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.applet.*;
-import java.sql.*;
-import java.net.*;
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Properties;
 
 import org.hsqldb.lib.java.JavaSystem;
 

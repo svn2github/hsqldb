@@ -97,19 +97,20 @@ import org.hsqldb.scriptio.ScriptWriterText;
 // boucherb@users 20030510 - patch 1.7.2 consolidated all periodic database
 // tasks in one timed task queue
 /*
-todo - when a *.script file that has no properties file is opened, it is
-always assumed that the cache_version is 1.6.0, which may not be true;
-- when both *.script and *.backup exist, there is a problem openning. the
-backup does not get deflated into *.data and an attemp is made to read the
-index roots from the empty *.data file.
+ todo - when a *.script file that has no properties file is opened, it is
+ always assumed that the cache_version is 1.6.0, which may not be true;
+ - when both *.script and *.backup exist, there is a problem openning. the
+ backup does not get deflated into *.data and an attemp is made to read the
+ index roots from the empty *.data file.
 
-*/
+ */
 
 /**
  *  This class is responsible for most file handling. An HSQLDB database
  *  consists of a .properties file, a .script file (contains an SQL script),
  *  a .data file (contains data of cached tables) and a .backup file
- *  (contains the compressed .data file) <p>
+ *  (contains the compressed .data file). Since 1.7.2 a .log file is also
+ *  present. <p>
  *
  *  This is an example of the .properties file. The version and the modified
  *  properties are automatically created by the database and should not be
@@ -567,6 +568,10 @@ class Log {
         if (maxLogSize > 0 && dbLogWriter.size() > maxLogSize) {
             checkpoint(false);
         }
+    }
+
+    void writeCommit() throws HsqlException {
+        dbLogWriter.sync();
     }
 
     /**

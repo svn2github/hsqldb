@@ -31,12 +31,13 @@
 
 package org.hsqldb.test;
 
-import org.hsqldb.*;
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.SQLException;
+
+import org.hsqldb.HsqlServerFactory;
+import org.hsqldb.HsqlSocketRequestHandler;
 
 /**
  * Test the HsqlServerFactory interface. After running, connect to the

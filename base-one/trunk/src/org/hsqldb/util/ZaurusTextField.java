@@ -31,7 +31,8 @@
 
 package org.hsqldb.util;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.TextField;
 
 /**
  * Class declaration

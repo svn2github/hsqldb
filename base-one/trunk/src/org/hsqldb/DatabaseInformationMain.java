@@ -33,13 +33,13 @@ package org.hsqldb;
 
 import java.sql.DatabaseMetaData;
 
-import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.WrapperIterator;
 import org.hsqldb.store.ValuePool;
+import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users - 1.7.2 - structural modifications to allow inheritance
 // boucherb@users - 1.7.2 - 20020225

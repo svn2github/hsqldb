@@ -31,8 +31,8 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.lib.HashSet;
+import org.hsqldb.lib.IntValueHashMap;
 
 /**
  * Defines and enumerates reserved and non-reserved SQL

@@ -66,9 +66,9 @@
 
 package org.hsqldb.util;
 
-import java.sql.*;
-import java.util.*;
 import java.io.Serializable;
+import java.sql.SQLException;
+import java.util.Hashtable;
 
 // fredt@users 20011220 - patch 481239 by xponsard@users - enhancements
 // enhancements to support saving and loading of transfer settings,

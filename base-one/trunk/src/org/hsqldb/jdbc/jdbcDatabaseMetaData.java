@@ -31,15 +31,14 @@
 
 package org.hsqldb.jdbc;
 
-import org.hsqldb.lib.StringUtil;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import org.hsqldb.Trace;
-import org.hsqldb.Library;
 import org.hsqldb.Column;
+import org.hsqldb.Library;
+import org.hsqldb.Trace;
+import org.hsqldb.lib.StringUtil;
 
 // fredt@users 20020320 - patch 1.7.0 - JDBC 2 support and error trapping
 // JDBC 2 methods can now be called from jdk 1.1.x - see javadoc comments

@@ -97,17 +97,25 @@ examples:
        </javac>
     </target>
 
-    <target name="switchtodeprecatedjava" depends="codeswitcher"
+    <target name="switchtojava1target" depends="codeswitcher"
             description="self explanatory">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes" >
-         <arg line="${src}/org/hsqldb/lib/java/JavaSystem.java +DEPRECATEDJAVA"/>
+         <arg line="${src}/org/hsqldb/lib/java/JavaSystem.java
+                    ${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java
+                    ${src}/org/hsqldb/jdbc/jdbcResultSet.java
+                    ${src}/org/hsqldb/jdbc/jdbcStatement.java
+                    ${src}/org/hsqldb/rowio/RowInputTextLog.java +JAVA1TARGET"/>
        </java>
     </target>
 
-    <target name="switchoffdeprecatedjava" depends="codeswitcher"
+    <target name="switchoffjava1target" depends="codeswitcher"
             description="self explanatory">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes" >
-         <arg line="${src}/org/hsqldb/lib/java/JavaSystem.java -DEPRECATEDJAVA"/>
+         <arg line="${src}/org/hsqldb/lib/java/JavaSystem.java
+                    ${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java
+                    ${src}/org/hsqldb/jdbc/jdbcResultSet.java
+                    ${src}/org/hsqldb/jdbc/jdbcStatement.java
+                    ${src}/org/hsqldb/rowio/RowInputTextLog.java -JAVA1TARGET"/>
        </java>
     </target>
 
@@ -129,7 +137,7 @@ examples:
        </java>
     </target>
 
-    <target name="switchtojdk11" depends="codeswitcher"
+    <target name="switchtojdk11" depends="codeswitcher,switchtojava1target"
             description="self explanatory" unless="ant.java.iscjavamodern">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes" >
          <arg line="${src}/org/hsqldb/jdbc/jdbcStubs.java
@@ -145,7 +153,7 @@ examples:
        <available classname="java.util.Vector" property="noswing"/>
     </target>
 
-    <target name="switchtojdk12" depends="codeswitcher"
+    <target name="switchtojdk12" depends="codeswitcher,switchoffjava1target"
             description="self explanatory" if="ant.java.iscjava12">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes" >
          <arg line="${src}/org/hsqldb/jdbc/jdbcStubs.java
@@ -582,11 +590,11 @@ examples:
       <javadoc
                    sourcefiles="${src}/org/hsqldb/jdbcDriver.java,
                         ${src}/org/hsqldb/Trigger.java,
-                                                   ${src}/org/hsqldb/Server.java,
-                                                   ${src}/org/hsqldb/WebServer.java,
-                                                   ${src}/org/hsqldb/jdbc/*.java,
-                                                   ${src}/org/hsqldb/sample/TriggerSample.java,
-                                                   ${src}/org/hsqldb/util/SqlTool.java"
+		   				${src}/org/hsqldb/Server.java,
+		   				${src}/org/hsqldb/WebServer.java,
+		   				${src}/org/hsqldb/jdbc/*.java,
+		   				${src}/org/hsqldb/sample/TriggerSample.java,
+		   				${src}/org/hsqldb/util/SqlTool.java"
            destdir="${basedir}/doc/src"
            classpath="${basedir}/lib/servlet.jar;${basedir}/lib/junit.jar"
            author="true"

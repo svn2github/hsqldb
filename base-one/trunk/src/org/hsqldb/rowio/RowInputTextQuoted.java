@@ -43,7 +43,7 @@ import org.hsqldb.Trace;
  * @author sqlbob@users (RMP)
  * @version 1.7.2
  * @since 1.7.0
-*/
+ */
 public class RowInputTextQuoted extends RowInputText {
 
     private static final int NORMAL_FIELD   = 0;

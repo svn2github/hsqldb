@@ -40,9 +40,16 @@ package org.hsqldb.test;
  *  server operations.
  * @author Mark Matthews (mark@mysql.com)
  */
-import java.sql.*;
-import java.util.*;
-import java.io.*;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Enumeration;
+import java.util.Vector;
 
 class JDBCBench {
 
@@ -238,8 +245,8 @@ class JDBCBench {
             }
 
             /*
-            ** Barrier to complete this test session
-            */
+             ** Barrier to complete this test session
+             */
             e = vClient.elements();
 
             while (e.hasMoreElements()) {
@@ -264,8 +271,8 @@ class JDBCBench {
             }
 
             /*
-            ** Barrier to complete this test session
-            */
+             ** Barrier to complete this test session
+             */
             e = vClient.elements();
 
             while (e.hasMoreElements()) {
@@ -290,8 +297,8 @@ class JDBCBench {
             }
 
             /*
-            ** Barrier to complete this test session
-            */
+             ** Barrier to complete this test session
+             */
             e = vClient.elements();
 
             while (e.hasMoreElements()) {
@@ -316,8 +323,8 @@ class JDBCBench {
             }
 
             /*
-            ** Barrier to complete this test session
-            */
+             ** Barrier to complete this test session
+             */
             e = vClient.elements();
 
             while (e.hasMoreElements()) {
@@ -630,10 +637,10 @@ class JDBCBench {
             }
 
             /* prime database using TPC BM B scaling rules.
-            **  Note that for each branch and teller:
-            **      branch_id = teller_id  / ntellers
-            **      branch_id = account_id / naccounts
-            */
+             **  Note that for each branch and teller:
+             **      branch_id = teller_id  / ntellers
+             **      branch_id = account_id / naccounts
+             */
             PreparedStatement pstmt = null;
 
             prepared_stmt = true;
@@ -928,8 +935,8 @@ class JDBCBench {
         }
 
         /*
-        **  doOne() - Executes a single TPC BM B transaction.
-        */
+         **  doOne() - Executes a single TPC BM B transaction.
+         */
         int doOne(int bid, int tid, int aid, int delta) {
 
             int aBalance = 0;

@@ -34,15 +34,15 @@ package org.hsqldb.rowio;
 import java.io.IOException;
 import java.math.BigDecimal;
 
-import org.hsqldb.types.Binary;
 import org.hsqldb.Column;
 import org.hsqldb.HsqlException;
-import org.hsqldb.types.JavaObject;
 import org.hsqldb.Table;
 import org.hsqldb.Trace;
 import org.hsqldb.Types;
 import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.lib.HsqlByteArrayOutputStream;
+import org.hsqldb.types.Binary;
+import org.hsqldb.types.JavaObject;
 
 /**
  * Base class for writing the data for a database row in different formats.

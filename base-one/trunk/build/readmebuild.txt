@@ -16,24 +16,12 @@ For all the older versions, always use JDK 1.3.x to build the jar.
 The default build with JDK 1.3.x is not compatible to run under
 1.1. If you require this compatibility, you should use the following
 ant command prior to the build:
-ant switchtodeprecatedjava
-The jar compiled after this switch will run under JRE 1.3 too, but
+ant switchtojava1target
+The jars compiled after this switch will run under JRE 1.3 too, but
 they use some deprecated JDK 1.1 methods.
 
 To switch back to non-deprecated code, use:
-ant switchoffdeprecatedjava
-
-
-The source files
-
-The source files are supplied in a state that is compatible with
-JDK 1.4. 
-
-The org.hsqldb.util.CodeSwitcher class can process
-the source files and make them compatible with a given JDK by
-removing or adding comments from blocks of code. This procedure
-is invoked with the supplied build scripts.
-
+ant switchoffjava1target
 
 
 Different jar sizes
@@ -68,7 +56,6 @@ is not upward compatible with newer JDK'S / JRE's. Use JDK 1.3.x
 to build the jar instead. You can then deploy the jar in JRE 1.1.
 
 
-
 Build methods:
 
 The preferred method of rebuilding the jar is with Ant. After
@@ -100,7 +87,10 @@ should of course be set before running any of the batch files.
 If you are compiling for JDK's other than 1.4.x, you should
 use the appropriate switchtoJDK11.bat or switchtoJDK12.bat to adapt
 the source files to the target JDK before running the appropriate
-buildJDK11.bat or buildJDK12.bat
+buildJDK11.bat or buildJDK12.bat. As explained before, it is not
+recommended to use this method for building jars for use on JRE 1.1.x
+targets.
+
 
 
 fredt@users

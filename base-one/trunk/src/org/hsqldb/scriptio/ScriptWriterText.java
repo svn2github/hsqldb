@@ -35,8 +35,8 @@ import java.io.IOException;
 
 import org.hsqldb.Database;
 import org.hsqldb.HsqlException;
-import org.hsqldb.Table;
 import org.hsqldb.NumberSequence;
+import org.hsqldb.Table;
 import org.hsqldb.rowio.RowOutputTextLog;
 
 /**

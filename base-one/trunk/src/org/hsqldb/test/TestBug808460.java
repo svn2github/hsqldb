@@ -31,11 +31,11 @@
 
 package org.hsqldb.test;
 
-import junit.framework.TestCase;
-import junit.framework.TestResult;
-
 import java.sql.Connection;
 import java.sql.Statement;
+
+import junit.framework.TestCase;
+import junit.framework.TestResult;
 
 /**
  * HSQLDB TestBug808460 Junit test case. <p>

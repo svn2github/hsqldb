@@ -205,7 +205,7 @@ final class DITypeInfo {
     }
 
 // NOTES:
-// From recent usability testing, this patch and the corresponding patch in 
+// From recent usability testing, this patch and the corresponding patch in
 // jdbcResultSetMetaData together provide better compatibility with existing
 // tools than through the previous method of dynamically scanning each result
 // in jdbcResultSetMetaData.  This is especially true given that many tools use

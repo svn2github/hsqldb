@@ -31,7 +31,9 @@
 
 package org.hsqldb.test;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.Statement;
 
 /**
  * @author kloska@users

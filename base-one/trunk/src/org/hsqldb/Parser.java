@@ -66,12 +66,12 @@
 
 package org.hsqldb;
 
-import org.hsqldb.HsqlNameManager.HsqlName;
+import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.IntValueHashMap;
-import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.store.ValuePool;
+import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt - support GROUP BY with more than one column
 // fredt@users 20020215 - patch 1.7.0 by fredt - SQL standard quoted identifiers
@@ -100,9 +100,9 @@ import org.hsqldb.store.ValuePool;
 // boucherb@users 2004-03-xx - patch 1.7.2 - added support for prepared SELECT INTO
 // boucherb@users 2004-03-xx - doc 1.7.2 - some
 /* todo: fredt - implement numeric value functions (SQL92 6.6)
-*
+ *
  * EXTRACT({TIMEZONE_HOUR | TIMEZONE_MINUTE} FROM {datetime | interval})
-*/
+ */
 
 /**
  *  Responsible for parsing non-DDL statements.
@@ -1158,8 +1158,37 @@ class Parser {
                 return new Expression(type, s, null);
             }
             default : {
-                Expression a   = readConcat();
-                boolean    not = false;
+                Expression a = readConcat();
+
+                if (iToken == Expression.IS) {
+                    read();
+
+                    boolean not;
+
+                    if (iToken == Expression.NOT) {
+                        not = true;
+
+                        read();
+                    } else {
+                        not = false;
+                    }
+
+                    Trace.check(iToken == Expression.VALUE && oData == null,
+                                Trace.UNEXPECTED_TOKEN);
+                    read();
+
+                    // TODO: the TableFilter needs a right hand side to avoid null pointer exceptions...
+                    a = new Expression(Expression.IS_NULL, a,
+                                       new Expression(Types.NULL, null));
+
+                    if (not) {
+                        a = new Expression(Expression.NOT, a, null);
+                    }
+
+                    return a;
+                }
+
+                boolean not = false;
 
                 if (iToken == Expression.NOT) {
                     not = true;
@@ -1666,9 +1695,8 @@ class Parser {
 
                 while (true) {
                     Expression current = readOr();
-                    Expression condition =
-                        new Expression(Expression.EQUAL, current,
-                                       new Expression(Types.NULL, null));
+                    Expression condition = new Expression(Expression.IS_NULL,
+                                                          current, null);
                     Expression alternatives =
                         new Expression(Expression.ALTERNATIVE,
                                        new Expression(Types.NULL, null),
@@ -2117,22 +2145,11 @@ class Parser {
                 case Expression.TRAILING :
                 case Expression.BOTH :
                 case Expression.AS :
+                case Expression.IS :
                     break;            // nothing else required, iToken initialized properly
 
                 case Expression.MULTIPLY :
                     sTable = null;    // in case of ASTERIX
-                    break;
-
-                case Expression.IS :
-                    sToken = tokenizer.getString();
-
-                    if (sToken.equals(Token.T_NOT)) {
-                        iToken = Expression.NOT_EQUAL;
-                    } else {
-                        iToken = Expression.EQUAL;
-
-                        tokenizer.back();
-                    }
                     break;
 
                 default :

@@ -31,10 +31,10 @@
 
 package org.hsqldb.jdbc;
 
-import java.io.Serializable;
 import java.io.PrintWriter;
-import java.sql.SQLException;
+import java.io.Serializable;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Properties;
 
 import javax.naming.NamingException;

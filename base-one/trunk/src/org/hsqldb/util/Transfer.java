@@ -66,11 +66,35 @@
 
 package org.hsqldb.util;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.image.*;
-import java.applet.*;
-import java.util.*;
+import java.applet.Applet;
+import java.util.Enumeration;
+import java.util.Vector;
+import java.awt.BorderLayout;
+import java.awt.Button;
+import java.awt.Checkbox;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FileDialog;
+import java.awt.Font;
+import java.awt.Frame;
+import java.awt.GridLayout;
+import java.awt.Image;
+import java.awt.ItemSelectable;
+import java.awt.Label;
+import java.awt.Menu;
+import java.awt.MenuBar;
+import java.awt.MenuItem;
+import java.awt.Panel;
+import java.awt.SystemColor;
+import java.awt.TextField;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.awt.image.MemoryImageSource;
 
 // fredt@users 20011220 - patch 481239 by xponsard@users - enhancements
 // enhancements to support saving and loading of transfer settings,
@@ -333,8 +357,8 @@ implements WindowListener, ActionListener, ItemListener, Traceable {
     void _main(String arg[]) {
 
         /*
-        ** What function is asked from the transfer tool?
-        */
+         ** What function is asked from the transfer tool?
+         */
         iTransferMode = TRFM_TRANSFER;
 
         if ((arg != null) && (arg.length > 0)) {

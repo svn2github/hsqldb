@@ -31,8 +31,15 @@
 
 package org.hsqldb.util;
 
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
+import java.util.Vector;
 
 // fredt@users 20020215 - patch 516309 by Nicolas Bazin - enhancements
 // sqlbob@users 20020401 - patch 1.7.0 - reengineering

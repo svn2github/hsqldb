@@ -31,9 +31,9 @@
 
 package org.hsqldb;
 
+import org.hsqldb.jdbc.jdbcResultSet;
 import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.jdbc.jdbcResultSet;
 
 // boucherb@users 200404xx - fixed broken CALL statement result set unwrapping;
 //                           fixed broken support for prepared SELECT...INTO

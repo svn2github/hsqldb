@@ -31,7 +31,10 @@
 
 package org.hsqldb.util;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 
 /**
  * helper class to write table data to a csv-file (comma separated values).

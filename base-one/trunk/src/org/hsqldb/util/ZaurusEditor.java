@@ -31,12 +31,29 @@
 
 package org.hsqldb.util;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.sql.*;
-import java.util.Vector;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Enumeration;
 import java.util.StringTokenizer;
+import java.util.Vector;
+import java.awt.BorderLayout;
+import java.awt.Button;
+import java.awt.CardLayout;
+import java.awt.Checkbox;
+import java.awt.CheckboxGroup;
+import java.awt.Choice;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Insets;
+import java.awt.Label;
+import java.awt.Panel;
+import java.awt.TextField;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * <code>ZaurusEditor</code> implements an search/input/edit form to
@@ -112,23 +129,21 @@ public class ZaurusEditor extends Panel implements ActionListener {
     //  pForm and pButton with CardLayout
     Panel      pForm, pButton;
     CardLayout lForm, lButton;
-/*
+    /*
+      ZaurusEditor holds two card panels:
 
+      1. pForm holds the different forms
+      pForm shows initially a search form to select a table and to
+      input some search words.
+      For every table which should be used in the editor, there is an own
+      ZaurusTableForm added to the card panel pForm
 
-  ZaurusEditor holds two card panels:
-
-  1. pForm holds the different forms
-  pForm shows initially a search form to select a table and to
-  input some search words.
-  For every table which should be used in the editor, there is an own
-  ZaurusTableForm added to the card panel pForm
-
-  2. pButton holds the different button boxes
-  For the search form, there are buttons search row, new row  - all in the panel pSearchButs
-  For a table in the editor, there are alternatively:
-  a) cancel, prev, next, delete row, new search - for editing a row - in panel pEditButs
-  b) cancel, new insert, new search - for inserting a new row - pInsertButs
-*/
+      2. pButton holds the different button boxes
+      For the search form, there are buttons search row, new row  - all in the panel pSearchButs
+      For a table in the editor, there are alternatively:
+      a) cancel, prev, next, delete row, new search - for editing a row - in panel pEditButs
+      b) cancel, new insert, new search - for inserting a new row - pInsertButs
+     */
 
     // text field with search words
     TextField fSearchWords;

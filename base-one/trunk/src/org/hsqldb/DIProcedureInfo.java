@@ -34,11 +34,11 @@ package org.hsqldb;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 
-import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashMap;
-import org.hsqldb.store.ValuePool;
+import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.resources.BundleHandler;
-import org.hsqldb.types.*;
+import org.hsqldb.store.ValuePool;
+import org.hsqldb.types.Binary;
 
 /**@todo fredt - move Trace.doAssert() literals to Trace*/
 

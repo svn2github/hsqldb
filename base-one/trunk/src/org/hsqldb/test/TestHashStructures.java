@@ -31,11 +31,11 @@
 
 package org.hsqldb.test;
 
-import junit.framework.*;
-
-import java.util.*;
+import java.util.Random;
 
 import org.hsqldb.lib.DoubleIntTable;
+
+import junit.framework.TestCase;
 
 /**
  * @author fredt@users

@@ -31,7 +31,7 @@
 
 package org.hsqldb.util;
 
-import java.sql.*;
+import java.sql.Types;
 
 // fredt@users 20020215 - patch 516309 by Nicolas Bazin - transfer Informix
 // sqlbob@users 20020325 - patch 1.7.0 - reengineering

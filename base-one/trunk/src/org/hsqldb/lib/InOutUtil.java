@@ -33,14 +33,9 @@ package org.hsqldb.lib;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-
-import org.hsqldb.lib.HsqlByteArrayOutputStream;
-import org.hsqldb.lib.HsqlByteArrayInputStream;
-
-import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Serializable;
 
 /**
@@ -52,9 +47,9 @@ import java.io.Serializable;
  */
 public class InOutUtil {
 
-/**
- * reads an int from an InputStream
- */
+    /**
+     * reads an int from an InputStream
+     */
     public static int readInt(InputStream datain) throws IOException {
 
         int value = 0;
@@ -72,11 +67,11 @@ public class InOutUtil {
         return value;
     }
 
-/**
- * Implementation only supports unix line-end format and is suitable for
- * processing HTTP and other network protocol communications. Reads and writes
- * a line of data. Returns the number of bytes read/written.
- */
+    /**
+     * Implementation only supports unix line-end format and is suitable for
+     * processing HTTP and other network protocol communications. Reads and writes
+     * a line of data. Returns the number of bytes read/written.
+     */
     public static int readLine(InputStream in,
                                OutputStream out) throws IOException {
 

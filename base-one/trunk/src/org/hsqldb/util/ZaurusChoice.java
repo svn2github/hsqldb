@@ -31,8 +31,9 @@
 
 package org.hsqldb.util;
 
-import java.awt.*;
 import java.util.Vector;
+import java.awt.Choice;
+import java.awt.Color;
 
 /**
  * Class declaration

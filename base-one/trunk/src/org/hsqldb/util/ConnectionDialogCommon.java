@@ -66,11 +66,16 @@
 
 package org.hsqldb.util;
 
-import java.io.*;
-import java.util.Vector;
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
-import org.hsqldb.lib.java.JavaSystem;
 import org.hsqldb.lib.HashMappedList;
+import org.hsqldb.lib.java.JavaSystem;
 
 // sqlbob@users 20020407 - patch 1.7.0 - reengineering
 // fredt@users - 20040508 - modified patch by lonbinder@users for saving settings

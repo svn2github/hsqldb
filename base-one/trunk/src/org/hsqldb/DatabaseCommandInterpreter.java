@@ -70,13 +70,13 @@ import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.StringReader;
 
-import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.StringUtil;
 import org.hsqldb.scriptio.ScriptWriterBase;
 import org.hsqldb.scriptio.ScriptWriterText;
+import org.hsqldb.HsqlNameManager.HsqlName;
 
 /**
  * Provides SQL Interpreter services relative to a Session and

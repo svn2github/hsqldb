@@ -31,12 +31,14 @@
 
 package org.hsqldb.test;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.io.IOException;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.StringTokenizer;
+
+import junit.framework.TestCase;
 
 public class TestSqlTool extends junit.framework.TestCase {
 

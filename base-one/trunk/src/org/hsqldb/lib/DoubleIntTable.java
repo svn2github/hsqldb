@@ -221,9 +221,13 @@ public class DoubleIntTable {
             v = j;
 
             for (;;) {
-                while (lessThan(++i, v));
+                while (lessThan(++i, v)) {
+                    ;
+                }
 
-                while (lessThan(v, --j));
+                while (lessThan(v, --j)) {
+                    ;
+                }
 
                 if (j < i) {
                     break;

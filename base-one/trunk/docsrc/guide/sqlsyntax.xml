@@ -1,4 +1,4 @@
-<!-- $Id: sqlsyntax.xml,v 1.20 2004/08/12 20:43:20 fredt Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.21 2004/09/19 03:44:43 fredt Exp $ -->
 
 <chapter id='sqlsyntax-chapter'>
 <title id='sqlsyntax-title'>SQL Syntax</title>
@@ -34,8 +34,8 @@
             </affiliation>
         </editor>
     </authorgroup>
-    <edition>$Revision: 1.20 $</edition>
-    <pubdate>$Date: 2004/08/12 20:43:20 $</pubdate>
+    <edition>$Revision: 1.21 $</edition>
+    <pubdate>$Date: 2004/09/19 03:44:43 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Syntax</keyword>
@@ -958,7 +958,7 @@ SET IGNORECASE { TRUE | FALSE };</programlisting>
         <programlisting>
 SET LOGSIZE size;</programlisting>
         <para>
-            Sets the maximum size in MB of the .script file.
+            Sets the maximum size in MB of the .log file.
             Default is 200 MB.
             The database will be closed and opened (just like using CHECKPOINT)
             if the .log file gets over this limit, and so the .log file 

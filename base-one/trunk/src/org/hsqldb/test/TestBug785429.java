@@ -31,16 +31,13 @@
 
 package org.hsqldb.test;
 
-import junit.framework.TestCase;
-import junit.framework.TestResult;
-
-import org.hsqldb.Server;
-
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+
+import junit.framework.TestCase;
+import junit.framework.TestResult;
 
 /**
  * Tests Bug 785429 concerning BINARY values as PreparedStatement parameters

@@ -31,14 +31,13 @@
 
 package org.hsqldb.scriptio;
 
+import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 
 import org.hsqldb.Database;
 import org.hsqldb.HsqlException;
 import org.hsqldb.Session;
-
-import java.io.BufferedInputStream;
 
 abstract public class ScriptReaderBase {
 

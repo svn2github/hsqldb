@@ -31,12 +31,12 @@
 
 package org.hsqldb.test;
 
-import junit.framework.TestCase;
-import junit.framework.TestResult;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+
+import junit.framework.TestCase;
+import junit.framework.TestResult;
 
 /**
  * HSQLDB TestBug778213 Junit test case. <p>

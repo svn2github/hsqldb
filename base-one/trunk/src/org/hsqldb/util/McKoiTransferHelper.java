@@ -31,7 +31,9 @@
 
 package org.hsqldb.util;
 
-import java.sql.*;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 
 /**
  * Helper class for conversion from a different databases
@@ -52,9 +54,8 @@ class McKoiTransferHelper extends TransferHelper {
         String CompareString = "UNIQUEKEY(\'" + t.Stmts.sDestTable + "\'";
 
         if (columnType.indexOf(CompareString) > 0) {
-            /*
-            ** We just found a increment
-            */
+
+            // We just found a increment            
             columnType = "SERIAL";
         }
 

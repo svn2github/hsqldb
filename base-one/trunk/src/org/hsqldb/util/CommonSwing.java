@@ -31,11 +31,13 @@
 
 package org.hsqldb.util;
 
-import javax.swing.*;
-
 import java.awt.Color;
-import java.awt.SystemColor;
 import java.awt.Image;
+import java.awt.SystemColor;
+
+import javax.swing.ImageIcon;
+import javax.swing.UIDefaults;
+import javax.swing.UIManager;
 
 // sqlbob@users 20020407 - patch 1.7.0 - reengineering
 

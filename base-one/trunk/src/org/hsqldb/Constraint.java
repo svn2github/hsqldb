@@ -82,15 +82,15 @@ import org.hsqldb.HsqlNameManager.HsqlName;
  */
 class Constraint {
 
-/*
-SQL CLI codes
+    /*
+     SQL CLI codes
 
-Referential Constraint 0 CASCADE
-Referential Constraint 1 RESTRICT
-Referential Constraint 2 SET NULL
-Referential Constraint 3 NO ACTION
-Referential Constraint 4 SET DEFAULT
-*/
+     Referential Constraint 0 CASCADE
+     Referential Constraint 1 RESTRICT
+     Referential Constraint 2 SET NULL
+     Referential Constraint 3 NO ACTION
+     Referential Constraint 4 SET DEFAULT
+     */
     static final int CASCADE     = 0,
                      SET_NULL    = 2,
                      NO_ACTION   = 3,
@@ -115,7 +115,7 @@ Referential Constraint 4 SET DEFAULT
         core.mainIndex = index;
         /* fredt - in unique constraints column list for iColMain is the
            visible columns of iMain
-        */
+         */
         core.mainColArray = ArrayUtil.arraySlice(index.getColumns(), 0,
                 index.getVisibleColumns());
         core.colLen = core.mainColArray.length;
@@ -160,7 +160,7 @@ Referential Constraint 4 SET DEFAULT
         /* fredt - in FK constraints column lists for iColMain and iColRef have
            identical sets to visible columns of iMain and iRef respectively
            but the order of columns can be different and must be preserved
-        */
+         */
         core.mainColArray = colmain;
         core.colLen       = core.mainColArray.length;
         core.refColArray  = colref;
@@ -476,7 +476,7 @@ Referential Constraint 4 SET DEFAULT
 
         core.checkFilter.currentData = row;
 
-        if (!core.check.testCondition(session)) {
+        if (Boolean.FALSE.equals(core.check.test(session))) {
             core.checkFilter.currentRow = null;
 
             throw Trace.error(Trace.CHECK_CONSTRAINT_VIOLATION,

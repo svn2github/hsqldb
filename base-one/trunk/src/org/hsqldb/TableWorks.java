@@ -67,8 +67,8 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.ArrayUtil;
-import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.HashSet;
+import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users 20020520 - patch 1.7.0 - ALTER TABLE support
 // tony_lai@users 20020820 - patch 595172 - drop constraint fix

@@ -73,7 +73,8 @@ import java.lang.reflect.Modifier;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.StringConverter;
-import org.hsqldb.types.*;
+import org.hsqldb.types.Binary;
+import org.hsqldb.types.JavaObject;
 
 // fredt@users 20020912 - patch 1.7.1 - shortcut treatment of identity() call
 // fredt@users 20020912 - patch 1.7.1 - cache java.lang.reflect.Method objects

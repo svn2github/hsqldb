@@ -31,9 +31,9 @@
 
 package org.hsqldb;
 
-import java.io.IOException;
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 
 import org.hsqldb.lib.DoubleIntTable;

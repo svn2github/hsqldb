@@ -31,7 +31,10 @@
 
 package org.hsqldb.util;
 
-import java.sql.*;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Types;
 
 // sqlbob@users 20020325 - patch 1.7.0 - reengineering
 
@@ -69,9 +72,8 @@ class HsqldbTransferHelper extends TransferHelper {
         String CompareString = "INTEGER IDENTITY";
 
         if (columnType.indexOf(CompareString) >= 0) {
-            /*
-            ** We just found a increment
-            */
+
+            // We just found a increment             
             columnType = "SERIAL";
         }
 

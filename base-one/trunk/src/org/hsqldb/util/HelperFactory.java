@@ -31,8 +31,6 @@
 
 package org.hsqldb.util;
 
-import java.sql.*;
-
 /**
  * @author Nicolas BAZIN, INGENICO
  * @version 1.7.0

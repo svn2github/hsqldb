@@ -32,16 +32,16 @@
 package org.hsqldb.lib.java;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
-import java.sql.DriverManager;
-import java.util.Properties;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.DriverManager;
+import java.util.Properties;
 
 // fredt@users 20020320 - patch 1.7.0 - JDBC 2 support and error trapping
 // fredt@users 20021030 - patch 1.7.2 - updates
@@ -56,12 +56,11 @@ public class JavaSystem {
 
     public static BigInteger getUnscaledValue(BigDecimal o) {
 
-//#ifdef DEPRECATEDJAVA
+//#ifdef JAVA1TARGET
 /*
         int scale = o.scale();
         return o.movePointRight(scale).toBigInteger();
-    }
- */
+*/
 
 //#else
         return o.unscaledValue();
@@ -71,7 +70,7 @@ public class JavaSystem {
 
     public static void setLogToSystem(boolean value) {
 
-//#ifdef DEPRECATEDJAVA
+//#ifdef JAVA1TARGET
 /*
         try {
             PrintStream newOutStream = (value) ? System.out
@@ -93,7 +92,7 @@ public class JavaSystem {
 
     public static void deleteOnExit(File f) {
 
-//#ifdef DEPRECATEDJAVA
+//#ifdef JAVA1TARGET
 /*
 */
 
@@ -112,7 +111,7 @@ public class JavaSystem {
 
         fos = new FileOutputStream(file);
 
-//#ifdef DEPRECATEDJAVA
+//#ifdef JAVA1TARGET
 /*
     props.save(fos, name);
 */
@@ -126,7 +125,7 @@ public class JavaSystem {
 
     public static void runFinalizers() {
 
-//#ifdef DEPRECATEDJAVA
+//#ifdef JAVA1TARGET
 /*
         System.runFinalizersOnExit(true);
 */
@@ -136,7 +135,7 @@ public class JavaSystem {
 
     public static String getTempDir(String tempdir) {
 
-//#ifdef DEPRECATEDJAVA
+//#ifdef JAVA1TARGET
 /*
 */
 

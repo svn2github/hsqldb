@@ -31,9 +31,17 @@
 
 package org.hsqldb.test;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
 
-import junit.framework.*;
+import junit.framework.TestCase;
+import junit.framework.TestResult;
 
 /**
  * Test sql statements via jdbc against in-memory database

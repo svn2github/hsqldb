@@ -31,16 +31,12 @@
 
 package org.hsqldb.test;
 
-import junit.framework.TestCase;
-import junit.framework.TestResult;
+import java.sql.Connection;
+import java.sql.DriverManager;
 
 import org.hsqldb.Server;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import junit.framework.TestCase;
 
 /**
  * HSQLDB TestBugBase Junit test case. <p>

@@ -38,9 +38,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import junit.framework.TestCase;
-
 import org.hsqldb.Trace;
+
+import junit.framework.TestCase;
 
 /**
  * Test cases for HSQL aggregates and HAVING clause.

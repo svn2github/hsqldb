@@ -71,7 +71,6 @@ import java.io.IOException;
 import org.hsqldb.lib.ArrayCounter;
 import org.hsqldb.lib.ObjectComparator;
 import org.hsqldb.lib.Sort;
-import org.hsqldb.lib.StopWatch;
 import org.hsqldb.rowio.RowInputBase;
 import org.hsqldb.rowio.RowInputInterface;
 import org.hsqldb.rowio.RowOutputBase;

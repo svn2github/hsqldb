@@ -32,7 +32,6 @@
 package org.hsqldb;
 
 import org.hsqldb.index.RowIterator;
-import org.hsqldb.HsqlException;
 
 /**
  * The abstract base of all HSQLDB table implementations.

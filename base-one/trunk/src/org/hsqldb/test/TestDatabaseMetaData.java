@@ -31,11 +31,16 @@
 
 package org.hsqldb.test;
 
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import junit.framework.TestCase;
 import junit.framework.TestResult;
-
-import java.sql.*;
-import java.util.*;
 
 public class TestDatabaseMetaData extends TestBase {
 

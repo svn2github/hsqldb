@@ -34,14 +34,14 @@ package org.hsqldb.rowio;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
-import org.hsqldb.types.Binary;
 import org.hsqldb.CachedRow;
 import org.hsqldb.HsqlException;
-import org.hsqldb.types.JavaObject;
 import org.hsqldb.TextCache;
 import org.hsqldb.Trace;
 import org.hsqldb.Types;
 import org.hsqldb.lib.StringConverter;
+import org.hsqldb.types.Binary;
+import org.hsqldb.types.JavaObject;
 
 /**
  *  Class for writing the data for a database row in text table format.

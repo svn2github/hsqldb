@@ -32,12 +32,12 @@
 package org.hsqldb.test;
 
 import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.util.regex.Pattern;
+import java.io.IOException;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 // $Id: SqlToolHarness.java,v 1.5 2004/06/16 17:38:01 unsaved Exp $
 

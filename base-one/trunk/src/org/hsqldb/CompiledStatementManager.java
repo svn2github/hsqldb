@@ -31,10 +31,10 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.IntKeyHashMap;
-import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.lib.IntKeyIntValueHashMap;
+import org.hsqldb.lib.IntValueHashMap;
+import org.hsqldb.lib.Iterator;
 
 /**
  * This class manages the reuse of CompiledStatement objects for prepared

@@ -31,8 +31,8 @@
 
 package org.hsqldb.types;
 
-import org.hsqldb.lib.StringConverter;
 import org.hsqldb.lib.ArrayUtil;
+import org.hsqldb.lib.StringConverter;
 
 /**
  * Java representation of a BINARY field value. <p>

@@ -66,11 +66,11 @@
 
 package org.hsqldb;
 
-import org.hsqldb.index.RowIterator;
-import org.hsqldb.HsqlNameManager.HsqlName;
-import org.hsqldb.lib.ArrayUtil;
-
 import java.util.NoSuchElementException;
+
+import org.hsqldb.index.RowIterator;
+import org.hsqldb.lib.ArrayUtil;
+import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users - corrections
 // fredt@users 20020225 - patch 1.7.0 - cascading deletes

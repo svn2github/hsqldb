@@ -31,8 +31,10 @@
 
 package org.hsqldb.util;
 
-import java.sql.*;
-import java.util.*;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.util.Hashtable;
 
 /**
  * Base class for conversion from a different databases

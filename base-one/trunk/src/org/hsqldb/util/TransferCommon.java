@@ -66,8 +66,12 @@
 
 package org.hsqldb.util;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Vector;
-import java.io.*;
 
 // sqlbob@users 20020407 - patch 1.7.0 - reengineering
 

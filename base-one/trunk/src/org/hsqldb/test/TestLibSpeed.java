@@ -33,13 +33,10 @@ package org.hsqldb.test;
 
 import org.hsqldb.lib.DoubleIntTable;
 import org.hsqldb.lib.HashSet;
+import org.hsqldb.lib.IntKeyHashMap;
 import org.hsqldb.lib.IntKeyIntValueHashMap;
 import org.hsqldb.lib.IntValueHashMap;
-import org.hsqldb.lib.IntKeyHashMap;
-import org.hsqldb.store.ValuePool;
 import org.hsqldb.lib.StopWatch;
-
-import java.util.NoSuchElementException;
 
 /**
  * @author fredt@users
