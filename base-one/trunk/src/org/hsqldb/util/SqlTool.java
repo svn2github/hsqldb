@@ -1,5 +1,5 @@
 /*
- * $Id: SqlTool.java,v 1.5 2004/01/19 23:09:38 unsaved Exp $
+ * $Id: SqlTool.java,v 1.6 2004/01/20 22:53:21 unsaved Exp $
  *
  * Copyright (c) 2001-2003, The HSQL Development Group
  * All rights reserved.
@@ -48,7 +48,7 @@ import java.util.StringTokenizer;
  *  immediately after the description, just like's Sun's examples in
  *  their Coding Conventions document).
  *
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public class SqlTool {
     final static private String DEFAULT_JDBC_DRIVER = "org.hsqldb.jdbcDriver";
@@ -274,32 +274,24 @@ public class SqlTool {
             System.exit(2);
         }
 
+        int retval = 0; // Value we will return via System.exit().
         try {
             for (int j = 0; j < scriptFiles.length; j++) {
                 sqlFiles[j].execute(conn);
             }
         } catch (IOException ioe) {
-            try {
-                conn.close();
-            } catch (Exception e) {}
             System.err.println("Failed to execute SQL:  " + ioe.getMessage());
-            System.exit(2);
+            retval = 3;
+        // These two Exception types are handled properly inside of SqlFile.
+        // We just need to return an appropriate error status.
         } catch (SqlToolError ste) {
-            try {
-                conn.close();
-            } catch (Exception e) {}
-            System.err.println(ste.getMessage());
-            System.exit(2);
+            retval = 2;
         } catch (SQLException se) {
-            try {
-                conn.close();
-            } catch (Exception e) {}
-            System.err.println(se.getMessage());
-            System.exit(2);
+            retval = 1;
         }
         try {
             conn.close();
         } catch (Exception e) {}
-        System.exit(0);
+        System.exit(retval);
     }
 }
