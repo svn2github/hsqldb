@@ -1,4 +1,4 @@
-<!-- $Id: unix.xml,v 1.25 2004/06/30 05:01:51 unsaved Exp $ -->
+<!-- $Id: unix.xml,v 1.26 2004/06/30 21:29:34 unsaved Exp $ -->
 
 <chapter id='unix-chapter'>
     <title id='unix-title'>UNIX Quick Start</title>
@@ -13,8 +13,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.25 $</edition>
-        <pubdate>$Date: 2004/06/30 05:01:51 $</pubdate>
+        <edition>$Revision: 1.26 $</edition>
+        <pubdate>$Date: 2004/06/30 21:29:34 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>UNIX</keyword>
@@ -560,6 +560,16 @@
                 See the man page for <literal>sh</literal> if you don't know 
                 the difference between <literal>-v</literal> and 
                 <literal>-x</literal>.
+            </para><para>
+                If you want troubleshooting help, use the HSQLDB lists/forums
+                or email me at 
+                <ulink url='mailto:&blaineaddr;?Subject=hsqldb-unix'>
+                    &blaineaddr;</ulink>.
+                If you email me, make sure to include the revision number 
+                from your <filename>hsqldb</filename> init script (it's
+                towards the top in the "Id" line), and the output of a run of
+                <screen>
+    sh -x path/to/hsqldb start > /tmp/hstart.log 2>&amp;1</screen>
             </para> </step> <step><para>
                 Tell your OS to run the init script upon system startup and 
                 shutdown.
