@@ -431,18 +431,18 @@ public class Trace {
         "37000 NULL in value list",                                     //
         "08000 socket creation error",                                  //
         "37000 invalid character encoding",                             //
-        "08000 reserved for NO_CLASSLOADER_FOR_TLS",                    //
-        "08000 reserved for NO_JSSE",                                   //
-        "08000 reserved for NO_SSLSOCKETFACTORY_METHOD",                //
-        "08000 reserved for UNEXPECTED_EXCEPTION",                      //
-        "08000 reserved for TLS_ERROR",                                 //
-        "08000 reserved for MISSING_TLS_METHOD",                        //
-        "08000 reserved for TLS_SECURITY_ERROR",                        //
-        "08000 reserved for NO_TLS_DATA",                               //
-        "08000 reserved for NO_PRINCIPAL",                              //
-        "08000 reserved for INCOMPLETE_CERTIFICATE",                    //
-        "08000 reserved for TLS_HOSTNAME_MISMATCH",                     //
-        "08000 reserved for KEYSTORE_PROBLEM",                          //
+        "08000 Failed to obtain a Java Classloader for TLS",            //
+        "08000 Trying to use security, but JSSE not available",         //
+        "08000 Failed to obtain an SSL Socket Factory",                 //
+        "08000 Unexpected exceptin when setting up TLS",                //
+        "08000 TLS Error",                                              //
+        "08000 A required method for TLS capability is missing",        //
+        "08000 TLS Security error",                                     //
+        "08000 TLS failed to obtain security data",                     //
+        "08000 No authentication principal",                            //
+        "08000 Incomplete security certificate",                        //
+        "08000 Authentication refusal due to hostname mismatch",        //
+        "08000 Certificate or private key keystore problem",            //
 
         //
         "08003 Database does not exists",                               //
