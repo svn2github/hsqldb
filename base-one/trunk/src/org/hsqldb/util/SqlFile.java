@@ -52,7 +52,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.76 2004/06/09 02:57:23 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.77 2004/06/10 01:59:42 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -88,18 +88,19 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.76 $
+ * @version $Revision: 1.77 $
  * @author Blaine Simpson
  */
 public class SqlFile {
+    static private final int DEFAULT_HISTORY_SIZE = 20;
     private File       file;
     private boolean    interactive;
     private String     primaryPrompt    = "sql> ";
     private String     contPrompt       = "  +> ";
     private Connection curConn          = null;
-    private String[]   statementHistory = new String[10];
     private boolean    htmlMode         = false;
     private HashMap    userVars         = null;
+    private String[]   statementHistory = null;
 
     /**
      * Private class to "share" a variable among a family of SqlFile
@@ -129,8 +130,8 @@ public class SqlFile {
           + "                                                                 ";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.76 $".substring("$Revision: ".length(),
-                "$Revision: 1.76 $".length() - 2);
+        revnum = "$Revision: 1.77 $".substring("$Revision: ".length(),
+                "$Revision: 1.77 $".length() - 2);
     }
     private static String BANNER =
         "(SqlFile processor v. " + revnum + ")\n"
@@ -185,7 +186,7 @@ public class SqlFile {
         + "    \\! COMMAND ARGS      Execute external program (no support for stdin)\n"
         + "    \\* [true|false]      Continue upon errors (a.o.t. abort upon error)\n"
         + "    \\a [true|false]      Auto-commit JDBC DML commands\n"
-        + "    \\s                   * Show previous commands (i.e. command history)\n"
+        + "    \\s                   * Show previous commands (i.e. SQL command history)\n"
         + "    \\-[3]                * reload a command to buffer (for : commands)\n"
         + "    \\-[3];               * reload command and execute (via \":;\")\n"
         + "    \\q [abort message]   Quit (alternatively, end input like Ctrl-Z or Ctrl-D)\n"
@@ -234,6 +235,19 @@ public class SqlFile {
         interactive = inInteractive;
         userVars = inVars;
 
+        if (interactive) {
+            String tmpStr = System.getProperty("sqltool.historyLength");
+            try {
+                statementHistory = new String[Integer.parseInt(
+                        System.getProperty("sqltool.historyLength")
+                )];
+            } catch (Throwable t) {
+                statementHistory = null;
+            }
+            if (statementHistory == null) {
+                statementHistory = new String[DEFAULT_HISTORY_SIZE];
+            }
+        }
         if (file != null &&!file.canRead()) {
             throw new IOException("Can't read SQL file '" + file + "'");
         }
@@ -1865,7 +1879,7 @@ public class SqlFile {
                 }
                 reversedList[++ctr] = s;
             }
-            for (int i = 9; i > curHist; i--) {
+            for (int i = statementHistory.length - 1; i > curHist; i--) {
                 s = statementHistory[i];
                 if (s == null) {
                     return;
