@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.39 2004/06/11 14:23:52 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.40 2004/06/11 18:30:50 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.39 $</edition>
-        <pubdate>$Date: 2004/06/11 14:23:52 $</pubdate>
+        <edition>$Revision: 1.40 $</edition>
+        <pubdate>$Date: 2004/06/11 18:30:50 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -307,7 +307,7 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
         </simpara><simpara>
             (Special Commands, Buffer Commands and PL Commands always consist
             of just one line.
-            Any of these commands or commænts may be preceded by space 
+            Any of these commands or comments may be preceded by space 
             characters.)
         </simpara></important>
         <variablelist><title>Command types</title>
