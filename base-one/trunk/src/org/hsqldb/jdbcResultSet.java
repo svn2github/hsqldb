@@ -1852,9 +1852,9 @@ public class jdbcResultSet implements ResultSet, ResultSetMetaData {
 
 // fredt@users 20020328 -  patch 482109 by fredt - OBJECT handling
 // all objects are stored in Result as the original java object,
-// except byte[] which is wrapped in ByteArray to allow comparison.
 // Deserialization of OTHER is now handled in BinaryServerRowInput
 // when reconstructing a Result from a bytestream.
+// fredt@users 200021001 - BINARY is now returned as byte[]
         return o;
     }
 

@@ -91,9 +91,11 @@ public class HsqlHashMap implements HsqlMap {
     private static final float DEFAULT_LOAD_FACTOR      = 0.75f;
 
     /** fredt - Used for rehashing */
-    private final float loadFactor;
+    private float loadFactor;
+
     /** fredt - Used for rehashing */
-    private final int initialCapacity;
+    private int initialCapacity;
+
     /** A java Hashtable that backs this implementation of HsqlHashMap */
     private Hashtable table;
 
@@ -126,11 +128,11 @@ public class HsqlHashMap implements HsqlMap {
 
         reporter.initCounter++;
 
-        table          = new Hashtable(initialCapacity, loadFactor);
-        this.loadFactor = loadFactor;
+        table                = new Hashtable(initialCapacity, loadFactor);
+        this.loadFactor      = loadFactor;
         this.initialCapacity = initialCapacity;
-        nullKeyExists  = false;
-        nullKeyMapping = null;
+        nullKeyExists        = false;
+        nullKeyMapping       = null;
     }
 
     /**

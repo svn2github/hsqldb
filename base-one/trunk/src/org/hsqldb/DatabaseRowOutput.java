@@ -31,14 +31,12 @@
 
 package org.hsqldb;
 
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.sql.Types;
 
+import org.hsqldb.lib.HsqlByteArrayOutputStream;
 /**
  * Base class for writing the data for a database row in different formats.
  * Defines the methods that are independent of storage format and declares
@@ -48,11 +46,31 @@ import java.sql.Types;
  * @author fredt@users
  * @version 1.7.0
  */
-abstract class DatabaseRowOutput extends ByteArrayOutputStream
+abstract class DatabaseRowOutput extends HsqlByteArrayOutputStream
 implements org.hsqldb.DatabaseRowOutputInterface {
 
-    // the last column in a table is a SYSTEM_ID that should not be written to file
+    static final int CACHE_ROW_160 = 0;
+    static final int CACHE_ROW_170 = 1;
+
+    // the last column in a table is an ID that should not be written to file
     protected boolean skipSystemId = false;
+
+    static DatabaseRowOutputInterface newDatabaseRowOutput(int cachedRowType)
+    throws SQLException {
+
+        try {
+            if (cachedRowType == CACHE_ROW_170) {
+                return new BinaryServerRowOutput();
+            } else {
+                Class c = Class.forName("org.hsqldb.BinaryDatabaseRowOutput");
+
+                return (DatabaseRowOutputInterface) c.newInstance();
+            }
+        } catch (Exception e) {
+            throw Trace.error(Trace.MISSING_SOFTWARE_MODULE,
+                              "legacy db support");
+        }
+    }
 
     /**
      *  Constructor used for result sets and persistent storage of a Table row
@@ -117,49 +135,6 @@ implements org.hsqldb.DatabaseRowOutputInterface {
     protected abstract void writeBinary(byte[] o,
                                         int t)
                                         throws IOException, SQLException;
-
-// fredt@users - comment - methods used for writing java primitive types
-    public final void writeShort(int v) {
-        write((v >>> 8) & 0xFF);
-        write((v >>> 0) & 0xFF);
-    }
-
-    public final void writeInt(int v) {
-
-        write((v >>> 24) & 0xFF);
-        write((v >>> 16) & 0xFF);
-        write((v >>> 8) & 0xFF);
-        write((v >>> 0) & 0xFF);
-    }
-
-    public final void writeLong(long v) {
-
-        write((int) (v >>> 56) & 0xFF);
-        write((int) (v >>> 48) & 0xFF);
-        write((int) (v >>> 40) & 0xFF);
-        write((int) (v >>> 32) & 0xFF);
-        write((int) (v >>> 24) & 0xFF);
-        write((int) (v >>> 16) & 0xFF);
-        write((int) (v >>> 8) & 0xFF);
-        write((int) (v >>> 0) & 0xFF);
-    }
-
-    public final void writeBytes(String s) {
-
-        int len = s.length();
-
-        for (int i = 0; i < len; i++) {
-            write((byte) s.charAt(i));
-        }
-    }
-
-    public final void writeFloat(float v) {
-        writeInt(Float.floatToIntBits(v));
-    }
-
-    public final void writeDouble(double v) {
-        writeLong(Double.doubleToLongBits(v));
-    }
 
     /**
      *  This method is called to write data for a table

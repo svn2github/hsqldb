@@ -87,13 +87,11 @@ import java.io.PrintWriter;
 // trace message to System.out
 // fredt@users 20020305 - patch 1.7.0 - various new messages added
 // tony_lai@users 20020820 - patch 595073 - Duplicated exception msg
-
 //
 // fredt - todo - 20021022 management of nested throws inside the program in
 // such a way that it is possible to return exactly the text of the error
 // thrown at a given level withou higher level messages being added and to
 // preserve the orignial erro code
-
 public class Trace extends PrintWriter {
 
     public static boolean       TRACE          = false;
@@ -173,7 +171,8 @@ public class Trace extends PrintWriter {
                                 INVALID_GROUP_BY                    = 68,
                                 INVALID_HAVING                      = 69,
                                 INVALID_ORDER_BY                    = 70,
-                                INVALID_ORDER_BY_IN_DISTINCT_SELECT = 71;
+                                INVALID_ORDER_BY_IN_DISTINCT_SELECT = 71,
+                                INVALIC_CHARACTER_ENCODING          = 72;
     private static String[]     sDescription                        = {
         "NOT USED", "08001 The database is already in use by another process",
         "08003 Connection is closed", "08003 Connection is broken",
@@ -224,6 +223,7 @@ public class Trace extends PrintWriter {
         "37000 Cannot be in HAVING clause",
         "37000 Cannot be in ORDER BY clause",
         "37000 ORDER BY item does not appear in the SELECT DISTINCT list",
+        "37000 invalid character encoding",
     };
 
     static {
@@ -429,9 +429,8 @@ public class Trace extends PrintWriter {
      *
      * @throws SQLException
      */
-    static void throwerror(int code,
-                      Object add) throws SQLException {
-            throw getError(code, add);
+    static void throwerror(int code, Object add) throws SQLException {
+        throw getError(code, add);
     }
 
     // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)

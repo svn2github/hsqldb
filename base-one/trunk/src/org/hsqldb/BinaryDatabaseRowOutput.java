@@ -205,7 +205,7 @@ class BinaryDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
     protected void writeOther(Object o) throws IOException, SQLException {
 
-        byte[] ba = ByteArray.serialize(o);
+        byte[] ba = Column.serialize(o);
 
         writeByteArray(ba);
     }
@@ -280,7 +280,7 @@ class BinaryDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
                     case Types.OTHER :
                         s += getUTFsize("**");    //new format flag
                         s += 4;
-                        s += ByteArray.serialize(o).length;
+                        s += Column.serialize(o).length;
                     default :
                         s += getUTFsize(o.toString());
                 }

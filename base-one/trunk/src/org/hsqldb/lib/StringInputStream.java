@@ -56,8 +56,6 @@ public class StringInputStream extends InputStream {
 
         if (available == 0) {
             return -1;
-
-//            throw new java.io.IOException("no more bytes");
         }
 
         available--;

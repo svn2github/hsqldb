@@ -185,7 +185,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
             to.append(hex);
         }
 
-        return ByteArray.hexToByteArray(to.toString());
+        return Column.hexToByteArray(to.toString());
     }
 
     public int readIntData() throws IOException {
@@ -338,7 +338,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
 
         o = readByteArray(s);
 
-        return ByteArray.deserialize(o);
+        return Column.deserialize(o);
     }
 
     protected byte[] readBinary(int type) throws IOException, SQLException {

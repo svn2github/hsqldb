@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.SQLException;
+import org.hsqldb.lib.StringConverter;
 
 /**
  *  Provides methods for reading the data for a row from a
@@ -76,11 +77,12 @@ implements org.hsqldb.DatabaseRowInputInterface {
 
     public String readString() throws IOException {
 
-        byte[] bytes = new byte[readInt()];
+        int    length = readInt();
+        String s      = StringConverter.readUTF(buf, pos, length);
 
-        readFully(bytes);
+        pos += length;
 
-        return (new String(bytes, "utf-8"));
+        return s;
     }
 
     protected boolean checkNull() throws IOException {
@@ -134,8 +136,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
 
     protected java.sql.Timestamp readTimestamp()
     throws IOException, SQLException {
-        return org.hsqldb.lib.HsqlDateTime.timestampValue(readLong(),
-                readInt());
+        return HsqlDateTime.timestampValue(readLong(), readInt());
     }
 
     protected Object readOther() throws IOException, SQLException {
@@ -145,7 +146,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
 // now they are deserialized before retrieval
         byte[] o = readByteArray();
 
-        return ByteArray.deserialize(o);
+        return Column.deserialize(o);
     }
 
     protected byte[] readBinary(int type) throws IOException, SQLException {

@@ -49,7 +49,7 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
     BinaryDatabaseScriptReader(Database db,
                                String file) throws SQLException, IOException {
         super(db, file);
-        rowIn = new BinaryServerRowInputTest();
+        rowIn = new BinaryServerRowInput();
     }
 
     void readAll(Session session) throws IOException, SQLException {

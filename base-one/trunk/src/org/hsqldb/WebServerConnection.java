@@ -79,6 +79,7 @@ import java.net.Socket;
 import java.sql.SQLException;
 import java.util.Observable;
 import java.util.StringTokenizer;
+import org.hsqldb.lib.StringConverter;
 
 // fredt@users 20021002 - patch 1.7.1 by fredt - changed notification method
 
@@ -285,7 +286,7 @@ class WebServerConnection implements Runnable {
      * @param  len
      */
     private void processPost(BufferedReader input, String name,
-                             int len) throws SQLException {
+                             int len) throws SQLException, IOException {
 
         if (len < 0) {
             processError(BAD_REQUEST);

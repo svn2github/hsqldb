@@ -33,10 +33,16 @@ package org.hsqldb;
 
 import java.io.*;
 import java.sql.SQLException;
+import org.hsqldb.lib.StringConverter;
 
 /**
+ * Handles operations involving reading back a log file already written
+ * out by DatabaseScriptWriter. This implementation and its subclasses
+ * correspond to DatabaseScriptWriter and its subclasses for the supported
+ * formats.
+ *
  * @author fredt@users
- * @version 1.0
+ * @version 1.7.2
  */
 class DatabaseScriptReader {
 
@@ -44,6 +50,16 @@ class DatabaseScriptReader {
     Database        db;
     int             count;
     BufferedReader  d;
+
+    static DatabaseScriptReader newDatabaseScriptReader(Database db,
+            String file, int scriptType) throws SQLException, IOException {
+
+        if (scriptType == DatabaseScriptWriter.SCRIPT_TEXT_170) {
+            return new DatabaseScriptReader(db, file);
+        } else {
+            return new BinaryDatabaseScriptReader(db, file);
+        }
+    }
 
     DatabaseScriptReader(Database db,
                          String file) throws SQLException, IOException {

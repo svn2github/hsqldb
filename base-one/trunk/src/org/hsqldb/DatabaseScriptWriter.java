@@ -31,12 +31,35 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlStringBuffer;
 import java.io.*;
 import java.sql.SQLException;
 
+import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.HsqlStringBuffer;
+import org.hsqldb.lib.StringConverter;
 /**
+ * Handles all logging to file operations. A log consists of three blocks:<p>
+ *
+ * DDL statements and definition of users and rights at startup time<br>
+ * All data for MEMORY tables at startup time<br>
+ * Logged SQL statements since startup time or the last CHECKPOINT<br>
+ *
+ * The implementation of this class and its subclasses determines the format
+ * used for writing the data. In versions up to 1.7.2, this data is written
+ * to the *.script file for the database for logging. Since 1.7.2 the data
+ * can be written as binray in order to speed up shutdown and startup.<p>
+ *
+ * A related use for this class is for saving a current snapshot of the
+ * database data to a user defined file.<p>
+ *
+ * DatabaseScriptReader and its subclasses read back the data at startup time.
+ *
+ * todo: this class will be enhanced or extended to support the following:<p>
+ *
+ * periodic flushing of data according to a property<br>
+ * constant backup of *.scrip file data<br>
+ * optional encryption / compression of data<br>
+ *
  * @author fredt@users
  * @version 1.7.2
  */
@@ -48,14 +71,19 @@ class DatabaseScriptWriter {
     Database          db;
     String            outFile;
     FileOutputStream  fileStreamOut;
-    DatabaseRowOutput binaryOut = new BinaryServerRowOutputTest();
+    DatabaseRowOutput binaryOut = new BinaryServerRowOutput();
     int               tableRowCount;
-    boolean           includeCachedData;
-    long              count;
-    boolean           noWriteDelay = true;
-    boolean           needsFlush   = false;
-    static final int  INSERT       = 0;
-    static byte[]     lineSep;
+
+    /**
+     * this determines if the script is the normal logging script (false) or a
+     * user initiated snapshot of the DB (true)
+     */
+    boolean          includeCachedData;
+    long             count;
+    boolean          noWriteDelay = true;
+    boolean          needsFlush   = false;
+    static final int INSERT       = 0;
+    static byte[]    lineSep;
 
     static {
         String sLineSep = System.getProperty("line.separator", "\n");
@@ -64,6 +92,22 @@ class DatabaseScriptWriter {
 
         for (int i = 0; i < sLineSep.length(); i++) {
             lineSep[i] = (byte) sLineSep.charAt(i);
+        }
+    }
+
+    final static int SCRIPT_TEXT_170   = 0;
+    final static int SCRIPT_BINARY_172 = 1;
+
+    static DatabaseScriptWriter newDatabaseScriptWriter(Database db,
+            String file, boolean includeCachedData, boolean newFile,
+            int scriptType) throws SQLException {
+
+        if (scriptType == SCRIPT_TEXT_170) {
+            return new DatabaseScriptWriter(db, file, includeCachedData,
+                                            newFile);
+        } else {
+            return new BinaryDatabaseScriptWriter(db, file,
+                                                  includeCachedData, newFile);
         }
     }
 

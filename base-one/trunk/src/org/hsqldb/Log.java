@@ -104,23 +104,25 @@ import java.util.zip.InflaterInputStream;
 // fredt@users 20020910 - patch 1.7.1 by Nitin Chauhan - code improvements
 
 /**
- *  This class is responsible for most file handling. A HSQL database
- *  consists of a .properties file, a .script file (contains a SQL script),
+ *  This class is responsible for most file handling. An HSQLDB database
+ *  consists of a .properties file, a .script file (contains an SQL script),
  *  a .data file (contains data of cached tables) and a .backup file
- *  (contains the compressed .data file) <P>
+ *  (contains the compressed .data file) <p>
  *
  *  This is an example of the .properties file. The version and the modified
  *  properties are automatically created by the database and should not be
  *  changed manually: <pre>
- * modified=no
- * version=1.43
- * </pre> The following lines are optional, this means they are not created
+ *  modified=no
+ *  version=1.43
+ *  </pre>
+ *  The following lines are optional, this means they are not created
  *  automatically by the database, but they are interpreted if they exist in
  *  the .script file. They have to be created manually if required. If they
  *  don't exist the default is used. This are the defaults of the database
- *  'test': <pre>
- * readonly=false
- * </pre>
+ *  'test':
+ *  <pre>
+ *  readonly=false
+ *  </pre>
  *
  * @version 1.7.0
  */
@@ -132,27 +134,19 @@ class Log implements Runnable {
     private String                 sName;
     private Database               dDatabase;
     private Session                sysSession;
-
-    // to use
-    private DatabaseScriptWriter dbScriptWriter;
-
-    // to go
-//    private Writer                 wScript;
-    private String           sFileScript;
-    private String           sFileCache;
-    private String           sFileBackup;
-    private boolean          bRestoring;
-    private boolean          bReadOnly;
-    private int              maxLogSize;
-    private int              iLogCount;
-    private int              logType;
-    private Thread           tRunner;
-    private volatile boolean bWriteDelay;
-    private int              mLastId;
-    private Cache            cCache;
-
-// boucherb@users - comment - FIXME
-//  boolean                  stopped;
+    private DatabaseScriptWriter   dbScriptWriter;
+    private String                 sFileScript;
+    private String                 sFileCache;
+    private String                 sFileBackup;
+    private boolean                bRestoring;
+    private boolean                bReadOnly;
+    private int                    maxLogSize;
+    private int                    iLogCount;
+    private int                    logType;
+    private Thread                 tRunner;
+    private volatile boolean       bWriteDelay;
+    private int                    mLastId;
+    private Cache                  cCache;
 
     /**
      *  Constructor declaration
@@ -170,32 +164,6 @@ class Log implements Runnable {
         pProperties = db.getProperties();
         tRunner     = new Thread(this);
 
-        // boucherb@users - FIXME:
-        // standard VM behaviour is to shut down only after all
-        // non-daemon threads exit.  Therefor, tRunner shuld be
-        // daemon.  Consider the case of:
-        /*
-         public void main(String[] args) {
-         ...
-         try {
-         // fails due to bad user/password...must then connect with valid combo
-         // again to *really* shutdown database, or explicitly call System.exit(...)
-         DriverManager.getConnection("jdbc:hsqldb:filespec,"user","password");
-         ...
-         } catch (...) {
-         }
-         ...
-         }
-         */
-
-        // the VM will not exit, since tRunner is still running and
-        // no shutdown is issued to close the database.
-        //
-        //  - setDaemon(false) may require flush in finalization
-        // CB
-        // tRunner.setDaemon(false);
-        // fredt - there are other issues, such as the tasks that need
-        // to be performed when the thread dies if there are open files
         tRunner.start();
     }
 
@@ -204,12 +172,9 @@ class Log implements Runnable {
      */
     public void run() {
 
-        // boucherb@users - FIXME
-        // while (!stopped) {
         while (tRunner != null) {
             try {
                 tRunner.sleep(1000);
-
                 dbScriptWriter.flush();
 
                 // todo: try to do Cache.cleanUp() here, too
@@ -262,10 +227,10 @@ class Log implements Runnable {
 
         // tony_lai@users 20020820
         // Allows the user to modify log size from the properties file.
-        maxLogSize = pProperties.getIntegerProperty("hsqldb.log_size",
-                0);
+        maxLogSize = pProperties.getIntegerProperty("hsqldb.log_size", 0);
         maxLogSize = maxLogSize * 1024 * 1024;
-        logType = pProperties.getIntegerProperty("hsqldb.log_type", 0);
+        logType = pProperties.getIntegerProperty("hsqldb.log_type",
+                DatabaseScriptWriter.SCRIPT_TEXT_170);
 
         String version = pProperties.getProperty("hsqldb.compatible_version");
 
@@ -354,16 +319,7 @@ class Log implements Runnable {
     /**
      *  Method declaration
      */
-    void /* synchronized */ stop() {
-
-        //boucherb@users - FIXME:
-        /*
-         if (!stopped)
-         stopped = true;
-         tRunner.interrupt();
-         tRunner = null;
-         }
-         */
+    void stop() {
         tRunner = null;
     }
 
@@ -449,7 +405,7 @@ class Log implements Runnable {
             }
 
             DataFileDefrag.updateTableIndexRoots(dDatabase.getTables(),
-                                                  rootsArray);
+                                                 rootsArray);
         }
 
         close(false);
@@ -472,8 +428,8 @@ class Log implements Runnable {
     void setLogSize(int newsize) {
 
         pProperties.setProperty("hsqldb.log_size", newsize);
-        maxLogSize = newsize;
 
+        maxLogSize = newsize;
     }
 
     /**
@@ -524,7 +480,6 @@ class Log implements Runnable {
 
         try {
             dbScriptWriter.writeLogStatement(s);
-
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR, sFileScript);
         }
@@ -737,14 +692,10 @@ class Log implements Runnable {
         }
 
         try {
-            if (logType == 0) {
-                dbScriptWriter = new DatabaseScriptWriter(this.dDatabase,
-                        sFileScript, false, false);
-            } else {
-                dbScriptWriter =
-                    new BinaryDatabaseScriptWriter(this.dDatabase,
-                                                   sFileScript, false, false);
-            }
+            dbScriptWriter =
+                DatabaseScriptWriter.newDatabaseScriptWriter(this.dDatabase,
+                    sFileScript, false, false, logType);
+
             dbScriptWriter.setWriteDelay(bWriteDelay);
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR, sFileScript);
@@ -808,12 +759,8 @@ class Log implements Runnable {
 
             DatabaseScriptReader scr;
 
-            if (logType == 0) {
-                scr = new DatabaseScriptReader(this.dDatabase, sFileScript);
-            } else {
-                scr = new BinaryDatabaseScriptReader(this.dDatabase,
-                                                     sFileScript);
-            }
+            scr = DatabaseScriptReader.newDatabaseScriptReader(this.dDatabase, sFileScript,
+                                          logType);
 
             scr.readAll(sysSession);
 

@@ -67,7 +67,9 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.HsqlDateTime;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -75,6 +77,9 @@ import java.sql.Types;
 import java.math.BigDecimal;
 import java.util.Hashtable;
 import java.text.Collator;
+import org.hsqldb.lib.StringConverter;
+import org.hsqldb.lib.HsqlByteArrayOutputStream;
+import org.hsqldb.lib.HsqlByteArrayInputStream;
 
 // fredt@users 20020320 - doc 1.7.0 - update
 // fredt@users 20020401 - patch 442993 by fredt - arithmetic expressions
@@ -104,6 +109,12 @@ import java.text.Collator;
 // Strings to reduce execution time and garbage collection
 // fredt@users 20021013 - patch 1.7.1 by fredt - type conversions
 // scripting of Double.Nan and infinity values
+// fredt@users 20020825 - patch 1.7.1 - ByteArray.java converted to static
+// methods
+// BINARY objest are now represented internally as byte[] and use the static
+// methods in this class to compare or convert the byte[] objects
+// fredt@users 20021110 - patch 1.7.2 - ByteArray.java removed and methods
+// moved here
 
 /**
  *  Implementation of SQL table columns as defined in DDL statements with
@@ -983,7 +994,7 @@ class Column {
             case Types.BINARY :
             case Types.VARBINARY :
             case Types.LONGVARBINARY :
-                i = ByteArray.compareTo((byte[]) a, (byte[]) b);
+                i = compareTo((byte[]) a, (byte[]) b);
                 break;
 
             case Types.OTHER :
@@ -1195,7 +1206,7 @@ class Column {
                     }
 
                     if (o instanceof byte[]) {
-                        return ByteArray.toString((byte[]) o);
+                        return StringConverter.byteToHex((byte[]) o);
                     }
                     break;
 
@@ -1300,10 +1311,10 @@ class Column {
             case Types.BINARY :
             case Types.VARBINARY :
             case Types.LONGVARBINARY :
-                return ByteArray.hexToByteArray(s);
+                return hexToByteArray(s);
 
             case Types.OTHER :
-                return ByteArray.deserialize(ByteArray.hexToByteArray(s));
+                return deserialize(hexToByteArray(s));
 
             default :
                 throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, type);
@@ -1345,12 +1356,12 @@ class Column {
             case Types.BINARY :
             case Types.VARBINARY :
             case Types.LONGVARBINARY :
-                return StringConverter.toQuotedString(
-                    ByteArray.toString((byte[]) o), '\'', false);
+                return StringConverter.toQuotedString(StringConverter.byteToHex((byte[]) o),
+                                                      '\'', false);
 
             case Types.OTHER :
-                return StringConverter.toQuotedString(
-                    ByteArray.serializeToString(o), '\'', false);
+                return StringConverter.toQuotedString(serializeToString(o),
+                                                      '\'', false);
 
             case VARCHAR_IGNORECASE :
             case Types.VARCHAR :
@@ -1485,6 +1496,118 @@ class Column {
 
             default :
                 return 32;
+        }
+    }
+
+    /**
+     * Converts the specified hexadecimal digit <CODE>String</CODE>
+     * to an equivalent array of bytes.
+     *
+     * @param hexString a <CODE>String</CODE> of hexadecimal digits
+     * @throws SQLException if the specified string contains non-hexadecimal digits.
+     * @return a byte array equivalent to the specified string of hexadecimal digits
+     */
+    static byte[] hexToByteArray(String hexString) throws SQLException {
+
+        try {
+            return StringConverter.hexToByte(hexString);
+        } catch (IOException e) {
+            throw Trace.error(Trace.INVALIC_CHARACTER_ENCODING);
+        }
+    }
+
+    /**
+     * Compares a <CODE>byte[]</CODE> with another specified
+     * <CODE>byte[]</CODE> for order.  Returns a negative integer, zero,
+     * or a positive integer as the first object is less than, equal to, or
+     * greater than the specified second <CODE>byte[]</CODE>.<p>
+     *
+     * @param o1 the first byte[] to be compared
+     * @param o2 the second byte[] to be compared
+     * @return a negative integer, zero, or a positive integer as this object
+     * is less than, equal to, or greater than the specified object.
+     */
+    static int compareTo(byte[] o1, byte[] o2) {
+
+        int len  = o1.length;
+        int lenb = o2.length;
+
+        for (int i = 0; ; i++) {
+            int a = 0;
+            int b = 0;
+
+            if (i < len) {
+                a = ((int) o1[i]) & 0xff;
+            } else if (i >= lenb) {
+                return 0;
+            }
+
+            if (i < lenb) {
+                b = ((int) o2[i]) & 0xff;
+            }
+
+            if (a > b) {
+                return 1;
+            }
+
+            if (b > a) {
+                return -1;
+            }
+        }
+    }
+
+    /**
+     * Retrieves the serialized form of the specified <CODE>Object</CODE>
+     * as an array of bytes.
+     *
+     * @param s the Object to serialize
+     * @return  a static byte array representing the passed Object
+     * @throws SQLException if a serialization failure occurs
+     */
+    static byte[] serialize(Object s) throws SQLException {
+
+        HsqlByteArrayOutputStream bo = new HsqlByteArrayOutputStream();
+
+        try {
+            ObjectOutputStream os = new ObjectOutputStream(bo);
+
+            os.writeObject(s);
+
+            return bo.toByteArray();
+        } catch (Exception e) {
+            throw Trace.error(Trace.SERIALIZATION_FAILURE, e.getMessage());
+        }
+    }
+
+    /**
+     * Retrieves the serialized form of the specified <CODE>Object</CODE>
+     * as an equivalent <CODE>String</CODE> of hexadecimal digits.
+     *
+     * @param s the Object to serialize
+     * @return  A String representing the passed Object
+     * @throws SQLException if a serialization failure occurs
+     */
+    static String serializeToString(Object s) throws SQLException {
+        return StringConverter.byteToHex(serialize(s));
+    }
+
+    /**
+     * Deserializes the specified byte array to an
+     * <CODE>Object</CODE> instance.
+     *
+     * @return the Object resulting from deserializing the specified array of bytes
+     * @param ba the byte array to deserialize to an Object
+     * @throws SQLException if a serialization failure occurs
+     */
+    static Object deserialize(byte[] ba) throws SQLException {
+
+        try {
+            HsqlByteArrayInputStream bi = new HsqlByteArrayInputStream(ba);
+            ObjectInputStream        is = new ObjectInputStream(bi);
+
+            return is.readObject();
+        } catch (Exception e) {
+            throw Trace.error(Trace.SERIALIZATION_FAILURE, e.getMessage());
         }
     }
 }

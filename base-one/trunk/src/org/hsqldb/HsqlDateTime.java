@@ -29,7 +29,7 @@
  */
 
 
-package org.hsqldb.lib;
+package org.hsqldb;
 
 import java.sql.Date;
 import java.sql.Time;

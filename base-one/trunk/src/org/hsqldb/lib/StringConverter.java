@@ -65,9 +65,8 @@
  */
 
 
-package org.hsqldb;
+package org.hsqldb.lib;
 
-import org.hsqldb.lib.HsqlStringBuffer;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -77,7 +76,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.UTFDataFormatException;
@@ -91,7 +89,7 @@ import java.io.UTFDataFormatException;
  */
 
 // fredt@users 20020328 - patch 1.7.0 by fredt - error trapping
-class StringConverter {
+public class StringConverter {
 
     private static final char HEXCHAR[] = {
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd',
@@ -108,7 +106,7 @@ class StringConverter {
      * @return
      * @throws SQLException
      */
-    static byte[] hexToByte(String s) throws SQLException {
+    public static byte[] hexToByte(String s) throws IOException {
 
         int  l      = s.length() / 2;
         byte data[] = new byte[l];
@@ -121,8 +119,7 @@ class StringConverter {
             n = HEXINDEX.indexOf(c);
 
             if (n == -1) {
-                throw Trace.error(
-                    Trace.INVALID_ESCAPE,
+                throw new IOException(
                     "hexadecimal string contains non hex character");
             }
 
@@ -144,7 +141,7 @@ class StringConverter {
      *
      * @return
      */
-    static String byteToHex(byte b[]) {
+    public static String byteToHex(byte b[]) {
 
         int              len = b.length;
         HsqlStringBuffer s   = new HsqlStringBuffer(len * 2);
@@ -167,7 +164,7 @@ class StringConverter {
      *
      * @return
      */
-    static String unicodeToHexString(String s) {
+    public static String unicodeToHexString(String s) {
 
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         DataOutputStream      out  = new DataOutputStream(bout);
@@ -192,17 +189,13 @@ class StringConverter {
      * @return
      * @throws SQLException
      */
-    public static String hexStringToUnicode(String s) throws SQLException {
+    public static String hexStringToUnicode(String s) throws IOException {
 
         byte[]               b   = hexToByte(s);
         ByteArrayInputStream bin = new ByteArrayInputStream(b);
         DataInputStream      in  = new DataInputStream(bin);
 
-        try {
-            return in.readUTF();
-        } catch (IOException e) {
-            return null;
-        }
+        return in.readUTF();
     }
 
 // fredt@users 20011120 - patch 450455 by kibu@users - modified
@@ -229,7 +222,8 @@ class StringConverter {
      * @return number of bytes written out
      *
      */
-    static int unicodeToAscii(OutputStream b, String s) throws IOException {
+    public static int unicodeToAscii(OutputStream b,
+                                     String s) throws IOException {
 
         int count = 0;
 
@@ -311,7 +305,7 @@ class StringConverter {
                 if (c1 == 'u') {
                     i++;
 
-                    // characters read from the should always return 0-15
+                    // 4 characters read should always return 0-15
                     int k = HEXINDEX.indexOf(s[offset + (++i)]) << 12;
 
                     k      += HEXINDEX.indexOf(s[offset + (++i)]) << 8;
@@ -348,7 +342,7 @@ class StringConverter {
                 if (c1 == 'u') {
                     i++;
 
-                    // characters read from the should always return 0-15
+                    // 4 characters read should always return 0-15
                     int k = HEXINDEX.indexOf(s.charAt(++i)) << 12;
 
                     k      += HEXINDEX.indexOf(s.charAt(++i)) << 8;
@@ -366,32 +360,29 @@ class StringConverter {
         return new String(b, 0, j);
     }
 
-    public final static String readUTF(byte[] bytearr, int offset,
-                                       int length) throws IOException {
+    public static String readUTF(byte[] bytearr, int offset,
+                                 int length) throws IOException {
 
         HsqlStringBuffer str = new HsqlStringBuffer(length);
         int              c, char2, char3;
         int              count = 0;
 
         while (count < length) {
-            c = (int) bytearr[offset + count] & 0xff;
+            c = (int) bytearr[offset + count];
+
+            if (c > 0) {
+
+                /* 0xxxxxxx*/
+                count++;
+
+                str.append((char) c);
+
+                continue;
+            }
+
+            c &= 0xff;
 
             switch (c >> 4) {
-
-                case 0 :
-                case 1 :
-                case 2 :
-                case 3 :
-                case 4 :
-                case 5 :
-                case 6 :
-                case 7 :
-
-                    /* 0xxxxxxx*/
-                    count++;
-
-                    str.append((char) c);
-                    break;
 
                 case 12 :
                 case 13 :
@@ -449,22 +440,13 @@ class StringConverter {
      * Writes a string to the specified DataOutput using UTF-8 encoding in a
      * machine-independent manner.
      * <p>
-     * First, two bytes are written to out as if by the <code>writeShort</code>
-     * method giving the number of bytes to follow. This value is the number of
-     * bytes actually written out, not the length of the string. Following the
-     * length, each character of the string is output, in sequence, using the
-     * UTF-8 encoding for the character. If no exception is thrown, the
-     * counter <code>written</code> is incremented by the total number of
-     * bytes written to the output stream. This will be at least two
-     * plus the length of <code>str</code>, and at most two plus
-     * thrice the length of <code>str</code>.
-     *
      * @param      str   a string to be written.
      * @param      out   destination to write to
      * @return     The number of bytes written out.
      * @exception  IOException  if an I/O error occurs.
      */
-    static int writeUTF(String str, OutputStream out) throws IOException {
+    public static int writeUTF(String str,
+                               OutputStream out) throws IOException {
 
         int strlen = str.length();
         int utflen = 0;
@@ -506,29 +488,25 @@ class StringConverter {
      * @throws SQLException
      */
     public static String inputStreamToString(InputStream x)
-    throws SQLException {
+    throws IOException {
 
         InputStreamReader in        = new InputStreamReader(x);
         StringWriter      write     = new StringWriter();
         int               blocksize = 8 * 1024;    // todo: is this a good value?
         char              buffer[]  = new char[blocksize];
 
-        try {
-            while (true) {
-                int l = in.read(buffer, 0, blocksize);
+        while (true) {
+            int l = in.read(buffer, 0, blocksize);
 
-                if (l == -1) {
-                    break;
-                }
-
-                write.write(buffer, 0, l);
+            if (l == -1) {
+                break;
             }
 
-            write.close();
-            x.close();
-        } catch (IOException e) {
-            throw Trace.error(Trace.INPUTSTREAM_ERROR, e.getMessage());
+            write.write(buffer, 0, l);
         }
+
+        write.close();
+        x.close();
 
         return write.toString();
     }
@@ -545,8 +523,8 @@ class StringConverter {
 
 // fredt@users 20020130 - patch 497872 by Nitin Chauhan - modified
 // use of string buffer of ample size
-    static String toQuotedString(String s, char quotechar,
-                                 boolean doublequote) {
+    public static String toQuotedString(String s, char quotechar,
+                                        boolean doublequote) {
 
         if (s == null) {
             return "NULL";

@@ -88,6 +88,7 @@ import java.util.*;    // for Map
 import java.util.Hashtable;
 import java.util.StringTokenizer;
 
+import org.hsqldb.lib.StringConverter;
 // fredt@users 20020320 - patch 1.7.0 - JDBC 2 support and error trapping
 // JDBC 2 methods can now be called from jdk 1.1.x - see javadoc comments
 // boucherb@users 20020509 - added "throws SQLException" to all methods where
@@ -2437,8 +2438,8 @@ public class jdbcConnection implements Connection {
             Trace.trace(s);
         }
 
-        String user     = (String) props.get("user");
-        String password = (String) props.get("password");
+        String user     = (String) props.getProperty("user");
+        String password = (String) props.getProperty("password");
 
         if (user == null) {
             user = "";

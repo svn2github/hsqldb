@@ -146,10 +146,10 @@ implements org.hsqldb.DatabaseRowInputInterface {
         } else {
 
             // hsql - old format
-            o = ByteArray.hexToByteArray(binarystring);
+            o = Column.hexToByteArray(binarystring);
         }
 
-        return ByteArray.deserialize(o);
+        return Column.deserialize(o);
     }
 
     protected byte[] readBinary(int type) throws IOException, SQLException {
@@ -163,7 +163,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         } else {
 
             // hsql - old format
-            return ByteArray.hexToByteArray(hexstring);
+            return Column.hexToByteArray(hexstring);
         }
     }
 }

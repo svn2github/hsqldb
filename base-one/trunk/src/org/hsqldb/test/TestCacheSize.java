@@ -96,6 +96,7 @@ public class TestCacheSize {
                 props.load();
                 props.setProperty("hsqldb.log_size", "400");
                 props.setProperty("hsqldb.cache_scale", "16");
+                props.setProperty("hsqldb.log_type", "1");
                 props.save();
 
                 cConnection = DriverManager.getConnection(url + filepath,
@@ -115,7 +116,7 @@ public class TestCacheSize {
      */
     public void testFillUp() {
 
-        int    bigrows   = 1000000;
+        int    bigrows   = 200000;
         int    smallrows = 0xfff;
         double value     = 0;
         String ddl1 = "DROP TABLE test IF EXISTS;"
@@ -268,7 +269,6 @@ public class TestCacheSize {
 
         try {
             long startTime = System.currentTimeMillis();
-
             cConnection = DriverManager.getConnection(url + filepath, user,
                     password);
             sStatement = cConnection.createStatement();

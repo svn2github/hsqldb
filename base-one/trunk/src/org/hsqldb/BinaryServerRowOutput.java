@@ -37,6 +37,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Types;
 import java.sql.SQLException;
+import org.hsqldb.lib.StringConverter;
 
 /**
  *  Provides methods for writing the data for a row to a
@@ -96,10 +97,17 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
 
     public void writeString(String s) throws IOException {
 
-        byte[] bytes = s.getBytes("utf-8");
+        int temp = count;
 
-        writeInt(bytes.length);
-        write(bytes);
+        writeInt(0);
+
+        int writecount = StringConverter.writeUTF(s, this);
+
+        if (writecount != count - temp - 4) {
+            System.out.println("writeUTF count mismatch");
+        }
+
+        writeIntData(count - temp - 4, temp);
     }
 
 // fredt@users - comment - methods used for writing each SQL type
@@ -177,7 +185,7 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
 
     protected void writeOther(Object o) throws IOException, SQLException {
 
-        byte[] ba = ByteArray.serialize(o);
+        byte[] ba = Column.serialize(o);
 
         writeByteArray(ba);
     }
@@ -298,7 +306,7 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
 
                     case Types.OTHER :
                         s += 4;
-                        s += ByteArray.serialize(o).length;
+                        s += Column.serialize(o).length;
                         break;
 
                     default :

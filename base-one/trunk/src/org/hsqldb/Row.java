@@ -71,10 +71,14 @@ import java.io.IOException;
 import java.sql.SQLException;
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-// fredt@users 20020920 - path 1.7.1 by fredt - refactoring to cut mamory footprint
+// fredt@users 20020920 - patch 1.7.1 by fredt - refactoring to cut mamory footprint
 
 /**
- * In-memory representation of a database row object
+ * Base class for a database row object implementing rows for
+ * memory resident tables and TEXT tables.<p>
+ *
+ *
+ * Subclasses implement rows for CACHED tables.
  *
  * @version 1.7.1
  */
@@ -82,6 +86,10 @@ class Row {
 
     protected Object oData[];
     protected Node   nPrimaryNode;
+
+    /**
+     *  Factory method instantiates a Row based on table type.
+     */
 
     static Row newRow(Table t, Object o[]) throws SQLException {
 
@@ -95,7 +103,7 @@ class Row {
     Row() {}
 
     /**
-     *  Constructor declaration
+     *  Constructor for memory Row
      *
      * @param  t
      * @param  o

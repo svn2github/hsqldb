@@ -77,6 +77,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.SQLException;
 import java.sql.Types;
+import org.hsqldb.lib.HsqlByteArrayInputStream;
 
 /**
  * Base class for reading the data for a database row in different formats.
@@ -87,8 +88,7 @@ import java.sql.Types;
  * @author fredt@users
  * @version 1.7.0
  */
-abstract class DatabaseRowInput extends ByteArrayInputStream
-implements DataInput {
+abstract class DatabaseRowInput extends HsqlByteArrayInputStream {
 
     static final int NO_POS  = -1;
     protected int    filePos = NO_POS;
@@ -97,6 +97,23 @@ implements DataInput {
 
     // the last column is a SYSTEM_ID that has to be created at read time
     protected boolean makeSystemId = false;
+
+    static DatabaseRowInputInterface newDatabaseRowInput(int cachedRowType)
+    throws SQLException {
+
+        try {
+            if (cachedRowType == DatabaseRowOutput.CACHE_ROW_170) {
+                return new BinaryServerRowInput();
+            } else {
+                Class c = Class.forName("org.hsqldb.BinaryDatabaseRowInput");
+
+                return (DatabaseRowInputInterface) c.newInstance();
+            }
+        } catch (Exception e) {
+            throw Trace.error(Trace.MISSING_SOFTWARE_MODULE,
+                              "legacy db support");
+        }
+    }
 
     public DatabaseRowInput() {
         this(new byte[4]);
@@ -176,126 +193,6 @@ implements DataInput {
     protected abstract byte[] readBinary(int type)
     throws IOException, SQLException;
 
-// fredt@users - comment - methods used for reading java primitive types
-    public final void readFully(byte b[]) throws IOException {
-        readFully(b, 0, b.length);
-    }
-
-    public final void readFully(byte b[], int off,
-                                int len) throws IOException {
-
-        if (len < 0) {
-            throw new IndexOutOfBoundsException();
-        }
-
-        int n = 0;
-
-        while (n < len) {
-            int count = read(b, off + n, len - n);
-
-            if (count < 0) {
-                throw new EOFException();
-            }
-
-            n += count;
-        }
-    }
-
-    public final boolean readBoolean() throws IOException {
-
-        int ch = read();
-
-        if (ch < 0) {
-            throw new EOFException();
-        }
-
-        return (ch != 0);
-    }
-
-    public final byte readByte() throws IOException {
-
-        int ch = read();
-
-        if (ch < 0) {
-            throw new EOFException();
-        }
-
-        return (byte) ch;
-    }
-
-    public final int readUnsignedByte() throws IOException {
-
-        int ch = read();
-
-        if (ch < 0) {
-            throw new EOFException();
-        }
-
-        return ch;
-    }
-
-    public final short readShort() throws IOException {
-
-        int ch1 = read();
-        int ch2 = read();
-
-        if ((ch1 | ch2) < 0) {
-            throw new EOFException();
-        }
-
-        return (short) ((ch1 << 8) + (ch2 << 0));
-    }
-
-    public final int readUnsignedShort() throws IOException {
-
-        int ch1 = read();
-        int ch2 = read();
-
-        if ((ch1 | ch2) < 0) {
-            throw new EOFException();
-        }
-
-        return (ch1 << 8) + (ch2 << 0);
-    }
-
-    public final char readChar() throws IOException {
-
-        int ch1 = read();
-        int ch2 = read();
-
-        if ((ch1 | ch2) < 0) {
-            throw new EOFException();
-        }
-
-        return (char) ((ch1 << 8) + (ch2 << 0));
-    }
-
-    public final int readInt() throws IOException {
-
-        int ch1 = read();
-        int ch2 = read();
-        int ch3 = read();
-        int ch4 = read();
-
-        if ((ch1 | ch2 | ch3 | ch4) < 0) {
-            throw new EOFException();
-        }
-
-        return ((ch1 << 24) + (ch2 << 16) + (ch3 << 8) + (ch4 << 0));
-    }
-
-    public final long readLong() throws IOException {
-        return ((long) (readInt()) << 32) + (readInt() & 0xFFFFFFFFL);
-    }
-
-    public final float readFloat() throws IOException {
-        return Float.intBitsToFloat(readInt());
-    }
-
-    public final double readDouble() throws IOException {
-        return Double.longBitsToDouble(readLong());
-    }
-
     /**
      *  reads row data from a stream using the JDBC types in colTypes
      *
@@ -312,6 +209,8 @@ implements DataInput {
 
         if (makeSystemId) {
             l--;
+
+            data[l] = new Integer(getPos());
         }
 
         Object o;
@@ -319,8 +218,6 @@ implements DataInput {
 
         for (int i = 0; i < l; i++) {
             if (checkNull()) {
-
-//                data[i] = null;
                 continue;
             }
 
@@ -393,10 +290,6 @@ implements DataInput {
             }
 
             data[i] = o;
-        }
-
-        if (makeSystemId) {
-            data[l] = new Integer(getPos());
         }
 
         return data;

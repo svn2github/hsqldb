@@ -68,6 +68,7 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.HsqlStringBuffer;
+import org.hsqldb.lib.StringConverter;
 
 /**
  * Name of an SQL object<p>

@@ -73,6 +73,7 @@ import java.io.*;
 import java.util.*;
 import java.sql.SQLException;
 
+import org.hsqldb.lib.StringConverter;
 // fredt@users 20020130 - patch 475586 by wreissen@users
 // fredt@users 20020328 - patch 1.7.0 by fredt - error trapping
 
@@ -230,7 +231,7 @@ public class Servlet extends javax.servlet.http.HttpServlet {
             user     = StringConverter.hexStringToUnicode(user);
             password = StringConverter.hexStringToUnicode(password);
             s        = StringConverter.hexStringToUnicode(s);
-        } catch (SQLException e) {
+        } catch (IOException e) {
             throw new ServletException();
         }
 

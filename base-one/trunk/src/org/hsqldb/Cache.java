@@ -96,7 +96,7 @@ class Cache {
     // post openning constant fields
     boolean           cacheReadonly;
     private int       cacheScale;
-    private boolean   newCacheType;
+    private int   cachedRowType = DatabaseRowOutput.CACHE_ROW_160;
     private int       cacheLength;
     private int       writerLength;
     private int       maxCacheSize;
@@ -154,22 +154,8 @@ class Cache {
     }
 
     private void initBuffers() throws SQLException {
-
-        try {
-            if (newCacheType) {
-                rowIn  = new BinaryServerRowInputTest();
-                rowOut = new BinaryServerRowOutputTest();
-            } else {
-                Class c = Class.forName("org.hsqldb.BinaryDatabaseRowInput");
-
-                rowIn  = (DatabaseRowInputInterface) c.newInstance();
-                c      = Class.forName("org.hsqldb.BinaryDatabaseRowOutput");
-                rowOut = (DatabaseRowOutputInterface) c.newInstance();
-            }
-        } catch (Exception e) {
-            Trace.throwerror(Trace.MISSING_SOFTWARE_MODULE,
-                             "legacy db support");
-        }
+         rowIn  = DatabaseRowInput.newDatabaseRowInput(cachedRowType);
+         rowOut = DatabaseRowOutput.newDatabaseRowOutput(cachedRowType);
     }
 
     Cache(String name, Database db) throws SQLException {
@@ -232,7 +218,7 @@ class Cache {
                 "1.6.0");
 
             if (cacheVersion.equals("1.7.0")) {
-                newCacheType = true;
+                cachedRowType = DatabaseRowOutput.CACHE_ROW_170;
             }
 
             initBuffers();
@@ -272,8 +258,8 @@ class Cache {
     }
 
     /**
-     *  Writes out all cached data and the free position to this
-     *  object's database file and then closes the file.
+     *  Writes out all the rows to a new file without fragmentation and
+     *  returns an ArrayList containing new positions for index roots.
      */
     HsqlArrayList defrag() throws SQLException {
 
@@ -299,8 +285,6 @@ class Cache {
             init(cacheScale);
             open(cacheReadonly);
             Trace.printSystemOut("opened new file");
-
-// db set index roots
         } catch (Exception e) {
             e.printStackTrace();
             Trace.throwerror(Trace.FILE_IO_ERROR,

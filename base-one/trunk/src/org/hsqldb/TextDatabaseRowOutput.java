@@ -281,7 +281,7 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
     protected void writeOther(Object o) throws IOException, SQLException {
 
-        byte[] ba = ByteArray.serialize(o);
+        byte[] ba = Column.serialize(o);
 
         writeByteArray(ba);
     }

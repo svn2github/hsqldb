@@ -83,7 +83,7 @@ import java.sql.Types;
 import java.util.*;    // for Map
 import java.util.Calendar;
 import java.util.Vector;
-import org.hsqldb.lib.HsqlDateTime;
+import org.hsqldb.lib.StringConverter;
 
 // fredt@users 20020320 - patch 1.7.0 - JDBC 2 support and error trapping
 // JDBC 2 methods can now be called from jdk 1.1.x - see javadoc comments
@@ -860,10 +860,15 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
             Trace.trace();
         }
 
-        if (x == null) {
-            setNull(parameterIndex);
-        } else {
-            setString(parameterIndex, StringConverter.inputStreamToString(x));
+        try {
+            if (x == null) {
+                setNull(parameterIndex);
+            } else {
+                setString(parameterIndex,
+                          StringConverter.inputStreamToString(x));
+            }
+        } catch (IOException e) {
+            throw Trace.error(Trace.INVALIC_CHARACTER_ENCODING);
         }
     }
 
@@ -5077,7 +5082,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
             case Types.OTHER :
                 setParameter(
                     parameterIndex,
-                    Column.createSQLString(ByteArray.serializeToString(x)));
+                    Column.createSQLString(Column.serializeToString(x)));
                 break;
 
             default :
