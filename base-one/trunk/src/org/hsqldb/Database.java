@@ -295,17 +295,17 @@ public class Database {
 
     void clearStructures() {
 
-        isNew           = false;
-        tTable          = null;
-        userManager     = null;
-        hAlias          = null;
-        nameManager     = null;
-        triggerNameList = null;
+        isNew              = false;
+        tTable             = null;
+        userManager        = null;
+        hAlias             = null;
+        nameManager        = null;
+        triggerNameList    = null;
         constraintNameList = null;
-        indexNameList   = null;
-        sequenceManager = null;
-        sessionManager  = null;
-        dInfo           = null;
+        indexNameList      = null;
+        sequenceManager    = null;
+        sessionManager     = null;
+        dInfo              = null;
     }
 
     /**
@@ -1008,34 +1008,29 @@ public class Database {
     }
 
     /**
-     * Ensures that under the correct conditions the system table producer's
-     * table cache, if any, is set dirty. <p>
-     *
-     * This call is require to ensure that up-to-date versions are
-     * generated if necessary in response to following system table
+     * Ensures system table producer's table cache, if any, is set dirty.
+     * and up-to-date versions are
+     * generated if necessary in response to subsequent system table
      * requests. <p>
      *
-     * The result argument, if non-null, is checked for update status.
-     * If it is an update result with an update count, then the call must
-     * have come from a successful SELECT INTO statement, in which a case a
-     * new table was created and all system tables reporting in the tables,
-     * columns, indexes, etc. are dirty. <p>
+     * Also resets all prepared statements if a change to database structure
+     * can possibly affect any existing prepared statement's validdity.<p>
      *
-     * If the Result argument is null, then the call must have come from a DDL
-     * statement other than a set statement, in which case a database object
-     * was created, dropped, altered or a permission was granted or revoked,
-     * meaning that potentially all cached ssytem table are dirty.
+     * The argument is false if the change to the database structure does not
+     * affect the prepared statement, such as when a new table is added.<p>
      *
-     * @param r A Result to test for update status, indicating the a table
-     *      was created as the result of executing a SELECT INTO statement.
+     * The argument is true when a table is dropped, altered or a permission
+     * was revoked. Also when an indes is added or dropped which affects the
+     * inner working of prepared statements.
+     *
+     * @param  resetPrepared If true, reset all prepared statements.
      */
-    void setMetaDirty(Result r) {
+    void setMetaDirty(boolean resetPrepared) {
 
-        if (r == null
-                || (r.iMode == ResultConstants.UPDATECOUNT
-                    && r.iUpdateCount > 0)) {
-            nextDDLSCN();
-            dInfo.setDirty();
+        dInfo.setDirty();
+
+        if (resetPrepared) {
+            this.compiledStatementManager.resetStatements();
         }
     }
 
@@ -1072,19 +1067,8 @@ public class Database {
         return scn;
     }
 
-    synchronized long getDDLSCN() {
-        return ddl_scn;
-    }
-
     synchronized long getDMLSCN() {
         return dml_scn;
-    }
-
-    synchronized long nextDDLSCN() {
-
-        ddl_scn = nextSCN();
-
-        return ddl_scn;
     }
 
     synchronized long nextDMLSCN() {

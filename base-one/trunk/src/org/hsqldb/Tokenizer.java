@@ -67,6 +67,7 @@
 
 package org.hsqldb;
 
+import java.util.Locale;
 import java.math.BigDecimal;
 
 import org.hsqldb.lib.HashMap;
@@ -305,13 +306,13 @@ public class Tokenizer {
             case STRING :
 
                 // fred - no longer including first quote in sToken
-                return sToken.toUpperCase();
+                return sToken.toUpperCase(Locale.ENGLISH);
 
             case NAME :
                 return sToken;
 
             case QUOTED_IDENTIFIER :
-                return sToken.toUpperCase();
+                return sToken.toUpperCase(Locale.ENGLISH);
         }
 
         throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
@@ -813,7 +814,8 @@ public class Tokenizer {
                     }
 
                     // fredt - todo new char[] to back sToken
-                    sToken = sCommand.substring(start, iIndex).toUpperCase();
+                    sToken = sCommand.substring(start, iIndex).toUpperCase(
+                        Locale.ENGLISH);
 
                     if (c == '.') {
                         sLongNameFirst = sToken;

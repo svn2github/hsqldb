@@ -184,7 +184,7 @@ public class Session implements SessionInterface {
 
         rollback();
         database.dropTempTables(this);
-        compiledStatementManager.processDisconnect(sessionId);
+        compiledStatementManager.removeSession(sessionId);
 
         database                  = null;
         user                      = null;
@@ -990,33 +990,24 @@ public class Session implements SessionInterface {
      */
     private Result sqlPrepare(String sql) {
 
-        CompiledStatement cs   = null;
         int               csid = compiledStatementManager.getStatementID(sql);
+        CompiledStatement cs   = compiledStatementManager.getStatement(csid);
         Result            rsmd;
         Result            pmd;
 
-        // ...check valid...
-        if (csid > 0 && compiledStatementManager.isValid(csid, sessionId)) {
-            cs   = compiledStatementManager.getStatement(csid);
-            rsmd = cs.describeResultSet();
-            pmd  = cs.describeParameters();
+        if (cs == null) {
 
-            return Result.newPrepareResponse(csid, rsmd, pmd);
+            // ...compile or (re)validate
+            try {
+                cs = sqlCompileStatement(sql);
+            } catch (Throwable t) {
+                return new Result(t, sql);
+            }
+
+            csid = compiledStatementManager.registerStatement(csid, cs);
         }
 
-        // ...compile or (re)validate
-        try {
-            cs = sqlCompileStatement(sql);
-        } catch (Throwable t) {
-            return new Result(t, sql);
-        }
-
-        if (csid <= 0) {
-            csid = compiledStatementManager.registerStatement(cs);
-        }
-
-        compiledStatementManager.setValidated(csid, sessionId,
-                                              database.getDDLSCN());
+        compiledStatementManager.linkSession(csid, sessionId);
 
         rsmd = cs.describeResultSet();
         pmd  = cs.describeParameters();
@@ -1038,16 +1029,13 @@ public class Session implements SessionInterface {
         cs   = compiledStatementManager.getStatement(csid);
 
         if (cs == null) {
-            return Trace.toResult(
-                Trace.error(Trace.INTERNAL_ivalid_compiled_statement_id));
-        }
-
-        if (!compiledStatementManager.isValid(csid, sessionId)) {
             out = sqlPrepare(cs.sql);
 
             if (out.iMode == ResultConstants.ERROR) {
                 return out;
             }
+
+            compiledStatementManager.getStatement(csid);
         }
 
         parameters   = cs.parameters;
@@ -1178,19 +1166,22 @@ public class Session implements SessionInterface {
         cs    = compiledStatementManager.getStatement(csid);
 
         if (cs == null) {
-            return Trace.toResult(
-                Trace.error(Trace.INTERNAL_ivalid_compiled_statement_id));
-        }
+            String sql = compiledStatementManager.getSql(csid);
 
-        if (!compiledStatementManager.isValid(csid, sessionId)) {
-            Result r = sqlPrepare(cs.sql);
+            if (sql == null) {
+                cmd.getStatementID();
+            }
+
+            Result r = sqlPrepare(sql);
 
             if (r.iMode == ResultConstants.ERROR) {
 
-                // TODO:
+                // sql is invalid due to DDL changes
                 // maybe compiledStatementManager.freeStatement(csid,iId);?
                 return r;
             }
+
+            cs = compiledStatementManager.getStatement(csid);
         }
 
         parameters = cs.parameters;
@@ -1214,19 +1205,15 @@ public class Session implements SessionInterface {
      * Retrieves the result of freeing the statement with the given id.
      *
      * @param csid the numeric identifier of the statement
-     * @return the result of freeing the indicated statement
      */
     private Result sqlFreeStatement(int csid) {
 
-        boolean existed;
-        Result  result;
+        Result result;
 
-        existed = compiledStatementManager.freeStatement(csid, sessionId);
-        result  = new Result(ResultConstants.UPDATECOUNT);
+        compiledStatementManager.freeStatement(csid, sessionId);
 
-        if (existed) {
-            result.iUpdateCount = 1;
-        }
+        result              = new Result(ResultConstants.UPDATECOUNT);
+        result.iUpdateCount = 1;
 
         return result;
     }

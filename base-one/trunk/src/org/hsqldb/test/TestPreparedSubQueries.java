@@ -32,8 +32,6 @@
 package org.hsqldb.test;
 
 import java.sql.*;
-import java.io.*;
-import java.text.*;
 
 /**
  * @author kloska@users

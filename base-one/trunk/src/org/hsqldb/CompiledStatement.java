@@ -41,20 +41,20 @@ package org.hsqldb;
  */
 final class CompiledStatement {
 
-    static final int        UNKNOWN = 0;
+    static final int UNKNOWN = 0;
 
     // enumeration of allowable CompiledStatement types
-    static final int        INSERT_VALUES = 1;
-    static final int        INSERT_SELECT = 2;
-    static final int        UPDATE        = 3;
-    static final int        DELETE        = 4;
-    static final int        SELECT        = 5;
-    static final int        CALL          = 6;
+    static final int INSERT_VALUES = 1;
+    static final int INSERT_SELECT = 2;
+    static final int UPDATE        = 3;
+    static final int DELETE        = 4;
+    static final int SELECT        = 5;
+    static final int CALL          = 6;
 
     // enumeration of catagories
-    static final int        DML = 7;
-    static final int        DQL = 8;
-    static final int        DDL = 9;
+    static final int DML = 7;
+    static final int DQL = 8;
+    static final int DDL = 9;
 
     /** target table for INSERT_XXX, UPDATE and DELETE */
     Table targetTable;
@@ -116,19 +116,10 @@ final class CompiledStatement {
      *  <li>DELETE
      *  <li>SELECT
      *  <li>CALL
+     *  <li>DDL
      * </ol>
      */
     int type;
-
-    /**
-     * The statement id of this compiled statement
-     */
-    int id;
-
-    /**
-     * The use count for this compiled statement
-     */
-    int use;
 
     /**
      * The SQL string that produced this compiled statement
@@ -170,7 +161,7 @@ final class CompiledStatement {
      * @param parameters
      */
     CompiledStatement(Table targetTable, Expression deleteCondition,
-                     Expression[] parameters) throws HsqlException {
+                      Expression[] parameters) throws HsqlException {
 
         this.targetTable = targetTable;
         tf               = new TableFilter(targetTable, null, false);

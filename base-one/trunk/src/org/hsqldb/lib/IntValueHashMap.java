@@ -55,18 +55,60 @@ public class IntValueHashMap extends BaseHashMap {
     }
 
     public int get(Object key) throws NoSuchElementException {
-        return super.getInt(key);
+
+        if (key == null) {
+            throw new NoSuchElementException();
+        }
+
+        int hash   = key.hashCode();
+        int lookup = getLookup(key, hash);
+
+        if (lookup != -1) {
+            return intValueTable[lookup];
+        }
+
+        throw new NoSuchElementException();
     }
 
     public int get(Object key, int defaultValue) {
-        return super.getInt(key, defaultValue);
+
+        if (key == null) {
+            throw new NoSuchElementException();
+        }
+
+        int hash   = key.hashCode();
+        int lookup = getLookup(key, hash);
+
+        if (lookup != -1) {
+            return intValueTable[lookup];
+        }
+
+        return defaultValue;
     }
 
     public boolean get(Object key, int[] value) {
-        return super.getInt(key, value);
+
+        if (key == null) {
+            throw new NoSuchElementException();
+        }
+
+        int hash   = key.hashCode();
+        int lookup = getLookup(key, hash);
+
+        if (lookup != -1) {
+            value[0] = intValueTable[lookup];
+
+            return true;
+        }
+
+        return false;
     }
 
     public boolean put(Object key, int value) {
+
+        if (key == null) {
+            throw new NoSuchElementException();
+        }
 
         int oldSize = size();
 

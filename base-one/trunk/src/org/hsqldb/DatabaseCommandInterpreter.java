@@ -215,7 +215,7 @@ class DatabaseCommandInterpreter {
                 } else {
                     result = processSelectInto(cStatement.select);
 
-                    database.setMetaDirty(result);
+                    database.setMetaDirty(false);
                 }
 
                 break;
@@ -297,32 +297,32 @@ class DatabaseCommandInterpreter {
 
             case Token.CREATE :
                 processCreate();
-                database.setMetaDirty(null);
+                database.setMetaDirty(true);
                 break;
 
             case Token.ALTER :
                 processAlter();
-                database.setMetaDirty(null);
+                database.setMetaDirty(true);
                 break;
 
             case Token.DROP :
                 processDrop();
-                database.setMetaDirty(null);
+                database.setMetaDirty(true);
                 break;
 
             case Token.GRANT :
                 processGrantOrRevoke(true);
-                database.setMetaDirty(null);
+                database.setMetaDirty(false);
                 break;
 
             case Token.REVOKE :
                 processGrantOrRevoke(false);
-                database.setMetaDirty(null);
+                database.setMetaDirty(true);
                 break;
 
             case Token.CONNECT :
                 processConnect();
-                database.setMetaDirty(null);
+                database.setMetaDirty(false);
                 session.setScripting(false);
                 break;
 

@@ -31,18 +31,47 @@
 
 package org.hsqldb;
 
-import java.util.Hashtable;
-
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.IntKeyHashMap;
-import org.hsqldb.store.ValuePool;
+import org.hsqldb.lib.IntValueHashMap;
+import org.hsqldb.lib.IntKeyIntValueHashMap;
 
 /**
- * Acts as a CompliedStatement pool by managing the registration, lookup and
- * validation of CompiledStatement objects for a Database instance.
+ * This class manages the reuse of CompiledStatement objects for prepared
+ * statements for a Database instance.<p>
+ *
+ * A compiled statement is registered by any session to be managed. Once
+ * registered, it is linked with one or more sessions.<p>
+ *
+ * The sql statement distinguishes different compiled statements and acts
+ * as lookup when a session initially looks for an existing instance of
+ * the compiled sql statement.<p>
+ *
+ * Once a session is linked with a statement, it uses the uniqe compiled
+ * statement id for the sql statement to access the statement.<p>
+ *
+ * Changes to database structure via DDL statements, will result in all
+ * registered CompiledStatement objects to become invalidated. This is done by
+ * setting to null all the managed CompiledStatement instances, while keeping
+ * their id and sql string. When a session subsequently attempts to use an
+ * invalidated (null) CompiledStatement via its id, it will reinstantiate the
+ * CompiledStatement using its sql statement still held by this class.<p>
+ *
+ * This class keeps count of the number of different sessions that are linked
+ * to each registered compiled statement, and the number of times each session
+ * is linked.  It unregisters a compiled statement when no session remains
+ * linked to it.<p>
+ *
+ * Modified by fredt@users from the original to simplify, support multiple
+ * identical prepared statements per session, and avoid keeping references
+ * to CompiledStatement objects after DDL changes which could result in
+ * memory leaks. <p>
+ *
  *
  * @author boucher@users.sourceforge.net
- * @since HSQLDB 1.7.2
+ * @author fredt@users
+ *
+ * @since 1.7.2
  * @version 1.7.2
  */
 final class CompiledStatementManager {
@@ -53,14 +82,16 @@ final class CompiledStatementManager {
      */
     Database database;
 
-    /** Map:  SQL String => CompiledStatement */
-    Hashtable sqlMap;
+    /** Map:  SQL String => Compiled Statement id */
+    IntValueHashMap sqlMap;
+    IntKeyHashMap   sqlLookup;
 
     /** Map: compiled statment id (int) => CompiledStatement object. */
     IntKeyHashMap csidMap;
 
-    /** Map: Session id (int) => Map: compiled statement id (int) => SCN (Long); */
-    IntKeyHashMap validationMap;
+    /** Map: Session id (int) => Map: compiled statement id (int) => use count in session; */
+    IntKeyHashMap         sessionMap;
+    IntKeyIntValueHashMap useMap;
 
     /**
      * Monotonically increasing counter used to assign unique ids to compiled
@@ -77,19 +108,42 @@ final class CompiledStatementManager {
     CompiledStatementManager(Database database) {
 
         this.database = database;
-        sqlMap        = new Hashtable();
+        sqlMap        = new IntValueHashMap();
+        sqlLookup     = new IntKeyHashMap();
         csidMap       = new IntKeyHashMap();
-        validationMap = new IntKeyHashMap();
+        sessionMap    = new IntKeyHashMap();
+        useMap        = new IntKeyIntValueHashMap();
         next_cs_id    = 0;
     }
 
+    /**
+     * Clears all internal data structures, removing any references to compiled statements.
+     */
     void reset() {
 
         sqlMap.clear();
+        sqlLookup.clear();
         csidMap.clear();
-        validationMap.clear();
+        sessionMap.clear();
+        useMap.clear();
 
         next_cs_id = 0;
+    }
+
+    /**
+     * Used after a DDL change that could impact the compiled statements.
+     * Clears references to CompiledStatement objects while keeping the counts
+     * and references to the sql strings.
+     */
+    void resetStatements() {
+
+        Iterator it = csidMap.keySet().iterator();
+
+        while (it.hasNext()) {
+            int key = it.nextInt();
+
+            csidMap.put(key, null);
+        }
     }
 
     /**
@@ -105,86 +159,22 @@ final class CompiledStatementManager {
     }
 
     /**
-     * Associates the specified system change number with the specified
-     * compiled statement identifier, relative to the specified session
-     * identifier, returning the old scn associated with the (csid,sid)
-     * pair, or a value less than zero if there was no such association.
-     *
-     * @param csid the compiled statement identifier
-     * @param sid the session identifier
-     * @param scn the system change number
-     * @return the old scn associated with the (csid, sid) pair
-     */
-    private long setSCN(int csid, int sid, long scn) {
-
-        IntKeyHashMap scsMap;
-        Long          oldscn;
-
-        scsMap = (IntKeyHashMap) validationMap.get(sid);
-
-        if (scsMap == null) {
-            scsMap = new IntKeyHashMap();
-
-            validationMap.put(sid, scsMap);
-        }
-
-        oldscn = (Long) scsMap.put(csid, ValuePool.getLong(scn));
-
-        return (oldscn == null) ? Long.MIN_VALUE
-                                : oldscn.longValue();
-    }
-
-    /**
-     * Retrieves the system change number associated with the specified
-     * compiled statement identifier, in the context of the specified
-     * session identifier.
-     *
-     * @param csid the compiled statement identifier
-     * @param sid the session identifier
-     * @return the system change number associated with the specified
-     *        compiled statement identifier, in the context of
-     *        the specified session identifier.
-     */
-    private long getSCN(int csid, int sid) {
-
-        IntKeyHashMap scsMap;
-        Long          scn;
-
-        scsMap = (IntKeyHashMap) validationMap.get(sid);
-
-        if (scsMap == null) {
-            return Long.MIN_VALUE;
-        }
-
-        scn = (Long) scsMap.get(csid);
-
-        return (scn == null) ? Long.MIN_VALUE
-                             : scn.longValue();
-    }
-
-    /**
-     * Retrieves the compiled statement identifier associated with the
-     * specified SQL String, or a value less than zero, if no such
-     * association exists.
+     * Retrieves the registered compiled statement identifier associated with
+     * the specified SQL String, or a value less than zero, if no such
+     * statement has been registered.
      *
      * @param sql the SQL String
      * @return the compiled statement identifier associated with the
      *      specified SQL String
      */
     synchronized int getStatementID(String sql) {
-
-        CompiledStatement cs;
-
-        cs = (CompiledStatement) sqlMap.get(sql);
-
-        return cs == null ? Integer.MIN_VALUE
-                          : cs.id;
+        return sqlMap.get(sql, -1);
     }
 
     /**
      * Retrieves the CompiledStatement object having the specified compiled
-     * statement identifier, or null if no such CompiledStatement object
-     * exists.
+     * statement identifier, or null if the CompiledStatement object
+     * has been invalidated.
      *
      * @param csid the identifier of the requested CompiledStatement object
      * @return the requested CompiledStatement object
@@ -194,150 +184,121 @@ final class CompiledStatementManager {
     }
 
     /**
-     * Retrieves whether the CompiledStatement object with the specified
-     * identifier was definitely set as validated at or after the time of the
-     * last potentially invalidating system change, relative to the specified
-     * session identifier.
+     * Retreives the sql statement for a registered compiled statement.
      *
      * @param csid the compiled statement identifier
-     * @param sid the session identifier
-     * @return true if the specified compiled statement was set valid
-     *      after the last invalidation system change number
+     * @return sql string
      */
-    synchronized boolean isValid(int csid, int sid) {
-        return getSCN(csid, sid) >= database.getDDLSCN();
+    synchronized String getSql(int csid) {
+        return (String) sqlLookup.get(csid);
     }
 
     /**
-     * Retrieves the system change number last associated with the specified
-     * compiled statement, relative to the specified session identifier.  If
-     * no such association exists, a value less than zero is returned.
+     * Links a session with a registered compiled statement.
+     *
+     * If this session has not already been linked with the given
+     * statement, then the statement use count is incremented.
      *
      * @param csid the compiled statement identifier
      * @param sid the session identifier
-     * @return the system change number last associated with the specified
-     *      compiled statement, relative to the specified session identifier.
      */
-    synchronized long getValidated(int csid, int sid) {
-        return csid > 0 ? getSCN(csid, sid)
-                        : Long.MIN_VALUE;
-    }
+    synchronized void linkSession(int csid, int sid) {
 
-    /**
-     * Causes the specified system change number to be associated with the
-     * specified compiled statement identifier as the last time the compiled
-     * statement was determined to be valid, relative to the Session specified
-     * by the session identifier.  If this is the first such operation relative
-     * to the (csid,sid) pair, the use count of the compiled statement is
-     * incremented.
-     *
-     * @param csid the compiled statement identifier
-     * @param sid the session identifier
-     * @param scn the system change number
-     * @return the last scn at which the indicated compiled statement was set
-     *      valid, relative to the indicated Session.  A value less than zero
-     *      indicates that no such compiled statement is registered. A value of
-     *      0 indicates that this is the first time the registered compiled
-     *      statement has been set valid, relative to the specified Session.
-     */
-    synchronized long setValidated(int csid, int sid, long scn) {
+        IntKeyIntValueHashMap scsMap;
 
-        CompiledStatement cs;
-        long              oldscn;
+        scsMap = (IntKeyIntValueHashMap) sessionMap.get(sid);
 
-        cs = (CompiledStatement) csidMap.get(csid);
+        if (scsMap == null) {
+            scsMap = new IntKeyIntValueHashMap();
 
-        if (cs == null) {
-            return Long.MIN_VALUE;
+            sessionMap.put(sid, scsMap);
         }
 
-        oldscn = setSCN(cs.id, sid, scn);
+        int count = scsMap.get(csid, 0);
 
-        if (oldscn < 0) {
-            cs.use++;
+        scsMap.put(csid, count + 1);
+
+        if (count == 0) {
+            useMap.put(csid, useMap.get(csid, 0) + 1);
         }
-
-        return oldscn < 0 ? 0
-                          : oldscn;
     }
 
     /**
-     * Binds the specified CompiledStatement object into this object's active
-     * compiled statement registry.  It is trusted completely that the caller
-     * is actually registering a previously unregistered CompiledStatement
-     * object; no checks are done in the interest of performance. Typically,
-     * the only caller should be a Session that is attempting to perform a
-     * prepare and has discovered that this CompiledStatementManager has
-     * no such statement registered, as indicated by a negative return value
-     * from {@link #getStatementID(String) getStatementID()}.
+     * Registers a compiled statement to be managed.
      *
+     * The only caller should be a Session that is attempting to prepare
+     * a statement for the first time, or a statement that has been invalidated
+     * due to DDL changes.
+     *
+     * @param csid existing id or negative if the statement is not yet managed
      * @param cs The CompiledStatement to add
-     * @return The compiled statement id assigned to the freshly bound
-     *      CompiledStatement object
+     * @return The compiled statement id assigned to the CompiledStatement
+     *  object
      */
-    synchronized int registerStatement(CompiledStatement cs) {
+    synchronized int registerStatement(int csid, CompiledStatement cs) {
 
-        cs.id  = nextID();
-        cs.use = 0;
+        if (csid < 0) {
+            csid = nextID();
 
-        sqlMap.put(cs.sql, cs);
-        csidMap.put(cs.id, cs);
+            sqlMap.put(cs.sql, csid);
+            sqlLookup.put(csid, cs.sql);
+        }
 
-        return cs.id;
+        csidMap.put(csid, cs);
+
+        return csid;
     }
 
     /**
-     * Releases any claim that the session with the specified session
-     * identifier may have on the compiled statement with the specified
-     * compiled statement identifier.  This includes releasing the asscociated
-     * validation resources, as well as possibly dropping the compiled
-     * statement itself and any resources associated with it, if it is
-     * determined that no other claims exists.
+     * Removes the link between a session and a compiled statement.
+     *
+     * If the statement is not linked with any other session, it is removed
+     * from management.
      *
      * @param csid the compiled statment identifier
      * @param sid the session identifier
-     * @return true if the statement was actually deallocated
      */
-    synchronized boolean freeStatement(int csid, int sid) {
+    synchronized void freeStatement(int csid, int sid) {
 
-        CompiledStatement cs;
-        IntKeyHashMap     scsMap;
+        IntKeyIntValueHashMap scsMap =
+            (IntKeyIntValueHashMap) sessionMap.get(sid);
+        int count = scsMap.get(csid) - 1;
 
-        cs     = (CompiledStatement) csidMap.get(csid);
-        scsMap = (IntKeyHashMap) validationMap.get(sid);
+        if (count != 0) {
+            scsMap.put(csid, count);
+        } else {
+            scsMap.remove(csid);
 
-        if (cs == null || scsMap == null || scsMap.remove(csid) == null) {
-            return false;
+            int usecount = useMap.get(csid, 1) - 1;
+
+            if (usecount == 0) {
+                String sql = (String) sqlLookup.remove(csid);
+
+                sqlMap.remove(sql);
+                csidMap.remove(csid);
+                useMap.remove(csid);
+            } else {
+                useMap.put(csid, usecount);
+            }
         }
-
-        cs.use--;
-
-        if (cs.use < 1) {
-            sqlMap.remove(cs.sql);
-            csidMap.remove(cs.id);
-        }
-
-        return true;
     }
 
     /**
-     * Releases the claim on any registered compiled statement objects
-     * held by the session with the specified session identifier. This
-     * includes releasing the asscociated validation resources, as well as
-     * possibly dropping each or some of the compiled statements themselves
-     * and any resources associated with them, if it is determined that no
-     * other claims are held by different sessions.
+     * Releases the link betwen the session and all compiled statement objects
+     * it is linked to.
+     *
+     * If any such statement is not linked with any other session, it is
+     * removed from management.
      *
      * @param sid the session identifier
      */
-    synchronized void processDisconnect(int sid) {
+    synchronized void removeSession(int sid) {
 
-        IntKeyHashMap     scsMap;
-        CompiledStatement cs;
-        int               csid;
-        Iterator          i;
+        IntKeyIntValueHashMap scsMap;
+        int                   csid;
+        Iterator              i;
 
-        scsMap = (IntKeyHashMap) validationMap.remove(sid);
+        scsMap = (IntKeyIntValueHashMap) sessionMap.remove(sid);
 
         if (scsMap == null) {
             return;
@@ -347,13 +308,17 @@ final class CompiledStatementManager {
 
         while (i.hasNext()) {
             csid = i.nextInt();
-            cs   = (CompiledStatement) csidMap.get(csid);
 
-            cs.use--;
+            int usecount = useMap.get(csid, 1) - 1;
 
-            if (cs.use < 1) {
-                sqlMap.remove(cs.sql);
-                csidMap.remove(cs.id);
+            if (usecount == 0) {
+                String sql = (String) sqlLookup.remove(csid);
+
+                sqlMap.remove(sql);
+                csidMap.remove(csid);
+                useMap.remove(csid);
+            } else {
+                useMap.put(csid, usecount);
             }
         }
     }

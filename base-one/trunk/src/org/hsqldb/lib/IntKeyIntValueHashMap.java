@@ -37,6 +37,9 @@ import org.hsqldb.store.BaseHashMap;
 
 public class IntKeyIntValueHashMap extends org.hsqldb.store.BaseHashMap {
 
+    Set        keySet;
+    Collection values;
+
     public IntKeyIntValueHashMap() {
         this(16, 0.75f);
     }
@@ -54,15 +57,38 @@ public class IntKeyIntValueHashMap extends org.hsqldb.store.BaseHashMap {
     }
 
     public int get(int key) throws NoSuchElementException {
-        return super.getInt(key);
+
+        int lookup = getLookup(key);
+
+        if (lookup != -1) {
+            return intValueTable[lookup];
+        }
+
+        throw new NoSuchElementException();
     }
 
     public int get(int key, int defaultValue) {
-        return super.getInt(key, defaultValue);
+
+        int lookup = getLookup(key);
+
+        if (lookup != -1) {
+            return intValueTable[lookup];
+        }
+
+        return defaultValue;
     }
 
     public boolean get(int key, int[] value) {
-        return super.getInt(key, value);
+
+        int lookup = getLookup(key);
+
+        if (lookup != -1) {
+            value[0] = intValueTable[lookup];
+
+            return true;
+        }
+
+        return false;
     }
 
     public boolean put(int key, int value) {
@@ -81,5 +107,89 @@ public class IntKeyIntValueHashMap extends org.hsqldb.store.BaseHashMap {
         super.addOrRemove(key, 0, null, null, true);
 
         return oldSize != size();
+    }
+
+    public Set keySet() {
+
+        if (keySet == null) {
+            keySet = new KeySet();
+        }
+
+        return keySet;
+    }
+
+    public Collection values() {
+
+        if (values == null) {
+            values = new Values();
+        }
+
+        return values;
+    }
+
+    class KeySet implements Set {
+
+        public Iterator iterator() {
+            return IntKeyIntValueHashMap.this.new BaseHashIterator(true);
+        }
+
+        public int size() {
+            return IntKeyIntValueHashMap.this.size();
+        }
+
+        public boolean contains(Object o) {
+            throw new RuntimeException();
+        }
+
+        public Object get(Object key) {
+            throw new RuntimeException();
+        }
+
+        public boolean add(Object value) {
+            throw new RuntimeException();
+        }
+
+        public boolean remove(Object o) {
+            throw new RuntimeException();
+        }
+
+        public boolean isEmpty() {
+            return size() == 0;
+        }
+
+        public void clear() {
+            IntKeyIntValueHashMap.this.clear();
+        }
+    }
+
+    class Values implements Collection {
+
+        public Iterator iterator() {
+            return IntKeyIntValueHashMap.this.new BaseHashIterator(false);
+        }
+
+        public int size() {
+            return IntKeyIntValueHashMap.this.size();
+        }
+
+        public boolean contains(Object o) {
+            throw new RuntimeException();
+        }
+
+        public boolean add(Object value) {
+            throw new RuntimeException();
+        }
+
+        public boolean remove(Object o) {
+            throw new RuntimeException();
+        }
+
+        public boolean isEmpty() {
+            return size() == 0;
+        }
+
+        public void clear() {
+            IntKeyIntValueHashMap.this.clear();
+        }
     }
 }

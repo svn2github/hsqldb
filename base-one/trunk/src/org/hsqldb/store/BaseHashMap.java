@@ -83,6 +83,7 @@ public class BaseHashMap {
     boolean isObjectKey;
     boolean isNoValue;
     boolean isIntValue;
+    boolean isLongValue;
     boolean isObjectValue;
 
     //
@@ -96,6 +97,7 @@ public class BaseHashMap {
     //
     protected int[]    intValueTable;
     protected Object[] objectValueTable;
+    protected long[]   longValueTable;
 
     //
     int   accessMin;
@@ -165,6 +167,9 @@ public class BaseHashMap {
         } else if (valueType == BaseHashMap.objectKeyOrValue) {
             isObjectValue    = true;
             objectValueTable = new Object[arraySize];
+        } else if (valueType == BaseHashMap.longKeyOrValue) {
+            isLongValue    = true;
+            longValueTable = new long[arraySize];
         } else {
             isNoValue = true;
         }
@@ -202,79 +207,6 @@ public class BaseHashMap {
         }
 
         return null;
-    }
-
-    protected int getInt(int key) throws NoSuchElementException {
-
-        int lookup = getLookup(key);
-
-        if (lookup != -1) {
-            return intValueTable[lookup];
-        }
-
-        throw new NoSuchElementException();
-    }
-
-    protected int getInt(int key, int defaultValue) {
-
-        int lookup = getLookup(key);
-
-        if (lookup != -1) {
-            return intValueTable[lookup];
-        }
-
-        return defaultValue;
-    }
-
-    protected boolean getInt(int key, int[] value) {
-
-        int lookup = getLookup(key);
-
-        if (lookup != -1) {
-            value[0] = intValueTable[lookup];
-
-            return true;
-        }
-
-        return false;
-    }
-
-    protected int getInt(Object key) throws NoSuchElementException {
-
-        int hash   = key.hashCode();
-        int lookup = getLookup(key, hash);
-
-        if (lookup != -1) {
-            return intValueTable[lookup];
-        }
-
-        throw new NoSuchElementException();
-    }
-
-    protected int getInt(Object key, int defaultValue) {
-
-        int hash   = key.hashCode();
-        int lookup = getLookup(key, hash);
-
-        if (lookup != -1) {
-            return intValueTable[lookup];
-        }
-
-        return defaultValue;
-    }
-
-    protected boolean getInt(Object key, int[] value) {
-
-        int hash   = key.hashCode();
-        int lookup = getLookup(key, hash);
-
-        if (lookup != -1) {
-            value[0] = intValueTable[lookup];
-
-            return true;
-        }
-
-        return false;
     }
 
     protected int getLookup(Object key, int hash) {
@@ -325,7 +257,7 @@ public class BaseHashMap {
         return lookup;
     }
 
-    protected Object addOrRemove(long longKey, int intValue,
+    protected Object addOrRemove(long longKey, long longValue,
                                  Object objectKey, Object objectValue,
                                  boolean remove) {
 
@@ -371,6 +303,8 @@ public class BaseHashMap {
                     objectValueTable[lookup] = null;
                 } else if (isIntValue) {
                     intValueTable[lookup] = 0;
+                } else if (isLongValue) {
+                    longValueTable[lookup] = 0;
                 }
 
                 hashIndex.unlinkNode(index, lastLookup, lookup);
@@ -382,7 +316,9 @@ public class BaseHashMap {
                 returnValue              = objectValueTable[lookup];
                 objectValueTable[lookup] = objectValue;
             } else if (isIntValue) {
-                intValueTable[lookup] = intValue;
+                intValueTable[lookup] = (int) longValue;
+            } else if (isLongValue) {
+                longValueTable[lookup] = longValue;
             }
 
             return returnValue;
@@ -396,7 +332,7 @@ public class BaseHashMap {
         if (hashIndex.elementCount >= threshold) {
             reset();
 
-            return addOrRemove(longKey, intValue, objectKey, objectValue,
+            return addOrRemove(longKey, longValue, objectKey, objectValue,
                                remove);
         }
 
@@ -424,7 +360,9 @@ public class BaseHashMap {
         if (isObjectValue) {
             objectValueTable[lookup] = objectValue;
         } else if (isIntValue) {
-            intValueTable[lookup] = intValue;
+            intValueTable[lookup] = (int) longValue;
+        } else if (isLongValue) {
+            longValueTable[lookup] = longValue;
         }
 
         //
@@ -508,7 +446,7 @@ public class BaseHashMap {
                 (lookup = nextLookup(lookup, limitLookup, oldZeroKey, oldZeroKeyIndex))
                 < limitLookup; ) {
             long   longKey     = 0;
-            int    intValue    = 0;
+            long   longValue   = 0;
             Object objectKey   = null;
             Object objectValue = null;
 
@@ -523,10 +461,12 @@ public class BaseHashMap {
             if (isObjectValue) {
                 objectValue = objectValueTable[lookup];
             } else if (isIntValue) {
-                intValue = intValueTable[lookup];
+                longValue = intValueTable[lookup];
+            } else if (isLongValue) {
+                longValue = longValueTable[lookup];
             }
 
-            addOrRemove(longKey, intValue, objectKey, objectValue, false);
+            addOrRemove(longKey, longValue, objectKey, objectValue, false);
 
             if (accessTable != null) {
                 accessTable[hashIndex.elementCount - 1] = accessTable[lookup];
@@ -557,6 +497,20 @@ public class BaseHashMap {
             intValueTable = new int[newLength];
 
             System.arraycopy(temp, 0, intValueTable, 0, usedLength);
+        }
+
+        if (isLongKey) {
+            temp         = longKeyTable;
+            longKeyTable = new long[newLength];
+
+            System.arraycopy(temp, 0, longKeyTable, 0, usedLength);
+        }
+
+        if (isLongValue) {
+            temp           = longValueTable;
+            longValueTable = new long[newLength];
+
+            System.arraycopy(temp, 0, longValueTable, 0, usedLength);
         }
 
         if (isObjectKey) {
@@ -618,6 +572,14 @@ public class BaseHashMap {
             }
         }
 
+        if (isLongValue) {
+            int counter = to;
+
+            while (--counter >= from) {
+                longValueTable[counter] = 0;
+            }
+        }
+
         if (isObjectValue) {
             int counter = to;
 
@@ -676,6 +638,15 @@ public class BaseHashMap {
                              arrayLength - lookup - 1);
 
             intValueTable[arrayLength - 1] = 0;
+        }
+
+        if (isLongValue) {
+            Object array = longValueTable;
+
+            System.arraycopy(array, lookup + 1, array, lookup,
+                             arrayLength - lookup - 1);
+
+            longValueTable[arrayLength - 1] = 0;
         }
 
         if (isObjectValue) {
@@ -966,6 +937,8 @@ public class BaseHashMap {
 
                 if (keys) {
                     return longKeyTable[lookup];
+                } else {
+                    return longValueTable[lookup];
                 }
             }
 
