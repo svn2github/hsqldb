@@ -577,10 +577,11 @@ examples:
         <!-- Run after generating docbook for a partic. dir -->
         <!-- Property 'book' MUST be set before calling this target -->
         <copy todir='doc'>
-            <fileset dir='docsrc' excludes='.*, *.css'/>
+            <fileset dir='docsrc' excludes='.*, *.css, *.java, *.sql, *.txt'/>
         </copy>
         <copy todir='doc/${book}'>
-            <fileset dir='docsrc/${book}' excludes='.*, *.css'/>
+            <fileset dir='docsrc/${book}'
+                     excludes='.*, *.css, *.java, *.sql, *.txt'/>
         </copy>
         <delete file='doc/${book}/${book}.bs'/>
     </target>
@@ -612,7 +613,8 @@ examples:
             <antcall target='-postDocbook'/>
         </then></if>
         <copy todir='doc'>
-            <fileset dir='docsrc' includes='**/*.css'/>
+            <fileset dir='docsrc'
+                     includes='**/*.css, **/*.java, **/*.sql, **/*.txt'/>
         </copy>
     </target>
     <target name='html' description='Build one single-page HTML DocBook book'
@@ -634,7 +636,8 @@ examples:
             <antcall target='-postDocbook'/>
         </then></if>
         <copy todir='doc'>
-            <fileset dir='docsrc' includes='**/*.css'/>
+            <fileset dir='docsrc'
+                     includes='**/*.css, **/*.java, **/*.sql, **/*.txt'/>
         </copy>
     </target>
     <target name='fo' description='Build one DocBook FO file'
@@ -714,9 +717,10 @@ examples:
     <target name='-setXsltFilesets'>
         <!-- You MUST set property 'book' before calling this target -->
         <fileset id='bookXsltSrcFiles' dir='docsrc/${book}'
-            includes='**/*.xml, **/*.png, **/*.jpg, **/*.txt, **/*.java'/>
+            includes='**/*.xml, **/*.png, **/*.jpg, **/*.txt, **/*.java,
+                      **/*.sql'/>
         <fileset id='sharedXsltSrcFiles' dir='docsrc'
-                    includes='*.xml, *.txt, *.png, *.java, *.jpg, *.html'/>
+                includes='*.xml, *.txt, *.png, *.java, *.jpg, *.html, *.sql'/>
     </target>
 
     <target name='-sandwich'>
