@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.14 2004/06/06 02:35:23 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.15 2004/06/06 02:42:19 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.14 $</edition>
-        <pubdate>$Date: 2004/06/06 02:35:23 $</pubdate>
+        <edition>$Revision: 1.15 $</edition>
+        <pubdate>$Date: 2004/06/06 02:42:19 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>HOWTO</keyword>
@@ -462,7 +462,7 @@
     <section><title>Raw mode</title>
         <para>
             If for some reason you want SqlTool to process your commands as 
-            if it were reading an SQL file, i.e., without giving a login 
+            if it were reading an SQL file, i.e., without giving a startup 
             banner or command prompts, and aborting upon failure by default, 
             then specify a SQL filepath of "-", like
         <informalexample><screen>
