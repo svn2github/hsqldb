@@ -76,10 +76,12 @@ pre_main
 [ -n "$VERBOSE" ] && set -x
 
 cd $dbhome || Failout "Failed to cd to '$dbhome'"
+echo 'Wiping classes branch...'
 rm -r -f classes
 cd src || Failout "Failed to cd to '$dbhome/src'"
 mkdir $dbhome/classes || Failout "Failed to create directory '$dbhome/classes'"
 
+echo 'Generating source file list...'
 LISTFILE=/tmp/list.$$
 rm -f $LISTFILE
 [ -f $LISTFILE ] && Failout "Failed to remove temp list file '$LISTFILE'"
@@ -101,6 +103,7 @@ esac; done > $LISTFILE
 #        files that are not newer than the main corresponding class file.
 
 # Main Compile
+echo 'Compiling...'
 "$jdkhome/bin/javac" -O -nowarn -d ../classes -classpath "$cp:../classes" `cat $LISTFILE`
 
 # Build jar
@@ -115,6 +118,7 @@ HSQLDB_GIF=
 [ "$JDKVER" != 1.1 ] && [ -f org/hsqldb/util/hsqldb.gif ] &&
  HSQLDB_GIF=org/hsqldb/util/hsqldb.gif
 
+echo 'Generating jar content file list...'
 find * -name '*.class' -print | while read file; do case "$file" in
     org/hsqldb/lib/*) echo $file; continue;;
     org/hsqldb/*/*) continue;;  # Nothing else from this deep in tree
@@ -133,4 +137,5 @@ find * -name '*.class' -print | while read file; do case "$file" in
     *) echo $file; continue;;  # This is at top level: src/X.java
 esac; done > $LISTFILE
 
+echo 'Assembling jar file...'
 exec "$jdkhome/bin/jar" -cf ../lib/hsqldb.jar `cat $LISTFILE` $HSQLDB_GIF
