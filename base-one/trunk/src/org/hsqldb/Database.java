@@ -71,6 +71,7 @@ import java.io.IOException;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users 20020130 - patch 476694 by velichko - transaction savepoints
@@ -147,6 +148,7 @@ class Database {
     HsqlNameManager                nameManager;
     DatabaseObjectNames            triggerNameList;
     DatabaseObjectNames            indexNameList;
+    HashMappedList                 sequenceMap;
     final static int               DATABASE_ONLINE       = 1;
     final static int               DATABASE_OPENING      = 4;
     final static int               DATABASE_CLOSING      = 8;
@@ -248,6 +250,7 @@ class Database {
             nameManager           = new HsqlNameManager();
             triggerNameList       = new DatabaseObjectNames();
             indexNameList         = new DatabaseObjectNames();
+            sequenceMap           = new HashMappedList();
             bReferentialIntegrity = true;
             sysUser               = userManager.createSysUser(this);
             sessionManager        = new SessionManager(this, sysUser);
@@ -288,6 +291,7 @@ class Database {
         nameManager     = null;
         triggerNameList = null;
         indexNameList   = null;
+        sequenceMap     = null;
         sessionManager  = null;
         dInfo           = null;
     }
@@ -941,6 +945,21 @@ class Database {
                 }
             }
         }
+    }
+
+    /**
+     *  Drops a sequence with the specified name from this Database
+     *
+     * @param name of the trigger to drop
+     * @param session execution context
+     * @throws HsqlException if a database access error occurs
+     */
+    void dropSequence(String name) throws HsqlException {
+
+        boolean found = sequenceMap.containsKey(name);
+
+        Trace.check(found, Trace.SEQUENCE_NOT_FOUND, name);
+        sequenceMap.remove(name);
     }
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)

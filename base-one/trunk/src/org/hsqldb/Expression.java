@@ -154,7 +154,8 @@ class Expression {
                      NULLIF      = 67,
                      CASE        = 68,
                      COALESCE    = 69,
-                     ALTERNATIVE = 70;
+                     ALTERNATIVE = 70,
+                     SEQUENCE    = 71;
 
     // temporary used during parsing
     static final int PLUS         = 100,
@@ -269,6 +270,8 @@ class Expression {
     //
     static final Integer INTEGER_0 = ValuePool.getInt(0);
     static final Integer INTEGER_1 = ValuePool.getInt(1);
+    static final Expression EXPRESSION_NULL = new Expression(Types.NULL,
+        null);
 
     /**
      * Creates a new boolean expression
@@ -291,6 +294,17 @@ class Expression {
         if (f.hasAggregate) {
             aggregateSpec = AGGREGATE_FUNCTION;
         }
+    }
+
+    /**
+     * Creates a new SEQUENCE expression
+     * @param f
+     */
+    Expression(NumberSequence sequence) {
+
+        exprType  = SEQUENCE;
+        valueData = sequence;
+        dataType  = sequence.getType();
     }
 
     /**
@@ -1729,7 +1743,7 @@ class Expression {
             case MULTIPLY :
             case DIVIDE :
                 Trace.check(!(eArg.isParam && eArg2.isParam),
-                    Trace.COLUMN_TYPE_MISMATCH,
+                            Trace.COLUMN_TYPE_MISMATCH,
                             Trace.getMessage(Trace.Expression_resolveTypes2));
 
                 if (isFixedConstant()) {
@@ -1778,7 +1792,7 @@ class Expression {
             case SMALLER_EQUAL :
             case NOT_EQUAL :
                 Trace.check(!(eArg.isParam && eArg2.isParam),
-                    Trace.COLUMN_TYPE_MISMATCH,
+                            Trace.COLUMN_TYPE_MISMATCH,
                             Trace.getMessage(Trace.Expression_resolveTypes3));
 
                 if (isFixedConditional()) {
@@ -1943,7 +1957,7 @@ class Expression {
                 Expression case2 = eArg2;
 
                 Trace.check(!(case1.isParam && case2.isParam),
-                    Trace.COLUMN_TYPE_MISMATCH,
+                            Trace.COLUMN_TYPE_MISMATCH,
                             Trace.getMessage(Trace.Expression_resolveTypes6));
 
                 if (case1.isParam || case1.dataType == Types.NULL) {
@@ -2762,6 +2776,9 @@ class Expression {
             case CONCAT :
                 return Column.concat(a, b);
 
+            case SEQUENCE :
+                return ((NumberSequence) valueData).getValueObject();
+
             default :
 
                 // must be comparion
@@ -3139,6 +3156,17 @@ class Expression {
      */
     void setLeftExpression(Expression e) {
         eArg = e;
+    }
+
+    void setRightExpression(Expression e) {
+        eArg2 = e;
+    }
+
+    /**
+     * Gets the right leaf.
+     */
+    Expression getRightExpression() {
+        return eArg2;
     }
 
 // boucherb@users 20030417 - patch 1.7.2 - compiled statement support

@@ -137,6 +137,8 @@ class ScriptRunner {
 
 /** @todo fredt - must catch out of  memory errors and terminate */
 
+/** @todo fredt - must display the error through different method as printSystemOut does not normally print */
+
 /* boucherb - Result(OOME,sql) now sets vendor code to Trace.OUT_OF_MEMORY */
                         Trace.printSystemOut("error in " + scriptFilename
                                              + " line: "
@@ -153,7 +155,10 @@ class ScriptRunner {
                 Trace.trace("restore time: " + sw.elapsedTime());
             }
         } catch (IOException e) {
-            throw Trace.error(Trace.FILE_IO_ERROR, scriptFilename + " " + e);
+            throw Trace.error(Trace.FILE_IO_ERROR,
+                              Trace.Generic_reading_file_error, new Object[] {
+                scriptFilename, e
+            });
         }
 
         database.setReferentialIntegrity(true);

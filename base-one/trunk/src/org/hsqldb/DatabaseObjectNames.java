@@ -56,7 +56,7 @@ class DatabaseObjectNames {
         return (HsqlName) nameList.get(name);
     }
 
-    void addName(String name, Object owner) throws HsqlException {
+    void addName(String name, HsqlName owner) throws HsqlException {
 
         // should not contain name
         if (containsName(name)) {
@@ -68,9 +68,9 @@ class DatabaseObjectNames {
 
     void rename(String name, String newname) throws HsqlException {
 
-        Object value = nameList.get(name);
+        HsqlName owner = (HsqlName) nameList.get(name);
 
-        addName(newname, value);
+        addName(newname, owner);
         nameList.remove(name);
     }
 
@@ -87,14 +87,14 @@ class DatabaseObjectNames {
         return owner;
     }
 
-    void removeOwner(Object value) {
+    void removeOwner(HsqlName owner) {
 
         Iterator it = nameList.values().iterator();
 
         while (it.hasNext()) {
             Object currentvalue = it.next();
 
-            if (value.equals(currentvalue)) {
+            if (owner.equals(currentvalue)) {
                 it.remove();
             }
         }

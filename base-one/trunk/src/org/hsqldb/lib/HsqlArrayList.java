@@ -293,6 +293,14 @@ public class HsqlArrayList extends BaseList implements HsqlList {
     }
 
 // fredt@users
+    public Object[] toArray() {
+
+        Object[] a = new Object[elementCount];
+
+        System.arraycopy(elementData, 0, a, 0, elementCount);
+
+        return a;
+    }
 
     /**
      * Copies all elements of the list to a[]. It is assumed a[] is of the
@@ -312,6 +320,15 @@ public class HsqlArrayList extends BaseList implements HsqlList {
         System.arraycopy(elementData, 0, a, 0, elementCount);
 
         return a;
+    }
+
+    public void sort(ObjectComparator c) {
+
+        if (elementCount < 2) {
+            return;
+        }
+
+        Sort.sort(elementData, c, 0, elementCount - 1);
     }
 
 // fredt@users - temp - won't need this when we have the hybrid map / list

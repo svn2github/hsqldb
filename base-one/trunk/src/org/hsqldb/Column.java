@@ -81,6 +81,7 @@ import org.hsqldb.lib.HsqlByteArrayInputStream;
 import org.hsqldb.store.ValuePool;
 import org.hsqldb.HsqlNameManager.HsqlName;
 
+// fredt@users 20020130 - patch 491987 by jimbag@users
 // fredt@users 20020320 - doc 1.7.0 - update
 // fredt@users 20020401 - patch 442993 by fredt - arithmetic expressions
 // to allow mixed type arithmetic expressions beginning with a narrower type
@@ -128,35 +129,19 @@ class Column {
     // DDL name, size, scale, null, identity and default values
     // most variables are final but not declared so because of a bug in
     // JDK 1.1.8 compiler
-    HsqlName        columnName;
-    private int     colType;
-    private int     colSize;
-    private int     colScale;
-    private boolean isNullable;
-    private boolean isIdentity;
-    private boolean isPrimaryKey;
-    private String  defaultString;
-    int             identityStart;
-
-    // supported JDBC types - exclude NULL and VARCHAR_IGNORECASE
-    static final int numericTypes[] = {
-        Types.TINYINT, Types.SMALLINT, Types.INTEGER, Types.BIGINT,
-        Types.NUMERIC, Types.DECIMAL, Types.FLOAT, Types.REAL, Types.DOUBLE
-    };
-    static final int otherTypes[] = {
-        Types.BIT, Types.LONGVARBINARY, Types.VARBINARY, Types.BINARY,
-        Types.LONGVARCHAR, Types.CHAR, Types.VARCHAR, Types.DATE, Types.TIME,
-        Types.TIMESTAMP, Types.OTHER
-    };
-    static final int[][]    typesArray = {
-        Column.numericTypes, Column.otherTypes
-    };
-    static final BigInteger MAX_LONG   = BigInteger.valueOf(Long.MAX_VALUE);
-    static final BigInteger MIN_LONG   = BigInteger.valueOf(Long.MIN_VALUE);
-    static final BigInteger MAX_INT = BigInteger.valueOf(Integer.MAX_VALUE);
-    static final BigInteger MIN_INT = BigInteger.valueOf(Integer.MIN_VALUE);
-
-// fredt@users 20020130 - patch 491987 by jimbag@users
+    HsqlName                columnName;
+    private int             colType;
+    private int             colSize;
+    private int             colScale;
+    private boolean         isNullable;
+    private boolean         isIdentity;
+    private boolean         isPrimaryKey;
+    private String          defaultString;
+    int                     identityStart;
+    static final BigInteger MAX_LONG = BigInteger.valueOf(Long.MAX_VALUE);
+    static final BigInteger MIN_LONG = BigInteger.valueOf(Long.MIN_VALUE);
+    static final BigInteger MAX_INT  = BigInteger.valueOf(Integer.MAX_VALUE);
+    static final BigInteger MIN_INT  = BigInteger.valueOf(Integer.MIN_VALUE);
 
     /**
      *  Creates a column defined in DDL statement.

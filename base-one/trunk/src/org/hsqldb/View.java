@@ -47,8 +47,14 @@ class View extends Table {
 
     Table          workingTable;
     Select         viewSelect;
+    SubQuery       viewSubQuery;
     private String sStatement;
-    SubQuery[]     viewSubqueries;
+
+    /**
+     * List of subqueries in this view in order of materialization. Last
+     * element is the view itself.
+     */
+    SubQuery[] viewSubqueries;
 
     View(Database db, HsqlName name, String definition,
             HsqlArrayList colList) throws HsqlException {
@@ -94,18 +100,14 @@ class View extends Table {
 
         Parser p = new Parser(this.database, tokenizer,
                               database.sessionManager.getSysSession());
-        SubQuery sq = p.parseSubquery(null, true, Expression.QUERY);
 
-        viewSubqueries = p.getSubqueries();
+        viewSubQuery = p.parseSubquery(null, true, Expression.QUERY);
 
-        for (int i = 0; i < viewSubqueries.length; i++) {
-            if (viewSubqueries[i].view == null) {
-                viewSubqueries[i].view = this;
-            }
-        }
+        p.setAsView(this);
 
-        workingTable = sq.table;
-        viewSelect   = sq.select;
+        viewSubqueries = p.getSortedSubqueries();
+        workingTable   = viewSubQuery.table;
+        viewSelect     = viewSubQuery.select;
 
         viewSelect.prepareResult();
 

@@ -182,8 +182,9 @@ class Table {
         database             = db;
         sqlEnforceSize       = db.sqlEnforceSize;
         sqlEnforceStrictSize = db.sqlEnforceStrictSize;
-        identitySequence     = new NumberSequence(db.firstIdentity);
-        rowIdSequence        = new NumberSequence(0);
+        identitySequence = new NumberSequence(null, db.firstIdentity, 1,
+                                              Types.BIGINT);
+        rowIdSequence = new NumberSequence(null, 0, 1, Types.BIGINT);
 
         switch (type) {
 

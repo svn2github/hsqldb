@@ -93,11 +93,12 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 // kloska@users 20021030 - patch 1.7.2 - ON UPDATE CASCADE | SET NULL | SET DEFAULT
 // kloska@users 20021112 - patch 1.7.2 - ON DELETE SET NULL | SET DEFAULT
 // boucherb@users 20020310 - disable ALTER TABLE DDL on VIEWs (avoid NPE)
-// fredt@users 20030314 - patch 1.7.2 by gilead@users - drop table syntax
+// fredt@users 20030314 - patch 1.7.2 by gilead@users - drop table if exists syntax
 // boucherb@users 20030425 - DDL methods are moved to DatabaseCommandInterpreter.java
-// boucherb@users 20030425 - refactoring DDL into smaller units
+// boucherb@users 20030425 - refactoring DDL methods into smaller units
 // fredt@users 20030609 - support for ALTER COLUMN SET/DROP DEFAULT / RENAME TO
 // wondersonic@users 20031205 - IF EXISTS support for DROP INDEX
+// fredt@users 20031224 - support for CREATE SEQUENCE ...
 class DatabaseCommandInterpreter {
 
     static final Result emptyResult = new Result(ResultConstants.UPDATECOUNT);
@@ -407,6 +408,7 @@ class DatabaseCommandInterpreter {
 
         switch (Token.get(token)) {
 
+            // table
             case Token.TABLE :
                 tableType = isTemp ? Table.TEMP_TABLE
                                    : Table.MEMORY_TABLE;
@@ -437,8 +439,13 @@ class DatabaseCommandInterpreter {
                 processCreateTable(tableType);
                 break;
 
-            case Token.VIEW :
-                processCreateView();
+            // other objects
+            case Token.ALIAS :
+                processCreateAlias();
+                break;
+
+            case Token.SEQUENCE :
+                processCreateSequence();
                 break;
 
             case Token.TRIGGER :
@@ -449,10 +456,11 @@ class DatabaseCommandInterpreter {
                 processCreateUser();
                 break;
 
-            case Token.ALIAS :
-                processCreateAlias();
+            case Token.VIEW :
+                processCreateView();
                 break;
 
+            // index
             case Token.UNIQUE :
                 unique = true;
 
@@ -801,17 +809,19 @@ class DatabaseCommandInterpreter {
             tokenizer.getThis(Token.T_DEFAULT);
             tokenizer.getThis(Token.T_AS);
             tokenizer.getThis(Token.T_IDENTITY);
-            tokenizer.getThis(Token.T_OPENBRACKET);
-            tokenizer.getThis(Token.T_START);
-            tokenizer.getThis(Token.T_WITH);
 
-            try {
-                identityStart = tokenizer.getInt();
-            } catch (NumberFormatException ne) {
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, sLen);
+            if (tokenizer.isGetThis(Token.T_OPENBRACKET)) {
+                tokenizer.getThis(Token.T_START);
+                tokenizer.getThis(Token.T_WITH);
+
+                try {
+                    identityStart = tokenizer.getInt();
+                } catch (NumberFormatException ne) {
+                    throw Trace.error(Trace.UNEXPECTED_TOKEN, sLen);
+                }
+
+                tokenizer.getThis(Token.T_CLOSEBRACKET);
             }
-
-            tokenizer.getThis(Token.T_CLOSEBRACKET);
 
             isIdentity   = true;
             isPrimaryKey = true;
@@ -1423,19 +1433,14 @@ class DatabaseCommandInterpreter {
         Parser parser = new Parser(database, tokenizer, session);
         Select select;
 
-        try {
+        // parse as UNION and do not accept ORDER BY
+        select = parser.parseSelect(true);
 
-            // parse as UNION and do not accept ORDER BY
-            select = parser.parseSelect(true);
-
-            if (select.sIntoTable != null) {
-                throw (Trace.error(Trace.TABLE_NOT_FOUND));
-            }
-
-            select.prepareResult();
-        } catch (HsqlException e) {
-            throw e;
+        if (select.sIntoTable != null) {
+            throw (Trace.error(Trace.TABLE_NOT_FOUND));
         }
+
+        select.prepareResult();
 
         View view = new View(database, viewHsqlName, tokenizer.getLastPart(),
                              colList);
@@ -1503,13 +1508,18 @@ class DatabaseCommandInterpreter {
             default : {
                 throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
             }
-            case Token.TABLE : {
-                processAlterTable();
+            case Token.INDEX : {
+                processAlterIndex();
 
                 break;
             }
-            case Token.INDEX : {
-                processAlterIndex();
+            case Token.SEQUENCE : {
+                processAlterSequence();
+
+                break;
+            }
+            case Token.TABLE : {
+                processAlterTable();
 
                 break;
             }
@@ -1701,16 +1711,13 @@ class DatabaseCommandInterpreter {
             default : {
                 throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
             }
-            case Token.VIEW : {
-                isview = true;
-            }    //fall thru
-            case Token.TABLE : {
-                processDropTable(isview);
+            case Token.INDEX : {
+                processDropIndex();
 
                 break;
             }
-            case Token.USER : {
-                processDropUser();
+            case Token.SEQUENCE : {
+                processDropSequence();
 
                 break;
             }
@@ -1719,8 +1726,16 @@ class DatabaseCommandInterpreter {
 
                 break;
             }
-            case Token.INDEX : {
-                processDropIndex();
+            case Token.USER : {
+                processDropUser();
+
+                break;
+            }
+            case Token.VIEW : {
+                isview = true;
+            }    //fall thru
+            case Token.TABLE : {
+                processDropTable(isview);
 
                 break;
             }
@@ -1776,7 +1791,7 @@ class DatabaseCommandInterpreter {
 
         tokenizer.getThis(Token.T_TO);
 
-        token = tokenizer.getStringToken();
+        token = tokenizer.getUserOrPassword();
 
         UserManager um = database.getUserManager();
 
@@ -1800,11 +1815,11 @@ class DatabaseCommandInterpreter {
 
         tokenizer.getThis(Token.T_USER);
 
-        userName = tokenizer.getStringToken();
+        userName = tokenizer.getUserOrPassword();
 
         tokenizer.getThis(Token.T_PASSWORD);
 
-        password = tokenizer.getStringToken();
+        password = tokenizer.getUserOrPassword();
         user     = database.getUserManager().getUser(userName, password);
 
         session.commit();
@@ -1863,7 +1878,7 @@ class DatabaseCommandInterpreter {
             }
             case Token.PASSWORD : {
                 session.checkDDLWrite();
-                session.setPassword(tokenizer.getStringToken());
+                session.setPassword(tokenizer.getUserOrPassword());
 
                 break;
             }
@@ -2367,6 +2382,22 @@ class DatabaseCommandInterpreter {
         }
     }
 
+    private void processAlterSequence() throws HsqlException {
+
+        long   start;
+        String name = tokenizer.getIdentifier();
+
+        tokenizer.getThis(Token.T_RESTART);
+        tokenizer.getThis(Token.T_WITH);
+
+        start = tokenizer.getBigint();
+
+        NumberSequence seq = (NumberSequence) database.sequenceMap.get(name);
+
+        Trace.check(seq != null, Trace.SEQUENCE_NOT_FOUND);
+        seq.reset(start);
+    }
+
     /**
      * Handles ALTER INDEX &lt;index-name&gt; RENAME.
      *
@@ -2415,12 +2446,9 @@ class DatabaseCommandInterpreter {
      */
     private void processAlterTableAddColumn(Table t) throws HsqlException {
 
-        int    colindex;
-        Column column;
         String token;
-
-        colindex = t.getColumnCount();
-        column   = processCreateColumn(t);
+        int    colindex = t.getColumnCount();
+        Column column   = processCreateColumn(t);
 
         checkAddColumn(t, column);
 
@@ -2567,17 +2595,66 @@ class DatabaseCommandInterpreter {
         }
     }
 
+    /**
+     * limitations in Tokenizer dictate that initial value or increment must
+     * be positive
+     */
+    private void processCreateSequence() throws HsqlException {
+
+/*
+        CREATE SEQUENCE <name>
+        [AS {INTEGER | BIGINT}]
+        [START WITH <value>]
+        [INCREMENT BY <value>]
+*/
+        int     type      = Types.INTEGER;
+        long    increment = 1;
+        long    start     = 0;
+        String  name      = tokenizer.getIdentifier();
+        boolean isquoted  = tokenizer.wasQuotedIdentifier();
+
+        if (tokenizer.isGetThis(Token.T_AS)) {
+            String typestring = tokenizer.getString();
+
+            type = Types.getTypeNr(typestring);
+
+            Trace.check(type == Types.INTEGER || type == Types.BIGINT,
+                        Trace.WRONG_DATA_TYPE);
+        }
+
+        if (tokenizer.isGetThis(Token.T_START)) {
+            tokenizer.getThis(Token.T_WITH);
+
+            start = tokenizer.getBigint();
+        }
+
+        if (tokenizer.isGetThis(Token.T_INCREMENT)) {
+            tokenizer.getThis(Token.T_BY);
+
+            increment = tokenizer.getBigint();
+        }
+
+        Trace.check(!database.sequenceMap.containsKey(name),
+                    Trace.SEQUENCE_ALREADY_EXISTS);
+
+        HsqlName hsqlname = database.nameManager.newHsqlName(name, isquoted);
+
+        database.sequenceMap.put(name,
+                                 new NumberSequence(hsqlname, start,
+                                     increment, type));
+    }
+
     private void processCreateUser() throws HsqlException {
 
         String  name;
         String  password;
         boolean admin;
 
-        name = tokenizer.getStringToken();
+        name = tokenizer.getUserOrPassword();
 
         tokenizer.getThis(Token.T_PASSWORD);
 
-        password = tokenizer.getStringToken();
+        password = tokenizer.getUserOrPassword();
         admin    = tokenizer.getString().equals(Token.T_ADMIN);
 
         if (!admin) {
@@ -2637,7 +2714,12 @@ class DatabaseCommandInterpreter {
 
     private void processDropUser() throws HsqlException {
         session.checkDDLWrite();
-        database.getUserManager().dropUser(tokenizer.getStringToken());
+        database.getUserManager().dropUser(tokenizer.getUserOrPassword());
+    }
+
+    private void processDropSequence() throws HsqlException {
+        session.checkDDLWrite();
+        database.dropSequence(tokenizer.getString());
     }
 
     private void processDropTrigger() throws HsqlException {

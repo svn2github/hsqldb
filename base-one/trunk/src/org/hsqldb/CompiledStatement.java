@@ -367,7 +367,7 @@ final class CompiledStatement {
         for (int i = 0; i < subqueries.length; i++) {
             SubQuery sq = subqueries[i];
 
-            // a VIEW working table contents are filled only once and reused
+            // VIEW working table contents are filled only once per query and reused
             if (sq.isMaterialised) {
                 continue;
             }

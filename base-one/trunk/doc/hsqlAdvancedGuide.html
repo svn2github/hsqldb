@@ -661,14 +661,38 @@
       
     </td>
   </tr>
+  <tr>
+    <td width="33%" valign="TOP">&nbsp;</td>
+    <td width="33%" valign="TOP">&nbsp;</td>
+    <td width="33%" valign="TOP">&nbsp;</td>
+  </tr>
+  <tr> 
+      
+    <td width="33%" valign="TOP"> 
+         
+      <pre>textdb.*</pre>
+    </td>
+    <td width="33%" valign="TOP"> 
+         
+      <pre>0</pre>
+    </td>
+    <td width="33%" valign="TOP"> 
+         
+      <p>default properties for new text tables
+    </td>
+  </tr>
+  <tr>
+    <td colspan="3" valign="TOP">Properties that  override the database engine defaults for newly created text tables. Settings in the text table <code>SET &lt;tablename&gt; SOURCE &lt;source string&gt; </code>command override  both the engine defaults and the database properties defaults. Individual <code>textdb.*</code> properties are listed in  <a href="hsqlTextTables.html">hsqlTextTables.html</a> . <code>(SET PROPERTY)</code></td>
+  </tr>
+  
 </table>
 <p>&nbsp;</p>
 <p><i>Upgrading: From 1.7.0, the location of the database files can no longer be overridden 
   by paths defined in the properties file. All files belonging to a database should 
   reside in the same directory.</i></p>
 <h3>CONSTRAINTS AND INDEXES</h3>
-<p>Version 1.7.0 features major improvements on previous versions in this area. 
-  Previously a<code> CONSTRAINT &lt;name&gt; PRIMARY KEY</code> was translated 
+<p>In version 1.7.2 the behaviour of UNIQUE constraints and indexes with respect to NULL values has changed to conform to SQL standards. A row, in which the value for any of the UNIQUE constraint columns is NULL, can always be added to the table. So multiple rows can contain the same values for the UNIQUE columns if one of the values is NULL.</p>
+<p>Before 1.7.0, a<code> CONSTRAINT &lt;name&gt; PRIMARY KEY</code> was translated 
   internally to a unique index and, in addition, a hidden column was added to 
   the table with an extra unique index. In 1.7.0 both single-column and multi-column 
   PRIMARY KEY constraints are supported. They are supported by a unique index 
@@ -680,16 +704,16 @@
   UNIQUE INDEX name1 ON atable(c1, c2, c3);</code> means there is the equivalent 
   of <code>CREATE INDEX name2 ON atable(c1);</code> So you do not need to specify 
   an extra index if you require one on the first column of the list.</p>
-<p>In 1.7.2, a multi-column index will speed up queries that contain joins or values on ALL the columns. You need NOT declare declare additional individual indexes on those columns unless you use queries that search only on a subset of the columns. For example, rows of  a table that has a PRIMARY KEY or UNIQUE constraint on three columns or simply an ordinary index on those columns can be found efficiently when values for all three columns are specified in the WHERE clause.</p>
-<p>As a result of the improvements, in multiple key indexes, the order of declared columns will not affect the speed 
-  of searches significantly. If the column that contains more diverse values appears first, 
-  the searches will be only slightly faster.</p>
-<p>In all versions of HSQLDB a multi-column index will not speed up queries on the second or third column only. The first column must be specified in the JOIN .. ON or WHERE  conditions.</p>
+<p>In 1.7.2, a multi-column index will speed up queries that contain joins or values on ALL the columns. You need NOT declare additional individual indexes on those columns unless you use queries that search only on a subset of the columns. For example, rows of  a table that has a PRIMARY KEY or UNIQUE constraint on three columns or simply an ordinary index on those columns can be found efficiently when values for all three columns are specified in the WHERE clause.</p>
+<p>As a result of the improvements to multiple key indexes, the order of declared columns of the index or constraint has less affect on the speed 
+  of searches than before. If the column that contains more diverse values appears first, 
+  the searches will  be slightly faster .</p>
+<p>A  multi-column index will not speed up queries on the second or third column only. The first column must be specified in the JOIN .. ON or WHERE  conditions.</p>
 <p>Query speed depends a lot on the order of the tables in the JOIN .. ON or FROM clauses. For example the second query below should be faster with large tables (provided there is an index on <code>TB.COL3</code>). The reason is that TB.COL3 can be evaluated very quickly if it applies to the first table (and there is an index on TB.COL3):</p>
+<p><code>(TB is a very large table with only a few rows where TB.COL3 = 4)</code></p>
 <p><code>SELECT * FROM TA JOIN TB ON TA.COL1 = TB.COL2 AND TB.COL3 = 4;</code></p>
 <p></p>
 <p><code>SELECT * FROM TB JOIN TA ON TA.COL1 = TB.COL2 AND TB.COL3 = 4;</code></p>
-<p>In version 1.7.2 the behaviour of UNIQUE constraints and indexes with respect to NULL values has changed to conform to SQL standards. A row, in which the value for any of the UNIQUE constraint columns is NULL, can always be added to the table. So multiple rows can contain the same values for the UNIQUE columns if one of the values is NULL.</p>
 <h4>FOREIGN KEYS</h4>
 <p>From version 1.7.0, HSQLDB features single and multiple column foreign keys. A foreign key 
   can also be specified to reference a target table without naming the target 
@@ -856,14 +880,14 @@ SELECT MAX(a), MAX(b) FROM t;</pre>
 <p>After a CHECKPOINT command is issued, uncommitted transactions can be continued, 
   committed, or rolled back. However, if the database is not subsequently closed 
   properly with the SHUTDOWN command, any such transaction that still remains 
-  uncommitted, is committed at the next startup. It is recommended not to use 
+  uncommitted at the time of shutdown, is part committed (to the state at CHECKPOINT) at the next startup. It is recommended not to use 
   the CHECKPOINT command when there are any uncommitted transactions.</p>
-<h3>UPGRADING DATABASES</h3>
-<p>Any database not produced with the release version of HSQLDB 1.7.2 must be upgraded to this version. This includes databases created with the ALPHA versions of 1.7.2. In fact, the instructions under UPGRADING USING THE SCRIPT command should be followed when possible. The DIRECT UPGRADE instructions may or may not work depending on the structure of the database.</p>
+<h3>UPGRADING AND MANAGING DATABASES</h3>
+<p>Any database not produced with the release version of HSQLDB 1.7.2 must be upgraded to this version. This includes databases created with the ALPHA versions of 1.7.2. The instructions under UPGRADING USING THE SCRIPT COMMAND should be followed when possible. The DIRECT UPGRADE instructions may or may not work depending on the structure of the database.</p>
 <h4>DIRECT UPGRADE</h4>
-<p>Databases created with Hypersonic version 1.43 and HSQLDB 1.6x can often  be seamlessly 
-  upgraded to the new version. However, there may be cases where due to data inconsistencies, 
-  the upgrade may not be so simple. The following procedure MAY work. If it doesn't, try the alternative upgrade procedure using the SCRIPT command.</p>
+<p>Databases created with Hypersonic version 1.43 and HSQLDB 1.6x can sometimes  be seamlessly 
+  upgraded to the new version. However, in many cases 
+  the upgrade is not so simple. The following procedure MAY work. If it doesn't, try the alternative upgrade procedure using the SCRIPT command.</p>
 <ol>
   <li>Make a backup of your database.</li>
   <li>Open the database using the old version of the Database Manager software. 
@@ -875,30 +899,11 @@ SELECT MAX(a), MAX(b) FROM t;</pre>
 </ol>
 <p>Once a database is upgraded to 1.7.2, it can no longer be used with Hypersonic or HSQLDB 
   1.6.x, 1.7.0 or 1.7.1.</p>
-<p>The new ALTER commands allow you to improve and streamline the design of your 
-  database after a successful import.</p>
 <h4>Some Potential Problems </h4>
 <p>Version 1.7.2 does not accept duplicate names for indexes.<br>
   Version 1.7.2 does not accept duplicate names for table columns. <br>
   Version 1.7.2 does not create the same type of index for foreign keys as previous 
-  versions. </p>
-<p>Some of  these problems can be resolved  by editing the old database script slightly 
-  to conform to the new restrictions. So long as you just rename index or column 
-  names, you can perform this action on the <code>.script</code> file of the old 
-  database between stages 2 and 3 above in the upgrade process. Use a programming 
-  editor that is capable of handling very large files and does not wrap long lines of text.</p>
-<h4>Manual Changes to the .script File</h4>
-<p>In 1.7.2 several ALTER TABLE commands are available to change the data structures and their names. However, if an old database cannot be opened due data inconsistencies, or when there is no ALTER TABLE command for the particular change, manual editing can sometimes be used.</p>
-<p>In addition to changing the names of columns or indexes in a <code>.script file</code> mentioned above, the following changes can be applied so long as they do not affect the integrity of existing data.</p>
-<p><code>CREATE UNIQUE INDEX ... </code>to<code> CREATE INDEX ... </code>and vice versa</p>
-<p> A unique index on columns of a  MEMORY tables can always be converted  into a normal index so long as it is not referenced by a foreign key from another table or the same table. A non-unique index can only be converted into a unique index if the table data for the column(s) is  unique in each row. This conversion is 	NOT  allowed on CACHED tables.</p>
-<p><code>NOT NULL</code></p>
-<p>A not-null constraint can always be removed. It can only be added if  the table data for the column has no null values.</p>
-<p><code>PRIMARY KEY</code></p>
-<p>A primary key constraint can be removed or added only in MEMORY tables (the default type of table). It cannot be removed if there is a foreign key referencing the column(s).  It cannot be added or removed at all in CACHED tables.</p>
-<p><code>COLUMN TYPES</code></p>
-<p>Some changes to column types are possible with MEMORY tables only. For example an INTEGER column can be changed to BIGINT.</p>
-<p>Any other changes to data structures should be made only through the supported <code>ALTER</code> commands. </p>
+  versions.</p>
 <h4>UPGRADING USING THE  SCRIPT COMMAND</h4>
 <p>In all versions of HSQLDB and Hypersonic 1.43, the <code>SCRIPT 'filename'</code> 
   command (used as an SQL query) allows you to save a full record of your database, 
@@ -908,17 +913,36 @@ SELECT MAX(a), MAX(b) FROM t;</pre>
 <ol>
   <li>Open the original database in the old version of DatabaseManager</li>
   <li>Issue the SCRIPT command, for example <code>SCRIPT 'newversion.script'</code> to create a script file containing a copy of the database.</li>
-  <li>You can now edit the <code>newversion.script</code> file to change any table and index definition so long as it is consistent with the data. Use the guidelines in the previous section but assume the tables are not CACHED. This allows more flexibility. You can, for example, remove or add a PRIMARY KEY to any table in this *.script file, including CACHED tables.</li>
+  <li>You can now edit the <code>newversion.script</code> file to change any table and index definition so long as it is consistent with the data. Use the guidelines in the next section (Manual Changes to the .script File). Use a programming 
+  editor that is capable of handling very large files and does not wrap long lines of text.</li>
   <li>Use the 1.7.2 version of DatabaseManager to create a new database, in this example <code>'newversion' </code>in a different directory.</li>
   <li>SHUTDOWN this database.</li>
   <li>Copy  the <code>newversion.script</code> file from step 2 over the file of the same name for the new database created in 4.</li>
   <li>Try to open the new database using DatabaseManager.</li>
   <li>If there is any inconsistency in the data, the script line number is reported on the console and the opening process is aborted. Edit and correct any problems in the <code>newversion.script</code> before attempting to open again.</li>
 </ol>
-<h3>Backing Up Databases</h3>
-<p>The data for each database consists of  up to 5 files in the same directory. The endings are *.properties, *.script, *.data, *.backup and *.log These should be backed up together. The files can be backed up while the engine is running but care should be taken that a CHECKPOINT or SHUTDOWN operation does not take place during the backup. It is more efficient to perform the backup immediately after a CHECKPOINT.  The *.data file can be excluded from the backup (the *.backup file will be used to replace this file if the full backup is restored). If a backup follows a checkpoint, then the *.log file can also be excluded, limiting the significant files to *.properties, *.script, *.backup. Normal backup methods, such as archiving the files in a compressed bundle can be used.</p>
+<h3></h3>
+<h4>Manual Changes to the .script File</h4>
+<p>In 1.7.2 several ALTER TABLE commands are available to change the data structures and their names. However, if an old database cannot be opened due data inconsistencies, or when there is no ALTER TABLE command for the particular change, manual editing of the SCRIPT file can sometimes be used.</p>
+<p>Index and row data for  CACHED tables is stored in the *.data file. Because of this, in 1.7.2, a new command, SHUTDOWN SCRIPT, has been introduced to save all the CACHED table data in the .script file and delete the .data and *.backup files. After issuing this command, you can make changes to the *.script file as listed below. This procedure can also be used for adding and removing indexes or constraints to CACHED tables when the size of the *.data file is over 1GB and the normal SQL commands do not work due to the *.data file growing beyond 2GB.</p>
+<p></p>
+<p></p>
+<p>The following changes can be applied so long as they do not affect the integrity of existing data.</p>
+<p>Names of tables, columns and indexes can be changes.</p>
+<p><code>CREATE UNIQUE INDEX ... </code>to<code> CREATE INDEX ... </code>and vice versa</p>
+<p> A unique index can always be converted  into a normal index. A non-unique index can only be converted into a unique index if the table data for the column(s) is  unique in each row.</p>
+<p><code>NOT NULL</code></p>
+<p>A not-null constraint can always be removed. It can only be added if  the table data for the column has no null values.</p>
+<p><code>PRIMARY KEY</code></p>
+<p>A primary key constraint can be removed or added. It cannot be removed if there is a foreign key referencing the column(s).</p>
+<p><code>COLUMN TYPES</code></p>
+<p>Some changes to column types are possible. For example an INTEGER column can be changed to BIGINT, or DATE, TIME and TIMESTAMP columns can be changed to VARCHAR.</p>
+<p>Any other changes to data structures should be made only through the supported <code>ALTER</code> commands. </p>
+<p>After completing the changes and saving the modified *.script file, you can open the database as normal.</p>
+<h4>Backing Up Databases</h4>
+<p>The data for each database consists of  up to 5 files in the same directory. The endings are *.properties, *.script, *.data, *.backup and *.log (a file with the *.lck ending is used for controlling access to the database and should not be backed up). These should be backed up together. The files can be backed up while the engine is running but care should be taken that a CHECKPOINT or SHUTDOWN operation does not take place during the backup. It is more efficient to perform the backup immediately after a CHECKPOINT.  The *.data file can be excluded from the backup (the *.backup file will be used to replace this file if the full backup is restored). If a backup immediately follows a checkpoint, then the *.log file can also be excluded, limiting the significant files to *.properties, *.script, *.data and *.backup. Normal backup methods, such as archiving the files in a compressed bundle can be used.</p>
 <h4></h4>
-<p>Author: Fred Toussi - 14 July 2002 - updated 4 November 2003</p>
+<p>Author: Fred Toussi - 14 July 2002 - updated 20 December 2003</p>
 <p>Copyright 2002-2003 Fred Toussi. Permission is granted to distribute this document 
   without any alteration under the terms of the HSQLDB license. Additional permission 
   is granted to the HSQLDB Development Group to distribute this document with 

@@ -169,6 +169,8 @@ public class Library {
         {
             "ASCII", "org.hsqldb.Library.ascii"
         }, {
+            "BIT_LENGTH", "org.hsqldb.Library.bitLength"
+        }, {
             "CHAR", "org.hsqldb.Library.character"
         }, {
             "CHAR_LENGTH", "org.hsqldb.Library.length"
@@ -193,7 +195,7 @@ public class Library {
         }, {
             "LTRIM", "org.hsqldb.Library.ltrim"
         }, {
-            "OCTECT_LENGTH", "org.hsqldb.Library.octetLength"
+            "OCTET_LENGTH", "org.hsqldb.Library.octetLength"
         }, {
             "RAWTOHEX", "org.hsqldb.Library.rawToHex"
         }, {
@@ -786,6 +788,11 @@ public class Library {
     public static Integer octetLength(String s) {
         return s == null ? null
                          : ValuePool.getInt(s.length() * 2);
+    }
+
+    public static Integer bitLength(String s) {
+        return s == null ? null
+                         : ValuePool.getInt(s.length() * 16);
     }
 
     /**
@@ -1543,276 +1550,69 @@ public class Library {
         return false;
     }
 
-// Now obsolete:
-//
-// boucherb@users - patch 1.7.2 - ResultSetMetaData
-// TODO: encode data type subcode and table column nullability in
-// Result.colType array values in order to avoid database
-// call back for certain ResultSetMetaData values.
-//
-// One possible encoding might be:
-// nullability:    (colType[i] & 0x00f00000) >>> 20
-// data type sub:  (colType[i] & 0x000f0000) >>> 16
-// data type code: (colType[i] & 0x0000ffff)
-//
-// An even denser encoding might be:
-// decl. size:      (colType[i] & 0xff000000) >>> 24
-// - allows transmitting decl. length/precision up to 255...
-// - for types with create params, zero might mean: call back to db required
-// ext:             (colType[i] & 0x00ff0000)
-// read-only:       (ext & 0x00800000) != 0
-// autoincrement:   (ext & 0x00400000) != 0
-// nullability:     (ext & 0x00300000) >>> 20
-// data type sub:   (ext & 0x000f0000) >>> 16
-// data type code:  (colType[i] & 0x0000ffff)
-//
-//    /**
-//     * Retrieves a Result object describing the connection-dependent column
-//     * metadata for each requested (table,column) pair. <p>
-//     *
-//     * @param c the <code>Connection</code> object on which to retrieve
-//     *      the connection-dependent column metadata
-//     * @param columns a character sequence whose content is a CSV list of
-//     *    SQL strings representing requests for conection-dependent
-//     *    column metadata regarding (table-name, column-name) pairs. <p>
-//     *
-//     *    Example 1 (as the content of Java String): <p>
-//     *
-//     *    'table-name-1','column-name-1','table-name-2','column-name-2'<p>
-//     *
-//     *    Example 2 (on the SQL command line): <p>
-//     *
-//     *    call "org.hsqldb.Library.getCDColumnMetaData"(
-//     *      '''table-name-1'',''column-name-1'',
-//     *      ''table-name-2'',''column-name-2''') <p>
-//     *
-//     *    <b>Note:</b> since it may be difficult to tell using certain viewers,
-//     *    text encodings or fonts, please realize that, in the second example,
-//     *    the parameter string contains no double quote characters,
-//     *    only single-quote characters.<p>
-//     *
-//     * @throws HsqlException if a database access error occurs
-//     * @return A Result object describing the
-//     *    connection-dependent column metadata
-//     *    for each requested (table-name,column-name) pair
-//     */
-//    public static Object getCDColumnMetaData(Connection c,
-//            String columns) throws HsqlException {
-//
-//        Session             session;
-//        Database            database;
-//        DatabaseInformation dInfo;
-//        HsqlProperties      props;
-//        HsqlArrayList       columnList;
-//        Tokenizer           tokenizer;
-//        String              token;
-//        String              catalog;
-//        String              tableName;
-//        String              columnName;
-//        int                 len;
-//        boolean             reportCatalogs;
-//        boolean             reportSchemas;
-//        Result              result;
-//        Table               table;
-//        Column              column;
-//        Object[]            row;
-//
-//        tokenizer  = new Tokenizer(columns);
-//        len        = tokenizer.getLength();
-//        columnList = new HsqlArrayList();
-//
-//        while (tokenizer.getPosition() < len) {
-//            token = tokenizer.getString();
-//
-//            columnList.add(token);
-//
-//            if (tokenizer.getPosition() < len) {
-//                tokenizer.getThis(",");
-//            }
-//        }
-//
-//        len = columnList.size();
-//
-//        Trace.doAssert((len & 0x1) == 0,
-//                       "must be a valid list of table/column name pairs");
-//
-//        session           = ((jdbcConnection) c).sessionProxy.getSession();
-//        database          = session.getDatabase();
-//        dInfo             = database.dInfo;
-//        props             = database.getProperties();
-//        reportCatalogs    = props.isPropertyTrue("hsqldb.catalogs");
-//        reportSchemas     = props.isPropertyTrue("hsqldb.schemas");
-//        catalog           = reportCatalogs ? database.getPath()
-//                                           : "";
-//        result            = new Result(ResultConstants.DATA, 5);
-//        result.colType[0] = Types.VARCHAR;
-//        result.colType[1] = Types.VARCHAR;
-//        result.colType[2] = Types.BIT;
-//        result.colType[3] = Types.BIT;
-//        result.colType[4] = Types.BIT;
-//        result.sTable[0]  = "";
-//        result.sTable[1]  = "";
-//        result.sTable[2]  = "";
-//        result.sTable[3]  = "";
-//        result.sTable[4]  = "";
-//        result.sName      = result.sTable;
-//        result.sLabel[0]  = "CATALOG";
-//        result.sLabel[1]  = "SCHEMA";
-//        result.sLabel[2]  = "IS_IDENTITY";
-//        result.sLabel[3]  = "IS_NULLABLE";
-//        result.sLabel[4]  = "IS_READONLY";
-//
-//        for (int i = 0; i < len; ) {
-//            tableName  = (String) columnList.get(i++);
-//            columnName = (String) columnList.get(i++);
-//            row        = new Object[5];
-//
-//            if (dInfo.isSystemTable(tableName)) {
-//                try {
-//                    table = dInfo.getSystemTable(tableName, session);
-//                } catch (Exception e) {
-//                    table = null;
-//                }
-//            } else {
-//
-//                // TODO:  non-admin users can create TEMP tables but
-//                //        we need to update access checks to allow
-//                //        non-admin users to update temp tables they
-//                //        create
-//                table = database.findUserTable(tableName);
-//            }
-//
-//            if (table == null ||!session.isAccessible(table.getName())) {
-//                row[0] = "";
-//                row[1] = "";
-//                row[2] = Boolean.FALSE;
-//                row[3] = null;
-//                row[4] = Boolean.TRUE;
-//            } else {
-//                try {
-//                    column = table.getColumn(table.getColumnNr(columnName));
-//                } catch (Exception e) {
-//                    column = null;
-//                }
-//
-//                if (column == null) {
-//                    row[0] = "";
-//                    row[1] = "";
-//                    row[2] = Boolean.FALSE;
-//                    row[3] = null;
-//                    row[4] = Boolean.TRUE;
-//                } else {
-//                    row[0] = catalog;
-//
-//                    if (reportSchemas) {
-//
-//                        // REMIND: Maybe use/reference DINameSpace here?
-//                        //         Maybe break out constants to interface?
-//                        // This seems like a good code reuse opportunity,
-//                        // but is avoided because of suspected overhead
-//                        // and the fact that there is no guarantee yet that
-//                        // DINameSpace is CORE (always included in jar)
-//                        if (table.tableType == Table.SYSTEM_TABLE) {
-//                            row[1] = "DEFINITION_SCHEMA";
-//                        } else if (table.equals(tableName, session)) {
-//                            row[1] = session.getUsername();
-//                        } else {
-//                            row[1] = "PUBLIC";
-//                        }
-//                    } else {
-//                        row[1] = "";
-//                    }
-//
-//                    row[2] = ValuePool.getBoolean(column.isIdentity());
-//                    row[3] = ValuePool.getBoolean(column.isNullable()
-//                                                  &&!column.isIdentity());
-//                    row[4] =
-//                        ValuePool.getBoolean(database.databaseReadOnly
-//                                             || table.isDataReadOnly()
-//                                             || (database.filesReadOnly
-//                                                 && (table.isCached()
-//                                                     || table.isText())));
-//                }
-//            }
-//
-//            result.add(row);
-//        }
-//
-//        return result;
-//    }
-/*
-// test for soundex
-    public static void main (String argv[]){
-        String [] names = {"Yyhiokkk","Washington","Lee","Gutierrez","Pfister","Jackson","Tymczak","Ashcraft","VanDeusen","Deusen","Van Deusen"};
-        for (int i = 0 ; i < names.length; i++ ){
-            Trace.printSystemOut( names[i] + " : " + soundex(names[i] + "\n"));
-        }
-    }
-*/
     static final int abs                       = 0;
     static final int ascii                     = 1;
     static final int bitand                    = 2;
-    static final int bitor                     = 3;
-    static final int character                 = 4;
-    static final int concat                    = 5;
-    static final int cot                       = 6;
-    static final int curdate                   = 7;
-    static final int curtime                   = 8;
-    static final int database                  = 9;
-    static final int dayname                   = 10;
-    static final int dayofmonth                = 11;
-    static final int dayofweek                 = 12;
-    static final int dayofyear                 = 13;
-    static final int difference                = 14;
-    static final int getAutoCommit             = 15;
-    static final int getDatabaseMajorVersion   = 16;
-    static final int getDatabaseMinorVersion   = 17;
-    static final int getDatabaseProductName    = 18;
-    static final int getDatabaseProductVersion = 19;
-    static final int hexToRaw                  = 20;
-    static final int hour                      = 21;
-    static final int identity                  = 22;
-    static final int insert                    = 23;
-    static final int isReadOnlyConnection      = 24;
-    static final int isReadOnlyDatabase        = 25;
-    static final int lcase                     = 26;
-    static final int left                      = 27;
-    static final int length                    = 28;
-    static final int locate                    = 29;
-    static final int log10                     = 30;
-    static final int ltrim                     = 31;
-    static final int minute                    = 32;
-    static final int mod                       = 33;
-    static final int month                     = 34;
-    static final int monthname                 = 35;
-    static final int now                       = 36;
-    static final int octetLength               = 37;
-    static final int pi                        = 38;
-    static final int quarter                   = 39;
-    static final int rand                      = 40;
-    static final int rawToHex                  = 41;
-    static final int repeat                    = 42;
-    static final int replace                   = 43;
-    static final int right                     = 44;
-    static final int round                     = 45;
-    static final int roundMagic                = 46;
-    static final int rtrim                     = 47;
-    static final int second                    = 48;
-    static final int sign                      = 49;
-    static final int soundex                   = 50;
-    static final int space                     = 51;
-    static final int substring                 = 52;
-    static final int trim                      = 53;
-    static final int truncate                  = 54;
-    static final int ucase                     = 55;
-    static final int user                      = 56;
-    static final int week                      = 57;
-    static final int year                      = 58;
-
-    //
-    static final int isReadOnlyDatabaseFiles = 59;
-    static final int day                     = 60;
-    static final int position                = 61;
+    static final int bitLength                 = 3;
+    static final int bitor                     = 4;
+    static final int character                 = 5;
+    static final int concat                    = 6;
+    static final int cot                       = 7;
+    static final int curdate                   = 8;
+    static final int curtime                   = 9;
+    static final int database                  = 10;
+    static final int day                       = 11;
+    static final int dayname                   = 12;
+    static final int dayofmonth                = 13;
+    static final int dayofweek                 = 14;
+    static final int dayofyear                 = 15;
+    static final int difference                = 16;
+    static final int getAutoCommit             = 17;
+    static final int getDatabaseMajorVersion   = 18;
+    static final int getDatabaseMinorVersion   = 19;
+    static final int getDatabaseProductName    = 20;
+    static final int getDatabaseProductVersion = 21;
+    static final int hexToRaw                  = 22;
+    static final int hour                      = 23;
+    static final int identity                  = 24;
+    static final int insert                    = 25;
+    static final int isReadOnlyConnection      = 26;
+    static final int isReadOnlyDatabase        = 27;
+    static final int isReadOnlyDatabaseFiles   = 28;
+    static final int lcase                     = 29;
+    static final int left                      = 30;
+    static final int length                    = 31;
+    static final int locate                    = 32;
+    static final int log10                     = 33;
+    static final int ltrim                     = 34;
+    static final int minute                    = 35;
+    static final int mod                       = 36;
+    static final int month                     = 37;
+    static final int monthname                 = 38;
+    static final int now                       = 39;
+    static final int octetLength               = 40;
+    static final int pi                        = 41;
+    static final int position                  = 42;
+    static final int quarter                   = 43;
+    static final int rand                      = 44;
+    static final int rawToHex                  = 45;
+    static final int repeat                    = 46;
+    static final int replace                   = 47;
+    static final int right                     = 48;
+    static final int round                     = 49;
+    static final int roundMagic                = 50;
+    static final int rtrim                     = 51;
+    static final int second                    = 52;
+    static final int sign                      = 53;
+    static final int soundex                   = 54;
+    static final int space                     = 55;
+    static final int substring                 = 56;
+    static final int trim                      = 57;
+    static final int truncate                  = 58;
+    static final int ucase                     = 59;
+    static final int user                      = 60;
+    static final int week                      = 61;
+    static final int year                      = 62;
 
     //
     private static final IntValueHashMap functionMap =
@@ -1823,6 +1623,7 @@ public class Library {
         functionMap.put("abs", abs);
         functionMap.put("ascii", ascii);
         functionMap.put("bitand", bitand);
+        functionMap.put("bitlength", bitLength);
         functionMap.put("bitor", bitor);
         functionMap.put("character", character);
         functionMap.put("concat", concat);
@@ -1901,6 +1702,9 @@ public class Library {
                     return ValuePool.getInt(
                         bitand(((Number) params[0]).intValue(),
                                ((Number) params[1]).intValue()));
+                }
+                case bitLength : {
+                    return bitLength((String) params[0]);
                 }
                 case bitor : {
                     return ValuePool.getInt(

@@ -1,5 +1,6 @@
 Build instructions for HSQLDB 1.7.2
 
+
 A jar file for HSQLDB is provided in the /lib directory of the 
 .zip package. This jar contains both the database and the 
 utilities and has been built with JDK 1.3.1. (#RELEASE VERSION)
@@ -12,12 +13,15 @@ Possible reasons to rebuild the jar are:
 (a) Rebuild with JDK 1.4 to gain cccess to JDBC 3 methods and 
 classes such as Savepoint and ParameterMetaData. Also to
 speed up large databases with CACHED tables via the nio classes.
+An HSQLDB jar built with JDK 1.4 cannot be used with older JRE
+versions.
 
 (b) Rebuild with any JDK to reduce the size of the jar for small
 devices or for better download speed.
 
 (c) Rebuild to work around known compatibility issues with
 certain non-standard JDK's.
+
 
 
 Different jar sizes
@@ -33,6 +37,15 @@ size (hsqldbtest.jar) includes some test classes as well. You need
 the JUnit jar in the /lib directory in order to build and run the
 test classes.
 
+
+
+JDK and JRE versions
+
+You can use any recent JDK for building the jar. Use of JDK 1.3.x is
+recommended for the widest compatibility.
+
+Javadoc can be built with Ant and batch files.
+
 The JDK used for the build has a marginal effect on the size.
 Newer JDK's support more JDBC methods and classes, resulting in
 slightly larger jars. JDK 1.1 is not as advanced as the newer ones
@@ -44,6 +57,8 @@ It is recommended not to use JDK 1.1.x for building the
 jar, as this version produces much larger jar sizes and the result
 is not upward compatible with newer JDK'S / JRE's. Use JDK 1.3.x
 to build the jar instead. You can then deploy the jar in JRE 1.1.
+
+
 
 Build methods:
 
@@ -85,11 +100,5 @@ Linux build
 Linux scripts with the same functionality as the MSDOS batch files
 are provided.
 
-JDK and JRE versions
-
-You can use any recent JDK for building the jar. Use of JDK 1.3.x is
-recommended for the widest compatibility.
-
-Javadoc can be built with Ant and batch files.
 
 fredt@users

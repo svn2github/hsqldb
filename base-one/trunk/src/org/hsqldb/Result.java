@@ -1332,6 +1332,8 @@ class Result {
 
 // boucerb@users 20030513
 // ------------------- patch 1.7.2 --------------------
+
+/** @todo fredt - move the messages to Trace.java */
     Result(Throwable t, String statement) {
 
         iMode = ResultConstants.ERROR;

@@ -100,6 +100,38 @@ class DatabaseScript {
 
         StringBuffer a;
 
+        // sequences
+        /*
+        CREATE SEQUENCE <name>
+        [AS {INTEGER | BIGINT}]
+        [START WITH <value>]
+        [INCREMENT BY <value>]
+        */
+        for (int i = 0, sSize = dDatabase.sequenceMap.size(); i < sSize;
+                i++) {
+            HashMappedList seqmap = dDatabase.sequenceMap;
+            NumberSequence seq    = (NumberSequence) seqmap.get(i);
+
+            a = new StringBuffer(128);
+
+            a.append(Token.T_CREATE).append(' ');
+            a.append(Token.T_SEQUENCE).append(' ');
+            a.append(seq.getName().statementName).append(' ');
+            a.append(Token.T_AS).append(' ');
+            a.append(Types.getTypeString(seq.getType())).append(' ');
+            a.append(Token.T_START).append(' ');
+            a.append(Token.T_WITH).append(' ');
+            a.append(seq.peek()).append(' ');
+
+            if (seq.getIncrement() != 1) {
+                a.append(Token.T_INCREMENT).append(' ');
+                a.append(Token.T_BY).append(' ');
+                a.append(seq.getIncrement()).append(' ');
+            }
+
+            addRow(r, a.toString());
+        }
+
         // tables
         for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
             Table t = (Table) tTable.get(i);

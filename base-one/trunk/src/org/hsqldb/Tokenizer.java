@@ -158,13 +158,13 @@ class Tokenizer {
             Token.T_FOR, Token.T_FROM, Token.T_GROUP, Token.T_IF,
             Token.T_INTO, Token.T_IFNULL, Token.T_IS, Token.T_IN,
             Token.T_JOIN, Token.T_INTERSECT, Token.T_INNER, Token.T_LEADING,
-            Token.T_LIKE, Token.T_MAX, Token.T_MIN, Token.T_NULLIF,
-            Token.T_NOT, Token.T_MINUS, Token.T_ON, Token.T_ORDER, Token.T_OR,
-            Token.T_OUTER, Token.T_POSITION, Token.T_PRIMARY, Token.T_SELECT,
-            Token.T_SET, Token.T_SUBSTRING, Token.T_SUM, Token.T_THEN,
-            Token.T_TO, Token.T_TRAILING, Token.T_TRIM, Token.T_UNIQUE,
-            Token.T_UNION, Token.T_VALUES, Token.T_WHEN, Token.T_WHERE,
-            Token.T_HAVING
+            Token.T_LIKE, Token.T_MAX, Token.T_MIN, Token.T_NEXT,
+            Token.T_NULLIF, Token.T_NOT, Token.T_MINUS, Token.T_ON,
+            Token.T_ORDER, Token.T_OR, Token.T_OUTER, Token.T_POSITION,
+            Token.T_PRIMARY, Token.T_SELECT, Token.T_SET, Token.T_SUBSTRING,
+            Token.T_SUM, Token.T_THEN, Token.T_TO, Token.T_TRAILING,
+            Token.T_TRIM, Token.T_UNIQUE, Token.T_UNION, Token.T_VALUES,
+            Token.T_WHEN, Token.T_WHERE, Token.T_HAVING
         };
 
         for (int i = 0; i < keyword.length; i++) {
@@ -275,7 +275,7 @@ class Tokenizer {
      *
      * @throws HsqlException
      */
-    String getStringToken() throws HsqlException {
+    String getUserOrPassword() throws HsqlException {
 
         getToken();
 
@@ -448,6 +448,20 @@ class Tokenizer {
         return ((Number) o).intValue();
     }
 
+    long getBigint() throws HsqlException {
+
+        getToken();
+
+        Object o = getAsValue();
+        int    t = getType();
+
+        if (t != Types.INTEGER && t != Types.BIGINT) {
+            throw Trace.error(Trace.WRONG_DATA_TYPE, Types.getTypeString(t));
+        }
+
+        return ((Number) o).longValue();
+    }
+
     Object getInType(int type) throws HsqlException {
 
         getToken();
@@ -559,7 +573,6 @@ class Tokenizer {
 
                 return ValuePool.getDouble(l);
 
-//                return new Double(sToken);
             case DECIMAL :
                 return new BigDecimal(sToken);
 
@@ -984,22 +997,6 @@ class Tokenizer {
         }
 
         return null;
-    }
-
-// fredt@users 20020420 - patch523880 by leptipre@users - VIEW support
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param s
-     */
-    void setString(String s, int pos) {
-
-        sCommand = s;
-        iLength  = s.length();
-        bWait    = false;
-        iIndex   = pos;
     }
 
     /**

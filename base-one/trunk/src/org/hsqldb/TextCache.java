@@ -282,7 +282,10 @@ class TextCache extends DataFileCache {
             }
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR,
-                              "error " + e + " opening " + sName);
+                              Trace.TextCache_openning_file_error,
+                              new Object[] {
+                sName, e
+            });
         }
 
         readOnly = readonly;
@@ -318,7 +321,10 @@ class TextCache extends DataFileCache {
             }
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR,
-                              "error " + e + " closing " + sName);
+                              Trace.TextCache_closing_file_error,
+                              new Object[] {
+                sName, e
+            });
         }
     }
 
@@ -343,7 +349,10 @@ class TextCache extends DataFileCache {
             }
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR,
-                              "error " + e + " purging " + sName);
+                              Trace.TextCache_purging_file_error,
+                              new Object[] {
+                sName, e
+            });
         }
     }
 
@@ -404,7 +413,7 @@ class TextCache extends DataFileCache {
 
                     if (next == -1) {
                         break;
-        }
+                    }
 
                     // c = (char) (next & 0xff);
                     c = next;
@@ -434,28 +443,28 @@ class TextCache extends DataFileCache {
                             rowIn.skippedLine();
 
                             continue;
-        }
-        }
+                        }
+                    }
 
                     if (c == '\r') {
 
                         //-- Check for newline
-            try {
+                        try {
                             next = rFile.read();
 
                             if (next == -1) {
                                 break;
-            }
+                            }
 
                             // c = (char) (next & 0xff);
                             c = next;
 
                             if (c == '\n') {
                                 buffer.append('\n');
-        }
+                            }
                         } catch (Exception e2) {
                             ;
-    }
+                        }
 
                         buffer.append('\n');
 
@@ -468,7 +477,7 @@ class TextCache extends DataFileCache {
                         if (ignoreFirst && pos == 0) {
                             ignoredFirst = buffer.toString();
                             blank        = true;
-    }
+                        }
 
                         //-- Ignore blanks.
                         if (!blank) {
@@ -524,7 +533,7 @@ class TextCache extends DataFileCache {
         public ByteArray(int n) {
             buffer = new byte[n];
             buflen = 0;
-            }
+        }
 
         public void append(int c) {
 
@@ -534,7 +543,7 @@ class TextCache extends DataFileCache {
                 System.arraycopy(buffer, 0, newbuf, 0, buflen);
 
                 buffer = newbuf;
-    }
+            }
 
             buffer[buflen] = (byte) c;
 
@@ -547,21 +556,21 @@ class TextCache extends DataFileCache {
 
         public void setLength(int l) {
             buflen = l;
-    }
+        }
 
         public String toString() {
 
-        try {
+            try {
                 return new String(buffer, 0, buflen, stringEncoding);
             } catch (UnsupportedEncodingException e) {
                 return new String(buffer, 0, buflen);
             }
         }
-            }
+    }
 
     int getLineNumber() {
         return rowIn.getLineNumber();
-        }
+    }
 
     void setSourceIndexing(boolean mode) {
         isIndexingSource = mode;

@@ -67,45 +67,118 @@
 
 package org.hsqldb;
 
+import org.hsqldb.HsqlNameManager.HsqlName;
+
+/**
+ * Maintains a sequence of numbers.
+ *
+ * @author  fredt@users
+ * @since HSQLDB 1.7.2
+ * @version 1.7.2
+ */
 public class NumberSequence {
 
-    long currValue;
-    long markValue;
+    private HsqlName name;
+    private long     currValue;
+    private long     markValue;
+    private long     increment;
+    private int      dataType;
 
-    NumberSequence(long value) {
-        currValue = markValue = value;
+    /**
+     * constructor with initial value and increment;
+     */
+    NumberSequence(HsqlName name, long value, long increment, int type) {
+
+        this.name      = name;
+        currValue      = markValue = value;
+        this.increment = increment;
+        dataType       = type;
     }
 
+    /**
+     * principal getter for the next sequence value
+     */
     long getValue() {
-        return currValue++;
+
+        long value = currValue;
+
+        currValue += increment;
+
+        return value;
     }
 
+    /**
+     * getter for a given value
+     */
     long getValue(long value) {
 
         if (value >= currValue) {
             currValue = value;
+            currValue += increment;
 
-            return currValue++;
+            return value;
         } else {
             return value;
         }
     }
 
+    /** @todo fredt - check against max value of type */
+    Object getValueObject() {
+
+        long value = currValue;
+
+        currValue += increment;
+
+        Object result;
+
+        if (dataType == Types.INTEGER) {
+            result = new Integer((int) value);
+        } else {
+            result = new Long(value);
+        }
+
+        return result;
+    }
+
+    /**
+     * marks current value for a future reset()
+     */
     void mark() {
         markValue = currValue;
     }
 
+    /**
+     * reset to marked value, works in conjunction with mark()
+     */
     void reset() {
 
         // no change if called before getValue() or called twice
         currValue = markValue;
     }
 
+    /**
+     * get next value without incrementing
+     */
     long peek() {
         return currValue;
     }
 
+    /**
+     * reset to new initial value
+     */
     void reset(long value) {
         markValue = currValue = value;
+    }
+
+    int getType() {
+        return dataType;
+    }
+
+    HsqlName getName() {
+        return name;
+    }
+
+    long getIncrement() {
+        return increment;
     }
 }

@@ -70,8 +70,8 @@ package org.hsqldb.lib;
 public class Sort {
 
     /**
-     * FastQSorts the [l,r] partition of the specfied array of Rows, based on
-     * the comparator.
+     * FastQSorts the [l,r] partition (inclusive) of the specfied array of
+     * Rows, using the comparator.
      *
      * Modified from the original method in Hypersonic with the addition of
      * the comparator. (fredt@users)
@@ -155,6 +155,20 @@ public class Sort {
     public static class StringComparator implements ObjectComparator {
 
         public int compare(Object a, Object b) {
+
+            // handle nulls
+            if (a == b) {
+                return 0;
+            }
+
+            if (a == null) {
+                return -1;
+            }
+
+            if (b == null) {
+                return 1;
+            }
+
             return ((String) a).compareTo((String) b);
         }
     }

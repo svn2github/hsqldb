@@ -33,6 +33,14 @@ package org.hsqldb;
 
 import org.hsqldb.lib.ObjectComparator;
 
+/**
+ * Subquery objects represent views or anonymous subqueries. The implementation
+ * of ObjectComparator provides the correct order of materialization for
+ * nested views / subqueries.
+ *
+ * @author boucherb@users
+ * @author fredt@users
+ */
 class SubQuery implements ObjectComparator {
 
     int     level;
@@ -48,12 +56,13 @@ class SubQuery implements ObjectComparator {
     /**
      * This results in the following sort order:
      *
-     * view subqueries first
-     * subqueries for views declared early first
-     * deepest suqqueries first (deep == higher level)
+     * view subqueries, then other subqueries
      *
-     * The set of subqueries contained in each view declaration has
-     * level values starting from 1 up.
+     *    view subqueries:
+     *        views sorted by creation order (earlier declaration first)
+     *
+     *    other subqueries:
+     *        subqueries sorted by depth within select query (deep == higher level)
      *
      */
     public int compare(Object a, Object b) {
@@ -62,7 +71,7 @@ class SubQuery implements ObjectComparator {
         SubQuery sqb = (SubQuery) b;
 
         if (sqa.view == null && sqb.view == null) {
-            return sqa.level - sqb.level;
+            return sqb.level - sqa.level;
         } else if (sqa.view != null && sqb.view != null) {
             Database db = sqa.view.database;
             int      ia = db.getTableIndex(sqa.view);
@@ -76,13 +85,13 @@ class SubQuery implements ObjectComparator {
                 ib = db.getTables().size();
             }
 
-            int diff = ib - ia;
+            int diff = ia - ib;
 
-            return diff == 0 ? sqa.level - sqb.level
+            return diff == 0 ? sqb.level - sqa.level
                              : diff;
         } else {
-            return ((SubQuery) a).view == null ? 1
-                                               : -1;
+            return sqa.view == null ? 1
+                                    : -1;
         }
     }
 }

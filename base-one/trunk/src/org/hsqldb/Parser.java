@@ -90,11 +90,11 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 // rewrite of the majority of multiple if(){}else{} chains with switch(){}
 // boucherb@users 20030705 - patch 1.7.2 - prepared statement support
 // fredt@users 20030819 - patch 1.7.2 - EXTRACT({YEAR | MONTH | DAY | HOUR | MINUTE | SECOND } FROM datetime)
-// fredt@users 20030820 - patch 1.7.2 - CHAR_LENGTH | CHARACTER_LENGTH | OCTECT_LENGTH(string)
+// fredt@users 20030820 - patch 1.7.2 - CHAR_LENGTH | CHARACTER_LENGTH | OCTET_LENGTH(string)
 // fredt@users 20030820 - patch 1.7.2 - POSITION(string IN string)
 // fredt@users 20030820 - patch 1.7.2 - SUBSTRING(string FROM pos [FOR length])
-// fredt@users 20030820 - patch 1.7.2 - TRIM({LEADING | TRAILING | BOTH} FROM <string expression>)
-// fredt@users 20030820 - patch 1.7.2 - CASE ... WHEN ... THEN ... [ELSE ...] END and its variants
+// fredt@users 20030820 - patch 1.7.2 - TRIM({LEADING | TRAILING | BOTH} [<character>] FROM <string expression>)
+// fredt@users 20030820 - patch 1.7.2 - CASE [expr] WHEN ... THEN ... [ELSE ...] END and its variants
 // fredt@users 20030820 - patch 1.7.2 - NULLIF(expr,expr)
 // fredt@users 20030820 - patch 1.7.2 - COALESCE(expr,expr,...)
 // fredt@users 20031012 - patch 1.7.2 - improved scoping for column names in all areas
@@ -121,10 +121,8 @@ class Parser {
     private int       iToken;
 
     //
-    private int           subQueryLevel = 0;
-    private HsqlArrayHeap subQueryHeap;
-    private static final String pamsg =
-        "It is ambiguous to specify a parameter marker ";
+    private int           subQueryLevel;
+    private HsqlArrayList subQueryList = new HsqlArrayList();
 
     /**
      *  Constructor declaration
@@ -138,6 +136,20 @@ class Parser {
         database     = db;
         tokenizer    = t;
         this.session = session;
+    }
+
+    void reset(String sql) {
+
+        sTable = null;
+        sToken = null;
+        oData  = null;
+
+        tokenizer.reset(sql);
+        subQueryList.clear();
+
+        subQueryLevel = 0;
+
+        parameters.clear();
     }
 
     void checkTableWriteAccess(Table table,
@@ -172,7 +184,6 @@ class Parser {
                 columns.add(name);
             } else {
                 columns.add(t.getString());
-                t.checkUnexpectedParam("parametric column identifier");
             }
 
             String token = t.getString();
@@ -192,7 +203,7 @@ class Parser {
     }
 
     /**
-     * The SubQuery objects are added to the subquery list at the
+     * The SubQuery objects are added to the end of subquery list
      */
     SubQuery parseSubquery(View v, boolean resolveAll,
                            int predicateType) throws HsqlException {
@@ -203,12 +214,12 @@ class Parser {
             Table  table;
             Select s = null;
 
-            sq            = new SubQuery();
+            sq = new SubQuery();
 
             subQueryLevel++;
 
-            s             = parseSelect(false);
-            sq.level      = subQueryLevel;
+            s        = parseSelect(false);
+            sq.level = subQueryLevel;
 
             subQueryLevel--;
 
@@ -249,20 +260,12 @@ class Parser {
 
             sq.table = table;
 
-            if (subQueryHeap == null) {
-                subQueryHeap = new HsqlArrayHeap(8, sq);
-            }
-
-            subQueryHeap.add(sq);
+            subQueryList.add(sq);
         } else {
-            sq = v.viewSubqueries[v.viewSubqueries.length - 1];
-
-            if (subQueryHeap == null) {
-                subQueryHeap = new HsqlArrayHeap(8, sq);
-            }
+            sq = v.viewSubQuery;
 
             for (int i = 0; i < v.viewSubqueries.length; i++) {
-                subQueryHeap.add(v.viewSubqueries[i]);
+                subQueryList.add(v.viewSubqueries[i]);
             }
         }
 
@@ -296,8 +299,6 @@ class Parser {
 
         do {
             Expression e = parseExpression();
-
-            checkParamAmbiguity(!e.isParam(), "as a SELECT list item");
 
             token = tokenizer.getString();
 
@@ -436,8 +437,6 @@ class Parser {
 
             do {
                 Expression e = parseExpression();
-
-                checkParamAmbiguity(!e.isParam(), "as a GROUP BY list item");
 
                 // tony_lai@users having support:
                 // "group by" does not allow refering to other columns alias.
@@ -605,9 +604,8 @@ class Parser {
         do {
             Expression e = parseExpression();
 
-            checkParamAmbiguity(!e.isParam(), "as an ORDER BY list item");
-
-            e = resolveOrderByColumnAlias(e, vcolumn, select.sUnion != null);
+            e = resolveOrderByColumnAlias(e, vcolumn, select.iResultLen,
+                                          select.sUnion != null);
             token = tokenizer.getString();
 
             if (token.equals(Token.T_DESC)) {
@@ -732,7 +730,8 @@ class Parser {
      * @exception  java.sql.HsqlException  when invalid search specification
      */
     private static Expression resolveOrderByColumnAlias(Expression e,
-            HsqlArrayList vcolumn, boolean union) throws HsqlException {
+            HsqlArrayList vcolumn, int visiblecols,
+            boolean union) throws HsqlException {
 
         if (e.getType() == Expression.VALUE) {
 
@@ -765,8 +764,9 @@ class Parser {
                         || (colalias == null
                             && s.equals(colexpr.getColumnName()))) {
 
-                    // check for ambiguity
-                    if (found != e) {
+                    // check for ambiguity if two displayed cols have the same name
+                    // do not check beyond as a column may be repeated for grouping purposes
+                    if (found != e && i < visiblecols) {
                         throw Trace.error(Trace.AMBIGUOUS_COLUMN_REFERENCE,
                                           s);
                     }
@@ -812,8 +812,6 @@ class Parser {
 
             t = sq.table;
         } else {
-            tokenizer.checkUnexpectedParam("parametric table identifier");
-
             t = database.getTable(token, session);
 
             session.check(t.getName(), UserManager.SELECT);
@@ -1110,12 +1108,13 @@ class Parser {
         Expression h = new Expression(Expression.SMALLER_EQUAL, a,
                                       readConcat());
 
-        checkParamAmbiguity(
-            !(l.getArg().isParam() && l.getArg2().isParam()),
-            "for both the first and second operands of a BETWEEN comparison predicate");
-        checkParamAmbiguity(
-            !(h.getArg().isParam() && h.getArg2().isParam()),
-            "for both the first and third operands of a BETWEEN comparison predicate");
+        if (l.getArg().isParam() && l.getArg2().isParam()) {
+            throw Trace.error(Trace.Parser_ambiguous_between1);
+        }
+
+        if (h.getArg().isParam() && h.getArg2().isParam()) {
+            throw Trace.error(Trace.Parser_ambiguous_between2);
+        }
 
         return new Expression(Expression.AND, l, h);
     }
@@ -1314,8 +1313,8 @@ class Parser {
 
                 r = new Expression(type, readTerm(), null);
 
-                checkParamAmbiguity(!r.getArg().isParam(),
-                                    "as the operand of a unary   operation");
+                Trace.check(!r.getArg().isParam(),
+                            Trace.Expression_resolveTypes1);
 
                 break;
             }
@@ -1324,8 +1323,7 @@ class Parser {
 
                 r = readTerm();
 
-                checkParamAmbiguity(!r.isParam(),
-                                    "as the operand of a unary + operation");
+                Trace.check(!r.isParam(), Trace.Expression_resolveTypes1);
 
                 break;
             }
@@ -1415,40 +1413,42 @@ class Parser {
                 break;
             }
             case Expression.CASE : {
-                int type = Expression.CASEWHEN;
+                int        type      = Expression.CASEWHEN;
+                Expression predicand = null;
 
                 read();
 
-                if (iToken == Expression.WHEN) {
-                    readThis(Expression.WHEN);
-
-                    r = readOr();
-                } else {
-                    r = readOr();
-
-                    readThis(Expression.WHEN);
-
-                    r = new Expression(Expression.EQUAL, r, readOr());
+                if (iToken != Expression.WHEN) {
+                    predicand = readOr();
                 }
 
-                readThis(Expression.THEN);
+                Expression leaf = null;
 
-                Expression thenelse = readOr();
-                Expression exprelse;
+                while (true) {
+                    Expression casewhen = parseCaseWhen(predicand);
+
+                    if (r == null) {
+                        r = casewhen;
+                    } else {
+                        leaf.setRightExpression(casewhen);
+                    }
+
+                    leaf = casewhen.getRightExpression();
+
+                    if (iToken != Expression.WHEN) {
+                        break;
+                    }
+                }
 
                 if (iToken == Expression.ELSE) {
                     readThis(Expression.ELSE);
 
-                    exprelse = readOr();
-                } else {
-                    exprelse = new Expression(Types.NULL, null);
+                    Expression elsexpr = readOr();
+
+                    leaf.setRightExpression(elsexpr);
                 }
 
                 readThis(Expression.ENDWHEN);
-
-                thenelse = new Expression(Expression.ALTERNATIVE, thenelse,
-                                          exprelse);
-                r = new Expression(type, r, thenelse);
 
                 break;
             }
@@ -1475,41 +1475,61 @@ class Parser {
             }
             case Expression.COALESCE :
             case Expression.IFNULL : {
-                Expression leaf = null;
 
                 // turn into a CASEWHEN
                 read();
                 readThis(Expression.OPEN);
 
-                Expression left = readOr();
+                Expression leaf = null;
 
                 while (true) {
-                    readThis(Expression.COMMA);
-
-                    Expression right = readOr();
-                    Expression thenelse =
-                        new Expression(Expression.ALTERNATIVE, right, left);
-                    Expression equals =
-                        new Expression(Expression.EQUAL, left,
+                    Expression current = readOr();
+                    Expression condition =
+                        new Expression(Expression.EQUAL, current,
                                        new Expression(Types.NULL, null));
-                    Expression coalesce = new Expression(Expression.CASEWHEN,
-                                                         equals, thenelse);
+                    Expression alternatives =
+                        new Expression(Expression.ALTERNATIVE,
+                                       new Expression(Types.NULL, null),
+                                       current);
+                    Expression casewhen = new Expression(Expression.CASEWHEN,
+                                                         condition,
+                                                         alternatives);
 
-                    if (leaf == null) {
-                        r = coalesce;
+                    if (r == null) {
+                        r = casewhen;
                     } else {
-                        leaf.setLeftExpression(coalesce);
+                        leaf.setLeftExpression(casewhen);
                     }
 
-                    leaf = thenelse;
-                    left = right;
+                    leaf = alternatives;
 
                     if (iToken == Expression.CLOSE) {
                         readThis(Expression.CLOSE);
 
                         break;
                     }
+
+                    readThis(Expression.COMMA);
                 }
+
+                break;
+            }
+            case Expression.SEQUENCE : {
+                int type = iToken;
+
+                tokenizer.getThis(Token.T_VALUE);
+                tokenizer.getThis(Token.T_FOR);
+
+                String name = tokenizer.getIdentifier();
+
+                tokenizer.getString();
+
+                NumberSequence sequence =
+                    (NumberSequence) database.sequenceMap.get(name);
+
+                Trace.check(sequence != null, Trace.SEQUENCE_NOT_FOUND);
+
+                r = new Expression(sequence);
 
                 break;
             }
@@ -1747,6 +1767,29 @@ class Parser {
         return r;
     }
 
+    Expression parseCaseWhen(Expression r) throws HsqlException {
+
+        readThis(Expression.WHEN);
+
+        Expression condition;
+
+        if (r == null) {
+            condition = readOr();
+        } else {
+            condition = new Expression(Expression.EQUAL, r, readOr());
+        }
+
+        readThis(Expression.THEN);
+
+        Expression current = readOr();
+        Expression alternatives = new Expression(Expression.ALTERNATIVE,
+            current, new Expression(Types.NULL, null));
+        Expression casewhen = new Expression(Expression.CASEWHEN, condition,
+                                             alternatives);
+
+        return casewhen;
+    }
+
     /**
      *  Method declaration
      *
@@ -1811,11 +1854,12 @@ class Parser {
                 case Expression.MIN :
                 case Expression.MAX :
                 case Expression.AVG :
+                case Expression.CONVERT :
+                case Expression.CAST :
+                case Expression.SEQUENCE :
                 case Expression.IFNULL :
                 case Expression.COALESCE :
                 case Expression.NULLIF :
-                case Expression.CONVERT :
-                case Expression.CAST :
                 case Expression.CASE :
                 case Expression.WHEN :
                 case Expression.THEN :
@@ -1902,6 +1946,7 @@ class Parser {
         tokenSet.put(Token.T_NULLIF, Expression.NULLIF);
         tokenSet.put(Token.T_CONVERT, Expression.CONVERT);
         tokenSet.put(Token.T_CAST, Expression.CAST);
+        tokenSet.put(Token.T_NEXT, Expression.SEQUENCE);
         tokenSet.put(Token.T_CASE, Expression.CASE);
         tokenSet.put(Token.T_WHEN, Expression.WHEN);
         tokenSet.put(Token.T_THEN, Expression.THEN);
@@ -1927,54 +1972,56 @@ class Parser {
     private static final Expression[] noParameters = new Expression[0];
     private static final SubQuery[]   noSubqueries = new SubQuery[0];
 
+    /**
+     *  Destructive get method
+     */
     Expression[] getParameters() {
 
-// TODO:  when Parser is reusable (maybe even before?) this should be
-// a destructive get (i.e. clears the parameters) so as to allow earier
-// garbage collection and avoid memory leaks.
-// Currently, parsers are created, used and thrown away immediately, typically
-// in method scope, so this is not really a big an issue for now.
-        return parameters.size() == 0 ? noParameters
-                                      : (Expression[]) parameters.toArray(
-                                          new Expression[parameters.size()]);
+        Expression[] result = parameters.size() == 0 ? noParameters
+                                                     : (Expression[]) parameters.toArray(
+                                                         new Expression[parameters.size()]);
 
-//      parameters.clear();
+        parameters.clear();
+
+        return result;
     }
 
     void clearParameters() {
         parameters.clear();
     }
 
-    // destructive get, but that's OK (preferred, actually)
+    // fredt - new implementation of subquery list
 
-    /** @todo fredt - replace this stuff with a simpler structure */
-    SubQuery[] getSubqueries() {
+    /**
+     * Sets the subqueries as belonging to the View being constructed
+     */
+    void setAsView(View view) {
 
-        SubQuery[] subqueries;
-        int        size;
+        for (int i = 0; i < subQueryList.size(); i++) {
+            SubQuery sq = (SubQuery) subQueryList.get(i);
 
-        if (subQueryHeap == null) {
+            if (sq.view == null) {
+                sq.view = view;
+            }
+        }
+    }
+
+    /**
+     * Return the list of subqueries as an array sorted according to the order
+     * of materialization, then clear the internal subquery list
+     */
+    SubQuery[] getSortedSubqueries() {
+
+        if (subQueryList.size() == 0) {
             return noSubqueries;
         }
 
-        size = subQueryHeap.size();
+        subQueryList.sort((SubQuery) subQueryList.get(0));
 
-        if (size == 0) {
-            return noSubqueries;
-        }
+        SubQuery[] subqueries = new SubQuery[subQueryList.size()];
 
-        subqueries = new SubQuery[size];
-
-        // order matters: we want deepest subqueries first, since higher
-        // level select table filters depend on the content of lower level
-        // ones.
-        // views are materialised first, in order of use depth
-        // other subqueries are then materialised in order of use depth
-        for (int i = size - 1; i >= 0; i--) {
-            subqueries[i] = (SubQuery) subQueryHeap.remove();
-        }
-
-        subQueryLevel = 0;
+        subQueryList.toArray(subqueries);
+        subQueryList.clear();
 
         return subqueries;
     }
@@ -2028,7 +2075,7 @@ class Parser {
 
         cs.setAsCall(expression, getParameters());
 
-        cs.subqueries = getSubqueries();
+        cs.subqueries = getSortedSubqueries();
 
         return cs;
     }
@@ -2047,9 +2094,6 @@ class Parser {
         tokenizer.getThis(Token.T_FROM);
 
         token = tokenizer.getString();
-
-        tokenizer.checkUnexpectedParam("parametric table specificiation");
-
         table = database.getTable(token, session);
 
         checkTableWriteAccess(table, UserManager.DELETE);
@@ -2069,7 +2113,7 @@ class Parser {
 
         cs.setAsDelete(table, condition, getParameters());
 
-        cs.subqueries = getSubqueries();
+        cs.subqueries = getSortedSubqueries();
 
         return cs;
     }
@@ -2135,10 +2179,7 @@ class Parser {
         tokenizer.getThis(Token.T_INTO);
 
         token = tokenizer.getString();
-
-        tokenizer.checkUnexpectedParam("parametric table specificiation");
-
-        t = database.getTable(token, session);
+        t     = database.getTable(token, session);
 
         checkTableWriteAccess(t, UserManager.INSERT);
 
@@ -2179,7 +2220,7 @@ class Parser {
 
             cs.setAsInsertValues(t, cm, acve, ccl, getParameters());
 
-            cs.subqueries = getSubqueries();
+            cs.subqueries = getSortedSubqueries();
 
             return cs;
         } else if (token.equals(Token.T_SELECT)) {
@@ -2191,7 +2232,7 @@ class Parser {
 
             cs.setAsInsertSelect(t, cm, ccl, select, getParameters());
 
-            cs.subqueries = getSubqueries();
+            cs.subqueries = getSortedSubqueries();
 
             return cs;
         } else {
@@ -2217,7 +2258,7 @@ class Parser {
 
         cs.setAsSelect(select, getParameters());
 
-        cs.subqueries = getSubqueries();
+        cs.subqueries = getSortedSubqueries();
 
         return cs;
     }
@@ -2244,9 +2285,6 @@ class Parser {
         clearParameters();
 
         token = tokenizer.getString();
-
-        tokenizer.checkUnexpectedParam("parametric table identifier");
-
         table = database.getTable(token, session);
 
         checkTableWriteAccess(table, UserManager.UPDATE);
@@ -2294,15 +2332,8 @@ class Parser {
 
         cs.setAsUpdate(table, cm, acve, condition, getParameters());
 
-        cs.subqueries = getSubqueries();
+        cs.subqueries = getSortedSubqueries();
 
         return cs;
     }
-
-    static void checkParamAmbiguity(boolean b,
-                                    String msg) throws HsqlException {
-        Trace.check(b, Trace.COLUMN_TYPE_MISMATCH, pamsg, msg);
-    }
-
-// --
 }

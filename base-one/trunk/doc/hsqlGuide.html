@@ -211,7 +211,18 @@ Connection c = DriverManager.<b>getConnection</b> ("jdbc:hsqldb:hsql://localhost
   overheads. See the discussion in <a href="hsqlAdvancedGuide.html">hsqlAdvancedGuide.html</a>  for more information.</p>
 <p>Indexes are crucial for adequate query speed. When queries joining multiple tables are used, there must be an  index on each joined column of each table. When range or equality conditions are used e.g. <code>SELECT ... WHERE a &gt;10 AND  b = 0</code>, an  indexes is  required on  column used in the condition. Indexes have no effect on LIKE conditions or ORDER BY clauses.</p>
 <p>As a rule of thumb, HSQLDB is capable of processing queries and returning over 100,000 rows per second. Any query that runs into several seconds should be checked and indexes should be added to the relevant columns of the tables if necessary.</p>
-<p>Author: Fred Toussi - 14 July 2002 - updated 20 Aug 2003</p>
+<h4>SQL SUPPORT</h4>
+<p>The SQL syntax supported by HSQLDB is essentially that specified by the SQL Standard (92 and 200n). Not all the features of the Standard are supported and there are some proprietary extensions. In 1.7.2 the behaviour of the engine is far more compliant with the Standards than with older versions. The main changes are </p>
+<ul>
+  <li> correct treatment of NULL column values in joins, in UNIQUE constraints and in query conditions</li>
+  <li>correct processing of selects with JOIN and LEFT OUTER JOIN</li>
+  <li>correct processing of aggregate functions contained in expressions or containing expression arguments</li>
+</ul>
+<p>The supported commands are listed in <a href="hsqlSyntax.html">hsqlSyntax.html</a> . For a  well written basic guide to SQL you can consult <a href="http://www.postgresql.org/docs/awbook.html">PostgreSQL: Introduction and Concepts</a> by Bruce Momjian, which is available on the web. Most of the SQL coverage in the book applies also  to HSQLDB. There are some  differences is keywords supported by one and not the other engine (ALL, ANY, OUTER, IDENTITY/SERIAL, OID's, SEQUENCE, etc.) or used differently (LIMIT, TRIGGER, etc.).</p>
+<h4>JDBC SUPPORT</h4>
+<p>In 1.7.2, support for JDBC2 has been significantly extended and some features of JDBC3 are also supported. The relevant classes are thoroughly documented. See the JavaDoc for <a href="src/">org.hsqldb.jdbcXXXX </a>classes.</p>
+<p>&nbsp;</p>
+<p>Author: Fred Toussi - 14 July 2002 - updated 20 Dec 2003</p>
 <p>Copyright 2002-2003 Fred Toussi. Permission is granted to distribute this document 
   without any alteration under the terms of the HSQLDB license. Additional permission 
   is granted to the HSQLDB Development Group to distribute this document with 

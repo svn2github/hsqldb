@@ -112,6 +112,8 @@ class Session implements SessionInterface {
     private HashMappedList savepoints;
     private boolean        script;
     private jdbcConnection intConnection;
+    private Tokenizer      tokenizer;
+    private Parser         parser;
     final static Result emptyUpdateCount =
         new Result(ResultConstants.UPDATECOUNT);
 
@@ -142,6 +144,8 @@ class Session implements SessionInterface {
         dbCommandInterpreter      = new DatabaseCommandInterpreter(this);
         compiledStatementExecutor = new CompiledStatementExecutor(this);
         compiledStatementManager  = db.compiledStatementManager;
+        tokenizer                 = new Tokenizer("");
+        parser                    = new Parser(dDatabase, tokenizer, this);
     }
 
     /**
@@ -705,18 +709,16 @@ class Session implements SessionInterface {
     private CompiledStatement sqlCompileStatement(String sql,
             int type) throws HsqlException {
 
-        Tokenizer         tokenizer;
         String            token;
-        Parser            parser;
         int               cmd;
         CompiledStatement cs;
         boolean           isCmdOk;
 
-        tokenizer = new Tokenizer(sql);
-        parser    = new Parser(dDatabase, tokenizer, this);
-        token     = tokenizer.getString();
-        cmd       = Token.get(token);
-        isCmdOk   = true;
+        parser.reset(sql);
+
+        token   = tokenizer.getString();
+        cmd     = Token.get(token);
+        isCmdOk = true;
 
         switch (cmd) {
 
@@ -766,13 +768,13 @@ class Session implements SessionInterface {
         }
 
         // fredt - now accepts semicolon and whitespace at the end of statement
-        // fredt - investigate if it should or not
+        // fredt - investigate if it should or not for prepared statements
         while (tokenizer.getPosition() < tokenizer.getLength()) {
             token = tokenizer.getString();
 
-            Trace.check(
-                token.length() == 0 || token.equals(Token.T_SEMICOLON),
-                Trace.UNEXPECTED_TOKEN, token);
+            if (token.length() != 0 &&!token.equals(Token.T_SEMICOLON)) {
+                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+            }
         }
 
         // - need to be able to key cs against its sql in statement pool
