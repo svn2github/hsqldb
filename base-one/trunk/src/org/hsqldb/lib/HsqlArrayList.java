@@ -31,6 +31,7 @@
 
 package org.hsqldb.lib;
 
+import java.lang.reflect.Array;
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
 
@@ -297,14 +298,17 @@ public class HsqlArrayList extends BaseList implements HsqlList {
 
     /**
      * Copies all elements of the list to a[]. It is assumed a[] is of the
-     * correct type. If a[] is too small, a new Object[] is returned. If
-     * a[] is larger, only the list elements are copied. Differs from the
-     * implementation in java.util.ArrayList in the last two aspects.
+     * correct type. If a[] is too small, a new array or the same type is
+     * returned. If a[] is larger, only the list elements are copied and no
+     * other change is made to the array.
+     * Differs from the implementation in java.util.ArrayList in the second
+     * aspect.
      */
-    public Object[] toArray(Object a[]) {
+    public Object toArray(Object a) {
 
-        if (a.length < elementCount) {
-            a = new Object[elementCount];
+        if (Array.getLength(a) < elementCount) {
+            a = Array.newInstance(a.getClass().getComponentType(),
+                                  elementCount);
         }
 
         System.arraycopy(elementData, 0, a, 0, elementCount);

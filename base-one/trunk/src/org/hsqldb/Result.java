@@ -182,8 +182,8 @@ class Result {
 
                 case ResultConstants.SQLGETSESSIONINFO :
                 case ResultConstants.SQLDISCONNECT :
-                case ResultConstants.SQLENDTRAN:
-                case ResultConstants.SQLSTARTTRAN:
+                case ResultConstants.SQLENDTRAN :
+                case ResultConstants.SQLSTARTTRAN :
                     break;
 
                 case ResultConstants.SQLPREPARE :
@@ -252,7 +252,8 @@ class Result {
                 }
                 default :
                     throw new HsqlException(
-                        "trying to use unsuppoted result mode: " + iMode, null, 0);
+                        "trying to use unsuppoted result mode: " + iMode,
+                        null, 0);
             }
         } catch (IOException e) {
             throw Trace.error(Trace.TRANSFER_CORRUPTED);
@@ -759,8 +760,8 @@ class Result {
 
             case ResultConstants.SQLGETSESSIONINFO :
             case ResultConstants.SQLDISCONNECT :
-            case ResultConstants.SQLENDTRAN:
-            case ResultConstants.SQLSTARTTRAN:
+            case ResultConstants.SQLENDTRAN :
+            case ResultConstants.SQLSTARTTRAN :
                 break;
 
             case ResultConstants.SQLPREPARE :
@@ -831,7 +832,8 @@ class Result {
             }
             default :
                 throw new HsqlException(
-                    "trying to use unsuppoted result mode: " + iMode, null, 0);
+                    "trying to use unsuppoted result mode: " + iMode, null,
+                    0);
         }
 
         out.writeIntData(out.size(), 0);
@@ -917,6 +919,7 @@ private    String getMode() {
             mainString  = "out of memory";
             statementID = Trace.GENERAL_ERROR;
         }
+
         subSubString = "";
     }
 

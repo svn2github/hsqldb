@@ -81,22 +81,24 @@ import org.hsqldb.lib.ArrayUtil;
 // fredt@users 20030618 - patch 1.7.2 by fredt - changed read -write
 
 /**
- *  All ServerConnection objects are listed in a Vector in server
- *  and removed when closed.<p>
+ *  All ServerConnection objects are listed in a Set in server
+ *  and removed by this class when closed.<p>
  *
- *  When a connection is dropped or closed the Server.notify() method is
- *  called. Upon notification, tf the DB is shutdown as a result of SHUTDOWN,
- *  the server stops all
- *  ServerConnection threads. At this point, only the skeletal Server
- *  object remains and everything else will be garbage collected.
+ *  When the datbase or server is shutdown, the signalClose() method is called
+ *  for all current ServerConnection instances. This will call the private
+ *  close() method unless the ServerConnection thread itself has caused the
+ *  shutdown. In this case, the keepAlive flag is set to false, allowing the
+ *  thread to terminate once it has returned the result of the operation to
+ *  the client.
  *  (fredt@users)<p>
  *
  * @version 1.7.2
  */
 class ServerConnection implements Runnable {
 
+    boolean                 keepAlive;
     private String          user;
-    int                     dbIndex;
+    int                     dbID;
     private Session         session;
     private Socket          socket;
     private Server          server;
@@ -107,7 +109,7 @@ class ServerConnection implements Runnable {
     static final int        bufferSize = 256;
     BinaryServerRowOutput   rowOut = new BinaryServerRowOutput(bufferSize);
     BinaryServerRowInput    rowIn      = new BinaryServerRowInput(rowOut);
-
+    Thread                  runnerThread;
     /**
      *
      * @param socket
@@ -127,11 +129,21 @@ class ServerConnection implements Runnable {
         }
     }
 
-    void close() {
+    void signalClose() {
+        keepAlive = false;
+        if (!runnerThread.equals(Thread.currentThread())) {
+            close();
+        }
+
+    }
+
+    private void close() {
 
         if (session != null) {
             session.disconnect();
         }
+
+        session = null;
 
         // fredt@user - closing the socket is to stop this thread
         try {
@@ -149,10 +161,10 @@ class ServerConnection implements Runnable {
      *
      * @return
      */
-    private Session init() {
+    private void init() {
 
-        Session c = null;
-
+        runnerThread = Thread.currentThread();
+        keepAlive = true;
         try {
             socket.setTcpNoDelay(true);
 
@@ -164,19 +176,24 @@ class ServerConnection implements Runnable {
             Result resultOut;
 
             try {
-                dbIndex = ArrayUtil.find(server.dbAlias,
-                                         resultIn.subSubString);
+                int dbIndex = ArrayUtil.find(server.dbAlias,
+                                             resultIn.subSubString);
+
+                dbID = server.dbID[dbIndex];
 
                 server.trace(mThread + ":trying to connect user " + user);
 
-                c = DatabaseManager.newSession(server.dbType[dbIndex],
-                                               server.dbPath[dbIndex],
-                                               resultIn.getMainString(),
-                                               resultIn.getSubString(), true);
+                session = DatabaseManager.newSession(dbID,
+                                                     resultIn.getMainString(),
+                                                     resultIn.getSubString());
                 resultOut = new Result(ResultConstants.UPDATECOUNT);
+                resultOut.databaseID = session.getDatabase().databaseID;
+                resultOut.sessionID  = session.getId();
             } catch (HsqlException e) {
+                session   = null;
                 resultOut = new Result(e, null);
             } catch (ArrayIndexOutOfBoundsException e) {
+                session = null;
                 resultOut = new Result(
                     Trace.getError(Trace.DATABASE_NOT_EXISTS, null),
                     resultIn.subSubString);
@@ -184,18 +201,16 @@ class ServerConnection implements Runnable {
 
             HSQLClientConnection.write(resultOut, rowOut, dataOutput);
 
-            return c;
+            return;
         } catch (Exception e) {
             server.trace(mThread + ":couldn't connect " + user);
 
-            if (c != null) {
-                c.disconnect();
+            if (session != null) {
+                session.disconnect();
             }
         }
 
         close();
-
-        return null;
     }
 
     /**
@@ -204,11 +219,11 @@ class ServerConnection implements Runnable {
      */
     public void run() {
 
-        session = init();
+        init();
 
         if (session != null) {
             try {
-                while (true) {
+                while (keepAlive) {
                     Result resultIn = HSQLClientConnection.read(rowIn,
                         dataInput);
 
@@ -217,11 +232,6 @@ class ServerConnection implements Runnable {
                     Result resultOut = session.execute(resultIn);
 
                     HSQLClientConnection.write(resultOut, rowOut, dataOutput);
-/*
-                    if (server.mDatabase.isShutdown()) {
-                        break;
-                    }
-*/
                 }
             } catch (IOException e) {
 

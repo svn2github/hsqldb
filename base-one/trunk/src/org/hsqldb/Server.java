@@ -83,6 +83,7 @@ import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.lib.java.javaSystem;
+import org.hsqldb.lib.WrapperIterator;
 import org.hsqldb.resources.BundleHandler;
 
 // fredt@users 20020215 - patch 1.7.0
@@ -134,22 +135,23 @@ import org.hsqldb.resources.BundleHandler;
  */
 public class Server implements HsqlSocketRequestHandler {
 
-//******************************** fields **************************************
-//-------------------------------- static --------------------------------------
+//
     static final String serverName = "HSQLDB/1.7.2";
 
 //    static final HsqlRuntime runtime = HsqlRuntime.getHsqlRuntime();
     private static final int bhnd =
         BundleHandler.getBundleHandle("org_hsqldb_Server_messages", null);
 
-//-------------------------------- package -------------------------------------
+//
     HashSet        serverConnSet;
     String[]       dbAlias = new String[1];
     String[]       dbType  = new String[1];
     String[]       dbPath  = new String[1];
+    int[]          dbID    = new int[1];
     HsqlProperties serverProperties;
 
-//------------------------------- protected ------------------------------------
+//
+    private int                 maxConnections;
     protected String            serverId;
     protected int               serverProtocol;
     protected ThreadGroup       serverThreadGroup;
@@ -157,7 +159,7 @@ public class Server implements HsqlSocketRequestHandler {
     protected HsqlSocketFactory socketFactory;
     protected ServerSocket      socket;
 
-//-------------------------------- private -------------------------------------
+//
     private volatile Thread serverThread;
     private int             serverState;
     private Throwable       serverError;
@@ -167,7 +169,7 @@ public class Server implements HsqlSocketRequestHandler {
     private final Object    status_monitor     = new Object();
     private final Object    socket_mutex       = new Object();
 
-//-------------------------------- Inner Classes -------------------------------
+//
 
     /**
      * A specialized Thread inner class in which the run() method of this
@@ -196,16 +198,15 @@ public class Server implements HsqlSocketRequestHandler {
 
         public String toString() {
 
-            String dbname;
+            String dbname = "";
 
-            dbname = dbType[0] + dbPath[0];
-
+            // fredt - was wrong with multiple dbs
+//            dbname = dbType[0] + dbPath[0];
             return super.toString() + "[Database[" + dbname + "]," + socket
                    + "]";
         }
     }
 
-//--------------------------------- Constructors -------------------------------
     public Server() {
         this(ServerConstants.SC_PROTOCOL_HSQL);
     }
@@ -213,8 +214,6 @@ public class Server implements HsqlSocketRequestHandler {
     protected Server(int protocol) {
         init(protocol);
     }
-
-//---------------------------- Command Line Invocation -------------------------
 
     /**
      * Creates and starts a new Server.  <p>
@@ -264,8 +263,6 @@ public class Server implements HsqlSocketRequestHandler {
         server.start();
     }
 
-// ------------------------------ public methods -------------------------------
-
     /**
      * Checks if this Server object is or is not running and throws if the
      * current state does not match the specified value.
@@ -311,16 +308,17 @@ public class Server implements HsqlSocketRequestHandler {
         trace("closeAllServerConnections() entered");
         trace("Closing all server connections:");
 
-        Iterator it = serverConnSet.iterator();
+        Object[] connections =
+            serverConnSet.toArray(new Object[serverConnSet.size()]);
+        Iterator it = new WrapperIterator(connections);
 
         for (; it.hasNext(); ) {
             sc = (ServerConnection) it.next();
 
             trace("Closing " + sc);
-            sc.close();
+            sc.signalClose();
         }
 
-        //fredt@users - when we implement restart on shutdown add resize to smaller size
         serverConnSet.clear();
         trace("closeAllServerConnections() exited");
     }
@@ -681,7 +679,16 @@ public class Server implements HsqlSocketRequestHandler {
         // Session tracing/callbacks, etc.
         socketFactory.configureSocket(s);
 
-        r = newConnectionHandler(s);
+        if (serverProtocol == ServerConstants.SC_PROTOCOL_HSQL) {
+            r = new ServerConnection(s, this);
+
+            synchronized (serverConnSet) {
+                serverConnSet.add(r);
+            }
+        } else {
+            r = new WebServerConnection(s, (WebServer) this);
+        }
+
         t = new Thread(serverConnectionThreadGroup, r, "[" + s + "]");
 
         t.start();
@@ -1032,6 +1039,9 @@ public class Server implements HsqlSocketRequestHandler {
             translateAddressProperty(serverProperties);
         }
 
+        maxConnections =
+            p.getIntegerProperty(ServerConstants.SC_KEY_MAX_CONNECTIONS, 16);
+
         javaSystem.setLogToSystem(isTrace());
 
         String[]    dblist   = new String[10];
@@ -1053,12 +1063,13 @@ public class Server implements HsqlSocketRequestHandler {
             }
         } catch (ArrayIndexOutOfBoundsException e) {
 
-            /** @todo this should display an error */
+            /** @todo fredt - this should display an error */
         }
 
         dbAlias = new String[maxindex + 1];
         dbType  = new String[maxindex + 1];
         dbPath  = new String[maxindex + 1];
+        dbID    = new int[maxindex + 1];
 
         ArrayUtil.copyArray(dblist, dbAlias, maxindex + 1);
     }
@@ -1136,8 +1147,6 @@ public class Server implements HsqlSocketRequestHandler {
         }
     }
 
-//----------------------------- protected methods ------------------------------
-
     /**
      * Retrieves whether the specified socket should be allowed
      * to make a connection.  By default, this method always returns
@@ -1170,22 +1179,17 @@ public class Server implements HsqlSocketRequestHandler {
         javaSystem.setLogToSystem(isTrace());
     }
 
-    protected Runnable newConnectionHandler(Socket socket) {
-        return new ServerConnection(socket, this);
-    }
-
-// ---------------------------------- package methods --------------------------
 // Package visibility for related classes and interfaces,
 // such as HsqlRuntime, XXXServerConnection and HsqlSocketRequestHandlerImpl,
 // etc. that may need to make calls back here.
 
     /**
      * This is called from org.hsqldb.DatabaseManager when a database is
-     * shutdown. Currently this shuts the whole server down.
+     * shutdown. This shuts the server down if it is the last database
      *
      * @param action a code indicating what has happend
      */
-    final void notify(int action) {
+    final void notify(int action, int id) {
 
         trace("notifiy() entered");
 
@@ -1193,7 +1197,49 @@ public class Server implements HsqlSocketRequestHandler {
             return;
         }
 
-        releaseServerSocket();
+        releaseDatabase(id);
+    }
+
+    /**
+     * This releases the resources used for a database
+     */
+    void releaseDatabase(int id) {
+
+        boolean shutdown = true;
+
+        synchronized (serverConnSet) {
+            for (int i = 0; i < dbID.length; i++) {
+                if (dbID[i] == id) {
+                    dbID[i]    = 0;
+                    dbAlias[i] = null;
+                    dbPath[i]  = null;
+                    dbType[i]  = null;
+                }
+            }
+
+            Object[] connections =
+                serverConnSet.toArray(new Object[serverConnSet.size()]);
+            Iterator it = new WrapperIterator(connections);
+
+            while (it.hasNext()) {
+                ServerConnection sc = (ServerConnection) it.next();
+
+                if (sc.dbID == id) {
+                    sc.signalClose();
+                }
+            }
+        }
+
+        for (int i = 0; i < dbID.length; i++) {
+            if (dbAlias[i] != null) {
+                shutdown = false;
+            }
+        }
+
+        if (shutdown) {
+            shutdown();
+        }
+
         trace("notifiy() exiting");
     }
 
@@ -1284,22 +1330,6 @@ public class Server implements HsqlSocketRequestHandler {
         print("[" + Thread.currentThread() + "]: " + msg);
     }
 
-//------------------------------- private methods ------------------------------
-
-    /**
-     * Starts the ServerSocket accept connection request handling loop.
-     *
-     * @throws Exception if a network or io exception occurs
-     */
-    private final void listen() throws Exception {
-
-        print("Listening for connections...");
-
-        while (true) {
-            handleConnection(socket.accept());
-        }
-    }
-
     /**
      * Retrieves a new default properties object for this server
      *
@@ -1378,10 +1408,10 @@ public class Server implements HsqlSocketRequestHandler {
 
                 sw = new StopWatch();
 
-                Database db = DatabaseManager.getDatabase(dbType[i],
-                    dbPath[i], false);
+                int id = DatabaseManager.getDatabase(dbType[i], dbPath[i],
+                                                     this);
 
-                DatabaseManager.registerServer(this, db);
+                dbID[i] = id;
 /*
                 print(sw.elapsedTimeToMessage("Database opened sucessfully"));
             } else {
@@ -1491,6 +1521,9 @@ public class Server implements HsqlSocketRequestHandler {
      */
     private final void releaseDB(int i) {
 
+        if (dbAlias[i] == null){
+            return;
+        }
         trace("releaseDB() entered");
 
         synchronized (mDatabase_mutex) {
@@ -1586,7 +1619,7 @@ public class Server implements HsqlSocketRequestHandler {
 
         try {
 
-            // Mount the database this server is supposed to host.
+            // Mount the databases this server is supposed to host.
             // This may take some time if the database is not already
             // open in the HsqlRuntime repository.
             openDB();
@@ -1612,7 +1645,9 @@ public class Server implements HsqlSocketRequestHandler {
         printServerOnlineMessage();
 
         try {
-            listen();
+            while (true) {
+                handleConnection(socket.accept());
+            }
         } catch (IOException ioe) {
             if (getState() == ServerConstants.SERVER_STATE_ONLINE) {
                 traceError(this + ".run/listen(): ");
@@ -1632,52 +1667,55 @@ public class Server implements HsqlSocketRequestHandler {
 
         StopWatch sw;
 
+/*
         // Paranoia.  Should never be the case, but can result
         // in deadlock if it is.
+
         if (Thread.currentThread() != serverThread) {
             throw new IllegalStateException("" + Thread.currentThread());
         }
-
+*/
         sw = new StopWatch();
 
         print("Initiating shutdown sequence...");
         releaseServerSocket();
         closeAllServerConnections();
+        DatabaseManager.deRegisterServer(this);
+
+        serverThread = null;
 
         for (int i = 0; i < dbPath.length; i++) {
             releaseDB(i);
+        }
 
-            serverThread = null;
-
-            // paranoia:  try { sctg.destroy() } is probably fine
-            if (serverConnectionThreadGroup != null) {
-                if (!serverConnectionThreadGroup.isDestroyed()) {
-                    try {
-                        serverConnectionThreadGroup.destroy();
-                    } catch (Throwable t) {
-                        if (Trace.TRACE) {
-                            Trace.trace(t.toString());
-                        }
+        // paranoia:  try { sctg.destroy() } is probably fine
+        if (serverConnectionThreadGroup != null) {
+            if (!serverConnectionThreadGroup.isDestroyed()) {
+                try {
+                    serverConnectionThreadGroup.destroy();
+                } catch (Throwable t) {
+                    if (Trace.TRACE) {
+                        Trace.trace(t.toString());
                     }
                 }
-
-                serverConnectionThreadGroup = null;
             }
 
-            setState(ServerConstants.SERVER_STATE_SHUTDOWN);
-            print(sw.elapsedTimeToMessage("Shutdown sequence completed"));
-            notifyStatus();
+            serverConnectionThreadGroup = null;
+        }
 
-            if (isNoSystemExit()) {
-                printWithTimestamp("SHUTDOWN : System.exit() was not called");
-            } else {
-                printWithTimestamp("SHUTDOWN : System.exit() is called next");
+        setState(ServerConstants.SERVER_STATE_SHUTDOWN);
+        print(sw.elapsedTimeToMessage("Shutdown sequence completed"));
+        notifyStatus();
 
-                try {
-                    System.exit(0);
-                } catch (Throwable t) {
-                    trace(t.toString());
-                }
+        if (isNoSystemExit()) {
+            printWithTimestamp("SHUTDOWN : System.exit() was not called");
+        } else {
+            printWithTimestamp("SHUTDOWN : System.exit() is called next");
+
+            try {
+                System.exit(0);
+            } catch (Throwable t) {
+                trace(t.toString());
             }
         }
     }
@@ -1695,8 +1733,6 @@ public class Server implements HsqlSocketRequestHandler {
 
         trace("waitForStatus() exited");
     }
-
-// --------------------------- static utility methods --------------------------
 
     /**
      * Prints message for the specified key, without any special

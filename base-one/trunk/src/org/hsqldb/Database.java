@@ -112,12 +112,13 @@ import org.hsqldb.lib.StopWatch;
  *  Although it either directly or indirectly provides all or most of the
  *  services required for DBMS functionality, this class should not be used
  *  directly by an application. Instead, to achieve portability and
- *  generality, the jdbc* classes should be used.
+ *  generality, the JDBC interface classes should be used.
  *
  * @version  1.7.0
  */
 class Database {
 
+    int                   databaseID;
     private String        sType;
     private String        sName;
     private String        sPath;
@@ -159,12 +160,12 @@ class Database {
     final static int               CLOSEMODE_COMPACT     = 1;
 
     /**
-     *  Constructs a new Database object having the specified canonical name,
-     *  using the specified canonical path (if file-based) to access its
-     *  database files.
+     *  Constructs a new Database object.
      *
      * @param name is an identifier for the database, for future use
      * @param path is the canonical path to the database files
+     * @param ifexists if true, prevents creation of a new database if it
+     * does not exist. Only valid for file-system databases.
      * @exception  HsqlException if the specified name and path
      *      combination is illegal or unavailable, or the database files the
      *      name and path resolves to are in use by another process
@@ -201,11 +202,10 @@ class Database {
             throw Trace.error(Trace.DATABASE_NOT_EXISTS, type + path);
         }
 
-        logger = new Logger();
-
+        logger                   = new Logger();
         compiledStatementManager = new CompiledStatementManager(this);
+        databaseProperties       = new HsqlDatabaseProperties(this);
 
-        databaseProperties    = new HsqlDatabaseProperties(this);
         databaseProperties.load();
         setState(Database.DATABASE_SHUTDOWN);
     }
@@ -220,7 +220,6 @@ class Database {
      */
     synchronized void open() throws HsqlException {
 
-        boolean newdatabase;
         User    sysUser;
 
         if (!isShutdown()) {
@@ -242,7 +241,6 @@ class Database {
 
         if (sType != DatabaseManager.S_MEM) {
             databaseProperties.load();
-
             logger.openLog(this);
         }
 

@@ -129,14 +129,12 @@ import org.hsqldb.resources.BundleHandler;
  * @version 1.7.2
  */
 public class WebServer extends Server {
-
     int           bundleHandle;
     protected int serverProtocol = ServerConstants.SC_PROTOCOL_HTTP;
 
     public WebServer() {
 
         super(ServerConstants.SC_PROTOCOL_HTTP);
-
         ClassLoader cl = null;
 
         try {
@@ -144,10 +142,6 @@ public class WebServer extends Server {
         } catch (Exception e) {}
 
         bundleHandle = BundleHandler.getBundleHandle("webserver", cl);
-    }
-
-    protected Runnable newConnectionHandler(Socket socket) {
-        return new WebServerConnection(socket, this);
     }
 
     /**

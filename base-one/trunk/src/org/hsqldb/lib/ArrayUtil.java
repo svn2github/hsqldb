@@ -31,7 +31,7 @@
 
 package org.hsqldb.lib;
 
-import java.lang.reflect.*;
+import java.lang.reflect.Array;
 
 /**
  * Collection of static methods for operations on arrays

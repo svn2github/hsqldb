@@ -35,6 +35,7 @@ import org.hsqldb.lib.HsqlTimer;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.IntValueHashMap;
+import org.hsqldb.lib.IntKeyHashMap;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.store.ValuePool;
 import java.io.File;
@@ -83,11 +84,23 @@ class DatabaseManager {
     }
 
     //
+    static int             dbIDCounter;
     static HashMap         memDatabaseMap    = new HashMap();
     static HashMap         fileDatabaseMap   = new HashMap();
     static HashMap         resDatabaseMap    = new HashMap();
     static IntValueHashMap databaseAccessMap = new IntValueHashMap();
-    static HashMap         databaseFileMap   = new HashMap();
+    static IntKeyHashMap   databaseIDMap     = new IntKeyHashMap();
+
+    /**
+     * Used by server to open a new session
+     */
+    static Session newSession(int dbID, String user,
+                              String password) throws HsqlException {
+
+        Database db = (Database) databaseIDMap.get(dbID);
+
+        return db.connect(user, password);
+    }
 
     static Session newSession(String type, String path, String user,
                               String password,
@@ -103,12 +116,35 @@ class DatabaseManager {
      * belonging to the same JDBC Conenction / HSQL Session pair.
      *
      */
+    static Session getSession(int dbID, int sessionID) throws HsqlException {
+
+        Database db = (Database) databaseIDMap.get(dbID);
+
+        return db.sessionManager.getSession(sessionID);
+    }
+
+    /**
+     * unused alternative.
+     */
     static Session getSession(String type, String path,
                               int id) throws HsqlException {
 
         Database db = lookupDatabaseObject(type, path);
 
         return db.sessionManager.getSession(id);
+    }
+
+    /**
+     * Used by server to open or create a database
+     */
+    static int getDatabase(String type, String path,
+                           Server server) throws HsqlException {
+
+        Database db = getDatabase(type, path, false);
+
+        registerServer(server, db);
+
+        return db.databaseID;
     }
 
     /**
@@ -180,7 +216,13 @@ class DatabaseManager {
         db = (Database) databaseMap.get(key);
 
         if (db == null) {
-            db = new Database(type,path, path, ifexists);
+            db            = new Database(type, path, path, ifexists);
+            db.databaseID = dbIDCounter;
+
+            databaseIDMap.put(dbIDCounter, db);
+
+            dbIDCounter++;
+
             databaseMap.put(key, db);
             databaseAccessMap.put(db, 1);
         } else {
@@ -250,6 +292,7 @@ class DatabaseManager {
 
     static void removeDatabase(Database database) {
 
+        int     dbID = database.databaseID;
         String  type = database.getType();
         String  path = database.getPath();
         Object  key  = path;
@@ -266,6 +309,7 @@ class DatabaseManager {
             databaseMap = memDatabaseMap;
         }
 
+        databaseIDMap.remove(dbID);
         databaseMap.remove(key);
         databaseAccessMap.remove(database);
 
@@ -283,7 +327,26 @@ class DatabaseManager {
      */
     private static HashMap serverMap = new HashMap();
 
-    static void registerServer(Server server, Database database) {
+    static void deRegisterServer(Server server) {
+        serverMap.remove(server);
+    }
+
+    static void deRegisterServer(Server server, Database db) {
+
+        Iterator it = serverMap.values().iterator();
+
+        for (; it.hasNext(); ) {
+            HashSet databases = (HashSet) it.next();
+
+            databases.remove(db);
+
+            if (databases.isEmpty()) {
+                it.remove();
+            }
+        }
+    }
+
+    private static void registerServer(Server server, Database db) {
 
         if (!serverMap.containsKey(server)) {
             serverMap.put(server, new HashSet());
@@ -291,10 +354,10 @@ class DatabaseManager {
 
         HashSet databases = (HashSet) serverMap.get(server);
 
-        databases.add(database);
+        databases.add(db);
     }
 
-    static void notifyServers(Database database) {
+    private static void notifyServers(Database db) {
 
         Iterator it = serverMap.keySet().iterator();
 
@@ -302,20 +365,9 @@ class DatabaseManager {
             Server  server    = (Server) it.next();
             HashSet databases = (HashSet) serverMap.get(server);
 
-            if (databases.contains(database)) {
-                server.notify(ServerConstants.SC_DATABASE_SHUTDOWN);
-            }
-        }
-
-        it = serverMap.values().iterator();
-
-        for (; it.hasNext(); ) {
-            HashSet databases = (HashSet) it.next();
-
-            databases.remove(database);
-
-            if (databases.isEmpty()) {
-                it.remove();
+            if (databases.contains(db)) {
+                server.notify(ServerConstants.SC_DATABASE_SHUTDOWN,
+                              db.databaseID);
             }
         }
     }

@@ -661,7 +661,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
         row    = t.getNewRow();
         row[0] = "AUTOCOMMIT";
         row[1] = session.isAutoCommit() ? "TRUE"
-                                         : "FALSE";
+                                        : "FALSE";
 
         t.insert(row, null);
 
@@ -684,12 +684,14 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
                                            : "FALSE";
 
         t.insert(row, null);
+
         // fredt - value set by SET MAXROWS in SQL, not Statement.setMaxRows()
         row    = t.getNewRow();
         row[0] = "MAXROWS";
         row[1] = String.valueOf(session.getSQLMaxRows());
 
         t.insert(row, null);
+
         row    = t.getNewRow();
         row[0] = "DATABASE";
         row[1] = String.valueOf(database.getPath());
