@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: buildjar.sh,v 1.17 2002/12/06 19:54:59 unsaved Exp $
+# $Id: buildjar.sh,v 1.18 2002/12/06 20:01:00 unsaved Exp $
 
 # -----------------------------------------------------
 # If $JAVA_HOME is set, editing this script should not be required.
@@ -92,7 +92,6 @@ RAWVER=
 RAWVER=`exec "$jdkhome/bin/java" -classpath "$dbhome/classes:$cp"  \
  org.hsqldb.util.EchoProperty java.version` ||
   Failout "Failed to determine Java version with EchoProperty"
-echo "RAWVER=($RAWVER)"   #  DEBUG.  Remove this line!!
 JDKVER=
 case "$RAWVER" in
     1.1.*) JDKVER=1.1;;
@@ -103,7 +102,7 @@ esac
 
 echo "Building for target '$JDKVER'"
 case "$JDKVER" in
-    1.1) echo "    (Resultant jar can only be used with Java JRE 1.1.x)";;
+    1.1) echo "    (Resultant jar can only be used with Java JRE < 1.2)";;
     pre1.4) echo "    (Resultant jar can be used with any Java JRE < 1.4)";;
     1.4) echo "    (Resultant jar can only be used with Java JREs >= 1.4)";;
 esac
