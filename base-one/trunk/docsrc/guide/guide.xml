@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<!-- $Id: guide.xml,v 1.16 2004/04/20 22:39:38 unsaved Exp $ -->
+<!-- $Id: guide.xml,v 1.17 2004/04/20 22:41:20 unsaved Exp $ -->
 
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN"
 "http://www.oasis-open.org/docbook/xml/4.2CR1/docbookx.dtd" [
-    <!ENTITY revision "$Revision: 1.16 $">
-    <!ENTITY date "$Date: 2004/04/20 22:39:38 $">
+    <!ENTITY revision "$Revision: 1.17 $">
+    <!ENTITY date "$Date: 2004/04/20 22:41:20 $">
     <!ENTITY alts SYSTEM "../formats-section.xml">
     <!ENTITY docbasename "guide">
     <!ENTITY baseurl "http://hsqldb.sourceforge.net/alphadocs/&docbasename;">
@@ -78,7 +78,7 @@
     </preface>
     &running-chapter.xml;
     <!-- I probably will not get around to re-writing the Beginnner chapter
-         before release time.  -- blaine
+         before release time.  - blaine
     <chapter><title>Place-holder for Beginner's Guide</title></chapter>
       -->
     &sqlissues-chapter.xml;
