@@ -52,7 +52,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.57 2004/06/05 05:53:37 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.58 2004/06/05 05:54:11 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -88,7 +88,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.57 $
+ * @version $Revision: 1.58 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -109,8 +109,8 @@ public class SqlFile {
         "                                                                 ";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.57 $".substring("$Revision: ".length(),
-                "$Revision: 1.57 $".length() - 2);
+        revnum = "$Revision: 1.58 $".substring("$Revision: ".length(),
+                "$Revision: 1.58 $".length() - 2);
     }
     private static String BANNER =
         "SqlFile processor v. " + revnum + ".\n"
@@ -222,6 +222,7 @@ public class SqlFile {
      */
     private boolean             continueOnError = false;
     static private final String DEFAULT_CHARSET = "US-ASCII";
+    private BufferedReader br       = null;
 
     /**
      * Process all the commands in the file (or stdin) associated with
@@ -248,10 +249,10 @@ public class SqlFile {
         String trimmedInput;
         String deTerminated;
         continueOnError = interactive;
-        BufferedReader br       = null;
         boolean inComment = false;  // Globbling up a comment
         int postCommentIndex;
 
+        plMode = userVars != null && userVars.size() > 0;
         String specifiedCharSet = System.getProperty("sqlfile.charset");
         try {
             br = new BufferedReader(new InputStreamReader((file == null)
@@ -421,6 +422,8 @@ public class SqlFile {
             }
             if (inComment || stringBuffer.length() != 0) {
                 errprintln("Unterminated input:  [" + stringBuffer + ']');
+                throw new SqlToolError(
+                        "Unterminated input:  [" + stringBuffer + ']');
             }
         } finally {
             if (br != null) {
@@ -577,7 +580,7 @@ public class SqlFile {
         if (inString.length() < 1) {
             throw new BadSpecial("Null special command");
         }
-        if (plMode && userVars != null && userVars.size() > 0) {
+        if (plMode) {
             inString = dereference(inString);
         }
         StringTokenizer toker = new StringTokenizer(inString);
@@ -612,7 +615,7 @@ public class SqlFile {
                     throw new BadSpecial("Empty command in buffer");
                 }
                 try {
-                    java.io.PrintWriter pw = new PrintWriter(
+                    PrintWriter pw = new PrintWriter(
                             new OutputStreamWriter(
                                     new FileOutputStream(other, true)));
                     pw.println(commandFromHistory(0) + ';');
@@ -755,7 +758,7 @@ public class SqlFile {
         return expandBuffer.toString();
     }
 
-    private boolean plMode = true;
+    private boolean plMode = false;
 
     /**
      * Process a Process Language Command.
@@ -764,17 +767,88 @@ public class SqlFile {
      * @throws BadSpecial Runtime error()
      */
     private void processPL(String inString)
-    throws BadSpecial {
+    throws BadSpecial, SqlToolError {
         if (inString.length() < 1) {
             throw new BadSpecial("Null PL command");
         }
         StringTokenizer toker = new StringTokenizer(inString);
         String arg1 = toker.nextToken();
+        // If user runs any PL command, we turn PL mode on.
+        plMode = true;
+        if (userVars == null) userVars = new HashMap();
         if (arg1.equals("list")) {
             if (toker.countTokens() > 0) {
                 throw new BadSpecial("PL comand 'list' takes no args");
             }
             stdprintln(new TreeMap(userVars).toString());
+            return;
+        }
+        if (arg1.equals("foreach")) {
+            /* 
+             * WARNING!!! foreach blocks are not yet smart about comments
+             * and strings.  We just look for a line beginning with "* end"
+             * without worrying about comments or quotes (for now).
+             *
+             * WARNING!!! This is very rudimentary.
+             * Users give up all editing and feedback capabilities for while
+             * in the foreach loop.
+             * A better solution would be to pass current input stream to a
+             * new SqlFile.execute() with a mode whereby commands are written 
+             * to a separate history but not executed.
+             */
+            String s;
+            if (toker.countTokens() < 1) {
+                throw new BadSpecial(
+                        "foreach PL command requires a variable name argument");
+            }
+            String varName = toker.nextToken();
+            File tmpFile = null;
+            try {
+                tmpFile = File.createTempFile("sqltool-", ".sql");
+                PrintWriter pw = new PrintWriter(
+                        new OutputStreamWriter(
+                                new FileOutputStream(tmpFile)));
+                while (true) {
+                    s = br.readLine();
+                    if (s == null)
+                        throw new SqlToolError("Unterminated PL lbock");
+                    if (s.trim().equals("* end")) {
+                        break;
+                    }
+                    pw.println(s);
+                }
+                pw.flush();
+                pw.close();
+            } catch (IOException ioe) {
+                throw new BadSpecial(
+                    "Failed to write given PL block temp file: " + ioe);
+            }
+            if (toker.countTokens() > 0) {
+                try {
+                    String origval = (String) userVars.get(varName);
+                    String varVal;
+                    while (toker.hasMoreTokens()) {
+                        varVal = toker.nextToken();
+                        userVars.put(varName, varVal);
+                        (new SqlFile(tmpFile, false, userVars)).
+                            execute(curConn);
+                    }
+                    if (origval == null) {
+                        userVars.remove(varName);
+                    } else {
+                        userVars.put(varName, origval);
+                    }
+                } catch (Exception e) {
+                    throw new BadSpecial(
+                            "Failed to execute SQL from PL block.  "
+                            + e.getMessage());
+                }
+            }
+            if (tmpFile != null && !tmpFile.delete()) {
+                throw new BadSpecial(
+                    "Error occurred while trying to remove temp file '" 
+                    + tmpFile + "'");
+            }
             return;
         }
         if ((toker.countTokens() == 0) || !toker.nextToken().equals("=")) {
@@ -913,10 +987,7 @@ public class SqlFile {
     private void processStatement() throws SQLException {
         Statement statement = curConn.createStatement();
 
-        statement.execute(
-                (plMode && userVars != null && userVars.size() > 0)
-                ? dereference(curCommand)
-                : curCommand);
+        statement.execute(plMode ? dereference(curCommand) : curCommand);
         displayResultSet(statement, statement.getResultSet(), null, null,
                          null);
     }
