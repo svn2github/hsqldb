@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: pkgbuild,v 1.6 2002/11/10 22:11:42 unsaved Exp $
+# $Id: pkgbuild,v 1.7 2002/11/10 22:44:29 unsaved Exp $
 
 # TODO:  Perhaps use RCS keywords to generate versions and write them
 #        into the install scripts, the info file, and to use in the
@@ -112,7 +112,7 @@ SRCBASE=`dirname $PWD`
 SRCBASE=`dirname $SRCBASE`
 SRCBASE=`dirname $SRCBASE`
 
-for jarfile in $SRCBASE/lib/hssqldb_jre*.jar; do
+for jarfile in $SRCBASE/lib/hsqldb_jre*.jar; do
     [ -f "$jarfile" ] ||
      Failout "Looks like your hsqldb_jre*.jar files are not built"
 done
