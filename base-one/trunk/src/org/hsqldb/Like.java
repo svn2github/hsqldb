@@ -295,12 +295,12 @@ class Like {
 
     boolean isEquivalentToNotNullPredicate() {
 
-        if (cLike.length == 1 && wildCardType[0] == PERCENT_CHAR) {
-            return true;
+        if (isNull || !hasWildcards()) {
+            return false;
         }
 
         for (int i = 0; i < wildCardType.length; i++) {
-            if (wildCardType[i] == 0) {
+            if (wildCardType[i] != PERCENT_CHAR) {
                 return false;
             }
         }

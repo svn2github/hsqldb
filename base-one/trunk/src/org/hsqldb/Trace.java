@@ -271,7 +271,8 @@ public class Trace extends PrintWriter {
      AMBIGUOUS_COLUMN_REFERENCE                     = 156,
      CHECK_CONSTRAINT_VIOLATION                     = 157,
      JDBC_RESULTSET_IS_CLOSED                       = 158,
-     SINGLE_COLUMN_EXPECTED                         = 159;
+     SINGLE_COLUMN_EXPECTED                         = 159,
+     TOKEN_REQUIRED                                 = 160;
 
     //
     static String MESSAGE_TAG = "$$";
@@ -437,6 +438,7 @@ public class Trace extends PrintWriter {
         "S0022 ambiguous Column reference",                                   //
         "23000 Check constraint violation", "S1000 ResultSet is closed",      //
         "37000 Single column select required in IN predicate",                //
+        " $$, requires $$",                                                    // Tokenizer.getThis()
     };
 
     /** Used during tests. */

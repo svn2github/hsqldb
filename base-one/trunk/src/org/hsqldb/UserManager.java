@@ -145,12 +145,8 @@ class UserManager {
      * created
      */
     UserManager() throws HsqlException {
-
         uUser   = new HashMappedList();
         uPublic = createUser("PUBLIC", null, false);
-
-        uPublic.grant("java.lang.Math", UserManager.ALL);
-        uPublic.grant("org.hsqldb.Library", UserManager.ALL);
     }
 
     /**

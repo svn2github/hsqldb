@@ -122,7 +122,6 @@ class Parser {
 
     //
     private int           subQueryLevel = 0;
-    private Stack         subQueryStack;
     private HsqlArrayHeap subQueryHeap;
     private static final String pamsg =
         "It is ambiguous to specify a parameter marker ";
@@ -1227,13 +1226,13 @@ class Parser {
                 read();
 
                 if (iToken == Expression.OPEN) {
-                    String javaName = database.getAlias(name);
+                    String   javaName = database.getAlias(name);
+                    Function f        = new Function(name, javaName, session);
 
                     session.check(javaName, UserManager.ALL);
 
-                    Function f   = new Function(name, javaName, session);
-                    int      len = f.getArgCount();
-                    int      i   = 0;
+                    int len = f.getArgCount();
+                    int i   = 0;
 
                     read();
 

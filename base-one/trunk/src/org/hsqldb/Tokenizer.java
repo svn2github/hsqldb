@@ -237,7 +237,10 @@ class Tokenizer {
         getToken();
 
         if (!sToken.equals(match)) {
-            throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+            throw Trace.error(Trace.UNEXPECTED_TOKEN, Trace.TOKEN_REQUIRED,
+                              new Object[] {
+                sToken, match
+            });
         }
 
         return sToken;

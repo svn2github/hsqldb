@@ -1012,10 +1012,11 @@ public class Library {
         }
 
         int trim     = trimstr.charAt(0);
-        int endindex = s.length() - 1;
+        int endindex = s.length();
 
         if (trailing) {
-            for (; endindex >= 0 && s.charAt(endindex) == trim; endindex--) {}
+            for (--endindex; endindex >= 0 && s.charAt(endindex) == trim;
+                    endindex--) {}
 
             endindex++;
         }
@@ -1789,16 +1790,17 @@ public class Library {
     static final int soundex                   = 50;
     static final int space                     = 51;
     static final int substring                 = 52;
-    static final int truncate                  = 53;
-    static final int ucase                     = 54;
-    static final int user                      = 55;
-    static final int week                      = 56;
-    static final int year                      = 57;
+    static final int trim                      = 53;
+    static final int truncate                  = 54;
+    static final int ucase                     = 55;
+    static final int user                      = 56;
+    static final int week                      = 57;
+    static final int year                      = 58;
 
     //
-    static final int isReadOnlyDatabaseFiles = 58;
-    static final int day                     = 59;
-    static final int position                = 60;
+    static final int isReadOnlyDatabaseFiles = 59;
+    static final int day                     = 60;
+    static final int position                = 61;
 
     //
     private static final IntValueHashMap functionMap =
@@ -1862,6 +1864,7 @@ public class Library {
         functionMap.put("soundex", soundex);
         functionMap.put("space", space);
         functionMap.put("substring", substring);
+        functionMap.put("trim", trim);
         functionMap.put("truncate", truncate);
         functionMap.put("ucase", ucase);
         functionMap.put("user", user);
@@ -1870,36 +1873,37 @@ public class Library {
         functionMap.put("isReadOnlyDatabaseFiles", isReadOnlyDatabaseFiles);
     }
 
-    static Object invoke(int fID, Object[] parms) throws HsqlException {
+    static Object invoke(int fID, Object[] params) throws HsqlException {
 
         try {
             switch (fID) {
 
                 case abs : {
                     return new Double(
-                        Library.abs(((Number) parms[0]).doubleValue()));
+                        Library.abs(((Number) params[0]).doubleValue()));
                 }
                 case ascii : {
-                    return ascii((String) parms[0]);
+                    return ascii((String) params[0]);
                 }
                 case bitand : {
                     return ValuePool.getInt(
-                        bitand(((Number) parms[0]).intValue(),
-                               ((Number) parms[1]).intValue()));
+                        bitand(((Number) params[0]).intValue(),
+                               ((Number) params[1]).intValue()));
                 }
                 case bitor : {
                     return ValuePool.getInt(
-                        bitor(((Number) parms[0]).intValue(),
-                              ((Number) parms[1]).intValue()));
+                        bitor(((Number) params[0]).intValue(),
+                              ((Number) params[1]).intValue()));
                 }
                 case character : {
-                    return character(((Number) parms[0]).intValue());
+                    return character(((Number) params[0]).intValue());
                 }
                 case concat : {
-                    return concat((String) parms[0], (String) parms[1]);
+                    return concat((String) params[0], (String) params[1]);
                 }
                 case cot : {
-                    return new Double(cot(((Number) parms[0]).doubleValue()));
+                    return new Double(
+                        cot(((Number) params[0]).doubleValue()));
                 }
                 case curdate : {
                     return curdate();
@@ -1911,21 +1915,21 @@ public class Library {
                     return null;
                 }
                 case dayname : {
-                    return dayname((Date) parms[0]);
+                    return dayname((Date) params[0]);
                 }
                 case dayofmonth :
                 case day : {
-                    return ValuePool.getInt(dayofmonth((Date) parms[0]));
+                    return ValuePool.getInt(dayofmonth((Date) params[0]));
                 }
                 case dayofweek : {
-                    return ValuePool.getInt(dayofweek((Date) parms[0]));
+                    return ValuePool.getInt(dayofweek((Date) params[0]));
                 }
                 case dayofyear : {
-                    return ValuePool.getInt(dayofyear((Date) parms[0]));
+                    return ValuePool.getInt(dayofyear((Date) params[0]));
                 }
                 case difference : {
-                    return ValuePool.getInt(difference((String) parms[0],
-                                                       (String) parms[1]));
+                    return ValuePool.getInt(difference((String) params[0],
+                                                       (String) params[1]));
                 }
                 case getAutoCommit : {
                     return null;
@@ -1943,19 +1947,19 @@ public class Library {
                     return getDatabaseProductVersion();
                 }
                 case hexToRaw : {
-                    return hexToRaw((String) parms[0]);
+                    return hexToRaw((String) params[0]);
                 }
                 case hour : {
-                    return ValuePool.getInt(hour((Time) parms[0]));
+                    return ValuePool.getInt(hour((Time) params[0]));
                 }
                 case identity : {
                     return null;
                 }
                 case insert : {
-                    return insert((String) parms[0],
-                                  ((Number) parms[1]).intValue(),
-                                  ((Number) parms[2]).intValue(),
-                                  (String) parms[3]);
+                    return insert((String) params[0],
+                                  ((Number) params[1]).intValue(),
+                                  ((Number) params[2]).intValue(),
+                                  (String) params[3]);
                 }
                 case isReadOnlyConnection : {
                     return null;
@@ -1964,121 +1968,127 @@ public class Library {
                     return null;
                 }
                 case lcase : {
-                    return lcase((String) parms[0]);
+                    return lcase((String) params[0]);
                 }
                 case left : {
-                    return left((String) parms[0],
-                                ((Number) parms[1]).intValue());
+                    return left((String) params[0],
+                                ((Number) params[1]).intValue());
                 }
                 case length : {
-                    return length((String) parms[0]);
+                    return length((String) params[0]);
                 }
                 case locate : {
-                    return ValuePool.getInt(locate((String) parms[0],
-                                                   (String) parms[1],
-                                                   (Integer) parms[2]));
+                    return ValuePool.getInt(locate((String) params[0],
+                                                   (String) params[1],
+                                                   (Integer) params[2]));
                 }
                 case log10 : {
                     return new Double(
-                        log10(((Number) parms[0]).doubleValue()));
+                        log10(((Number) params[0]).doubleValue()));
                 }
                 case ltrim : {
-                    return ltrim((String) parms[0]);
+                    return ltrim((String) params[0]);
                 }
                 case minute : {
-                    return ValuePool.getInt(minute((Time) parms[0]));
+                    return ValuePool.getInt(minute((Time) params[0]));
                 }
                 case mod : {
                     return ValuePool.getInt(
                         mod(
-                        ((Number) parms[0]).intValue(),
-                        ((Number) parms[1]).intValue()));
+                        ((Number) params[0]).intValue(),
+                        ((Number) params[1]).intValue()));
                 }
                 case month : {
-                    return ValuePool.getInt(month((Date) parms[0]));
+                    return ValuePool.getInt(month((Date) params[0]));
                 }
                 case monthname : {
-                    return ValuePool.getString(monthname((Date) parms[0]));
+                    return ValuePool.getString(monthname((Date) params[0]));
                 }
                 case now : {
                     return now();
                 }
                 case octetLength : {
-                    return octetLength((String) parms[0]);
+                    return octetLength((String) params[0]);
                 }
                 case position : {
-                    return ValuePool.getInt(position((String) parms[0],
-                                                     (String) parms[1]));
+                    return ValuePool.getInt(position((String) params[0],
+                                                     (String) params[1]));
                 }
                 case pi : {
                     return piValue;
                 }
                 case quarter : {
-                    return ValuePool.getInt(quarter((Date) parms[0]));
+                    return ValuePool.getInt(quarter((Date) params[0]));
                 }
                 case rand : {
-                    return new Double(rand((Integer) parms[0]));
+                    return new Double(rand((Integer) params[0]));
                 }
                 case rawToHex : {
-                    return rawToHex((String) parms[0]);
+                    return rawToHex((String) params[0]);
                 }
                 case repeat : {
-                    return repeat((String) parms[0], (Integer) parms[1]);
+                    return repeat((String) params[0], (Integer) params[1]);
                 }
                 case replace : {
-                    return replace((String) parms[0], (String) parms[1],
-                                   (String) parms[2]);
+                    return replace((String) params[0], (String) params[1],
+                                   (String) params[2]);
                 }
                 case right : {
-                    return right((String) parms[0],
-                                 ((Number) parms[1]).intValue());
+                    return right((String) params[0],
+                                 ((Number) params[1]).intValue());
                 }
                 case round : {
-                    return new Double(round(((Number) parms[0]).doubleValue(),
-                                            ((Number) parms[1]).intValue()));
+                    return new Double(
+                        round(((Number) params[0]).doubleValue(),
+                              ((Number) params[1]).intValue()));
                 }
                 case roundMagic : {
                     return new Double(
-                        roundMagic(((Number) parms[0]).doubleValue()));
+                        roundMagic(((Number) params[0]).doubleValue()));
                 }
                 case rtrim : {
-                    return rtrim((String) parms[0]);
+                    return rtrim((String) params[0]);
                 }
                 case second : {
-                    return ValuePool.getInt(second((Time) parms[0]));
+                    return ValuePool.getInt(second((Time) params[0]));
                 }
                 case sign : {
                     return ValuePool.getInt(
-                        sign(((Number) parms[0]).doubleValue()));
+                        sign(((Number) params[0]).doubleValue()));
                 }
                 case soundex : {
-                    return soundex((String) parms[0]);
+                    return soundex((String) params[0]);
                 }
                 case space : {
-                    return space(((Number) parms[0]).intValue());
+                    return space(((Number) params[0]).intValue());
                 }
                 case substring : {
-                    return substring((String) parms[0],
-                                     ((Number) parms[1]).intValue(),
-                                     (Integer) parms[2]);
+                    return substring((String) params[0],
+                                     ((Number) params[1]).intValue(),
+                                     (Integer) params[2]);
+                }
+                case trim : {
+                    return trim((String) params[0], (String) params[1],
+                                ((Boolean) params[2]).booleanValue(),
+                                ((Boolean) params[3]).booleanValue());
                 }
                 case truncate : {
                     return new Double(
                         truncate(
-                            ((Number) parms[0]).doubleValue(),
-                            ((Number) parms[1]).intValue()));
+                            ((Number) params[0]).doubleValue(),
+                            ((Number) params[1]).intValue()));
                 }
                 case ucase : {
-                    return ucase((String) parms[0]);
+                    return ucase((String) params[0]);
                 }
                 case user : {
                     return null;
                 }
                 case week : {
-                    return ValuePool.getInt(week((Date) parms[0]));
+                    return ValuePool.getInt(week((Date) params[0]));
                 }
                 case year : {
-                    return ValuePool.getInt(year((Date) parms[0]));
+                    return ValuePool.getInt(year((Date) params[0]));
                 }
                 case isReadOnlyDatabaseFiles : {
                     return null;

@@ -189,7 +189,6 @@ class User {
      */
     void grant(Object dbobject, int rights) {
 
-//        Trace.doAssert(dbobject != null, "dbobject is null");
         if (rights == 0) {
             return;
         }
@@ -210,7 +209,6 @@ class User {
      */
     void revoke(Object dbobject, int rights) {
 
-//        Trace.doAssert(dbobject != null, "dbobject is null");
         if (rights == 0) {
             return;
         }
@@ -276,9 +274,15 @@ class User {
      */
     boolean isAccessible(Object dbobject, int rights) {
 
-//        Trace.doAssert(dbobject != null, "dbobject is null");
         if (isAdministrator) {
             return true;
+        }
+
+        if (dbobject instanceof String) {
+            if (((String) dbobject).startsWith("org.hsqldb.Library")
+                    || ((String) dbobject).startsWith("java.lang.Math")) {
+                return true;
+            }
         }
 
         int n = rightsMap.get(dbobject, 0);
