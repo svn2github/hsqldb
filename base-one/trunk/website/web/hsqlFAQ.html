@@ -149,7 +149,8 @@ rel=copyright href="http://hsqldb.sourceforge.net">
       should close Database Manager before manually editing the newdb.script to 
       remove the errors. 
   </ul>
-  <p>Common errors are: </p>
+  <p>Databases created with versions before 1.7.0 could have issues such as those 
+    listed below. Such errors are not accepted by 1.7.2:</p>
   <ul>
     <li>duplicate column names in one table</li>
     <li>duplicate index or constraint name within the whole database</li>
@@ -167,15 +168,21 @@ rel=copyright href="http://hsqldb.sourceforge.net">
     <li>How does HSQLDB compare to other RDBMS engines in SQL support / JDBC support 
       <p>HSQLDB has very extensive support for SQL 92, 99 and 2003. This support 
         is not full but is in some respects better than many other products. JDBC 
-        support is good and extends to prepared and batch statements, full metadata 
-        reporting on database objects and result sets.</p>
+        support is good and extends to real prepared and batch statements, full 
+        metadata reporting on database objects and result sets.</p>
     <li>How does HSQLDB compare to other RDBMS engines in speed 
       <p></p>
       This is something that you can measure. Overall, HSQLDB is comparable in 
-      speed to non-java open-source RDBMS engines. Some comparisons have been 
-      posted by users in our mailing list. Specific SELECT query speed issues 
-      can normally be resolved with slight modifications to the query or by adding 
-      appropriate indexes. <br>
+      speed to non-java open-source RDBMS engines. It is generally much faster 
+      than java open-source engines in most operations. You can use the performance 
+      tests supplied with HSQLDB. One test, JDBCBench.java is a standard TPC-B 
+      implementation that measures speed and reliablility of multi-threaded access. 
+      Another test, TestCacheSize.java, is a single-threaded test for speed of 
+      INSERT, UPDATE, DELETE and SELECT operations with hundreds of thousands 
+      of rows. Some comparisons have been posted by users in our mailing list. 
+      Any specific SELECT query speed issues can normally be resolved with slight 
+      modifications to the query or by adding appropriate indexes. See the Guide 
+      for details.<br>
       <br>
     <li> How solid is HSQLDB 
       <p>HSQLDB 1.7.2 has undergone several months of extensive user tests with 
@@ -183,21 +190,24 @@ rel=copyright href="http://hsqldb.sourceforge.net">
         extensive SQL compatibility tests and stress tests by application vendors 
         who use HSQLDB in their products. All the reported issues were fixed before 
         the final release and no serious issue has been reported since the release. 
-        If any new issue arises, it will be dealt with promptly.</p>
+        If any new issue arises, it will be dealt with promptly. Reported problems 
+        since the original releas have been fixed promptly in revisions.</p>
     <li>How solid is HSQLDB when a machine crashes<br>
       <br>
-      HSQLDB employs a redo log for data recovery. Extensive user tests have demonstrated 
-      this mechanism to be effective and fail-safe in most cases. For added security, 
-      you can backup the database files while the engine is running.<br>
+      HSQLDB employs a redo log for data recovery. All the changes to the database 
+      are reflected in this log. Extensive user tests have demonstrated this mechanism 
+      to be effective and fail-safe in most cases. For added security, you can 
+      backup the database files while the engine is running.<br>
       <br>
     <li>Can HSQLDB handle multithreading? 
       <p> The core engine is currently not multithreaded (*), but it is multithreading-safe. 
         The Server is multithreading and responds to requests while any database 
         core is busy. Application that are multithreading can use the database, 
         but all requests are executed one after the other per database, this means 
-        only one at a time. (*). There is a separate timer thread for saving the 
-        transaction log to disk when WRITE_DELAY is turned on. Server modes also 
-        use threads to respond to connection request. 
+        only one at a time. This model contributes to speed, reliability, and 
+        completely avoids issues such as deadlocks (*). There is a separate timer 
+        thread for saving the transaction log to disk. Server modes also use threads 
+        to respond to connection request. 
       <p> 
     <li> What are the limitations of the database (size of columns, number of 
       tables, rows...)? 
@@ -226,22 +236,24 @@ rel=copyright href="http://hsqldb.sourceforge.net">
         millions of rows and resulting in data files of over 1 GB. 
       <p> 
     <li> May I use HSQLDB in a commercial product? 
-      <p> HSQLDB is Open Source and free to use in any commercial product so long 
-        as the terms of the Licenses are met. The License of Hypersonic SQL (on 
-        which HSQLDB is based) is based on the old BSD License. The HSQLDB Licence 
-        is based on the new BSD License. 
+      <p> Yes. HSQLDB is Open Source and free to use in any commercial product 
+        so long as the terms of the Licenses are met. The Licenses of HSQLDB and 
+        Hypersonic SQL (on which HSQLDB is based) are both based on the new BSD 
+        License. 
       <p> 
     <li> After the program is finished, almost all statements are in the *.log 
       file, and the *.data file is almost empty. Why? 
       <p> If data has been added to CACHED tables then the database was not shut 
-        down properly.<br>
+        down properly. When you restart the database, the *.log file will be processed 
+        and an automatic checkpoint will be performed. No commited data will be 
+        lost. <br>
         <br>
         The statements that make up the database are saved in the *.script file 
         (mostly CREATE statements and INSERT statements for memory tables). Only 
         data of cached tables (CREATE CACHED TABLE) are stored in the *.data file. 
         Also all data manipulation operations are stored in the *.log file (mostly 
         DELETE/INSERT) for crash recovery. When the SHUTDOWN or CHECKPOINT command 
-        is issued to a database, then the *.script file is re-created an becomes 
+        is issued to a database, then the *.script file is re-created and becomes 
         up-to-date. The .log file is deleted. The *.data file is also closed and 
         backed up as the *.backup file. When the database is restarted, all statements 
         of the *.script file are executed first and new statements are appended 
@@ -258,8 +270,8 @@ rel=copyright href="http://hsqldb.sourceforge.net">
  
 <a href="http://sourceforge.net"> <img src="http://sourceforge.net/sflogo.php?group_id=23316" width="95" height="32" border="0" alt="SourceForge Logo"></a> 
 <!-- #BeginEditable "extralogo" --><!-- #EndEditable --> 
-<h6 align="center"> This page last updated <!-- #BeginEditable "update" -->08 
-  August 2004<!-- #EndEditable --></h6>
+<h6 align="center"> This page last updated <!-- #BeginEditable "update" -->29 
+  November 2004<!-- #EndEditable --></h6>
 <h6> Java is a Trademark of Sun Microsystems, Inc. (under various licenses). <i>Contents 
   of this page are &copy;2001-2004 <a href="http://hsqldb.sourceforge.net" target="_top">The 
   hsqldb Development Group.</a> All rights reserved under the terms of the applicable 

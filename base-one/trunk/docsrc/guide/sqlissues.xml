@@ -1,4 +1,4 @@
-<!-- $Id: sqlissues.xml,v 1.15 2004/07/15 19:45:50 fredt Exp $ -->
+<!-- $Id: sqlissues.xml,v 1.16 2004/08/09 17:10:11 fredt Exp $ -->
 
 <chapter id='sql_issues-chapter'>
     <title id='sql_issues-title'>SQL Issues</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.15 $</edition>
-        <pubdate>$Date: 2004/07/15 19:45:50 $</pubdate>
+        <edition>$Revision: 1.16 $</edition>
+        <pubdate>$Date: 2004/08/09 17:10:11 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>SQL</keyword>
@@ -39,7 +39,7 @@
     <section>
         <title>SQL Standard Support</title>
         <para>
-            HSQLDB 1.7.2 supports the dialect of SQL defined by SQL
+            HSQLDB 1.7.3 supports the dialect of SQL defined by SQL
             standards 92, 99 and 2003. This means where a feature of the
             standard is supported, e.g. left outer join, the syntax is
             that specified by the standard text. Many features
@@ -124,7 +124,7 @@
                     <member>NULL,</member>  <member>NULL</member>
                 </simplelist>
             </example><para>
-                In version 1.7.2 the behaviour of UNIQUE constraints and
+                Since version 1.7.2 the behaviour of UNIQUE constraints and
                 indexes with respect to NULL values has changed to conform to
                 SQL standards.
                 A row, in which the value for any of the UNIQUE constraint
@@ -136,7 +136,7 @@
         <section>
             <title>Unique Indexes</title>
             <para>
-                In 1.7.2, user defined UNIQUE indexes can still be declared but
+                In 1.7.3, user defined UNIQUE indexes can still be declared but
                 they are deprecated.
                 You should use a UNIQUE constraint instead.
             </para> <para>
@@ -219,7 +219,7 @@
                 So you do not need to specify an extra index if you require one
                 on the first column of the list.
             </para> <para>
-                In 1.7.2, a multi-column index will speed up queries that
+                In 1.7.3, a multi-column index will speed up queries that
                 contain joins or values on ALL the columns.
                 You need NOT declare additional individual indexes on those
                 columns unless you use queries that search only on a subset of
@@ -259,7 +259,7 @@
                 The general rule is to put first the table that has a narrowing
                 condition on one of its columns.
             </para> <para>
-                1.7.2 features automatic, on-the-fly indexes for views and
+                1.7.3 features automatic, on-the-fly indexes for views and
                 subselects that are used in a query.
                 An index is added to a view when it is joined to a table or
                 another view.
@@ -471,7 +471,7 @@
         <section>
             <title>Bit and Boolean Types</title>
             <para>
-                In 1.7.2, BIT is simply an alias for BOOLEAN.
+                Since 1.7.2, BIT is simply an alias for BOOLEAN.
                 The primary representation of BOOLEAN column is
                 <literal>'true'</literal> or <literal>'false'</literal>
                 either as the boolean type or as strings  when used from JDBC.
@@ -481,11 +481,18 @@
                 <literal>false</literal> and any other value such as 1 is
                 translated to <literal>true</literal>.
             </para>
+            <para>
+			    Since 1.7.3 the BOOLEAN type conforms to the SQL standards
+				and supports the UNDEFINED state in addition to TRUE or FALSE.
+				NULL values are treated as undefined. This improvement
+				affects queries that contain NOT IN. See the test text file, 
+				TestSelfNot.txt, for examples of the queries.  
+            </para>
         </section>
         <section>
             <title>Storage and Handling of Java Objects</title>
             <para>
-                In version 1.7.2 this support has improved and any serializable
+                Since version 1.7.2 this support has improved and any serializable
                 JAVA Object can be inserted directly into a column of type
                 OTHER using any variation of
                 <literal>PreparedStatement.setObject()</literal> methods.
@@ -520,11 +527,11 @@
             <para>
                 Prior to 1.7.2, all table column type definitions with a column
                 size, precision or scale qualifier were accepted and ignored.
-                In version 1.7.2, such qualifiers  must conform to the SQL
+                Since version 1.7.2, such qualifiers  must conform to the SQL
                 standards.
                 For example INTEGER(8) is no longer acceptable.
             </para> <para>
-                In 1.7.2, the qualifiers are still ignored unless you set a
+                Since 1.7.2, the qualifiers are still ignored unless you set a
                 database property.
                 <literal>SET PROPERTY &quot;sql.enforce_strict_size&quot;
                 TRUE </literal>will enforce sizes for CHARACTER or VARCHAR
@@ -669,7 +676,7 @@
     <section>
         <title>New Features and Changes</title>
         <para>
-            In 1.7.2 many enhancements have been made for better SQL support.
+            In 1.7.2 many enhancements were made for better SQL support.
             These are listed in the
             <link linkend='sqlsyntax-chapter' endterm='sqlsyntax-title'/>
             chapter and in <ulink url="../changelog_1_7_2.txt"/>.
