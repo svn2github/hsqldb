@@ -25,7 +25,7 @@
            description="List description of jars that you can build">
      <echo>
 hsqldb.jar     : default distribution jar
-hsqljdbc.jar   : JDBC driver only (no memory-only nor in-mem mode)
+hsqljdbc.jar   : JDBC client only (no memory-only nor in-mem mode)
 hsqldbmain.jar : no utility programs
 hsqldbmin.jar  : no utility or server programs
 hsqldbtest.jar : all including test classes

@@ -37,7 +37,7 @@ is invoked with the supplied build scripts.
 
 Different jar sizes
 
-HSQLDB can be built in any combination of four different sizes.
+HSQLDB can be built in any combination of five different sizes.
 
 The smallest jar, hsqljdbc.jar, contains only the client side
 of the JDBC driver, without any server or client standalone programs.
