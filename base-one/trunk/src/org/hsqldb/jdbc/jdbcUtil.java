@@ -49,8 +49,8 @@ public class jdbcUtil {
 
     public static final int    MAJOR    = 1,
                                MINOR    = 7,
-                               REVISION = 2;
-    public static final String VERSION  = "1.7.2";
+                               REVISION = 3;
+    public static final String VERSION  = "1.7.3";
     public static final String PRODUCT  = "HSQL Database Engine";
 
     static final void throwError(HsqlException e) throws SQLException {

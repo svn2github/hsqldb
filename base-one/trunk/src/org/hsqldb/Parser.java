@@ -1158,8 +1158,37 @@ class Parser {
                 return new Expression(type, s, null);
             }
             default : {
-                Expression a   = readConcat();
-                boolean    not = false;
+                Expression a = readConcat();
+
+                if (iToken == Expression.IS) {
+                    read();
+
+                    boolean not;
+
+                    if (iToken == Expression.NOT) {
+                        not = true;
+
+                        read();
+                    } else {
+                        not = false;
+                    }
+
+                    Trace.check(iToken == Expression.VALUE && oData == null,
+                                Trace.UNEXPECTED_TOKEN);
+                    read();
+
+                    // TODO: the TableFilter needs a right hand side to avoid null pointer exceptions...
+                    a = new Expression(Expression.IS_NULL, a,
+                                       new Expression(Types.NULL, null));
+
+                    if (not) {
+                        a = new Expression(Expression.NOT, a, null);
+                    }
+
+                    return a;
+                }
+
+                boolean not = false;
 
                 if (iToken == Expression.NOT) {
                     not = true;
@@ -1666,9 +1695,8 @@ class Parser {
 
                 while (true) {
                     Expression current = readOr();
-                    Expression condition =
-                        new Expression(Expression.EQUAL, current,
-                                       new Expression(Types.NULL, null));
+                    Expression condition = new Expression(Expression.IS_NULL,
+                                                          current, null);
                     Expression alternatives =
                         new Expression(Expression.ALTERNATIVE,
                                        new Expression(Types.NULL, null),
@@ -2117,22 +2145,11 @@ class Parser {
                 case Expression.TRAILING :
                 case Expression.BOTH :
                 case Expression.AS :
+                case Expression.IS :
                     break;            // nothing else required, iToken initialized properly
 
                 case Expression.MULTIPLY :
                     sTable = null;    // in case of ASTERIX
-                    break;
-
-                case Expression.IS :
-                    sToken = tokenizer.getString();
-
-                    if (sToken.equals(Token.T_NOT)) {
-                        iToken = Expression.NOT_EQUAL;
-                    } else {
-                        iToken = Expression.EQUAL;
-
-                        tokenizer.back();
-                    }
                     break;
 
                 default :

@@ -1904,10 +1904,18 @@ public class Expression {
                 }
 
                 if (isFixedConditional()) {
-                    exprType = test(null) ? TRUE
-                                          : FALSE;
-                    eArg     = null;
-                    eArg2    = null;
+                    Boolean result = test(null);
+
+                    if (result == null) {
+                        setNull();
+                    } else if (result.booleanValue()) {
+                        exprType = TRUE;
+                    } else {
+                        exprType = FALSE;
+                    }
+
+                    eArg  = null;
+                    eArg2 = null;
                 } else if (eArg.isParam) {
                     eArg.dataType = eArg2.dataType == Types.NULL
                                     ? Types.VARCHAR
@@ -1936,16 +1944,25 @@ public class Expression {
                 break;
 
             case AND : {
-                boolean eArgFixed  = eArg.isFixedConditional();
-                boolean eArg2Fixed = eArg2.isFixedConditional();
+                boolean argFixed  = eArg.isFixedConditional();
+                boolean arg2Fixed = eArg2.isFixedConditional();
+                Boolean arg       = argFixed ? (eArg.test(null))
+                                             : null;
+                Boolean arg2      = arg2Fixed ? eArg2.test(null)
+                                              : null;
 
-                if (eArgFixed && eArg2Fixed) {
-                    exprType = test(null) ? TRUE
-                                          : FALSE;
-                    eArg     = null;
-                    eArg2    = null;
-                } else if ((eArgFixed &&!eArg.test(null))
-                           || (eArg2Fixed &&!eArg2.test(null))) {
+                if (argFixed && arg2Fixed) {
+                    if (arg == null || arg2 == null) {
+                        setNull();
+                    } else {
+                        exprType = arg.booleanValue() && arg2.booleanValue()
+                                   ? TRUE
+                                   : FALSE;
+                        eArg  = null;
+                        eArg2 = null;
+                    }
+                } else if ((argFixed &&!Boolean.TRUE.equals(arg))
+                           || (arg2Fixed &&!Boolean.TRUE.equals(arg2))) {
                     exprType = FALSE;
                     eArg     = null;
                     eArg2    = null;
@@ -1964,16 +1981,25 @@ public class Expression {
                 break;
             }
             case OR : {
-                boolean eArgFixed  = eArg.isFixedConditional();
-                boolean eArg2Fixed = eArg2.isFixedConditional();
+                boolean argFixed  = eArg.isFixedConditional();
+                boolean arg2Fixed = eArg2.isFixedConditional();
+                Boolean arg       = argFixed ? (eArg.test(null))
+                                             : null;
+                Boolean arg2      = arg2Fixed ? eArg2.test(null)
+                                              : null;
 
-                if (eArgFixed && eArg2Fixed) {
-                    exprType = test(null) ? TRUE
-                                          : FALSE;
-                    eArg     = null;
-                    eArg2    = null;
-                } else if ((eArgFixed && eArg.test(null))
-                           || (eArg2Fixed && eArg2.test(null))) {
+                if (argFixed && arg2Fixed) {
+                    if (arg == null || arg2 == null) {
+                        setNull();
+                    } else {
+                        exprType = arg.booleanValue() || arg2.booleanValue()
+                                   ? TRUE
+                                   : FALSE;
+                        eArg  = null;
+                        eArg2 = null;
+                    }
+                } else if ((argFixed && Boolean.TRUE.equals(arg))
+                           || (arg2Fixed && Boolean.TRUE.equals(arg2))) {
                     exprType = TRUE;
                     eArg     = null;
                     eArg2    = null;
@@ -1991,11 +2017,27 @@ public class Expression {
 
                 break;
             }
+            case IS_NULL :
+                if (isFixedConditional()) {
+                    exprType = Boolean.TRUE.equals(test(null)) ? TRUE
+                                                               : FALSE;
+                    eArg     = null;
+                }
+
+                dataType = Types.BOOLEAN;
+                break;
+
             case NOT :
                 if (isFixedConditional()) {
-                    exprType = test(null) ? TRUE
-                                          : FALSE;
-                    eArg     = null;
+                    Boolean arg = test(null);
+
+                    if (arg == null) {
+                        setNull();
+                    } else {
+                        exprType = arg.booleanValue() ? TRUE
+                                                      : FALSE;
+                        eArg     = null;
+                    }
                 } else if (eArg.isParam) {
                     eArg.dataType = Types.BOOLEAN;
                 }
@@ -2129,10 +2171,16 @@ public class Expression {
         }
 
         if (isFixedConditional()) {
-            exprType = test(null) ? TRUE
-                                  : FALSE;
-            eArg     = null;
-            eArg2    = null;
+            Boolean arg = test(null);
+
+            if (arg == null) {
+                setNull();
+            } else {
+                exprType = arg.booleanValue() ? TRUE
+                                              : FALSE;
+                eArg     = null;
+                eArg2    = null;
+            }
         } else if (eArg.isParam) {
             eArg.dataType = Types.VARCHAR;
         } else if (eArg2.isParam) {
@@ -2192,8 +2240,9 @@ public class Expression {
         } else if (likeObject.isEquivalentToNotNullPredicate()) {
 
             // X LIKE '%' <=>  X IS NOT NULL
-            exprType   = NOT_EQUAL;
-            eArg2      = new Expression(Types.NULL, null);
+            exprType   = NOT;
+            eArg       = new Expression(IS_NULL, eArg, null);
+            eArg2      = null;
             likeObject = null;
         } else {
             if (eArg.exprType != Expression.COLUMN) {
@@ -2702,6 +2751,10 @@ public class Expression {
                                                                 : Boolean
                                                                 .FALSE;
 
+            case IS_NULL :
+                return leftValue == null ? Boolean.TRUE
+                                         : Boolean.FALSE;
+
             case LIKE :
                 String s = (String) Column.convertObject(rightValue,
                     Types.VARCHAR);
@@ -2717,9 +2770,7 @@ public class Expression {
                                              : Boolean.FALSE;
 
             case IN :
-                return eArg2.testValueList(session, leftValue) ? Boolean.TRUE
-                                                               : Boolean
-                                                               .FALSE;
+                return eArg2.testValueList(session, leftValue);
 
             case EXISTS :
                 if (eArg.isCorrelated) {
@@ -2908,14 +2959,15 @@ public class Expression {
             case LIKE :
             case EXISTS :
             case IN :
-                return test(session) ? Boolean.TRUE
-                                     : Boolean.FALSE;
+                return test(session);
 
             case CONVERT :
                 return eArg.getValue(session, dataType);
 
             case CASEWHEN :
-                if (eArg.test(session)) {
+                Boolean result = eArg.test(session);
+
+                if (Boolean.TRUE.equals(result)) {
                     return eArg2.eArg.getValue(session, dataType);
                 } else {
                     return eArg2.eArg2.getValue(session, dataType);
@@ -2964,13 +3016,12 @@ public class Expression {
             default :
 
                 /** @todo fredt - make sure the expression type is always comparison here */
-                return test(session) ? Boolean.TRUE
-                                     : Boolean.FALSE;
+                return test(session);
         }
     }
 
     boolean testCondition(Session session) throws HsqlException {
-        return test(session);
+        return Boolean.TRUE.equals(test(session));
     }
 
     /**
@@ -2980,26 +3031,59 @@ public class Expression {
      * @return boolean
      * @throws HsqlException
      */
-    boolean test(Session session) throws HsqlException {
+    Boolean test(Session session) throws HsqlException {
 
         switch (exprType) {
 
             case TRUE :
-                return true;
+                return Boolean.TRUE;
 
             case FALSE :
-                return false;
+                return Boolean.FALSE;
 
             case NOT :
                 Trace.doAssert(eArg2 == null, "Expression.test");
 
-                return !eArg.test(session);
+                Boolean result = eArg.test(session);
 
-            case AND :
-                return eArg.test(session) && eArg2.test(session);
+                return result == null ? null
+                                      : result.booleanValue() ? Boolean.FALSE
+                                                              : Boolean.TRUE;
 
-            case OR :
-                return eArg.test(session) || eArg2.test(session);
+            case AND : {
+
+                // can't use C style optimization because of NULL
+                Boolean r1 = eArg.test(session);
+
+                if (r1 == null) {
+                    return null;
+                }
+
+                Boolean r2 = eArg2.test(session);
+
+                if (r2 == null) {
+                    return null;
+                }
+
+                return r1.booleanValue() && r2.booleanValue() ? Boolean.TRUE
+                                                              : Boolean.FALSE;
+            }
+            case OR : {
+
+                // TODO: maybe use C style optimization?
+                boolean r1 = Boolean.TRUE.equals(eArg.test(session));
+
+                if (r1) {
+                    return Boolean.TRUE;
+                }
+
+                return Boolean.TRUE.equals(eArg2.test(session)) ? Boolean.TRUE
+                                                                : Boolean
+                                                                .FALSE;
+            }
+            case IS_NULL :
+                return eArg.getValue(session) == null ? Boolean.TRUE
+                                                      : Boolean.FALSE;
 
             case LIKE :
                 String s = (String) eArg2.getValue(session, Types.VARCHAR);
@@ -3010,7 +3094,8 @@ public class Expression {
 
                 String c = (String) eArg.getValue(session, Types.VARCHAR);
 
-                return likeObject.compare(c);
+                return likeObject.compare(c) ? Boolean.TRUE
+                                             : Boolean.FALSE;
 
             case IN :
                 return eArg2.testValueList(session, eArg.getValue(session));
@@ -3018,16 +3103,15 @@ public class Expression {
             case EXISTS :
                 Result r = eArg.subSelect.getResult(session, 1);    // 1 is already enough
 
-                return r.rRoot != null;
+                return r.rRoot == null ? Boolean.FALSE
+                                       : Boolean.TRUE;
 
             case FUNCTION :
                 Object value =
                     Column.convertObject(function.getValue(session),
                                          Types.BOOLEAN);
 
-                if (value != null && value instanceof Boolean) {
-                    return ((Boolean) value).booleanValue();
-                }
+                return (Boolean) value;
         }
 
         if (eArg == null || eArg2 == null) {
@@ -3037,8 +3121,7 @@ public class Expression {
                     Object value = Column.convertObject(getValue(session),
                                                         Types.BOOLEAN);
 
-                    return value == null ? false
-                                         : ((Boolean) value).booleanValue();
+                    return (Boolean) value;
                 }
             }
 
@@ -3050,23 +3133,16 @@ public class Expression {
         Object o2   = eArg2.getValue(session, type);
 
         if (o == null || o2 == null) {
-/*
- TableFilter.swapCondition() ensures that with LEFT OUTER, eArg is the
- column expression for the table on the right hand side.
- We do not join tables on nulls apart from outer joins
- Any comparison operator can exist in WHERE or JOIN conditions
-*/
-            if (eArg.tableFilter != null && eArg2.tableFilter != null
-                    &&!eArg.tableFilter.isOuterJoin) {
-
-                // here we should have (eArg.iType == COLUMN && eArg2.iType == COLUMN)
-                return false;
-            }
-
+            /*
+             TableFilter.swapCondition() ensures that with LEFT OUTER, eArg is the
+             column expression for the table on the right hand side.
+             We do not join tables on nulls apart from outer joins
+             Any comparison operator can exist in WHERE or JOIN conditions
+             */
             if (eArg.tableFilter != null && eArg.tableFilter.isOuterJoin) {
                 if (isInJoin) {
                     if (eArg.tableFilter.isCurrentOuter && o == null) {
-                        return true;
+                        return Boolean.TRUE;
                     }
                 } else {
 
@@ -3075,10 +3151,11 @@ public class Expression {
                 }
             }
 
-            return testNull(o, o2, exprType);
+            return null;
         }
 
-        return compareValues(o, o2, type, exprType);
+        return compareValues(o, o2, type, exprType) ? Boolean.TRUE
+                                                    : Boolean.FALSE;
     }
 
     private static boolean compareValues(Object o, Object o2, int valueType,
@@ -3112,60 +3189,6 @@ public class Expression {
         }
     }
 
-// vorburger@users 20021229 - patch 1.7.2 - null handling
-
-    /**
-     * Special test to perform comparison with correct handling of SQL
-     * null values. Called by test() only if a logical operation with at
-     * least one of the operands being null is invoked.<p>
-     *
-     * Works according to the following logic:
-     *
-     * <pre>
-     *                 Both a and b null      Either a or b null
-     * EQUAL                 true                   false
-     * NOT_EQUAL             false                  true
-     * BIGGER                false                  false
-     * BIGGER_EQUAL          true                   false
-     * SMALLER               false                  false
-     * SMALLER_EQUAL         true                   false
-     * </pre>
-     *
-     * @param a left argument
-     * @param b right argument
-     * @param logicalOperation expression type
-     * @return boolean
-     * @throws HsqlException
-     */
-    boolean testNull(Object a, Object b,
-                     int logicalOperation) throws HsqlException {
-
-        switch (logicalOperation) {
-
-            case NOT_EQUAL :
-                return !(a == null && b == null);
-
-            case EQUAL :
-            case BIGGER_EQUAL :
-            case SMALLER_EQUAL :
-                return a == null && b == null;
-
-            case BIGGER :
-            case SMALLER :
-            default :
-                return false;
-        }
-    }
-
-/*
-
-    for ( int i = 0; i < vl.length; i++ ){
-        if ( vl[i].isConstant() ){
-            vl[i] = Column.convertObject(vl[i].valueData, eArg2.dataType);
-        }
-    }
-*/
-
     /**
      * Returns the result of testing a VALUE_LIST expression
      *
@@ -3179,22 +3202,23 @@ public class Expression {
 // boucherb@users - 2003-09-25 - patch 1.7.2 Alpha Q - parametric IN lists
 //                  and correlated IN list expressions
 // fredt - catch type conversion exception due to narrowing
-    private boolean testValueList(Session session,
+    private Boolean testValueList(Session session,
                                   Object o) throws HsqlException {
 
         if (o == null) {
-            return false;
+            return null;
         }
 
         if (exprType == VALUELIST) {
             try {
                 o = Column.convertObject(o, this.dataType);
             } catch (HsqlException e) {
-                return false;
+                return Boolean.FALSE;
             }
 
             if (isFixedConstantValueList) {
-                return hList.contains(o);
+                return hList.contains(o) ? Boolean.TRUE
+                                         : Boolean.FALSE;
             }
 
             final int len = valueList.length;
@@ -3203,11 +3227,11 @@ public class Expression {
                 Object o2 = valueList[i].getValue(session, dataType);
 
                 if (Column.compare(o, o2, dataType) == 0) {
-                    return true;
+                    return Boolean.TRUE;
                 }
             }
 
-            return false;
+            return Boolean.FALSE;
         } else if (exprType == QUERY) {
 
             /** @todo fredt - convert to join */
@@ -3215,11 +3239,12 @@ public class Expression {
                 try {
                     o = Column.convertObject(o, subTable.getColumnTypes()[0]);
                 } catch (HsqlException e) {
-                    return false;
+                    return Boolean.FALSE;
                 }
 
-                return subTable.getPrimaryIndex().findFirst(
-                    o, Expression.EQUAL) != null;
+                return subTable.getPrimaryIndex().findFirst(o, Expression.EQUAL)
+                       == null ? Boolean.FALSE
+                               : Boolean.TRUE;
             }
 
             Result r = subSelect.getResult(session, 0);
@@ -3233,20 +3258,20 @@ public class Expression {
             try {
                 o = Column.convertObject(o, type);
             } catch (HsqlException e) {
-                return false;
+                return Boolean.FALSE;
             }
 
             while (n != null) {
                 Object o2 = n.data[0];
 
                 if (o2 != null && Column.compare(o2, o, type) == 0) {
-                    return true;
+                    return Boolean.TRUE;
                 }
 
                 n = n.next;
             }
 
-            return false;
+            return Boolean.FALSE;
         }
 
         throw Trace.error(Trace.WRONG_DATA_TYPE);

@@ -6,8 +6,10 @@ area will be found later in changelog_1_7_3.txt.
 
 Fred Toussi (fredt@users.sourceforge.net)
 
-2004.11.24 FIRST COMMIT 1.7.3.0
+2004.12.05 First release 1.7.3.0
 
 Changed handling of the BOOLEAN type to allow the undefined state.
-This involves changes to the behariour of NOT and NULL, also CHECK conditions
+This involves changes to the behariour of NOT and NULL, and also CHECK conditions,
 regarding NULL values.
+
+In all other respects, 1.7.3.0 is identical to 1.7.2.10

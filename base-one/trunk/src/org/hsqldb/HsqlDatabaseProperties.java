@@ -144,7 +144,7 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
         // the version that created this database
         // once created, this won't change if db is used with a future version
-        setProperty("hsqldb.original_version", "1.7.2");
+        setProperty("hsqldb.original_version", "1.7.3");
         /*
                 garbage collection with gc_interval
                 Setting this value can be useful when HSQLDB is used as an

@@ -1725,7 +1725,7 @@ public class Library {
      * @since HSQLDB 1.7.2
      */
     public static String getDatabaseProductVersion() {
-        return "1.7.2";
+        return "1.7.3";
     }
 
     /**
