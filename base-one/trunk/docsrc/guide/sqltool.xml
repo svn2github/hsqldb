@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.24 2004/06/06 22:54:16 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.25 2004/06/07 23:08:42 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.24 $</edition>
-        <pubdate>$Date: 2004/06/06 22:54:16 $</pubdate>
+        <edition>$Revision: 1.25 $</edition>
+        <pubdate>$Date: 2004/06/07 23:08:42 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -27,9 +27,10 @@
             This document explains how to use SqlTool, the main purpose of
             which is to read your SQL text file or stdin, and execute the SQL 
             commands therein against a JDBC database.
-            There are also many features to both facilitate interactive use
-            (such as command-line editing and aliases), and to facilitate
-            automation (such as file inclusion and scripting variables).
+            There are also a great number of features to facilitate both
+            interactive use (such as command-line editing and aliases) and 
+            automation (such as scripting variables and SQL transaction 
+            control and error handling).
         </simpara><simpara>
             Some of the examples below use quoting which works exactly
             as-is for any normal UNIX shell.
@@ -560,6 +561,13 @@
             If you're doing data updates, remember to issue a commit command
             or use the <literal>--autoCommit</literal> switch.
         </simpara></important>
+        <simpara>
+            As you'll see, SqlTool has many features that are very 
+            convenient for scripting.  But what really makes it superior for
+            automation tasks (as compared to SQL tools from other vendors)
+            is the ability to reliably detect errors and to control JDBC
+            transactions.
+        </simpara>
         <section><title>Giving SQL on the Command Line</title>
             <para>
                 If you just have a couple SQL commands to run, you can run them 
@@ -761,6 +769,18 @@
                     false so that real errors are caught.
                 </simpara></listitem></varlistentry>
             </variablelist>
+        </section>
+        <section><title>Automation</title>
+            <simpara>
+                SqlTool is ideal for mission-critical automation because,
+                unlike other SQL tools, SqlTool returns a dependable exit 
+                status and gives you control over error handling and SQL 
+                transactions.
+                Autocommit is off by default, so you can build a completely
+                dependable solution by intelligently using \* commands 
+                (Continue upon Errors) and commit statements, and by
+                verifying exit statuses.
+            <simpara>
         </section>
         <section><title>Getting Interactive Functionality with SQL Files</title>
             <para>
