@@ -1,5 +1,5 @@
 /*
- * $Id: SqlFile.java,v 1.6 2004/01/20 17:06:18 unsaved Exp $
+ * $Id: SqlFile.java,v 1.7 2004/01/20 17:38:09 unsaved Exp $
  *
  * Copyright (c) 2001-2003, The HSQL Development Group
  * All rights reserved.
@@ -48,8 +48,18 @@ import java.sql.ResultSetMetaData;
 /**
  * Definitions.
  * COMMAND = Statement || Special
- * Statement = SQL Statement
+ * Statement = SQL statement like "SQL Statement;"
  * Special =   Special Command like "\x arg..."
+ *
+ * In general, the special commands mirror those of Postgresql's psql,
+ * but SqlFile handles command editing much different from Postgresql
+ * because of Java's lack of support for raw tty I/O.
+ * The \p special command, in particular, is very different from psql's.
+ * Also, to keep the code simpler, we're sticking to only single-char
+ * special commands until we really need more.
+ *
+ * For now, using Sql*plus's method of only keeping SQL statements
+ * in history.
  */
 public class SqlFile {
     private File file;
@@ -57,6 +67,10 @@ public class SqlFile {
     private String primaryPrompt = "sql> ";
     private String contPrompt    = "  +> ";
     private Connection conn = null;
+    private String[] statementHistory = new String[10];
+
+    final private static String DIVIDER =
+        "-----------------------------------------------------------------";
 
     final private static String BANNER =
 "********   N.b. I have updated this explanations, but the behavior of\n" +
@@ -81,12 +95,13 @@ public class SqlFile {
         + "    \\p [line to print]   Print string to stdout\n"
         + "    \\s                   * Show previous commands \n"
         + "    \\-                   * reload last command\n"
-        + "    \\-2                  * reload 2nd-to-last command, etc.\n"
+        + "    \\-2;                 * reload and run 2nd-to-last command, etc.\n"
         + "    \\q                   Quit (alternatively, end input,\n"
         + "                           like Ctrl-Z or Ctrl-D)\n\n"
-        + "EXAMPLE:  To show previous commands then execute the 3rd-to-last:\n"
+        + "EXAMPLE:  To show previous commands then edit then execute the 3rd-to-last:\n"
         + "    \\s\n"
         + "    \\-3\n"
+        + "    \\e\n"
         + "    ;\n";
 
     /**
@@ -113,6 +128,9 @@ public class SqlFile {
 
     private String curCommand = null;
     private int curLinenum = -1;
+    private int curHist = -1;
+    private PrintStream psStd = null;
+    private PrintStream psErr = null;
 
     /**
      * Run SQL in the file through the given database connection.
@@ -120,15 +138,19 @@ public class SqlFile {
      * This is synchronized so that I can use object variables to keep
      * track of current line number and command.
      */
-    public synchronized void execute(Connection conn, PrintStream psStd,
-            PrintStream psErr) throws IOException, SqlToolError, SQLException {
+    public synchronized void execute(Connection conn, PrintStream stdIn,
+            PrintStream errIn) throws IOException, SqlToolError, SQLException {
+        psStd = stdIn;
+        psErr = errIn;
         StringBuffer buffer = new StringBuffer();
         curLinenum = -1;
-        int index, nextsem;
         String inputLine;
-        String multicommand;
+        String trimmedCommand;
+        String deTerminated;
 
-        BufferedReader br = new BufferedReader(new InputStreamReader(
+        BufferedReader br = null;
+        try {
+            br = new BufferedReader(new InputStreamReader(
                 (file == null) ? System.in : new FileInputStream(file)));
         // psErr.println("Executing '" + file + "'");
         curLinenum = 0;
@@ -139,52 +161,72 @@ public class SqlFile {
             inputLine = br.readLine();
             if (inputLine == null) break;
             curLinenum++;
-            // This is just to filter out useless newlines at beginning of 
-            // commands.
-            if (buffer.length() == 0 && inputLine.trim().length() == 0)
-                continue;
-            buffer.append("\n" + inputLine);
-            if (inputLine.indexOf(';') < 0) continue;
-            multicommand = buffer.toString();
-            index = -1; // Previous sem
-            while (true) {
-                // This WILL succeed at least once.
-                nextsem = multicommand.indexOf(';', index + 1);
-                if (nextsem < 0) break;
-                try {
-                    curCommand =
-                        multicommand.substring(index + 1, nextsem).trim();
-                    if (curCommand.length() == 0) {
-                        ; // Permit null command, but don't pass to DB.
-                    } else if (curCommand.charAt(0) == '\\') {
-                        processSpecial();
-                    } else {
-                        processStatement(conn, psStd);
+            trimmedCommand = inputLine.trim();
+            if (buffer.length() == 0) {
+                // This is just to filter out useless newlines at beginning of 
+                // commands.
+                if (trimmedCommand.length() == 0) continue;
+                if (trimmedCommand.charAt(0) == '\\') {
+                    try {
+                        processSpecial(trimmedCommand.substring(1));
+                    } catch (QuitNow qn) {
+                        return;
+                    } catch (BadSpecial bs) {
+                        psErr.println("Error at '"
+                            + ((file == null) ? "stdin" : file.toString())
+                            + "' line " + curLinenum
+                            + ":\n\"" + inputLine + "\"\n" + bs.getMessage());
+                        if (!interactive) throw new SqlToolError(bs);
                     }
-                } catch (QuitNow qn) {
-                    return;
-                } catch (BadSpecial bs) {
-                    psErr.println("Error at '"
-                        + ((file == null) ? "stdin" : file.toString())
-                        + "' line " + curLinenum
-                        + ":\n\"" + curCommand + "\"\n" + bs.getMessage());
-                    if (!interactive) throw new SqlToolError(bs);
-                } catch (SQLException se) {
-                    psErr.println("SQL Error at '"
-                        + ((file == null) ? "stdin" : file.toString())
-                        + "' line " + curLinenum
-                        + ":\n\"" + curCommand + "\"\n" + se.getMessage());
-                    if (!interactive) throw se;
+                    continue;
                 }
-                index = nextsem;
             }
-            while (++index < multicommand.length())
-                if (!Character.isWhitespace(multicommand.charAt(index))) break;
-            buffer.delete(0, index);
+            if (trimmedCommand.length() == 0) {
+                setHist(buffer.toString());
+                buffer.setLength(0);
+                psStd.println("Buffer stored into history then cleared");
+                continue;
+            }
+            deTerminated = deTerminated(inputLine);
+            if (buffer.length() > 0) buffer.append('\n');
+            buffer.append((deTerminated == null) ? inputLine : deTerminated);
+            if (deTerminated == null) continue;
+            try {
+                curCommand = buffer.toString();
+                if (curCommand.trim().length() == 0) {
+                    throw new SQLException("Empty SQL Statement");
+                }
+                setHist(curCommand);
+                processStatement(conn, psStd);
+            } catch (SQLException se) {
+                psErr.println("SQL Error at '"
+                    + ((file == null) ? "stdin" : file.toString())
+                    + "' line " + curLinenum
+                    + ":\n\"" + curCommand + "\"\n" + se.getMessage());
+                if (!interactive) throw se;
+            }
+            buffer.setLength(0);
         }
         if (buffer.length() != 0)
             psErr.println("Unterminated input:  [" + buffer + ']');
+        } finally {
+            if (br != null) br.close();
+        }
     }
+
+    /**
+     * Returns a copy of given string without a terminating semicolon.
+     * If there is no terminating semicolon, null is returned.
+     */
+    static private String deTerminated(String inString) {
+        int index = inString.lastIndexOf(';');
+        if (index < 0) return null;
+        for (int i = index + 1; i < inString.length(); i++) {
+            if (!Character.isWhitespace(inString.charAt(i))) return null;
+        }
+        return inString.substring(0, index);
+    }
+
     private class BadSpecial extends Exception {
         private BadSpecial(String s) { super(s); }
     }
@@ -194,21 +236,24 @@ public class SqlFile {
     /**
      * Process a Special Command.
      */
-    private void processSpecial() throws BadSpecial, QuitNow {
+    private void processSpecial(String inString) throws BadSpecial, QuitNow {
         int index = 0;
         int special;
         String other = null;
 
-        // Put an assertion here to verify that curCommand[0] == '\\'
-        if (curCommand.length() < 2)
+        // Put an assertion here to verify that inString[0] == '\\'
+        if (inString.length() < 1)
             throw new BadSpecial("Null special command");
-        if (curCommand.length() > 2) {
-            other = curCommand.substring(1).trim();
+        if (inString.length() > 1) {
+            other = inString.substring(1).trim();
             if (other.length() < 1) other = null;
         }
-        switch (curCommand.charAt(1)) {
+        switch (inString.charAt(0)) {
             case 'q':
                 throw new QuitNow();
+            case 's':
+                showHistory();
+                break;
             case '?':
                 System.out.println(HELP_TEXT);
                 break;
@@ -221,6 +266,15 @@ public class SqlFile {
         }
     }
 
+    /**
+     * Most of this code taken directly from ScriptTool.java
+     *
+     * TODO:  Completely rework.  All the data is in RAM anyways (in
+     * a StringBuffer).  We might as well store in a more primitive
+     * form and calculate maximul lengths, then print out in a good
+     * table where things will always line up, instead of the hit and
+     * miss method below of using tabs.
+     */
     private void processStatement(Connection conn,
             PrintStream printStream) throws SQLException {
         //System.out.println(Integer.toString(curLinenum) + ": " + curCommand);
@@ -239,23 +293,58 @@ public class SqlFile {
                 ResultSetMetaData m      = r.getMetaData();
                 int               col    = m.getColumnCount();
                 StringBuffer      strbuf = new StringBuffer();
-                for (int i = 1; i <= col; i++) {
-                    strbuf.append(m.getColumnLabel(i) + "\t");
+                String val;
+                StringBuffer dividerBuffer = new StringBuffer();
+                if (col > 1) {
+                    for (int i = 1; i <= col; i++) {
+                        val = m.getColumnLabel(i);
+                        strbuf.append(val + '\t');
+                        dividerBuffer.append(divider(val.length()) + '\t');
+                    }
+                    strbuf = strbuf.append("\n"
+                            + dividerBuffer.toString() + '\n');
                 }
-                strbuf = strbuf.append("\n");
                 while (r.next()) {
                     for (int i = 1; i <= col; i++) {
-                        strbuf = strbuf.append(r.getString(i) + "\t");
+                        strbuf = strbuf.append(r.getString(i) + '\t');
                         if (r.wasNull()) {
                             strbuf = strbuf.append("(null)\t");
                         }
                     }
+                    strbuf.append('\n');
                 }
-                printStream.println(strbuf.toString());
+                printStream.print(strbuf.toString());
                 break;
             default:
-                printStream.println("update count " + updateCount);
+                printStream.println("Updated row(s):  " + updateCount);
                 break;
         }
+    }
+
+    private String divider(int len) {
+        return (len > DIVIDER.length()) ? DIVIDER : DIVIDER.substring(0, len);
+    }
+
+    private void showHistory() {
+        int ctr = 0;
+        String s;
+        for (int i = curHist; i >= 0; i--) {
+            s = statementHistory[i];
+            if (s == null) return;
+            psStd.println(Integer.toString(++ctr)
+                    + "  **********************************************\n" + s);
+        }
+        for (int i = 9; i >= curHist; i--) {
+            s = statementHistory[i];
+            if (s == null) return;
+            psStd.println(Integer.toString(++ctr)
+                    + "  **********************************************\n" + s);
+        }
+    }
+
+    private void setHist(String inString) {
+        curHist++;
+        if (curHist == statementHistory.length) curHist = 0;
+        statementHistory[curHist] = inString;
     }
 }
