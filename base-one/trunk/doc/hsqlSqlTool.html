@@ -40,7 +40,7 @@ Up:<a rel="up" accesskey="u" href="#dir">(dir)</a>
 
 <p>Author: Blaine Simpson.  <a href="mailto:blaine.simpson@admc.com?subject=sqltool">blaine.simpson@admc.com</a>
 <br>
-$Revision: 1.3 $
+$Revision: 1.5 $
 
 <p>The software which is referred to in this document and which is hosted
 on the admc.com web site, is distributed for free according to the Gnu
@@ -289,12 +289,19 @@ lines.
 (This easily be changed to accommondate editing only specific lines of
 the buffer-- let me know if that would be useful to you).
 
-     <p>All occurrences of "$" in the "from string" will be treated as line breaks. 
-For example, "from string" of "*$FROM mytable" would actually look for
+     <p>All occurrences of "$" in the "from string" and the "to string" are treated
+as line breaks. 
+For example, "from string" of "<code>*$FROM mytable</code>" would actually look for
 occurrences of
      <pre class="example">              "*
               FROM mytable"
           </pre>
+     This is very useful, as it permits you to append to or prefix to specific
+lines within a multi-line SQL Statement, like
+     <pre class="example">              :s/e)$/e) WHERE col1 is not null$/
+          </pre>
+     This command appends "<code> WHERE col1 is not null</code>" to the line(s) which
+end with "e)".
 
      <p>The "to string" may be empty, in which case, occurrences of the "from string"
 are just deleted.  For example
