@@ -323,21 +323,30 @@ if necessary.
 <font face="Arial" color="#FF0000"><br>
 <b>CREATE VIEW</b> &lt;viewname&gt; <b>AS SELECT ... FROM ... </b>[ WHERE Expression ] ;
 </font>
-<p><font face="Arial">A view can be thought of as either a virtual table or a stored query. The data accessible through a view is not stored in the database as a distinct object. What is stored in the database is a SELECT statement. The result set of the SELECT statement forms the virtual table returned by the view. A user can use this virtual table by referencing the view name in SQL statements the same way a table is referenced. A view is used to do any or all of these functions:<br><br> 
+<p>
+<font face="Arial">A view can be thought of as either a virtual table or a stored query. The data accessible through a view is not stored in the database as a distinct object. What is stored in the database is a SELECT statement. The result set of the SELECT statement forms the virtual table returned by the view. A user can use this virtual table by referencing the view name in SQL statements the same way a table is referenced. A view is used to do any or all of these functions:<br>
+<br>
+ 
 Restrict a user to specific rows in a table. For example, allow an employee to see only the rows recording his or her work in a labor-tracking table.
-<br><br>
+<br>
+<br>
 Restrict a user to specific columns. For example, allow employees who do not work in payroll to see the name, office, work phone, and department columns in an employee table, but do not allow them to see any columns with salary information or personal information.
-<br><br>
+<br>
+<br>
 Join columns from multiple tables so that they look like a single table.
-<br><br>
+<br>
+<br>
 Aggregate information instead of supplying details. For example, present the sum of a column, or the maximum or minimum value from a column.
-<br><br>
+<br>
+<br>
 Views are created by defining the SELECT statement that retrieves the data to be presented by
 the view. The data tables referenced by the SELECT statement are known as the base tables 
 for the view. In this example,  is a view that selects data from three base tables 
 to present a virtual table of commonly needed data:
-<br><br>
-<big><pre>
+<br>
+<br>
+<big>
+<pre>
     CREATE VIEW mealsjv AS
       SELECT m.mid mid, m.name name, t.mealtype mt, a.aid aid,
              a.gname + ' ' + a.sname author, m.description description,
@@ -345,16 +354,22 @@ to present a virtual table of commonly needed data:
         FROM meals m, mealtypes t, authors a
        WHERE m.mealtype = t.mealtype
 	     AND m.aid = a.aid;
-</pre></big>
+</pre>
+</big>
 You can then reference mealsjv in statements in the same way you would reference a table:
-<br><br>
-<big><pre>
+<br>
+<br>
+<big>
+<pre>
     SELECT *
       FROM mealsjv
-</pre></big>
+</pre>
+</big>
 A view can reference another view. For example, mealsjv presents information that is useful for long discriptions that contain identifers, but a short list might be all a web page display needs. A view can be built that selects only specific mealsjv columns:
-<br><br>
-<big><pre>
+<br>
+<br>
+<big>
+<pre>
     CREATE VIEW mealswebv AS
       SELECT name, author
         FROM mealsjv
@@ -497,17 +512,28 @@ Will not work if the index backs a UNIQUE of FOREIGN KEY constraint.
 </font>
 <hr>
 <font face="Arial"><br>
-<b>ROLLBACK</b> [WORK] ;
+<b>ROLLBACK</b> [TO SAVEPOINT &lt;savepointname&gt; |  WORK}] ;
 </font>
-<p><font face="Arial">Undoes changes made since the last COMMIT or ROLLBACK. 
-</font>
+<p><font face="Arial">Undoes changes made since the last COMMIT or ROLLBACK. ROLLBACK TO SAVEPOINT &lt;savepointname&gt; undoes the change since the named savepoint. It has no effect if the savepoint is not found.</font>
 <p><font face="Arial">See also: <a href="#COMMIT">COMMIT</a> 
 </font>
 <p> <font face="Arial"><br>
+  <a name="SAVEPOINT"></a>
+</font>
+<hr>
+<font face="Arial, Helvetica" size="2"><br>
+<b>SAVEPOINT</b> &lt;savepoint name&gt; ;
+</font>
+</font>
+<p><font face="Arial, Helvetica" size="2">Sets up a SAVEPOINT for use with ROLLBACK TO SAVEPOINT. 
+</font>
+<p><font face="Arial, Helvetica" size="2">See also: <a href="#COMMIT">COMMIT</a> 
+</font>
+<p> <font face="Arial, Helvetica" size="2"><br>
   <a name="SCRIPT"></a>
 </font>
 <hr>
-<font face="Arial"><br>
+<font face="Arial, Helvetica" size="2"><font face="Arial"><br>
 <b>SCRIPT</b> ['file'] ;
 </font>
 <p><font face="Arial">Creates an SQL script describing the database. This file is saved on the machine where the database files are located. <br>
@@ -624,7 +650,7 @@ Will not work if the index backs a UNIQUE of FOREIGN KEY constraint.
 <p> 
 </font>
 <hr>
-<p><font face="Arial, Helvetica" size="2">SET SCRIPTFORMAT {TEXT | BINARY | COMPRESSED}</font>
+<p><font face="Arial, Helvetica" size="2"><b><font color="#FF0000">SET SCRIPTFORMAT</font></b><font color="#FF0000"> {TEXT | BINARY | COMPRESSED}</font></font>
 <p><font face="Arial, Helvetica" size="2">Changes the format of the script file. BINARY and COMPRESSED formats are slightly faster and more compact than the default TEXT. Recommended only for very larg script files.<br>
    </font>
 <p> <font face="Arial, Helvetica" size="2"><br>
