@@ -144,6 +144,8 @@ font-family:&quot;Courier New&quot;'>/build</span></code> then type: </p>
   the hsqldbtest.jar package, you should download the junit jar from <a href="http://www.junit.org">www.junit.org</a>  and put it in 
   the /lib directory, alongside servlet.jar, which is included in the .zip package.</p>
 <h4>Building with Batch Files</h4>
+<p>UNIX users must use Ant to build hsqldb.
+
 <p>A set of MSDOS batch files is also provided. These produce only the default 
   jar size. The path and classpath variables for the JDK should of course be set 
   before running any of the batch files.</p>
@@ -155,16 +157,6 @@ font-family:&quot;Courier New&quot;'>/build</span></code> then type: </p>
   target. This is because the java.sql package in each version (1.1.x 1.2.x 1.3.x 
   1.4.x) has a different set of methods in its public interfaces. Javadoc can 
   be built with Ant and batch files.</p>
-
-<h4>Building on UNIX without Ant  (hsqldb 1.7.2)</h4>
-The script <span style="italic">buildjar.sh</span> builds a new hsqldb.jar
-appropriate for your JDK (the one at $JAVA_HOME).
-The script does not use Ant or Make, but you do need a JDK at $JAVA_HOME.
-<p>
-Just run <span style="italic">buildjar.sh</span> and the script will tell you
-what JRE(s) the resultant jar file is good for.
-You are not given a choice of what your target JRE is, because, at this time,
-it is entirely dependent on the version of your JDK.
 
 <p>fredt@users </p>
 </body>
