@@ -1,6 +1,12 @@
 Readme File
 
 
+2003.11.28
+
+Fixed some bugs.
+
+Changes to SET PROPERTY command with better error checking.
+
 2003.11.23
 
 Added support for LIMIT ? ? and TOP ?
