@@ -162,12 +162,12 @@ implements ActionListener, WindowListener, KeyListener {
         String  lowerArg;
         boolean autoConnect = false;
 
+        bMustExit = true;
+
         for (int i = 0; i < arg.length; i++) {
             lowerArg = arg[i].toLowerCase();
 
             i++;
-
-            bMustExit = true;
 
             if (lowerArg.equals("-driver")) {
                 defDriver   = arg[i];
