@@ -42,8 +42,6 @@ import java.sql.SQLException;
  */
 class TextTable extends org.hsqldb.Table {
 
-    private String  readRoots  = "";
-    private String  emptyRoots = "";
     private String  dataSource = "";
     private String  firstLine  = "";
     private boolean isReversed = false;
@@ -63,6 +61,7 @@ class TextTable extends org.hsqldb.Table {
 
     private void openCache(String source, boolean isDesc,
                            boolean isRdOnly) throws SQLException {
+
         if (source == null) {
             source = "";
         }
@@ -85,17 +84,13 @@ class TextTable extends org.hsqldb.Table {
             try {
                 cCache = dDatabase.logger.openTextCache(tableName.name,
                         source, isRdOnly, isDesc);
+                iIdentityId = cCache.getFreePos();
 
-                int    freePos = cCache.getFreePos();
-                String roots   = readRoots;
+                // all zero
+                int[] roots = new int[iIndexCount];
 
-                if (freePos <= TextCache.NL.length()) {
-                    roots = emptyRoots;
-                }
+                setIndexRoots(roots);
 
-                roots += freePos;
-
-                super.setIndexRoots(roots);
                 // fredt - moved here from TableFilter
                 // build the indexes
                 Node readAll = this.getPrimaryIndex().getRoot();
@@ -103,7 +98,6 @@ class TextTable extends org.hsqldb.Table {
                 while (readAll != null) {
                     readAll = readAll.getRight();
                 }
-
             } catch (SQLException e) {
                 if (!dataSource.equals(source) || isDesc != isReversed
                         || isRdOnly != isReadOnly) {
@@ -178,11 +172,11 @@ class TextTable extends org.hsqldb.Table {
     }
 
     protected String getDataSource() throws SQLException {
-        return (dataSource);
+        return dataSource;
     }
 
     protected boolean isDescDataSource() throws SQLException {
-        return (isReversed);
+        return isReversed;
     }
 
     void setDataReadOnly(boolean value) throws SQLException {
@@ -194,32 +188,6 @@ class TextTable extends org.hsqldb.Table {
         openCache(dataSource, isReversed, value);
 
         isReadOnly = value;
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @return
-     * @throws  SQLException
-     */
-    String getIndexRoots() throws SQLException {
-
-        Trace.doAssert(isCached, "Table.getIndexRootData");
-
-        return (readRoots + "0");
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @param  s
-     * @throws  SQLException
-     */
-    void setIndexRoots(String s) throws SQLException {
-
-        Trace.check(isCached, Trace.TABLE_NOT_FOUND);
-
-        // Ignore
     }
 
     boolean isIndexCached() {
@@ -282,24 +250,6 @@ class TextTable extends org.hsqldb.Table {
         super.delete(row, c);
     }
 
-    /**
-     *  Method declaration
-     *
-     * @param  column
-     * @param  name
-     * @param  unique
-     * @return                Description of the Return Value
-     * @throws  SQLException
-     */
-    Index createIndexPrivate(int column[], HsqlName name,
-                             boolean unique) throws SQLException {
-
-        readRoots  += "0 ";
-        emptyRoots += "-1 ";
-
-        return (super.createIndexPrivate(column, name, unique));
-    }
-
 // tony_lai@users 20020820 - patch 595099
     void createPrimaryKey(String pkName, int[] columns) throws SQLException {
 
@@ -313,7 +263,7 @@ class TextTable extends org.hsqldb.Table {
         }
     }
 
-    void drop() throws SQLException{
+    void drop() throws SQLException {
         openCache("", false, false);
     }
 }

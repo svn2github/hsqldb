@@ -103,7 +103,7 @@ abstract class Node {
                 return new MemoryNode(r);
 
             case Index.POINTER_INDEX :
-                return new PointerNode((CachedRow) r);
+                return new PointerNode((CachedRow) r, id);
 
             case Index.DISK_INDEX :
             default :
@@ -120,7 +120,7 @@ abstract class Node {
                 return new MemoryNode(r);
 
             case Index.POINTER_INDEX :
-                return new PointerNode((CachedRow) r);
+                return new PointerNode((CachedRow) r, id);
 
             case Index.DISK_INDEX :
             default :

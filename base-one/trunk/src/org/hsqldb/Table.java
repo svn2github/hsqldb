@@ -114,9 +114,9 @@ class Table {
     private HsqlArrayList vColumn;            // columns in table
     private HsqlArrayList vIndex;             // vIndex(0) is the primary key index
     private int[]         iPrimaryKey;        // column numbers for primary key
-    private int           iIndexCount;        // size of vIndex
+    protected int         iIndexCount;        // size of vIndex
     private int           iIdentityColumn;    // -1 means no such row
-    private int           iIdentityId;        // next value of identity column
+    protected int         iIdentityId;        // next value of identity column
     HsqlArrayList         vConstraint;        // constrainst for the table
     HsqlArrayList         vTrigs[];           // array of trigger lists
     private int[]         colTypes;           // fredt - types of columns

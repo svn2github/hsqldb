@@ -203,7 +203,7 @@ class DatabaseScript {
         for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
             Table t = (Table) tTable.get(i);
 
-            if (bCached && t.isCached()) {
+            if (bCached && t.isIndexCached()) {
                 addRow(r, getIndexRootsDDL((Table) tTable.get(i)));
             }
         }

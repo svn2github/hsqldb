@@ -104,7 +104,7 @@ class TextCache extends org.hsqldb.Cache {
 
         super("", db);
 
-        // write rows as soon as they are inserted
+        // fredt - write rows as soon as they are inserted
         storeOnInsert = true;
 
         TextSource textSource = new TextSource(name);
@@ -318,10 +318,7 @@ class TextCache extends org.hsqldb.Cache {
     }
 
     /**
-     *  flush method declaration <P>
-     *
-     *  The flush method saves all cached data to the file, saves the free
-     *  position and closes the file.
+     *  The flush method saves all modified cached data to the file.
      *
      * @throws  SQLException
      */

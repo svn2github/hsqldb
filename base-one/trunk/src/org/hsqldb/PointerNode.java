@@ -89,8 +89,9 @@ class PointerNode extends MemoryNode {
     private Table tTable;
     private int   iRight = NO_POS;
 
-    PointerNode(CachedRow r) {
+    PointerNode(CachedRow r, int id) {
 
+        iId    = id;
         tTable = r.getTable();
 
         if (r.iPos == CachedRow.NO_POS) {
