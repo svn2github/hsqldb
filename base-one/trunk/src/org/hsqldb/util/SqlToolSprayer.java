@@ -34,8 +34,9 @@ import java.util.Date;
 import java.util.ArrayList;
 import java.util.Properties;
 import java.io.FileInputStream;
+import java.io.File;
 
-/* $Id$ */
+/* $Id: SqlToolSprayer.java,v 1.1 2004/05/14 18:25:57 unsaved Exp $ */
 
 /**
  * Sql Tool Sprayer.
@@ -52,7 +53,7 @@ import java.io.FileInputStream;
  * </UL>
  *
  * @see @main()
- * @version $Revision$
+ * @version $Revision: 1.1 $
  * @author Blaine Simpson
  */
 public class SqlToolSprayer {
@@ -61,13 +62,14 @@ public class SqlToolSprayer {
         + "System properties you may use [default values]:\n"
         + "    sqltoolsprayer.period (in ms.) [500]\n"
         + "    sqltoolsprayer.maxtime (in ms.) [0]\n"
+        + "    sqltoolsprayer.monfile (filepath) [none]\n"
       + "    sqltoolsprayer.rcfile (filepath) [none.  SqlTool default used.]\n"
         + "    sqltoolsprayer.propfile (filepath) [none]";
 
     static public void main(String[] sa) {
         if (sa.length < 1) {
             System.err.println(SYNTAX_MSG);
-            System.exit(2);
+            System.exit(4);
         }
         System.setProperty("sqltool.noexit", "true");
         long period = ((System.getProperty("sqltoolsprayer.period") == null)
@@ -78,6 +80,10 @@ public class SqlToolSprayer {
                 Integer.parseInt(System.getProperty("sqltoolsprayer.maxtime")));
         String rcFile = System.getProperty("sqltoolsprayer.rcfile");
         String propfile = System.getProperty("sqltoolsprayer.propfile");
+        File monitorFile =
+                (System.getProperty("sqltoolsprayer.monfile") == null)
+                ? null
+                : new File(System.getProperty("sqltoolsprayer.monfile"));
         ArrayList urlids = new ArrayList();
         if (propfile != null) try {
             getUrlsFromPropFile(propfile, urlids);
@@ -109,6 +115,10 @@ public class SqlToolSprayer {
         boolean onefailed = false;
         long startTime = (new Date()).getTime();
         while (true) {
+            if (monitorFile != null && !monitorFile.exists()) {
+                System.err.println("Required file is gone:  " + monitorFile);
+                System.exit(2);
+            }
             onefailed = false;
             for (int i = 0; i < status.length; i++) {
                 if (status[i]) continue;
@@ -134,7 +144,7 @@ public class SqlToolSprayer {
         for (int i = 0; i < status.length; i++)
             if (status[i] != true) failedUrlids.add((String) urlids.get(i));
         if (failedUrlids.size() > 0) {
-            System.err.println("\nFailed instances:   " + failedUrlids);
+            System.err.println("Failed instances:   " + failedUrlids);
             System.exit(1);
         }
         System.exit(0);
