@@ -226,7 +226,7 @@ examples:
              classpath="lib/junit.jar"
        >
           <include name="org/hsqldb/test/TestJDBCSavepoints.java"/>
-          <include name="org/hsqldb/test/ExecHarness.java"/>
+          <include name="org/hsqldb/test/SqlToolHarness.java"/>
           <include name="org/hsqldb/test/TestSqlTool*.java"/>
       </javac>
    </target>
@@ -277,7 +277,7 @@ examples:
          </classpath>
          <include name="org/hsqldb/test/**"/>
          <exclude name="org/hsqldb/test/TestJDBCSavepoints.java"/>
-         <exclude name="org/hsqldb/test/ExecHarness.java"/>
+         <exclude name="org/hsqldb/test/SqlToolHarness.java"/>
          <exclude name="org/hsqldb/test/SqlTool*.java"/>
       </javac>
       <antcall inheritall='true' target='-test14'/>
