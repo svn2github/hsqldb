@@ -1,4 +1,4 @@
-<!-- $Id: advancedtopics.xml,v 1.15 2004/06/19 17:21:39 fredt Exp $ -->
+<!-- $Id: advancedtopics.xml,v 1.16 2004/07/15 15:45:07 fredt Exp $ -->
 
 <chapter id='advanced-chapter'>
     <title id='advanced-title'>Advanced Topics</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.15 $</edition>
-        <pubdate>$Date: 2004/06/19 17:21:39 $</pubdate>
+        <edition>$Revision: 1.16 $</edition>
+        <pubdate>$Date: 2004/07/15 15:45:07 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Advanced</keyword>
@@ -726,8 +726,8 @@
                             The value is the size in megabytes that the
                             <literal>.log</literal> file can reach before an
                             automatic checkpoint occurs. A checkpoint and
-							rewrites the <literal>.script</literal> file and
-							clears the <literal>.log</literal> file.
+                            rewrites the <literal>.script</literal> file and
+                            clears the <literal>.log</literal> file.
                             The value can be changed via the <literal>SET
                             LOGSIZE nnn</literal> SQL command.
                         </para> </entry>
@@ -771,7 +771,12 @@
                             When HSQLDB is compiled and run in Java 1.4,
                             setting this property to <literal>false</literal>
                             will avoid the use of nio access methods, resulting
-                            in reduced speed.
+                            in reduced speed. If the data file is larger than
+                            512MB when it is first opened, nio access methods
+                            are not used. Also, if the file gets larger than
+                            the amount of available computer memory that needs
+                            to be allocated for nio access, non-nio access
+                            methods are used.
                             </para><para>
                             <literal>(SET PROPERTY)</literal>.
                             If used before defining any CACHED table, it
@@ -999,9 +1004,9 @@
                 bytes on the total size of rows that are cached.
                 When the default values is used for both properties, the limit
                 on the total size of rows is approximately 50MB.
-                (This is the size of binary images of the rows. It translates to
-				 more actual memory, typically 2-4 times, used for the cache as
-				 the data is represented by Java objects.)
+                (This is the size of binary images of the rows and indexes. It
+                translates to more actual memory, typically 2-4 times, used for
+                the cache because the data is represented by Java objects.)
             </para> <para>
                 If memory is limited, the <property>hsqldb.cache_scale</property>
                 or <property>hsqldb.cache_size_scale</property> database
@@ -1031,7 +1036,7 @@
             Hypersonic or HSQLDB 1.6.x, 1.7.0 or 1.7.1.
         </para><para>
             There may be some potential problems in the upgrade which should
-			be resolved by editing the .script file:
+            be resolved by editing the .script file:
         </para><itemizedlist>
             <listitem><para>
                 Version 1.7.2 does not accept duplicate names for indexes.
