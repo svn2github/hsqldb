@@ -206,7 +206,7 @@ DROP TABLE HLO
 /*r2*/ update test set nr=4/2;select "TEST"."NR" from test
 /*r34*/ update test set name='3' || '4';select distinct name from test
 /*rx*/ update test set name=null || 'x' || null;select name from "TEST"
-/*rHo*/ select 'Ho' as hhoo from TEsT where name in ('x','y',null)
+/*rHo*/ select 'Ho' as hhoo from TEsT where name in ('x','y','z')
 -- case sensitivity tests
 /*r0*/ create table "T6"("x" char,s smallint not null,b bigint);select count(*) from "T6"
 /*rCaseS*/ insert into "T6" values('CaseS',100, 1000000000000); select "x" from "T6"
