@@ -215,10 +215,6 @@ public final class HsqlHashSet implements HsqlSet {
      * This ensures that s1.equals(s2) implies that
      * s1.hashCode()==s2.hashCode() for any two sets s1 and s2, as required
      * by the general contract of Object.hashCode. <p>
-     *
-     * This implementation returns the hashCode of the backing
-     * <code>Hashtable</code> which is the sum of the hashCodes of the
-     * backing Hashtable's entries.
      * @return the hash code value for this set.
      */
     public int hashCode() {
@@ -257,9 +253,7 @@ public final class HsqlHashSet implements HsqlSet {
      * two sets have the same size, and every member of the given set is
      * contained in this set. This ensures that the equals method works
      * properly across different implementations of the <code>HsqlSet</code>
-     * interface.  This implementation first checks if the specified object
-     * is this set; if not, then it returns <code>false</code>. If so, then
-     * it returns <code>this.map.equals(obj.map)</code>.
+     * interface.
      * @param obj <code>Object</code> to be compared for
      *        equality with this set.
      * @return true if the specified object is

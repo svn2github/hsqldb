@@ -31,123 +31,74 @@
 
 package org.hsqldb;
 
-
 import java.io.File;
-
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-
 import java.util.Enumeration;
-
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HsqlHashSet;
 import org.hsqldb.lib.HsqlHashMap;
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.lib.ValuePool;
-
 import org.hsqldb.lib.enum.ArrayEnumeration;
 import org.hsqldb.lib.enum.CompositeEnumeration;
 import org.hsqldb.lib.enum.EmptyEnumeration;
 
 // fredt@users - 1.7.2 - structural modifications to allow inheritance
-// boucherb@users - 1.7.2 - 20020225  
+// boucherb@users - 1.7.2 - 20020225
 // - factored out all reusable code into DIXXX support classes
+// - completed Fred's work on allowing inheritance
+// boucherb@users - 1.7.2 - 20020304 - bug fixes, refinements, better java docs
 
 /**
- * Produces tables which form a view of the system data dictionary.
- *
- * Implementations use a group of arrays of equal size to store various
- * attributes or cached instances of system tables.<p>
- *
- * Two fixed static lists of reserved table names are kept in String[] and
- * HsqlName[] forms. These are shared by all implementations of
- * DatabaseInformtion.<p>
- *
- * Each implementation keeps a lookup set of names for those tables whose
- * contents are never cached (nonCachedTablesSet).
- *
- * An instance of this class uses three lists named sysTablexxxx for caching
- * system tables.<p>
- *
- * sysTableSessionDependent indicates which tables contain data that is
- * dependent on the user rights of the User associatiod with the Session.<p>
- *
- * sysTableSessions contains the Session with whose rights each cached table
- * was built.<p>
- *
- * sysTables contains the cached tables.<p>
- *
- * At the time of instantiation, which is part of the Database.open() method
- * invocation, an empty table is created and placed in sysTables with calls to
- * generateTable(int) for each name in sysTableNames. Some of these
- * table entries are null as this implementation does not produce them.<p>
- *
- * Calls to getSystemTable(String, Session) return a cached table if various
- * caching rules are met (see below), or it will delete all rows of the table
- * and rebuild the contents via generateTable(int).<p>
- *
- * generateTable(int) calls the appropriate single method for each table.
- * These methods either build and return an empty table (if sysTables
- * contains null for the table slot) or populate the table with up-to-date
- * rows. <p>
- *
- * When the setDirty() call is made externally, the internal isDirty flag
- * is set. This flag is used next time a call to
- * getSystemTable(String, Session) is made.
- *
- * Rules for caching are applied as follows:
- *
- * When a call to getSystemTable(String, Session) is made, if the isDirty flag
- * is true, then the contents of all cached tables are cleared and the
- * sysTableUsers slot for all tables is set to null.
- *
- * If a table has non-cached contents, its contents are cleared and rebuilt.
- *
- * For the rest of the tables, if the sysTableSessions slot is null or if the
- * Session parameter is not the same as the Session object
- * in that slot, the table contents are cleared and rebuilt.
- *
- * (fredt@users)
+ * Extends DatabaseInformationMain to provide additional system table support.
  *
  * @author Campbell Boucher-Burnet, Camco & Associates Consulting
  * @version 1.7.2
- * @since HSQLDB 1.7.1
+ * @since HSQLDB 1.7.2
  */
-class DatabaseInformationFull extends DatabaseInformationMain {
-
+final class DatabaseInformationFull extends DatabaseInformationMain {
 
     /**
      * A <code>Result</code> object that holds the unchanging rows of
-     * the <code>SYSTEM_PROPERTIES</code> table.
+     * the SYSTEM_PROPERTIES table.
      */
     protected Result rsp;
 
-    /** Provides SQL function/procedure reporting support.  */
+    /** Provides SQL function/procedure reporting support. */
     protected DIProcedureInfo pi;
-    
+
+    /**
+     * Constructs a new DatabaseInformationFull instance. <p>
+     *
+     * @param db the database for which to produce system tables.
+     * @throws SQLException if a database access error occurs.
+     */
     DatabaseInformationFull(Database db) throws SQLException {
+
         super(db);
+
         pi = new DIProcedureInfo(ns);
     }
 
-
-    /** Retrieves the system table corresponding to the specified index.
+    /**
+     * Retrieves the system table corresponding to the specified index. <p>
+     *
      * @param tableIndex index identifying the system table to generate
      * @throws SQLException if a database access error occurs
      * @return the system table corresponding to the specified index
-     */    
+     */
     protected Table generateTable(int tableIndex) throws SQLException {
 
         switch (tableIndex) {
-            
-            case SYSTEM_PROCEDURECOLUMNS:
+
+            case SYSTEM_PROCEDURECOLUMNS :
                 return SYSTEM_PROCEDURECOLUMNS();
-                
-            case SYSTEM_PROCEDURES:
+
+            case SYSTEM_PROCEDURES :
                 return SYSTEM_PROCEDURES();
 
             case SYSTEM_SUPERTABLES :
@@ -168,9 +119,6 @@ class DatabaseInformationFull extends DatabaseInformationMain {
             // HSQLDB-specific
             case SYSTEM_ALIASES :
                 return SYSTEM_ALIASES();
-
-            case SYSTEM_BYTECODE :
-                return null;
 
             case SYSTEM_CACHEINFO :
                 return SYSTEM_CACHEINFO();
@@ -193,25 +141,22 @@ class DatabaseInformationFull extends DatabaseInformationMain {
             case SYSTEM_TRIGGERS :
                 return SYSTEM_TRIGGERS();
 
-            case SYSTEM_ALLTYPEINFO :
-                return SYSTEM_ALLTYPEINFO();
-
-            case SYSTEM_VIEWSOURCE :
-                return SYSTEM_VIEWSOURCE();
+            case SYSTEM_VIEWS :
+                return SYSTEM_VIEWS();
 
             default :
                 return super.generateTable(tableIndex);
         }
     }
 
-
-    /** Retrieves a <code>Table</code> object describing the aliases defined
+    /**
+     * Retrieves a <code>Table</code> object describing the aliases defined
      * within this database <p>
      *
-     * Currently two types of alias are reported: DOMAIN alaises ( alternate
+     * Currently two types of alias are reported: DOMAIN alaises (alternate
      * names for column data types when issuing "CREATE TABLE" DDL) and
      * ROUTINE aliases (alternate names that can be used when invoking
-     * routines as SQL functions or stored procedures). <P>
+     * routines as SQL functions or stored procedures). <p>
      *
      * Each row is an alias description with the following columns: <p>
      *
@@ -219,19 +164,19 @@ class DatabaseInformationFull extends DatabaseInformationMain {
      * OBJECT_TYPE  VARCHAR   type of the aliased object
      * OBJECT_CAT   VARCHAR   catalog of the aliased object
      * OBJECT_SCHEM VARCHAR   schema of the aliased object
-     * OBJECT_NAME  VARCHAR   identifier of the aliased object
+     * OBJECT_NAME  VARCHAR   simple identifier of the aliased object
      * ALIAS_CAT    VARCHAR   catalog in which alias is defined
      * ALIAS_SCHEM  VARCHAR   schema in which alias is defined
      * ALIAS        VARCHAR   alias for the indicated object
-     * </pre>
+     * </pre> <p>
      *
      * <b>Note:</b> Up to and including HSQLDB 1.7.2, user-defined aliases
      * are supported only for SQL function and stored procedure calls
-     * (indicated by the value "ROUTINE" in the <code>OBJECT_TYPE</code>
+     * (indicated by the value "ROUTINE" in the OBJECT_TYPE
      * column), and there is no syntax for dropping aliases, only for
      * creating them. <p>
      * @return a Table object describing the accessisble
-     *    aliases w.r.t the calling Session
+     *      aliases in the context of the calling session
      * @throws SQLException if an error occurs while producing the table
      */
     Table SYSTEM_ALIASES() throws SQLException {
@@ -248,9 +193,12 @@ class DatabaseInformationFull extends DatabaseInformationMain {
             addColumn(t, "ALIAS_CAT", VARCHAR);
             addColumn(t, "ALIAS_SCHEM", VARCHAR);
             addColumn(t, "ALIAS", VARCHAR, false);          // not null
-            // order: OBJECT_TYPE, OBJECT_NAME, ALIAS.  
-            // true primary key. 
-            t.createPrimaryKey(null, new int[]{0,3,6},true);
+
+            // order: OBJECT_TYPE, OBJECT_NAME, ALIAS.
+            // true PK.
+            t.createPrimaryKey(null, new int[] {
+                0, 3, 6
+            }, true);
 
             return t;
         }
@@ -262,7 +210,7 @@ class DatabaseInformationFull extends DatabaseInformationMain {
         String objName;
         String objType;
 
-        // Intermediate holders 
+        // Intermediate holders
         HsqlHashMap hAliases;
         Enumeration aliases;
         Object[]    row;
@@ -277,59 +225,56 @@ class DatabaseInformationFull extends DatabaseInformationMain {
         final int ialias_schem        = 5;
         final int ialias              = 6;
 
-        // Initialization        
-        hAliases   = database.getAlias();
-        aliases    = hAliases.keys();
-        objType    = "ROUTINE";
-        
+        // Initialization
+        hAliases = database.getAlias();
+        aliases  = hAliases.keys();
+        objType  = "ROUTINE";
+
         // Do it.
         while (aliases.hasMoreElements()) {
-            row        = t.getNewRow();
-            alias      = (String) aliases.nextElement();
-            objName    = (String) hAliases.get(alias);
+            row     = t.getNewRow();
+            alias   = (String) aliases.nextElement();
+            objName = (String) hAliases.get(alias);
 
             // must have class grant to see method call aliases
             pos = objName.lastIndexOf('.');
 
-            if (
-                pos <= 0 || !session.isAccessible(objName.substring(0, pos))
-            ) {
+            if (pos <= 0 ||!session.isAccessible(objName.substring(0, pos))) {
                 continue;
             }
-            
-            cat = ns.getCatalogName(objName);
-            schem = ns.getSchemaName(objName);
 
+            cat                      = ns.getCatalogName(objName);
+            schem                    = ns.getSchemaName(objName);
             row[ialias_object_type]  = objType;
-            row[ialias_object_cat]   = cat;  
+            row[ialias_object_cat]   = cat;
             row[ialias_object_schem] = schem;
             row[ialias_object_name]  = objName;
             row[ialias_cat]          = cat;
             row[ialias_schem]        = schem;
             row[ialias]              = alias;
 
-            t.insert(row,session);
+            t.insert(row, session);
         }
 
         // must have create/alter table rights to see domain aliases
         if (session.isAdmin()) {
-            aliases    = Column.hTypes.keys();
-            objType    = "DOMAIN";
+            aliases = Column.hTypes.keys();
+            objType = "DOMAIN";
 
             while (aliases.hasMoreElements()) {
                 row   = t.getNewRow();
                 alias = (String) aliases.nextElement();
 
                 Integer tn = (Integer) Column.hTypes.get(alias);
-                objName    = Column.getTypeString(tn.intValue());
+
+                objName = Column.getTypeString(tn.intValue());
 
                 if (alias.equals(objName)) {
                     continue;
                 }
-                
-                cat = ns.getCatalogName(objName);
-                schem = ns.getSchemaName(objName);
 
+                cat                      = ns.getCatalogName(objName);
+                schem                    = ns.getSchemaName(objName);
                 row[ialias_object_type]  = objType;
                 row[ialias_object_cat]   = cat;
                 row[ialias_object_schem] = schem;
@@ -341,13 +286,19 @@ class DatabaseInformationFull extends DatabaseInformationMain {
                 t.insert(row, session);
             }
         }
-        
+
         t.setDataReadOnly(true);
 
         return t;
     }
 
-    /** Retrieves a <code>Table</code> object describing the current
+// boucherb@users - 20020305 - added cache_hash column to cover the case
+// of multiple text tables sharing single text file.  This is possible
+// without file corruption under read-only text tables, but really should be
+// disallowed under all other cases, else corruption is sure to result.
+
+    /**
+     * Retrieves a <code>Table</code> object describing the current
      * state of all row caching objects for the accessible
      * tables defined within this database. <p>
      *
@@ -362,17 +313,18 @@ class DatabaseInformationFull extends DatabaseInformationMain {
      * columns: <p>
      *
      * <pre>
-     * CACHE_CLASS        VARCHAR   FQN of cache class
-     * CACHE_FILE         VARCHAR   absolute path of cache file
-     * CACHE_LENGTH       INTEGER   length row data array
+     * CACHE_CLASS        VARCHAR   FQN of Cache class
+     * CACHE_HASH         INTEGER   in-memory hashCode() value of Cache object
+     * CACHE_FILE         VARCHAR   absolute path of cache data file
+     * CACHE_LENGTH       INTEGER   length of row data array
      * CACHE_SIZE         INTEGER   number of rows currently cached
-     * FREE_BYTES         INTEGER   size sum of available allocation units
-     * SMALLEST_FREE_ITEM INTEGER   smallest allocation unit available
-     * LARGEST_FREE_ITEM  INTEGER   largest allocation unit available
-     * FREE_COUNT         INTEGER   total number of allocation units available
+     * FREE_BYTES         INTEGER   total bytes in available allocation units
+     * SMALLEST_FREE_ITEM INTEGER   bytes of smallest available allocation unit
+     * LARGEST_FREE_ITEM  INTEGER   bytes of largest available allocation unit
+     * FREE_COUNT         INTEGER   total # of allocation units available
      * FREE_POS           INTEGER   largest file position allocated + 1
      * MAX_CACHE_SIZE     INTEGER   maximum allowable cached Row objects
-     * MULTIPLIER_MASK    VARCHAR   binary mask for calc. row data array indices
+     * MULTIPLIER_MASK    VARCHAR   binary mask for calc'n of row data indices
      * WRITER_LENGTH      INTEGER   length of row write buffer array
      * </pre> <p>
      *
@@ -390,8 +342,9 @@ class DatabaseInformationFull extends DatabaseInformationMain {
      * release, other column values may also change over the life of a cache
      * object, as SQL syntax may eventually be introduced to allow runtime
      * modification of certain cache properties. <p>
-     * @return a description of the current state of all row caching objects associated
-     * with the accessible tables of the database
+     *
+     * @return a description of the current state of all row caching
+     *      objects associated with the accessible tables of the database
      * @throws SQLException if an error occurs while producing the table
      */
     Table SYSTEM_CACHEINFO() throws SQLException {
@@ -402,7 +355,8 @@ class DatabaseInformationFull extends DatabaseInformationMain {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_CACHEINFO]);
 
             addColumn(t, "CACHE_CLASS", VARCHAR, false);           // not null
-            addColumn(t, "CACHE_FILE", VARCHAR);
+            addColumn(t, "CACHE_HASH", INTEGER, false);            // not null
+            addColumn(t, "CACHE_FILE", VARCHAR, false);            // not null
             addColumn(t, "CACHE_LENGTH", INTEGER, false);          // not null
             addColumn(t, "CACHE_SIZE", INTEGER, false);            // not null
             addColumn(t, "FREE_BYTES", INTEGER, false);            // not null
@@ -413,8 +367,13 @@ class DatabaseInformationFull extends DatabaseInformationMain {
             addColumn(t, "MAX_CACHE_SIZE", INTEGER, false);        // not null
             addColumn(t, "MULTIPLIER_MASK", VARCHAR, false);       // not null
             addColumn(t, "WRITER_LENGTH", INTEGER, false);         // not null
+
             // order: CACHE_CLASS, CACHE_FILE
-            t.createPrimaryKey(null, new int[]{0,1},false);
+            // added for unique: CACHE_HASH
+            // true PK
+            t.createPrimaryKey(null, new int[] {
+                0, 2, 1
+            }, true);
 
             return t;
         }
@@ -431,23 +390,25 @@ class DatabaseInformationFull extends DatabaseInformationMain {
         long        lSmallestFreeItem;
 
         // column number mappings
-        final int icache_class        = 0;
-        final int icache_file         = 1;
-        final int icache_length       = 2;
-        final int icache_size         = 3;
-        final int ifree_bytes         = 4;
-        final int is_free_item        = 5;
-        final int il_free_item        = 6;
-        final int ifree_count         = 7;
-        final int ifree_pos           = 8;
-        final int imax_cache_sz       = 9;
-        final int imult_mask          = 10;
-        final int iwriter_length      = 11;
+        final int icache_class   = 0;
+        final int icache_hash    = 1;
+        final int icache_file    = 2;
+        final int icache_length  = 3;
+        final int icache_size    = 4;
+        final int ifree_bytes    = 5;
+        final int is_free_item   = 6;
+        final int il_free_item   = 7;
+        final int ifree_count    = 8;
+        final int ifree_pos      = 9;
+        final int imax_cache_sz  = 10;
+        final int imult_mask     = 11;
+        final int iwriter_length = 12;
 
         // Initialization
         cacheSet = new HsqlHashSet();
+
         // dynamic system tables are never cached
-        tables   = database.getTables().elements(); 
+        tables = database.getTables().elements();
 
         while (tables.hasMoreElements()) {
             table = (Table) tables.nextElement();
@@ -491,6 +452,7 @@ class DatabaseInformationFull extends DatabaseInformationMain {
             }
 
             row[icache_class]   = cache.getClass().getName();
+            row[icache_hash]    = ValuePool.getInt(cache.hashCode());
             row[icache_file]    = (new File(cache.sName)).getAbsolutePath();
             row[icache_length]  = ValuePool.getInt(cache.cacheLength);
             row[icache_size]    = ValuePool.getInt(cache.iCacheSize);
@@ -503,7 +465,7 @@ class DatabaseInformationFull extends DatabaseInformationMain {
             row[imult_mask]     = Integer.toHexString(cache.multiplierMask);
             row[iwriter_length] = ValuePool.getInt(cache.writerLength);
 
-            t.insert(row,session);
+            t.insert(row, session);
         }
 
         t.setDataReadOnly(true);
@@ -511,11 +473,13 @@ class DatabaseInformationFull extends DatabaseInformationMain {
         return t;
     }
 
-    /** Retrieves a <code>Table</code> object describing the visible
+    /**
+     * Retrieves a <code>Table</code> object describing the visible
      * access rights for all accessible Java Class objects defined
      * within this database.<p>
      *
-     * Each row is a Class privilege description with the following columns: <p>
+     * Each row is a Class privilege description with the following
+     * columns: <p>
      *
      * <pre>
      * CLASS_CAT    VARCHAR   catalog in which the class is defined
@@ -523,15 +487,17 @@ class DatabaseInformationFull extends DatabaseInformationMain {
      * CLASS_NAME   VARCHAR   fully qualified name of class
      * GRANTOR      VARCHAR   grantor of access
      * GRANTEE      VARCHAR   grantee of access
-     * PRIVILEGE    VARCHAR   name of access
-     * IS_GRANTABLE VARCHAR   grantable?: "YES" , "NO" , NULL (unknown)
+     * PRIVILEGE    VARCHAR   name of access: {"EXECUTE" | "TRIGGER"}
+     * IS_GRANTABLE VARCHAR   grantable?: {"YES" | "NO" | NULL (unknown)}
      * </pre>
      *
      * <b>Note:</b> Users with the administrative privilege implicily have
      * full and unrestricted access to all Classes available to the database
      * class loader.  However, only explicitly granted rights are reported
      * in this table.  Explicit Class grants/revokes to admin users have no
-     * effect in reality, but are reported in this table anyway.
+     * effect in reality, but are reported in this table anyway for
+     * completeness. <p>
+     *
      * @return a <code>Table</code> object describing the visible
      *        access rights for all accessible Java Class
      *        objects defined within this database
@@ -551,7 +517,9 @@ class DatabaseInformationFull extends DatabaseInformationMain {
             addColumn(t, "GRANTEE", VARCHAR, false);         // not null
             addColumn(t, "PRIVILEGE", VARCHAR, false);       // not null
             addColumn(t, "IS_GRANTABLE", VARCHAR, false);    // not null
-            t.createPrimaryKey(null, new int[] {2,4,5}, true);
+            t.createPrimaryKey(null, new int[] {
+                2, 4, 5
+            }, true);
 
             return t;
         }
@@ -565,8 +533,7 @@ class DatabaseInformationFull extends DatabaseInformationMain {
         String privilege;
         String isGrantable;
 
-        // secondary variables required to calculate column values and
-        // produce a sorted set of rows for insertion into the output table
+        // intermediate holders
         UserManager   um;
         HsqlArrayList users;
         Enumeration   classNames;
@@ -574,27 +541,31 @@ class DatabaseInformationFull extends DatabaseInformationMain {
         Object[]      row;
 
         // column number mappings
-        final int icls_cat      = 0;
-        final int icls_schem    = 1;
-        final int icls_name     = 2;
-        final int igrantor      = 3;
-        final int igrantee      = 4;
-        final int iprivilege    = 5;
-        final int iis_grntbl    = 6;
+        final int icls_cat   = 0;
+        final int icls_schem = 1;
+        final int icls_name  = 2;
+        final int igrantor   = 3;
+        final int igrantee   = 4;
+        final int iprivilege = 5;
+        final int iis_grntbl = 6;
 
         // Initialization
-        
-        grantorName  = UserManager.SYS_USER_NAME;
-        um           = database.getUserManager();
-        users        = um.listVisibleUsers(session, true);
+        grantorName = UserManager.SYS_USER_NAME;
+        um          = database.getUserManager();
+        users       = um.listVisibleUsers(session, true);
 
         // Do it.
         for (int i = 0; i < users.size(); i++) {
             granteeUser = (User) users.get(i);
             granteeName = granteeUser.getName();
-            isGrantable = granteeUser.isAdmin() ? "YES" : "NO";
+            isGrantable = granteeUser.isAdmin() ? "YES"
+                                                : "NO";
             classNames  = granteeUser.getGrantedClassNames(false).elements();
-            privilege   = "EXECUTE"; // TODO:  Check the SQL nnnn spec.
+
+// boucherb@users 20030305 - TODO completed.
+// "EXECUTE" is closest to correct (from: SQL 200n ROUTINE_PRIVILEGES)
+// There is nothing even like CLASS_PRIVILEGES table under SQL 200n spec.
+            privilege = "EXECUTE";
 
             while (classNames.hasMoreElements()) {
                 clsName         = (String) classNames.nextElement();
@@ -608,12 +579,16 @@ class DatabaseInformationFull extends DatabaseInformationMain {
                 row[igrantee]   = granteeName;
                 row[iprivilege] = privilege;
                 row[iis_grntbl] = isGrantable;
-                
-                t.insert(row,session);
+
+                t.insert(row, session);
             }
 
             classNames = ns.enumAccessibleTriggerClassNames(granteeUser);
-            privilege  = "FIRE"; // TODO:  Check the SQL nnnn spec.
+
+// boucherb@users 20030305 - TODO completed.
+// "TRIGGER" is closest to correct. (from: SQL 200n TABLE_PRIVILEGES)
+// There is nothing even like CLASS_PRIVILEGES table under SQL 200n spec.
+            privilege = "TRIGGER";
 
             while (classNames.hasMoreElements()) {
                 clsName         = (String) classNames.nextElement();
@@ -628,7 +603,7 @@ class DatabaseInformationFull extends DatabaseInformationMain {
                 row[iprivilege] = privilege;
                 row[iis_grntbl] = isGrantable;
 
-                t.insert(row,session);
+                t.insert(row, session);
             }
         }
 
@@ -637,30 +612,32 @@ class DatabaseInformationFull extends DatabaseInformationMain {
         return t;
     }
 
-    /** Retrieves a <code>Table</code> object describing attributes
-     * for the calling session.<p>
+    /**
+     * Retrieves a <code>Table</code> object describing attributes
+     * for the calling session context.<p>
      *
      * The rows report the following {key,value} pairs:<p>
      *
      * <pre>
      * KEY (VARCHAR)       VALUE (VARCHAR)
      * ------------------- ---------------
-     * SESSION_ID          the id of the this session
+     * SESSION_ID          the id of the calling session
      * AUTOCOMMIT          YES: session is in autocommit mode, else NO
-     * USER                the name of user connected in the specified session
+     * USER                the name of user connected in the calling session
      * (was READ_ONLY)
      * CONNECTION_READONLY TRUE: session is in read-only mode, else FALSE
      * (new)
      * DATABASE_READONLY   TRUE: database is in read-only mode, else FALSE
-     * MAXROWS             the MAXROWS setting for the specified session
+     * MAXROWS             the MAXROWS setting in the calling session
      * DATABASE            the name of the database
-     * IDENTITY            the last identity value used by this session
+     * IDENTITY            the last identity value used by calling session
      * </pre>
      *
      * <b>Note:</b>  This table <em>may</em> become deprecated in a future
      * release, as the information it reports now duplicates information
-     * reported in the newer SYSTEM_SESSIONSS and SYSTEM_PROPERTIES
+     * reported in the newer SYSTEM_SESSIONS and SYSTEM_PROPERTIES
      * tables. <p>
+     *
      * @return a <code>Table</code> object describing the
      *        attributes of the connection associated
      *        with the current execution context
@@ -691,7 +668,7 @@ class DatabaseInformationFull extends DatabaseInformationMain {
         row    = t.getNewRow();
         row[0] = "AUTOCOMMIT";
         row[1] = session.getAutoCommit() ? "TRUE"
-                                          : "FALSE";
+                                         : "FALSE";
 
         t.insert(row, null);
 
@@ -704,7 +681,7 @@ class DatabaseInformationFull extends DatabaseInformationMain {
         row    = t.getNewRow();
         row[0] = "CONNECTION_READONLY";
         row[1] = session.isReadOnly() ? "TRUE"
-                                       : "FALSE";
+                                      : "FALSE";
 
         t.insert(row, null);
 
@@ -737,14 +714,15 @@ class DatabaseInformationFull extends DatabaseInformationMain {
         return t;
     }
 
-    /** Retrieves a <code>Table</code> object describing the capabilities
+    /**
+     * Retrieves a <code>Table</code> object describing the capabilities
      * and operating parameter properties for the engine hosting this
      * database, as well as their applicability in terms of scope and
-     * name space.
+     * name space. <p>
      *
      * Reported properties include all static JDBC <code>DatabaseMetaData</code>
-     * capabilities values as well as certain <code>Database</code> object properties
-     * and attribute values. <p>
+     * capabilities values as well as certain <code>Database</code> object
+     * properties and attribute values. <p>
      *
      * It is intended that all <code>Database</code> attributes and
      * properties that can be set via the database properties file,
@@ -756,33 +734,36 @@ class DatabaseInformationFull extends DatabaseInformationMain {
      *
      * <OL>
      *     <LI>LOGSIZSE - # bytes to which REDO log grows before auto-checkpoint
-     *     <LI>LOGTYPE - 0 : TEXT, 1 : BINARY
+     *     <LI>LOGTYPE - 0 : TEXT, 1 : BINARY, ...
      *     <LI>WRITEDELAY - does REDO log currently use buffered write strategy?
-     *     <LI>IGNORECASE - currently ignoring case in string comparisons?
+     *     <LI>IGNORECASE - currently ignoring case in character comparisons?
      *     <LI>REFERENTIAL_INTEGITY - currently enforcing referential integrity?
-     *     <LI>sql.month - TRUE: output range is 1..12, else 0..11
+     *     <LI>sql.month - TRUE: output range is 1..12; FALSE: 0..11
      *     <LI>sql.enforce_size - column length specifications enforced?
      *     <LI>sql.compare_in_locale - is JVM Locale used in collations?
      *     <LI>sql.strict_fk - TRUE: FK must reference pre-existing unique
      *     <LI>sql.strong_fk - TRUE: autogen referenced unique, else plain index
      *     <LI>hsqldb.cache_scale - base-2 exponent of row cache size
-     *     <LI>hsqldb.gc_interval - # new records between forced gc ({0|NULL}=>never)
+     *     <LI>hsqldb.gc_interval - # new records forcing gc ({0|NULL}=>never)
      * </OL> <p>
      *
      * <b>Notes:</b> <p>
      *
-     * Since DatabaseMetaData return values are embedded in the jdbcDatabaseMetaData
-     * class (assumption is driver version matches server version), the possibility
-     * exists that a remote server has different DatabaseMetaData values than the
-     * driver being used.  Rather than impose a great deal of overhead on the
-     * engine and jdbcDatabaseMetaData classes by making all metadata calls query
-     * the (possibly remote) engine directly, this table can be used to resolve such
-     * differences.
+     * Since DatabaseMetaData return values are embedded in the
+     * jdbcDatabaseMetaData class (assumption is driver version matches server
+     * version), the possibility exists that a remote server actually has
+     * different DatabaseMetaData values than returned by the local driver
+     * being used. Rather than impose a great deal of overhead on the engine
+     * and jdbcDatabaseMetaData classes by making all metadata calls query
+     * the (possibly remote) engine directly, this table can be used to
+     * resolve such differences.
      *
      * Also, as engine capabilities and supported properties/attributes are
      * added, this list will be expanded, if required, to include all relevant
      * additions supported at that time. <p>
-     * @return table describing database and session operating parameters and capabilities
+     *
+     * @return table describing database and session operating parameters
+     *      and capabilities
      * @throws SQLException if an error occurs while producing the table
      */
     Table SYSTEM_PROPERTIES() throws SQLException {
@@ -797,19 +778,23 @@ class DatabaseInformationFull extends DatabaseInformationMain {
             addColumn(t, "PROPERTY_NAME", VARCHAR, false);
             addColumn(t, "PROPERTY_VALUE", VARCHAR);
             addColumn(t, "PROPERTY_CLASS", VARCHAR, false);
-            t.createPrimaryKey(null, new int[] {0,1,2}, true);
+
+            // order PROPERTY_SCOPE, PROPERTY_NAMESPACE, PROPERTY_NAME
+            // true PK
+            t.createPrimaryKey(null, new int[] {
+                0, 1, 2
+            }, true);
 
             return t;
         }
 
         // calculated column values
         String scope;
-        String ns;
+        String nameSpace;
         String name;
         Object value;
 
-        // secondary varaibles required to calculate column values and
-        // produce a sorted set of rows for insertion into the output table
+        // intermediate holders
         DatabaseMetaData md;
         Method[]         methods;
         Class            returnType;
@@ -820,23 +805,23 @@ class DatabaseInformationFull extends DatabaseInformationMain {
         HsqlProperties   props;
 
         // column number mappings
-        final int iscope     = 0;
-        final int ins = 1;
-        final int iname      = 2;
-        final int ivalue     = 3;
-        final int iclass     = 4;
+        final int iscope = 0;
+        final int ins    = 1;
+        final int iname  = 2;
+        final int ivalue = 3;
+        final int iclass = 4;
 
         // Do it:
         if (rsp == null) {
 
             // First, we want the names and values for
             // all JDBC capabilities constants
-            scope             = "SESSION";
-            ns                = "java.sql.DatabaseMetaData";
-            md                = session.getInternalConnection().getMetaData();
-            methods           = DatabaseMetaData.class.getMethods();
-            emptyParms        = new Object[]{};
-            rsp               = DITableInfo.createResultProto(t);
+            scope      = "SESSION";
+            nameSpace  = "java.sql.DatabaseMetaData";
+            md         = session.getInternalConnection().getMetaData();
+            methods    = DatabaseMetaData.class.getMethods();
+            emptyParms = new Object[]{};
+            rsp        = DITableInfo.createResultProto(t);
 
             for (int i = 0; i < methods.length; i++) {
                 method     = methods[i];
@@ -850,14 +835,14 @@ class DatabaseInformationFull extends DatabaseInformationMain {
                 "getUserName".equals(method.getName())) {}
                 else {
                     try {
-                        name            = method.getName();
-                        value           = method.invoke(md, emptyParms);
-                        row             = t.getNewRow();
-                        row[iscope]     = scope;
-                        row[ins] = ns;
-                        row[iname]      = name;
-                        row[ivalue]     = String.valueOf(value);
-                        row[iclass]     = returnType.getName();
+                        name        = method.getName();
+                        value       = method.invoke(md, emptyParms);
+                        row         = t.getNewRow();
+                        row[iscope] = scope;
+                        row[ins]    = nameSpace;
+                        row[iname]  = name;
+                        row[ivalue] = String.valueOf(value);
+                        row[iclass] = returnType.getName();
 
                         rsp.add(row);
                     } catch (Exception e) {}
@@ -865,75 +850,75 @@ class DatabaseInformationFull extends DatabaseInformationMain {
             }
 
             props     = database.getProperties();
-            ns = "database.properties";
+            nameSpace = "database.properties";
 
             // sql.month
-            row             = t.getNewRow();
-            row[iscope]     = scope;
-            row[ins] = ns;
-            row[iname]      = "sql.month";
-            row[ivalue]     = props.getProperty("sql.month");
-            row[iclass]     = "boolean";
+            row         = t.getNewRow();
+            row[iscope] = scope;
+            row[ins]    = nameSpace;
+            row[iname]  = "sql.month";
+            row[ivalue] = props.getProperty("sql.month");
+            row[iclass] = "boolean";
 
             rsp.add(row);
 
             // sql.enforce_size
-            row             = t.getNewRow();
-            row[iscope]     = scope;
-            row[ins] = ns;
-            row[iname]      = "sql.enforce_size";
-            row[ivalue]     = props.getProperty("sql.enforce_size");
-            row[iclass]     = "boolean";
+            row         = t.getNewRow();
+            row[iscope] = scope;
+            row[ins]    = nameSpace;
+            row[iname]  = "sql.enforce_size";
+            row[ivalue] = props.getProperty("sql.enforce_size");
+            row[iclass] = "boolean";
 
             rsp.add(row);
 
             // sql.compare_in_locale
-            row             = t.getNewRow();
-            row[iscope]     = scope;
-            row[ins] = ns;
-            row[iname]      = "sql.compare_in_locale";
-            row[ivalue]     = props.getProperty("sql.compare_in_locale");
-            row[iclass]     = "boolean";
+            row         = t.getNewRow();
+            row[iscope] = scope;
+            row[ins]    = nameSpace;
+            row[iname]  = "sql.compare_in_locale";
+            row[ivalue] = props.getProperty("sql.compare_in_locale");
+            row[iclass] = "boolean";
 
             rsp.add(row);
 
             // sql.strict_fk
-            row             = t.getNewRow();
-            row[iscope]     = scope;
-            row[ins] = ns;
-            row[iname]      = "sql.strict_fk";
-            row[ivalue]     = props.getProperty("sql.strict_fk");
-            row[iclass]     = "boolean";
+            row         = t.getNewRow();
+            row[iscope] = scope;
+            row[ins]    = nameSpace;
+            row[iname]  = "sql.strict_fk";
+            row[ivalue] = props.getProperty("sql.strict_fk");
+            row[iclass] = "boolean";
 
             rsp.add(row);
 
             // sql.strong_fk
-            row             = t.getNewRow();
-            row[iscope]     = scope;
-            row[ins] = ns;
-            row[iname]      = "sql.strong_fk";
-            row[ivalue]     = props.getProperty("sql.strong_fk");
-            row[iclass]     = "boolean";
+            row         = t.getNewRow();
+            row[iscope] = scope;
+            row[ins]    = nameSpace;
+            row[iname]  = "sql.strong_fk";
+            row[ivalue] = props.getProperty("sql.strong_fk");
+            row[iclass] = "boolean";
 
             rsp.add(row);
 
             // hsqldb.cache_scale
-            row             = t.getNewRow();
-            row[iscope]     = scope;
-            row[ins] = ns;
-            row[iname]      = "hsqldb.cache_scale";
-            row[ivalue]     = props.getProperty("hsqldb.cache_scale");
-            row[iclass]     = "int";
+            row         = t.getNewRow();
+            row[iscope] = scope;
+            row[ins]    = nameSpace;
+            row[iname]  = "hsqldb.cache_scale";
+            row[ivalue] = props.getProperty("hsqldb.cache_scale");
+            row[iclass] = "int";
 
             rsp.add(row);
 
             // hsqldb.gc_interval
-            row             = t.getNewRow();
-            row[iscope]     = scope;
-            row[ins] = ns;
-            row[iname]      = "hsqldb.gc_interval";
-            row[ivalue]     = props.getProperty("hsqldb.gc_interval");
-            row[iclass]     = "int";
+            row         = t.getNewRow();
+            row[iscope] = scope;
+            row[ins]    = nameSpace;
+            row[iname]  = "hsqldb.gc_interval";
+            row[ivalue] = props.getProperty("hsqldb.gc_interval");
+            row[iclass] = "int";
 
             rsp.add(row);
         }
@@ -941,7 +926,7 @@ class DatabaseInformationFull extends DatabaseInformationMain {
         // Now get a snapshot of the properties that may change over
         // the lifetime of the session
         scope     = "TRANSACTION";
-        ns        = "org.hsqldb.Database";
+        nameSpace = "org.hsqldb.Database";
         r         = DITableInfo.createResultProto(t);
 
         // log size
@@ -949,25 +934,25 @@ class DatabaseInformationFull extends DatabaseInformationMain {
         int logSize = (log == null) ? 0
                                     : log.maxLogSize * 1 << 20;
 
-        row             = t.getNewRow();
-        row[iscope]     = scope;
-        row[ins]        = ns;
-        row[iname]      = "LOGSIZE";
-        row[ivalue]     = String.valueOf(logSize);
-        row[iclass]     = "int";
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "LOGSIZE";
+        row[ivalue] = String.valueOf(logSize);
+        row[iclass] = "int";
 
         r.add(row);
 
         Integer logType = (log == null) ? null
                                         : ValuePool.getInt(log.logType);
 
-        row             = t.getNewRow();
-        row[iscope]     = scope;
-        row[ins]        = ns;
-        row[iname]      = "LOGTYPE";
-        row[ivalue]     = logType == null ? null
-                                          : String.valueOf(logType);
-        row[iclass]     = "int";
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "LOGTYPE";
+        row[ivalue] = logType == null ? null
+                                      : String.valueOf(logType);
+        row[iclass] = "int";
 
         r.add(row);
 
@@ -977,44 +962,45 @@ class DatabaseInformationFull extends DatabaseInformationMain {
         Integer writeDelay = (log == null) ? null
                                            : ValuePool.getInt(log.writeDelay);
 
-        row[ins] = ns;
-        row[iscope]     = scope;
-        row[iname]      = "WRITE_DELAY";
-        row[ivalue]     = String.valueOf(writeDelay);
-        row[iclass]     = "int";
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "WRITE_DELAY";
+        row[ivalue] = (writeDelay == null) ? null
+                                           : String.valueOf(writeDelay);
+        row[iclass] = "int";
 
         r.add(row);
 
         // ignore case
-        row             = t.getNewRow();
-        row[iscope]     = scope;
-        row[ins]        = ns;
-        row[iname]      = "IGNORECASE";
-        row[ivalue]     = String.valueOf(database.isIgnoreCase());
-        row[iclass]     = "boolean";
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "IGNORECASE";
+        row[ivalue] = String.valueOf(database.isIgnoreCase());
+        row[iclass] = "boolean";
 
         r.add(row);
 
         // referential integrity
-        row             = t.getNewRow();
-        row[iscope]     = scope;
-        row[ins]        = ns;
-        row[iname]      = "REFERENTIAL_INTEGRITY";
-        row[ivalue]     = String.valueOf(database.isReferentialIntegrity());
-        row[iclass]     = "boolean";
+        row         = t.getNewRow();
+        row[iscope] = scope;
+        row[ins]    = nameSpace;
+        row[iname]  = "REFERENTIAL_INTEGRITY";
+        row[ivalue] = String.valueOf(database.isReferentialIntegrity());
+        row[iclass] = "boolean";
 
-        r.add(row);    
-        
-        t.insert(rsp,session);
+        r.add(row);
+        t.insert(rsp, session);
         t.insert(r, session);
         t.setDataReadOnly(true);
 
         return t;
     }
 
-    /** Retrieves a <code>Table</code> object describing all visible
-     * sessions. ADMIN users see *all* sessions, while non-admin users
-     * see only their own session.<p>
+    /**
+     * Retrieves a <code>Table</code> object describing all visible
+     * sessions. ADMIN users see *all* sessions, including the SYS session,
+     * while non-admin users see only their own session.<p>
      *
      * Each row is a session state description with the following columns: <p>
      *
@@ -1028,9 +1014,10 @@ class DatabaseInformationFull extends DatabaseInformationMain {
      * MAXROWS            INTEGER   session's MAXROWS setting
      * LAST_IDENTITY      INTEGER   last identity value used by this session
      * TRANSACTION_SIZE   INTEGER   # of undo items in current transaction
-     * </pre>
+     * </pre> <p>
+     *
      * @return a <code>Table</code> object describing all visible
-     * sessions
+     *      sessions
      * @throws SQLException if an error occurs while producing the table
      */
     Table SYSTEM_SESSIONS() throws SQLException {
@@ -1047,41 +1034,40 @@ class DatabaseInformationFull extends DatabaseInformationMain {
             addColumn(t, "AUTOCOMMIT", BIT, false);
             addColumn(t, "READONLY", BIT, false);
             addColumn(t, "MAXROWS", INTEGER, false);
+
             // Note: some sessions may have a NULL LAST_IDENTITY value
             addColumn(t, "LAST_IDENTITY", BIGINT);
             addColumn(t, "TRANSACTION_SIZE", INTEGER, false);
-            
+
             // order:  SESSION_ID
             // true primary key
-            t.createPrimaryKey(null, new int[]{0}, true );
+            t.createPrimaryKey(null, new int[]{ 0 }, true);
 
             return t;
         }
 
-        // secondary variables required to calculate column values and
-        // produce a sorted set of rows for insertion into the output table
-        HsqlArrayList   sessions;
-        Session         s;
-        Object[]        row;
+        // intermediate holders
+        HsqlArrayList sessions;
+        Session       s;
+        Object[]      row;
 
         // column number mappings
-        final int isid        = 0;
-        final int ict         = 1;
-        final int iuname      = 2;
-        final int iis_admin   = 3;
-        final int iautocmt    = 4;
-        final int ireadonly   = 5;
-        final int imaxrows    = 6;
-        final int ilast_id    = 7;
-        final int it_size     = 8;
+        final int isid      = 0;
+        final int ict       = 1;
+        final int iuname    = 2;
+        final int iis_admin = 3;
+        final int iautocmt  = 4;
+        final int ireadonly = 5;
+        final int imaxrows  = 6;
+        final int ilast_id  = 7;
+        final int it_size   = 8;
 
         // Initialisation
         sessions = ns.listVisibleSessions(session);
 
         // Do it.
-        for (int i = 0; i < sessions.size(); i++) {            
+        for (int i = 0; i < sessions.size(); i++) {
             s              = (Session) sessions.get(i);
-            
             row            = t.getNewRow();
             row[isid]      = ValuePool.getInt(s.getId());
             row[ict]       = new Timestamp(s.getConnectTime());
@@ -1093,7 +1079,7 @@ class DatabaseInformationFull extends DatabaseInformationMain {
             row[ilast_id]  = ValuePool.getLong((Number) s.getLastIdentity());
             row[it_size]   = ValuePool.getInt(s.getTransactionSize());
 
-            t.insert(row,session);
+            t.insert(row, session);
         }
 
         t.setDataReadOnly(true);
@@ -1101,9 +1087,10 @@ class DatabaseInformationFull extends DatabaseInformationMain {
         return t;
     }
 
-    /** Retrieves a <code>Table</code> object describing the accessible
-     * direct super table, if any, of each accessible table defined
-     * within the this database. <p>
+    /**
+     * Retrieves a <code>Table</code> object describing the accessible
+     * direct super table (if any) of each accessible table defined
+     * within this database. <p>
      *
      * Each row is a super table description with the following columns: <p>
      *
@@ -1112,10 +1099,10 @@ class DatabaseInformationFull extends DatabaseInformationMain {
      * TABLE_SCHEM     VARCHAR   table schema
      * TABLE_NAME      VARCHAR   table name
      * SUPERTABLE_NAME VARCHAR   the direct super table's name
-     * </pre>
+     * </pre> <p>
      * @return a <code>Table</code> object describing the accessible
-     *        direct supertable, if any, of each accessible
-     *        table defined within the this databas
+     *        direct supertable (if any) of each accessible
+     *        table defined within this database
      * @throws SQLException if an error occurs while producing the table
      */
     Table SYSTEM_SUPERTABLES() throws SQLException {
@@ -1127,8 +1114,8 @@ class DatabaseInformationFull extends DatabaseInformationMain {
 
             addColumn(t, "TABLE_CAT", VARCHAR);
             addColumn(t, "TABLE_SCHEM", VARCHAR);
-            addColumn(t, "TABLE_NAME", VARCHAR, false);      // not null
-            addColumn(t, "SUPERTABLE_NAME", VARCHAR, false); // not null
+            addColumn(t, "TABLE_NAME", VARCHAR, false);         // not null
+            addColumn(t, "SUPERTABLE_NAME", VARCHAR, false);    // not null
             t.createPrimaryKey(null);
 
             return t;
@@ -1139,8 +1126,9 @@ class DatabaseInformationFull extends DatabaseInformationMain {
         return t;
     }
 
-    /** Retrieves a <code>Table</code> object describing the accessible
-     * direct super type, if any, of each accessible user-defined type (UDT)
+    /**
+     * Retrieves a <code>Table</code> object describing the accessible
+     * direct super type (if any) of each accessible user-defined type (UDT)
      * defined within this database. <p>
      *
      * Each row is a super type description with the following columns: <p>
@@ -1152,9 +1140,9 @@ class DatabaseInformationFull extends DatabaseInformationMain {
      * SUPERTYPE_CAT   VARCHAR   the direct super type's catalog
      * SUPERTYPE_SCHEM VARCHAR   the direct super type's schema
      * SUPERTYPE_NAME  VARCHAR   the direct super type's name
-     * </pre>
+     * </pre> <p>
      * @return a <code>Table</code> object describing the accessible
-     *        direct supertype, if any, of each accessible
+     *        direct supertype (if any) of each accessible
      *        user-defined type (UDT) defined within this database
      * @throws SQLException if an error occurs while producing the table
      */
@@ -1167,10 +1155,10 @@ class DatabaseInformationFull extends DatabaseInformationMain {
 
             addColumn(t, "TYPE_CAT", VARCHAR);
             addColumn(t, "TYPE_SCHEM", VARCHAR);
-            addColumn(t, "TYPE_NAME", VARCHAR, false);      // not null
+            addColumn(t, "TYPE_NAME", VARCHAR, false);         // not null
             addColumn(t, "SUPERTYPE_CAT", VARCHAR);
             addColumn(t, "SUPERTYPE_SCHEM", VARCHAR);
-            addColumn(t, "SUPERTYPE_NAME", VARCHAR, false); // not null
+            addColumn(t, "SUPERTYPE_NAME", VARCHAR, false);    // not null
             t.createPrimaryKey(null);
 
             return t;
@@ -1181,29 +1169,27 @@ class DatabaseInformationFull extends DatabaseInformationMain {
         return t;
     }
 
-    /** Retrieves a <code>Table</code> object describing of the usage
+    /**
+     * Retrieves a <code>Table</code> object describing of the usage
      * of accessible columns in accessible triggers defined within
      * the database. <p>
-     *
-     * Rows are ordered by TRIGGER_CAT, TRIGGER_SCHEM, TRIGGER_NAME, TABLE_CAT,
-     * TABLE_SCHEM, TABLE_NAME, COLUMN_NAME, COLUMN_LIST, COLUMN_USAGE. <p>
      *
      * Each column usage description has the following columns: <p>
      *
      * <pre>
-     * TRIGGER_CAT   VARCHAR   Trigger catalog
-     * TRIGGER_SCHEM VARCHAR   Trigger schema
-     * TRIGGER_NAME  VARCHAR   Trigger name
-     * TABLE_CAT     VARCHAR   Catalog of table on which the trigger is defined
-     * TABLE_SCHEM   VARCHAR   Schema of table on which the trigger is defined
-     * TABLE_NAME    VARCHAR   Table on which the trigger is defined
-     * COLUMN_NAME   VARCHAR   Name of the column used in the trigger
-     * COLUMN_LIST   VARCHAR   Specified in UPDATE clause?: ("Y" | "N" }
-     * COLUMN_USAGE  VARCHAR   { NEW | OLD | IN | OUT | IN OUT }
-     * </pre>
+     * TRIGGER_CAT   VARCHAR   Trigger catalog.
+     * TRIGGER_SCHEM VARCHAR   Trigger schema.
+     * TRIGGER_NAME  VARCHAR   Trigger name.
+     * TABLE_CAT     VARCHAR   Catalog of table on which the trigger is defined.
+     * TABLE_SCHEM   VARCHAR   Schema of table on which the trigger is defined.
+     * TABLE_NAME    VARCHAR   Table on which the trigger is defined.
+     * COLUMN_NAME   VARCHAR   Name of the column used in the trigger.
+     * COLUMN_LIST   VARCHAR   Specified in UPDATE clause?: ("Y" | "N"}
+     * COLUMN_USAGE  VARCHAR   {"NEW" | "OLD" | "IN" | "OUT" | "IN OUT"}
+     * </pre> <p>
      * @return a <code>Table</code> object describing of the usage
      *        of accessible columns in accessible triggers
-     *        defined within the database
+     *        defined within this database
      * @throws SQLException if an error occurs while producing the table
      */
     Table SYSTEM_TRIGGERCOLUMNS() throws SQLException {
@@ -1222,176 +1208,81 @@ class DatabaseInformationFull extends DatabaseInformationMain {
             addColumn(t, "COLUMN_NAME", VARCHAR);
             addColumn(t, "COLUMN_LIST", VARCHAR);
             addColumn(t, "COLUMN_USAGE", VARCHAR);
+
             // order:  all columns, in order, as each column
-            // of each table may be listed under various 
-            // capacities
+            // of each table may eventually be listed under various capacities
+            // (when a more comprehensive trugger system is put in place)
             // false PK, as cat and schem may be null
-            t.createPrimaryKey(null, new int[] {0,1,2,3,4,5,6,7,8}, false);
+            t.createPrimaryKey(null, new int[] {
+                0, 1, 2, 3, 4, 5, 6, 7, 8
+            }, false);
+
             // fast lookup by trigger ident
-            addIndex(t, null, new int[]{1},false);
-            addIndex(t, null, new int[]{2},false);
+            addIndex(t, null, new int[]{ 1 }, false);
+            addIndex(t, null, new int[]{ 2 }, false);
+
             // fast lookup by table ident
-            addIndex(t, null, new int[]{3},false);
-            addIndex(t, null, new int[]{4},false);
-            addIndex(t, null, new int[]{5},false);
+            addIndex(t, null, new int[]{ 3 }, false);
+            addIndex(t, null, new int[]{ 4 }, false);
+            addIndex(t, null, new int[]{ 5 }, false);
 
             return t;
         }
-        
+
         java.sql.ResultSet rs;
-        
+
+        // - used appends to make class file constant pool smaller
+        // - saves ~ 100 bytes jar space
         rs = session.getInternalConnection().createStatement().executeQuery(
-        "select " + 
-        "   a.TRIGGER_CAT, " +
-        "   a.TRIGGER_SCHEM, " +
-        "   a.TRIGGER_NAME, " +
-        "   a.TABLE_CAT, " +
-        "   a.TABLE_SCHEM, " +
-        "   a.TABLE_NAME, " +
-        "   b.COLUMN_NAME, " +
-        "   'Y', " +
-        "   'IN' " +
-        "from " +
-        "   SYSTEM_TRIGGERS a, " +
-        "   SYSTEM_COLUMNS b " +
-        " where " +
-        "   a.TABLE_NAME = b.TABLE_NAME");
-        
-        t.insert(((jdbcResultSet)rs).rResult,session);
+            (new StringBuffer(185)).append("select").append(' ').append(
+                "a.").append("TRIGGER_CAT").append(',').append("a.").append(
+                "TRIGGER_SCHEM").append(',').append("a.").append(
+                "TRIGGER_NAME").append(',').append("a.").append(
+                "TABLE_CAT").append(',').append("a.").append(
+                "TABLE_SCHEM").append(',').append("a.").append(
+                "TABLE_NAME").append(',').append("b.").append(
+                "COLUMN_NAME").append(',').append("'Y'").append(',').append(
+                "'IN'").append(' ').append("from").append(' ').append(
+                "SYSTEM_TRIGGERS").append(" a,").append(
+                "SYSTEM_COLUMNS").append(" b ").append("where").append(
+                ' ').append("a.").append("TABLE_NAME").append('=').append(
+                "b.").append("TABLE_NAME").toString());
+
+        t.insert(((jdbcResultSet) rs).rResult, session);
         t.setDataReadOnly(true);
+
         return t;
-        
-//        // calculated column values
-//        String triggerCatalog;
-//        String triggerSchema;
-//        String triggerName;
-//        String tableCatalog;
-//        String tableSchema;
-//        String tableName;
-//        String columnName;
-//        String columnList;
-//        String columnUsage;
-//
-//        // secondary variables required to calculate column values and
-//        // produce a sorted set of rows for insertion into an output table
-//        Enumeration     tables;
-//        Table           table;
-//        HsqlArrayList[] vTrigs;
-//        HsqlArrayList   triggerList;
-//        TriggerDef      def;
-//        Column          column;
-//        int             columnCount;
-//        Object          row[];
-//        Result          r;
-//
-//        // column number mappings
-//        final int itrigger_cat   = 0;
-//        final int itrigger_schem = 1;
-//        final int itrigger_name  = 2;
-//        final int itable_cat     = 3;
-//        final int itable_schem   = 4;
-//        final int itable_name    = 5;
-//        final int icolumn_name   = 6;
-//        final int icolumn_list   = 7;
-//        final int icolumn_usage  = 8;
-//
-//        // Initialization
-//        // dynamic system tables can/must not easily have triggers
-//        // they are disallowed because of this, so we consider only "user" 
-//        // tables.  Note that there is no reason why
-//        // static system tables can't exist in the user table list.
-//        tables = userTableList.elements();
-//
-//        // currently, the only supported types
-//        columnList  = "Y";
-//        columnUsage = "IN";
-//
-//        // Do it.
-//        while (tables.hasMoreElements()) {
-//            table  = (Table) tables.nextElement();
-//            vTrigs = table.vTrigs;
-//
-//            if (vTrigs == null) {
-//                continue;
-//            }
-//
-//            if (!isAccessibleTable(table)) {
-//                continue;
-//            }
-//
-//            tableCatalog   = ns.getCatalogName(table);
-//            triggerCatalog = tableCatalog;
-//            tableSchema    = ns.getSchemaName(table);
-//            triggerSchema  = tableSchema;
-//            tableName      = table.getName().name;
-//            columnCount    = table.getColumnCount();
-//
-//            for (int i = 0; i < vTrigs.length; i++) {
-//                triggerList = vTrigs[i];
-//
-//                if (triggerList == null) {
-//                    continue;
-//                }
-//
-//                for (int j = 0; j < triggerList.size(); j++) {
-//                    def = (TriggerDef) triggerList.get(j);
-//
-//                    if (def == null) {
-//                        continue;
-//                    }
-//
-//                    triggerName = def.name.name;
-//
-//                    for (int k = 0; k < columnCount; k++) {
-//                        column              = table.getColumn(k);
-//                        columnName          = column.columnName.name;
-//                        row                 = t.getNewRow();
-//                        row[itrigger_cat]   = triggerCatalog;
-//                        row[itrigger_schem] = triggerSchema;
-//                        row[itrigger_name]  = triggerName;
-//                        row[itable_cat]     = tableCatalog;
-//                        row[itable_schem]   = tableSchema;
-//                        row[itable_name]    = tableName;
-//                        row[icolumn_name]   = columnName;
-//                        row[icolumn_list]   = columnList;
-//                        row[icolumn_usage]  = columnUsage;
-//
-//                        t.insert(row,session);
-//                    }
-//                }
-//            }
-//        }
-//
-//        t.setDataReadOnly(true);
-//
-//        return t;
     }
 
-    /** Retrieves a <code>Table</code> object describing the accessible
+    /**
+     * Retrieves a <code>Table</code> object describing the accessible
      * triggers defined within the database. <p>
      *
      * Each row is a trigger description with the following columns: <p>
      *
      * <pre>
-     * TRIGGER_CAT       VARCHAR   Trigger catalog
-     * TRIGGER_SCHEM     VARCHAR   Trigger Schema
-     * TRIGGER_NAME      VARCHAR   Trigger Name
-     * TRIGGER_TYPE      VARCHAR   { [ BEFORE | AFTER ] STATEMENT | EACH ROW }
-     * TRIGGERING_EVENT  VARCHAR   { INSERT | UPDATE | DELETE } )
-     * TABLE_CAT         VARCHAR   Table's catalog 
-     * TABLE_SCHEM       VARCHAR   Table's schema
-     * BASE_OBJECT_TYPE  VARCHAR   TABLE ( future: VIEW, SCHEMA, DATABASE )
+     * TRIGGER_CAT       VARCHAR   Trigger catalog.
+     * TRIGGER_SCHEM     VARCHAR   Trigger Schema.
+     * TRIGGER_NAME      VARCHAR   Trigger Name.
+     * TRIGGER_TYPE      VARCHAR   {("BEFORE" | "AFTER") + [" EACH ROW"] }
+     * TRIGGERING_EVENT  VARCHAR   {"INSERT" | "UPDATE" | "DELETE"}
+     *                             (future?: "INSTEAD OF " + ("SELECT" | ...))
+     * TABLE_CAT         VARCHAR   Table's catalog.
+     * TABLE_SCHEM       VARCHAR   Table's schema.
+     * BASE_OBJECT_TYPE  VARCHAR   "TABLE"
+     *                             (future?: "VIEW" | "SCHEMA" | "DATABASE")
      * TABLE_NAME        VARCHAR   Table on which trigger is defined
-     * COLUMN_NAME       VARCHAR   NULL (future: name of the nested table column)
+     * COLUMN_NAME       VARCHAR   NULL (future?: nested table column name)
      * REFERENCING_NAMES VARCHAR   ROW, OLD, NEW, etc.
-     * WHEN_CLAUSE       VARCHAR   Condition causing trigger to fire (NULL: always)
-     * STATUS            VARCHAR   { "ENABLED" | "DISABLED" }
+     * WHEN_CLAUSE       VARCHAR   Condition firing trigger (NULL => always)
+     * STATUS            VARCHAR   {"ENABLED" | "DISABLED"}
      * DESCRIPTION       VARCHAR   typically, the trigger's DDL
-     * ACTION_TYPE       VARCHAR   "CALL" (future: embedded language name)
+     * ACTION_TYPE       VARCHAR   "CALL" (future?: embedded language name)
      * TRIGGER_BODY      VARCHAR   Statement(s) executed
-     * </pre>
+     * </pre> <p>
+     *
      * @return a <code>Table</code> object describing the accessible
-     * triggers defined within the database.
+     *    triggers defined within this database.
      * @throws SQLException if an error occurs while producing the table
      */
     Table SYSTEM_TRIGGERS() throws SQLException {
@@ -1417,17 +1308,23 @@ class DatabaseInformationFull extends DatabaseInformationMain {
             addColumn(t, "DESCRIPTION", VARCHAR, false);
             addColumn(t, "ACTION_TYPE", VARCHAR, false);
             addColumn(t, "TRIGGER_BODY", VARCHAR, false);
+
             // order: TRIGGER_TYPE, TRIGGER_SCHEM, TRIGGER_NAME
-            // false PK, as trigger_schem may be null
-            t.createPrimaryKey(null, new int[]{3,1,2}, false);            
+            // added for unique: TRIGGER_CAT
+            // false PK, as TRIGGER_SCHEM and/or TRIGGER_CAT may be null
+            t.createPrimaryKey(null, new int[] {
+                3, 1, 2, 0
+            }, false);
+
             // fast lookup by trigger ident
-            addIndex(t, null, new int[]{0},false);
-            addIndex(t, null, new int[]{1},false);
-            addIndex(t, null, new int[]{2},false);
+            addIndex(t, null, new int[]{ 0 }, false);
+            addIndex(t, null, new int[]{ 1 }, false);
+            addIndex(t, null, new int[]{ 2 }, false);
+
             // fast lookup by table ident
-            addIndex(t, null, new int[]{5},false);
-            addIndex(t, null, new int[]{6},false);
-            addIndex(t, null, new int[]{8},false);
+            addIndex(t, null, new int[]{ 5 }, false);
+            addIndex(t, null, new int[]{ 6 }, false);
+            addIndex(t, null, new int[]{ 8 }, false);
 
             return t;
         }
@@ -1478,18 +1375,20 @@ class DatabaseInformationFull extends DatabaseInformationMain {
 
         // Initialization
         tables = database.getTables().elements();
+
         // these are the only values supported, currently
         actionType       = "CALL";
         baseObjectType   = "TABLE";
         columnName       = null;
-        referencingNames = "row";
+        referencingNames = "ROW";
         whenClause       = null;
 
-        // Do it.        
+        // Do it.
         while (tables.hasMoreElements()) {
             table  = (Table) tables.nextElement();
             vTrigs = table.vTrigs;
 
+            // faster test first
             if (vTrigs == null) {
                 continue;
             }
@@ -1520,7 +1419,8 @@ class DatabaseInformationFull extends DatabaseInformationMain {
 
                     triggerName = def.name.name;
                     description = def.toBuf().toString();
-                    status      = def.valid ? "ENABLED" : "DISABLED";
+                    status      = def.valid ? "ENABLED"
+                                            : "DISABLED";
                     triggerBody = def.fire;
                     triggerType = def.when;
 
@@ -1529,9 +1429,7 @@ class DatabaseInformationFull extends DatabaseInformationMain {
                     }
 
                     triggeringEvent         = def.operation;
-                    
                     row                     = t.getNewRow();
-                    
                     row[itrigger_cat]       = triggerCatalog;
                     row[itrigger_schem]     = triggerSchema;
                     row[itrigger_name]      = triggerName;
@@ -1549,7 +1447,7 @@ class DatabaseInformationFull extends DatabaseInformationMain {
                     row[iaction_type]       = actionType;
                     row[itrigger_body]      = triggerBody;
 
-                    t.insert(row,session);
+                    t.insert(row, session);
                 }
             }
         }
@@ -1561,16 +1459,48 @@ class DatabaseInformationFull extends DatabaseInformationMain {
 
     /**
      * Retrieves a <code>Table</code> object describing the accessible
-     * attrubutes of the accessible user-defined type (UDT) objects
+     * attributes of the accessible user-defined type (UDT) objects
      * defined within this database. <p>
-     *
-     * Rows are ordered by TYPE_SCHEM, TYPE_NAME and ORDINAL_POSITION.  <p>
      *
      * This description does not contain inherited attributes. <p>
      *
-     * <B>Note:</B> Currently, neither the hsqldb engine nor the JDBC driver
-     * support UDTs, so an empty table is returned.     
+     * Each row is a user-defined type attributes description with the
+     * following columns:
      *
+     * <pre>
+     * TYPE_CAT          VARCHAR   type catalog
+     * TYPE_SCHEM        VARCHAR   type schema
+     * TYPE_NAME         VARCHAR   type name
+     * ATTR_NAME         VARCHAR   attribute name
+     * DATA_TYPE         SMALLINT  attribute's SQL type from DITypes
+     * ATTR_TYPE_NAME    VARCHAR   UDT: fully qualified type name
+     *                            REF: fully qualified type name of target type of
+     *                            the reference type.
+     * ATTR_SIZE         INTEGER   column size.
+     *                            char or date types => maximum number of characters;
+     *                            numeric or decimal types => precision.
+     * DECIMAL_DIGITS    INTEGER   # of fractional digits (scale) of number type
+     * NUM_PREC_RADIX    INTEGER   Radix of number type
+     * NULLABLE          INTEGER   whether NULL is allowed
+     * REMARKS           VARCHAR   comment describing attribute
+     * ATTR_DEF          VARCHAR   default attribute value
+     * SQL_DATA_TYPE     INTEGER   expected value of SQL CLI SQL_DESC_TYPE in the SQLDA
+     * SQL_DATETIME_SUB  INTEGER   DATETIME/INTERVAL => datetime/interval subcode
+     * CHAR_OCTET_LENGTH INTEGER   for char types:  max bytes in column
+     * ORDINAL_POSITION  INTEGER   index of column in table (starting at 1)
+     * IS_NULLABLE       VARCHAR   "NO" => strictly no NULL values;
+     *                             "YES" => maybe NULL values;
+     *                             "" => unknown.
+     * SCOPE_CATALOG     VARCHAR   catalog of REF attribute scope table or NULL
+     * SCOPE_SCHEMA      VARCHAR   schema of REF attribute scope table or NULL
+     * SCOPE_TABLE       VARCHAR   name of REF attribute scope table or NULL
+     * SOURCE_DATA_TYPE  SMALLINT  For DISTINCT or user-generated REF DATA_TYPE:
+     *                            source SQL type from DITypes
+     *                            For other DATA_TYPE values:  NULL
+     * </pre>
+     *
+     * <B>Note:</B> Currently, neither the HSQLDB engine or the JDBC driver
+     * support UDTs, so an empty table is returned. <p>
      * @return a <code>Table</code> object describing the accessible
      *        attrubutes of the accessible user-defined type
      *        (UDT) objects defined within this database
@@ -1620,16 +1550,14 @@ class DatabaseInformationFull extends DatabaseInformationMain {
      *
      * Schema-specific UDTs may have type JAVA_OBJECT, STRUCT, or DISTINCT.
      *
-     * <P>Rows are ordered by DATA_TYPE, TYPE_SCHEM and TYPE_NAME.
-     *
-     * <P>Each row has the following columns:
+     * <P>Each row is a UDT descripion with the following columns:
      * <OL>
      *   <LI><B>TYPE_CAT</B> <code>VARCHAR</code> => the type's catalog
      *   <LI><B>TYPE_SCHEM</B> <code>VARCHAR</code> => type's schema
      *   <LI><B>TYPE_NAME</B> <code>VARCHAR</code> => type name
      *   <LI><B>CLASS_NAME</B> <code>VARCHAR</code> => Java class name
      *   <LI><B>DATA_TYPE</B> <code>VARCHAR</code> =>
-     *         type value defined in <code>java.sql.Types</code>;
+     *         type value defined in <code>DITypes</code>;
      *         one of <code>JAVA_OBJECT</code>, <code>STRUCT</code>, or
      *        <code>DISTINCT</code>
      *   <LI><B>REMARKS</B> <code>VARCHAR</code> =>
@@ -1638,16 +1566,16 @@ class DatabaseInformationFull extends DatabaseInformationMain {
      *          type code of the source type of a DISTINCT type or the
      *          type that implements the user-generated reference type of the
      *          SELF_REFERENCING_COLUMN of a structured type as defined in
-     *          java.sql.Types (null if DATA_TYPE is not DISTINCT or not
+     *          DITypes (null if DATA_TYPE is not DISTINCT or not
      *          STRUCT with REFERENCE_GENERATION = USER_DEFINED)
      *
      * </OL> <p>
      *
-     * <B>Note:</B> Currently, neither the hsqldb engine nor the JDBC driver
+     * <B>Note:</B> Currently, neither the HSQLDB engine or the JDBC driver
      * support UDTs, so an empty table is returned. <p>
      *
      * @return a <code>Table</code> object describing the accessible
-     * user-defined types defined in this database
+     *      user-defined types defined in this database
      * @throws SQLException if an error occurs while producing the table
      */
     Table SYSTEM_UDTS() throws SQLException {
@@ -1663,58 +1591,10 @@ class DatabaseInformationFull extends DatabaseInformationMain {
             addColumn(t, "CLASS_NAME", VARCHAR, false);    // not null
             addColumn(t, "DATA_TYPE", VARCHAR, false);     // not null
             addColumn(t, "REMARKS", VARCHAR);
-            addColumn(t, "BASE_TYPE ", SMALLINT);
+            addColumn(t, "BASE_TYPE", SMALLINT);
             t.createPrimaryKey(null);
 
             return t;
-        }
-
-        t.setDataReadOnly(true);
-
-        return t;
-    }
-
-    /**
-     * Retrieves a <code>Table</code> object describing the
-     * visible <code>Users</code> defined within this database.
-     * @return table containing information about the users defined within
-     *      this database
-     * @throws SQLException if an error occurs while producing the table
-     */
-    Table SYSTEM_USERS() throws SQLException {
-
-        Table t = sysTables[SYSTEM_USERS];
-
-        if (t == null) {
-            t = createBlankTable(sysTableHsqlNames[SYSTEM_USERS]);
-
-            addColumn(t, "USER", VARCHAR, false);
-            addColumn(t, "ADMIN", BIT, false);
-            // order: USER
-            // true PK
-            t.createPrimaryKey(null, new int[]{0}, true);
-
-            return t;
-        }
-
-        // Intermediate holders
-        HsqlArrayList users;
-        User          user;
-        int           userCount;
-        Object[]      row;
-
-
-        // Initialization
-        users = database.getUserManager().listVisibleUsers(session, false);
-
-        // Do it.
-        for (int i = 0; i < users.size(); i++) {
-            row     = t.getNewRow();
-            user    = (User) users.get(i);
-            row[0]  = user.getName();
-            row[1]  = ValuePool.getBoolean(user.isAdmin());
-
-            t.insert(row, null);
         }
 
         t.setDataReadOnly(true);
@@ -1727,9 +1607,8 @@ class DatabaseInformationFull extends DatabaseInformationMain {
      * columns that are automatically updated when any value in a row
      * is updated. <p>
      *
-     * Rows are unordered. <p>
+     * Each row is a version column description with the following columns: <p>
      *
-     * <P>Each column description has the following columns:
      * <OL>
      * <LI><B>SCOPE</B> <code>SMALLINT</code> => is not used
      * <LI><B>COLUMN_NAME</B> <code>VARCHAR</code> => column name
@@ -1752,7 +1631,7 @@ class DatabaseInformationFull extends DatabaseInformationMain {
      * </UL>
      * </OL> <p>
      *
-     * <B>Note:</B> Currently, the hsqldb engine does not support version 
+     * <B>Note:</B> Currently, the HSQLDB engine does not support version
      * columns, so an empty table is returned. <p>
      *
      * @return a <code>Table</code> object describing the columns
@@ -1795,98 +1674,132 @@ class DatabaseInformationFull extends DatabaseInformationMain {
         t.setDataReadOnly(true);
 
         return t;
-    }    
+    }
 
     /**
-     * Retrieves a <code>Table</code> object describing the DDL
-     * source of all <code>View</code> objects accessible to
-     * the current user. <p>
+     * Retrieves a <code>Table</code> object describing the VIEW objects
+     * defined within this database. The table contains one row for each row
+     * in the SYSTEM_TABLES table with a TABLE_TYPE of ’VIEW’. <p>
+     *
+     * Each row is a description of the query expression that defines its view,
+     * with the following columns:
+     *
+     * <pre>
+     * TABLE_CATALOG    VARCHAR     name of view's defining catalog.
+     * TABLE_SCHEMA     VARCHAR     unqualified name of view's defining schema.
+     * TABLE_NAME       VARCHAR     the simple name of the view.
+     * VIEW_DEFINITION  VARCHAR     the character representation of the
+     *                              &lt;query expression&gt; contained in the
+     *                              corresponding &lt;view descriptor&gt;.
+     * CHECK_OPTION     VARCHAR     {"CASCADED" | "LOCAL" | "NONE"}
+     * IS_UPDATABLE     VARCHAR     {"YES" | "NO"}
+     * VALID            BIT         TRUE: VIEW_DEFINITION currently represents
+     *                              a valid &lt;query expression&gt.
+     *                              FALSE: VIEW_DEFINITION cannot currently be
+     *                              parsed to a valid &lt;query expression&gt;.
+     *                              This can happen if, say, a table, column or
+     *                              routine upon which the view depends has
+     *                              been incompatibly altered, has been
+     *                              dropped since the view was created or is no
+     *                              longer accessible due to changes in assigned
+     *                              access permissions
+     * </pre> <p>
      *
      * @return a tabular description of the text source of all
      *        <code>View</code> objects accessible to
      *        the user.
      * @throws SQLException if an error occurs while producing the table
      */
-    Table SYSTEM_VIEWSOURCE() throws SQLException {
+    Table SYSTEM_VIEWS() throws SQLException {
 
-        Table t = sysTables[SYSTEM_VIEWSOURCE];
+        Table t = sysTables[SYSTEM_VIEWS];
 
         if (t == null) {
-            t = createBlankTable(sysTableHsqlNames[SYSTEM_VIEWSOURCE]);
+            t = createBlankTable(sysTableHsqlNames[SYSTEM_VIEWS]);
 
-            addColumn(t, "VIEW_CAT", VARCHAR);
-            addColumn(t, "VIEW_SCHEM", VARCHAR);
-            addColumn(t, "VIEW_NAME", VARCHAR, true); // not null
-            addColumn(t, "VIEW_SQL", VARCHAR, true); // not null
-            addColumn(t, "VALID", BIT, true); // not null
-            // order VIEW_NAME
-            // VIEW_SCHEM added for unique
-            // false PK, as VIEW_SCHEM may be null
-            t.createPrimaryKey(null, new int[]{1,2}, false);
+            addColumn(t, "TABLE_CATALOG", VARCHAR);
+            addColumn(t, "TABLE_SCHEMA", VARCHAR);
+            addColumn(t, "TABLE_NAME", VARCHAR, true);         // not null
+            addColumn(t, "VIEW_DEFINITION", VARCHAR, true);    // not null
+            addColumn(t, "CHECK_OPTION", VARCHAR, true);       // not null
+            addColumn(t, "IS_UPDATABLE", VARCHAR, true);       // not null
+            addColumn(t, "VALID", BIT, true);                  // not null
+
+            // order TABLE_NAME
+            // added for unique: TABLE_SCHEMA, TABLE_CATALOG
+            // false PK, as TABLE_SCHEMA and/or TABLE_CATALOG may be null
+            t.createPrimaryKey(null, new int[] {
+                1, 2, 0
+            }, false);
+
             // fast lookup by view ident
-            addIndex(t, null, new int[]{0},false);
-            addIndex(t, null, new int[]{2},false);
+            addIndex(t, null, new int[]{ 0 }, false);
+
+            //addIndex(t, null, new int[]{1},false);
+            addIndex(t, null, new int[]{ 2 }, false);
 
             return t;
         }
-        
+
         Parser      parser;
-        String      source;
+        String      defn;
         Select      select;
         Tokenizer   tokenizer;
         Enumeration tables;
         Table       table;
         Object[]    row;
-        
-        
-        final int   iview_cat   = 0;
-        final int   iview_schem = 1;
-        final int   iview_name  = 2;
-        final int   iview_sql   = 3;
-        final int   ivalid      = 4;
+        final int   icat   = 0;
+        final int   ischem = 1;
+        final int   iname  = 2;
+        final int   idefn  = 3;
+        final int   icopt  = 4;
+        final int   iiupd  = 5;
+        final int   ivalid = 6;
 
         tables = database.getTables().elements();
 
         while (tables.hasMoreElements()) {
             table = (Table) tables.nextElement();
 
-            if (!table.isView()) {
+            if (!table.isView() ||!isAccessibleTable(table)) {
                 continue;
             }
 
-            if (!isAccessibleTable(table)) {
-                continue;
-            }
-            
-            row                 = t.getNewRow();
-            source              = ((View) table).getStatement();
-            
-            row[iview_cat]      = ns.getCatalogName(table);
-            row[iview_schem]    = ns.getSchemaName(table);
-            row[iview_name]     = table.getName().name;
-            row[iview_sql]      = source;
-            
-            try {                
-                tokenizer = new Tokenizer(source);
+            row         = t.getNewRow();
+            defn        = ((View) table).getStatement();
+            row[icat]   = ns.getCatalogName(table);
+            row[ischem] = ns.getSchemaName(table);
+            row[iname]  = table.getName().name;
+            row[idefn]  = defn;
+            row[icopt]  = "NONE";
+            row[iiupd]  = "NO";
+
+            try {
+                tokenizer = new Tokenizer(defn);
+
                 tokenizer.getThis("SELECT");
-                parser = new Parser(database,tokenizer,session);
+
+                parser = new Parser(database, tokenizer, session);
                 select = parser.parseSelect();
+
                 select.resolve();
                 select.checkResolved();
+
                 row[ivalid] = Boolean.TRUE;
             } catch (Exception e) {
                 row[ivalid] = Boolean.FALSE;
             }
-            
-            t.insert(row,session);
+
+            t.insert(row, session);
         }
 
         t.setDataReadOnly(true);
 
         return t;
     }
-    
-    /** Retrieves a <code>Table</code> object describing the
+
+    /**
+     * Retrieves a <code>Table</code> object describing the
      * return, parameter and result columns of the accessible
      * routines defined within this database.<p>
      *
@@ -1894,31 +1807,44 @@ class DatabaseInformationFull extends DatabaseInformationMain {
      * columns: <p>
      *
      * <pre>
-     * PROCEDURE_CAT   VARCHAR   procedure catalog
-     * PROCEDURE_SCHEM VARCHAR   procedure schema
-     * PROCEDURE_NAME  VARCHAR   procedure name
+     * PROCEDURE_CAT   VARCHAR   routine catalog
+     * PROCEDURE_SCHEM VARCHAR   routine schema
+     * PROCEDURE_NAME  VARCHAR   routine name
      * COLUMN_NAME     VARCHAR   column/parameter name
      * COLUMN_TYPE     SMALLINT  kind of column/parameter
-     * DATA_TYPE       SMALLINT  SQL type from java.sql.Types
+     * DATA_TYPE       SMALLINT  SQL type from DITypes
      * TYPE_NAME       VARCHAR   SQL type name
      * PRECISION       INTEGER   precision (length) of type
-     * LENGTH          INTEGER   length--in bytes--of data
+     * LENGTH          INTEGER   transfer size, in bytes, if definitely known
+     *                           (roughly equivalent to BUFFER_SIZE for table
+     *                           columns)
      * SCALE           SMALLINT  scale
      * RADIX           SMALLINT  radix
      * NULLABLE        SMALLINT  can column contain NULL?
-     * REMARKS         VARCHAR   comment on { return value | parameter | result column }
+     * REMARKS         VARCHAR   explanatory comment on column
+     * SIGNATURE       VARCHAR   typically (but not restricted to) a
+     *                           Java Method signature
+     * SEQ             INTEGER   The JDBC-specified order within
+     *                           runs of PROCEDURE_SCHEM, PROCEDURE_NAME,
+     *                           SIGNATURE, which is:
+     *
+     *                           return value (0), if any, first, followed
+     *                           by the parameter descriptions in call order
+     *                           (1..n1), followed by the result column
+     *                           descriptions in column number order
+     *                           (n1 + 1..n1 + n2)
      * </pre> <p>
+     *
      * @return a <code>Table</code> object describing the
      *        return, parameter and result columns
      *        of the accessible routines defined
      *        within this database.
      * @throws SQLException if an error occurs while producing the table
-     *
      */
     Table SYSTEM_PROCEDURECOLUMNS() throws SQLException {
-        
+
         Table t = super.SYSTEM_PROCEDURECOLUMNS();
-        
+
         // calculated column values
         String  procedureCatalog;
         String  procedureSchema;
@@ -1934,93 +1860,99 @@ class DatabaseInformationFull extends DatabaseInformationMain {
         Integer nullability;
         String  remark;
         String  sig;
-        
-        // secondary variables required to calculate column values and
-        // produce a sorted set of rows for insertion into an output table
-        
-        HsqlArrayList   aliasList;
-        Object[]        info;
-        Method          method;
-        Enumeration     methods;
-        Object[]        row;
-        DITypeInfo      ti;
-        
+
+        // intermediate holders
+        HsqlArrayList aliasList;
+        Object[]      info;
+        Method        method;
+        Enumeration   methods;
+        Object[]      row;
+        DITypeInfo    ti;
+
         // Initialization
-        methods = ns.enumAllAccessibleMethods(session,true);// and aliases
+        methods = ns.enumAllAccessibleMethods(session, true);    // and aliases
         ti      = new DITypeInfo();
-        
+
+        // no such thing as identity or ignorecase return/parameter
+        // procedure columns.  Future: may need to worry about this if
+        // result columns are ever reported
         ti.setTypeSub(TYPE_SUB_DEFAULT);
-        
+
         // Do it.
         while (methods.hasMoreElements()) {
             info             = (Object[]) methods.nextElement();
             method           = (Method) info[0];
             aliasList        = (HsqlArrayList) info[1];
-            
             procedureCatalog = ns.getCatalogName(method);
             procedureSchema  = ns.getSchemaName(method);
-            
+
             pi.setMethod(method);
-            
-            sig              = pi.getSignature();
-            procedureName    = pi.getFQN();
-            
-            for(int i = 0; i < pi.getColCount(); i++) {
-                
+
+            sig           = pi.getSignature();
+            procedureName = pi.getFQN();
+
+            for (int i = 0; i < pi.getColCount(); i++) {
                 ti.setTypeCode(pi.getColTypeCode(i));
-                
-                columnName      = pi.getColName(i);
-                columnType      = pi.getColUsage(i);
-                dataType        = pi.getColDataType(i);
-                dataTypeName    = ti.getTypeName();
-                precision       = ti.getPrecision();
-                length          = pi.getColLen(i);
-                scale           = ti.getDefaultScale();
-                radix           = ti.getNumPrecRadix();
-                nullability     = pi.getColNullability(i);
-                remark          = pi.getColRemark(i);
-                
-                addPColRows(t, aliasList, procedureCatalog,
-                procedureSchema, procedureName, columnName,
-                columnType, dataType, dataTypeName, precision,
-                length, scale, radix, nullability, remark, sig,
-                i);
+
+                columnName   = pi.getColName(i);
+                columnType   = pi.getColUsage(i);
+                dataType     = pi.getColDataType(i);
+                dataTypeName = ti.getTypeName();
+                precision    = ti.getPrecision();
+                length       = pi.getColLen(i);
+                scale        = ti.getDefaultScale();
+                radix        = ti.getNumPrecRadix();
+                nullability  = pi.getColNullability(i);
+                remark       = pi.getColRemark(i);
+
+                addPColRows(t, aliasList, procedureCatalog, procedureSchema,
+                            procedureName, columnName, columnType, dataType,
+                            dataTypeName, precision, length, scale, radix,
+                            nullability, remark, sig, i);
             }
         }
-        
+
         t.setDataReadOnly(true);
-        
+
         return t;
     }
-    
-    /** Retrieves a <code>Table</code> object describing the accessible
-     * routines defined within the this database.
+
+    /**
+     * Retrieves a <code>Table</code> object describing the accessible
+     * routines defined within this database.
      *
      * Each row is a procedure description with the following
      * columns: <p>
      *
      * <pre>
-     * PROCEDURE_CAT     VARCHAR   catalog in which procedure is defined
-     * PROCEDURE_SCHEM   VARCHAR   schema in which procedure is defined
-     * PROCEDURE_NAME    VARCHAR   procedure identifier
-     * NUM_INPUT_PARAMS  INTEGER   number of procedure input parameters
-     * NUM_OUTPUT_PARAMS INTEGER   number of procedure output parameters
-     * NUM_RESULT_SETS   INTEGER   number of result sets returned by procedure
-     * REMARKS           VARCHAR   explanatory comment on the procedure
-     * PROCEDURE_TYPE    SMALLINT  kind of procedure: { Unknown | No Result | Returns Result }
-     * ORIGIN            VARCHAR   { ALIAS | ([BUILTIN | USER DEFINED] ROUTINE | TRIGGER | ...)}
-     * SIGNATURE         VARCHAR   typically, but not restricted to a Java Method signature
-     * </pre>
+     * PROCEDURE_CAT     VARCHAR   catalog in which routine is defined
+     * PROCEDURE_SCHEM   VARCHAR   schema in which routine is defined
+     * PROCEDURE_NAME    VARCHAR   simple routine identifier
+     * NUM_INPUT_PARAMS  INTEGER   number of input parameters
+     * NUM_OUTPUT_PARAMS INTEGER   number of output parameters
+     * NUM_RESULT_SETS   INTEGER   number of result sets returned
+     * REMARKS           VARCHAR   explanatory comment on the routine
+     * PROCEDURE_TYPE    SMALLINT  { Unknown | No Result | Returns Result }
+     * ORIGIN            VARCHAR   {ALIAS |
+     *                             [BUILTIN | USER DEFINED] ROUTINE |
+     *                             [BUILTIN | USER DEFINED] TRIGGER |
+     *                              ...}
+     * SIGNATURE         VARCHAR   typically (but not restricted to) a
+     *                             Java Method signature
+     * </pre> <p>
+     *
      * @return a <code>Table</code> object describing the accessible
      *        routines defined within the this database
      * @throws SQLException if an error occurs while producing the table
-     *
      */
     Table SYSTEM_PROCEDURES() throws SQLException {
-        
+
         Table t = super.SYSTEM_PROCEDURES();
 
         // calculated column values
+        // ------------------------
+        // required
+        // ------------------------
         String  catalog;
         String  schema;
         String  procName;
@@ -2029,13 +1961,14 @@ class DatabaseInformationFull extends DatabaseInformationMain {
         Integer numResultSets;
         String  remarks;
         Integer procRType;
-        
+
         // -------------------
-        String  procOrigin;
-        String  procSignature;
-        
-        // secondary variables required to calculate column values and
-        // produce a sorted set of rows for insertion into an output table
+        // extended
+        // -------------------
+        String procOrigin;
+        String procSignature;
+
+        // intermediate holders
         String        alias;
         HsqlArrayList aliasList;
         Enumeration   methods;
@@ -2043,20 +1976,19 @@ class DatabaseInformationFull extends DatabaseInformationMain {
         Method        method;
         String        methodOrigin;
         Object[]      row;
-        
+
         // Initialization
-        methods = ns.enumAllAccessibleMethods(session,true);//and aliases
-        
+        methods = ns.enumAllAccessibleMethods(session, true);    //and aliases
+
         // Do it.
         while (methods.hasMoreElements()) {
-            
-            methodInfo    = (Object[]) methods.nextElement();
-            method        = (Method) methodInfo[0];
-            aliasList     = (HsqlArrayList) methodInfo[1];
-            methodOrigin  = (String) methodInfo[2];
-            
+            methodInfo   = (Object[]) methods.nextElement();
+            method       = (Method) methodInfo[0];
+            aliasList    = (HsqlArrayList) methodInfo[1];
+            methodOrigin = (String) methodInfo[2];
+
             pi.setMethod(method);
-            
+
             catalog         = ns.getCatalogName(method);
             schema          = ns.getSchemaName(method);
             procName        = pi.getFQN();
@@ -2067,20 +1999,21 @@ class DatabaseInformationFull extends DatabaseInformationMain {
             procRType       = pi.getResultType(methodOrigin);
             procOrigin      = pi.getOrigin(methodOrigin);
             procSignature   = pi.getSignature();
-            
-            addProcRows(t, aliasList, pi.getDeclaringClass(),
-            methodOrigin, catalog, schema, procName,
-            numInputParams, numOutputParams, numResultSets,
-            remarks, procRType, procOrigin, procSignature);
+
+            addProcRows(t, aliasList, catalog, schema, procName,
+                        numInputParams, numOutputParams, numResultSets,
+                        remarks, procRType, procOrigin, procSignature);
         }
-        
+
         t.setDataReadOnly(true);
-        
+
         return t;
     }
-    
-    /** Inserts a set of procedure column description rows into the
-     * <code>Table</code> specified by the <code>t</code> argument.
+
+    /**
+     * Inserts a set of procedure column description rows into the
+     * <code>Table</code> specified by the <code>t</code> argument. <p>
+     *
      * @param t the table in which the rows are to be inserted
      * @param l the list of procedure name aliases to which the
      *        specified column values apply
@@ -2096,18 +2029,24 @@ class DatabaseInformationFull extends DatabaseInformationMain {
      * @param scale the column's scale (decimal digits)
      * @param radix the column's numeric precision radix
      * @param nullability the column's java.sql.DatbaseMetaData
-     *    nullabiliy code
+     *      nullabiliy code
      * @param remark a human-readable remark regarding the column
      * @param sig the signature of the procedure
-     *    (typically but not limited to
-     *    a java method signature)
+     *      (typically but not limited to
+     *      a java method signature)
      * @param seq helper value to allow JDBC contract order
      * @throws SQLException if there is problem inserting the specified rows
-     *    in the table
+     *      in the table
      *
      */
-    protected void addPColRows(Table t, HsqlArrayList l, String cat, String schem, String pName, String cName, Integer cType, Integer dType, String tName, Integer prec, Integer len, Integer scale, Integer radix, Integer nullability, String remark, String sig, int seq) throws SQLException {
-        
+    protected void addPColRows(Table t, HsqlArrayList l, String cat,
+                               String schem, String pName, String cName,
+                               Integer cType, Integer dType, String tName,
+                               Integer prec, Integer len, Integer scale,
+                               Integer radix, Integer nullability,
+                               String remark, String sig,
+                               int seq) throws SQLException {
+
         // column number mappings
         final int icat       = 0;
         final int ischem     = 1;
@@ -2124,9 +2063,9 @@ class DatabaseInformationFull extends DatabaseInformationMain {
         final int iremark    = 12;
         final int isig       = 13;
         final int iseq       = 14;
-        
         Object[]  row        = t.getNewRow();
-        
+        Integer   sequence   = ValuePool.getInt(seq);
+
         row[icat]       = cat;
         row[ischem]     = schem;
         row[iname]      = pName;
@@ -2141,13 +2080,13 @@ class DatabaseInformationFull extends DatabaseInformationMain {
         row[inullable]  = nullability;
         row[iremark]    = remark;
         row[isig]       = sig;
-        row[iseq]       = ValuePool.getInt(seq);
-        
-        t.insert(row,session);
-        
+        row[iseq]       = sequence;
+
+        t.insert(row, session);
+
         if (l != null) {
             int size = l.size();
-            
+
             for (int i = 0; i < size; i++) {
                 row             = t.getNewRow();
                 pName           = (String) l.get(i);
@@ -2165,21 +2104,21 @@ class DatabaseInformationFull extends DatabaseInformationMain {
                 row[inullable]  = nullability;
                 row[iremark]    = remark;
                 row[isig]       = sig;
-                row[iseq]       = ValuePool.getInt(seq);
-                
-                t.insert(row,session);
+                row[iseq]       = sequence;
+
+                t.insert(row, session);
             }
         }
     }
-    
-    /** Inserts a set of procedure description rows into the <code>Table</code>
-     * object specified by the <code>t</code> argument.
-     * @param t the table into which the specified rows will eventually be inserted
+
+    /**
+     * Inserts a set of procedure description rows into the <code>Table</code>
+     * object specified by the <code>t</code> argument. <p>
+     *
+     * @param t the table into which the specified rows will eventually
+     *      be inserted
      * @param l the list of procedure name aliases to which the specified column
-     *    values apply
-     * @param c the Java class, if any, that provides the procedure entry point
-     * @param src a String indicating whether the non-aliased procedure is built-in or is
-     *    visible via a user class grant
+     *      values apply
      * @param cat the procedure catalog name
      * @param schem the procedure schema name
      * @param pName the base (non-alias) procedure name
@@ -2188,21 +2127,24 @@ class DatabaseInformationFull extends DatabaseInformationMain {
      * @param rs the procedure result column count
      * @param remark a human-readable remark regarding the procedure
      * @param pType the procedure type code, indicating whether it is a
-     *    function, procedure, or uncatagorized (i.e. returns
-     *    a value, does not return a value, or it is unknown
-     *    if it returns a value)
+     *      function, procedure, or uncatagorized (i.e. returns
+     *      a value, does not return a value, or it is unknown
+     *      if it returns a value)
      * @param origin origin of the procedure, e.g.
-     *    (callable) "ROUTINE", "TRIGGER",
-     *    "ALIAS", etc.
+     *      (["BUILTIN" | "USER DEFINED"] "ROUTINE" | "TRIGGER") | "ALIAS", etc.
      * @param sig the signature of the procedure
-     *        (typically but not limited to a
-     *        java method signature)
+     *      (typically but not limited to a
+     *      java method signature)
      * @throws SQLException if there is problem inserting the specified rows
-     *    in the table
+     *      in the table
      *
      */
-    protected void addProcRows(Table t, HsqlArrayList l, Class c, String src, String cat, String schem, String pName, Integer ip, Integer op, Integer rs, String remark, Integer pType, String origin, String sig) throws SQLException {
-        
+    protected void addProcRows(Table t, HsqlArrayList l, String cat,
+                               String schem, String pName, Integer ip,
+                               Integer op, Integer rs, String remark,
+                               Integer pType, String origin,
+                               String sig) throws SQLException {
+
         // column number mappings
         final int icat          = 0;
         final int ischem        = 1;
@@ -2214,9 +2156,8 @@ class DatabaseInformationFull extends DatabaseInformationMain {
         final int iptype        = 7;
         final int iporigin      = 8;
         final int isig          = 9;
-        
         Object[]  row           = t.getNewRow();
-        
+
         row[icat]          = cat;
         row[ischem]        = schem;
         row[ipname]        = pName;
@@ -2227,16 +2168,14 @@ class DatabaseInformationFull extends DatabaseInformationMain {
         row[iptype]        = pType;
         row[iporigin]      = origin;
         row[isig]          = sig;
-        
-        t.insert(row,session);
-        
+
+        t.insert(row, session);
+
         if (l != null) {
             int size = l.size();
-            
+
             for (int i = 0; i < size; i++) {
-                
                 row                = t.getNewRow();
-                
                 pName              = (String) l.get(i);
                 row[icat]          = cat;
                 row[ischem]        = schem;
@@ -2248,10 +2187,455 @@ class DatabaseInformationFull extends DatabaseInformationMain {
                 row[iptype]        = pType;
                 row[iporigin]      = "ALIAS";
                 row[isig]          = sig;
-                
-                t.insert(row,session);
+
+                t.insert(row, session);
             }
         }
     }
-    
+
+// boucherb@users - 20020305
+// EXPERIMENTAL:  NONE OF THESE ARE REALLY WORKABLE UNTIL WE STOP USING
+// AN INVISIBLE INTERMEDAIATE "SYSTEM_SUBQUERY" TABLE TO ROLL UP
+// SUBQUERIES.  NEED TO EXTENDING TableFilter/Select TO PRESERVE
+// THE ENTIRE EXPRESSION TREE TO ARBITRARY NESTING DEPTH.
+// WILL ALSO ALLOW PROPER QUERY OPTIMIZATION.  RIGHT NOW, INDEX INFO IS
+// LOST WHEN CREATING INTERMEDAIATE "SYSTEM_SUBQUERY" TABLES, SO IT IS
+// IMPOSSSIBLE TO CHOOSE "optimal" INDEX USAGE.
+//    Table SYSTEM_VIEW_COLUMN_USAGE() throws SQLException {
+//
+//        Table t = sysTables[SYSTEM_VIEW_COLUMN_USAGE];
+//
+//        if (t == null) {
+//            t = createBlankTable(sysTableHsqlNames[SYSTEM_VIEW_COLUMN_USAGE]);
+//
+//            addColumn(t, "VIEW_CATALOG", VARCHAR);
+//            addColumn(t, "VIEW_SCHEMA", VARCHAR);
+//            addColumn(t, "VIEW_NAME", VARCHAR, true); // not null
+//            addColumn(t, "TABLE_CATALOG", VARCHAR);
+//            addColumn(t, "TABLE_SCHEMA", VARCHAR);
+//            addColumn(t, "TABLE_NAME", VARCHAR, true); // not null
+//            addColumn(t, "COLUMN_NAME", VARCHAR, true);
+//
+//            t.createPrimaryKey(null);
+//
+//            return t;
+//        }
+//
+//        String      vcat;
+//        String      vschem;
+//        String      vname;
+//        String      tcat;
+//        String      tschem;
+//        String      tname;
+//        String      tcname;
+//
+//        Parser      parser;
+//        String      defn;
+//        Select      select;
+//        Tokenizer   tokenizer;
+//        Enumeration tables;
+//        Table       table;
+//        Object[]    row;
+//
+//
+//        final int   ivcat   = 0;
+//        final int   ivschem = 1;
+//        final int   ivname  = 2;
+//        final int   itcat   = 3;
+//        final int   itschem = 4;
+//        final int   itname  = 5;
+//        final int   itcname = 6;
+//
+//        tables = database.getTables().elements();
+//
+//        while (tables.hasMoreElements()) {
+//            table = (Table) tables.nextElement();
+//
+//            if (!table.isView()) {
+//                continue;
+//            }
+//
+//            if (!isAccessibleTable(table)) {
+//                continue;
+//            }
+//
+//            //row                 = t.getNewRow();
+//            defn                = ((View) table).getStatement();
+//
+//            vcat           = ns.getCatalogName(table);
+//            vschem         = ns.getSchemaName(table);
+//            vname          = table.getName().name;
+//
+//            try {
+//                tokenizer = new Tokenizer(defn);
+//                tokenizer.getThis("SELECT");
+//                parser = new Parser(database,tokenizer,session);
+//                select = parser.parseSelect();
+//                select.resolve();
+//
+//                Expression expr = new Expression(select);
+//                HsqlHashMap tableColumns = new HsqlHashMap();
+//
+//                expr.collectAllTableColumns(tableColumns);
+//
+//                Enumeration e = tableColumns.keys();
+//
+//                while (e.hasMoreElements()) {
+//                    tname = (String) e.nextElement();
+//                    tcat = ns.getCatalogName(tname);
+//                    tschem = null;
+//                    if ("SYSTEM_SUBQUERY".equals(tname)) {
+//
+//                    } else {
+//                        try {
+//                            tschem = ns.getSchemaName(database.getTable(tname,session));
+//                        } catch (Exception e2) {
+//
+//                        }
+//                    }
+//                    Enumeration columns = ((HsqlHashSet)tableColumns.get(tname)).elements();
+//
+//                    while (columns.hasMoreElements()) {
+//
+//                        row = t.getNewRow();
+//
+//                        row[ivcat] = vcat;
+//                        row[ivschem] = vschem;
+//                        row[ivname] = vname;
+//                        row[itcat] = tcat;
+//                        row[itschem] = tschem;
+//                        row[itname] = tname;
+//                        row[itcname] = (String) columns.nextElement();
+//
+//                        t.insert(row,session);
+//
+//                    }
+//                }
+//
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//
+//        }
+//
+//        t.setDataReadOnly(true);
+//
+//        return t;
+//    }
+//
+//    Table SYSTEM_VIEW_ROUTINE_USAGE() throws SQLException {
+//        Table t = sysTables[SYSTEM_VIEW_ROUTINE_USAGE];
+//
+//        if (t == null) {
+//            t = createBlankTable(sysTableHsqlNames[SYSTEM_VIEW_ROUTINE_USAGE]);
+//
+//            addColumn(t, "TABLE_CATALOG", VARCHAR);
+//            addColumn(t, "TABLE_SCHEMA", VARCHAR);
+//            addColumn(t, "TABLE_NAME", VARCHAR, true); // not null
+//            addColumn(t, "SPECIFIC_CATALOG", VARCHAR);
+//            addColumn(t, "SPECIFIC_SCHEMA", VARCHAR);
+//            addColumn(t, "SPECIFIC_NAME", VARCHAR, true); // not null
+//
+//            t.createPrimaryKey(null);
+//
+//            return t;
+//        }
+//
+//        String      tcat;
+//        String      tschem;
+//        String      tname;
+//        String      scat;
+//        String      sschem;
+//        String      sname;
+//
+//        Parser      parser;
+//        String      defn;
+//        Select      select;
+//        Tokenizer   tokenizer;
+//        Enumeration tables;
+//        Table       table;
+//        Object[]    row;
+//
+//
+//        final int   itcat   = 0;
+//        final int   itschem = 1;
+//        final int   itname  = 2;
+//        final int   iscat   = 3;
+//        final int   isschem = 4;
+//        final int   isname  = 5;
+//
+//        tables = database.getTables().elements();
+//
+//        while (tables.hasMoreElements()) {
+//            table = (Table) tables.nextElement();
+//
+//            if (!table.isView()) {
+//                continue;
+//            }
+//
+//            if (!isAccessibleTable(table)) {
+//                continue;
+//            }
+//
+//            defn                = ((View) table).getStatement();
+//
+//            tcat           = ns.getCatalogName(table);
+//            tschem         = ns.getSchemaName(table);
+//            tname          = table.getName().name;
+//
+//            try {
+//                tokenizer = new Tokenizer(defn);
+//                tokenizer.getThis("SELECT");
+//                parser = new Parser(database,tokenizer,session);
+//                select = parser.parseSelect();
+//                select.resolve();
+//
+//                Expression expr = new Expression(select);
+//
+//                HsqlHashSet routineNames = new HsqlHashSet();
+//
+//                expr.collectAllRoutineNames(routineNames);
+//
+//                Enumeration e = routineNames.elements();
+//
+//                while (e.hasMoreElements()) {
+//
+//                    sname = (String) e.nextElement();
+//                    scat = ns.getCatalogName(sname);
+//                    sschem = ns.getSchemaName(ns.classForMethodFQN(sname));
+//
+//                    row = t.getNewRow();
+//
+//                    row[itcat] = tcat;
+//                    row[itschem] = tschem;
+//                    row[itname] = tname;
+//                    row[iscat] = scat;
+//                    row[isschem] = sschem;
+//                    row[isname] = sname;
+//
+//                    t.insert(row,session);
+//                }
+//
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//
+//        }
+//
+//        t.setDataReadOnly(true);
+//
+//        return t;
+//    }
+//
+//    Table SYSTEM_VIEW_TABLE_USAGE() throws SQLException {
+//        Table t = sysTables[SYSTEM_VIEW_TABLE_USAGE];
+//
+//        if (t == null) {
+//            t = createBlankTable(sysTableHsqlNames[SYSTEM_VIEW_TABLE_USAGE]);
+//
+//            addColumn(t, "VIEW_CATALOG", VARCHAR);
+//            addColumn(t, "VIEW_SCHEMA", VARCHAR);
+//            addColumn(t, "VIEW_NAME", VARCHAR, true); // not null
+//            addColumn(t, "TABLE_CATALOG", VARCHAR);
+//            addColumn(t, "TABLE_SCHEMA", VARCHAR);
+//            addColumn(t, "TABLE_NAME", VARCHAR, true); // not null
+//
+//            t.createPrimaryKey(null);
+//
+//            return t;
+//        }
+//
+//        String      vcat;
+//        String      vschem;
+//        String      vname;
+//        String      tcat;
+//        String      tschem;
+//        String      tname;
+//
+//        Parser      parser;
+//        String      defn;
+//        Select      select;
+//        Tokenizer   tokenizer;
+//        Enumeration tables;
+//        Table       table;
+//        Object[]    row;
+//
+//
+//        final int   ivcat   = 0;
+//        final int   ivschem = 1;
+//        final int   ivname  = 2;
+//        final int   itcat   = 3;
+//        final int   itschem = 4;
+//        final int   itname  = 5;
+//
+//        tables = database.getTables().elements();
+//
+//        while (tables.hasMoreElements()) {
+//            table = (Table) tables.nextElement();
+//
+//            if (!table.isView()) {
+//                continue;
+//            }
+//
+//            if (!isAccessibleTable(table)) {
+//                continue;
+//            }
+//
+//            defn                = ((View) table).getStatement();
+//
+//            vcat           = ns.getCatalogName(table);
+//            vschem         = ns.getSchemaName(table);
+//            vname          = table.getName().name;
+//
+//            try {
+//                tokenizer = new Tokenizer(defn);
+//                tokenizer.getThis("SELECT");
+//                parser = new Parser(database,tokenizer,session);
+//                select = parser.parseSelect();
+//                select.resolve();
+//
+//                Expression expr = new Expression(select);
+//
+//                HsqlHashMap tableColumns = new HsqlHashMap();
+//
+//                expr.collectAllTableColumns(tableColumns);
+//
+//                Enumeration e = tableColumns.keys();
+//
+//                while (e.hasMoreElements()) {
+//                    tname = (String) e.nextElement();
+//                    tcat = ns.getCatalogName(tname);
+//                    tschem = null;
+//                    if ("SYSTEM_SUBQUERY".equals(tname)) {
+//                      // do nothing
+//                    } else {
+//                        try {
+//                            tschem = ns.getSchemaName(database.getTable(tname,session));
+//                        } catch (Exception e2) {}
+//                    }
+//                    row = t.getNewRow();
+//
+//                    row[ivcat] = vcat;
+//                    row[ivschem] = vschem;
+//                    row[ivname] = vname;
+//                    row[itcat] = tcat;
+//                    row[itschem] = tschem;
+//                    row[itname] = tname;
+//
+//
+//                    t.insert(row,session);
+//                }
+//
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//
+//        }
+//
+//        t.setDataReadOnly(true);
+//
+//        return t;
+//    }
+// PATCH FOR:
+// Expression.java
+// EXPERIMENTAL SUPPORT FOR VIEW USAGE SYSTEM TABLES
+// import org.hsqldb.lib.HsqlHashSet;
+// boucherb@users - support for view usage system tables
+// EXPERIMENTAL:  NONE OF THESE ARE REALLY WORKABLE UNTIL WE STOP USING
+// AN INVISIBLE INTERMEDAIATE "SYSTEM_SUBQUERY" TABLE TO ROLL UP SUBQUERIES
+// NEED TO REWORK TableFilter/Select INSTEAD TO PRESERVE FULL EXPESSION
+// TREE TO ARBITRARY NESTING DEPTH
+//    boolean collectTableColumn(HsqlHashMap tableNames) {
+//        //System.out.println("Processing: " + this);
+//        if (iType == COLUMN) {
+//            HsqlHashSet s = (HsqlHashSet) tableNames.get(sTable);
+//            if (s == null) {
+//                s = new HsqlHashSet();
+//                tableNames.put(sTable,s);
+//            }
+//            s.add(sColumn);
+//            return true;
+//        } else if (iType == QUERY || iType == SELECT) {
+//            Expression eColumn[] = sSelect.eColumn;
+//            for (int i = 0; i < eColumn.length; i++) {
+//                eColumn[i].collectAllTableColumns(tableNames);
+//            }
+//            if (sSelect.eCondition != null) {
+//                sSelect.eCondition.collectAllTableColumns(tableNames);
+//            }
+//            if (sSelect.havingCondition != null) {
+//                sSelect.havingCondition.collectAllTableColumns(tableNames);
+//            }
+//            //System.out.println("Processed Select: " + sSelect);
+//            return true;
+//        } else if (iType == FUNCTION) {
+//            Expression eArg[] = fFunction.eArg;
+//
+//            for (int i = 0; i < eArg.length; i++) {
+//                eArg[i].collectAllTableColumns(tableNames);
+//            }
+//            //System.out.println("Processed Function: " + fFunction);
+//            return true;
+//        }
+//
+//        return false;
+//    }
+//
+//    void collectAllTableColumns(HsqlHashMap tableNames) {
+//        if (!collectTableColumn(tableNames)) {
+//            if (eArg != null) {
+//                eArg.collectAllTableColumns(tableNames);
+//            }
+//
+//            if (eArg2 != null) {
+//                eArg2.collectAllTableColumns(tableNames);
+//            }
+//        }
+//    }
+//
+//    boolean collectRoutineName(HsqlHashSet routineNames) {
+//        //System.out.println("Processing: " + this);
+//
+//        if (iType == QUERY || iType == SELECT) {
+//            Expression eColumn[] = sSelect.eColumn;
+//            for (int i = 0; i < eColumn.length; i++) {
+//                eColumn[i].collectAllRoutineNames(routineNames);
+//            }
+//            if (sSelect.eCondition != null) {
+//                sSelect.eCondition.collectAllRoutineNames(routineNames);
+//            }
+//            if (sSelect.havingCondition != null) {
+//                sSelect.havingCondition.collectAllRoutineNames(routineNames);
+//            }
+//            //System.out.println("Processed Select: " + sSelect);
+//            return true;
+//        } else if (iType == FUNCTION) {
+//            Expression eArg[] = fFunction.eArg;
+//
+//            if (eArg != null) {
+//                for (int i = 0; i < eArg.length; i++) {
+//                    if (eArg[i] != null) {
+//                        eArg[i].collectAllRoutineNames(routineNames);
+//                    }
+//                }
+//            }
+//            routineNames.add(fFunction.fname);
+//            //System.out.println("Processed Function: " + fFunction);
+//            return true;
+//        }
+//
+//        return false;
+//    }
+//
+//    void collectAllRoutineNames(HsqlHashSet routineNames) {
+//        if (!collectRoutineName(routineNames)) {
+//            if (eArg != null) {
+//                eArg.collectAllRoutineNames(routineNames);
+//            }
+//
+//            if (eArg2 != null) {
+//                eArg2.collectAllRoutineNames(routineNames);
+//            }
+//        }
+//    }
 }

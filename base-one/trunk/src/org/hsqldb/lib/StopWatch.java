@@ -117,4 +117,39 @@ public class StopWatch {
             running = false;
         }
     }
+    
+    /** Retrieves prefix + " in " + elapsedTime() + " ms."
+     * @param prefix The string to use as a prefix
+     * @return prefix + " in " + elapsedTime() + " ms."
+     */    
+    public String toMessage(String prefix) {
+        return prefix + " in " + elapsedTime() + " ms.";
+    }
+    
+    /** Retrieves the internal state of this object, as a String.
+     *
+     * The retreived value is:
+     *
+     * <pre>
+     *    super.toString() +
+     *    "[running=" +
+     *    running +
+     *    ", startTime=" +
+     *    startTime +
+     *    ", total=" +
+     *    total + "]";
+     * </pre>
+     * @return the state of this object, as a String
+     */    
+    public String toString() {
+        return
+        super.toString() +
+        "[running=" +
+        running +
+        ", startTime=" +
+        startTime +
+        ", total=" +
+        total + "]";
+    }
+    
 }

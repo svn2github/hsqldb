@@ -111,15 +111,15 @@ import org.hsqldb.lib.StopWatch;
 // fredt@users 20020912 - patch 1.7.1 by fredt - log alter statements
 // fredt@users 20021112 - patch 1.7.2 by Nitin Chauhan - use of switch
 // rewrite of the majority of multiple if(){}else if(){} chains with switch()
+// boucherb@users 20020310 - class loader update for JDK 1.1 compliance
+// boucherb@users 20020310 - disable ALTER TABLE DDL on VIEWs (avoid NPE)
 class Database {
 
     private String        sName;
     private UserManager   aAccess;
     private HsqlArrayList tTable;
     DatabaseInformation   dInfo;
-
-// boucherb@users - table-based class loading
-    ClassLoader classLoader = ClassLoader.getSystemClassLoader();
+    ClassLoader           classLoader;
 
 // ----------------------------------------------------------------------------
 // boucherb@users - pluggable system table producer strategy for metadata 1.7.2
@@ -264,6 +264,15 @@ class Database {
 
         sName  = name.trim();
         logger = new Logger();
+
+        // does not need to be done more than once
+        try {
+            classLoader = getClass().getClassLoader();
+        } catch (Exception e) {
+
+            // strict security policy:  just use the system/boot loader
+            classLoader = null;
+        }
 
         open();
     }

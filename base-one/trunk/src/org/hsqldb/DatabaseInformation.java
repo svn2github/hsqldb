@@ -1,51 +1,15 @@
-/* Copyrights and Licenses
- *
- * This product includes Hypersonic SQL.
- * Originally developed by Thomas Mueller and the Hypersonic SQL Group. 
- *
- * Copyright (c) 1995-2000 by the Hypersonic SQL Group. All rights reserved. 
- * Redistribution and use in source and binary forms, with or without modification, are permitted
- * provided that the following conditions are met: 
- *     -  Redistributions of source code must retain the above copyright notice, this list of conditions
- *         and the following disclaimer. 
- *     -  Redistributions in binary form must reproduce the above copyright notice, this list of
- *         conditions and the following disclaimer in the documentation and/or other materials
- *         provided with the distribution. 
- *     -  All advertising materials mentioning features or use of this software must display the
- *        following acknowledgment: "This product includes Hypersonic SQL." 
- *     -  Products derived from this software may not be called "Hypersonic SQL" nor may
- *        "Hypersonic SQL" appear in their names without prior written permission of the
- *         Hypersonic SQL Group. 
- *     -  Redistributions of any form whatsoever must retain the following acknowledgment: "This
- *          product includes Hypersonic SQL." 
- * This software is provided "as is" and any expressed or implied warranties, including, but
- * not limited to, the implied warranties of merchantability and fitness for a particular purpose are
- * disclaimed. In no event shall the Hypersonic SQL Group or its contributors be liable for any
- * direct, indirect, incidental, special, exemplary, or consequential damages (including, but
- * not limited to, procurement of substitute goods or services; loss of use, data, or profits;
- * or business interruption). However caused any on any theory of liability, whether in contract,
- * strict liability, or tort (including negligence or otherwise) arising in any way out of the use of this
- * software, even if advised of the possibility of such damage. 
- * This software consists of voluntary contributions made by many individuals on behalf of the
- * Hypersonic SQL Group.
- *
- *
- * For work added by the HSQL Development Group:
- *
- * Copyright (c) 2001-2002, The HSQL Development Group
+/* Copyright (c) 2001-2002, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
  * Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer, including earlier
- * license statements (above) and comply with all above license conditions.
+ * list of conditions and the following disclaimer.
  *
  * Redistributions in binary form must reproduce the above copyright notice,
  * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution, including earlier
- * license statements (above) and comply with all above license conditions.
+ * and/or other materials provided with the distribution.
  *
  * Neither the name of the HSQL Development Group nor the names of its
  * contributors may be used to endorse or promote products derived from this
@@ -72,6 +36,9 @@ import java.sql.SQLException;
 import org.hsqldb.lib.HsqlObjectToIntMap;
 
 // fredt@users - 1.7.2 - structural modifications to allow inheritance
+// boucherB@users 20020305 - completed inheritance work, including final access
+// boucherB@users 20020305 - javadoc updates/corrections
+// boucherB@users 20020305 - SYSTEM_VIEWS brought in line with SQL 200n
 
 /**
  * Base class for system tables. Inclues a factory method which returns the
@@ -79,15 +46,15 @@ import org.hsqldb.lib.HsqlObjectToIntMap;
  * knows the names of all system tables but returns null for any system table.
  * <p>
  * This class has been developed from scratch to replace the previous
- * DatabaseInformation implementations.
+ * DatabaseInformation implementations. <p>
  *
- * @author  boucherb@users.sourceforge.net
+ * @author boucherb@users.sourceforge.net
  * @version 1.7.2
  * @since 1.7.2
  */
 class DatabaseInformation {
 
-    // ids for system table names strictly in order of sysName[]
+    // ids for system table names strictly in order of sysTableNames[]
     protected static final int SYSTEM_BESTROWIDENTIFIER = 0;
     protected static final int SYSTEM_CATALOGS          = 1;
     protected static final int SYSTEM_COLUMNPRIVILEGES  = 2;
@@ -120,9 +87,11 @@ class DatabaseInformation {
     protected static final int SYSTEM_TRIGGERCOLUMNS  = 27;
     protected static final int SYSTEM_TRIGGERS        = 28;
     protected static final int SYSTEM_ALLTYPEINFO     = 29;
-    protected static final int SYSTEM_VIEWSOURCE      = 30;
 
-    // system table names strictly in order of their ids
+// boucherb@users 20030305 - brought in line with SQL 200n
+    protected static final int SYSTEM_VIEWS = 30;
+
+    /** system table names strictly in order of their ids */
     protected static final String sysTableNames[] = {
         "SYSTEM_BESTROWIDENTIFIER",    //
         "SYSTEM_CATALOGS",             //
@@ -156,7 +125,9 @@ class DatabaseInformation {
         "SYSTEM_TRIGGERCOLUMNS",       //
         "SYSTEM_TRIGGERS",             //
         "SYSTEM_ALLTYPEINFO",          //
-        "SYSTEM_VIEWSOURCE"            //
+
+// boucherb@users 20030305 - brought in line with SQL 200n
+        "SYSTEM_VIEWS"
 
         // Future use
 //        "SYSTEM_ASSERTIONS",
@@ -239,10 +210,10 @@ class DatabaseInformation {
 //        "SYSTEM_VIEW_COLUMN_USAGE",
 //        "SYSTEM_VIEW_ROUTINE_USAGE",
 //        "SYSTEM_VIEW_TABLE_USAGE",
-//        "SYSTEM_VIEWS",
+//        "SYSTEM_VIEWS", // boucherb@users 20030305 - implemented
     };
 
-    // map for id lookup
+    /** Map: table name => table id */
     protected static final HsqlObjectToIntMap sysTableNamesMap;
 
     static {
@@ -254,7 +225,7 @@ class DatabaseInformation {
     }
 
     /** Database for which to produce tables */
-    protected Database database;
+    protected final Database database;
 
     /**
      * Simple object-wide flag indicating that all of this object's cached
@@ -273,12 +244,14 @@ class DatabaseInformation {
     /**
      * Factory method retuns the fullest system table producer
      * implementation available.  This instantiates implementations beginning
-     * with the most complet, finally choosing an empty table producer
+     * with the most complete, finally choosing an empty table producer
      * implemenation (this class) if no better instance can be constructed.
-     *
-     * @throws SQLException never - required by TableProducer.<init>
+     * @param db The Database object for which to produce system tables
+     * @return the fullest system table producer
+     *      implementation available
+     * @throws SQLException never - required by constructor
      */
-    static DatabaseInformation newDatabaseInformation(Database db)
+    static final DatabaseInformation newDatabaseInformation(Database db)
     throws SQLException {
 
         String[] impls = new String[] {
@@ -312,27 +285,31 @@ class DatabaseInformation {
     }
 
     /**
-     * Constructor
+     * Constructs a new DatabaseInformation instance which knows the names of
+     * all system tables (isSystemTable()) but simpy returns null for all
+     * getSystemTable() requests. <p>
+     *
+     * @param db The Database object for which to produce system tables
+     * @throws SQLException never (required for descendents)
      */
     DatabaseInformation(Database db) throws SQLException {
         database = db;
     }
 
     /**
-     * Tests if the specified name is that of a system table.
+     * Tests if the specified name is that of a system table. <p>
      *
      * @param name the name to test
      * @return true if the specified name is that of a system table
-     *
      */
-    boolean isSystemTable(String name) {
+    final boolean isSystemTable(String name) {
         return sysTableNamesMap.containsKey(name);
     }
 
     /**
      * Retrieves a table with the specified name whose content may depend on
      * the execution context indicated by the session argument as well as the
-     * current value of <code>isWithContent()</code>.
+     * current value of <code>withContent</code>. <p>
      *
      * @param name the name of the table to produce
      * @param session the context in which to produce the table
@@ -355,25 +332,23 @@ class DatabaseInformation {
      * table data may be dirty, requiring a complete cache clear at some
      * point.<p>
      *
-     * Subclasses are free to delay cache clear until next produceTable().
+     * Subclasses are free to delay cache clear until next getSystemTable().
      * However, subclasses may have to be aware of additional methods with
-     * semantics similar to produceTable() and act accordingly (e.g. clearing
-     * earlier than next invocation of produceTable()).
-     *
-     * @throws SQLException if a database access error occurs
+     * semantics similar to getSystemTable() and act accordingly (e.g.
+     * clearing earlier than next invocation of getSystemTable()).
      */
-    void setDirty() throws SQLException {
+    final void setDirty() {
         isDirty = true;
     }
 
     /**
      * Switches this table producer between producing empty (surrogate)
-     * or contentful tables.
+     * or contentful tables. <p>
      *
      * @param withContent if true, then produce contentful tables, else
      *        produce emtpy (surrogate) tables
      */
-    void setWithContent(boolean withContent) {
+    final void setWithContent(boolean withContent) {
         this.withContent = withContent;
     }
 }

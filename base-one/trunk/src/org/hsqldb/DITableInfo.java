@@ -31,10 +31,6 @@
 
 package org.hsqldb;
 
-/*
- * originally created as DITableInfo.java on February 21, 2003, 4:31 PM
- */
-
 import java.io.File;
 import java.sql.DatabaseMetaData;
 import java.util.Enumeration;
@@ -45,22 +41,17 @@ import org.hsqldb.lib.enum.EmptyEnumeration;
 import org.hsqldb.resources.BundleHandler;
 
 /**
- *
+ * Provides extended information about HSQLDB tables and their columns/indices
  * @author  boucherb@users.sourceforge.net
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
 final class DITableInfo implements DITypes {
 
-
-    private static final int HALF_MAX_INT = Integer.MAX_VALUE >>> 1;
-
-    private int hnd_column_remarks = -1;
-
-    private int hnd_table_remarks = -1;
-
-    private Table table;
-
+    private static final int        HALF_MAX_INT = Integer.MAX_VALUE >>> 1;
+    private int                     hnd_column_remarks = -1;
+    private int                     hnd_table_remarks  = -1;
+    private Table                   table;
     private static final DITypeInfo ti = new DITypeInfo();
 
     public DITableInfo() {
@@ -68,51 +59,56 @@ final class DITableInfo implements DITypes {
     }
 
     void setLocale(Locale l) {
+
         Locale oldLocale;
 
         synchronized (BundleHandler.class) {
             oldLocale = BundleHandler.getLocale();
+
             BundleHandler.setLocale(l);
+
             hnd_column_remarks =
                 BundleHandler.getBundleHandle("column-remarks", null);
-            hnd_table_remarks =
-                BundleHandler.getBundleHandle("table-remarks",null);
+            hnd_table_remarks = BundleHandler.getBundleHandle("table-remarks",
+                    null);
+
             BundleHandler.setLocale(oldLocale);
         }
-
     }
 
     Integer getBRIPseudo() {
         return ValuePool.getInt(DatabaseMetaData.bestRowNotPseudo);
     }
 
-
     Integer getBRIScope() {
 
-        return (
-        table.dDatabase.bReadOnly ||
-        (table.isTemp() && table.tableType != Table.SYSTEM_TABLE)
-        )
-        ? ValuePool.getInt(DatabaseMetaData.bestRowSession)
-        : ValuePool.getInt(DatabaseMetaData.bestRowTemporary);
+        return (table.dDatabase.bReadOnly || (table.isTemp() && table.tableType != Table.SYSTEM_TABLE))
+               ? ValuePool.getInt(DatabaseMetaData.bestRowSession)
+               : ValuePool.getInt(DatabaseMetaData.bestRowTemporary);
+    }
+
+    Integer getCacheHash() {
+
+        return (table.cCache == null) ? null
+                                      : ValuePool.getInt(
+                                          table.cCache.hashCode());
     }
 
     String getCachePath() {
 
-        return (table.cCache == null)
-        ? null
-        : new File(table.cCache.sName).getAbsolutePath();
+        return (table.cCache == null) ? null
+                                      : new File(table.cCache.sName)
+                                          .getAbsolutePath();
     }
-
 
     Integer getColBufLen(int i) {
 
-        int         size;
-        int         type;
-        Column      column;
+        int    size;
+        int    type;
+        Column column;
 
         column = table.getColumn(i);
-        type = column.getType();
+        type   = column.getType();
 
         switch (type) {
 
@@ -170,17 +166,17 @@ final class DITableInfo implements DITypes {
         }
 
         return (size > 0) ? ValuePool.getInt(size)
-        : null;
+                          : null;
     }
 
     Integer getColCharOctLen(int i) {
 
-        int         size;
-        int         type;
-        Column      column;
+        int    size;
+        int    type;
+        Column column;
 
         column = table.getColumn(i);
-        type = column.getType();
+        type   = column.getType();
 
         switch (type) {
 
@@ -206,9 +202,8 @@ final class DITableInfo implements DITypes {
             }
         }
 
-        return (size == 0)
-        ? null
-        : ValuePool.getInt(size);
+        return (size == 0) ? null
+                           : ValuePool.getInt(size);
     }
 
     Integer getColDataType(int i) {
@@ -227,11 +222,9 @@ final class DITableInfo implements DITypes {
 
         Column column = table.getColumn(i);
 
-        return (column.isNullable() || !column.isIdentity())
-        ? "YES"
-        : "NO";
+        return (column.isNullable() ||!column.isIdentity()) ? "YES"
+                                                            : "NO";
     }
-
 
     String getColName(int i) {
         return table.getColumn(i).columnName.name;
@@ -241,16 +234,16 @@ final class DITableInfo implements DITypes {
 
         Column column = table.getColumn(i);
 
-        return  (column.isNullable() && !column.isIdentity())
-        ? ValuePool.getInt(DatabaseMetaData.columnNullable)
-        : ValuePool.getInt(DatabaseMetaData.columnNoNulls);
+        return (column.isNullable() &&!column.isIdentity())
+               ? ValuePool.getInt(DatabaseMetaData.columnNullable)
+               : ValuePool.getInt(DatabaseMetaData.columnNoNulls);
     }
 
     Integer getColPrecRadix(int i) {
 
         ti.setTypeCode(table.getColumn(i).getType());
-        return ti.getNumPrecRadix();
 
+        return ti.getNumPrecRadix();
     }
 
     String getColRemarks(int i) {
@@ -266,14 +259,13 @@ final class DITableInfo implements DITypes {
         return BundleHandler.getString(hnd_column_remarks, key);
     }
 
-
     Integer getColScale(int i) {
 
         Column column;
-        int type;
+        int    type;
 
         column = table.getColumn(i);
-        type = column.getType();
+        type   = column.getType();
 
         switch (type) {
 
@@ -283,20 +275,18 @@ final class DITableInfo implements DITypes {
             }
             default :
                 ti.setTypeCode(type);
+
                 return ti.getDefaultScale();
         }
     }
-
 
     String getColScopeCat(int i) {
         return null;
     }
 
-
     String getColScopeSchem(int i) {
         return null;
     }
-
 
     String getColScopeTable(int i) {
         return null;
@@ -305,8 +295,8 @@ final class DITableInfo implements DITypes {
     Integer getColSize(int i) {
 
         Column column;
-        int type;
-        int size;
+        int    type;
+        int    size;
 
         column = table.getColumn(i);
         type   = column.getType();
@@ -337,6 +327,7 @@ final class DITableInfo implements DITypes {
 
         if (size == 0) {
             ti.setTypeCode(type);
+
             return ti.getPrecision();
         }
 
@@ -344,12 +335,16 @@ final class DITableInfo implements DITypes {
     }
 
     Integer getColSqlDataType(int i) {
+
         ti.setTypeCode(table.getColumn(i).getType());
+
         return ti.getSqlDataType();
     }
 
     Integer getColSqlDateTimeSub(int i) {
+
         ti.setTypeCode(table.getColumn(i).getType());
+
         return ti.getSqlDateTimeSub();
     }
 
@@ -367,7 +362,8 @@ final class DITableInfo implements DITypes {
             }
             case Table.CACHED_TABLE :
             case Table.SYSTEM_TABLE : {
-                return table.isCached() ? "CACHED" : "MEMORY";
+                return table.isCached() ? "CACHED"
+                                        : "MEMORY";
             }
             case Table.TEMP_TEXT_TABLE :
             case Table.TEXT_TABLE : {
@@ -390,6 +386,7 @@ final class DITableInfo implements DITypes {
     }
 
     String getIndexColDirection(int i, int columnPosition) {
+
         // so far, hsqldb only supports completely ascending indexes
         return "A";
     }
@@ -399,13 +396,17 @@ final class DITableInfo implements DITypes {
     }
 
     String getIndexName(int i) {
+
         HsqlArrayList vIndex = table.vIndex;
-        Index index = (vIndex == null)
-        ? null : (Index) vIndex.get(i);
-        return (index == null) ? null : index.getName().name;
+        Index         index  = (vIndex == null) ? null
+                                                : (Index) vIndex.get(i);
+
+        return (index == null) ? null
+                               : index.getName().name;
     }
 
     Integer getIndexPages(int i) {
+
         // not supported yet: hsqldb does not even know what a "page" is
         return null;
     }
@@ -424,19 +425,24 @@ final class DITableInfo implements DITypes {
 
     Long getNextIdentity() {
 
-        Index pi = table.getPrimaryIndex();
+        Index pi;
 
-        return (table.iIdentityColumn > -1 && pi != null && pi.getVisibleColumns() > 0)
-        ? ValuePool.getLong(table.iIdentityId)
-        : null;
+        if (table.iIdentityColumn < 0) {
+            return null;
+        }
+
+        pi = table.getPrimaryIndex();
+
+        return (pi != null && pi.getVisibleColumns() > 0)
+               ? ValuePool.getLong(table.iIdentityId)
+               : null;
     }
-
 
     String getRemark() {
 
         return (table.tableType == Table.SYSTEM_TABLE)
-        ? BundleHandler.getString(hnd_table_remarks, getName())
-        : null;
+               ? BundleHandler.getString(hnd_table_remarks, getName())
+               : null;
     }
 
     String getStandardType() {
@@ -462,7 +468,6 @@ final class DITableInfo implements DITypes {
         return this.table;
     }
 
-
     Boolean isDataSourceDescending() {
         return ValuePool.getBoolean(table.isDescDataSource());
     }
@@ -472,19 +477,27 @@ final class DITableInfo implements DITypes {
     }
 
     boolean isPrimaryIndexPrimaryKey() {
+
         Index index;
-        int vcols;
+        int[] icols;
+        int   vcols;
 
         index = table.getPrimaryIndex();
 
-        if (index == null || index.getVisibleColumns() < 1) {
+        if (index == null) {
             return false;
         }
 
         vcols = index.getVisibleColumns();
 
+        if (vcols < 1) {
+            return false;
+        }
+
+        icols = index.getColumns();
+
         for (int i = 0; i < vcols; i++) {
-            if (table.getColumn(i).isNullable()) {
+            if (table.getColumn(icols[i]).isNullable()) {
                 return false;
             }
         }
@@ -492,17 +505,16 @@ final class DITableInfo implements DITypes {
         return true;
     }
 
-
     Boolean isReadOnly() {
-        return ValuePool.getBoolean(table.isDataReadOnly());
+        return ValuePool.getBoolean(table.isDataReadOnly() || table.isView());
     }
 
     HsqlArrayList listVisibleIndicies() {
 
         HsqlArrayList vIndex;
-        HsqlArrayList list ;
-        Index        primaryIndex;
-        Index        index;
+        HsqlArrayList list;
+        Index         primaryIndex;
+        Index         index;
 
         primaryIndex = table.getPrimaryIndex();
 
@@ -512,8 +524,7 @@ final class DITableInfo implements DITypes {
             list = new HsqlArrayList();
         } else {
             vIndex = table.vIndex;
-
-            list         = new HsqlArrayList(vIndex.size() - 1);
+            list   = new HsqlArrayList(vIndex.size() - 1);
 
             for (int i = 0; i < vIndex.size(); i++) {
                 index = (Index) vIndex.get(i);
@@ -531,11 +542,13 @@ final class DITableInfo implements DITypes {
         this.table = table;
     }
 
-    /** Retrieves a new <code>Result</code> object whose metadata matches that
+    /**
+     * Retrieves a new <code>Result</code> object whose metadata matches that
+     * of the specified table. <p>
+     *
+     * @param t The table from which to construct the new Result object
+     * @return a new <code>Result</code> object whose metadata matches that
      * of the specified table.
-     * @param t The table from which to construct the Result object
-     * @return a new <code>Result</code> object whose metadata matches that of the
-     * specified table.
      *
      */
     static Result createResultProto(Table t) {
@@ -556,7 +569,6 @@ final class DITableInfo implements DITypes {
             column             = t.getColumn(i);
             columnHsqlName     = column.columnName;
             columnName         = columnHsqlName.name;
-            r.sLabel[i]        = columnName;
             r.sName[i]         = columnName;
             r.isLabelQuoted[i] = columnHsqlName.isNameQuoted;
             r.colType[i]       = column.getType();
@@ -564,7 +576,8 @@ final class DITableInfo implements DITypes {
             r.colScale[i]      = column.getScale();
         }
 
+        r.sLabel = r.sName;
+
         return r;
     }
-
 }

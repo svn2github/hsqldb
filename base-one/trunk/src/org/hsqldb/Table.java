@@ -742,21 +742,24 @@ class Table {
 
     private void resetBestRowIdentifiers() {
 
-        int[]   briCols    = getPrimaryKey();
+        int[]   briCols    = null;
         boolean isStrict   = false;
         int     nNullCount = 0;
 
-        if (briCols != null) {
-            bestRowIdentifierCols   = briCols;
-            bestRowIdentifierStrict = true;
-
-            return;
-        }
-
-        for (int i = 1; i < vIndex.size(); i++) {
+        for (int i = 0; i < vIndex.size(); i++) {
             Index index = (Index) vIndex.get(i);
 
             if (!index.isUnique()) {
+                continue;
+            }
+
+            // ignore system primary keys
+            if (i == 0 && getPrimaryKey() == null) {
+                continue;
+            }
+
+            // ignore if called prior to completion of primary key construction
+            if ( colNullable == null ) {
                 continue;
             }
 
