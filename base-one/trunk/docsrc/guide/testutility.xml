@@ -1,10 +1,10 @@
-<!-- $Id: testutility.xml,v 1.8 2004/05/01 18:14:19 fredt Exp $ -->
+<!-- $Id: testutility.xml,v 1.9 2004/06/04 11:26:33 fredt Exp $ -->
 
 <appendix>
     <title>Hsqldb Test Utility</title>
     <appendixinfo>
-        <edition>$Revision: 1.8 $</edition>
-        <pubdate>$Date: 2004/05/01 18:14:19 $</pubdate>
+        <edition>$Revision: 1.9 $</edition>
+        <pubdate>$Date: 2004/06/04 11:26:33 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Test</keyword>
@@ -20,8 +20,8 @@
         To run the tests, you should compile the
         <filename>hsqldbtest.jar</filename> target with Ant.
     </para> <para>
-        For <classname>TestSelf</classname>, a batch file is provided in the demo 
-        directory.
+        For <classname>TestSelf</classname>, a batch file is provided in the 
+		testrun/hsqldb directory, together with a set of TestSelf*.txt files.
         To start the application in Windows, type:
     </para><screen>
     runtest TestSelf</screen>

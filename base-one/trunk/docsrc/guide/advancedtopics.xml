@@ -1,4 +1,4 @@
-<!-- $Id: advancedtopics.xml,v 1.12 2004/05/26 09:05:48 fredt Exp $ -->
+<!-- $Id: advancedtopics.xml,v 1.13 2004/06/04 11:26:33 fredt Exp $ -->
 
 <chapter id='advanced-chapter'>
     <title id='advanced-title'>Advanced Topics</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.12 $</edition>
-        <pubdate>$Date: 2004/05/26 09:05:48 $</pubdate>
+        <edition>$Revision: 1.13 $</edition>
+        <pubdate>$Date: 2004/06/04 11:26:33 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Advanced</keyword>
@@ -724,8 +724,10 @@
                     <row>
                         <entry namest='c1' nameend='c3'> <para>
                             The value is the size in megabytes that the
-                            <literal>.script</literal> file can reach before an
-                            automatic checkpoint occurs to rewrite the file.
+                            <literal>.log</literal> file can reach before an
+                            automatic checkpoint occurs. A checkpoint and 
+							rewrites the <literal>.script</literal> file and
+							clears the <literal>.log</literal> file.
                             The value can be changed via the <literal>SET
                             LOGSIZE nnn</literal> SQL command.
                         </para> </entry>
