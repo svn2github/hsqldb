@@ -1,4 +1,4 @@
-<!-- $Id$ -->
+<!-- $Id: texttables.xml,v 1.1 2004/04/14 22:35:00 unsaved Exp $ -->
 
 <chapter>
     <title>Text Tables</title>
@@ -20,12 +20,20 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision$</edition>
-        <pubdate>$Date$</pubdate>
+        <edition>$Revision: 1.1 $</edition>
+        <pubdate>$Date: 2004/04/14 22:35:00 $</pubdate>
         <keywordset>
             <keyword>Text</keyword>
             <keyword>Tables</keyword>
         </keywordset>
+        <legalnotice><para>
+            Copyright 2002-2004 Bob Preston and Fred Toussi.
+            Permission is granted to distribute this document without any 
+            alteration under the terms of the HSQLDB license.
+            Additional permission is granted to the HSQLDB Development Group 
+            to distribute this document with or without alterations under the 
+            terms of the HSQLDB license.
+        </para></legalnotice>
     </chapterinfo>
     <para>
         Text Table support for HSQLDB was originally developed by Bob Preston 
