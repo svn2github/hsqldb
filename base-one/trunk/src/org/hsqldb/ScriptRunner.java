@@ -140,7 +140,7 @@ public class ScriptRunner {
                     s = s.substring(s.indexOf('/', 1) + 1);
                 }
 
-                if (s.length() != 0) {
+                if (s.length() != 0 &&!current.isClosed()) {
                     Result result = current.sqlExecuteDirectNoPreChecks(s);
 
                     if (result != null
