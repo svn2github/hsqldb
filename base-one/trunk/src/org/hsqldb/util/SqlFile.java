@@ -49,7 +49,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.53 2004/06/02 13:10:08 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.54 2004/06/04 01:59:32 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -85,7 +85,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.53 $
+ * @version $Revision: 1.54 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -224,9 +224,10 @@ public class SqlFile {
         String trimmedCommand;
         String trimmedInput;
         String deTerminated;
-        String commentTestString;
         continueOnError = interactive;
         BufferedReader br       = null;
+        boolean inComment = false;  // Globbling up a comment
+        int postCommentIndex;
 
         String specifiedCharSet = System.getProperty("sqlfile.charset");
         try {
@@ -257,6 +258,21 @@ public class SqlFile {
                     break;
                 }
                 curLinenum++;
+                if (inComment) {
+                    postCommentIndex = inputLine.indexOf("*/", 2) + 2;
+                    if (postCommentIndex > 1) {
+                        // I see no reason to leave comments in history.
+                        inputLine = inputLine.substring(postCommentIndex);
+                        // Empty the buffer.  The non-comment remainder of
+                        // this line is either the beginning of a new SQL
+                        // or Special command, or an empty line.
+                        stringBuffer.setLength(0);
+                        inComment = false;
+                    } else {
+                        // Just completely ignore the input line.
+                        continue;
+                    }
+                }
                 trimmedInput = inputLine.trim();
                 try {
                     // This is the try for SQLException.  SQLExceptions are
@@ -264,6 +280,23 @@ public class SqlFile {
                     // could be called up above if a Special processing
                     // executes a SQL command from history.
                     if (stringBuffer.length() == 0) {
+                        if (trimmedInput.startsWith("/*")) {
+                            postCommentIndex = 
+                                trimmedInput.indexOf("*/", 2) + 2;
+                            if (postCommentIndex > 1) {
+                                // I see no reason to leave comments in 
+                                // history.
+                                inputLine = inputLine.substring(
+                                        postCommentIndex + inputLine.length()
+                                        - trimmedInput.length());
+                                trimmedInput = inputLine.trim();
+                            } else {
+                                // Just so we get continuation lines:
+                                stringBuffer.append("COMMENT");
+                                inComment = true;
+                                continue;
+                            }
+                        }
                         // This is just to filter out useless newlines at
                         // beginning of commands.
                         if (trimmedInput.length() == 0) {
@@ -303,7 +336,7 @@ public class SqlFile {
                         }
                     }
                     if (trimmedInput.length() == 0) {
-                        if (interactive) {
+                        if (interactive && !inComment) {
                             setBuf(stringBuffer.toString());
                             stringBuffer.setLength(0);
                             stdprintln("Current input moved into buffer.");
@@ -320,11 +353,6 @@ public class SqlFile {
                             (deTerminated == null) ? inputLine : deTerminated);
                     }
                     if (deTerminated == null) {
-                        commentTestString = stringBuffer.toString().trim();
-                        if (commentTestString.startsWith("/*")
-                                && commentTestString.endsWith("*/")) {
-                            stringBuffer.setLength(0);
-                        }
                         continue;
                     }
                     // If we reach here, then stringBuffer contains a complete
@@ -334,17 +362,10 @@ public class SqlFile {
                     if (trimmedCommand.length() == 0) {
                         throw new SQLException("Empty SQL Statement");
                     }
-                    // If not completely SQL comment
-                    if ((!trimmedCommand.startsWith(
-                            "/*")) || (!trimmedCommand.endsWith(
-                            "*/")) || (trimmedCommand.indexOf(
-                                "/*", 2) > -1) || (trimmedCommand.lastIndexOf(
-                                "*/", trimmedCommand.length() - 4) > -1)) {
-                        if (interactive) {
-                            setBuf(curCommand);
-                        }
-                        processStatement();
+                    if (interactive) {
+                        setBuf(curCommand);
                     }
+                    processStatement();
                 } catch (SQLException se) {
                     errprintln("SQL Error at '" + ((file == null)
                             ? "stdin"
@@ -356,7 +377,7 @@ public class SqlFile {
                 }
                 stringBuffer.setLength(0);
             }
-            if (stringBuffer.length() != 0) {
+            if (inComment || stringBuffer.length() != 0) {
                 errprintln("Unterminated input:  [" + stringBuffer + ']');
             }
         } finally {
