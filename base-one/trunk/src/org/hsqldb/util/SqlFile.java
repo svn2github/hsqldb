@@ -52,7 +52,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.61 2004/06/05 10:58:17 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.62 2004/06/05 14:32:46 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -88,7 +88,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.61 $
+ * @version $Revision: 1.62 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -109,8 +109,8 @@ public class SqlFile {
         "                                                                 ";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.61 $".substring("$Revision: ".length(),
-                "$Revision: 1.61 $".length() - 2);
+        revnum = "$Revision: 1.62 $".substring("$Revision: ".length(),
+                "$Revision: 1.62 $".length() - 2);
     }
     private static String BANNER =
         "SqlFile processor v. " + revnum + ".\n"
@@ -168,9 +168,12 @@ public class SqlFile {
         + "    * list [VARNAME1...]          List values of variable(s) (defaults to all)\n\n"
         + "    * foreach VARNAME ([val1...]) Repeat the following PL block with \n"
         + "                                  given variable value each time\n"
+        + "    * if (log expr)               Execute following PL block only if expr true\n"
+        + "    * while (log expr)            Repeat following PL block while expr true\n"
         + "    * end                         Ends a PL block\n\n"
         + "Use defined PL variables in SQL or Special commands like: *{VARNAME}.\n"
         + "You may omit the {}'s iff *VARNAME is the first word of a SQL command.\n"
+        + "Use defined PL variables in logical expressions like: *VARNAME.\n"
         + "No variable substitutions are performed until you run any '* ...' command\n"
         + "(other than '* ?').\n";
 
@@ -844,6 +847,80 @@ public class SqlFile {
             }
             return;
         }
+        if (arg1.equals("if")) {
+            if (toker.countTokens() < 1) {
+                throw new BadSpecial("Malformatted PL if command (1)");
+            }
+            String parenExpr = toker.nextToken("").trim();
+            if (parenExpr.length() < 2 || parenExpr.charAt(0) != '('
+                    || parenExpr.charAt(parenExpr.length() - 1) != ')') {
+                throw new BadSpecial("Malformatted PL if command (2)");
+            }
+            String[] values = getTokenArray(parenExpr.substring(1,
+                    parenExpr.length() - 1));
+            File tmpFile = null;
+            try {
+                tmpFile = plBlockFile();
+            } catch (IOException ioe) {
+                throw new BadSpecial(
+                    "Failed to write given PL block temp file: " + ioe);
+            }
+            try {
+                if (eval(values)) {
+                    (new SqlFile(tmpFile, false, userVars)).execute(curConn);
+                }
+            } catch (BadSpecial bs) {
+                throw new BadSpecial("Malformatted PL while command (3): "
+                        + bs);
+            } catch (Exception e) {
+                throw new BadSpecial(
+                        "Failed to execute SQL from PL block.  "
+                        + e.getMessage());
+            }
+            if (tmpFile != null && !tmpFile.delete()) {
+                throw new BadSpecial(
+                    "Error occurred while trying to remove temp file '" 
+                    + tmpFile + "'");
+            }
+            return;
+        }
+        if (arg1.equals("while")) {
+            if (toker.countTokens() < 1) {
+                throw new BadSpecial("Malformatted PL while command (1)");
+            }
+            String parenExpr = toker.nextToken("").trim();
+            if (parenExpr.length() < 2 || parenExpr.charAt(0) != '('
+                    || parenExpr.charAt(parenExpr.length() - 1) != ')') {
+                throw new BadSpecial("Malformatted PL while command (2)");
+            }
+            String[] values = getTokenArray(parenExpr.substring(1,
+                    parenExpr.length() - 1));
+            File tmpFile = null;
+            try {
+                tmpFile = plBlockFile();
+            } catch (IOException ioe) {
+                throw new BadSpecial(
+                    "Failed to write given PL block temp file: " + ioe);
+            }
+            try {
+                while (eval(values)) {
+                    (new SqlFile(tmpFile, false, userVars)).execute(curConn);
+                }
+            } catch (BadSpecial bs) {
+                throw new BadSpecial("Malformatted PL while command (3): "
+                        + bs);
+            } catch (Exception e) {
+                throw new BadSpecial(
+                        "Failed to execute SQL from PL block.  "
+                        + e.getMessage());
+            }
+            if (tmpFile != null && !tmpFile.delete()) {
+                throw new BadSpecial(
+                    "Error occurred while trying to remove temp file '" 
+                    + tmpFile + "'");
+            }
+            return;
+        }
         if ((toker.countTokens() == 0) || !toker.nextToken().equals("=")) {
             throw new BadSpecial("Unknown PL command (2)");
         }
@@ -1442,5 +1519,48 @@ public class SqlFile {
             sa[i] = toker.nextToken();
         }
         return sa;
+    }
+
+    private boolean eval(String[] inTokens) throws BadSpecial {
+        // dereference *VARNAME variables.
+        // N.b. we work with a "copy" of the tokens.
+        String[] tokens = new String[inTokens.length];
+        for (int i = 0; i < tokens.length; i++) {
+            tokens[i] = (inTokens[i].length() > 1
+                    && inTokens[i].charAt(0) == '*')
+                          ? ((String) userVars.get(inTokens[i].substring(1)))
+                          : inTokens[i];
+            if (tokens[i] == null) {
+                tokens[i] = "";
+            }
+        }
+        if (tokens.length == 1) {
+            return (tokens[0].length() > 0 && !tokens[0].equals("0"));
+        }
+        if (tokens.length == 3) {
+            if (tokens[1].equals("==")) {
+                return tokens[0].equals(tokens[2]);
+            }
+            if (tokens[1].equals("!=") 
+                || tokens[1].equals("<>") 
+                || tokens[1].equals("><")) {
+                return !tokens[0].equals(tokens[2]);
+            }
+            if (tokens[1].equals(">")) {
+                return tokens[0].length() > tokens[2].length()
+                    || (
+                            (tokens[0].length() == tokens[2].length())
+                            && tokens[0].compareTo(tokens[2]) > 0
+                    );
+            }
+            if (tokens[1].equals("<")) {
+                return tokens[2].length() > tokens[0].length()
+                    || (
+                            (tokens[2].length() == tokens[0].length())
+                            && tokens[2].compareTo(tokens[0]) > 0
+                    );
+            }
+        }
+        throw new BadSpecial("Unrecognized logical operation");
     }
 }
