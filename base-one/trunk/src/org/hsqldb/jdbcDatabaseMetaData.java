@@ -350,14 +350,14 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
     /** The connection this object uses to retrieve database instance-specific
      * metadata.
      */
-    private jdbcConnection _connection;
+    private jdbcConnection connection;
 
     /** A CSV list representing the SQL IN list to use when generating
      * queries for <code>getBestRowIdentifier</code> when the
      * <code>scope</code> argument is <code>bestRowSession</code>.
      * @since HSQLDB 1.7.2
      */
-    private static final String _BRI_SESSION_SCOPE_IN_LIST =
+    private static final String BRI_SESSION_SCOPE_IN_LIST =
     "("+bestRowSession+")";
 
     /** A CSV list representing the SQL IN list to use when generating
@@ -365,7 +365,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <code>scope</code> argument is <code>bestRowTemporary</code>.
      * @since HSQLDB 1.7.2
      */
-    private static final String _BRI_TEMPORARY_SCOPE_IN_LIST =
+    private static final String BRI_TEMPORARY_SCOPE_IN_LIST =
     "("+bestRowTemporary+","+bestRowTransaction+","+bestRowSession+")";
 
     /** A CSV list representing the SQL IN list to use when generating
@@ -373,13 +373,13 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <code>scope</code> argument is <code>bestRowTransaction</code>.
      * @since HSQLDB 1.7.2
      */
-    private static final String _BRI_TRANSACTION_SCOPE_IN_LIST =
+    private static final String BRI_TRANSACTION_SCOPE_IN_LIST =
     "("+bestRowTransaction+","+bestRowSession+")";
 
     /** A string buffer that is reused to compile meta-data SQL queries
      * @since HSQLDB 1.7.2
      */
-    private final StringBuffer _sb = new StringBuffer(256);
+    private final StringBuffer sb = new StringBuffer(256);
 
 
     /** A <code>StringBuffer</code> pre-loaded with "SELECT * FROM "
@@ -388,7 +388,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * generate returned <code>ResultSet</code> objects.
      * @since HSQLDB 1.7.2
      */
-    private static final StringBuffer _selstar = new StringBuffer("SELECT * FROM ");
+    private static final StringBuffer selstar = new StringBuffer("SELECT * FROM ");
 
     /** " WHERE 1=1 ", in the form of a string buffer. <p>
      *
@@ -399,7 +399,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * end of this and Presto! Everything works :-) <p>
      * @since HSQLDB 1.7.2
      */
-    private static final StringBuffer _whereTrue = new StringBuffer(" WHERE 1=1 ");
+    private static final StringBuffer whereTrue = new StringBuffer(" WHERE 1=1 ");
 
 
     //----------------------------------------------------------------------
@@ -497,7 +497,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // CHECKME:
         // is this always correct?
         // boucherb@users 20020426
-        return "jdbc:hsqldb:" + _connection.getName();
+        return "jdbc:hsqldb:" + connection.getName();
     }
 
     /**
@@ -513,7 +513,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
             Trace.trace();
         }
 
-        ResultSet r =_execute("CALL USER()");
+        ResultSet r =execute("CALL USER()");
 
         r.next();
 
@@ -546,7 +546,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
             Trace.trace();
         }
 
-        ResultSet r =_execute("CALL \"org.hsqldb.Library.isReadOnlyDatabase\"()");
+        ResultSet r =execute("CALL \"org.hsqldb.Library.isReadOnlyDatabase\"()");
 
         r.next();
 
@@ -680,7 +680,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         }
 
         ResultSet rs =
-        _execute("call \"org.hsqldb.Library.getDatabaseProductName\"()");
+        execute("call \"org.hsqldb.Library.getDatabaseProductName\"()");
 
         rs.next();
 
@@ -704,7 +704,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         }
 
         ResultSet rs =
-        _execute("call \"org.hsqldb.Library.getDatabaseProductVersion\"()");
+        execute("call \"org.hsqldb.Library.getDatabaseProductVersion\"()");
 
         rs.next();
 
@@ -793,7 +793,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         // SEE: FIXME at jdbcConnection.usesLocalFiles()
         // boucherb@users 20020426
-        return _connection.usesLocalFiles();
+        return connection.usesLocalFiles();
     }
 
     /**
@@ -3632,20 +3632,20 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
                                    String procedureNamePattern)
                                    throws SQLException {
 
-        if (_wantsIsNull(procedureNamePattern)) {
-            return _executeSelect("SYSTEM_PROCEDURES","0=1");
+        if (wantsIsNull(procedureNamePattern)) {
+            return executeSelect("SYSTEM_PROCEDURES","0=1");
         }
 
 
         StringBuffer select =
-        _toQueryPrefix("SYSTEM_PROCEDURES")
-        .append(_and("PROCEDURE_CAT","LIKE",catalog))
-        .append(_and("PROCEDURE_SCHEM","LIKE",schemaPattern))
-        .append(_and("PROCEDURE_NAME","LIKE",procedureNamePattern));
+        toQueryPrefix("SYSTEM_PROCEDURES")
+        .append(and("PROCEDURE_CAT","=",catalog))
+        .append(and("PROCEDURE_SCHEM","LIKE",schemaPattern))
+        .append(and("PROCEDURE_NAME","LIKE",procedureNamePattern));
 
         // By default, query already returns the result ordered by
         // PROCEDURE_SCHEM, PROCEDURE_NAME...
-        return _execute(select.toString());
+        return execute(select.toString());
     }
 
     /**
@@ -3731,22 +3731,22 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
                                          String columnNamePattern)
                                          throws SQLException {
         if (
-            _wantsIsNull(procedureNamePattern) ||
-            _wantsIsNull(columnNamePattern)
+            wantsIsNull(procedureNamePattern) ||
+            wantsIsNull(columnNamePattern)
         ) {
-            return _executeSelect("SYSTEM_PROCEDURECOLUMNS","0=1");
+            return executeSelect("SYSTEM_PROCEDURECOLUMNS","0=1");
         }
 
         StringBuffer select =
-        _toQueryPrefix("SYSTEM_PROCEDURECOLUMNS")
-        .append(_and("PROCEDURE_CAT","LIKE",catalog))
-        .append(_and("PROCEDURE_SCHEM","LIKE",schemaPattern))
-        .append(_and("PROCEDURE_NAME","LIKE",procedureNamePattern))
-        .append(_and("COLUMN_NAME","LIKE",columnNamePattern));
+        toQueryPrefix("SYSTEM_PROCEDURECOLUMNS")
+        .append(and("PROCEDURE_CAT","=",catalog))
+        .append(and("PROCEDURE_SCHEM","LIKE",schemaPattern))
+        .append(and("PROCEDURE_NAME","LIKE",procedureNamePattern))
+        .append(and("COLUMN_NAME","LIKE",columnNamePattern));
 
         // By default, query already returns result ordered by
         // PROCEDURE_SCHEM and PROCEDURE_NAME...
-        return _execute(select.toString());
+        return execute(select.toString());
     }
 
     /**
@@ -3816,17 +3816,17 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
                                String types[]) throws SQLException {
 
         if (
-            _wantsIsNull(tableNamePattern) ||
+            wantsIsNull(tableNamePattern) ||
             (types != null && types.length == 0)
         ) {
-            return _executeSelect("SYSTEM_TABLES","0=1");
+            return executeSelect("SYSTEM_TABLES","0=1");
         }
 
         StringBuffer select =
-        _toQueryPrefix("SYSTEM_TABLES")
-        .append(_and("TABLE_CAT","LIKE",catalog))
-        .append(_and("TABLE_SCHEM","LIKE",schemaPattern))
-        .append(_and("TABLE_NAME","LIKE",tableNamePattern));
+        toQueryPrefix("SYSTEM_TABLES")
+        .append(and("TABLE_CAT","=",catalog))
+        .append(and("TABLE_SCHEM","LIKE",schemaPattern))
+        .append(and("TABLE_NAME","LIKE",tableNamePattern));
         if (types == null) {
             // do not use to narrow search
         } else {
@@ -3838,7 +3838,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         // By default, query already returns result ordered by
         // TABLE_TYPE, TABLE_SCHEM and TABLE_NAME...
-        return _execute(select.toString());
+        return execute(select.toString());
     }
 
     /**
@@ -3873,7 +3873,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public ResultSet getSchemas() throws SQLException {
         // By default, query already returns the result in contract order
-        return _executeSelect("SYSTEM_SCHEMAS",null);
+        return executeSelect("SYSTEM_SCHEMAS",null);
     }
 
     /**
@@ -3904,7 +3904,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public ResultSet getCatalogs() throws SQLException {
-        return _executeSelect("SYSTEM_CATALOGS", null);
+        return executeSelect("SYSTEM_CATALOGS", null);
     }
 
     /**
@@ -3937,7 +3937,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public ResultSet getTableTypes() throws SQLException {
         // system table producer returns rows in contract order
-        return _executeSelect("SYSTEM_TABLETYPES", null);
+        return executeSelect("SYSTEM_TABLETYPES", null);
     }
 
     /**
@@ -4029,22 +4029,22 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
                                 String columnNamePattern)
                                 throws SQLException {
         if (
-            _wantsIsNull(tableNamePattern) ||
-            _wantsIsNull(columnNamePattern)
+            wantsIsNull(tableNamePattern) ||
+            wantsIsNull(columnNamePattern)
         ) {
-            return _executeSelect("SYSTEM_COLUMNS","0=1");
+            return executeSelect("SYSTEM_COLUMNS","0=1");
         }
 
         StringBuffer select =
-        _toQueryPrefix("SYSTEM_COLUMNS")
-        .append(_and("TABLE_CAT","LIKE",catalog))
-        .append(_and("TABLE_SCHEM","LIKE",schemaPattern))
-        .append(_and("TABLE_NAME","LIKE",tableNamePattern))
-        .append(_and("COLUMN_NAME","LIKE",columnNamePattern));
+        toQueryPrefix("SYSTEM_COLUMNS")
+        .append(and("TABLE_CAT","=",catalog))
+        .append(and("TABLE_SCHEM","LIKE",schemaPattern))
+        .append(and("TABLE_NAME","LIKE",tableNamePattern))
+        .append(and("COLUMN_NAME","LIKE",columnNamePattern));
 
         // by default, query already returns the result ordered
         // by TABLE_SCHEM, TABLE_NAME and ORDINAL_POSITION
-        return _execute(select.toString());
+        return execute(select.toString());
     }
 
     /**
@@ -4107,22 +4107,22 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
                                          throws SQLException {
 
         if (
-            _wantsIsNull(table) ||
-            _wantsIsNull(columnNamePattern)
+            wantsIsNull(table) ||
+            wantsIsNull(columnNamePattern)
         ) {
-            return _executeSelect("SYSTEM_COLUMNPRIVILEGES","0=1");
+            return executeSelect("SYSTEM_COLUMNPRIVILEGES","0=1");
         }
 
         StringBuffer select =
-        _toQueryPrefix("SYSTEM_COLUMNPRIVILEGES")
-        .append(_and("TABLE_CAT","LIKE",catalog))
-        .append(_and("TABLE_SCHEM","LIKE",schema))
-        .append(_and("TABLE_NAME","LIKE",table))
-        .append(_and("COLUMN_NAME","LIKE",columnNamePattern));
+        toQueryPrefix("SYSTEM_COLUMNPRIVILEGES")
+        .append(and("TABLE_CAT","=",catalog))
+        .append(and("TABLE_SCHEM","=",schema))
+        .append(and("TABLE_NAME","=",table))
+        .append(and("COLUMN_NAME","LIKE",columnNamePattern));
 
         // By default, the query already returns the result
         // ordered by column name, privilege...
-        return _execute(select.toString());
+        return execute(select.toString());
     }
 
     /**
@@ -4185,19 +4185,19 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
                                         String tableNamePattern)
                                         throws SQLException {
 
-        if (_wantsIsNull(tableNamePattern)) {
-            return _executeSelect("SYSTEM_TABLEPRIVILEGES","0=1");
+        if (wantsIsNull(tableNamePattern)) {
+            return executeSelect("SYSTEM_TABLEPRIVILEGES","0=1");
         }
 
         StringBuffer select =
-        _toQueryPrefix("SYSTEM_TABLEPRIVILEGES")
-        .append(_and("TABLE_CAT","LIKE",catalog))
-        .append(_and("TABLE_SCHEM","LIKE",schemaPattern))
-        .append(_and("TABLE_NAME","LIKE",tableNamePattern));
+        toQueryPrefix("SYSTEM_TABLEPRIVILEGES")
+        .append(and("TABLE_CAT","=",catalog))
+        .append(and("TABLE_SCHEM","LIKE",schemaPattern))
+        .append(and("TABLE_NAME","LIKE",tableNamePattern));
 
         // By default, the query already returns a result ordered by
         // TABLE_SCHEM, TABLE_NAME, and PRIVILEGE...
-        return _execute(select.toString());
+        return execute(select.toString());
     }
 
     /**
@@ -4272,38 +4272,30 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 
        switch (scope) {
            case bestRowTemporary:
-               scopeIn = _BRI_TEMPORARY_SCOPE_IN_LIST;
+               scopeIn = BRI_TEMPORARY_SCOPE_IN_LIST;
                break;
            case bestRowTransaction:
-               scopeIn = _BRI_TRANSACTION_SCOPE_IN_LIST;
+               scopeIn = BRI_TRANSACTION_SCOPE_IN_LIST;
                break;
            case bestRowSession:
-               scopeIn = _BRI_SESSION_SCOPE_IN_LIST;
+               scopeIn = BRI_SESSION_SCOPE_IN_LIST;
                break;
            default:
                throw Trace.error(Trace.ASSERT_FAILED,"invalid scope value");
        }
 
-        if (_wantsIsNull(table)) {
-            return _executeSelect("SYSTEM_BESTROWIDENTIFIER","0=1");
+        if (wantsIsNull(table)) {
+            return executeSelect("SYSTEM_BESTROWIDENTIFIER","0=1");
         }
 
        Integer Nullable = (nullable) ? null : ValuePool.getInt(columnNoNulls);
 
-        // "LIKE" doesn't make much sense here: in general, there is
-        // no way  to know which table the columns are coming from,
-        // because the result set contract does not require the table
-        // cat, schem, name to be included (even though we do include
-        // them as of 1.7.2) However, we stick to the general contract
-        // for JDBC DatabaseMetaData paramters, where "" => IS NULL,
-        // null => drop from WHERE clause and any other value => LIKE
-        // Perhaps this should be given special treatment, though?
         StringBuffer    select   =
-         _toQueryPrefix("SYSTEM_BESTROWIDENTIFIER")
-        .append(_and("TABLE_CAT","LIKE",catalog))
-        .append(_and("TABLE_SCHEM","LIKE",schema))
-        .append(_and("TABLE_NAME","LIKE",table))
-        .append(_and("NULLABLE","=",Nullable))
+         toQueryPrefix("SYSTEM_BESTROWIDENTIFIER")
+        .append(and("TABLE_CAT","=",catalog))
+        .append(and("TABLE_SCHEM","=",schema))
+        .append(and("TABLE_NAME","=",table))
+        .append(and("NULLABLE","=",Nullable))
         .append(" AND SCOPE IN " + scopeIn);
 
         // by default, query already returns rows in contract order.
@@ -4312,7 +4304,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // will want only one table and the system table producer (for
         // now) guarantees that a maximum of BRI one scope column set is
         // produced for each table
-        return _execute(select.toString());
+        return execute(select.toString());
     }
 
     /**
@@ -4364,18 +4356,18 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public ResultSet getVersionColumns(String catalog, String schema,
                                        String table) throws SQLException {
-        if (_wantsIsNull(table)) {
-            return _executeSelect("SYSTEM_VERSIONCOLUMNS","0=1");
+        if (wantsIsNull(table)) {
+            return executeSelect("SYSTEM_VERSIONCOLUMNS","0=1");
         }
 
         StringBuffer select =
-        _toQueryPrefix("SYSTEM_VERSIONCOLUMNS")
-        .append(_and("TABLE_CAT","LIKE",catalog))
-        .append(_and("TABLE_SCHEM","LIKE",schema))
-        .append(_and("TABLE_NAME","LIKE",table));
+        toQueryPrefix("SYSTEM_VERSIONCOLUMNS")
+        .append(and("TABLE_CAT","=",catalog))
+        .append(and("TABLE_SCHEM","=",schema))
+        .append(and("TABLE_NAME","=",table));
 
         // result does not need to be ordered
-        return _execute(select.toString());
+        return execute(select.toString());
     }
 
     /**
@@ -4424,18 +4416,18 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
     public ResultSet getPrimaryKeys(String catalog, String schema,
                                     String table) throws SQLException {
 
-        if ( _wantsIsNull(table) ) {
-            return _executeSelect("SYSTEM_PRIMARYKEYS","0=1");
+        if ( wantsIsNull(table) ) {
+            return executeSelect("SYSTEM_PRIMARYKEYS","0=1");
         }
 
         StringBuffer select =
-        _toQueryPrefix("SYSTEM_PRIMARYKEYS")
-        .append(_and("TABLE_CAT","LIKE",catalog))
-        .append(_and("TABLE_SCHEM","LIKE",schema))
-        .append(_and("TABLE_NAME","LIKE",table));
+        toQueryPrefix("SYSTEM_PRIMARYKEYS")
+        .append(and("TABLE_CAT","=",catalog))
+        .append(and("TABLE_SCHEM","=",schema))
+        .append(and("TABLE_NAME","=",table));
 
         // By default, query already returns result in contract order
-        return _execute(select.toString());
+        return execute(select.toString());
     }
 
     /**
@@ -4528,18 +4520,18 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
     public ResultSet getImportedKeys(String catalog, String schema,
                                      String table) throws SQLException {
 
-        if ( _wantsIsNull(table) ) {
-            return _executeSelect("SYSTEM_CROSSREFERENCE","0=1");
+        if ( wantsIsNull(table) ) {
+            return executeSelect("SYSTEM_CROSSREFERENCE","0=1");
         }
 
         StringBuffer select =
-        _toQueryPrefix("SYSTEM_CROSSREFERENCE")
-        .append(_and("FKTABLE_CAT","LIKE",catalog))
-        .append(_and("FKTABLE_SCHEM","LIKE",schema))
-        .append(_and("FKTABLE_NAME","LIKE",table))
+        toQueryPrefix("SYSTEM_CROSSREFERENCE")
+        .append(and("FKTABLE_CAT","=",catalog))
+        .append(and("FKTABLE_SCHEM","=",schema))
+        .append(and("FKTABLE_NAME","=",table))
         .append(" ORDER BY PKTABLE_CAT, PKTABLE_SCHEM, PKTABLE_NAME, KEY_SEQ");
 
-        return _execute(select.toString());
+        return execute(select.toString());
     }
 
     /**
@@ -4634,19 +4626,19 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
     public ResultSet getExportedKeys(String catalog, String schema,
                                      String table) throws SQLException {
 
-        if (_wantsIsNull(table)) {
-            return _executeSelect("SYSTEM_CROSSREFERENCE","0=1");
+        if (wantsIsNull(table)) {
+            return executeSelect("SYSTEM_CROSSREFERENCE","0=1");
         }
 
         StringBuffer select =
-        _toQueryPrefix("SYSTEM_CROSSREFERENCE")
-        .append(_and("PKTABLE_CAT","LIKE",catalog))
-        .append(_and("PKTABLE_SCHEM","LIKE",schema))
-        .append(_and("PKTABLE_NAME","LIKE",table));
+        toQueryPrefix("SYSTEM_CROSSREFERENCE")
+        .append(and("PKTABLE_CAT","=",catalog))
+        .append(and("PKTABLE_SCHEM","=",schema))
+        .append(and("PKTABLE_NAME","=",table));
 
         // By default, query already returns the table ordered by
         // FKTABLE_CAT, FKTABLE_SCHEM, FKTABLE_NAME, and KEY_SEQ.
-        return _execute(select.toString());
+        return execute(select.toString());
     }
 
     /**
@@ -4755,24 +4747,24 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
                                        String foreignTable)
                                        throws SQLException {
         if (
-            _wantsIsNull(primaryTable) ||
-            _wantsIsNull(foreignTable)
+            wantsIsNull(primaryTable) ||
+            wantsIsNull(foreignTable)
         ) {
-            return _executeSelect("SYSTEM_CROSSREFERENCE","0=1");
+            return executeSelect("SYSTEM_CROSSREFERENCE","0=1");
         }
 
         StringBuffer select =
-        _toQueryPrefix("SYSTEM_CROSSREFERENCE")
-        .append(_and("PKTABLE_CAT","LIKE",primaryCatalog))
-        .append(_and("PKTABLE_SCHEM","LIKE",primarySchema))
-        .append(_and("PKTABLE_NAME","LIKE",primaryTable))
-        .append(_and("PKTABLE_CAT","LIKE",foreignCatalog))
-        .append(_and("PKTABLE_SCHEM","LIKE",foreignSchema))
-        .append(_and("PKTABLE_NAME","LIKE",foreignTable));
+        toQueryPrefix("SYSTEM_CROSSREFERENCE")
+        .append(and("PKTABLE_CAT","=",primaryCatalog))
+        .append(and("PKTABLE_SCHEM","=",primarySchema))
+        .append(and("PKTABLE_NAME","=",primaryTable))
+        .append(and("PKTABLE_CAT","=",foreignCatalog))
+        .append(and("PKTABLE_SCHEM","=",foreignSchema))
+        .append(and("PKTABLE_NAME","=",foreignTable));
 
         // by default, query already returns the table ordered by
         // FKTABLE_CAT, FKTABLE_SCHEM, FKTABLE_NAME, and KEY_SEQ.
-        return _execute(select.toString());
+        return execute(select.toString());
     }
 
     /**
@@ -4838,7 +4830,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public ResultSet getTypeInfo() throws SQLException {
         // system table producer returns rows in contract order
-        return _executeSelect("SYSTEM_TYPEINFO", null);
+        return executeSelect("SYSTEM_TYPEINFO", null);
     }
 
     /**
@@ -4926,8 +4918,8 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
                                   String table, boolean unique,
                                   boolean approximate) throws SQLException {
 
-        if ( _wantsIsNull(table)) {
-            return _executeSelect("SYSTEM_INDEXINFO","0=1");
+        if ( wantsIsNull(table)) {
+            return executeSelect("SYSTEM_INDEXINFO","0=1");
         }
 
         // TODO:
@@ -4943,15 +4935,15 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         Boolean  nu = (unique) ? Boolean.valueOf("false") : null;
 
         StringBuffer select =
-        _toQueryPrefix("SYSTEM_INDEXINFO")
-        .append(_and( "TABLE_CAT", "LIKE", catalog))
-        .append(_and( "TABLE_SCHEM", "LIKE", schema))
-        .append(_and( "TABLE_NAME", "LIKE", table))
-        .append(_and("NON_UNIQUE","=",nu));
+        toQueryPrefix("SYSTEM_INDEXINFO")
+        .append(and( "TABLE_CAT", "=", catalog))
+        .append(and( "TABLE_SCHEM", "=", schema))
+        .append(and( "TABLE_NAME", "=", table))
+        .append(and("NON_UNIQUE","=",nu));
 
         // By default, this query already returns the table ordered by
         // NON_UNIQUE, TYPE, INDEX_NAME, and ORDINAL_POSITION...
-        return _execute(select.toString());
+        return execute(select.toString());
     }
 
     //--------------------------JDBC 2.0-----------------------------
@@ -5381,17 +5373,17 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
                              int[] types) throws SQLException {
 
          if (
-            _wantsIsNull(typeNamePattern) ||
+            wantsIsNull(typeNamePattern) ||
             (types !=null && types.length == 0)
          ) {
-             _executeSelect("SYSTEM_UDTS", "0=1");
+             executeSelect("SYSTEM_UDTS", "0=1");
          }
 
          StringBuffer select =
-        _toQueryPrefix("SYSTEM_UDTS")
-        .append(_and("TYPE_CAT","LIKE",catalog))
-        .append(_and("TYPE_SCHEM","LIKE",schemaPattern))
-        .append(_and("TYPE_NAME","LIKE",typeNamePattern));
+        toQueryPrefix("SYSTEM_UDTS")
+        .append(and("TYPE_CAT","LIKE",catalog))
+        .append(and("TYPE_SCHEM","LIKE",schemaPattern))
+        .append(and("TYPE_NAME","LIKE",typeNamePattern));
 
         if (types == null) {
             // do not use to narrow search
@@ -5404,7 +5396,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         // By default, the query already returns a result ordered by
         // DATA_TYPE, TYPE_SCHEM, and TYPE_NAME...
-        return _execute(select.toString());
+        return execute(select.toString());
     }
 
     /**
@@ -5426,7 +5418,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
             Trace.trace();
         }
 
-        return _connection;
+        return connection;
     }
 
 // boucherb@users 20020426 - javadocs for all JDBC 3 methods
@@ -5452,7 +5444,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public boolean supportsSavepoints() throws SQLException {
 
         // TODO: fredt@users, I will incorporate the patch but this one should
@@ -5467,7 +5458,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // JDBC specs say so (contrary to the impression given in JavaDoc)
         return false;
     }
-*/
 
 //#endif JDBC3
 
@@ -5490,7 +5480,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public boolean supportsNamedParameters() throws SQLException {
 
         // TODO: fredt@users - sure
@@ -5499,7 +5488,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // return false;
         return false;
     }
-*/
 
 //#endif JDBC3
 
@@ -5525,7 +5513,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public boolean supportsMultipleOpenResults() throws SQLException {
 
         // TODO: fredt@users  - agreed on both
@@ -5535,7 +5522,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // return false;
         return false;
     }
-*/
 
 //#endif JDBC3
 
@@ -5560,7 +5546,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public boolean supportsGetGeneratedKeys() throws SQLException {
 
         // TODO: fredt@users - agreed
@@ -5568,7 +5553,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // boucherb@users 20020426
         return false;
     }
-*/
 
 //#endif JDBC3
 
@@ -5628,24 +5612,22 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public ResultSet getSuperTypes(String catalog, String schemaPattern,
                                    String typeNamePattern)
                                    throws SQLException {
 
-        if ( _wantsIsNull(typeNamePattern)) {
-            return _executeSelect("SYSTEM_SUPERTYPES","0=1");
+        if ( wantsIsNull(typeNamePattern)) {
+            return executeSelect("SYSTEM_SUPERTYPES","0=1");
         }
 
         StringBuffer select =
-        _toQueryPrefix("SYSTEM_SUPERTYPES")
-        .append(_and("TYPE_CAT","LIKE",catalog))
-        .append(_and("TYPE_SCHEM","LIKE",schemaPattern))
-        .append(_and("TYPE_NAME","LIKE",typeNamePattern));
+        toQueryPrefix("SYSTEM_SUPERTYPES")
+        .append(and("TYPE_CAT","=",catalog))
+        .append(and("TYPE_SCHEM","LIKE",schemaPattern))
+        .append(and("TYPE_NAME","LIKE",typeNamePattern));
 
-        return _execute(select.toString());
+        return execute(select.toString());
     }
-*/
 
 //#endif JDBC3
 
@@ -5698,24 +5680,22 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public ResultSet getSuperTables(String catalog, String schemaPattern,
                                     String tableNamePattern)
                                     throws SQLException {
 
-        if (_wantsIsNull(tableNamePattern)) {
-            return _executeSelect("SYSTEM_SUPERTABLES","0=1");
+        if (wantsIsNull(tableNamePattern)) {
+            return executeSelect("SYSTEM_SUPERTABLES","0=1");
         }
 
         StringBuffer select =
-        _toQueryPrefix("SYSTEM_SUPERTABLES")
-        .append(_and("TABLE_CAT","LIKE",catalog))
-        .append(_and("TABLE_SCHEM","LIKE",schemaPattern))
-        .append(_and("TABLE_NAME","LIKE",tableNamePattern));
+        toQueryPrefix("SYSTEM_SUPERTABLES")
+        .append(and("TABLE_CAT","=",catalog))
+        .append(and("TABLE_SCHEM","LIKE",schemaPattern))
+        .append(and("TABLE_NAME","LIKE",tableNamePattern));
 
-        return _execute(select.toString());
+        return execute(select.toString());
     }
-*/
 
 //#endif JDBC3
 
@@ -5806,28 +5786,26 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public ResultSet getAttributes(String catalog, String schemaPattern,
                                    String typeNamePattern,
                                    String attributeNamePattern)
                                    throws SQLException {
         if (
-            _wantsIsNull(typeNamePattern) ||
-            _wantsIsNull(attributeNamePattern)
+            wantsIsNull(typeNamePattern) ||
+            wantsIsNull(attributeNamePattern)
         ) {
-            return _executeSelect("SYSTEM_UDTATTRIBUTES","0=1");
+            return executeSelect("SYSTEM_UDTATTRIBUTES","0=1");
         }
 
         StringBuffer select =
-        _toQueryPrefix("SYSTEM_UDTATTRIBUTES")
-        .append(_and("TYPE_CAT","LIKE",catalog))
-        .append(_and("TYPE_SCHEM","LIKE",schemaPattern))
-        .append(_and("TYPE_NAME","LIKE",typeNamePattern))
-        .append(_and("ATTR_NAME","LIKE",attributeNamePattern));
+        toQueryPrefix("SYSTEM_UDTATTRIBUTES")
+        .append(and("TYPE_CAT","=",catalog))
+        .append(and("TYPE_SCHEM","LIKE",schemaPattern))
+        .append(and("TYPE_NAME","LIKE",typeNamePattern))
+        .append(and("ATTR_NAME","LIKE",attributeNamePattern));
 
-        return _execute(select.toString());
+        return execute(select.toString());
     }
-*/
 
 //#endif JDBC3
 
@@ -5854,7 +5832,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public boolean supportsResultSetHoldability(int holdability)
     throws SQLException {
 
@@ -5865,7 +5842,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // return false;
         return false;
     }
-*/
 
 //#endif JDBC3
 
@@ -5891,7 +5867,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public int getResultSetHoldability() throws SQLException {
 
         // TODO: fredt@users - if we don't support holdability how can we
@@ -5902,7 +5877,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // return ResultSet.CLOSE_CURSORS_AT_COMMIT; // ???
         throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
     }
-*/
 
 //#endif JDBC3
 
@@ -5930,7 +5904,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public int getDatabaseMajorVersion() throws SQLException {
 
         if (Trace.TRACE) {
@@ -5938,13 +5911,12 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         }
 
         ResultSet rs =
-        _execute("call \"org.hsqldb.Library.getDatabaseMajorVersion\"()");
+        execute("call \"org.hsqldb.Library.getDatabaseMajorVersion\"()");
 
         rs.next();
 
         return rs.getInt(1);
     }
-*/
 
 //#endif JDBC3
 
@@ -5972,7 +5944,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public int getDatabaseMinorVersion() throws SQLException {
 
         if (Trace.TRACE) {
@@ -5980,13 +5951,12 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         }
 
         ResultSet rs =
-        _execute("call \"org.hsqldb.Library.getDatabaseMinorVersion\"()");
+        execute("call \"org.hsqldb.Library.getDatabaseMinorVersion\"()");
 
         rs.next();
 
         return rs.getInt(1);
     }
-*/
 
 //#endif JDBC3
 
@@ -6011,11 +5981,9 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public int getJDBCMajorVersion() throws SQLException {
         return 3;
     }
-*/
 //#endif JDBC3
 
     /**
@@ -6041,11 +6009,9 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public int getJDBCMinorVersion() throws SQLException {
         return 0;
     }
-*/
 
 //#endif JDBC3
 
@@ -6070,7 +6036,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public int getSQLStateType() throws SQLException {
 
         // TODO: fredt@users we don't really. Need to review the codes.
@@ -6078,7 +6043,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // boucherb@users 20020426
         throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
     }
-*/
 
 //#endif JDBC3
 
@@ -6102,7 +6066,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public boolean locatorsUpdateCopy() throws SQLException {
 
         // TODO: fredt@users - agreed
@@ -6112,7 +6075,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // return false;
         return false;
     }
-*/
 
 //#endif JDBC3
 
@@ -6134,7 +6096,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @since JDK 1.4, HSQLDB 1.7
      */
 //#ifdef JDBC3
-/*
     public boolean supportsStatementPooling() throws SQLException {
 
         // TODO:
@@ -6144,7 +6105,6 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // return false;
         return false;
     }
-*/
 
 //#endif JDBC3
     //----------------------- Internal Implementation --------------------------
@@ -6157,7 +6117,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *         instance-specific metadata
      */
     jdbcDatabaseMetaData(jdbcConnection c) {
-        _connection = c;
+        connection = c;
     }
 
     /** Retreives an "AND" predicate based on the (column) <code>id</code>,
@@ -6198,7 +6158,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *              <code>String.valueOf(val)</code>
      *      </UL>
      */
-    private static StringBuffer _and(String id, String op, Object val) {
+    private static StringBuffer and(String id, String op, Object val) {
 
         StringBuffer    sb = new StringBuffer();
 
@@ -6213,18 +6173,21 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         if (val == null) {
             return sb;
         }
+        
+        boolean isStr = (val instanceof String);
 
-        // can't use length yet:
-        // columnValue is java.lang.Object, not String.
-        if ("".equals(val)) {
+        if (isStr && ((String)val).length() == 0) {
             return sb.append(" AND ").append(id).append(" IS NULL");
         }
 
-        boolean isStr = (val instanceof String);
         String v = isStr ? Column.createSQLString((String) val)
                          : String.valueOf(val);
 
-        if (isStr && "LIKE".equalsIgnoreCase(op) && v.indexOf('%') < 0) {
+        if (
+            isStr && 
+            "LIKE".equalsIgnoreCase(op) && 
+            !(containsUnescaped(v,'%') || containsUnescaped(v,'_'))
+        ) {
             op = "=";
         }
 
@@ -6237,6 +6200,26 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         .append(v);
 
     }
+    
+    private static boolean containsUnescaped(String s, char ch) {
+        
+        int start = s.indexOf(ch);
+        
+        if (start < 0) {
+            return false;
+        }
+        
+        if (start == 0) {
+            return true;
+        }
+        
+        while (start > -1 && s.charAt(start-1) == '\\') {
+           start = s.indexOf(ch,start);
+        }
+        
+        return start > -1;
+
+    }
 
     /** The main SQL statement executor.  All SQL destined for execution
      * ultimately goes through this method. <p>
@@ -6244,13 +6227,13 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @param statement SQL statement to execute
      * @throws SQLException is a database error occurs
      */
-    private ResultSet _execute(String statement) throws SQLException {
+    private ResultSet execute(String statement) throws SQLException {
 
         if (Trace.TRACE) {
             Trace.trace(statement);
         }
 
-        return _connection.execute(statement);
+        return connection.execute(statement);
     }
 
     /** A SQL statement executor that knows how to create a "SELECT
@@ -6265,14 +6248,14 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @param where the where condition for the select
      * @throws SQLException if database error occurs
      */
-    private ResultSet _executeSelect(String table, String where) throws SQLException {
+    private ResultSet executeSelect(String table, String where) throws SQLException {
         String select = "SELECT * FROM " + table;
 
         if (where != null) {
             select += " WHERE " + where;
         }
 
-        return _execute(select);
+        return execute(select);
     }
 
     /** Retrieves "SELECT * FROM &lt;table&gt; WHERE 1=1" in string buffer form.
@@ -6284,12 +6267,12 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *      "SELECT * FROM &lt;table&gt; WHERE 1=1"
      * @param t the name of the table
      */
-    private StringBuffer _toQueryPrefix(String t) {
+    private StringBuffer toQueryPrefix(String t) {
 
-        _sb.setLength(0);
+        sb.setLength(0);
 
         return
-        _sb.append(_selstar).append(t).append(' ').append(_whereTrue);
+        sb.append(selstar).append(t).append(' ').append(whereTrue);
     }
 
     /** Retrieves whether the JDBC <code>DatabaseMetaData</code> contract specifies
@@ -6299,7 +6282,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @return true if the argument <code>s</code>code> is filter paramter value that
      * requies a corresponding IS NULL preidicate
      */
-    private static boolean _wantsIsNull(String s) {
+    private static boolean wantsIsNull(String s) {
         return (s != null && s.length() == 0);
     }
 

@@ -71,14 +71,14 @@ public final class SingletonEnumeration implements Enumeration {
      */
     public Object nextElement() throws NoSuchElementException {
 
-        if (element == null) {
-            throw new NoSuchElementException();
+        if (hasMoreElements()) {
+            Object tmp = element;
+            
+            element = null;
+            
+            return tmp;            
         }
-
-        Object tmp = element;
-
-        element = null;
-
-        return tmp;
+        
+        throw new NoSuchElementException();
     }
 }

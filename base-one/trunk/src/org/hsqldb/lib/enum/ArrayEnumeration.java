@@ -69,10 +69,22 @@ public final class ArrayEnumeration implements Enumeration {
      *          <code>false</code> otherwise.
      */
     public boolean hasMoreElements() {
+        
+        if (elements == null) {
+            return false;
+        }
 
         for (; notNull && i < elements.length && elements[i] == null; i++) {}
 
-        return (i < elements.length);
+        if (i < elements.length) {
+            return true;
+        } else {
+            // we are done: 
+            // release elements for garbage collection
+            elements = null;
+            return false;
+        }
+            
     }
 
     /**
@@ -83,12 +95,11 @@ public final class ArrayEnumeration implements Enumeration {
      */
     public Object nextElement() {
 
-        hasMoreElements();
-
-        try {
-            return elements[i++];
-        } catch (ArrayIndexOutOfBoundsException e) {
-            throw new NoSuchElementException();
+        if (hasMoreElements()) {
+            return elements[i++];            
         }
+
+        throw new NoSuchElementException();
+        
     }
 }

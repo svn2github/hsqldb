@@ -69,6 +69,11 @@ public final class HsqlHashSet implements HsqlSet {
      * backing Map.
      */
     private static final Object PRESENT = new Object();
+    
+    /** hash code calculation in progress? 
+     * - guards against cycles of containment
+     */
+    private boolean hcip = false;
 
     /** Constructs a new HsqlHashSet object. */
     public HsqlHashSet() {
@@ -217,7 +222,33 @@ public final class HsqlHashSet implements HsqlSet {
      * @return the hash code value for this set.
      */
     public int hashCode() {
-        return map.hashCode();
+        
+// boucherb@users 20030225 - patch to comply with JDK 1.1 
+// Oops.  Can't use java.util.Hashtable equals/hashCode...
+// They are 1.2+ features.        
+// Double Oops!  What if we are contained in our own map somehow?
+// Hopefully, this prevents cycles.       
+            
+        int             hc;
+        Enumeration     e;
+        
+        hc = 0;       
+        
+        if (hcip) {
+            return 0;
+        }
+        
+        hcip  = true;
+        e     = map.keys();
+        
+        while (e.hasMoreElements()) {
+            hc += e.nextElement().hashCode();
+        }
+        
+        hcip = false;
+        
+        return hc;
+
     }
 
     /** Compares the specified object with this set for equality. <p>
@@ -235,17 +266,26 @@ public final class HsqlHashSet implements HsqlSet {
      *        equal to this set.
      */
     public boolean equals(Object obj) {
-        if (obj == null || !(obj instanceof HsqlHashSet)) {
+        
+// boucherb@users 20030225 - patch to comply with JDK 1.1
+// Oops.  Can't use java.util.Hashtable equals/hashCode...
+// They are 1.2+ features.
+        
+        if (this == obj) {
+            return true;
+        }
+        
+        if (!(obj instanceof HsqlHashSet)) {
             return false;
         }
 
-        if (obj == this) {
-            return true;
-        }
-
         HsqlHashSet that = (HsqlHashSet) obj;
-
-        return this.map.equals(that.map);
+        
+        if (this.size() != that.size()) {
+            return false;
+        }
+        
+        return this.containsAll(that);
     }
 
     /** Returns true if this set contains all of the elements of

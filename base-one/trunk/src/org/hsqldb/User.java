@@ -131,15 +131,15 @@ class User {
      */
     static final HsqlArrayList emptyRightsList = new HsqlArrayList();
 
-    /**
-     * A list containing the single element "ALL" which is returned by
-     * calls to {@link #listTablePrivileges listTablePrivileges}, when
-     * it is detected that this <code>User</code> object has the
-     * database administrator role.
-     *
-     */
-    static final HsqlArrayList adminRightsList =
-        UserManager.listRightNames(UserManager.INTEGER_ALL);
+//    /**
+//     * A list containing the single element "ALL" which is returned by
+//     * calls to {@link #listTablePrivileges listTablePrivileges}, when
+//     * it is detected that this <code>User</code> object has the
+//     * database administrator role.
+//     *
+//     */
+//    static final HsqlArrayList adminRightsList =
+//        UserManager.listRightNames(UserManager.INTEGER_ALL);
 
     /**
      * Constructor, with a argument reference to the PUBLIC User Object which
@@ -435,13 +435,13 @@ class User {
             return emptyRightsList;
         }
 
-        if (bAdministrator) {
-            if (adminRightsList.size() == 0) {
-                adminRightsList.add("ALL");
-            }
-
-            return adminRightsList;
-        }
+//        if (bAdministrator) {
+//            if (adminRightsList.size() == 0) {
+//                adminRightsList.add("ALL");
+//            }
+//
+//            return adminRightsList;
+//        }
 
         return UserManager.listRightNames((Integer) rightsMap.get(name));
     }
