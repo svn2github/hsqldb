@@ -43,7 +43,7 @@ import org.hsqldb.lib.java.javaSystem;
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
  *
- * @version $Revision$
+ * @version $Revision: 1.1 $
  * (Note:  For every Javadoc block comment, I'm using a single blank line 
  *  immediately after the description, just like's Sun's examples in
  *  their Coding Conventions document).
@@ -57,7 +57,8 @@ public class SqlTool {
     private static Properties pProperties = new Properties();
     private Connection        cConn;
     private Statement         sStatement;
-    private boolean           BATCH = true;
+    //private boolean           BATCH = true;
+    private boolean           BATCH = false;
     private String            EKW   = new String("go");
     private boolean           EOF   = false;
 
@@ -190,11 +191,13 @@ public class SqlTool {
             }
             if (++i == arg.length) throw bcl;
             targetDb = arg[i];
+            int scriptIndex = 0;
             if (arg.length > i + 1) {
                 scriptFiles = new File[arg.length - i - 1];
 System.err.println("scriptFiles has " + scriptFiles.length + " elements");
-                //while (i + 1 < arg.length) scriptFiles[++i]  = new File(arg[i]);
-while (i + 1 < arg.length) System.err.println("    set " + i + " to " + scriptFiles[i]);
+                while (i + 1 < arg.length) {
+                    scriptFiles[scriptIndex++]  = new File(arg[++i]);
+                }
             }
         } catch (BadCmdline bcl) {
             System.err.println(SYNTAX_MESSAGE);
@@ -241,7 +244,7 @@ while (i + 1 < arg.length) System.err.println("    set " + i + " to " + scriptFi
                          : inDriver);
         boolean log = p.getProperty("log", "false").equalsIgnoreCase("true");
 
-        BATCH = p.getProperty("batch", "true").equalsIgnoreCase("true");
+        //BATCH = p.getProperty("batch", "true").equalsIgnoreCase("true");
 
         if (log) {
             trace("driver   = " + driver);
