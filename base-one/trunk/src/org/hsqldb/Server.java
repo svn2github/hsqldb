@@ -1718,6 +1718,12 @@ public class Server implements HsqlSocketRequestHandler {
                         true, messageParameters));
             }
         }
+        
+        /*
+         * Following line necessary for Java 3.1 on UNIX.  See accept()
+         * comment elsewhere in this file.
+         */
+        socket.setSoTimeout(1000);
 
         trace("Got server socket: " + socket);
         print(sw.elapsedTimeToMessage("Server socket opened successfully"));
@@ -1860,8 +1866,17 @@ public class Server implements HsqlSocketRequestHandler {
         printServerOnlineMessage();
 
         try {
+
+            /*
+             * This loop is necessary for UNIX w/ Sun Java 1.3 because 
+             * in that caes the socket.close() elsewhere will not
+             * interrupt this accept().
+             */
             while (true) {
-                handleConnection(socket.accept());
+                try { 
+                    handleConnection(socket.accept());
+                } catch (java.io.InterruptedIOException iioe) {
+                }
             }
         } catch (IOException ioe) {
             if (getState() == ServerConstants.SERVER_STATE_ONLINE) {
