@@ -63,11 +63,10 @@ implements org.hsqldb.DatabaseRowInputInterface {
      * fredt@users - comment - in future may use a custom subclasse of
      * InputStream to read the data.
      *
-     * @author sqlbob@users (RMP)
+     * author: sqlbob@users (RMP)
      */
     public TextDatabaseRowInput(String fieldSep, String varSep,
-                                String longvarSep,
-                                boolean allQuoted) throws IOException {
+                                String longvarSep, boolean allQuoted) {
 
         super(new byte[0]);
 
@@ -138,11 +137,11 @@ implements org.hsqldb.DatabaseRowInputInterface {
 
             if (isEnd) {
                 if ((next >= textLen) && (sepLen > 0)) {
-                    throw (new Exception("No end sep."));
+                    throw Trace.error(Trace.TextDatabaseRowInput_getField);
                 } else if (text.endsWith(sep)) {
                     next = textLen - sepLen;
                 } else {
-                    throw (new Exception("No end sep."));
+                    throw Trace.error(Trace.TextDatabaseRowInput_getField2);
                 }
             } else {
                 next = text.indexOf(sep, start);
@@ -159,8 +158,11 @@ implements org.hsqldb.DatabaseRowInputInterface {
                 s = null;
             }
         } catch (Exception e) {
-            throw (new IOException("field " + field + " (" + e.getMessage()
-                                   + ")"));
+            throw new IOException(
+                Trace.getMessage(
+                    Trace.TextDatabaseRowInput_getField3, true, new Object[] {
+                new Integer(field), e.getMessage()
+            }));
         }
 
         return s;

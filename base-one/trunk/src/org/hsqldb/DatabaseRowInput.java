@@ -127,7 +127,8 @@ abstract class DatabaseRowInput extends HsqlByteArrayInputStream {
     public int getPos() throws IOException {
 
         if (filePos == NO_POS) {
-            throw (new IOException("No position specified"));
+            throw new IOException(
+                Trace.getMessage(Trace.DatabaseRowInput_getPos));
         }
 
         return (filePos);
@@ -136,7 +137,8 @@ abstract class DatabaseRowInput extends HsqlByteArrayInputStream {
     public int getNextPos() throws IOException {
 
         if (nextPos == NO_POS) {
-            throw (new IOException("No next position specified"));
+            throw new IOException(
+                Trace.getMessage(Trace.DatabaseRowInput_getNextPos));
         }
 
         return (nextPos);

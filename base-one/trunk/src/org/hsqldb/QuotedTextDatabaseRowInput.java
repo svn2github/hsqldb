@@ -127,7 +127,9 @@ class QuotedTextDatabaseRowInput extends org.hsqldb.TextDatabaseRowInput {
                             //-- End of field.
                             if (((next + 1) != qtext.length)
                                     && (text.indexOf(sep, next) != next)) {
-                                throw (new Exception("No sep."));
+                                throw Trace
+                                    .error(Trace
+                                        .QuotedTextDatabaseRowInput_getField);
                             }
 
                             next  += sepLen - 1;
@@ -153,8 +155,12 @@ class QuotedTextDatabaseRowInput extends org.hsqldb.TextDatabaseRowInput {
                 s = null;
             }
         } catch (Exception e) {
-            throw (new IOException("field " + field + " (" + e.getMessage()
-                                   + ")"));
+            throw new IOException(
+                Trace.getMessage(
+                    Trace.QuotedTextDatabaseRowInput_getField2, true,
+                    new Object[] {
+                new Integer(field), e.getMessage()
+            }));
         }
 
         return s;

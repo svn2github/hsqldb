@@ -69,7 +69,6 @@ package org.hsqldb;
 
 import java.sql.DriverManager;
 import java.io.PrintWriter;
-import org.hsqldb.lib.FileUtil;
 
 /**
  * handles creation and reporting of error messages and throwing HsqlException
@@ -291,7 +290,14 @@ public class Trace extends PrintWriter {
      TEXT_TABLE_SOURCE_SEPARATOR                    = 174,
      UNSUPPORTED_PARAM_CLASS                        = 175,
      JDBC_NULL_STREAM                               = 176,
-     INTEGRITY_CONSTRAINT_VIOLATION_NOPARENT        = 177;
+     INTEGRITY_CONSTRAINT_VIOLATION_NOPARENT        = 177,
+     DatabaseRowInput_getPos                        = 178,
+     DatabaseRowInput_getNextPos                    = 179,
+     QuotedTextDatabaseRowInput_getField            = 180,
+     QuotedTextDatabaseRowInput_getField2           = 181,
+     TextDatabaseRowInput_getField                  = 182,
+     TextDatabaseRowInput_getField2                 = 183,
+     TextDatabaseRowInput_getField3                 = 184;
 
     //
     static String MESSAGE_TAG = "$$";
@@ -304,14 +310,14 @@ public class Trace extends PrintWriter {
         "08003 Connection is broken", "08003 The database is shutdown",       //
         "21000 Column count does not match",                                  //
         "22012 Division by zero",                                             //
-        "22019 Invalid escape character",
-        "23000 Integrity constraint violation",
-        "23000 Violation of unique index",
-        "23000 Try to insert null into a non-nullable column",
+        "22019 Invalid escape character",                                     //
+        "23000 Integrity constraint violation",                               //
+        "23000 Violation of unique index",                                    //
+        "23000 Try to insert null into a non-nullable column",                //
         "37000 Unexpected token",                                             //
         "37000 Unexpected end of command",                                    //
         "37000 Unknown function",                                             //
-        "37000 Need aggregate function or group by",
+        "37000 Need aggregate function or group by",                          //
         "37000 Sum on non-numeric data not allowed",                          //
         "37000 Wrong data type",                                              //
         "37000 Single value expected",                                        //
@@ -327,8 +333,8 @@ public class Trace extends PrintWriter {
         "S0021 Column already exists",                                        //
         "S0022 Column not found",                                             //
         "S1000 File input/output error",                                      //
-        "S1000 Wrong database file version",
-        "S1000 The database is in read only mode",
+        "S1000 Wrong database file version",                                  //
+        "S1000 The database is in read only mode",                            //
         "S1000 The table data is read only",                                  //
         "S1000 Access is denied",                                             //
         "S1000 InputStream error",                                            //
@@ -342,57 +348,57 @@ public class Trace extends PrintWriter {
         "S1010 Error in function",                                            //
         "S0002 Trigger not found",                                            //
         "S1011 Savepoint not found",                                          //
-        "37000 Label required for value list",
-        "37000 Wrong data type or data too long in DEFAULT clause",
+        "37000 Label required for value list",                                //
+        "37000 Wrong data type or data too long in DEFAULT clause",           //
         "S0011 Foreign key not allowed, both tables must be permanent or temporary",
         "S1000 The table's data source for this connection is not known",
         "S0000 User-defined index or constraint name cannot begin with SYS_",
-        "S0011 Attempt to drop a foreign key index",
-        "S1000 ResultSet was set to forward only",
+        "S0011 Attempt to drop a foreign key index",                          //
+        "S1000 ResultSet was set to forward only",                            //
         "S0003 View already exists",                                          //
         "S0004 View not found",                                               //
         "S0005 Not a View", "S0005 Not a Table",
         "S0011 Attempt to drop or rename a system index",
-        "S0021 Column types do not match",
+        "S0021 Column types do not match",                                    //
         "s0021 Column constraints are not acceptable",
-        "S0011 Attempt to drop a system constraint",
+        "S0011 Attempt to drop a system constraint",                          //
         "S0011 Constraint already exists",                                    //
         "S0011 Constraint not found",                                         //
         "SOO10 Invalid argument in JDBC call",                                //
-        "S1000 Database is memory only",
-        "37000 not allowed in OUTER JOIN condition",
-        "22003 Numeric value out of range",
-        "37000 Software module not installed",
+        "S1000 Database is memory only",                                      //
+        "37000 not allowed in OUTER JOIN condition",                          //
+        "22003 Numeric value out of range",                                   //
+        "37000 Software module not installed",                                //
         "37000 Not contained in aggregate function or group by clause",
-        "37000 Cannot be in GROUP BY clause",
-        "37000 Cannot be in HAVING clause",
-        "37000 Cannot be in ORDER BY clause",
-        "37000 ORDER BY item does not appear in the SELECT DISTINCT list",
+        "37000 Cannot be in GROUP BY clause",                                 //
+        "37000 Cannot be in HAVING clause",                                   //
+        "37000 Cannot be in ORDER BY clause",                                 //
+        "37000 ORDER BY item does not appear in the SELECT DISTINCT list",    //
         "S1000 Out of Memory",                                                //
         "S1000 This operation is not supported", "22019 Invalid identifier",
-        "22019 Invalid TEXT table source string",
+        "22019 Invalid TEXT table source string",                             //
         "S1000 bad TEXT table source file - line number: $$ $$",
         "23000 negative value not allowed for identity column",
         "S1000 error in script file",                                         //
         "37000 NULL in value list",                                           //
         "08000 socket creation error",                                        //
-        "37000 invalid character encoding",
+        "37000 invalid character encoding",                                   //
         "08000 reserved for NO_CLASSLOADER_FOR_TLS",
-        "08000 reserved for NO_JSSE",
+        "08000 reserved for NO_JSSE",                                         //
         "08000 reserved for NO_SSLSOCKETFACTORY_METHOD",
         "08000 reserved for UNEXPECTED_EXCEPTION",
-        "08000 reserved for TLS_ERROR",
+        "08000 reserved for TLS_ERROR",                                       //
         "08000 reserved for MISSING_TLS_METHOD",
         "08000 reserved for TLS_SECURITY_ERROR",
         "08000 reserved for NO_TLS_DATA",                                     //
-        "08000 reserved for NO_PRINCIPAL",
+        "08000 reserved for NO_PRINCIPAL",                                    //
         "08000 reserved for INCOMPLETE_CERTIFICATE",
         "08000 reserved for TLS_HOSTNAME_MISMATCH",
-        "08000 reserved for KEYSTORE_PROBLEM",
+        "08000 reserved for KEYSTORE_PROBLEM",                                //
 
         //
         "08003 Database does not exists",                                     //
-        "22003 Type Conversion not supported",
+        "22003 Type Conversion not supported",                                //
 
         //--- wsonic
         "table $$ row count error : $$ read, needed $$",                      // BinaryDatabaseScriptReader_readExistingData
@@ -453,13 +459,15 @@ public class Trace extends PrintWriter {
         "Method writeIntData(int, int) not yet implemented.",                 // TextDatabaseRowOutput_writeIntData
         "00000 ORDER BY must be at the end of the statement",
         "00000 Statement does not generate a row count",
-        "00000 Statement does not generate a result set",
+        "00000 Statement does not generate a result set",                     //
         "S0022 ambiguous Column reference",                                   //
         "23000 Check constraint violation", "S1000 ResultSet is closed",      //
         "37000 Single column select required in IN predicate",                //
         " $$, requires $$",                                                   // Tokenizer.getThis()
-        "path is null", "file does not exist: ", "wrong resource protocol: ",
-        "S0002 Trigger already exists",
+        "path is null",                                                       //
+        "file does not exist: ",                                              //
+        "wrong resource protocol: ",                                          //
+        "S0002 Trigger already exists",                                       //
         "S0000 direct execute with param count > 0", "while creating ",       // DataFileCache_backup
         "Expression.compareValues",                                           // Expression_compareValues
         "LIMIT n m",                                                          // Parser_parseLimit1
@@ -469,6 +477,13 @@ public class Trace extends PrintWriter {
         "no value for: ", "zero length separator",
         "Unsupported parameter/return value class: ", "input stream is null",
         "23000 Integrity constraint violation - no parent",
+        "No position specified",                                              // DatabaseRowInput_getPos
+        "No next position specified",                                         // DatabaseRowInput_getNextPos
+        "No sep.",                                                            // QuotedTextDatabaseRowInput_getField
+        "field $$ ($$)",                                                      // QuotedTextDatabaseRowInput_getField2
+        "No end sep.",                                                        // TextDatabaseRowInput_getField
+        "No end sep.",                                                        // TextDatabaseRowInput_getField2
+        "field $$ ($$)",                                                      // TextDatabaseRowInput_getField3
     };
 
     /** Used during tests. */

@@ -45,13 +45,24 @@ class SubQuery implements ObjectComparator {
     View    view;
     boolean isMaterialised;
 
+    /**
+     * This results in the following sort order:
+     *
+     * view subqueries first
+     * subqueries for views declared early first
+     * deepest suqqueries first (deep == higher level)
+     *
+     * The set of subqueries contained in each view declaration has
+     * level values starting from 1 up.
+     *
+     */
     public int compare(Object a, Object b) {
 
         SubQuery sqa = (SubQuery) a;
         SubQuery sqb = (SubQuery) b;
 
         if (sqa.view == null && sqb.view == null) {
-            return sqb.level - sqa.level;
+            return sqa.level - sqb.level;
         } else if (sqa.view != null && sqb.view != null) {
             Database db = sqa.view.database;
             int      ia = db.getTableIndex(sqa.view);
@@ -65,7 +76,10 @@ class SubQuery implements ObjectComparator {
                 ib = db.getTables().size();
             }
 
-            return ia - ib;
+            int diff = ib - ia;
+
+            return diff == 0 ? sqa.level - sqb.level
+                             : diff;
         } else {
             return ((SubQuery) a).view == null ? 1
                                                : -1;

@@ -1970,7 +1970,7 @@ class Parser {
         // ones.
         // views are materialised first, in order of use depth
         // other subqueries are then materialised in order of use depth
-        for (int i = 0; i < size; i++) {
+        for (int i = size - 1; i >= 0; i--) {
             subqueries[i] = (SubQuery) subQueryHeap.remove();
         }
 
