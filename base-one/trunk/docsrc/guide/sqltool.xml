@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.54 2004/07/12 16:54:32 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.55 2004/07/16 05:09:04 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.54 $</edition>
-        <pubdate>$Date: 2004/07/12 16:54:32 $</pubdate>
+        <edition>$Revision: 1.55 $</edition>
+        <pubdate>$Date: 2004/07/16 05:09:04 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -202,10 +202,15 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
             or <emphasis>config</emphasis> file, I mean an SqlTool 
             configuration file (aka SqlTool RC file).
         </simpara><simpara>
-            There is a sample <filename>sqltool.rc</filename> file in the
-            directory <filename>src/org/hsqldb/sample</filename> of your
+            The following sample <filename>sqltool.rc</filename> file resides
+            in the directory <filename>src/org/hsqldb/sample</filename> of your
             HSQLDB distribution.
-        </simpara><para>
+        </simpara>
+        <example>
+            <title>Sample sqltool.rc File</title>
+            <programlisting>&sqltool.rc-cdata;</programlisting>
+        </example>
+        <para>
             You can put this file anywhere you want to, and specify the 
             location to SqlTool by using the "--rcfile" argument.
             If there is no reason to not use the default location (and there 
@@ -215,7 +220,7 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
             The default location is <emphasis>sqltool.rc</emphasis> in your 
             home directory.
             If you have any doubt about where that is, then just run SqlTool 
-            with a phoney urlid and it will tell you where it expects the 
+            with a phony urlid and it will tell you where it expects the 
             configuration file to be.
         <informalexample><screen>
     java -jar $HSQLDB_HOME/lib/hsqldb.jar x</screen>
