@@ -43,7 +43,7 @@ HSQLDB
 Beginner's Guide
 </div>
 </center>
-$Revision: 1.18 $
+$Revision: 1.20 $
 <p>
 WARNING:  Don't skip the <a href="#intro">introduction section</a>
 nor the <a href="#definitions">definitions section</a>.
@@ -61,6 +61,7 @@ TABLE OF CONTENTS
     <li><a href="#architecture">Hsqldb architecture</a></li>
     <li><a href="#running">Running hsqldb</a></li>
     <li><a href="#flatfiles">Character-delimited flat database files</a></li>
+    <li><a href="#users">Additional Database Users</a></li>
 </ul>
 
 
@@ -80,7 +81,8 @@ This is a <i>Beginner's Guide</i>, so don't expect to find the answers to
 all of your Hsqldb questions here.
 See the other docs in $HSQLDB_HOME-- they're really good.
 <p>
-I believe that everything in this document applies to versions 1.7.x of hsqldb.
+I believe that everything in this document applies to versions 1.7.x of hsqldb
+(unless stated otherwise).
 </p><p>
 In order to make my examples brief, in most cases I just provide the
 UNIX usage.  If you are a Windows user, you may need to change
@@ -361,7 +363,7 @@ data source <i>Driver</i> is not.  The data source Driver is always
     Java 1.2 or 1.3, you can run your Server Engine or WebServer Engine
     with TLS (aka SSL) encryption.  
     See the file $HSQLDB_HOME/hsqlSSL.html for how to do that.
-    TO connect up to a server running with TLS, just use an URL with
+    To connect up to a server running with TLS, just use an URL with
     "hsqls://" or
     "https://" instead of "hsql://" or "http://" correspondingly
     (and, like I said, you need a late model hsqldb build, and Java TLS
@@ -392,10 +394,33 @@ data source <i>Driver</i> is not.  The data source Driver is always
     data source URLs.
     </li>
 </ul>
+
+<span class="bold">Database Preparation</span>
+If security is of any concern to you at all, then immediately after
+starting your database for the first time, you should change the
+privileged password in the databse.
+Connect up as user "sa" with no password, perhaps using one of the
+utilities described above.
+Execute the command <span class="italic">set password "newpassword"</span>.
+If you will ever make use of non-Admin user account(s), then you should
+grant SELECT privilege on the following objects to PUBLIC
+<ul>
+    <li>system_tables
+    </li><li>system_columns
+    </li><li>system_indexinfo
+    </li><li>system_connectioninfo
+</li></ul>
+If you don't, then you will have to grant these permissions to every new
+user every time you add a new user.
+(New users will still be unable to even read data in tables that you
+have created, unless you also grant privileges on those objects).
+See the <a href="#users">section below</a> about using additional database
+users.
+<p>
     
 <span class="bold">Resources</span>
     Do check out the docs in $HSQLDB_HOME/doc.
-<p>
+</p><p>
 
 <a name="footnote"><span style="font-weight: bold;">1</span></a> Note the ambiguity with database arguments between QueryTool and Server.
   QueryTool url arg always ends with : (which is dumb if you ask me), and
@@ -441,5 +466,40 @@ The file will reside in the same directory as the other database files.
 To persist changes to your csv file after modifications, use the 
 CHECKPOINT command.
 
+
+<a class="heading" name="users">
+ADDITIONAL DATABASE USERS
+</a>
+There are two classes of database accounts, Admin accounts and non-Admin
+accounts.
+Admins have privileges to do anything, non-Admins may be granted some
+privileges, but may never create or own database objects.
+When you first create a hsqldb database, it has only one database user-- SA,
+an Admin account, with no password set.
+You should set a password (as described above).
+You can create as many additional Admin users as you wish.
+Each Admin user has a unique user name (and optional password), but 
+these accounts are otherwise indistinguishable.
+These accounts are created by appending the keyword "ADMIN" to the 
+<span class="italic">CREATE USER</span> command (see the Syntax doc).
+</p><p>
+If you create a user without the ADMIN tag, it will be a Non-Admin account.
+These users can not create or own objects, and, by default, they can't use
+any database objects.
+You should have already granted the permissions listed above in the
+database preparation part of the <a href="#running">Running hsqldb section</a>.
+The user will then be able to perform operations which have been granted to
+the pseudo-user PUBLIC.
+To give the user additional privileges (even the privilege to read data),
+an Admin user must grant those rights to the user (or to PUBLIC).
+</p><p>
+Since only people with a database account may do anything at all with the 
+database, it is often useful to permit other database users to view the 
+data in your tables.
+To optimize performance, reduce contention, and minimize administration, it
+is usually best to grant SELECT to PUBLIC on any object that needs to be
+accessed by multiple database users (with the significant exception of any
+data which you want to keep secret).
+</p><p>
 
 </p></body></html>
