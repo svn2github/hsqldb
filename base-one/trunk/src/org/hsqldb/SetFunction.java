@@ -34,7 +34,6 @@ package org.hsqldb;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import org.hsqldb.lib.HashSet;
-import org.hsqldb.store.ValuePool;
 
 /**
  * Implementation of SQL set functions (currently only aggregate functions).
@@ -174,7 +173,7 @@ public class SetFunction {
         switch (setType) {
 
             case Expression.COUNT :
-                return ValuePool.getInt(count);
+                return new Integer(count);
 
             case Expression.AVG : {
                 switch (type) {
@@ -184,11 +183,12 @@ public class SetFunction {
                     case Types.INTEGER :
                         return new Long(currentLong / count);
 
-                    case Types.BIGINT :
-                        return new BigDecimal(
-                            longSum.getValue().divide(
-                                BigInteger.valueOf(count)));
+                    case Types.BIGINT : {
+                        long value = longSum.getValue().divide(
+                            BigInteger.valueOf(count)).longValue();
 
+                        return new Long(value);
+                    }
                     case Types.REAL :
                     case Types.FLOAT :
                     case Types.DOUBLE :
@@ -257,10 +257,8 @@ public class SetFunction {
                     case Types.TINYINT :
                     case Types.SMALLINT :
                     case Types.INTEGER :
-                        return Types.BIGINT;
-
                     case Types.BIGINT :
-                        return Types.DECIMAL;
+                        return Types.BIGINT;
 
                     case Types.REAL :
                     case Types.FLOAT :

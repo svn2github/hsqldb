@@ -632,6 +632,9 @@ class Expression {
                             : e1.similarTo(e2);
     }
 
+/** @todo fredt - workaround for functions in ORDER BY and GROUP BY needs
+ *  checking the argument of the function to ensure they are valid. */
+
     /**
      * Check if this expression can be included in a group by clause.
      * <p>
@@ -639,6 +642,11 @@ class Expression {
      * expression.
      */
     boolean canBeInGroupBy() {
+
+        if (iType == FUNCTION) {
+            return true;
+        }
+
         return isColumn() && (!(isAggregate()));
     }
 
@@ -648,6 +656,11 @@ class Expression {
      * It can, if itself is a column expression.
      */
     boolean canBeInOrderBy() {
+
+        if (iType == FUNCTION) {
+            return true;
+        }
+
         return isColumn() || isAggregate();
     }
 
@@ -657,7 +670,7 @@ class Expression {
      * It is, if itself is a column expression, or any the argument
      * expressions is a column expression.
      */
-    boolean isColumn() {
+    private boolean isColumn() {
 
         switch (iType) {
 
