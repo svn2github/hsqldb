@@ -1,0 +1,31 @@
+
+# Bourne shell Solaris packaging script (no interpreter line on purpose)
+
+# $Id$
+
+# Do not set path.  Pkgadd sets a safe path, it does not use any inherited path
+
+
+# Not knowing what name service is in use for groups and passwords, I
+# know of no way on the command-line to portably get a list of uids and gids.
+# (would be easy enough in C).
+
+# We need this user and group in place before installing the software
+# (due to file ownerships)
+
+# If getent isn't installed, we will "attempt" to create the user and
+# group.  That won't hurt anything.
+
+getent group hsqldb > /dev/null || {
+    # Add group 'hsqldb'
+    groupadd hsqldb
+}
+
+getent passwd hsqldb > /dev/null || {
+    # Add user 'hsqldb'
+    # We just set temporary home dir and login shell, because at this
+    # point, the intended dir and shell don't exist yet.
+    useradd -s /bin/false -d /dev/null -c 'hsqldb owner' hsqldb
+}
+
+exit 0
