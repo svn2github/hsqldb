@@ -79,4 +79,17 @@ class SequenceManager {
 
         return sequence;
     }
+
+    String logSequences(Session c, Logger logger) throws HsqlException {
+
+        for (int i = 0; i < sequenceMap.size(); i++) {
+            NumberSequence seq = (NumberSequence) sequenceMap.get(i);
+
+            if (seq.wasUsed()) {
+                logger.writeSequenceStatement(c, seq);
+            }
+        }
+
+        return null;
+    }
 }

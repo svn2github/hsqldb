@@ -97,9 +97,9 @@ import org.hsqldb.store.ValuePool;
 /** @todo fredt - move error and assert string literals to Trace */
 public class Session implements SessionInterface {
 
-    private Database       dDatabase;
-    private User           uUser;
-    private HsqlArrayList  tTransaction;
+    private Database       database;
+    private User           user;
+    private HsqlArrayList  transactionList;
     private boolean        isAutoCommit;
     private boolean        isNestedTransaction;
     private boolean        isNestedOldAutoCommit;
@@ -109,7 +109,7 @@ public class Session implements SessionInterface {
     private int            sessionMaxRows;
     private Number         iLastIdentity = ValuePool.getInt(0);
     private boolean        isClosed;
-    private int            iId;
+    private int            sessionId;
     private HashMappedList savepoints;
     private boolean        script;
     private jdbcConnection intConnection;
@@ -135,10 +135,10 @@ public class Session implements SessionInterface {
     Session(Database db, User user, boolean autocommit, boolean readonly,
             int id) {
 
-        iId                       = id;
-        dDatabase                 = db;
-        uUser                     = user;
-        tTransaction              = new HsqlArrayList();
+        sessionId                 = id;
+        database                  = db;
+        this.user                 = user;
+        transactionList           = new HsqlArrayList();
         savepoints                = new HashMappedList(4);
         isAutoCommit              = autocommit;
         isReadOnly                = readonly;
@@ -146,7 +146,7 @@ public class Session implements SessionInterface {
         compiledStatementExecutor = new CompiledStatementExecutor(this);
         compiledStatementManager  = db.compiledStatementManager;
         tokenizer                 = new Tokenizer();
-        parser                    = new Parser(dDatabase, tokenizer, this);
+        parser                    = new Parser(database, tokenizer, this);
     }
 
     /**
@@ -155,7 +155,7 @@ public class Session implements SessionInterface {
      * @return the session identifier for this Session
      */
     public int getId() {
-        return iId;
+        return sessionId;
     }
 
     /**
@@ -164,8 +164,8 @@ public class Session implements SessionInterface {
     public synchronized void close() {
 
         if (!isClosed) {
-            synchronized (dDatabase) {
-                dDatabase.sessionManager.processDisconnect(this);
+            synchronized (database) {
+                database.sessionManager.processDisconnect(this);
             }
         }
     }
@@ -182,12 +182,12 @@ public class Session implements SessionInterface {
         }
 
         rollback();
-        dDatabase.dropTempTables(this);
-        compiledStatementManager.processDisconnect(iId);
+        database.dropTempTables(this);
+        compiledStatementManager.processDisconnect(sessionId);
 
-        dDatabase                 = null;
-        uUser                     = null;
-        tTransaction              = null;
+        database                  = null;
+        user                      = null;
+        transactionList           = null;
         savepoints                = null;
         intConnection             = null;
         compiledStatementExecutor = null;
@@ -231,7 +231,7 @@ public class Session implements SessionInterface {
      * @return the Database object to which this Session is connected
      */
     Database getDatabase() {
-        return dDatabase;
+        return database;
     }
 
     /**
@@ -241,7 +241,7 @@ public class Session implements SessionInterface {
      * @return the name of the user currently connected within this Session
      */
     String getUsername() {
-        return uUser.getName();
+        return user.getName();
     }
 
     /**
@@ -251,7 +251,7 @@ public class Session implements SessionInterface {
      * @return this Session's User object
      */
     User getUser() {
-        return uUser;
+        return user;
     }
 
     /**
@@ -261,7 +261,7 @@ public class Session implements SessionInterface {
      * @param  user the new User object for this session
      */
     void setUser(User user) {
-        uUser = user;
+        this.user = user;
     }
 
     int getMaxRows() {
@@ -291,7 +291,7 @@ public class Session implements SessionInterface {
      *      privileges of the ADMIN role.
      */
     void checkAdmin() throws HsqlException {
-        uUser.checkAdmin();
+        user.checkAdmin();
     }
 
     /**
@@ -304,7 +304,7 @@ public class Session implements SessionInterface {
      * @throws  HsqlException if the Session User does not have such rights
      */
     void check(Object object, int right) throws HsqlException {
-        uUser.check(object, right);
+        user.check(object, right);
     }
 
     /**
@@ -321,7 +321,7 @@ public class Session implements SessionInterface {
      */
     void checkDDLWrite() throws HsqlException {
 
-        boolean condition = uUser.isSys() ||!dDatabase.filesReadOnly;
+        boolean condition = user.isSys() ||!database.filesReadOnly;
 
         Trace.check(condition, Trace.DATABASE_IS_READONLY);
     }
@@ -332,7 +332,7 @@ public class Session implements SessionInterface {
      * @param  s
      */
     void setPassword(String s) {
-        uUser.setPassword(s);
+        user.setPassword(s);
     }
 
     /**
@@ -349,7 +349,7 @@ public class Session implements SessionInterface {
             Transaction t = new Transaction(true, isNestedTransaction, table,
                                             row);
 
-            tTransaction.add(t);
+            transactionList.add(t);
         }
     }
 
@@ -367,7 +367,7 @@ public class Session implements SessionInterface {
             Transaction t = new Transaction(false, isNestedTransaction,
                                             table, row);
 
-            tTransaction.add(t);
+            transactionList.add(t);
         }
     }
 
@@ -385,7 +385,7 @@ public class Session implements SessionInterface {
             isAutoCommit = autocommit;
 
             try {
-                dDatabase.logger.writeToLog(this, getAutoCommitStatement());
+                database.logger.writeToLog(this, getAutoCommitStatement());
             } catch (HsqlException e) {}
         }
     }
@@ -397,12 +397,12 @@ public class Session implements SessionInterface {
      */
     public void commit() {
 
-        if (!tTransaction.isEmpty()) {
+        if (!transactionList.isEmpty()) {
             try {
-                dDatabase.logger.writeToLog(this, Token.T_COMMIT);
+                database.logger.writeToLog(this, Token.T_COMMIT);
             } catch (HsqlException e) {}
 
-            tTransaction.clear();
+            transactionList.clear();
         }
 
         savepoints.clear();
@@ -415,22 +415,22 @@ public class Session implements SessionInterface {
      */
     public void rollback() {
 
-        int i = tTransaction.size();
+        int i = transactionList.size();
 
-        synchronized (dDatabase) {
+        synchronized (database) {
             while (i-- > 0) {
-                Transaction t = (Transaction) tTransaction.get(i);
+                Transaction t = (Transaction) transactionList.get(i);
 
                 t.rollback(this);
             }
         }
 
-        if (!tTransaction.isEmpty()) {
+        if (!transactionList.isEmpty()) {
             try {
-                dDatabase.logger.writeToLog(this, Token.T_ROLLBACK);
+                database.logger.writeToLog(this, Token.T_ROLLBACK);
             } catch (HsqlException e) {}
 
-            tTransaction.clear();
+            transactionList.clear();
         }
 
         savepoints.clear();
@@ -446,10 +446,10 @@ public class Session implements SessionInterface {
     void savepoint(String name) throws HsqlException {
 
         savepoints.remove(name);
-        savepoints.add(name, ValuePool.getInt(tTransaction.size()));
+        savepoints.add(name, ValuePool.getInt(transactionList.size()));
 
         try {
-            dDatabase.logger.writeToLog(this, Token.T_SAVEPOINT + " " + name);
+            database.logger.writeToLog(this, Token.T_SAVEPOINT + " " + name);
         } catch (HsqlException e) {}
     }
 
@@ -470,19 +470,19 @@ public class Session implements SessionInterface {
 
         index = oi.intValue();
 
-        int i = tTransaction.size() - 1;
+        int i = transactionList.size() - 1;
 
         for (; i >= index; i--) {
-            Transaction t = (Transaction) tTransaction.get(i);
+            Transaction t = (Transaction) transactionList.get(i);
 
             t.rollback(this);
-            tTransaction.remove(i);
+            transactionList.remove(i);
         }
 
         releaseSavepoint(name);
 
         try {
-            dDatabase.logger.writeToLog(this,
+            database.logger.writeToLog(this,
                                         Token.T_ROLLBACK + " " + Token.T_TO
                                         + " " + Token.T_SAVEPOINT + " "
                                         + name);
@@ -521,7 +521,7 @@ public class Session implements SessionInterface {
 
         // now all transactions are logged
         isAutoCommit        = false;
-        nestedOldTransIndex = tTransaction.size();
+        nestedOldTransIndex = transactionList.size();
         isNestedTransaction = true;
     }
 
@@ -536,10 +536,10 @@ public class Session implements SessionInterface {
         Trace.doAssert(isNestedTransaction, "endNestedTransaction");
 
         if (rollback) {
-            int i = tTransaction.size();
+            int i = transactionList.size();
 
             while (i-- > nestedOldTransIndex) {
-                Transaction t = (Transaction) tTransaction.get(i);
+                Transaction t = (Transaction) transactionList.get(i);
 
                 t.rollback(this);
             }
@@ -550,7 +550,7 @@ public class Session implements SessionInterface {
         isAutoCommit        = isNestedOldAutoCommit;
 
         if (isAutoCommit == true) {
-            tTransaction.setSize(nestedOldTransIndex);
+            transactionList.setSize(nestedOldTransIndex);
         }
     }
 
@@ -561,7 +561,7 @@ public class Session implements SessionInterface {
      */
     public void setReadOnly(boolean readonly) throws HsqlException {
 
-        if (!readonly && dDatabase.databaseReadOnly) {
+        if (!readonly && database.databaseReadOnly) {
             throw Trace.error(Trace.DATABASE_IS_READONLY);
         }
 
@@ -650,7 +650,7 @@ public class Session implements SessionInterface {
      * @ return the current value
      */
     boolean isAdmin() {
-        return uUser.isAdmin();
+        return user.isAdmin();
     }
 
     /**
@@ -668,7 +668,7 @@ public class Session implements SessionInterface {
      * @return the current value
      */
     int getTransactionSize() {
-        return tTransaction.size();
+        return transactionList.size();
     }
 
     /**
@@ -678,7 +678,7 @@ public class Session implements SessionInterface {
      * @return true if so, else false
      */
     boolean isAccessible(Object dbobject) throws HsqlException {
-        return uUser.isAccessible(dbobject);
+        return user.isAccessible(dbobject);
     }
 
     /**
@@ -697,8 +697,8 @@ public class Session implements SessionInterface {
      *      access.
      */
     HashSet getGrantedClassNames(boolean andToPublic) {
-        return (isAdmin()) ? dDatabase.getUserManager().getGrantedClassNames()
-                           : uUser.getGrantedClassNames(andToPublic);
+        return (isAdmin()) ? database.getUserManager().getGrantedClassNames()
+                           : user.getGrantedClassNames(andToPublic);
     }
 
 // boucherb@users 20030417 - patch 1.7.2 - compiled statement support
@@ -798,7 +798,7 @@ public class Session implements SessionInterface {
 
         int type = cmd.iMode;
 
-        synchronized (dDatabase) {
+        synchronized (database) {
             if (sessionMaxRows == 0) {
                 currentMaxRows = cmd.iUpdateCount;
             }
@@ -808,16 +808,33 @@ public class Session implements SessionInterface {
             switch (type) {
 
                 case ResultConstants.SQLEXECUTE : {
-                    return sqlExecute(cmd);
+                    Result resultout = sqlExecute(cmd);
+
+                    resultout = performPostExecute(resultout);
+
+                    return resultout;
                 }
                 case ResultConstants.BATCHEXECUTE : {
-                    return sqlExecuteBatch(cmd);
+                    Result resultout = sqlExecuteBatch(cmd);
+
+                    resultout = performPostExecute(resultout);
+
+                    return resultout;
                 }
                 case ResultConstants.SQLEXECDIRECT : {
-                    return sqlExecuteDirectNoPreChecks(cmd.getMainString());
+                    Result resultout =
+                        sqlExecuteDirectNoPreChecks(cmd.getMainString());
+
+                    resultout = performPostExecute(resultout);
+
+                    return resultout;
                 }
                 case ResultConstants.BATCHEXECDIRECT : {
-                    return sqlExecuteBatchDirect(cmd);
+                    Result resultout = sqlExecuteBatchDirect(cmd);
+
+                    resultout = performPostExecute(resultout);
+
+                    return resultout;
                 }
                 case ResultConstants.SQLPREPARE : {
                     return sqlPrepare(cmd.getMainString());
@@ -898,6 +915,17 @@ public class Session implements SessionInterface {
         }
     }
 
+    private Result performPostExecute(Result r) {
+
+        try {
+            database.sequenceManager.logSequences(this, database.logger);
+
+            return r;
+        } catch (Exception e) {
+            return new Result(e, null);
+        }
+    }
+
     public Result sqlExecuteDirectNoPreChecks(String sql) {
         return dbCommandInterpreter.execute(sql);
     }
@@ -918,8 +946,8 @@ public class Session implements SessionInterface {
             Trace.check(!isClosed, Trace.ACCESS_IS_DENIED,
                         Trace.getMessage(Trace.Session_sqlExecuteCompiled));
 
-            synchronized (dDatabase) {
-                Trace.check(!dDatabase.isShutdown(),
+            synchronized (database) {
+                Trace.check(!database.isShutdown(),
                             Trace.DATABASE_IS_SHUTDOWN);
 
                 return compiledStatementExecutor.execute(cs);
@@ -965,7 +993,7 @@ public class Session implements SessionInterface {
         Result            pmd;
 
         // ...check valid...
-        if (csid > 0 && compiledStatementManager.isValid(csid, iId)) {
+        if (csid > 0 && compiledStatementManager.isValid(csid, sessionId)) {
             cs   = compiledStatementManager.getStatement(csid);
             rsmd = cs.describeResultSet();
             pmd  = cs.describeParameters();
@@ -984,8 +1012,8 @@ public class Session implements SessionInterface {
             csid = compiledStatementManager.registerStatement(cs);
         }
 
-        compiledStatementManager.setValidated(csid, iId,
-                                              dDatabase.getDDLSCN());
+        compiledStatementManager.setValidated(csid, sessionId,
+                                              database.getDDLSCN());
 
         rsmd = cs.describeResultSet();
         pmd  = cs.describeParameters();
@@ -1014,7 +1042,7 @@ public class Session implements SessionInterface {
                 Trace.error(Trace.INTERNAL_ivalid_compiled_statement_id));
         }
 
-        if (!compiledStatementManager.isValid(csid, iId)) {
+        if (!compiledStatementManager.isValid(csid, sessionId)) {
             out = sqlPrepare(cs.sql);
 
             if (out.iMode == ResultConstants.ERROR) {
@@ -1175,7 +1203,7 @@ public class Session implements SessionInterface {
                 Trace.error(Trace.INTERNAL_ivalid_compiled_statement_id));
         }
 
-        if (!compiledStatementManager.isValid(csid, iId)) {
+        if (!compiledStatementManager.isValid(csid, sessionId)) {
             Result r = sqlPrepare(cs.sql);
 
             if (r.iMode == ResultConstants.ERROR) {
@@ -1214,7 +1242,7 @@ public class Session implements SessionInterface {
         boolean existed;
         Result  result;
 
-        existed = compiledStatementManager.freeStatement(csid, iId);
+        existed = compiledStatementManager.freeStatement(csid, sessionId);
         result  = new Result(ResultConstants.UPDATECOUNT);
 
         if (existed) {
@@ -1249,9 +1277,9 @@ public class Session implements SessionInterface {
         };
 
         Object[] row = new Object[] {
-            dDatabase.getPath(), getUsername(), ValuePool.getInt(iId),
+            database.getPath(), getUsername(), ValuePool.getInt(sessionId),
             iLastIdentity, ValuePool.getBoolean(isAutoCommit),
-            ValuePool.getBoolean(dDatabase.databaseReadOnly),
+            ValuePool.getBoolean(database.databaseReadOnly),
             ValuePool.getBoolean(isReadOnly)
         };
 

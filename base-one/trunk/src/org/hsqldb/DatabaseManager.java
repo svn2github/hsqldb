@@ -147,19 +147,6 @@ public class DatabaseManager {
     /**
      * This returns an existing session. Used with repeat HTTP connections
      * belonging to the same JDBC Conenction / HSQL Session pair.
-     *
-     */
-    private static Session getSession(int dbID,
-                                      int sessionID) throws HsqlException {
-
-        Database db = (Database) databaseIDMap.get(dbID);
-
-        return db.sessionManager.getSession(sessionID);
-    }
-
-    /**
-     * This returns an existing session. Used with repeat HTTP connections
-     * belonging to the same JDBC Conenction / HSQL Session pair.
      */
     static Session getSession(String type, String path,
                               int sessionId) throws HsqlException {
@@ -291,7 +278,6 @@ public class DatabaseManager {
     private static synchronized Database lookupDatabaseObject(String type,
             String path) throws HsqlException {
 
-        Database db;
         Object   key = path;
         HashMap  databaseMap;
 
@@ -410,7 +396,7 @@ public class DatabaseManager {
     }
 
     /**
-     * Deregisters a server as serving a given database.
+     * Deregisters a server as serving a given database. Not yet used.
      */
     private static void deRegisterServer(Server server, Database db) {
 
@@ -491,8 +477,8 @@ public class DatabaseManager {
      * path: path of the resource on server in networked modes,
      * / (slash) in all cases apart from
      * servlet path which is / (slash) plus the name of the servlet<p>
-     * database: database name. For memory and networked modes, this is
-     * returned in lowercase, for file or resource databases the original
+     * database: database name. For memory, resource and networked modes,
+     * this is returned in lowercase, for file databases the original
      * case of characters is preserved. Returns empty string if name is not
      * present in the url.<p>
      * for each protocol if port number is not in the url<p>
@@ -616,7 +602,7 @@ public class DatabaseManager {
             props.setProperty("host", host);
             props.setProperty("path", path);
         } else {
-            if (type == S_MEM) {
+            if (type == S_MEM || type == S_RES) {
                 database = urlImage.substring(pos, semicolpos).toLowerCase();
             } else {
                 database = url.substring(pos, semicolpos);

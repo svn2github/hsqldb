@@ -1513,8 +1513,6 @@ class Parser {
                 break;
             }
             case Expression.SEQUENCE : {
-                int type = iToken;
-
                 tokenizer.getThis(Token.T_VALUE);
                 tokenizer.getThis(Token.T_FOR);
 

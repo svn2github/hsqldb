@@ -173,6 +173,10 @@ public class RowOutputTextLog extends RowOutputBase {
         isWritten = true;
     }
 
+    public void writeLongData(long value) {
+        this.writeBytes(Long.toString(value));
+    }
+
     public void writeIntData(int i, int position) throws IOException {}
 
     protected void writeTimestamp(Timestamp o)

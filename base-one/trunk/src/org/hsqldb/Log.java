@@ -509,7 +509,8 @@ class Log {
         }
     }
 
-    void writeRow(Session c, Table t, Object[] row) throws HsqlException {
+    void writeInsertStatement(Session c, Table t,
+                              Object[] row) throws HsqlException {
 
         if (filesReadOnly || bRestoring) {
             return;
@@ -541,6 +542,27 @@ class Log {
 
         try {
             dbScriptWriter.writeDeleteStatement(id, t, row);
+        } catch (IOException e) {
+            throw Trace.error(Trace.FILE_IO_ERROR, sFileLog);
+        }
+
+        if (maxLogSize > 0 && dbScriptWriter.size() > maxLogSize) {
+            checkpoint(false);
+        }
+    }
+
+    void writeSequenceStatement(Session c,
+                                NumberSequence s) throws HsqlException {
+
+        if (filesReadOnly || bRestoring) {
+            return;
+        }
+
+        int id = (c == null) ? 0
+                             : c.getId();
+
+        try {
+            dbScriptWriter.writeSequenceStatement(id, s);
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR, sFileLog);
         }

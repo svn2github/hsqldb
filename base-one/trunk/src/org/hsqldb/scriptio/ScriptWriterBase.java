@@ -84,7 +84,6 @@ public abstract class ScriptWriterBase {
     String         outFile;
     OutputStream   fileStreamOut;
     FileDescriptor outDescriptor;
-    RowOutputBase  rowOut;
     int            tableRowCount;
     StopWatch      sw = new StopWatch();
 

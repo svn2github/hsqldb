@@ -37,6 +37,7 @@ import java.io.IOException;
 import org.hsqldb.Database;
 import org.hsqldb.HsqlException;
 import org.hsqldb.Table;
+import org.hsqldb.NumberSequence;
 import org.hsqldb.Trace;
 import org.hsqldb.rowio.RowOutputTextLog;
 
@@ -59,6 +60,8 @@ import org.hsqldb.rowio.RowOutputTextLog;
 // used at checkpoint
 public class ScriptWriterText extends ScriptWriterBase {
 
+    RowOutputTextLog rowOut;
+
     // todo - perhaps move this global into a lib utility class
     public static byte[] BYTES_LINE_SEP;
 
@@ -73,6 +76,8 @@ public class ScriptWriterText extends ScriptWriterBase {
     final static byte[] BYTES_TERM        = ")".getBytes();
     final static byte[] BYTES_DELETE_FROM = "DELETE FROM ".getBytes();
     final static byte[] BYTES_WHERE       = " WHERE ".getBytes();
+    final static byte[] BYTES_SEQUENCE     = "ALTER SEQUENCE ".getBytes();
+    final static byte[] BYTES_SEQUENCE_MID = " RESTART WITH ".getBytes();
     final static byte[] BYTES_C_ID_INIT   = "/*C".getBytes();
     final static byte[] BYTES_C_ID_TERM   = "*/".getBytes();
 
@@ -183,6 +188,33 @@ public class ScriptWriterText extends ScriptWriterBase {
         rowOut.write(BYTES_WHERE);
         rowOut.writeData(table.getColumnCount(), table.getColumnTypes(),
                          data, table.vColumn, table.hasPrimaryKey());
+        rowOut.write(BYTES_LINE_SEP);
+        fileStreamOut.write(rowOut.getBuffer(), 0, rowOut.size());
+
+        byteCount += rowOut.size();
+
+        fileStreamOut.flush();
+
+        needsSync   = true;
+        busyWriting = false;
+
+        if (forceSync) {
+            sync();
+        }
+    }
+
+    public void writeSequenceStatement(int sid,
+                                       NumberSequence seq)
+                                       throws HsqlException, IOException {
+
+        busyWriting = true;
+
+        rowOut.reset();
+        writeSessionId(sid);
+        rowOut.write(BYTES_SEQUENCE);
+        rowOut.writeString(seq.getName().statementName);
+        rowOut.write(BYTES_SEQUENCE_MID);
+        rowOut.writeLongData(seq.peek());
         rowOut.write(BYTES_LINE_SEP);
         fileStreamOut.write(rowOut.getBuffer(), 0, rowOut.size());
 

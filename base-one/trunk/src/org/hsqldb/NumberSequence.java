@@ -58,7 +58,8 @@ public class NumberSequence {
     /**
      * constructor with initial value and increment;
      */
-    NumberSequence(HsqlName name, long value, long increment, int type) {
+    public NumberSequence(HsqlName name, long value, long increment,
+                          int type) {
 
         this.name      = name;
         startValue     = currValue = lastValue = value;
@@ -112,7 +113,7 @@ public class NumberSequence {
     }
 
     /**
-     * reset to start value, works in conjunction with mark()
+     * reset to start value
      */
     void reset() {
 
@@ -123,7 +124,7 @@ public class NumberSequence {
     /**
      * get next value without incrementing
      */
-    long peek() {
+    public long peek() {
         return currValue;
     }
 
@@ -159,7 +160,7 @@ public class NumberSequence {
         return dataType;
     }
 
-    HsqlName getName() {
+    public HsqlName getName() {
         return name;
     }
 

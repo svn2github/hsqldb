@@ -1701,7 +1701,7 @@ public class Table extends BaseTable {
                 indexRow(row);
 
                 if (log) {
-                    database.logger.writeToLog(c, this, data);
+                    database.logger.writeInsertStatement(c, this, data);
                 }
             } catch (HsqlException e) {}
 
@@ -1739,7 +1739,7 @@ public class Table extends BaseTable {
 
         if (log &&!isTemp &&!isText &&!isReadOnly
                 && database.logger.hasLog()) {
-            database.logger.writeToLog(c, this, row);
+            database.logger.writeInsertStatement(c, this, row);
         }
     }
 
@@ -1757,7 +1757,7 @@ public class Table extends BaseTable {
 
         if (log &&!isTemp &&!isText &&!isReadOnly
                 && database.logger.hasLog()) {
-            database.logger.writeToLog(c, this, row);
+            database.logger.writeInsertStatement(c, this, row);
         }
     }
 

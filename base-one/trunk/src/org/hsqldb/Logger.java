@@ -211,11 +211,11 @@ class Logger {
         }
     }
 
-    void writeToLog(Session session, Table table,
+    void writeInsertStatement(Session session, Table table,
                     Object[] row) throws HsqlException {
 
         if (lLog != null) {
-            lLog.writeRow(session, table, row);
+            lLog.writeInsertStatement(session, table, row);
         }
     }
 
@@ -224,6 +224,14 @@ class Logger {
 
         if (lLog != null) {
             lLog.writeDeleteStatement(c, t, row);
+        }
+    }
+
+    void writeSequenceStatement(Session c,
+                                NumberSequence s) throws HsqlException {
+
+        if (lLog != null) {
+            lLog.writeSequenceStatement(c, s);
         }
     }
 
