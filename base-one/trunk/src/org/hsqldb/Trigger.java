@@ -57,7 +57,7 @@ AFTER DELETE
 BEFORE INSERT FOR EACH ROW
  - row2[] contains data about to be inserted and this can
 be modified within the trigger such that modified data gets written to the
-database. Perfect.
+database.
 
 AFTER INSERT FOR EACH ROW
  - row2[] contains data just inserted into the table.

@@ -33,9 +33,11 @@ package org.hsqldb;
 
 import java.io.IOException;
 import org.hsqldb.lib.StringConverter;
+import org.hsqldb.lib.ArrayUtil;
 
 /**
- * Representation of instnace of BINARY field data
+ * Representation of instnace of BINARY field data. An instance always has
+ * a not-null byte[] object.
  *
  *
  * @author fredt@users
@@ -72,6 +74,19 @@ public class Binary {
 
     int getBytesLength() {
         return data.length;
+    }
+
+    public boolean equals(Object other) {
+
+        if (other == null ||!(other instanceof Binary)) {
+            return false;
+        }
+
+        if (data.length != ((Binary) other).data.length) {
+            return false;
+        }
+
+        return ArrayUtil.startsWith(data, 0, ((Binary) other).data);
     }
 
     public int hashCode() {

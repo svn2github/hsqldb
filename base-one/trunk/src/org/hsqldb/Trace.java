@@ -231,7 +231,9 @@ public class Trace extends PrintWriter {
      jdbcDatabaseMetaData_getBestRowIdentifier     = 118,
      jdbcResultSetMetaData_jdbcResultSetMetaData   = 119,
      jdbcResultSetMetaData_jdbcResultSetMetaData_2 = 120,
-     jdbcResultSetMetaData_jdbcResultSetMetaData_3 = 121
+     jdbcResultSetMetaData_jdbcResultSetMetaData_3 = 121,
+     // new one
+     TableFilter_findFirst = 122
     ;
 
     //
@@ -295,7 +297,7 @@ public class Trace extends PrintWriter {
         "S0011 Constraint already exists", "S0011 Constraint not found",
         "SOO10 Invalid argument in JDBC call",
         "S1000 Database is memory only",
-        "37000 only one join condition on table columns allowed",
+        "37000 only AND allowed in OUTER JOIN conditions",
         "22003 Numeric value out of range",
         "37000 Software module not installed",
         "37000 Not contained in aggregate function or group by clause",
@@ -356,6 +358,8 @@ public class Trace extends PrintWriter {
         "result set is null",                                         // jdbcResultSetMetaData_jdbcResultSetMetaData
         "result set is closed",                                       // jdbcResultSetMetaData_jdbcResultSetMetaData_2
         "connection is closed",                                       // jdbcResultSetMetaData_jdbcResultSetMetaData_3
+        "37000 an index is required on table $$, column $$",          // TableFilter_findFirst
+
     };
 
     static {
@@ -365,6 +369,7 @@ public class Trace extends PrintWriter {
         } catch (Exception e) {}
     }
 
+    static String MESSAGE_TAG = "$$";
     /**
      * Compose error message by inserting the strings in the add parameters
      * in placeholders within the error message. The message string contains
@@ -402,20 +407,20 @@ public class Trace extends PrintWriter {
             // then the statement escIndex = mainErrorMessage.length();
             // is never reached!  ???
             for (int i = 0; i < add.length; i++) {
-                escIndex = mainErrorMessage.indexOf("$$", lastIndex);
+                escIndex = mainErrorMessage.indexOf(MESSAGE_TAG, lastIndex);
 
                 if (escIndex == -1) {
-                    escIndex = mainErrorMessage.length();
-
                     break;
                 }
 
                 sb.append(mainErrorMessage.substring(lastIndex, escIndex));
                 sb.append(add[i].toString());
 
-                lastIndex = escIndex + "$$".length();
+                lastIndex = escIndex + MESSAGE_TAG.length();
             }
         }
+
+        escIndex = mainErrorMessage.length();
 
         sb.append(mainErrorMessage.substring(lastIndex, escIndex));
 

@@ -1827,7 +1827,7 @@ class Table {
     }
 
     /**
-     *  Row level UPDATE triggers
+     *  Row level triggers
      *
      * @param  trigVecIndx
      * @param  row
@@ -1847,10 +1847,8 @@ class Table {
         }
     }
 
-// statement-level triggers
-
     /**
-     *  Method declaration
+     *  Statement level triggers
      *
      * @param  trigVecIndx
      */
