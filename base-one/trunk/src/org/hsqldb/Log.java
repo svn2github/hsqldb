@@ -634,7 +634,7 @@ class Log {
 
                 if (session.isAutoCommit() == false) {
                     dbScriptWriter.writeLogStatement(
-                        session.getAutoCommitStatement(false),
+                        session.getAutoCommitStatement(),
                         session.getId());
                 }
             }

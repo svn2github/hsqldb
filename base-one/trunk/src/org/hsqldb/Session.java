@@ -111,7 +111,7 @@ class Session implements SessionInterface {
     private IntValueHashMap savepoints;
     private boolean         script;
     private jdbcConnection  intConnection;
-    private static Result emptyUpdateCount =
+    final static Result emptyUpdateCount =
         new Result(ResultConstants.UPDATECOUNT);
 
 /** @todo fredt - clarify in which circumstances Session has to disconnet */
@@ -430,7 +430,7 @@ class Session implements SessionInterface {
         int index = -1;
 
         if (savepoints != null) {
-            index = savepoints.get(name);
+            index = savepoints.get(name,-1);
         }
 
         Trace.check(index >= 0, Trace.SAVEPOINT_NOT_FOUND, name);
@@ -566,8 +566,8 @@ class Session implements SessionInterface {
         return script;
     }
 
-    String getAutoCommitStatement(boolean auto) {
-        return auto ? "SET AUTOCOMMIT TRUE"
+    String getAutoCommitStatement() {
+        return isAutoCommit ? "SET AUTOCOMMIT TRUE"
                     : "SET AUTOCOMMIT FALSE";
     }
 
@@ -777,11 +777,11 @@ class Session implements SessionInterface {
     }
 
     /**
-     * Directly executes all of the sql statements in the collection
+     * Directly executes all of the sql statements in the list
      * represented by the sql argument string.
      *
      * @param sql a sql string
-     * @return the result of the last sql statement in the collection
+     * @return the result of the last sql statement in the list
      */
     Result sqlExecuteDirect(String sql) {
         return dbCommandInterpreter.execute(sql);

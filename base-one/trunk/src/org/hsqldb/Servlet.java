@@ -69,34 +69,52 @@ package org.hsqldb;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.InputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import org.hsqldb.lib.StringConverter;
 
 // fredt@users 20020130 - patch 475586 by wreissen@users
 // fredt@users 20020328 - patch 1.7.0 by fredt - error trapping
+// fredt@users 20030630 - patch 1.7.2 - new protocol, persistent sessions
 
 /**
- * <font color="#009900">
- * Servlet acts as a interface between the applet and the database for the
- * the client / server mode of HSQL Database Engine. It is not required if
- * the included HSQL Database Engine WebServer is used, but if another
- * HTTP server is used. The HTTP Server must support the Servlet API.
- * <br>
- * This class should not be used directly by the application. It will be
- * called by the HTTP Server. The applet / application should use the
- * jdbc* classes.
- * <br>
- * The database name is taken from the servlet engine (extranal webserver)
- * property hsqldb.server.database (fredt@users)
- * <br>
- * </font>
- * @version 1.7.0
+ * Servlet can act as an interface between the client and the database for the
+ * the client / server mode of HSQL Database Engine. It uses the HTTP protocol
+ * for communication. This class is not required if the included HSQLDB
+ * Weberver is used on the server host. But if the host is running a J2EE
+ * application server or a servlet container such as Tomcat, the Servlet class
+ * can be hosted on this server / container to serve external requests from
+ * external hosts.<p>
+ * The remote applet / application should
+ * use the normal JDBC interfaces to connect to the URL of this servlet. An
+ * example URL is:
+ * <pre>
+ * jdbc:hsqldb:http://localhost.com:8080/servlet/org.hsqldb.Servlet
+ * </pre>
+ * The database name is taken from the servlet engine property:
+ * <pre>
+ * hsqldb.server.database
+ * </pre>
+ * <p>
+ * From version 1.7.2 JDBC connections via the HTTP protocol are persistent
+ * in the JDBC sense. The JDBC Connection that is established can support
+ * transactions spanning several Statement calls and real PreparedStatement
+ * calls are supported. This class has been rewritten to support the new
+ * features. (fredt@users)
+ *
+ * @version 1.7.2
  */
 public class Servlet extends javax.servlet.http.HttpServlet {
 
-    private String   sError;
-    private Database dDatabase;
-    private String   sDatabase;
+    static final int      BUFFER_SIZE = 256;
+    String                dbType;
+    String                dbPath;
+    String                errorStr;
+    BinaryServerRowOutput rowOut = new BinaryServerRowOutput(BUFFER_SIZE);
+    BinaryServerRowInput  rowIn  = new BinaryServerRowInput(rowOut);
 
     /**
      * Method declaration
@@ -112,20 +130,23 @@ public class Servlet extends javax.servlet.http.HttpServlet {
             log(exp.getMessage());
         }
 
-        sDatabase = getInitParameter("hsqldb.server.database");
-        String type = DatabaseManager.S_MEM;
-        if (sDatabase == null) {
-            sDatabase = ".";
+        String dbStr = getInitParameter("hsqldb.server.database");
+
+        if (dbStr == null) {
+            dbStr = ".";
         }
 
-        log("Database filename = " + sDatabase);
+        HsqlProperties dbURL = DatabaseManager.parseURL(dbStr, false);
 
-        try {
-            dDatabase = DatabaseManager.getDatabase(DatabaseManager.S_MEM,sDatabase);
-        } catch (HsqlException e) {
-            sError = e.getMessage();
+        log("Database filename = " + dbStr);
 
-            log(sError);
+        if (dbURL == null) {
+            errorStr = "Bad Database name";
+
+            log(errorStr);
+        } else {
+            dbPath = dbURL.getProperty("database");
+            dbType = dbURL.getProperty("connection_type");
         }
 
         log("Initialization completed.");
@@ -176,16 +197,16 @@ public class Servlet extends javax.servlet.http.HttpServlet {
             out.println(
                 "<html><head><title>HSQL Database Engine Servlet</title>");
             out.println("</head><body><h1>HSQL Database Engine Servlet</h1>");
-            out.println("The servlet is running.<P>");
+            out.println("The servlet is running.<p>");
 
-            if (dDatabase != null) {
-                out.println("The database is also running.<P>");
-                out.println("Database name: " + sDatabase + "<P>");
-                out.println("Queries processed: " + iQueries + "<P>");
+            if (errorStr == null) {
+                out.println("The database is also running.<p>");
+                out.println("Database name: " + dbType + dbPath + "<p>");
+                out.println("Queries processed: " + iQueries + "<p>");
             } else {
                 out.println("<h2>The database is not running!</h2>");
-                out.println("The error message is:<P>");
-                out.println(sError);
+                out.println("The error message is:<p>");
+                out.println(errorStr);
             }
 
             out.println("</body></html>");
@@ -206,57 +227,54 @@ public class Servlet extends javax.servlet.http.HttpServlet {
                        HttpServletResponse response)
                        throws IOException, ServletException {
 
-        ServletInputStream input = request.getInputStream();
-        int                len   = request.getContentLength();
-        byte               b[]   = new byte[len];
-
-        // fredt@users - the servlet container, Resin does not return all the
-        // bytes with one call to input.read(b,0,len) when len > 8192 bytes,
-        // so the loop is added as as workaround
-        for (int off = 0, bytesread = 0; off < len; off += bytesread) {
-            bytesread = input.read(b, off, len - off);
-
-            // fredt@users - it must read more bytes until the for loop exits
-            // otherwise an exception is thrown as the input is truncated
-            if (bytesread == 0 || bytesread == -1) {
-                throw new ServletException();
-            }
-        }
-
-        String s = new String(b);
-        int    p = s.indexOf('+');
-        int    q = s.indexOf('+', p + 1);
-
-        if ((p == -1) || (q == -1)) {
-            doGet(request, response);
-        }
-
-        String user     = s.substring(0, p);
-        String password = s.substring(p + 1, q);
-
-        s = s.substring(q + 1);
 
         try {
-            user     = StringConverter.hexStringToUnicode(user);
-            password = StringConverter.hexStringToUnicode(password);
-            s        = StringConverter.hexStringToUnicode(s);
-        } catch (IOException e) {
-            throw new ServletException();
-        }
-/*
-        response.setContentType("application/octet-stream");
+            DataInputStream inStream =
+                new DataInputStream(request.getInputStream());
 
-        ServletOutputStream out      = response.getOutputStream();
+            // fredt@users - the servlet container, Resin does not return all
+            // the bytes with one call to input.read(b,0,len) when len > 8192
+            // bytes, the loop in the next method handles this
+            Result resultIn = HSQLClientConnection.read(rowIn, inStream);
+            Result resultOut;
 
-        byte                result[] = dDatabase.execute(user, password, s);
+            if (resultIn.iMode == ResultConstants.SQLCONNECT) {
+                try {
+                    Session session = DatabaseManager.newSession(dbType,
+                        dbPath, resultIn.getMainString(),
+                        resultIn.getSubString());
 
-        response.setContentLength(result.length);
-        out.write(result);
-        out.flush();
-        out.close();
+                    resultOut = new Result(ResultConstants.UPDATECOUNT);
+                    resultOut.sessionID = session.getId();
+                } catch (HsqlException e) {
+                    resultOut = new Result(e.getMessage(), e.getSQLState(),
+                                           e.getErrorCode());
+                }
+            } else {
+                Session session = DatabaseManager.getSession(dbType, dbPath,
+                    resultIn.sessionID);
 
-        iQueries++;
-*/
+                resultOut = session.execute(resultIn);
+            }
+
+            rowOut.reset();
+            resultOut.write(rowOut);
+
+            //
+            response.setContentType("application/octet-stream");
+            response.setContentLength(rowOut.size());
+
+            //
+            ServletOutputStream outStream = response.getOutputStream();
+
+            outStream.write(rowOut.getOutputStream().getBuffer(), 0,
+                            rowOut.getOutputStream().size());
+            outStream.flush();
+            outStream.close();
+
+            iQueries++;
+        } catch (HsqlException e) {}
+
         // System.out.print("Queries processed: "+iQueries+"  \n");
     }
 

@@ -74,10 +74,13 @@ import org.hsqldb.lib.ArrayUtil;
 // tony_lai@users 20020820 - patch 595156 - violation of Integrity constraint name
 
 /**
- *  Implementation of a table constraint with references to the indexes used
- *  by the constraint.
+ * Implementation of a table constraint with references to the indexes used
+ * by the constraint.<p>
  *
- * @version    1.7.0
+ * Methods for checking constraint violation must be called from within a
+ * synchronized context that locks the ConsraintCore object.
+ *
+ * @version    1.7.2
  */
 class Constraint {
 

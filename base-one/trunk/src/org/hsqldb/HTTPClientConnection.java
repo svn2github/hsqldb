@@ -73,38 +73,33 @@ public class HTTPClientConnection extends HSQLClientConnection {
         dataOutput.write("POST ".getBytes(ENCODING));
         dataOutput.write('/');
         dataOutput.write(database.getBytes(ENCODING));
-        dataOutput
-            .write(" HTTP/1.0\r\nContent-Type: application/octet-stream\r\n"
-                .getBytes(ENCODING));
+        dataOutput.write(" HTTP/1.0\r\n".getBytes(ENCODING));
+        dataOutput.write(
+            "Content-Type: application/octet-stream\r\n".getBytes(ENCODING));
         dataOutput.write(("Content-Length: " + rowOut.size()
                           + "\r\n").getBytes(ENCODING));
+        dataOutput.write("\r\n".getBytes(ENCODING));
         dataOutput.write(rowOut.getOutputStream().getBuffer(), 0,
                          rowOut.getOutputStream().size());
         dataOutput.flush();
     }
 
     protected Result read() throws IOException, HsqlException {
-        // fredt - 4 lines should be skipped
+
+        // fredt - for WebServer 4 lines should be skipped
+        // for Servlet, number of lines depends on Servlet container
+        // stop skipping after the blank line
         rowOut.reset();
 
-        int    count  = InOutUtil.readLine(dataInput, rowOut);
-        int    offset = rowOut.size() - count;
-        String name = new String(rowOut.getBuffer(), offset, count, ENCODING);
+        for (;;) {
+            int count  = InOutUtil.readLine(dataInput, rowOut);
+//            int offset = rowOut.size() - count;
+//            String line = new String(rowOut.getBuffer(), offset, count, ENCODING);
 
-        //
-        count  = InOutUtil.readLine(dataInput, rowOut);
-        offset = rowOut.size() - count;
-        name   = new String(rowOut.getBuffer(), offset, count, ENCODING);
-
-        //
-        count  = InOutUtil.readLine(dataInput, rowOut);
-        offset = rowOut.size() - count;
-        name   = new String(rowOut.getBuffer(), offset, count, ENCODING);
-
-        //
-        count  = InOutUtil.readLine(dataInput, rowOut);
-        offset = rowOut.size() - count;
-        name   = new String(rowOut.getBuffer(), offset, count, ENCODING);
+            if (count <= 2) {
+                break;
+            }
+        }
 
         //
         Result resultIn = read(rowIn, dataInput);

@@ -138,7 +138,6 @@ class ServerConnection implements Runnable {
         synchronized(mServer.serverConnSet){
             mServer.serverConnSet.remove(this);
         }
-        mServer.notify(ServerConstants.SC_CONNECTION_CLOSED);
     }
 
     /**

@@ -300,8 +300,13 @@ class DatabaseManager {
 
         HsqlProperties props     = new HsqlProperties();
         int            pos       = hasPrefix ? S_URL_PREFIX.length()
-                                             : 0;
+                                                 : 0;
+        //
+        String host;
+
         int            port      = 0;
+        String database;
+
         String         type      = null;
         boolean        isNetwork = false;
 
@@ -352,12 +357,14 @@ class DatabaseManager {
         }
 
         props.setProperty("connection_type", type);
-
+/*
         if (type == S_FILE || type == S_RES) {
             url = url.substring(pos, nextPos);
         } else {
             url = urlImage.substring(pos, nextPos);
         }
+*/
+        url = url.substring(pos, nextPos);
 
         if (nextPos != urlImage.length()) {
             String arguments = urlImage.substring(nextPos + 1,
@@ -369,8 +376,6 @@ class DatabaseManager {
             //todo - check if properties have valid names / values
             props.addProperties(extraProps);
         }
-
-        String database;
 
         if (isNetwork) {
             pos = url.indexOf('/');
@@ -386,16 +391,18 @@ class DatabaseManager {
 
             if (pos >= 0) {
                 try {
-                    port = Integer.parseInt(url.substring(pos));
+                    port = Integer.parseInt(url.substring(pos + 1));
                 } catch (NumberFormatException e) {
                     return null;
                 }
 
-                url = url.substring(0, pos);
+                host = url.substring(0, pos);
+            } else {
+                host = url;
             }
 
             props.setProperty("port", port);
-            props.setProperty("host", url);
+            props.setProperty("host", host);
         } else {
             database = url;
         }

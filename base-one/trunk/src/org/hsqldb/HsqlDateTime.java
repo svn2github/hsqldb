@@ -156,7 +156,7 @@ class HsqlDateTime {
             return Date.valueOf(s.substring(0, sdfdPattern.length()));
         }
 
-        return Date.valueOf(s);    // Compatiblity...if no leading zero in mm/dd!
+        return Date.valueOf(s);
     }
 
     /**
@@ -176,8 +176,11 @@ class HsqlDateTime {
         }
 
         if (s.toUpperCase().equals("CURRENT_TIME")) {
-            return new Time(System.currentTimeMillis()
-                            - getToday().getTime());
+            long time = System.currentTimeMillis() - getToday().getTime();
+
+            time = (time / 1000) * 1000;
+
+            return new Time(time);
         }
 
         return Time.valueOf(s);
@@ -228,12 +231,12 @@ class HsqlDateTime {
         return ts;
     }
 
-    static java.text.SimpleDateFormat sdfts;
+    static SimpleDateFormat sdfd  = new SimpleDateFormat(sdfdPattern);
+    static SimpleDateFormat sdft  = new SimpleDateFormat(sdftPattern);
+    static SimpleDateFormat sdfts = new SimpleDateFormat(sdftsPattern);
 
-    static String getTimestampString(Timestamp x,
-                                     Calendar cal) throws Exception {
-
-        SimpleDateFormat sdfts = new SimpleDateFormat(sdftsPattern);
+    synchronized static String getTimestampString(Timestamp x,
+            Calendar cal) throws Exception {
 
         sdfts.setCalendar(cal);
 
@@ -241,18 +244,16 @@ class HsqlDateTime {
                                                + x.getNanos() / 1000000));
     }
 
-    static String getTimeString(Time x, Calendar cal) throws Exception {
-
-        final SimpleDateFormat sdft = new SimpleDateFormat(sdftPattern);
+    synchronized static String getTimeString(Time x,
+            Calendar cal) throws Exception {
 
         sdft.setCalendar(cal);
 
         return sdft.format(x);
     }
 
-    static String getDateString(Date x, Calendar cal) throws Exception {
-
-        SimpleDateFormat sdfd = new SimpleDateFormat(sdfdPattern);
+    synchronized static String getDateString(Date x,
+            Calendar cal) throws Exception {
 
         sdfd.setCalendar(cal);
 
@@ -309,7 +310,7 @@ class HsqlDateTime {
 
         long now = System.currentTimeMillis();
 
-// fredt - this needs more work
+// fredt - this needs tests and review to ensure core time zone is always GMT
 //        Calendar c   = new GregorianCalendar(TimeZone.getTimeZone("GMT"));
         Calendar c = new GregorianCalendar();
 
