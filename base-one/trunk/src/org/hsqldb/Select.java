@@ -207,17 +207,20 @@ class Select {
      *
      * @throws HsqlException
      */
-    void checkResolved() throws HsqlException {
+    boolean checkResolved(boolean check) throws HsqlException {
 
-        int len = eColumn.length;
+        boolean result = true;
+        int     len    = eColumn.length;
 
         for (int i = 0; i < len; i++) {
-            eColumn[i].checkResolved();
+            result = result && eColumn[i].checkResolved(check);
         }
 
         if (eCondition != null) {
-            eCondition.checkResolved();
+            result = result && eCondition.checkResolved(check);
         }
+
+        return result;
     }
 
     /**
@@ -248,7 +251,7 @@ class Select {
      */
     void prepareResult() throws HsqlException {
 
-        resolveAll();
+        resolveAll(true);
 
         if (iGroupLen > 0) {    // has been set in Parser
             isGrouped        = true;
@@ -764,24 +767,29 @@ class Select {
 // -----------------------------------------------------------------------------
     boolean isResolved = false;
 
-    void resolveAll() throws HsqlException {
+    boolean resolveAll(boolean check) throws HsqlException {
+
+        boolean result = true;
 
         if (isResolved) {
-            return;
+            return true;
         }
 
         resolve();
-        checkResolved();
+
+        result = result && checkResolved(check);
 
         if (sUnion != null) {
             if (sUnion.iResultLen != iResultLen) {
                 throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
             }
 
-            sUnion.resolveAll();
+            sUnion.resolveAll(check);
         }
 
-        isResolved = true;
+        isResolved = result;
+
+        return result;
     }
 
     boolean isResolved() {

@@ -1370,38 +1370,44 @@ class Expression {
      *
      * @throws HsqlException
      */
-    Expression checkResolved() throws HsqlException {
+    boolean checkResolved(boolean check) throws HsqlException {
+
+        boolean result = true;
 
         if (eArg != null) {
-            eArg.checkResolved();
+            result = result && eArg.checkResolved(check);
         }
 
         if (eArg2 != null) {
-            eArg2.checkResolved();
+            result = result && eArg2.checkResolved(check);
         }
 
         if (subSelect != null) {
-            subSelect.checkResolved();
+            result = result && subSelect.checkResolved(check);
         }
 
         if (function != null) {
-            function.checkResolved();
+            result = result && function.checkResolved(check);
         }
 
         if (valueList != null) {
             for (int i = 0; i < valueList.length; i++) {
-                valueList[i].checkResolved();
+                result = result && valueList[i].checkResolved(check);
             }
         }
 
         if (exprType == COLUMN && tableFilter == null) {
-            String err = tableName == null ? columnName
-                                           : tableName + "." + columnName;
+            if (check) {
+                String err = tableName == null ? columnName
+                                               : tableName + "." + columnName;
 
-            throw Trace.error(Trace.COLUMN_NOT_FOUND, err);
+                throw Trace.error(Trace.COLUMN_NOT_FOUND, err);
+            }
+
+            result = false;
         }
 
-        return null;
+        return result;
     }
 
     /**
@@ -1566,7 +1572,8 @@ class Expression {
                 // we now (1_7_2_ALPHA_R) resolve independently first, then
                 // resolve in the enclosing context
                 if (subSelect != null) {
-                    subSelect.resolve();
+
+//                    subSelect.resolve();
                     subSelect.resolve(f, false);
                 }
                 break;
@@ -2095,6 +2102,9 @@ class Expression {
 
             case COLUMN :
                 return tableFilter != null;
+
+            case QUERY :
+                return true;
         }
 
         // todo: could recurse here, but never miss a 'false'!

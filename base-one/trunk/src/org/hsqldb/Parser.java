@@ -618,7 +618,7 @@ class Parser {
 
                 vcolumn.remove(current);
             } else if (e.getType() == Expression.COLUMN) {
-                if (e.getTableName() == null) {
+                if (e.getFilter() == null) {
                     for (int f = 0; f < filters.length; f++) {
                         e.resolveTables(filters[f]);
                     }
@@ -749,7 +749,7 @@ class Parser {
             s = sq.select;
 
             // fredt - not correlated - a joined subquery table must resolve fully
-            s.resolveAll();
+            s.resolveAll(true);
 
             // it's not a problem that this table has not a unique name
             t = new Table(
@@ -814,7 +814,7 @@ class Parser {
                 s = sq.select;
 
                 // fredt - not correlated
-                s.resolveAll();
+                s.resolveAll(true);
 
                 // it's not a problem that this table has not a unique name
                 t = new Table(
@@ -999,8 +999,9 @@ class Parser {
                 Trace.check(iToken == Expression.SELECT,
                             Trace.UNEXPECTED_TOKEN);
 
-                Select     select = parseSelect(false);
-                Expression s      = new Expression(select);
+                Select     select      = parseSelect(false);
+                boolean    subresolved = select.resolveAll(false);
+                Expression s           = new Expression(select);
 
                 read();
                 readThis(Expression.CLOSE);
@@ -1132,9 +1133,8 @@ class Parser {
         Expression b = null;
 
         if (iToken == Expression.SELECT) {
-            Select select = parseSelect(false);
-
-            select.resolve();
+            Select  select      = parseSelect(false);
+            boolean subresolved = select.resolveAll(false);
 
             b = new Expression(select);
 

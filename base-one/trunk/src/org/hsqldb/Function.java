@@ -470,13 +470,17 @@ class Function {
      *
      * @throws HsqlException if any arguments have not yet been resolved
      */
-    void checkResolved() throws HsqlException {
+    boolean checkResolved(boolean check) throws HsqlException {
+
+        boolean result = true;
 
         for (int i = iSqlArgStart; i < iArgCount; i++) {
             if (eArg[i] != null) {
-                eArg[i].checkResolved();
+                result = result && eArg[i].checkResolved(check);
             }
         }
+
+        return result;
     }
 
     /**

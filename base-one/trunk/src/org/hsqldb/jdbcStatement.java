@@ -1587,7 +1587,7 @@ public class jdbcStatement implements java.sql.Statement {
         // PRE: assume type is a valid result set type code
         connection = c;
         rsType     = type;
-        isNetConn  = c.sessionProxy instanceof HSQLClientConnection;
+        isNetConn  = !(c.sessionProxy instanceof Session);
     }
 
     /**

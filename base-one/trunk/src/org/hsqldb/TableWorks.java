@@ -311,7 +311,7 @@ class TableWorks {
         /** @todo fredt - this temp workaround is here to stop LIKE optimisation */
         e.setLikeOptimised();
         e.resolveTypes();
-        e.checkResolved();
+        e.checkResolved(true);
 
         /** @todo fredt - this temp workaround is here to ensure no subselects etc. are in contition */
         e.getDDL();

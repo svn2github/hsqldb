@@ -90,7 +90,7 @@ final class CompiledStatementExecutor {
             result = new Result(t, cs.sql);
         }
 
-        // keep memory consumption down
+        // clear redundant data
         cs.dematerializeSubQueries();
 
         if (result == null) {

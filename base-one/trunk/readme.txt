@@ -1,6 +1,9 @@
 Readme File
 
-2003.10.17
+2003.10.18
+
+Fixed name resolution issues in some IN (SELECT ...) and EXISTS (SELECT ...)
+queries.
 
 Fixed LIKE parameter bug.
 
