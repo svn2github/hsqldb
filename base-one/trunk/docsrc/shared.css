@@ -32,20 +32,20 @@ div.warning      { background: red; }
 pre.programlisting { background-color: silver; padding: 5px; }
 pre.screen         { background-color: #BDC6DE; padding: 5px; }
 
-h1.title { font-size: 300%; }
+h1.title { font-size: 200%; }
 div.chapter h2.title {
-    font-size: 200%;
-    font-weight: bold;
-    color: white;
-    background: #083194;
-    border: 4px groove black;
-    padding: 5px;
-}
-div.section h2.title {
-    font-size: 150%;
+    font-size: 170%;
     font-weight: bold;
     color: black;
     background: white;
     padding: 2px;
     border: 2px solid #083194;
+}
+div.section h2.title {
+    font-size: 140%;
+    font-weight: bold;
+    color: #083194;
+    background: white;
+    padding: 2px;
+    border: none;
 }
