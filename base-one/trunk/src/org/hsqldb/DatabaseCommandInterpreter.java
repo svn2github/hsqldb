@@ -84,6 +84,9 @@ import org.hsqldb.lib.StringUtil;
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
+
+// boucherb@users 20030425 - refactoring DDL into smaller units
+// fredt@users 20030609 - support for ALTER COLUMN SET/DROP DEFAULT / RENAME TO
 class DatabaseCommandInterpreter implements DITypes {
 
     protected Database    database;
@@ -361,7 +364,7 @@ class DatabaseCommandInterpreter implements DITypes {
         token  = tokenizer.getString();
         isTemp = false;
 
-        if (token.equals("TEMP")) {
+        if (token.equals(Token.T_TEMP)) {
             isTemp = true;
             token  = tokenizer.getString();
 
@@ -399,7 +402,7 @@ class DatabaseCommandInterpreter implements DITypes {
                 break;
 
             case Token.MEMORY :
-                tokenizer.getThis("TABLE");
+                tokenizer.getThis(Token.T_TABLE);
 
                 tableType = isTemp ? Table.TEMP_TABLE
                                    : Table.MEMORY_TABLE;
@@ -408,12 +411,12 @@ class DatabaseCommandInterpreter implements DITypes {
                 break;
 
             case Token.CACHED :
-                tokenizer.getThis("TABLE");
+                tokenizer.getThis(Token.T_TABLE);
                 processCreateTable(Table.CACHED_TABLE);
                 break;
 
             case Token.TEXT :
-                tokenizer.getThis("TABLE");
+                tokenizer.getThis(Token.T_TABLE);
 
                 tableType = isTemp ? Table.TEMP_TEXT_TABLE
                                    : Table.TEXT_TABLE;
@@ -440,7 +443,7 @@ class DatabaseCommandInterpreter implements DITypes {
             case Token.UNIQUE :
                 unique = true;
 
-                tokenizer.getThis("INDEX");
+                tokenizer.getThis(Token.T_INDEX);
 
             //fall thru
             case Token.INDEX :
@@ -473,7 +476,7 @@ class DatabaseCommandInterpreter implements DITypes {
         list = new HsqlArrayList();
         set  = new HashSet();
 
-        tokenizer.getThis("(");
+        tokenizer.getThis(Token.T_OPENBRACKET);
 
         while (true) {
             token = tokenizer.getName();
@@ -488,11 +491,11 @@ class DatabaseCommandInterpreter implements DITypes {
 
             token = tokenizer.getString();
 
-            if (token.equals(",")) {
+            if (token.equals(Token.T_COMMA)) {
                 continue;
             }
 
-            if (token.equals(")")) {
+            if (token.equals(Token.T_CLOSEBRACKET)) {
                 break;
             }
 
@@ -584,7 +587,7 @@ class DatabaseCommandInterpreter implements DITypes {
         sWhen     = tokenizer.getString();
         sOper     = tokenizer.getString();
 
-        tokenizer.getThis("ON");
+        tokenizer.getThis(Token.T_ON);
 
         tableName = tokenizer.getString();
         t         = database.getTable(tableName, session);
@@ -597,13 +600,13 @@ class DatabaseCommandInterpreter implements DITypes {
         // "FOR EACH ROW" or "CALL"
         token = tokenizer.getString();
 
-        if (token.equals("FOR")) {
+        if (token.equals(Token.T_FOR)) {
             token = tokenizer.getString();
 
-            if (token.equals("EACH")) {
+            if (token.equals(Token.T_EACH)) {
                 token = tokenizer.getString();
 
-                if (token.equals("ROW")) {
+                if (token.equals(Token.T_ROW)) {
                     isForEach = true;
 
                     // should be 'NOWAIT' or 'QUEUE' or 'CALL'
@@ -616,21 +619,21 @@ class DatabaseCommandInterpreter implements DITypes {
             }
         }
 
-        if (token.equals("NOWAIT")) {
+        if (token.equals(Token.T_NOWAIT)) {
             isNowait = true;
 
             // should be 'CALL' or 'QUEUE'
             token = tokenizer.getString();
         }
 
-        if (token.equals("QUEUE")) {
+        if (token.equals(Token.T_QUEUE)) {
             queueSize = Integer.parseInt(tokenizer.getString());
 
             // should be 'CALL'
             token = tokenizer.getString();
         }
 
-        if (!token.equals("CALL")) {
+        if (!token.equals(Token.T_CALL)) {
             throw Trace.error(Trace.UNEXPECTED_END_OF_COMMAND, token);
         }
 
@@ -710,7 +713,7 @@ class DatabaseCommandInterpreter implements DITypes {
         scale        = 0;
         defaultValue = null;
 
-        if (typeName.equals("IDENTITY")) {
+        if (typeName.equals(Token.T_IDENTITY)) {
             isIdentity   = true;
             isPrimaryKey = true;
         }
@@ -725,14 +728,14 @@ class DatabaseCommandInterpreter implements DITypes {
 
         token = tokenizer.getString();
 
-        if (type == DOUBLE && token.equals("PRECISION")) {
+        if (type == DOUBLE && token.equals(Token.T_PRECISION)) {
             token = tokenizer.getString();
         }
 
         // fredt@users 20020130 - patch 491987 by jimbag@users
         sLen = "";
 
-        if (token.equals("(")) {
+        if (token.equals(Token.T_OPENBRACKET)) {
 
             // TODO:
             // Shouldn't we throw for types that do not
@@ -742,7 +745,7 @@ class DatabaseCommandInterpreter implements DITypes {
             while (true) {
                 token = tokenizer.getString();
 
-                if (token.equals(")")) {
+                if (token.equals(Token.T_CLOSEBRACKET)) {
                     break;
                 }
 
@@ -755,7 +758,7 @@ class DatabaseCommandInterpreter implements DITypes {
         // see if we have a scale specified
         int index;
 
-        if ((index = sLen.indexOf(",")) != -1) {
+        if ((index = sLen.indexOf(Token.T_COMMA)) != -1) {
             sScale = sLen.substring(index + 1, sLen.length());
             sLen   = sLen.substring(0, index);
 
@@ -775,28 +778,28 @@ class DatabaseCommandInterpreter implements DITypes {
             }
         }
 
-        if (token.equals("DEFAULT")) {
+        if (token.equals(Token.T_DEFAULT)) {
             defaultValue = processCreateDefaultValue(type, length);
             token        = tokenizer.getString();
         }
 
-        if (token.equals("NULL")) {
+        if (token.equals(Token.T_NULL)) {
             token = tokenizer.getString();
-        } else if (token.equals("NOT")) {
-            tokenizer.getThis("NULL");
+        } else if (token.equals(Token.T_NOT)) {
+            tokenizer.getThis(Token.T_NULL);
 
             isNullable = false;
             token      = tokenizer.getString();
         }
 
-        if (token.equals("IDENTITY")) {
+        if (token.equals(Token.T_IDENTITY)) {
             isIdentity   = true;
             token        = tokenizer.getString();
             isPrimaryKey = true;
         }
 
-        if (token.equals("PRIMARY")) {
-            tokenizer.getThis("KEY");
+        if (token.equals(Token.T_PRIMARY)) {
+            tokenizer.getThis(Token.T_KEY);
 
             isPrimaryKey = true;
         } else {
@@ -912,7 +915,7 @@ class DatabaseCommandInterpreter implements DITypes {
 
             i++;
 
-            if (token.equals("CONSTRAINT")) {
+            if (token.equals(Token.T_CONSTRAINT)) {
                 cname = new HsqlName(tokenizer.getName(),
                                      tokenizer.wasQuotedIdentifier());
                 token = tokenizer.getString();
@@ -921,7 +924,7 @@ class DatabaseCommandInterpreter implements DITypes {
             switch (Token.get(token)) {
 
                 case Token.PRIMARY : {
-                    tokenizer.getThis("KEY");
+                    tokenizer.getThis(Token.T_KEY);
 
                     // tony_lai@users 20020820 - patch 595099
                     pkHsqlName = cname;
@@ -955,7 +958,7 @@ class DatabaseCommandInterpreter implements DITypes {
                     break;
                 }
                 case Token.FOREIGN : {
-                    tokenizer.getThis("KEY");
+                    tokenizer.getThis(Token.T_KEY);
 
                     tempConst = processCreateFK(t, cname);
 
@@ -980,11 +983,11 @@ class DatabaseCommandInterpreter implements DITypes {
 
             token = tokenizer.getString();
 
-            if (token.equals(",")) {
+            if (token.equals(Token.T_COMMA)) {
                 continue;
             }
 
-            if (token.equals(")")) {
+            if (token.equals(Token.T_CLOSEBRACKET)) {
                 break;
             }
 
@@ -1017,7 +1020,7 @@ class DatabaseCommandInterpreter implements DITypes {
         isnamequoted = tokenizer.wasQuotedIdentifier();
         t            = newTable(type, token, isnamequoted);
 
-        tokenizer.getThis("(");
+        tokenizer.getThis(Token.T_OPENBRACKET);
 
         pkCols     = null;
         colIndex   = 0;
@@ -1058,13 +1061,13 @@ class DatabaseCommandInterpreter implements DITypes {
 
             token = tokenizer.getString();
 
-            if (token.equals(",")) {
+            if (token.equals(Token.T_COMMA)) {
                 colIndex++;
 
                 continue;
             }
 
-            if (token.equals(")")) {
+            if (token.equals(Token.T_CLOSEBRACKET)) {
                 break;
             }
 
@@ -1153,7 +1156,7 @@ class DatabaseCommandInterpreter implements DITypes {
 
         localcol = processColumnList(t);
 
-        tokenizer.getThis("REFERENCES");
+        tokenizer.getThis(Token.T_REFERENCES);
 
         expTableName = tokenizer.getString();
 
@@ -1171,7 +1174,7 @@ class DatabaseCommandInterpreter implements DITypes {
         tokenizer.back();
 
 // fredt@users 20020503 - patch 1.7.0 by fredt -  FOREIGN KEY on table
-        if (token.equals("(")) {
+        if (token.equals(Token.T_OPENBRACKET)) {
             expcol = processColumnList(expTable);
         } else {
 
@@ -1203,43 +1206,43 @@ class DatabaseCommandInterpreter implements DITypes {
         int deleteAction = Constraint.NO_ACTION;
         int updateAction = Constraint.NO_ACTION;
 
-        while (token.equals("ON")) {
+        while (token.equals(Token.T_ON)) {
             token = tokenizer.getString();
 
             if (deleteAction == Constraint.NO_ACTION
-                    && token.equals("DELETE")) {
+                    && token.equals(Token.T_DELETE)) {
                 token = tokenizer.getString();
 
-                if (token.equals("SET")) {
+                if (token.equals(Token.T_SET)) {
                     token = tokenizer.getString();
 
-                    if (token.equals("DEFAULT")) {
+                    if (token.equals(Token.T_DEFAULT)) {
                         deleteAction = Constraint.SET_DEFAULT;
-                    } else if (token.equals("NULL")) {
+                    } else if (token.equals(Token.T_NULL)) {
                         deleteAction = Constraint.SET_NULL;
                     } else {
                         throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
                     }
-                } else if (token.equals("CASCADE")) {
+                } else if (token.equals(Token.T_CASCADE)) {
                     deleteAction = Constraint.CASCADE;
                 } else {
                     throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
                 }
             } else if (updateAction == Constraint.NO_ACTION
-                       && token.equals("UPDATE")) {
+                       && token.equals(Token.T_UPDATE)) {
                 token = tokenizer.getString();
 
-                if (token.equals("SET")) {
+                if (token.equals(Token.T_SET)) {
                     token = tokenizer.getString();
 
-                    if (token.equals("DEFAULT")) {
+                    if (token.equals(Token.T_DEFAULT)) {
                         updateAction = Constraint.SET_DEFAULT;
-                    } else if (token.equals("NULL")) {
+                    } else if (token.equals(Token.T_NULL)) {
                         updateAction = Constraint.SET_NULL;
                     } else {
                         throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
                     }
-                } else if (token.equals("CASCADE")) {
+                } else if (token.equals(Token.T_CASCADE)) {
                     updateAction = Constraint.CASCADE;
                 }
             } else {
@@ -1283,9 +1286,9 @@ class DatabaseCommandInterpreter implements DITypes {
         viewHsqlName = new HsqlName(token, tokenizer.wasQuotedIdentifier());
         view         = new View(database, viewHsqlName);
 
-        tokenizer.getThis("AS");
+        tokenizer.getThis(Token.T_AS);
         tokenizer.setPartMarker();
-        tokenizer.getThis("SELECT");
+        tokenizer.getThis(Token.T_SELECT);
 
         parser = new Parser(database, tokenizer, session);
 
@@ -1329,7 +1332,7 @@ class DatabaseCommandInterpreter implements DITypes {
             throw Trace.error(Trace.TABLE_NOT_FOUND);
         }
 
-        tokenizer.getThis("TO");
+        tokenizer.getThis(Token.T_TO);
 
         newName  = tokenizer.getName();
         isquoted = tokenizer.wasQuotedIdentifier();
@@ -1388,12 +1391,9 @@ class DatabaseCommandInterpreter implements DITypes {
      */
     private void processAlterTable() throws SQLException {
 
-        String tableName;
-        Table  t;
+        String tableName = tokenizer.getString();
+        Table  t         = database.getUserTable(tableName, session);
         String token;
-
-        tableName = tokenizer.getString();
-        t         = database.getUserTable(tableName, session);
 
         checkIsReallyTable(t);
         session.setScripting(!t.isTemp());
@@ -1424,7 +1424,7 @@ class DatabaseCommandInterpreter implements DITypes {
                         return;
                     }
                     case Token.FOREIGN : {
-                        tokenizer.getThis("KEY");
+                        tokenizer.getThis(Token.T_KEY);
                         processAlterTableAddForeignKeyConstraint(t, null);
 
                         return;
@@ -1461,7 +1461,72 @@ class DatabaseCommandInterpreter implements DITypes {
                     }
                 }
             }
+            case Token.ALTER : {
+                tokenizer.getThis(Token.T_COLUMN);
+                processAlterColumn(t);
+            }
         }
+    }
+
+    /**
+     * Handles ALTER COLUMN
+     *
+     * @throws SQLException
+     */
+    private void processAlterColumn(Table t) throws SQLException {
+
+        String columnName = tokenizer.getString();
+        Column column     = t.getColumn(t.getColumnNr(columnName));
+        String token      = tokenizer.getString();
+
+        switch (Token.get(token)) {
+
+            default : {
+                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+            }
+            case Token.RENAME : {
+                tokenizer.getThis(Token.T_TO);
+                processAlterColumnRename(t, column);
+
+                return;
+            }
+            case Token.DROP : {
+                tokenizer.getThis(Token.T_DEFAULT);
+
+                column.defaultString = null;
+
+                return;
+            }
+            case Token.SET : {
+                tokenizer.getThis(Token.T_DEFAULT);
+
+                int iType = column.getType();
+                int iLen  = column.getSize();
+
+                column.defaultString = processCreateDefaultValue(iType, iLen);
+            }
+        }
+    }
+
+    /**
+     * Responsible for handling tail of ALTER COLUMN ... RENAME ...
+     * @param t
+     * @param oldName
+     * @throws SQLException
+     */
+    private void processAlterColumnRename(Table t,
+                                          Column column) throws SQLException {
+
+        String  newName  = tokenizer.getName();
+        boolean isquoted = tokenizer.wasQuotedIdentifier();
+
+        if (t.searchColumn(newName) > -1) {
+            throw Trace.error(Trace.COLUMN_ALREADY_EXISTS, newName);
+        }
+
+        session.commit();
+        session.setScripting(!t.isTemp());
+        column.columnName.rename(newName, isquoted);
     }
 
     /**
@@ -1548,16 +1613,16 @@ class DatabaseCommandInterpreter implements DITypes {
             token = tokenizer.getString();
             right |= UserManager.getRight(token);
             token = tokenizer.getString();
-        } while (token.equals(","));
+        } while (token.equals(Token.T_COMMA));
 
-        if (!token.equals("ON")) {
+        if (!token.equals(Token.T_ON)) {
             throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
         }
 
         accessKey = null;
         token     = tokenizer.getString();
 
-        if (token.equals("CLASS")) {
+        if (token.equals(Token.T_CLASS)) {
             accessKey = tokenizer.getString();
         } else {
 
@@ -1570,7 +1635,7 @@ class DatabaseCommandInterpreter implements DITypes {
             session.setScripting(!t.isTemp());
         }
 
-        tokenizer.getThis("TO");
+        tokenizer.getThis(Token.T_TO);
 
         token = tokenizer.getStringToken();
 
@@ -1594,11 +1659,11 @@ class DatabaseCommandInterpreter implements DITypes {
         String password;
         User   user;
 
-        tokenizer.getThis("USER");
+        tokenizer.getThis(Token.T_USER);
 
         userName = tokenizer.getStringToken();
 
-        tokenizer.getThis("PASSWORD");
+        tokenizer.getThis(Token.T_PASSWORD);
 
         password = tokenizer.getStringToken();
         user     = database.getUserManager().getUser(userName, password);
@@ -1729,7 +1794,7 @@ class DatabaseCommandInterpreter implements DITypes {
 
                         boolean isDesc = false;
 
-                        if (tokenizer.getString().equals("DESC")) {
+                        if (tokenizer.getString().equals(Token.T_DESC)) {
                             isDesc = true;
                         } else {
                             tokenizer.back();
@@ -1771,9 +1836,9 @@ class DatabaseCommandInterpreter implements DITypes {
                 int    delay = 0;
                 String s     = tokenizer.getString();
 
-                if (s.equals("TRUE")) {
+                if (s.equals(Token.T_TRUE)) {
                     delay = 60;
-                } else if (s.equals("FALSE")) {
+                } else if (s.equals(Token.T_FALSE)) {
                     delay = 0;
                 } else {
                     delay = Integer.parseInt(s);
@@ -1796,9 +1861,9 @@ class DatabaseCommandInterpreter implements DITypes {
 
         String sToken = tokenizer.getString();
 
-        if (sToken.equals("TRUE")) {
+        if (sToken.equals(Token.T_TRUE)) {
             return true;
-        } else if (sToken.equals("FALSE")) {
+        } else if (sToken.equals(Token.T_FALSE)) {
             return false;
         } else {
             throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
@@ -1812,7 +1877,7 @@ class DatabaseCommandInterpreter implements DITypes {
      */
     private void processCommit() throws SQLException {
 
-        if (!"WORK".equals(tokenizer.getString())) {
+        if (!tokenizer.getString().equals(Token.T_WORK)) {
             tokenizer.back();
         }
 
@@ -1832,17 +1897,17 @@ class DatabaseCommandInterpreter implements DITypes {
         token       = tokenizer.getString();
         toSavepoint = false;
 
-        if (token.equals("WORK")) {
+        if (token.equals(Token.T_WORK)) {
 
             // do nothing
-        } else if (token.equals("TO")) {
+        } else if (token.equals(Token.T_TO)) {
 
 //            token = tokenizer.getString();
 //
 //            if (!token.equals("SAVEPOINT")) {
 //                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
 //            }
-            tokenizer.getThis("SAVEPOINT");
+            tokenizer.getThis(Token.T_SAVEPOINT);
 
             token = tokenizer.getString();
 
@@ -1899,9 +1964,9 @@ class DatabaseCommandInterpreter implements DITypes {
         token     = tokenizer.getString();
 
         // fredt - todo - catch misspelt qualifiers here and elsewhere
-        if (token.equals("IMMEDIATELY")) {
+        if (token.equals(Token.T_IMMEDIATELY)) {
             closemode = -1;
-        } else if (token.equals("COMPACT")) {
+        } else if (token.equals(Token.T_COMPACT)) {
             closemode = 1;
         } else {
             tokenizer.back();
@@ -1930,7 +1995,7 @@ class DatabaseCommandInterpreter implements DITypes {
         token  = tokenizer.getString();
 
         // fredt - todo - catch misspelt qualifiers here and elsewhere
-        if (token.equals("DEFRAG")) {
+        if (token.equals(Token.T_DEFRAG)) {
             defrag = true;
         }
 
@@ -2164,8 +2229,8 @@ class DatabaseCommandInterpreter implements DITypes {
 
         indexName = tokenizer.getName();
 
-        tokenizer.getThis("RENAME");
-        tokenizer.getThis("TO");
+        tokenizer.getThis(Token.T_RENAME);
+        tokenizer.getThis(Token.T_TO);
 
         newName  = tokenizer.getName();
         isQuoted = tokenizer.wasQuotedIdentifier();
@@ -2209,7 +2274,7 @@ class DatabaseCommandInterpreter implements DITypes {
 
         token = tokenizer.getString();
 
-        if (token.equals("BEFORE")) {
+        if (token.equals(Token.T_BEFORE)) {
             token    = tokenizer.getName();
             colindex = t.getColumnNr(token);
         } else {
@@ -2248,7 +2313,7 @@ class DatabaseCommandInterpreter implements DITypes {
                 throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
             }
             case Token.FOREIGN : {
-                tokenizer.getThis("KEY");
+                tokenizer.getThis(Token.T_KEY);
                 processAlterTableAddForeignKeyConstraint(t, cname);
 
                 return;
@@ -2278,6 +2343,7 @@ class DatabaseCommandInterpreter implements DITypes {
         // CHECKME:
         // shouldn't the commit come only *after* the DDL is
         // actually successful?
+        // fredt - no, uncommitted data may include the column
         session.commit();
         tableWorks.setTable(t);
         tableWorks.addOrDropColumn(null, colindex, -1);
@@ -2313,7 +2379,7 @@ class DatabaseCommandInterpreter implements DITypes {
 
         alias = tokenizer.getString();
 
-        tokenizer.getThis("FOR");
+        tokenizer.getThis(Token.T_FOR);
 
         methodFQN = upgradeMethodFQN(tokenizer.getString());
 
@@ -2329,7 +2395,7 @@ class DatabaseCommandInterpreter implements DITypes {
         name     = tokenizer.getName();
         isQuoted = tokenizer.wasQuotedIdentifier();
 
-        tokenizer.getThis("ON");
+        tokenizer.getThis(Token.T_ON);
 
         t = database.getTable(tokenizer.getName(), session);
 
@@ -2344,10 +2410,10 @@ class DatabaseCommandInterpreter implements DITypes {
 
         name = tokenizer.getStringToken();
 
-        tokenizer.getThis("PASSWORD");
+        tokenizer.getThis(Token.T_PASSWORD);
 
         password = tokenizer.getStringToken();
-        admin    = tokenizer.getString().equals("ADMIN");
+        admin    = tokenizer.getString().equals(Token.T_ADMIN);
 
         if (!admin) {
             tokenizer.back();
@@ -2369,14 +2435,14 @@ class DatabaseCommandInterpreter implements DITypes {
         tableName = token = tokenizer.getString();
         ifExists  = false;
 
-        if (token.equals("IF")) {
+        if (token.equals(Token.T_IF)) {
             token = tokenizer.getString();
 
-            if (token.equals("EXISTS")) {
+            if (token.equals(Token.T_EXISTS)) {
                 ifExists  = true;
                 tableName = tokenizer.getString();
-            } else if (token.equals("IF")) {
-                tokenizer.getThis("EXISTS");
+            } else if (token.equals(Token.T_IF)) {
+                tokenizer.getThis(Token.T_EXISTS);
 
                 ifExists = true;
             } else {
@@ -2385,8 +2451,8 @@ class DatabaseCommandInterpreter implements DITypes {
         } else {
             token = tokenizer.getString();
 
-            if (token.equals("IF")) {
-                tokenizer.getThis("EXISTS");
+            if (token.equals(Token.T_IF)) {
+                tokenizer.getThis(Token.T_EXISTS);
 
                 ifExists = true;
             } else {

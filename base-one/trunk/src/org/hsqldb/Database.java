@@ -104,8 +104,8 @@ import org.hsqldb.lib.StopWatch;
 // fredt@users 20030314 - patch 1.7.2 by gilead@users - drop table syntax
 // fredt@users 20030401 - patch 1.7.2 by akede@users - data files readonly
 // fredt@users 20030401 - patch 1.7.2 by Brendan Ryan - data files in Jar
-// fredt@users 20030425 - from this version the DDL methods are not used, methods in Session.java are used instead
 // boucherb@users 20030405 - removed 1.7.2 lint - updated JavaDocs
+// boucherb@users 20030425 - DDL methods are moved to DatabaseCommandInterpreter.java
 // boucherb@users 20030510 - patch 1.7.2 - HsqlRuntime upgrade (close())
 
 /**

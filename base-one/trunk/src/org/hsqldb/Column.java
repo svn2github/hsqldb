@@ -156,7 +156,7 @@ class Column {
     private boolean isNullable;
     private boolean isIdentity;
     private boolean isPrimaryKey;
-    private String  defaultString;
+    String  defaultString;
 
     // helper values
     private static final BigDecimal BIGDECIMAL_0 = new BigDecimal("0");
