@@ -1,4 +1,4 @@
-<!-- $Id: sqlissues.xml,v 1.5 2004/04/15 21:46:30 unsaved Exp $ -->
+<!-- $Id: sqlissues.xml,v 1.6 2004/04/15 21:49:19 unsaved Exp $ -->
 
 <chapter>
     <title>SQL Issues</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.5 $</edition>
-        <pubdate>$Date: 2004/04/15 21:46:30 $</pubdate>
+        <edition>$Revision: 1.6 $</edition>
+        <pubdate>$Date: 2004/04/15 21:49:19 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>SQL</keyword>
@@ -70,15 +70,15 @@
                 <title>
                     Column values which satisfy a 2-column UNIQUE constraint
                 </title>
-                <screen>
-    1,1
-    1,2
-    2,1
-    2,2
-    NULL,1
-    NULL,1
-    NULL,NULL
-    1, NULL</screen>
+                <simplelist type='vert' columns='2'>
+                    <member>1,</member>  <member>2</member>
+                    <member>2,</member>  <member>1</member>
+                    <member>2,</member>  <member>2</member>
+                    <member>NULL,</member>  <member>1</member>
+                    <member>NULL,</member>  <member>1</member>
+                    <member>NULL,</member>  <member>NULL</member>
+                    <member>1,</member>  <member>NULL</member>
+                </simplelist>
             </example><para>
                 In version 1.7.2 the behaviour of UNIQUE constraints and 
                 indexes with respect to NULL values has changed to conform to 
