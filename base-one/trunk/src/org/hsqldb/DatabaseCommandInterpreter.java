@@ -885,58 +885,56 @@ class DatabaseCommandInterpreter {
     private String processCreateDefaultValue(int type,
             int length) throws HsqlException {
 
-        String  dv;
-        Object  sv;
+        String  defString;
+        Object  defValue;
         boolean wasminus;
-        String  dvTemp;
-        String  dvTest;
 
-        dv       = tokenizer.getString();
+        defString       = tokenizer.getString();
         wasminus = false;
 
         // see if it is a negative number
-        if (dv.equals("-") && tokenizer.getType() != Types.VARCHAR) {
+        if (defString.equals("-") && tokenizer.getType() != Types.VARCHAR) {
             wasminus = true;
-            dv       += tokenizer.getString();
+            defString       += tokenizer.getString();
         }
 
         if (type == Types.OTHER ||!tokenizer.wasValue()) {
-            throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, dv);
+            throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, defString);
         }
 
-        sv = tokenizer.getAsValue();
+        defValue = tokenizer.getAsValue();
 
         if (wasminus) {
-            sv = Column.negate(sv, type);
+            defValue = Column.negate(defValue, type);
         }
 
-        if (sv == null) {
-            return dv;
+        if (defValue == null) {
+            return null;
         }
 
         // check conversion of literals to values and size constraints
         try {
-            Column.convertObject(sv, type);
+            Column.convertObject(defValue, type);
         } catch (Exception e) {
-            throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, dv);
+            throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, defString);
         }
 
-        checkBooleanDefault(dv, type);
+        checkBooleanDefault(defString, type);
 
         // ensure char triming does not affect the value
         if (database.sqlEnforceSize || database.sqlEnforceSize) {
-            dvTemp = Column.convertObject(sv);
-            dvTest = (String) Table.enforceSize(dvTemp, type, length, false,
+            String defValTemp = Column.convertObject(defValue);
+            String defValTest = (String) Table.enforceSize(defValTemp, type, length, false,
                                                 false);
 
-            if (!dvTemp.equals(dvTest)) {
+            if (!defValTemp.equals(defValTest)) {
 
                 // default value is too long for fixed size column
-                throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, dv);
+                throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE, defString);
             }
         }
 
-        return dv;
+        return defString;
     }
 
     public static void checkBooleanDefault(String s,
