@@ -3,6 +3,57 @@ Readme File
 
 leading to HSQLDB 1.7.2 ALPHA_N
 
+2003.07.04
+
+- support for real PreparedStatements - major speedup
+
+- uniform support for transactions via HSQL and HTTP (WebServer and Servlet)
+protocols
+
+- support for multiple memory-only databases within the same JVM
+
+- support for simultaneous multiple servers, multiple internal
+connections and multiple databases within the same JVM
+
+
+
+NB: NEW CONVENTIONS FOR URL'S AND .properties FILES
+
+The server.properties and webserver.properties method for defining the
+database has changed. The following properties should be used:
+
+server.database.0   path_of_the_first_database
+server.dbname.0 alias_for_the_first_database
+
+Up to 10 databases can be defined but they must start from 0 
+
+The same applies to command line arguments for Server and WebServer.
+
+The urls for connecting to servers should have the name of the database
+at the end.
+
+For example, to connect to the HSQL protocol server on the localhost use:
+
+jdbc:hsqldb:hsql://localhost/alias_for_the_database
+
+where alias_for_the_database is the same string as defined in
+server.properties.
+
+Multiple memory-only database are supported by the use of:
+
+jdbc:hsqldb:mem:alias_for_the_first_database
+jdbc:hsqldb:mem:alias_for_the_second_database
+
+Example: jdbc:hsqldb:mem:db1 jdbc:hsqldb:mem:mydb
+
+
+The URL for connecting to a Servlet HTTP server must have a 
+forward-slash at the end. Servlet serves only one database.
+
+jdbc:hsqldb:hsql://localhost:8080/servlet/HsqlServlet/
+
+
+
 2003.03.10
 
 -system table support and DatabaseMetadate results have been overhauled
