@@ -1,4 +1,4 @@
-<!-- $Id: tls.xml,v 1.8 2004/05/17 12:50:22 fredt Exp $ -->
+<!-- $Id: tls.xml,v 1.9 2004/06/04 11:26:33 fredt Exp $ -->
 
 <chapter>
     <title>TLS</title>
@@ -13,8 +13,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.8 $</edition>
-        <pubdate>$Date: 2004/05/17 12:50:22 $</pubdate>
+        <edition>$Revision: 1.9 $</edition>
+        <pubdate>$Date: 2004/06/04 11:26:33 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>TLS</keyword>
@@ -134,11 +134,13 @@
                 <classname>javax.net.ssl.trustStore</classname> every time that 
                 you run your client program.
                 For example
-            </para><example>
-        <title>Running a Hsqldb JDBC client with your own trust store</title>
-                <screen>
-    java -cp /path/to/hsqldb.jar -Djavax.net.ssl.trustStore=/home/blaine/trust.store org.hsqldb.util.SqlTool dest-urlid</screen>
-            </example>
+                <example>
+                <title>Running a JDBC client (SqlTool) with your own 
+                       trust store</title>
+                    <screen>
+    java -Djavax.net.ssl.trustStore=/home/blaine/trust.store -jar /path/to/hsqldb.jar dest-urlid</screen>
+                </example>
+            </para>
             <para>
                 N.b.  The hostname in your database URL must match the 
                 <emphasis>Common Name</emphasis> of the server's certificate 
