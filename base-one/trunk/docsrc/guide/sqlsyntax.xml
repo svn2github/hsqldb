@@ -1,4 +1,4 @@
-<!-- $Id: sqlsyntax.xml,v 1.7 2004/04/22 03:06:26 unsaved Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.8 2004/05/30 17:38:11 unsaved Exp $ -->
 
 <chapter id='sqlsyntax-chapter'>
 <title id='sqlsyntax-title'>SQL Syntax</title>
@@ -34,8 +34,8 @@
             </affiliation>
         </editor>
     </authorgroup>
-    <edition>$Revision: 1.7 $</edition>
-    <pubdate>$Date: 2004/04/22 03:06:26 $</pubdate>
+    <edition>$Revision: 1.8 $</edition>
+    <pubdate>$Date: 2004/05/30 17:38:11 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Syntax</keyword>
@@ -271,13 +271,16 @@ CREATE ALIAS &lt;function&gt; FOR &lt;javaFunction&gt;;</programlisting>
     <section id="create_index-section">
         <title id="create_index-title">CREATE INDEX</title>
         <programlisting>
-CREATE [UNIQUE] INDEX &lt;index&gt; ON &lt;table&gt; (&lt;column&gt; [, ...]) [DESC];</programlisting>
+CREATE [UNIQUE] INDEX &lt;index&gt; ON &lt;table&gt; (&lt;column&gt; [DESC] [, ...]) [DESC];</programlisting>
         <para>
             Creates an index on one or more columns in a table.
         </para> <para>
             Creating an index on searched columns may improve performance.
             The qualifier DESC can be present for command compatibility with 
-            other databases but it has no effect.
+            other databases but it has no effect. 
+            Unique indexes can be defined but this is deprecated. Use
+            UNIQUE constraints instead. The name of an index must be unique
+            within the whole database.
         </para> <para>
             See also:
             <link linkend='create_table-section' endterm='create_table-title'/>,
@@ -331,8 +334,8 @@ CREATE [MEMORY | CACHED | TEMP<footnoteref linkend="posthyper"/> | TEXT<footnote
                         For character column, a single-quoted string or NULL.
                     </para></listitem> <listitem><para>
                         For datetime columns, a single-quoted DATE, TIME or 
-                        TIMESTAMP value or NULL.
-                        Or an appropriate SQL function such as CURRENT_DATE, 
+                        TIMESTAMP value or NULL. Or an appropriate SQL function
+                        such as CURRENT_USER, CURRENT_DATE, 
                         CURRENT_TIME, CURRENT_TIMESTAMP, TODAY, NOW.
                         Each functions is allowed for a certain column type.
                     </para></listitem> <listitem><para>
@@ -439,15 +442,36 @@ CREATE TRIGGER &lt;name&gt; {BEFORE | AFTER} {INSERT | UPDATE | DELETE} ON &lt;t
             the actual row.
         </para> <para>
             If the trigger method wants to access the database, it must 
-            establish its own JDBC connection.
-            Note that this means any access is in a separate transaction.
+            establish its own JDBC connection. This can cause data inconsistency
+            and other problems so it is not recommended.
             The <literal>jdbc:default:connection:</literal> URL is not 
             currently supported.
         </para> <para>
-            Implementation note: In the interests of not blocking the 
-            database's main thread, each trigger runs in a thread that will 
-            wait for its firing event to occur;
-            when this happens, the trigger's thread calls triggerClass.fire.
+            Implementation note: 
+        </para> <para>
+	     If QUEUE 0 is specified, the fire method is execued 
+            in the same thread as the database engine.
+            This allows trigger action to alter the data that is about to be 
+            stored in the database. Data can be checked or modified in
+            BEFORE INSERT / UPDATE + FOR EACH ROW triggers. All table
+            constraints are then enforced by the database engine and if there
+            is a violation, the action is rejected for the SQL command that
+            initiated the INSERT or UPDATE. There is an exception to this
+            rule, that is with UPDATE queries, referential integrity and
+            cascading actions resulting from ON UPDATE CASCASE / SET NULL /
+            SET DEFAULT are all performed prior to the invocation of the
+            trigger method. If an invalid value that breaks referential 
+            integrity is inserted in the row by the trigger method, this
+            action is not checked and results in inconsistent data in the
+            table.  
+        </para> <para>
+			 
+            Alternatively, if the trigger is used for external communications
+            and not for checking or altering the data, a queue size larger than
+            zero can be specified. This is in the interests of not
+            blocking the database's main thread as each trigger will run in a
+            thread that will wait for its firing event to occur.
+            When this happens, the trigger's thread calls TriggerClass.fire.
             There is a queue of events waiting to be run by each trigger thread.
             This is particularly useful for 'FOR EACH ROW' triggers, when a 
             large number of trigger events occur in rapid succession, without 
@@ -463,10 +487,10 @@ CREATE TRIGGER &lt;name&gt; {BEFORE | AFTER} {INSERT | UPDATE | DELETE} ON &lt;t
             Note also that the timing of trigger method calls is not guaranteed,
             so applications should implement their own synchronization measures
             if necessary.
-            Alternatively, if  QUEUE 0 is specified, the fire method is execued 
-            in the same thread as the database engine.
-            This allows trigger action to alter the data that is about to be 
-            stored in the database.
+        </para> <para>
+            With a non-zero QUEUE parameter, if the trigger methods modifies
+            the 'row2' values, these changes may or may not affect the database
+            and will almost certainly result in data inconsistency. 
         </para> <para>
             Please refer to the code for 
             <ulink url='../src/org/hsqldb/Trigger.html'>
@@ -791,8 +815,9 @@ SELECT [{LIMIT n m | TOP m}<footnoteref linkend="posthyper"/>][DISTINCT]
 FROM tableList
 [WHERE <link linkend='expression-section'>Expression</link>]
 [GROUP BY Expression [, ...]]
-[ORDER BY orderExpression [, ...]]
-[{ UNION [ALL | DISTINCT] | {MINUS | EXCEPT} | INTERSECT } selectStatement];</programlisting>
+[{ UNION [ALL | DISTINCT] | {MINUS | EXCEPT} | INTERSECT } selectStatement]
+[ORDER BY orderExpression [, ...]];</programlisting>
+
         <para>
             Retrieves information from one or more tables in the database. 
         </para>
@@ -803,9 +828,14 @@ FROM tableList
     table [{ INNER | LEFT OUTER } JOIN table ON Expression] [, ...]</programlisting>
                 </listitem>
             </varlistentry>
+            <varlistentry><term>table</term>
+                <listitem><programlisting>
+    { (selectStatement) [AS] label | tableName}</programlisting>
+                </listitem>
+            </varlistentry>
             <varlistentry><term>selectExpression</term>
                 <listitem><programlisting>
-    { Expression | COUNT(*) | {COUNT | MIN | MAX | SUM | AVG} ([DISTINCT<footnoteref linkend="posthyper"/>] Expression) }</programlisting>
+    { Expression | COUNT(*) | {COUNT | MIN | MAX | SUM | AVG} ([DISTINCT<footnoteref linkend="posthyper"/>] Expression) } [[AS] label]</programlisting>
                 <para>
                     If DISTINCT is specified, only one instance of several 
                     equivalent values is used in the aggregate function.
@@ -1262,7 +1292,15 @@ UPDATE table SET column = Expression [, ...] [WHERE Expression];</programlisting
         VARCHAR_IGNORECASE is a special case-insensitive type of VARCHAR.
         This type is not portable. 
     </para> <para>
-        In HSQLDB, when defining CHAR and VARCHAR columns, the SIZE 
+	  In table definition statements, HSQLDB accepts size, precision and
+        scale qualifiers only for certain types: CHAR(n), VARCHAR(n), 
+        DOUBLE(n), DECIMAL(p,s).                  
+    </para> <para>
+	  The specified precision and scale for DOUBLE and DECIMAL is simply
+        ignored by the engine. Instead, the values for the corresponding
+        Java types are always used, which in the case of DECIMAL is
+        an unlimited precision and scale.
+        When defining CHAR and VARCHAR columns, the SIZE 
         argument is optional and defaults to 0.
         If any other size is specified, it is stored in the database 
         definition but is not enforeced by default.
@@ -1723,6 +1761,11 @@ UPDATE table SET column = Expression [, ...] [WHERE Expression];</programlisting
         <varlistentry><term>USER()</term>
             <listitem><para>
                 returns the user name of this connection
+            </para></listitem>
+        </varlistentry>
+        <varlistentry><term>CURRENT_USER</term>
+            <listitem><para>
+                SQL standard function, returns the user name of this connection
             </para></listitem>
         </varlistentry>
         <varlistentry><term>IDENTITY()</term>

@@ -618,8 +618,8 @@ public class TestCacheSize {
 
         test.setUp();
         test.testFillUp();
-        test.tearDown();
         test.checkResults();
+        test.tearDown();
         System.out.println("Total Test Time: " + sw.elapsedTime());
     }
 }

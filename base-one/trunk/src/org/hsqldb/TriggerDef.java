@@ -38,6 +38,8 @@ import org.hsqldb.lib.HsqlDeque;
 // fredt@users 20020130 - patch 1.7.0 by fredt
 // added new class as jdk 1.1 does not allow use of LinkedList
 // fredt@users 20030727 - signature and other alterations
+// fredt@users 20040430 - changes by mattshaw@users to allow termination of the
+// trigger thread -
 
 /**
  *  Represents an HSQLDB Trigger definition. <p>
@@ -265,7 +267,7 @@ class TriggerDef extends Thread {
             TriggerData triggerData = popPair();
 
             if (triggerData != null) {
-                if (triggerData.session.getUser() != null) {
+                if (triggerData.username != null) {
                     trig.fire(this.vectorIndex, name.name,
                               table.getName().name, triggerData.oldRow,
                               triggerData.newRow);
@@ -385,20 +387,22 @@ class TriggerDef extends Thread {
     }
 
     /**
-     * Class to store the data used to fire a trigger
+     * Class to store the data used to fire a trigger. The username attribute
+     * is not used but it allows developers to change the signature of the
+     * fire method of the Trigger class and pass the user name to the Trigger.
      */
     class TriggerData {
 
         public Object[] oldRow;
         public Object[] newRow;
-        public Session  session;
+        public String   username;
 
         public TriggerData(Session session, Object[] oldRow,
                            Object[] newRow) {
 
             this.oldRow  = oldRow;
             this.newRow  = newRow;
-            this.session = session;
+            this.username = session.getUsername();
         }
     }
 }
