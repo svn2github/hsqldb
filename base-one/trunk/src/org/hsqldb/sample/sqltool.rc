@@ -1,4 +1,4 @@
-# $Id: sqltool.rc,v 1.7 2004/07/18 04:13:56 unsaved Exp $
+# $Id: sqltool.rc,v 1.8 2004/07/18 13:57:20 unsaved Exp $
 
 # This is a sample SqlTool configuration file, a.k.a. rc file.
 
@@ -67,6 +67,9 @@ password
 # "java -jar .../hsqlsqltool.jar...".
 # Put both the HSQLDB jar and the Postgresql jar in your classpath (and
 # export!) and run something like "java org.hsqldb.util.SqlTool...".
+# N.b.:  I notice that Postgresql refuses to process many DDL commands if
+# you are in a transaction.  If you get a message "... cannot run inside
+# a transaction block", just run "commit;" and retry.
 
 #urlid commerce
 #url jdbc:postgresql://dbsvr2/commercedb
