@@ -34,6 +34,7 @@
 package org.hsqldb.sample;
 
 // peterhudson@users 20020130 - patch 478657 by peterhudson - new class
+// fredt@users 20030727 - signature altered
 
 /**
  * <P>Sample code for use of triggers in hsqldb.
@@ -95,11 +96,12 @@ public class TriggerSample implements org.hsqldb.Trigger {
      * @param tabName
      * @param row
      */
-    public void fire(String trigName, String tabName, Object row[]) {
+    public void fire(String trigName, String tabName, Object row1[],
+                     Object row2[]) {
 
         System.out.println(trigName + " trigger fired on " + tabName);
-        System.out.print("col 0 value <");
-        System.out.print(row[0]);
+        System.out.print(" col 0 value <");
+        System.out.print(row1[0]);
         System.out.println(">");
 
         // you can cast row[i] given your knowledge of what the table

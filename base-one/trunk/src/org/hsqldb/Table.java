@@ -1795,7 +1795,28 @@ class Table {
     }
 
     /**
-     *  Method declaration
+     *  Row level UPDATE triggers
+     *
+     * @param  trigVecIndx
+     * @param  row
+     */
+    void fireAll(int trigVecIndx, Object oldrow[], Object newrow[]) {
+
+        if (!database.isReferentialIntegrity()) {    // reloading db
+            return;
+        }
+
+        HsqlArrayList trigVec = vTrigs[trigVecIndx];
+
+        for (int i = 0, size = trigVec.size(); i < size; i++) {
+            TriggerDef td = (TriggerDef) trigVec.get(i);
+
+            td.push(oldrow, newrow);    // tell the trigger thread to fire with this row
+        }
+    }
+
+    /**
+     *  Row level DELETE and INSERT triggers
      *
      * @param  trigVecIndx
      * @param  row
@@ -1811,7 +1832,7 @@ class Table {
         for (int i = 0, size = trigVec.size(); i < size; i++) {
             TriggerDef td = (TriggerDef) trigVec.get(i);
 
-            td.push(row);    // tell the trigger thread to fire with this row
+            td.push(row, null);    // tell the trigger thread to fire with this row
         }
     }
 
@@ -2471,9 +2492,9 @@ class Table {
                                   Session c,
                                   boolean log) throws HsqlException {
 
-        fireAll(TriggerDef.UPDATE_BEFORE_ROW, oldrow);
+        fireAll(TriggerDef.UPDATE_BEFORE_ROW, oldrow, newrow);
         updateNoCheck(oldrow, newrow, c, log);
-        fireAll(TriggerDef.UPDATE_AFTER_ROW, oldrow);
+        fireAll(TriggerDef.UPDATE_AFTER_ROW, oldrow, newrow);
     }
 */
 
@@ -2483,9 +2504,9 @@ class Table {
     private void updateNoRefCheck(Row oldr, Object[] newrow, Session c,
                                   boolean log) throws HsqlException {
 
-        fireAll(TriggerDef.UPDATE_BEFORE_ROW, oldr.getData());
+        fireAll(TriggerDef.UPDATE_BEFORE_ROW, oldr.getData(), newrow);
         updateNoCheck(oldr, newrow, c, log);
-        fireAll(TriggerDef.UPDATE_AFTER_ROW, oldr.getData());
+        fireAll(TriggerDef.UPDATE_AFTER_ROW, oldr.getData(), newrow);
     }
 
     /**

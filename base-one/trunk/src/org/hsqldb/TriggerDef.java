@@ -38,6 +38,9 @@ import org.hsqldb.lib.HsqlDeque;
 import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.HsqlNameManager.HsqlName;
 
+// fredt@users 20030727 - signature altered
+//
+
 /**
  *  TriggerDef class declaration Definition and execution of triggers
  *  Development of the trigger implementation sponsored by Logicscope
@@ -87,12 +90,13 @@ class TriggerDef extends Thread {
     Table                table;
     Trigger              trig;
     String               fire;
-    int                  vectorIndx;     // index into HsqlArrayList[]
+    int                  vectorIndx;      // index into HsqlArrayList[]
 
     //protected boolean busy;               // firing trigger in progress
-    protected HsqlDeque pendingQueue;    // row triggers pending
-    protected int       rowsQueued;      // rows in pendingQueue
-    protected boolean   valid;           // parsing valid
+    protected HsqlDeque pendingQueue;     // row triggers pending
+    protected HsqlDeque pendingQueue2;    // row triggers pending
+    protected int       rowsQueued;       // rows in pendingQueue
+    protected boolean   valid;            // parsing valid
 
     /**
      *  Constructor declaration create an object from the components of an
@@ -125,8 +129,9 @@ class TriggerDef extends Thread {
         vectorIndx    = SqlToIndex();
 
         //busy = false;
-        rowsQueued   = 0;
-        pendingQueue = new HsqlDeque();
+        rowsQueued    = 0;
+        pendingQueue  = new HsqlDeque();
+        pendingQueue2 = new HsqlDeque();
 
         if (vectorIndx < 0) {
             valid = false;
@@ -246,9 +251,10 @@ class TriggerDef extends Thread {
         boolean keepGoing = true;
 
         while (keepGoing) {
-            Object trigRow[] = pop();
+            Object[][] trigRows = pop2();
 
-            trig.fire(name.name, table.getName().name, trigRow);
+            trig.fire(name.name, table.getName().name, trigRows[0],
+                      trigRows[1]);
         }
     }
 
@@ -262,7 +268,38 @@ class TriggerDef extends Thread {
      *
      * @return  Description of the Return Value
      */
+/*
     synchronized Object[] pop() {
+
+        if (rowsQueued == 0) {
+            try {
+                wait();    // this releases the lock monitor
+            } catch (InterruptedException e) {
+
+                // ignore and resume
+            }
+        }
+
+        rowsQueued--;
+
+        notify();    // notify push's wait
+
+        pendingQueue2.removeFirst();
+        return (Object[]) pendingQueue.removeFirst();
+    }
+*/
+
+    /**
+     *  pop2 method declaration <P>
+     *
+     *  The consumer (trigger) thread waits for an event to be queued <P>
+     *
+     *  <B>Note: </B> This push/pop pairing assumes a single producer thread
+     *  and a single consumer thread _only_.
+     *
+     * @return  Description of the Return Value
+     */
+    synchronized Object[][] pop2() {
 
         if (rowsQueued == 0) {
             try {
@@ -277,7 +314,12 @@ class TriggerDef extends Thread {
 
         notify();    // notify push's wait
 
-        return (Object[]) pendingQueue.removeFirst();
+        Object[] oldrow = (Object[]) pendingQueue.removeFirst();
+        Object[] newrow = (Object[]) pendingQueue2.removeFirst();
+
+        return new Object[][] {
+            oldrow, newrow
+        };
     }
 
     /**
@@ -287,11 +329,12 @@ class TriggerDef extends Thread {
      *
      * @param  row Description of the Parameter
      */
-    synchronized void push(Object row[]) {
+    synchronized void push(Object row1[], Object row2[]) {
 
         if (rowsQueued >= maxRowsQueued) {
             if (nowait) {
-                pendingQueue.removeLast();    // overwrite last
+                pendingQueue2.removeLast();    // overwrite last
+                pendingQueue.removeLast();     // overwrite last
             } else {
                 try {
                     wait();
@@ -306,7 +349,8 @@ class TriggerDef extends Thread {
             rowsQueued++;
         }
 
-        pendingQueue.add(row);
+        pendingQueue.add(row1);
+        pendingQueue2.add(row2);
         notify();    // notify pop's wait
     }
 

@@ -110,7 +110,6 @@ import org.hsqldb.HsqlNameManager.HsqlName;
  *
  *
  *  */
-
 class Parser {
 
     private Database  database;

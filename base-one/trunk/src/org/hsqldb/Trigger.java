@@ -31,8 +31,10 @@
 
 package org.hsqldb;
 
+// fredt@users 20030727 - signature altered
+
 /**
- * Interface declaration
+ *
  *
  *
  * @author Peter Hudson
@@ -41,12 +43,18 @@ package org.hsqldb;
 public interface Trigger {
 
     /**
-     * Method declaration
+     * This method when UPDATE triggers are fired with row1 containing the
+     * existing values of the table row and row2 containing the new values.<p>
+     *
+     * For INSERT and DELETE triggers, row2 is null and row1 contains the
+     * table row to be inserted or deleted respectively. (fredt)
      *
      *
      * @param trigName
      * @param tabName
-     * @param row
+     * @param row1
+     * @param row2
      */
-    public void fire(String trigName, String tabName, Object row[]);
+    public void fire(String trigName, String tabName, Object row1[],
+                     Object row2[]);
 }
