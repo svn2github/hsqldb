@@ -16,6 +16,7 @@ usage:
    ant jarmain        build the hsqldbmain.jar (no utilities)
    ant jarmin         build the hsqldbmin.jar (no servers)
    ant jartest        build the hsqldbtest.jar (default plus test classes)
+   ant jarzaurus      ONLY for JDK 1.1 - build the hsqldbz.jar (min plus necessary util classes)
    ant clean          delete the /classes directory created by ant tasks
    ant cleanall       same as clean but delete the jar files as well
    ant javadoc        create javadoc for the distribution package
@@ -24,6 +25,7 @@ usage:
    hsqldbmain.jar : no utility programs
    hsqldbmin.jar  : no utility or server programs
    hsqldbtest.jar : all including test classes
+   hsqldbz.jar    : min jar plus necessary util classes for Zaurus
 
    the script detects the JDK in use and builds compatible jars
    no Swing based util classes are generated with JDK 1.1.x
@@ -212,6 +214,28 @@ example:
          <exclude name="org/hsqldb/sample/*.java"/>
       </javac>
    </target>
+
+	<target name="jarzaurus" depends="classes,util" unless="ant.java.iscjava12">
+		<jar jarfile="lib/hsqldbz.jar"
+             basedir="classes"
+         >
+         <exclude name="org/hsqldb/util/*Transfer*.*"/>
+         <exclude name="org/hsqldb/test/*.*"/>
+         <exclude name="org/hsqldb/sample/*.*"/>
+         <exclude name="hsqlServlet.class"/>
+         <exclude name="org/hsqldb/Servlet.class"/>
+         <exclude name="org/hsqldb/HsqlServerFactory.class"/>
+         <exclude name="org/hsqldb/HsqlServerProperties.class"/>
+         <exclude name="org/hsqldb/HsqlSocketRequestHandler.class"/>
+         <exclude name="org/hsqldb/HsqlSocketRequestHandlerImpl.class"/>
+         <exclude name="org/hsqldb/jdbcDataSource.class"/>
+         <exclude name="org/hsqldb/jdbcDataSourceFactory.class"/>
+         <exclude name="org/hsqldb/Server.class"/>
+         <exclude name="org/hsqldb/ServerConnection.class"/>
+         <exclude name="org/hsqldb/WebServer.class"/>
+         <exclude name="org/hsqldb/WebServerConnection.class"/>
+       </jar>
+	</target>
 
 	<target name="jartest" depends="test,util">
 		<jar jarfile="lib/hsqldbtest.jar"

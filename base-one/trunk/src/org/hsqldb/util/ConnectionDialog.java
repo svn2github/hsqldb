@@ -82,9 +82,9 @@ import java.sql.*;
 class ConnectionDialog extends Dialog
 implements ActionListener, ItemListener {
 
-    private Connection mConnection;
-    private TextField  mDriver, mURL, mUser, mPassword;
-    private Label      mError;
+    protected Connection mConnection;
+    protected TextField  mDriver, mURL, mUser, mPassword;
+    protected Label      mError;
     private String     connTypes[][];
 
     /**
@@ -257,7 +257,7 @@ implements ActionListener, ItemListener {
      *
      * @return
      */
-    private static Label createLabel(String s) {
+    protected static Label createLabel(String s) {
 
         Label l = new Label(s);
 
@@ -274,7 +274,7 @@ implements ActionListener, ItemListener {
      *
      * @return
      */
-    private static Panel createBorderPanel(Component center) {
+    protected static Panel createBorderPanel(Component center) {
 
         Panel p = new Panel();
 
