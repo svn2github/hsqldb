@@ -552,7 +552,7 @@ examples:
             <!-- Mappers don't work for shit with multiple patterns.
             Therefore, have to use a timestamp file.  -->
             <srcfiles dir='docsrc/${book}'
-                      includes='*.java, *.txt, *.ksh, *.properties, *.rc'/>
+                 includes='*.java, *.txt, *.ksh, *.properties, *.rc, *.cfg'/>
         </uptodate></not><then>
             <!-- This copies files matching the fileset below to the docwork
                  dir w/ data so that DocBook may entity include them.
@@ -561,7 +561,7 @@ examples:
             <pathconvert property='_virginfiles' targetos='unix' pathsep='|'
                          setonempty='false'> <path>
                  <fileset dir='docsrc/${book}'
-                          includes='*.java, *.txt, *.ksh, *.properties, *.rc'/>
+                  includes='*.java, *.txt, *.ksh, *.properties, *.rc, *.cfg'/>
             </path> </pathconvert>
             <if><isset property='_virginfiles'/><then>
                 <foreach list='${_virginfiles}' param='vfile' inheritall='false'
@@ -637,7 +637,7 @@ examples:
         </then></if>
         <copy todir='doc'>
             <fileset dir='docsrc'
-          includes='**/*.css, **/*.java, **/*.sql, **/*.txt, **/*.properties'/>
+includes='**/*.css, **/*.java, **/*.sql, **/*.txt, **/*.properties, **/*.cfg'/>
         </copy>
     </target>
     <target name='fo' description='Build one DocBook FO file'
@@ -718,7 +718,7 @@ examples:
         <!-- You MUST set property 'book' before calling this target -->
         <fileset id='bookXsltSrcFiles' dir='docsrc/${book}'
             includes='**/*.xml, **/*.png, **/*.jpg, **/*.txt, **/*.java,
-                      **/*.sql, **/*.properties, **/*.rc'/>
+                      **/*.sql, **/*.properties, **/*.rc, **/*.cfg'/>
         <fileset id='sharedXsltSrcFiles' dir='docsrc'
                 includes='*.xml, *.txt, *.png, *.java, *.jpg, *.html, *.sql'/>
     </target>
