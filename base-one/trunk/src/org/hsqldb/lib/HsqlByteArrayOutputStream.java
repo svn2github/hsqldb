@@ -202,7 +202,7 @@ implements DataOutput {
         count = 0;
     }
 
-    public byte toByteArray()[] {
+    public byte[] toByteArray() {
 
         byte newbuf[] = new byte[count];
 

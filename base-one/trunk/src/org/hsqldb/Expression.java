@@ -224,14 +224,18 @@ class Expression {
     private String      sSchema;
     private String      sTable;
     private String      sColumn;
-    private TableFilter tFilter;        // null if not yet resolved
-    private int         iColumn;
-    private boolean     columnQuoted;
-    private int         iColumnSize;
-    private int         iColumnScale;
-    private String      sAlias;         // if it is a column of a select column list
-    private boolean     aliasQuoted;
-    private boolean     bDescending;    // if it is a column in a order by
+    private TableFilter tFilter;    // null if not yet resolved
+
+    //
+    private int     iColumn;
+    private boolean columnQuoted;
+    private int     iColumnSize;
+    private int     iColumnScale;
+    private String  sAlias;         // if it is a column of a select column list
+    private boolean aliasQuoted;
+
+    //
+    private boolean bDescending;    // if it is a column in a order by
 
 // rougier@users 20020522 - patch 552830 - COUNT(DISTINCT)
     // {COUNT|SUM|MIN|MAX|AVG}(distinct ...)
@@ -882,6 +886,7 @@ class Expression {
         switch (iType) {
 
             case TRUE :
+            case FALSE :
             case EQUAL :
             case BIGGER_EQUAL :
             case BIGGER :
@@ -1151,10 +1156,11 @@ class Expression {
             fFunction.resolve(f);
         }
 
-        if (iDataType != Types.NULL) {
-            return;
-        }
-
+// temp fix to allow leaf Expression objects to be resolved
+//
+//        if (iDataType != Types.NULL) {
+//            return;
+//        }
         switch (iType) {
 
             case FUNCTION :
@@ -1463,7 +1469,7 @@ class Expression {
                 if (Types.isNumberType(case1.iDataType)
                         && Types.isNumberType(case2.iDataType)) {
                     iDataType = Column.getCombinedNumberType(case1.iDataType,
-                            case2.iDataType, ADD);
+                            case2.iDataType, CASEWHEN);
                 } else if (Types.isCharacterType(case1.iDataType)
                            && Types.isCharacterType(case2.iDataType)) {
 
@@ -2445,7 +2451,7 @@ class Expression {
     // output column and parameter expression metadata values
     boolean isIdentity;        // = false
     int     nullability = NULLABLE_UNKNOWN;
-    boolean isWritable;        // = false; true iff column of writable table
+    boolean isWritable;        // = false; true if column of writable table
     int     paramMode = PARAM_UNKNOWN;
     String  valueClassName;    // = null
 }

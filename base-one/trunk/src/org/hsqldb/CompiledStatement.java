@@ -53,6 +53,11 @@ final class CompiledStatement {
     static final int SELECT        = 5;
     static final int CALL          = 6;
 
+    // enumeration of catagories
+    static final int DML = 7;
+    static final int DQL = 8;
+    static final int DDL = 9;
+
     /** target table for INSERT_XXX, UPDATE and DELETE */
     Table targetTable;
 

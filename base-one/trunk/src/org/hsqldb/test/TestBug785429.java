@@ -29,11 +29,6 @@
  */
 
 
-/*
- * TestPreparedStatementBug785429.java
- *
- * Created on August 27, 2003, 3:20 PM
- */
 package org.hsqldb.test;
 
 import junit.framework.TestCase;
@@ -50,64 +45,24 @@ import java.sql.Statement;
  *
  * @author  boucherb@users.sourceforge.net
  */
-public class TestBug785429 extends TestCase {
+public class TestBug785429 extends TestBugBase {
 
-//  change the url to reflect your preferred db location and name
-//  String url = "jdbc:hsqldb:hsql://localhost/yourtest";
-    String     serverProps = "database.0=mem:test";
-    String     url         = "jdbc:hsqldb:hsql://localhost";
-    String     user;
-    String     password;
     Statement  stmt;
     Connection conn;
-    Server     server;
 
     public TestBug785429(String name) {
         super(name);
     }
 
-    protected void setUp() {
+    public void test() throws Exception {
 
-        user        = "sa";
-        password    = "";
-        stmt        = null;
-        conn        = null;
-        server      = new Server();
-
-        server.putPropertiesFromString(serverProps);
-        server.start();
-
-        try {
-            Class.forName("org.hsqldb.jdbcDriver");
-
-            conn = DriverManager.getConnection(url, user, password);
-            stmt = conn.createStatement();
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println(this + ".setUp() error: " + e.getMessage());
-        }
-    }
-
-    protected void tearDown() {
-
-        try {
-            conn.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println(this + ".tearDown() error: " + e.getMessage());
-        }
-
-        server.stop();
-    }
-
-    public void testBug785429() throws Exception {
-
+        Connection        conn = newConnection();
+        Statement         stmt = conn.createStatement();
         String            sql;
         String            msg;
-        int               i;
         PreparedStatement ps;
         ResultSet         rs;
-        int rowcount      = 0;
+        int               rowcount = 0;
 
         stmt.executeUpdate("drop table testA if exists;");
         stmt.executeUpdate("drop table testB if exists;");
@@ -120,14 +75,14 @@ public class TestBug785429 extends TestCase {
 
         sql = "select * from testA as ttt,(select oid,data from testB) as tst "
               + "where (tst.oid=ttt.oid) and (tst.oid='0001');";
-        rs = stmt.executeQuery(sql);
+        rs       = stmt.executeQuery(sql);
         rowcount = 0;
 
         while (rs.next()) {
             rowcount++;
         }
 
-        msg = "select * row count:";
+        msg = sql + ": row count:";
 
         assertEquals(msg, 1, rowcount);
         stmt.execute("drop table testA if exists");
@@ -151,18 +106,31 @@ public class TestBug785429 extends TestCase {
 
         sql = "select * from testA as ttt,(select oid,data from testB) as tst "
               + "where (tst.oid=ttt.oid) and (tst.oid=?);";
-        ps = conn.prepareStatement(sql);
+
+        try {
+            ps = conn.prepareStatement(sql);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         ps.setBytes(1, oid);
 
-        rs = ps.executeQuery();
+        rs       = ps.executeQuery();
         rowcount = 0;
 
+        int colCount = rs.getMetaData().getColumnCount();
+
         while (rs.next()) {
+
+//            for (int i= 1; i <= colCount; i++) {
+//                System.out.print(rs.getString(i) + ", ");
+//            }
+//
+//            System.out.println();
             rowcount++;
         }
 
-        msg = "select * row count:";
+        msg = sql + ": row count:";
 
         assertEquals(msg, 1, rowcount);
     }
@@ -171,11 +139,12 @@ public class TestBug785429 extends TestCase {
 
         TestResult            result;
         TestCase              test;
+        java.util.Enumeration exceptions;
         java.util.Enumeration failures;
         int                   count;
 
         result = new TestResult();
-        test   = new TestBug785429("testBug785429");
+        test   = new TestBug785429("test");
 
         test.run(result);
 

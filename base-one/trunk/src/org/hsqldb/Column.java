@@ -1495,22 +1495,26 @@ class Column {
             return Types.DOUBLE;
         }
 
-        if (expType != Expression.DIVIDE) {
-            if (typeWidth1 + typeWidth2 <= 4) {
+        switch (expType) {
+
+            case Expression.CASEWHEN :
+            case Expression.DIVIDE :
+                return (typeWidth1 > typeWidth2) ? type1
+                                                 : type2;
+
+            default :
+                int sum = typeWidth1 + typeWidth2;
+
+                if (sum <= 4) {
                 return Types.INTEGER;
             }
 
-            if (typeWidth1 + typeWidth2 <= 8) {
+                if (sum <= 8) {
                 return Types.BIGINT;
             }
 
-            if (typeWidth1 + typeWidth2 <= 16) {
                 return Types.NUMERIC;
             }
-        }
-
-        return (typeWidth1 > typeWidth2) ? type1
-                                         : type2;
     }
 
     /**

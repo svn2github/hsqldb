@@ -219,7 +219,7 @@ implements java.sql.PreparedStatement {
     /**
      * The type of this statement, from org.hsqldb.CompiledStatement
      */
-    protected int statementType;
+    protected int compiledStatementType;
 
     /**
      * Whether this statement generates only a single row update count in
@@ -311,6 +311,10 @@ implements java.sql.PreparedStatement {
         checkClosed();
         connection.clearWarningsNoCheck();
 
+        if (compiledStatementType == CompiledStatement.UNKNOWN) {
+            return super.execute(sql);
+        }
+
         resultIn = null;
 
         try {
@@ -395,6 +399,10 @@ implements java.sql.PreparedStatement {
         checkClosed();
         connection.clearWarningsNoCheck();
         checkIsRowCount(true);
+
+        if (compiledStatementType == CompiledStatement.UNKNOWN) {
+            return super.executeUpdate(sql);
+        }
 
         resultIn = null;
 
@@ -1281,6 +1289,7 @@ implements java.sql.PreparedStatement {
 
 // boucherb@users 20030801 - method implemented
         checkClosed();
+        checkAddBatch();
 
         int      len      = parameterValues.length;
         Object[] bpValues = new Object[len];
@@ -2037,21 +2046,34 @@ implements java.sql.PreparedStatement {
         Result   modesResult;
         Object[] row;
 
-        sql = c.nativeSQL(sql);
+        sql                   = c.nativeSQL(sql);
+        compiledStatementType = guessCompiledStatementType(sql);
+
+        // If true, then its either DDL or its invalid.
+        // In either case, handle it like we are a plain old jdbcStatement       
+        if (compiledStatementType == CompiledStatement.UNKNOWN) {
+
+            // Presently, only SELECT and CALL generate result sets
+            isRowCount = true;
+
+            // Presently, DDL statements cannot take parameters 
+            parameterTypes  = parameterModes = new int[0];
+            parameterValues = new Object[0];
+
+            // for toString()
+            this.sql = sql;
+
+            return;
+        }
 
         resultOut.setResultType(ResultConstants.SQLPREPARE);
         resultOut.setMainString(sql);
-
-        if (this instanceof jdbcCallableStatement) {
-            resultOut.setStatementType(CompiledStatement.CALL);
-        } else {
-            resultOut.setStatementType(CompiledStatement.UNKNOWN);
-        }
+        resultOut.setStatementType(compiledStatementType);
 
         in = connection.sessionProxy.execute(resultOut);
 
         if (in.iMode == ResultConstants.ERROR) {
-            throw new HsqlException(in);
+            jdbcDriver.throwError(in);
         }
 
         // else it's a MULTI result encapsulating three sub results:
@@ -2066,13 +2088,13 @@ implements java.sql.PreparedStatement {
         //     This is communicated in the same way as for result sets. That is,
         //     the metadata arrays of Result, such as colTypes, are used in the
         //     "conventional" fashion.  With some work, it may be possible
-        //     to speed up internal execution of prepared stateements by
+        //     to speed up internal execution of prepared statements by
         //     dispensing with generating most rsmd values while generating
         //     the result, safe in the knowlege that the client already
         //     has a copy of the rsmd.  In general, only the colTypes array
         //     must be available at the engine, and only for network
-        //     commincations so that the row output and row input
-        //     interfaces can do their work.  One caveat is the the
+        //     communications so that the row output and row input
+        //     interfaces can do their work.  One caveat is that the
         //     columnDisplaySize values are not accurate, as we do
         //     not consistently enforce column size yet and instead
         //     approximate the value when a result with actual data is
@@ -2394,5 +2416,58 @@ implements java.sql.PreparedStatement {
         sb.append(']');
 
         return sb.toString();
+    }
+
+    /**
+     * Checks if this statement allows batch execution.  DDL statements,
+     * for instance, do not make sense to batch as prepared statements. <p>
+     *
+     * @throws SQLException if this is not a batchable statement
+     */
+    protected void checkAddBatch() throws SQLException {
+
+        if (compiledStatementType == CompiledStatement.UNKNOWN) {
+            String msg =
+                "prepared DDL statements do not support batch execution";
+
+            throw jdbcDriver.sqlException(Trace.ASSERT_FAILED, msg);
+        }
+    }
+
+    static int guessCompiledStatementType(String sql) throws SQLException {
+
+        if (sql == null) {
+            return CompiledStatement.UNKNOWN;
+        }
+
+        Tokenizer tokenizer = new Tokenizer(sql);
+        int       token     = Token.UNKNOWN;
+
+        try {
+            token = Token.get(tokenizer.getString());
+        } catch (HsqlException e) {
+            jdbcDriver.throwError(e);
+        }
+
+        switch (token) {
+
+            case Token.INSERT :
+            case Token.UPDATE :
+            case Token.DELETE :
+                return CompiledStatement.DML;
+
+            case Token.SELECT :
+                return CompiledStatement.DQL;
+
+            case Token.CALL :
+                return CompiledStatement.CALL;
+
+            // In the future, we can do a test for DDL as well,
+            // for instance, pre-validating all statement preparation.
+            // For now, this is a quick 'n dirty to allow execution of
+            // DDL via the PreparedStatement internface implementation
+            default :
+                return CompiledStatement.UNKNOWN;
+        }
     }
 }

@@ -1,6 +1,14 @@
 Readme File
 
-2003.09.17
+2003.09.24
+
+HSQLDB 1.7.2 ALPHA_Q
+
+The problem with PreparedStatement parameters in IN lists still remains to be fixed.
+
+This release includes some bug fixes and improvements. In the /doc directory
+there is a new how-to document on using HSQLDB in OpenOffice.org.
+
 
 HSQLDB 1.7.2 ALPHA_P
 
