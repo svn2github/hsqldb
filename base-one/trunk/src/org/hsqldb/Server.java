@@ -77,6 +77,9 @@ import java.util.Observer;
 import java.util.Vector;
 import java.lang.reflect.InvocationTargetException;
 import java.io.FileNotFoundException;
+import java.io.File;
+import java.security.Security;
+import java.security.Provider;
 
 /**
  * Server acts as a database server and is one way of using
@@ -212,7 +215,7 @@ public class Server {
 
 	    if (bSsl) try {
 	    	// We can not get here unless the property is non-null
-	    	java.io.File fil = new java.io.File(
+	    	File fil = new File(
 		 System.getProperty("javax.net.ssl.keyStore"));
 		if (!(fil.isFile()))
 		 throw new FileNotFoundException("Keystore '" + fil +
@@ -222,17 +225,17 @@ public class Server {
 	    	ClassLoader loader = getClass().getClassLoader();
 		if (loader == null)
 		 throw new IncompatibleClassChangeError(
-		  "Failed to retrieve a ClassLoader (Java 1.1?)");
-		Class clsProvider = loader.loadClass("java.security.Provider");
-		Class[] caProvider = { clsProvider };
-		Object objProvider =
+		"Failed to retrieve a ClassLoader (Java 1.1?).  Cannot do TLS");
+		try {
+		Security.addProvider((Provider) 
 		 loader.loadClass("com.sun.net.ssl.internal.ssl.Provider").
-		 newInstance();
-		Object[] oaProvider = { objProvider };
+		 newInstance());
+		} catch(Exception e) {
+		    // User may have some other Provider loaded.
+		    // If not, error will be caught later
+		}
 		Class[] caInt = { getClass().getField("_int_").getType() };
 		Object[] oaInt = { new Integer(port) };
-		loader.loadClass("java.security.Security").
-		 getMethod("addProvider", caProvider).invoke(null, oaProvider);
 		Class clsSSF =
 		 loader.loadClass("javax.net.ServerSocketFactory");
 		socket = (ServerSocket)
@@ -256,7 +259,11 @@ public class Server {
 		 "is installed:\n" + nsme);
 	    } catch (InvocationTargetException ite) {
 	    	Throwable t = ite.getTargetException();
-		throw((t instanceof Exception) ? ((Exception) t) : ite);
+		if (t.toString().endsWith("no SSL Server Sockets"))
+		 throw new Exception(t.toString() +
+		 "\n(If you are running Java 1.2 or 1.3, keystore could be " +
+		 "invalid or password wrong)");
+		else throw((t instanceof Exception) ? ((Exception) t) : ite);
 	    } catch (ExceptionInInitializerError eiie) {
 	    	Throwable t = eiie.getException();
 		if (t instanceof Exception) throw (Exception) t;
