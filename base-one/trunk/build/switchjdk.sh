@@ -1,6 +1,5 @@
 #!/bin/sh +u
 # -----------------------------------------------------
-# Run with -help for usage.
 # If $JAVA_HOME is set, editing this script should not be required.
 # Send any questions to fchoong@user.sourceforge.net
 # -----------------------------------------------------
