@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.31 2004/06/10 02:08:37 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.32 2004/06/10 02:17:26 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.31 $</edition>
-        <pubdate>$Date: 2004/06/10 02:08:37 $</pubdate>
+        <edition>$Revision: 1.32 $</edition>
+        <pubdate>$Date: 2004/06/10 02:17:26 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -629,11 +629,31 @@
                 You can also execute SQL files from an interactive session with
                 the "\i"' Special Command,
                 but be aware that the default behavior in an interactive 
-                session is to continue upon errors, so if you want the SQL
-                file to abort upon error you need to give a \* command
-                before the \i command.
-                (You can also use \i in SQL files, resulting in nested SQL
-                files).
+                session is to continue upon errors.
+                If the SQL file was written without any concern for error
+                handling, then the file will continue to execute after errors
+                occur.
+                You could run <literal>\* false</literal> before 
+                <literal>\i filename</literal>, but then your SqlTool session
+                will exit if an error is encountered in the SQL file.
+                If you have an SQL file without error handling, and you want it
+                to abort that SQL file when an error occurs, but not exit 
+                SqlTool, the easiest way to accomplish this is usually to add
+                <literal>\* false</literal> to the top of the script.
+            </simpara><simpara>
+                If you specify multiple SQL files on the command-line, the
+                default behavior is to exit SqlTool if any of the SQL files
+                encounters an error.
+            </simpara><simpara>
+                <emphasis role='bold'>
+                SQL files themselves have ultimate control over error handling.
+                </emphasis>
+                Regardless of what command-line options are set, or what 
+                commands you give interactively, if a SQL file gives error
+                handling statements, they will take precedence.
+            </simpara><simpara>
+                You can also use \i in SQL files in addition to interactively.
+                This results in nested SQL files.
             </simpara><simpara>
                 You can use the following SQL file,
                 <filename>sample.sql</filename>, which resides in the
@@ -770,8 +790,8 @@
                     SQL file which includes all of the other SQL files in the
                     correct sequence.
                     Be aware that the current continue-upon-error behavior
-                    will apply to the included file, so you may want to
-                    give a \* command before your \i command.
+                    will apply to included files until such point as the SQL
+                    file runs its own error handling commands.
                 </simpara></listitem></varlistentry>
                 <varlistentry><term>\H</term><listitem><para>
                     Toggle HTML output mode.
@@ -803,7 +823,7 @@
                     The default for interactive use is to continue upon error, 
                     but the default for non-interactive use is to abort upon 
                     error.
-                    You can override that behavior by using the
+                    You can override this behavior by using the
                     <literal>--continueOnErr</literal> or the
                     <literal>--abortOnErr</literal> command-line switch.
                     </simpara><simpara>
@@ -811,7 +831,19 @@
                     to set "true" before deleting tables (so that things will 
                     continue if the tables aren't there), then set it back to 
                     false so that real errors are caught.
-                </simpara></listitem></varlistentry>
+                    </simpara>
+                    <tip><simpara>
+                        In general, put an explicit <literal>\* false</literal>
+                        at the top of your SQL files, and turn on
+                        continue-upon-error only for sections where you really
+                        want to permit errors, or where you are using PL
+                        commands to handle errors manually.
+                        This way, errors generated inside your SQL file will be
+                        handled properly whether your script is called by
+                        somebody interactively, from the SqlTool command-line, 
+                        or included in another SQL file (i.e. nested).
+                    </simpara></tip>
+                </listitem></varlistentry>
             </variablelist>
         </section>
         <section><title>Automation</title>
