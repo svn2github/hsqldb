@@ -89,10 +89,6 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
         super(name);
 
-        // returns the underlying column name with getColumnName(int c)
-        // false value returns getColumnLabel(int c)
-        setProperty("jdbc.get_column_name", true);
-
         // month 1-12 instead of 0-11
         setProperty("sql.month", true);
 
@@ -120,7 +116,7 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         setProperty("hsqldb.original_version", "1.7.1");
 
         // data format of the cache file
-        // this is set to 1.7.0 when new cache is created
+        // this is set to 1.7.0 when a new *.data file is created
         setProperty("hsqldb.cache_version", "1.6.0");
 
         // garbage collect per Record or Cache Row objects created
@@ -146,11 +142,12 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
         //setProperty("hsqldb.gc_interval", "0");
         // number of rows from CACHED tables kept constantly in memory
-        // the number of rows in 2 to the power of cache_scale value.
-        // reduce the default 15 (32K rows) if memory is limited and rows
+        // the number of rows in up to 3 * (2 to the power of
+        // cache_scale value).
+        // reduce the default 14 (3*16K rows) if memory is limited and rows
         // are large.
         // values between 8-16 are allowed
-        setProperty("hsqldb.cache_scale", "15");
+        setProperty("hsqldb.cache_scale", "14");
 
         // maximum size of .script file in megabytes
         setProperty("hsqldb.log_size", "200");

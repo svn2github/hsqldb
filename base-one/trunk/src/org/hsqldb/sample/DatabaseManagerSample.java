@@ -29,11 +29,13 @@
  */
 
 
-/*
- * How to customize DatabaseManager with pluggable connection types.
- */
 package org.hsqldb.sample;
 
+/*
+ * How to customize DatabaseManager with pluggable connection types.
+ *
+ * @version 1.7.0
+ */
 public class DatabaseManagerSample extends org.hsqldb.util.DatabaseManager {
 
     static {

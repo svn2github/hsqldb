@@ -36,8 +36,8 @@ import java.io.*;
 import junit.framework.*;
 
 /**
- * Test sql statements via jdbc against persistent database
- * @author fredt@users.sourceforge.net
+ * Test sql statements via jdbc against a persistent database
+ * @author fredt@users
  */
 public class TestSqlPersistent extends TestCase {
 

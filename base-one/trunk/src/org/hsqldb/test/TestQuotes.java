@@ -42,7 +42,7 @@ import junit.framework.TestSuite;
 import junit.framework.TestCase;
 
 /**
- *  Test all api of DatabaseUtils.
+ *  Test handling of quote characters in strings
  *
  * @author <a href="mailto:david@walend.net">David Walend</a>
  * @author <a href="mailto:jvanzyl@zenplex.com">Jason van Zyl</a>

@@ -72,9 +72,10 @@ import java.io.*;
 import org.hsqldb.jdbcDriver;
 
 /**
- *  Class declaration
+ *  Main test class, containing several JDBC and script based tests to
+ *  verify correct operation of the engine.
  *
- *@ version    1.0.0.1
+ * @version 1.7.0
  */
 class TestSelf {
 

@@ -197,7 +197,7 @@
 <b>CREATE ALIAS</b> function <b>FOR</b> javaFunction ;
 </font>
 <p><font face="Arial">Creates an alias for a Java function. The function must be accessible from 
-  the JVM in that the database runs. Example: <br>
+  the JVM in which the  database runs. Example: <br>
   CREATE ALIAS ABS FOR "java.lang.Math.abs" 
 </font>
 <p><font face="Arial">See also: <a href="#CALL">CALL</a>, <a href="#Stored">Stored Procedures / Functions</a> 
@@ -715,83 +715,108 @@ This command should not be used as the routine method of closing the database.</
 <br>
 <table border="1" cellspacing="1" bordercolor="Black" >
    <tr>
+      <td>NAME</td>
+      <td>RANGE</td>
+      <td>Java type</td>
+   </tr>
+   <tr>
 	   <td><font size="2">INTEGER | INT </font></td>
+      <td><font size="2">as Java type</font></td>
       <td><font size="2">"int" | "java.lang.Integer"</font></td>
    </tr>
    <tr>
 	   <td><font size="2">DOUBLE [PRECISION] | FLOAT</font></td>
+      <td><font size="2">as Java type</font></td>
       <td><font size="2">"double" | "java.lang.Double"</font></td>
    </tr>
    <tr>
 	   <td><font size="2">VARCHAR</font></td>
+      <td><font size="2">Integer.MAXVALUE</font></td>
       <td><font size="2">"java.lang.String"</font></td>
    </tr>
    <tr>
 	   <td><font size="2">VARCHAR_IGNORECASE</font></td>
+      <td><font size="2">Integer.MAXVALUE</font></td>
       <td><font size="2">"java.lang.String"</font></td>
    </tr>
    <tr>
 	   <td><font size="2">CHAR | CHARACTER</font></td>
+      <td><font size="2">Integer.MAXVALUE</font></td>
       <td><font size="2">"java.lang.String"</font></td>
    </tr>
    <tr>
 	   <td><font size="2">LONGVARCHAR</font></td>
+      <td><font size="2">Integer.MAXVALUE</font></td>
       <td><font size="2">"java.lang.String"</font></td>
    </tr>
    <tr>
 	   <td><font size="2">DATE</font></td>
+      <td><font size="2">as Java type</font></td>
       <td><font size="2">"java.sql.Date"</font></td>
    </tr>
    <tr>
 	   <td><font size="2">TIME</font></td>
+      <td><font size="2">as Java type</font></td>
       <td><font size="2">"java.sql.Time"</font></td>
    </tr>
    <tr>
 	   <td><font size="2">TIMESTAMP | DATETIME</font></td>
+      <td><font size="2">as Java type</font></td>
       <td><font size="2">"java.sql.Timestamp"</font></td>
    </tr>
    <tr>
 	   <td><font size="2">DECIMAL</font></td>
+      <td><font size="2">No limit</font></td>
       <td><font size="2">"java.math.BigDecimal"</font></td>
    </tr>
    <tr>
 	   <td><font size="2">NUMERIC</font></td>
+      <td><font size="2">No limit</font></td>
       <td><font size="2">"java.math.BigDecimal"</font></td>
    </tr>
    <tr>
 	   <td><font size="2">BIT</font></td>
+      <td><font size="2">as Java type</font></td>
       <td><font size="2">"boolean" | "java.lang.Boolean"</font></td>
    </tr>
    <tr>
 	   <td><font size="2">TINYINT</font></td>
+      <td><font size="2">as Java type</font></td>
       <td><font size="2">"byte" | "java.lang.Byte"</font></td>
    </tr>
    <tr>
 	   <td><font size="2">SMALLINT</font></td>
+      <td><font size="2">as Java type</font></td>
       <td><font size="2">"short" | "java.lang.Short"</font></td>
    </tr>
    <tr>
 	   <td><font size="2">BIGINT</font></td>
+      <td><font size="2">as Java type</font></td>
       <td><font size="2">"long" | "java.lang.Long"</font></td>
    </tr>
    <tr>
 	   <td><font size="2">REAL</font></td>
+      <td><font size="2">as Java type</font></td>
       <td><font size="2" color="#FF0000">"double" | "java.lang.Double" </font></td>
    </tr>
    <tr>
 	   <td><font size="2">BINARY</font></td>
+      <td><font size="2">Integer.MAXVALUE</font></td>
       <td><font size="2">"byte[]"</font></td>
    </tr>
    <tr>
 	   <td><font size="2">VARBINARY</font></td>
+      <td><font size="2">Integer.MAXVALUE</font></td>
       <td><font size="2">"byte[]"</font></td>
    </tr>
    <tr>
 	   <td><font size="2">LONGVARBINARY</font></td>
+      <td><font size="2">Integer.MAXVALUE</font></td>
       <td><font size="2">"byte[]"</font></td>
    </tr>
    <tr>
 	   <td><font size="2">OTHER | OBJECT</font></td>
+      <td><font size="2">Integer.MAXVALUE</font></td>
       <td><font size="2">"java.lang.Object"</font></td>
    </tr>
 </table>
@@ -803,8 +828,9 @@ This command should not be used as the routine method of closing the database.</
 </font><font face="Arial, Helvetica" size="2">
 <p><font face="Arial"> The uppercase names are the data types names defined by the SQL standard or commonly used by RDMS's. The 
   data types in quotes are the Java class names - if these type names are used 
-  then they must be enclosed in quotes because in Java names are case-sensitive. 
-</font>
+  then they must be enclosed in quotes because in Java names are case-sensitive. Range indicates the maximum
+size of the object that can be stored. Where Integer.MAXVALUE is stated, this is a theoretical limit and in practice the maximum size of a VARCHAR or BINARY object that can be stored is dictated by the amount of memory available.</font>
+In practice, objects of up to a megabyte in size have been successfully used in production databases.
 <p><font face="Arial"> The recommended Java mapping for the JDBC datatype FLOAT is as a Java type 
   "double". Because of the potential confusion it is recommended that DOUBLE is 
   used instead of FLOAT. 
@@ -867,7 +893,7 @@ This command should not be used as the routine method of closing the database.</
 </font>
 <hr>
 <font face="Arial"><br>
-<b>List of built in functions and stored procedures</b> 
+<b>List of built-in functions and stored procedures</b> 
 </font>
 <p> <font face="Arial"><b>Numerical</b> <br>
    <br>

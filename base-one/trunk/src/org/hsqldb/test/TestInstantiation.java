@@ -38,17 +38,15 @@ import java.net.Socket;
 import java.sql.SQLException;
 
 /**
+ * Test the HsqlServerFactory interface. After running, connect to the
+ * server at port 9999 using the database manager.
+ *
+ *
  * @author fredt@users
  * @version 1.7.0
  */
 public class TestInstantiation {
 
-    /**
-     * Test the HsqlServerFactory interface. After running, connect to the
-     * server at port 9999 using the database manager.
-     *
-     *
-     */
     public TestInstantiation() {
 
         try {

@@ -38,12 +38,12 @@ import junit.framework.*;
 
 /**
  * Test sql statements via jdbc against in-memory database
- * @author fredt@users.sourceforge.net
+ * @author fredt@users
  */
 public class TestSql extends TestCase {
 
 //    protected String url = "jdbc:hsqldb:hsql://localhost";
-    String     url = "jdbc:hsqldb:.";
+    String     url = "jdbc:hsqldb:test3";
     String     user;
     String     password;
     Statement  stmnt;
@@ -288,9 +288,9 @@ public class TestSql extends TestCase {
      */
     public void testDoubleNaN() {
 
-        double  value   = 0;
+        double  value    = 0;
         boolean wasEqual = false;
-        String  message = "DB operation completed";
+        String  message  = "DB operation completed";
         String ddl1 =
             "DROP TABLE t1 IF EXISTS;"
             + "CREATE TABLE t1 ( d DECIMAL, f DOUBLE, l BIGINT, i INTEGER, s SMALLINT, t TINYINT, "

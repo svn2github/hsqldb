@@ -36,17 +36,16 @@ package org.hsqldb.sample;
 // peterhudson@users 20020130 - patch 478657 by peterhudson - new class
 
 /**
- * TriggerSample class declaration
  * <P>Sample code for use of triggers in hsqldb.
  *
- * SQL to invoke is:
- * CREATE TRIGGER triggerSample BEFORE|AFTER INSERT|UPDATE|DELETE \
- * ON myTable [FOR EACH ROW] [QUEUE n] [NOWAIT] CALL "myPackage.trigClass"
+ * SQL to invoke is:<p>
+ * CREATE TRIGGER triggerSample BEFORE|AFTER INSERT|UPDATE|DELETE
+ * ON myTable [FOR EACH ROW] [QUEUE n] [NOWAIT] CALL "myPackage.trigClass"<br>
  *
  * This will create a thread that will wait for its firing event to occur;
  * when this happens, the trigger's thread runs the 'trigClass.fire'
  * Note that this is still in the same Java Virtual Machine as the
- * database, so make sure the fired method does not hang.
+ * database, so make sure the fired method does not hang.<p>
  *
  * There is a queue of events waiting to be run by each trigger thread.
  * This is particularly useful for 'FOR EACH ROW' triggers, when a large
@@ -58,26 +57,26 @@ package org.hsqldb.sample;
  * This can be avoided either by ensuring the QUEUE parameter makes a large
  * enough queue, or by using the NOWAIT parameter, which causes a new
  * trigger event to overwrite the most recent event in the queue.
- * The default queue size is 1024.
+ * The default queue size is 1024.<p>
  *
  * Ensure that "myPackage.trigClass" is present in the classpath which
- * you use to start hsql.
+ * you use to start hsql.<p>
  *
  * If the method wants to access the database, it must establish
- * a JDBC connection.
+ * a JDBC connection.<p>
  *
- * When the 'fire' method is called, it is passed the following arguments:
- * fire (String trigName, String tabName, Object row[])
+ * When the 'fire' method is called, it is passed the following arguments:<br>
+ * fire (String trigName, String tabName, Object row[])<br>
  *
  * where 'row' represents the row acted on, with each column being
  * a member of the array. The mapping of row classes to database
- * types is specified in doc/internet/hSqlSyntax.html#Datatypes
+ * types is specified in /doc/hsqlSyntax.html#Datatypes
  *
  *
- * For implementation at a later date:
+ * For implementation at a later date:<br>
  * 1.   jdbc:default:connection: URL for JDBC trigger method connections to
- * the database.
- * 2.   arguments to the trigger method.
+ * the database.<br>
+ * 2.   arguments to the trigger method.<br>
  * 3.   Because they run in different threads, it is possible for an
  * 'after' trigger to run before its corresponding 'before' trigger;
  * the acceptability of this needs to be investigated.

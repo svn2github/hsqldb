@@ -74,6 +74,14 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import org.hsqldb.jdbcDriver;
 
+/**
+ *  Main test class, containing several JDBC and script based tests to
+ *  verify correct operation of the engine.<br?
+ *
+ *  This is based on TestSelf.java but does not have all the tests.
+ *
+ *@ version 1.7.0
+ */
 public class TestHsql extends TestCase {
 
     public TestHsql(String name) {

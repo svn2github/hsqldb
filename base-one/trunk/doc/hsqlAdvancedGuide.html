@@ -6,7 +6,7 @@
 <h2>ADVANCED TOPICS</h2>
 <h3>PROPERTIES FILES</h3>
 <p>HSQLDB relies on a set of properties files for different settings. Version 
-  1.7.0 streamlines property naming and introduces a number of new properties (in this document, all references to  versions 1.7.0 also apply to version 1.7.1) . 
+  1.7.0 streamlines property naming and introduces a number of new properties (in this document, all references to  versions 1.7.0 also apply to version 1.7.1 unless stated otherwise) . 
   This process will continue with future versions and the properties will be used 
   in a hierarchical manner.</p>
 <p> The properties files and the settings stored in them 
@@ -361,7 +361,7 @@
          <pre>hsqldb.cache_scale</pre>
       </td>
       <td width="33%" valign="TOP"> 
-         <pre>15</pre>
+         <pre>14</pre>
       </td>
       <td width="33%" valign="TOP"> 
          <p>memory cache exponent 
@@ -370,7 +370,7 @@
    <tr> 
       <td valign="TOP" colspan=3> 
          <p>Indicates the size of memory cache used with cached tables, calculated 
-        as 2^value. The default results in just over 32000 rows from all cached 
+        as 2^value. The default results in up to 3*16000 rows from all cached 
         tables being held in memory at any time. </p>
          <p>The value can range between 8-16. 
       </td>
@@ -554,6 +554,7 @@ SELECT a, MAX(b) FROM t;</pre>
   (DOUBLE) equals <code>1.25</code>. Without division operations, DECIMAL values represent 
   exact arithmetic; the resulting scale is the sum of the scales of the two terms 
   when multiplication is performed.</p>
+<p>REAL, FLOAT and DOUBLE values are all stored in the database as java.lang.Double objects. Special values such as NaN and +-Infinity are also stored and supported. These values can be submitted to the database via JDBC PreparedStatement methods and are returned in ResultSet objects.</p>
 <h4>BIT TYPE</h4>
 <p>BIT columns in HSQLDB are in fact boolean columns. BIT columns can be initialised 
   using values of any numeric type. In this case <code>0</code> is translated to <code>false</code> 
@@ -596,7 +597,7 @@ SELECT a, MAX(b) FROM t;</pre>
   databases, the <code>getString()</code> methods can be used to retrieve very 
   long character strings and is faster than the stream based methods. </p>
 <p><em>Upgrading: Several JDBC methods that previously returned incorrect values 
-    now return correct values some will throw an SQLException if the relevant connection property, 'strict' has been set to true. All these changes have been documented in the Javadoc 
+    now return correct values. Some will throw an SQLException if the relevant connection property, 'strict' has been set to true. All these changes have been documented in the Javadoc 
     for the jdbcXXX classes.</em></p> 
 <h3>MANAGING DATABASE CONNECTIONS</h3>
 <p>In all running modes (server or in-process) multiple connections to the database engine are supported. In-process (standalone) mode supports connections from the client in the same Java Virtual Machine, while server modes support connections over the network from several different clients.</p>
@@ -606,9 +607,9 @@ SELECT a, MAX(b) FROM t;</pre>
 <p> 
 
 (c) To control  transactions in a multi-threaded application. This can be useful with HSQLDB as well. For example, in a web application, a transaction may involve some processing between the queries or user action across web pages. A separate connection should be used for each session so that the work can be committed when completed or rolled back otherwise.</p>
-<p>An application that is not both multi-threaded and transactional, such as an application for recording user login and logout actions,  does not need more than one connection. The connection can stay open indefinitely and reopened only when it is dropped due to network problems.  
-
-</p>
+<p>An application that is not both multi-threaded and transactional, such as an application for recording user login and logout actions,  does not need more than one connection. The connection can stay open indefinitely and reopened only when it is dropped due to network problems.</p>
+<p>When using an in-process database the application program should be set up so that it always keeps at least one connection to the database open, otherwise the database will be closed and further attempts in creating connections can fail. If  connection pooling software is used which cannot be set up to keep the open connection, a 'guardian' connection to the database should be made and kept open before starting the connection pooling.</p>
+<p>When using a server database (and to some extent, an in-process database), care must be taken to avoid creating and dropping JDBC connections too frequently. Filure to observe this will result in unsuccessful connection attempts when the application is under heavy load and will slow down all operations even when the load is light.</p>
 <h3>MEMORY AND DISK USE</h3>
 <p>Memory used by the program can be thought of as two distinct pools: memory 
   used for table data, and memory used for building result sets. In addition, 
@@ -624,9 +625,9 @@ SELECT a, MAX(b) FROM t;</pre>
   row. Beyond this, each extra column in the table adds at least a few bytes to 
   the size of each row.</p>
 <p>With CACHED tables, the data is stored on disk and   only up to a maximum number of rows are held in memory 
-  at any time. The default is 32000 rows. The <code>hsqldb.cache_scale</code> database 
-  property can be set to alter this amount. As any random subset of the rows in any of  the CACHED tables can be held in the cache, the amount of memory needed  by cached rows can reach the sum of the rows containing the largest field data. For example if a table with 100,000 rows contains 40,000 rows with 1,000 bytes  of data in each row and 60,000 rows with 100 bytes in each, the cache can grow to contain 32000 of the larger rows. If memory is limited, the  <code>hsqldb.cache_scale</code> database 
-  property should be reduced to 14 or less (corresponding to 16,000 rows or less).</p>
+  at any time. The default is up to 3*16000 rows. The <code>hsqldb.cache_scale</code> database 
+  property can be set to alter this amount. As any random subset of the rows in any of  the CACHED tables can be held in the cache, the amount of memory needed  by cached rows can reach the sum of the rows containing the largest field data. For example if a table with 100,000 rows contains 40,000 rows with 1,000 bytes  of data in each row and 60,000 rows with 100 bytes in each, the cache can grow to contain 48,000 of the larger rows. If memory is limited, the  <code>hsqldb.cache_scale</code> database 
+  property should be reduced to 13 or less (corresponding to 3*8,000 rows or less).</p>
 <h3></h3>
 <p>The memory used for a result set row has fewer overheads (fewer slots and no 
   index nodes) but still uses a lot of memory. In server mode databases, the result set memory is released 
@@ -711,7 +712,7 @@ SELECT a, MAX(b) FROM t;</pre>
 <h3>Backing Up Databases</h3>
 <p>Each database consists of  up to 4 files in the same directory. These should be backed up together. The files can be backed up while the engine is running but care should be taken that a CHECKPOINT or SHUTDOWN operation does not take place during the backup. It is more efficient to perform the backup soon after a CHECKPOINT.  If backup takes place while the engine is running, the *.data file can be excluded from the backup (the *.backup file will be used to replace this file if the full backup is restored) . Normal backup methods, such as archiving the files in a compressed bundle can be used.</p>
 <h4></h4>
-<p>Author: Fred Toussi - 14 July 2002 - updated 8 Oct 2002</p>
+<p>Author: Fred Toussi - 14 July 2002 - updated 18 Oct 2002</p>
 <p>Copyright 2002 Fred Toussi. Permission is granted to distribute this document 
   without any alteration under the terms of the HSQLDB license. Additional permission 
   is granted to the HSQLDB Development Group to distribute this document with 

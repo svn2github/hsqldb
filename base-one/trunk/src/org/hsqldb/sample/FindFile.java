@@ -79,8 +79,14 @@ import java.io.*;
 class FindFile {
 
     /**
-     * main method declaration
-     *
+     * Extracts a directory tree and stores it ina HSQLDB database.<br>
+     * Usage:<p>
+     * <pre>
+     * java org.hsqldb.sample.FindFile -init .
+     * Re-create database from directory '.'
+     * java org.hsqldb.sample.FindFile name
+     * Find files like 'name'
+     * </pre>
      *
      * @param arg
      */

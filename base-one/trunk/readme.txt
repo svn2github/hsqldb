@@ -21,7 +21,7 @@ This release also features major speed improvements to all procedure
 calls and particularly the identity() function.
 
 The Transfer tool features new functionality, such as database
-dump and restore.
+dump and restore. Database Manager has been enhanced.
 
 Big improvements were made to startup speed where certain types of
 VIEW were defined. Also VIEWS featuring function calls are now
