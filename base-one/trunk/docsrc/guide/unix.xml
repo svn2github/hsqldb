@@ -1,4 +1,4 @@
-<!-- $Id: unix.xml,v 1.3 2004/04/22 17:38:48 unsaved Exp $ -->
+<!-- $Id: unix.xml,v 1.4 2004/04/22 20:25:08 unsaved Exp $ -->
 
 <chapter>
     <title>UNIX Quick Start</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.3 $</edition>
-        <pubdate>$Date: 2004/04/22 17:38:48 $</pubdate>
+        <edition>$Revision: 1.4 $</edition>
+        <pubdate>$Date: 2004/04/22 20:25:08 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>UNIX</keyword>
@@ -53,7 +53,7 @@
             Click the filename to download it.
         </para> <para>
             If you want an rpm, then click "hsqldb" in the "free section" of
-            <ulink url='http://www.jpackage.org/rpm.php'/>.
+            <ulink url='http://www.jpackage.org/'/>.
             Hopefully, the JPackage folk will document what JVM versions their
             rpm will support (currently they document this neither on their
             site nor within the package itself).
@@ -107,7 +107,7 @@
     unzip /path/to/file.zip</screen>
             </informalexample><para>
             All the files in the zip archive will be extracted to underneath
-            the new <filename>hsqldb</filename> directory.
+            a new <filename>hsqldb</filename> directory.
             </para>
         </listitem></varlistentry>
         </variablelist>
@@ -157,7 +157,7 @@
                 </informalexample><para>or</para><informalexample><screen>
     tar -xzf /path/to/file.tar.gz</screen>
                 </informalexample><para>or</para><informalexample><screen>
-    gunzip2 -c /path/to/file.tar.bz2 | tar -xzf -</screen>
+    bunzip2 -c /path/to/file.tar.bz2 | tar -xzf -</screen>
                 </informalexample><para>
                 Everything will be installed into a new subdirectory named
                 <filename>apache-ant- + version</filename>.
@@ -171,8 +171,8 @@
                 The location is entirely dependent upon your variety of UNIX.
                 Sun's rpm distributions of Java normally install to
                 <filename>/usr/java/something</filename>.
-                Sun's package distributions of Java (including those that come 
-                with Solaris) normally install to
+                Sun's System V package distributions of Java (including those 
+                that come with Solaris) normally install to
                 <filename>/usr/something</filename>, with a sym-link from 
                 <filename>/usr/java</filename> to the default version (so for 
                 Solaris you will usually set JAVA_HOME to 
@@ -181,7 +181,8 @@
                 Remove the existing file
 <emphasis role='bold'>HSQLDB_HOME</emphasis><filename>/lib/hsqldb.jar</filename>.
             </para></step> <step><para>
-                cd to $HSQLDB_HOME/build.
+                cd to
+                <emphasis role='bold'>HSQLDB_HOME</emphasis><filename>/build</filename>.
                 Make sure that the bin directory under your Ant home is in your 
                 search path.
                 Run the following command.
@@ -224,7 +225,7 @@
                 On all system-5 UNIXes and most hybrids (including Linux), 
                 you can run (as root) something like
                 </para><informalexample><screen>
-    useradd -m -C 'HSQLDB Database Owner' -s /bin/ksh -m hsqldb</screen>
+    useradd -m -c 'HSQLDB Database Owner' -s /bin/ksh -m hsqldb</screen>
                 </informalexample><para>
                     (BSD-variant users can use a similar
                     <literal>pw useradd hsqldb...</literal> command).
@@ -236,9 +237,19 @@
                 <emphasis role='bold'>HSQLDB_OWNER</emphasis>'s home
                 directory and rename it to 
                 <filename>server.properties</filename>.
-                TODO:  List the server.properties here and point out the
-                meaning of things, especially that the file path makes the
-                database instance a persistent database.
+            </para>
+            <programlisting>&sample-server.properties-cdata;</programlisting>
+            <para>
+                Since the value of the first database
+                (<property>server.database.0</property>) begins with
+                <literal>file:</literal>, the database instance will be
+                persisted to a set of files in the specified directory with
+                names beginning with the specified name.
+                You can read about how to specify other database instances
+                of various types, and how to make settings for the listen
+                port and many other things, in the 
+                <link linkend='advanced-chapter' endterm='advanced-title'/>
+                chapter.
             </para></step><step><para>
                 Set the environmental variable <literal>HSQLDB_HOME</literal>
                 to the real value of
@@ -254,7 +265,7 @@
                 </para>
                 In <emphasis role='bold'>HSQLDB_OWNER</emphasis>'s home
                 directory, run<informalexample><screen>
-    java -classpath $HSQLDB_HOME/lib/hsqldb.jar Server</screen>
+    java -classpath $HSQLDB_HOME/lib/hsqldb.jar org.hsqldb.Server</screen>
                 </informalexample><para>
                     This will create your database instance and start it up.
                     Use <literal>Ctrl Z</literal> to move the database process
@@ -269,6 +280,17 @@
         <para>
             Download this sample <ulink url='sqltool.rc'/> file to the
             <emphasis role='bold'>HSQLDB_OWNER</emphasis>'s home directory.
+        </para>
+        <programlisting>&sqltool.rc-cdata;</programlisting>
+        <para>
+            Notice that the config file says to connect up to URL
+            <literal>jdbc:hsqldb:hsql://localhost</literal>.
+            That is the URL for the default database instance of a HSQLDB
+            Server running on the default port of the local host.
+            You can read about URLs to connect to other instances and 
+            other servers in the 
+            <link linkend='advanced-chapter' endterm='advanced-title'/>
+            chapter.
         </para> <para>
             Run Sql Tool.
         </para><informalexample><screen>
@@ -283,6 +305,7 @@
             </informalexample><para>
             When you're finised playing, exit with the command
             <literal>\q</literal>.
+        </para> <para>
             If you changed the <literal>sa</literal> password, then you need to
             fix the password in the <filename>sqltool.rc</filename> file
             accordingly.
@@ -296,60 +319,50 @@
     </section>
 
     <section>
-        <title>Setting up for Multiple Users</title>
+        <title>Create additional Accounts</title>
         <para>
-            If you will ever make use of non-Admin user account(s), then you should
-            grant SELECT privilege on the following objects to PUBLIC
-        </para>
-        <para>
-            TODO:  Make an sql script file.  Show it and offer it for download:
-            </para><screen>
-    system_tables
-    system_columns
-    system_indexinfo
-    system_connectioninfo</screen>
-        <para>
-            If you don't, then you will have to grant these permissions to every new
-            user every time you add a new user.
-            (New users will still be unable to even read data in tables that you
-            have created, unless you also grant privileges on those objects).
-            There are two classes of database accounts, Admin accounts and non-Admin
-            accounts.
-            Admins have privileges to do anything, non-Admins may be granted some
-            privileges, but may never create or own database objects.
-            When you first create a hsqldb database, it has only one database user-- SA,
-            an Admin account, with no password set.
+            There are two classes of database accounts, Admin accounts and
+            non-Admin accounts.
+            Admins have privileges to do anything, non-Admins may be granted 
+            some privileges, but may never create or own database objects.
+            When you first create a hsqldb database, it has only one database 
+            user-- SA, an Admin account, with no password set.
             You should set a password (as described above).
             You can create as many additional Admin users as you wish.
             Each Admin user has a unique user name (and optional password), but 
             these accounts are otherwise indistinguishable.
             These accounts are created by appending the keyword "ADMIN" to the 
             <literal>CREATE USER</literal> command (see the
-            <link linkend='stored-section' endterm='stored-title'/> chapter).
+            <link linkend='create_user-section'
+                  endterm='create_user-title'/> chapter).
         </para> <para>
-            If you create a user without the ADMIN tag, it will be a Non-Admin account.
-            These users can not create or own objects, and, by default, they can't use
-            any database objects.
-            The user will then be able to perform operations which have been granted to
-            the pseudo-user PUBLIC.
-            To give the user additional privileges (even the privilege to read data),
-            an Admin user must grant those rights to the user (or to PUBLIC).
+            If you create a user without the ADMIN tag, it will be a Non-Admin 
+            account.
+            These users can not create or own objects, and, by default, they 
+            can't use any database objects.
+            The user will then be able to perform operations which have been 
+            granted to the pseudo-user PUBLIC.
+            To give the user additional privileges (even the privilege to read 
+            data), an Admin user must grant those rights to the user (or to 
+            PUBLIC).
         </para> <para>
-            Since only people with a database account may do anything at all with the 
-            database, it is often useful to permit other database users to view the 
-            data in your tables.
-            To optimize performance, reduce contention, and minimize administration, it
-            is usually best to grant SELECT to PUBLIC on any object that needs to be
-            accessed by multiple database users (with the significant exception of any
-            data which you want to keep secret).
+            Since only people with a database account may do anything at all 
+            with the database, it is often useful to permit other database 
+            users to view the data in your tables.
+            To optimize performance, reduce contention, and minimize 
+            administration, it is often best to grant SELECT to PUBLIC on any 
+            object that needs to be accessed by multiple database users (with 
+            the significant exception of any data which you want to keep 
+            secret).
         </para>
     </section>
 
     <section>
         <title>Running Hsqldb as a System Daemon</title>
-        <para>
-            Put simplified version of instructions in the init script here,
-            or just refer to those instructions.
-        </para>
+        <para><remark>
+            TODO:
+            Move instructions from the init script itself to here, then
+            put a reference in the init script pointing to this chapter.
+        </remark></para>
     </section>
 </chapter>
