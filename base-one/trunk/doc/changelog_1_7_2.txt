@@ -259,6 +259,7 @@ Support for JDBC batch execution with multiple-results. Both Statement and Prepa
 
 SSL support for server mode operation.
 
+After calling Statement.setMaxRows(int), the maximum row count restriction will no longer apply to result sets returned and used internally. (change in 1_7_2_5)
 
 
 ----------------
@@ -287,7 +288,11 @@ PREPARED STATEMENTS
 
 
 
-Support for real PreparedStatements - major speedup.
+Support for real PreparedStatements - major speedup. This has introduced the following changes from the previous versions.
+
+The execute(String sql), executeUpdate(String sql) and executeQuery(String sql) commands are no-longer supported for PreparedStatements according to JDBC specs. Use an ordinary Statement for calling these methods.
+
+The SQL for each call to the prepareStatement() method of Connection must consist of a single SQL query. For multiple statements use either multiple PreparedStatement objects or an ordinary Statement object.
 
 Bug fixes ensure date / time, java object and binary values stored in in-process databases via prepared statements will not be altered if the object is modified outside the engine.
 

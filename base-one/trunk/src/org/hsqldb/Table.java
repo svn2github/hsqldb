@@ -1071,8 +1071,9 @@ public class Table extends BaseTable {
 
         int i = bestIndexForColumn[column];
 
-        if (i == -1 && tableType == Table.SYSTEM_SUBQUERY
-                || tableType == Table.SYSTEM_TABLE) {
+        if (i == -1
+                && (tableType == Table.SYSTEM_SUBQUERY
+                    || tableType == Table.SYSTEM_TABLE)) {
             try {
                 createIndex(new int[]{ column }, null, false, false, false);
 
