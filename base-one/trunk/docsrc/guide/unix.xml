@@ -1,0 +1,142 @@
+<!-- $Id$ -->
+
+<chapter>
+    <title>UNIX Quick Start</title>
+    <subtitle>How to quickly get Hsqldb up and running on UNIX</subtitle>
+    <chapterinfo>
+        <author>
+            <firstname>Blaine</firstname><surname>Simpson</surname>
+            <email>&blaineaddr;</email>
+            <affiliation>
+                <orgname>HSQLDB Development Group</orgname>
+            </affiliation>
+        </author>
+        <edition>$Revision$</edition>
+        <pubdate>$Date$</pubdate>
+        <keywordset>
+            <keyword>HSQLDB</keyword>
+            <keyword>UNIX</keyword>
+            <keyword>HOWTO</keyword>
+        </keywordset>
+    </chapterinfo>
+
+    <section>
+        <title>Purpose</title>
+        <para>
+            This chapter explains how to quickly install, run, and
+            use HSQLDB version 1.7.2 on UNIX.
+        </para><para>
+            HSQLDB has lots of great optional features.
+            I intend to cover very few of them.
+            I do intend to cover what I think is the most common UNIX setup:
+            To run a multi-user database with permament data persistence.
+            (By the latter I mean that data is stored to disk so that the
+            data will persist across database shutdowns and startups).
+            I also cover how to run Hsqldb as a system daemon.
+        </para>
+    </section>
+
+    <section>
+        <title>Installation</title>
+        <para>
+            Go to <ulink url="http://sourceforge.net/projects/hsqldb"/>
+            and click on the "files" link.
+            Look for "hsqldb_1_7_2" under lower-case "hsqldb".
+            Click on "show only this release" link right after "hsqldb_1_7_2".
+            If you 
+        </para> <para>
+            Click the "hsqldb_1_7_2" link to find out what version of Java
+            this binary HSQLDB distribution was built with.
+            Choose a binary package format that will work with your UNIX
+            variant and which supports your Java version.
+            Otherwise choose the hsqldb_1_7_2.zip file.
+            Click the filename to download it.
+        </para> <para>
+            If you want an rpm, then click "hsqldb" in the "free section" of
+            <ulink url='http://www.jpackage.org/rpm.php'/>.
+            Hopefully, the JPackage folk will document what JVM versions their
+            rpm will support (currently they document this neither on their
+            site nor within the package itself).
+            Download the package you want
+            (I really can't document how to download from a site that is
+            totally beyond my control).
+        </para> <note><para>
+            It could very well happen that some of the file formats which I
+            discuss here are not in fact offered.
+            If so, then we have not gotten around to 
+        </para></note> <para>
+            Binary installation depends on the package format that you 
+            downloaded.
+        </para><variablelist><
+        <varlistentry><term>Installing from a .pkg.Z file</term><listitem><para>
+            This package is only for use by a Solaris super-user.
+            It's a System V package.
+            Download the package, and run
+            <para><screen>
+    pkgadd filename.pkg.Z</screen>
+            <para>
+                as root.
+                You can also read about the package by running
+                </para><screen>
+    pkginfo -l d filename.pkg.Z
+        </listitem></varlistentry>
+        <varlistentry><term>Installing from a .rpm file</term><listitem><para>
+            This is a Linux rpm package.
+            Rpms can be installed or upgraded by running<screen>
+    $rpm -Uvh /path/to/file.rpm</screen>
+            <para>
+                as root.
+                You can also read about the package by running
+            </para><screen>
+    rpm -qip /path/to/file.rpm</screen>
+
+Extract the zip file to wherever you want the hsqldb system to
+reside (the $HSQLDB_HOME).
+The contents of production hsqldb archives contain a version-specific
+base directory (like <I>hsqldb_v.1.61</I>) as is customary.  However,
+at least some non-production archives do not contain a base directory
+(i.e., the contents are all <B>relative</B> to an unnamed $HSQLDB_HOME
+base directory).
+So, after you download the archive, do a <I>unzip -v</I>.
+<P>
+<P>
+<P>
+Look through $HSQLDB_HOME/readme.txt and/or $HSQLDB_HOME/index.html.  
+(They may or may not be there, depending on whether you are working 
+with a production release, etc.).
+The most important file of the hsqldb system is hsqldb.jar, which
+resides at $HSQLDB_HOME/lib/hsqldb.jar.
+Your index.html or readme.txt file should say what version of Java
+your hsqldb.jar was built with/for (Rpm users should be able to run
+<I>rpm -qi hsqldb</I>, though I can't test that now because the rpm
+isn't built yet).
+If they don't say, or it is not your JRE version, then I suggest that
+you rebuild hsqldb.jar to avoid problems due to JRE version conflicts.
+The rest of the section is only for those people who want to rebuild hsqldb.
+<P>
+First set the environmental
+variable JAVA_HOME to the base directory of your Java JRE or SDK.
+(like &quot;<CODE>export JAVA_HOME; JAVA_HOME=/usr/java/j2sdk1.4.0</CODE>&quot; in UNIX,
+or &quot;<CODE>set JAVA_HOME=C:\Program Files\Java\J2re1.4.0</CODE>&quot; in Windows).
+(For Solaris, you would normally set JAVA_HOME to /usr/java, which is a sym-link
+to the default java home).
+<P>
+
+You can run run the scripts $HSQLDB/build/switchToJDK*.bat and $HSQLDB/build/buildJDK*.bat (Windows users, where the * is your Java version number).
+or the script $HSQLDB/build/buildjar.sh (no need to specify Java version).
+If that works, you're finished with the installation.
+If you have any problems with that, then use the following instructions to 
+perform the build yourself using Ant.
+<P>
+If you don't already have Ant, download any recent production version
+from <A href="http://jakarta.apache.org/ant/">Apache's Jakarta site</A>,
+cd to where you want Ant to live, and extract from the archive with
+<I>unzip</I> or <I>tar -xzf</I>.
+<P>
+cd to $HSQLDB_HOME/build.  Make sure that the bin directory under your Ant
+home is in your search path.
+Run the following command.
+<BLOCKQUOTE><CODE>ant jar</CODE></BLOCKQUOTE>
+This builds $HSQLDB_HOME/lib/hsqldb.jar.
+    </section>
+</chapter>
