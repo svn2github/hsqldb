@@ -42,7 +42,7 @@ import java.io.FileNotFoundException;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
-// $Id$
+// $Id: SqlToolHarness.java,v 1.1 2004/06/16 07:41:59 unsaved Exp $
 
 /**
  * Runs SqlTool tests based upon metacommands embedded in comments in SQL 
@@ -131,11 +131,16 @@ public class SqlToolHarness {
         }
         execHarness.setArgs(args);
         execHarness.exec();
-        System.err.println("STDOUT ******************************************");
-        System.out.print(execHarness.getStdout());
-        System.err.println("ERROUT ******************************************");
-        System.err.print(execHarness.getErrout());
-        System.err.println("*************************************************");
+        if (Verbose) {
+            System.err.println(
+                    "STDOUT ******************************************");
+            System.out.print(execHarness.getStdout());
+            System.err.println(
+                    "ERROUT ******************************************");
+            System.err.print(execHarness.getErrout());
+            System.err.println(
+                    "*************************************************");
+        }
         if (md.exitValue != null) {
             if (md.exitValue.intValue() != execHarness.getExitValue()) {
                 if (Verbose) {
