@@ -1,4 +1,4 @@
-<!-- $Id: sqlsyntax.xml,v 1.3 2004/04/20 18:35:56 unsaved Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.4 2004/04/20 22:42:26 unsaved Exp $ -->
 
 <chapter id='sqlsyntax-chapter'>
 <title id='sqlsyntax-title'>SQL Syntax</title>
@@ -34,8 +34,8 @@
             </affiliation>
         </editor>
     </authorgroup>
-    <edition>$Revision: 1.3 $</edition>
-    <pubdate>$Date: 2004/04/20 18:35:56 $</pubdate>
+    <edition>$Revision: 1.4 $</edition>
+    <pubdate>$Date: 2004/04/20 22:42:26 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Syntax</keyword>
@@ -469,7 +469,8 @@ CREATE TRIGGER &lt;name&gt; {BEFORE | AFTER} {INSERT | UPDATE | DELETE} ON &lt;t
             stored in the database.
         </para> <para>
             Please refer to the code for 
-            <ulink url='fixthis'>../src/org/hsqldb/Trigger.html</ulink>
+            <ulink url='../src/org/hsqldb/Trigger.html'>
+            org.hsqldb.sample.Trigger</ulink>
             and <ulink url='../src/org/hsqldb/sample/TriggerSample.html'>
             org.hsqldb.sample.TriggerSample</ulink>
             for more information on how to write a trigger class.
