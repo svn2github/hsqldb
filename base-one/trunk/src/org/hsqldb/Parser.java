@@ -132,6 +132,9 @@ class Parser {
             return select.getResult(cSession.getMaxRows());
         } else {
 
+            // session level user rights
+            cSession.checkReadWrite();
+
 // fredt@users 20020215 - patch 497872 by Nitin Chauhan
 // to require column labels in SELECT INTO TABLE
             for (int i = 0; i < select.eColumn.length; i++) {
@@ -262,18 +265,12 @@ class Parser {
      */
     Result processUpdate() throws SQLException {
 
-        cSession.checkReadWrite();
-
         String token = tTokenizer.getString();
         Table  table = dDatabase.getTable(token, cSession);
 
-        cSession.check(table.getName(), UserManager.UPDATE);
+        checkTableWriteAccess(table, UserManager.UPDATE);
 
         TableFilter filter = new TableFilter(table, null, false);
-
-        if (table.isView()) {
-            throw Trace.error(Trace.NOT_A_TABLE, token);
-        }
 
         tTokenizer.getThis("SET");
 
@@ -314,16 +311,17 @@ class Parser {
 
         eColumn.toArray(exp);
 
-        int col[]   = new int[len];
-        int type[]  = new int[len];
-        //int csize[] = new int[len];
+        int col[]  = new int[len];
+        int type[] = new int[len];
 
+        //int csize[] = new int[len];
         for (int i = 0; i < len; i++) {
             col[i] = ((Integer) vColumn.get(i)).intValue();
 
             Column column = table.getColumn(col[i]);
 
-            type[i]  = column.getType();
+            type[i] = column.getType();
+
             //csize[i] = column.getSize();
         }
 
@@ -374,6 +372,24 @@ class Parser {
         return r;
     }
 
+    void checkTableWriteAccess(Table table,
+                               int userRight) throws SQLException {
+
+        // session level user rights
+        cSession.checkReadWrite();
+
+        // object level user rights
+        cSession.check(table.getName(), userRight);
+
+        // object type
+        if (table.isView()) {
+            throw Trace.error(Trace.NOT_A_TABLE, table.getName().name);
+        }
+
+        // object readonly
+        table.checkDataReadOnly();
+    }
+
     /**
      *  Method declaration
      *
@@ -382,19 +398,14 @@ class Parser {
      */
     Result processDelete() throws SQLException {
 
-        cSession.checkReadWrite();
         tTokenizer.getThis("FROM");
 
         String token = tTokenizer.getString();
         Table  table = dDatabase.getTable(token, cSession);
 
-        cSession.check(table.getName(), UserManager.DELETE);
+        checkTableWriteAccess(table, UserManager.DELETE);
 
         TableFilter filter = new TableFilter(table, null, false);
-
-        if (table.isView()) {
-            throw Trace.error(Trace.NOT_A_TABLE, token);
-        }
 
         token = tTokenizer.getString();
 
@@ -441,17 +452,12 @@ class Parser {
      */
     Result processInsert() throws SQLException {
 
-        cSession.checkReadWrite();
         tTokenizer.getThis("INTO");
 
         String token = tTokenizer.getString();
         Table  t     = dDatabase.getTable(token, cSession);
 
-        cSession.check(t.getName(), UserManager.INSERT);
-
-        if (t.isView()) {
-            throw Trace.error(Trace.NOT_A_TABLE, token);
-        }
+        checkTableWriteAccess(t, UserManager.INSERT);
 
         token = tTokenizer.getString();
 

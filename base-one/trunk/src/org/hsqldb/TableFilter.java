@@ -219,22 +219,6 @@ class TableFilter {
             return;
         }
 
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-// fredt - comment - this is for text tables only
-/*
-        if (tTable.isText()) {
-            Index primary = tTable.getPrimaryIndex();
-
-
-            if (index != primary) {
-                Node readAll = primary.getRoot();
-
-                while (readAll != null) {
-                    readAll = readAll.getRight();
-                }
-            }
-        }
-*/
         iIndex = index;
 
         if (candidate == 1) {

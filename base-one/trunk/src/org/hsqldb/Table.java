@@ -264,6 +264,16 @@ class Table {
         return isReadOnly;
     }
 
+    /**
+     * Used by INSERT, DELETE, UPDATE operations
+     */
+    void checkDataReadOnly() throws SQLException {
+
+        if (isReadOnly) {
+            throw Trace.error(Trace.DATA_IS_READONLY);
+        }
+    }
+
     void setDataReadOnly(boolean value) throws SQLException {
         isReadOnly = value;
     }
@@ -1087,7 +1097,7 @@ class Table {
         for (int i = 0, size = vConstraint.size(); i < size; i++) {
             Constraint c = (Constraint) vConstraint.get(i);
 
-            if ( ignore != null && ignore.get(c) != null) {
+            if (ignore != null && ignore.get(c) != null) {
                 continue;
             }
 
@@ -1289,8 +1299,6 @@ class Table {
      */
     void insert(Object row[], Session c) throws SQLException {
 
-        // todo - clarify the place for readonly checks
-        Trace.check(!isReadOnly, Trace.DATA_IS_READONLY);
         checkNullColumns(row);
         fireAll(TriggerDef.INSERT_BEFORE);
         insertRow(row, c);
@@ -1303,7 +1311,6 @@ class Table {
      */
     private void insertRow(Object row[], Session c) throws SQLException {
 
-        Trace.check(!isReadOnly, Trace.DATA_IS_READONLY);
         fireAll(TriggerDef.INSERT_BEFORE_ROW, row);
 
         if (dDatabase.isReferentialIntegrity()) {
@@ -1377,7 +1384,6 @@ class Table {
             dDatabase.logger.writeToLog(c, getInsertStatement(row));
         }
     }
-
 
     /**
      * Used by TextCache to insert a row into the indexes when the source
@@ -1950,8 +1956,8 @@ class Table {
      *  High level row delete method. Fires triggers and performs integrity
      *  constraint checks.
      */
-    void delete(Object row[], Session session,
-                boolean doit) throws SQLException {
+    private void delete(Object row[], Session session,
+                        boolean doit) throws SQLException {
 
         if (dDatabase.isReferentialIntegrity()) {
             checkCascadeDelete(row, session, doit);

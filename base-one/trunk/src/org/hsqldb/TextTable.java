@@ -182,6 +182,21 @@ class TextTable extends org.hsqldb.Table {
         return isReversed;
     }
 
+    /**
+     * Used by INSERT, DELETE, UPDATE operations. This class will return
+     * a more appropriate message when there is no data source.
+     */
+    void checkDataReadOnly() throws SQLException {
+
+        if (dataSource.length() == 0) {
+            throw Trace.error(Trace.UNKNOWN_DATA_SOURCE);
+        }
+
+        if (isReadOnly) {
+            throw Trace.error(Trace.DATA_IS_READONLY);
+        }
+    }
+
     void setDataReadOnly(boolean value) throws SQLException {
 
         if (isReversed && value == true) {
@@ -216,34 +231,6 @@ class TextTable extends org.hsqldb.Table {
         }
 
         return r;
-    }
-
-    void checkUpdate(int col[], Result deleted,
-                     Result inserted) throws SQLException {
-
-        if (dataSource.length() == 0) {
-            Trace.check(false, Trace.UNKNOWN_DATA_SOURCE);
-        }
-
-        super.checkUpdate(col, deleted, inserted);
-    }
-
-    void insert(Object row[], Session c) throws SQLException {
-
-        if (dataSource.length() == 0) {
-            Trace.check(false, Trace.UNKNOWN_DATA_SOURCE);
-        }
-
-        super.insert(row, c);
-    }
-
-    void delete(Object row[], Session c, boolean doit) throws SQLException {
-
-        if (dataSource.length() == 0) {
-            Trace.check(false, Trace.UNKNOWN_DATA_SOURCE);
-        }
-
-        super.delete(row, c, doit);
     }
 
     void drop() throws SQLException {
