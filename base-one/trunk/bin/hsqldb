@@ -32,7 +32,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.3 2004/02/19 23:26:37 unsaved Exp $
+# $Id: hsqldb,v 1.4 2004/02/19 23:57:32 unsaved Exp $
 
 
 # This stuff will be ignored by systems that don't use chkconfig.
@@ -266,7 +266,7 @@ running with pid $HSQLDB_PID."
         # spaces inside of $AUTH_FILE.
         [ -n "$AUTH_FILE" ] && AUTH_FILE_SWITCH="--rcfile $AUTH_FILE"
         databases="`echo $MVAR | wc -w`"
-        echo "$database databases to shut down..."
+        echo "$databases databases to shut down..."
         # Some shell implementations don't allow substitution on arg 0,
         # so, we'll set the search path.
         PATH="$JAVA_HOME/bin:$PATH"
