@@ -14,7 +14,7 @@
   Windows, type: </p>
 <p><code><span style='font-size:10.0pt;font-family:"Courier New"'>runtest TestSelf</span></code> 
 </p>
-<p>To test inserting 30000 rows into one table, type: </p>
+<p>To test speed by inserting 30000 rows into one table, type: </p>
 <p><code><span style='font-size:10.0pt;font-family:"Courier New"'>runtest TestSelf 
   30000</span></code> </p>
 <p>To test inserting 10000 rows in the In-Memory-mode type only: </p>
@@ -25,6 +25,8 @@
   may run out of memory if there is not enough memory available. You may experience 
   a delay between updating and deleting records. This is by design: the recovery 
   mechanism is tested here. </p>
-<p><font size="-1">This text is based on HypersonicSQL documentation, updated to reflect the latest version of HSQLDB</font></p>
+<h3>SQL TESTS</h3>
+<p>The new version of TestSelf runs multiple SQL test files to test different operations of the database. All files with names in the format, <code>TestSelf*.txt</code>  are processed in alphabetical order. This makes it easy to add new tests to the framework.</p>
+<p><font size="-1">This text is based on HypersonicSQL documentation, updated to reflect the latest version 1.7.2 of HSQLDB</font></p>
 </body>
 </html>

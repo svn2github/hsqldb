@@ -157,7 +157,7 @@ import org.hsqldb.lib.HashSet;
  *
  * Starting with 1.7.2, the allowable forms of the HSQLDB database connection
  * <b>&lt;url&gt;</b> have been extended.  However, all legacy forms continue
- * to work, with unchanged semantics.  The extentions are as described in the
+ * to work, with unchanged semantics.  The extensions are as described in the
  * following material: <p>
  *
  * <b>Network Server Database Connections:</b> <p>
@@ -307,7 +307,7 @@ import org.hsqldb.lib.HashSet;
  * database connection <b>&lt;url&gt;</b> form, in the case that they did
  * not already exist.  Starting with HSQLDB 1.7.0, directories <i>will</i>
  * be created if they do not already exist, but only if HSQLDB is built under
- * a version of the compiler grreater than JDK 1.1.x. <p>
+ * a version of the compiler greater than JDK 1.1.x. <p>
  *
  * The new <b>'jdbc:hsqldb:res:&lt;path&gt;'</b> database connection
  * <b>&lt;url&gt;</b> has different semantics than the
@@ -1106,7 +1106,7 @@ public class jdbcConnection implements Connection {
         // closed every time.  It's a waste.  The session proxy does not
         // call back to the database across the network each time its
         // isClosed method is called, so the only time the session proxy
-        // will return true from isClosed() is when we are in-process or 
+        // will return true from isClosed() is when we are in-process or
         // internal and the SQL DISCONNECT is issued or when we call
         // sessionProxy.close() explicilty, which only happens when
         // our close() method is called.

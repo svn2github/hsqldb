@@ -97,7 +97,7 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 // fredt@users 20021228 - patch 1.7.2 - refactoring
 // boucherb@users 20030705 - patch 1.7.2 - handle parameter marker ambiguity
 // fredt@users 20030819 - patch 1.7.2 - EXTRACT({YEAR | MONTH | DAY | HOUR | MINUTE | SECOND } FROM datetime)
-// fredt@users 20030820 - patch 1.7.2 - CHAR_LENGTH | CHARACTER_LENGTH | OCTECT_LENGTHPOSITION(string)
+// fredt@users 20030820 - patch 1.7.2 - CHAR_LENGTH | CHARACTER_LENGTH | OCTECT_LENGTH(string)
 // fredt@users 20030820 - patch 1.7.2 - POSITION(string IN string)
 // fredt@users 20030820 - patch 1.7.2 - SUBSTRING(string FROM pos [FOR length])
 // fredt@users 20030820 - patch 1.7.2 - TRIM({LEADING | TRAILING | BOTH} FROM <string expression>)

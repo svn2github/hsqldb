@@ -30,57 +30,98 @@ font-family:&quot;Courier New&quot;'>/build</span></code> then type: </p>
 <p>ant</p>
 <p>This displays the command line options which include</p>
 <table border=1 cellpadding=2 width="75%" cellspacing="0">
-   <tr> 
-      <td class="Normal"> 
-         <p>ant jar </p>
-      </td>
-      <td class="Normal"> 
-         <p>to make the hsqldb.jar</p>
-      </td>
-   </tr>
-   <tr> 
-      <td class="Normal"> 
-         <p>ant clean</p>
-      </td>
-      <td class="Normal"> 
-         <p>to clean up the /classes directory that is created</p>
-      </td>
-   </tr>
-   <tr> 
-      <td class="Normal"> 
-         <p>ant cleanall</p>
-      </td>
-      <td class="Normal"> 
-         <p>to remove the old jar as well</p>
-      </td>
-   </tr>
-   <tr> 
-      <td class="Normal"> 
-         <p>ant javadoc</p>
-      </td>
-      <td class="Normal"> 
-         <p>to build javadoc</p>
-      </td>
-   </tr>
-   <tr> 
-      <td class="Normal"> 
-         <p>ant jarmain</p>
-      </td>
-      <td class="Normal"> 
-         <p>to build a smaller jar for hsqldb that does not contain utilities</p>
-      </td>
-   </tr>
-   <tr> 
-      <td class="Normal"> 
-         <p>ant jartest</p>
-      </td>
-      <td class="Normal"> 
-         <p>to build a larger jar for hsqldb that contains tests</p>
-      </td>
-   </tr>
-   <tr>
-      <td class="Normal" colspan="2">... and more options</td>
-   </tr>
+   
+  <tr> 
+      
+    <td class="Normal"> 
+         
+      <p>ant jar </p>
+    </td>
+    <td class="Normal"> 
+         
+      <p>to make the hsqldb.jar</p>
+    </td>
+  </tr>
+   
+  <tr> 
+      
+    <td class="Normal"> 
+         
+      <p>ant clean</p>
+    </td>
+    <td class="Normal"> 
+         
+      <p>to clean up the /classes directory that is created</p>
+    </td>
+  </tr>
+   
+  <tr> 
+      
+    <td class="Normal"> 
+         
+      <p>ant cleanall</p>
+    </td>
+    <td class="Normal"> 
+         
+      <p>to remove the old jar as well</p>
+    </td>
+  </tr>
+   
+  <tr> 
+      
+    <td class="Normal"> 
+         
+      <p>ant javadoc</p>
+    </td>
+    <td class="Normal"> 
+         
+      <p>to build javadoc</p>
+    </td>
+  </tr>
+   
+  <tr> 
+      
+    <td class="Normal"> 
+         
+      <p>ant jarmain</p>
+    </td>
+    <td class="Normal"> 
+         
+      <p>to build a smaller jar for hsqldb that does not contain utilities</p>
+    </td>
+  </tr>
+   
+  <tr> 
+      
+    <td class="Normal"> 
+         
+      <p>ant jartest</p>
+    </td>
+    <td class="Normal"> 
+         
+      <p>to build a larger jar for hsqldb that contains tests</p>
+    </td>
+  </tr>
+  <tr>
+    <td class="Normal" colspan="2">... and more options</td>
+  </tr>
+  <tr> 
+      
+    <td class="Normal"> 
+         
+      <p>ant jarmin</p>
+    </td>
+    <td class="Normal"> 
+         
+      <p>to build a very small jar with no support for servers</p>
+    </td>
+  </tr>
+  
+  <tr>
+    <td class="Normal">&nbsp;</td>
+    <td class="Normal">&nbsp;</td>
+  </tr>
+   
 </table>
 <p><br>
   HSQLDB can be built in any combination of four different sizes and three JRE 
@@ -91,7 +132,7 @@ font-family:&quot;Courier New&quot;'>/build</span></code> then type: </p>
 <p>You need the JUnit jar in the /lib directory in order to build and run the 
   test classes.</p>
 <p>A Jar file for HSQLDB is provided in the .zip package. This jar contains both 
-  the database and the utilities and has been built with JDK 1.3.1. From version 1.7.2, this jar is compatible with all JDK / JRE versions from 1.1.x to 1.4.</p>
+  the database and the utilities and has been built with JDK 1.3.1. From version 1.7.2, this jar is compatible with all JDK / JRE runtime versions from 1.1.x to 1.4.</p>
 <p>The preferred method of rebuilding the jar is with Ant. After installing Ant 
   on your system use the following command from the /build directory: ant The 
   command displays a list of different options for building different sizes of 
@@ -122,7 +163,7 @@ The script does not use Ant or Make, but you do need a JDK at $JAVA_HOME.
 <p>
 Just run <span style="italic">buildjar.sh</span> and the script will tell you
 what JRE(s) the resultant jar file is good for.
-You are not given a choice of what your target JRE is because, at this time,
+You are not given a choice of what your target JRE is, because, at this time,
 it is entirely dependent on the version of your JDK.
 
 <p>fredt@users </p>

@@ -1819,49 +1819,26 @@ class Expression {
 
                 return r.rRoot != null ? Boolean.TRUE
                                        : Boolean.FALSE;
-
-// tony_lai@users having <<<
         }
 
         // handle comparisons
-        int valueType = eArg.isColumn() ? eArg.iDataType
-                                        : eArg2.iDataType;
-        int result    = Column.compare(leftValue, rightValue, valueType);
+        // convert vals
+        if (isCompare(iType)) {
+            int valueType = eArg.isColumn() ? eArg.iDataType
+                                            : eArg2.iDataType;
 
-        switch (iType) {
-
-            case EQUAL :
-                return result == 0 ? Boolean.TRUE
-                                   : Boolean.FALSE;
-
-            case BIGGER :
-                return result > 0 ? Boolean.TRUE
-                                  : Boolean.FALSE;
-
-            case BIGGER_EQUAL :
-                return result >= 0 ? Boolean.TRUE
-                                   : Boolean.FALSE;
-
-            case SMALLER_EQUAL :
-                return result <= 0 ? Boolean.TRUE
-                                   : Boolean.FALSE;
-
-            case SMALLER :
-                return result < 0 ? Boolean.TRUE
-                                  : Boolean.FALSE;
-
-            case NOT_EQUAL :
-                return result != 0 ? Boolean.TRUE
-                                   : Boolean.FALSE;
+            return compareValues(leftValue, rightValue, valueType, iType)
+                   ? Boolean.TRUE
+                   : Boolean.FALSE;
         }
 
         // handle arithmetic and concat operations
         if (leftValue != null) {
-            leftValue = eArg.getValue(iDataType);
+            leftValue = Column.convertObject(leftValue, iDataType);
         }
 
         if (rightValue != null) {
-            rightValue = eArg.getValue(iDataType);
+            rightValue = Column.convertObject(rightValue, iDataType);
         }
 
         switch (iType) {
@@ -2124,9 +2101,15 @@ class Expression {
             return testNull(o, o2, iType);
         }
 
-        int result = Column.compare(o, o2, type);
+        return compareValues(o, o2, type, iType);
+    }
 
-        switch (iType) {
+    private static boolean compareValues(Object o, Object o2, int valueType,
+                                         int exprType) throws HsqlException {
+
+        int result = Column.compare(o, o2, valueType);
+
+        switch (exprType) {
 
             case EQUAL :
                 return result == 0;
@@ -2145,11 +2128,10 @@ class Expression {
 
             case NOT_EQUAL :
                 return result != 0;
+
+            default :
+                throw Trace.error(Trace.GENERAL_ERROR, "Expression.test2");
         }
-
-        Trace.doAssert(false, "Expression.test2");
-
-        return false;
     }
 
 // vorburger@users 20021229 - patch 1.7.2 - null handling

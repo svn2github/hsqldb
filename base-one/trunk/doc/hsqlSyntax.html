@@ -3,7 +3,7 @@
 <body bgcolor=#FFFFFF>
 <font face="Arial, Helvetica" size="2">
 <h2><font face="Arial">SQL Syntax</font></h2>
-<p><font face="Arial"> HSQLDB version 1.7.0 supports the following SQL statements and syntax: 
+<p><font face="Arial"> HSQLDB version 1.7.2 supports the following SQL statements and syntax: 
 </font>
 <p> 
 <table border=0 cellspacing=10 cellpadding=0 >
@@ -29,15 +29,15 @@
          <p><font face="Arial, Helvetica" size="2"><a href="#ALTERTABLE">ALTER TABLE</a> <br>
             </font><font face="Arial, Helvetica" size="2"><a href="#ALTERINDEX">ALTER INDEX<br>
             </a></font><font face="Arial, Helvetica" size="2">
-      <a href="#CREATE ALIAS">CREATE ALIAS</a> <br>
-      <a href="#CREATE INDEX">CREATE INDEX</a> <br>
-      <a href="#DROP INDEX">DROP INDEX</a> <br>
-      <a href="#CREATE TABLE">CREATE TABLE</a> <br>
-      <a href="#DROP TABLE">DROP TABLE</a><br>
-      <a href="#CREATE TRIGGER">CREATE TRIGGER</a><br>
-      <a href="#DROP TRIGGER">DROP TRIGGER</a><br>
-      <a href="#CREATE VIEW">CREATE VIEW</a><br>
-      <a href="#DROP VIEW">DROP VIEW</a> </font><br><br>
+      <a href="#CREATE_ALIAS">CREATE ALIAS</a> <br>
+      <a href="#CREATE_INDEX">CREATE INDEX</a> <br>
+      <a href="#DROP_INDEX">DROP INDEX</a> <br>
+      <a href="#CREATE_TABLE">CREATE TABLE</a> <br>
+      <a href="#DROP_TABLE">DROP TABLE</a><br>
+      <a href="#CREATE_TRIGGER">CREATE TRIGGER</a><br>
+      <a href="#DROP_TRIGGER">DROP TRIGGER</a><br>
+      <a href="#CREATE_VIEW">CREATE VIEW</a><br>
+      <a href="#DROP_VIEW">DROP VIEW</a> </font><br><br>
       <a href="#Datatypes">Datatypes</a></p>
          </td>
    </tr>
@@ -54,16 +54,16 @@
          <p><font face="Arial, Helvetica" size="2"> <a href="#CONNECT">CONNECT</a> 
       <br>
       <a href="#DISCONNECT">DISCONNECT</a> <br>
-      <a href="#CREATE USER">CREATE USER</a> <br>
-      <a href="#DROP USER">DROP USER</a> <br>
+      <a href="#CREATE_USER">CREATE USER</a> <br>
+      <a href="#DROP_USER">DROP USER</a> <br>
       <a href="#GRANT">GRANT</a> <br>
       <a href="#REVOKE">REVOKE</a> <br>
-      <a href="#SET PASSWORD">SET PASSWORD</a> <br>
-      <a href="#SET REFINT">SET REFERENTIAL_INTEGRITY</a> <br>
-      <a href="#SET TABLE">SET TABLE READONLY</a><br>
+      <a href="#SET_PASSWORD">SET PASSWORD</a> <br>
+      <a href="#SET_REFINT">SET REFERENTIAL_INTEGRITY</a> <br>
+      <a href="#SET_TABLE">SET TABLE READONLY</a><br>
       </font><font face="Arial, Helvetica" size="2">
-	  <a href="#SET TABLE SOURCE">SET TABLE SOURCE</a><br>
-      <a href="#SET WRITE_DELAY">SET WRITE_DELAY</a> 
+	  <a href="#SET_TABLE_SOURCE">SET TABLE SOURCE</a><br>
+      <a href="#SET_WRITE_DELAY">SET WRITE_DELAY</a> 
 	  </font></p>
          </td>
    </tr>
@@ -72,8 +72,8 @@
       <td> <font face="Arial, Helvetica" size="2"> <a href="#CHECKPOINT">CHECKPOINT</a> 
       <br>
       <a href="#SCRIPT">SCRIPT</a> <br>
-      <a href="#SET IGNORECASE">SET IGNORECASE</a> <br>
-      <a href="#SET LOGSIZE">SET LOGSIZE</a> <br>
+      <a href="#SET_IGNORECASE">SET IGNORECASE</a> <br>
+      <a href="#SET_LOGSIZE">SET LOGSIZE</a> <br>
       <a href="#SHUTDOWN">SHUTDOWN</a> <br>
       <a href="#Comments">Comments</a> </font></td>
    </tr>
@@ -87,30 +87,30 @@
   <a href="#CHECKPOINT">CHECKPOINT</a> <br>
   <a href="#COMMIT">COMMIT</a> <br>
   <a href="#CONNECT">CONNECT</a> <br>
-  <a href="#CREATE ALIAS">CREATE ALIAS</a> <br>
-  <a href="#CREATE INDEX">CREATE INDEX</a> <br>
-  <a href="#CREATE TABLE">CREATE TABLE</a> <br>
-  <a href="#CREATE USER">CREATE USER</a> <br>
-  <a href="#CREATE VIEW">CREATE VIEW</a> <br>
+  <a href="#CREATE_ALIAS">CREATE ALIAS</a> <br>
+  <a href="#CREATE_INDEX">CREATE INDEX</a> <br>
+  <a href="#CREATE_TABLE">CREATE TABLE</a> <br>
+  <a href="#CREATE_USER">CREATE USER</a> <br>
+  <a href="#CREATE_VIEW">CREATE VIEW</a> <br>
   <a href="#DELETE">DELETE</a> <br>
   <a href="#DISCONNECT">DISCONNECT</a> <br>
-  <a href="#DROP INDEX">DROP INDEX</a> <br>
-  <a href="#DROP TABLE">DROP TABLE</a> <br>
-  <a href="#DROP USER">DROP USER</a> <br>
-  <a href="#DROP VIEW">DROP VIEW</a> <br>
+  <a href="#DROP_INDEX">DROP INDEX</a> <br>
+  <a href="#DROP_TABLE">DROP TABLE</a> <br>
+  <a href="#DROP_USER">DROP USER</a> <br>
+  <a href="#DROP_VIEW">DROP VIEW</a> <br>
   <a href="#GRANT">GRANT</a> <br>
   <a href="#INSERT">INSERT</a> <br>
   <a href="#REVOKE">REVOKE</a> <br>
   <a href="#ROLLBACK">ROLLBACK</a> <br>
   <a href="#SCRIPT">SCRIPT</a> <br>
   <a href="#SELECT">SELECT</a> <br>
-  <a href="#SET AUTOCOMMIT">SET AUTOCOMMIT</a> <br>
-  <a href="#SET IGNORECASE">SET IGNORECASE</a> <br>
-  <a href="#SET LOGSIZE">SET LOGSIZE</a> <br>
-  <a href="#SET PASSWORD">SET PASSWORD</a> <br>
-  <a href="#SET REFINT">SET REFERENTIAL_INTEGRITY</a> <br>
-  <a href="#SET TABLE">SET TABLE READONLY</a><br>
-  <a href="#SET WRITE_DELAY">SET WRITE_DELAY</a> <br>
+  <a href="#SET_AUTOCOMMIT">SET AUTOCOMMIT</a> <br>
+  <a href="#SET_IGNORECASE">SET IGNORECASE</a> <br>
+  <a href="#SET_LOGSIZE">SET LOGSIZE</a> <br>
+  <a href="#SET_PASSWORD">SET PASSWORD</a> <br>
+  <a href="#SET_REFINT">SET REFERENTIAL_INTEGRITY</a> <br>
+  <a href="#SET_TABLE">SET TABLE READONLY</a><br>
+  <a href="#SET_WRITE_DELAY">SET WRITE_DELAY</a> <br>
   <a href="#SHUTDOWN">SHUTDOWN</a> <br>
   <a href="#UPDATE">UPDATE</a> 
 </font>
@@ -125,10 +125,12 @@
 </font>
 <hr>
 <p><font face="Arial"><br>
-   <b><font size="2" color="#FF0000">ALTER TABLE</font></b><font size="2" color="#FF0000"> &lt;tablename&gt;</font></font><font color="#FF0000" face="Arial"><b><font size="2"> ADD COLUMN</font></b><font size="2"> &lt;columnname&gt; </font><font face="Arial, Helvetica" size="2"><font face="Arial"> <a href="#Datatypes">Datatype</a><font color="#FF0000"> [(columnSize[,precision])] [DEFAULT 'defaultValue' [NOT NULL]]</font> </font></font><font size="2">[BEFORE &lt;existingcolumn&gt;];</font></font></p>
+   <b><font size="2" color="#FF0000">ALTER TABLE</font></b><font size="2" color="#FF0000"> &lt;tablename&gt;</font></font><font color="#FF0000" face="Arial"><b><font size="2"> ADD COLUMN</font></b><font size="2"> &lt;columnname&gt; </font><font face="Arial, Helvetica" size="2"><font face="Arial"> <a href="#Datatypes">Datatype</a><font color="#FF0000"> [(columnSize[,precision])] [DEFAULT &lt;defaultValue&gt; [NOT NULL]]</font> </font></font><font size="2">[BEFORE &lt;existingcolumn&gt;];</font></font></p>
 <p><font face="Arial" size="2">Adds the column to the end of the column list. Optional attributes, size and default value (with or without  NOT NULL)  can be specified. The optional BEFORE &lt;existingcolumn&gt; can be used to specify the name of an existing column so that the new column is inserted in a position just before the &lt;existingcolumn&gt;. If NOT NULL is specified and the table is not empty, then a default value must be specified.</font></p>
 <p><font face="Arial"><b><font size="2" color="#FF0000">ALTER TABLE </font></b><font size="2" color="#FF0000">&lt;tablename&gt;</font></font><font color="#FF0000" face="Arial"><b><font size="2"> DROP COLUMN </font></b><font size="2">&lt;columnname&gt;;</font></font></p>
 <p><font face="Arial" size="2">Drops the column from the table. Will not work if column is part of a primary key, unique or foreign key constraint.</font></p>
+<p><font face="Arial"><b><font size="2" color="#FF0000">ALTER TABLE </font></b><font size="2" color="#FF0000">&lt;tablename&gt;</font></font><font color="#FF0000" face="Arial"><b><font size="2"> ALTER COLUMN </font></b><font size="2">&lt;columnname&gt; {RENAME TO &lt;newname&gt; | DROP DEFAULT | ADD DEFAULT &lt;defaultvalue&gt;};</font></font></p>
+<p><font face="Arial" size="2">Changes column name. Or adds or drops the default value.</font></p>
 <p><font face="Arial"><b><font size="2" color="#FF0000">ALTER TABLE </font></b><font size="2" color="#FF0000">&lt;tablename&gt;</font></font><font color="#FF0000" face="Arial"><b><font size="2"> ADD CONSTRAINT </font></b><font size="2">&lt;constraintname&gt;</font><b><font size="2"> UNIQUE (</font></b><font size="2">&lt;column list&gt;</font><b><font size="2">);</font></b></font></p>
 <p><font face="Arial" size="2">Adds a unique constraint to the table. This will not work if there is already  a unique constraints covering exactly the same &lt;column list&gt;.</font></p>
 <p><font face="Arial"><b><font size="2" color="#FF0000">ALTER TABLE </font></b><font size="2" color="#FF0000">&lt;tablename&gt;</font></font><font color="#FF0000" face="Arial"><b><font size="2"> ADD CONSTRAINT </font></b><font size="2">&lt;constraintname&gt;</font><b><font size="2"> FOREIGN KEY (</font></b><font size="2">&lt;column list&gt;</font><b><font size="2">) REFERENCES </font></b><font size="2">&lt;exptablename&gt;</font><b><font size="2"> (</font></b><font size="2">&lt;column list&gt;</font><b><font size="2">)</font></b><font size="2"> [ON DELETE CASCADE];</font></font></p>
@@ -161,11 +163,11 @@
 </font>
 <hr>
 <font face="Arial"><br>
-<b>CHECKPOINT</b> ;
+<b>CHECKPOINT</b> <font color="#FF0000">[DEFRAG]</font>;
 </font>
-<p><font face="Arial">Closes the database files, shrinks the script file and opens the database. 
-</font>
-<p><font face="Arial">See also: <a href="#SHUTDOWN">SHUTDOWN</a>, <a href="#SET LOGSIZE">SET LOGSIZE</a>. 
+<p><font face="Arial">Closes the database files, rewrites the script file, deletes the log file and opens the database. If DEFRAG is specified,</font>
+shrinks the data file.
+<p><font face="Arial">See also: <a href="#SHUTDOWN">SHUTDOWN</a>, <a href="#SET_LOGSIZE">SET LOGSIZE</a>. 
 </font>
 <p> <font face="Arial"><br>
   <a name="COMMIT"></a>
@@ -176,25 +178,25 @@
 </font>
 <p><font face="Arial">Ends a transaction and makes the changes permanent. 
 </font>
-<p><font face="Arial">See also: <a href="#ROLLBACK">ROLLBACK</a>, <a href="#SET AUTOCOMMIT">SET AUTOCOMMIT</a>. 
+<p><font face="Arial">See also: <a href="#ROLLBACK">ROLLBACK</a>, <a href="#SET_AUTOCOMMIT">SET AUTOCOMMIT</a>. 
 </font>
 <p><font face="Arial"><br>
   <a name="CONNECT"></a>
 </font>
 <hr>
 <font face="Arial"><br>
-<b>CONNECT USER</b> username<b> PASSWORD</b> password ;
+<b>CONNECT USER</b> &lt;username&gt;<b> PASSWORD</b> &lt;password&gt; ;
 </font>
 <p><font face="Arial">Connects to the database as a different user. Use "" for an empty password. 
 </font>
 <p><font face="Arial">See also: <a href="#GRANT">GRANT</a>, <a href="#REVOKE">REVOKE</a> 
 </font>
 <p> <font face="Arial"><br>
-  <a name="CREATE ALIAS"></a>
+  <a name="CREATE_ALIAS"></a>
 </font>
 <hr>
 <font face="Arial"><br>
-<b>CREATE ALIAS</b> function <b>FOR</b> javaFunction ;
+<b>CREATE ALIAS</b> &lt;function&gt; <b>FOR</b> &lt;javaFunction&gt; ;
 </font>
 <p><font face="Arial">Creates an alias for a Java function. The function must be accessible from 
   the JVM in which the  database runs. Example: <br>
@@ -203,25 +205,25 @@
 <p><font face="Arial">See also: <a href="#CALL">CALL</a>, <a href="#Stored">Stored Procedures / Functions</a> 
 </font>
 <p> <font face="Arial"><br>
-  <a name="CREATE INDEX"></a>
+  <a name="CREATE_INDEX"></a>
 </font>
 <hr>
 <font face="Arial"><br>
-<b>CREATE</b> [UNIQUE] <b>INDEX</b> index <b>ON</b> table (column [, ...]) ;
+<b>CREATE</b> [UNIQUE] <b>INDEX</b> &lt;index&gt; <b>ON</b> &lt;table&gt; (&lt;column&gt; [, ...]) ;
 </font>
 <p><font face="Arial">Creates an index on one or more columns in a table. <br>
   Creating an index on searched columns may improve performance. 
 </font>
-<p><font face="Arial">See also: <a href="#CREATE TABLE">CREATE TABLE</a>, <a href="#DROP INDEX">DROP 
+<p><font face="Arial">See also: <a href="#CREATE_TABLE">CREATE TABLE</a>, <a href="#DROP INDEX">DROP 
   INDEX</a> 
 </font>
 <p> <font face="Arial"><br>
-  <a name="CREATE TABLE"></a>
+  <a name="CREATE_TABLE"></a>
 </font>
 <hr>
 <font face="Arial"><br>
-<b>CREATE</b> [ MEMORY | CACHED |<font color="#FF0000"> TEMP | TEXT   </font>] <b>TABLE</b> name <br>
-( columnDefinition [, ...] [, constraintDefinition...]) ;
+<b>CREATE</b> [ MEMORY | CACHED |<font color="#FF0000"> TEMP | TEXT   </font>] <b>TABLE</b> &lt;name&gt; <br>
+( &lt;columnDefinition&gt; [, ...] [, &lt;constraintDefinition&gt;...]) ;
 </font>
 <p><font face="Arial">Creates a tables in the memory (default) or on disk and only cached in memory. 
   Identity columns are autoincrement columns. They must be integer columns and 
@@ -231,26 +233,26 @@
   INSERT INTO Test (Id, Name) VALUES (NULL,'Test'); CALL IDENTITY();
 </font>
 <p><font face="Arial">columnDefinition: <br>
-  columnname <a href="#Datatypes">Datatype</a><font color="#FF0000"> [(columnSize[,precision])] [DEFAULT 'defaultValue']</font> [[NOT] NULL] [IDENTITY] 
+  columnname <a href="#Datatypes">Datatype</a><font color="#FF0000"> [(columnSize[,precision])] [{DEFAULT &lt;defaultValue&gt; | GENERATES BY DEFAULT AS IDENTITY(START WITH &lt;n&gt;)}]</font> |  [[NOT] NULL] [IDENTITY] 
   [PRIMARY KEY] </font>
-<p>the default value must be enclosed in singlequotes
+<p>the default value must be in the same format as used in an INSERT statement.
 <p><font face="Arial">constraintDefinition: <br>
-  [ CONSTRAINT name ] <br>
-  UNIQUE ( column [,column...] ) | <br>
-  PRIMARY KEY ( column [,column...] ) | <br>
-  FOREIGN KEY ( column [,column...] ) REFERENCES refTable ( column [,column...]) 
+  [ CONSTRAINT &lt;name&gt; ] <br>
+  UNIQUE ( &lt;column&gt; [,&lt;column&gt;...] ) | <br>
+  PRIMARY KEY ( &lt;column&gt; [,&lt;column&gt;...] ) | <br>
+  FOREIGN KEY ( &lt;column&gt; [,&lt;column&gt;...] ) REFERENCES &lt;refTable&gt; ( &lt;column&gt; [,&lt;column&gt;...]) 
 <font color="#FF0000"> 
-  [ON DELETE CASCADE]</font></font>
+  [ON {DELETE | UPDATE} {CASCADE | SET DEFAULT | SET NULL}]</font></font>
 <p>&nbsp; 
-<p><font face="Arial">See also: <a href="#DROP TABLE">DROP TABLE</a> 
+<p><font face="Arial">See also: <a href="#DROP_TABLE">DROP TABLE</a> 
 </font>
-<p> <font face="Arial" size="2"><a name="CREATE TRIGGER"></a></font>
+<p> <font face="Arial" size="2"><a name="CREATE_TRIGGER"></a></font>
 </font>
 <hr>
 <font face="Arial"><br>
-<b><font size="2" color="#FF0000">CREATE TRIGGER</font></b><font size="2" color="#FF0000"> name {BEFORE|AFTER} {INSERT|UPDATE|DELETE}
-<b>ON</b> table [FOR EACH ROW] [QUEUE n] [NOWAIT] <b>CALL</b> triggerClass
-;</font></font>
+<b><font size="2" color="#FF0000">CREATE TRIGGER</font></b><font size="2" color="#FF0000"> &lt;name&gt; {BEFORE|AFTER} {INSERT|UPDATE|DELETE}
+<b>ON</b> &lt;table&gt; [FOR EACH ROW] [QUEUE n] [NOWAIT] <b>CALL</b> &lt;triggerClass
+&gt;;</font></font>
 
 <p><font face="Arial" size="2">
 triggerClass is an application-supplied class that implements the
@@ -301,7 +303,7 @@ if necessary.
 <p>
 <font face="Arial, Helvetica" size="2">
 <p><font face="Arial"><br>
-  <a name="CREATE USER"></a>
+  <a name="CREATE_USER"></a>
 </font>
 <hr>
 <font face="Arial"><br>
@@ -315,11 +317,11 @@ if necessary.
 </font>
 <font face="Arial, Helvetica" size="2">
 <p><font face="Arial"><br>
-  <a name="CREATE VIEW"></a>
+  <a name="CREATE_VIEW"></a>
 </font>
 <hr>
 <font face="Arial" color="#FF0000"><br>
-<b>CREATE VIEW</b> viewname <b>AS SELECT ... FROM ... </b>[ WHERE Expression ] ;
+<b>CREATE VIEW</b> &lt;viewname&gt; <b>AS SELECT ... FROM ... </b>[ WHERE Expression ] ;
 </font>
 <p><font face="Arial">A view can be thought of as either a virtual table or a stored query. The data accessible through a view is not stored in the database as a distinct object. What is stored in the database is a SELECT statement. The result set of the SELECT statement forms the virtual table returned by the view. A user can use this virtual table by referencing the view name in SQL statements the same way a table is referenced. A view is used to do any or all of these functions:<br><br> 
 Restrict a user to specific rows in a table. For example, allow an employee to see only the rows recording his or her work in a labor-tracking table.
@@ -389,7 +391,7 @@ The SELECT statement in a VIEW definition should return columns with distinct na
 <p><font face="Arial">See also: <a href="#CONNECT">CONNECT</a> 
 </font>
 <p> <font face="Arial"><br>
-  <a name="DROP INDEX"></a>
+  <a name="DROP_INDEX"></a>
 </font>
 <hr>
 <font face="Arial"><br>
@@ -398,55 +400,55 @@ The SELECT statement in a VIEW definition should return columns with distinct na
 <p><font face="Arial">Removes the specified index from the database. 
 </font>
 Will not work if the index backs a UNIQUE of FOREIGN KEY constraint.
-<p><font face="Arial">See also: <a href="#CREATE INDEX">CREATE INDEX</a> 
+<p><font face="Arial">See also: <a href="#CREATE_INDEX">CREATE INDEX</a> 
 </font>
 <p> <font face="Arial"><br>
-  <a name="DROP TABLE"></a>
+  <a name="DROP_TABLE"></a>
 </font>
 <hr>
 <font face="Arial"><br>
-<b>DROP TABLE</b> table  [IF EXISTS]
+<b>DROP TABLE</b> &lt;table&gt;  [IF EXISTS]
 ;</font>
 <p><font face="Arial">Removes a table, the data and indexes from the database. When IF EXIST is used, the statement returns true if the table does not exist.  
 </font>
-<p><font face="Arial">See also: <a href="#CREATE TABLE">CREATE TABLE</a> 
+<p><font face="Arial">See also: <a href="#CREATE_TABLE">CREATE TABLE</a> 
 </font>
-<p> <font face="Arial" size="2"><a name="DROP TRIGGER"></a></font>
+<p> <font face="Arial" size="2"><a name="DROP_TRIGGER"></a></font>
 </font>
 <hr>
 <font face="Arial"><br>
-<b><font size="2">DROP TRIGGER</font></b><font size="2"> trigger</font></font>
+<b><font size="2">DROP TRIGGER</font></b><font size="2"> &lt;trigger&gt;</font></font>
 ;
 <p><font face="Arial" size="2">Removes a trigger from the database.
 </font>
-<p><font face="Arial" size="2">See also: <a href="#CREATE TRIGGER">CREATE TRIGGER</a>
+<p><font face="Arial" size="2">See also: <a href="#CREATE_TRIGGER">CREATE TRIGGER</a>
 </font>
 <p>
 <font face="Arial, Helvetica" size="2">
 <p><font face="Arial"><br>
-  <a name="DROP USER"></a>
+  <a name="DROP_USER"></a>
 </font>
 <hr>
 <font face="Arial"><br>
-<b>DROP USER</b> username ;
+<b>DROP USER</b> &lt;username&gt; ;
 </font>
 <p><font face="Arial">Removes a user from the database. <br>
   Only an administrator do this. 
 </font>
-<p><font face="Arial">See also: <a href="#CREATE USER">CREATE USER</a> 
+<p><font face="Arial">See also: <a href="#CREATE_USER">CREATE USER</a> 
 </font>
 <p> <font face="Arial"><br>
-  <a name="DROP VIEW"></a>
+  <a name="DROP_VIEW"></a>
 </font>
 <hr>
 <font face="Arial" color="#FF0000"><br>
-<b>DROP VIEW</b> viewname  [IF EXISTS]
+<b>DROP VIEW</b> &lt;viewname&gt;  [IF EXISTS]
 ;</font>
 <p><font face="Arial">Removes a view from the database. When IF EXIST is used, the statement returns true if the view does not exist.  
 </font>
-<p><font face="Arial">See also: <a href="#CREATE VIEW">CREATE VIEW</a> 
+<p><font face="Arial">See also: <a href="#CREATE_VIEW">CREATE VIEW</a> 
 </font>
-<p> <font face="Arial" size="2"><a name="DROP TRIGGER"></a></font>
+<p> <font face="Arial" size="2"><a name="DROP_TRIGGER"></a></font>
 </font>
 <p> <font face="Arial"><br>
   <a name="GRANT"></a>
@@ -549,7 +551,7 @@ Will not work if the index backs a UNIQUE of FOREIGN KEY constraint.
 <p><font face="Arial" size="2">See also: <a href="#INSERT">INSERT</a>, <a href="#UPDATE">UPDATE</a>, <a href="#DELETE">DELETE</a> 
 </font>
 <p> <font face="Arial" size="2"><br>
-  <a name="SET AUTOCOMMIT"></a>
+  <a name="SET_AUTOCOMMIT"></a>
 </font>
 <hr>
 <font face="Arial" size="2"><br>
@@ -562,14 +564,14 @@ Will not work if the index backs a UNIQUE of FOREIGN KEY constraint.
   mode. 
 </font>
 <p> <font face="Arial" size="2"><br>
-  <a name="SET IGNORECASE"></a>
+  <a name="SET_IGNORECASE"></a>
 </font>
 <hr>
 <font face="Arial" size="2"><br>
 <b>SET IGNORECASE</b> { TRUE | FALSE } ;
 </font>
 <p><font face="Arial" size="2">Disables (ignorecase = true) or enables (ignorecase = false) the case sensitivity 
-  of text comparison and indexing. By default, new databases are case sensitive. The sensitivity 
+  of text comparison and indexing for new tables. By default, new databases are case sensitive. The sensitivity 
   must be switched before creating tables. Existing tables and their data are not affected. 
   When switched on, the data type VARCHAR is set to VARCHAR_IGNORECASE. This special 
   data type can also be used without switching global  ignorecase on. So it is possible 
@@ -577,7 +579,7 @@ Will not work if the index backs a UNIQUE of FOREIGN KEY constraint.
   Only an administrator may do this. 
 </font>
 <p> <font face="Arial" size="2"><br>
-  <a name="SET LOGSIZE"></a>
+  <a name="SET_LOGSIZE"></a>
 </font>
 <hr>
 <font face="Arial" size="2"><br>
@@ -590,7 +592,7 @@ Will not work if the index backs a UNIQUE of FOREIGN KEY constraint.
 <p><font face="Arial" size="2">See also: <a href="#CHECKPOINT">CHECKPOINT</a> 
 </font>
 <p> <font face="Arial" size="2"><br>
-  <a name="SET PASSWORD"></a>
+  <a name="SET_PASSWORD"></a>
 </font>
 <hr>
 <font face="Arial" size="2"><br>
@@ -600,7 +602,7 @@ Will not work if the index backs a UNIQUE of FOREIGN KEY constraint.
   set using "" 
 </font>
 <p> <font face="Arial" size="2"><br>
-  <a name="SET REFINT"></a>
+  <a name="SET_REFINT"></a>
 </font>
 <hr>
 <font face="Arial" size="2"><br>
@@ -612,12 +614,22 @@ Will not work if the index backs a UNIQUE of FOREIGN KEY constraint.
   off. <br>
   Only an administrator may do this. 
 </font>
-<p><font face="Arial" size="2">See also: <a href="#CREATE TABLE">CREATE TABLE</a> 
+<p><font face="Arial" size="2">See also: <a href="#CREATE_TABLE">CREATE TABLE</a> 
 </font>
 <p> <font face="Arial" size="2"><br>
   
-<a name="SET WRITE_DELAY"></a>
+<a name="SET_WRITE_DELAY"></a>
 </font>
+<font face="Arial, Helvetica" size="2">
+<p> 
+</font>
+<hr>
+<p><font face="Arial, Helvetica" size="2">SET SCRIPTFORMAT {TEXT | BINARY | COMPRESSED}</font>
+<p><font face="Arial, Helvetica" size="2">Changes the format of the script file. BINARY and COMPRESSED formats are slightly faster and more compact than the default TEXT. Recommended only for very larg script files.<br>
+   </font>
+<p> <font face="Arial, Helvetica" size="2"><br>
+  
+<a name="SET_SCRIPTFORMAT"></a></font>
 <font face="Arial, Helvetica" size="2">
 <p> 
 <hr>
@@ -629,13 +641,13 @@ Will not work if the index backs a UNIQUE of FOREIGN KEY constraint.
    </font>
 <p> <font face="Arial"><br>
   
-<a name="SET TABLE"></a>
+<a name="SET_TABLE"></a>
 </font>
 <hr>
 </font>
 <p><font face="Arial" size="2" color="#FF0000"><b>SET TABLE</b> &lt;tablename&gt; <b>READONLY</b> {TRUE | FALSE} ;</font>
 <p><font face="Arial" size="2">Sets the table as read only</font>
-<p><font face="Arial, Helvetica" size="2"><font face="Arial"><a name="SET TABLE SOURCE"></a></font></font><font face="Arial" size="2"><br>
+<p><font face="Arial, Helvetica" size="2"><font face="Arial"><a name="SET_TABLE_SOURCE"></a></font></font><font face="Arial" size="2"><br>
    </font>
 <hr>
 <font face="Arial"><br>
@@ -661,7 +673,7 @@ HSQLDB also recognises the following special indicators for separators: <br><br>
 </font>
 <p>
 <font face="Arial, Helvetica" size="2">
-<p><font face="Arial"><a name="SET WRITE_DELAY"></a>
+<p><font face="Arial"><a name="SET_WRITE_DELAY"></a>
 </font>
 <hr>
 <font face="Arial"><br>
@@ -981,9 +993,16 @@ In practice, objects of up to a megabyte in size have been successfully used in 
   IFNULL(exp,value) (if exp is null, value is returned else exp) <br>
   CASEWHEN(exp,v1,v2) (if exp is true, v1 is returned, else v2) <br>
   CONVERT(term,type) (converts exp to another data type) <br>
-  CAST(term AS type) (converts exp to another data type) 
-</font>
-<p><font face="Arial"> See also: <a href="#CREATE ALIAS">CREATE ALIAS</a>, <a href="#CALL">CALL</a> 
+  CAST(term AS type) (converts exp to another data type) </font>
+<p><font face="Arial" color="#FF0000">NULLIF(v1,v2) (if v1 equals v2 return null, otherwise v1)<br>
+  CASE v1 WHEN v2 THEN v3 [ELSE v4] END (when v1 equals v2 return v3 [otherwise v4])<br>
+  </font><font face="Arial, Helvetica" size="2" color="#FF0000"><font face="Arial">CASE WHEN expr1 THEN v1 [ELSE v2] END (when expr1 is true return v1 [otherwise v4])</font></font><font face="Arial" color="#FF0000">
+<br>
+  EXTRACT {YEAR | MONTH | DAY | HOUR | MINUTE | SECOND} FROM &lt;datetime value&gt;<br>
+  SUBSTRING(&lt;string expression&gt; FROM &lt;numeric expression&gt; [FOR &lt;numeric expression&gt;])<br>
+  TRIM([{LEADING | TRAILING | BOTH}] FROM &lt;string expression&gt;)</font>
+<p>&nbsp;
+<p><font face="Arial"> See also: <a href="#CREATE_ALIAS">CREATE ALIAS</a>, <a href="#CALL">CALL</a> 
 </font>
 <p> <font face="Arial"><br>
   <a name="Expression"></a>
@@ -1035,7 +1054,7 @@ An important implication of this is the for accessing columns or aliases via JDB
 
 <p>SELECT COUNT(*) &quot;COUNT&quot; FROM MYTABLE;
 <p>Portability between different JRE locales is an issue when accented characters are used in unquoted  identifiers. Because native Java methods are used to convert the identifier to uppercase, the result may vary among different locales. It is recommended that accented characters are used only in quoted identifiers.
-<p>When using JDBC methods that take table, column, or index identifiers as arguments, treat the names as they are registered in the database. With these methods, unquoted identifiers should be used in all-uppercase to get the correct result. Quoted identifiers should be used in the exact case combination as they were defined - no quote character should be included in the name. JDBC methods that return a result set containing such identifiers return unquoted identifiers as all-uppercase and quoted identifiers in the exact case they are registered in the database <font color="#FF0000">(a change from 1.6.1 and previous versions)</font>.
+<p>When using JDBC methods that take table, column, or index identifiers as arguments, treat the names as they are registered in the database. With these methods, unquoted identifiers should be used in all-uppercase to get the correct result. Quoted identifiers should be used in the exact case combination as they were defined - no quote character should be included around the name. JDBC methods that return a result set containing such identifiers return unquoted identifiers as all-uppercase and quoted identifiers in the exact case they are registered in the database <font color="#FF0000">(a change from 1.6.1 and previous versions)</font>.
 <p><font face="Arial">values: <br>
   A 'date' value starts and ends with ' (singlequote), the format is yyyy-mm-dd (see java.sql.Date). 
   <br>
@@ -1045,10 +1064,10 @@ An important implication of this is the for accessing columns or aliases via JDB
   <br>
   
 </font>
-<p><font face="Arial">When specifying default values for date / time columns  in CREATE TABLE statements, or in SELECT,INSERT, and  UPDATE statements, special values<font color="#FF0000"> 'now',</font></font><font color="#FF0000" face="Arial"> 'today', 'current_timestamp', 'sysdate', 'current_time' and 'current_date' </font><font face="Arial">(case independent) can be used. 'now' is used for TIME and TIMESTAMP columns, 'today' is used for DATE columns. Example:
+<p><font face="Arial">When specifying default values for date / time columns  in CREATE TABLE statements, or in SELECT,INSERT, and  UPDATE statements, special values<font color="#FF0000"> NOW,</font></font><font color="#FF0000" face="Arial"> TODAY, CURRENT_TIMESTAMP, SYSDATE, CURRENT_TIME and CURRENT_DATE </font><font face="Arial">(case independent) can be used. NOW is used for TIME and TIMESTAMP columns, TODAY is used for DATE columns. The three variants CURRENT_* are SQL standard versions. Example:
 </font>
-<pre> CREATE TABLE T(D DATE DEFAULT 'today');
- CREATE TABLE T1(TS TIMESTAMP DEFAULT 'now');  </pre>
+<pre> CREATE TABLE T(D DATE DEFAULT CURRENT_DATE);
+ CREATE TABLE T1(TS TIMESTAMP DEFAULT CURRENT_TIMESTAMP);  </pre>
 </font>
 <p>
 <font face="Arial, Helvetica" size="2">
@@ -1061,8 +1080,12 @@ An important implication of this is the for accessing columns or aliases via JDB
 </font>
 <p><font face="Arial">[ A ] means A is optional <br>
   { B | C } means either B or C must be used. <br>
+  </font><font face="Arial, Helvetica" size="2"><font face="Arial">[{ B | C }] means either B or C may optionally be used, or not at all</font></font><font face="Arial"><br>
+  </font>
+<p><font face="Arial">
   ( and ) are the actual characters '(' and ')' used in statements.<br>
-  UPPERCASE words are keywords<br><br>
+  UPPERCASE words are keywords<br>
+  <br>
    <font color="#FF0000">Items in red indicate features added by HSQL Development Group since April 2001<br>
    Based on original Hypersonic documentation. Updates by Peter Hudson, Joe Maher and Fred Toussi
    </font></font>
