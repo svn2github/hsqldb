@@ -32,7 +32,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.12 2004/04/23 16:50:41 unsaved Exp $
+# $Id: hsqldb,v 1.13 2004/04/23 19:42:22 unsaved Exp $
 
 # UNIX init script for HSQLDB.
 
@@ -44,6 +44,17 @@
 # description: Hsqldb, A High Performance Java Database
 # pidfile: /var/run/hsqldb.pid
 # config: /etc/sysconfig/hsqldb
+
+# This stuff for SuSE Linux.  Contributed by M. Bisping.
+### BEGIN INIT INFO
+# Provides:          HSQLDB-Server
+# Required-Start:    $syslog $remote_fs $network $named
+# Required-Stop:
+# Default-Start:     3 5
+# Default-Stop:      0 1 2 6
+# Short-Description: HSQLDB-Server
+# Description:       Hsqldb, A High Performance Java Database Server
+### END INIT INFO
 
 # N.b.  Being a system script, this script does not use inherited variables.
 # If you want to adjust a setting, edit the config file.
@@ -77,7 +88,7 @@ SYNTAX_MSG="SYNTAX:  ${INVOC_PATH}hsqldb start|stop|restart|status"
 
 # Time to allow for java process to die, if it's not able to start up,
 # And for it to shutdown after it receives the last SQL "shutdown" command.
-CROAKTIME=1
+MAX_STARTSTOP_SECS=1
 
 CFGFILE=
 LOGFILE=
@@ -265,7 +276,8 @@ running with pid $HSQLDB_PID."
                 exec $JAVA_HOME/bin/java -classpath "$HSQLDB_HOME/lib/hsqldb.jar"  org.hsqldb.Server
             ' >> "$LOGFILE" 2>&1 &
         fi
-        sleep $CROAKTIME  # Wait long enough for it to croak, if it's gonna.
+        sleep $MAX_STARTSTOP_SECS
+        # Wait long enough for it to croak, if it's gonna.
         # There are many reasons why we could fail to read the pid file,
         # but regardless of why, the pid file does not contain a valid pid.
         kill -0 "`cat $PIDFILE`" > /dev/null 2>&1 || {
@@ -300,7 +312,7 @@ echo "Failed to start an org.hsqldb.Server.  See log file at '$LOGFILE'." 1>&2
             java org.hsqldb.util.SqlTool $AUTH_FILE_SWITCH --noinput \
                     --sql 'shutdown;' $urlid
         done
-        sleep $CROAKTIME  # Give it time to die.
+        sleep $MAX_STARTSTOP_SECS  # Give it time to die.
         kill -0 "$HSQLDB_PID" > /dev/null 2>&1 && {
             echo "WARNING:  hsqldb is still running!" 1>&2
             exit 1
