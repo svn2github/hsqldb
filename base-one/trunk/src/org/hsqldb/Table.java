@@ -1918,6 +1918,9 @@ class Table {
         vTrigs[trigDef.vectorIndx].add(trigDef);
     }
 
+    /** @todo fredt - reused structure to be reviewed for multi-threading */
+    HashMappedList constraintPath = new HashMappedList();
+
 // fredt@users 20020225 - patch 1.7.0 - CASCADING DELETES
 
     /**
@@ -1937,7 +1940,7 @@ class Table {
      * @param  delete
      * @throws  HsqlException
      */
-    void checkCascadeDelete(Object[] row, Session session,
+    void checkCascadeDelete(Row row, Session session,
                             boolean doIt) throws HsqlException {
 
         for (int i = 0, cSize = vConstraint.size(); i < cSize; i++) {
@@ -1947,7 +1950,7 @@ class Table {
                 continue;
             }
 
-            Node refnode = c.findFkRef(row, true);
+            Node refnode = c.findFkRef(row.getData(), true);
 
             if (refnode == null) {
 
@@ -1975,12 +1978,13 @@ class Table {
             int      r_columns[] = c.getRefColumns();
             Object[] m_objects   = new Object[m_columns.length];
 
-            ArrayUtil.copyColumnValues(row, m_columns, m_objects);
+            ArrayUtil.copyColumnValues(row.getData(), m_columns, m_objects);
 
             // walk the index for all the nodes that reference delnode
             for (Node n = refnode;
-                    refindex.comparePartialRowNonUnique(
-                        m_objects, n.getData()) == 0; ) {
+                    !n.isDeleted() /* n.getRow().getData() != null */ && refindex
+                        .comparePartialRowNonUnique(m_objects, n
+                            .getData()) == 0; ) {
 
                 // deleting rows can free n out of the cache so we
                 // make sure it is loaded with up-to-date left-right-parent
@@ -2013,30 +2017,35 @@ class Table {
                     }
 
                     if (hasref) {
-                        reftable.checkCascadeUpdate(n.getData(), rnd,
-                                                    session, r_columns, null,
-                                                    doIt);
+                        if (constraintPath.add(c, c)) {
+                            reftable.checkCascadeUpdate(n.getRow(), rnd,
+                                                        session, r_columns,
+                                                        null, doIt);
+                            constraintPath.remove(c);
+                        }
                     }
 
                     if (doIt) {
                         ri.add(rnd);
                     }
-                } else if (hasref) {
+                } else if (hasref /* && reftable != this */) {
 
-                    // fredt - todo - to avoid infinite recursion on same table
-                    // check here if n refers to same row ??
-                    reftable.checkCascadeDelete(n.getData(), session, doIt);
+                    // fredt - avoid infinite recursion on same table
+                    if (constraintPath.add(c, c)) {
+                        reftable.checkCascadeDelete(n.getRow(), session,
+                                                    doIt);
+                        constraintPath.remove(c);
+                    }
                 }
 
                 if (doIt) {
-
-                    // fredt - replace with a method that gets
-                    // a Row argument to avoid searching for the row
-                    reftable.deleteNoRefCheck(n.getRow(), session);
+                    if (!n.isDeleted()) {
+                        reftable.deleteNoRefCheck(n.getRow(), session);
+                    }
 
                     //  foreign key referencing own table
                     if (reftable == this) {
-                        nextn = c.findFkRef(row, true);
+                        nextn = c.findFkRef(row.getData(), true);
                     }
                 }
 
@@ -2094,7 +2103,7 @@ class Table {
 // referencing FK's (is disallowed in ALTER TABLE when FK is forward
 // referencing) so any cyclic condition will be limited to same-table FK's
 // which can be spotted within this routine.
-    void checkCascadeUpdate(Object[] orow, Object[] nrow, Session session,
+    void checkCascadeUpdate(Row orow, Object[] nrow, Session session,
                             int[] cols, Table ref,
                             boolean update) throws HsqlException {
 
@@ -2151,7 +2160,8 @@ class Table {
                 boolean nochange = true;
 
                 for (int j = 0; j < m_columns.length; j++) {
-                    if (!orow[m_columns[j]].equals(nrow[m_columns[j]])) {
+                    if (!orow.getData()[m_columns[j]].equals(
+                            nrow[m_columns[j]])) {
                         nochange = false;
 
                         break;
@@ -2162,7 +2172,7 @@ class Table {
                     continue;
                 }
 
-                Node refnode = c.findFkRef(orow, false);
+                Node refnode = c.findFkRef(orow.getData(), false);
 
                 if (refnode == null) {
 
@@ -2172,14 +2182,15 @@ class Table {
 
                 Table reftable = c.getRef();
 
-                // -- shortcut when update table has no imported constraint
+                // -- unused shortcut when update table has no imported constraint
                 boolean hasref =
                     reftable.getNextConstraintIndex(0, Constraint.MAIN) != -1;
                 Index    refindex    = c.getRefIndex();
                 Object[] mainobjects = new Object[m_columns.length];
                 Object[] refobjects  = new Object[r_columns.length];
 
-                ArrayUtil.copyColumnValues(orow, m_columns, mainobjects);
+                ArrayUtil.copyColumnValues(orow.getData(), m_columns,
+                                           mainobjects);
                 ArrayUtil.copyColumnValues(nrow, r_columns, refobjects);
 
                 // -- walk the index for all the nodes that reference update node
@@ -2222,9 +2233,11 @@ class Table {
                                     .getColumn(r_columns[j]).getType());
                         }
 
-                        reftable.checkCascadeUpdate(n.getData(), rnd,
-                                                    session, r_columns, null,
-                                                    update);
+                        if (constraintPath.add(c, c)) {
+                            reftable.checkCascadeUpdate(n.getRow(), rnd,
+                                                        session, r_columns,
+                                                        null, update);
+                        }
                     } else {
 
                         // -- cascade; standard recursive call. We inherit values from the foreign key
@@ -2233,9 +2246,11 @@ class Table {
                             rnd[r_columns[j]] = nrow[m_columns[j]];
                         }
 
-                        reftable.checkCascadeUpdate(n.getData(), rnd,
-                                                    session, common, this,
-                                                    update);
+                        if (constraintPath.add(c, c)) {
+                            reftable.checkCascadeUpdate(n.getRow(), rnd,
+                                                        session, common,
+                                                        this, update);
+                        }
                     }
 
                     if (update) {
@@ -2243,7 +2258,7 @@ class Table {
                         reftable.deleteNoRefCheck(n.getData(), session);
 
                         if (reftable == this) {
-                            nextn = c.findFkRef(orow, false);
+                            nextn = c.findFkRef(orow.getData(), false);
                         }
                     }
 
@@ -2265,38 +2280,6 @@ class Table {
                 }
             }
         }
-    }
-
-    /**
-     *  Highest level multiple row delete method. Corresponds to an SQL
-     *  DELETE.
-     */
-    int delete(Result del, Session c) throws HsqlException {
-
-        Record nd    = del.rRoot;
-        int    count = 0;
-
-        while (nd != null) {
-            delete(nd.data, c, false);
-
-            nd = nd.next;
-        }
-
-        fireAll(TriggerDef.DELETE_BEFORE);
-
-        nd = del.rRoot;
-
-        while (nd != null) {
-            delete(nd.data, c, true);
-
-            nd = nd.next;
-
-            count++;
-        }
-
-        fireAll(TriggerDef.DELETE_AFTER);
-
-        return count;
     }
 
     /**
@@ -2334,30 +2317,15 @@ class Table {
      *  High level row delete method. Fires triggers and performs integrity
      *  constraint checks.
      */
-    private void delete(Object row[], Session session,
-                        boolean doit) throws HsqlException {
-
-        if (database.isReferentialIntegrity()) {
-            checkCascadeDelete(row, session, doit);
-        }
-
-        if (doit) {
-            deleteNoRefCheck(row, session);
-        }
-    }
-
-    /**
-     *  High level row delete method. Fires triggers and performs integrity
-     *  constraint checks.
-     */
     private void delete(Row r, Session session,
                         boolean doit) throws HsqlException {
 
         if (database.isReferentialIntegrity()) {
-            checkCascadeDelete(r.getData(), session, doit);
+            constraintPath.clear();
+            checkCascadeDelete(r, session, doit);
         }
 
-        if (doit) {
+        if (doit &&!r.isDeleted()) {
             deleteNoRefCheck(r, session);
         }
     }
@@ -2505,8 +2473,8 @@ class Table {
             setIdentityColumn(ni.data, null);
 
             if (database.isReferentialIntegrity()) {
-                checkCascadeUpdate(row.getData(), ni.data, c, col, null,
-                                   false);
+                constraintPath.clear();
+                checkCascadeUpdate(row, ni.data, c, col, null, false);
             }
 
             ni = ni.next;
@@ -2520,7 +2488,8 @@ class Table {
         while (it.hasNext() && ni != null) {
             Row row = (Row) it.next();
 
-            checkCascadeUpdate(row.getData(), ni.data, c, col, null, true);
+            constraintPath.clear();
+            checkCascadeUpdate(row, ni.data, c, col, null, true);
             deleteNoCheck(row, c, true);
 
             ni = ni.next;

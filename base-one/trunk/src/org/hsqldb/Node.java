@@ -197,4 +197,8 @@ abstract class Node {
      */
     abstract void write(DatabaseRowOutputInterface out)
     throws IOException, HsqlException;
+
+    boolean isDeleted() {
+        return iBalance == -2;
+    }
 }

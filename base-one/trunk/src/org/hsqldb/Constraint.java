@@ -533,6 +533,10 @@ Referential Constraint 4 SET DEFAULT
     Node findFkRef(Object row[], boolean forDelete) throws HsqlException {
 
         // must be called synchronized because of oRef
+        if ( row == null ) {
+            return null;
+        }
+
         for (int i = 0; i < core.iLen; i++) {
             Object o = row[core.iColMain[i]];
 

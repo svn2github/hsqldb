@@ -192,4 +192,8 @@ class Row {
         oData        = null;
         nPrimaryNode = null;
     }
+
+    boolean isDeleted() {
+        return nPrimaryNode == null;
+    }
 }
