@@ -146,6 +146,7 @@ implements HandshakeCompletedListener {
             Trace.trace("----------------------------");
             dump("supported cipher suites", ss.getSupportedCipherSuites());
             dump("enabled cipher suites", ss.getEnabledCipherSuites());
+
 //            dump("supported protocols", ss.getSupportedProtocols());
 //            dump("enabled protocols", ss.getEnabledProtocols());
         }
@@ -178,6 +179,7 @@ implements HandshakeCompletedListener {
             Trace.trace("----------------------------");
             dump("supported cipher suites", ss.getSupportedCipherSuites());
             dump("enabled cipher suites", ss.getEnabledCipherSuites());
+
 //            dump("supported protocols", ss.getSupportedProtocols());
 //            dump("enabled protocols", ss.getEnabledProtocols());
         }
@@ -383,8 +385,8 @@ implements HandshakeCompletedListener {
             Trace.trace("------------------------------------------------");
             Trace.trace("socket:      : " + socket);
             Trace.trace("cipher suite : " + session.getCipherSuite());
-//            Trace.trace("protocol     : " + session.getProtocol());
 
+//            Trace.trace("protocol     : " + session.getProtocol());
             sessionId = StringConverter.byteToHex(session.getId());
 
             Trace.trace("session id   : " + sessionId);

@@ -36,7 +36,8 @@ import org.hsqldb.store.BaseHashMap;
 
 public class IntValueHashMap extends BaseHashMap {
 
-    Set        keySet;
+    Set keySet;
+
     public IntValueHashMap() {
         this(16, 0.75f);
     }
@@ -56,11 +57,11 @@ public class IntValueHashMap extends BaseHashMap {
         return super.getInt(key);
     }
 
-    public int get(Object key, int defaultValue){
+    public int get(Object key, int defaultValue) {
         return super.getInt(key, defaultValue);
     }
 
-    public boolean get(Object key, int[] value){
+    public boolean get(Object key, int[] value) {
         return super.getInt(key, value);
     }
 
@@ -79,6 +80,7 @@ public class IntValueHashMap extends BaseHashMap {
     public boolean containsValue(int value) {
         throw new RuntimeException();
     }
+
     public Set keySet() {
 
         if (keySet == null) {

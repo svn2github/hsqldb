@@ -54,8 +54,8 @@ public class StopWatch {
      * by System.currentTimeMillis().
      */
     private long startTime;
-
     private long lastStart;
+
     /**
      * The accumulated running time of this object since
      * it was last zeroed.
@@ -99,6 +99,7 @@ public class StopWatch {
             return 0;
         }
     }
+
     /** Zeros accumulated running time and restarts this object. */
     public void zero() {
 
@@ -115,7 +116,7 @@ public class StopWatch {
      */
     public void start() {
         startTime = System.currentTimeMillis();
-        running = true;
+        running   = true;
     }
 
     /**
@@ -139,7 +140,8 @@ public class StopWatch {
         start();
     }
 
-    /** Retrieves prefix + " in " + elapsedTime() + " ms."
+    /**
+     * Retrieves prefix + " in " + elapsedTime() + " ms."
      * @param prefix The string to use as a prefix
      * @return prefix + " in " + elapsedTime() + " ms."
      */
@@ -147,7 +149,8 @@ public class StopWatch {
         return prefix + " in " + elapsedTime() + " ms.";
     }
 
-    /** Retrieves prefix + " in " + elapsedTime() + " ms."
+    /**
+     * Retrieves prefix + " in " + elapsedTime() + " ms."
      * @param prefix The string to use as a prefix
      * @return prefix + " in " + elapsedTime() + " ms."
      */
@@ -155,7 +158,8 @@ public class StopWatch {
         return prefix + " in " + currentElapsedTime() + " ms.";
     }
 
-    /** Retrieves the internal state of this object, as a String.
+    /**
+     * Retrieves the internal state of this object, as a String.
      *
      * The retreived value is:
      *
@@ -171,14 +175,7 @@ public class StopWatch {
      * @return the state of this object, as a String
      */
     public String toString() {
-        return
-        super.toString() +
-        "[running=" +
-        running +
-        ", startTime=" +
-        startTime +
-        ", total=" +
-        total + "]";
+        return super.toString() + "[running=" + running + ", startTime="
+               + startTime + ", total=" + total + "]";
     }
-
 }

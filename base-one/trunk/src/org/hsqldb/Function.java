@@ -67,7 +67,6 @@
 
 package org.hsqldb;
 
-import java.sql.SQLException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.InvocationTargetException;
@@ -119,24 +118,24 @@ class Function {
      * FQN. <p>
      *
      * The function FQN must match at least one static Java method FQN in the
-     * specified class or construction cannot procede and a SQLException is
+     * specified class or construction cannot procede and a HsqlException is
      * thrown. <p>
      *
      * The Session paramter is the connected context in which this
      * Function object will evaluate.  If it is determined that the
      * connected user does not have the right to evaluate this Function,
-     * construction cannot proceed and a SQLException is thrown.
+     * construction cannot proceed and a HsqlException is thrown.
      *
      *
      * @param function the fully qualified name of a Java method
      * @param session the connected context in which this Function object will
      *                evaluate
-     * @throws SQLException if the specified function FQN corresponds to no
+     * @throws HsqlException if the specified function FQN corresponds to no
      *                      Java method or the session user at the time of
      *                      construction does not have the right to evaluate
      *                      this Function.
      */
-    Function(String function, Session session) throws SQLException {
+    Function(String function, Session session) throws HsqlException {
 
         cSession  = session;
         sFunction = function;
@@ -227,11 +226,11 @@ class Function {
      *
      *
      * @return the value resulting from evaluating this Function
-     * @throws SQLException if an invocation exception is encountered when
+     * @throws HsqlException if an invocation exception is encountered when
      * calling the Java
      * method underlying this object
      */
-    Object getValue() throws SQLException {
+    Object getValue() throws HsqlException {
 
         int i = 0;
 
@@ -315,10 +314,10 @@ class Function {
      *
      * @param f the TableFilter against which to resolve this Function
      * object's arguments
-     * @throws SQLException if there is a problem resolving an argument
+     * @throws HsqlException if there is a problem resolving an argument
      * against the specified TableFilter
      */
-    void resolve(TableFilter f) throws SQLException {
+    void resolve(TableFilter f) throws HsqlException {
 
         for (int i = 0; i < iArgCount; i++) {
             if (eArg[i] != null) {
@@ -329,12 +328,12 @@ class Function {
 
     /**
      * Checks each of this object's arguments for resolution, throwing a
-     * SQLException if any arguments have not yet been resolved.
+     * HsqlException if any arguments have not yet been resolved.
      *
      *
-     * @throws SQLException if any arguments have not yet been resolved
+     * @throws HsqlException if any arguments have not yet been resolved
      */
-    void checkResolved() throws SQLException {
+    void checkResolved() throws HsqlException {
 
         for (int i = 0; i < iArgCount; i++) {
             if (eArg[i] != null) {

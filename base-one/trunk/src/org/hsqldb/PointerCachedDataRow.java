@@ -32,7 +32,6 @@
 package org.hsqldb;
 
 import java.io.IOException;
-import java.sql.SQLException;
 
 // fredt@users 20021205 - path 1.7.2 - enhancements
 // fredt@users 20021215 - doc 1.7.2 - javadoc comments
@@ -55,7 +54,7 @@ class PointerCachedDataRow extends CachedDataRow {
      */
     PointerCachedDataRow(Table t,
                          DatabaseRowInputInterface in)
-                         throws IOException, SQLException {
+                         throws IOException, HsqlException {
 
         super(t, in);
 

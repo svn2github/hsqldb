@@ -1941,6 +1941,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
 // fredt@users 20030413 - return value change to support OpenOffice.org
+
     /**
      * Retrieves whether this database supports the SQL Integrity
      * Enhancement Facility. <p>
@@ -4329,7 +4330,8 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
                 break;
 
             default :
-                throw Trace.error(Trace.ASSERT_FAILED, "invalid scope value");
+                throw jdbcDriver.sqlException(Trace.ASSERT_FAILED,
+                                              "invalid scope value");
         }
 
         if (wantsIsNull(table)) {
@@ -6202,8 +6204,11 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *         instance-specific metadata
      */
     jdbcDatabaseMetaData(jdbcConnection c) throws SQLException {
-        Trace.doAssert(c != null, "connection is null");
-        Trace.doAssert(!c.isClosed(), "connection is closed");
+
+        if (c.isClosed()) {
+            throw new SQLException("connection is closed");
+        }
+
         connection = c;
     }
 
@@ -6339,7 +6344,8 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // next, causing the jdbcResultSet's Result object to be nullified
         final int scroll = ResultSet.TYPE_SCROLL_INSENSITIVE;
         final int concur = ResultSet.CONCUR_READ_ONLY;
-        return connection.createStatement(scroll,concur).executeQuery(sql);
+
+        return connection.createStatement(scroll, concur).executeQuery(sql);
     }
 
     /**

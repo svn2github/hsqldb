@@ -68,7 +68,6 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.ArrayUtil;
-import java.sql.SQLException;
 
 // fredt@users 20020225 - patch 1.7.0 by boucherb@users - named constraints
 // fredt@users 20020320 - doc 1.7.0 - update
@@ -141,11 +140,11 @@ class Constraint {
      * @param  iref
      * @param  deleteAction
      * @param  updateAction
-     * @exception  SQLException  Description of the Exception
+     * @exception  HsqlException  Description of the Exception
      */
     Constraint(HsqlName pkname, HsqlName fkname, Table main, Table ref,
                int colmain[], int colref[], Index imain, Index iref,
-               int deleteAction, int updateAction) throws SQLException {
+               int deleteAction, int updateAction) throws HsqlException {
 
         core        = new ConstraintCore();
         core.pkName = pkname;
@@ -172,7 +171,7 @@ class Constraint {
 
     private Constraint() {}
 
-    private void setTableRows() throws SQLException {
+    private void setTableRows() throws HsqlException {
 
         core.oMain = core.tMain.getNewRow();
 
@@ -191,7 +190,7 @@ class Constraint {
      * @param name
      * @param isquoted
      */
-    private void setName(String name, boolean isquoted) throws SQLException {
+    private void setName(String name, boolean isquoted) throws HsqlException {
         constName.rename(name, isquoted);
     }
 
@@ -364,10 +363,10 @@ class Constraint {
      * @param  newt referenct to the new version of the table
      * @param  colindex index at which table column is added or removed
      * @param  adjust -1, 0, +1 to indicate if column is added or removed
-     * @throws  SQLException
+     * @throws  HsqlException
      */
     void replaceTable(Table oldt, Table newt, int colindex,
-                      int adjust) throws SQLException {
+                      int adjust) throws HsqlException {
 
         if (oldt == core.tMain) {
             core.tMain = newt;
@@ -402,7 +401,7 @@ class Constraint {
      *
      * @param  oldi reference to the old index
      * @param  newt referenct to the new index
-     * @throws  SQLException
+     * @throws  HsqlException
      */
     void replaceIndex(Index oldi, Index newi) {
 
@@ -420,9 +419,9 @@ class Constraint {
      *  table.
      *
      * @param  row
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void checkInsert(Object row[]) throws SQLException {
+    void checkInsert(Object row[]) throws HsqlException {
 
         if ((iType == MAIN) || (iType == UNIQUE)) {
 
@@ -459,9 +458,9 @@ class Constraint {
      *  CASCADE.
      *
      * @param  row
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    private void checkDelete(Object row[]) throws SQLException {
+    private void checkDelete(Object row[]) throws HsqlException {
 
         // must be called synchronized because of oRef
         for (int i = 0; i < core.iLen; i++) {
@@ -499,9 +498,9 @@ class Constraint {
      * @param  array of objects for a database row
      * @param  forDelete should we allow 'ON DELETE CASCADE' or 'ON UPDATE CASCADE'
      * @return Node object or null
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    Node findFkRef(Object row[], boolean forDelete) throws SQLException {
+    Node findFkRef(Object row[], boolean forDelete) throws HsqlException {
 
         // must be called synchronized because of oRef
         for (int i = 0; i < core.iLen; i++) {
@@ -543,9 +542,9 @@ class Constraint {
      *
      * @see Table#checkUpdateCascade(Table,Object[],Object[],Session,boolean)
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    Node findMainRef(Object row[]) throws SQLException {
+    Node findMainRef(Object row[]) throws HsqlException {
 
         for (int i = 0; i < core.iLen; i++) {
             Object o = row[core.iColRef[i]];
@@ -576,10 +575,10 @@ class Constraint {
      * @param  col array of column indexes for columns to check
      * @param  deleted  rows to delete
      * @param  inserted rows to insert
-     * @throws  SQLException
+     * @throws  HsqlException
      */
     void checkUpdate(int col[], Result deleted,
-                     Result inserted) throws SQLException {
+                     Result inserted) throws HsqlException {
 
         if (iType == UNIQUE) {
 

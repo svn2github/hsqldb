@@ -31,6 +31,8 @@
 
 package org.hsqldb;
 
+import java.sql.SQLException;
+
 // fredt@users 20020215 - patch 461556 by paul-h@users - modified
 // minor changes to support the new HsqlServerProperties class
 // boucherb@users 20030501 - Server now implements HsqlSocketRequestHandler
@@ -55,7 +57,14 @@ public class HsqlServerFactory {
         Server server = new Server();
 
         server.setProperties(props);
-        server.openDB();
+
+        try {
+            server.openDB();
+        } catch (HsqlException e) {
+            throw new SQLException(e.getMessage(), e.getSQLState(),
+                                   e.getErrorCode());
+        }
+
         server.setState(ServerConstants.SERVER_ONLINE);
 
         // Server now implementes HsqlSocketRequestHandler,

@@ -32,7 +32,6 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.UnifiedTable;
-import java.sql.SQLException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import org.hsqldb.lib.HsqlArrayList;
@@ -55,7 +54,7 @@ class DataFileDefrag {
     StopWatch stopw = new StopWatch();
 
     HsqlArrayList defrag(Database db, DatabaseFile sourcenotused,
-                         String filename) throws IOException, SQLException {
+                         String filename) throws IOException, HsqlException {
 
         System.out.println("Transfer begins");
 
@@ -102,7 +101,7 @@ class DataFileDefrag {
 
     static void updateTableIndexRoots(org.hsqldb.lib.HsqlArrayList tTable,
                                       HsqlArrayList rootsList)
-                                      throws SQLException {
+                                      throws HsqlException {
 
         for (int i = 0, size = tTable.size(); i < size; i++) {
             Table t = (Table) tTable.get(i);
@@ -117,13 +116,14 @@ class DataFileDefrag {
 
     int[] writeTableToDataFile(Table table,
                                RandomAccessFile destFile)
-                               throws IOException, SQLException {
+                               throws IOException, HsqlException {
 
         BinaryServerRowOutput rowOut = new BinaryServerRowOutput();
         UnifiedTable pointerLookup = new UnifiedTable(int.class, 2, 1000000,
             100000);
-        int[] rootsArray  = table.getIndexRootsArray();
-        Index index       = table.getPrimaryIndex();
+        int[] rootsArray = table.getIndexRootsArray();
+        Index index      = table.getPrimaryIndex();
+
 // erik        long  pos         = destFile.getFilePointer() / cacheFileScale;
         long  pos         = destFile.getFilePointer();
         int[] pointerPair = new int[2];
@@ -160,9 +160,10 @@ class DataFileDefrag {
         count = 0;
 
         for (Node n = index.first(); n != null; count++) {
-            CachedRow row        = (CachedRow) n.getRow();
+            CachedRow row = (CachedRow) n.getRow();
+
 // erik            int       rowPointer = (int) destFile.getFilePointer() / cacheFileScale;
-            int       rowPointer = (int) destFile.getFilePointer();
+            int rowPointer = (int) destFile.getFilePointer();
 
             rowOut.reset();
 
@@ -202,7 +203,7 @@ class DataFileDefrag {
             int lookupIndex = pointerLookup.search(rootsArray[i]);
 
             if (lookupIndex == -1) {
-                throw new SQLException();
+                throw new HsqlException(null, null, 0);
             }
 
             rootsArray[i] = pointerLookup.getIntCell(lookupIndex, 1);

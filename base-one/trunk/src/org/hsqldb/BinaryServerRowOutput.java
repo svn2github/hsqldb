@@ -35,8 +35,6 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.sql.Types;
-import java.sql.SQLException;
 import org.hsqldb.lib.StringConverter;
 
 /**
@@ -129,9 +127,9 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
      *
      * @param  row - a database row
      * @return  size of byte array
-     * @exception  SQLException When data is inconsistent
+     * @exception  HsqlException When data is inconsistent
      */
-    public int getSize(CachedRow row) throws SQLException {
+    public int getSize(CachedRow row) throws HsqlException {
 
         Object data[] = row.getData();
         int    type[] = row.getTable().getColumnTypes();
@@ -152,25 +150,25 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
         writeString(s);
     }
 
-    protected void writeSmallint(Number o) throws IOException, SQLException {
+    protected void writeSmallint(Number o) throws IOException, HsqlException {
         writeShort(o.intValue());
     }
 
-    protected void writeInteger(Number o) throws IOException, SQLException {
+    protected void writeInteger(Number o) throws IOException, HsqlException {
         writeInt(o.intValue());
     }
 
-    protected void writeBigint(Number o) throws IOException, SQLException {
+    protected void writeBigint(Number o) throws IOException, HsqlException {
         writeLong(o.longValue());
     }
 
     protected void writeReal(Double o,
-                             int type) throws IOException, SQLException {
+                             int type) throws IOException, HsqlException {
         writeLong(Double.doubleToLongBits((o.doubleValue())));
     }
 
     protected void writeDecimal(BigDecimal o)
-    throws IOException, SQLException {
+    throws IOException, HsqlException {
 
         int        scale  = o.scale();
         BigInteger bigint = null;
@@ -190,28 +188,28 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
         writeInt(scale);
     }
 
-    protected void writeBit(Boolean o) throws IOException, SQLException {
+    protected void writeBit(Boolean o) throws IOException, HsqlException {
         write(o.booleanValue() ? 1
                                : 0);
     }
 
     protected void writeDate(java.sql.Date o)
-    throws IOException, SQLException {
+    throws IOException, HsqlException {
         writeLong(o.getTime());
     }
 
     protected void writeTime(java.sql.Time o)
-    throws IOException, SQLException {
+    throws IOException, HsqlException {
         writeLong(o.getTime());
     }
 
     protected void writeTimestamp(java.sql.Timestamp o)
-    throws IOException, SQLException {
+    throws IOException, HsqlException {
         writeLong(o.getTime());
         writeInt(o.getNanos());
     }
 
-    protected void writeOther(Object o) throws IOException, SQLException {
+    protected void writeOther(Object o) throws IOException, HsqlException {
 
         byte[] ba = Column.serialize(o);
 
@@ -219,7 +217,7 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
     }
 
     protected void writeBinary(byte[] o,
-                               int t) throws IOException, SQLException {
+                               int t) throws IOException, HsqlException {
         writeByteArray(o);
     }
 
@@ -236,10 +234,10 @@ class BinaryServerRowOutput extends org.hsqldb.DatabaseRowOutput {
      * @param  l - number of data[] elements to include in calculation
      * @param  type - array of java.sql.Types values
      * @return size of byte array
-     * @exception  SQLException when data is inconsistent
+     * @exception  HsqlException when data is inconsistent
      */
     private static int getSize(Object data[], int l,
-                               int type[]) throws SQLException {
+                               int type[]) throws HsqlException {
 
         int s = 0;
 

@@ -49,8 +49,7 @@ class QuotedTextDatabaseRowOutput extends org.hsqldb.TextDatabaseRowOutput {
     }
 
     public QuotedTextDatabaseRowOutput(String fieldSep, String varSep,
-                                       String longvarSep,
-                                       boolean allQuoted,
+                                       String longvarSep, boolean allQuoted,
                                        String encoding) throws IOException {
         super(fieldSep, varSep, longvarSep, allQuoted, encoding);
     }

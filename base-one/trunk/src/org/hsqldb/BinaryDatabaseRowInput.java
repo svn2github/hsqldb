@@ -33,8 +33,6 @@ package org.hsqldb;
 
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.sql.SQLException;
-import java.sql.Types;
 
 /**
  *  Provides methods for reading the data for a row from a
@@ -84,19 +82,19 @@ implements org.hsqldb.DatabaseRowInputInterface {
         return readUTF();
     }
 
-    protected Integer readSmallint() throws IOException, SQLException {
+    protected Integer readSmallint() throws IOException, HsqlException {
         return Integer.valueOf(readNumericString());
     }
 
-    protected Integer readInteger() throws IOException, SQLException {
+    protected Integer readInteger() throws IOException, HsqlException {
         return new Integer(readIntData());
     }
 
-    protected Long readBigint() throws IOException, SQLException {
+    protected Long readBigint() throws IOException, HsqlException {
         return Long.valueOf(readNumericString());
     }
 
-    protected Double readReal(int type) throws IOException, SQLException {
+    protected Double readReal(int type) throws IOException, HsqlException {
 
         if (type == Types.REAL) {
             return Double.valueOf(readNumericString());
@@ -109,28 +107,28 @@ implements org.hsqldb.DatabaseRowInputInterface {
     }
 
     protected java.math.BigDecimal readDecimal()
-    throws IOException, SQLException {
+    throws IOException, HsqlException {
         return new java.math.BigDecimal(readNumericString());
     }
 
-    protected Boolean readBit() throws IOException, SQLException {
+    protected Boolean readBit() throws IOException, HsqlException {
         return Boolean.valueOf(readString());
     }
 
-    protected java.sql.Time readTime() throws IOException, SQLException {
+    protected java.sql.Time readTime() throws IOException, HsqlException {
         return java.sql.Time.valueOf(readString());
     }
 
-    protected java.sql.Date readDate() throws IOException, SQLException {
+    protected java.sql.Date readDate() throws IOException, HsqlException {
         return java.sql.Date.valueOf(readString());
     }
 
     protected java.sql.Timestamp readTimestamp()
-    throws IOException, SQLException {
+    throws IOException, HsqlException {
         return java.sql.Timestamp.valueOf(readString());
     }
 
-    protected Object readOther() throws IOException, SQLException {
+    protected Object readOther() throws IOException, HsqlException {
 
 // fredt@users 20020328 -  patch 482109 by fredt - OBJECT handling
 // objects are / were stored as serialized byte[]
@@ -151,7 +149,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         return Column.deserialize(o);
     }
 
-    protected byte[] readBinary(int type) throws IOException, SQLException {
+    protected byte[] readBinary(int type) throws IOException, HsqlException {
 
         String hexstring = readString();
 

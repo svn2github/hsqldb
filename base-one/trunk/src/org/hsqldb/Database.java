@@ -67,8 +67,6 @@
 
 package org.hsqldb;
 
-import java.sql.SQLException;
-import java.sql.Types;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HashMap;
@@ -143,7 +141,7 @@ class Database {
     int     firstIdentity;
 
 //    private boolean                bShutdown;
-    private HashMap            hAlias;
+    private HashMap                hAlias;
     private boolean                bIgnoreCase;
     private boolean                bReferentialIntegrity;
     SessionManager                 sessionManager;
@@ -161,11 +159,11 @@ class Database {
      *
      * @param  name the path to and common name shared by the database files
      *      this Database uses
-     * @exception  SQLException if the specified path and common name
+     * @exception  HsqlException if the specified path and common name
      *      combination is illegal or unavailable, or the database files the
      *      name resolves to are in use by another process
      */
-    Database(String name) throws SQLException {
+    Database(String name) throws HsqlException {
 
         if (Trace.TRACE) {
             Trace.trace();
@@ -194,9 +192,9 @@ class Database {
      * "shutdown compact".
      *
      * @see #close(int closemode)
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      */
-    private void open() throws SQLException {
+    private void open() throws HsqlException {
 
         boolean newdatabase;
         User    sysUser;
@@ -284,11 +282,11 @@ class Database {
      *      user
      * @return  a new Session object that initially that initially operates on
      *      behalf of the specified user
-     * @throws  SQLException if the specified user does not exist or a bad
+     * @throws  HsqlException if the specified user does not exist or a bad
      *      password is specified
      */
     synchronized Session connect(String username,
-                                 String password) throws SQLException {
+                                 String password) throws HsqlException {
 
         User user = aAccess.getUser(username.toUpperCase(),
                                     password.toUpperCase());
@@ -328,10 +326,10 @@ class Database {
             sessionManager.processDisconnect(session);
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-        } catch (SQLException e) {
-            r = new Result(e.getMessage(), e.getErrorCode());
+        } catch (HsqlException e) {
+            r = new Result(e.getMessage(), e.getSQLState(), e.getErrorCode());
         } catch (Exception e) {
-            r = new Result(e.getMessage(), Trace.GENERAL_ERROR);
+            r = new Result(e.getMessage(), null, Trace.GENERAL_ERROR);
         }
 
         try {
@@ -359,7 +357,7 @@ class Database {
 
         try {
             Trace.check(session != null, Trace.ACCESS_IS_DENIED);
-        } catch (SQLException e) {
+        } catch (HsqlException e) {
             return new Result(e, statement);
         }
 
@@ -370,7 +368,7 @@ class Database {
      *  Puts this Database object in global read-only mode. That is, after
      *  this call, all existing and future sessions are limited to read-only
      *  transactions. Any following attempts to update the state of the
-     *  database will result in throwing an SQLException.
+     *  database will result in throwing an HsqlException.
      */
     void setReadOnly() {
         databaseReadOnly = true;
@@ -485,9 +483,9 @@ class Database {
      * @param  name of the table or view to retrieve
      * @param  session the Session within which to search for user tables
      * @return  the user table or view, or system table
-     * @throws  SQLException if there is no such table or view
+     * @throws  HsqlException if there is no such table or view
      */
-    Table getTable(String name, Session session) throws SQLException {
+    Table getTable(String name, Session session) throws HsqlException {
 
         Table t = findUserTable(name, session);
 
@@ -513,11 +511,11 @@ class Database {
      * @param session the retrieval context
      * @return the user table object with the specified
      *      name
-     * @throws SQLException if the user table object with the specified
+     * @throws HsqlException if the user table object with the specified
      *      name cannot be found, given the specified
      *      session context
      */
-    Table getUserTable(String name, Session session) throws SQLException {
+    Table getUserTable(String name, Session session) throws HsqlException {
 
         Table t = findUserTable(name, session);
 
@@ -535,10 +533,10 @@ class Database {
      * @param name of the table to retrieve
      * @return the user table object with the specified
      *      name
-     * @throws SQLException if the user table object with the specified
+     * @throws HsqlException if the user table object with the specified
      *      name cannot be found
      */
-    Table getUserTable(String name) throws SQLException {
+    Table getUserTable(String name) throws HsqlException {
 
         Table t = findUserTable(name);
 
@@ -601,9 +599,9 @@ class Database {
      *  object.
      *
      * @param  t the table of view to register
-     * @throws  SQLException if there is a problem
+     * @throws  HsqlException if there is a problem
      */
-    void linkTable(Table t) throws SQLException {
+    void linkTable(Table t) throws HsqlException {
         tTable.add(t);
     }
 
@@ -669,10 +667,10 @@ class Database {
      * Drops the index with the specified name from this database.
      * @param indexname the name of the index to drop
      * @param session the execution context
-     * @throws SQLException if the index does not exist, the session lacks the permission
+     * @throws HsqlException if the index does not exist, the session lacks the permission
      *        or the operation violates database integrity
      */
-    void dropIndex(String indexname, Session session) throws SQLException {
+    void dropIndex(String indexname, Session session) throws HsqlException {
 
         Table t = findUserTableForIndex(indexname, session);
 
@@ -708,7 +706,7 @@ class Database {
 
         try {
             close(-1);
-        } catch (SQLException e) {    // it's too late now
+        } catch (HsqlException e) {    // it's too late now
             if (Trace.TRACE) {
                 Trace.trace(e.toString());
             }
@@ -733,13 +731,13 @@ class Database {
      * </ol>
      *
      * @param  closemode which type of close to perform
-     * @throws  SQLException if a database access error occurs
+     * @throws  HsqlException if a database access error occurs
      * @see Logger#closeLog(int)
      */
-    void close(int closemode) throws SQLException {
+    void close(int closemode) throws HsqlException {
 
-        SQLException se;
-        HsqlRuntime  rt;
+        HsqlException se;
+        HsqlRuntime   rt;
 
         se = null;
         rt = HsqlRuntime.getHsqlRuntime();
@@ -760,8 +758,8 @@ class Database {
                     logger.closeLog(0);
                 }
             } catch (Throwable t) {
-                if (t instanceof SQLException) {
-                    se = (SQLException) t;
+                if (t instanceof HsqlException) {
+                    se = (HsqlException) t;
                 } else {
                     se = Trace.error(Trace.GENERAL_ERROR, t.toString());
                 }
@@ -832,19 +830,19 @@ class Database {
      * @param  isView true if the name argument refers to a View
      * @param  session the connected context in which to perform this
      *      operation
-     * @throws  SQLException if any of the checks listed above fail
+     * @throws  HsqlException if any of the checks listed above fail
      */
     void dropTable(String name, boolean ifExists, boolean isView,
-                   Session session) throws SQLException {
+                   Session session) throws HsqlException {
 
-        Table       toDrop            = null;
-        int         dropIndex         = -1;
-        int         refererIndex      = -1;
-        Iterator constraints       = null;
-        Constraint  currentConstraint = null;
-        Table       refTable          = null;
-        boolean     isRef             = false;
-        boolean     isSelfRef         = false;
+        Table      toDrop            = null;
+        int        dropIndex         = -1;
+        int        refererIndex      = -1;
+        Iterator   constraints       = null;
+        Constraint currentConstraint = null;
+        Table      refTable          = null;
+        boolean    isRef             = false;
+        boolean    isSelfRef         = false;
 
         for (int i = 0; i < tTable.size(); i++) {
             toDrop = (Table) tTable.get(i);
@@ -948,9 +946,9 @@ class Database {
      *
      * @param name of the trigger to drop
      * @param session execution context
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      */
-    void dropTrigger(String name, Session session) throws SQLException {
+    void dropTrigger(String name, Session session) throws HsqlException {
 
         boolean found = false;
 

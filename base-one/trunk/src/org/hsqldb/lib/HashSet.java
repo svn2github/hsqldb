@@ -33,7 +33,7 @@ package org.hsqldb.lib;
 
 import org.hsqldb.store.BaseHashMap;
 
-public class HashSet extends BaseHashMap implements Set{
+public class HashSet extends BaseHashMap implements Set {
 
     public HashSet() {
         this(16, 0.75f);
@@ -54,26 +54,36 @@ public class HashSet extends BaseHashMap implements Set{
     }
 
     public boolean add(Object key) {
+
         int oldSize = size();
+
         super.addOrRemove(0, 0, key, null, false);
+
         return oldSize != size();
     }
 
     public boolean addAll(Object[] keys) {
+
         boolean changed = false;
-        for (int i = 0; i < keys.length; i++){
-            if ( add(keys[i]) ) {
+
+        for (int i = 0; i < keys.length; i++) {
+            if (add(keys[i])) {
                 changed = true;
             }
         }
+
         return changed;
     }
+
     public boolean remove(Object key) {
+
         int oldSize = size();
 
         super.addOrRemove(0, 0, key, null, true);
+
         return oldSize != size();
     }
+
     public Iterator iterator() {
         return new BaseHashIterator(true);
     }

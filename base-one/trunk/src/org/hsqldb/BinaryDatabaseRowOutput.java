@@ -69,8 +69,6 @@ package org.hsqldb;
 
 import java.io.IOException;
 import java.io.DataOutputStream;
-import java.sql.SQLException;
-import java.sql.Types;
 
 /**
  *  Provides methods for writing the data for a row to a byte array. The
@@ -154,20 +152,20 @@ class BinaryDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
     //fredt: REAL, TINYINT and SMALLINT are written in the old format
     // for compatibility
-    protected void writeSmallint(Number o) throws IOException, SQLException {
+    protected void writeSmallint(Number o) throws IOException, HsqlException {
         writeString(o.toString());
     }
 
-    protected void writeInteger(Number o) throws IOException, SQLException {
+    protected void writeInteger(Number o) throws IOException, HsqlException {
         writeInt(o.intValue());
     }
 
-    protected void writeBigint(Number o) throws IOException, SQLException {
+    protected void writeBigint(Number o) throws IOException, HsqlException {
         writeString(o.toString());
     }
 
     protected void writeReal(Double o,
-                             int type) throws IOException, SQLException {
+                             int type) throws IOException, HsqlException {
 
         if (type == Types.REAL) {
             writeString(o.toString());
@@ -180,30 +178,30 @@ class BinaryDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
     }
 
     protected void writeDecimal(java.math.BigDecimal o)
-    throws IOException, SQLException {
+    throws IOException, HsqlException {
         writeString(o.toString());
     }
 
-    protected void writeBit(Boolean o) throws IOException, SQLException {
+    protected void writeBit(Boolean o) throws IOException, HsqlException {
         writeString(o.toString());
     }
 
     protected void writeDate(java.sql.Date o)
-    throws IOException, SQLException {
+    throws IOException, HsqlException {
         writeString(o.toString());
     }
 
     protected void writeTime(java.sql.Time o)
-    throws IOException, SQLException {
+    throws IOException, HsqlException {
         writeString(o.toString());
     }
 
     protected void writeTimestamp(java.sql.Timestamp o)
-    throws IOException, SQLException {
+    throws IOException, HsqlException {
         writeString(o.toString());
     }
 
-    protected void writeOther(Object o) throws IOException, SQLException {
+    protected void writeOther(Object o) throws IOException, HsqlException {
 
         byte[] ba = Column.serialize(o);
 
@@ -211,7 +209,7 @@ class BinaryDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
     }
 
     protected void writeBinary(byte[] o,
-                               int t) throws IOException, SQLException {
+                               int t) throws IOException, HsqlException {
         writeByteArray(o);
     }
 
@@ -228,9 +226,9 @@ class BinaryDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
      *
      * @param  row - a database row
      * @return  size of byte array
-     * @exception  SQLException When data is inconsistent
+     * @exception  HsqlException When data is inconsistent
      */
-    public int getSize(CachedRow row) throws SQLException {
+    public int getSize(CachedRow row) throws HsqlException {
 
         Object data[] = row.getData();
         int    type[] = row.getTable().getColumnTypes();
@@ -245,10 +243,10 @@ class BinaryDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
      * @param  l - number of data[] elements to include in calculation
      * @param  type - array of java.sql.Types values
      * @return size of byte array
-     * @exception  SQLException when data is inconsistent
+     * @exception  HsqlException when data is inconsistent
      */
     private static int getSize(Object data[], int l,
-                               int type[]) throws SQLException {
+                               int type[]) throws HsqlException {
 
         int s = 0;
 

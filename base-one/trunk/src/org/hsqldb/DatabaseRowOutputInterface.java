@@ -32,7 +32,6 @@
 package org.hsqldb;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import org.hsqldb.lib.HsqlByteArrayOutputStream;
 
 /**
@@ -57,13 +56,13 @@ interface DatabaseRowOutputInterface {
     public void writeIntData(int i, int position) throws IOException;
 
     public void writeData(Object data[],
-                          Table t) throws IOException, SQLException;
+                          Table t) throws IOException, HsqlException;
 
     public void writeData(int l, int types[],
-                          Object data[]) throws IOException, SQLException;
+                          Object data[]) throws IOException, HsqlException;
 
     // independent of the this object, calls only a static method
-    public int getSize(CachedRow row) throws SQLException;
+    public int getSize(CachedRow row) throws HsqlException;
 
     // returns the underlying HsqlByteArrayOutputStream
     public HsqlByteArrayOutputStream getOutputStream();

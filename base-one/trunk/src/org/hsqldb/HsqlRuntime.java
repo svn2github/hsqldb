@@ -36,7 +36,6 @@ import java.io.File;
 import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
-import java.sql.SQLException;
 import java.util.Hashtable;
 import java.util.Vector;
 import org.hsqldb.lib.HsqlTimer;
@@ -134,7 +133,7 @@ public final class HsqlRuntime {
 // --------------------------- Public Static Methods ---------------------------
 
     /**
-     * Retieves null if path is null, the the absolute path of the database
+     * Retieves null if path is null, the absolute path of the database
      * indicated by path, or the special path '.' indicating the memory database
      * instance, if '.'.equals(path.trim()).
      *
@@ -395,20 +394,23 @@ public final class HsqlRuntime {
      *
      * Record.gcFrequency > 0 && Record.memoryRecords > Record.gcFrequency
      */
+
+// fredt - synchronized is not necessary
     public void gc() {
 
-        synchronized (Record.class) {
-            if ((Record.gcFrequency > 0)
-                    && (Record.memoryRecords > Record.gcFrequency)) {
-                if (Trace.TRACE) {
-                    Trace.trace("gc at " + Record.memoryRecords);
-                }
-
-                Record.memoryRecords = 0;
-
-                System.gc();
+//        synchronized (Record.class) {
+        if ((Record.gcFrequency > 0)
+                && (Record.memoryRecords > Record.gcFrequency)) {
+            if (Trace.TRACE) {
+                Trace.trace("gc at " + Record.memoryRecords);
             }
+
+            Record.memoryRecords = 0;
+
+            System.gc();
         }
+
+//        }
     }
 
     /**
@@ -469,9 +471,10 @@ public final class HsqlRuntime {
      */
     public int getRecordCreateCountGcThreshold() {
 
-        synchronized (Record.class) {
-            return Record.gcFrequency;
-        }
+//        synchronized (Record.class) {
+        return Record.gcFrequency;
+
+//        }
     }
 
     /**
@@ -742,9 +745,10 @@ public final class HsqlRuntime {
      */
     public int recordCreateCount() {
 
-        synchronized (Record.class) {
-            return Record.memoryRecords;
-        }
+//        synchronized (Record.class) {
+        return Record.memoryRecords;
+
+//        }
     }
 
     /**
@@ -835,13 +839,15 @@ public final class HsqlRuntime {
      */
     public void setRecordCreateCountGcThreshold(int n) {
 
-        synchronized (Record.class) {
-            Record.gcFrequency = n;
-        }
+//        synchronized (Record.class) {
+        Record.gcFrequency = n;
+
+//        }
     }
 
 // TODO:  enumerate threadgoups and custom print them instead of relying on
 // substituting System.out and doing an rtg.list();
+// fredt - should never lock system resources
 
     /**
      * Retrieves a string representation of the state of this HsqlRuntime.
@@ -955,11 +961,11 @@ public final class HsqlRuntime {
      *
      * @param path Database path
      * @param requestor object requesting instance (optional - may be null)
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      * @return a database instance corresponding to the specified
      *      path.
      */
-    Database getDatabase(String path, Object requestor) throws SQLException {
+    Database getDatabase(String path, Object requestor) throws HsqlException {
 
         Database                  database;
         DatabasePlaceHolderThread placeholder;
@@ -1384,9 +1390,9 @@ public final class HsqlRuntime {
      * Retrieves the existing or newly created memory Database instance.
      *
      * @return the memory database instance for this HsqlRuntime
-     * @throws SQLException should be never; required by database Constructor
+     * @throws HsqlException should be never; required by database Constructor
      */
-    private Database getOrCreateMemoryDatabase() throws SQLException {
+    private Database getOrCreateMemoryDatabase() throws HsqlException {
 
         // This method does not need synchronization because it is
         // only called inside a syncronized(findOrCreateDatabaseMutext(path))
@@ -1533,9 +1539,9 @@ public final class HsqlRuntime {
          *
          * @param path the Database path
          *
-         * @throws SQLException if a database access error occurs
+         * @throws HsqlException if a database access error occurs
          */
-        private DatabaseReference(String path) throws SQLException {
+        private DatabaseReference(String path) throws HsqlException {
             database = HsqlRuntime.getHsqlRuntime().getDatabase(path, this);
         }
 
@@ -1549,10 +1555,10 @@ public final class HsqlRuntime {
          *
          * @return a new DatabaseReference
          *
-         * @throws SQLException if a database access error occurs
+         * @throws HsqlException if a database access error occurs
          */
         public static DatabaseReference newReference(String path)
-        throws SQLException {
+        throws HsqlException {
             return new DatabaseReference(path);
         }
 

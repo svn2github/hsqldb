@@ -67,8 +67,6 @@
 
 package org.hsqldb;
 
-import java.sql.SQLException;
-
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // fredt@users 20020920 - path 1.7.1 - refactoring to cut mamory footprint
 // fredt@users 20021205 - path 1.7.2 - enhancements
@@ -109,7 +107,7 @@ class PointerNode extends BaseMemoryNode {
         return iData;
     }
 
-    Row getRow() throws SQLException {
+    Row getRow() throws HsqlException {
 
         if (iData == NO_POS) {
             return null;
@@ -120,7 +118,7 @@ class PointerNode extends BaseMemoryNode {
         return r;
     }
 
-    Object[] getData() throws SQLException {
+    Object[] getData() throws HsqlException {
 
         if (Trace.DOASSERT) {
             Trace.doAssert(iBalance != -2);

@@ -32,7 +32,6 @@
 package org.hsqldb;
 
 import java.io.*;
-import java.sql.SQLException;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.StringConverter;
@@ -117,7 +116,7 @@ class DatabaseScriptWriter {
 
     static DatabaseScriptWriter newDatabaseScriptWriter(Database db,
             String file, boolean includeCachedData, boolean newFile,
-            int scriptType) throws SQLException {
+            int scriptType) throws HsqlException {
 
         if (scriptType == SCRIPT_TEXT_170) {
             return new DatabaseScriptWriter(db, file, includeCachedData,
@@ -132,7 +131,7 @@ class DatabaseScriptWriter {
     }
 
     DatabaseScriptWriter(Database db, String file, boolean includeCachedData,
-                         boolean newFile) throws SQLException {
+                         boolean newFile) throws HsqlException {
 
         File newFileFile = new File(file);
 
@@ -182,7 +181,8 @@ class DatabaseScriptWriter {
         }
     }
 
-    void close() throws SQLException {
+    void close() throws HsqlException {
+
         try {
             fileStreamOut.flush();
             fileStreamOut.close();
@@ -195,7 +195,7 @@ class DatabaseScriptWriter {
         return byteCount;
     }
 
-    void writeAll() throws SQLException {
+    void writeAll() throws HsqlException {
 
         try {
             writeDDL();
@@ -210,7 +210,7 @@ class DatabaseScriptWriter {
      *  File is opened in append mode although in current usage the file
      *  never pre-exists
      */
-    protected void openFile() throws SQLException {
+    protected void openFile() throws HsqlException {
 
         try {
             FileOutputStream fos = new FileOutputStream(outFile, true);
@@ -228,14 +228,14 @@ class DatabaseScriptWriter {
      */
     protected void finishStream() throws IOException {}
 
-    protected void writeDDL() throws IOException, SQLException {
+    protected void writeDDL() throws IOException, HsqlException {
 
         Result ddlPart = DatabaseScript.getScript(db, !includeCachedData);
 
         writeSingleColumnResult(ddlPart);
     }
 
-    protected void writeExistingData() throws SQLException, IOException {
+    protected void writeExistingData() throws HsqlException, IOException {
 
         boolean       wroteTable = false;
         HsqlArrayList tables     = db.getTables();
@@ -283,9 +283,10 @@ class DatabaseScriptWriter {
         writeDataTerm();
     }
 
-    protected void writeTableInit(Table t) throws SQLException, IOException {}
+    protected void writeTableInit(Table t)
+    throws HsqlException, IOException {}
 
-    protected void writeTableTerm(Table t) throws SQLException, IOException {
+    protected void writeTableTerm(Table t) throws HsqlException, IOException {
 
         if (t.isDataReadOnly() &&!t.isTemp() &&!t.isText()) {
             HsqlStringBuffer a = new HsqlStringBuffer("SET TABLE ");
@@ -297,7 +298,7 @@ class DatabaseScriptWriter {
     }
 
     protected void writeSingleColumnResult(Result r)
-    throws SQLException, IOException {
+    throws HsqlException, IOException {
 
         Record n = r.rRoot;
 
@@ -309,14 +310,14 @@ class DatabaseScriptWriter {
     }
 
     protected void writeRow(Object[] data,
-                            Table t) throws SQLException, IOException {
+                            Table t) throws HsqlException, IOException {
         writeLogStatement(t.getInsertStatement(data));
     }
 
     protected void writeDataTerm() throws IOException {}
 
     void writeLogStatement(String s,
-                           int sid) throws IOException, SQLException {
+                           int sid) throws IOException, HsqlException {
 
         if (sid != sessionId) {
             s         = "/*C" + sid + "*/" + s;
@@ -327,7 +328,7 @@ class DatabaseScriptWriter {
     }
 
     private void writeLogStatement(String s)
-    throws IOException, SQLException {
+    throws IOException, HsqlException {
 
         busyWriting = true;
 

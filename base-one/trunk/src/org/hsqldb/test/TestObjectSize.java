@@ -79,12 +79,13 @@ public class TestObjectSize {
 
     public TestObjectSize() {
 
-        StopWatch        sw        = new StopWatch();
-        int              testCount = 2350000;
+        StopWatch sw        = new StopWatch();
+        int       testCount = 2350000;
 
         System.out.println("Fill Memory with Objects ");
 
         Object[] objectArray = new Object[testCount];
+
         for (int j = 0; j < objectArray.length; j++) {
             objectArray[j] = new java.sql.Timestamp(0);
         }
@@ -100,10 +101,10 @@ public class TestObjectSize {
         Object[] objectArray4 = new Object[testCount];
         Object[] objectArray5 = new Object[testCount];
         Object[] objectArray6 = new Object[testCount];
-//        Object[] objectArray7 = new Object[testCount];
-        short[]  shortArray = new short[testCount];
-        byte[]   byteArray = new byte[testCount];
 
+//        Object[] objectArray7 = new Object[testCount];
+        short[] shortArray = new short[testCount];
+        byte[]  byteArray  = new byte[testCount];
 
         System.out.println("Fill with Empty Arrays " + sw.elapsedTime());
         sw.zero();

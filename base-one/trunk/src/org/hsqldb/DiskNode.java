@@ -67,7 +67,6 @@
 
 package org.hsqldb;
 
-import java.sql.SQLException;
 import java.io.IOException;
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
@@ -95,7 +94,7 @@ class DiskNode extends Node {
     private int   iId;    // id of Index object for this Node
 
     DiskNode(CachedRow r, DatabaseRowInputInterface in,
-             int id) throws IOException, SQLException {
+             int id) throws IOException, HsqlException {
 
         iId      = id;
         rData    = r;
@@ -141,7 +140,7 @@ class DiskNode extends Node {
         return NO_POS;
     }
 
-    Row getRow() throws SQLException {
+    Row getRow() throws HsqlException {
 
         if (Trace.DOASSERT) {
             Trace.doAssert(rData != null);
@@ -150,7 +149,7 @@ class DiskNode extends Node {
         return rData;
     }
 
-    private Node findNode(int pos) throws SQLException {
+    private Node findNode(int pos) throws HsqlException {
 
         Node ret = null;
         Row  r   = ((CachedRow) rData).getTable().getRow(pos, null);
@@ -162,7 +161,7 @@ class DiskNode extends Node {
         return ret;
     }
 
-    Node getLeft() throws SQLException {
+    Node getLeft() throws HsqlException {
 
         if (Trace.DOASSERT) {
             Trace.doAssert(iBalance != -2);
@@ -175,7 +174,7 @@ class DiskNode extends Node {
         return findNode(iLeft);
     }
 
-    void setLeft(Node n) throws SQLException {
+    void setLeft(Node n) throws HsqlException {
 
         if (Trace.DOASSERT) {
             Trace.doAssert(iBalance != -2);
@@ -190,7 +189,7 @@ class DiskNode extends Node {
         }
     }
 
-    Node getRight() throws SQLException {
+    Node getRight() throws HsqlException {
 
         if (Trace.DOASSERT) {
             Trace.doAssert(iBalance != -2);
@@ -203,7 +202,7 @@ class DiskNode extends Node {
         return findNode(iRight);
     }
 
-    void setRight(Node n) throws SQLException {
+    void setRight(Node n) throws HsqlException {
 
         if (Trace.DOASSERT) {
             Trace.doAssert(iBalance != -2);
@@ -218,7 +217,7 @@ class DiskNode extends Node {
         }
     }
 
-    Node getParent() throws SQLException {
+    Node getParent() throws HsqlException {
 
         if (Trace.DOASSERT) {
             Trace.doAssert(iBalance != -2);
@@ -235,7 +234,7 @@ class DiskNode extends Node {
         return iParent == Node.NO_POS;
     }
 
-    void setParent(Node n) throws SQLException {
+    void setParent(Node n) throws HsqlException {
 
         if (Trace.DOASSERT) {
             Trace.doAssert(iBalance != -2);
@@ -250,7 +249,7 @@ class DiskNode extends Node {
         }
     }
 
-    void setBalance(int b) throws SQLException {
+    void setBalance(int b) throws HsqlException {
 
         if (Trace.DOASSERT) {
             Trace.doAssert(iBalance != -2);
@@ -263,7 +262,7 @@ class DiskNode extends Node {
         }
     }
 
-    boolean isFromLeft() throws SQLException {
+    boolean isFromLeft() throws HsqlException {
 
         if (this.isRoot()) {
             return true;
@@ -282,7 +281,7 @@ class DiskNode extends Node {
         }
     }
 
-    Object[] getData() throws SQLException {
+    Object[] getData() throws HsqlException {
 
         if (Trace.DOASSERT) {
             Trace.doAssert(iBalance != -2);
@@ -291,7 +290,7 @@ class DiskNode extends Node {
         return rData.getData();
     }
 
-    boolean equals(Node n) throws SQLException {
+    boolean equals(Node n) throws HsqlException {
 
         if (Trace.DOASSERT) {
             Trace.doAssert(iBalance != -2);
@@ -308,7 +307,7 @@ class DiskNode extends Node {
     }
 
     void write(DatabaseRowOutputInterface out)
-    throws IOException, SQLException {
+    throws IOException, HsqlException {
 
         if (Trace.DOASSERT) {
             Trace.doAssert(iBalance != -2);
@@ -323,7 +322,7 @@ class DiskNode extends Node {
                                              : iParent);
     }
 
-    Node getUpdatedNode() throws SQLException {
+    Node getUpdatedNode() throws HsqlException {
 
         Row row = rData.getUpdatedRow();
 
@@ -332,7 +331,7 @@ class DiskNode extends Node {
 
     void writeTranslate(DatabaseRowOutputInterface out,
                         org.hsqldb.lib.UnifiedTable lookup)
-                        throws IOException, SQLException {
+                        throws IOException, HsqlException {
 
         out.writeIntData(iBalance);
         writeTranslatePointer(iLeft, out, lookup);
@@ -343,7 +342,7 @@ class DiskNode extends Node {
     private void writeTranslatePointer(int pointer,
                                        DatabaseRowOutputInterface out,
                                        org.hsqldb.lib.UnifiedTable lookup)
-                                       throws IOException, SQLException {
+                                       throws IOException, HsqlException {
 
         int newPointer = 0;
 
@@ -351,7 +350,7 @@ class DiskNode extends Node {
             int i = lookup.search(pointer);
 
             if (i == -1) {
-                throw new SQLException();
+                throw new HsqlException(null, null, 0);
             }
 
             newPointer = lookup.getIntCell(i, 1);

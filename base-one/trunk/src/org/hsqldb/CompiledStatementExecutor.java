@@ -31,7 +31,6 @@
 
 package org.hsqldb;
 
-import java.sql.SQLException;
 import org.hsqldb.lib.HsqlLinkedList;
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.lib.StringUtil;
@@ -104,10 +103,10 @@ public class CompiledStatementExecutor {
      * Executes a generic CompiledStatement with no synchronization.
      *
      * @param cs any valid CompiledStatement
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      * @return the result of executing the statement
      */
-    Result executeImpl(CompiledStatement cs) throws SQLException {
+    Result executeImpl(CompiledStatement cs) throws HsqlException {
 
         switch (cs.type) {
 
@@ -139,10 +138,10 @@ public class CompiledStatementExecutor {
      * of the correct type.
      *
      * @param cs a CompiledStatement of type CompiledStatement.CALL
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      * @return the result of executing the statement
      */
-    Result executeCallStatement(CompiledStatement cs) throws SQLException {
+    Result executeCallStatement(CompiledStatement cs) throws HsqlException {
 
         Expression e;    // representing CALL
         Object     o;    // expression return value
@@ -188,10 +187,10 @@ public class CompiledStatementExecutor {
      * of the correct type.
      *
      * @param cs a CompiledStatement of type CompiledStatement.DELETE
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      * @return the result of executing the statement
      */
-    Result executeDeleteStatement(CompiledStatement cs) throws SQLException {
+    Result executeDeleteStatement(CompiledStatement cs) throws HsqlException {
 
         Table          t;
         TableFilter    f;
@@ -234,10 +233,10 @@ public class CompiledStatementExecutor {
      * checked to be of the correct type.
      *
      * @param cs a CompiledStatement of type CompiledStatement.INSERT_XXX
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      * @return the result of executing the statement
      */
-    Result executeInsertStatement(CompiledStatement cs) throws SQLException {
+    Result executeInsertStatement(CompiledStatement cs) throws HsqlException {
 
         switch (cs.type) {
 
@@ -257,11 +256,11 @@ public class CompiledStatementExecutor {
      * is of the correct type.
      *
      * @param cs a CompiledStatement of type CompiledStatement.INSERT_SELECT
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      * @return the result of executing the statement
      */
     Result executeInsertSelectStatement(CompiledStatement cs)
-    throws SQLException {
+    throws HsqlException {
 
         Table     t;
         Select    s;
@@ -306,7 +305,7 @@ public class CompiledStatementExecutor {
             count = t.insert(r, session);
 
             session.endNestedTransaction(false);
-        } catch (SQLException se) {
+        } catch (HsqlException se) {
 
             // insert failed (violation of primary key)
             session.endNestedTransaction(true);
@@ -324,11 +323,11 @@ public class CompiledStatementExecutor {
      * is of the correct type.
      *
      * @param cs a CompiledStatement of type CompiledStatement.INSERT_VALUES
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      * @return the result of executing the statement
      */
     Result executeInsertValuesStatement(CompiledStatement cs)
-    throws SQLException {
+    throws HsqlException {
 
         Object[]     row;
         int[]        cm;    // column map
@@ -365,10 +364,10 @@ public class CompiledStatementExecutor {
      * SELECT ... INTO statement.
      *
      * @param cs a CompiledStatement of type CompiledStatement.SELECT
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      * @return the result of executing the statement
      */
-    Result executeSelectStatement(CompiledStatement cs) throws SQLException {
+    Result executeSelectStatement(CompiledStatement cs) throws HsqlException {
         return cs.select.getResult(session.getMaxRows());
     }
 
@@ -377,10 +376,10 @@ public class CompiledStatementExecutor {
      * is of the correct type.
      *
      * @param cs a CompiledStatement of type CompiledStatement.UPDATE
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      * @return the result of executing the statement
      */
-    Result executeUpdateStatement(CompiledStatement cs) throws SQLException {
+    Result executeUpdateStatement(CompiledStatement cs) throws HsqlException {
 
         Table          t;
         TableFilter    f;
@@ -470,7 +469,7 @@ public class CompiledStatementExecutor {
                 count = t.update(del, ins, cm, session);
 
                 session.endNestedTransaction(false);
-            } catch (SQLException se) {
+            } catch (HsqlException se) {
 
                 // update failed (constraint violation)
                 session.endNestedTransaction(true);

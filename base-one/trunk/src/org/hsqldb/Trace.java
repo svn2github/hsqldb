@@ -68,12 +68,11 @@
 package org.hsqldb;
 
 import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.io.PrintWriter;
 import org.hsqldb.lib.FileUtil;
 
 /**
- * handles creation and reporting of error messages and throwing SQLException
+ * handles creation and reporting of error messages and throwing HsqlException
  *
  * @version 1.7.0
  */
@@ -285,7 +284,7 @@ public class Trace extends PrintWriter {
      *
      * @return
      */
-    static SQLException getError(int code, Object add) {
+    static HsqlException getError(int code, Object add) {
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
         code = Math.abs(code);
@@ -297,13 +296,13 @@ public class Trace extends PrintWriter {
         }
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-        return new SQLException(s.substring(6), s.substring(0, 5), -code);
+        return new HsqlException(s.substring(6), s.substring(0, 5), -code);
 
         //return getError(s);
     }
 
     /**
-     * Creates a SQLException useing given message and code.  The status is
+     * Creates a HsqlException useing given message and code.  The status is
      * filled based on the code.
      * <p>
      * Note use the given msg as error message, not as "add" argument.
@@ -312,17 +311,17 @@ public class Trace extends PrintWriter {
      * @param msg
      * @param code
      *
-     * @return a SQLException created from the given message and code.
+     * @return a HsqlException created from the given message and code.
      */
 
 // tony_lai@users 20020820 - patch 595073
-    static SQLException getError(String msg, int code) {
+    static HsqlException getError(String msg, int code) {
 
         code = Math.abs(code);
 
         String s = getMessage(code);
 
-        return new SQLException(msg, s.substring(0, 5), -code);
+        return new HsqlException(msg, s.substring(0, 5), -code);
     }
 
     /**
@@ -345,8 +344,8 @@ public class Trace extends PrintWriter {
      *
      * @return
      */
-    static String getMessage(SQLException e) {
-        return e.getSQLState() + " " + e.getMessage();
+    static String getMessage(HsqlException e) {
+        return e.state + " " + e.message;
     }
 
     /**
@@ -357,9 +356,9 @@ public class Trace extends PrintWriter {
      *
      * @return
      */
-    static SQLException getError(String msg) {
-        return new SQLException(msg.substring(6), msg.substring(0, 5),
-                                -GENERAL_ERROR);
+    static HsqlException getError(String msg) {
+        return new HsqlException(msg.substring(6), msg.substring(0, 5),
+                                 -GENERAL_ERROR);
     }
 
     /**
@@ -370,7 +369,7 @@ public class Trace extends PrintWriter {
      *
      * @return
      */
-    public static SQLException error(int code) {
+    public static HsqlException error(int code) {
         return getError(code, null);
     }
 
@@ -383,7 +382,7 @@ public class Trace extends PrintWriter {
      *
      * @return
      */
-    public static SQLException error(int code, String s) {
+    public static HsqlException error(int code, String s) {
         return getError(code, s);
     }
 
@@ -396,7 +395,7 @@ public class Trace extends PrintWriter {
      *
      * @return
      */
-    public static SQLException error(int code, int i) {
+    public static HsqlException error(int code, int i) {
         return getError(code, String.valueOf(i));
     }
 
@@ -406,9 +405,9 @@ public class Trace extends PrintWriter {
      *
      * @param condition
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    static void doAssert(boolean condition) throws SQLException {
+    static void doAssert(boolean condition) throws HsqlException {
         doAssert(condition, null);
     }
 
@@ -419,10 +418,10 @@ public class Trace extends PrintWriter {
      * @param condition
      * @param error
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
     static void doAssert(boolean condition,
-                         String error) throws SQLException {
+                         String error) throws HsqlException {
 
         if (!condition) {
             printStack();
@@ -438,9 +437,9 @@ public class Trace extends PrintWriter {
      * @param condition
      * @param code
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    static void check(boolean condition, int code) throws SQLException {
+    static void check(boolean condition, int code) throws HsqlException {
         check(condition, code, null);
     }
 
@@ -452,10 +451,10 @@ public class Trace extends PrintWriter {
      * @param code
      * @param s
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
     static void check(boolean condition, int code,
-                      Object add) throws SQLException {
+                      Object add) throws HsqlException {
 
         if (!condition) {
             throw getError(code, add);
@@ -470,9 +469,9 @@ public class Trace extends PrintWriter {
      * @param code
      * @param s
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    static void throwerror(int code, Object add) throws SQLException {
+    static void throwerror(int code, Object add) throws HsqlException {
         throw getError(code, add);
     }
 
@@ -597,9 +596,9 @@ public class Trace extends PrintWriter {
      * Method declaration
      *
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    static void stop() throws SQLException {
+    static void stop() throws HsqlException {
         stop(null);
     }
 
@@ -609,9 +608,9 @@ public class Trace extends PrintWriter {
      *
      * @param s
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    static synchronized void stop(String s) throws SQLException {
+    static synchronized void stop(String s) throws HsqlException {
 
         if (iStop++ % 10000 != 0) {
             return;

@@ -104,6 +104,4 @@ public class jdbcColumnMetaData {
 
     /** Whether it is possible for a write on the column to succeed. */
     public boolean isWritable;
-
 }
-

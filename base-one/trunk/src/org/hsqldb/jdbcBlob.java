@@ -34,7 +34,6 @@ package org.hsqldb;
 import java.io.ByteArrayInputStream;
 import java.io.OutputStream;
 import java.io.InputStream;
-import java.sql.SQLException;
 import java.sql.*;
 
 /**

@@ -127,10 +127,27 @@ public class jdbcDriver implements Driver {
                         REVISION  = 2;
     static final String VERSION   = "1.7.2";
     static final String PRODUCT   = "HSQL Database Engine";
+
+    static final void throwError(HsqlException e) throws SQLException {
+        throw new SQLException(e.message, e.state, e.code);
+    }
+
+    static final SQLException sqlException(HsqlException e) {
+        return new SQLException(e.message, e.state, e.code);
+    }
+
+    static final SQLException sqlException(int id) {
+        return sqlException(Trace.error(id));
+    }
+
+    static final SQLException sqlException(int id, String message) {
+        return sqlException(Trace.error(id, message));
+    }
+
     static final SQLException notSupported =
-        Trace.error(Trace.FUNCTION_NOT_SUPPORTED);
+        sqlException(Trace.error(Trace.FUNCTION_NOT_SUPPORTED));
     static final SQLException notSupportedJDBC3 =
-        Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3");
+        sqlException(Trace.error(Trace.FUNCTION_NOT_SUPPORTED, "JDBC3"));
 
     /**
      *  Attempts to make a database connection to the given URL. The driver

@@ -31,8 +31,6 @@
 
 package org.hsqldb;
 
-import java.sql.SQLException;
-
 /**
  * A simple structure class for holding the products of
  * statement compilation for later execution.
@@ -129,7 +127,7 @@ public class CompiledStatement {
         clearAll();
     }
 
-    void bind(Object[] values, int[] types) throws SQLException {
+    void bind(Object[] values, int[] types) throws HsqlException {
 
         int len;
 
@@ -166,7 +164,7 @@ public class CompiledStatement {
      * @param parameters
      */
     void setAsDelete(Table targetTable, Expression deleteCondition,
-                     Expression[] parameters) throws SQLException {
+                     Expression[] parameters) throws HsqlException {
 
         clearAll();
 
@@ -195,7 +193,7 @@ public class CompiledStatement {
      */
     void setAsUpdate(Table targetTable, int[] columnMap,
                      Expression[] columnValues, Expression updateCondition,
-                     Expression[] parameters) throws SQLException {
+                     Expression[] parameters) throws HsqlException {
 
         clearAll();
 
@@ -256,7 +254,7 @@ public class CompiledStatement {
      */
     void setAsInsertSelect(Table targetTable, int[] columnMap,
                            boolean[] checkColumns, Select select,
-                           Expression[] parameters) throws SQLException {
+                           Expression[] parameters) throws HsqlException {
 
         clearAll();
 
@@ -278,7 +276,7 @@ public class CompiledStatement {
      * @param parameters
      */
     void setAsSelect(Select select,
-                     Expression[] parameters) throws SQLException {
+                     Expression[] parameters) throws HsqlException {
 
         this.select = select;
 

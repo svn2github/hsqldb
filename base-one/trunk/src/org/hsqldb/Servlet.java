@@ -70,7 +70,6 @@ package org.hsqldb;
 import javax.servlet.*;
 import javax.servlet.http.*;
 import java.io.*;
-import java.sql.SQLException;
 import org.hsqldb.lib.StringConverter;
 
 // fredt@users 20020130 - patch 475586 by wreissen@users
@@ -123,7 +122,7 @@ public class Servlet extends javax.servlet.http.HttpServlet {
 
         try {
             dDatabase = new Database(sDatabase);
-        } catch (SQLException e) {
+        } catch (HsqlException e) {
             sError = e.getMessage();
 
             log(sError);

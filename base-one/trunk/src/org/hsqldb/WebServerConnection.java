@@ -76,7 +76,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
-import java.sql.SQLException;
 import java.util.StringTokenizer;
 import org.hsqldb.lib.StringConverter;
 import org.hsqldb.resources.BundleHandler;
@@ -376,8 +375,8 @@ class WebServerConnection implements Runnable, ServerConstants {
         // this can still be made more efficient by using our own
         // byte buffer and getting closer to the native bulk read
         // and write methods.  Serveral thousand calls to byte read()
-        // and writeByte(b), even when backed by buffers, are always 
-        // bound to be less efficient than direct read(byte[]) and 
+        // and writeByte(b), even when backed by buffers, are always
+        // bound to be less efficient than direct read(byte[]) and
         // write(byte[]) calls.
         if (send) {
             while (-1 != (b = is.read())) {
@@ -421,7 +420,7 @@ class WebServerConnection implements Runnable, ServerConstants {
      * @param  len
      */
     private void processPost(BufferedReader input, String name,
-                             int len) throws SQLException, IOException {
+                             int len) throws HsqlException, IOException {
 
         char   cbuf[];
         String s;

@@ -47,7 +47,7 @@ import org.hsqldb.resources.BundleHandler;
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
-final class DITableInfo implements DITypes {
+final class DITableInfo implements Types {
 
     /** Used in buffer size and character octet length determinations. */
     private static final int HALF_MAX_INT = Integer.MAX_VALUE >>> 1;

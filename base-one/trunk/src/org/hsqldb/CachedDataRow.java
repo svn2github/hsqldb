@@ -32,7 +32,6 @@
 package org.hsqldb;
 
 import java.io.IOException;
-import java.sql.SQLException;
 
 // fredt@users 20021205 - path 1.7.2 - enhancements
 // fredt@users 20021215 - doc 1.7.2 - javadoc comments
@@ -48,7 +47,7 @@ class CachedDataRow extends CachedRow {
     /**
      *  Constructor for new rows.
      */
-    CachedDataRow(Table t, Object o[]) throws SQLException {
+    CachedDataRow(Table t, Object o[]) throws HsqlException {
 
         super(t, o);
 
@@ -66,7 +65,7 @@ class CachedDataRow extends CachedRow {
      */
     CachedDataRow(Table t,
                   DatabaseRowInputInterface in)
-                  throws IOException, SQLException {
+                  throws IOException, HsqlException {
 
         tTable      = t;
         iPos        = in.getPos();
@@ -82,7 +81,7 @@ class CachedDataRow extends CachedRow {
      *  As the indexes are in-memory, this passes the existing primary node
      *  for the construction of the new Row
      */
-    Row getUpdatedRow() throws SQLException {
+    Row getUpdatedRow() throws HsqlException {
         return tTable.getRow(iPos, nPrimaryNode);
     }
 
@@ -119,7 +118,7 @@ class CachedDataRow extends CachedRow {
      *  The only time this is used is when a new Row is added to the Caches.
      */
     void write(DatabaseRowOutputInterface out)
-    throws IOException, SQLException {
+    throws IOException, HsqlException {
 
         ((TextDatabaseRowOutput) out).setSystemId(tTable.iVisibleColumns
          != tTable.iColumnCount);

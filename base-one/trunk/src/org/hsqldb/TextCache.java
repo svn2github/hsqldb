@@ -33,7 +33,6 @@ package org.hsqldb;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.sql.SQLException;
 import org.hsqldb.lib.HsqlByteArrayOutputStream;
 import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.FileUtil;
@@ -70,11 +69,11 @@ class TextCache extends Cache {
      *  source string for the table (2) global database settings in
      *  *.properties file (3) program defaults
      */
-    TextCache(String name, Database db) throws SQLException {
+    TextCache(String name, Database db) throws HsqlException {
         super(name, db);
     }
 
-    protected void initParams() throws SQLException {
+    protected void initParams() throws HsqlException {
 
         // fredt - write rows as soon as they are inserted
         storeOnInsert = true;
@@ -247,7 +246,7 @@ class TextCache extends Cache {
     /**
      *  Opens a data source file.
      */
-    void open(boolean readonly) throws SQLException {
+    void open(boolean readonly) throws HsqlException {
 
         try {
             rFile    = new DatabaseFile(sName, (readonly) ? "r"
@@ -275,7 +274,7 @@ class TextCache extends Cache {
         readOnly = readonly;
     }
 
-    void reopen() throws SQLException {
+    void reopen() throws HsqlException {
         open(readOnly);
         rowIn.reset();
     }
@@ -285,7 +284,7 @@ class TextCache extends Cache {
      *  such rows have already been saved, so this method just removes a
      *  source file that has no rows.
      */
-    void flush() throws SQLException {
+    void flush() throws HsqlException {
 
         if (rFile == null) {
             return;
@@ -312,7 +311,7 @@ class TextCache extends Cache {
     /**
      * Closes the source file and deletes it if it is not read-only.
      */
-    void purge() throws SQLException {
+    void purge() throws HsqlException {
 
         if (rFile == null) {
             return;
@@ -337,7 +336,7 @@ class TextCache extends Cache {
     /**
      *
      */
-    void free(CachedRow r) throws SQLException {
+    void free(CachedRow r) throws HsqlException {
 
         if (storeOnInsert &&!isIndexingSource) {
             int pos    = r.iPos;
@@ -360,11 +359,11 @@ class TextCache extends Cache {
         remove(r);
     }
 
-    protected void setStorageSize(CachedRow r) throws SQLException {
+    protected void setStorageSize(CachedRow r) throws HsqlException {
         r.storageSize = rowOut.getSize(r);
     }
 
-    protected CachedRow makeRow(int pos, Table t) throws SQLException {
+    protected CachedRow makeRow(int pos, Table t) throws HsqlException {
 
         CachedRow r = null;
 

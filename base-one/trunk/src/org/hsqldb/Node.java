@@ -67,7 +67,6 @@
 
 package org.hsqldb;
 
-import java.sql.SQLException;
 import java.io.IOException;
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
@@ -109,7 +108,7 @@ abstract class Node {
     }
 
     static final Node newNode(Row r, DatabaseRowInputInterface in, int id,
-                              Table t) throws IOException, SQLException {
+                              Table t) throws IOException, HsqlException {
 
         switch (t.getIndexType()) {
 
@@ -140,24 +139,24 @@ abstract class Node {
     /**
      *  Return the Row Object that is linked to this Node.
      */
-    abstract Row getRow() throws SQLException;
+    abstract Row getRow() throws HsqlException;
 
     /**
      *  Getters and setters for AVL index operations.
      */
-    abstract Node getLeft() throws SQLException;
+    abstract Node getLeft() throws HsqlException;
 
-    abstract void setLeft(Node n) throws SQLException;
+    abstract void setLeft(Node n) throws HsqlException;
 
-    abstract Node getRight() throws SQLException;
+    abstract Node getRight() throws HsqlException;
 
-    abstract void setRight(Node n) throws SQLException;
+    abstract void setRight(Node n) throws HsqlException;
 
-    abstract Node getParent() throws SQLException;
+    abstract Node getParent() throws HsqlException;
 
-    abstract void setParent(Node n) throws SQLException;
+    abstract void setParent(Node n) throws HsqlException;
 
-    final int getBalance() throws SQLException {
+    final int getBalance() throws HsqlException {
 
         if (Trace.DOASSERT) {
             Trace.doAssert(iBalance != -2);
@@ -166,19 +165,19 @@ abstract class Node {
         return iBalance;
     }
 
-    abstract void setBalance(int b) throws SQLException;
+    abstract void setBalance(int b) throws HsqlException;
 
     abstract boolean isRoot();
 
-    abstract boolean isFromLeft() throws SQLException;
+    abstract boolean isFromLeft() throws HsqlException;
 
     /**
      *  Returns the database table data for this Node
      *
      */
-    abstract Object[] getData() throws SQLException;
+    abstract Object[] getData() throws HsqlException;
 
-    abstract boolean equals(Node n) throws SQLException;
+    abstract boolean equals(Node n) throws HsqlException;
 
     /**
      *  Returns the Node Object that currently represents this Node in the
@@ -189,7 +188,7 @@ abstract class Node {
      *  currently valid pointers to its linked AVL Nodes.
      *
      */
-    Node getUpdatedNode() throws SQLException {
+    Node getUpdatedNode() throws HsqlException {
         return this;
     }
 
@@ -197,5 +196,5 @@ abstract class Node {
      *  Writes out the node in an implementation dependent way.
      */
     abstract void write(DatabaseRowOutputInterface out)
-    throws IOException, SQLException;
+    throws IOException, HsqlException;
 }

@@ -69,8 +69,6 @@ package org.hsqldb;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.sql.SQLException;
-import java.sql.Types;
 import org.hsqldb.lib.HsqlByteArrayInputStream;
 
 /**
@@ -95,7 +93,7 @@ abstract class DatabaseRowInput extends HsqlByteArrayInputStream {
     protected boolean makeSystemId;
 
     static DatabaseRowInputInterface newDatabaseRowInput(int cachedRowType)
-    throws SQLException {
+    throws HsqlException {
 
         try {
             if (cachedRowType == DatabaseRowOutput.CACHED_ROW_170) {
@@ -158,36 +156,37 @@ abstract class DatabaseRowInput extends HsqlByteArrayInputStream {
     protected abstract boolean checkNull() throws IOException;
 
     protected abstract String readChar(int type)
-    throws IOException, SQLException;
+    throws IOException, HsqlException;
 
     protected abstract Integer readSmallint()
-    throws IOException, SQLException;
+    throws IOException, HsqlException;
 
-    protected abstract Integer readInteger() throws IOException, SQLException;
+    protected abstract Integer readInteger()
+    throws IOException, HsqlException;
 
-    protected abstract Long readBigint() throws IOException, SQLException;
+    protected abstract Long readBigint() throws IOException, HsqlException;
 
     protected abstract Double readReal(int type)
-    throws IOException, SQLException;
+    throws IOException, HsqlException;
 
     protected abstract BigDecimal readDecimal()
-    throws IOException, SQLException;
+    throws IOException, HsqlException;
 
-    protected abstract Boolean readBit() throws IOException, SQLException;
+    protected abstract Boolean readBit() throws IOException, HsqlException;
 
     protected abstract java.sql.Time readTime()
-    throws IOException, SQLException;
+    throws IOException, HsqlException;
 
     protected abstract java.sql.Date readDate()
-    throws IOException, SQLException;
+    throws IOException, HsqlException;
 
     protected abstract java.sql.Timestamp readTimestamp()
-    throws IOException, SQLException;
+    throws IOException, HsqlException;
 
-    protected abstract Object readOther() throws IOException, SQLException;
+    protected abstract Object readOther() throws IOException, HsqlException;
 
     protected abstract byte[] readBinary(int type)
-    throws IOException, SQLException;
+    throws IOException, HsqlException;
 
     /**
      *  reads row data from a stream using the JDBC types in colTypes
@@ -195,10 +194,10 @@ abstract class DatabaseRowInput extends HsqlByteArrayInputStream {
      * @param  colTypes currently only the length is used
      * @return
      * @throws  IOException
-     * @throws  SQLException
+     * @throws  HsqlException
      */
     public Object[] readData(int[] colTypes)
-    throws IOException, SQLException {
+    throws IOException, HsqlException {
 
         int    l      = colTypes.length;
         Object data[] = new Object[l];
@@ -326,6 +325,4 @@ abstract class DatabaseRowInput extends HsqlByteArrayInputStream {
         throw new java.lang.RuntimeException(
             "Method readLine() not yet implemented.");
     }
-
-
 }

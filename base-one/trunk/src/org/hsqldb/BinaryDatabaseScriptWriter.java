@@ -32,7 +32,6 @@
 package org.hsqldb;
 
 import java.io.*;
-import java.sql.SQLException;
 
 /**
  * @version 1.7.2
@@ -41,12 +40,12 @@ class BinaryDatabaseScriptWriter extends DatabaseScriptWriter {
 
     BinaryDatabaseScriptWriter(Database db, String file,
                                boolean includeCached,
-                               boolean newFile) throws SQLException {
+                               boolean newFile) throws HsqlException {
         super(db, file, includeCached, newFile);
     }
 
     protected void writeSingleColumnResult(Result r)
-    throws IOException, SQLException {
+    throws IOException, HsqlException {
 
         binaryOut.reset();
         binaryOut.writeSize(0);
@@ -58,7 +57,7 @@ class BinaryDatabaseScriptWriter extends DatabaseScriptWriter {
     // int : row size (0 if no more rows) ,
     // BinaryServerRowInput/Output : row (column values)
     protected void writeRow(Object[] data,
-                            Table t) throws IOException, SQLException {
+                            Table t) throws IOException, HsqlException {
 
         binaryOut.reset();
         binaryOut.writeSize(0);
@@ -70,7 +69,7 @@ class BinaryDatabaseScriptWriter extends DatabaseScriptWriter {
     }
 
     // int : headersize (0 if no more tables), String : tablename, int : operation,
-    protected void writeTableInit(Table t) throws SQLException, IOException {
+    protected void writeTableInit(Table t) throws HsqlException, IOException {
 
         tableRowCount = 0;
 

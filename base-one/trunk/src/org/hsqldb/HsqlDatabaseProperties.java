@@ -67,7 +67,6 @@
 
 package org.hsqldb;
 
-import java.sql.SQLException;
 import org.hsqldb.lib.HashSet;
 
 /**
@@ -211,7 +210,7 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
      * Creates file with defaults if it didn't exist.
      * Returns false if file already existed.
      */
-    public boolean load() throws SQLException {
+    public boolean load() throws HsqlException {
 
         boolean exists;
 
@@ -272,7 +271,7 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
                 0);
     }
 
-    public void save() throws SQLException {
+    public void save() throws HsqlException {
 
         try {
             super.save();

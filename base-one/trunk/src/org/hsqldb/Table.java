@@ -67,8 +67,6 @@
 
 package org.hsqldb;
 
-import java.sql.SQLException;
-import java.sql.Types;
 import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.Iterator;
@@ -165,10 +163,10 @@ class Table {
      * @param  name
      * @param  cached
      * @param  nameQuoted        Description of the Parameter
-     * @exception  SQLException  Description of the Exception
+     * @exception  HsqlException  Description of the Exception
      */
     Table(Database db, HsqlName name, int type,
-            int sessionid) throws SQLException {
+            int sessionid) throws HsqlException {
 
         dDatabase      = db;
         sqlEnforceSize = db.sqlEnforceSize;
@@ -287,7 +285,7 @@ class Table {
     /**
      * Used by INSERT, DELETE, UPDATE operations
      */
-    void checkDataReadOnly() throws SQLException {
+    void checkDataReadOnly() throws HsqlException {
 
         if (isReadOnly) {
             throw Trace.error(Trace.DATA_IS_READONLY);
@@ -296,7 +294,7 @@ class Table {
 
 // ----------------------------------------------------------------------------
 // akede@users - 1.7.2 patch Files readonly
-    void setDataReadOnly(boolean value) throws SQLException {
+    void setDataReadOnly(boolean value) throws HsqlException {
 
         // Changing the Read-Only mode for the table is only allowed if the
         // the database can realize it.
@@ -320,7 +318,7 @@ class Table {
     }
 
     protected void setDataSource(String source, boolean isDesc,
-                                 Session s) throws SQLException {
+                                 Session s) throws HsqlException {
 
         // Same exception as setIndexRoots.
         throw (Trace.error(Trace.TABLE_NOT_FOUND));
@@ -429,9 +427,9 @@ class Table {
      *
      * @param  name
      * @param  type
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void addColumn(String name, int type) throws SQLException {
+    void addColumn(String name, int type) throws HsqlException {
 
         Column column = new Column(new HsqlName(name, false), true, type, 0,
                                    0, false, false, null);
@@ -446,9 +444,9 @@ class Table {
      *  DDL level.
      *
      * @param  column new column to add
-     * @throws  SQLException when table level checks fail
+     * @throws  HsqlException when table level checks fail
      */
-    void addColumn(Column column) throws SQLException {
+    void addColumn(Column column) throws HsqlException {
 
         if (searchColumn(column.columnName.name) >= 0) {
             throw Trace.error(Trace.COLUMN_ALREADY_EXISTS);
@@ -477,9 +475,9 @@ class Table {
      *  Method declaration
      *
      * @param  result
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void addColumns(Result result) throws SQLException {
+    void addColumns(Result result) throws HsqlException {
 
         int colCount = result.getColumnCount();
 
@@ -509,9 +507,9 @@ class Table {
      *
      * @param name
      * @param isquoted
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void setName(String name, boolean isquoted) throws SQLException {
+    void setName(String name, boolean isquoted) throws HsqlException {
 
         tableName.rename(name, isquoted);
 
@@ -532,7 +530,7 @@ class Table {
         return iColumnCount;
     }
 
-    protected Table duplicate() throws SQLException {
+    protected Table duplicate() throws HsqlException {
 
         Table t = (new Table(dDatabase, tableName, tableType,
                              ownerSessionId));
@@ -546,10 +544,10 @@ class Table {
      * @param col column array from this Table
      * @param other the other Table object
      * @param othercol column array from the other Table
-     * @throws SQLException if there is a mismatch
+     * @throws HsqlException if there is a mismatch
      */
     void checkColumnsMatch(int[] col, Table other,
-                           int[] othercol) throws SQLException {
+                           int[] othercol) throws HsqlException {
 
         if (col.length != othercol.length) {
             throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
@@ -589,10 +587,10 @@ class Table {
      * @param  colindex
      * @param  adjust -1 or 0 or +1
      * @return
-     * @throws  SQLException
+     * @throws  HsqlException
      */
     Table moveDefinition(String withoutindex, Column newcolumn, int colindex,
-                         int adjust) throws SQLException {
+                         int adjust) throws HsqlException {
 
         Table tn = duplicate();
 
@@ -658,7 +656,7 @@ class Table {
     }
 
     void updateConstraints(Table to, int colindex,
-                           int adjust) throws SQLException {
+                           int adjust) throws HsqlException {
 
         for (int j = 0, size = vConstraint.size(); j < size; j++) {
             Constraint c = (Constraint) vConstraint.get(j);
@@ -699,9 +697,9 @@ class Table {
      *
      * @param  c
      * @return
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    int getColumnNr(String c) throws SQLException {
+    int getColumnNr(String c) throws HsqlException {
 
         int i = searchColumn(c);
 
@@ -733,7 +731,7 @@ class Table {
      *  Method declaration
      *
      * @return
-     * @throws  SQLException
+     * @throws  HsqlException
      */
     Index getPrimaryIndex() {
 
@@ -748,7 +746,7 @@ class Table {
      *  Method declaration
      *
      * @return
-     * @throws  SQLException
+     * @throws  HsqlException
      */
     int[] getPrimaryKey() {
 
@@ -834,9 +832,9 @@ class Table {
      *
      * @param  column
      * @return
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    Index getIndexForColumn(int column) throws SQLException {
+    Index getIndexForColumn(int column) throws HsqlException {
 
         for (int i = 0; i < iIndexCount; i++) {
             Index h = getIndex(i);
@@ -854,9 +852,9 @@ class Table {
      *
      * @param  col
      * @return
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    Index getIndexForColumns(int col[], boolean unique) throws SQLException {
+    Index getIndexForColumns(int col[], boolean unique) throws HsqlException {
 
         for (int i = 0; i < iIndexCount; i++) {
             Index currentindex = getIndex(i);
@@ -894,7 +892,7 @@ class Table {
      *  Method declaration
      *
      * @return
-     * @throws  SQLException
+     * @throws  HsqlException
      */
     String getIndexRoots() {
 
@@ -928,9 +926,9 @@ class Table {
      *  null or all should be a valid file pointer/reference.
      *
      * @param  s
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void setIndexRoots(int[] roots) throws SQLException {
+    void setIndexRoots(int[] roots) throws HsqlException {
 
         Trace.check(isCached, Trace.TABLE_NOT_FOUND);
 
@@ -956,9 +954,9 @@ class Table {
      *  Method declaration
      *
      * @param  s
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void setIndexRoots(String s) throws SQLException {
+    void setIndexRoots(String s) throws HsqlException {
 
         // the user may try to set this; this is not only internal problem
         Trace.check(isCached, Trace.TABLE_NOT_FOUND);
@@ -1007,18 +1005,18 @@ class Table {
     /**
      *  Shortcut for creating system table PK's
      *
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void createPrimaryKey(int[] cols) throws SQLException {
+    void createPrimaryKey(int[] cols) throws HsqlException {
         createPrimaryKey(null, cols, false);
     }
 
     /**
      *  Shortcut for creating default PK's
      *
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void createPrimaryKey() throws SQLException {
+    void createPrimaryKey() throws HsqlException {
         createPrimaryKey(null, null, false);
     }
 
@@ -1028,12 +1026,12 @@ class Table {
      *  colTypes array. Finalises the creation of the table. (fredt@users)
      *
      * @param columns primary key column(s) or null if no primary key in DDL
-     * @throws  SQLException
+     * @throws  HsqlException
      */
 
 // tony_lai@users 20020820 - patch 595099
     void createPrimaryKey(HsqlName pkName, int[] columns,
-                          boolean columnsNotNull) throws SQLException {
+                          boolean columnsNotNull) throws HsqlException {
 
         Trace.doAssert(iPrimaryKey == null, "Table.createPrimaryKey(column)");
 
@@ -1101,10 +1099,10 @@ class Table {
      * @param  colindex
      * @param  ajdust -1 or 0 or 1
      * @return new index or null if a column is removed from index
-     * @throws  SQLException
+     * @throws  HsqlException
      */
     private Index createAdjustedIndex(Index index, int colindex,
-                                      int adjust) throws SQLException {
+                                      int adjust) throws HsqlException {
 
         int[] indexcolumns =
             (int[]) ArrayUtil.newResizedArray(index.getColumns(),
@@ -1129,7 +1127,7 @@ class Table {
      * @param  unique
      */
     Index createIndex(int column[], HsqlName name,
-                      boolean unique) throws SQLException {
+                      boolean unique) throws HsqlException {
 
         Index newindex     = createIndexStructure(column, name, unique);
         Index primaryindex = getPrimaryIndex();
@@ -1156,7 +1154,7 @@ class Table {
             return newindex;
         } catch (java.lang.OutOfMemoryError e) {
             error = Trace.OUT_OF_MEMORY;
-        } catch (SQLException e) {
+        } catch (HsqlException e) {
             error = Trace.VIOLATION_OF_UNIQUE_INDEX;
         }
 
@@ -1193,10 +1191,10 @@ class Table {
      * @param  name
      * @param  unique
      * @return                Description of the Return Value
-     * @throws  SQLException
+     * @throws  HsqlException
      */
     Index createIndexStructure(int column[], HsqlName name,
-                               boolean unique) throws SQLException {
+                               boolean unique) throws HsqlException {
 
         Trace.doAssert(iPrimaryKey != null, "createIndex");
 
@@ -1254,10 +1252,10 @@ class Table {
      *
      * @param  indexname
      * @param ignore null or a set of constraints that should be ignored in checks
-     * @throws  SQLException if index is used in a constraint
+     * @throws  HsqlException if index is used in a constraint
      */
     void checkDropIndex(String indexname,
-                        HashMap ignore) throws SQLException {
+                        HashMap ignore) throws HsqlException {
 
         Index index = this.getIndex(indexname);
 
@@ -1336,7 +1334,7 @@ class Table {
      * required and avoids evaluating these values where they will be
      * overwritten.
      */
-    Object[] getNewRow(boolean[] exists) throws SQLException {
+    Object[] getNewRow(boolean[] exists) throws HsqlException {
 
         Object[] row = new Object[iColumnCount];
         int      i;
@@ -1360,7 +1358,7 @@ class Table {
      *
      * @return
      */
-    void dropIndex(String indexname) throws SQLException {
+    void dropIndex(String indexname) throws HsqlException {
 
         // find the array index for indexname and remove
         int todrop = 1;
@@ -1404,9 +1402,9 @@ class Table {
      *
      * @param  from
      * @param  colindex index of the column that was added or removed
-     * @throws  SQLException normally for lack of resources
+     * @throws  HsqlException normally for lack of resources
      */
-    void moveData(Table from, int colindex, int adjust) throws SQLException {
+    void moveData(Table from, int colindex, int adjust) throws HsqlException {
 
         Object colvalue = null;
 
@@ -1459,7 +1457,7 @@ class Table {
      *  Highest level multiple row insert method. Corresponds to an SQL
      *  INSERT INTO statement.
      */
-    int insert(Result ins, Session c) throws SQLException {
+    int insert(Result ins, Session c) throws HsqlException {
 
         Record ni    = ins.rRoot;
         int    count = 0;
@@ -1492,7 +1490,7 @@ class Table {
      *  SQL INSERT INTO .... VALUES(,,) statement.
      *  fires triggers.
      */
-    void insert(Object row[], Session c) throws SQLException {
+    void insert(Object row[], Session c) throws HsqlException {
 
         checkNullColumns(row);
         fireAll(TriggerDef.INSERT_BEFORE);
@@ -1504,7 +1502,7 @@ class Table {
      *  High level method for inserting rows. Performs constraint checks and
      *  fires triggers.
      */
-    private void insertRow(Object row[], Session c) throws SQLException {
+    private void insertRow(Object row[], Session c) throws HsqlException {
 
         fireAll(TriggerDef.INSERT_BEFORE_ROW, row);
 
@@ -1528,7 +1526,7 @@ class Table {
      *
      * Not used for INSERT INTO .... SELECT ... FROM queries
      */
-    void insertNoCheck(Result result, Session c) throws SQLException {
+    void insertNoCheck(Result result, Session c) throws HsqlException {
 
         // if violation of constraints can occur, insert must be rolled back
         // outside of this function!
@@ -1554,7 +1552,7 @@ class Table {
      *  add the row to the indexes.
      */
     void insertNoCheck(Object row[], Session c,
-                       boolean log) throws SQLException {
+                       boolean log) throws HsqlException {
 
         // this is necessary when rebuilding from the *.script but not
         // for transaction rollback
@@ -1586,7 +1584,7 @@ class Table {
      *  add the row to the indexes.
      */
     void insertNoCheckRollback(Object row[], Session c,
-                               boolean log) throws SQLException {
+                               boolean log) throws HsqlException {
 
         Row r = Row.newRow(this, row);
 
@@ -1602,7 +1600,7 @@ class Table {
      * Used by TextCache to insert a row into the indexes when the source
      * file is first read.
      */
-    protected void insertNoChange(CachedDataRow r) throws SQLException {
+    protected void insertNoChange(CachedDataRow r) throws HsqlException {
 
         Object[] row = r.getData();
 
@@ -1614,7 +1612,7 @@ class Table {
     /**
      * Checks a row against NOT NULL constraints on columns.
      */
-    protected void checkNullColumns(Object[] row) throws SQLException {
+    protected void checkNullColumns(Object[] row) throws HsqlException {
 
         for (int i = 0; i < iVisibleColumns; i++) {
             if (row[i] == null &&!colNullable[i]) {
@@ -1630,7 +1628,7 @@ class Table {
      * the value and/or adjusts the iIdentiy value for the table.
      */
     protected void setIdentityColumn(Object[] row,
-                                     Session c) throws SQLException {
+                                     Session c) throws HsqlException {
 
         long nextId = iIdentityId;
 
@@ -1672,7 +1670,7 @@ class Table {
      *  Enforce max field sizes according to SQL column definition.
      *  SQL92 13.8
      */
-    void enforceFieldValueLimits(Object[] row) throws SQLException {
+    void enforceFieldValueLimits(Object[] row) throws HsqlException {
 
         int colindex;
 
@@ -1691,7 +1689,7 @@ class Table {
      *  As above but for a limited number of columns used for UPDATE queries.
      */
     void enforceFieldValueLimits(Object[] row,
-                                 int col[]) throws SQLException {
+                                 int col[]) throws HsqlException {
 
         int i;
         int colindex;
@@ -1841,10 +1839,10 @@ class Table {
      * @param  row
      * @param  session
      * @param  delete
-     * @throws  SQLException
+     * @throws  HsqlException
      */
     void checkCascadeDelete(Object[] row, Session session,
-                            boolean doIt) throws SQLException {
+                            boolean doIt) throws HsqlException {
 
         for (int i = 0, cSize = vConstraint.size(); i < cSize; i++) {
             Constraint c = (Constraint) vConstraint.get(i);
@@ -2001,7 +1999,7 @@ class Table {
 // which can be spotted within this routine.
     void checkCascadeUpdate(Object[] orow, Object[] nrow, Session session,
                             int[] cols, Table ref,
-                            boolean update) throws SQLException {
+                            boolean update) throws HsqlException {
 
         // -- We iterate through all constraints associated with this table
         // --
@@ -2176,7 +2174,7 @@ class Table {
      *  Highest level multiple row delete method. Corresponds to an SQL
      *  DELETE.
      */
-    int delete(Result del, Session c) throws SQLException {
+    int delete(Result del, Session c) throws HsqlException {
 
         Record nd    = del.rRoot;
         int    count = 0;
@@ -2208,11 +2206,11 @@ class Table {
      *  Highest level multiple row delete method. Corresponds to an SQL
      *  DELETE.
      */
-    int delete(HsqlLinkedList del, Session c) throws SQLException {
+    int delete(HsqlLinkedList del, Session c) throws HsqlException {
 
         Iterator it    = del.iterator();
-        int         count = 0;
-        Row         r;
+        int      count = 0;
+        Row      r;
 
         while (it.hasNext()) {
             r = (Row) it.next();
@@ -2240,7 +2238,7 @@ class Table {
      *  constraint checks.
      */
     private void delete(Object row[], Session session,
-                        boolean doit) throws SQLException {
+                        boolean doit) throws HsqlException {
 
         if (dDatabase.isReferentialIntegrity()) {
             checkCascadeDelete(row, session, doit);
@@ -2256,7 +2254,7 @@ class Table {
      *  constraint checks.
      */
     private void delete(Row r, Session session,
-                        boolean doit) throws SQLException {
+                        boolean doit) throws HsqlException {
 
         if (dDatabase.isReferentialIntegrity()) {
             checkCascadeDelete(r.getData(), session, doit);
@@ -2272,7 +2270,7 @@ class Table {
      *  constraint checks.
      */
     private void deleteNoRefCheck(Object row[],
-                                  Session session) throws SQLException {
+                                  Session session) throws HsqlException {
 
         fireAll(TriggerDef.DELETE_BEFORE_ROW, row);
         deleteNoCheck(row, session, true);
@@ -2286,7 +2284,7 @@ class Table {
      *  constraint checks.
      */
     private void deleteNoRefCheck(Row r,
-                                  Session session) throws SQLException {
+                                  Session session) throws HsqlException {
 
         fireAll(TriggerDef.DELETE_BEFORE_ROW, r.getData());
         deleteNoCheck(r, session, true);
@@ -2300,7 +2298,7 @@ class Table {
      * from the Cache.
      */
     private void deleteNoCheck(Row r, Session c,
-                               boolean log) throws SQLException {
+                               boolean log) throws HsqlException {
 
         Node     node;
         Object[] row = r.getData();
@@ -2332,7 +2330,7 @@ class Table {
      * from the Cache.
      */
     void deleteNoCheck(Object row[], Session c,
-                       boolean log) throws SQLException {
+                       boolean log) throws HsqlException {
 
         Node node = getIndex(0).search(row);
         Row  r    = node.getRow();
@@ -2362,7 +2360,7 @@ class Table {
      * from the Cache.
      */
     void deleteNoCheckRollback(Object row[], Session c,
-                               boolean log) throws SQLException {
+                               boolean log) throws HsqlException {
 
         Node node = getIndex(0).search(row);
         Row  r    = node.getRow();
@@ -2388,10 +2386,10 @@ class Table {
      *  UPDATE.
      */
     int update(HsqlLinkedList del, Result ins, int[] col,
-               Session c) throws SQLException {
+               Session c) throws HsqlException {
 
         Iterator it = del.iterator();
-        Record      ni = ins.rRoot;
+        Record   ni = ins.rRoot;
 
         while (it.hasNext() && ni != null) {
             Row row = (Row) it.next();
@@ -2430,7 +2428,7 @@ class Table {
      *  integrity or to perform the update.
      */
     private void update(Row oldr, Object[] newrow, int[] col, Session c,
-                        boolean doit) throws SQLException {
+                        boolean doit) throws HsqlException {
 
         if (dDatabase.isReferentialIntegrity()) {
             checkCascadeUpdate(oldr.getData(), newrow, c, col, null, doit);
@@ -2447,7 +2445,7 @@ class Table {
 /*
     private void updateNoRefCheck(Object[] oldrow, Object[] newrow,
                                   Session c,
-                                  boolean log) throws SQLException {
+                                  boolean log) throws HsqlException {
 
         fireAll(TriggerDef.UPDATE_BEFORE_ROW, oldrow);
         updateNoCheck(oldrow, newrow, c, log);
@@ -2459,7 +2457,7 @@ class Table {
      * Mid level row update method. Fires triggers.
      */
     private void updateNoRefCheck(Row oldr, Object[] newrow, Session c,
-                                  boolean log) throws SQLException {
+                                  boolean log) throws HsqlException {
 
         fireAll(TriggerDef.UPDATE_BEFORE_ROW, oldr.getData());
         updateNoCheck(oldr, newrow, c, log);
@@ -2471,7 +2469,7 @@ class Table {
      */
 /*
     private void updateNoCheck(Object[] oldrow, Object[] newrow, Session c,
-                               boolean log) throws SQLException {
+                               boolean log) throws HsqlException {
         deleteNoCheck(oldrow, c, log);
         insertNoCheck(newrow, c, log);
     }
@@ -2481,7 +2479,7 @@ class Table {
      * Low level row update method. Updates the row and the indexes.
      */
     private void updateNoCheck(Row oldr, Object[] newrow, Session c,
-                               boolean log) throws SQLException {
+                               boolean log) throws HsqlException {
         deleteNoCheck(oldr, c, log);
         insertNoCheck(newrow, c, log);
     }
@@ -2490,7 +2488,7 @@ class Table {
      * Unused since support for cascading updates was introduced.
      */
     void checkUpdate(int col[], Result deleted,
-                     Result inserted) throws SQLException {
+                     Result inserted) throws HsqlException {
 
         Trace.check(!isReadOnly, Trace.DATA_IS_READONLY);
 
@@ -2611,9 +2609,9 @@ class Table {
      *
      * @param  row
      * @return
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    String getInsertStatement(Object row[]) throws SQLException {
+    String getInsertStatement(Object row[]) throws HsqlException {
 
         HsqlStringBuffer a = new HsqlStringBuffer(128);
 
@@ -2636,9 +2634,9 @@ class Table {
      *
      * @param  row
      * @return
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    private String getDeleteStatement(Object row[]) throws SQLException {
+    private String getDeleteStatement(Object row[]) throws HsqlException {
 
         HsqlStringBuffer a = new HsqlStringBuffer(128);
 
@@ -2685,9 +2683,9 @@ class Table {
      *
      * @param  pos
      * @return
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    CachedRow getRow(int pos, Node primarynode) throws SQLException {
+    CachedRow getRow(int pos, Node primarynode) throws HsqlException {
 
         if (isCached) {
             return cCache.getRow(pos, this);
@@ -2696,7 +2694,7 @@ class Table {
         return null;
     }
 
-    void putRow(CachedRow r) throws SQLException {
+    void putRow(CachedRow r) throws HsqlException {
 
         int size = 0;
 
@@ -2705,14 +2703,14 @@ class Table {
         }
     }
 
-    void removeRow(CachedRow r) throws SQLException {
+    void removeRow(CachedRow r) throws HsqlException {
 
         if (cCache != null) {
             cCache.free(r);
         }
     }
 
-    void indexRow(Row r) throws SQLException {
+    void indexRow(Row r) throws HsqlException {
 
         int i = 0;
 
@@ -2724,7 +2722,7 @@ class Table {
 
                 getIndex(i).insert(n);
             }
-        } catch (SQLException e) {
+        } catch (HsqlException e) {
 
             // unique index violation - rollback insert
             for (--i; i >= 0; i--) {
@@ -2742,12 +2740,12 @@ class Table {
     /**
      * Currently only for temp system tables.
      */
-    void clearAllRows() throws SQLException {
+    void clearAllRows() throws HsqlException {
         Trace.check(isTemp, Trace.OPERATION_NOT_SUPPORTED);
         setIndexRootsNull();
     }
 
-    void drop() throws SQLException {
+    void drop() throws HsqlException {
 
         if (cCache != null &&!isEmpty()) {
             cCache.remove(this);

@@ -33,8 +33,6 @@ package org.hsqldb;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.sql.SQLException;
-import java.sql.Types;
 import org.hsqldb.lib.StringConverter;
 
 /**
@@ -61,24 +59,26 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
                                  boolean allQuoted) throws IOException {
 
         super();
+
         initTextDatabaseRowOutput(fieldSep, varSep, longvarSep, allQuoted,
-                                 "ASCII");
+                                  "ASCII");
     }
 
     public TextDatabaseRowOutput(String fieldSep, String varSep,
-                                 String longvarSep,
-                                 boolean allQuoted,
+                                 String longvarSep, boolean allQuoted,
                                  String encoding) throws IOException {
 
         super();
+
         initTextDatabaseRowOutput(fieldSep, varSep, longvarSep, allQuoted,
-                                 encoding);
+                                  encoding);
     }
 
     private void initTextDatabaseRowOutput(String fieldSep, String varSep,
-                                 String longvarSep,
-                                 boolean allQuoted,
-                                 String encoding) throws IOException {
+                                           String longvarSep,
+                                           boolean allQuoted,
+                                           String encoding)
+                                           throws IOException {
 
         //-- Newline indicates that field should match to end of line.
         if (fieldSep.endsWith("\n")) {
@@ -131,6 +131,7 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
         // writeBytes(s);
         byte[] bytes = getBytes(s);
+
         write(bytes, 0, bytes.length);
 
         nextSep    = fieldSep;
@@ -147,6 +148,7 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
         // writeBytes(s);
         byte[] bytes = getBytes(s);
+
         write(bytes, 0, bytes.length);
 
         nextSep    = varSep;
@@ -159,6 +161,7 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
 
         // writeBytes(s);
         byte[] bytes = getBytes(s);
+
         write(bytes, 0, bytes.length);
 
         nextSep    = longvarSep;
@@ -178,13 +181,15 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
     }
 
     private byte[] getBytes(String s) {
+
         byte[] bytes = null;
+
         try {
             bytes = s.getBytes(encoding);
-        }
-        catch (UnsupportedEncodingException e) {
+        } catch (UnsupportedEncodingException e) {
             bytes = s.getBytes();
         }
+
         return bytes;
     }
 
@@ -260,48 +265,48 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
         }
     }
 
-    protected void writeSmallint(Number o) throws IOException, SQLException {
+    protected void writeSmallint(Number o) throws IOException, HsqlException {
         writeString(o.toString());
     }
 
-    protected void writeInteger(Number o) throws IOException, SQLException {
+    protected void writeInteger(Number o) throws IOException, HsqlException {
         writeString(o.toString());
     }
 
-    protected void writeBigint(Number o) throws IOException, SQLException {
+    protected void writeBigint(Number o) throws IOException, HsqlException {
         writeString(o.toString());
     }
 
     protected void writeReal(Double o,
-                             int type) throws IOException, SQLException {
+                             int type) throws IOException, HsqlException {
         writeString(o.toString());
     }
 
     protected void writeDecimal(java.math.BigDecimal o)
-    throws IOException, SQLException {
+    throws IOException, HsqlException {
         writeString(o.toString());
     }
 
-    protected void writeBit(Boolean o) throws IOException, SQLException {
+    protected void writeBit(Boolean o) throws IOException, HsqlException {
         writeString(o.toString());
     }
 
     protected void writeDate(java.sql.Date o)
-    throws IOException, SQLException {
+    throws IOException, HsqlException {
         writeString(o.toString());
     }
 
     protected void writeTime(java.sql.Time o)
-    throws IOException, SQLException {
+    throws IOException, HsqlException {
         writeString(o.toString());
     }
 
     protected void writeTimestamp(java.sql.Timestamp o)
-    throws IOException, SQLException {
+    throws IOException, HsqlException {
         writeString(o.toString());
     }
 
-    protected void writeOther(Object o) throws IOException, SQLException {
+    protected void writeOther(Object o) throws IOException, HsqlException {
 
         byte[] ba = Column.serialize(o);
 
@@ -309,11 +314,11 @@ class TextDatabaseRowOutput extends org.hsqldb.DatabaseRowOutput {
     }
 
     protected void writeBinary(byte[] o,
-                               int t) throws IOException, SQLException {
+                               int t) throws IOException, HsqlException {
         writeByteArray(o);
     }
 
-    public int getSize(CachedRow r) throws SQLException {
+    public int getSize(CachedRow r) throws HsqlException {
 
         reset();
 

@@ -32,16 +32,23 @@
 package org.hsqldb.lib;
 
 public interface Set extends Collection {
+
     int size();
+
     boolean isEmpty();
+
     boolean contains(Object o);
+
     Iterator iterator();
+
 /*
     Object[] toArray();
     Object[] toArray(Object a[]);
 */
     boolean add(Object o);
+
     boolean remove(Object o);
+
 /*
     boolean containsAll(Collection c);
     boolean addAll(Collection c);
@@ -51,5 +58,6 @@ public interface Set extends Collection {
     void clear();
 
     boolean equals(Object o);
+
     int hashCode();
 }

@@ -34,7 +34,6 @@ package org.hsqldb;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.sql.SQLException;
 import org.hsqldb.lib.StringConverter;
 
 /**
@@ -47,11 +46,11 @@ import org.hsqldb.lib.StringConverter;
 class BinaryServerRowInput extends org.hsqldb.DatabaseRowInput
 implements org.hsqldb.DatabaseRowInputInterface {
 
-    public BinaryServerRowInput(){
+    public BinaryServerRowInput() {
         super();
     }
 
-    public BinaryServerRowInput(byte buf[]){
+    public BinaryServerRowInput(byte buf[]) {
         super(buf);
     }
 
@@ -76,9 +75,9 @@ implements org.hsqldb.DatabaseRowInputInterface {
 
         int    length = readInt();
         String s      = StringConverter.readUTF(buf, pos, length);
-// fredt - memory opt tests
-        s = org.hsqldb.store.ValuePool.getString(s);
 
+// fredt - memory opt tests
+        s   = org.hsqldb.store.ValuePool.getString(s);
         pos += length;
 
         return s;
@@ -96,31 +95,35 @@ implements org.hsqldb.DatabaseRowInputInterface {
         return readString();
     }
 
-    protected Integer readSmallint() throws IOException, SQLException {
+    protected Integer readSmallint() throws IOException, HsqlException {
+
 // fredt - memory opt tests
 //        return new Integer(readShort());
         return org.hsqldb.store.ValuePool.getInt(readShort());
     }
 
-    protected Integer readInteger() throws IOException, SQLException {
+    protected Integer readInteger() throws IOException, HsqlException {
+
 // fredt - memory opt tests
 //        return new Integer(readInt());
         return org.hsqldb.store.ValuePool.getInt(readInt());
     }
 
-    protected Long readBigint() throws IOException, SQLException {
+    protected Long readBigint() throws IOException, HsqlException {
+
 // fredt - memory opt tests
 //        return new Long(readLong());
         return org.hsqldb.store.ValuePool.getLong(readLong());
     }
 
-    protected Double readReal(int type) throws IOException, SQLException {
+    protected Double readReal(int type) throws IOException, HsqlException {
+
 // fredt - memory opt tests
 //        return new Double(Double.longBitsToDouble(readLong()));
         return org.hsqldb.store.ValuePool.getDouble(readLong());
     }
 
-    protected BigDecimal readDecimal() throws IOException, SQLException {
+    protected BigDecimal readDecimal() throws IOException, HsqlException {
 
         byte[]     bytes  = readByteArray();
         int        scale  = readInt();
@@ -128,30 +131,32 @@ implements org.hsqldb.DatabaseRowInputInterface {
 
 // fredt - memory opt tests
 //        return new BigDecimal(bigint, scale);
-        return org.hsqldb.store.ValuePool.getBigDecimal(new BigDecimal(bigint, scale));
+        return org.hsqldb.store.ValuePool.getBigDecimal(new BigDecimal(bigint,
+                scale));
     }
 
-    protected Boolean readBit() throws IOException, SQLException {
+    protected Boolean readBit() throws IOException, HsqlException {
         return readBoolean() ? Boolean.TRUE
                              : Boolean.FALSE;
     }
 
-    protected java.sql.Time readTime() throws IOException, SQLException {
+    protected java.sql.Time readTime() throws IOException, HsqlException {
         return new java.sql.Time(readLong());
     }
 
-    protected java.sql.Date readDate() throws IOException, SQLException {
+    protected java.sql.Date readDate() throws IOException, HsqlException {
+
 // fredt - memory opt tests
 //        return new java.sql.Date(readLong());
         return org.hsqldb.store.ValuePool.getDate(readLong());
     }
 
     protected java.sql.Timestamp readTimestamp()
-    throws IOException, SQLException {
+    throws IOException, HsqlException {
         return HsqlDateTime.timestampValue(readLong(), readInt());
     }
 
-    protected Object readOther() throws IOException, SQLException {
+    protected Object readOther() throws IOException, HsqlException {
 
 // fredt@users 20020328 -  patch 482109 by fredt - OBJECT handling
 // objects are / were stored as serialized byte[]
@@ -161,7 +166,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         return Column.deserialize(o);
     }
 
-    protected byte[] readBinary(int type) throws IOException, SQLException {
+    protected byte[] readBinary(int type) throws IOException, HsqlException {
         return readByteArray();
     }
 }

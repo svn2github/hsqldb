@@ -69,7 +69,6 @@ package org.hsqldb;
 
 import java.io.IOException;
 import java.io.File;
-import java.sql.SQLException;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.ObjectComparator;
@@ -194,7 +193,7 @@ class Cache {
     // for testing
     StopWatch sw;
 
-    Cache(String name, Database db) throws SQLException {
+    Cache(String name, Database db) throws HsqlException {
 
         sName     = name;
         dDatabase = db;
@@ -207,7 +206,7 @@ class Cache {
     /**
      * initial external parameters are set here.
      */
-    protected void initParams() throws SQLException {
+    protected void initParams() throws HsqlException {
 
         cacheScale = dbProps.getIntegerProperty("hsqldb.cache_scale", 14, 8,
                 16);
@@ -251,7 +250,7 @@ class Cache {
         iCacheSize     = 0;
     }
 
-    private void initBuffers() throws SQLException {
+    private void initBuffers() throws HsqlException {
         rowIn  = DatabaseRowInput.newDatabaseRowInput(cachedRowType);
         rowOut = DatabaseRowOutput.newDatabaseRowOutput(cachedRowType);
     }
@@ -260,7 +259,7 @@ class Cache {
      * Opens the *.data file for this cache, setting the variables that
      * allow accesse to the particular database version of the *.data file.
      */
-    void open(boolean readonly) throws SQLException {
+    void open(boolean readonly) throws HsqlException {
 
         try {
             boolean exists = false;
@@ -303,7 +302,7 @@ class Cache {
      *  Writes out all cached rows that have been modified and the free
      *  position pointer for the *.data file and then closes the file.
      */
-    void flush() throws SQLException {
+    void flush() throws HsqlException {
 
         if (rFile == null || rFile.readOnly) {
             return;
@@ -334,7 +333,7 @@ class Cache {
      *  Writes out all the rows to a new file without fragmentation and
      *  returns an ArrayList containing new positions for index roots.
      */
-    HsqlArrayList defrag() throws SQLException {
+    HsqlArrayList defrag() throws HsqlException {
 
         HsqlArrayList indexRoots = null;
 
@@ -370,7 +369,7 @@ class Cache {
     /**
      *  Closes this object's database file without flushing pending writes.
      */
-    void closeFile() throws SQLException {
+    void closeFile() throws HsqlException {
 
         if (rFile == null) {
             return;
@@ -394,7 +393,7 @@ class Cache {
      * todo: This is wrong when deleting lots of records <p>
      * Then remove the row from the cache data structures.
      */
-    void free(CachedRow r) throws SQLException {
+    void free(CachedRow r) throws HsqlException {
 
         fileModified = true;
 
@@ -421,7 +420,7 @@ class Cache {
      * Calculates the number of bytes required to store a Row in this object's
      * database file.
      */
-    protected void setStorageSize(CachedRow r) throws SQLException {
+    protected void setStorageSize(CachedRow r) throws HsqlException {
 
         // iSize = 4 bytes, iPos = 4 bytes, each index = 32 bytes
         Table t    = r.getTable();
@@ -437,7 +436,7 @@ class Cache {
      * Adds a new Row to the Cache. This is used when a new database row is
      * created<p>
      */
-    void add(CachedRow r) throws SQLException {
+    void add(CachedRow r) throws HsqlException {
 
         fileModified = true;
 
@@ -486,7 +485,7 @@ class Cache {
      * there is available space to store it, reusing space if it exists.
      * Otherwise the file is grown to accommodate it.
      */
-    int setFilePos(CachedRow r) throws SQLException {
+    int setFilePos(CachedRow r) throws HsqlException {
 
         int       rowSize = r.storageSize;
         int       size    = rowSize;
@@ -543,7 +542,7 @@ class Cache {
      * Constructs a new Row for the specified table, using row data read
      * at the specified position (pos) in this object's database file.
      */
-    protected CachedRow makeRow(int pos, Table t) throws SQLException {
+    protected CachedRow makeRow(int pos, Table t) throws HsqlException {
 
         CachedRow r = null;
 
@@ -570,7 +569,7 @@ class Cache {
      * Reads a Row object from this Cache that corresponds to the
      * (pos) file offset in .data file.
      */
-    CachedRow getRow(int pos, Table t) throws SQLException {
+    CachedRow getRow(int pos, Table t) throws HsqlException {
 
         CachedRow r = getRow(pos);
 
@@ -650,7 +649,7 @@ class Cache {
      * some of those that have been accessed less recently.
      *
      */
-    private void cleanUp() throws SQLException {
+    private void cleanUp() throws HsqlException {
 
         if (sw == null) {
             sw = new StopWatch();
@@ -721,7 +720,7 @@ class Cache {
      * some of those that have been accessed less recently.
      *
      */
-    private void cleanUpNew() throws SQLException {
+    private void cleanUpNew() throws HsqlException {
 
         if (sw == null) {
             sw = new StopWatch();
@@ -781,7 +780,7 @@ class Cache {
      * to index roots will never be removed otherwise. This doesn't add the
      * Rows to the free list and does not by itself modify the *.data file.
      */
-    protected void remove(Table t) throws SQLException {
+    protected void remove(Table t) throws HsqlException {
 
         CachedRow row = rFirst;
 
@@ -798,7 +797,7 @@ class Cache {
      * Removes a Row from this Cache object. This is done when there is no
      * room for extra rows to be read from the disk.
      */
-    protected CachedRow remove(CachedRow r) throws SQLException {
+    protected CachedRow remove(CachedRow r) throws HsqlException {
 
         // r.hasChanged() == false unless called from Cache.remove(Table)
         // make sure rLastChecked does not point to r
@@ -851,7 +850,7 @@ class Cache {
      * keeps such pointers on a temporary basis.
      *
      */
-    private CachedRow getWorst() throws SQLException {
+    private CachedRow getWorst() throws HsqlException {
 
         if (rLastChecked == null) {
             rLastChecked = rFirst;
@@ -885,7 +884,7 @@ class Cache {
      * Scales down all iLastAccess values to avoid negative numbers.
      *
      */
-    private void resetAccessCount() throws SQLException {
+    private void resetAccessCount() throws HsqlException {
 
         if (iCurrentAccess < Integer.MAX_VALUE / 2) {
             return;
@@ -904,7 +903,7 @@ class Cache {
     /**
      * Writes out all modified cached Rows.
      */
-    protected void saveAll() throws SQLException {
+    protected void saveAll() throws HsqlException {
 
         if (sw == null) {
             sw = new StopWatch();
@@ -949,7 +948,7 @@ class Cache {
     /**
      * Writes out all modified cached Rows.
      */
-    protected void saveAllNew() throws SQLException {
+    protected void saveAllNew() throws HsqlException {
 
         if (sw == null) {
             sw = new StopWatch();
@@ -995,7 +994,7 @@ class Cache {
      * Writes out the specified Row. Will write only the Nodes or both Nodes
      * and table row data depending on what is not already persisted to disk.
      */
-    protected void saveRow(CachedRow r) throws IOException, SQLException {
+    protected void saveRow(CachedRow r) throws IOException, HsqlException {
 
         rowOut.reset();
 
@@ -1010,7 +1009,7 @@ class Cache {
      * Writes out the first count rowTable Rows in iPos
      * sorted order.
      */
-    private void saveSorted(int count) throws SQLException {
+    private void saveSorted(int count) throws HsqlException {
 
         rowComparator.setType(rowComparator.COMPARE_POSITION);
         sort(rowTable, rowComparator, 0, count - 1);
@@ -1030,7 +1029,7 @@ class Cache {
      *
      */
     private static final void sort(Object w[], ObjectComparator comparator,
-                                   int l, int r) throws SQLException {
+                                   int l, int r) throws HsqlException {
 
         int    i;
         int    j;

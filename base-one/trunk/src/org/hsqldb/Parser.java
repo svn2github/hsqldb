@@ -67,8 +67,6 @@
 
 package org.hsqldb;
 
-import java.sql.SQLException;
-import java.sql.Types;
 import java.util.NoSuchElementException;
 import org.hsqldb.lib.HsqlArrayHeap;
 import org.hsqldb.lib.HsqlArrayList;
@@ -130,9 +128,9 @@ class Parser {
      *  Method declaration
      *
      * @return
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-//    Result processSelect() throws SQLException {
+//    Result processSelect() throws HsqlException {
 //
 //        Select select = parseSelect();
 //
@@ -187,7 +185,7 @@ class Parser {
 //                    t.setDataSource(src, false, cSession);
 //                    logTableDDL(t);
 //                    t.insertNoCheck(r, cSession);
-//                } catch (SQLException e) {
+//                } catch (HsqlException e) {
 //                    dDatabase.dropTable(select.sIntoTable.name, false, false,
 //                                        cSession);
 //
@@ -214,9 +212,9 @@ class Parser {
 //     *  Uses three dummy arguments for getTableDDL() as the new table has no
 //     *  FK constraints.
 //     *
-//     * @throws  SQLException
+//     * @throws  HsqlException
 //     */
-//    void logTableDDL(Table t) throws SQLException {
+//    void logTableDDL(Table t) throws HsqlException {
 //
 //        if (t.isTemp()) {
 //            return;
@@ -240,9 +238,9 @@ class Parser {
 //     *  Method declaration
 //     *
 //     * @return
-//     * @throws  SQLException
+//     * @throws  HsqlException
 //     */
-//    Result processCall() throws SQLException {
+//    Result processCall() throws HsqlException {
 //
 //        Expression e = parseExpression();
 //
@@ -283,9 +281,9 @@ class Parser {
 //     *  Method declaration
 //     *
 //     * @return
-//     * @throws  SQLException
+//     * @throws  HsqlException
 //     */
-//    Result processUpdate() throws SQLException {
+//    Result processUpdate() throws HsqlException {
 //
 //        String token = tTokenizer.getString();
 //
@@ -384,7 +382,7 @@ class Parser {
 //                count = table.update(del, ins, col, cSession);
 //
 //                cSession.endNestedTransaction(false);
-//            } catch (SQLException e) {
+//            } catch (HsqlException e) {
 //
 //                // update failed (constraint violation)
 //                cSession.endNestedTransaction(true);
@@ -400,7 +398,7 @@ class Parser {
 //        return r;
 //    }
     void checkTableWriteAccess(Table table,
-                               int userRight) throws SQLException {
+                               int userRight) throws HsqlException {
 
         // session level user rights
         cSession.checkReadWrite();
@@ -423,9 +421,9 @@ class Parser {
 //     *  Method declaration
 //     *
 //     * @return
-//     * @throws  SQLException
+//     * @throws  HsqlException
 //     */
-//    Result processDelete() throws SQLException {
+//    Result processDelete() throws HsqlException {
 //
 //        tTokenizer.getThis("FROM");
 //
@@ -482,9 +480,9 @@ class Parser {
 //     *  Method declaration
 //     *
 //     * @return
-//     * @throws  SQLException
+//     * @throws  HsqlException
 //     */
-//    Result processInsert() throws SQLException {
+//    Result processInsert() throws HsqlException {
 //
 //        tTokenizer.getThis("INTO");
 //
@@ -564,7 +562,7 @@ class Parser {
 //                count = t.insert(result, cSession);
 //
 //                cSession.endNestedTransaction(false);
-//            } catch (SQLException e) {
+//            } catch (HsqlException e) {
 //
 //                // insert failed (violation of primary key)
 //                cSession.endNestedTransaction(true);
@@ -581,7 +579,7 @@ class Parser {
 //
 //        return r;
 //    }
-    HsqlArrayList getColumnNames() throws SQLException {
+    HsqlArrayList getColumnNames() throws HsqlException {
 
         HsqlArrayList columns = new HsqlArrayList();
         int           i       = 0;
@@ -610,7 +608,7 @@ class Parser {
     }
 
     void getColumnValues(Table t, Object[] row, int[] columnmap,
-                         int len) throws SQLException {
+                         int len) throws HsqlException {
 
         boolean enclosed = false;
         int     i        = 0;
@@ -644,10 +642,10 @@ class Parser {
         }
     }
 
-    Select parseSubquery() throws SQLException {
+    Select parseSubquery() throws HsqlException {
 
-        SQLException se;
-        Select       s;
+        HsqlException se;
+        Select        s;
 
         se                = null;
         s                 = null;
@@ -657,7 +655,7 @@ class Parser {
 
         try {
             s = parseSelect();
-        } catch (SQLException e) {
+        } catch (HsqlException e) {
             se = e;
         }
 
@@ -684,9 +682,9 @@ class Parser {
      *  Method declaration
      *
      * @return
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    Select parseSelect() throws SQLException {
+    Select parseSelect() throws HsqlException {
 
         Select select = new Select();
 
@@ -1006,11 +1004,11 @@ class Parser {
      * @param  e                          Description of the Parameter
      * @param  vcolumn                    Description of the Parameter
      * @return                            Description of the Return Value
-     * @exception  java.sql.SQLException  Description of the Exception
+     * @exception  java.sql.HsqlException  Description of the Exception
      */
     private Expression checkOrderByColumns(Expression e,
                                            HsqlArrayList vcolumn)
-                                           throws java.sql.SQLException {
+                                           throws HsqlException {
 
         if (e.getType() == Expression.VALUE) {
 
@@ -1049,10 +1047,10 @@ class Parser {
      *
      * @param  outerjoin
      * @return
-     * @throws  SQLException
+     * @throws  HsqlException
      */
     private TableFilter parseTableFilter(boolean outerjoin)
-    throws SQLException {
+    throws HsqlException {
 
         String      token = tTokenizer.getString();
         Table       t     = null;
@@ -1201,9 +1199,9 @@ class Parser {
      *
      * @param  type
      * @return
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    private Object getValue(int type) throws SQLException {
+    private Object getValue(int type) throws HsqlException {
 
         Expression r = parseExpression();
 
@@ -1216,9 +1214,9 @@ class Parser {
      *  Method declaration
      *
      * @return
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    private Expression parseExpression() throws SQLException {
+    private Expression parseExpression() throws HsqlException {
 
         read();
 
@@ -1229,7 +1227,7 @@ class Parser {
         return r;
     }
 
-    private Expression readAggregate() throws SQLException {
+    private Expression readAggregate() throws HsqlException {
 
         boolean distinct = false;
         int     type     = iToken;
@@ -1259,9 +1257,9 @@ class Parser {
      *  Method declaration
      *
      * @return
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    private Expression readOr() throws SQLException {
+    private Expression readOr() throws HsqlException {
 
         Expression r = readAnd();
 
@@ -1281,9 +1279,9 @@ class Parser {
      *  Method declaration
      *
      * @return
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    private Expression readAnd() throws SQLException {
+    private Expression readAnd() throws HsqlException {
 
         Expression r = readCondition();
 
@@ -1303,9 +1301,9 @@ class Parser {
      *  Method declaration
      *
      * @return
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    private Expression readCondition() throws SQLException {
+    private Expression readCondition() throws HsqlException {
 
         switch (iToken) {
 
@@ -1461,9 +1459,9 @@ class Parser {
      *  Method declaration
      *
      * @param  type
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    private void readThis(int type) throws SQLException {
+    private void readThis(int type) throws HsqlException {
         Trace.check(iToken == type, Trace.UNEXPECTED_TOKEN);
         read();
     }
@@ -1472,9 +1470,9 @@ class Parser {
      *  Method declaration
      *
      * @return
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    private Expression readConcat() throws SQLException {
+    private Expression readConcat() throws HsqlException {
 
         Expression r = readSum();
 
@@ -1494,9 +1492,9 @@ class Parser {
      *  Method declaration
      *
      * @return
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    private Expression readSum() throws SQLException {
+    private Expression readSum() throws HsqlException {
 
         Expression r = readFactor();
 
@@ -1525,9 +1523,9 @@ class Parser {
      *  Method declaration
      *
      * @return
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    private Expression readFactor() throws SQLException {
+    private Expression readFactor() throws HsqlException {
 
         Expression r = readTerm();
 
@@ -1547,9 +1545,9 @@ class Parser {
      *  Method declaration
      *
      * @return
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    private Expression readTerm() throws SQLException {
+    private Expression readTerm() throws HsqlException {
 
         Expression r = null;
 
@@ -1626,7 +1624,7 @@ class Parser {
                 break;
             }
             case Expression.PARAM : {
-                r = new Expression(DITypes.NULL, null);
+                r = new Expression(Types.NULL, null);
 
                 parameters.add(r);
                 read();
@@ -1743,12 +1741,12 @@ class Parser {
     /**
      *  Method declaration
      *
-     * @throws  SQLException
+     * @throws  HsqlException
      */
 
 // fredt@users 20020130 - patch 497872 by Nitin Chauhan
 // reordering for speed
-    private void read() throws SQLException {
+    private void read() throws HsqlException {
 
         sToken = tTokenizer.getString();
 
@@ -1761,8 +1759,8 @@ class Parser {
             sTable = null;
         } else if (tTokenizer.wasLongName()) {
             sTable = tTokenizer.getLongNameFirst();
-//            sToken = tTokenizer.getLongNameLast();
 
+//            sToken = tTokenizer.getLongNameLast();
             if (sToken.equals(Token.T_ASTERISK)) {
                 iToken = Expression.MULTIPLY;
             } else {
@@ -1922,7 +1920,7 @@ class Parser {
     }
 
     CompiledStatement compileStatement(CompiledStatement cs)
-    throws SQLException {
+    throws HsqlException {
 
         String token;
 
@@ -1947,7 +1945,7 @@ class Parser {
      * Retrieves a CALL-type CompiledStatement from this parse context.
      */
     CompiledStatement compileCallStatement(CompiledStatement cs)
-    throws SQLException {
+    throws HsqlException {
 
         Expression expression;
 
@@ -1970,7 +1968,7 @@ class Parser {
      * Retrieves a DELETE-type CompiledStatement from this parse context.
      */
     CompiledStatement compileDeleteStatement(CompiledStatement cs)
-    throws SQLException {
+    throws HsqlException {
 
         String     token;
         Table      table;
@@ -2008,7 +2006,7 @@ class Parser {
     }
 
     void getColumnValueExpressions(Table t, Expression[] acve,
-                                   int len) throws SQLException {
+                                   int len) throws HsqlException {
 
         boolean    enclosed;
         String     token;
@@ -2050,7 +2048,7 @@ class Parser {
      * Retrieves an INSERT_XXX-type CompiledStatement from this parse context.
      */
     CompiledStatement compileInsertStatement(CompiledStatement cs)
-    throws SQLException {
+    throws HsqlException {
 
         String        token;
         Table         t;
@@ -2134,7 +2132,7 @@ class Parser {
      * Retrieves a SELECT-type CompiledStatement from this parse context.
      */
     CompiledStatement compileSelectStatement(CompiledStatement cs)
-    throws SQLException {
+    throws HsqlException {
 
         Select select;
 
@@ -2157,7 +2155,7 @@ class Parser {
      * Retrieves an UPDATE-type CompiledStatement from this parse context.
      */
     CompiledStatement compileUpdateStatement(CompiledStatement cs)
-    throws SQLException {
+    throws HsqlException {
 
         String        token;
         Table         table;

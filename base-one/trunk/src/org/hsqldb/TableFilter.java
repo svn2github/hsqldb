@@ -67,8 +67,6 @@
 
 package org.hsqldb;
 
-import java.sql.SQLException;
-
 // fredt@users 20021229 - patch 1.7.2 - fix for OUTER JOIN conditions bug
 
 /**
@@ -181,9 +179,9 @@ class TableFilter {
      *
      * @param e
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    void setCondition(Expression e) throws SQLException {
+    void setCondition(Expression e) throws HsqlException {
 
         int        type = e.getType();
         Expression e1   = e.getArg();
@@ -238,7 +236,7 @@ class TableFilter {
 
             // TODO: Optimize
             //
-            // The current way always chooses eStart, eEnd conditions  
+            // The current way always chooses eStart, eEnd conditions
             // using first encountered eligible index
             //
             // We should check if current index offers better selectivity/access
@@ -248,56 +246,56 @@ class TableFilter {
             //
             // CREATE TABLE t (c1 int, c2 int primary key)
             // CREATE INDEX I1 ON t(c1)
-            // SELECT 
-            //      * 
-            // FROM 
-            //      t 
-            // WHERE 
+            // SELECT
+            //      *
+            // FROM
+            //      t
+            // WHERE
             //     c1 = | < | <= | >= | > ...
-            // AND 
+            // AND
             //     c2 = | < | <= | >= | > ...
             //
             // currently always chooses iIndex / condition (c1/I1), over
-            // index / condition (c2/pk), whereas index / condition (c2/pk) 
+            // index / condition (c2/pk), whereas index / condition (c2/pk)
             // may well be better, especially if condition on c2 is equality
-            // (condition_start_end) and conditionon(s) on c1 involve range 
+            // (condition_start_end) and conditionon(s) on c1 involve range
             // (condition_start, condition_end, or some composite).
             //
-            // Currently, the developer/client software must somehow know facts 
+            // Currently, the developer/client software must somehow know facts
             // both about the table, the query and the way HSQLDB forms its
             // plans and, based on this knowlege, perhaps decide to reverse
             // order by explicitly issuing instead:
             //
-            // SELECT 
-            //      * 
-            // FROM 
-            //      t 
-            // WHERE 
+            // SELECT
+            //      *
+            // FROM
+            //      t
+            // WHERE
             //     c2 = | < | <= | >= | > ...
-            // AND 
+            // AND
             //     c1 = | < | <= | >= | > ...
             //
             // to get optimal index choice.
             //
             // The same thing applies to and is even worse for joins.
-            // 
-            // Consider the following (highly artificial, but easy to 
+            //
+            // Consider the following (highly artificial, but easy to
             // understand) case:
             //
-            // CREATE TABLE T1(ID INTEGER PRIMARY KEY, C1 INTEGER) 
-            // CREATE INDEX I1 ON T1(C1)                                            
-            // CREATE TABLE T2(ID INTEGER PRIMARY KEY, C1 INTEGER) 
+            // CREATE TABLE T1(ID INTEGER PRIMARY KEY, C1 INTEGER)
+            // CREATE INDEX I1 ON T1(C1)
+            // CREATE TABLE T2(ID INTEGER PRIMARY KEY, C1 INTEGER)
             // CREATE INDEX I2 ON T2(C1)
             //
-            // select * from t1, t2 where t1.c1 = t2.c1 and t1.id = t2.id 
+            // select * from t1, t2 where t1.c1 = t2.c1 and t1.id = t2.id
             //
-            // Consider the worst value distribution where t1 and t2 are both 
-            // 10,000 rows, c1 selectivity is nil (all values are identical) 
-            // for both tables, and, say, id values span the range 0..9999 
+            // Consider the worst value distribution where t1 and t2 are both
+            // 10,000 rows, c1 selectivity is nil (all values are identical)
+            // for both tables, and, say, id values span the range 0..9999
             // for both tables.
             //
             // Then time to completion on 500 MHz Athlon testbed using memory
-            // tables is:  
+            // tables is:
             //
             // 10000 row(s) in 309114 ms
             //
@@ -305,14 +303,14 @@ class TableFilter {
             //
             // select * from t1, t2 where t1.id = t2.id and t1.c1 = t2.c1
             //
-            // time to completion is: 
+            // time to completion is:
             //
             // 10000 row(s) in 471 ms
             //
-            // Hence, the unoptimized query takes 656 times as long as the 
+            // Hence, the unoptimized query takes 656 times as long as the
             // optimized one!!!
             //
-            // EXAMPLE 2: 
+            // EXAMPLE 2:
             //
             // If there are, say, two non-unique candidate indexes,
             // and some range or equality predicates against
@@ -387,7 +385,7 @@ class TableFilter {
      * row was found but the all-null row passed the test. (fredt)
      *
      */
-    boolean findFirst() throws SQLException {
+    boolean findFirst() throws HsqlException {
 
         boolean andtested = false;
 
@@ -438,9 +436,9 @@ class TableFilter {
      *
      * @return
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    boolean next() throws SQLException {
+    boolean next() throws HsqlException {
 
         if (bOuterJoin && nCurrent == null) {
             return false;
@@ -498,9 +496,9 @@ class TableFilter {
      *
      * @return
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    private boolean test(Expression e) throws SQLException {
+    private boolean test(Expression e) throws HsqlException {
 
         if (e == null) {
             return true;

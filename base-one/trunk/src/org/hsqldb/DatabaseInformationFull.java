@@ -34,7 +34,6 @@ package org.hsqldb;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.sql.DatabaseMetaData;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashSet;
@@ -65,9 +64,9 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
      * Constructs a new DatabaseInformationFull instance. <p>
      *
      * @param db the database for which to produce system tables.
-     * @throws SQLException if a database access error occurs.
+     * @throws HsqlException if a database access error occurs.
      */
-    DatabaseInformationFull(Database db) throws SQLException {
+    DatabaseInformationFull(Database db) throws HsqlException {
 
         super(db);
 
@@ -78,10 +77,10 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
      * Retrieves the system table corresponding to the specified index. <p>
      *
      * @param tableIndex index identifying the system table to generate
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      * @return the system table corresponding to the specified index
      */
-    protected Table generateTable(int tableIndex) throws SQLException {
+    protected Table generateTable(int tableIndex) throws HsqlException {
 
         switch (tableIndex) {
 
@@ -170,9 +169,9 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
      * creating them. <p>
      * @return a Table object describing the accessisble
      *      aliases in the context of the calling session
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    Table SYSTEM_ALIASES() throws SQLException {
+    Table SYSTEM_ALIASES() throws HsqlException {
 
         Table t = sysTables[SYSTEM_ALIASES];
 
@@ -339,9 +338,9 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
      *
      * @return a description of the current state of all row caching
      *      objects associated with the accessible tables of the database
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    Table SYSTEM_CACHEINFO() throws SQLException {
+    Table SYSTEM_CACHEINFO() throws HsqlException {
 
         Table t = sysTables[SYSTEM_CACHEINFO];
 
@@ -495,9 +494,9 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
      * @return a <code>Table</code> object describing the visible
      *        access rights for all accessible Java Class
      *        objects defined within this database
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    Table SYSTEM_CLASSPRIVILEGES() throws SQLException {
+    Table SYSTEM_CLASSPRIVILEGES() throws HsqlException {
 
         Table t = sysTables[SYSTEM_CLASSPRIVILEGES];
 
@@ -635,9 +634,9 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
      * @return a <code>Table</code> object describing the
      *        attributes of the connection associated
      *        with the current execution context
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    Table SYSTEM_CONNECTIONINFO() throws SQLException {
+    Table SYSTEM_CONNECTIONINFO() throws HsqlException {
 
         Table t = sysTables[SYSTEM_CONNECTIONINFO];
 
@@ -758,9 +757,9 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
      *
      * @return table describing database and session operating parameters
      *      and capabilities
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    Table SYSTEM_PROPERTIES() throws SQLException {
+    Table SYSTEM_PROPERTIES() throws HsqlException {
 
         Table t = sysTables[SYSTEM_PROPERTIES];
 
@@ -807,7 +806,10 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
 
         // First, we want the names and values for
         // all JDBC capabilities constants
-        scope      = "SESSION";
+        scope = "SESSION";
+
+// fredt - jdbc is not part of the database
+/*
         nameSpace  = "java.sql.DatabaseMetaData";
         md         = session.getInternalConnection().getMetaData();
         methods    = DatabaseMetaData.class.getMethods();
@@ -838,7 +840,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
                 } catch (Exception e) {}
             }
         }
-
+*/
         props     = database.getProperties();
         nameSpace = "database.properties";
 
@@ -1034,9 +1036,9 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
      *
      * @return a <code>Table</code> object describing all visible
      *      sessions
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    Table SYSTEM_SESSIONS() throws SQLException {
+    Table SYSTEM_SESSIONS() throws HsqlException {
 
         Table t = sysTables[SYSTEM_SESSIONS];
 
@@ -1092,8 +1094,9 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
             row[iautocmt]  = ValuePool.getBoolean(s.getAutoCommit());
             row[ireadonly] = ValuePool.getBoolean(s.isReadOnly());
             row[imaxrows]  = ValuePool.getInt(s.getMaxRows());
-            row[ilast_id]  = ValuePool.getLong(s.getLastIdentity().longValue());
-            row[it_size]   = ValuePool.getInt(s.getTransactionSize());
+            row[ilast_id] =
+                ValuePool.getLong(s.getLastIdentity().longValue());
+            row[it_size] = ValuePool.getInt(s.getTransactionSize());
 
             t.insert(row, session);
         }
@@ -1119,9 +1122,9 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
      * @return a <code>Table</code> object describing the accessible
      *        direct supertable (if any) of each accessible
      *        table defined within this database
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    Table SYSTEM_SUPERTABLES() throws SQLException {
+    Table SYSTEM_SUPERTABLES() throws HsqlException {
 
         Table t = sysTables[SYSTEM_SUPERTABLES];
 
@@ -1160,9 +1163,9 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
      * @return a <code>Table</code> object describing the accessible
      *        direct supertype (if any) of each accessible
      *        user-defined type (UDT) defined within this database
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    Table SYSTEM_SUPERTYPES() throws SQLException {
+    Table SYSTEM_SUPERTYPES() throws HsqlException {
 
         Table t = sysTables[SYSTEM_SUPERTYPES];
 
@@ -1211,10 +1214,10 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
      *
      * @return a <code>Table</code> object describing the text attributes
      * of the accessible text tables defined within this database
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      *
      */
-    final Table SYSTEM_TEXTTABLES() throws SQLException {
+    final Table SYSTEM_TEXTTABLES() throws HsqlException {
 
         Table t = sysTables[SYSTEM_TEXTTABLES];
 
@@ -1319,9 +1322,9 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
      * @return a <code>Table</code> object describing of the usage
      *        of accessible columns in accessible triggers
      *        defined within this database
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    Table SYSTEM_TRIGGERCOLUMNS() throws SQLException {
+    Table SYSTEM_TRIGGERCOLUMNS() throws HsqlException {
 
         Table t = sysTables[SYSTEM_TRIGGERCOLUMNS];
 
@@ -1358,11 +1361,11 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
             return t;
         }
 
-        java.sql.ResultSet rs;
+        Result rs;
 
         // - used appends to make class file constant pool smaller
         // - saves ~ 100 bytes jar space
-        rs = session.getInternalConnection().createStatement().executeQuery(
+        rs = session.sqlExecuteDirect(
             (new StringBuffer(185)).append("select").append(' ').append(
                 "a.").append("TRIGGER_CAT").append(',').append("a.").append(
                 "TRIGGER_SCHEM").append(',').append("a.").append(
@@ -1377,7 +1380,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
                 ' ').append("a.").append("TABLE_NAME").append('=').append(
                 "b.").append("TABLE_NAME").toString());
 
-        t.insert(((jdbcResultSet) rs).rResult, session);
+        t.insert(rs, session);
         t.setDataReadOnly(true);
 
         return t;
@@ -1412,9 +1415,9 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
      *
      * @return a <code>Table</code> object describing the accessible
      *    triggers defined within this database.
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    Table SYSTEM_TRIGGERS() throws SQLException {
+    Table SYSTEM_TRIGGERS() throws HsqlException {
 
         Table t = sysTables[SYSTEM_TRIGGERS];
 
@@ -1633,9 +1636,9 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
      * @return a <code>Table</code> object describing the accessible
      *        attrubutes of the accessible user-defined type
      *        (UDT) objects defined within this database
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    Table SYSTEM_UDTATTRIBUTES() throws SQLException {
+    Table SYSTEM_UDTATTRIBUTES() throws HsqlException {
 
         Table t = sysTables[SYSTEM_UDTATTRIBUTES];
 
@@ -1705,9 +1708,9 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
      *
      * @return a <code>Table</code> object describing the accessible
      *      user-defined types defined in this database
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    Table SYSTEM_UDTS() throws SQLException {
+    Table SYSTEM_UDTS() throws HsqlException {
 
         Table t = sysTables[SYSTEM_UDTS];
 
@@ -1766,9 +1769,9 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
      * @return a <code>Table</code> object describing the columns
      *        that are automatically updated when any value
      *        in a row is updated
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    Table SYSTEM_VERSIONCOLUMNS() throws SQLException {
+    Table SYSTEM_VERSIONCOLUMNS() throws HsqlException {
 
         Table t = sysTables[SYSTEM_VERSIONCOLUMNS];
 
@@ -1837,9 +1840,9 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
      * @return a tabular description of the text source of all
      *        <code>View</code> objects accessible to
      *        the user.
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    Table SYSTEM_VIEWS() throws SQLException {
+    Table SYSTEM_VIEWS() throws HsqlException {
 
         Table t = sysTables[SYSTEM_VIEWS];
 
@@ -1968,9 +1971,9 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
      *        return, parameter and result columns
      *        of the accessible routines defined
      *        within this database.
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    Table SYSTEM_PROCEDURECOLUMNS() throws SQLException {
+    Table SYSTEM_PROCEDURECOLUMNS() throws HsqlException {
 
         Table t = sysTables[SYSTEM_PROCEDURECOLUMNS];
 
@@ -2076,9 +2079,9 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
      *
      * @return a <code>Table</code> object describing the accessible
      *        routines defined within the this database
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    Table SYSTEM_PROCEDURES() throws SQLException {
+    Table SYSTEM_PROCEDURES() throws HsqlException {
 
         Table t = sysTables[SYSTEM_PROCEDURES];
 
@@ -2172,7 +2175,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
      *      (typically but not limited to
      *      a java method signature)
      * @param seq helper value to allow JDBC contract order
-     * @throws SQLException if there is problem inserting the specified rows
+     * @throws HsqlException if there is problem inserting the specified rows
      *      in the table
      *
      */
@@ -2182,7 +2185,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
                                Integer prec, Integer len, Integer scale,
                                Integer radix, Integer nullability,
                                String remark, String sig,
-                               int seq) throws SQLException {
+                               int seq) throws HsqlException {
 
         // column number mappings
         final int icat       = 0;
@@ -2272,7 +2275,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
      * @param sig the signature of the procedure
      *      (typically but not limited to a
      *      java method signature)
-     * @throws SQLException if there is problem inserting the specified rows
+     * @throws HsqlException if there is problem inserting the specified rows
      *      in the table
      *
      */
@@ -2280,7 +2283,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
                                String schem, String pName, Integer ip,
                                Integer op, Integer rs, String remark,
                                Integer pType, String origin,
-                               String sig) throws SQLException {
+                               String sig) throws HsqlException {
 
         // column number mappings
         final int icat          = 0;
@@ -2338,7 +2341,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
 // WILL ALSO ALLOW PROPER QUERY OPTIMIZATION.  RIGHT NOW, INDEX INFO IS
 // LOST WHEN CREATING INTERMEDAIATE "SYSTEM_SUBQUERY" TABLES, SO IT IS
 // IMPOSSSIBLE TO CHOOSE "optimal" INDEX USAGE.
-//    Table SYSTEM_VIEW_COLUMN_USAGE() throws SQLException {
+//    Table SYSTEM_VIEW_COLUMN_USAGE() throws HsqlException {
 //
 //        Table t = sysTables[SYSTEM_VIEW_COLUMN_USAGE];
 //
@@ -2460,7 +2463,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
 //        return t;
 //    }
 //
-//    Table SYSTEM_VIEW_ROUTINE_USAGE() throws SQLException {
+//    Table SYSTEM_VIEW_ROUTINE_USAGE() throws HsqlException {
 //        Table t = sysTables[SYSTEM_VIEW_ROUTINE_USAGE];
 //
 //        if (t == null) {
@@ -2564,7 +2567,7 @@ final class DatabaseInformationFull extends DatabaseInformationMain {
 //        return t;
 //    }
 //
-//    Table SYSTEM_VIEW_TABLE_USAGE() throws SQLException {
+//    Table SYSTEM_VIEW_TABLE_USAGE() throws HsqlException {
 //        Table t = sysTables[SYSTEM_VIEW_TABLE_USAGE];
 //
 //        if (t == null) {

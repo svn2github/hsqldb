@@ -67,8 +67,6 @@
 
 package org.hsqldb;
 
-import java.sql.SQLException;
-import java.sql.Types;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashMap;
@@ -951,9 +949,9 @@ class Expression {
      * Method declaration
      *
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    void checkResolved() throws SQLException {
+    void checkResolved() throws HsqlException {
 
         Trace.check((iType != COLUMN) || (tFilter != null),
                     Trace.COLUMN_NOT_FOUND, sColumn);
@@ -981,9 +979,9 @@ class Expression {
      *
      * @param f
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    void resolve(TableFilter f) throws SQLException {
+    void resolve(TableFilter f) throws HsqlException {
 
         if ((f != null) && (iType == COLUMN)) {
             String tableName = f.getName();
@@ -1240,9 +1238,9 @@ class Expression {
      * Method declaration
      *
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    void swapCondition() throws SQLException {
+    void swapCondition() throws HsqlException {
 
         int i = EQUAL;
 
@@ -1297,9 +1295,9 @@ class Expression {
      *
      * @return
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    Object getValue(int type) throws SQLException {
+    Object getValue(int type) throws HsqlException {
 
         Object o = getValue();
 
@@ -1316,9 +1314,9 @@ class Expression {
      *
      * @return
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    Object getAggregatedValue(Object currValue) throws SQLException {
+    Object getAggregatedValue(Object currValue) throws HsqlException {
 
         if (!isAggregate()) {
             return currValue;
@@ -1491,7 +1489,7 @@ class Expression {
 // tony_lai@users having <<<
     }
 
-    Object getSelfAggregatingValue(Object currValue) throws SQLException {
+    Object getSelfAggregatingValue(Object currValue) throws HsqlException {
 
         AggregatingValue aggValue =
             AggregatingValue.getAggregatingValue(currValue,
@@ -1536,9 +1534,9 @@ class Expression {
      *
      * @return
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    Object getAggregatingValue(Object currValue) throws SQLException {
+    Object getAggregatingValue(Object currValue) throws HsqlException {
 
         if (!isAggregate()) {
             return getValue();
@@ -1587,7 +1585,7 @@ class Expression {
         return currValue;
     }
 
-    Object getValue() throws SQLException {
+    Object getValue() throws HsqlException {
 
         switch (iType) {
 
@@ -1670,9 +1668,9 @@ class Expression {
      *
      * @return
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    boolean test() throws SQLException {
+    boolean test() throws HsqlException {
 
         switch (iType) {
 
@@ -1771,10 +1769,10 @@ class Expression {
      * </pre>
      *
      * @return
-     * @throws SQLException
+     * @throws HsqlException
      */
     boolean testNull(Object a, Object b,
-                     int logicalOperation) throws SQLException {
+                     int logicalOperation) throws HsqlException {
 
         switch (logicalOperation) {
 
@@ -1802,12 +1800,12 @@ class Expression {
      *
      * @return
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
 
 // fredt - in the future testValueList can be turned into a join query
     private boolean testValueList(Object o,
-                                  int datatype) throws SQLException {
+                                  int datatype) throws HsqlException {
 
         if (iType == VALUELIST) {
             if (datatype != iDataType) {
@@ -1887,7 +1885,7 @@ class Expression {
 
 // boucherb@users 20030417 - patch 1.7.2 - compiled statement support
 //-------------------------------------------------------------------
-    void bind(Object o, int type) throws SQLException {
+    void bind(Object o, int type) throws HsqlException {
         oData     = o;
         iDataType = type;
     }

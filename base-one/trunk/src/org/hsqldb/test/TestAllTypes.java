@@ -196,21 +196,18 @@ public class TestAllTypes {
             for (i = 0; i < bigrows; i++) {
                 ps.setInt(3, randomgen.nextInt(smallrows));
 
-                int nextrandom = randomgen.nextInt(filler.length());
-                int randomlength   = randomgen.nextInt(filler.length());
+                int nextrandom   = randomgen.nextInt(filler.length());
+                int randomlength = randomgen.nextInt(filler.length());
 
-
-                ps.setLong(4,randomgen.nextLong());
-                ps.setDouble(5,randomgen.nextDouble());
-                ps.setDouble(6,randomgen.nextDouble());
-                ps.setDate(7,new java.sql.Date(randomgen.nextInt(1000)*24*3600*1000));
+                ps.setLong(4, randomgen.nextLong());
+                ps.setDouble(5, randomgen.nextDouble());
+                ps.setDouble(6, randomgen.nextDouble());
+                ps.setDate(7, new java.sql.Date(randomgen.nextInt(1000) * 24
+                                                * 3600 * 1000));
 
                 String varfiller = filler.substring(0, randomlength);
 
                 ps.setString(8, nextrandom + varfiller);
-
-
-
                 ps.execute();
 
                 if (reportProgress && (i + 1) % 10000 == 0) {
@@ -414,7 +411,7 @@ public class TestAllTypes {
 
     public static void main(String argv[]) {
 
-        StopWatch     sw   = new StopWatch();
+        StopWatch    sw   = new StopWatch();
         TestAllTypes test = new TestAllTypes();
 
         test.setUp();

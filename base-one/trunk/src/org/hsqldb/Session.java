@@ -67,7 +67,6 @@
 
 package org.hsqldb;
 
-import java.sql.SQLException;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashSet;
@@ -94,28 +93,28 @@ import org.hsqldb.store.ValuePool;
  */
 public class Session {
 
-    private Database           dDatabase;
-    private User               uUser;
-    private HsqlArrayList      tTransaction;
-    private boolean            isAutoCommit;
-    private boolean            isNestedTransaction;
-    private boolean            isNestedOldAutoCommit;
-    private int                nestedOldTransIndex;
-    private boolean            isReadOnly;
-    private int                iMaxRows;
-    private Number             iLastIdentity;
-    private boolean            isClosed;
-    private int                iId;
+    private Database        dDatabase;
+    private User            uUser;
+    private HsqlArrayList   tTransaction;
+    private boolean         isAutoCommit;
+    private boolean         isNestedTransaction;
+    private boolean         isNestedOldAutoCommit;
+    private int             nestedOldTransIndex;
+    private boolean         isReadOnly;
+    private int             iMaxRows;
+    private Number          iLastIdentity;
+    private boolean         isClosed;
+    private int             iId;
     private IntValueHashMap savepoints;
-    private boolean            script;
-    private jdbcConnection     intConnection;
+    private boolean         script;
+    private jdbcConnection  intConnection;
 
     /**
      *  closes the session.
      *
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    public void finalize() throws SQLException {
+    public void finalize() throws HsqlException {
         disconnect();
     }
 
@@ -156,7 +155,7 @@ public class Session {
      * Closes this Session, freeing any resources associated with it
      * and rolling back any uncommited transaction it may have open.
      *
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      */
     void disconnect() {
 
@@ -246,10 +245,10 @@ public class Session {
      * Checks whether this Session's current User has the privileges of
      * the ADMIN role.
      *
-     * @throws SQLException if this Session's User does not have the
+     * @throws HsqlException if this Session's User does not have the
      *      privileges of the ADMIN role.
      */
-    void checkAdmin() throws SQLException {
+    void checkAdmin() throws HsqlException {
         uUser.checkAdmin();
     }
 
@@ -260,25 +259,25 @@ public class Session {
      *
      * @param  object the database object to check
      * @param  right the rights to check for
-     * @throws  SQLException if the Session User does not have such rights
+     * @throws  HsqlException if the Session User does not have such rights
      */
-    void check(Object object, int right) throws SQLException {
+    void check(Object object, int right) throws HsqlException {
         uUser.check(object, right);
     }
 
     /**
      * This is used for reading - writing to existing tables.
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void checkReadWrite() throws SQLException {
+    void checkReadWrite() throws HsqlException {
         Trace.check(!isReadOnly, Trace.DATABASE_IS_READONLY);
     }
 
     /**
      * This is used for creating new database objects such as tables.
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void checkDDLWrite() throws SQLException {
+    void checkDDLWrite() throws HsqlException {
 
         boolean condition = uUser.isSys() ||!dDatabase.filesReadOnly;
 
@@ -299,9 +298,10 @@ public class Session {
      *
      * @param  table the table from which the row was deleted
      * @param  row the deleted row
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void addTransactionDelete(Table table, Object row[]) throws SQLException {
+    void addTransactionDelete(Table table,
+                              Object row[]) throws HsqlException {
 
         if (!isAutoCommit) {
             Transaction t = new Transaction(true, isNestedTransaction, table,
@@ -316,9 +316,10 @@ public class Session {
      *
      * @param  table the table into which the row was inserted
      * @param  row the inserted row
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void addTransactionInsert(Table table, Object row[]) throws SQLException {
+    void addTransactionInsert(Table table,
+                              Object row[]) throws HsqlException {
 
         if (!isAutoCommit) {
             Transaction t = new Transaction(false, isNestedTransaction,
@@ -332,9 +333,9 @@ public class Session {
      *  Setter for the autocommit attribute.
      *
      * @param  autocommit the new value
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void setAutoCommit(boolean autocommit) throws SQLException {
+    void setAutoCommit(boolean autocommit) throws HsqlException {
 
         if (autocommit != isAutoCommit) {
             commit();
@@ -346,9 +347,9 @@ public class Session {
     /**
      * Commits any uncommited transaction this Session may have open
      *
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void commit() throws SQLException {
+    void commit() throws HsqlException {
 
         tTransaction.clear();
 
@@ -360,7 +361,7 @@ public class Session {
     /**
      * Rolls back any uncommited transaction this Session may have open.
      *
-     * @throws  SQLException
+     * @throws  HsqlException
      */
     void rollback() {
 
@@ -385,9 +386,9 @@ public class Session {
      *  name of an existing one, replaces the old SAVEPOINT.
      *
      * @param  name Name of savepoint
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void savepoint(String name) throws SQLException {
+    void savepoint(String name) throws HsqlException {
 
         if (savepoints == null) {
             savepoints = new IntValueHashMap(4);
@@ -401,9 +402,9 @@ public class Session {
      *
      * @param  name Name of savepoint that was marked before by savepoint()
      *      call
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void rollbackToSavepoint(String name) throws SQLException {
+    void rollbackToSavepoint(String name) throws HsqlException {
 
         int index = -1;
 
@@ -421,6 +422,7 @@ public class Session {
             t.rollback(this);
             tTransaction.remove(i);
         }
+
         // remove all rows above index
         Iterator it = savepoints.keySet().iterator();
 
@@ -436,9 +438,9 @@ public class Session {
     /**
      * Starts a nested transaction.
      *
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void beginNestedTransaction() throws SQLException {
+    void beginNestedTransaction() throws HsqlException {
 
         Trace.doAssert(!isNestedTransaction, "beginNestedTransaction");
 
@@ -454,9 +456,9 @@ public class Session {
      * Ends a nested transaction.
      *
      * @param  rollback true to roll back or false to commit the nested transaction
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void endNestedTransaction(boolean rollback) throws SQLException {
+    void endNestedTransaction(boolean rollback) throws HsqlException {
 
         Trace.doAssert(isNestedTransaction, "endNestedTransaction");
 
@@ -484,7 +486,7 @@ public class Session {
      *
      * @param  readonly the new value
      */
-    void setReadOnly(boolean readonly) throws SQLException {
+    void setReadOnly(boolean readonly) throws HsqlException {
 
         if (!readonly && dDatabase.databaseReadOnly) {
             throw Trace.error(Trace.DATABASE_IS_READONLY);
@@ -572,7 +574,7 @@ public class Session {
      *
      * @return  internal connection.
      */
-    jdbcConnection getInternalConnection() throws SQLException {
+    jdbcConnection getInternalConnection() throws HsqlException {
 
         if (intConnection == null) {
             intConnection = new jdbcConnection(this);
@@ -620,7 +622,7 @@ public class Session {
      *
      * @return true if so, else false
      */
-    boolean isAccessible(Object dbobject) throws SQLException {
+    boolean isAccessible(Object dbobject) throws HsqlException {
         return uUser.isAccessible(dbobject);
     }
 
@@ -651,7 +653,7 @@ public class Session {
     CompiledStatementExecutor  cse;
     CompiledStatementManager   csm;
 
-    CompiledStatement sqlCompileStatement(String sql) throws SQLException {
+    CompiledStatement sqlCompileStatement(String sql) throws HsqlException {
 
         Tokenizer         tokenizer;
         String            token;
@@ -752,7 +754,7 @@ public class Session {
             default : {
                 String msg = "operation type:" + type;
 
-                return new Result(msg, Trace.OPERATION_NOT_SUPPORTED);
+                return new Result(msg, "s1000", Trace.OPERATION_NOT_SUPPORTED);
             }
         }
     }
@@ -787,7 +789,7 @@ public class Session {
      * previously compiled statement objects.
      *
      * @param sql a string describing the desired statement object
-     * @throws SQLException is a database access error occurs
+     * @throws HsqlException is a database access error occurs
      * @return the result of preparing the statement
      */
     Result sqlPrepare(String sql) {
@@ -860,7 +862,7 @@ public class Session {
         if (cs == null) {
             String msg = "Statement not prepared for csid: " + csid + ").";
 
-            return new Result(msg, Trace.INVALID_IDENTIFIER);
+            return new Result(msg, "22019", Trace.INVALID_IDENTIFIER);
         }
 
         if (!csm.isValid(csid, iId)) {
@@ -877,7 +879,7 @@ public class Session {
         updateCounts   = new int[cmd.getSize()];
         record         = cmd.rRoot;
         out            = new Result(1);
-        out.colType[0] = DITypes.INTEGER;
+        out.colType[0] = Types.INTEGER;
         err            = new Result();
         err.iMode      = Result.ERROR;
 
@@ -961,7 +963,7 @@ public class Session {
         if (cs == null) {
             String msg = "Statement not prepared for csid: " + csid + ").";
 
-            return new Result(msg, Trace.INVALID_IDENTIFIER);
+            return new Result(msg, "22019", Trace.INVALID_IDENTIFIER);
         }
 
         if (!csm.isValid(csid, iId)) {

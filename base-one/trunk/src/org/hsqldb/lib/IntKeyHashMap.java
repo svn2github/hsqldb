@@ -35,7 +35,7 @@ import org.hsqldb.store.BaseHashMap;
 
 public class IntKeyHashMap extends BaseHashMap {
 
-    Set keySet;
+    Set        keySet;
     Collection values;
 
     public IntKeyHashMap() {
@@ -48,8 +48,7 @@ public class IntKeyHashMap extends BaseHashMap {
     }
 
     public IntKeyHashMap(int initialCapacity,
-                                 float loadFactor)
-                                 throws IllegalArgumentException {
+                         float loadFactor) throws IllegalArgumentException {
         super(initialCapacity, loadFactor, keyOrValueTypes.intKeyOrValue,
               keyOrValueTypes.objectKeyOrValue);
     }
@@ -59,7 +58,7 @@ public class IntKeyHashMap extends BaseHashMap {
     }
 
     public Object put(int key, Object value) {
-        return super.addOrRemove(key,0,null, value,false);
+        return super.addOrRemove(key, 0, null, value, false);
     }
 
     public boolean containsValue(Object value) {
@@ -67,7 +66,7 @@ public class IntKeyHashMap extends BaseHashMap {
     }
 
     public Object remove(int key) {
-        return super.addOrRemove(key,0,null,null,true);
+        return super.addOrRemove(key, 0, null, null, true);
     }
 
     public Set keySet() {

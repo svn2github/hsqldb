@@ -46,18 +46,22 @@ import org.hsqldb.resources.BundleHandler;
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
-final class DITypeInfo implements DITypes {
+final class DITypeInfo implements Types {
 
     /** BundleHandler id for create params resource bundle. */
     private int hnd_create_params = -1;
+
     /** BundleHandler id for local names resource bundle. */
-    private int hnd_local_names   = -1;
+    private int hnd_local_names = -1;
+
     /** BundleHandler id for data type remarks resource bundle. */
-    private int hnd_remarks       = -1;
+    private int hnd_remarks = -1;
+
     /** The SQL type code on which this object is reporting. */
-    private int type              = NULL;
+    private int type = NULL;
+
     /** The HSQLDB subtype code on which this object is reporting. */
-    private int typeSub           = TYPE_SUB_DEFAULT;
+    private int typeSub = TYPE_SUB_DEFAULT;
 
     /** Creates a new DITypeInfo object having the default Locale. */
     public DITypeInfo() {
@@ -275,6 +279,7 @@ final class DITypeInfo implements DITypes {
      *      the type may have
      */
     int getMaxDisplaySize() {
+
         switch (type) {
 
             case BINARY :
@@ -285,47 +290,47 @@ final class DITypeInfo implements DITypes {
             case VARBINARY :
             case VARCHAR :
             case XML :
-                return Integer.MAX_VALUE; // same as precision
+                return Integer.MAX_VALUE;    // same as precision
 
             case BIGINT :
-                return 20; // precision + "-".length();
+                return 20;                   // precision + "-".length();
 
             case BIT :
             case BOOLEAN :
-                return 5; // Math.max("true".length(),"false".length);
+                return 5;                    // Math.max("true".length(),"false".length);
 
             case DATALINK :
-                return 2004; // same as precision
+                return 2004;                 // same as precision
 
             case DECIMAL :
             case NUMERIC :
-                return 646456995; // precision + "-.".length()
+                return 646456995;            // precision + "-.".length()
 
             case DATE :
-                return 10; // same as precision
+                return 10;                   // same as precision
 
             case INTEGER :
-                return 11; // precision + "-".length();
+                return 11;                   // precision + "-".length();
 
             case FLOAT :
             case REAL :
             case DOUBLE :
-                return 23; // String.valueOf(-Double.MAX_VALUE).length();
+                return 23;                   // String.valueOf(-Double.MAX_VALUE).length();
 
             case TIME :
-                return 8; // same as precision
+                return 8;                    // same as precision
 
             case SMALLINT :
-                return 6; // precision + "-".length();
+                return 6;                    // precision + "-".length();
 
             case TIMESTAMP :
-                return 29; // same as precision
+                return 29;                   // same as precision
 
             case TINYINT :
-                return 4; // precision + "-".length();
+                return 4;                    // precision + "-".length();
 
             default :
-                return 0; // unknown
+                return 0;                    // unknown
         }
     }
 
@@ -400,22 +405,22 @@ final class DITypeInfo implements DITypes {
                 return "'";
 
             case DATALINK :
-                return "'"; // hypothetically: "{url '";
+                return "'";    // hypothetically: "{url '";
 
             case DATE :
-                return "'"; // or JDBC escape: "{d '";
+                return "'";    // or JDBC escape: "{d '";
 
             case OTHER :
-                return  "'"; // hypothetically: "{o '"; or new "pkg.cls"(...)
+                return "'";    // hypothetically: "{o '"; or new "pkg.cls"(...)
 
             case TIME :
-                return  "'"; // or JDBC escape: "{t '";
+                return "'";    // or JDBC escape: "{t '";
 
             case TIMESTAMP :
-                return  "'"; // or JDBC escape: "{ts '";
+                return "'";    // or JDBC escape: "{ts '";
 
             case XML :
-                return  "'"; // hypothetically: "{xml '";
+                return "'";    // hypothetically: "{xml '";
 
             default :
                 return null;
@@ -447,7 +452,7 @@ final class DITypeInfo implements DITypes {
             case TIME :
             case TIMESTAMP :
             case XML :
-                return "'"; // or JDBC close escape: "'}";
+                return "'";    // or JDBC close escape: "'}";
 
             default :
                 return null;
@@ -1134,7 +1139,8 @@ final class DITypeInfo implements DITypes {
         }
     }
 
-    /** Retrieves whether the type is case-sensitive in collations and
+    /**
+     * Retrieves whether the type is case-sensitive in collations and
      * comparisons. <p>
      *
      * @return whether the type is case-sensitive in collations and
@@ -1298,7 +1304,8 @@ final class DITypeInfo implements DITypes {
         return ValuePool.getBoolean(isSup);
     }
 
-    /** Retrieves whether, under the current release, class path and
+    /**
+     * Retrieves whether, under the current release, class path and
      * hosting JVM, HSQLDB supports passing or receiving this type as
      * the value of a procedure column. <p>
      *
@@ -1322,7 +1329,8 @@ final class DITypeInfo implements DITypes {
         }
     }
 
-    /** Retrieves whether, under the current release, class path and
+    /**
+     * Retrieves whether, under the current release, class path and
      * hosting JVM, HSQLDB supports this as the type of a table
      * column. <p>
      *
@@ -1369,7 +1377,8 @@ final class DITypeInfo implements DITypes {
         }
     }
 
-    /** Assigns the Locale object used to retrieve this object's
+    /**
+     * Assigns the Locale object used to retrieve this object's
      * resource bundle dependent values. <p>
      *
      * @param l the Locale object used to retrieve this object's resource
@@ -1396,7 +1405,8 @@ final class DITypeInfo implements DITypes {
         }
     }
 
-    /** Assigns the SQL data type code on which this object is to report. <p>
+    /**
+     * Assigns the SQL data type code on which this object is to report. <p>
      *
      * @param type the SQL data type code on which this object is to report
      */
@@ -1404,7 +1414,8 @@ final class DITypeInfo implements DITypes {
         this.type = type;
     }
 
-    /** Assigns the HSQLDB data subtype code on which this object is
+    /**
+     * Assigns the HSQLDB data subtype code on which this object is
      * to report. <p>
      *
      * @param typeSub the HSQLDB data subtype code on which this object

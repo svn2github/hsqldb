@@ -124,7 +124,6 @@ public class TestHashStructures {
             new org.hsqldb.lib.HashMappedList();
         java.util.HashMap uMap = new java.util.HashMap();
 
-
         populateBySerialIntKeys(uMap, hMap, testSize);
         compareByUIterator(uMap, hMap);
         compareByHIterator(uMap, hMap);
@@ -240,19 +239,19 @@ public class TestHashStructures {
     }
 
     void depopulateByIterator(java.util.HashMap uMap,
-                            org.hsqldb.lib.HashMap hMap,
-                            int testCount) throws Exception {
+                              org.hsqldb.lib.HashMap hMap,
+                              int testCount) throws Exception {
 
-        org.hsqldb.lib.Iterator hIt = hMap.keySet().iterator();
-        int size        = uMap.size();
-        System.out.println( uMap.size());
+        org.hsqldb.lib.Iterator hIt  = hMap.keySet().iterator();
+        int                     size = uMap.size();
+
+        System.out.println(uMap.size());
 
         for (int i = 0; hIt.hasNext(); i++) {
-            Object key = hIt.next();
+            Object key   = hIt.next();
+            int    check = randomgen.nextInt(2);
 
-            int check = randomgen.nextInt(2);
-
-            if ( check == i%2 ){
+            if (check == i % 2) {
                 hIt.remove();
                 uMap.remove(key);
             }
@@ -261,8 +260,8 @@ public class TestHashStructures {
                 throw new Exception("HashMap size mismatch");
             }
         }
-        System.out.println( uMap.size());
 
+        System.out.println(uMap.size());
     }
 
     void compareByUIterator(java.util.HashMap uMap,

@@ -70,7 +70,6 @@ package org.hsqldb;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.StringReader;
-import java.sql.SQLException;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HsqlStringBuffer;
@@ -87,7 +86,7 @@ import org.hsqldb.lib.StringUtil;
 
 // boucherb@users 20030425 - refactoring DDL into smaller units
 // fredt@users 20030609 - support for ALTER COLUMN SET/DROP DEFAULT / RENAME TO
-class DatabaseCommandInterpreter implements DITypes {
+class DatabaseCommandInterpreter implements org.hsqldb.Types {
 
     protected Database    database;
     protected Session     session;
@@ -309,9 +308,9 @@ class DatabaseCommandInterpreter implements DITypes {
      *
      * @return either an empty result or one in which each row is a DDL or DML
      * @throws IOException
-     * @throws SQLException
+     * @throws HsqlException
      */
-    private Result processScript() throws IOException, SQLException {
+    private Result processScript() throws IOException, HsqlException {
 
         String               token = tokenizer.getString();
         StopWatch            sw    = null;
@@ -350,9 +349,9 @@ class DatabaseCommandInterpreter implements DITypes {
      * CREATE TEMP [MEMORY] TABLE
      * </pre>
      *
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    private void processCreate() throws SQLException {
+    private void processCreate() throws HsqlException {
 
         String  token;
         boolean isTemp;
@@ -463,9 +462,9 @@ class DatabaseCommandInterpreter implements DITypes {
      *
      * @param  t table that contains the columns
      * @return  column index map
-     * @throws  SQLException if a column is not found or is duplicate
+     * @throws  HsqlException if a column is not found or is duplicate
      */
-    private int[] processColumnList(Table t) throws SQLException {
+    private int[] processColumnList(Table t) throws HsqlException {
 
         HsqlArrayList list;
         HashSet       set;
@@ -529,11 +528,11 @@ class DatabaseCommandInterpreter implements DITypes {
      * @param  indexName
      * @param  indexNameQuoted
      * @param  unique
-     * @throws  SQLException
+     * @throws  HsqlException
      */
     private void addIndexOn(Table t, String indexName,
                             boolean indexNameQuoted,
-                            boolean unique) throws SQLException {
+                            boolean unique) throws HsqlException {
 
         HsqlName indexHsqlName;
         int[]    indexColumns;
@@ -557,9 +556,9 @@ class DatabaseCommandInterpreter implements DITypes {
      *
      *  typical sql is: CREATE TRIGGER tr1 AFTER INSERT ON tab1 CALL "pkg.cls"
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    private void processCreateTrigger() throws SQLException {
+    private void processCreateTrigger() throws HsqlException {
 
         Table      t;
         boolean    isForEach;
@@ -679,9 +678,9 @@ class DatabaseCommandInterpreter implements DITypes {
      *
      *  @param  t target table
      *  @return a Column object with indicated attributes
-     *  @throws  SQLException
+     *  @throws  HsqlException
      */
-    private Column processCreateColumn(Table t) throws SQLException {
+    private Column processCreateColumn(Table t) throws HsqlException {
 
         boolean isIdentity;
         boolean isPrimaryKey;
@@ -814,11 +813,11 @@ class DatabaseCommandInterpreter implements DITypes {
     /**
      * @param iType
      * @param iLen
-     * @throws SQLException
+     * @throws HsqlException
      * @return
      */
     private String processCreateDefaultValue(int iType,
-            int iLen) throws SQLException {
+            int iLen) throws HsqlException {
 
         String  dv;
         Object  sv;
@@ -877,11 +876,11 @@ class DatabaseCommandInterpreter implements DITypes {
      * @param t
      * @param constraint
      * @param primarykeycolumn
-     * @throws SQLException
+     * @throws HsqlException
      * @return
      */
     private HsqlArrayList processCreateConstraints(Table t,
-            boolean constraint, int[] primarykeycolumn) throws SQLException {
+            boolean constraint, int[] primarykeycolumn) throws HsqlException {
 
         String         token;
         HsqlArrayList  tcList;
@@ -1001,9 +1000,9 @@ class DatabaseCommandInterpreter implements DITypes {
      * Responsible for handling the execution CREATE TABLE SQL statements.
      *
      * @param type Description of the Parameter
-     * @throws SQLException
+     * @throws HsqlException
      */
-    private void processCreateTable(int type) throws SQLException {
+    private void processCreateTable(int type) throws HsqlException {
 
         Table         t;
         String        token;
@@ -1126,10 +1125,10 @@ class DatabaseCommandInterpreter implements DITypes {
             }
 
             database.linkTable(t);
-        } catch (SQLException e) {
+        } catch (HsqlException e) {
 
 // fredt@users 20020225 - comment
-// if a SQLException is thrown while creating table, any foreign key that has
+// if a HsqlException is thrown while creating table, any foreign key that has
 // been created leaves it modification to the expTable in place
 // need to undo those modifications. This should not happen in practice.
             database.removeExportedKeys(t);
@@ -1141,12 +1140,12 @@ class DatabaseCommandInterpreter implements DITypes {
     /**
      * @param t
      * @param cname
-     * @throws SQLException
+     * @throws HsqlException
      * @return
      */
     private TempConstraint processCreateFK(Table t,
                                            HsqlName cname)
-                                           throws SQLException {
+                                           throws HsqlException {
 
         int[]  localcol;
         int[]  expcol;
@@ -1266,9 +1265,9 @@ class DatabaseCommandInterpreter implements DITypes {
     /**
      * Responsible for handling the execution CREATE VIEW SQL statements.
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    private void processCreateView() throws SQLException {
+    private void processCreateView() throws HsqlException {
 
         View     view;
         String   token;
@@ -1302,7 +1301,7 @@ class DatabaseCommandInterpreter implements DITypes {
             select.setPreProcess();
 
             result = select.getResult(1);
-        } catch (SQLException e) {
+        } catch (HsqlException e) {
             throw e;
         }
 
@@ -1316,9 +1315,9 @@ class DatabaseCommandInterpreter implements DITypes {
     /**
      * Responsible for handling tail of ALTER TABLE ... RENAME ...
      * @param t
-     * @throws SQLException
+     * @throws HsqlException
      */
-    private void processAlterTableRename(Table t) throws SQLException {
+    private void processAlterTableRename(Table t) throws HsqlException {
 
         String  tableName;
         String  newName;
@@ -1354,9 +1353,9 @@ class DatabaseCommandInterpreter implements DITypes {
      *
      * ALTER TABLE <name> ADD CONSTRAINT <constname> UNIQUE (<col>, ...)
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    private void processAlter() throws SQLException {
+    private void processAlter() throws HsqlException {
 
         String token;
 
@@ -1387,9 +1386,9 @@ class DatabaseCommandInterpreter implements DITypes {
     /**
      * Handles ALTER TABLE DDL.
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    private void processAlterTable() throws SQLException {
+    private void processAlterTable() throws HsqlException {
 
         String tableName = tokenizer.getString();
         Table  t         = database.getUserTable(tableName, session);
@@ -1471,9 +1470,9 @@ class DatabaseCommandInterpreter implements DITypes {
     /**
      * Handles ALTER COLUMN
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    private void processAlterColumn(Table t) throws SQLException {
+    private void processAlterColumn(Table t) throws HsqlException {
 
         String columnName = tokenizer.getString();
         Column column     = t.getColumn(t.getColumnNr(columnName));
@@ -1512,10 +1511,11 @@ class DatabaseCommandInterpreter implements DITypes {
      * Responsible for handling tail of ALTER COLUMN ... RENAME ...
      * @param t
      * @param oldName
-     * @throws SQLException
+     * @throws HsqlException
      */
     private void processAlterColumnRename(Table t,
-                                          Column column) throws SQLException {
+                                          Column column)
+                                          throws HsqlException {
 
         String  newName  = tokenizer.getName();
         boolean isquoted = tokenizer.wasQuotedIdentifier();
@@ -1532,9 +1532,9 @@ class DatabaseCommandInterpreter implements DITypes {
     /**
      * Handles ALTER INDEX.
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    private void processAlterIndex() throws SQLException {
+    private void processAlterIndex() throws HsqlException {
 
         // only the one supported operation, so far
         processAlterIndexRename();
@@ -1543,9 +1543,9 @@ class DatabaseCommandInterpreter implements DITypes {
     /**
      * Responsible for handling parse and execute of SQL DROP DDL
      *
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    private void processDrop() throws SQLException {
+    private void processDrop() throws HsqlException {
 
         String  token;
         boolean isview;
@@ -1593,9 +1593,9 @@ class DatabaseCommandInterpreter implements DITypes {
      *  statements.
      *
      * @param grant
-     * @throws SQLException
+     * @throws HsqlException
      */
-    private void processGrantOrRevoke(boolean grant) throws SQLException {
+    private void processGrantOrRevoke(boolean grant) throws HsqlException {
 
         int    right;
         Object accessKey;
@@ -1651,9 +1651,9 @@ class DatabaseCommandInterpreter implements DITypes {
     /**
      * Responsible for handling CONNECT
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    private void processConnect() throws SQLException {
+    private void processConnect() throws HsqlException {
 
         String userName;
         String password;
@@ -1675,9 +1675,9 @@ class DatabaseCommandInterpreter implements DITypes {
     /**
      * Responsible for handling the execution of SET SQL statements
      *
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    private void processSet() throws SQLException {
+    private void processSet() throws HsqlException {
 
         String token;
 
@@ -1855,9 +1855,9 @@ class DatabaseCommandInterpreter implements DITypes {
      * Retrieves boolean value corresponding to the next token.
      *
      * @return   true if next token is "TRUE"; false if next token is "FALSE"
-     * @throws  SQLException if the next token is neither "TRUE" or "FALSE"
+     * @throws  HsqlException if the next token is neither "TRUE" or "FALSE"
      */
-    private boolean processTrueOrFalse() throws SQLException {
+    private boolean processTrueOrFalse() throws HsqlException {
 
         String sToken = tokenizer.getString();
 
@@ -1873,9 +1873,9 @@ class DatabaseCommandInterpreter implements DITypes {
     /**
      * Responsible for  handling the execution of COMMIT [WORK]
      *
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    private void processCommit() throws SQLException {
+    private void processCommit() throws HsqlException {
 
         if (!tokenizer.getString().equals(Token.T_WORK)) {
             tokenizer.back();
@@ -1887,9 +1887,9 @@ class DatabaseCommandInterpreter implements DITypes {
     /**
      * Responsible for handling the execution of ROLLBACK SQL statements.
      *
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    private void processRollback() throws SQLException {
+    private void processRollback() throws HsqlException {
 
         String  token;
         boolean toSavepoint;
@@ -1930,9 +1930,9 @@ class DatabaseCommandInterpreter implements DITypes {
     /**
      * Responsible for handling the execution of SAVEPOINT SQL statements.
      *
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    private void processSavepoint() throws SQLException {
+    private void processSavepoint() throws HsqlException {
 
         String token;
 
@@ -1948,9 +1948,9 @@ class DatabaseCommandInterpreter implements DITypes {
     /**
      * Responsible for handling the execution of SHUTDOWN SQL statements
      *
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    private void processShutdown() throws SQLException {
+    private void processShutdown() throws HsqlException {
 
         int    closemode;
         String token;
@@ -1981,9 +1981,9 @@ class DatabaseCommandInterpreter implements DITypes {
     /**
      * Responsible for handling CHECKPOINT [DEFRAG].
      *
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    private void processCheckpoint() throws SQLException {
+    private void processCheckpoint() throws HsqlException {
 
         boolean defrag;
         String  token;
@@ -2004,7 +2004,7 @@ class DatabaseCommandInterpreter implements DITypes {
 
 // --------------------- new methods / simplifications ------------------------
     private HsqlName newIndexHsqlName(String name,
-                                      boolean isQuoted) throws SQLException {
+                                      boolean isQuoted) throws HsqlException {
 
         return HsqlName.isReservedIndexName(name)
                ? HsqlName.newAutoName("USER", name)
@@ -2012,7 +2012,7 @@ class DatabaseCommandInterpreter implements DITypes {
     }
 
     private Table newTable(int type, String name,
-                           boolean quoted) throws SQLException {
+                           boolean quoted) throws HsqlException {
 
         HsqlName tableHsqlName;
         int      sid;
@@ -2038,11 +2038,11 @@ class DatabaseCommandInterpreter implements DITypes {
      *
      * @param indexName to check
      * @param yes if true, check if exists, else check not exists
-     * @throws SQLException if existence of Index does not match value of
+     * @throws HsqlException if existence of Index does not match value of
      *      the argument, yes.
      */
     private void checkIndexExists(String indexName,
-                                  boolean yes) throws SQLException {
+                                  boolean yes) throws HsqlException {
 
         boolean exists;
         int     code;
@@ -2063,11 +2063,11 @@ class DatabaseCommandInterpreter implements DITypes {
      *
      * @param tableName to check
      * @param yes if true, check if exists, else check if not exists
-     * @throws SQLException if existence of table does not match value of
+     * @throws HsqlException if existence of table does not match value of
      *      the argument, yes.
      */
     private void checkTableExists(String tableName,
-                                  boolean yes) throws SQLException {
+                                  boolean yes) throws HsqlException {
 
         boolean exists;
         int     code;
@@ -2092,11 +2092,11 @@ class DatabaseCommandInterpreter implements DITypes {
      *
      * @param viewName to check
      * @param yes if true, check if exists, else check not exists
-     * @throws SQLException if existence of View does not match value of
+     * @throws HsqlException if existence of View does not match value of
      *      the argument, yes.
      */
     private void checkViewExists(String viewName,
-                                 boolean yes) throws SQLException {
+                                 boolean yes) throws HsqlException {
 
         Table   t;
         boolean exists;
@@ -2123,7 +2123,7 @@ class DatabaseCommandInterpreter implements DITypes {
         }
     }
 
-    private void checkIsReallyTable(Table t) throws SQLException {
+    private void checkIsReallyTable(Table t) throws HsqlException {
 
         if (t.isView() || t.tableType == Table.SYSTEM_TABLE) {
             throw Trace.error(Trace.NOT_A_TABLE);
@@ -2136,11 +2136,11 @@ class DatabaseCommandInterpreter implements DITypes {
      *
      * @param triggerName to check
      * @param yes if true, check if exists, else check not exists
-     * @throws SQLException if existence of trigger does not match value of
+     * @throws HsqlException if existence of trigger does not match value of
      *      the argument, yes.
      */
     private void checkTriggerExists(String triggerName,
-                                    boolean yes) throws SQLException {
+                                    boolean yes) throws HsqlException {
 
         boolean exists;
         int     code;
@@ -2164,10 +2164,10 @@ class DatabaseCommandInterpreter implements DITypes {
      *
      * @param t to which to add the Column, c
      * @param c the Column to add to the Table, t
-     * @throws SQLException if the operation of adding the Column, c, to
+     * @throws HsqlException if the operation of adding the Column, c, to
      *      the table t is not valid
      */
-    private void checkAddColumn(Table t, Column c) throws SQLException {
+    private void checkAddColumn(Table t, Column c) throws HsqlException {
 
         boolean canAdd = true;
 
@@ -2186,7 +2186,7 @@ class DatabaseCommandInterpreter implements DITypes {
 
     private void checkFKColumnDefaults(Table t,
                                        TempConstraint tc)
-                                       throws SQLException {
+                                       throws HsqlException {
 
         boolean check;
         int[]   localCol;
@@ -2218,9 +2218,9 @@ class DatabaseCommandInterpreter implements DITypes {
     /**
      * Handles ALTER INDEX &lt;index-name&gt; RENAME.
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    private void processAlterIndexRename() throws SQLException {
+    private void processAlterIndexRename() throws HsqlException {
 
         String  indexName;
         String  newName;
@@ -2259,9 +2259,9 @@ class DatabaseCommandInterpreter implements DITypes {
     /**
      *
      * @param t
-     * @throws SQLException
+     * @throws HsqlException
      */
-    private void processAlterTableAddColumn(Table t) throws SQLException {
+    private void processAlterTableAddColumn(Table t) throws HsqlException {
 
         int    colindex;
         Column column;
@@ -2296,9 +2296,10 @@ class DatabaseCommandInterpreter implements DITypes {
      * ALTER TABLE ADD CONSTRAINT ... DDL.
      *
      * @param t to which to add the constraint
-     * @throws SQLException
+     * @throws HsqlException
      */
-    private void processAlterTableAddConstraint(Table t) throws SQLException {
+    private void processAlterTableAddConstraint(Table t)
+    throws HsqlException {
 
         String   token;
         HsqlName cname;
@@ -2330,9 +2331,9 @@ class DatabaseCommandInterpreter implements DITypes {
      * Responsible for handling tail of ALTER TABLE ... DROP COLUMN ...
      *
      * @param t
-     * @throws SQLException
+     * @throws HsqlException
      */
-    private void processAlterTableDropColumn(Table t) throws SQLException {
+    private void processAlterTableDropColumn(Table t) throws HsqlException {
 
         String token;
         int    colindex;
@@ -2353,10 +2354,10 @@ class DatabaseCommandInterpreter implements DITypes {
      * Responsible for handling tail of ALTER TABLE ... DROP CONSTRAINT ...
      *
      * @param t
-     * @throws SQLException
+     * @throws HsqlException
      */
     private void processAlterTableDropConstraint(Table t)
-    throws SQLException {
+    throws HsqlException {
 
         String cname;
 
@@ -2372,7 +2373,7 @@ class DatabaseCommandInterpreter implements DITypes {
         return;
     }
 
-    private void processCreateAlias() throws SQLException {
+    private void processCreateAlias() throws HsqlException {
 
         String alias;
         String methodFQN;
@@ -2386,7 +2387,7 @@ class DatabaseCommandInterpreter implements DITypes {
         database.getAlias().put(alias, methodFQN);
     }
 
-    private void processCreateIndex(boolean unique) throws SQLException {
+    private void processCreateIndex(boolean unique) throws HsqlException {
 
         String  name;
         boolean isQuoted;
@@ -2402,7 +2403,7 @@ class DatabaseCommandInterpreter implements DITypes {
         addIndexOn(t, name, isQuoted, unique);
     }
 
-    private void processCreateUser() throws SQLException {
+    private void processCreateUser() throws HsqlException {
 
         String  name;
         String  password;
@@ -2422,11 +2423,11 @@ class DatabaseCommandInterpreter implements DITypes {
         database.getUserManager().createUser(name, password, admin);
     }
 
-    private void processDisconnect() throws SQLException {
+    private void processDisconnect() throws HsqlException {
         database.sessionManager.processDisconnect(session);
     }
 
-    private void processDropTable(boolean isView) throws SQLException {
+    private void processDropTable(boolean isView) throws HsqlException {
 
         String  tableName;
         String  token;
@@ -2470,22 +2471,22 @@ class DatabaseCommandInterpreter implements DITypes {
         database.dropTable(tableName, ifExists, isView, session);
     }
 
-    private void processDropUser() throws SQLException {
+    private void processDropUser() throws HsqlException {
         session.checkDDLWrite();
         database.getUserManager().dropUser(tokenizer.getStringToken());
     }
 
-    private void processDropTrigger() throws SQLException {
+    private void processDropTrigger() throws HsqlException {
         session.checkDDLWrite();
         database.dropTrigger(tokenizer.getString(), session);
     }
 
-    private void processDropIndex() throws SQLException {
+    private void processDropIndex() throws HsqlException {
         session.checkDDLWrite();
         database.dropIndex(tokenizer.getName(), session);
     }
 
-    private Result processExplainPlan() throws IOException, SQLException {
+    private Result processExplainPlan() throws IOException, HsqlException {
 
         String            token;
         Parser            parser;
@@ -2625,7 +2626,7 @@ class DatabaseCommandInterpreter implements DITypes {
         }
     }
 
-    private Result processSelectInto(Select select) throws SQLException {
+    private Result processSelectInto(Select select) throws HsqlException {
 
         Table        t;
         Result       r;
@@ -2683,7 +2684,7 @@ class DatabaseCommandInterpreter implements DITypes {
                 t.setDataSource(txtSrc, false, session);
                 logTableDDL(t);
                 t.insertNoCheck(r, session);
-            } catch (SQLException e) {
+            } catch (HsqlException e) {
                 database.dropTable(intoName, false, false, session);
 
                 throw (e);
@@ -2706,9 +2707,9 @@ class DatabaseCommandInterpreter implements DITypes {
      *  Uses three dummy arguments for getTableDDL() as the new table has no
      *  FK constraints.
      *
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void logTableDDL(Table t) throws SQLException {
+    void logTableDDL(Table t) throws HsqlException {
 
         HsqlStringBuffer tableDDL;
         String           sourceDDL;
@@ -2731,7 +2732,7 @@ class DatabaseCommandInterpreter implements DITypes {
     }
 
     private void processAlterTableAddUniqueConstraint(Table t,
-            HsqlName n) throws SQLException {
+            HsqlName n) throws HsqlException {
 
         int col[];
 
@@ -2747,7 +2748,7 @@ class DatabaseCommandInterpreter implements DITypes {
     }
 
     private void processAlterTableAddForeignKeyConstraint(Table t,
-            HsqlName n) throws SQLException {
+            HsqlName n) throws HsqlException {
 
         TempConstraint tc;
 

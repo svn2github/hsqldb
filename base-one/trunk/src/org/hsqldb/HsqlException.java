@@ -67,89 +67,38 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HashMap;
-import java.io.IOException;
-import org.hsqldb.lib.FileUtil;
-import org.hsqldb.lib.StopWatch;
+/**
+ * @author fredt@users
+ * @version 1.7.2
+ * @since 1.7.2
+ */
+public class HsqlException extends Exception {
 
-class ScriptRunner {
+    String message;
+    String state;
+    int    code;
 
     /**
-     *  This is used to read the *.log file and manage any necessary
-     *  transaction rollback.
-     *
-     * @throws  HsqlException
+     * @param prompt
+     * @param state XOPEN / SQL code for exceptoin
+     * @param exception number code in HSQLDB
      */
-    static void runScript(Database database, String scriptFilename,
-                          int logType) throws HsqlException {
+    public HsqlException(String message, String state, int code) {
 
-        if (database.filesInJar) {
-            if (ScriptRunner.class.getClassLoader().getResource(
-                    scriptFilename) == null) {
-                return;
-            }
-        } else if (!FileUtil.exists(scriptFilename)) {
-            return;
-        }
+        this.message = message;
+        this.state   = state;
+        this.code    = code;
+    }
 
-        HashMap sessionMap = new HashMap();
-        Session sysSession = database.sessionManager.getSysSession();
-        Session current    = sysSession;
+    public String getMessage() {
+        return message;
+    }
 
-        database.setReferentialIntegrity(false);
+    public String getSQLState() {
+        return state;
+    }
 
-        try {
-            StopWatch sw = new StopWatch();
-            DatabaseScriptReader scr =
-                DatabaseScriptReader.newDatabaseScriptReader(database,
-                    scriptFilename, logType);
-
-            while (true) {
-                String s = scr.readLoggedStatement();
-
-                if (s == null) {
-                    break;
-                }
-
-                if (s.startsWith("/*C")) {
-                    Integer id = new Integer(s.substring(3, s.indexOf('*',
-                        4)));
-
-                    current = (Session) sessionMap.get(id);
-
-                    if (current == null) {
-                        current = database.sessionManager.newSession(database,
-                                sysSession.getUser(), false);
-
-                        sessionMap.put(id, current);
-                    }
-
-                    s = s.substring(s.indexOf('/', 1) + 1);
-                }
-
-                if (s.length() != 0) {
-                    Result result = database.execute(s, current);
-
-                    if (result != null && result.iMode == Result.ERROR) {
-                        Trace.printSystemOut("error in " + scriptFilename
-                                             + " line: "
-                                             + scr.getLineNumber());
-                        Trace.printSystemOut(result.errorString);
-                    }
-                }
-            }
-
-            scr.close();
-            database.sessionManager.closeAllSessions();
-
-            if (Trace.TRACE) {
-                Trace.trace("restore time: " + sw.elapsedTime());
-            }
-        } catch (IOException e) {
-            throw Trace.error(Trace.FILE_IO_ERROR, scriptFilename + " " + e);
-        }
-
-        database.setReferentialIntegrity(true);
+    public int getErrorCode() {
+        return code;
     }
 }

@@ -67,8 +67,6 @@
 
 package org.hsqldb;
 
-import java.sql.Types;
-import java.sql.SQLException;
 import java.math.BigDecimal;
 import java.util.NoSuchElementException;
 import org.hsqldb.lib.HashMap;
@@ -124,10 +122,11 @@ class Tokenizer {
     private int              iType;
     private String           sToken;
     private String           sLongNameFirst;
+
 //    private String           sLongNameLast;
-    private boolean          bWait;
-    private static HashMap   hKeyword;
-    static IntValueHashMap   valueTokens;
+    private boolean        bWait;
+    private static HashMap hKeyword;
+    static IntValueHashMap valueTokens;
 
     static {
 
@@ -184,17 +183,18 @@ class Tokenizer {
         iType          = NO_TYPE;
         sToken         = null;
         sLongNameFirst = null;
+
 //        sLongNameLast  = null;
-        bWait          = false;
+        bWait = false;
     }
 
     /**
      * Method declaration
      *
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    void back() throws SQLException {
+    void back() throws HsqlException {
 
         Trace.doAssert(!bWait, "back");
 
@@ -209,9 +209,9 @@ class Tokenizer {
      *
      * @param match
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    void getThis(String match) throws SQLException {
+    void getThis(String match) throws HsqlException {
 
         getToken();
 
@@ -226,9 +226,9 @@ class Tokenizer {
      *
      * @return
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    String getStringToken() throws SQLException {
+    String getStringToken() throws HsqlException {
 
         getToken();
 
@@ -284,7 +284,6 @@ class Tokenizer {
      *
      * @return
      */
-
     boolean wasLongName() {
         return iType == LONG_NAME;
     }
@@ -295,7 +294,6 @@ class Tokenizer {
      *
      * @return
      */
-
     boolean wasName() {
 
         if (iType == QUOTED_IDENTIFIER) {
@@ -343,15 +341,16 @@ class Tokenizer {
         return sLongNameLast;
     }
 */
+
     /**
      * Method declaration
      *
      *
      * @return
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    String getName() throws SQLException {
+    String getName() throws HsqlException {
 
         getToken();
 
@@ -362,7 +361,7 @@ class Tokenizer {
         return sToken;
     }
 
-    String getIdentifier() throws SQLException {
+    String getIdentifier() throws HsqlException {
 
         getToken();
 
@@ -379,9 +378,9 @@ class Tokenizer {
      *
      * @return
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    String getString() throws SQLException {
+    String getString() throws HsqlException {
 
         getToken();
 
@@ -438,9 +437,9 @@ class Tokenizer {
      *
      * @return
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    Object getAsValue() throws SQLException {
+    Object getAsValue() throws HsqlException {
 
         if (!wasValue()) {
             throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
@@ -562,9 +561,9 @@ class Tokenizer {
      * Method declaration
      *
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    private void getToken() throws SQLException {
+    private void getToken() throws HsqlException {
 
         if (bWait) {
             bWait  = false;
@@ -643,7 +642,7 @@ class Tokenizer {
                         getToken();
 
 //                        sLongNameLast = sToken;
-                        iType         = LONG_NAME;
+                        iType = LONG_NAME;
 /*
                         StringBuffer sb =
                             new StringBuffer(sLongNameFirst.length() + 1
@@ -720,7 +719,8 @@ class Tokenizer {
                         getToken();    // todo: eliminate recursion
 
 //                        sLongNameLast = sToken;
-                        iType         = LONG_NAME;
+                        iType = LONG_NAME;
+
 //                        sToken        = sLongNameFirst + "." + sLongNameLast;
                     } else if (c == '(') {
 
@@ -860,7 +860,7 @@ class Tokenizer {
 // because these strings might end up as part of internal data structures
 // or table elements.
 // we may consider using pools to avoid recreating the strings
-    private String getString(char quoteChar) throws SQLException {
+    private String getString(char quoteChar) throws HsqlException {
 
         try {
             int     nextIndex   = iIndex;
@@ -907,7 +907,7 @@ class Tokenizer {
             iIndex = ++nextIndex;
 
             return new String(chBuffer, 0, j);
-        } catch (SQLException e) {
+        } catch (HsqlException e) {
             throw e;
         } catch (Exception e) {
             e.getMessage();
@@ -951,10 +951,10 @@ class Tokenizer {
      * in the current tokenizing context
      *
      * @param msg to display in exception if check determines
-     * @throws SQLException if current token string value is '?' and the
+     * @throws HsqlException if current token string value is '?' and the
      * class of the token is not SPECIAL
      */
-    void checkUnexpectedParam(String msg) throws SQLException {
+    void checkUnexpectedParam(String msg) throws HsqlException {
 
         if ("?".equals(sToken)) {
             Trace.check(iType != SPECIAL, Trace.UNEXPECTED_TOKEN, msg);

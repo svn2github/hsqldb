@@ -68,7 +68,6 @@
 package org.hsqldb;
 
 import java.io.IOException;
-import java.sql.SQLException;
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // fredt@users 20020920 - path 1.7.1 - refactoring to cut mamory footprint
@@ -120,7 +119,7 @@ class CachedRow extends Row {
      *  means that once a row is created its data cannot change.
      *  (correct as of version 1_7_2_alpha_i)
      */
-    CachedRow(Table t, Object o[]) throws SQLException {
+    CachedRow(Table t, Object o[]) throws HsqlException {
 
         tTable = t;
 
@@ -145,7 +144,8 @@ class CachedRow extends Row {
      *  constructor when read from the disk into the Cache
      */
     CachedRow(Table t,
-              DatabaseRowInputInterface in) throws IOException, SQLException {
+              DatabaseRowInputInterface in)
+              throws IOException, HsqlException {
 
         tTable      = t;
         iPos        = in.getPos();
@@ -171,7 +171,7 @@ class CachedRow extends Row {
      *  This method is called only when the Row is deleted from the database
      *  table. The links with all the other objects are removed.
      */
-    void delete() throws SQLException {
+    void delete() throws HsqlException {
 
         Record.memoryRecords++;
 
@@ -217,7 +217,7 @@ class CachedRow extends Row {
      * Returns true if any of the Index Nodes for this row is a root node.
      * Used only in Cache.java to avoid removing the row from the cache.
      */
-    boolean isRoot() throws SQLException {
+    boolean isRoot() throws HsqlException {
 
         Node n = nPrimaryNode;
 
@@ -244,7 +244,7 @@ class CachedRow extends Row {
      *  Using the internal reference to the Table, returns the current valid
      *  Row that represents the database row for this Object.
      */
-    Row getUpdatedRow() throws SQLException {
+    Row getUpdatedRow() throws HsqlException {
         return tTable.getRow(iPos, null);
     }
 
@@ -256,7 +256,7 @@ class CachedRow extends Row {
      *  will change.
      */
     void write(DatabaseRowOutputInterface out)
-    throws IOException, SQLException {
+    throws IOException, HsqlException {
 
         writeNodes(out);
 
@@ -288,7 +288,7 @@ class CachedRow extends Row {
      *  methods writes this information out.
      */
     private void writeNodes(DatabaseRowOutputInterface out)
-    throws IOException, SQLException {
+    throws IOException, HsqlException {
 
         out.writeSize(storageSize);
 
@@ -325,7 +325,7 @@ class CachedRow extends Row {
     /**
      *  Removes the Row from the linked list of Rows in the Cache.
      */
-    CachedRow free() throws SQLException {
+    CachedRow free() throws HsqlException {
 
         CachedRow nextrow = rNext;
 

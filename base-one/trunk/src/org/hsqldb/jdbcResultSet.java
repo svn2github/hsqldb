@@ -71,13 +71,12 @@ import java.io.ByteArrayInputStream;
 import java.io.StringReader;
 import java.math.BigDecimal;
 import java.sql.*;     // for Array, Blob, Clob, Ref
+import java.sql.SQLException;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
-import java.sql.Types;
 import java.sql.SQLWarning;
 import java.util.*;    // for Map
 import java.util.Calendar;
@@ -439,9 +438,9 @@ public class jdbcResultSet implements ResultSet {
     /**
      * Determines how strictly ResultSetMetaData reporting is handled. <p>
      *
-     * If false, various unsupported jdbcResultSetMetaData methods behave as 
-     * they did in version 1.61, else they typically either throw an 
-     * SQLException or return a more strictly correct but possibly less 
+     * If false, various unsupported jdbcResultSetMetaData methods behave as
+     * they did in version 1.61, else they typically either throw an
+     * SQLException or return a more strictly correct but possibly less
      * usable value.
      */
     boolean strictMetaData = false;
@@ -459,7 +458,7 @@ public class jdbcResultSet implements ResultSet {
      * this still cannot be guaranteed in all cases.  <p>
      *
      * For example, a jdbcResultSet obtained directly from any of the internal
-     * jdbcConnection.executeXXX() methods does not have a non-null 
+     * jdbcConnection.executeXXX() methods does not have a non-null
      * jdbcStatement member.  Indeed, in the current code base, the only time
      * a jdbcResultSet object does have a non-null jdbcStatement member is
      * when it has been generated from a jdbcStatement object and does not
@@ -620,7 +619,8 @@ public class jdbcResultSet implements ResultSet {
         try {
             o = nCurrent.data[--columnIndex];
         } catch (ArrayIndexOutOfBoundsException e) {
-            throw Trace.error(Trace.COLUMN_NOT_FOUND, ++columnIndex);
+            throw jdbcDriver.sqlException(Trace.COLUMN_NOT_FOUND,
+                                          String.valueOf(++columnIndex));
         }
 
         // use checknull because getColumnInType is not used
@@ -837,7 +837,7 @@ public class jdbcResultSet implements ResultSet {
             Types.DECIMAL);
 
         if (scale < 0) {
-            throw Trace.error(Trace.INVALID_JDBC_ARGUMENT);
+            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT);
         }
 
         if (bd != null) {
@@ -1718,7 +1718,11 @@ public class jdbcResultSet implements ResultSet {
      * @see jdbcResultSetMetaData
      */
     public ResultSetMetaData getMetaData() throws SQLException {
-        Trace.doAssert(sqlStatement != null,"Statement is null");
+
+        if (sqlStatement == null) {
+            throw new SQLException("Statement is null");
+        }
+
         return new jdbcResultSetMetaData(this);
     }
 
@@ -1764,7 +1768,8 @@ public class jdbcResultSet implements ResultSet {
         try {
             o = nCurrent.data[--columnIndex];
         } catch (ArrayIndexOutOfBoundsException e) {
-            throw Trace.error(Trace.COLUMN_NOT_FOUND, ++columnIndex);
+            throw jdbcDriver.sqlException(Trace.COLUMN_NOT_FOUND,
+                                          String.valueOf(++columnIndex));
         }
 
         // use checknull because getColumnInType is not used
@@ -1844,7 +1849,7 @@ public class jdbcResultSet implements ResultSet {
             }
         }
 
-        throw Trace.error(Trace.COLUMN_NOT_FOUND);
+        throw jdbcDriver.sqlException(Trace.COLUMN_NOT_FOUND);
     }
 
     //--------------------------JDBC 2.0-----------------------------------
@@ -2135,7 +2140,7 @@ public class jdbcResultSet implements ResultSet {
         }
 
         if (this.getType() == TYPE_FORWARD_ONLY) {
-            throw Trace.error(Trace.RESULTSET_FORWARD_ONLY);
+            throw jdbcDriver.sqlException(Trace.RESULTSET_FORWARD_ONLY);
         }
 
         // Set to beforeFirst status
@@ -2167,7 +2172,7 @@ public class jdbcResultSet implements ResultSet {
         }
 
         if (this.getType() == TYPE_FORWARD_ONLY) {
-            throw Trace.error(Trace.RESULTSET_FORWARD_ONLY);
+            throw jdbcDriver.sqlException(Trace.RESULTSET_FORWARD_ONLY);
         }
 
         if (rResult != null && rResult.rRoot != null) {
@@ -2204,7 +2209,7 @@ public class jdbcResultSet implements ResultSet {
         }
 
         if (this.getType() == TYPE_FORWARD_ONLY) {
-            throw Trace.error(Trace.RESULTSET_FORWARD_ONLY);
+            throw jdbcDriver.sqlException(Trace.RESULTSET_FORWARD_ONLY);
         }
 
         if (rResult == null) {
@@ -2247,7 +2252,7 @@ public class jdbcResultSet implements ResultSet {
         }
 
         if (this.getType() == TYPE_FORWARD_ONLY) {
-            throw Trace.error(Trace.RESULTSET_FORWARD_ONLY);
+            throw jdbcDriver.sqlException(Trace.RESULTSET_FORWARD_ONLY);
         }
 
         if (rResult == null) {
@@ -2348,7 +2353,7 @@ public class jdbcResultSet implements ResultSet {
         }
 
         if (this.getType() == TYPE_FORWARD_ONLY) {
-            throw Trace.error(Trace.RESULTSET_FORWARD_ONLY);
+            throw jdbcDriver.sqlException(Trace.RESULTSET_FORWARD_ONLY);
         }
 
         if (rResult == null) {
@@ -2445,7 +2450,7 @@ public class jdbcResultSet implements ResultSet {
         }
 
         if (this.getType() == TYPE_FORWARD_ONLY) {
-            throw Trace.error(Trace.RESULTSET_FORWARD_ONLY);
+            throw jdbcDriver.sqlException(Trace.RESULTSET_FORWARD_ONLY);
         }
 
         if (rResult == null) {
@@ -2506,7 +2511,7 @@ public class jdbcResultSet implements ResultSet {
         }
 
         if (this.getType() == TYPE_FORWARD_ONLY) {
-            throw Trace.error(Trace.RESULTSET_FORWARD_ONLY);
+            throw jdbcDriver.sqlException(Trace.RESULTSET_FORWARD_ONLY);
         }
 
         if (rResult == null || rResult.rRoot == null || iCurrentRow == 0) {
@@ -5510,14 +5515,18 @@ public class jdbcResultSet implements ResultSet {
 //#endif JDBC3
     //-------------------- Internal Implementation -------------------------
 // Support for JDBC 2 from JRE 1.1.x
-    /** Copy of java.sql.ResultSet constant, for JDK 1.1 clients. */    
-    public static final int FETCH_FORWARD           = 1000;
-    /** Copy of java.sql.ResultSet constant, for JDK 1.1 clients. */    
-    public static final int TYPE_FORWARD_ONLY       = 1003;
-    /** Copy of java.sql.ResultSet constant, for JDK 1.1 clients. */    
+
+    /** Copy of java.sql.ResultSet constant, for JDK 1.1 clients. */
+    public static final int FETCH_FORWARD = 1000;
+
+    /** Copy of java.sql.ResultSet constant, for JDK 1.1 clients. */
+    public static final int TYPE_FORWARD_ONLY = 1003;
+
+    /** Copy of java.sql.ResultSet constant, for JDK 1.1 clients. */
     public static final int TYPE_SCROLL_INSENSITIVE = 1004;
-    /** Copy of java.sql.ResultSet constant, for JDK 1.1 clients. */    
-    public static final int CONCUR_READ_ONLY        = 1007;
+
+    /** Copy of java.sql.ResultSet constant, for JDK 1.1 clients. */
+    public static final int CONCUR_READ_ONLY = 1007;
 
     //---------------------------- Private ---------------------------------
 
@@ -5529,7 +5538,7 @@ public class jdbcResultSet implements ResultSet {
     private void checkAvailable() throws SQLException {
 
         if (rResult == null ||!bInit || nCurrent == null) {
-            throw Trace.error(Trace.NO_DATA_IS_AVAILABLE);
+            throw jdbcDriver.sqlException(Trace.NO_DATA_IS_AVAILABLE);
         }
     }
 
@@ -5542,7 +5551,8 @@ public class jdbcResultSet implements ResultSet {
     void checkColumn(int columnIndex) throws SQLException {
 
         if (columnIndex < 1 || columnIndex > iColumnCount) {
-            throw Trace.error(Trace.COLUMN_NOT_FOUND, columnIndex);
+            throw jdbcDriver.sqlException(Trace.COLUMN_NOT_FOUND,
+                                          String.valueOf(columnIndex));
         }
     }
 
@@ -5587,7 +5597,8 @@ public class jdbcResultSet implements ResultSet {
             t = rResult.colType[--columnIndex];
             o = nCurrent.data[columnIndex];
         } catch (ArrayIndexOutOfBoundsException e) {
-            throw Trace.error(Trace.COLUMN_NOT_FOUND, ++columnIndex);
+            throw jdbcDriver.sqlException(Trace.COLUMN_NOT_FOUND,
+                                          String.valueOf(++columnIndex));
         }
 
         checkNull(o);
@@ -5605,7 +5616,7 @@ public class jdbcResultSet implements ResultSet {
                        + ") expected: " + Column.getTypeString(type)
                        + " value: " + o.toString();
 
-            throw Trace.error(Trace.WRONG_DATA_TYPE, s);
+            throw jdbcDriver.sqlException(Trace.WRONG_DATA_TYPE, s);
         }
     }
 
@@ -5616,7 +5627,7 @@ public class jdbcResultSet implements ResultSet {
      * <code>org.hsqldb.Result</code>. <p>
      *
      * @param props The properties object of this object's parent Connection.
-     * @param r the internal result form that the new 
+     * @param r the internal result form that the new
      *      <code>jdbcResultSet</code> represents
      * @exception SQLException when the supplied Result is of type
      * org.hsqldb.Result.ERROR
@@ -5638,7 +5649,7 @@ public class jdbcResultSet implements ResultSet {
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // tony_lai@users 20020820 - patch 595073
 //            throw (Trace.getError(r.errorCode, r.sError));
-            throw (Trace.getError(r.sError, r.errorCode));
+            throw new SQLException(r.errorString, null, r.errorCode);
         } else {
             iUpdateCount = -1;
             rResult      = r;

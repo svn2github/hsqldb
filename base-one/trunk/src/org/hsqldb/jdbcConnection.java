@@ -743,7 +743,7 @@ public class jdbcConnection implements Connection {
     public String nativeSQL(String sql) throws SQLException {
 
         //boucherb@users 20030405
-        //FIXME: does not properly escape even the JDBC escape syntax we 
+        //FIXME: does not properly escape even the JDBC escape syntax we
         //       say we support.
         //       e.g.  {call ...(...,{dt '...'},....)} does not work
         checkClosed();
@@ -919,7 +919,7 @@ public class jdbcConnection implements Connection {
             } catch (SQLException e) {
                 this.close();
 
-                throw Trace.error(Trace.CONNECTION_IS_BROKEN);
+                throw jdbcDriver.sqlException(Trace.CONNECTION_IS_BROKEN);
             }
         }
     }
@@ -1268,7 +1268,7 @@ public class jdbcConnection implements Connection {
             } catch (SQLException e) {
                 this.close();
 
-                throw Trace.error(Trace.CONNECTION_IS_BROKEN);
+                throw jdbcDriver.sqlException(Trace.CONNECTION_IS_BROKEN);
             }
         }
     }
@@ -1493,7 +1493,7 @@ public class jdbcConnection implements Connection {
     void checkClosed() throws SQLException {
 
         if (bClosed) {
-            throw Trace.error(Trace.CONNECTION_IS_CLOSED);
+            throw jdbcDriver.sqlException(Trace.CONNECTION_IS_CLOSED);
         }
     }
 
@@ -2529,7 +2529,7 @@ public class jdbcConnection implements Connection {
      * @exception SQLException when the specified Session is null
      * @see Function
      */
-    jdbcConnection(Session c) throws SQLException {
+    jdbcConnection(Session c) throws HsqlException {
 
         Trace.doAssert(c != null, "The specified Session is null");
 
@@ -2714,7 +2714,7 @@ public class jdbcConnection implements Connection {
     private synchronized jdbcResultSet executeHTTP(String s)
     throws SQLException {
 
-        byte result[];
+        byte byteArray[];
 
         try {
             URL url = new URL(sConnect);
@@ -2735,18 +2735,18 @@ public class jdbcConnection implements Connection {
             BufferedInputStream in  = new BufferedInputStream(is);
             int                 len = c.getContentLength();
 
-            result = new byte[len];
+            byteArray = new byte[len];
 
             for (int i = 0; i < len; i++) {
                 int r = in.read();
 
-                result[i] = (byte) r;
+                byteArray[i] = (byte) r;
             }
         } catch (MalformedURLException mue) {
             int iEndOfProt = sConnect.indexOf(':');
 
             if (iEndOfProt < 1) {
-                throw Trace.error(
+                throw jdbcDriver.sqlException(
                     Trace.CONNECTION_IS_BROKEN,
                     "jdbcResultSet() somehow got a "
                     + "connect string with no protocol specification");
@@ -2756,12 +2756,20 @@ public class jdbcConnection implements Connection {
                                    + sConnect.substring(0, iEndOfProt)
                                    + "' is not supported by your JRE.");
         } catch (Exception e) {
-            throw Trace.error(Trace.CONNECTION_IS_BROKEN, e.getMessage());
+            throw jdbcDriver.sqlException(Trace.CONNECTION_IS_BROKEN,
+                                          e.getMessage());
         }
 
-        BinaryServerRowInput rowin = new BinaryServerRowInput(result);
+        BinaryServerRowInput rowin = new BinaryServerRowInput(byteArray);
+        Result               result;
 
-        return new jdbcResultSet(new Result(rowin), connProperties);
+        try {
+            result = new Result(rowin);
+        } catch (HsqlException e) {
+            throw new SQLException("connection is broken");
+        }
+
+        return new jdbcResultSet(result, connProperties);
     }
 
     /**
@@ -2844,7 +2852,8 @@ public class jdbcConnection implements Connection {
             dOutput.writeUTF(sPassword);
             dOutput.flush();
         } catch (Exception e) {
-            throw Trace.error(Trace.CONNECTION_IS_BROKEN, e.getMessage());
+            throw jdbcDriver.sqlException(Trace.CONNECTION_IS_BROKEN,
+                                          e.getMessage());
         }
     }
 
@@ -2880,7 +2889,7 @@ public class jdbcConnection implements Connection {
     private synchronized jdbcResultSet executeHSQL(String s)
     throws SQLException {
 
-        byte result[];
+        byte byteArray[];
 
         try {
 
@@ -2893,12 +2902,12 @@ public class jdbcConnection implements Connection {
 
             int len = dInput.readInt();
 
-            result = new byte[len];
+            byteArray = new byte[len];
 
             int p = 0;
 
             while (true) {
-                int l = dInput.read(result, p, len);
+                int l = dInput.read(byteArray, p, len);
 
                 if (l == len) {
                     break;
@@ -2908,12 +2917,20 @@ public class jdbcConnection implements Connection {
                 }
             }
         } catch (Exception e) {
-            throw Trace.error(Trace.CONNECTION_IS_BROKEN, e.getMessage());
+            throw jdbcDriver.sqlException(Trace.CONNECTION_IS_BROKEN,
+                                          e.getMessage());
         }
 
-        BinaryServerRowInput rowin = new BinaryServerRowInput(result);
+        BinaryServerRowInput rowin = new BinaryServerRowInput(byteArray);
+        Result               result;
 
-        return new jdbcResultSet(new Result(rowin), connProperties);
+        try {
+            result = new Result(rowin);
+        } catch (HsqlException e) {
+            throw new SQLException("connection is broken");
+        }
+
+        return new jdbcResultSet(result, connProperties);
     }
 
     /**
@@ -2939,12 +2956,12 @@ public class jdbcConnection implements Connection {
         try {
             dDatabase = runtime.getDatabase(sDatabaseName, this);
             cSession  = dDatabase.connect(user, password);
-        } catch (SQLException se) {
+        } catch (HsqlException se) {
             try {
                 close();
             } catch (Exception e) {}
 
-            throw se;
+            throw jdbcDriver.sqlException(se);
         }
     }
 
@@ -3043,8 +3060,11 @@ public class jdbcConnection implements Connection {
             // TODO:  wrap this better; we have lots of Trace codes we could
             // use for TLS and maybe a few better than GENERAL_ERROR
             // for plain sockets.
-            throw isTLS ? Trace.error(Trace.TLS_ERROR, e.toString())
-                        : Trace.error(Trace.GENERAL_ERROR, e.toString());
+            throw jdbcDriver.sqlException(isTLS
+                                          ? Trace.error(Trace.TLS_ERROR,
+                                              e.toString())
+                                          : Trace.error(Trace.GENERAL_ERROR,
+                                          e.toString()));
         }
     }
 

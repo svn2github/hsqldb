@@ -35,7 +35,6 @@ import java.io.Externalizable;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.sql.DatabaseMetaData;
-import java.sql.SQLException;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.store.ValuePool;
@@ -49,7 +48,7 @@ import org.hsqldb.resources.BundleHandler;
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
-final class DIProcedureInfo implements DITypes {
+final class DIProcedureInfo implements Types {
 
     private Class         clazz;
     private Class[]       colClasses;
@@ -65,7 +64,7 @@ final class DIProcedureInfo implements DITypes {
     private DINameSpace   nameSpace;
     private final HashMap typeMap = new HashMap();
 
-    public DIProcedureInfo(DINameSpace ns) throws SQLException {
+    public DIProcedureInfo(DINameSpace ns) throws HsqlException {
         setNameSpace(ns);
     }
 
@@ -302,7 +301,7 @@ final class DIProcedureInfo implements DITypes {
         return nameSpace;
     }
 
-    void setNameSpace(DINameSpace ns) throws SQLException {
+    void setNameSpace(DINameSpace ns) throws HsqlException {
 
         Trace.doAssert(ns != null, "name space is null");
 

@@ -31,8 +31,6 @@
 
 package org.hsqldb;
 
-import java.sql.SQLException;
-
 // fredt@users 20020420 - patch523880 by leptipre@users - VIEW support - modified
 // fredt - todo - disallow dropping tables used in views
 
@@ -46,7 +44,7 @@ class View extends Table {
 
     String sStatement;
 
-    View(Database db, HsqlName name) throws SQLException {
+    View(Database db, HsqlName name) throws HsqlException {
 
         super(db, name, VIEW, 0);
 
@@ -54,7 +52,7 @@ class View extends Table {
         isReadOnly = true;
     }
 
-    void addColumns(Result result) throws SQLException {
+    void addColumns(Result result) throws HsqlException {
 
         for (int i = 0; i < result.getColumnCount(); i++) {
             String name = result.sTable[i];
@@ -84,9 +82,9 @@ class View extends Table {
      *
      * @param s
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    void setStatement(String s) throws SQLException {
+    void setStatement(String s) throws HsqlException {
 
         int       position;
         String    str;
@@ -107,7 +105,7 @@ class View extends Table {
         return sStatement;
     }
 
-    void setDataReadOnly(boolean value) throws SQLException {
+    void setDataReadOnly(boolean value) throws HsqlException {
         throw Trace.error(Trace.NOT_A_TABLE);
     }
 }

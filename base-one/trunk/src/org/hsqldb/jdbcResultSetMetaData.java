@@ -450,7 +450,10 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
             sw = new StopWatch();
         }
 
-        Trace.doAssert(rs != null, "result set is null");
+        if (rs == null) {
+            throw jdbcDriver.sqlException(Trace.GENERAL_ERROR,
+                                          "result set is null");
+        }
 
         rResult = rs.rResult;
 
@@ -474,7 +477,10 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
             return;
         }
 
-        Trace.doAssert(rResult != null, "result set is closed");
+        if (rResult == null) {
+            throw jdbcDriver.sqlException(Trace.GENERAL_ERROR,
+                                          "result set is closed");
+        }
 
         // Typically, these assertions are not required, but they are
         // not guaranteed to be true either.  It is far more terse,
@@ -482,6 +488,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         // all related code further along in try-catch blocks and wrap
         // things like array bounds and null pointer exceptions with
         // SQLExceptions.
+/*
         Trace.doAssert(
             rResult.colType != null && rResult.colType.length >= columnCount,
             "rResult.colType array is null or too small");
@@ -494,15 +501,20 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         Trace.doAssert(
             rResult.sName != null && rResult.sName.length >= columnCount,
             "rResult.sName array is null or too small");
-
+*/
         stmnt = rs.getStatement();
-
+/*
         Trace.doAssert(stmnt != null, "statement is null");
-
+*/
         conn = stmnt.getConnection();
 
+/*
         Trace.doAssert(conn != null, "connection is null");
-        Trace.doAssert(!conn.isClosed(), "connection is closed");
+*/
+        if (conn.isClosed()) {
+            throw jdbcDriver.sqlException(Trace.GENERAL_ERROR,
+                                          "connection is closed");
+        }
 
         acmd = new jdbcColumnMetaData[columnCount];
 
@@ -1322,7 +1334,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
         // (e.g. using high bytes for extention info and low bytes for SQL
         // type), reducing transport overhead.
         // (see: org.hsqldb.Library.getCDColumnMetaData)
-        return type == Column.VARCHAR_IGNORECASE ? DITypes.VARCHAR
+        return type == Column.VARCHAR_IGNORECASE ? Types.VARCHAR
                                                  : type;
     }
 
@@ -1589,8 +1601,9 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
             if (e instanceof SQLException) {
                 cDependentException = (SQLException) e;
             } else {
-                cDependentException = Trace.error(Trace.GENERAL_ERROR,
-                                                  e.toString());
+                cDependentException =
+                    jdbcDriver.sqlException(Trace.GENERAL_ERROR,
+                                            e.toString());
             }
 
             reportCDependent = false;
@@ -1646,11 +1659,11 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
             cmd = acmd[i];
 
             int ditype     = cmd.columnType;
-            int ditype_sub = DITypes.TYPE_SUB_DEFAULT;
+            int ditype_sub = Types.TYPE_SUB_DEFAULT;
 
             if (cmd.columnType == Column.VARCHAR_IGNORECASE) {
-                ditype     = DITypes.VARCHAR;
-                ditype_sub = DITypes.TYPE_SUB_IGNORECASE;
+                ditype     = Types.VARCHAR;
+                ditype_sub = Types.TYPE_SUB_IGNORECASE;
             }
 
             ti.setTypeCode(ditype);
@@ -1713,7 +1726,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
 
                         rc++;
                     }
-                } catch (Exception e) { /* Should never happen */
+                } catch (Exception e) {    /* Should never happen */
                 }
 
                 cmd.columnDisplaySize = max;
@@ -1807,7 +1820,8 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
     private void checkColumn(int column) throws SQLException {
 
         if (column < 1 || column > columnCount) {
-            throw Trace.error(Trace.COLUMN_NOT_FOUND, column);
+            throw jdbcDriver.sqlException(Trace.COLUMN_NOT_FOUND,
+                                          String.valueOf(column));
         }
     }
 

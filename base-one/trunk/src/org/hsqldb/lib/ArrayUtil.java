@@ -88,8 +88,10 @@ public class ArrayUtil {
             if (sets) {
                 return a.length == b.length && count == a.length;
             }
+
             return true;
         }
+
         return false;
     }
 

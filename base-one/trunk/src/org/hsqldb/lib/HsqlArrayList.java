@@ -75,15 +75,13 @@ public class HsqlArrayList extends BaseList implements HsqlList {
     public HsqlArrayList() {
 
 //        reporter.initCounter++;
-
-        elementData  = new Object[DEFAULT_INITIAL_CAPACITY];
+        elementData = new Object[DEFAULT_INITIAL_CAPACITY];
     }
 
     /** Creates a new instance with the given initial capacity */
     public HsqlArrayList(int initialCapacity) {
 
 //        reporter.initCounter++;
-
         if (initialCapacity < 0) {
             throw new NegativeArraySizeException(
                 "Invalid initial capacity given");
@@ -102,7 +100,6 @@ public class HsqlArrayList extends BaseList implements HsqlList {
     public void add(int index, Object element) {
 
 //        reporter.updateCounter++;
-
         if (index > elementCount) {
             throw new IndexOutOfBoundsException("Index out of bounds: "
                                                 + index + ">" + elementCount);
@@ -130,7 +127,6 @@ public class HsqlArrayList extends BaseList implements HsqlList {
     public boolean add(Object element) {
 
 //        reporter.updateCounter++;
-
         if (elementCount >= elementData.length) {
             increaseCapacity();
         }
@@ -254,6 +250,7 @@ public class HsqlArrayList extends BaseList implements HsqlList {
         return enum;
     }
 */
+
     /** Trims the array to be the same size as the number of elements. */
     public void trim() {
 

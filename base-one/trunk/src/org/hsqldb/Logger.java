@@ -1,51 +1,15 @@
-/* Copyrights and Licenses
- *
- * This product includes Hypersonic SQL.
- * Originally developed by Thomas Mueller and the Hypersonic SQL Group. 
- *
- * Copyright (c) 1995-2000 by the Hypersonic SQL Group. All rights reserved. 
- * Redistribution and use in source and binary forms, with or without modification, are permitted
- * provided that the following conditions are met: 
- *     -  Redistributions of source code must retain the above copyright notice, this list of conditions
- *         and the following disclaimer. 
- *     -  Redistributions in binary form must reproduce the above copyright notice, this list of
- *         conditions and the following disclaimer in the documentation and/or other materials
- *         provided with the distribution. 
- *     -  All advertising materials mentioning features or use of this software must display the
- *        following acknowledgment: "This product includes Hypersonic SQL." 
- *     -  Products derived from this software may not be called "Hypersonic SQL" nor may
- *        "Hypersonic SQL" appear in their names without prior written permission of the
- *         Hypersonic SQL Group. 
- *     -  Redistributions of any form whatsoever must retain the following acknowledgment: "This
- *          product includes Hypersonic SQL." 
- * This software is provided "as is" and any expressed or implied warranties, including, but
- * not limited to, the implied warranties of merchantability and fitness for a particular purpose are
- * disclaimed. In no event shall the Hypersonic SQL Group or its contributors be liable for any
- * direct, indirect, incidental, special, exemplary, or consequential damages (including, but
- * not limited to, procurement of substitute goods or services; loss of use, data, or profits;
- * or business interruption). However caused any on any theory of liability, whether in contract,
- * strict liability, or tort (including negligence or otherwise) arising in any way out of the use of this
- * software, even if advised of the possibility of such damage. 
- * This software consists of voluntary contributions made by many individuals on behalf of the
- * Hypersonic SQL Group.
- *
- *
- * For work added by the HSQL Development Group:
- *
- * Copyright (c) 2001-2002, The HSQL Development Group
+/* Copyright (c) 2001-2002, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
  * Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer, including earlier
- * license statements (above) and comply with all above license conditions.
+ * list of conditions and the following disclaimer.
  *
  * Redistributions in binary form must reproduce the above copyright notice,
  * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution, including earlier
- * license statements (above) and comply with all above license conditions.
+ * and/or other materials provided with the distribution.
  *
  * Neither the name of the HSQL Development Group nor the names of its
  * contributors may be used to endorse or promote products derived from this
@@ -66,8 +30,6 @@
 
 
 package org.hsqldb;
-
-import java.sql.SQLException;
 
 // boucherb@users 20030510 - patch 1.7.2 - added cooperative file locking
 
@@ -115,10 +77,10 @@ class Logger {
      * @param  name the path and common name of the database files
      * @return  true if the specified database files had to be created
      *      before being opened (i.e. a new database is created)
-     * @throws  SQLException if there is a problem, such as the case when
+     * @throws  HsqlException if there is a problem, such as the case when
      *      the specified files are in use by another process
      */
-    void openLog(Database db, String name) throws SQLException {
+    void openLog(Database db, String name) throws HsqlException {
 
         aquireLock(name);
 
@@ -148,10 +110,10 @@ class Logger {
      *        which in turn creates a new, compact *.data file.
      *      </OL>
      *
-     * @throws  SQLException if there is a problem closing the Log and
+     * @throws  HsqlException if there is a problem closing the Log and
      *        its dependent files.
      */
-    void closeLog(int closemode) throws SQLException {
+    void closeLog(int closemode) throws HsqlException {
 
         if (lLog == null) {
             return;
@@ -198,7 +160,7 @@ class Logger {
     /**
      *  Returns the Cache object or null if one doesn't exist.
      */
-    Cache getCache() throws SQLException {
+    Cache getCache() throws HsqlException {
 
         if (lLog != null) {
             return lLog.getCache();
@@ -215,11 +177,11 @@ class Logger {
      *      entry
      * @param  username the name of the User, as known to the database
      * @param  password the password of the user, as know to the database
-     * @throws  SQLException if there is a problem recording the Log
+     * @throws  HsqlException if there is a problem recording the Log
      *      entry
      */
     void logConnectUser(Session session, String username,
-                        String password) throws SQLException {
+                        String password) throws HsqlException {
 
         if (lLog != null) {
             lLog.write(session,
@@ -235,9 +197,9 @@ class Logger {
      * @param  session the Session object for which to record the Log
      *      entry
      * @param  statement the SQL statement to Log
-     * @throws  SQLException if there is a problem recording the entry
+     * @throws  HsqlException if there is a problem recording the entry
      */
-    void writeToLog(Session session, String statement) throws SQLException {
+    void writeToLog(Session session, String statement) throws HsqlException {
 
         if (lLog != null) {
             lLog.write(session, statement);
@@ -255,10 +217,10 @@ class Logger {
      *  files, in order to ensure as much as possible the ACID properites
      *  of the database.
      *
-     * @throws  SQLException if there is a problem checkpointing the
+     * @throws  HsqlException if there is a problem checkpointing the
      *      database
      */
-    void checkpoint(boolean mode) throws SQLException {
+    void checkpoint(boolean mode) throws HsqlException {
 
         if (lLog != null) {
             lLog.checkpoint(mode);
@@ -284,7 +246,7 @@ class Logger {
      *
      * @param  i The type
      */
-    void setLogType(int i) throws SQLException {
+    void setLogType(int i) throws HsqlException {
 
         if (lLog != null) {
             lLog.setLogType(i);
@@ -319,18 +281,18 @@ class Logger {
      */
     Cache openTextCache(HsqlName tablename, String source,
                         boolean readOnlyData,
-                        boolean reversed) throws SQLException {
+                        boolean reversed) throws HsqlException {
         return lLog.openTextCache(tablename, source, readOnlyData, reversed);
     }
 
     /**
      *  Closes the TextCache object.
      */
-    void closeTextCache(HsqlName name) throws SQLException {
+    void closeTextCache(HsqlName name) throws HsqlException {
         lLog.closeTextCache(name);
     }
 
-    void aquireLock(String name) throws SQLException {
+    void aquireLock(String name) throws HsqlException {
 
         boolean locked;
         String  msg;

@@ -67,7 +67,6 @@
 
 package org.hsqldb;
 
-import java.sql.SQLException;
 import java.io.IOException;
 
 // fredt@users 20021205 - path 1.7.2 - enhancements
@@ -91,7 +90,7 @@ abstract class BaseMemoryNode extends Node {
         nLeft    = nRight = nParent = null;
     }
 
-    Node getLeft() throws SQLException {
+    Node getLeft() throws HsqlException {
 
         if (Trace.DOASSERT) {
             Trace.doAssert(iBalance != -2);
@@ -100,7 +99,7 @@ abstract class BaseMemoryNode extends Node {
         return nLeft;
     }
 
-    void setLeft(Node n) throws SQLException {
+    void setLeft(Node n) throws HsqlException {
 
         if (Trace.DOASSERT) {
             Trace.doAssert(iBalance != -2);
@@ -109,7 +108,7 @@ abstract class BaseMemoryNode extends Node {
         nLeft = n;
     }
 
-    Node getRight() throws SQLException {
+    Node getRight() throws HsqlException {
 
         if (Trace.DOASSERT) {
             Trace.doAssert(iBalance != -2);
@@ -118,7 +117,7 @@ abstract class BaseMemoryNode extends Node {
         return nRight;
     }
 
-    void setRight(Node n) throws SQLException {
+    void setRight(Node n) throws HsqlException {
 
         if (Trace.DOASSERT) {
             Trace.doAssert(iBalance != -2);
@@ -127,7 +126,7 @@ abstract class BaseMemoryNode extends Node {
         nRight = n;
     }
 
-    Node getParent() throws SQLException {
+    Node getParent() throws HsqlException {
 
         if (Trace.DOASSERT) {
             Trace.doAssert(iBalance != -2);
@@ -140,7 +139,7 @@ abstract class BaseMemoryNode extends Node {
         return nParent == null;
     }
 
-    void setParent(Node n) throws SQLException {
+    void setParent(Node n) throws HsqlException {
 
         if (Trace.DOASSERT) {
             Trace.doAssert(iBalance != -2);
@@ -149,7 +148,7 @@ abstract class BaseMemoryNode extends Node {
         nParent = n;
     }
 
-    void setBalance(int b) throws SQLException {
+    void setBalance(int b) throws HsqlException {
 
         if (Trace.DOASSERT) {
             Trace.doAssert(iBalance != -2);
@@ -158,7 +157,7 @@ abstract class BaseMemoryNode extends Node {
         iBalance = b;
     }
 
-    boolean isFromLeft() throws SQLException {
+    boolean isFromLeft() throws HsqlException {
 
         if (this.isRoot()) {
             return true;
@@ -173,7 +172,7 @@ abstract class BaseMemoryNode extends Node {
         return equals(parent.getLeft());
     }
 
-    boolean equals(Node n) throws SQLException {
+    boolean equals(Node n) throws HsqlException {
 
         if (Trace.DOASSERT) {
             Trace.doAssert(iBalance != -2);
@@ -183,5 +182,5 @@ abstract class BaseMemoryNode extends Node {
     }
 
     void write(DatabaseRowOutputInterface out)
-    throws IOException, SQLException {}
+    throws IOException, HsqlException {}
 }

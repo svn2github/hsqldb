@@ -40,7 +40,7 @@ import org.hsqldb.lib.StopWatch;
  * @since HSQLDB 1.7.2
  * @version 1.7.2
  */
-public class BatchExecutionTest implements DITypes {
+public class BatchExecutionTest implements Types {
 
     static final String drop_table_sql = "drop table test if exists";
     static final String create_cached  = "create cached ";
@@ -70,7 +70,7 @@ public class BatchExecutionTest implements DITypes {
     static void checkResult(Result r) throws Exception {
 
         if (r.iMode == Result.ERROR) {
-            throw Trace.error(r.errorCode, r.sError);
+            throw Trace.error(r.errorCode, r.errorString);
         }
     }
 

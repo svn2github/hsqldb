@@ -67,8 +67,6 @@
 
 package org.hsqldb;
 
-import java.sql.SQLException;
-import java.sql.Types;
 import java.util.Enumeration;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashMap;

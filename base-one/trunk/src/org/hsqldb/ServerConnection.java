@@ -73,7 +73,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.sql.SQLException;
 
 // fredt@users 20020215 - patch 461556 by paul-h@users - server factory
 // fredt@users 20020424 - patch 1.7.0 by fredt - shutdown without exit
@@ -155,9 +154,9 @@ class ServerConnection implements Runnable, ServerConstants {
                 mServer.trace(mThread + ":trying to connect user " + user);
 
                 return mServer.mDatabase.connect(user, password);
-            } catch (SQLException e) {
+            } catch (HsqlException e) {
                 write(new Result(e.getMessage(),
-                                 e.getErrorCode()).getBytes());
+                                 e.getSQLState(), e.getErrorCode()).getBytes());
             }
         } catch (Exception e) {
             mServer.trace(mThread + ":couldn't connect " + user);
@@ -205,7 +204,7 @@ class ServerConnection implements Runnable, ServerConstants {
 
                 // fredt - after the client abrubtly drops clear the session
                 session.disconnect();
-            } catch (SQLException e) {
+            } catch (HsqlException e) {
 
                 // is thrown by Result.getBytes()
                 String s = e.getMessage();

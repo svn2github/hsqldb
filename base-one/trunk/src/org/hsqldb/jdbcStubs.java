@@ -31,14 +31,14 @@
 
 package org.hsqldb;
 
-import java.sql.SQLException;
 import java.sql.ResultSet;
 
 class jdbcStubs {}
 
 //#ifdef JAVA2
-//#else
 /*
+*/
+//#else
 // surrogate for java.util.Map interface
 interface Map {
 
@@ -87,59 +87,58 @@ interface Map {
 // surrogates for java.SQL type interfaces
 interface Array {
 
-    String getBaseTypeName() throws SQLException;
+    String getBaseTypeName() throws HsqlException;
 
-    int getBaseType() throws SQLException;
+    int getBaseType() throws HsqlException;
 
-    Object getArray() throws SQLException;
+    Object getArray() throws HsqlException;
 
-    Object getArray(Map map) throws SQLException;
+    Object getArray(Map map) throws HsqlException;
 
-    Object getArray(long index, int count) throws SQLException;
+    Object getArray(long index, int count) throws HsqlException;
 
-    Object getArray(long index, int count, Map map) throws SQLException;
+    Object getArray(long index, int count, Map map) throws HsqlException;
 
-    ResultSet getResultSet() throws SQLException;
+    ResultSet getResultSet() throws HsqlException;
 
-    ResultSet getResultSet(Map map) throws SQLException;
+    ResultSet getResultSet(Map map) throws HsqlException;
 
-    ResultSet getResultSet(long index, int count) throws SQLException;
+    ResultSet getResultSet(long index, int count) throws HsqlException;
 
     ResultSet getResultSet(long index, int count,
-                           Map map) throws SQLException;
+                           Map map) throws HsqlException;
 }
 
 interface Blob {
 
-    long length() throws SQLException;
+    long length() throws HsqlException;
 
-    byte[] getBytes(long pos, int length) throws SQLException;
+    byte[] getBytes(long pos, int length) throws HsqlException;
 
-    java.io.InputStream getBinaryStream() throws SQLException;
+    java.io.InputStream getBinaryStream() throws HsqlException;
 
-    long position(byte pattern[], long start) throws SQLException;
+    long position(byte pattern[], long start) throws HsqlException;
 
-    long position(Blob pattern, long start) throws SQLException;
+    long position(Blob pattern, long start) throws HsqlException;
 }
 
 interface Clob {
 
-    long length() throws SQLException;
+    long length() throws HsqlException;
 
-    String getSubString(long pos, int length) throws SQLException;
+    String getSubString(long pos, int length) throws HsqlException;
 
-    java.io.Reader getCharacterStream() throws SQLException;
+    java.io.Reader getCharacterStream() throws HsqlException;
 
-    java.io.InputStream getAsciiStream() throws SQLException;
+    java.io.InputStream getAsciiStream() throws HsqlException;
 
-    long position(String searchstr, long start) throws SQLException;
+    long position(String searchstr, long start) throws HsqlException;
 
-    long position(Clob searchstr, long start) throws SQLException;
+    long position(Clob searchstr, long start) throws HsqlException;
 }
 
 interface Ref {
-    String getBaseTypeName() throws SQLException;
+    String getBaseTypeName() throws HsqlException;
 }
-*/
 
 //#endif JAVA2

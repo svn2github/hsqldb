@@ -33,8 +33,6 @@ package org.hsqldb;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.sql.SQLException;
-import java.sql.Types;
 import org.hsqldb.lib.HsqlByteArrayOutputStream;
 
 /**
@@ -56,7 +54,7 @@ implements DatabaseRowOutputInterface {
     protected boolean skipSystemId = false;
 
     static DatabaseRowOutputInterface newDatabaseRowOutput(int cachedRowType)
-    throws SQLException {
+    throws HsqlException {
 
         try {
             if (cachedRowType == CACHED_ROW_170) {
@@ -111,39 +109,39 @@ implements DatabaseRowOutputInterface {
     protected abstract void writeChar(String s, int t) throws IOException;
 
     protected abstract void writeSmallint(Number o)
-    throws IOException, SQLException;
+    throws IOException, HsqlException;
 
     protected abstract void writeInteger(Number o)
-    throws IOException, SQLException;
+    throws IOException, HsqlException;
 
     protected abstract void writeBigint(Number o)
-    throws IOException, SQLException;
+    throws IOException, HsqlException;
 
     protected abstract void writeReal(Double o,
                                       int type)
-                                      throws IOException, SQLException;
+                                      throws IOException, HsqlException;
 
     protected abstract void writeDecimal(java.math.BigDecimal o)
-    throws IOException, SQLException;
+    throws IOException, HsqlException;
 
     protected abstract void writeBit(Boolean o)
-    throws IOException, SQLException;
+    throws IOException, HsqlException;
 
     protected abstract void writeDate(java.sql.Date o)
-    throws IOException, SQLException;
+    throws IOException, HsqlException;
 
     protected abstract void writeTime(java.sql.Time o)
-    throws IOException, SQLException;
+    throws IOException, HsqlException;
 
     protected abstract void writeTimestamp(java.sql.Timestamp o)
-    throws IOException, SQLException;
+    throws IOException, HsqlException;
 
     protected abstract void writeOther(Object o)
-    throws IOException, SQLException;
+    throws IOException, HsqlException;
 
     protected abstract void writeBinary(byte[] o,
                                         int t)
-                                        throws IOException, SQLException;
+                                        throws IOException, HsqlException;
 
     /**
      *  This method is called to write data for a table
@@ -153,7 +151,7 @@ implements DatabaseRowOutputInterface {
      * @throws  IOException
      */
     public void writeData(Object data[],
-                          Table t) throws IOException, SQLException {
+                          Table t) throws IOException, HsqlException {
 
         int[] types = t.getColumnTypes();
         int   l     = types.length;
@@ -174,7 +172,7 @@ implements DatabaseRowOutputInterface {
      * @throws  IOException
      */
     public void writeData(int l, int types[],
-                          Object data[]) throws IOException, SQLException {
+                          Object data[]) throws IOException, HsqlException {
 
         for (int i = 0; i < l; i++) {
             Object o = data[i];

@@ -67,8 +67,6 @@
 
 package org.hsqldb;
 
-import java.sql.SQLException;
-
 /**
  * Class declaration
  *
@@ -94,15 +92,15 @@ class Transaction {
 
         isDelete = delete;
         isNested = nested;
-        tTable  = table;
-        oRow    = row;
+        tTable   = table;
+        oRow     = row;
     }
 
     /**
      * Method declaration
      *
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
     void rollback(Session session) {
 

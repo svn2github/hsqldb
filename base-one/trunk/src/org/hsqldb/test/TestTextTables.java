@@ -77,9 +77,10 @@ public class TestTextTables {
     int     deleteWhileInsertCount    = 4000;
 
     protected void setUp() {
-        try{
-        Class.forName("org.hsqldb.jdbcDriver");
-        } catch (Exception e){}
+
+        try {
+            Class.forName("org.hsqldb.jdbcDriver");
+        } catch (Exception e) {}
     }
 
     /**

@@ -67,7 +67,6 @@
 
 package org.hsqldb;
 
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -1357,9 +1356,9 @@ public class Library {
      *
      * @param conn the connection for which to retrieve the database name
      * @return the name of the database for the given connection
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      */
-    public static String database(Connection conn) throws SQLException {
+    public static String database(Connection conn) throws HsqlException {
         return ((jdbcConnection) conn).dDatabase.getName();
     }
 
@@ -1369,9 +1368,9 @@ public class Library {
      *
      * @param conn the connection for which to retrieve the user name
      * @return the user's name as known to the database
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      */
-    public static String user(Connection conn) throws SQLException {
+    public static String user(Connection conn) throws HsqlException {
         return ((jdbcConnection) conn).cSession.getUsername();
     }
 
@@ -1383,9 +1382,9 @@ public class Library {
      * directly by Function.java
      *
      * @return the connection's the last generated integer identity value
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      */
-    public static int identity() throws SQLException {
+    public static int identity() throws HsqlException {
         return 0;
     }
 
@@ -1528,13 +1527,13 @@ public class Library {
      *    the parameter string contains no double quote characters,
      *    only single-quote characters.<p>
      *
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      * @return A Result object describing the
      *    connection-dependent column metadata
      *    for each requested (table-name,column-name) pair
      */
     public static Object getCDColumnMetaData(Connection c,
-            String columns) throws SQLException {
+            String columns) throws HsqlException {
 
         Session             session;
         Database            database;
@@ -1582,11 +1581,11 @@ public class Library {
         catalog           = reportCatalogs ? database.getName()
                                            : "";
         result            = new Result(5);
-        result.colType[0] = DITypes.VARCHAR;
-        result.colType[1] = DITypes.VARCHAR;
-        result.colType[2] = DITypes.BIT;
-        result.colType[3] = DITypes.BIT;
-        result.colType[4] = DITypes.BIT;
+        result.colType[0] = Types.VARCHAR;
+        result.colType[1] = Types.VARCHAR;
+        result.colType[2] = Types.BIT;
+        result.colType[3] = Types.BIT;
+        result.colType[4] = Types.BIT;
         result.sTable[0]  = "";
         result.sTable[1]  = "";
         result.sTable[2]  = "";
@@ -1813,7 +1812,7 @@ public class Library {
         functionMap.put("isReadOnlyDatabaseFiles", isReadOnlyDatabaseFiles);
     }
 
-    static Object invoke(int fID, Object[] parms) throws SQLException {
+    static Object invoke(int fID, Object[] parms) throws HsqlException {
 
         try {
             switch (fID) {
@@ -2037,10 +2036,10 @@ public class Library {
         }
     }
 
-    static SQLException wrapException(Exception e) {
+    static HsqlException wrapException(Exception e) {
 
-        if (e instanceof SQLException) {
-            return (SQLException) e;
+        if (e instanceof HsqlException) {
+            return (HsqlException) e;
         }
 
         return Trace.error(Trace.GENERAL_ERROR, e.toString());

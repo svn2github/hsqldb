@@ -106,7 +106,8 @@ public class jdbcClob implements java.sql.Clob {
         try {
             return data.substring((int) pos, length);
         } catch (Exception e) {
-            throw Trace.error(Trace.GENERAL_ERROR, e.getMessage());
+            throw jdbcDriver.sqlException(Trace.error(Trace.GENERAL_ERROR,
+                    e.getMessage()));
         }
     }
 
@@ -131,7 +132,8 @@ public class jdbcClob implements java.sql.Clob {
         try {
             return data.indexOf(searchstr, (int) start);
         } catch (Exception e) {
-            throw Trace.error(Trace.GENERAL_ERROR, e.getMessage());
+            throw jdbcDriver.sqlException(Trace.error(Trace.GENERAL_ERROR,
+                    e.getMessage()));
         }
     }
 
@@ -157,7 +159,8 @@ public class jdbcClob implements java.sql.Clob {
             return position(
                 searchstr.getSubString(0L, (int) searchstr.length()), start);
         } catch (Exception e) {
-            throw Trace.error(Trace.GENERAL_ERROR, e.getMessage());
+            throw jdbcDriver.sqlException(Trace.error(Trace.GENERAL_ERROR,
+                    e.getMessage()));
         }
     }
 
@@ -277,7 +280,8 @@ public class jdbcClob implements java.sql.Clob {
         try {
             data = data.substring(0, (int) len);
         } catch (Exception e) {
-            throw Trace.error(Trace.GENERAL_ERROR, e.getMessage());
+            throw jdbcDriver.sqlException(Trace.error(Trace.GENERAL_ERROR,
+                    e.getMessage()));
         }
     }
 }

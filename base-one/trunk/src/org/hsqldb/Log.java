@@ -69,7 +69,6 @@ package org.hsqldb;
 
 import java.io.IOException;
 import java.io.File;
-import java.sql.SQLException;
 
 //import java.util.zip.
 import org.hsqldb.lib.HsqlArrayList;
@@ -166,9 +165,9 @@ class Log {
      * @param  db
      * @param  system
      * @param  name
-     * @exception  SQLException  Description of the Exception
+     * @exception  HsqlException  Description of the Exception
      */
-    Log(Database db, String name) throws SQLException {
+    Log(Database db, String name) throws HsqlException {
 
         dDatabase   = db;
         sName       = name;
@@ -229,9 +228,9 @@ class Log {
      * database.<p>
      *
      * @return
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void open() throws SQLException {
+    void open() throws HsqlException {
 
         // Allows the user to set log size in the properties file.
         maxLogSize = pProperties.getIntegerProperty("hsqldb.log_size", 0);
@@ -340,7 +339,7 @@ class Log {
 */
     }
 
-    Cache getCache() throws SQLException {
+    Cache getCache() throws HsqlException {
 
         if (dDatabase.filesInJar) {
             return null;
@@ -371,9 +370,9 @@ class Log {
      *  Method declaration
      *
      * @param  compact
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void close(boolean compact) throws SQLException {
+    void close(boolean compact) throws HsqlException {
 
         if (Trace.TRACE) {
             Trace.trace();
@@ -441,9 +440,9 @@ class Log {
     /**
      *  Method declaration
      *
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void checkpoint(boolean defrag) throws SQLException {
+    void checkpoint(boolean defrag) throws HsqlException {
 
         if (defrag) {
             HsqlArrayList rootsArray = cCache.defrag();
@@ -490,7 +489,7 @@ class Log {
      *
      * @param  mb
      */
-    void setLogType(int type) throws SQLException {
+    void setLogType(int type) throws HsqlException {
 
         boolean needsCheckpoint = false;
 
@@ -512,9 +511,9 @@ class Log {
      *
      * @param  c
      * @param  s
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void write(Session c, String s) throws SQLException {
+    void write(Session c, String s) throws HsqlException {
 
         if (filesReadOnly || bRestoring || s == null || s.length() == 0) {
             return;
@@ -537,9 +536,9 @@ class Log {
     /**
      *  Method declaration
      *
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void shutdown() throws SQLException {
+    void shutdown() throws HsqlException {
 
         stop();
 
@@ -556,9 +555,9 @@ class Log {
     /**
      *  Saves the *.data file as compressed *.backup.
      *
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    private void backup() throws SQLException {
+    private void backup() throws HsqlException {
 
         try {
             if (Trace.TRACE) {
@@ -579,9 +578,9 @@ class Log {
     /**
      *  Method declaration
      *
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    private void restoreBackup() throws SQLException {
+    private void restoreBackup() throws HsqlException {
 
         if (Trace.TRACE) {
             Trace.trace("not closed last time!");
@@ -609,9 +608,9 @@ class Log {
     /**
      *  Method declaration
      *
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    private void openLog() throws SQLException {
+    private void openLog() throws HsqlException {
 
         if (Trace.TRACE) {
             Trace.trace();
@@ -647,9 +646,9 @@ class Log {
     /**
      *  Method declaration
      *
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    private void closeLog() throws SQLException {
+    private void closeLog() throws HsqlException {
 
         if (dbScriptWriter != null) {
             dbScriptWriter.close();
@@ -662,9 +661,9 @@ class Log {
      *  Method declaration
      *
      * @param  full
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    private void writeScript(boolean full) throws SQLException {
+    private void writeScript(boolean full) throws HsqlException {
 
         if (Trace.TRACE) {
             Trace.trace();
@@ -687,7 +686,7 @@ class Log {
 
     Cache openTextCache(HsqlName tablename, String source,
                         boolean readOnlyData,
-                        boolean reversed) throws SQLException {
+                        boolean reversed) throws HsqlException {
 
         closeTextCache(tablename);
 
@@ -718,7 +717,7 @@ class Log {
         return c;
     }
 
-    void closeTextCache(HsqlName table) throws SQLException {
+    void closeTextCache(HsqlName table) throws HsqlException {
 
         TextCache c = (TextCache) textCacheList.remove(table);
 
@@ -727,7 +726,7 @@ class Log {
         }
     }
 
-    void closeAllTextCaches(boolean compact) throws SQLException {
+    void closeAllTextCaches(boolean compact) throws HsqlException {
 
         Iterator it = textCacheList.values().iterator();
 
@@ -740,7 +739,7 @@ class Log {
         }
     }
 
-    void reopenAllTextCaches() throws SQLException {
+    void reopenAllTextCaches() throws HsqlException {
 
         Iterator it = textCacheList.values().iterator();
 
@@ -749,7 +748,7 @@ class Log {
         }
     }
 
-    void shutdownAllTextCaches() throws SQLException {
+    void shutdownAllTextCaches() throws HsqlException {
 
         Iterator it = textCacheList.values().iterator();
 

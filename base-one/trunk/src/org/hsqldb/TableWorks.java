@@ -67,7 +67,6 @@
 
 package org.hsqldb;
 
-import java.sql.SQLException;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashMap;
 
@@ -92,6 +91,7 @@ class TableWorks {
     Table getTable() {
         return table;
     }
+
 // boucherb@users 20030402 - patch 1.7.2 added for reuse of TableWorks object
 // under command interpreter support
     void setTable(Table table) {
@@ -153,11 +153,11 @@ class TableWorks {
      * @param  expTable
      * @param  deleteAction
      * @param  updateAction
-     * @throws SQLException
+     * @throws HsqlException
      */
     void createForeignKey(int fkcol[], int expcol[], HsqlName fkname,
                           Table expTable, int deleteAction,
-                          int updateAction) throws SQLException {
+                          int updateAction) throws HsqlException {
 
         // name check
         if (table.getConstraint(fkname.name) != null) {
@@ -222,10 +222,10 @@ class TableWorks {
      * @param  name
      * @param  unique
      * @return  new index
-     * @throws  SQLException normally for lack of resources
+     * @throws  HsqlException normally for lack of resources
      */
     Index createIndex(int col[], HsqlName name,
-                      boolean unique) throws SQLException {
+                      boolean unique) throws HsqlException {
 
         Index newindex;
 
@@ -266,10 +266,10 @@ class TableWorks {
      *
      * @param  col
      * @param  name
-     * @throws  SQLException
+     * @throws  HsqlException
      */
     void createUniqueConstraint(int[] col,
-                                HsqlName name) throws SQLException {
+                                HsqlName name) throws HsqlException {
 
         HsqlArrayList constraints = table.getConstraints();
 
@@ -301,9 +301,9 @@ class TableWorks {
      *  in place of the old table (fredt@users)
      *
      * @param  indexname
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void dropIndex(String indexname) throws SQLException {
+    void dropIndex(String indexname) throws HsqlException {
 
         if (table.isIndexingMutable()) {
             table.dropIndex(indexname);
@@ -329,10 +329,10 @@ class TableWorks {
      * @param  column
      * @param  colindex
      * @param  adjust +1 or -1
-     * @throws  SQLException
+     * @throws  HsqlException
      */
     void addOrDropColumn(Column column, int colindex,
-                         int adjust) throws SQLException {
+                         int adjust) throws HsqlException {
 
         if (table.isText()) {
             throw Trace.error(Trace.OPERATION_NOT_SUPPORTED);
@@ -354,11 +354,11 @@ class TableWorks {
      *  Method declaration
      *
      */
-    void dropConstraint(String name) throws SQLException {
+    void dropConstraint(String name) throws HsqlException {
 
-        int         j    = table.getConstraintIndex(name);
-        Constraint  c    = table.getConstraint(name);
-        HashMap cmap = new HashMap();
+        int        j    = table.getConstraintIndex(name);
+        Constraint c    = table.getConstraint(name);
+        HashMap    cmap = new HashMap();
 
         cmap.put(c, c);
 
@@ -403,7 +403,7 @@ class TableWorks {
                     if (mainTable == table) {
                         table = tw.getTable();
                     }
-                } catch (SQLException e) {
+                } catch (HsqlException e) {
                     if (candrop) {
                         throw e;
                     }
@@ -419,7 +419,7 @@ class TableWorks {
                     // drop unless the index is used by other constraints
                     table.checkDropIndex(refIndex.getName().name, cmap);
                     dropIndex(refIndex.getName().name);
-                } catch (SQLException e) {}
+                } catch (HsqlException e) {}
             }
 
             mainTable.vConstraint.remove(k);

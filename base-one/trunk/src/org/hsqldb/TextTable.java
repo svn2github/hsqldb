@@ -31,8 +31,6 @@
 
 package org.hsqldb;
 
-import java.sql.SQLException;
-
 // tony_lai@users 20020820 - patch 595099 - user define PK name
 
 /**
@@ -52,10 +50,10 @@ class TextTable extends org.hsqldb.Table {
      * @param  db
      * @param  isTemp is a temp text table
      * @param  name
-     * @exception  SQLException  Description of the Exception
+     * @exception  HsqlException  Description of the Exception
      */
     TextTable(Database db, HsqlName name, int type,
-              int sessionid) throws SQLException {
+              int sessionid) throws HsqlException {
         super(db, name, type, sessionid);
     }
 
@@ -67,7 +65,7 @@ class TextTable extends org.hsqldb.Table {
      * Better clarification of the role of the methods is needed.
      */
     private void openCache(String dataSourceNew, boolean isReversedNew,
-                           boolean isReadOnlyNew) throws SQLException {
+                           boolean isReadOnlyNew) throws HsqlException {
 
         if (dataSourceNew == null) {
             dataSourceNew = "";
@@ -100,7 +98,7 @@ class TextTable extends org.hsqldb.Table {
                 }
 
                 ((TextCache) cCache).setSourceIndexing(false);
-            } catch (SQLException e) {
+            } catch (HsqlException e) {
                 int linenumber = cCache == null ? 0
                                                 : ((TextCache) cCache)
                                                     .getLineNumber();
@@ -143,7 +141,7 @@ class TextTable extends org.hsqldb.Table {
         if (isEqual && isReversed) {
             try {
                 openCache(dataSource, isReversed, isReadOnly);
-            } catch (SQLException e) {
+            } catch (HsqlException e) {
                 return false;
             }
         }
@@ -158,7 +156,7 @@ class TextTable extends org.hsqldb.Table {
         if (isEqual && isReversed) {
             try {
                 openCache(dataSource, isReversed, isReadOnly);
-            } catch (SQLException e) {
+            } catch (HsqlException e) {
                 return false;
             }
         }
@@ -171,11 +169,10 @@ class TextTable extends org.hsqldb.Table {
      * Reassings only if the data source or direction has changed.
      */
     protected void setDataSource(String dataSourceNew, boolean isReversedNew,
-                                 Session s) throws SQLException {
+                                 Session s) throws HsqlException {
 
         if (isTemp) {
-            Trace.check(s.getId() == ownerSessionId,
-                        Trace.ACCESS_IS_DENIED);
+            Trace.check(s.getId() == ownerSessionId, Trace.ACCESS_IS_DENIED);
         } else {
             s.checkAdmin();
         }
@@ -205,7 +202,7 @@ class TextTable extends org.hsqldb.Table {
      * Used by INSERT, DELETE, UPDATE operations. This class will return
      * a more appropriate message when there is no data source.
      */
-    void checkDataReadOnly() throws SQLException {
+    void checkDataReadOnly() throws HsqlException {
 
         if (dataSource.length() == 0) {
             throw Trace.error(Trace.UNKNOWN_DATA_SOURCE);
@@ -216,7 +213,7 @@ class TextTable extends org.hsqldb.Table {
         }
     }
 
-    void setDataReadOnly(boolean value) throws SQLException {
+    void setDataReadOnly(boolean value) throws HsqlException {
 
         if (isReversed && value == true) {
             throw Trace.error(Trace.DATA_IS_READONLY);
@@ -231,11 +228,11 @@ class TextTable extends org.hsqldb.Table {
         return false;
     }
 
-    protected Table duplicate() throws SQLException {
+    protected Table duplicate() throws HsqlException {
         return new TextTable(dDatabase, tableName, tableType, ownerSessionId);
     }
 
-    CachedRow getRow(int pos, Node primarynode) throws SQLException {
+    CachedRow getRow(int pos, Node primarynode) throws HsqlException {
 
         CachedDataRow r = (CachedDataRow) cCache.getRow(pos, this);
 
@@ -252,11 +249,11 @@ class TextTable extends org.hsqldb.Table {
         return r;
     }
 
-    void drop() throws SQLException {
+    void drop() throws HsqlException {
         openCache("", false, false);
     }
 
-    void setIndexRoots(String s) throws java.sql.SQLException {
+    void setIndexRoots(String s) throws HsqlException {
 
         // do nothing
     }

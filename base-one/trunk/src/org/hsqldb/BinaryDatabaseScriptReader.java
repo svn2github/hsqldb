@@ -32,7 +32,6 @@
 package org.hsqldb;
 
 import java.io.*;
-import java.sql.SQLException;
 
 /**
  * Reader corresponding to BinaryDatabaseScritReader.
@@ -46,19 +45,21 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
     BinaryServerRowInput rowIn;
 
     BinaryDatabaseScriptReader(Database db,
-                               String file) throws SQLException, IOException {
+                               String file)
+                               throws HsqlException, IOException {
 
         super(db, file);
 
         rowIn = new BinaryServerRowInput();
     }
 
-    protected void readDDL(Session session) throws IOException, SQLException {
+    protected void readDDL(Session session)
+    throws IOException, HsqlException {
         readSingleColumnResult(session);
     }
 
     protected void readSingleColumnResult(Session session)
-    throws IOException, SQLException {
+    throws IOException, HsqlException {
 
         readRow(rowIn, 0, dataStreamIn);
 
@@ -76,7 +77,7 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
     }
 
     protected void readExistingData(Session session)
-    throws IOException, SQLException {
+    throws IOException, HsqlException {
 
         for (int i = 0; ; i++) {
             String s = readTableInit();
@@ -106,7 +107,7 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
 
     // int : row size (0 if no more rows) ,
     // BinaryServerRowInput : row (column values)
-    protected boolean readRow(Table t) throws IOException, SQLException {
+    protected boolean readRow(Table t) throws IOException, HsqlException {
 
         boolean more = readRow(rowIn, 0, dataStreamIn);
 
@@ -122,7 +123,7 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
     }
 
     // int : rowcount
-    protected int readTableTerm() throws IOException, SQLException {
+    protected int readTableTerm() throws IOException, HsqlException {
 
         rowIn.reset();
 
@@ -138,7 +139,7 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
     }
 
     // int : headersize (0 if no more tables), String : tablename, int : operation,
-    protected String readTableInit() throws IOException, SQLException {
+    protected String readTableInit() throws IOException, HsqlException {
 
         boolean more = readRow(rowIn, 0, dataStreamIn);
 

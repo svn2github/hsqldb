@@ -33,7 +33,6 @@ package org.hsqldb;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.sql.SQLException;
 
 //import java.util.zip.
 import java.util.zip.Deflater;
@@ -45,7 +44,7 @@ class ZippedDatabaseScriptWriter extends BinaryDatabaseScriptWriter {
 
     ZippedDatabaseScriptWriter(Database db, String file,
                                boolean includeCached,
-                               boolean newFile) throws SQLException {
+                               boolean newFile) throws HsqlException {
         super(db, file, includeCached, newFile);
     }
 
@@ -54,7 +53,7 @@ class ZippedDatabaseScriptWriter extends BinaryDatabaseScriptWriter {
      */
     void sync() {}
 
-    protected void openFile() throws java.sql.SQLException {
+    protected void openFile() throws HsqlException {
 
         try {
             fileStreamOut = new DeflaterOutputStream(

@@ -67,8 +67,6 @@
 
 package org.hsqldb;
 
-import java.sql.SQLException;
-
 // fredt@users 20020221 - patch 513005 by sqlbob@users - corrections
 // fredt@users 20020225 - patch 1.7.0 - cascading deletes
 // a number of changes to support this feature
@@ -160,7 +158,7 @@ class Index {
      * @param name
      * @param isquoted
      */
-    void setName(String name, boolean isquoted) throws SQLException {
+    void setName(String name, boolean isquoted) throws HsqlException {
         indexName.rename(name, isquoted);
     }
 
@@ -226,9 +224,9 @@ class Index {
      *
      * @param i
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    void insert(Node i) throws SQLException {
+    void insert(Node i) throws HsqlException {
 
         Object  data[]  = i.getData();
         Node    n       = root,
@@ -270,7 +268,7 @@ class Index {
         balance(x, isleft);
     }
 
-    private void balance(Node x, boolean isleft) throws SQLException {
+    private void balance(Node x, boolean isleft) throws HsqlException {
 
         while (true) {
             if (Trace.STOP) {
@@ -337,9 +335,9 @@ class Index {
      * @param row
      * @param datatoo
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    void delete(Node x) throws SQLException {
+    void delete(Node x) throws HsqlException {
 
         if (x == null) {
             return;
@@ -520,10 +518,10 @@ class Index {
      *
      * @return
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
     Node findSimple(Object indexcoldata[],
-                    boolean first) throws SQLException {
+                    boolean first) throws HsqlException {
 
         Node x      = root, n;
         Node result = null;
@@ -575,9 +573,9 @@ class Index {
      *
      * @return
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    Node find(Object d[]) throws SQLException {
+    Node find(Object d[]) throws HsqlException {
 
         Node x = root;
 
@@ -609,9 +607,9 @@ class Index {
      *
      * @return
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    Node findFirst(Object value, int compare) throws SQLException {
+    Node findFirst(Object value, int compare) throws HsqlException {
 
         Trace.doAssert(compare == Expression.BIGGER
                        || compare == Expression.EQUAL
@@ -669,9 +667,9 @@ class Index {
      *
      * @return
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    Node first() throws SQLException {
+    Node first() throws HsqlException {
 
         Node x = root,
              l = x;
@@ -696,9 +694,9 @@ class Index {
      *
      * @return
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    Node next(Node x) throws SQLException {
+    Node next(Node x) throws HsqlException {
 
         if (x == null) {
             return null;
@@ -748,9 +746,9 @@ class Index {
      *
      * @return
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    private Node child(Node x, boolean isleft) throws SQLException {
+    private Node child(Node x, boolean isleft) throws HsqlException {
         return isleft ? x.getLeft()
                       : x.getRight();
     }
@@ -762,9 +760,9 @@ class Index {
      * @param x
      * @param n
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    private void replace(Node x, Node n) throws SQLException {
+    private void replace(Node x, Node n) throws HsqlException {
 
         if (x.equals(root)) {
             root = n;
@@ -785,9 +783,9 @@ class Index {
      * @param w
      * @param n
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    private void set(Node x, boolean isleft, Node n) throws SQLException {
+    private void set(Node x, boolean isleft, Node n) throws HsqlException {
 
         if (isleft) {
             x.setLeft(n);
@@ -808,9 +806,9 @@ class Index {
      *
      * @return
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    Node search(Object d[]) throws SQLException {
+    Node search(Object d[]) throws HsqlException {
 
         Node x = root;
 
@@ -849,10 +847,10 @@ class Index {
      *
      * @return
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
     int comparePartialRowNonUnique(Object a[],
-                                   Object b[]) throws SQLException {
+                                   Object b[]) throws HsqlException {
 
         int i = Column.compare(a[0], b[iColumn_0], iType_0);
 
@@ -890,10 +888,10 @@ class Index {
      *
      * @return
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
     private int compareRowNonUnique(Object a[],
-                                    Object b[]) throws SQLException {
+                                    Object b[]) throws HsqlException {
 
         int i = Column.compare(a[iColumn_0], b[iColumn_0], iType_0);
 
@@ -923,9 +921,9 @@ class Index {
      *
      * @return
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    private int compareRow(Object a[], Object b[]) throws SQLException {
+    private int compareRow(Object a[], Object b[]) throws HsqlException {
 
         int i = Column.compare(a[iColumn_0], b[iColumn_0], iType_0);
 
@@ -953,9 +951,9 @@ class Index {
      *
      * @return
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    private int compareValue(Object a, Object b) throws SQLException {
+    private int compareValue(Object a, Object b) throws HsqlException {
         return Column.compare(a, b, iType_0);
     }
 }

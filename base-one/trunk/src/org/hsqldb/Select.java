@@ -70,7 +70,6 @@ package org.hsqldb;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.Iterator;
-import java.sql.SQLException;
 
 // fredt@users 20010701 - patch 1.6.1 by hybris
 // basic implementation of LIMIT n m
@@ -88,31 +87,31 @@ import java.sql.SQLException;
  */
 class Select {
 
-    boolean             isPreProcess;
-    boolean             isDistinctSelect;
-    boolean             isAggregated;
-    private boolean     isGrouped;
-    private HashMap groupColumnNames;
-    private int         aggregateCount;
-    TableFilter         tFilter[];
-    Expression          eCondition;           // null means no condition
-    Expression          havingCondition;      // null means none
-    Expression          eColumn[];            // 'result', 'group' and 'order' columns
-    int                 iResultLen;           // number of columns that are 'result'
-    int                 iGroupLen;            // number of columns that are 'group'
-    int                 iHavingIndex = -1;    // -1 means no having
-    int                 iOrderLen;            // number of columns that are 'order'
-    Select              sUnion;               // null means no union select
-    HsqlName            sIntoTable;           // null means not select..into
-    int                 intoType = Table.MEMORY_TABLE;
-    boolean             isIntoTableQuoted;
-    int                 iUnionType;
-    static final int    UNION      = 1,
-                        UNIONALL   = 2,
-                        INTERSECT  = 3,
-                        EXCEPT     = 4;
-    int                 limitStart = 0;       // set only by the LIMIT keyword
-    int                 limitCount = 0;       // set only by the LIMIT keyword
+    boolean          isPreProcess;
+    boolean          isDistinctSelect;
+    boolean          isAggregated;
+    private boolean  isGrouped;
+    private HashMap  groupColumnNames;
+    private int      aggregateCount;
+    TableFilter      tFilter[];
+    Expression       eCondition;           // null means no condition
+    Expression       havingCondition;      // null means none
+    Expression       eColumn[];            // 'result', 'group' and 'order' columns
+    int              iResultLen;           // number of columns that are 'result'
+    int              iGroupLen;            // number of columns that are 'group'
+    int              iHavingIndex = -1;    // -1 means no having
+    int              iOrderLen;            // number of columns that are 'order'
+    Select           sUnion;               // null means no union select
+    HsqlName         sIntoTable;           // null means not select..into
+    int              intoType = Table.MEMORY_TABLE;
+    boolean          isIntoTableQuoted;
+    int              iUnionType;
+    static final int UNION      = 1,
+                     UNIONALL   = 2,
+                     INTERSECT  = 3,
+                     EXCEPT     = 4;
+    int              limitStart = 0;       // set only by the LIMIT keyword
+    int              limitCount = 0;       // set only by the LIMIT keyword
 
     /**
      * Set to preprocess mode
@@ -126,9 +125,9 @@ class Select {
      * Method declaration
      *
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    void resolve() throws SQLException {
+    void resolve() throws HsqlException {
 
         int len = tFilter.length;
 
@@ -144,9 +143,9 @@ class Select {
      * @param f
      * @param ownfilter
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    void resolve(TableFilter f, boolean ownfilter) throws SQLException {
+    void resolve(TableFilter f, boolean ownfilter) throws HsqlException {
 
         if (eCondition != null) {
 
@@ -172,9 +171,9 @@ class Select {
      * Method declaration
      *
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    void checkResolved() throws SQLException {
+    void checkResolved() throws HsqlException {
 
         if (eCondition != null) {
             eCondition.checkResolved();
@@ -195,9 +194,9 @@ class Select {
      *
      * @return
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
-    Object getValue(int type) throws SQLException {
+    Object getValue(int type) throws HsqlException {
 
         resolve();
 
@@ -226,13 +225,13 @@ class Select {
      *
      * @return
      *
-     * @throws SQLException
+     * @throws HsqlException
      */
 
 // fredt@users 20020130 - patch 471710 by fredt - LIMIT rewritten
 // for SELECT LIMIT n m DISTINCT
 // fredt@users 20020804 - patch 580347 by dkkopp - view speedup
-    Result getResult(int maxrows) throws SQLException {
+    Result getResult(int maxrows) throws HsqlException {
 
         if (!isResolved) {
             resolve();
@@ -256,7 +255,7 @@ class Select {
                                              : groupByEnd;
         int orderByEnd   = orderByStart + iOrderLen;
 
-        if (iGroupLen > 0) {                         // has been set in Parser
+        if (iGroupLen > 0) {                     // has been set in Parser
             isGrouped        = true;
             groupColumnNames = new HashMap();    // TODO size !!
 
@@ -407,7 +406,7 @@ class Select {
      * aggregated, unless it is included in the group by clause.
      */
     private void checkAggregateOrGroupByColumns(int start,
-            int end) throws SQLException {
+            int end) throws HsqlException {
 
         HsqlArrayList colExps = new HsqlArrayList();
 
@@ -468,8 +467,7 @@ class Select {
      * Check if all the column names used in the given expression is defined
      * in the given defined column names.
      */
-    boolean allColumnsAreDefinedIn(Expression exp,
-                                   HashMap definedColumns) {
+    boolean allColumnsAreDefinedIn(Expression exp, HashMap definedColumns) {
 
         HashMap colNames = new HashMap();    // TODO size !!
 
@@ -490,7 +488,7 @@ class Select {
         return true;
     }
 
-    private void buildResult(Result r, int limitcount) throws SQLException {
+    private void buildResult(Result r, int limitcount) throws HsqlException {
 
         GroupedResult gResult = new GroupedResult(this, r);
         int           len     = eColumn.length;
@@ -590,7 +588,7 @@ class Select {
 // -----------------------------------------------------------------------------
     boolean isResolved = false;
 
-    void resolveAll() throws SQLException {
+    void resolveAll() throws HsqlException {
 
         if (isResolved) {
             return;
@@ -711,13 +709,13 @@ class Select {
 
         try {
             getResult(-1);
-        } catch (SQLException e) {}
+        } catch (HsqlException e) {}
 
         isPreProcess = oldPreProcess;
     }
 
     // Not used yet
-    Result describeResult() throws SQLException {
+    Result describeResult() throws HsqlException {
 
         Result  r;
         boolean oldPreProcess;

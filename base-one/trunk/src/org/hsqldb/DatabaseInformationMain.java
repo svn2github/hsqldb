@@ -32,8 +32,6 @@
 package org.hsqldb;
 
 import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HashMap;
@@ -114,7 +112,7 @@ import org.hsqldb.lib.WrapperIterator;
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
-class DatabaseInformationMain extends DatabaseInformation implements DITypes {
+class DatabaseInformationMain extends DatabaseInformation implements Types {
 
     // HsqlName objects for the system tables
 
@@ -200,9 +198,9 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      *
      * @param db the <code>Database</code> object for which this object
      *      produces system tables
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      */
-    DatabaseInformationMain(Database db) throws SQLException {
+    DatabaseInformationMain(Database db) throws HsqlException {
 
         super(db);
 
@@ -221,11 +219,11 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      * @param type the data type of the column
      * @param nullable <code>true</code> if the column is to allow null values,
      *      else <code>false</code>
-     * @throws SQLException if a problem occurs when adding the
+     * @throws HsqlException if a problem occurs when adding the
      *      column (e.g. duplicate name)
      */
     protected final void addColumn(Table t, String name, int type,
-                                   boolean nullable) throws SQLException {
+                                   boolean nullable) throws HsqlException {
 
         HsqlName cn;
         Column   c;
@@ -243,11 +241,11 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      * @param t the table to which to add the specified column
      * @param name the name of the column
      * @param type the data type of the column
-     * @throws SQLException if a problem occurs when adding the
+     * @throws HsqlException if a problem occurs when adding the
      *      column (e.g. duplicate name)
      */
     protected final void addColumn(Table t, String name,
-                                   int type) throws SQLException {
+                                   int type) throws HsqlException {
         addColumn(t, name, type, true);
     }
 
@@ -262,11 +260,11 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      *      to include in the index
      * @param unique <code>true</code> if a unique index is desired,
      *      else <code>false</code>
-     * @throws SQLException if there is a problem adding the specified index
+     * @throws HsqlException if there is a problem adding the specified index
      *      to the specified table
      */
     protected final void addIndex(Table t, String indexName, int[] cols,
-                                  boolean unique) throws SQLException {
+                                  boolean unique) throws HsqlException {
 
         HsqlName name;
 
@@ -296,9 +294,9 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      * Clears the contents of cached system tables and resets user slots
      * to null. <p>
      *
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      */
-    protected final void cacheClear() throws SQLException {
+    protected final void cacheClear() throws HsqlException {
 
         int i = sysTables.length;
 
@@ -320,10 +318,10 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      * tableIndex value. <p>
      *
      * @param tableIndex int value identifying the system table to generate
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      * @return the system table corresponding to the specified tableIndex value
      */
-    protected Table generateTable(int tableIndex) throws SQLException {
+    protected Table generateTable(int tableIndex) throws HsqlException {
 
         Table t = sysTables[tableIndex];
 
@@ -421,9 +419,9 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      * One time initialisation of instance attributes
      * at construction time. <p>
      *
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      */
-    protected final void init() throws SQLException {
+    protected final void init() throws HsqlException {
 
         StopWatch sw = null;
 
@@ -489,10 +487,10 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      *
      * @return true if the table is accessible, else false
      * @param table the table for which to check accessibility
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      */
     protected final boolean isAccessibleTable(Table table)
-    throws SQLException {
+    throws HsqlException {
 
         if (!session.isAccessible(table.getName())) {
             return false;
@@ -509,10 +507,10 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      *
      * @return a new system table
      * @param name of the table
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      */
     protected final Table createBlankTable(HsqlName name)
-    throws SQLException {
+    throws HsqlException {
         return new Table(database, name, Table.SYSTEM_TABLE, 0);
     }
 
@@ -522,13 +520,13 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      *
      * @param name a String identifying the desired table
      * @param session the Session object requesting the table
-     * @throws SQLException if there is a problem producing the table or a
+     * @throws HsqlException if there is a problem producing the table or a
      *      database access error occurs
      * @return a system table corresponding to the <code>name</code> and
      *      <code>session</code> arguments
      */
     final Table getSystemTable(String name,
-                               Session session) throws SQLException {
+                               Session session) throws HsqlException {
 
         Table t;
         int   tableIndex;
@@ -757,9 +755,9 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      * @return a <code>Table</code> object describing the optimal
      * set of visible columns that uniquely identifies a row
      * for each accessible table defined within this database
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    final Table SYSTEM_BESTROWIDENTIFIER() throws SQLException {
+    final Table SYSTEM_BESTROWIDENTIFIER() throws HsqlException {
 
         Table t = sysTables[SYSTEM_BESTROWIDENTIFIER];
 
@@ -907,9 +905,9 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      *
      * @return a <code>Table</code> object naming the accessible
      *        catalogs defined within this database
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    final Table SYSTEM_CATALOGS() throws SQLException {
+    final Table SYSTEM_CATALOGS() throws HsqlException {
 
         Table t = sysTables[SYSTEM_CATALOGS];
 
@@ -971,9 +969,9 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      *        access rights for all visible columns of
      *        all accessible tables defined within this
      *        database
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    final Table SYSTEM_COLUMNPRIVILEGES() throws SQLException {
+    final Table SYSTEM_COLUMNPRIVILEGES() throws HsqlException {
 
         Table t = sysTables[SYSTEM_COLUMNPRIVILEGES];
 
@@ -1004,11 +1002,11 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             return t;
         }
 
-        ResultSet rs;
+        Result rs;
 
         // - used appends to make class file constant pool smaller
         // - saves ~ 100 bytes jar space
-        rs = session.getInternalConnection().createStatement().executeQuery(
+        rs = session.sqlExecuteDirect(
             (new StringBuffer(185)).append("select").append(' ').append(
                 "a.").append("TABLE_CAT").append(',').append("a.").append(
                 "TABLE_SCHEM").append(',').append("a.").append(
@@ -1022,7 +1020,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
                 "where").append(' ').append("a.").append("TABLE_NAME").append(
                 "=").append("b.").append("TABLE_NAME").toString());
 
-        t.insert(((jdbcResultSet) rs).rResult, session);
+        t.insert(rs, session);
         t.setDataReadOnly(true);
 
         return t;
@@ -1064,9 +1062,9 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      * @return a <code>Table</code> object describing the
      *        visible columns of all accessible
      *        tables defined within this database.<p>
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    final Table SYSTEM_COLUMNS() throws SQLException {
+    final Table SYSTEM_COLUMNS() throws HsqlException {
 
         Table t = sysTables[SYSTEM_COLUMNS];
 
@@ -1229,9 +1227,9 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      * @return a <code>Table</code> object describing how accessible tables
      *      import other accessible tables' primary key and/or unique
      *      constraint columns
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    final Table SYSTEM_CROSSREFERENCE() throws SQLException {
+    final Table SYSTEM_CROSSREFERENCE() throws HsqlException {
 
         Table t = sysTables[SYSTEM_CROSSREFERENCE];
 
@@ -1502,9 +1500,9 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      * @return a <code>Table</code> object describing the visible
      *        <code>Index</code> objects for each accessible
      *        table defined within this database.
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    final Table SYSTEM_INDEXINFO() throws SQLException {
+    final Table SYSTEM_INDEXINFO() throws HsqlException {
 
         Table t = sysTables[SYSTEM_INDEXINFO];
 
@@ -1675,9 +1673,9 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      * @return a <code>Table</code> object describing the visible
      *        primary key columns of each accessible table
      *        defined within this database.
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    final Table SYSTEM_PRIMARYKEYS() throws SQLException {
+    final Table SYSTEM_PRIMARYKEYS() throws HsqlException {
 
         Table t = sysTables[SYSTEM_PRIMARYKEYS];
 
@@ -1829,9 +1827,9 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      *        return, parameter and result columns
      *        of the accessible routines defined
      *        within this database.
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    Table SYSTEM_PROCEDURECOLUMNS() throws SQLException {
+    Table SYSTEM_PROCEDURECOLUMNS() throws HsqlException {
 
         Table t = sysTables[SYSTEM_PROCEDURECOLUMNS];
 
@@ -1915,9 +1913,9 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      *
      * @return a <code>Table</code> object describing the accessible
      *        routines defined within the this database
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    Table SYSTEM_PROCEDURES() throws SQLException {
+    Table SYSTEM_PROCEDURES() throws HsqlException {
 
         Table t = sysTables[SYSTEM_PROCEDURES];
 
@@ -1983,9 +1981,9 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      *
      * @return table containing information about schemas defined
      *      within this database
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    final Table SYSTEM_SCHEMAS() throws SQLException {
+    final Table SYSTEM_SCHEMAS() throws HsqlException {
 
         Table t = sysTables[SYSTEM_SCHEMAS];
 
@@ -2046,9 +2044,9 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      * @return a <code>Table</code> object describing the visible
      *        access rights for each accessible table
      *        defined within this database
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    final Table SYSTEM_TABLEPRIVILEGES() throws SQLException {
+    final Table SYSTEM_TABLEPRIVILEGES() throws HsqlException {
 
         Table t = sysTables[SYSTEM_TABLEPRIVILEGES];
 
@@ -2183,9 +2181,9 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      *
      * @return a <code>Table</code> object describing the accessible
      *      tables defined within this database
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    final Table SYSTEM_TABLES() throws SQLException {
+    final Table SYSTEM_TABLES() throws HsqlException {
 
         Table t = sysTables[SYSTEM_TABLES];
 
@@ -2322,9 +2320,9 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      *
      * @return a <code>Table</code> object describing the table types
      *        available in this database
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    Table SYSTEM_TABLETYPES() throws SQLException {
+    Table SYSTEM_TABLETYPES() throws HsqlException {
 
         Table t = sysTables[SYSTEM_TABLETYPES];
 
@@ -2400,9 +2398,9 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      *
      * @return a <code>Table</code> object describing the
      *      system-defined SQL types supported as table columns
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    final Table SYSTEM_TYPEINFO() throws SQLException {
+    final Table SYSTEM_TYPEINFO() throws HsqlException {
 
         Table t = sysTables[SYSTEM_TYPEINFO];
 
@@ -2445,11 +2443,11 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             return t;
         }
 
-        ResultSet rs;
+        Result rs;
 
         // - used appends to make class file constant pool smaller
         // - saves ~ 150 bytes jar space
-        rs = session.getInternalConnection().createStatement().executeQuery(
+        rs = session.sqlExecuteDirect(
             (new StringBuffer(313)).append("select").append(' ').append(
                 "TYPE_NAME").append(',').append("DATA_TYPE").append(
                 ',').append("PRECISION").append(',').append(
@@ -2469,7 +2467,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
                 "SYSTEM_ALLTYPEINFO").append(' ').append("where").append(
                 ' ').append("AS_TAB_COL").append(" = true").toString());
 
-        t.insert(((jdbcResultSet) rs).rResult, session);
+        t.insert(rs, session);
         t.setDataReadOnly(true);
 
         return t;
@@ -2547,9 +2545,9 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      *
      * @return a <code>Table</code> object describing all of the
      *        standard SQL types known to this database
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    final Table SYSTEM_ALLTYPEINFO() throws SQLException {
+    final Table SYSTEM_ALLTYPEINFO() throws HsqlException {
 
         Table t = sysTables[SYSTEM_ALLTYPEINFO];
 
@@ -2809,9 +2807,9 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      * visible <code>Users</code> defined within this database.
      * @return table containing information about the users defined within
      *      this database
-     * @throws SQLException if an error occurs while producing the table
+     * @throws HsqlException if an error occurs while producing the table
      */
-    Table SYSTEM_USERS() throws SQLException {
+    Table SYSTEM_USERS() throws HsqlException {
 
         Table t = sysTables[SYSTEM_USERS];
 

@@ -71,7 +71,6 @@ import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HsqlStringBuffer;
-import java.sql.SQLException;
 import org.hsqldb.lib.Iterator;
 
 // fredt@users 20020130 - patch 497872 by Nitin Chauhan - loop optimisation
@@ -123,7 +122,7 @@ class UserManager {
      * Construction happens once for each Database object. The PUBLIC user is
      * created
      */
-    UserManager() throws SQLException {
+    UserManager() throws HsqlException {
 
         uUser   = new HsqlArrayList();
         uPublic = createUser("PUBLIC", null, false);
@@ -208,7 +207,7 @@ class UserManager {
      *  </OL>
      */
     User createUser(String name, String password,
-                    boolean admin) throws SQLException {
+                    boolean admin) throws HsqlException {
 
         // boucherb@users 20020815 - patch assert nn name
         Trace.doAssert(name != null, "null is name");
@@ -258,7 +257,7 @@ class UserManager {
      *  </UL> <p>
      *
      */
-    void dropUser(String name) throws SQLException {
+    void dropUser(String name) throws HsqlException {
 
         Trace.check(!name.equals("PUBLIC"), Trace.ACCESS_IS_DENIED);
 
@@ -287,7 +286,7 @@ class UserManager {
      * Returns the User object with the specified name and
      * password from this object's set.
      */
-    User getUser(String name, String password) throws SQLException {
+    User getUser(String name, String password) throws HsqlException {
 
         Trace.check(!name.equals("PUBLIC"), Trace.ACCESS_IS_DENIED);
 
@@ -333,7 +332,8 @@ class UserManager {
      *  {@link HsqlName#equals equals} methods based on pure object
      *  identity, rather than on attribute values. <p>
      */
-    void grant(String name, Object dbobject, int rights) throws SQLException {
+    void grant(String name, Object dbobject,
+               int rights) throws HsqlException {
         get(name).grant(dbobject, rights);
     }
 
@@ -345,7 +345,7 @@ class UserManager {
      * @see #grant
      */
     void revoke(String name, Object dbobject,
-                int rights) throws SQLException {
+                int rights) throws HsqlException {
         get(name).revoke(dbobject, rights);
     }
 
@@ -353,7 +353,7 @@ class UserManager {
      * Returns the User object identified by the
      * name argument. <p>
      */
-    private User get(String name) throws SQLException {
+    private User get(String name) throws HsqlException {
 
         int i = uUser.size();
 
@@ -532,9 +532,9 @@ class UserManager {
      */
     HashSet getGrantedClassNames() {
 
-        int         size;
-        User        user;
-        HashSet out;
+        int      size;
+        User     user;
+        HashSet  out;
         Iterator e;
 
         size = uUser.size();
@@ -564,13 +564,13 @@ class UserManager {
      * @param database the <code>Database</code> object for which to
      *          construct a new
      * <code>SYS</code> <code>User</code> object
-     * @throws SQLException - if the specified <code>Database</code>
+     * @throws HsqlException - if the specified <code>Database</code>
      *          object already has a non-null <code>SYS</code>
      *          <code>User</code> attribute
      * @return a new <code>SYS</code> <code>User</code> object
      *
      */
-    static User createSysUser(Database database) throws SQLException {
+    static User createSysUser(Database database) throws HsqlException {
         return new User(SYS_USER_NAME, null, true, null);
     }
 }

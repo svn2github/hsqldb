@@ -32,8 +32,6 @@
 package org.hsqldb;
 
 import java.io.IOException;
-import java.sql.SQLException;
-import java.sql.Types;
 
 /**
  *  Class for reading the data for a database row in text table format.
@@ -163,8 +161,8 @@ implements org.hsqldb.DatabaseRowInputInterface {
                 s = null;
             }
         } catch (Exception e) {
-            throw (new IOException("field " + field + " ("
-                                   + e.getMessage() + ")"));
+            throw (new IOException("field " + field + " (" + e.getMessage()
+                                   + ")"));
         }
 
         return s;
@@ -220,7 +218,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         }
     }
 
-    protected Integer readSmallint() throws IOException, SQLException {
+    protected Integer readSmallint() throws IOException, HsqlException {
 
         String s = readString();
 
@@ -231,7 +229,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         return Integer.valueOf(s);
     }
 
-    protected Integer readInteger() throws IOException, SQLException {
+    protected Integer readInteger() throws IOException, HsqlException {
 
         String s = readString();
 
@@ -242,7 +240,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         return Integer.valueOf(s);
     }
 
-    protected Long readBigint() throws IOException, SQLException {
+    protected Long readBigint() throws IOException, HsqlException {
 
         String s = readString();
 
@@ -253,7 +251,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         return Long.valueOf(s);
     }
 
-    protected Double readReal(int type) throws IOException, SQLException {
+    protected Double readReal(int type) throws IOException, HsqlException {
 
         String s = readString();
 
@@ -265,7 +263,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
     }
 
     protected java.math.BigDecimal readDecimal()
-    throws IOException, SQLException {
+    throws IOException, HsqlException {
 
         String s = readString();
 
@@ -276,7 +274,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         return new java.math.BigDecimal(s);
     }
 
-    protected java.sql.Time readTime() throws IOException, SQLException {
+    protected java.sql.Time readTime() throws IOException, HsqlException {
 
         String s = readString();
 
@@ -287,7 +285,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         return java.sql.Time.valueOf(s);
     }
 
-    protected java.sql.Date readDate() throws IOException, SQLException {
+    protected java.sql.Date readDate() throws IOException, HsqlException {
 
         String s = readString();
 
@@ -299,7 +297,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
     }
 
     protected java.sql.Timestamp readTimestamp()
-    throws IOException, SQLException {
+    throws IOException, HsqlException {
 
         String s = readString();
 
@@ -310,7 +308,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         return java.sql.Timestamp.valueOf(s);
     }
 
-    protected Boolean readBit() throws IOException, SQLException {
+    protected Boolean readBit() throws IOException, HsqlException {
 
         String s = readString();
 
@@ -321,7 +319,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         return Boolean.valueOf(s);
     }
 
-    protected Object readOther() throws IOException, SQLException {
+    protected Object readOther() throws IOException, HsqlException {
 
         byte[] o;
         String s = readString();
@@ -335,7 +333,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         return Column.deserialize(o);
     }
 
-    protected byte[] readBinary(int type) throws IOException, SQLException {
+    protected byte[] readBinary(int type) throws IOException, HsqlException {
 
         String s = readString();
 
@@ -346,7 +344,7 @@ implements org.hsqldb.DatabaseRowInputInterface {
         return Column.hexToByteArray(s);
     }
 
-    int getLineNumber(){
+    int getLineNumber() {
         return line;
     }
 

@@ -41,7 +41,9 @@ import junit.framework.*;
  * @author fredt@users
  */
 public class TestSql extends TestCase {
-    String     path = "test3";
+
+    String path = "test3";
+
 //    protected String url = "jdbc:hsqldb:hsql://localhost";
     String     url = "jdbc:hsqldb:test3";
     String     user;
@@ -51,8 +53,10 @@ public class TestSql extends TestCase {
     String     getColumnName;
 
     public TestSql(String name) {
-       super(name);
-       TestSelf.deleteDatabase(path);
+
+        super(name);
+
+        TestSelf.deleteDatabase(path);
     }
 
     protected void setUp() {

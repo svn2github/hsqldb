@@ -154,8 +154,8 @@ class QuotedTextDatabaseRowInput extends org.hsqldb.TextDatabaseRowInput {
                 s = null;
             }
         } catch (Exception e) {
-            throw (new IOException("field " + field + " ("
-                                   + e.getMessage() + ")"));
+            throw (new IOException("field " + field + " (" + e.getMessage()
+                                   + ")"));
         }
 
         return (s);

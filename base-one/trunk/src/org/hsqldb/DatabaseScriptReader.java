@@ -32,7 +32,6 @@
 package org.hsqldb;
 
 import java.io.*;
-import java.sql.SQLException;
 import org.hsqldb.lib.StringConverter;
 
 /**
@@ -57,7 +56,7 @@ class DatabaseScriptReader {
     String         fileName;
 
     static DatabaseScriptReader newDatabaseScriptReader(Database db,
-            String file, int scriptType) throws SQLException, IOException {
+            String file, int scriptType) throws HsqlException, IOException {
 
         if (scriptType == DatabaseScriptWriter.SCRIPT_TEXT_170) {
             return new DatabaseScriptReader(db, file);
@@ -69,7 +68,7 @@ class DatabaseScriptReader {
     }
 
     DatabaseScriptReader(Database db,
-                         String file) throws SQLException, IOException {
+                         String file) throws HsqlException, IOException {
 
         this.db  = db;
         fileName = file;
@@ -77,12 +76,13 @@ class DatabaseScriptReader {
         openFile();
     }
 
-    void readAll(Session session) throws IOException, SQLException {
+    void readAll(Session session) throws IOException, HsqlException {
         readDDL(session);
         readExistingData(session);
     }
 
-    protected void readDDL(Session session) throws IOException, SQLException {
+    protected void readDDL(Session session)
+    throws IOException, HsqlException {
 
         for (;;) {
             lastLine = readLoggedStatement();
@@ -96,13 +96,13 @@ class DatabaseScriptReader {
             if (result != null && result.iMode == Result.ERROR) {
                 throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
                                   " line: " + lineCount + " "
-                                  + result.sError);
+                                  + result.errorString);
             }
         }
     }
 
     protected void readExistingData(Session session)
-    throws IOException, SQLException {
+    throws IOException, HsqlException {
 
         // fredt - needed for forward referencing FK constraints
         db.setReferentialIntegrity(false);
@@ -121,7 +121,7 @@ class DatabaseScriptReader {
             if (result != null && result.iMode == Result.ERROR) {
                 throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
                                   " line: " + lineCount + " "
-                                  + result.sError);
+                                  + result.errorString);
             }
 
             lastLine = readLoggedStatement();

@@ -31,7 +31,6 @@
 
 package org.hsqldb;
 
-import java.sql.SQLException;
 import org.hsqldb.lib.UnifiedTable;
 
 /**
@@ -66,7 +65,7 @@ class DatabaseObjectNames {
         return (HsqlName) nameList.getCell(i, 1);
     }
 
-    void addName(String name, Object owner) throws SQLException {
+    void addName(String name, Object owner) throws HsqlException {
 
         // should not contain name
         if (containsName(name)) {
@@ -80,7 +79,7 @@ class DatabaseObjectNames {
         nameList.sort(0, true);
     }
 
-    void rename(String name, String newname) throws SQLException {
+    void rename(String name, String newname) throws HsqlException {
 
         int i = nameList.search(name);
 
@@ -90,7 +89,7 @@ class DatabaseObjectNames {
         }
     }
 
-    void removeName(String name) throws SQLException {
+    void removeName(String name) throws HsqlException {
 
         int i = nameList.search(name);
 

@@ -33,7 +33,6 @@ package org.hsqldb;
 
 import org.hsqldb.lib.HsqlStringBuffer;
 import java.io.IOException;
-import java.sql.SQLException;
 
 /**
  *  Cache class declaration <P>
@@ -50,7 +49,7 @@ class ReverseTextCache extends org.hsqldb.TextCache {
     /**
      * same as parent
      */
-    ReverseTextCache(String name, Database db) throws SQLException {
+    ReverseTextCache(String name, Database db) throws HsqlException {
         super(name, db);
     }
 
@@ -59,9 +58,9 @@ class ReverseTextCache extends org.hsqldb.TextCache {
      *
      * @param  readonly Description of the Parameter
      * @param  ignore1st Description of the Parameter
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void open(boolean readonly) throws SQLException {
+    void open(boolean readonly) throws HsqlException {
 
         try {
             if (!readonly) {
@@ -83,17 +82,17 @@ class ReverseTextCache extends org.hsqldb.TextCache {
      *  The flush method saves all cached data to the file, saves the free
      *  position and closes the file.
      *
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void flush() throws SQLException {
+    void flush() throws HsqlException {
         closeFile();
     }
 
-    void purge() throws SQLException {
+    void purge() throws HsqlException {
         closeFile();
     }
 
-    protected CachedRow makeRow(int pos, Table t) throws SQLException {
+    protected CachedRow makeRow(int pos, Table t) throws HsqlException {
 
         CachedRow r = null;
 

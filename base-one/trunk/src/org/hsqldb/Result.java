@@ -68,7 +68,6 @@
 package org.hsqldb;
 
 import java.io.IOException;
-import java.sql.SQLException;
 
 // fredt@users 20020130 - patch 1.7.0 by fredt
 // to ensure consistency of r.rTail r.iSize in all operations
@@ -88,7 +87,8 @@ class Result implements ResultConstants {
     private int    iSize;
     private int    iColumnCount;
     int            iMode;
-    String         sError;
+    String         errorString;
+    String         errorState;
     int            errorCode;
     int            iUpdateCount;
     Record         rRoot;
@@ -116,11 +116,12 @@ class Result implements ResultConstants {
      * @param  error
      * @param  code   Description of the Parameter
      */
-    Result(String error, int code) {
+    Result(String error, String state, int code) {
 
-        iMode     = ERROR;
-        sError    = error;
-        errorCode = code;
+        iMode       = ERROR;
+        errorString = error;
+        errorState  = state;
+        errorCode   = code;
     }
 
     /**
@@ -139,9 +140,9 @@ class Result implements ResultConstants {
      *  Constructor declaration
      *
      * @param  b
-     * @exception  SQLException  Description of the Exception
+     * @exception  HsqlException  Description of the Exception
      */
-    Result(DatabaseRowInputInterface in) throws SQLException {
+    Result(DatabaseRowInputInterface in) throws HsqlException {
 
         try {
             iMode = in.readIntData();
@@ -149,11 +150,10 @@ class Result implements ResultConstants {
             if (iMode == ERROR) {
 
 // tony_lai@users 20020820 - patch 595073
-                int code = in.readIntData();
+                int    code   = in.readIntData();
+                String string = in.readString();
 
-                throw Trace.getError(in.readString(), code);
-
-//                throw Trace.getError(in.readIntData(), in.readString());
+                throw Trace.getError(string, code);
             } else if (iMode == UPDATECOUNT) {
                 iUpdateCount = in.readIntData();
             } else if (iMode == DATA) {
@@ -335,12 +335,12 @@ class Result implements ResultConstants {
     /**
      *  Method declaration
      *
-     * @throws  SQLException
+     * @throws  HsqlException
      */
 
 // fredt@users 20020130 - patch 1.7.0 by fredt
 // to ensure consistency of r.rTail r.iSize in all set operations
-    void removeDuplicates() throws SQLException {
+    void removeDuplicates() throws HsqlException {
 
         if (rRoot == null) {
             return;
@@ -386,9 +386,9 @@ class Result implements ResultConstants {
      *  Method declaration
      *
      * @param  minus
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void removeSecond(Result minus) throws SQLException {
+    void removeSecond(Result minus) throws HsqlException {
 
         removeDuplicates();
         minus.removeDuplicates();
@@ -438,9 +438,9 @@ class Result implements ResultConstants {
      *  Method declaration
      *
      * @param  r2
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void removeDifferent(Result r2) throws SQLException {
+    void removeDifferent(Result r2) throws HsqlException {
 
         removeDuplicates();
         r2.removeDuplicates();
@@ -496,9 +496,9 @@ class Result implements ResultConstants {
      *
      * @param  order
      * @param  way
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    void sortResult(int order[], int way[]) throws SQLException {
+    void sortResult(int order[], int way[]) throws HsqlException {
 
         if (rRoot == null || rRoot.next == null) {
             return;
@@ -584,10 +584,10 @@ class Result implements ResultConstants {
      * @param  order
      * @param  way
      * @return
-     * @throws  SQLException
+     * @throws  HsqlException
      */
     private int compareRecord(Object a[], Object b[], int order[],
-                              int way[]) throws SQLException {
+                              int way[]) throws HsqlException {
 
         int i = Column.compare(a[order[0]], b[order[0]], colType[order[0]]);
 
@@ -612,10 +612,10 @@ class Result implements ResultConstants {
      * @param  b
      * @param  len
      * @return
-     * @throws  SQLException
+     * @throws  HsqlException
      */
     private int compareRecord(Object a[], Object b[],
-                              int len) throws SQLException {
+                              int len) throws HsqlException {
 
         for (int j = 0; j < len; j++) {
             int i = Column.compare(a[j], b[j], colType[j]);
@@ -641,9 +641,9 @@ class Result implements ResultConstants {
      *  Method declaration
      *
      * @return
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    byte[] getBytes() throws SQLException {
+    byte[] getBytes() throws HsqlException {
 
         try {
             DatabaseRowOutputInterface out = new BinaryServerRowOutput();
@@ -657,25 +657,25 @@ class Result implements ResultConstants {
     }
 
     void write(DatabaseRowOutputInterface out)
-    throws IOException, SQLException {
+    throws IOException, HsqlException {
 
         out.writeIntData(iMode);
 
 //        switch (iMode) {
 //            case UPDATECOUNT: {
-//                
+//
 //            }
 //            case ERROR: {
-//                
+//
 //            }
-//            case 
-//            
+//            case
+//
 //        }
         if (iMode == UPDATECOUNT) {
             out.writeIntData(iUpdateCount);
         } else if (iMode == ERROR) {
             out.writeIntData(errorCode);
-            out.writeString(sError);
+            out.writeString(errorString);
         } else {
             int l = iColumnCount;
 
@@ -751,29 +751,29 @@ class Result implements ResultConstants {
 
         iMode = ERROR;
 
-        if (t instanceof SQLException) {
-            sError = t.getMessage();
+        if (t instanceof HsqlException) {
+            errorString = t.getMessage();
 
             if (statement != null) {
-                sError += " in statement [" + statement + "]";
+                errorString += " in statement [" + statement + "]";
             }
 
-            errorCode = ((SQLException) t).getErrorCode();
+            errorCode = ((HsqlException) t).code;
         } else if (t instanceof Exception) {
             t.printStackTrace();
 
-            sError = Trace.getMessage(Trace.GENERAL_ERROR) + " " + t;
+            errorString = Trace.getMessage(Trace.GENERAL_ERROR) + " " + t;
 
             if (statement != null) {
-                sError += " in statement [" + statement + "]";
+                errorString += " in statement [" + statement + "]";
             }
 
             errorCode = Trace.GENERAL_ERROR;
         } else if (t instanceof OutOfMemoryError) {
             t.printStackTrace();
 
-            sError    = "out of memory";
-            errorCode = Trace.GENERAL_ERROR;
+            errorString = "out of memory";
+            errorCode   = Trace.GENERAL_ERROR;
         }
     }
 
@@ -786,11 +786,11 @@ class Result implements ResultConstants {
     }
 
     String getStatement() {
-        return sError;
+        return errorString;
     }
 
     void setStatement(String sql) {
-        sError = sql;
+        errorString = sql;
     }
 
     Object[] getParameterData() {

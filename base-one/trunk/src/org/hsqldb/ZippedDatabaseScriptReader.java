@@ -36,14 +36,14 @@ import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
 class ZippedDatabaseScriptReader extends BinaryDatabaseScriptReader {
 
     ZippedDatabaseScriptReader(Database db,
-                               String file) throws SQLException, IOException {
+                               String file)
+                               throws HsqlException, IOException {
         super(db, file);
     }
 

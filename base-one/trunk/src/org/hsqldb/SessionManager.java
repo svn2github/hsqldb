@@ -77,10 +77,10 @@ import org.hsqldb.lib.Iterator;
  */
 public class SessionManager {
 
-    int                       sessionIdCount;
-    private HsqlArrayList     sessionList = new HsqlArrayList();
+    int                   sessionIdCount;
+    private HsqlArrayList sessionList = new HsqlArrayList();
     private IntKeyHashMap sessionMap  = new IntKeyHashMap();
-    Session                   sysSession;
+    Session               sysSession;
 
 // TODO:
 //
@@ -204,7 +204,7 @@ public class SessionManager {
         Session       observed;
         boolean       isObserverAdmin = session.isAdmin();
         int           observerId      = session.getId();
-        Iterator it              = sessionMap.values().iterator();
+        Iterator      it              = sessionMap.values().iterator();
 
         for (; it.hasNext(); ) {
             observed = (Session) it.next();

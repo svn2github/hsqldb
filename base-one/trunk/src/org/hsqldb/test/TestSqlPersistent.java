@@ -342,6 +342,7 @@ public class TestSqlPersistent extends TestCase {
             rs.next();
 
             integerValueResult = rs.getObject(2);
+
             rs.next();
         } catch (SQLException e) {
             System.out.println(e.getMessage());

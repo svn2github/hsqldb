@@ -70,10 +70,8 @@ package org.hsqldb;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
-import java.sql.Types;
 import java.math.BigDecimal;
 import java.text.Collator;
 import org.hsqldb.lib.HashMap;
@@ -156,7 +154,7 @@ class Column {
     private boolean isNullable;
     private boolean isIdentity;
     private boolean isPrimaryKey;
-    String  defaultString;
+    String          defaultString;
 
     // helper values
     private static final BigDecimal BIGDECIMAL_0 = new BigDecimal("0");
@@ -303,19 +301,19 @@ class Column {
     }
 
     int getDIType() {
-        return colType == VARCHAR_IGNORECASE ? DITypes.VARCHAR
+        return colType == VARCHAR_IGNORECASE ? Types.VARCHAR
                                              : colType;
     }
 
     int getDITypeSub() {
 
         if (colType == VARCHAR_IGNORECASE) {
-            return DITypes.TYPE_SUB_IGNORECASE;
+            return Types.TYPE_SUB_IGNORECASE;
         } else if (isIdentity) {
-            return DITypes.TYPE_SUB_IDENTITY;
+            return Types.TYPE_SUB_IDENTITY;
         }
 
-        return DITypes.TYPE_SUB_DEFAULT;
+        return Types.TYPE_SUB_DEFAULT;
     }
 
     /**
@@ -340,9 +338,9 @@ class Column {
      *
      * @param  SQL type string
      * @return java.sql.Types int value
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    static int getTypeNr(String type) throws SQLException {
+    static int getTypeNr(String type) throws HsqlException {
 
         Integer i = (Integer) hTypes.get(type);
 
@@ -436,9 +434,9 @@ class Column {
      * @param  b
      * @param  type
      * @return result
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    static Object add(Object a, Object b, int type) throws SQLException {
+    static Object add(Object a, Object b, int type) throws HsqlException {
 
         if (a == null || b == null) {
             return null;
@@ -495,9 +493,9 @@ class Column {
      * @param  a
      * @param  b
      * @return result
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    static Object concat(Object a, Object b) throws SQLException {
+    static Object concat(Object a, Object b) throws HsqlException {
 
         if (a == null) {
             return b;
@@ -514,9 +512,9 @@ class Column {
      * @param  a
      * @param  type
      * @return result
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    static Object negate(Object a, int type) throws SQLException {
+    static Object negate(Object a, int type) throws HsqlException {
 
         if (a == null) {
             return null;
@@ -556,9 +554,10 @@ class Column {
      * @param  b
      * @param  type
      * @return result
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    static Object multiply(Object a, Object b, int type) throws SQLException {
+    static Object multiply(Object a, Object b,
+                           int type) throws HsqlException {
 
         if (a == null || b == null) {
             return null;
@@ -616,9 +615,9 @@ class Column {
      * @param  b
      * @param  type
      * @return result
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    static Object divide(Object a, Object b, int type) throws SQLException {
+    static Object divide(Object a, Object b, int type) throws HsqlException {
 
         if (a == null || b == null) {
             return null;
@@ -677,9 +676,10 @@ class Column {
      * @param  b
      * @param  type
      * @return result
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    static Object subtract(Object a, Object b, int type) throws SQLException {
+    static Object subtract(Object a, Object b,
+                           int type) throws HsqlException {
 
         if (a == null || b == null) {
             return null;
@@ -731,9 +731,9 @@ class Column {
      * @param  b
      * @param  type
      * @return result
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    static Object sum(Object a, Object b, int type) throws SQLException {
+    static Object sum(Object a, Object b, int type) throws HsqlException {
 
         if (a == null) {
             return b;
@@ -782,9 +782,9 @@ class Column {
      * @param  type
      * @param  count
      * @return result
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    static Object avg(Object a, int type, int count) throws SQLException {
+    static Object avg(Object a, int type, int count) throws HsqlException {
 
         if (a == null || count == 0) {
             return null;
@@ -825,9 +825,9 @@ class Column {
      * @param  b
      * @param  type
      * @return result
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    static Object min(Object a, Object b, int type) throws SQLException {
+    static Object min(Object a, Object b, int type) throws HsqlException {
 
         if (a == null) {
             return b;
@@ -851,9 +851,9 @@ class Column {
      * @param  b
      * @param  type
      * @return result
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    static Object max(Object a, Object b, int type) throws SQLException {
+    static Object max(Object a, Object b, int type) throws HsqlException {
 
         if (a == null) {
             return b;
@@ -886,9 +886,9 @@ class Column {
      * @param  b instance of Java wrapper, depending on type, but always same for a & b (can be null)
      * @param  type one of the java.sql.Types
      * @return result 1 if a>b, 0 if a=b, -1 if b>a
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    static int compare(Object a, Object b, int type) throws SQLException {
+    static int compare(Object a, Object b, int type) throws HsqlException {
 
         int i = 0;
 
@@ -1064,9 +1064,9 @@ class Column {
      * @param  o
      * @param  type
      * @return result
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    static Object convertObject(Object o, int type) throws SQLException {
+    static Object convertObject(Object o, int type) throws HsqlException {
 
         try {
             if (o == null) {
@@ -1269,7 +1269,7 @@ class Column {
             }
 
             return convertString(o.toString(), type);
-        } catch (SQLException e) {
+        } catch (HsqlException e) {
             throw e;
         } catch (Exception e) {
             throw Trace.error(Trace.WRONG_DATA_TYPE, e.getMessage());
@@ -1283,10 +1283,10 @@ class Column {
      * @param  s
      * @param  type
      * @return
-     * @throws  SQLException
+     * @throws  HsqlException
      */
     private static Object convertString(String s,
-                                        int type) throws SQLException {
+                                        int type) throws HsqlException {
 
         switch (type) {
 
@@ -1350,9 +1350,9 @@ class Column {
      * @param  o
      * @param  type
      * @return result
-     * @throws  SQLException
+     * @throws  HsqlException
      */
-    static String createSQLString(Object o, int type) throws SQLException {
+    static String createSQLString(Object o, int type) throws HsqlException {
 
         if (o == null) {
             return "NULL";
@@ -1530,10 +1530,10 @@ class Column {
      * to an equivalent array of bytes.
      *
      * @param hexString a <CODE>String</CODE> of hexadecimal digits
-     * @throws SQLException if the specified string contains non-hexadecimal digits.
+     * @throws HsqlException if the specified string contains non-hexadecimal digits.
      * @return a byte array equivalent to the specified string of hexadecimal digits
      */
-    static byte[] hexToByteArray(String hexString) throws SQLException {
+    static byte[] hexToByteArray(String hexString) throws HsqlException {
 
         try {
             return StringConverter.hexToByte(hexString);
@@ -1588,9 +1588,9 @@ class Column {
      *
      * @param s the Object to serialize
      * @return  a static byte array representing the passed Object
-     * @throws SQLException if a serialization failure occurs
+     * @throws HsqlException if a serialization failure occurs
      */
-    static byte[] serialize(Object s) throws SQLException {
+    static byte[] serialize(Object s) throws HsqlException {
 
         HsqlByteArrayOutputStream bo = new HsqlByteArrayOutputStream();
 
@@ -1611,9 +1611,9 @@ class Column {
      *
      * @param s the Object to serialize
      * @return  A String representing the passed Object
-     * @throws SQLException if a serialization failure occurs
+     * @throws HsqlException if a serialization failure occurs
      */
-    static String serializeToString(Object s) throws SQLException {
+    static String serializeToString(Object s) throws HsqlException {
         return StringConverter.byteToHex(serialize(s));
     }
 
@@ -1623,9 +1623,9 @@ class Column {
      *
      * @return the Object resulting from deserializing the specified array of bytes
      * @param ba the byte array to deserialize to an Object
-     * @throws SQLException if a serialization failure occurs
+     * @throws HsqlException if a serialization failure occurs
      */
-    static Object deserialize(byte[] ba) throws SQLException {
+    static Object deserialize(byte[] ba) throws HsqlException {
 
         try {
             HsqlByteArrayInputStream bi = new HsqlByteArrayInputStream(ba);

@@ -32,7 +32,6 @@
 package org.hsqldb;
 
 import java.io.IOException;
-import java.sql.SQLException;
 
 /**
  * Public interface for reading the data for a database row.
@@ -57,7 +56,8 @@ interface DatabaseRowInputInterface {
 
     public int available() throws IOException;
 
-    public Object[] readData(int[] colTypes) throws IOException, SQLException;
+    public Object[] readData(int[] colTypes)
+    throws IOException, HsqlException;
 
     public void resetRow(int pos, int size) throws IOException;
 

@@ -33,7 +33,6 @@ package org.hsqldb;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.sql.SQLException;
 import java.util.Enumeration;
 import org.hsqldb.lib.WrapperIterator;
 import org.hsqldb.lib.Iterator;
@@ -141,9 +140,9 @@ final class DINameSpace {
      *
      * @param database The Database object for which to provide name
      *      space support
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      */
-    public DINameSpace(Database database) throws SQLException {
+    public DINameSpace(Database database) throws HsqlException {
 
         HsqlProperties p;
 
@@ -213,9 +212,9 @@ final class DINameSpace {
      *
      * @return An enumeration of <code>String</code> objects naming all
      *      visible catalogs, relative to this object's database.
-     * @throws SQLException never (reserved for future use)
+     * @throws HsqlException never (reserved for future use)
      */
-    Iterator enumCatalogNames() throws SQLException {
+    Iterator enumCatalogNames() throws HsqlException {
         return isReportCatalogs() ? new WrapperIterator(database.getName())
                                   : new WrapperIterator();
     }
@@ -227,9 +226,9 @@ final class DINameSpace {
      *
      * @return An enumeration of <code>String</code> objects naming the
      *      system schemas
-     * @throws SQLException never (reserved for future use)
+     * @throws HsqlException never (reserved for future use)
      */
-    Iterator enumSysSchemaNames() throws SQLException {
+    Iterator enumSysSchemaNames() throws HsqlException {
         return isReportSchemas() ? sysSchemas.iterator()
                                  : new WrapperIterator();
     }
@@ -243,9 +242,9 @@ final class DINameSpace {
      * @return An enumeration of <code>Strings</code> naming the schemas
      *      visible to the specified session
      * @param session The context in which to provide the enumeration
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      */
-    Iterator enumVisibleSchemaNames(Session session) throws SQLException {
+    Iterator enumVisibleSchemaNames(Session session) throws HsqlException {
 
         HsqlArrayList users;
         HsqlArrayList userNames;
@@ -708,11 +707,11 @@ final class DINameSpace {
      *        retrive the enumeration
      * @param andAliases if <code>true</code>, alias lists for qualifying
      *        methods are additionally retrieved.
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      *
      */
     Iterator enumRoutineMethods(String className,
-                                boolean andAliases) throws SQLException {
+                                boolean andAliases) throws HsqlException {
 
         Class         clazz;
         Method[]      methods;
@@ -779,7 +778,7 @@ final class DINameSpace {
      *
      * @param user the <code>User</code> for which to retrieve the
      *      <code>Enumeration</code>
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      * @return an <code>Enumeration</code> object describing the
      *        fully qualified names of all Java <code>Class</code>
      *        objects that are both trigger body implementations
@@ -787,7 +786,7 @@ final class DINameSpace {
      *        potentially be invoked) by actions upon this object's database
      *        by the specified <code>User</code>.
      */
-    Iterator enumAccessibleTriggerClassNames(User user) throws SQLException {
+    Iterator enumAccessibleTriggerClassNames(User user) throws HsqlException {
 
         Table           table;
         Class           clazz;
@@ -858,10 +857,10 @@ final class DINameSpace {
      *      potentially be fired) within the execution context of User
      *      currently represented by the specified session.
      * @param session The context in which to produce the enumeration
-     * @throws SQLException if a database access error occurs.
+     * @throws HsqlException if a database access error occurs.
      */
     Iterator enumAccessibleTriggerMethods(Session session)
-    throws SQLException {
+    throws HsqlException {
 
         Table           table;
         Class           clazz;
@@ -950,11 +949,11 @@ final class DINameSpace {
      * @param session The context in which to produce the enumeration
      * @param andAliases true if the alias lists for the "ROUTINE" type method
      *      elements are to be generated.
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      */
     Iterator enumAllAccessibleMethods(Session session,
                                       boolean andAliases)
-                                      throws SQLException {
+                                      throws HsqlException {
 
         Iterator out;
         Iterator classNames;

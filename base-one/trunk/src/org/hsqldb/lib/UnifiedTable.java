@@ -80,7 +80,8 @@ public class UnifiedTable {
 */
 
 // fredt
-    static final int OBJ_CLASS_CODE_OBJECT = (new Object()).getClass().hashCode();
+    static final int OBJ_CLASS_CODE_OBJECT =
+        (new Object()).getClass().hashCode();
 
     static {
         classCodeMap.put(byte.class, new Integer(PRIM_CLASS_CODE_BYTE));
@@ -228,8 +229,10 @@ public class UnifiedTable {
 
     public void sort(int targetColumn, boolean ascending) {
 
-        rowComparator  = getSingleCellComparator(targetColumn);
+        rowComparator = getSingleCellComparator(targetColumn);
+
         rowComparator.reset();
+
         this.ascending = ascending;
 
         fastQuickSort();
@@ -237,8 +240,10 @@ public class UnifiedTable {
 
     public void sort(int[] targetColumns, boolean ascending) {
 
-        rowComparator  = new MultiCellsComparator(targetColumns);
+        rowComparator = new MultiCellsComparator(targetColumns);
+
         rowComparator.reset();
+
         this.ascending = ascending;
 
         fastQuickSort();
@@ -1178,8 +1183,9 @@ public class UnifiedTable {
         public void reset() {
 
             for (int i = 0; i < cellComparators.length; i++) {
-                if ( cellComparators[i] != null)
+                if (cellComparators[i] != null) {
                     cellComparators[i].reset();
+                }
             }
         }
 
@@ -1244,7 +1250,6 @@ public class UnifiedTable {
      * This interface is used for the compare method for Objects
      * stored in a column.
      */
-
     public class DefaultStringComparator implements ObjectComparator {
 
         public int compare(Object a, Object b) {
@@ -1266,7 +1271,7 @@ public class UnifiedTable {
                 return 1;
             }
 
-            return a.toString().compareTo((String)b);
+            return a.toString().compareTo((String) b);
         }
     }
 

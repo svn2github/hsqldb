@@ -67,8 +67,6 @@
 
 package org.hsqldb;
 
-import java.sql.SQLException;
-
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // fredt@users 20020920 - patch 1.7.1 - refactoring to cut mamory footprint
 // fredt@users 20021215 - doc 1.7.2 - javadoc comments
@@ -94,7 +92,7 @@ class Row {
     /**
      *  Factory method instantiates a Row based on table type.
      */
-    static Row newRow(Table t, Object o[]) throws SQLException {
+    static Row newRow(Table t, Object o[]) throws HsqlException {
 
         if (t.isText()) {
             return new CachedDataRow(t, o);
@@ -114,7 +112,7 @@ class Row {
      *  Constructor for MEMORY table Row. The result is a Row with Nodes that
      *  are not yet linked with other Nodes in the AVL indexes.
      */
-    Row(Table t, Object o[]) throws SQLException {
+    Row(Table t, Object o[]) throws HsqlException {
 
         int index = t.getIndexCount();
 
@@ -178,7 +176,7 @@ class Row {
      * rows need to be loaded into the Cache. getUpdatedRow() returns a
      * currently valid Row object that is in the Cache.
      */
-    Row getUpdatedRow() throws SQLException {
+    Row getUpdatedRow() throws HsqlException {
         return this;
     }
 
@@ -187,7 +185,7 @@ class Row {
      *  Is used only when the database row is deleted, not when it is freed
      *  from the Cache.
      */
-    void delete() throws SQLException {
+    void delete() throws HsqlException {
 
         Record.memoryRecords++;
 

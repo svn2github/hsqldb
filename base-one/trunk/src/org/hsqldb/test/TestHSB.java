@@ -178,6 +178,7 @@ public class TestHSB {
 
                     tempString = "";
                     break;
+
 /*
                 case INSERT_HSB :
                     tempString   = getRandomString("");
@@ -272,6 +273,7 @@ public class TestHSB {
                         equalsTrue = false;
                     }
                     break;
+
 /*
                 case TO_QUOTED_STRING :
 

@@ -73,7 +73,6 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.Enumeration;
@@ -1315,9 +1314,9 @@ public class Server implements ServerConstants, HsqlSocketRequestHandler {
     /**
      * Opens this server's database instance.
      *
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      */
-    final void openDB() throws SQLException {
+    final void openDB() throws HsqlException {
 
         String    path;
         StopWatch sw;
@@ -1647,7 +1646,7 @@ public class Server implements ServerConstants, HsqlSocketRequestHandler {
 
         InetAddress   addr;
         InetAddress[] addrs;
-        HashSet   set;
+        HashSet       set;
         Vector        out;
         StringBuffer  sb;
 

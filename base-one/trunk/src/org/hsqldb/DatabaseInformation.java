@@ -32,7 +32,6 @@
 package org.hsqldb;
 
 import java.lang.reflect.Constructor;
-import java.sql.SQLException;
 import java.util.NoSuchElementException;
 import org.hsqldb.lib.IntValueHashMap;
 
@@ -260,10 +259,10 @@ class DatabaseInformation {
      * @param db The Database object for which to produce system tables
      * @return the fullest system table producer
      *      implementation available
-     * @throws SQLException never - required by constructor
+     * @throws HsqlException never - required by constructor
      */
     static final DatabaseInformation newDatabaseInformation(Database db)
-    throws SQLException {
+    throws HsqlException {
 
         String[] impls = new String[] {
             "org.hsqldb.DatabaseInformationFull",
@@ -301,9 +300,9 @@ class DatabaseInformation {
      * getSystemTable() requests. <p>
      *
      * @param db The Database object for which to produce system tables
-     * @throws SQLException never (required for descendents)
+     * @throws HsqlException never (required for descendents)
      */
-    DatabaseInformation(Database db) throws SQLException {
+    DatabaseInformation(Database db) throws HsqlException {
         database = db;
     }
 
@@ -324,11 +323,11 @@ class DatabaseInformation {
      *
      * @param name the name of the table to produce
      * @param session the context in which to produce the table
-     * @throws SQLException if a database access error occurs
+     * @throws HsqlException if a database access error occurs
      * @return a table corresponding to the name and session arguments, or
      *      <code>null</code> if there is no such table to be produced
      */
-    Table getSystemTable(String name, Session session) throws SQLException {
+    Table getSystemTable(String name, Session session) throws HsqlException {
         return null;
     }
 

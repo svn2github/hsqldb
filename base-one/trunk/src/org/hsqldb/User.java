@@ -67,7 +67,6 @@
 
 package org.hsqldb;
 
-import java.sql.SQLException;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashSet;
@@ -139,7 +138,7 @@ class User {
         setPassword(password);
 
         isAdministrator = admin;
-        isSys = name.equals(UserManager.SYS_USER_NAME);
+        isSys           = name.equals(UserManager.SYS_USER_NAME);
         uPublic         = pub;
     }
 
@@ -189,7 +188,7 @@ class User {
      * Checks if this object's password attibute equals
      * specified argument, else throws.
      */
-    void checkPassword(String test) throws SQLException {
+    void checkPassword(String test) throws HsqlException {
         Trace.check(test.equals(sPassword), Trace.ACCESS_IS_DENIED);
     }
 
@@ -273,7 +272,7 @@ class User {
      * from the dbobject argument for at least one of the rights
      * contained in the rights argument. Otherwise, it throws.
      */
-    void check(Object dbobject, int rights) throws SQLException {
+    void check(Object dbobject, int rights) throws HsqlException {
 
         if (!isAccessible(dbobject, rights)) {
             throw Trace.error(Trace.ACCESS_IS_DENIED);
@@ -320,7 +319,7 @@ class User {
      * Checks that this User object is for a user with the
      * database administrator role. Otherwise it throws.
      */
-    void checkAdmin() throws SQLException {
+    void checkAdmin() throws HsqlException {
         Trace.check(isAdmin(), Trace.ACCESS_IS_DENIED);
     }
 
@@ -356,11 +355,11 @@ class User {
      */
     HashSet getGrantedClassNames(boolean andToPublic) {
 
-        HashMap rights;
-        HashSet out;
-        HashSet pub;
-        Object      key;
-        Integer     right;
+        HashMap  rights;
+        HashSet  out;
+        HashSet  pub;
+        Object   key;
+        Integer  right;
         Iterator i;
 
         rights = rightsMap;

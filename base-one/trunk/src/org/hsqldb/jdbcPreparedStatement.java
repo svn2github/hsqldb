@@ -79,7 +79,6 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
-import java.sql.Types;
 import java.util.*;    // for Map
 import java.util.Calendar;
 import java.util.Vector;
@@ -682,8 +681,12 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
             Trace.trace();
         }
 
-        setParameter(parameterIndex,
-                     Column.createSQLString(x, Types.DECIMAL));
+        try {
+            setParameter(parameterIndex,
+                         Column.createSQLString(x, Types.DECIMAL));
+        } catch (HsqlException e) {
+            jdbcDriver.throwError(e);
+        }
     }
 
     /**
@@ -767,7 +770,12 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
             Trace.trace();
         }
 
-        setParameter(parameterIndex, Column.createSQLString(x, Types.DATE));
+        try {
+            setParameter(parameterIndex,
+                         Column.createSQLString(x, Types.DATE));
+        } catch (HsqlException e) {
+            jdbcDriver.throwError(e);
+        }
     }
 
     /**
@@ -792,7 +800,12 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
             Trace.trace();
         }
 
-        setParameter(parameterIndex, Column.createSQLString(x, Types.TIME));
+        try {
+            setParameter(parameterIndex,
+                         Column.createSQLString(x, Types.TIME));
+        } catch (HsqlException e) {
+            jdbcDriver.throwError(e);
+        }
     }
 
     /**
@@ -818,8 +831,12 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
             Trace.trace();
         }
 
-        setParameter(parameterIndex,
-                     Column.createSQLString(x, Types.TIMESTAMP));
+        try {
+            setParameter(parameterIndex,
+                         Column.createSQLString(x, Types.TIMESTAMP));
+        } catch (HsqlException e) {
+            jdbcDriver.throwError(e);
+        }
     }
 
     /**
@@ -868,7 +885,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
                           StringConverter.inputStreamToString(x));
             }
         } catch (IOException e) {
-            throw Trace.error(Trace.INVALID_CHARACTER_ENCODING);
+            throw jdbcDriver.sqlException(Trace.INVALID_CHARACTER_ENCODING);
         }
     }
 
@@ -932,7 +949,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
                 sb.append(character);
             }
         } catch (IOException e) {
-            throw Trace.error(Trace.TRANSFER_CORRUPTED);
+            throw jdbcDriver.sqlException(Trace.TRANSFER_CORRUPTED);
         }
 
         setParameter(parameterIndex, sb.toString());
@@ -1009,7 +1026,8 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
             x.read(b, 0, length);
             x.close();
         } catch (IOException e) {
-            throw Trace.error(Trace.INPUTSTREAM_ERROR, e.getMessage());
+            throw jdbcDriver.sqlException(Trace.INPUTSTREAM_ERROR,
+                                          e.getMessage());
         }
 
         setBytes(parameterIndex, b);
@@ -1139,7 +1157,11 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 
 // fredt@users 20020328 -  patch 482109 by fredt - OBJECT handling
         if (targetSqlType != Types.OTHER) {
-            x = Column.convertObject(x, targetSqlType);
+            try {
+                x = Column.convertObject(x, targetSqlType);
+            } catch (HsqlException e) {
+                jdbcDriver.throwError(e);
+            }
         }
 
         setObjectInType(parameterIndex, x, targetSqlType);
@@ -1361,7 +1383,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
                 throw new IOException();
             }
         } catch (IOException e) {
-            throw Trace.error(Trace.TRANSFER_CORRUPTED);
+            throw jdbcDriver.sqlException(Trace.TRANSFER_CORRUPTED);
         }
 
         setString(parameterIndex, new String(buffer));
@@ -1573,7 +1595,8 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
                 setParameter(parameterIndex,
                              Column.createSQLString(dateString));
             } catch (Exception e) {
-                Trace.throwerror(Trace.INVALID_ESCAPE, e);
+                throw jdbcDriver.sqlException(Trace.INVALID_ESCAPE,
+                                              e.getMessage());
             }
         }
     }
@@ -1623,7 +1646,8 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
                 setParameter(parameterIndex,
                              Column.createSQLString(dateString));
             } catch (Exception e) {
-                Trace.throwerror(Trace.INVALID_ESCAPE, e);
+                throw jdbcDriver.sqlException(Trace.INVALID_ESCAPE,
+                                              e.getMessage());
             }
         }
     }
@@ -1671,7 +1695,8 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
                 setParameter(parameterIndex,
                              Column.createSQLString(dateString));
             } catch (Exception e) {
-                Trace.throwerror(Trace.INVALID_ESCAPE, e);
+                throw jdbcDriver.sqlException(Trace.INVALID_ESCAPE,
+                                              e.getMessage());
             }
         }
     }
@@ -2600,7 +2625,8 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 
             return HsqlDateTime.getDate(dateString, cal);
         } catch (Exception e) {
-            throw Trace.error(Trace.INVALID_ESCAPE, e.getMessage());
+            throw jdbcDriver.sqlException(Trace.INVALID_ESCAPE,
+                                          e.getMessage());
         }
     }
 
@@ -2648,7 +2674,8 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 
             return HsqlDateTime.getTime(timeString, cal);
         } catch (Exception e) {
-            throw Trace.error(Trace.INVALID_ESCAPE, e.getMessage());
+            throw jdbcDriver.sqlException(Trace.INVALID_ESCAPE,
+                                          e.getMessage());
         }
     }
 
@@ -2697,7 +2724,8 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
 
             return HsqlDateTime.getTimestamp(dateString, cal);
         } catch (Exception e) {
-            throw Trace.error(Trace.INVALID_ESCAPE, e.getMessage());
+            throw jdbcDriver.sqlException(Trace.INVALID_ESCAPE,
+                                          e.getMessage());
         }
     }
 
@@ -4860,7 +4888,7 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
         // This method is never called.  Why is it here?
         // fredt@users - might be used or deleted later
         // @return a SQLException stating that an invalid value has been encounted
-        return Trace.error(Trace.UNEXPECTED_TOKEN);
+        return jdbcDriver.sqlException(Trace.UNEXPECTED_TOKEN);
     }
 
     /**
@@ -4954,9 +4982,13 @@ implements java.sql.PreparedStatement, java.sql.CallableStatement {
                 break;
 
             case Types.OTHER :
-                setParameter(
-                    parameterIndex,
-                    Column.createSQLString(Column.serializeToString(x)));
+                try {
+                    setParameter(
+                        parameterIndex,
+                        Column.createSQLString(Column.serializeToString(x)));
+                } catch (HsqlException e) {
+                    jdbcDriver.throwError(e);
+                }
                 break;
 
             default :

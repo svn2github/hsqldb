@@ -67,8 +67,6 @@
 
 package org.hsqldb;
 
-import java.sql.SQLException;
-
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 
 /**
@@ -93,11 +91,11 @@ class MemoryNode extends BaseMemoryNode {
         return 0;
     }
 
-    Row getRow() throws SQLException {
+    Row getRow() throws HsqlException {
         return rData;
     }
 
-    Object[] getData() throws SQLException {
+    Object[] getData() throws HsqlException {
 
         if (Trace.DOASSERT) {
             Trace.doAssert(iBalance != -2);
