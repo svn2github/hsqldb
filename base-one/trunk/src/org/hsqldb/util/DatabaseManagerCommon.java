@@ -160,11 +160,12 @@ class DatabaseManagerCommon {
         + "- lines starting with --#<count> means set new count\n"
     };
     static String testDataSql[] = {
-        "SELECT * FROM Product", "SELECT * FROM Document",
-        "SELECT * FROM Position",
-        "SELECT * FROM Address a INNER JOIN Document d ON a.ID=d.AddressID",
-        "SELECT * FROM Document d INNER JOIN Position p ON d.ID=p.DocumentID",
-        "SELECT * FROM Address WHERE Street LIKE '1%' ORDER BY Lastname"
+        "SELECT * FROM Product", "SELECT * FROM Invoice",
+        "SELECT * FROM Item",
+        "SELECT * FROM Customer a INNER JOIN Invoice i ON a.ID=i.CustomerID",
+        "SELECT * FROM Customer a LEFT OUTER JOIN Invoice i ON a.ID=i.CustomerID",
+        "SELECT * FROM Invoice d INNER JOIN Item i ON d.ID=i.InvoiceID",
+        "SELECT * FROM Customer WHERE Street LIKE '1%' ORDER BY Lastname"
     };
 
     /**
@@ -202,17 +203,21 @@ class DatabaseManagerCommon {
     static void createTestTables(Statement sStatement) {
 
         String demo[] = {
-            "DROP TABLE Address", "DROP TABLE Product", "DROP TABLE Document",
-            "DROP TABLE Position",
-            "CREATE TABLE Address(ID INTEGER PRIMARY KEY,FirstName VARCHAR(255),"
-            + "LastName VARCHAR(255),Street VARCHAR(255),City VARCHAR(255))",
-            "CREATE TABLE Product(ID INTEGER PRIMARY KEY,Name VARCHAR(255),"
-            + "Cost DECIMAL)",
-            "CREATE TABLE Document(ID INTEGER PRIMARY KEY,AddressID INTEGER,"
-            + "Total DECIMAL)",
-            "CREATE TABLE Position(DocumentID INTEGER,Position INTEGER,"
-            + "ProductID INTEGER,Quantity INTEGER,Price DECIMAL,"
-            + "PRIMARY KEY(DocumentID,Position))"
+            "DROP TABLE Item IF EXISTS;", "DROP TABLE Invoice IF EXISTS;",
+            "DROP TABLE Product IF EXISTS;", "DROP TABLE Customer IF EXISTS;",
+            "CREATE TABLE Customer(ID INTEGER PRIMARY KEY,FirstName VARCHAR,"
+            + "LastName VARCHAR,Street VARCHAR,City VARCHAR);",
+            "CREATE TABLE Product(ID INTEGER PRIMARY KEY,Name VARCHAR,"
+            + "Price DECIMAL);",
+            "CREATE TABLE Invoice(ID INTEGER PRIMARY KEY,CustomerID INTEGER,"
+            + "Total DECIMAL, FOREIGN KEY (CustomerId) "
+            + "REFERENCES Customer(ID) ON DELETE CASCADE);",
+            "CREATE TABLE Item(InvoiceID INTEGER,Item INTEGER,"
+            + "ProductID INTEGER,Quantity INTEGER,Cost DECIMAL,"
+            + "PRIMARY KEY(InvoiceID,Item), "
+            + "FOREIGN KEY (InvoiceId) REFERENCES "
+            + "Invoice (ID) ON DELETE CASCADE, FOREIGN KEY (ProductId) "
+            + "REFERENCES Product(ID) ON DELETE CASCADE);"
         };
 
         for (int i = 0; i < demo.length; i++) {
@@ -220,7 +225,9 @@ class DatabaseManagerCommon {
             // drop table may fail
             try {
                 sStatement.execute(demo[i]);
-            } catch (SQLException e) {}
+            } catch (SQLException e) {
+                ;
+            }
         }
     }
 
@@ -253,33 +260,36 @@ class DatabaseManagerCommon {
         };
         int    max       = 50;
 
+        sStatement.execute("SET REFERENTIAL_INTEGRITY FALSE");
+
         for (int i = 0; i < max; i++) {
-            sStatement.execute("INSERT INTO Address VALUES(" + i + ",'"
+            sStatement.execute("INSERT INTO Customer VALUES(" + i + ",'"
                                + random(firstname) + "','" + random(name)
                                + "','" + random(554) + " " + random(street)
                                + "','" + random(city) + "')");
             sStatement.execute("INSERT INTO Product VALUES(" + i + ",'"
                                + random(product) + " " + random(product)
                                + "'," + (20 + 2 * random(120)) + ")");
-            sStatement.execute("INSERT INTO Document VALUES(" + i + ","
+            sStatement.execute("INSERT INTO Invoice VALUES(" + i + ","
                                + random(max) + ",0.0)");
 
             for (int j = random(20) + 2; j >= 0; j--) {
-                sStatement.execute("INSERT INTO Position VALUES(" + i + ","
-                                   + j + "," + random(max) + ","
+                sStatement.execute("INSERT INTO Item VALUES(" + i + "," + j
+                                   + "," + random(max) + ","
                                    + (1 + random(24)) + ",1.5)");
             }
         }
 
-        sStatement.execute("UPDATE Product SET Cost=ROUND(Cost*.1,2)");
+        sStatement.execute("SET REFERENTIAL_INTEGRITY TRUE");
+        sStatement.execute("UPDATE Product SET Price=ROUND(Price*.1,2)");
         sStatement.execute(
-            "UPDATE Position SET Price=Price*"
-            + "SELECT Cost FROM Product prod WHERE ProductID=prod.ID");
+            "UPDATE Item SET Cost=Cost*"
+            + "SELECT Price FROM Product prod WHERE ProductID=prod.ID");
         sStatement.execute(
-            "UPDATE Document SET Total=SELECT SUM(Price*"
-            + "Quantity) FROM Position WHERE DocumentID=Document.ID");
+            "UPDATE Invoice SET Total=SELECT SUM(Cost*"
+            + "Quantity) FROM Item WHERE InvoiceID=Invoice.ID");
 
-        return ("SELECT * FROM Address");
+        return ("SELECT * FROM Customer");
     }
 
     /**
@@ -302,6 +312,7 @@ class DatabaseManagerCommon {
                 count++;
 
                 b.append(s);
+                b.append('\n');
             }
 
             read.close();

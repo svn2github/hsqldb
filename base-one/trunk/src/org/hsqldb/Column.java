@@ -102,6 +102,8 @@ import java.text.Collator;
 // fredt@users 20020402 - patch 1.7.0 by fredt - type conversions
 // frequently used type conversions are done without creating temporary
 // Strings to reduce execution time and garbage collection
+// fredt@users 20021013 - patch 1.7.1 by fredt - type conversions
+// scripting of Double.Nan and infinity values
 
 /**
  *  Implementation of SQL table columns as defined in DDL statements with
@@ -601,8 +603,7 @@ class Column {
                 double ad = ((Number) a).doubleValue();
                 double bd = ((Number) b).doubleValue();
 
-                return (bd == 0) ? null
-                                 : new Double(ad / bd);
+                return new Double(ad / bd);
 
             case Types.NUMERIC :
             case Types.DECIMAL :
@@ -1110,7 +1111,7 @@ class Column {
                             throw new java.lang.NumberFormatException();
                         }
 
-                        // fredt@users - narroing is required for library function calls
+                        // fredt@users - narrowing needed for function calls
                         return new Integer(((Number) o).intValue());
                     }
                     break;
@@ -1329,6 +1330,23 @@ class Column {
 
             case Types.NULL :
                 return "NULL";
+
+            case Types.REAL :
+            case Types.FLOAT :
+            case Types.DOUBLE :
+                if (((Double) o).doubleValue() == Double.NEGATIVE_INFINITY) {
+                    return "-1e0/0";
+                }
+
+                if (((Double) o).doubleValue() == Double.POSITIVE_INFINITY) {
+                    return "1e0/0";
+                }
+
+                if (((Double) o).isNaN()) {
+                    return "0e0/0e0";
+                }
+
+                return o.toString();
 
             case Types.DATE :
             case Types.TIME :

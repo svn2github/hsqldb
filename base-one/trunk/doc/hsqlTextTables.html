@@ -7,7 +7,7 @@
 
 <h2>Text Tables as a Standard Feature of HSQLDB </h2>
 <p>Text Table support for HSQLDB was originally developed by Bob Preston independently from the Project. Subsequently Bob joined the Project and incorporated this feature into version 1.7.0, with a number of enhancements, especially the use of conventional SQL commands for specifying the files used for Text Tables. </p>
-<p>In a nutshell, Text Tables are CSV or other delimited files treated as SQL tables. Any ordinary CSV or other delimited file can be used. The full range of SQL queries can be performed on these files, including SELECT, UPDATE and DELETE. Indexes and unique constraints can be set up, and foreign key constraints can be used to enforce referential integrity between Text Tables themselves or with conventional tables. </p>
+<p>In a nutshell, Text Tables are CSV or other delimited files treated as SQL tables. Any ordinary CSV or other delimited file can be used. The full range of SQL queries can be performed on these files, including SELECT, INSERT, UPDATE and DELETE. Indexes and unique constraints can be set up, and foreign key constraints can be used to enforce referential integrity between Text Tables themselves or with conventional tables. </p>
 <p>HSQLDB with Text Table support is the only comprehensive solution that employs the power of SQL and the universal reach of JDBC to handle data stored in text files and will have wide ranging use way beyond the currently established Java realm of HSQLDB. </p>
 <h3>Goals of the Implementation </h3>
 <ol>
@@ -113,8 +113,9 @@ HSQLDB also recognises the following special indicators for separators: <br>
 \t - tab <br>
 \\ - backslash <br>
 \u#### - a Unicode character specified in hexadecimal</p>
-   <p>&nbsp; <br>
-Furthermore, HSQLDB provides csv file support with two additional boolean options: ignore_first and quoted. The ignore_first option (default false) tells HSQLDB to ignore the first line in a file, and the quoted option (default true) tells it that some fields may be quoted. These also may be specified in the .properties file: <br>
+   
+<p>&nbsp; <br>
+Furthermore, HSQLDB provides csv file support with two additional boolean options: ignore_first and quoted. The ignore_first option (default false) tells HSQLDB to ignore the first line in a file. This option is used when the first line of the file contains column headings. The quoted option (default true) tells the program  that some fields may be quoted. These options may also  be specified in the .properties file: <br>
       &nbsp; </p>
    <pre>textdb.mytable.ignore_first=true 
 textdb.mytable.quoted=false</pre>
@@ -178,7 +179,7 @@ Secondary indexes and UNIQUE constraints can be used on any column of a text tab
 </ul>
 
 <dl>
-<dt>Authors: Bob Preston and Fred Toussi - 29 May 2002</dt>
+   <dt>Authors: Bob Preston and Fred Toussi - 29 May 2002 - updated by FT 11 Oct 2002</dt>
 </dl>
 <p>Copyright 2002 Bob Preston and Fred Toussi. Permission is granted to distribute this document without any alteration under the terms of the HSQLDB license. Additional permission is granted to the HSQLDB Development Group to distribute this document with or without alterations under the terms of the HSQLDB license.</p>
 <p><a href="http://hsqldb.sourceforge.net">http://hsqldb.sourceforge.net&nbsp;</a></p>

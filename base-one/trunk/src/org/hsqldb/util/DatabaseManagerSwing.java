@@ -360,7 +360,7 @@ implements ActionListener, WindowListener, KeyListener {
 
             ifHuge = DatabaseManagerCommon.readFile(defScript);
 
-            if (1024 <= ifHuge.length()) {
+            if (4096 <= ifHuge.length()) {
                 buf.append(
                     "This huge file cannot be edited. Please execute\n");
                 txtCommand.setText(buf.toString());
@@ -489,7 +489,7 @@ implements ActionListener, WindowListener, KeyListener {
                     ifHuge = DatabaseManagerCommon.readFile(
                         file.getAbsolutePath());
 
-                    if (1024 <= ifHuge.length()) {
+                    if (4096 <= ifHuge.length()) {
                         buf.append(
                             "This huge file cannot be edited. Please execute\n");
                         txtCommand.setText(buf.toString());
@@ -652,7 +652,7 @@ implements ActionListener, WindowListener, KeyListener {
 
         String sCmd = null;
 
-        if (1024 <= ifHuge.length()) {
+        if (4096 <= ifHuge.length()) {
             sCmd = ifHuge;
         } else {
             sCmd = txtCommand.getText();

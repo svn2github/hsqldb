@@ -176,13 +176,6 @@ class DatabaseScript {
                 addRow(r, dataSource);
             }
 
-            if (bCached && t.isCached()) {
-                if (i >= forwardFKSource.size()
-                        || forwardFKSource.elementAt(i) == null) {
-                    addRow(r, getIndexRootsDDL(t));
-                }
-            }
-
             // trigger script
             int numTrigs = TriggerDef.numTrigs();
 
@@ -210,8 +203,10 @@ class DatabaseScript {
             addRow(r, a.toString());
         }
 
-        for (int i = 0, tSize = forwardFKSource.size(); i < tSize; i++) {
-            if (forwardFKSource.elementAt(i) != null) {
+        for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
+            Table t = (Table) tTable.elementAt(i);
+
+            if (bCached && t.isCached()) {
                 addRow(r, getIndexRootsDDL((Table) tTable.elementAt(i)));
             }
         }

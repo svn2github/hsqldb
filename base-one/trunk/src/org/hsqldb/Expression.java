@@ -626,6 +626,7 @@ class Expression {
         }
     }
 
+// fredt@users 20021012 - patch 1.7.1 by hofhansl@users - use index with negate
     /**
      * Method declaration
      *
@@ -634,7 +635,7 @@ class Expression {
      */
     boolean isResolved() {
 
-        if (iType == VALUE) {
+        if (iType == VALUE || iType == NEGATE) {
             return true;
         }
 

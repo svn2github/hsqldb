@@ -159,7 +159,8 @@ public class Trace extends PrintWriter {
                                 CONSTRAINT_NOT_FOUND           = 61,
                                 INVALID_JDBC_ARGUMENT          = 62,
                                 DATABASE_IS_MEMORY_ONLY        = 63,
-                                OUTER_JOIN_CONDITION           = 64;
+                                OUTER_JOIN_CONDITION           = 64,
+                                NUMERIC_VALUE_OUT_OF_RANGE     = 65;
     private static String[]     sDescription                   = {
         "NOT USED", "08001 The database is already in use by another process",
         "08003 Connection is closed", "08003 Connection is broken",
@@ -202,7 +203,8 @@ public class Trace extends PrintWriter {
         "S0011 Constraint already exists", "S0011 Constraint not found",
         "SOO10 Invalid argument in JDBC call",
         "S1000 Database is memory only",
-        "37000 only one join condition on table columns allowed"
+        "37000 only one join condition on table columns allowed",
+        "22003 Numeric value out of range"
     };
 
     static {

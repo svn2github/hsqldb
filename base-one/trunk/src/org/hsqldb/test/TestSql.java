@@ -327,7 +327,7 @@ public class TestSql extends TestCase {
             ps.setDate(9, new java.sql.Date(System.currentTimeMillis() + 1));
             ps.execute();
             ps.setInt(1, 0);
-            ps.setDouble(2, java.lang.Double.NaN);
+            ps.setDouble(2, java.lang.Double.POSITIVE_INFINITY);
             ps.setInt(4, Integer.MIN_VALUE);
             ps.setObject(5, new Short((short) 2), Types.SMALLINT);
             ps.setObject(6, new Integer(2), Types.TINYINT);
