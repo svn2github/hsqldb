@@ -42,18 +42,22 @@
 # config: /etc/sysconfig/hsqldb
 
 # SETUP
-# First, you have to place this where init scripts belong for your kind
-# of UNIX.  
+# (1) Place this where init scripts belong for your kind of UNIX.  
 # See the 'THISDIR' setting below for exactly where.
-# Then you need to set up your SqlTool authentication file (see the
-# SqlTool docs about that), and the config file for this init script.
-# There is a commented sample config file with the hsqldb distro.
-#
-# If using a BSD variant, you must set "enable_hsqldb" to "YES" in
-# /etc/rc.conf.
+# (2) Set up the config file according to the comments in the file
+# hsqldb.cfg.sample in the bin directory of your hsqldb distribution.
+# See the setting for CFGFILE below for exactly where you need to place this 
+# file on your UNIX variant.
+# (3) Set up your SqlTool authentication file (see the SqlTool docs about that).
+# This file is read (for stops) directly by root, even if you run hsqldb as
+# non-root (by setting HSQLDB_OWNER in the config file).  Therefore, if you
+# don't name the file 'sqltool.rc' in root's home directory, you need to set
+# AUTH_FILE in your main config file (#2 above).
+# (4) Tell your OS to run the init script upon system startup and shutdown.
+# If using a BSD variant, you must set "enable_hsqldb" to "YES" in /etc/rc.conf.
 # For good UNIXes that use System V style init, you must set up hard links 
-# or soft links manually or with management tools or Gui's, or with 
-# "chkconfig".
+# or soft links manually or with management tools or Gui's, or with "chkconfig".
+# (I recommend using chkconfig if you have it).
 
 # N.b.  Being a system script, this script does not use inherited variables.
 # If you want to adjust a setting, edit the config file.
@@ -244,7 +248,9 @@ running with pid $HSQLDB_PID."
                 exit 1
             }
             # Some OSes choke if there are newlines in this string.
-            nohup su -c "cd '$SERVER_HOME' && echo "'$$'" > '$PIDFILE' && exec $JAVA_HOME/bin/java -classpath '$HSQLDB_HOME/lib/hsqldb.jar' org.hsqldb.Server" "$HSQLDB_OWNER" >> "$LOGFILE" 2>&1 &
+            # N.b.!!!  The shell of the -c command is the target user's default
+            # login shell, so keep this command shell-independent!
+            nohup su -f "$HSQLDB_OWNER" -c "cd '$SERVER_HOME' && echo "'$$'" > '$PIDFILE' && exec $JAVA_HOME/bin/java -classpath '$HSQLDB_HOME/lib/hsqldb.jar' org.hsqldb.Server" >> "$LOGFILE" 2>&1 &
         else
             cd "$SERVER_HOME" || {
                 echo "Failed to cd to '$SERVER_HOME'" 1>&2
