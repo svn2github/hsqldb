@@ -75,6 +75,8 @@ import java.util.*;
 // moved the Profile class to org.hsqldb.test package
 // fredt@users 20021020 - patch 1.7.1 - formatting fix
 // avoid moving blank lines which would be interpreted as code change by CVS
+// fredt@users 20021118 - patch 1.7.2 - no-change, no-save fix
+// if the file contents do not change, do not save a new version of file
 
 /**
  * Modifies the source code to support different JDK or profile settings. <p>
@@ -523,15 +525,19 @@ public class CodeSwitcher {
      */
     boolean processFile(String name) {
 
-        File    f           = new File(name);
-        File    fnew        = new File(name + ".new");
-        int     state       = 0;    // 0=normal 1=inside_if 2=inside_else
-        boolean switchoff   = false;
-        boolean working     = false;
-        boolean filechanged = false;
+        File    f         = new File(name);
+        File    fnew      = new File(name + ".new");
+        int     state     = 0;    // 0=normal 1=inside_if 2=inside_else
+        boolean switchoff = false;
+        boolean working   = false;
 
         try {
-            Vector v = getFileLines(f);
+            Vector v  = getFileLines(f);
+            Vector v1 = new Vector(v.size());
+
+            for (int i = 0; i < v.size(); i++) {
+                v1.add(v.elementAt(i));
+            }
 
             for (int i = 0; i < v.size(); i++) {
                 String line = (String) v.elementAt(i);
@@ -544,14 +550,11 @@ public class CodeSwitcher {
                     if (line.equals("/*") || line.equals("*/")) {
                         v.removeElementAt(i--);
 
-                        filechanged = true;
-
                         continue;
                     }
                 }
 
-                if (!line.startsWith("//#")) {}
-                else {
+                if (line.startsWith("//#")) {
                     if (line.startsWith("//#ifdef ")) {
                         if (state != 0) {
                             printError(
@@ -572,8 +575,7 @@ public class CodeSwitcher {
 
                             v.insertElementAt("/*", ++i);
 
-                            filechanged = true;
-                            switchoff   = true;
+                            switchoff = true;
                         }
 
                         if (vSwitches.indexOf(s) == -1) {
@@ -593,21 +595,16 @@ public class CodeSwitcher {
                             if (v.elementAt(i - 1).equals("")) {
                                 v.insertElementAt("*/", i - 1);
 
-                                filechanged = true;
-
                                 i++;
                             } else {
                                 v.insertElementAt("*/", i++);
-
-                                filechanged = true;
                             }
 
                             switchoff = false;
                         } else {
                             v.insertElementAt("/*", ++i);
 
-                            filechanged = true;
-                            switchoff   = true;
+                            switchoff = true;
                         }
                     } else if (line.startsWith("//#endif")) {
                         if (state == 0) {
@@ -622,13 +619,9 @@ public class CodeSwitcher {
                             if (v.elementAt(i - 1).equals("")) {
                                 v.insertElementAt("*/", i - 1);
 
-                                filechanged = true;
-
                                 i++;
                             } else {
                                 v.insertElementAt("*/", i++);
-
-                                filechanged = true;
                             }
                         }
 
@@ -641,6 +634,16 @@ public class CodeSwitcher {
                 printError("'#endif' missing");
 
                 return false;
+            }
+
+            boolean filechanged = false;
+
+            for (int i = 0; i < v.size(); i++) {
+                if (!v1.elementAt(i).equals(v.elementAt(i))) {
+                    filechanged = true;
+
+                    break;
+                }
             }
 
             if (!filechanged) {

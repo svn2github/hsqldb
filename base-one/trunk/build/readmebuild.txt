@@ -30,13 +30,18 @@ ant jar
 The Ant method always builds a jar that is compatible with the
 JDK that is used by Ant and specified in the JAVA_HOME environment
 variable. It is recommended not to use JDK 1.1.x for building the
-jar, as this version produces much larger jar sizes.
+jar, as this version produces much larger jar sizes. Use JDK 1.3.x
+instead.
 
 Before building the hsqldbtest.jar package, you should download the
 junit.jar and put it in the /lib directory, alongside servlet.jar, 
 which is included in the .zip package.
 
 Batch Build
+
+Note: Batch an Linux builds are not in synch with the Ant build as
+of 18 Nov 2002. These scripts will be rewritten once the file list
+for the next release is finalised.
 
 A set of MSDOS batch files is also provided. These produce only
 the default jar size. The path and classpath variables for the JDK

@@ -39,18 +39,15 @@ example:
 
    <target name="javaversion4">
       <available classname="java.nio.Buffer" property="ant.java.iscjava14"/>
+      <available classname="java.nio.Buffer" property="ant.java.iscjavamodern"/>
    </target>
 
    <target name="javaversion2" depends="javaversion4"  unless="ant.java.iscjava14">
       <available classname="java.util.Set" property="ant.java.iscjava12"/>
+      <available classname="java.util.Set" property="ant.java.iscjavamodern"/>
    </target>
 
-   <target name="javaversion1" depends="javaversion2"  unless="ant.java.iscjava12">
-      <available classname="java.util.Vector" property="ant.java.iscjava11"/>
-      <available classname="java.util.Vector" property="noswing"/>
-   </target>
-
-   <target name="prepare" depends="init,javaversion1">
+   <target name="prepare" depends="init,javaversion2">
        <mkdir dir="classes" />
    </target>
 
@@ -75,7 +72,7 @@ example:
        </javac>
     </target>
 
-    <target name="switchtojdk11" depends="codeswitcher" if="ant.java.iscjava11">
+    <target name="switchtojdk11" depends="codeswitcher" unless="ant.java.iscjavamodern">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes" >
          <arg line="${src}/org/hsqldb/jdbcStubs.java -JAVA2 -JDBC3"/>
        </java>
