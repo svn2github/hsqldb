@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.25 2004/06/07 23:08:42 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.26 2004/06/08 02:37:45 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.25 $</edition>
-        <pubdate>$Date: 2004/06/07 23:08:42 $</pubdate>
+        <edition>$Revision: 1.26 $</edition>
+        <pubdate>$Date: 2004/06/08 02:37:45 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -40,7 +40,7 @@
             SqlTool is still a very useful tool even if you have no quoting
             capability at all.
         </simpara><simpara>
-            This document is now updated for version 1.33 of SqlTool and
+            This document is now updated for version 1.34 of SqlTool and
             1.74 of SqlFile (the latter is the class which does most of the
             work for SqlTool).
             The startup banner will report both version when you run SqlTool
@@ -75,8 +75,8 @@
                     (the sa password is blank when new HSQLDB database 
                     instances are created).
                     Edit the file if you need to change the target Server URL, 
-                    username, password, character set, or JDBC driver,
-                    as documented in the 
+                    username, password, character set, JDBC driver, or TLS 
+                    trust store as documented in the 
                     <link linkend='auth-section' endterm='auth-title'/> section.
                 </simpara></step><step><simpara>
                     Find out where your hsqldb.jar file resides.
@@ -243,6 +243,10 @@
                 You can, alternatively, set this for one SqlTool invocation 
                 by using the SqlTool switch <emphasis>--driver</emphasis>.
                 Defaults to <emphasis>org.hsqldb.jdbcDriver</emphasis>.
+            </simpara></listitem></varlistentry>
+            <varlistentry><term>truststore</term><listitem><simpara>
+                TLS trust keystore store file path as documented in the
+                <link linkend='tls-chapter' endterm='tls-title'/> chapter.
             </simpara></listitem></varlistentry>
         </variablelist>
         <simpara>
@@ -780,7 +784,7 @@
                 dependable solution by intelligently using \* commands 
                 (Continue upon Errors) and commit statements, and by
                 verifying exit statuses.
-            <simpara>
+            </simpara>
         </section>
         <section><title>Getting Interactive Functionality with SQL Files</title>
             <para>
