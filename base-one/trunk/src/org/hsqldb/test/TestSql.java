@@ -41,9 +41,10 @@ import junit.framework.*;
  */
 public class TestSql extends TestBase {
 
-    Statement  stmnt;
-    Connection connection;
-    String     getColumnName = "false";
+    Statement         stmnt;
+    PreparedStatement pstmnt;
+    Connection        connection;
+    String            getColumnName = "false";
 
     public TestSql(String name) {
         super(name);
@@ -288,8 +289,9 @@ public class TestSql extends TestBase {
                     result5 += "\n";
                 }
 
-                // most of these will throw if strict_md is true
-                System.out.println(rsmd.isAutoIncrement(1));
+                System.out.println(result5);
+                System.out.println("first column identity: "
+                                   + rsmd.isAutoIncrement(1));
                 rsmd.isCaseSensitive(1);
                 rsmd.isCurrency(1);
                 rsmd.isDefinitelyWritable(1);
@@ -299,7 +301,22 @@ public class TestSql extends TestBase {
                 rsmd.isSigned(1);
                 rsmd.isWritable(1);
                 rs.close();
-                System.out.println(result5);
+
+                // test identity with PreparedStatement
+                stmnt.executeQuery(
+                    "INSERT INTO T VALUES (NULL, 'get_column_name', '"
+                    + getColumnName + "');");
+
+                pstmnt = connection.prepareStatement("call identity()");
+
+                ResultSet rsi = pstmnt.executeQuery();
+
+                rsi.next();
+
+                int identity = rsi.getInt(1);
+
+                System.out.println("call identity(): " + identity);
+                rsi.close();
             }
         } catch (SQLException e) {
             fail(e.getMessage());

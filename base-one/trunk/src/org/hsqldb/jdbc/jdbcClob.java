@@ -71,8 +71,8 @@ import org.hsqldb.lib.AsciiStringInputStream;
  *
  * Currently, the interface methods for updating a CLOB value are
  * unsupported. However, the truncate method is supported for local use.
- * </div>
- * <!-- start Release-specific documentation -->
+* </div>
+* <!-- end release-specific documentation -->
  *
  * @author  boucherb@users
  * @version 1.7.2
@@ -141,6 +141,7 @@ final public class jdbcClob implements Clob {
      * characters from pos to this.length().  Another would be to throw
      * an exception.  HSQLDB observes the later policy.
      * </div>
+     * <!-- end release-specific documentation -->
      *
      * @param pos the first character of the substring to be extracted.
      *            The first character is at position 1.

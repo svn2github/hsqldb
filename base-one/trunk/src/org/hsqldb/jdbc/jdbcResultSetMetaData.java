@@ -63,9 +63,9 @@ import org.hsqldb.Types;
  * </PRE>
  * <!-- end generic documentation -->
  *
- * <!-- start release-specific documentation -->
- * <span class="ReleaseSpecificDocumentation">
- * <b>HSQLDB-Specific:</b> <p>
+ * <!-- start Release-specific documentation -->
+ * <div class="ReleaseSpecificDocumentation">
+ * <h3>HSQLDB-Specific Information:</h3> <p>
  *
  * HSQLDB supports a subset of the <code>ResultSetMetaData</code> interface.<p>
  *
@@ -82,8 +82,9 @@ import org.hsqldb.Types;
  *
  * (fredt@users) <br>
  * (boucherb@users)<p>
- * </span>
+ * </div>
  * <!-- end release-specific documentation -->
+ *
  * @author boucherb@users
  * @version 1.7.2
  * @see jdbcStatement#executeQuery
@@ -304,11 +305,11 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * thus read-only. <p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <!-- start Release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * HSQLDB 1.7.1 did not support accurately reporting this value,
+     * HSQLDB 1.7.1 did not report this value accurately,
      * either always throwing or always returning false, depending
      * upon client property values.<p>
      *
@@ -374,7 +375,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * is also currently included (in a fashion proprietary to HSQLDB) as the
      * last column of the jdbcDatabaseMetaData.getColumns() result.
      *
-     * </span>
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param column the first column is 1, the second is 2, ...
@@ -393,11 +394,11 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * Indicates whether a column's case matters. <p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <!-- start Release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * HSQLDB 1.7.1 did not support accurately reporting this value.  <p>
+     * HSQLDB 1.7.1 did not report this value accurately.  <p>
      *
      * Starting with 1.7.2, this feature is better supported.  <p>
      *
@@ -406,8 +407,9 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * false. It also returns false for any column whose data type is a
      * not a character data type. <p>
      *
-     * </span>
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param column the first column is 1, the second is 2, ...
      * @return <code>true</code> if so; <code>false</code> otherwise
      * @exception SQLException if a database access error occurs
@@ -425,11 +427,11 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * clause. <p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <!-- start Release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * HSQLDB 1.7.1 did not support accurately reporting this value.  <p>
+     * HSQLDB 1.7.1 did not report this value accurately.  <p>
      *
      * Starting with 1.7.2, this feature is better supported.  <p>
      *
@@ -439,8 +441,9 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * DatabaseMetaData.typePredNone or is not reported, then false is
      * returned, else true.
      *
-     * </span>
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param column the first column is 1, the second is 2, ...
      * @return <code>true</code> if so; <code>false</code> otherwise
      * @exception SQLException if a database access error occurs
@@ -457,9 +460,9 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * Indicates whether the designated column is a cash value. <p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <!-- start Release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * Up to and including HSQLDB 1.7.2, this method always returns
      * false. <p>
@@ -470,8 +473,9 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * additional, as yet unimplemented constraint enforcement code, be
      * said to be a fixed (precision,scale) types. <p>
      *
-     * </span>
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param column the first column is 1, the second is 2, ...
      * @return <code>true</code> if so; <code>false</code> otherwise
      * @exception SQLException if a database access error occurs
@@ -488,12 +492,11 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * Indicates the nullability of values in the designated column. <p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <!-- start Release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Up to 1.7.1, HSQLDB did not support accurately reporting this
-     * value. <p>
+     * Up to 1.7.1, HSQLDB did not report this value accurately. <p>
      *
      * Starting with 1.7.2, this feature is better supported.  <p>
      *
@@ -508,8 +511,9 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * filter values and inspecting the result at the position described in
      * the API documentation. <p>
      *
-     * </span>
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param column the first column is 1, the second is 2, ...
      * @return the nullability status of the given column; one of
      *      <code>columnNoNulls</code>,
@@ -529,15 +533,15 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * numbers. <p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <!-- start Release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.1 introduced support for this feature and 1.7.2
      * reports identical values (although using a slightly different
      * implementation).<p>
      *
-     * </span>
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param column the first column is 1, the second is 2, ...
@@ -557,9 +561,9 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * characters. <p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <!-- start Release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * Up to and including HSQLDB 1.7.1, this method always returned
      * 0, which was intended to convey unknown display size.
@@ -622,8 +626,9 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      *
      * </ol>
      *
-     * </span>
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param column the first column is 1, the second is 2, ...
      * @return the normal maximum number of characters allowed as the width
      *      of the designated column
@@ -642,9 +647,9 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * displays. <p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <!-- start Release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * In HSQLDB a <code>ResultSet</code> column label is determined in the
      * following order of precedence:<p>
@@ -656,7 +661,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * <LI>An empty <code>String</code>.</LI>
      * </OL> <p>
      *
-     * </span>
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param column the first column is 1, the second is 2, ...
@@ -675,9 +680,9 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * Get the designated column's name. <p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <!-- start Release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * In HSQLDB a ResultSet column name is determined in the following
      * order of prcedence:<p>
@@ -693,7 +698,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * has been set to false, this method returns the same value as
      * {@link #getColumnLabel(int)}.<p>
      *
-     * </span>
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param column the first column is 1, the second is 2, ...
@@ -715,9 +720,9 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * Get the designated column's table's schema. <p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <!-- start Release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * Up to 1.7.1, HSQLDB did not support the notion of schemas at all,
      * including schema names in result set metadata; this method always
@@ -741,8 +746,9 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * For greater detail, see discussion at:
      * {@link jdbcDatabaseMetaData}. <p>
      *
-     * </span>
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param column the first column is 1, the second is 2, ...
      * @return schema name or "" if not applicable
      * @exception SQLException if a database access error occurs
@@ -759,9 +765,9 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * Get the designated column's number of decimal digits. <p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <!-- start Release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * Up to and including HSQLDB 1.7.1, this method always returned 0,
      * which was intended to convey that the precision was <em>unknown</em>,
@@ -789,8 +795,9 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * upon the contents of the columns. This situation may or may not change
      * in a future release. <p>
      *
-     * </span>
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param column the first column is 1, the second is 2, ...
      * @return precision
      * @exception SQLException if a database access error occurs
@@ -808,9 +815,9 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * decimal point. <p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <!-- start Release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * Up to and including HSQLDB 1.7.2, this method always returns 0
      * (which is the actual scale for integral types and is to be interpreted
@@ -825,7 +832,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * instead consult the DatabaseMetaData.getColumns() result using the
      * required filter parameters. <p>
      *
-     * </span>
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param column the first column is 1, the second is 2, ...
@@ -859,9 +866,9 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * Gets the designated column's table's catalog name. <p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <!-- start Release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * Up to and including 1.7.1, HSQLDB did not support the notion of
      * catalog and this method always returned "". <p>
@@ -882,7 +889,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * For greater detail, see discussion at:
      * {@link jdbcDatabaseMetaData}. <p>
      *
-     * </span>
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param column the first column is 1, the second is 2, ...
@@ -902,15 +909,15 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * Retrieves the designated column's SQL type. <p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <!-- start Release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * This reports the SQL type of the column. HSQLDB can return Objects in
      * any Java integral type wider than <code>Integer</code> for an SQL
      * integral type.<p>
      *
-     * </span>
+     * </div>
      * <!-- end release-specific documentation -->
      *
      *
@@ -951,12 +958,12 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * Indicates whether the designated column is definitely not writable.<p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <!-- start Release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Up to and including 1.7.1, HSQLDB did not support accurately reporting
-     * this value. <p>
+     * Up to and including 1.7.1, HSQLDB did not report this value accurately.
+     * <p>
      *
      * Starting with HSQLDB 1.7.2, this feature is better supported. <p>
      *
@@ -965,8 +972,9 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * Otherwise, the read only status of the table and the database are used
      * in the calculation, but not the read-only status of the session. <p>
      *
-     * </span>
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param column the first column is 1, the second is 2, ...
      * @return <code>true</code> if so; <code>false</code> otherwise
      * @exception SQLException if a database access error occurs
@@ -984,19 +992,20 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * column to succeed. <p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <!-- start Release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Up to and including 1.7.1, HSQLDB did not support accurately reporting
-     * this value. <p>
+     * Up to and including 1.7.1, HSQLDB did not report this value accurately.
+     * <p>
      *
      * Starting with HSQLDB 1.7.2, this feature is better supported. <p>
      *
      * In essense, the negation of isReadOnly() is reported. <p>
      *
-     * </span>
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param column the first column is 1, the second is 2, ...
      * @return <code>true</code> if so; <code>false</code> otherwise
      * @exception SQLException if a database access error occurs
@@ -1014,11 +1023,11 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * succeed. <p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <!-- start Release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * HSQLDB 1.7.1 did not support reporting this value accurately. <p>
+     * HSQLDB 1.7.1 did not report this value accurately. <p>
      *
      * Starting with HSQLDB 1.7.2, this method always returns false. The
      * reason for this is that it is generally either very complex or
@@ -1028,8 +1037,9 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * "SELECT ... FOR UPDATE" style locking.  However, this is not anticipated to
      * occur any time in the 1.7.x release series. <p>
      *
-     * </span>
+     * </div>
      * <!-- end release-specific documentation -->
+     *
      * @param column the first column is 1, the second is 2, ...
      * @return <code>true</code> if so; <code>false</code> otherwise
      * @exception SQLException if a database access error occurs
@@ -1064,15 +1074,15 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * returned by this method. <p>
      * <!-- end generic documentation -->
      *
-     * <!-- start release-specific documentation -->
-     * <span class="ReleaseSpecificDocumentation">
-     * <B>HSQLDB-Specific Information:</B> <p>
+     * <!-- start Release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * HSQLDB 1.7.1 did not support this feature; calling this method
      * always caused an <code>SQLException</code> to be thrown,
      * stating that the function was not supported. <p>
      *
-     * </span>
+     * </div>
      * <!-- end release-specific documentation -->
      *
      * @param column the first column is 1, the second is 2, ...

@@ -750,6 +750,13 @@ public class ArrayUtil {
         return newarray;
     }
 
+    /**
+     * Returns an array containing the elements of parameter source, with one
+     * element removed or added. Parameter adjust {-1, +1} indicates the
+     * operation. Parameter colindex indicates the position at which an element
+     * is removed or added. Parameter addition is an Object to add when
+     * adjust is +1.
+     */
     public static Object toAdjustedArray(Object source, Object addition,
                                          int colindex, int adjust) {
 
@@ -766,7 +773,8 @@ public class ArrayUtil {
      *  Copies elements of source to dest. If adjust is -1 the element at
      *  colindex is not copied. If adjust is +1 that element is filled with
      *  the Object addition. All the rest of the elements in source are
-     *  shifted left or right accordingly when they are copied.
+     *  shifted left or right accordingly when they are copied. If adjust is 0
+     *  only elements up to colindex are copied.
      *
      *  No checks are perfomed on array sizes and an exception is thrown
      *  if they are not consistent with the other arguments.
@@ -779,17 +787,24 @@ public class ArrayUtil {
 
         System.arraycopy(source, 0, dest, 0, colindex);
 
-        if (colindex == Array.getLength(dest)) {
+        if (adjust == 0) {
             return;
-        }
+        } else if (adjust < 0) {
+            int endcount = length - colindex - 1;
 
-        if (adjust < 0) {
-            System.arraycopy(source, colindex + 1, dest, colindex,
-                             length - colindex - 1);
+            if (endcount > 0) {
+                System.arraycopy(source, colindex + 1, dest, colindex,
+                                 endcount);
+            }
         } else {
+            int endcount = length - colindex;
+
             Array.set(dest, colindex, addition);
-            System.arraycopy(source, colindex, dest, colindex + 1,
-                             length - colindex);
+
+            if (endcount > 0) {
+                System.arraycopy(source, colindex, dest, colindex + 1,
+                                 endcount);
+            }
         }
     }
 

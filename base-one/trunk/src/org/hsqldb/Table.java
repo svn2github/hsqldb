@@ -1674,12 +1674,12 @@ public class Table extends BaseTable {
         }
 
         setIdentityColumn(session, data);
-        checkRowData(session, data);
+        checkRowDataInsert(session, data);
         insertNoCheck(session, data);
 
         if (triggerLists[Trigger.INSERT_AFTER_ROW] != null) {
             fireAll(Trigger.INSERT_AFTER_ROW, null, data);
-            checkRowData(session, data);
+            checkRowDataInsert(session, data);
         }
     }
 
@@ -2782,22 +2782,35 @@ public class Table extends BaseTable {
 
             if (triggerLists[Trigger.UPDATE_BEFORE_ROW] != null) {
                 fireAll(Trigger.UPDATE_BEFORE_ROW, row.getData(), data);
-                checkRowData(session, data);
+                checkRowDataUpdate(session, data, cols);
             }
 
             insertNoCheck(session, data);
 
             if (triggerLists[Trigger.UPDATE_AFTER_ROW] != null) {
                 fireAll(Trigger.UPDATE_AFTER_ROW, row.getData(), data);
-                checkRowData(session, data);
+                checkRowDataUpdate(session, data, cols);
             }
         }
     }
 
-    void checkRowData(Session session, Object[] data) throws HsqlException {
+    void checkRowDataInsert(Session session,
+                            Object[] data) throws HsqlException {
 
-        // set identity column where null and check columns
         enforceFieldValueLimits(data);
+        enforceNullConstraints(data);
+
+        if (database.isReferentialIntegrity()) {
+            for (int i = 0, size = constraintList.length; i < size; i++) {
+                constraintList[i].checkInsert(data, session);
+            }
+        }
+    }
+
+    void checkRowDataUpdate(Session session, Object[] data,
+                            int[] cols) throws HsqlException {
+
+        enforceFieldValueLimits(data, cols);
         enforceNullConstraints(data);
 
         for (int j = 0; j < constraintList.length; j++) {
@@ -2805,8 +2818,6 @@ public class Table extends BaseTable {
 
             if (c.getType() == Constraint.CHECK) {
                 c.checkCheckConstraint(data, session);
-
-                continue;
             }
         }
     }
