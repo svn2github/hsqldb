@@ -268,11 +268,11 @@ class Select {
      * @return
      * @throws HsqlException
      */
-    Object getValue(int type) throws HsqlException {
+    Object getValue(int type, Session session) throws HsqlException {
 
         resolve();
 
-        Result r    = getResult(2);    // 2 records are (already) too much
+        Result r    = getResult(2, session);    // 2 records are (already) too much
         int    size = r.getSize();
         int    len  = r.getColumnCount();
 
@@ -396,10 +396,12 @@ class Select {
 
         limitStart = limitCondition == null ? 0
                                             : ((Integer) limitCondition
-                                            .getArg().getValue()).intValue();
+                                            .getArg().getValue(null))
+                                                .intValue();
         limitCount = limitCondition == null ? 0
                                             : ((Integer) limitCondition
-                                            .getArg2().getValue()).intValue();
+                                            .getArg2().getValue(null))
+                                                .intValue();
 
         if (maxrows == 0) {
             maxrows = limitCount;
@@ -434,13 +436,13 @@ class Select {
 // fredt@users 20020130 - patch 471710 by fredt - LIMIT rewritten
 // for SELECT LIMIT n m DISTINCT
 // fredt@users 20020804 - patch 580347 by dkkopp - view speedup
-    Result getResult(int maxrows) throws HsqlException {
+    Result getResult(int maxrows, Session session) throws HsqlException {
 
         if (resultMetaData == null) {
             prepareResult();
         }
 
-        Result r = buildResult(getLimitCount(maxrows));
+        Result r = buildResult(getLimitCount(maxrows), session);
 
         // the result is perhaps wider (due to group and order by)
         // so use the visible columns to remove duplicates
@@ -449,7 +451,7 @@ class Select {
         }
 
         if (sUnion != null) {
-            Result x = sUnion.getResult(0);
+            Result x = sUnion.getResult(0, session);
 
             switch (iUnionType) {
 
@@ -598,7 +600,8 @@ class Select {
     }
 
 // fredt@users 20030810 - patch 1.7.2 - OUTER JOIN rewrite
-    private Result buildResult(int limitcount) throws HsqlException {
+    private Result buildResult(int limitcount,
+                               Session session) throws HsqlException {
 
         GroupedResult gResult     = new GroupedResult(this, resultMetaData);
         final int     len         = exprColumns.length;
@@ -651,14 +654,14 @@ class Select {
             }
 
             // apply condition
-            if (queryCondition == null || queryCondition.test()) {
+            if (queryCondition == null || queryCondition.test(session)) {
                 try {
                     Object row[] = new Object[len];
 
                     // gets the group by column values first.
                     for (int i = gResult.groupBegin; i < gResult.groupEnd;
                             i++) {
-                        row[i] = exprColumns[i].getValue();
+                        row[i] = exprColumns[i].getValue(session);
                     }
 
                     row = gResult.getRow(row);
@@ -667,15 +670,17 @@ class Select {
                     for (int i = 0; i < gResult.groupBegin; i++) {
                         row[i] =
                             isAggregated && exprColumns[i].isAggregate()
-                            ? exprColumns[i].updateAggregatingValue(row[i])
-                            : exprColumns[i].getValue();
+                            ? exprColumns[i].updateAggregatingValue(row[i],
+                                session)
+                            : exprColumns[i].getValue(session);
                     }
 
                     for (int i = gResult.groupEnd; i < len; i++) {
                         row[i] =
                             isAggregated && exprColumns[i].isAggregate()
-                            ? exprColumns[i].updateAggregatingValue(row[i])
-                            : exprColumns[i].getValue();
+                            ? exprColumns[i].updateAggregatingValue(row[i],
+                                session)
+                            : exprColumns[i].getValue(session);
                     }
 
                     gResult.addRow(row);
@@ -695,7 +700,7 @@ class Select {
             for (int i = 0; i < len; i++) {
                 row[i] = exprColumns[i].isAggregate() ? null
                                                       : exprColumns[i]
-                                                      .getValue();
+                                                      .getValue(session);
             }
 
             gResult.addRow(row);
@@ -709,7 +714,8 @@ class Select {
             if (isAggregated) {
                 for (int i = 0; i < len; i++) {
                     if (exprColumns[i].isAggregate()) {
-                        row[i] = exprColumns[i].getAggregatedValue(row[i]);
+                        row[i] = exprColumns[i].getAggregatedValue(row[i],
+                                session);
                     }
                 }
             }
@@ -957,7 +963,7 @@ class Select {
     private void preProcess() {
 
         try {
-            getResult(1);
+            getResult(1, null);
         } catch (HsqlException e) {}
     }
 

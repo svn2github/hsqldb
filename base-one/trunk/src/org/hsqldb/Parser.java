@@ -572,10 +572,10 @@ class Parser {
         }
 
         if ((e1.getType() == Expression.VALUE && e1.getDataType() == Types
-                .INTEGER && ((Integer) e1.getValue()).intValue() >= 0) || e1
-                    .isParam()) {
+                .INTEGER && ((Integer) e1.getValue(null))
+                .intValue() >= 0) || e1.isParam()) {
             if ((e2.getType() == Expression.VALUE && e2.getDataType() == Types
-                    .INTEGER && ((Integer) e1.getValue())
+                    .INTEGER && ((Integer) e1.getValue(null))
                     .intValue() >= 0) || e2.isParam()) {
 
                 // necessary for params
@@ -812,7 +812,7 @@ class Parser {
 
         // order by 1,2,3
         if (e.getDataType() == Types.INTEGER) {
-            int i = ((Integer) e.getValue()).intValue();
+            int i = ((Integer) e.getValue(null)).intValue();
 
             if (0 < i && i <= visiblecols) {
                 Expression colexpr = (Expression) vcolumn.get(i - 1);
@@ -1114,7 +1114,7 @@ class Parser {
             Trace.check(c.getType() == Expression.VALUE,
                         Trace.INVALID_ESCAPE);
 
-            String s = (String) c.getValue(Types.VARCHAR);
+            String s = (String) c.getValue(Types.VARCHAR, session);
 
             // boucherb@users 2003-09-25
             // CHECKME:
@@ -1333,7 +1333,7 @@ class Parser {
 
                 if (iToken == Expression.OPEN) {
                     String   javaName = database.getAlias(name);
-                    Function f = new Function(name, javaName, false, session);
+                    Function f        = new Function(name, javaName, false);
 
                     session.check(javaName, UserManager.ALL);
 
@@ -1362,8 +1362,7 @@ class Parser {
                     String javaName = (String) datetimeTokens.get(name);
 
                     if (javaName != null) {
-                        Function f = new Function(name, javaName, true,
-                                                  session);
+                        Function f = new Function(name, javaName, true);
 
                         r = new Expression(f);
                     }
@@ -1698,7 +1697,7 @@ class Parser {
 
                 // the name argument is DAY, MONTH etc.  - OK for now for CHECK constraints
                 Function f = new Function(name, database.getAlias(name),
-                                          false, session);
+                                          false);
 
                 f.setArgument(0, readOr());
                 readThis(Expression.CLOSE);
@@ -1747,8 +1746,7 @@ class Parser {
 
                 // name argument is OK for now for CHECK constraints
                 Function f = new Function(Token.T_TRIM,
-                                          "org.hsqldb.Library.trim", false,
-                                          session);
+                                          "org.hsqldb.Library.trim", false);
 
                 f.setArgument(0, readOr());
                 f.setArgument(1, trim);
@@ -1766,7 +1764,7 @@ class Parser {
 
                 Function f = new Function(Token.T_POSITION,
                                           "org.hsqldb.Library.position",
-                                          false, session);
+                                          false);
 
                 f.setArgument(0, readTerm());
                 readThis(Expression.IN);
@@ -1786,7 +1784,7 @@ class Parser {
                 // OK for now for CHECK search conditions
                 Function f = new Function(Token.T_SUBSTRING,
                                           "org.hsqldb.Library.substring",
-                                          false, session);
+                                          false);
 
                 f.setArgument(0, readTerm());
 

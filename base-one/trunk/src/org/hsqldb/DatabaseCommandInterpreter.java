@@ -1236,31 +1236,22 @@ class DatabaseCommandInterpreter {
         try {
             session.commit();
 
-// fredt@users 20020225 - patch 509002 by fredt
-//
-// It's essential to stay compatible with existing cached tables,
-// so we create all constraints and indexes (even duplicates) for
-// cached tables
-//
-// CONSTRAINT PRIMARY KEY can appear in user scripts and new
-// tables only so we can safely apply it correctly
-//
-// first apply any primary key constraint then set all the constraints
-// also, duplicate indexes can be avoided if we choose to in the
-// future, but currently we have to accept them to stay compatible
-// with existing cached tables that include them
-            Constraint tempConst;
+            Constraint primaryConst;
 
-            tempConst = (Constraint) tempConstraints.get(0);
+            primaryConst = (Constraint) tempConstraints.get(0);
 
-            // tony_lai@users 20020820 - patch 595099
-            t.createPrimaryKey(tempConst.constName,
-                               tempConst.core.mainColArray, true);
+            if (primaryConst.constName != null) {
+                database.indexNameList.addName(primaryConst.constName.name,
+                                               t.getName());
+                database.constraintNameList.addName(
+                    primaryConst.constName.name, t.getName());
+            }
 
-            boolean logDDL = false;
+            t.createPrimaryKey(primaryConst.constName,
+                               primaryConst.core.mainColArray, true);
 
             for (int i = 1; i < tempConstraints.size(); i++) {
-                tempConst = (Constraint) tempConstraints.get(i);
+                Constraint tempConst = (Constraint) tempConstraints.get(i);
 
                 if (tempConst.constType == Constraint.UNIQUE) {
                     TableWorks tableWorks = new TableWorks(t);
@@ -1302,6 +1293,8 @@ class DatabaseCommandInterpreter {
 // been created leaves it modification to the expTable in place
 // need to undo those modifications. This should not happen in practice.
             database.removeExportedKeys(t);
+            database.indexNameList.removeOwner(t.tableName);
+            database.constraintNameList.removeOwner(t.tableName);
 
             throw e;
         }
@@ -2875,7 +2868,7 @@ class DatabaseCommandInterpreter {
             throw Trace.error(Trace.TABLE_ALREADY_EXISTS, intoName);
         }
 
-        r        = select.getResult(0);
+        r        = select.getResult(0, session);
         intoType = select.intoType;
         sid      = session.getId();
 

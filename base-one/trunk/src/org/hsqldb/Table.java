@@ -1783,7 +1783,7 @@ public class Table extends BaseTable {
 
         if (database.isReferentialIntegrity()) {
             for (int i = 0, size = constraintList.size(); i < size; i++) {
-                ((Constraint) constraintList.get(i)).checkInsert(row);
+                ((Constraint) constraintList.get(i)).checkInsert(row, c);
             }
         }
 
@@ -2355,7 +2355,7 @@ public class Table extends BaseTable {
             Constraint c = (Constraint) table.constraintList.get(i);
 
             if (c.getType() == Constraint.CHECK) {
-                c.checkCheckConstraint(nrow);
+                c.checkCheckConstraint(nrow, session);
 
                 continue;
             }

@@ -463,7 +463,7 @@ class TableFilter {
                 Expression e = findFirstExpressions[i];
 
                 if (e != null) {
-                    data[i] = e.getValue(types[i]);
+                    data[i] = e.getValue(types[i], null);
                 }
             }
 
@@ -473,7 +473,7 @@ class TableFilter {
                                        : filterIndex.findFirstNotNull();
         } else {
             int    type = eStart.getArg().getDataType();
-            Object o    = eStart.getArg2().getValue(type);
+            Object o    = eStart.getArg2().getValue(type, null);
 
             currentNode = filterIndex.findFirst(o, eStart.getType());
         }
@@ -482,11 +482,11 @@ class TableFilter {
             currentData = currentNode.getData();
             currentRow  = currentNode.getRow();
 
-            if (!(eEnd == null || eEnd.test())) {
+            if (!(eEnd == null || eEnd.test(null))) {
                 break;
             }
 
-            if (eAnd == null || eAnd.test()) {
+            if (eAnd == null || eAnd.test(null)) {
                 return true;
             }
 
@@ -517,11 +517,11 @@ class TableFilter {
             currentData = currentNode.getData();
             currentRow  = currentNode.getRow();
 
-            if (!(eEnd == null || eEnd.test())) {
+            if (!(eEnd == null || eEnd.test(null))) {
                 break;
             }
 
-            if (eAnd == null || eAnd.test()) {
+            if (eAnd == null || eAnd.test(null)) {
                 return true;
             }
 
@@ -542,7 +542,7 @@ class TableFilter {
         currentRow     = null;
 
         return eAnd == null || (eAnd.getFilter() != this && eAnd.isInJoin)
-               || eAnd.test();
+               || eAnd.test(null);
     }
 
     /**

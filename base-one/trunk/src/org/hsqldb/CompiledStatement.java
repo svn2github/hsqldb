@@ -364,7 +364,7 @@ final class CompiledStatement {
         this.paramTypes = types;
     }
 
-    void materializeSubQueries() throws HsqlException {
+    void materializeSubQueries(Session session) throws HsqlException {
 
         for (int i = 0; i < subqueries.length; i++) {
             SubQuery sq = subqueries[i];
@@ -377,7 +377,7 @@ final class CompiledStatement {
             Table  t = sq.table;
             Select s = sq.select;
             Result r = s.getResult(sq.isExistsPredicate ? 1
-                                                        : 0);
+                                                        : 0, session);
 
             t.insertIntoTable(r, null);
 

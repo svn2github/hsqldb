@@ -450,7 +450,7 @@ Referential Constraint 4 SET DEFAULT
      * @param  row
      * @throws  HsqlException
      */
-    void checkInsert(Object row[]) throws HsqlException {
+    void checkInsert(Object row[], Session session) throws HsqlException {
 
         if (constType == Constraint.MAIN || constType == Constraint.UNIQUE) {
 
@@ -460,7 +460,7 @@ Referential Constraint 4 SET DEFAULT
         }
 
         if (constType == Constraint.CHECK) {
-            checkCheckConstraint(row);
+            checkCheckConstraint(row, session);
 
             return;
         }
@@ -497,11 +497,12 @@ Referential Constraint 4 SET DEFAULT
         }
     }
 
-    void checkCheckConstraint(Object[] row) throws HsqlException {
+    void checkCheckConstraint(Object[] row,
+                              Session session) throws HsqlException {
 
         core.checkFilter.currentData = row;
 
-        if (!core.check.test()) {
+        if (!core.check.test(session)) {
             core.checkFilter.currentRow = null;
 
             throw Trace.error(Trace.CHECK_CONSTRAINT_VIOLATION,

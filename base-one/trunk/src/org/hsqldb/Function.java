@@ -89,7 +89,6 @@ import org.hsqldb.lib.StringConverter;
  */
 class Function {
 
-    private Session        cSession;
     private String         sFunction;
     Method                 mMethod;
     private Class          cReturnClass;
@@ -148,14 +147,14 @@ class Function {
      *      construction does not have the right to evaluate
      *      this Function.
      */
-    Function(String name, String fqn, boolean isSimple,
-             Session session) throws HsqlException {
+    Function(String name, String fqn, boolean isSimple) throws HsqlException {
 
         this.name     = name;
         this.isSimple = isSimple;
-        cSession      = session;
-        sFunction     = fqn;
-        fID           = Library.functionID(fqn);
+
+//        cSession      = session;
+        sFunction = fqn;
+        fID       = Library.functionID(fqn);
 
         int i = fqn.lastIndexOf('.');
 
@@ -267,50 +266,55 @@ class Function {
      * calling the Java
      * method underlying this object
      */
-    Object getValue() throws HsqlException {
+    Object getValue(Session session) throws HsqlException {
+
+        if (session != null) {
+
+//            cSession = session;
+        }
 
         switch (fID) {
 
             case Library.identity :
-                return cSession.getLastIdentity();
+                return session.getLastIdentity();
 
             case Library.database :
-                return cSession.getDatabase().getPath();
+                return session.getDatabase().getPath();
 
             case Library.user :
-                return cSession.getUser().getName();
+                return session.getUser().getName();
 
             case Library.isReadOnlyConnection :
-                return cSession.isReadOnly() ? Boolean.TRUE
-                                             : Boolean.FALSE;
+                return session.isReadOnly() ? Boolean.TRUE
+                                            : Boolean.FALSE;
 
             case Library.getAutoCommit :
-                return cSession.isAutoCommit() ? Boolean.TRUE
-                                               : Boolean.FALSE;
+                return session.isAutoCommit() ? Boolean.TRUE
+                                              : Boolean.FALSE;
 
             case Library.isReadOnlyDatabase :
-                return cSession.getDatabase().databaseReadOnly ? Boolean.TRUE
-                                                               : Boolean
-                                                               .FALSE;
+                return session.getDatabase().databaseReadOnly ? Boolean.TRUE
+                                                              : Boolean.FALSE;
 
             case Library.isReadOnlyDatabaseFiles :
-                return cSession.getDatabase().filesReadOnly ? Boolean.TRUE
-                                                            : Boolean.FALSE;
+                return session.getDatabase().filesReadOnly ? Boolean.TRUE
+                                                           : Boolean.FALSE;
         }
 
-        Object[] oArg = getArguments();
+        Object[] oArg = getArguments(session);
 
         if (oArg == null) {
             return null;
         }
 
-        return getValue(oArg);
+        return getValue(oArg, session);
     }
 
-    Object getValue(Object[] arguments) throws HsqlException {
+    private Object getValue(Object[] arguments,
+                            Session session) throws HsqlException {
 
         if (bConnection) {
-            arguments[0] = cSession.getInternalConnection();
+            arguments[0] = session.getInternalConnection();
         }
 
         try {
@@ -334,7 +338,7 @@ class Function {
         // Library function throw HsqlException
     }
 
-    private Object[] getArguments() throws HsqlException {
+    private Object[] getArguments(Session session) throws HsqlException {
 
         int      i    = bConnection ? 1
                                     : 0;
@@ -347,7 +351,7 @@ class Function {
             if (e != null) {
 
                 // no argument: null
-                o = e.getValue(iArgType[i]);
+                o = e.getValue(iArgType[i], session);
             }
 
             if ((o == null) &&!bArgNullable[i]) {
@@ -389,7 +393,8 @@ class Function {
         return values;
     }
 
-    Object getAggregatedValue(Object currValue) throws HsqlException {
+    Object getAggregatedValue(Object currValue,
+                              Session session) throws HsqlException {
 
         Object[] valueArray = (Object[]) currValue;
 
@@ -402,8 +407,8 @@ class Function {
 
             if (eArg[i] != null) {
                 valueArray[i] = eArg[i].isAggregate()
-                                ? e.getAggregatedValue(valueArray[i])
-                                : e.getValue();
+                                ? e.getAggregatedValue(valueArray[i], session)
+                                : e.getValue(session);
             }
         }
 
@@ -413,10 +418,11 @@ class Function {
             return null;
         }
 
-        return getValue(valueArray);
+        return getValue(valueArray, session);
     }
 
-    Object updateAggregatingValue(Object currValue) throws HsqlException {
+    Object updateAggregatingValue(Object currValue,
+                                  Session session) throws HsqlException {
 
         Object[] valueArray = (Object[]) currValue;
 
@@ -428,7 +434,8 @@ class Function {
             Expression e = eArg[i];
 
             if (eArg[i] != null) {
-                valueArray[i] = e.updateAggregatingValue(valueArray[i]);
+                valueArray[i] = e.updateAggregatingValue(valueArray[i],
+                        session);
             }
         }
 
@@ -620,8 +627,8 @@ class Function {
             // special case for TRIM
             sb.append(name).append('(');
 
-            boolean leading  = eArg[2].test();
-            boolean trailing = eArg[3].test();
+            boolean leading  = eArg[2].test(null);
+            boolean trailing = eArg[3].test(null);
 
             if (leading && trailing) {
                 sb.append(Token.T_BOTH);
@@ -633,7 +640,7 @@ class Function {
             // to do change to string
             sb.append(' ');
 
-            String charval = (String) eArg[1].getValue();
+            String charval = (String) eArg[1].getValue(null);
 
             sb.append(Column.createSQLString(charval)).append(' ');
             sb.append(Token.T_FROM).append(' ');

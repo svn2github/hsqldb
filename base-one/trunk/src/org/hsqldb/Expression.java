@@ -270,7 +270,7 @@ public class Expression {
 
     /**
      * Creates a new boolean expression
-     * @param b
+     * @param b boolean constant
      */
     Expression(boolean b) {
         exprType = b ? TRUE
@@ -279,7 +279,7 @@ public class Expression {
 
     /**
      * Creates a new FUNCTION expression
-     * @param f
+     * @param f function
      */
     Expression(Function f) {
 
@@ -293,7 +293,7 @@ public class Expression {
 
     /**
      * Creates a new SEQUENCE expression
-     * @param sequence
+     * @param sequence number sequence
      */
     Expression(NumberSequence sequence) {
 
@@ -324,7 +324,9 @@ public class Expression {
 
     /**
      * Creates a new QUERY expression
-     * @param s
+     * @param s select
+     * @param t table
+     * @param correlated boolean
      */
     Expression(Select s, Table t, boolean correlated) {
 
@@ -336,7 +338,7 @@ public class Expression {
 
     /**
      * Creates a new VALUELIST expression
-     * @param valueList
+     * @param valueList array of Expression
      */
     Expression(Expression[] valueList) {
         exprType       = VALUELIST;
@@ -364,7 +366,7 @@ public class Expression {
      *
      * @param e operand 1
      * @param e2 operand 2
-     * @param escape
+     * @param escape escape character
      */
     Expression(Expression e, Expression e2, Character escape) {
 
@@ -378,8 +380,8 @@ public class Expression {
 
     /**
      * Creates a new ASTERIX or COLUMN expression
-     * @param table
-     * @param column
+     * @param table table
+     * @param column column
      */
     Expression(String table, String column) {
 
@@ -395,8 +397,9 @@ public class Expression {
 
     /**
      * Creates a new ASTERIX or possibly quoted COLUMN expression
-     * @param table
-     * @param column
+     * @param table table
+     * @param column column name
+     * @param isquoted boolean
      */
     Expression(String table, String column, boolean isquoted) {
 
@@ -428,8 +431,8 @@ public class Expression {
     /**
      * Creates a new VALUE expression
      *
-     * @param datatype
-     * @param o
+     * @param datatype data type
+     * @param o data
      */
     Expression(int datatype, Object o) {
 
@@ -510,6 +513,9 @@ public class Expression {
      * are not user-defined aliases should be kept as the HsqlName structures
      * so that table or column renaming is reflected in the precompiled
      * query.
+     *
+     * @return DDL
+     * @throws HsqlException
      */
     String getDDL() throws HsqlException {
 
@@ -940,10 +946,10 @@ public class Expression {
     }
 
     /**
-     * Method declaration
+     * Set the data type
      *
      *
-     * @param type
+     * @param type data type
      */
     void setDataType(int type) {
         dataType = type;
@@ -973,6 +979,9 @@ public class Expression {
      *
      * In the future we may perform the test when evaluating the search
      * condition to get a more accurate match.
+     *
+     * @param exp expression
+     * @return boolean
      */
     public boolean similarTo(Expression exp) {
 
@@ -1038,6 +1047,8 @@ public class Expression {
      * <p>
      * It can, if itself is a column expression, and it is not an aggregate
      * expression.
+     *
+     * @return boolean
      */
     boolean canBeInGroupBy() {
 
@@ -1052,6 +1063,8 @@ public class Expression {
      * Check if this expression can be included in an order by clause.
      * <p>
      * It can, if itself is a column expression.
+     *
+     * @return boolean
      */
     boolean canBeInOrderBy() {
         return exprType == FUNCTION || orderColumnIndex != -1 || isColumn()
@@ -1063,6 +1076,8 @@ public class Expression {
      * <p>
      * It is, if itself is a column expression, or any the argument
      * expressions is a column expression.
+     *
+     * @return boolean
      */
     private boolean isColumn() {
 
@@ -1087,6 +1102,8 @@ public class Expression {
 
     /**
      * Collect column name used in this expression.
+     *
+     * @param columnNames set to be filled
      * @return true if a column name is used in this expression
      */
     boolean collectColumnName(HashSet columnNames) {
@@ -1103,6 +1120,8 @@ public class Expression {
     /**
      * Collect all column names used in this expression or any of nested
      * expression.
+     *
+     * @param columnNames set to be filled
      */
     void collectAllColumnNames(HashSet columnNames) {
 
@@ -1122,6 +1141,8 @@ public class Expression {
      * <p>
      * It does, if it is a constant value expression, or all the argument
      * expressions define constant values.
+     *
+     * @return boolean
      */
     boolean isConstant() {
 
@@ -1150,26 +1171,27 @@ public class Expression {
      * <p>
      * It can, if itself is an aggregate expression, or it results a constant
      * value.
+     *
+     * @return boolean
      */
     boolean canBeInAggregate() {
         return isAggregate() || isConstant();
     }
 
     /**
-     *  Method declaration
+     *  Is this (indirectly) an aggregate expression
      *
-     *
-     *  @return
+     *  @return boolean
      */
     boolean isAggregate() {
         return aggregateSpec != AGGREGATE_NONE;
     }
 
     /**
-     *  Method declaration
+     *  Is this directly an aggregate expression
      *
      *
-     *  @return
+     *  @return boolean
      */
     boolean isSelfAggregate() {
         return aggregateSpec == AGGREGATE_SELF;
@@ -1196,7 +1218,7 @@ public class Expression {
      *  Checks for conditional expression.
      *
      *
-     *  @return
+     *  @return boolean
      */
     boolean isConditional() {
 
@@ -1230,6 +1252,8 @@ public class Expression {
     /**
      * Collects all expressions that must be in the GROUP BY clause, for a
      * grouped select statement.
+     *
+     * @param colExps expression list
      */
     void collectInGroupByExpressions(HsqlArrayList colExps) {
 
@@ -1249,7 +1273,7 @@ public class Expression {
     }
 
     /**
-     * Method declaration
+     * Set an ORDER BY column expression DESC
      *
      */
     void setDescending() {
@@ -1257,19 +1281,20 @@ public class Expression {
     }
 
     /**
-     * Method declaration
+     * Is an ORDER BY column expression DESC
      *
      *
-     * @return
+     * @return boolean
      */
     boolean isDescending() {
         return isDescending;
     }
 
     /**
-     * Set the column alias
+     * Set the column alias and whether the name is quoted
      *
-     * @param s
+     * @param s alias
+     * @param isquoted boolean
      */
     void setAlias(String s, boolean isquoted) {
         columnAlias = s;
@@ -1278,6 +1303,9 @@ public class Expression {
 
     /**
      * Change the column name
+     *
+     * @param newname name
+     * @param isquoted quoted
      */
     void setColumnName(String newname, boolean isquoted) {
         columnName   = newname;
@@ -1286,6 +1314,8 @@ public class Expression {
 
     /**
      * Change the table name
+     *
+     * @param newname table name for column expression
      */
     void setTableName(String newname) {
         tableName = newname;
@@ -1293,16 +1323,18 @@ public class Expression {
 
     /**
      * Return the user defined alias or null if none
+     *
+     * @return alias
      */
     String getDefinedAlias() {
         return columnAlias;
     }
 
     /**
-     * Method declaration
+     * Get the column alias
      *
      *
-     * @return
+     * @return alias
      */
     String getAlias() {
 
@@ -1333,10 +1365,9 @@ public class Expression {
     }
 
     /**
-     * Method declaration
+     * Is an column alias quoted
      *
-     *
-     * @return
+     * @return boolean
      */
     boolean isAliasQuoted() {
 
@@ -1361,40 +1392,39 @@ public class Expression {
     }
 
     /**
-     * Method declaration
+     * Returns the type of expression
      *
      *
-     * @return
+     * @return type
      */
     int getType() {
         return exprType;
     }
 
     /**
-     * Method declaration
+     * Returns the left node
      *
      *
-     * @return
+     * @return argument
      */
     Expression getArg() {
         return eArg;
     }
 
     /**
-     * Method declaration
+     * Returns the right node
      *
      *
-     * @return
+     * @return argument
      */
     Expression getArg2() {
         return eArg2;
     }
 
     /**
-     * Method declaration
+     * Returns the table filter for a COLUMN expression
      *
-     *
-     * @return
+     * @return table filter
      */
     TableFilter getFilter() {
         return tableFilter;
@@ -1403,6 +1433,8 @@ public class Expression {
     /**
      * Final check for all expressions.
      *
+     * @param check boolean
+     * @return boolean
      * @throws HsqlException
      */
     boolean checkResolved(boolean check) throws HsqlException {
@@ -1451,32 +1483,32 @@ public class Expression {
      * Resolve the table names for columns and throws if a column remains
      * unresolved.
      *
-     * @param fa
+     * @param filters list of filters
      *
      * @throws HsqlException
      */
-    void checkTables(HsqlArrayList fa) throws HsqlException {
+    void checkTables(HsqlArrayList filters) throws HsqlException {
 
-        if (fa == null || exprType == Expression.VALUE) {
+        if (filters == null || exprType == Expression.VALUE) {
             return;
         }
 
         if (eArg != null) {
-            eArg.checkTables(fa);
+            eArg.checkTables(filters);
         }
 
         if (eArg2 != null) {
-            eArg2.checkTables(fa);
+            eArg2.checkTables(filters);
         }
 
         switch (exprType) {
 
             case COLUMN :
                 boolean found = false;
-                int     len   = fa.size();
+                int     len   = filters.size();
 
                 for (int j = 0; j < len; j++) {
-                    TableFilter filter     = (TableFilter) fa.get(j);
+                    TableFilter filter     = (TableFilter) filters.get(j);
                     String      filterName = filter.getName();
 
                     if (tableName == null || filterName.equals(tableName)) {
@@ -1512,7 +1544,7 @@ public class Expression {
 
             case FUNCTION :
                 if (function != null) {
-                    function.checkTables(fa);
+                    function.checkTables(filters);
                 }
                 break;
 
@@ -1521,7 +1553,7 @@ public class Expression {
                     Expression[] vl = eArg2.valueList;
 
                     for (int i = 0; i < vl.length; i++) {
-                        vl[i].checkTables(fa);
+                        vl[i].checkTables(filters);
                     }
                 }
                 break;
@@ -1533,6 +1565,8 @@ public class Expression {
     /**
      * Workaround for CHECK constraints. We don't want optimisation so we
      * flag all LIKE expressions as already optimised.
+     *
+     * @throws HsqlException
      */
     void setLikeOptimised() throws HsqlException {
 
@@ -1596,6 +1630,14 @@ public class Expression {
         }
     }
 */
+
+    /**
+     * set boolean flags and expressions for columns in a join
+     *
+     * @param filter target table filter
+     * @param columns boolean array
+     * @param elist expression list
+     */
     void getEquiJoinColumns(TableFilter filter, boolean[] columns,
                             Expression[] elist) {
 
@@ -1634,8 +1676,7 @@ public class Expression {
     /**
      * Resolve the table names for columns
      *
-     *
-     * @param f
+     * @param f table filter
      *
      * @throws HsqlException
      */
@@ -1753,7 +1794,7 @@ public class Expression {
                 dataType = eArg.dataType;
 
                 if (isFixedConstant()) {
-                    valueData = getValue(dataType);
+                    valueData = getValue(dataType, null);
                     eArg      = null;
                     exprType  = VALUE;
                 }
@@ -1780,7 +1821,7 @@ public class Expression {
                 if (isFixedConstant()) {
                     dataType = Column.getCombinedNumberType(eArg.dataType,
                             eArg2.dataType, exprType);
-                    valueData = getValue(dataType);
+                    valueData = getValue(dataType, null);
                     eArg      = null;
                     eArg2     = null;
                     exprType  = VALUE;
@@ -1801,7 +1842,7 @@ public class Expression {
                 dataType = Types.VARCHAR;
 
                 if (isFixedConstant()) {
-                    valueData = getValue(dataType);
+                    valueData = getValue(dataType, null);
                     eArg      = null;
                     eArg2     = null;
                     exprType  = VALUE;
@@ -1828,8 +1869,8 @@ public class Expression {
                 }
 
                 if (isFixedConditional()) {
-                    exprType = test() ? TRUE
-                                      : FALSE;
+                    exprType = test(null) ? TRUE
+                                          : FALSE;
                     eArg     = null;
                     eArg2    = null;
                 } else if (eArg.isParam) {
@@ -1864,12 +1905,12 @@ public class Expression {
                 boolean eArg2Fixed = eArg2.isFixedConditional();
 
                 if (eArgFixed && eArg2Fixed) {
-                    exprType = test() ? TRUE
-                                      : FALSE;
+                    exprType = test(null) ? TRUE
+                                          : FALSE;
                     eArg     = null;
                     eArg2    = null;
-                } else if ((eArgFixed &&!eArg.test())
-                           || (eArg2Fixed &&!eArg2.test())) {
+                } else if ((eArgFixed &&!eArg.test(null))
+                           || (eArg2Fixed &&!eArg2.test(null))) {
                     exprType = FALSE;
                     eArg     = null;
                     eArg2    = null;
@@ -1892,12 +1933,12 @@ public class Expression {
                 boolean eArg2Fixed = eArg2.isFixedConditional();
 
                 if (eArgFixed && eArg2Fixed) {
-                    exprType = test() ? TRUE
-                                      : FALSE;
+                    exprType = test(null) ? TRUE
+                                          : FALSE;
                     eArg     = null;
                     eArg2    = null;
-                } else if ((eArgFixed && eArg.test())
-                           || (eArg2Fixed && eArg2.test())) {
+                } else if ((eArgFixed && eArg.test(null))
+                           || (eArg2Fixed && eArg2.test(null))) {
                     exprType = TRUE;
                     eArg     = null;
                     eArg2    = null;
@@ -1917,8 +1958,8 @@ public class Expression {
             }
             case NOT :
                 if (isFixedConditional()) {
-                    exprType = test() ? TRUE
-                                      : FALSE;
+                    exprType = test(null) ? TRUE
+                                          : FALSE;
                     eArg     = null;
                 } else if (eArg.isParam) {
                     eArg.dataType = Types.BOOLEAN;
@@ -1967,7 +2008,7 @@ public class Expression {
                 // NOTE: both iDataType for this expr and for eArg (if isParm)
                 // are already set in Parser during read
                 if (eArg.isFixedConstant() || eArg.isFixedConditional()) {
-                    valueData = getValue();
+                    valueData = getValue(null);
                     exprType  = VALUE;
                     eArg      = null;
                 }
@@ -2043,8 +2084,8 @@ public class Expression {
         }
 
         if (isFixedConditional()) {
-            exprType = test() ? TRUE
-                              : FALSE;
+            exprType = test(null) ? TRUE
+                                  : FALSE;
             eArg     = null;
             eArg2    = null;
         } else if (eArg.isParam) {
@@ -2078,7 +2119,7 @@ public class Expression {
 
         boolean isRightArgFixedConstant = eArg2.isFixedConstant();
         String likeStr = isRightArgFixedConstant
-                         ? (String) eArg2.getValue(Types.VARCHAR)
+                         ? (String) eArg2.getValue(Types.VARCHAR, null)
                          : null;
         boolean ignoreCase = eArg.dataType == Types.VARCHAR_IGNORECASE
                              || eArg2.dataType == Types.VARCHAR_IGNORECASE;
@@ -2290,7 +2331,7 @@ public class Expression {
 
                 for (int i = 0; i < len; i++) {
                     try {
-                        Object value = eArg2.valueList[i].getValue();
+                        Object value = eArg2.valueList[i].getValue(null);
 
                         value = Column.convertObject(value, eArg2.dataType);
 
@@ -2302,10 +2343,10 @@ public class Expression {
     }
 
     /**
-     * Method declaration
+     * Has this expression been resolved
      *
      *
-     * @return
+     * @return boolean
      */
     boolean isResolved() {
 
@@ -2327,12 +2368,11 @@ public class Expression {
     }
 
     /**
-     * Method declaration
+     * Is the argument expression type a comparison expression
      *
+     * @param i expresion type
      *
-     * @param i
-     *
-     * @return
+     * @return boolean
      */
     static boolean isCompare(int i) {
 
@@ -2351,10 +2391,9 @@ public class Expression {
     }
 
     /**
-     * Method declaration
+     * Returns the table name for a column expression as a string
      *
-     *
-     * @return
+     * @return table name
      */
     String getTableName() {
 
@@ -2375,10 +2414,9 @@ public class Expression {
     }
 
     /**
-     * Method declaration
+     * Returns the name of a column as string
      *
-     *
-     * @return
+     * @return column name
      */
     String getColumnName() {
 
@@ -2395,53 +2433,50 @@ public class Expression {
     }
 
     /**
-     * Method declaration
+     * Returns the column index in the table
      *
-     *
-     * @return
+     * @return column index
      */
     int getColumnNr() {
         return columnIndex;
     }
 
     /**
-     * Method declaration
+     * Returns the column size
      *
-     *
-     * @return
+     * @return size
      */
     int getColumnSize() {
         return columnSize;
     }
 
     /**
-     * Method declaration
+     * Returns the column scale
      *
      *
-     * @return
+     * @return scale
      */
     int getColumnScale() {
         return columnScale;
     }
 
     /**
-     * Method declaration
+     * Set this as a set function with / without DISTINCT
      *
-     * @param type
+     * @param distinct is distinct
      */
-    void setDistinctAggregate(boolean type) {
+    void setDistinctAggregate(boolean distinct) {
 
-        isDistinctAggregate = type && (eArg.exprType != ASTERIX);
+        isDistinctAggregate = distinct && (eArg.exprType != ASTERIX);
 
         if (exprType == COUNT) {
-            dataType = type ? dataType
-                            : Types.INTEGER;
+            dataType = distinct ? dataType
+                                : Types.INTEGER;
         }
     }
 
     /**
-     * Method declaration
-     *
+     * Swap the condition with its complement
      *
      * @throws HsqlException
      */
@@ -2483,28 +2518,28 @@ public class Expression {
     }
 
     /**
-     * Method declaration
+     * Returns the data type
      *
      *
-     * @return
+     * @return type
      */
     int getDataType() {
         return dataType;
     }
 
     /**
-     * Method declaration
+     * Get the value in the given type in the given session context
      *
      *
-     * @param type
-     *
-     * @return
+     * @param type returned type
+     * @param session context
+     * @return value
      *
      * @throws HsqlException
      */
-    Object getValue(int type) throws HsqlException {
+    Object getValue(int type, Session session) throws HsqlException {
 
-        Object o = getValue();
+        Object o = getValue(session);
 
         if ((o == null) || (dataType == type)) {
             return o;
@@ -2517,14 +2552,16 @@ public class Expression {
      *  with other operations handled in the normal way */
 
     /**
-     * Method declaration
+     * Get the result of a SetFunction or an ordinary value
      *
-     *
-     * @return
+     * @param currValue instance of set function or value
+     * @param session context
+     * @return object
      *
      * @throws HsqlException
      */
-    Object getAggregatedValue(Object currValue) throws HsqlException {
+    Object getAggregatedValue(Object currValue,
+                              Session session) throws HsqlException {
 
         if (!isAggregate()) {
             return currValue;
@@ -2551,12 +2588,12 @@ public class Expression {
                 return ((SetFunction) currValue).getValue();
 
             case NEGATE :
-                return Column.negate(eArg.getAggregatedValue(currValue),
-                                     dataType);
+                return Column.negate(
+                    eArg.getAggregatedValue(currValue, session), dataType);
 
             case CONVERT :
                 return Column.convertObject(
-                    eArg.getAggregatedValue(currValue), dataType);
+                    eArg.getAggregatedValue(currValue, session), dataType);
         }
 
         // handle expressions
@@ -2566,15 +2603,15 @@ public class Expression {
         switch (aggregateSpec) {
 
             case AGGREGATE_LEFT :
-                leftValue  = eArg.getAggregatedValue(currValue);
+                leftValue  = eArg.getAggregatedValue(currValue, session);
                 rightValue = eArg2 == null ? null
-                                           : eArg2.getValue();
+                                           : eArg2.getValue(session);
                 break;
 
             case AGGREGATE_RIGHT :
                 leftValue  = eArg == null ? null
-                                          : eArg.getValue();
-                rightValue = eArg2.getAggregatedValue(currValue);
+                                          : eArg.getValue(session);
+                rightValue = eArg2.getAggregatedValue(currValue, session);
                 break;
 
             case AGGREGATE_BOTH :
@@ -2582,10 +2619,11 @@ public class Expression {
                     currValue = new Object[2];
                 }
 
-                leftValue =
-                    eArg.getAggregatedValue(((Object[]) currValue)[0]);
+                leftValue = eArg.getAggregatedValue(((Object[]) currValue)[0],
+                                                    session);
                 rightValue =
-                    eArg2.getAggregatedValue(((Object[]) currValue)[1]);
+                    eArg2.getAggregatedValue(((Object[]) currValue)[1],
+                                             session);
                 break;
         }
 
@@ -2633,12 +2671,13 @@ public class Expression {
                                              : Boolean.FALSE;
 
             case IN :
-                return eArg2.testValueList(leftValue) ? Boolean.TRUE
-                                                      : Boolean.FALSE;
+                return eArg2.testValueList(leftValue, session) ? Boolean.TRUE
+                                                               : Boolean
+                                                               .FALSE;
 
             case EXISTS :
                 if (eArg.isCorrelated) {
-                    Result r = eArg.subSelect.getResult(1);    // 1 is already enough
+                    Result r = eArg.subSelect.getResult(1, session);    // 1 is already enough
 
                     return r.rRoot == null ? Boolean.FALSE
                                            : Boolean.TRUE;
@@ -2688,7 +2727,7 @@ public class Expression {
                 return objectPair;
 
             case FUNCTION :
-                return function.getAggregatedValue(currValue);
+                return function.getAggregatedValue(currValue, session);
         }
 
         // handle comparisons
@@ -2734,17 +2773,19 @@ public class Expression {
     }
 
     /**
-     * Method declaration
+     * Instantiate the SetFunction or recurse, returning the result
      *
-     *
-     * @return
+     * @param currValue setFunction
+     * @param session context
+     * @return a normal value or SetFunction instance
      *
      * @throws HsqlException
      */
-    Object updateAggregatingValue(Object currValue) throws HsqlException {
+    Object updateAggregatingValue(Object currValue,
+                                  Session session) throws HsqlException {
 
         if (!isAggregate()) {
-            return getValue();
+            return getValue(session);
         }
 
         switch (aggregateSpec) {
@@ -2756,7 +2797,8 @@ public class Expression {
                 }
 
                 Object newValue = eArg.exprType == ASTERIX ? INTEGER_1
-                                                           : eArg.getValue();
+                                                           : eArg.getValue(
+                                                               session);
 
                 ((SetFunction) currValue).add(newValue);
 
@@ -2769,19 +2811,21 @@ public class Expression {
                     valuePair = new Object[2];
                 }
 
-                valuePair[0] = eArg.updateAggregatingValue(valuePair[0]);
-                valuePair[1] = eArg2.updateAggregatingValue(valuePair[1]);
+                valuePair[0] = eArg.updateAggregatingValue(valuePair[0],
+                        session);
+                valuePair[1] = eArg2.updateAggregatingValue(valuePair[1],
+                        session);
 
                 return valuePair;
             }
             case AGGREGATE_LEFT :
-                return eArg.updateAggregatingValue(currValue);
+                return eArg.updateAggregatingValue(currValue, session);
 
             case AGGREGATE_RIGHT :
-                return eArg2.updateAggregatingValue(currValue);
+                return eArg2.updateAggregatingValue(currValue, session);
 
             case AGGREGATE_FUNCTION :
-                return function.updateAggregatingValue(currValue);
+                return function.updateAggregatingValue(currValue, session);
 
             default :
 
@@ -2790,7 +2834,7 @@ public class Expression {
         }
     }
 
-    Object getValue() throws HsqlException {
+    Object getValue(Session session) throws HsqlException {
 
         switch (exprType) {
 
@@ -2804,36 +2848,38 @@ public class Expression {
                     throw Trace.error(Trace.COLUMN_NOT_FOUND, columnName);
                 }
             case FUNCTION :
-                return function.getValue();
+                return function.getValue(session);
 
             case QUERY :
-                return subSelect.getValue(dataType);
+                return subSelect.getValue(dataType, session);
 
             case NEGATE :
-                return Column.negate(eArg.getValue(dataType), dataType);
+                return Column.negate(eArg.getValue(dataType, session),
+                                     dataType);
 
             case AND :
             case OR :
             case LIKE :
             case EXISTS :
             case IN :
-                return test() ? Boolean.TRUE
-                              : Boolean.FALSE;
+                return test(session) ? Boolean.TRUE
+                                     : Boolean.FALSE;
 
             case CONVERT :
-                return eArg.getValue(dataType);
+                return eArg.getValue(dataType, session);
 
             case CASEWHEN :
-                if (eArg.test()) {
-                    return eArg2.eArg.getValue(dataType);
+                if (eArg.test(session)) {
+                    return eArg2.eArg.getValue(dataType, session);
                 } else {
-                    return eArg2.eArg2.getValue(dataType);
+                    return eArg2.eArg2.getValue(dataType, session);
                 }
 
             // gets here from getAggregatedValue()
             case ALTERNATIVE :
                 return new Object[] {
-                    eArg.getValue(dataType), eArg2.getValue(dataType)
+                    eArg.getValue(dataType, session),
+                    eArg2.getValue(dataType, session)
                 };
         }
 
@@ -2842,11 +2888,11 @@ public class Expression {
                b = null;
 
         if (eArg != null) {
-            a = eArg.getValue(dataType);
+            a = eArg.getValue(dataType, session);
         }
 
         if (eArg2 != null) {
-            b = eArg2.getValue(dataType);
+            b = eArg2.getValue(dataType, session);
         }
 
         switch (exprType) {
@@ -2872,20 +2918,19 @@ public class Expression {
             default :
 
                 /** @todo fredt - make sure the expression type is always comparison here */
-                return test() ? Boolean.TRUE
-                              : Boolean.FALSE;
+                return test(session) ? Boolean.TRUE
+                                     : Boolean.FALSE;
         }
     }
 
     /**
-     * Method declaration
+     * Returns the test result of a conditional expression
      *
-     *
-     * @return
-     *
+     * @param session session
+     * @return boolean
      * @throws HsqlException
      */
-    boolean test() throws HsqlException {
+    boolean test(Session session) throws HsqlException {
 
         switch (exprType) {
 
@@ -2898,36 +2943,37 @@ public class Expression {
             case NOT :
                 Trace.doAssert(eArg2 == null, "Expression.test");
 
-                return !eArg.test();
+                return !eArg.test(session);
 
             case AND :
-                return eArg.test() && eArg2.test();
+                return eArg.test(session) && eArg2.test(session);
 
             case OR :
-                return eArg.test() || eArg2.test();
+                return eArg.test(session) || eArg2.test(session);
 
             case LIKE :
-                String s = (String) eArg2.getValue(Types.VARCHAR);
+                String s = (String) eArg2.getValue(Types.VARCHAR, session);
 
                 if (eArg2.isParam || eArg2.exprType != VALUE) {
                     likeObject.resetPattern(s);
                 }
 
-                String c = (String) eArg.getValue(Types.VARCHAR);
+                String c = (String) eArg.getValue(Types.VARCHAR, session);
 
                 return likeObject.compare(c);
 
             case IN :
-                return eArg2.testValueList(eArg.getValue());
+                return eArg2.testValueList(eArg.getValue(session), session);
 
             case EXISTS :
-                Result r = eArg.subSelect.getResult(1);    // 1 is already enough
+                Result r = eArg.subSelect.getResult(1, session);    // 1 is already enough
 
                 return r.rRoot != null;
 
             case FUNCTION :
-                Object value = Column.convertObject(function.getValue(),
-                                                    Types.BOOLEAN);
+                Object value =
+                    Column.convertObject(function.getValue(session),
+                                         Types.BOOLEAN);
 
                 if (value != null && value instanceof Boolean) {
                     return ((Boolean) value).booleanValue();
@@ -2939,8 +2985,8 @@ public class Expression {
         }
 
         int    type = eArg.dataType;
-        Object o    = eArg.getValue(type);
-        Object o2   = eArg2.getValue(type);
+        Object o    = eArg.getValue(type, session);
+        Object o2   = eArg2.getValue(type, session);
 
         if (o == null || o2 == null) {
 /*
@@ -3024,7 +3070,10 @@ public class Expression {
      * SMALLER_EQUAL         true                   false
      * </pre>
      *
-     * @return
+     * @param a left argument
+     * @param b right argument
+     * @param logicalOperation expression type
+     * @return boolean
      * @throws HsqlException
      */
     boolean testNull(Object a, Object b,
@@ -3057,13 +3106,11 @@ public class Expression {
 */
 
     /**
-     * Method declaration
+     * Returns the result of testing a VALUE_LIST expression
      *
-     *
-     * @param o
-     *
-     * @return
-     *
+     * @param o value to check against
+     * @param session context
+     * @return boolean
      * @throws HsqlException
      */
 
@@ -3071,7 +3118,8 @@ public class Expression {
 // boucherb@users - 2003-09-25 - patch 1.7.2 Alpha Q - parametric IN lists
 //                  and correlated IN list expressions
 // fredt - catch type conversion exception due to narrowing
-    private boolean testValueList(Object o) throws HsqlException {
+    private boolean testValueList(Object o,
+                                  Session session) throws HsqlException {
 
         if (o == null) {
             return false;
@@ -3091,7 +3139,7 @@ public class Expression {
             final int len = valueList.length;
 
             for (int i = 0; i < len; i++) {
-                Object o2 = valueList[i].getValue(dataType);
+                Object o2 = valueList[i].getValue(dataType, session);
 
                 if (Column.compare(o, o2, dataType) == 0) {
                     return true;
@@ -3113,7 +3161,7 @@ public class Expression {
                     o, Expression.EQUAL) != null;
             }
 
-            Result r = subSelect.getResult(0);
+            Result r = subSelect.getResult(0, session);
 
             // fredt - reduce the size if possible
             r.removeDuplicates();
@@ -3154,6 +3202,10 @@ public class Expression {
      * or functions ...
      *
      * (fredt@users)
+     *
+     * @param tf table filter
+     * @param outer boolean
+     * @return boolean
      */
     boolean setForJoin(TableFilter tf, boolean outer) {
 
@@ -3191,6 +3243,10 @@ public class Expression {
      * Returns a Select object that can be used for checking the contents
      * of an existing table against the given CHECK search condition.
      *
+     * @param t table
+     * @param e expression
+     * @return select object
+     * @throws HsqlException
      */
     static Select getCheckSelect(Table t, Expression e) throws HsqlException {
 
@@ -3212,6 +3268,8 @@ public class Expression {
 
     /**
      * Sets the left leaf.
+     *
+     * @param e expression
      */
     void setLeftExpression(Expression e) {
         eArg = e;
@@ -3223,6 +3281,8 @@ public class Expression {
 
     /**
      * Gets the right leaf.
+     *
+     * @return expression
      */
     Expression getRightExpression() {
         return eArg2;

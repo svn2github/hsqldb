@@ -81,7 +81,7 @@ final class CompiledStatementExecutor {
         DatabaseManager.gc();
 
         try {
-            cs.materializeSubQueries();
+            cs.materializeSubQueries(session);
 
             result = executeImpl(cs);
         } catch (Throwable t) {
@@ -151,8 +151,8 @@ final class CompiledStatementExecutor {
     private Result executeCallStatement(CompiledStatement cs)
     throws HsqlException {
 
-        Expression e = cs.expression;    // representing CALL
-        Object     o = e.getValue();     // expression return value
+        Expression e = cs.expression;          // representing CALL
+        Object     o = e.getValue(session);    // expression return value
         Result     r;
         Object[]   row;
 
@@ -201,7 +201,7 @@ final class CompiledStatementExecutor {
                 count = table.delete(del, session);
             } else {
                 do {
-                    if (c.test()) {
+                    if (c.test(session)) {
                         del.add(filter.currentRow);
                     }
                 } while (filter.next());
@@ -229,7 +229,7 @@ final class CompiledStatementExecutor {
         Table     t   = cs.targetTable;
         Select    s   = cs.select;
         int[]     ct  = t.getColumnTypes();    // column types
-        Result    r   = s.getResult(session.getMaxRows());
+        Result    r   = s.getResult(session.getMaxRows(), session);
         Record    rc  = r.rRoot;
         int[]     cm  = cs.columnMap;          // column map
         boolean[] ccl = cs.checkColumns;       // column check list
@@ -292,7 +292,7 @@ final class CompiledStatementExecutor {
         for (int i = 0; i < len; i++) {
             cve     = acve[i];
             ci      = cm[i];
-            row[ci] = cve.getValue(ct[ci]);
+            row[ci] = cve.getValue(ct[ci], session);
         }
 
         t.insert(row, session);
@@ -313,7 +313,7 @@ final class CompiledStatementExecutor {
      */
     private Result executeSelectStatement(CompiledStatement cs)
     throws HsqlException {
-        return cs.select.getResult(session.getMaxRows());
+        return cs.select.getResult(session.getMaxRows(), session);
     }
 
     /**
@@ -342,7 +342,7 @@ final class CompiledStatementExecutor {
             boolean        success   = false;
 
             do {
-                if (condition == null || condition.test()) {
+                if (condition == null || condition.test(session)) {
                     try {
                         Row      row = filter.currentRow;
                         Object[] ni  = table.getNewRow();
@@ -352,7 +352,8 @@ final class CompiledStatementExecutor {
                         for (int i = 0; i < len; i++) {
                             int ci = colmap[i];
 
-                            ni[ci] = colvalues[i].getValue(coltypes[ci]);
+                            ni[ci] = colvalues[i].getValue(coltypes[ci],
+                                                           session);
                         }
 
                         del.add(row, ni);
