@@ -54,7 +54,7 @@ import org.hsqldb.lib.enum.CompositeEnumeration;
 import org.hsqldb.lib.enum.EmptyEnumeration;
 
 // fredt@users - 1.7.2 - structural modifications to allow inheritance
-// boucherb@users - 1.7.2 - 20020225  
+// boucherb@users - 1.7.2 - 20020225
 // - factored out all reusable code into DIXXX support classes
 
 /**
@@ -120,7 +120,7 @@ import org.hsqldb.lib.enum.EmptyEnumeration;
 class DatabaseInformationMain extends DatabaseInformation implements DITypes {
 
     // HsqlName objects for the system tables
-    /** The HsqlNames of the system tables. */    
+    /** The HsqlNames of the system tables. */
     protected static final HsqlName[] sysTableHsqlNames;
 
     static {
@@ -143,7 +143,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
     protected Table[] sysTables = new Table[sysTableNames.length];
 
     /** Set: { names of system tables that are not to be cached } */
-    protected static HsqlHashSet nonCachedTablesSet;    
+    protected static HsqlHashSet nonCachedTablesSet;
 
     /**
      * Map: simple <code>Column</code> name <code>String</code> object =>
@@ -167,8 +167,8 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
     protected static final String[] tableTypes = new String[] {
         "GLOBAL TEMPORARY", "SYSTEM TABLE", "TABLE", "VIEW"
     };
-    
-    /** Provides naming support. */    
+
+    /** Provides naming support. */
     protected DINameSpace ns;
     /** Constructs a table producer which provides system tables
      * for the specified <code>Database</code> object. <p>
@@ -202,8 +202,8 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
 
         Trace.doAssert(db != null, "database is null");
         Trace.doAssert(db.getTables() != null, "database table list is null");
-        Trace.doAssert(db.getUserManager() != null, "user manager is null");       
-        
+        Trace.doAssert(db.getUserManager() != null, "user manager is null");
+
         init();
     }
 
@@ -214,17 +214,17 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      * @param type the data type of the column
      * @param nullable <code>true</code> if the column is to allow null values,
      *    else <code>false</code>
-     * @throws SQLException if a problem occurs when adding the 
+     * @throws SQLException if a problem occurs when adding the
      *      column (e.g. duplicate name)
      */
     protected void addColumn(Table t, String name, int type, boolean nullable) throws SQLException {
 
-        HsqlName cn;        
+        HsqlName cn;
         Column   c;
 
         cn  = ns.findOrCreateHsqlName(name, columnNameMap);
         c   = new Column(cn, nullable, type, 0, 0, false, false, null);
-        
+
         t.addColumn(c);
     }
 
@@ -233,7 +233,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      * @param t the table to which to add the specified column
      * @param name the name of the column
      * @param type the data type of the column
-     * @throws SQLException if a problem occurs when adding the 
+     * @throws SQLException if a problem occurs when adding the
      *      column (e.g. duplicate name)
      */
     protected void addColumn(Table t, String name, int type) throws SQLException {
@@ -292,7 +292,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      * @param tableIndex index identifying the system table to generate
      * @throws SQLException if a database access error occurs
      * @return the system table corresponding to the specified index
-     */    
+     */
     protected Table generateTable(int tableIndex) throws SQLException {
 
         Table t = sysTables[tableIndex];
@@ -360,13 +360,13 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
     protected void init() throws SQLException {
 
 
-        StopWatch sw = null;                
+        StopWatch sw = null;
 
         if (Trace.TRACE) {
             sw = new StopWatch();
         }
-        
-        ns                       = new DINameSpace(database);        
+
+        ns                       = new DINameSpace(database);
         columnNameMap            = new HsqlHashMap();
         indexNameMap             = new HsqlHashMap();
         nonCachedTablesSet       = new HsqlHashSet();
@@ -403,7 +403,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
                 t.setDataReadOnly(true);
             }
         }
-        
+
         UserManager um = database.getUserManager();
 
         for (int i = 0; i < sysTableHsqlNames.length; i++) {
@@ -432,7 +432,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             return false;
         }
 
-        return (table.isTemp() && table.tableType != Table.SYSTEM_TABLE) 
+        return (table.isTemp() && table.tableType != Table.SYSTEM_TABLE)
         ? (table.getOwnerSessionId() == session.getId())
         : true;
     }
@@ -449,7 +449,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
 
     /**
      * Does this object produce a table with the specified name? <P>
-     * @return true if this object produces a table with the 
+     * @return true if this object produces a table with the
      *      specified name, else false
      * @param name the table name to test
      */
@@ -492,7 +492,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
 
         name = ns.withoutDefnSchema(name);
 
-        // at this point, we still might have a "special" system table 
+        // at this point, we still might have a "special" system table
         // that must be in database.tTable in order to get persisted...
         //
         // TODO:  Formalize system/interface for persistent SYSTEM tables
@@ -557,7 +557,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
 
         // problem:  now a session can hang around here
         // after it dissconnects.  solve.
-        // It might be better to 
+        // It might be better to
         // have sysTableUsers[tableIndex] instead,
         // since rights are per user, not per session
         // and a session's user may change.
@@ -682,7 +682,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      *      of the first such encountered candidate set are reported. Each
      *      row has its IN_KEY column set to FALSE. <p>
      *
-     * <LI> Finally, if the set of candidate column sets in 3.) is the empty, 
+     * <LI> Finally, if the set of candidate column sets in 3.) is the empty,
      *      then no column set is reported for the table under consideration.
      * </OL> <p>
      *
@@ -755,7 +755,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         //        - backing index (constraint) name?
         //        - column sequence in index (constraint)?
         //-------------------------------------------
-        
+
         // Intermediate holders
         Enumeration tables;
         Table       table;
@@ -799,9 +799,9 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
 
             inKey = table.isBestRowIdentifiersStrict() ? Boolean.TRUE
                                                        : Boolean.FALSE;
-                                                       
+
             ti.setTable(table);
-            
+
             tableName    = ti.getName();
             tableCatalog = ns.getCatalogName(table);
             tableSchema  = ns.getSchemaName(table);
@@ -811,7 +811,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             for (int i = 0; i < cols.length; i++) {
 
                 row                  = t.getNewRow();
-                
+
                 row[iscope]          = scope;
                 row[icolumn_name]    = ti.getColName(i);
                 row[idata_type]      = ti.getColDataType(i);
@@ -908,7 +908,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
      * @throws SQLException if an error occurs while producing the table
      */
     Table SYSTEM_COLUMNPRIVILEGES() throws SQLException {
-        
+
 
         Table t = sysTables[SYSTEM_COLUMNPRIVILEGES];
 
@@ -923,7 +923,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             addColumn(t, "GRANTEE", VARCHAR, false);         // not null
             addColumn(t, "PRIVILEGE", VARCHAR, false);       // not null
             addColumn(t, "IS_GRANTABLE", VARCHAR, false);    // not null
-            // order: column_name, privilege, 
+            // order: column_name, privilege,
             // for unique: grantee, grantor, table_name, table_schem, table_cat
             t.createPrimaryKey(null, new int[] {3,6,5,4,2,1,0}, false);
             // fast lookup for metadata calls
@@ -933,15 +933,15 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
 
             return t;
         }
-        
-        java.sql.ResultSet rs;        
-        
+
+        java.sql.ResultSet rs;
+
         // - used appends to make class file constant pool smaller
         // - saves 100 bytes on compressed size.
         rs = session.getInternalConnection().createStatement().executeQuery(
         (new StringBuffer())
         .append("select ")
-            .append("a.").append("TABLE_CAT").append(", ") 
+            .append("a.").append("TABLE_CAT").append(", ")
             .append("a.").append("TABLE_SCHEM").append(", ")
             .append("a.").append("TABLE_NAME").append(", ")
             .append("b.").append("COLUMN_NAME").append(", ")
@@ -957,12 +957,12 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             .append("=")
             .append("b.").append("TABLE_NAME").toString());
 
-        
+
         t.insert(((jdbcResultSet)rs).rResult,session);
         t.setDataReadOnly(true);
-        
+
         return t;
-        
+
     }
 
     /** Retrieves a <code>Table</code> object describing the
@@ -1044,7 +1044,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         String tableSchema;
         String tableName;
 
-        // intermediate holders 
+        // intermediate holders
         int             columnCount;
         Enumeration     tables;
         Table           table;
@@ -1085,16 +1085,16 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             }
 
             ti.setTable(table);
-            
+
             tableCatalog = ns.getCatalogName(table);
-            tableSchema  = ns.getSchemaName(table);            
+            tableSchema  = ns.getSchemaName(table);
             tableName    = ti.getName();
             columnCount  = table.getColumnCount();
 
             for (int i = 0; i < columnCount; i++) {
 
                 row                     = t.getNewRow();
-                
+
                 row[itable_cat]         = tableCatalog;
                 row[itable_schem]       = tableSchema;
                 row[itable_name]        = tableName;
@@ -1113,7 +1113,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
                 row[ichar_octet_length] = ti.getColCharOctLen(i);
                 row[iordinal_position]  = ValuePool.getInt(i+1);
                 row[iis_nullable]       = ti.getColIsNullable(i);
-                
+
                 t.insert(row,session);
             }
         }
@@ -1176,7 +1176,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             addColumn(t, "PK_NAME", VARCHAR);
             addColumn(t, "DEFERRABILITY", SMALLINT, false);    // not null
             // order: FKTABLE_CAT, FKTABLE_SCHEM, FKTABLE_NAME, and KEY_SEQ
-            t.createPrimaryKey(null, new int[] {4,5,6,8}, false);
+            t.createPrimaryKey(null, new int[] {4,5,6,8,11,12}, false);
             // fast lookup for metadata calls
             addIndex(t, null, new int[]{0}, false);
             addIndex(t, null, new int[]{1}, false);
@@ -1258,13 +1258,13 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         fkConstraintsList = new HsqlArrayList();
 
         while (tables.hasMoreElements()) {
-            
+
             table           = (Table) tables.nextElement();
-            
+
             if (!isAccessibleTable(table)) {
                 continue;
-            }  
-            
+            }
+
             constraints     = table.getConstraints();
             constraintCount = constraints.size();
 
@@ -1287,17 +1287,17 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         // session user has no access (may not make references)
         // Do it.
         for (int i = 0; i < fkConstraintsList.size(); i++) {
-            
+
             constraint      = (Constraint) fkConstraintsList.get(i);
             pkTable         = constraint.getMain();
-            
+
             pkInfo.setTable(pkTable);
-            
+
             pkTableName     = pkInfo.getName();
             fkTable         = constraint.getRef();
-            
+
             fkInfo.setTable(fkTable);
-            
+
             fkTableName    = fkInfo.getName();
             pkTableCatalog = ns.getCatalogName(pkTable);
             pkTableSchema  = ns.getSchemaName(pkTable);
@@ -1435,7 +1435,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             addColumn(t, "CARDINALITY", INTEGER);
             addColumn(t, "PAGES", INTEGER);
             addColumn(t, "FILTER_CONDITION", VARCHAR);
-            // order: NON_UNIQUE, TYPE, INDEX_NAME, and ORDINAL_POSITION. 
+            // order: NON_UNIQUE, TYPE, INDEX_NAME, and ORDINAL_POSITION.
             t.createPrimaryKey(null, new int[] {3,6,5,7}, true);
             // fast lookup for metadata calls
             addIndex(t, null, new int[]{0}, false);
@@ -1498,22 +1498,22 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             if (!isAccessibleTable(table)) {
                 continue;
             }
-            
+
             ti.setTable(table);
-            
+
             tableCatalog    = ns.getCatalogName(table);
             tableSchema     = ns.getSchemaName(table);
             tableName       = ti.getName();
             // not supported yet
-            filterCondition = null;    
+            filterCondition = null;
             indexCount      = table.getIndexCount();
 
             // process all of the visible indicies for this table
             for (int i = 0; i < indexCount; i++) {
-                
+
                 indexName            = ti.getIndexName(i);
                 // different cat for index not supported yet
-                indexQualifier       = tableCatalog; 
+                indexQualifier       = tableCatalog;
                 nonUnique            = ti.isIndexNonUnique(i);
                 cardinality          = ti.getIndexCardinality(i);
                 pages                = ti.getIndexPages(i);
@@ -1538,7 +1538,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
                     row[icardinality]      = cardinality;
                     row[ipages]            = pages;
                     row[ifilter_condition] = filterCondition;
-                    
+
                     t.insert(row,session);
                 }
             }
@@ -1583,7 +1583,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             addColumn(t, "KEY_SEQ", SMALLINT, false);       // not null
             addColumn(t, "PK_NAME", VARCHAR);
             // order: COLUMN_NAME (table_name required for unique)
-            t.createPrimaryKey(null, new int[]{3,2}, false); 
+            t.createPrimaryKey(null, new int[]{3,2}, false);
             // fast lookups for metadata calls
             addIndex(t, null, new int[]{0}, false);
             addIndex(t, null, new int[]{1}, false);
@@ -1629,7 +1629,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             if (index == null) {
                 continue;
             }
-            
+
             ti.setTable(table);
 
             if (!isAccessibleTable(table) || !ti.isPrimaryIndexPrimaryKey()) {
@@ -1645,7 +1645,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
 
             for (int j = 0; j < colCount; j++) {
                 row               = t.getNewRow();
-                
+
                 row[itable_cat]   = tableCatalog;
                 row[itable_schem] = tableSchema;
                 row[itable_name]  = tableName;
@@ -1725,12 +1725,12 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             addColumn(t, "SEQ", INTEGER);
 
             // ----------------------------------------------------------------
-            // order: PROCEDURE_SCHEM and PROCEDURE_NAME. 
+            // order: PROCEDURE_SCHEM and PROCEDURE_NAME.
             // sig & seq added for unique
             t.createPrimaryKey(null, new int[] {1,2,13,14},false);
             // fast lookup for metadata calls
             addIndex(t, null, new int[]{0}, false);
-            addIndex(t, null, new int[]{1}, false);            
+            addIndex(t, null, new int[]{1}, false);
             addIndex(t, null, new int[]{2}, false);
             // fast join with SYSTEM_PROCEDURES
             addIndex(t, null, new int[]{ 13 }, false);
@@ -1782,7 +1782,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             addColumn(t, "NUM_OUTPUT_PARAMS", INTEGER);
             addColumn(t, "NUM_RESULT_SETS", INTEGER);
             addColumn(t, "REMARKS", VARCHAR);
-            // basically: funtion, procedure or 
+            // basically: funtion, procedure or
             // unknown( say, a trigger callout routine)
             addColumn(t, "PROCEDURE_TYPE", SMALLINT, false);    // not null
 
@@ -1793,13 +1793,13 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             addColumn(t, "SIGNATURE", VARCHAR, false); // not null
 
             // ----------------------------------------------------------------
-            // order: PROCEDURE_SCHEM and PROCEDURE_NAME. 
+            // order: PROCEDURE_SCHEM and PROCEDURE_NAME.
             // sig added for uniqe
             t.createPrimaryKey(null, new int[] {1,2,9}, false);
             // fast lookup for metadata calls
             addIndex(t, null, new int[]{0}, false);
             addIndex(t, null, new int[]{1}, false);
-            addIndex(t, null, new int[]{2}, false);   
+            addIndex(t, null, new int[]{2}, false);
             // fast join with SYSTEM_PROCEDURECOLUMNS
             addIndex(t, null, new int[]{ 9 }, false);
 
@@ -1897,7 +1897,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             addColumn(t, "GRANTEE", VARCHAR, false);         // not null
             addColumn(t, "PRIVILEGE", VARCHAR, false);       // not null
             addColumn(t, "IS_GRANTABLE", VARCHAR, false);    // not null
-            // order: TABLE_SCHEM, TABLE_NAME, and PRIVILEGE, 
+            // order: TABLE_SCHEM, TABLE_NAME, and PRIVILEGE,
             // grantee, grantor added for unique
             // false primary key, as schema may be null
             t.createPrimaryKey(null, new int[] {1,2,5,4,3}, false);
@@ -1947,7 +1947,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             table     = (Table) tables.nextElement();
             accessKey = table.getName();
 
-            // Only show table grants if session user is admin, has some 
+            // Only show table grants if session user is admin, has some
             // right, or the special PUBLIC user has some right.
             if (!isAccessibleTable(table)) {
                 continue;
@@ -2090,17 +2090,17 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
 
         // Do it.
         while (tables.hasMoreElements()) {
-            
+
             table = (Table) tables.nextElement();
 
             if (!isAccessibleTable(table)) {
                 continue;
             }
-            
+
             ti.setTable(table);
 
             row               = t.getNewRow();
-            
+
             row[itable_cat]   = ns.getCatalogName(table);
             row[itable_schem] = ns.getSchemaName(table);
             row[itable_name]  = ti.getName();
@@ -2252,9 +2252,9 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
 
             return t;
         }
-        
+
         java.sql.ResultSet rs;
-        
+
         rs = session.getInternalConnection().createStatement().executeQuery(
         "select " +
             "TYPE_NAME, " +
@@ -2263,7 +2263,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             "LITERAL_PREFIX, " +
             "LITERAL_SUFFIX, " +
             "CREATE_PARAMS, " +
-            "NULLABLE, " + 
+            "NULLABLE, " +
             "CASE_SENSITIVE, " +
             "SEARCHABLE, " +
             "UNSIGNED_ATTRIBUTE, " +
@@ -2280,7 +2280,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             "SYSTEM_ALLTYPEINFO " +
         "where " +
             "AS_TAB_COL = true");
-        
+
         t.insert(((jdbcResultSet)rs).rResult, session);
         t.setDataReadOnly(true);
         return t;
@@ -2371,7 +2371,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             addColumn(t, "INTERVAL_PRECISION", INTEGER);
 
             //-------------------------------------------
-            // extended:            
+            // extended:
             //-------------------------------------------
             // level of support
             //-------------------------------------------
@@ -2431,7 +2431,7 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
             // required for JDBC sort contract:
             //-------------------------------------------
             addColumn(t, "TYPE_SUB", INTEGER);
-            
+
             // order:  DATA_TYPE, TYPE_SUB
             t.createPrimaryKey(null, new int[] {1,34}, true);
 
@@ -2471,8 +2471,8 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         //------------------------------------------
         final int iinterval_precision  = 18;
         //------------------------------------------
-        // HSQLDB-specific:        
-        //------------------------------------------        
+        // HSQLDB-specific:
+        //------------------------------------------
         final int iis_sup_as_tcol      = 19;
         final int iis_sup_as_pcol      = 20;
 
@@ -2509,12 +2509,12 @@ class DatabaseInformationMain extends DatabaseInformation implements DITypes {
         ti = new DITypeInfo();
 
         for (int i = 0; i < ALL_TYPES.length; i++) {
-            
+
             ti.setTypeCode(ALL_TYPES[i][0]);
             ti.setTypeSub(ALL_TYPES[i][1]);
-            
+
             row                      = t.getNewRow();
-            
+
             row[itype_name]          = ti.getTypeName();
             row[idata_type]          = ti.getDataType();
             row[iprecision]          = ti.getPrecision();

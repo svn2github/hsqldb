@@ -135,7 +135,7 @@ class Database {
     private HsqlHashMap            hAlias;
     private boolean                bIgnoreCase;
     private boolean                bReferentialIntegrity;
-    HsqlArrayList                  cSession;
+    SessionManager                 sessionManager;
     int                            sessionIdCount;
     private HsqlDatabaseProperties databaseProperties;
     private Session                sysSession;
@@ -280,7 +280,7 @@ class Database {
 
         tTable         = new HsqlArrayList();
         aAccess        = new UserManager();
-        cSession       = new HsqlArrayList();
+        sessionManager = new SessionManager();
         sessionIdCount = 0;
         hAlias         = Library.getAliasMap();
 
@@ -300,7 +300,7 @@ class Database {
 // -------------------------------------------------------------------
         sysSession = newSession(sysUser, false);
 
-        registerSession(sysSession);
+        sessionManager.registerSession(sysSession);
 
         databaseProperties = new HsqlDatabaseProperties(sName);
         dInfo              = DatabaseInformation.newDatabaseInformation(this);
@@ -400,51 +400,13 @@ class Database {
         logger.writeToLog(session,
                           "CONNECT USER " + username + " PASSWORD \""
                           + password + "\"");
-        registerSession(session);
+        sessionManager.registerSession(session);
 
         return session;
     }
 
     Session newSession(User user, boolean readonly) {
         return new Session(this, user, true, readonly, sessionIdCount++);
-    }
-
-    /**
-     *  Binds the specified Session object into this Database object's active
-     *  session registry. This method is typically called from {@link
-     *  #connect} as the final step, when a successful connection has been
-     *  made.
-     *
-     * @param  session the Session object to register
-     */
-    void registerSession(Session session) {
-
-        int i    = 0;
-        int size = cSession.size();
-
-        for (; i < size; i++) {
-            if (cSession.get(i) == null) {
-                break;
-            }
-        }
-
-        if (i == size) {
-            cSession.setSize(i + 1);
-        }
-
-        cSession.set(i, session);
-    }
-
-    void closeAllSessions() {
-
-        // don't disconnect system user; need it to save database
-        for (int i = 1, tsize = cSession.size(); i < tsize; i++) {
-            Session d = (Session) cSession.get(i);
-
-            if (d != null) {
-                d.disconnect();
-            }
-        }
     }
 
     /**
@@ -470,7 +432,7 @@ class Database {
 
             r = execute(statement, session);
 
-            execute("DISCONNECT", session);
+            sessionManager.processDisconnect(session);
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
         } catch (SQLException e) {
@@ -644,7 +606,7 @@ class Database {
                         break;
 
                     case DISCONNECT :
-                        rResult = processDisconnect(session);
+                        rResult = sessionManager.processDisconnect(session);
                         break;
 
                     case SCRIPT :
@@ -1118,7 +1080,9 @@ class Database {
      *  name of an existing index begins with "SYS_", the name is changed to
      *  begin with "USER_". The name should be unique within the database.
      *  For compatibility with old database, non-unique names are modified
-     *  and assigned a new name<br>
+     *  and assigned a new name<p>
+     *
+     *  In 1.7.2 no new index is created if an equivalent already exists.
      *  (fredt@users)
      *
      * @param  c
@@ -1142,23 +1106,6 @@ class Database {
             indexname = new HsqlName(name, namequoted);
         }
 
-// fredt@users - to check further - this is confined only to old scripts
-// rename duplicate indexes
-/*
-        if (findIndex(name) != null && session == sysSession
-                && databaseProperties.getProperty("hsqldb.compatible_version")
-                    .equals("1.6.0")) {
-            indexname = HsqlName.makeAutoName("USER", name);
-            name      = indexname.name;
-        }
-*/
-
-// fredt - 2003
-/*
-        if (findIndex(name) != null) {
-            throw Trace.error(Trace.INDEX_ALREADY_EXISTS);
-        }
-*/
         if (this.indexNameList.containsName(name)) {
             throw Trace.error(Trace.INDEX_ALREADY_EXISTS);
         }
@@ -1170,25 +1117,6 @@ class Database {
 
         tw.createIndex(col, indexname, unique);
     }
-
-    /**
-     *  Finds an index with the given name in the whole database.
-     *
-     * @param  name Description of the Parameter
-     * @return  Description of the Return Value
-     */
-/*
-    private Index findIndex(String name) {
-
-        Table t = findTableForIndex(name);
-
-        if (t == null) {
-            return null;
-        } else {
-            return t.getIndex(name);
-        }
-    }
-*/
 
     /**
      *  Finds the table that has an index with the given name in the
@@ -1205,21 +1133,6 @@ class Database {
 
         return findUserTable(hsqlname.name, session);
     }
-
-/*
-    private Table findTableForIndex(String name) {
-
-        for (int i = 0, tsize = tTable.size(); i < tsize; i++) {
-            Table t = (Table) tTable.get(i);
-
-            if (t.getIndex(name) != null) {
-                return t;
-            }
-        }
-
-        return null;
-    }
-*/
 
     /**
      *  Retrieves the index of a table or view in the HsqlArrayList that
@@ -2106,6 +2019,18 @@ class Database {
 
                                 t.checkColumnsMatch(tc.localCol, tc.expTable,
                                                     tc.expCol);
+
+                                if (tc.deleteAction == Constraint
+                                        .SET_DEFAULT || tc
+                                        .deleteAction == Constraint
+                                        .SET_NULL || tc
+                                        .updateAction != Constraint
+                                        .NO_ACTION) {
+                                    throw Trace.error(
+                                        Trace.FOREIGN_KEY_NOT_ALLOWED,
+                                        "only ON UPDATE NO ACTION and ON DELETE CASCADE possible");
+                                }
+
                                 session.commit();
                                 tw.createForeignKey(tc.localCol, tc.expCol,
                                                     tc.name, tc.expTable,
@@ -2389,33 +2314,6 @@ class Database {
 
         session.commit();
         session.setUser(user);
-
-        return new Result();
-    }
-
-    /**
-     *  Responsible for handling the execution DISCONNECT SQL statements
-     *
-     * @param  session
-     * @return
-     * @throws  SQLException
-     */
-    private Result processDisconnect(Session session) throws SQLException {
-
-        int i    = 0;
-        int size = cSession.size();
-
-        if (!session.isClosed()) {
-            session.disconnect();
-
-            for (; i < size; i++) {
-                if (cSession.get(i) == session) {
-                    cSession.set(i, null);
-
-                    break;
-                }
-            }
-        }
 
         return new Result();
     }
@@ -2756,10 +2654,10 @@ class Database {
             c.back();
         }
 
-        closeAllSessions();
-        cSession.clear();
+        sessionManager.closeAllSessions();
+        sessionManager.clearAll();
         close(closemode);
-        processDisconnect(session);
+        sessionManager.processDisconnect(session);
 
         return new Result();
     }

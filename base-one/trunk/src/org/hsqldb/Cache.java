@@ -152,7 +152,9 @@ class Cache {
     // outside access to all below allowed only for metadata
     int               cacheScale;
     int               cacheSizeScale;
-    int               cachedRowType = DatabaseRowOutput.CACHED_ROW_160;
+    int               cacheFileScale;
+    int               cachedRowPadding = 8;
+    int               cachedRowType    = DatabaseRowOutput.CACHED_ROW_160;
     int               cacheLength;
     int               writerLength;
     int               maxCacheSize;            // number of Rows
@@ -204,6 +206,12 @@ class Cache {
                 16);
         cacheSizeScale = dbProps.getIntegerProperty("hsqldb.cache_size_scale",
                 20, 8, 20);
+        cacheFileScale = dbProps.getIntegerProperty("hsqldb.cache_file_scale",
+                1, 1, 8);
+
+        if (cacheFileScale != 8) {
+            cacheFileScale = 1;
+        }
 
         System.out.println("cache_scale: " + cacheScale);
         System.out.println("cache_size_scale: " + cacheSizeScale);
@@ -263,6 +271,8 @@ class Cache {
 
                 iFreePos = rFile.readInteger();
             } else {
+
+// erik - iFreePos = INITIAL_FREE_POS / cacheFileScale;
                 iFreePos = INITIAL_FREE_POS;
 
                 dbProps.setProperty("hsqldb.cache_version", "1.7.0");
@@ -404,12 +414,13 @@ class Cache {
      */
     protected void setStorageSize(CachedRow r) throws SQLException {
 
-        // 32 bytes overhead for each index + iSize, iPos
+        // iSize = 4 bytes, iPos = 4 bytes, each index = 32 bytes
         Table t    = r.getTable();
         int   size = 8 + 16 * t.getIndexCount();
 
-        size          += rowOut.getSize(r);
-        size          = ((size + 7) / 8) * 8;    // align to 8 byte blocks
+        size += rowOut.getSize(r);
+        size = ((size + cachedRowPadding - 1) / cachedRowPadding)
+               * cachedRowPadding;    // align to 8 byte blocks
         r.storageSize = size;
     }
 
@@ -494,7 +505,9 @@ class Cache {
                     iFreeCount--;
                 } else {
                     f.iLength = size;
-                    f.iPos    += rowSize;
+
+// erik  f.iPos += rowSize / cacheFileScale
+                    f.iPos += rowSize;
                 }
 
                 break;
@@ -505,6 +518,8 @@ class Cache {
         }
 
         if (i == iFreePos) {
+
+// erik  iFreePs += size / cacheFileScale
             iFreePos += size;
         }
 
@@ -522,6 +537,8 @@ class Cache {
         CachedRow r = null;
 
         try {
+
+// erik -  rFile.readSeek(pos*cacheFileScale);
             rFile.readSeek(pos);
 
             int size = rFile.readInteger();
@@ -622,16 +639,17 @@ class Cache {
      */
     private void cleanUp() throws SQLException {
 
-        int count = 0;
-        int j     = 0;
+        int count  = 0;
+        int j      = 0;
+        int jlimit = iCacheSize / 6;
 
         resetAccessCount();
 
         rLastChecked = null;
 
         // HJB-2001-06-21
-        while ((j++ < cacheLength) && (iCacheSize > maxCacheSize / 2)
-                && (count < writerLength)) {
+        while (j++ < jlimit && iCacheSize > maxCacheSize / 2
+                && count < writerLength) {
             CachedRow r = getWorst();
 
             if (r == null) {
@@ -775,12 +793,7 @@ class Cache {
                 worst     = w;
             }
 
-            if (rLastChecked.rNext == null) {
-                Trace.printSystemOut("rLastChecked is null; i =" + i);
-            }
-
             rLastChecked = rLastChecked.rNext;
-
         }
 
         return candidate;
@@ -852,6 +865,8 @@ class Cache {
     protected void saveRow(CachedRow r) throws IOException, SQLException {
 
         rowOut.reset();
+
+// erik - multiply position by cacheFileScale   rFile.seek(r.iPos * cacheFileScale);
         rFile.seek(r.iPos);
         r.write(rowOut);
         rFile.write(rowOut.getOutputStream().getBuffer(), 0,

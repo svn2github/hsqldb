@@ -36,7 +36,7 @@ import java.sql.SQLException;
 import org.hsqldb.lib.StringConverter;
 
 /**
- * Handles operations involving reading back a log file already written
+ * Handles operations involving reading back a script or log file written
  * out by DatabaseScriptWriter. This implementation and its subclasses
  * correspond to DatabaseScriptWriter and its subclasses for the supported
  * formats.
@@ -49,6 +49,7 @@ class DatabaseScriptReader {
     InputStream dataStreamIn;
     Database    db;
     int         lineCount;
+    String      lastLine;
 
 //    int         byteCount;
     // this is used only to enable reading one logged line at a time
@@ -76,9 +77,58 @@ class DatabaseScriptReader {
         openFile();
     }
 
-    void readAll(Session session) throws IOException, SQLException {}
+    void readAll(Session session) throws IOException, SQLException {
+        readDDL(session);
+        readExistingData(session);
+    }
 
-    int getLineNumber(){
+    protected void readDDL(Session session) throws IOException, SQLException {
+
+        for (;;) {
+            lastLine = readLoggedStatement();
+
+            if (lastLine == null || lastLine.startsWith("INSERT INTO ")) {
+                break;
+            }
+
+            Result result = db.execute(lastLine, session);
+
+            if (result != null && result.iMode == Result.ERROR) {
+                throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
+                                  " line: " + lineCount);
+            }
+        }
+    }
+
+    protected void readExistingData(Session session)
+    throws IOException, SQLException {
+
+        // fredt - needed for forward referencing FK constraints
+        db.setReferentialIntegrity(false);
+
+        if (lastLine == null) {
+            lastLine = readLoggedStatement();
+        }
+
+        for (;;) {
+            if (lastLine == null) {
+                break;
+            }
+
+            Result result = db.execute(lastLine, session);
+
+            if (result != null && result.iMode == Result.ERROR) {
+                throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
+                                  " line: " + lineCount);
+            }
+
+            lastLine = readLoggedStatement();
+        }
+
+        db.setReferentialIntegrity(true);
+    }
+
+    int getLineNumber() {
         return lineCount;
     }
 
@@ -87,18 +137,14 @@ class DatabaseScriptReader {
         d = new BufferedReader(new InputStreamReader(dataStreamIn));
     }
 
-    protected String readLoggedStatement() {
+    protected String readLoggedStatement() throws IOException {
 
-        try {
+        //fredt temporary solution - should read bytes directly from buffer
+        String s = d.readLine();
 
-            //fredt temporary solution - should read bytes directly from buffer
-            String s = d.readLine();
-            lineCount++;
+        lineCount++;
 
-            return StringConverter.asciiToUnicode(s);
-        } catch (IOException e) {
-            return null;
-        }
+        return StringConverter.asciiToUnicode(s);
     }
 
     void close() throws IOException {

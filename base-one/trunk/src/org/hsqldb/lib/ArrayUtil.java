@@ -64,25 +64,32 @@ public class ArrayUtil {
     }
 
     /**
+     * Returns true if a and be contain the same set of integers.
+     */
+    public static boolean areEqualSets(int[] a, int[] b) {
+        return a.length == b.length
+               && ArrayUtil.haveEqualSets(a, b, a.length);
+    }
+
+    /**
      * For sets == true returns true if a and b are the same length and
-     * contain the same set of integers. For sets == false returns the result
+     * contain the same integers.
+     *
+     * For strict == false returns the result
      * of haveEqualArrays(a,b,count)
+     *
+     * For strict == true, the array lengths should be the same as count
      *
      */
     public static boolean haveEquality(int[] a, int[] b, int count,
                                        boolean sets) {
 
-        if (sets) {
-            if (a.length == b.length && count == a.length
-                    && ArrayUtil.haveEqualSets(a, b, count)) {
-                return true;
+        if (ArrayUtil.haveEqualArrays(a, b, count)) {
+            if (sets) {
+                return a.length == b.length && count == a.length;
             }
-        } else {
-            if (ArrayUtil.haveEqualArrays(a, b, count)) {
-                return true;
-            }
+            return true;
         }
-
         return false;
     }
 
@@ -125,10 +132,6 @@ public class ArrayUtil {
 
         if (count > a.length || count > b.length) {
             return false;
-        }
-
-        if (count == 1) {
-            return a[0] == b[0];
         }
 
         for (int j = 0; j < count; j++) {

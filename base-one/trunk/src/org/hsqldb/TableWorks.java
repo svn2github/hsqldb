@@ -94,11 +94,15 @@ class TableWorks {
     }
 
 // fredt@users 20020225 - patch 1.7.0 - require existing index for foreign key
+// fredt@users 20030309 - patch 1.7.2 - more rigorous rules
 
     /**
      *  Creates a foreign key according to current sql.strict_fk or
      *  sql.strong_fk settings. Foreign keys are enforced via indexes on both
      *  the referencing (child) and referenced (parent) tables.
+     *  <p>
+     *  In versions 1.7.0 and 1.7.1 some non-standard features were supported
+     *  for compatibility with older databases as follows:
      *  <p>
      *  If sql.strict_fk is set (default for new databases) a pre-existing
      *  primary key or unique index is required on the referenced columns
@@ -109,21 +113,34 @@ class TableWorks {
      *  sql.strict_fk, this automatic index will be a unique index. Otherwise
      *  (for compatibility with existing data created with HSQLDB 1.61 or
      *  earlier) it will be an ordinary index.
+     *  <>
+     *  In version 1.7.2, the semantics of sql.strict_fk are enforced
+     *  regardless of the database properties settings (which are now obsolete).
      *
-     *  The non-unique index on the referencing table is created if none
-     *  exits. The existence of a PK or unique constraint is required for
-     *  backward referencing foreign keys. This is becuase the index must
-     *  always be created before the foreign key DDL is processed.
-     *  Any index, including a user-defined one can be used for forward
-     *  referencing FK's.
+     *  The non-unique index on the referencing table is created unless
+     *  PK or unique constraint index on the columns exist. This is becuase the
+     *  index must always be created before the foreign key DDL is processed.
      *
      *  Foriegn keys on temp tables can reference other temp tables with the
-     *  same rules above. When they reference other permanent tables, the
-     *  sql.strict_fk is always applied. Foreign keys on permanent tables
-     *  cannot reference temp tables.
+     *  same rules above. Foreign keys on permanent tables cannot reference
+     *  temp tables.
      *
-     *  Currently, duplicate foreign keys can be declared, but they do not
-     *  create any additional indexes. (fred@users)
+     *  Duplicate foreign keys are now disallowed.
+     *
+     *  The introduction of ALTER TABLE for adding foreign keys opened some
+     *  loopholes that were closed in version 1.7.2 :
+     *
+     *  -- The unique index on the referenced table must also belong to a
+     *  constraint (PK or UNIQUE) when the foreign key is referencing the
+     *  same table. Otherwise after a SHUTDOWN and restart the index will not
+     *  exist at the time of creation of the foreign key.
+     *
+     *  -- The non-unique index on the referencing table is always created
+     *  unless there is an index belonging to a PK or UNIQUE constraint that
+     *  can be used instead.
+     *
+     *
+     *  (fred@users)
      *
      * @param  fkcol
      * @param  expcol
@@ -137,8 +154,19 @@ class TableWorks {
                           Table expTable, int deleteAction,
                           int updateAction) throws SQLException {
 
+        // name check
         if (table.getConstraint(fkname.name) != null) {
             throw Trace.error(Trace.CONSTRAINT_ALREADY_EXISTS);
+        }
+
+        // existing FK check
+        if (table.getConstraintForColumns(expTable, expcol, fkcol) != null) {
+            throw Trace.error(Trace.CONSTRAINT_ALREADY_EXISTS);
+        }
+
+        if (expTable.isTemp() != table.isTemp()) {
+            throw Trace.error(Trace.FOREIGN_KEY_NOT_ALLOWED,
+                              "both tables must be permanent or temporary");
         }
 
         int interval = table.dDatabase.getTableIndex(table)
@@ -147,39 +175,19 @@ class TableWorks {
                             ? expTable.getConstraintIndexForColumns(expcol,
                                 true)
                             : expTable.getIndexForColumns(expcol, true);
-        boolean strict =
-            table.dDatabase.getProperties().isPropertyTrue("sql.strict_fk");
 
-        if (expTable.isTemp() != table.isTemp()) {
-            throw Trace.error(Trace.FOREIGN_KEY_NOT_ALLOWED,
-                              "both tables must be permanent or temporary");
-        }
-
-        if (strict && (exportindex == null ||!exportindex.isUnique())) {
+        if (exportindex == null) {
             throw Trace.error(Trace.INDEX_NOT_FOUND,
                               "needs unique index on referenced columns of "
                               + expTable.getName().statementName);
         }
 
-        Index fkindex = (interval >= 0)
-                        ? table.getConstraintIndexForColumns(fkcol, false)
-                        : table.getIndexForColumns(fkcol, false);
+        Index fkindex = table.getConstraintIndexForColumns(fkcol, false);
 
         if (fkindex == null) {
             HsqlName iname = HsqlName.newAutoName("IDX");
 
             fkindex = createIndex(fkcol, iname, false);
-        }
-
-        boolean strong =
-            table.dDatabase.getProperties().isPropertyTrue("sql.strong_fk");
-
-        if (exportindex == null || (strong &&!exportindex.isUnique())) {
-            HsqlName   iname = HsqlName.newAutoName("FK");
-            TableWorks tw    = new TableWorks(expTable);
-
-            exportindex = tw.createIndex(expcol, iname, strong);
-            expTable    = tw.getTable();
         }
 
         HsqlName pkname = HsqlName.newAutoName("REF", fkname.name);

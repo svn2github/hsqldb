@@ -179,6 +179,7 @@ public class Trace extends PrintWriter {
                                   TEXT_TABLE_SOURCE                   = 75,
                                   TEXT_FILE                           = 76,
                                   BAD_IDENTITY_VALUE                  = 77,
+                                  ERROR_IN_SCRIPT_FILE                = 78,
                                   INVALID_CHARACTER_ENCODING          = 81,
                                   NO_CLASSLOADER_FOR_TLS              = 82,
                                   NO_JSSE                             = 83,
@@ -247,9 +248,9 @@ public class Trace extends PrintWriter {
         "22019 Invalid identifier", "22019 Invalid TEXT table source string",
         "S1000 bad TEXT table source file",
         "23000 negative value not allowed for identity column",
-
+        "S1000 error in script file",
         //
-        "", "", "",
+        "", "",
 
         //
         "37000 invalid character encoding",

@@ -335,13 +335,30 @@ class Constraint {
      */
     boolean isEquivalent(int col[], int type) {
 
-        if (type == iType && iType == UNIQUE && core.iLen == col.length) {
-            if (ArrayUtil.haveEqualSets(core.iColMain, col, core.iLen)) {
-                return true;
-            }
+        if (type != iType || iType != UNIQUE || core.iLen != col.length) {
+            return false;
         }
 
-        return false;
+        return ArrayUtil.haveEqualSets(core.iColMain, col, core.iLen);
+    }
+
+    /**
+     * Compares this with another constraint column set. This implementation
+     * only checks FOREIGN KEY constraints.
+     */
+    boolean isEquivalent(Table tablemain, int colmain[], Table tableref,
+                         int colref[]) {
+
+        if (iType != Constraint.MAIN || iType != Constraint.FOREIGN_KEY) {
+            return false;
+        }
+
+        if (tablemain != core.tMain || tableref != core.tRef) {
+            return false;
+        }
+
+        return ArrayUtil.areEqualSets(core.iColMain, colmain)
+               && ArrayUtil.areEqualSets(core.iColRef, colref);
     }
 
     /**
@@ -380,6 +397,25 @@ class Constraint {
                                                         colindex, adjust);
                 }
             }
+        }
+    }
+
+    /**
+     *  Adding or dropping indexes may require changes to the indexes used by
+     *  a constraint to an equivalent index.
+     *
+     * @param  oldi reference to the old index
+     * @param  newt referenct to the new index
+     * @throws  SQLException
+     */
+    void replaceIndex(Index oldi, Index newi) {
+
+        if (oldi == core.iRef) {
+            core.iRef = newi;
+        }
+
+        if (oldi == core.iMain) {
+            core.iMain = newi;
         }
     }
 

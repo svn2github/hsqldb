@@ -209,7 +209,9 @@ class Log implements Runnable {
 
         writeDelay = delay;
 
-        dbScriptWriter.setWriteDelay(delay);
+        if (dbScriptWriter != null) {
+            dbScriptWriter.setWriteDelay(delay);
+        }
     }
 
     /**
@@ -268,7 +270,17 @@ class Log implements Runnable {
 
             bRestoring = true;
 
-            ScriptRunner.runScript(dDatabase, sFileScript, logType);
+            try {
+                DatabaseScriptReader scr =
+                    DatabaseScriptReader.newDatabaseScriptReader(dDatabase,
+                        sFileScript, logType);
+
+                scr.readAll(dDatabase.getSysSession());
+                scr.close();
+            } catch (IOException e) {
+
+                // must throw here
+            }
 
             bRestoring = false;
 
@@ -304,7 +316,18 @@ class Log implements Runnable {
 
         bRestoring = true;
 
-        ScriptRunner.runScript(dDatabase, sFileScript, logType);
+        try {
+            DatabaseScriptReader scr =
+                DatabaseScriptReader.newDatabaseScriptReader(dDatabase,
+                    sFileScript, logType);
+
+            scr.readAll(dDatabase.getSysSession());
+            scr.close();
+        } catch (IOException e) {
+
+            // must throw here
+        }
+
         ScriptRunner.runScript(dDatabase, sFileLog,
                                DatabaseScriptWriter.SCRIPT_TEXT_170);
 
@@ -322,7 +345,7 @@ class Log implements Runnable {
             reopenAllTextCaches();
         }
 
-        openScript();
+        openLog();
 
         if (newdb == true) {
             dbScriptWriter.writeAll();
@@ -453,7 +476,7 @@ class Log implements Runnable {
         }
 
         reopenAllTextCaches();
-        openScript();
+        openLog();
     }
 
     /**
@@ -595,7 +618,7 @@ class Log implements Runnable {
      *
      * @throws  SQLException
      */
-    private void openScript() throws SQLException {
+    private void openLog() throws SQLException {
 
         if (Trace.TRACE) {
             Trace.trace();
@@ -608,6 +631,21 @@ class Log implements Runnable {
                     DatabaseScriptWriter.SCRIPT_TEXT_170);
 
             dbScriptWriter.setWriteDelay(writeDelay);
+
+            HsqlArrayList sessions =
+                dDatabase.sessionManager.listVisibleSessions(
+                    dDatabase.getSysSession());
+            Enumeration en = sessions.elements();
+
+            for (; en.hasMoreElements(); ) {
+                Session session = (Session) en.nextElement();
+
+                if (session.getAutoCommit() == false) {
+                    dbScriptWriter.writeLogStatement(
+                        session.getAutoCommitStatement(false),
+                        session.getId());
+                }
+            }
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR, sFileScript);
         }

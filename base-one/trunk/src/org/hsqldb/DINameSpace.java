@@ -34,17 +34,13 @@ package org.hsqldb;
 /*
  * originally created as DINameSpace.java on February 21, 2003, 11:24 PM
  */
-
-
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.sql.SQLException;
 import java.util.Enumeration;
-
 import org.hsqldb.lib.enum.CompositeEnumeration;
 import org.hsqldb.lib.enum.EmptyEnumeration;
 import org.hsqldb.lib.enum.SingletonEnumeration;
-
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HsqlHashMap;
 import org.hsqldb.lib.HsqlHashSet;
@@ -59,11 +55,11 @@ import org.hsqldb.lib.HsqlHashSet;
 final class DINameSpace {
 
     private Database database;
+    private boolean  reportCatalogs = true;
+    private boolean  reportSchemas  = true;
 
-    private boolean reportCatalogs = true;
-    private boolean reportSchemas = true;
-
-    /** Set { <code>Class</code> FQN <code>String</code> objects }. <p>
+    /**
+     * Set { <code>Class</code> FQN <code>String</code> objects }. <p>
      *
      * The Set contains the names of the classes providing the public static
      * methods that are automatically made accessible to the PUBLIC user in
@@ -72,11 +68,13 @@ final class DINameSpace {
      */
     private static HsqlHashSet builtin = new HsqlHashSet();
 
-    /** The <code>DEFINITION_SCHEMA</code> schema name.    */
+    /** The <code>DEFINITION_SCHEMA</code> schema name. */
     static final String DEFN_SCHEMA = "DEFINITION_SCHEMA";
 
-    /** The <code>DEFINITION_SCHEMA</code> schema name plus the schema
-     * separator character. */
+    /**
+     * The <code>DEFINITION_SCHEMA</code> schema name plus the schema
+     * separator character.
+     */
     private static final String DEFN_SCHEMA_DOT = DEFN_SCHEMA + ".";
 
     /** Length of <code>QS_DEFN_SCHEMA_DOT</code>. */
@@ -85,47 +83,56 @@ final class DINameSpace {
     /** The <code>INFORMATION_SCHEMA</code> schema name. */
     static final String INFO_SCHEMA = "INFORMATION_SCHEMA";
 
-    /** The <code>INFORMATION_SCHEMA</code> schema name plus the schema
-     * separator character. */
+    /**
+     * The <code>INFORMATION_SCHEMA</code> schema name plus the schema
+     * separator character.
+     */
     private static final String INFO_SCHEMA_DOT = INFO_SCHEMA + ".";
 
     /** Length of <code>INFO_SCHEMA_DOT</code>. */
     private static final int INFO_SCHEMA_DOT_LEN = INFO_SCHEMA_DOT.length();
 
-    /** The <code>PUBLIC</code> schema name.    */
+    /** The <code>PUBLIC</code> schema name. */
     static final String PUB_SCHEMA = "PUBLIC";
 
-    /** The <code>PUBLIC</code> schema name plus the schema
-    * separator character.*/
+    /**
+     * The <code>PUBLIC</code> schema name plus the schema
+     * separator character.
+     */
     private static final String PUB_SCHEMA_DOT = PUB_SCHEMA + ".";
 
-    /** Length of <code>PUB_SCHEMA_DOT</code>.    */
+    /** Length of <code>PUB_SCHEMA_DOT</code>. */
     private static final int PUB_SCHEMA_DOT_LEN = PUB_SCHEMA_DOT.length();
 
-    /** List of system schema names:
-     * { DEFINITION_SCHEMA, INFORMATION_SCHEMA, PUBLIC } */
+    /**
+     * List of system schema names:
+     * { DEFINITION_SCHEMA, INFORMATION_SCHEMA, PUBLIC }
+     */
     private static final HsqlArrayList sysSchemas = new HsqlArrayList();
 
     static {
         sysSchemas.add(DEFN_SCHEMA);
         sysSchemas.add(INFO_SCHEMA);
         sysSchemas.add(PUB_SCHEMA);
-
         builtin.add("org.hsqldb.Library");
         builtin.add("org.hsqldb.DatabaseClassLoader");
         builtin.add("java.lang.Math");
     }
 
     public DINameSpace(Database database) throws SQLException {
-        Trace.doAssert(database != null, "database is null");
-        this.database = database;
-        HsqlProperties p = database.getProperties();
-        reportCatalogs = p.isPropertyTrue("hsqldb.catalogs",reportCatalogs);
-        reportSchemas = p.isPropertyTrue("hsqldb.schemas",reportSchemas);
 
+        Trace.doAssert(database != null, "database is null");
+
+        this.database = database;
+
+        HsqlProperties p = database.getProperties();
+
+        reportCatalogs = p.isPropertyTrue("hsqldb.catalogs", reportCatalogs);
+        reportSchemas  = p.isPropertyTrue("hsqldb.schemas", reportSchemas);
     }
 
-    /** Retrieves the declaring <code>Class</code> object for the specified
+    /**
+     * Retrieves the declaring <code>Class</code> object for the specified
      * fully qualified method name, using, if possible, the classLoader
      * attribute of the database.<p>
      *
@@ -143,7 +150,8 @@ final class DINameSpace {
         return null;
     }
 
-    /** Retreives the <code>Class</code> object specified by the
+    /**
+     * Retreives the <code>Class</code> object specified by the
      * <code>name</code> argument using the database class loader.
      * @param name the fully qulified name of the <code>Class</code>
      *      object to retrieve.
@@ -154,12 +162,13 @@ final class DINameSpace {
      */
     Class classForName(String name) throws ClassNotFoundException {
 
-        return (database.classLoader == null)
-        ? Class.forName(name)
-        : Class.forName(name, true, database.classLoader);
+        return (database.classLoader == null) ? Class.forName(name)
+                                              : Class.forName(name, true,
+                                              database.classLoader);
     }
 
-    /** Retrieves an <code>Enumeration</code> object whose elements form the
+    /**
+     * Retrieves an <code>Enumeration</code> object whose elements form the
      * set of distinct names of all catalogs visible in specified Database. <p>
      *
      * <b>Note:</b> in the present implementation, the returned
@@ -171,18 +180,17 @@ final class DINameSpace {
      * @throws SQLException never (reserved for future use)
      */
     Enumeration enumCatalogNames() throws SQLException {
-        return reportCatalogs
-        ? new SingletonEnumeration(database.getName())
-        : EmptyEnumeration.instance;
+        return reportCatalogs ? new SingletonEnumeration(database.getName())
+                              : EmptyEnumeration.instance;
     }
 
     Enumeration enumSysSchemaNames() throws SQLException {
-        return reportSchemas
-        ? sysSchemas.elements()
-        : EmptyEnumeration.instance;
+        return reportSchemas ? sysSchemas.elements()
+                             : EmptyEnumeration.instance;
     }
 
-    /** Retrieves an enumeration of the names of schemas visible in
+    /**
+     * Retrieves an enumeration of the names of schemas visible in
      * the context of the specified <code>Session</code>. <p>
      *
      * @return An enumeration of <code>Strings</code> naming the schemas
@@ -190,31 +198,30 @@ final class DINameSpace {
      */
     Enumeration enumVisibleSchemaNames(Session session) throws SQLException {
 
-        HsqlArrayList   users;
-        HsqlArrayList   userNames;
-        UserManager     userManager;
+        HsqlArrayList users;
+        HsqlArrayList userNames;
+        UserManager   userManager;
 
         if (!reportSchemas || session == null) {
             return EmptyEnumeration.instance;
         }
 
-        userManager     = database.getUserManager();
-        users           = userManager.listVisibleUsers(session,false);
-        userNames       = new HsqlArrayList();
+        userManager = database.getUserManager();
+        users       = userManager.listVisibleUsers(session, false);
+        userNames   = new HsqlArrayList();
 
         for (int i = 0; i < users.size(); i++) {
             User u = (User) users.get(i);
+
             userNames.add(u.getName());
         }
 
-        return new
-        CompositeEnumeration(
-            enumSysSchemaNames(),
-            userNames.elements()
-        );
+        return new CompositeEnumeration(enumSysSchemaNames(),
+                                        userNames.elements());
     }
 
-    /** Retrieves the one-and-only correct <code>HsqlName</code> instance
+    /**
+     * Retrieves the one-and-only correct <code>HsqlName</code> instance
      * for the current JVM session, using the s argument as a key to
      * look up the <code>HsqlName</code> instance in the repository
      * specified by the map argument.
@@ -232,6 +239,7 @@ final class DINameSpace {
         if (name == null) {
             try {
                 name = new HsqlName(s, false);
+
                 map.put(s, name);
             } catch (Exception e) {}
         }
@@ -239,7 +247,8 @@ final class DINameSpace {
         return name;
     }
 
-    /** Finds a regular (non-temp, non-system) table or view, if any,
+    /**
+     * Finds a regular (non-temp, non-system) table or view, if any,
      * corresponding to the given table name, relative to this object's
      * database attribute.<p>
      *
@@ -254,16 +263,13 @@ final class DINameSpace {
      */
     Table findPubSchemaTable(String name) {
 
-        return (
-            !reportSchemas ||
-            name == null ||
-            !name.startsWith(PUB_SCHEMA_DOT)
-        )
-        ? null
-        : database.findUserTable(name.substring(PUB_SCHEMA_DOT_LEN));
+        return (!reportSchemas || name == null ||!name.startsWith(PUB_SCHEMA_DOT))
+               ? null
+               : database.findUserTable(name.substring(PUB_SCHEMA_DOT_LEN));
     }
 
-    /** Finds a TEMP [TEXT] table, if any, corresponding to
+    /**
+     * Finds a TEMP [TEXT] table, if any, corresponding to
      * the given database object identifier, relative to the specified
      * session.<p>
      *
@@ -273,6 +279,7 @@ final class DINameSpace {
      * a schema qualifier
      */
     Table findUserSchemaTable(String name, Session session) {
+
         String prefix;
 
         if (name == null || session == null) {
@@ -283,12 +290,13 @@ final class DINameSpace {
         prefix = session.getUsername() + ".";
 
         return name.startsWith(prefix) && reportSchemas
-        ? database.findUserTable(name.substring(prefix.length()),session)
-        : null;
-
+               ? database.findUserTable(name.substring(prefix.length()),
+                                        session)
+               : null;
     }
 
-    /** Retrieves the name of the catalog corresponding to the indicated
+    /**
+     * Retrieves the name of the catalog corresponding to the indicated
      * object. <p>
      *
      * <B>Note:</B> <code>database.getName()</code> is returned whenever
@@ -300,12 +308,12 @@ final class DINameSpace {
      * @param o the object whose catalog name is to be retrieved
      */
     String getCatalogName(Object o) {
-        return (!reportCatalogs || o == null)
-        ? null
-        : database.getName();
+        return (!reportCatalogs || o == null) ? null
+                                              : database.getName();
     }
 
-    /** Retrieves a map from each distinct
+    /**
+     * Retrieves a map from each distinct
      * value of the database alias map to the list of keys
      * in the input map mapping to that value
      */
@@ -322,15 +330,13 @@ final class DINameSpace {
         // a cached hashCode based equals() method.  As it is, two HsqlHashMap
         // references are considered equal iff they refer to the indentical
         // object, which is useless for this application
-
-        mapIn         = database.getAlias();
-        mapOut        = new HsqlHashMap();
-
-        keys          = mapIn.keys();
+        mapIn  = database.getAlias();
+        mapOut = new HsqlHashMap();
+        keys   = mapIn.keys();
 
         while (keys.hasMoreElements()) {
-            key       = keys.nextElement();
-            value     = mapIn.get(key);
+            key     = keys.nextElement();
+            value   = mapIn.get(key);
             keyList = (HsqlArrayList) mapOut.get(value);
 
             if (keyList == null) {
@@ -346,12 +352,14 @@ final class DINameSpace {
     }
 
     static String getMethodFQN(Method m) {
-        return m == null
-        ? null
-        : m.getDeclaringClass().getName() + '.' + m.getName();
+
+        return m == null ? null
+                         : m.getDeclaringClass().getName() + '.'
+                           + m.getName();
     }
 
-    /** Retrieves the name of the schema corresponding to the indicated object,
+    /**
+     * Retrieves the name of the schema corresponding to the indicated object,
      * in the context of the specified <code>Session</code>.<p>
      *
      * The current implementation makes the determination as follows: <p>
@@ -398,16 +406,19 @@ final class DINameSpace {
         }
 
         if (o instanceof String) {
-           // maybe the name of a DOMAIN?
+
+            // maybe the name of a DOMAIN?
             if (Column.hTypes.get(o) != null) {
                 return DEFN_SCHEMA;
             }
+
             // Class name?
             if (isBuiltin((String) o)) {
                 return DEFN_SCHEMA;
             }
+
             try {
-                o = classForName((String)o);
+                o = classForName((String) o);
             } catch (Exception e) {
                 return null;
             }
@@ -422,7 +433,8 @@ final class DINameSpace {
         }
 
         if (c != null) {
-            return (isBuiltin(c)) ? DEFN_SCHEMA : PUB_SCHEMA;
+            return (isBuiltin(c)) ? DEFN_SCHEMA
+                                  : PUB_SCHEMA;
         }
 
         Table table = null;
@@ -440,74 +452,52 @@ final class DINameSpace {
         } else if (table.tableType == Table.SYSTEM_TABLE) {
             return DEFN_SCHEMA;
         } else if (table.isTemp()) {
-            int id = table.ownerSessionId;
-            HsqlArrayList sList = database.cSession;
-            int size = sList.size();
-            for (int i = 0; i < size; i++) {
-                Session s = (Session) sList.get(i);
-                if (s != null && s.getId() == id) {
-                    return s.getUsername();
-                }
+            int     id = table.ownerSessionId;
+            Session s  = database.sessionManager.getSession(id);
+
+            if (s != null && s.getId() == id) {
+                return s.getUsername();
             }
+
             return null;
         } else {
             return PUB_SCHEMA;
         }
     }
 
-    /** @return
+    /**
+     * @return
      * @param clazz
      */
     boolean isBuiltin(Class clazz) {
-        return clazz == null
-        ? false
-        : builtin.contains(clazz.getName());
+        return clazz == null ? false
+                             : builtin.contains(clazz.getName());
     }
 
-    /** @param className
+    /**
+     * @param className
      * @return
      */
     boolean isBuiltin(String name) {
-        return (name==null)
-        ? false
-        : builtin.contains(name);
+        return (name == null) ? false
+                              : builtin.contains(name);
     }
 
-    /** @return
+    /**
+     * @return
      * @param index
      */
     Table tableForIndex(Index index) {
-        return index == null
-        ? null
-        : tableForIndexName(index.getName().name);
+        return index == null ? null
+                             : tableForIndexName(index.getName().name);
     }
 
     Table tableForIndexName(String indexName) {
-
-        HsqlArrayList tables;
-        int      size;
-        Table    table;
-
         if (indexName == null) {
             return null;
         }
-
-        // PRE:  we assume that if the session is non-null,
-        // then it has a valid, open-for-business database
-        // member attribute
-
-        tables    = database.getTables();
-        size      = tables.size();
-
-        for (int i = 0; i < size; i++) {
-            table = (Table) tables.get(i);
-
-            if (table.getIndex(indexName) != null) {
-                return table;
-            }
-        }
-
-        return null;
+        HsqlName tableName = database.indexNameList.getOwner(indexName);
+        return database.findUserTable(tableName.name);
     }
 
     String withoutCatalog(String name) {
@@ -517,7 +507,6 @@ final class DINameSpace {
         }
 
         String cat_dot = getCatalogName(name) + ".";
-
         String out;
 
         if (name.startsWith(cat_dot)) {
@@ -532,18 +521,19 @@ final class DINameSpace {
     String withoutDefnSchema(String name) {
 
         return !reportSchemas && name.startsWith(DEFN_SCHEMA_DOT)
-        ? name.substring(DEFN_SCHEMA_DOT_LEN)
-        : name;
+               ? name.substring(DEFN_SCHEMA_DOT_LEN)
+               : name;
     }
 
     String withoutInfoSchema(String name) {
 
         return !reportSchemas && name.startsWith(INFO_SCHEMA_DOT)
-        ? name.substring(INFO_SCHEMA_DOT_LEN)
-        : name;
+               ? name.substring(INFO_SCHEMA_DOT_LEN)
+               : name;
     }
 
-    /** Retrieves an <code>Enumeration</code> object describing the Java
+    /**
+     * Retrieves an <code>Enumeration</code> object describing the Java
      * <code>Method</code> objects that are both the entry points
      * to executable SQL database objects, such as SQL functions and
      * stored procedures, and that are accessible within the current
@@ -587,7 +577,8 @@ final class DINameSpace {
      * @throws SQLException if a database access error occurs
      *
      */
-    Enumeration enumRoutineMethods(String className, boolean andAliases) throws SQLException {
+    Enumeration enumRoutineMethods(String className,
+                                   boolean andAliases) throws SQLException {
 
         Class         clazz;
         Method[]      methods;
@@ -601,7 +592,7 @@ final class DINameSpace {
         // we want all methods listed into an enumerable set
         methodSet   = new HsqlHashSet();
         invAliasMap = andAliases ? getInverseAliasMap()
-        : null;
+                                 : null;
 
         try {
             clazz = classForName(className);
@@ -645,7 +636,8 @@ final class DINameSpace {
         return methodSet.elements();
     }
 
-    /** Retrieves an <code>Enumeration</code> object describing the
+    /**
+     * Retrieves an <code>Enumeration</code> object describing the
      * fully qualified names of all Java <code>Class</code> objects
      * that are both trigger body implementations and that are accessible
      * (whose fire method can potentially be invoked) by actions upon the
@@ -660,7 +652,8 @@ final class DINameSpace {
      *        specified <code>User</code>.
      *
      */
-    Enumeration enumAccessibleTriggerClassNames(User user) throws SQLException {
+    Enumeration enumAccessibleTriggerClassNames(User user)
+    throws SQLException {
 
         Table           table;
         Class           clazz;
@@ -671,7 +664,7 @@ final class DINameSpace {
         HsqlArrayList   tableList;
         int             listSize;
 
-        classSet = new HsqlHashSet();
+        classSet  = new HsqlHashSet();
         tableList = database.getTables();
 
         for (int i = 0; i < tableList.size(); i++) {
@@ -700,9 +693,9 @@ final class DINameSpace {
                     triggerDef = (TriggerDef) triggerList.get(k);
 
                     if (triggerDef == null ||!triggerDef.valid
-                    || triggerDef.trig == null
-                    ||!user.isAccessible(
-                    table, TriggerDef.indexToRight(k))) {
+                            || triggerDef.trig == null
+                            ||!user.isAccessible(
+                                table, TriggerDef.indexToRight(k))) {
                         continue;
                     }
 
@@ -714,7 +707,8 @@ final class DINameSpace {
         return classSet.elements();
     }
 
-    /** Retrieves an <code>Enumeration</code> object describing the Java
+    /**
+     * Retrieves an <code>Enumeration</code> object describing the Java
      * distinct <code>Method</code> objects that are both the entry points
      * to trigger body implementations and that are accessible (can potentially
      * be fired) within the current execution context. <p>
@@ -730,7 +724,8 @@ final class DINameSpace {
      * @throws SQLException if a database access error occurs.
      *
      */
-    Enumeration enumAccessibleTriggerMethods(Session session) throws SQLException {
+    Enumeration enumAccessibleTriggerMethods(Session session)
+    throws SQLException {
 
         Table           table;
         Class           clazz;
@@ -804,7 +799,8 @@ final class DINameSpace {
         return methodList.elements();
     }
 
-    /** Retrieves a composite enumeration consiting of the elements from
+    /**
+     * Retrieves a composite enumeration consiting of the elements from
      * {@link #_enumerateAllRoutineMethods} and
      * {@link #_enumerateAllTriggerMethods}.
      * @param andAliases true if the alias lists for routine method elements are to be generated.
@@ -814,7 +810,9 @@ final class DINameSpace {
      * {@link #_enumerateAllTriggerMethods}.
      *
      */
-    Enumeration enumAllAccessibleMethods(Session session, boolean andAliases) throws SQLException {
+    Enumeration enumAllAccessibleMethods(Session session,
+                                         boolean andAliases)
+                                         throws SQLException {
 
         Enumeration out;
         Enumeration classNames;
@@ -830,34 +828,15 @@ final class DINameSpace {
             out       = new CompositeEnumeration(out, methods);
         }
 
-        return new CompositeEnumeration(out,enumAccessibleTriggerMethods(session));
+        return new CompositeEnumeration(
+            out, enumAccessibleTriggerMethods(session));
     }
 
-    /** @return
+    /**
+     * @return
      *
      */
     HsqlArrayList listVisibleSessions(Session session) {
-
-        HsqlArrayList in;
-        HsqlArrayList out;
-        Session       observed;
-        boolean       isObserverAdmin = session.isAdmin();
-        int           observerId      = session.getId();
-
-        in  = database.cSession;
-        out = new HsqlArrayList();
-
-        for (int i = 0; i < in.size(); i++) {
-            observed = (Session) in.get(i);
-
-            if (observed == null) {
-                // do nothing
-            } else if (isObserverAdmin || observed.getId() == observerId) {
-                out.add(observed);
-            }
-        }
-
-        return out;
+        return database.sessionManager.listVisibleSessions(session);
     }
-
 }

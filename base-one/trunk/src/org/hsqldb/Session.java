@@ -138,8 +138,8 @@ class Session {
         dDatabase    = db;
         uUser        = user;
         tTransaction = new HsqlArrayList();
-        isAutoCommit  = autocommit;
-        isReadOnly    = readonly;
+        isAutoCommit = autocommit;
+        isReadOnly   = readonly;
         savepoints   = new UnifiedTable(Object.class, 2, 4, 4);
 
         savepoints.sort(0, true);
@@ -173,7 +173,7 @@ class Session {
         tTransaction  = null;
         savepoints    = null;
         intConnection = null;
-        isClosed       = true;
+        isClosed      = true;
     }
 
     /**
@@ -286,7 +286,8 @@ class Session {
     void addTransactionDelete(Table table, Object row[]) throws SQLException {
 
         if (!isAutoCommit) {
-            Transaction t = new Transaction(true, isNestedTransaction,table, row);
+            Transaction t = new Transaction(true, isNestedTransaction, table,
+                                            row);
 
             tTransaction.add(t);
         }
@@ -302,7 +303,8 @@ class Session {
     void addTransactionInsert(Table table, Object row[]) throws SQLException {
 
         if (!isAutoCommit) {
-            Transaction t = new Transaction(false,isNestedTransaction, table, row);
+            Transaction t = new Transaction(false, isNestedTransaction,
+                                            table, row);
 
             tTransaction.add(t);
         }
@@ -417,9 +419,9 @@ class Session {
         isNestedOldAutoCommit = isAutoCommit;
 
         // now all transactions are logged
-        isAutoCommit          = false;
+        isAutoCommit        = false;
         nestedOldTransIndex = tTransaction.size();
-        isNestedTransaction   = true;
+        isNestedTransaction = true;
     }
 
     /**
@@ -526,8 +528,13 @@ class Session {
         return script;
     }
 
+    String getAutoCommitStatement(boolean auto) {
+        return auto ? "SET AUTOCOMMIT TRUE"
+                    : "SET AUTOCOMMIT FALSE";
+    }
+
     /**
-     * @return  scripting for the last statement.
+     * @return  internal connection.
      */
     jdbcConnection getInternalConnection() throws SQLException {
 

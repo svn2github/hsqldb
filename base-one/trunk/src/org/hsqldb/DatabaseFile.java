@@ -110,6 +110,8 @@ class DatabaseFile extends RandomAccessFile {
     public void seek(long newPos) throws IOException {
 
         if (length() < newPos) {
+            super.seek(length());
+
             for (long ix = length(); ix < newPos; ix++) {
                 write(0);
             }

@@ -79,6 +79,7 @@ class DataFileDefrag {
             Trace.printSystemOut(t.getName().name + " complete");
         }
 
+// erik        int pos = (int) dest.getFilePointer() / cacheFileScale;
         int pos = (int) dest.getFilePointer();
 
         dest.seek(Cache.FREE_POS_POS);
@@ -123,6 +124,7 @@ class DataFileDefrag {
             100000);
         int[] rootsArray  = table.getIndexRootsArray();
         Index index       = table.getPrimaryIndex();
+// erik        long  pos         = destFile.getFilePointer() / cacheFileScale;
         long  pos         = destFile.getFilePointer();
         int[] pointerPair = new int[2];
         int   count       = 0;
@@ -137,6 +139,7 @@ class DataFileDefrag {
 
             pointerLookup.addRow(pointerPair);
 
+// erik            pos += row.storageSize / cacheFileScale;
             pos += row.storageSize;
 
             if (count % 50000 == 0) {
@@ -158,11 +161,12 @@ class DataFileDefrag {
 
         for (Node n = index.first(); n != null; count++) {
             CachedRow row        = (CachedRow) n.getRow();
+// erik            int       rowPointer = (int) destFile.getFilePointer() / cacheFileScale;
             int       rowPointer = (int) destFile.getFilePointer();
 
             rowOut.reset();
 
-// should go to CachedRow
+// code should be moved to CachedRow.java
             rowOut.writeSize(row.storageSize);
 
             Node rownode = row.nPrimaryNode;

@@ -327,24 +327,16 @@ class CachedRow extends Row {
      */
     CachedRow free() throws SQLException {
 
+        CachedRow nextrow = rNext;
+
         rLast.rNext = rNext;
         rNext.rLast = rLast;
-
-/*
-        if (rNext == this) {
-            rNext = rLast = null;
-        }
-
-        return rNext;
-*/
-        CachedRow nextrow = rNext;
-        rNext = rLast = null;
+        rNext       = rLast = null;
 
         if (nextrow == this) {
             return null;
         }
 
         return nextrow;
-
     }
 }

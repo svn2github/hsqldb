@@ -68,81 +68,114 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.HsqlArrayList;
-import org.hsqldb.lib.HsqlHashMap;
-import java.io.IOException;
-import java.sql.SQLException;
-import org.hsqldb.lib.FileUtil;
-import org.hsqldb.lib.StopWatch;
 
-class ScriptRunner {
+public class SessionManager {
+
+    private HsqlArrayList sessionList = new HsqlArrayList();
+
+    public SessionManager() {}
 
     /**
-     *  This is used to read the *.log file and manage any necessary
-     *  transaction rollback.
+     *  Binds the specified Session object into this Database object's active
+     *  session registry. This method is typically called from {@link
+     *  #connect} as the final step, when a successful connection has been
+     *  made.
      *
+     * @param  session the Session object to register
+     */
+    void registerSession(Session session) {
+
+        int i    = 0;
+        int size = sessionList.size();
+
+        for (; i < size; i++) {
+            if (sessionList.get(i) == null) {
+                break;
+            }
+        }
+
+        if (i == size) {
+            sessionList.setSize(i + 1);
+        }
+
+        sessionList.set(i, session);
+    }
+
+    void closeAllSessions() {
+
+        // don't disconnect system user; need it to save database
+        for (int i = 1, tsize = sessionList.size(); i < tsize; i++) {
+            Session s = (Session) sessionList.get(i);
+
+            if (s != null) {
+                s.disconnect();
+            }
+        }
+    }
+
+    /**
+     *  Responsible for handling the execution DISCONNECT SQL statements
+     *
+     * @param  session
+     * @return
      * @throws  SQLException
      */
-    static void runScript(Database dDatabase, String sFileScript,
-                          int logType) throws SQLException {
+    Result processDisconnect(Session session) {
 
-        if (!FileUtil.exists(sFileScript)) {
-            return;
-        }
+        int i    = 0;
+        int size = sessionList.size();
 
-        HsqlHashMap sessionMap = new HsqlHashMap();
-        Session     sysSession = dDatabase.getSysSession();
-        Session     current    = sysSession;
+        if (!session.isClosed()) {
+            session.disconnect();
 
-        try {
-            StopWatch sw = new StopWatch();
-            DatabaseScriptReader scr =
-                DatabaseScriptReader.newDatabaseScriptReader(dDatabase,
-                    sFileScript, logType);
+            for (; i < size; i++) {
+                if (sessionList.get(i) == session) {
+                    sessionList.set(i, null);
 
-            while (true) {
-                String s = scr.readLoggedStatement();
-
-                if (s == null) {
                     break;
                 }
-
-                if (s.startsWith("/*C")) {
-                    Integer id = new Integer(s.substring(3, s.indexOf('*',
-                        4)));
-
-                    current = (Session) sessionMap.get(id);
-
-                    if (current == null) {
-                        current = dDatabase.newSession(sysSession.getUser(),
-                                                       false);
-
-                        sessionMap.put(id, current);
-                        dDatabase.sessionManager.registerSession(current);
-                    }
-
-                    s = s.substring(s.indexOf('/', 1) + 1);
-                }
-
-                if (s.length() != 0) {
-                    Result result = dDatabase.execute(s, current);
-
-                    if (result != null && result.iMode == Result.ERROR) {
-                        Trace.printSystemOut("error in " + sFileScript
-                                             + " line: "
-                                             + scr.getLineNumber());
-                        Trace.printSystemOut(result.sError);
-                    }
-                }
             }
-
-            scr.close();
-            dDatabase.sessionManager.closeAllSessions();
-
-            if (Trace.TRACE) {
-                Trace.trace("restore time: " + sw.elapsedTime());
-            }
-        } catch (IOException e) {
-            throw Trace.error(Trace.FILE_IO_ERROR, sFileScript + " " + e);
         }
+
+        return new Result();
+    }
+
+    void clearAll() {
+        sessionList.clear();
+    }
+
+    HsqlArrayList listVisibleSessions(Session session) {
+
+        HsqlArrayList in  = sessionList;
+        HsqlArrayList out = new HsqlArrayList();
+        Session       observed;
+        boolean       isObserverAdmin = session.isAdmin();
+        int           observerId      = session.getId();
+
+        for (int i = 0; i < in.size(); i++) {
+            observed = (Session) in.get(i);
+
+            if (observed == null) {
+
+                // do nothing
+            } else if (isObserverAdmin || observed.getId() == observerId) {
+                out.add(observed);
+            }
+        }
+
+        return out;
+    }
+
+    Session getSession(int id) {
+
+        for (int i = 0; i < sessionList.size(); i++) {
+            Session s = (Session) sessionList.get(i);
+
+            if (s != null && s.getId() == id) {
+                return s;
+            }
+        }
+
+        return null;
     }
 }

@@ -97,32 +97,31 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         // char and varchar sorting in charset of the current jvm Locale
         setProperty("sql.compare_in_locale", false);
 
+        // removed from 1.7.2 - sql.strict_fk is always enforced
         // if true, requires a pre-existing unique index for foreign key
         // referenced column and returns an error if index does not exist
         // 1.61 creates a non-unique index if no index exists
-        setProperty("sql.strict_fk", false);
-
+        // setProperty("sql.strict_fk", false);
+        // removed from 1.7.2
         // has no effect if sql_strict_fk is true, otherwise if true,
         // creates a unique index for foreign keys instead of non-unique
-        setProperty("sql.strong_fk", true);
-
+        // setProperty("sql.strong_fk", true);
+        // the two properties below are meant for attempting to open an
+        // existing database with all its files *.properties, *script and
+        // *.data.
         // the earliest version that can open this database
-        // this is set to 1.7.0 when the db is written to
+        // this is set to 1.7.2 when the db is written to
         setProperty("hsqldb.compatible_version", "1.6.0");
-
-        // the version that created this database
-        // once created, this won't change if db is used with a future version
-        setProperty("hsqldb.original_version", "1.7.2");
 
         // data format of the cache file
         // this is set to 1.7.0 when a new *.data file is created
         setProperty("hsqldb.cache_version", "1.6.0");
 
-        // garbage collect per Record or Cache Row objects created
-        // the default, "0" means no garbage collection is forced by
-        // hsqldb (the Java Runtime will do it's own garbage collection
-        // in any case). Based on tests by meissnersd@users
+        // the version that created this database
+        // once created, this won't change if db is used with a future version
+        setProperty("hsqldb.original_version", "1.7.2");
         /*
+            garbage collection with gc_interval
             Setting this value can be useful when HSQLDB is used as an
             in-process part of an application. The minimum practical
             amount is probably "10000" and the maximum "1000000"
@@ -137,9 +136,20 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
             Of course there is a speed penalty for setting the value
             too low and doing garbage collection too often.
+
+            This was introduced as a result of tests by Karl Meissner
+            (meissnersd@users)
         */
 
-        //setProperty("hsqldb.gc_interval", "0");
+        // garbage collect per Record or Cache Row objects created
+        // the default, "0" means no garbage collection is forced by
+        // hsqldb (the Java Runtime will do it's own garbage collection
+        // in any case).
+        setProperty("hsqldb.gc_interval", "0");
+
+        // this property is either 1 or 8
+        setProperty("hsqldb.cache_file_scale", "1");
+
         // number of rows from CACHED tables kept constantly in memory
         // the number of rows in up to 3 * (2 to the power of
         // cache_scale value).
@@ -157,6 +167,18 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         setProperty("modified", "no");
 
         // the property "version" is also set to the current version
+        //
+        // the following properties can be set by the user as defaults for
+        // text tables. the default values are shown.
+        // "textdb.fs", ","
+        // "textdb.vs", ",";
+        // "textdb.lvs", ","
+        // "textdb.ignore_first", false
+        // "textdb.quoted", true
+        // "textdb.all_quoted", false
+        // "textdb.encoding", "ASCII"
+        // "textdb.cache_scale", 10  -- allowed range 8-16
+        // "textdb.cache_size_scale", 12  -- allowed range 8-20
     }
 
     public void close() throws SQLException {
@@ -233,12 +255,15 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         }
 
         setProperty("version", jdbcDriver.VERSION);
+        setProperty("hsqldb.cache_version", "1.7.0");
+        setProperty("hsqldb.compatible_version", "1.7.2");
         setProperty("sql.strict_fk", true);
         save();
 
         return true;
     }
 
+// fredt@users - patch suggested by Ian Roberts clarry@users
     /**
      *  check by trying to delete the properties file this will not work if
      *  some application has the file open this is why the properties file
@@ -255,10 +280,12 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         if (Trace.TRACE) {
             Trace.trace();
         }
-
-        if ((new File(fileName + ".properties")).delete() == false) {
+        File f = new File(fileName + ".properties");
+        if (f.delete() == false) {
+            f = null;
             return true;
         }
+        f = null;
 
         // the file was deleted, so recreate it now
         save();

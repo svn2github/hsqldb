@@ -357,6 +357,27 @@ class Table {
     }
 
     /**
+     *  Get any foreign key constraint equivalent to the column sets
+     *
+     * @param  col column list array
+     * @param  unique for the index
+     * @return
+     */
+    Constraint getConstraintForColumns(Table tablemain, int[] colmain,
+                                       int[] colref) {
+
+        for (int i = 0, size = vConstraint.size(); i < size; i++) {
+            Constraint c = (Constraint) vConstraint.get(i);
+
+            if (c.isEquivalent(tablemain, colmain, this, colref)) {
+                return c;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      *  Method declaration
      *
      * @param  from
@@ -811,7 +832,7 @@ class Table {
             Index currentindex = getIndex(i);
             int   indexcol[]   = currentindex.getColumns();
 
-            if (ArrayUtil.haveEquality(indexcol, col, col.length, unique)) {
+            if (ArrayUtil.haveEqualArrays(indexcol, col, col.length)) {
                 if (!unique || currentindex.isUnique()) {
                     return currentindex;
                 }
@@ -1178,14 +1199,6 @@ class Table {
 
         Index newindex = new Index(name, this, col, type, unique, s);
 
-// fredt@users 20030219 - patch 1.7.2 - no duplicate indexes
-/*
-        for (int i = 0; i < iIndexCount; i++) {
-            if (newindex.isEquivalent(getIndex(i))) {
-                throw Trace.error(Trace.INDEX_ALREADY_EXISTS);
-            }
-        }
-*/
         vIndex.add(newindex);
 
         iIndexCount = vIndex.size();
@@ -1513,8 +1526,8 @@ class Table {
     void insertNoCheck(Object row[], Session c,
                        boolean log) throws SQLException {
 
-        // this is necessary when rebuilding from the *.script but no
-        // for transaction rollbadk
+        // this is necessary when rebuilding from the *.script but not
+        // for transaction rollback
         setIdentityColumn(row, c);
 
         // this step is not necessary for rebuilding from the *.script file
@@ -1615,7 +1628,7 @@ class Table {
             }
 
             if (c != null) {
-                c.setLastIdentity(id); // don't do this if id is internal column
+                c.setLastIdentity(id);    // don't do this if id is internal column
             }
         }
 
@@ -1951,6 +1964,11 @@ class Table {
      *
      *
      */
+
+// fredt - todo - cascading updates will be allowed only for backward
+// referencing FK's (will be disallowed in ALTER TABLE when FK is forward
+// referencing) so any cyclic condiiton will be limited to same-table FK's
+// which can be spotted within this routine.
     void checkCascadeUpdate(Object[] orow, Object[] nrow, Session session,
                             int[] cols, Table ref,
                             boolean update) throws SQLException {

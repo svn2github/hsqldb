@@ -53,11 +53,6 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
         rowIn = new BinaryServerRowInput();
     }
 
-    void readAll(Session session) throws IOException, SQLException {
-        readDDL(session);
-        readExistingData(session);
-    }
-
     protected void readDDL(Session session) throws IOException, SQLException {
         readSingleColumnResult(session);
     }
@@ -102,10 +97,9 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
             int checkCount = readTableTerm();
 
             if (j != checkCount) {
-                Trace.printSystemOut("table " + s + " row count error : " + j
-                                     + " read, needed " + checkCount);
-
-                // error
+                throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
+                                  "table " + s + " row count error : " + j
+                                  + " read, needed " + checkCount);
             }
         }
     }
@@ -131,7 +125,14 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
     protected int readTableTerm() throws IOException, SQLException {
 
         rowIn.reset();
-        dataStreamIn.read(rowIn.getBuffer(), 0, 4);
+
+        int count  = 0;
+        int length = 4;
+
+        while (dataStreamIn.available() > 0 && count < length) {
+            count += dataStreamIn.read(rowIn.getBuffer(), count,
+                                       length - count);
+        }
 
         return rowIn.readInt();
     }
@@ -151,8 +152,8 @@ class BinaryDatabaseScriptReader extends DatabaseScriptReader {
         int checkOp = rowIn.readIntData();
 
         if (checkOp != DatabaseScriptWriter.INSERT) {
-
-            // error
+            throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
+                              "wrong data for insert operation");
         }
 
         return s;
