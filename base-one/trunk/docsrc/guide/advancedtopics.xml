@@ -1,4 +1,4 @@
-<!-- $Id: advancedtopics.xml,v 1.18 2004/08/09 17:10:10 fredt Exp $ -->
+<!-- $Id: advancedtopics.xml,v 1.19 2004/08/12 20:43:19 fredt Exp $ -->
 
 <chapter id='advanced-chapter'>
     <title id='advanced-title'>Advanced Topics</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.18 $</edition>
-        <pubdate>$Date: 2004/08/09 17:10:10 $</pubdate>
+        <edition>$Revision: 1.19 $</edition>
+        <pubdate>$Date: 2004/08/12 20:43:19 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Advanced</keyword>
@@ -234,7 +234,8 @@
                 <row>
                     <entry namest='c1' nameend='c3'>
                     <para>
-                    When true,
+                    This property is used for compatibility with other JDBC
+					driver implementations. When true (the default),
                     <literal>ResultSet.getColumnName(int c)</literal>
                     returns the underlying column name
                     </para> <para>
@@ -245,6 +246,11 @@
                     <informalexample><programlisting>
     jdbc:hsqldb:hsql://localhost/enrollments;get_column_name=false
                     </programlisting></informalexample>
+                    <para>
+                    When a ResultSet is used inside a user-defined stored
+					procedure, the default, true, is always used for this
+					property.
+                    </para>
                     </entry>
                 </row>
                 <row>

@@ -192,8 +192,12 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
             return;
         }
 
-        columnCount    = r.getColumnCount();
-        useColumnName  = props.isPropertyTrue("get_column_name");
+        columnCount = r.getColumnCount();
+
+        // fredt -  props is null for internal connections, so always use the default behaviour in this case
+        useColumnName = props == null ? true
+                                      : props.isPropertyTrue(
+                                          "get_column_name");
         columnMetaData = new jdbcColumnMetaData[columnCount];
         rmd            = r.metaData;
 
