@@ -171,8 +171,7 @@ class TableWorks {
         }
 
         if (expTable.isTemp() != table.isTemp()) {
-            throw Trace.error(Trace.FOREIGN_KEY_NOT_ALLOWED,
-                              "both tables must be permanent or temporary");
+            throw Trace.error(Trace.FOREIGN_KEY_NOT_ALLOWED);
         }
 
         boolean isforward = table.database.getTableIndex(table)
@@ -181,9 +180,8 @@ class TableWorks {
             true);
 
         if (exportindex == null) {
-            throw Trace.error(Trace.INDEX_NOT_FOUND,
-                              "needs unique index on referenced columns of "
-                              + expTable.getName().statementName);
+            throw Trace.error(Trace.SQL_CONSTRAINT_REQUIRED,
+                              expTable.getName().statementName);
         }
 
         Index    fkindex = table.getConstraintIndexForColumns(fkcol, false);
@@ -392,7 +390,9 @@ class TableWorks {
 
         if (c == null) {
             throw Trace.error(Trace.CONSTRAINT_NOT_FOUND,
-                              name + " in table: " + table.getName().name);
+                              Trace.TableWorks_dropConstraint, new Object[] {
+                name, table.getName().name
+            });
         }
 
         if (c.getType() == Constraint.MAIN) {

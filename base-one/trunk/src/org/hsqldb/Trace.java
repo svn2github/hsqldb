@@ -277,7 +277,19 @@ public class Trace extends PrintWriter {
      Logger_checkFilesInJar1                        = 162,
      Logger_checkFilesInJar2                        = 163,
      TRIGGER_ALREADY_EXISTS                         = 164,
-     ASSERT_DIRECT_EXEC_WITH_PARAM                  = 165;
+     ASSERT_DIRECT_EXEC_WITH_PARAM                  = 165,
+     DataFileCache_backup                           = 166,
+     Expression_compareValues                       = 167,
+     Parser_parseLimit1                             = 168,
+     Parser_parseLimit2                             = 169,
+     SQL_CONSTRAINT_REQUIRED                        = 170,
+     TableWorks_dropConstraint                      = 171,
+     TEXT_TABLE_SOURCE_FILENAME                     = 172,
+     TEXT_TABLE_SOURCE_VALUE_MISSING                = 173,
+     TEXT_TABLE_SOURCE_SEPARATOR                    = 174,
+     UNSUPPORTED_PARAM_CLASS                        = 175,
+     JDBC_NULL_STREAM                               = 176
+    ;
 
     //
     static String MESSAGE_TAG = "$$";
@@ -330,7 +342,7 @@ public class Trace extends PrintWriter {
         "S1011 Savepoint not found",                                          //
         "37000 Label required for value list",
         "37000 Wrong data type or data too long in DEFAULT clause",
-        "S0011 Foreign key not allowed",
+        "S0011 Foreign key not allowed, both tables must be permanent or temporary",
         "S1000 The table's data source for this connection is not known",
         "S0000 User-defined index or constraint name cannot begin with SYS_",
         "S0011 Attempt to drop a foreign key index",
@@ -357,7 +369,7 @@ public class Trace extends PrintWriter {
         "S1000 Out of Memory",                                                //
         "S1000 This operation is not supported", "22019 Invalid identifier",
         "22019 Invalid TEXT table source string",
-        "S1000 bad TEXT table source file",
+        "S1000 bad TEXT table source file - line number: $$ $$",
         "23000 negative value not allowed for identity column",
         "S1000 error in script file",                                         //
         "37000 NULL in value list",                                           //
@@ -446,7 +458,14 @@ public class Trace extends PrintWriter {
         " $$, requires $$",                                                   // Tokenizer.getThis()
         "path is null", "file does not exist: ", "wrong resource protocol: ",
         "S0002 Trigger already exists",
-        "S0000 direct execute with param count > 0",
+        "S0000 direct execute with param count > 0", "while creating ",       // DataFileCache_backup
+        "Expression.compareValues",                                           // Expression_compareValues
+        "LIMIT n m",                                                          // Parser_parseLimit1
+        "TOP n",                                                              // Parser_parseLimit2
+        "S0011 primary or unique constraint required on the columns of the main table",
+        "$$ in table: $$", "no file name specified for source",
+        "no value for: ", "zero length separator",
+        "Unsupported parameter/return value class: ", "input stream is null",
     };
 
     /** Used during tests. */
@@ -532,7 +551,7 @@ public class Trace extends PrintWriter {
     }
 
     static HsqlException error(int code, int code2, Object add) {
-        return getError(code, getMessage(code2) + add);
+        return error(code, getMessage(code2) + add);
     }
 
     /**
@@ -544,7 +563,7 @@ public class Trace extends PrintWriter {
      *
      * @return
      */
-    static HsqlException getError(int code, Object add) {
+    static HsqlException error(int code, Object add) {
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
         code = Math.abs(code);
@@ -651,20 +670,7 @@ public class Trace extends PrintWriter {
      * @return
      */
     public static HsqlException error(int code) {
-        return getError(code, null);
-    }
-
-    /**
-     * Method declaration
-     *
-     *
-     * @param code
-     * @param s
-     *
-     * @return
-     */
-    public static HsqlException error(int code, String s) {
-        return getError(code, s);
+        return error(code, null);
     }
 
     /**
@@ -677,7 +683,7 @@ public class Trace extends PrintWriter {
      * @return
      */
     public static HsqlException error(int code, int i) {
-        return getError(code, String.valueOf(i));
+        return error(code, String.valueOf(i));
     }
 
     /**
@@ -705,7 +711,7 @@ public class Trace extends PrintWriter {
                       Object add) throws HsqlException {
 
         if (!condition) {
-            throw getError(code, add);
+            throw error(code, add);
         }
     }
 
@@ -719,7 +725,7 @@ public class Trace extends PrintWriter {
      * @throws HsqlException
      */
     static void throwerror(int code, Object add) throws HsqlException {
-        throw getError(code, add);
+        throw error(code, add);
     }
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
@@ -920,24 +926,6 @@ public class Trace extends PrintWriter {
      * @param boolean condition
      * @param int code
      * @param String add1
-     * @param int add2
-     *
-     * @throws HsqlException
-     */
-    static void check(boolean condition, int code, String add1,
-                      int add2) throws HsqlException {
-
-        if (!condition) {
-            check(condition, code, add1, String.valueOf(add2), null, null);
-        }
-    }
-
-    /**
-     * Throws exception if condition is false
-     *
-     * @param boolean condition
-     * @param int code
-     * @param String add1
      * @param String add2
      *
      * @throws HsqlException
@@ -997,8 +985,8 @@ public class Trace extends PrintWriter {
                 add += add4;
             }
 
-            throw getError(code, add.length() > 0 ? add
-                                                  : null);
+            throw error(code, add.length() > 0 ? add
+                                               : null);
         }
     }
 
@@ -1044,8 +1032,8 @@ public class Trace extends PrintWriter {
                 add += error;
             }
 
-            throw getError(ASSERT_FAILED, add.length() > 0 ? add
-                                                           : null);
+            throw error(ASSERT_FAILED, add.length() > 0 ? add
+                                                        : null);
         }
     }
 }

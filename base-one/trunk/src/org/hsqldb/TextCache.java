@@ -46,6 +46,8 @@ import org.hsqldb.lib.FileUtil;
  */
 
 // Ito Kazumitsu 20030328 - patch 1.7.2 - character encoding support
+
+/** @todo fredt - file error messages to Trace */
 class TextCache extends DataFileCache {
 
     //state of Cache
@@ -84,7 +86,8 @@ class TextCache extends DataFileCache {
         switch (tableprops.errorCodes.length) {
 
             case 0 :
-                throw Trace.error(Trace.TEXT_TABLE_SOURCE, "no filename");
+                throw Trace.error(Trace.TEXT_TABLE_SOURCE,
+                                  Trace.TEXT_TABLE_SOURCE_FILENAME);
             case 1 :
 
                 // source file name is the only key without a value
@@ -93,7 +96,8 @@ class TextCache extends DataFileCache {
 
             default :
                 throw Trace.error(Trace.TEXT_TABLE_SOURCE,
-                                  "no value for: " + tableprops.errorKeys[1]);
+                                  Trace.TEXT_TABLE_SOURCE_VALUE_MISSING,
+                                  tableprops.errorKeys[1]);
         }
 
         //-- Get separators:
@@ -106,7 +110,7 @@ class TextCache extends DataFileCache {
 
         if (fs.length() == 0 || vs.length() == 0 || lvs.length() == 0) {
             throw Trace.error(Trace.TEXT_TABLE_SOURCE,
-                              "zero length separator");
+                              Trace.TEXT_TABLE_SOURCE_SEPARATOR);
         }
 
         //-- Get booleans
@@ -497,7 +501,7 @@ class TextCache extends DataFileCache {
                 }
             }
         } catch (Exception e) {
-            throw Trace.getError(Trace.TEXT_FILE, e);
+            throw Trace.error(Trace.TEXT_FILE, e);
         }
 
         return r;

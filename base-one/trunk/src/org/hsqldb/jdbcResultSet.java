@@ -414,9 +414,10 @@ public class jdbcResultSet implements ResultSet {
     private HsqlProperties connProperties;
 
     /**
-     * The Statement that generated this result. <p>
+     * The Statement that generated this result. Null if the result is
+     * from DatabaseMetaData<p>
      */
-    Statement sqlStatement;
+    jdbcStatement sqlStatement;
 
     //------------------------ Package Attributes --------------------------
 
@@ -2559,7 +2560,9 @@ public class jdbcResultSet implements ResultSet {
 
         checkAvailable();
 
-        if (rows > 1 || rows < 0) {
+        if (rows < 0
+                || (sqlStatement.iMaxRows != 0
+                    && rows > sqlStatement.iMaxRows)) {
             throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT);
         }
     }
@@ -4267,7 +4270,7 @@ public class jdbcResultSet implements ResultSet {
      *    jdbcResultSet)
      */
     public Statement getStatement() throws SQLException {
-        return sqlStatement;
+        return (Statement) sqlStatement;
     }
 
     /**
@@ -5253,7 +5256,8 @@ public class jdbcResultSet implements ResultSet {
      */
     private void checkClosed() throws SQLException {
 
-        if (rResult == null) {
+        if (rResult == null
+                || (sqlStatement != null && sqlStatement.isClosed)) {
             throw jdbcDriver.sqlException(Trace.JDBC_RESULTSET_IS_CLOSED);
         }
     }

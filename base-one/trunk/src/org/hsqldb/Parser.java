@@ -556,7 +556,8 @@ class Parser {
             } catch (NumberFormatException ex) {
 
                 // todo: add appropriate error type and message to Trace.java
-                throw Trace.error(Trace.WRONG_DATA_TYPE, "LIMIT n m");
+                throw Trace.error(Trace.WRONG_DATA_TYPE,
+                                  Trace.Parser_parseLimit1);
             }
         } else if (token.equals(Token.T_TOP)) {
             String limEnd = tokenizer.getString();
@@ -567,7 +568,8 @@ class Parser {
             } catch (NumberFormatException ex) {
 
                 // todo: add appropriate error type and message to Trace.java
-                throw Trace.error(Trace.WRONG_DATA_TYPE, "TOP m");
+                throw Trace.error(Trace.WRONG_DATA_TYPE,
+                                  Trace.Parser_parseLimit2);
             }
         } else {
             tokenizer.back();

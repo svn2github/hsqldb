@@ -222,32 +222,6 @@ final class CompiledStatementExecutor {
     }
 
     /**
-     * Executes an INSERT_XXX statement.  The argument is
-     * checked to be of the correct type.
-     *
-     * @param cs a CompiledStatement of type CompiledStatement.INSERT_XXX
-     * @throws HsqlException if a database access error occurs
-     * @return the result of executing the statement
-     */
-    private Result executeInsertStatement(CompiledStatement cs)
-    throws HsqlException {
-
-        switch (cs.type) {
-
-            case CompiledStatement.INSERT_SELECT : {
-                return executeInsertSelectStatement(cs);
-            }
-            case CompiledStatement.INSERT_VALUES : {
-                return executeInsertValuesStatement(cs);
-            }
-            default :
-                String msg = "Unexpected compiled statement type: " + cs.type;
-
-                throw Trace.error(Trace.UNEXPECTED_EXCEPTION, msg);
-        }
-    }
-
-    /**
      * Executes an INSERT_SELECT statement.  It is assumed that the argument
      * is of the correct type.
      *

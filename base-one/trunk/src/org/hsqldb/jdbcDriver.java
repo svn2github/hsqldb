@@ -81,6 +81,40 @@ import java.util.Properties;
 // fredt@users 20030528 - patch 1.7.2 suggested by Gerhard Hiller - support for properties in URL
 
 /**
+ * The following comments are from the http://ldbc.sourceforge.net project.
+ * These are the issues with HSQLDB JDBC implementation that are currently
+ * not resolved. Other issues stated there have been resolved in 1.7.2.
+ *
+ * ResultSet.getString() on a DECIMAL data type should return the value
+ * formatted for example for DECIMAL(10,2) the returned value should be 0.00
+ * and not 0
+ *
+ * ResultSetMetaData precision and scale are not returned - always 0.
+ *
+ * Time format error: the following statement should work, but throws an exception:
+ * CREATE TABLE Test ( ID INT , Current DATETIME )
+ * insert into test values(1,'2002-01-01 0:0:0.0')
+ * This works:
+ * insert into test values(1,'2002-01-01 00:00:00.0')
+ *
+ * ABS(4) returns data type DECIMAL, should return data type INTEGER
+ *
+ * Should throw a exception if PreparedStatement.setObject(1,null) is called.
+ * See also JDBC API Tutorial and Reference, Second Edition,
+ * page 544, 24.1.5 Sending JDBC NULL as an IN parameter
+ *
+ * Statement / PreparedStatement setMaxFieldSize is ignored.
+ *
+ * The database should support at least Connection.TRANSACTION_READ_COMMITTED.
+ * Currently, only TRANSACTION_READ_UNCOMMITTED is supported.
+ *
+ * Statement.getQueryTimeout doesn't return the value set before.
+ *
+ * When autocommit is on, executing a query on a statement is
+ * supposed to close the old resultset. This is not implemented.
+ */
+
+/**
  *  Each JDBC driver must supply a class that implements the Driver
  *  interface. <p>
  *

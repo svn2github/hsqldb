@@ -392,7 +392,8 @@ public class DataFileCache extends Cache {
             // create a '.new' file; rename later
             FileUtil.compressFile(sName, newName);
         } catch (Exception e) {
-            throw Trace.error(Trace.FILE_IO_ERROR, "creating " + newName);
+            throw Trace.error(Trace.FILE_IO_ERROR,
+                              Trace.DataFileCache_backup + newName);
         }
     }
 

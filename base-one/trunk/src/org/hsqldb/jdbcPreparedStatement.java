@@ -920,9 +920,9 @@ implements java.sql.PreparedStatement {
         checkSetParameterIndex(parameterIndex);
 
         if (x == null) {
-            String msg = "input stream is null";
-
-            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+            throw jdbcDriver.sqlException(
+                Trace.error(
+                    Trace.INVALID_JDBC_ARGUMENT, Trace.JDBC_NULL_STREAM));
         }
 
         byte b[] = new byte[length];
@@ -1426,8 +1426,7 @@ implements java.sql.PreparedStatement {
      * <B>HSQLDB-Specific Information:</B> <p>
      *
      * Starting with HSQLDB 1.7.2, this feature is supported.  If the statement
-     * generates an update count, then a ResultSetMetaData object is retrieved
-     * whose column count is zero.
+     * generates an update count, then null is returned.
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1444,8 +1443,6 @@ implements java.sql.PreparedStatement {
 
         checkClosed();
 
-// CHECKME:
-// Is this correct?  Or is it supposed to be a zero-column rsmd object?
         if (isRowCount) {
             return null;
         }

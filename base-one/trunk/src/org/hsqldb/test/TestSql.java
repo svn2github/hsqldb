@@ -359,6 +359,10 @@ public class TestSql extends TestBase {
                 value        = rs.getDouble(2);
                 wasEqual     = Double.isNaN(value);
                 integerValue = rs.getInt(4);
+
+                // tests for conversion
+                // getInt on DECIMAL
+                integerValue = rs.getInt(1);
             }
 
             rs = stmnt.executeQuery("SELECT MAX(i) FROM t1");

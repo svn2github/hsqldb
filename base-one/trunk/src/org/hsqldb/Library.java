@@ -2094,8 +2094,7 @@ public class Library {
                     return null;
                 }
                 default : {
-                    throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED,
-                                      "org.hsqldb.Library: fID: " + fID);
+                    throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED);
                 }
             }
         } catch (Exception e) {

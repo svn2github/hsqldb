@@ -3273,8 +3273,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      *
      * Starting with 1.7.0, HSQLDB includes the new JDBC3 columns TYPE_CAT,
      * TYPE_SCHEM, TYPE_NAME and SELF_REFERENCING_COL_NAME in anticipation
-     * of JDBC3 compliant tools.  However, these columns are never filled in,
-     * since HSQLDB does not yet support the related features. <p>
+     * of JDBC3 compliant tools.<p>
      *
      * Starting with 1.7.2, there is an option to support this feature
      * to greater or lesser degrees.  See the documentation specific to the
@@ -5609,18 +5608,17 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
                 " IS NULL").toString();
         }
 
-        String v = isStr ? Column.createSQLString((String) val)
-                         : String.valueOf(val);
+        String v      = isStr ? Column.createSQLString((String) val)
+                              : String.valueOf(val);
+        String escape = "";
 
-// Obsolete: this is now optimized away at the engine for all
-//           non-parametric LIKE statements.
-//
-//        if (isStr && "LIKE".equalsIgnoreCase(op)
-//            && !(new Like(v, '\\', false)).hasWildcards()) {
-//            op = "=";
-//        }
+        // add the escape to like
+        if (isStr && "LIKE".equalsIgnoreCase(op)) {
+            escape = " ESCAPE '\\' ";
+        }
+
         return sb.append(" AND ").append(id).append(' ').append(op).append(
-            ' ').append(v).toString();
+            ' ').append(v).append(escape).toString();
     }
 
     /**
@@ -5656,6 +5654,11 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
     /**
      * The main SQL statement executor.  All SQL destined for execution
      * ultimately goes through this method. <p>
+     *
+     * The sqlStatement field for the result is set null to comply with
+     * ResultSet.getStatement() semantics for result sets that are not from
+     * a user supplied Statement object. (fredt)
+     *
      * @return the result of issuing the statement
      * @param statement SQL statement to execute
      * @throws SQLException is a database error occurs
@@ -5674,8 +5677,12 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // next, causing the jdbcResultSet's Result object to be nullified
         final int scroll = jdbcResultSet.TYPE_SCROLL_INSENSITIVE;
         final int concur = jdbcResultSet.CONCUR_READ_ONLY;
+        ResultSet r = connection.createStatement(scroll,
+            concur).executeQuery(sql);
 
-        return connection.createStatement(scroll, concur).executeQuery(sql);
+        ((jdbcResultSet) r).sqlStatement = null;
+
+        return r;
     }
 
     /**

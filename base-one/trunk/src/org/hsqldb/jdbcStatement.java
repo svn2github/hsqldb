@@ -153,7 +153,7 @@ public class jdbcStatement implements java.sql.Statement {
      * object now explicitly closes all of its open jdbcXXXStatement objects
      * when it is closed.
      */
-    private boolean isClosed;
+    boolean isClosed;
 
     /** Is escape processing enabled? */
     private boolean isEscapeProcessing = true;
@@ -190,7 +190,6 @@ public class jdbcStatement implements java.sql.Statement {
     // For example, if two threads call execute() then both call getResult() in
     // the wrong order, the ResultSet object for one call could actually belong
     // to the other call.
-    // It is possible for two threads to call a method
 
     /**
      * <!-- start generic documentation -->
@@ -367,7 +366,12 @@ public class jdbcStatement implements java.sql.Statement {
      * @see #getMaxFieldSize
      */
     public void setMaxFieldSize(int max) throws SQLException {
+
         checkClosed();
+
+        if (max < 0) {
+            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT);
+        }
     }
 
     /**
@@ -417,6 +421,10 @@ public class jdbcStatement implements java.sql.Statement {
     public void setMaxRows(int max) throws SQLException {
 
         checkClosed();
+
+        if (max < 0) {
+            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT);
+        }
 
         iMaxRows = max;
     }
@@ -503,7 +511,12 @@ public class jdbcStatement implements java.sql.Statement {
      * @see #getQueryTimeout
      */
     public void setQueryTimeout(int seconds) throws SQLException {
+
         checkClosed();
+
+        if (seconds < 0) {
+            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT);
+        }
     }
 
     /**

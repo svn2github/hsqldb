@@ -38,6 +38,7 @@ import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.lib.IntKeyHashMap;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.store.ValuePool;
+import java.util.Vector;
 import java.io.File;
 
 /**
@@ -78,6 +79,44 @@ class DatabaseManager {
 
     /** id number to Database for Databases currently in registry */
     private static IntKeyHashMap databaseIDMap = new IntKeyHashMap();
+
+    /**
+     * Returns a vector containing the paths for all the databases.
+     */
+    public static Vector getDatabasePaths() {
+
+        Vector   v  = new Vector();
+        Iterator it = databaseIDMap.values().iterator();
+
+        while (it.hasNext()) {
+            Database db = (Database) it.next();
+
+            v.addElement(db.getType() + db.getPath());
+        }
+
+        return v;
+    }
+
+    /**
+     * Closes all the databases using the given mode.<p>
+     *
+     * CLOSEMODE_IMMEDIATELY = -1;
+     * CLOSEMODE_NORMAL      = 0;
+     * CLOSEMODE_COMPACT     = 1;
+     * CLOSEMODE_SCRIPT      = 2;
+     */
+    public static void closeDatabases(int mode) {
+
+        Iterator it = databaseIDMap.values().iterator();
+
+        while (it.hasNext()) {
+            Database db = (Database) it.next();
+
+            try {
+                db.close(mode);
+            } catch (HsqlException e) {}
+        }
+    }
 
     /**
      * Used by server to open a new session
@@ -395,6 +434,8 @@ class DatabaseManager {
         return false;
     }
 
+    // URL parsing
+
     /**
      * Parses the url into the following components returned in the properties
      * object: <p>
@@ -419,7 +460,7 @@ class DatabaseManager {
      * part that should represent the port is not an integer.
      *
      */
-    public static HsqlProperties parseURL(String url, boolean hasPrefix) {
+    static HsqlProperties parseURL(String url, boolean hasPrefix) {
 
         String urlImage = url.toLowerCase();
 
@@ -556,6 +597,7 @@ class DatabaseManager {
     static final String S_HTTPS      = "https://";
     static final String S_URL_PREFIX = "jdbc:hsqldb:";
 
+/*
     public static void main(String[] argv) {
 
         parseURL("JDBC:hsqldb:../data/mydb.db", true);
@@ -568,6 +610,7 @@ class DatabaseManager {
                  true);
         parseURL("JDBC:hsqldb:hsql://myhost", true);
     }
+*/
 
     // Garbage Collection
     static void gc() {

@@ -126,9 +126,9 @@ class TextTable extends org.hsqldb.Table {
                 // everything is in order here.
                 // At this point table should either have a valid (old) data
                 // source and cache or have an empty source and null cache.
-                throw Trace.error(Trace.TEXT_FILE,
-                                  "Line number: " + linenumber + " "
-                                  + e.getMessage());
+                throw Trace.error(Trace.TEXT_FILE, new Object[] {
+                    new Integer(linenumber), e.getMessage()
+                });
             }
         }
 

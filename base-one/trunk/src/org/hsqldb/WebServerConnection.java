@@ -333,9 +333,9 @@ class WebServerConnection implements Runnable {
                 } catch (HsqlException e) {
                     resultOut = new Result(e, null);
                 } catch (ArrayIndexOutOfBoundsException e) {
-                    resultOut = new Result(
-                        Trace.getError(Trace.DATABASE_NOT_EXISTS, null),
-                        resultIn.subSubString);
+                    resultOut =
+                        new Result(Trace.error(Trace.DATABASE_NOT_EXISTS),
+                                   resultIn.subSubString);
                 }
             } else {
                 int dbIndex = resultIn.databaseID;
@@ -344,8 +344,6 @@ class WebServerConnection implements Runnable {
                                                server.dbPath[dbIndex],
                                                resultIn.sessionID);
 
-                //server.traceConnection(resultIn.sessionID + " : "
-                //                       + resultIn.getMainString());
                 resultOut = session.execute(resultIn);
             }
 

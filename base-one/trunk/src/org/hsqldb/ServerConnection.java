@@ -207,9 +207,8 @@ class ServerConnection implements Runnable {
                 resultOut = new Result(e, null);
             } catch (ArrayIndexOutOfBoundsException e) {
                 session = null;
-                resultOut = new Result(
-                    Trace.getError(Trace.DATABASE_NOT_EXISTS, null),
-                    resultIn.subSubString);
+                resultOut = new Result(Trace.error(Trace.DATABASE_NOT_EXISTS),
+                                       resultIn.subSubString);
             }
 
             Result.write(resultOut, rowOut, dataOutput);

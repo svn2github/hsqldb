@@ -653,7 +653,6 @@ class Types {
     static int getParameterTypeNr(Class c) throws HsqlException {
 
         String name;
-        String msg;
         int    type;
 
         Trace.doAssert(c != null, "c is null");
@@ -663,10 +662,10 @@ class Types {
         }
 
         name = c.getName();
-        msg  = "Unsupported parameter/return value class: ";
 
         if (illegalParameterClasses.contains(c)) {
-            throw Trace.error(Trace.WRONG_DATA_TYPE, msg + name);
+            throw Trace.error(Trace.WRONG_DATA_TYPE,
+                              Trace.UNSUPPORTED_PARAM_CLASS, name);
         }
 
         type = typeAliases.get(name, Integer.MIN_VALUE);
@@ -688,8 +687,7 @@ class Types {
             }
         }
 
-        Trace.check(type != Integer.MIN_VALUE, Trace.WRONG_DATA_TYPE, msg,
-                    name);
+        Trace.check(type != Integer.MIN_VALUE, Trace.WRONG_DATA_TYPE, name);
 
         return type;
     }

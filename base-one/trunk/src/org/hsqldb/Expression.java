@@ -2839,7 +2839,8 @@ class Expression {
                 return result != 0;
 
             default :
-                throw Trace.error(Trace.GENERAL_ERROR, "Expression.test2");
+                throw Trace.error(Trace.GENERAL_ERROR,
+                                  Trace.Expression_compareValues);
         }
     }
 

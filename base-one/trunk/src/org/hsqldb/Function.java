@@ -363,11 +363,11 @@ class Function {
 
                 s += ": " + t.toString();
 
-                throw Trace.getError(Trace.UNKNOWN_FUNCTION, s);
+                throw Trace.error(Trace.UNKNOWN_FUNCTION, s);
             } else {
                 s = sFunction + ": " + t.toString();
 
-                throw Trace.getError(Trace.GENERAL_ERROR, s);
+                throw Trace.error(Trace.GENERAL_ERROR, s);
             }
         }
     }
