@@ -1,3 +1,4 @@
+<!-- saved from url=(0022)http://internet.e-mail -->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
@@ -21,7 +22,7 @@ other  documents.
 <h4>Installing</h4>
 <p>I assume you have a running OpenOffice.org (OOo) and a
 JavaRuntimeEnvironment. So place the hsqldb-1.7.2.*.zip file where you
-want on your disk and unpack it 
+want on your disk and unpack it
 (I assume you have done this already).</p>
 <h4>Setting up OpenOffice.org</h4>
 <p>
@@ -42,7 +43,7 @@ URL choose the following:</p>
 <p><span style="font-weight: bold;">On windows:</span> you can specify a
 directory where HSQLDB should store the
 info and data. Something
-like jdbc:hsqldb:c:\javasrc\hsqldb-dev\databasename (where jdbc: is
+like jdbc:hsqldb:file:c:\javasrc\hsqldb-dev\databasename (where jdbc: is
 written by OOo).
 the string c:\javasrc\hsqldb-dev\databasename works only on windows,
 but you can write this down
@@ -60,8 +61,11 @@ So go to options =&gt; security and insert the path to the .jar file.
 If you have problems, search the Online-help for JDBC. You then get
 help in your own language (this is generally quite better than my English, I
 think ;-)</p>
-<p>Next we tell OOo to ignore the DriverPrivileges because on our
+<p>If you cannot write to your Tables, OOo thinks that you don't have permission
+to write to HSQLDB. Then we tell OOo to ignore the DriverPrivileges because on our
 single-user-system we do not need them. <br>
+Because OOo is working on this, the next Step is only needed for systems without
+write - permission.<br />
 So we go to http://dba.openoffice.org and look at the
 IgnoreDriverPrivileges.html file
 in the HowTo-section. You find here a macro-code. <br>
@@ -77,8 +81,8 @@ again!</p>
 Quickstarter and all running processes too. On next OOo-Start you
 should have a running Database in OpenOffice.org</p>
 <br>
-<p>Author: Hermann Kienlein - 18 September 2003 </p>
-<p>Copyright 2003 Hermann Kienlein. Permission is granted to distribute
+<p>Author: Hermann Kienlein - 18 September 2003 - updated 24 Febr. 2004 </p>
+<p>Copyright 2003-2004 Hermann Kienlein. Permission is granted to distribute
 this document without any alteration under the terms of the HSQLDB
 license. Additional permission is granted to the HSQLDB Development
 Group to distribute this document with or without alterations under the
