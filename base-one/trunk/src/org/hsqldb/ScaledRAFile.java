@@ -36,6 +36,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Constructor;
 
+import org.hsqldb.lib.HsqlByteArrayInputStream;
+
 // fredt@users 20030111 - patch 1.7.2 by bohgammer@users - pad file before seek() beyond end
 
 /**
@@ -59,6 +61,7 @@ class ScaledRAFile {
     final boolean          readOnly;
     final String           fileName;
     boolean                isNio;
+    boolean                bufferDirty = true;
 
     static ScaledRAFile newScaledRAFile(String name, boolean readonly,
                                         int multiplier,
@@ -101,7 +104,7 @@ class ScaledRAFile {
     }
 
     /**
-     * Some JVM's do not allow seek beyon end of file, so zeros are written
+     * Some JVM's do not allow seek beyond end of file, so zeros are written
      * first in that case. Reported by bohgammer@users in Open Disucssion
      * Forum.
      */
@@ -109,10 +112,11 @@ class ScaledRAFile {
 
         if (file.length() < position) {
             file.seek(file.length());
-
+/*
             for (long ix = file.length(); ix < position; ix++) {
                 file.write(0);
             }
+*/
         }
 
         file.seek(position);
@@ -126,19 +130,103 @@ class ScaledRAFile {
         return file.read();
     }
 
-    void read(byte[] b, int offset, int length) throws IOException {
+    void readOld(byte[] b, int offset, int length) throws IOException {
         file.readFully(b, offset, length);
     }
 
-    int readInt() throws IOException {
+    int readIntOld() throws IOException {
         return file.readInt();
     }
 
+    byte[]                   buffer = new byte[4096];
+    HsqlByteArrayInputStream ba     = new HsqlByteArrayInputStream(buffer);
+    long                     bufferBlockOffset;
+
+    int readInt() throws IOException {
+
+        long filePos        = file.getFilePointer();
+        long maxBlockOffset = file.length() / buffer.length;
+        long blockOffset    = file.getFilePointer() / buffer.length;
+        long subOffset      = filePos % buffer.length;
+
+        if (!bufferDirty && blockOffset == bufferBlockOffset) {
+            file.seek(filePos + 4);
+            ba.reset();
+            ba.skip(subOffset);
+
+            return ba.readInt();
+        } else {
+            if (blockOffset != maxBlockOffset) {
+                bufferDirty = false;
+
+                file.seek(filePos - subOffset);
+                file.readFully(buffer, 0, buffer.length);
+                file.seek(filePos + 4);
+
+                bufferBlockOffset = blockOffset;
+
+                ba.reset();
+                ba.skip(subOffset);
+
+                return ba.readInt();
+            }
+        }
+
+        return file.readInt();
+    }
+
+    void read(byte[] b, int offset, int length) throws IOException {
+
+        long filePos        = file.getFilePointer();
+        long maxBlockOffset = file.length() / buffer.length;
+        long blockOffset    = file.getFilePointer() / buffer.length;
+        long subOffset      = filePos % buffer.length;
+
+        if (!bufferDirty && blockOffset == bufferBlockOffset) {
+            ba.reset();
+            ba.skip(subOffset);
+
+            int bytesRead = ba.read(b, offset, length);
+
+            file.seek(filePos + bytesRead);
+
+            if (bytesRead < length) {
+                file.readFully(b, offset + bytesRead, length - bytesRead);
+            }
+
+            return;
+        } else {
+            if (blockOffset != maxBlockOffset
+                    && subOffset + length <= buffer.length) {
+                bufferDirty = false;
+
+                file.readFully(buffer, 0, buffer.length);
+
+                bufferBlockOffset = blockOffset;
+
+                ba.reset();
+                ba.skip(subOffset);
+                ba.read(b, offset, length);
+                file.seek(filePos + length);
+
+                return;
+            }
+        }
+
+        file.readFully(b, offset, length);
+    }
+
     void write(byte[] b, int off, int len) throws IOException {
+
+        bufferDirty = true;
+
         file.write(b, off, len);
     }
 
     void writeInt(int i) throws IOException {
+
+        bufferDirty = true;
+
         file.writeInt(i);
     }
 

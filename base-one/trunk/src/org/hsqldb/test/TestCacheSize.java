@@ -85,14 +85,14 @@ public class TestCacheSize {
     // type of the big table {MEMORY | CACHED | TEXT}
     String tableType      = "CACHED";
     int    cacheScale     = 15;
-    int    cacheSizeScale = 8;
+    int    cacheSizeScale = 12;
 
     // script format {TEXT, BINARY, COMPRESSED}
     String  logType       = "TEXT";
     int     writeDelay    = 60;
     boolean indexZip      = true;
     boolean indexLastName = false;
-    boolean addForeignKey = false;
+    boolean addForeignKey = true;
     boolean refIntegrity  = true;
 
     // speeds up inserts when tableType=="CACHED"
@@ -103,7 +103,7 @@ public class TestCacheSize {
     int     deleteWhileInsertInterval = 10000;
 
     // size of the tables used in test
-    int bigrows   = 512000;
+    int bigrows   = 256000;
     int smallrows = 0xfff;
 
     // if the extra table needs to be created and filled up
@@ -114,6 +114,24 @@ public class TestCacheSize {
     String     password;
     Statement  sStatement;
     Connection cConnection;
+
+    private void checkSelects() {
+
+        countRows();
+        selectZip();
+        selectID();
+        selectZipTable();
+    }
+
+    private void checkUpdates() {
+
+        updateZip();
+        countRows();
+        updateID();
+        countRows();
+        deleteZip();
+        countRows();
+    }
 
     protected void setUp() {
 
@@ -144,6 +162,7 @@ public class TestCacheSize {
                 props.setProperty("hsqldb.cache_scale", "" + cacheScale);
                 props.setProperty("hsqldb.cache_size_scale",
                                   "" + cacheSizeScale);
+                props.setProperty("hsqldb.nio_data_file", "" + false);
                 props.save();
             }
 
@@ -181,7 +200,7 @@ public class TestCacheSize {
 
         // referential integrity checks will slow down inserts a bit
         String ddl6 =
-            "ALTER TABLE test add constraint c1 FOREIGN KEY (zip) REFERENCES zip(zip);";
+            "ALTER TABLE test add constraint c1 FOREIGN KEY (zip) REFERENCES zip(zip) ON DELETE CASCADE;";
         String ddl7 = "CREATE TEMP TABLE temptest( id INT,"
                       + " firstname VARCHAR, " + " lastname VARCHAR, "
                       + " zip INTEGER, " + " filler VARCHAR); ";
@@ -438,22 +457,6 @@ public class TestCacheSize {
         }
     }
 
-    private void checkSelects() {
-
-        countRows();
-        selectZip();
-        selectID();
-        selectZipTable();
-    }
-
-    private void checkUpdates() {
-
-        updateZip();
-        countRows();
-        updateID();
-        countRows();
-    }
-
     void selectZip() {
 
         StopWatch        sw        = new StopWatch();
@@ -561,7 +564,7 @@ public class TestCacheSize {
             ResultSet rs = sStatement.getResultSet();
 
             rs.next();
-            System.out.println("Row Count: " + rs.getInt(1));
+            System.out.println("Row Count, id: " + rs.getInt(1));
             System.out.println("Time to count: " + sw.elapsedTime());
 
             // use index on zip
@@ -571,7 +574,17 @@ public class TestCacheSize {
             rs = sStatement.getResultSet();
 
             rs.next();
-            System.out.println("Row Count: " + rs.getInt(1));
+            System.out.println("Row Count, zip: " + rs.getInt(1));
+            System.out.println("Time to count: " + sw.elapsedTime());
+
+            //
+            sw.zero();
+            sStatement.execute("SELECT count(*) from zip");
+
+            rs = sStatement.getResultSet();
+
+            rs.next();
+            System.out.println("Row Count, zip table: " + rs.getInt(1));
             System.out.println("Time to count: " + sw.elapsedTime());
         } catch (SQLException e) {}
     }
@@ -623,7 +636,8 @@ public class TestCacheSize {
 
         try {
             PreparedStatement ps = cConnection.prepareStatement(
-                "UPDATE test SET zip = zip + 1 WHERE id = ?");
+                "UPDATE test SET zip = zip + 1 WHERE id = ? and zip <> "
+                + smallrows);
 
             for (i = 0; i < bigrows; i++) {
                 random = randomgen.nextInt(bigrows - 1);
@@ -644,6 +658,45 @@ public class TestCacheSize {
         }
 
         System.out.println("Update with random id " + i + " rows : "
+                           + sw.elapsedTime() + " rps: "
+                           + (i * 1000 / (sw.elapsedTime() + 1)));
+    }
+
+    void deleteZip() {
+
+        StopWatch        sw        = new StopWatch();
+        java.util.Random randomgen = new java.util.Random();
+        int              i         = 0;
+        boolean          slow      = false;
+        int              count     = 0;
+        int              random    = 0;
+
+        try {
+            PreparedStatement ps =
+                cConnection.prepareStatement("DELETE FROM zip WHERE zip = ?");
+
+            for (i = 0; i <= smallrows; i++) {
+
+//                random = randomgen.nextInt(smallrows - 1);
+                random = i;
+
+                ps.setInt(1, random);
+
+                count += ps.executeUpdate();
+
+                if (reportProgress && (i + 1) % 10000 == 0
+                        || (slow && (i + 1) % 100 == 0)) {
+                    System.out.println("Update " + (i + 1) + " : "
+                                       + sw.elapsedTime() + " rps: "
+                                       + (i * 1000 / (sw.elapsedTime() + 1)));
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("error : " + random);
+            e.printStackTrace();
+        }
+
+        System.out.println("Delete with random zip " + count + " rows : "
                            + sw.elapsedTime() + " rps: "
                            + (i * 1000 / (sw.elapsedTime() + 1)));
     }

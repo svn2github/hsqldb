@@ -465,7 +465,7 @@ abstract class Cache {
         // the next access count to account for this condition.
         firstAccessCount =
             ArrayCounter.rank(
-                accessCount, iCacheSize / 8, firstAccessCount,
+                accessCount, iCacheSize / 4, firstAccessCount,
                 currentAccessCount, iCacheSize / 512) + 1;
 
 //        rankTimer.stop();
