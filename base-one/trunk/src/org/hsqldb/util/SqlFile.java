@@ -52,7 +52,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.71 2004/06/07 18:43:47 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.72 2004/06/07 21:18:28 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -88,7 +88,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.71 $
+ * @version $Revision: 1.72 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -109,17 +109,17 @@ public class SqlFile {
         "                                                                 ";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.71 $".substring("$Revision: ".length(),
-                "$Revision: 1.71 $".length() - 2);
+        revnum = "$Revision: 1.72 $".substring("$Revision: ".length(),
+                "$Revision: 1.72 $".length() - 2);
     }
     private static String BANNER =
         "(SqlFile processor v. " + revnum + ")\n"
         + "Distribution is permitted under the terms of the HSQLDB license.\n"
         + "(c) 2004 Blaine Simpson and the HSQLDB Development Group.\n\n"
-        + "    \"\\q\"  to quit.\n"
-        + "    \"\\?\"  lists Special Commands.\n"
-        + "    \":?\"  lists Buffer/Editing commands.\n"
-        + "    \"* ?\" lists PL commands (including alias commands).\n\n"
+        + "    \\q    to quit.\n"
+        + "    \\?    lists Special Commands.\n"
+        + "    :?    lists Buffer/Editing commands.\n"
+        + "    * ?   lists PL commands (including alias commands).\n\n"
         + "SPECIAL Commands begin with '\\' and execute when you hit ENTER.\n"
         + "BUFFER Commands begin with ':' and execute when you hit ENTER.\n"
         + "COMMENTS begin with '/*' and end with the very next '*/'.\n"
@@ -137,17 +137,17 @@ public class SqlFile {
         + "    :s/from/to        Substitute \"to\" for first occurrence of \"from\"\n"
         + "    :s/from/to/[i;g2] Substitute \"to\" for occurrence(s) of \"from\"\n"
         + "                from:  '$'s represent line breaks\n"
-        + "                to:    If empty, from's will be deleted.\n"
+        + "                to:    If empty, from's will be deleted (e.g. \":s/x//\").\n"
         + "                       '$'s represent line breaks\n"
-        + "                       Do not terminate with ';' (use ';' switch below)\n"
-        + "                /:     Can actually be any char which occurs in\n"
+        + "                       Do not terminate with ';' (use ';' switch, see below)\n"
+        + "                /:     Can actually be any character which occurs in\n"
         + "                       neither \"to\" string nor \"from\" string.\n"
         + "                SUBSTITUTION MODE SWITCHES:\n"
         + "                       i:  case Insensitive\n"
         + "                       ;:  execute immediately after substitution\n"
         + "                       g:  Global (substitute all occurrences of \"from\" string)\n"
         + "                       2:  Narrows substitution to specified buffer line number\n"
-        + "                           (Use any line number in place of '2')\n"
+        + "                           (Use any line number in place of '2').\n"
     ;
     final private static String HELP_TEXT = "SPECIAL Commands.\n"
         + "* commands only available for interactive use.\n"
@@ -165,10 +165,10 @@ public class SqlFile {
         + "    \\* [true|false]      Continue upon errors (a.o.t. abort upon error)\n"
         + "    \\a [true|false]      Auto-commit JDBC DML commands\n"
         + "    \\s                   * Show previous commands (i.e. command history)\n"
-        + "    \\-[3]                * reload a command to buffer (for / commands)\n"
-        + "    \\q                   Quit (alternatively, end input like Ctrl-Z or Ctrl-D)\n\n"
-        + "EXAMPLE:  To show previous commands then edit and execute the 3rd-to-last:\n"
-        + "    \\s\n" + "    \\-3\n" + "    :;\n";
+        + "    \\-[3]                * reload a command to buffer (for : commands)\n"
+        + "    \\-[3];               * reload command and execute (via \":;\")\n"
+        + "    \\q                   Quit (alternatively, end input like Ctrl-Z or Ctrl-D)\n"
+        ;
     final private static String PL_HELP_TEXT =
         "PROCEDURAL LANGUAGE Commands.  MUST have white space after '*'.\n"
         + "    * ?                           Help\n"
@@ -553,6 +553,7 @@ public class SqlFile {
                         // complete SQL command.
                         curCommand = stringBuffer.toString();
                         setBuf(curCommand);
+                        stdprintln("Executing:\n" + curCommand + '\n');
                         processStatement();
                         stringBuffer.setLength(0);
                         return;
@@ -671,6 +672,9 @@ public class SqlFile {
                     statementHistory[curHist] = sb.toString();
                     stdprintln((modeExecute ? "Executing" : "Current Buffer")
                             + ":\n" + commandFromHistory(0));
+                    if (modeExecute) {
+                        stdprintln();
+                    }
                 } catch (BadSwitch badswitch) {
                     throw new BadSpecial(
                         "Substitution syntax:  \":s/from this/to that/i;g2\".  "
@@ -824,10 +828,14 @@ public class SqlFile {
             case '-':
                 int    commandsAgo = 0;
                 String numStr;
+                boolean executeMode = arg1.charAt(arg1.length() - 1) == ';';
 
+                if (executeMode) {
+                    // Trim off terminating ';'
+                    arg1 = arg1.substring(0, arg1.length() - 1);
+                }
                 numStr = (arg1.length() == 1) ? null
-                                              : arg1.substring(1,
-                                              arg1.length());
+                        : arg1.substring(1,arg1.length());
                 if (numStr == null) {
                     commandsAgo = 0;
                 } else {
@@ -838,9 +846,13 @@ public class SqlFile {
                     }
                 }
                 setBuf(commandFromHistory(commandsAgo));
-                stdprintln(
-                    "RESTORED following command to buffer.  Enter \":?\" "
-                    + "to see buffer commands:\n" + commandFromHistory(0));
+                if (executeMode) {
+                    processBuffer(";");
+                } else {
+                    stdprintln(
+                        "RESTORED following command to buffer.  Enter \":?\" "
+                        + "to see buffer commands:\n" + commandFromHistory(0));
+                }
                 return;
             case '?':
                 stdprintln(HELP_TEXT);
