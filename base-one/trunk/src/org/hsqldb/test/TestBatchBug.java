@@ -135,7 +135,7 @@ public class TestBatchBug {
 
 // etwas andere Schreibweise von CURRENT TIMESTAMP
         sql.append(", last_update TIMESTAMP ");
-        sql.append("DEFAULT 'CURRENT_TIMESTAMP' NOT NULL");
+        sql.append("DEFAULT CURRENT_TIMESTAMP NOT NULL");
 
         for (int i = 1; i <= DECIMAL_FIELDS_PER_DATASET; i++) {
             sql.append(", Field_" + i + " decimal");

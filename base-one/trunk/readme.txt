@@ -1,5 +1,9 @@
 Readme File
 
+2004.06.11 
+
+Fixed bug in Statement.executeBatch()
+
 2004.06.07 
 
 Fixed reported bugs

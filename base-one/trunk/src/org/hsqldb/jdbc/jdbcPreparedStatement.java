@@ -421,6 +421,87 @@ implements java.sql.PreparedStatement {
 
     /**
      * <!-- start generic documentation -->
+     * Submits a batch of commands to the database for execution and
+     * if all commands execute successfully, returns an array of update counts.
+     * The <code>int</code> elements of the array that is returned are ordered
+     * to correspond to the commands in the batch, which are ordered
+     * according to the order in which they were added to the batch.
+     * The elements in the array returned by the method <code>executeBatch</code>
+     * may be one of the following:
+     * <OL>
+     * <LI>A number greater than or equal to zero -- indicates that the
+     * command was processed successfully and is an update count giving the
+     * number of rows in the database that were affected by the command's
+     * execution
+     * <LI>A value of <code>SUCCESS_NO_INFO</code> -- indicates that the command was
+     * processed successfully but that the number of rows affected is
+     * unknown
+     * <P>
+     * If one of the commands in a batch update fails to execute properly,
+     * this method throws a <code>BatchUpdateException</code>, and a JDBC
+     * driver may or may not continue to process the remaining commands in
+     * the batch.  However, the driver's behavior must be consistent with a
+     * particular DBMS, either always continuing to process commands or never
+     * continuing to process commands.  If the driver continues processing
+     * after a failure, the array returned by the method
+     * <code>BatchUpdateException.getUpdateCounts</code>
+     * will contain as many elements as there are commands in the batch, and
+     * at least one of the elements will be the following:
+     * <P>
+     * <LI>A value of <code>EXECUTE_FAILED</code> -- indicates that the command failed
+     * to execute successfully and occurs only if a driver continues to
+     * process commands after a command fails
+     * </OL>
+     * <P>
+     * A driver is not required to implement this method.
+     * The possible implementations and return values have been modified in
+     * the Java 2 SDK, Standard Edition, version 1.3 to
+     * accommodate the option of continuing to proccess commands in a batch
+     * update after a <code>BatchUpdateException</code> obejct has been thrown. <p>
+     * <!-- end generic documentation -->
+     *
+     * <!-- start release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
+     *
+     * Starting with HSQLDB 1.7.2, this feature is supported. <p>
+     *
+     * HSQLDB stops execution of commands in a batch when one of the commands
+     * results in an exception. The size of the returned array equals the
+     * number of commands that were executed successfully.<p>
+     *
+     * When the product is built under the JAVA1 target, an exception
+     * is never thrown and it is the responsibility of the client software to
+     * check the size of the  returned update count array to determine if any
+     * batch items failed.  To build and run under the JAVA2 target, JDK/JRE
+     * 1.3 or higher must be used.
+     * </div>
+     * <!-- end release-specific documentation -->
+     *
+     * @return an array of update counts containing one element for each
+     * command in the batch.  The elements of the array are ordered according
+     * to the order in which commands were added to the batch.
+     * @exception SQLException if a database access error occurs or the
+     * driver does not support batch statements. Throws
+     * {@link java.sql.BatchUpdateException}
+     * (a subclass of <code>java.sql.SQLException</code>) if one of the commands
+     * sent  to the database fails to execute properly or attempts to return a
+     * result set.
+     * @since JDK 1.3 (JDK 1.1.x developers: read the new overview
+     *   for jdbcStatement)
+     */
+    public int[] executeBatch() throws SQLException {
+
+        if (batchResultOut == null) {
+            batchResultOut = new Result(ResultConstants.BATCHEXECUTE,
+                                        parameterTypes, statementID);
+        }
+
+        return super.executeBatch();
+    }
+
+    /**
+     * <!-- start generic documentation -->
      * Sets the designated parameter to SQL <code>NULL</code>. <p>
      *
      * <B>Note:</B> You must specify the parameter's SQL type.<p>
@@ -1088,6 +1169,12 @@ implements java.sql.PreparedStatement {
         Object[] bpValues = new Object[len];
 
         System.arraycopy(parameterValues, 0, bpValues, 0, len);
+
+        if (batchResultOut == null) {
+            batchResultOut = new Result(ResultConstants.BATCHEXECUTE,
+                                        parameterTypes, statementID);
+        }
+
         batchResultOut.add(bpValues);
     }
 
@@ -1750,8 +1837,6 @@ implements java.sql.PreparedStatement {
 
         resultOut = new Result(ResultConstants.SQLEXECUTE, parameterTypes,
                                statementID);
-        batchResultOut = new Result(ResultConstants.BATCHEXECUTE,
-                                    parameterTypes, statementID);
 
         // for toString()
         this.sql = sql;

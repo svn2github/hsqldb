@@ -79,6 +79,7 @@ public class AllTests extends TestCase {
 
         TestSuite suite = new TestSuite();
 
+        suite.addTestSuite(org.hsqldb.test.TestBatchExecution.class);
         suite.addTestSuite(org.hsqldb.test.TestBug778213.class);
         suite.addTestSuite(org.hsqldb.test.TestBug785429.class);
         suite.addTestSuite(org.hsqldb.test.TestBug808460.class);

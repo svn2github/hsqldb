@@ -42,7 +42,9 @@ import java.sql.*;
  * @since HSQLDB 1.7.2
  * @version 1.7.2
  */
-public class TestBatchExecution {
+
+// fredt@users - modified to do some network connection tests
+public class TestBatchExecution extends TestBase {
 
     static final String drop_table_sql = "drop table test if exists";
     static final String create_cached  = "create cached ";
@@ -63,6 +65,21 @@ public class TestBatchExecution {
     static final int    rows         = 10000;
     static Connection   conn;
     static Statement    stmnt;
+    static String       url;
+
+    public TestBatchExecution(String name) {
+        super(name);
+    }
+
+    public void test() throws Exception {
+
+        conn  = newConnection();
+        stmnt = conn.createStatement();
+        url   = super.url;
+
+        nonPreparedTest();
+        preparedTestOne(5);
+    }
 
     static void print(String s) {
         System.out.print(s);
@@ -108,6 +125,11 @@ public class TestBatchExecution {
         conn  = DriverManager.getConnection(url, "SA", "");
         stmnt = conn.createStatement();
 
+        runTests(runs);
+    }
+
+    static void runTests(int runs) throws Exception {
+
         println("");
         println("***************************************");
         println("featuring cached (persistent) table");
@@ -118,7 +140,7 @@ public class TestBatchExecution {
         stmnt.execute(drop_table_sql);
         println(create_cached + table_sql);
         stmnt.execute(create_cached + table_sql);
-        test(runs);
+        preparedTestOne(runs);
 
         // drop the test table and shut down database
         println(drop_table_sql);
@@ -142,7 +164,7 @@ public class TestBatchExecution {
         stmnt.execute(drop_table_sql);
         println(create_memory + table_sql);
         stmnt.execute(create_memory + table_sql);
-        test(runs);
+        preparedTestOne(runs);
 
         // drop the test table and shut down database
         println(drop_table_sql);
@@ -166,7 +188,7 @@ public class TestBatchExecution {
         stmnt.execute(drop_table_sql);
         println(create_temp + table_sql);
         stmnt.execute(create_temp + table_sql);
-        test(runs);
+        preparedTestOne(runs);
 
         // drop the test table
         println(drop_table_sql);
@@ -175,10 +197,17 @@ public class TestBatchExecution {
         println("shutting down database");
         stmnt.execute(shutdown_sql);
         println("---------------------------------------");
-        test2();
+        preparedTestTwo();
     }
 
-    public static void test(int runs) throws Exception {
+    public static void nonPreparedTest() throws Exception {
+
+        stmnt.addBatch(drop_table_sql);
+        stmnt.addBatch(create_memory + table_sql);
+        stmnt.executeBatch();
+    }
+
+    public static void preparedTestOne(int runs) throws Exception {
 
         PreparedStatement insertStmnt;
         PreparedStatement updateStmnt;
@@ -262,7 +291,7 @@ public class TestBatchExecution {
         }
     }
 
-    public static void test2() {
+    public static void preparedTestTwo() {
 
         try {
             Class.forName("org.hsqldb.jdbcDriver");

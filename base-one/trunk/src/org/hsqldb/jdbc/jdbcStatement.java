@@ -40,6 +40,7 @@ import org.hsqldb.HsqlException;
 import org.hsqldb.Result;
 import org.hsqldb.ResultConstants;
 import org.hsqldb.Trace;
+import org.hsqldb.Types;
 
 // fredt@users 20020320 - patch 1.7.0 - JDBC 2 support and error trapping
 // JDBC 2 methods can now be called from jdk 1.1.x - see javadoc comments
@@ -148,8 +149,7 @@ public class jdbcStatement implements java.sql.Statement {
     protected Result resultOut = new Result(ResultConstants.SQLEXECDIRECT);
 
     /** Use by this statement to communicate batched execution requests */
-    protected Result batchResultOut =
-        new Result(ResultConstants.BATCHEXECDIRECT);
+    protected Result batchResultOut = null;
 
     // boucherb@users
     // NOTE:
@@ -939,6 +939,11 @@ public class jdbcStatement implements java.sql.Statement {
             sql = connection.nativeSQL(sql);
         }
 
+        if (batchResultOut == null) {
+            batchResultOut = new Result(ResultConstants.BATCHEXECDIRECT,
+                                        new int[]{ Types.VARCHAR }, 0);
+        }
+
         batchResultOut.add(new Object[]{ sql });
     }
 
@@ -965,8 +970,12 @@ public class jdbcStatement implements java.sql.Statement {
      *   for jdbcStatement)
      */
     public void clearBatch() throws SQLException {
+
         checkClosed();
-        batchResultOut.clear();
+
+        if (batchResultOut != null) {
+            batchResultOut.clear();
+        }
     }
 
     /**
@@ -1049,6 +1058,11 @@ public class jdbcStatement implements java.sql.Statement {
         checkClosed();
         connection.clearWarningsNoCheck();
 
+        if (batchResultOut == null) {
+            batchResultOut = new Result(ResultConstants.BATCHEXECDIRECT,
+                                        new int[]{ Types.VARCHAR }, 0);
+        }
+
         batchCount = batchResultOut.getSize();
 
         try {
@@ -1069,7 +1083,8 @@ public class jdbcStatement implements java.sql.Statement {
 
 //#ifdef JAVA2
         if (updateCounts.length != batchCount) {
-            throw new java.sql.BatchUpdateException(updateCounts);
+            throw new java.sql.BatchUpdateException("failed batch",
+                    updateCounts);
         }
 
 //#endif JAVA2
