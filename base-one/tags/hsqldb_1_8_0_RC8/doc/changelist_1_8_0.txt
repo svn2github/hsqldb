@@ -1,0 +1,103 @@
+Chronological Change List
+
+This file is the accumulated list of changes in the course of development of
+hsqldb 1.8.0 in reverse chronological order.
+
+Fred Toussi (fredt@users.sourceforge.net)
+Maintainer, HSQLDB Project
+
+2005.02.11 1.8.0.RC8
+
+Fixed minor bugs
+
+Added public shutdown() method to Server.
+
+A new application log has been introduced as an optional feature. The property/value pair
+"hsqldb.applog=1" can be used in the first connection string to log some important messages.
+The default is "hsqldb.applog=0", meaning no logging. A file with the ending ".app.log" is
+generated alongside the rest of the database files for this purpose. 
+
+In the current version only the classes used for file persistence (different in OpenOffice.org),
+plus any error encountered while processing the .log file after an abnormal end is logged.
+
+Bob Preston has updated the text table support to accept new line characters inside quoted 
+strings. It is still not possible to create / modify a row containing a new line inside the engine.
+This will be a simple upgrade and will be included in the next RC.
+
+Note that the JDBC driver and the engine for 1.8.0 cannot be mixed with those of earlier 
+versions in client/server setup. Check your classpaths and use the same version of the engine
+for both client and server.
+
+
+2005.01.28 1.8.0.RC7
+
+Fixed minor bugs
+
+2005.01.24 1.8.0.RC5
+
+Issues with SET CHECKPOINT DEFRAG fixed
+
+New property for larger data file limits is introduced. Once set, the limit will go
+up to 8GB. The property can be set with the following SQL command only when the database
+has no tables (new database).
+
+SET PROPERTY "hsqldb.cache_file_scale" 8
+
+To apply the change to an existing database, SHUTDOWN SCRIPT should be performed first,
+then the property=value line below should be added to the .properties file before reopenning
+the database.
+hsqldb.cache_file_scale=8
+
+It is now possible to add or drop a primary key.
+
+An existing primary key that is to be removed should not be referenced in a FOREIGN KEY
+constraint. If a table has an IDENTITY column, removing a primary key will remove the 
+identity attribute of the column but leave the actual data.
+
+When adding a primary key, a NOT NULL constraint is automatically added to the column definitions.
+The table data for the columns of a newly declared primary key should not contain null values. 
+
+ALTER TABLE <name> ADD CONSTRAINT <cname> PRIMARY KEY(collist);
+ALTER TABLE <name> DROP CONSTRAINT <cname>;
+ALTER TABLE <name> DROP PRIMARY KEY; // alternative syntax
+
+2005.01.20 1.8.0.RC4
+
+More minor bug fixes
+ResultSetMetaData reports identical precision/scale in embedded and client/server modes
+
+2005.01.16 1.8.0.RC3
+
+Regression bug fixes.
+New property allows a CHECKPOINT DEFRAG to be performed automatically whenever
+CHECKPOINT is performed internally or via a user command.
+
+SET CHECKPOINT DEFRAG n
+
+The parameter n is the megabytes of abandoned space in the .data file. When
+a CHECKPOINT is performed either as a result of the .log file reaching the 
+limit set by "SET LOGSIZE m", or by the user issuing a CHECKPOINT command, the
+amount of space abandoned during the session is checked and if it is larger 
+than n, a CHECKPOINT DEFRAG is performed instead of a checkpoint.
+
+2005.01.14 1.8.0.RC2
+
+Regression bug fixes.
+
+
+2005.01.10 1.8.0.RC1
+
+Allows embedding into OpenOffice.org
+Rewrite of log and cache handling classes, including:
+New deleted block manager with more effective deleted block reuse.
+Faster log processing after an abnormal termination.
+Better checks when maximum data file size is reached.
+Better recovery when maximum data file size is reached.
+
+Changes to row access to use iterators. More code clarity.
+
+Various refactorings and new package for improved modularity. 
+
+Enhancements to DatabaseManagerSwing
+
+In all other respects, 1.8.0.RC1 is identical to 1.7.3.1
