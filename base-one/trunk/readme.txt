@@ -1,12 +1,15 @@
 Readme File
 
-Leading to final Release Candidate
+2004.05.07 RC_6
+Final Release Candidate
+
+This is the final release candidate for 1.7.2.
 
 More tests are required to verify the improvements. Please perform tests and 
 report any issues. Testers are needed for build scripts with different JVM's 
 using both ANT and batch builds.
 
-2004.05.13
+Documentation has been updated and is available in HTML and PDF formats.
 
 More bug fixes to engine and JDBC classes.
 
