@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: buildjar.sh,v 1.19 2002/12/06 20:07:13 unsaved Exp $
+# $Id: buildjar.sh,v 1.20 2002/12/08 23:29:03 unsaved Exp $
 
 # -----------------------------------------------------
 # If $JAVA_HOME is set, editing this script should not be required.
@@ -124,6 +124,7 @@ rm -f $LISTFILE
 touch $LISTFILE || Failout "Failed to create temporary list file '$LISTFILE'"
 find * -name '*.java' -print | while read file; do case "$file" in
     org/hsqldb/lib/*) echo $file; continue;;
+    org/hsqldb/resources/*.java) echo $file; continue;;
     org/hsqldb/util/*Swing.java) [ -n "$NOSWING" ] || echo $file; continue;;
     org/hsqldb/util/Zaurus*.java) continue;;
     org/hsqldb/util/*) echo $file; continue;;
@@ -144,9 +145,17 @@ $AWK '{
     NewerThan "$src" "$cls" && echo "$src"
 done > $LISTFILE
 NUMFILES=`$AWK 'END { print NR;}' $LISTFILE`
-
 # TODO:  Use NewerThan() on the $LISTFILE records to exclude the java
 #        files that are not newer than the main corresponding class file.
+
+# Put .properties files into place
+[ -d $dbhome/classes/org/hsqldb/resources ] || {
+    mkdir -p $dbhome/classes/org/hsqldb/resources ||
+     Failout "Failed to create directory '$dbhome/classes/org/hsqldb/resources'"
+}
+for file in org/hsqldb/resources/*.properties; do
+    NewerThan $file ../classes/$file && cp -p $file $dbhome/classes/$file
+done
 
 # Main Compile
 if [ "$NUMFILES" = 0 ]; then
@@ -172,6 +181,7 @@ HSQLDB_GIF=
 echo 'Generating jar content file list...'
 find * -name '*.class' -print | while read file; do case "$file" in
     org/hsqldb/lib/*) echo $file; continue;;
+    org/hsqldb/resources/*) echo $file; continue;;
     org/hsqldb/util/Zaurus*.class) continue;;
     org/hsqldb/util/*Swing.class) [ -n "$NOSWING" ] || echo $file; continue;;
     org/hsqldb/util/*Swing\$*.class) [ -n "$NOSWING" ] || echo $file; continue;;
