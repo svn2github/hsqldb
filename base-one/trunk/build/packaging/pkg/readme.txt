@@ -1,6 +1,6 @@
 README FOR THE SOLARIS HSQLDB PACKAGE
 
-$Id: readme.txt,v 1.2 2002/10/12 01:40:47 unsaved Exp $
+$Id: readme.txt,v 1.3 2002/10/12 01:53:00 unsaved Exp $
 
 
 JAVA SUPPORT
@@ -10,30 +10,33 @@ search path, unless you set $JAVA_HOME in the config file
 (/etc/hsqldb.conf on Solaris).  If java's not found in the normal
 search path and $JAVA_HOME's not set, then things won't work.
 
-Currently supports Java runtimes for Java 2.x, 3.x, 4.x.  I need to
-build hsqldb.lib for 1.x.
+Currently supports Java runtimes for Java 1.x, 2.x, 3.x, 4.x.
 
+Be aware that if you don't have Java installed in the standard
+path, the hsqldb package install will tell you that you need to
+specify the $JAVA_HOME in the hsqldb config file.  For 1.x, even
+the standard install location needs to be specified because sym-
+links don't work for the 1.x binaries.
 
-
-DEVELOPERS
-
-build/packaging/pkg/pkgbuild is the main script to build a Solaris 
-package.
-
+Known bug with Java 1.x:  If you run the daemons as root (which is
+not the default), the default shutdown method fails and results in
+a long wait before shutdown with TERM signal succeeds.  If this
+bothers you, then upgrade your java, don't run as root, or set a 
+short timeout in the hsqldb config file.
 
 
 IF YOU UPGRADE JAVA
 
 If you change your Java version, do recreate the sym-link
-.../lib/hsqldb.jar to pint to the proper one for your JRE.  JRE-to-
+.../lib/hsqldb.jar to point to the proper one for your JRE.  JRE-to-
 file mapping is as follows.
 
-    JRE Version 1.2.x => hsqldb_j1.3.a.jar
-    JRE Version 1.3.x => hsqldb_j1.3.b.jar
-    JRE Version 1.4.x => hsqldb_j1.4.c.jar
+    JRE Version 1.1.x => hsqldb_jre1_1_8.jar
+    JRE Version 1.2.x => hsqldb_jre1_3_1.jar
+    JRE Version 1.3.x => hsqldb_jre1_3_1.jar
+    JRE Version 1.4.x => hsqldb_jre1_4_0.jar
 
-(List the directory to see what a, b, and c actually are).  This
-link is not used by the init scripts at all, but it is used by
+This link is not used by the init scripts at all, but it is used by
 runUtil.sh (and users may expect it to be there).  To see what
 it's linked to currently, run something like
 
@@ -43,7 +46,7 @@ Example
 
     cd /usr/hsqldb/lib
     ls hsqldb*.jar  #  To see what's available
-    ln -s hsqldb_j123.456.jar hsldb.jar  # where the 1st .jar file is
+    ln -s hsqldb_jre1_2_3.jar hsldb.jar  # where the 1st .jar file is
 					 # the one you want to use
 
 (Note that these paths will be different if the HSQLhsqldb package was
@@ -62,8 +65,8 @@ installed gets a sym-link called "hsqldb" (i.e., no version in it)
 right at the install base.  So, to use the default (last) instance
 at any install base, just access "hsqldb".  Example
 
-    /usr/hsqldb1.7.1   (default location on Solaris)
-    /usr/hsqldb -> hsqldb1.7.1   (sym-link to default hsqldb instance)
+    /usr/hsqldb-1.7.1   (default location on Solaris)
+    /usr/hsqldb -> hsqldb-1.7.1   (sym-link to default hsqldb instance)
 
 (when I talk about "instance" here, I mean hsqldb "system" instances,
 not database data-set instances).
@@ -91,9 +94,15 @@ privileged port).  See /usr/hsqldb/doc/hsqlAdvancedGuide.html.
 
 HOW TO CREATE A NEW DATABASE
 
-To creat a new Server instance (and a new data set), just make a
+By default, you do get a database named 'db1' that will automatically
+start and stop when your Solaris server is booted up and shut down.
+
+To create a new Server instance (and a new data set), just make a
 subdirectory off of hsqldb*/data, touch a server or webserver
-properties file, and fix the ownership.
+properties file, and fix the ownership.  The database "name" will
+be the name of the subdirectory you created, and the database
+files in that directory will (for the most part) be based on that
+name (e.g. "/usr/hsqldb-1.7.1/data/dbname.data").
 
 Example, to make and run a database server named db2...
 
@@ -140,6 +149,16 @@ SOLARIS
 
     If you don't understand what I say about Admin files,  run
     "man pkgadd" and "man -s 4 admin".
+
+
+HSQLDB DEVELOPERS
+
+build/packaging/pkg/pkgbuild is the main script to build a Solaris 
+package.  Give the -p switch to rebuild the prototype file 
+(definitely need to do that if there were any changes to anything
+in the software to be delivered... as opposed to just a version or
+package parameter change).
+
 
 
 Blaine

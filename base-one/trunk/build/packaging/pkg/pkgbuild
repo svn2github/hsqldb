@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: pkgbuild,v 1.1 2002/10/12 01:15:45 unsaved Exp $
+# $Id: pkgbuild,v 1.2 2002/10/14 18:31:35 unsaved Exp $
 
 # TODO:  Perhaps use RCS keywords to generate versions and write them
 #        into the install scripts, the info file, and to use in the
@@ -34,23 +34,36 @@ case "`uname`" in
 esac
 
 # Being VERY careful here, because we do a relative "rm -rf" below!!
-[ $0 = "./$PROGNAME" ] ||
+[ "$0" = "./$PROGNAME" ] ||
  Failout "You have to run this script like './$PROGNAME'"
 
-[ $# -gt 0 ] && [ "$1" = '-n' ] && {
-    pkgmk() {
-	echo "pkgmk $@" 1>&2
-    }
-    pkgtrans() {
-	echo "pkgtransmk $@" 1>&2
-    }
-    compress() {
-	echo "compress $@" 1>&2
-    }
-    rm() {
-	echo "rm $@" 1>&2
-    }
-}
+GENPROTO=
+while [ "$#" -gt 0 ]; do
+    case "$1" in -*n*)
+    	pkgmk() {
+	     echo "pkgmk $@" 1>&2
+    	}
+    	pkgtrans() {
+	     echo "pkgtransmk $@" 1>&2
+    	}
+    	compress() {
+	     echo "compress $@" 1>&2
+    	}
+    	rm() {
+	     echo "rm $@" 1>&2
+    	}
+	;;
+    esac
+    case "$1" in -*p*) GENPROTO=1;; esac
+    case "$1" in -*v*) set -x;; esac # Verbose
+    shift
+done
+
+
+getent passwd hsqldb > /dev/null ||
+ Failout "You need to have the user account 'hsqldb' on this sytem (dead shell ok)"
+getent group hsqldb > /dev/null ||
+ Failout "You need to have the group 'hsqldb' on this sytem"
 
 PKGNAME=`sed -n '/^PKG=/ {
     s:^PKG=::
@@ -79,9 +92,9 @@ VERPRE=`sed -n '/^BASE=/ {
  Failout 'Failed to retrieve version from info preremove script'
 
 [ "$VERPRE" = "$VERPOST" ] || Failout  \
- "Version specs (BASE) don't agreein preremove script and postinstall script"
+ "Version specs (BASE) don't agree in preremove script and postinstall script"
 [ "$VERPRE" = "$VERINFO" ] || 
- Failout "Version specs (BASE and VERDIR) don't agreein preremove script and 
+ Failout "Version specs (BASE and VERDIR) don't agree in preremove script and 
 info script"
 
 case "$VERPRE" in hsqldb-*);; *)
@@ -97,8 +110,33 @@ SRCBASE=`dirname $PWD`
 SRCBASE=`dirname $SRCBASE`
 SRCBASE=`dirname $SRCBASE`
 
-[ -f cfg/H*.proto ] ||
- Failout 'You need to fix cfg/H*.proto, or fix the wildcard in this script'
+PROTOFILE="`echo cfg/H*.proto`"
+[ -f "$PROTOFILE" ] ||
+ Failout "You need to fix cfg/H*.proto, or fix the wildcard in this script
+Even if you're generating it, you have to start with an old version."
+
+
+[ -n "$GENPROTO" ] && {
+    perl -v > /dev/null 2>&1 ||
+     Failout 'You need perl in your search path to generate the proto file'
+    echo 'Generating prototype file...'
+    # Remove all lines after "# REGENERATE..."
+    perl -pi -we 'if (/^# REGENERATE AFTER HERE/i) {print; exit;}' $PROTOFILE
+    (cd $SRCBASE && pkgproto '.=$VERDIR') >> $PROTOFILE
+    perl -ni.safe -we '
+	next if m:^\s*\S\s+none\s+\$VERDIR/classes:;
+	next if m:^\s*\S\s+none\s+\$VERDIR/src:;
+	next if m:^[^#]*build/packaging:;
+    	next if m:^[^#]*[/ ]CVS:;
+	next if m:/lib/hsqldb\.jar\b:;
+	s/ 0644 root other$// unless /^\!default\s/;
+	print;
+    ' $PROTOFILE
+    grep '^d none $VERDIR/data 0755 root other' $PROTOFILE ||
+     echo 'd none $VERDIR/data 0755 root other' >> $PROTOFILE
+    grep '^d none $VERDIR/data/db1 0755 hsqldb hsqldb' $PROTOFILE ||
+     echo 'd none $VERDIR/data/db1 0755 hsqldb hsqldb' >> $PROTOFILE
+}
 
 # Be careful if you edit this
 echonoterm "Remove old dir package '$PKGNAME'?  "
@@ -111,15 +149,18 @@ case "$REPLY" in [Yy]*)
 esac
 
 echo "Building version $VER with source base $SRCBASE"
-pkgmk -o -b $SRCBASE -d . -f cfg/H*.proto || exit 1
+pkgmk -o -b $SRCBASE -d . -f $PROTOFILE || exit 1
 
-echo 'ENTER to quit, Y to build stream package ${PKGNAME}-${VER}.pkg.Z:  '
+echo "ENTER to quit, Y to build stream package ${PKGNAME}-${VER}.pkg.Z:  "
 read REPLY
 case "$REPLY" in [Yy]*)
     rm -f "${PKGNAME}-${VER}.pkg" "${PKGNAME}-${VER}.pkg.Z"
     pkgtrans -os . "$PWD/${PKGNAME}-${VER}.pkg" $PKGNAME &&
     echonoterm 'Now compressing... '
     compress "${PKGNAME}-${VER}.pkg"
-    echo Done;;
+    echo 'Done
+(If there is a massage that the file is "unchanged", that just means that
+the file compression was not done because compressions results in no savings).'
+    ;;
     [Qq]*) exit 0;;
 esac
