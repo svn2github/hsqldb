@@ -1,10 +1,14 @@
 /*
-    $Id: sample.sql,v 1.1 2004/06/02 20:32:05 unsaved Exp $
+    $Id: sample.sql,v 1.2 2004/06/06 04:44:43 unsaved Exp $
     Examplifies use of SqlTool.
     PCTASK Table creation
 */
 
-/* Ignore error for these two statements */
+/* Ignore error for the two drop statements
+ * For HSQLDB databases, you can use "IF EXISTS" instead of ignoring errors:
+ *    DROP TABLE x IF EXISTS;
+ * "IF EXISTS" is non-portable, however.
+ */
 \* true
 DROP TABLE pctasklist;
 DROP TABLE pctask;
