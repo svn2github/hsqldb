@@ -498,7 +498,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         }
 
         // so that admin users don't see other's temp tables
-        return (table.isTemp() && table.tableType != Table.SYSTEM_TABLE)
+        return (table.isTemp() && table.getTableType() != Table.SYSTEM_TABLE)
                ? (table.getOwnerSessionId() == session.getId())
                : true;
     }
@@ -1672,21 +1672,14 @@ class DatabaseInformationMain extends DatabaseInformation {
         while (tables.hasNext()) {
             table = (Table) tables.next();
 
-            if (table.isView()) {
+            if (table.isView() ||!isAccessibleTable(table)
+                    ||!table.hasPrimaryKey()) {
                 continue;
             }
 
             index = table.getPrimaryIndex();
 
-            if (index == null) {
-                continue;
-            }
-
             ti.setTable(table);
-
-            if (!isAccessibleTable(table) || table.getPrimaryKey() == null) {
-                continue;
-            }
 
             tableCatalog   = ns.getCatalogName(table);
             tableSchema    = ns.getSchemaName(table);

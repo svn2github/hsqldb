@@ -841,15 +841,14 @@ extends org.hsqldb.DatabaseInformationMain {
         Object value;
 
         // intermediate holders
-        DatabaseMetaData md;
-        Method[]         methods;
-        Class            returnType;
-        Method           method;
-        Object[]         emptyParms;
-        Object[]         row;
-        Result           r;
-        HsqlProperties   props;
-        Log              log;
+        Method[]       methods;
+        Class          returnType;
+        Method         method;
+        Object[]       emptyParms;
+        Object[]       row;
+        Result         r;
+        HsqlProperties props;
+        Log            log;
 
         // column number mappings
         final int iscope = 0;
@@ -2542,7 +2541,7 @@ extends org.hsqldb.DatabaseInformationMain {
                     tableFilter = expression.getFilter();
                     columnTable = tableFilter.getTable();
 
-                    if (columnTable.tableType == Table.SYSTEM_SUBQUERY
+                    if (columnTable.getTableType() == Table.SYSTEM_SUBQUERY
                             ||!isAccessibleTable(columnTable)) {
                         continue;
                     }

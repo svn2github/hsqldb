@@ -185,7 +185,11 @@ final class DINameSpace {
             if (database.classLoader == null) {
                 return Class.forName(name);
             } else {
-                return database.classLoader.loadClass(name);
+                if (name != null) {
+                    return database.classLoader.loadClass(name);
+                } else {
+                    throw new ClassNotFoundException();
+                }
             }
         } catch (NoClassDefFoundError err) {
             throw new ClassNotFoundException(err.toString());

@@ -342,6 +342,7 @@ public class Token {
     static final String        T_COUNT          = "COUNT";
     static final String        T_DEFRAG         = "DEFRAG";
     static final String        T_DESC           = "DESC";
+    static final String        T_EVERY          = "EVERY";
     static final String        T_EXPLAIN        = "EXPLAIN";
     static final String        T_EXTRACT        = "EXTRACT";
     static final String        T_GENERATED      = "GENERATED";
@@ -378,6 +379,8 @@ public class Token {
     static final String        T_SEQUENCE       = "SEQUENCE";
     static final String        T_SHUTDOWN       = "SHUTDOWN";
     static final String        T_SOURCE         = "SOURCE";
+    static final String        T_STDDEV_POP     = "STDDEV_POP";
+    static final String        T_STDDEV_SAMP    = "STDDEV_SAMP";
     static final String        T_SUBSTRING      = "SUBSTRING";
     static final String        T_SUM            = "SUM";
     static final String        T_SYSDATE        = "SYSDATE";
@@ -386,6 +389,8 @@ public class Token {
     static final String        T_TODAY          = "TODAY";
     static final String        T_TOP            = "TOP";
     static final String        T_TRIM           = "TRIM";
+    static final String        T_VAR_POP        = "VAR_POP";
+    static final String        T_VAR_SAMP       = "VAR_SAMP";
     static final String        T_VIEW           = "VIEW";
     static final String        T_WORK           = "WORK";
     static final String        T_WRITE_DELAY    = "WRITE_DELAY";
@@ -671,6 +676,12 @@ public class Token {
     static final int        VIEW                  = 327;
     static final int        WRITE_DELAY           = 328;
 
+    // added stuff
+    static final int VAR_POP     = 330;
+    static final int VAR_SAMP    = 331;
+    static final int STDDEV_POP  = 332;
+    static final int STDDEV_SAMP = 333;
+
     //
     static {
         commandSet = newCommandSet();
@@ -782,17 +793,19 @@ public class Token {
             Token.T_BETWEEN, Token.T_BOTH, Token.T_CALL, Token.T_CASE,
             Token.T_CASEWHEN, Token.T_CAST, Token.T_CONVERT, Token.T_CONCAT,
             Token.T_COUNT, Token.T_COALESCE, Token.T_DISTINCT, Token.T_ELSE,
-            Token.T_END, Token.T_EXISTS, Token.T_EXCEPT, Token.T_EXTRACT,
-            Token.T_FOR, Token.T_FROM, Token.T_GROUP, Token.T_IF,
-            Token.T_INTO, Token.T_IFNULL, Token.T_IS, Token.T_IN,
-            Token.T_JOIN, Token.T_INTERSECT, Token.T_INNER, Token.T_LEADING,
-            Token.T_LIKE, Token.T_MAX, Token.T_MIN, Token.T_NEXT,
-            Token.T_NULLIF, Token.T_NOT, Token.T_MINUS, Token.T_ON,
-            Token.T_ORDER, Token.T_OR, Token.T_OUTER, Token.T_POSITION,
-            Token.T_PRIMARY, Token.T_SELECT, Token.T_SET, Token.T_SUBSTRING,
-            Token.T_SUM, Token.T_THEN, Token.T_TO, Token.T_TRAILING,
-            Token.T_TRIM, Token.T_UNIQUE, Token.T_UNION, Token.T_VALUES,
-            Token.T_WHEN, Token.T_WHERE, Token.T_HAVING
+            Token.T_END, Token.T_EVERY, Token.T_EXISTS, Token.T_EXCEPT,
+            Token.T_EXTRACT, Token.T_FOR, Token.T_FROM, Token.T_GROUP,
+            Token.T_HAVING, Token.T_IF, Token.T_INTO, Token.T_IFNULL,
+            Token.T_IS, Token.T_IN, Token.T_INTERSECT, Token.T_JOIN,
+            Token.T_INNER, Token.T_LEADING, Token.T_LIKE, Token.T_MAX,
+            Token.T_MIN, Token.T_NEXT, Token.T_NULLIF, Token.T_NOT,
+            Token.T_MINUS, Token.T_ON, Token.T_ORDER, Token.T_OR,
+            Token.T_OUTER, Token.T_POSITION, Token.T_PRIMARY, Token.T_SELECT,
+            Token.T_SET, Token.T_SOME, Token.T_STDDEV_POP,
+            Token.T_STDDEV_SAMP, Token.T_SUBSTRING, Token.T_SUM, Token.T_THEN,
+            Token.T_TO, Token.T_TRAILING, Token.T_TRIM, Token.T_UNIQUE,
+            Token.T_UNION, Token.T_VALUES, Token.T_VAR_POP, Token.T_VAR_SAMP,
+            Token.T_WHEN, Token.T_WHERE,
         };
 
         for (int i = 0; i < keyword.length; i++) {

@@ -71,7 +71,7 @@ public interface RowOutputInterface {
 
     public void writeData(int l, int[] types, Object[] data,
                           HashMappedList cols,
-                          boolean primarykeys)
+                          int[] primarykeys)
                           throws IOException, HsqlException;
 
     // independent of the this object, calls only a static method

@@ -623,7 +623,8 @@ public class Trace {
                 }
 
                 sb.append(mainErrorMessage.substring(lastIndex, escIndex));
-                sb.append(add[i].toString());
+                sb.append(add[i] == null ? "null exception message"
+                                         : add[i].toString());
 
                 lastIndex = escIndex + MESSAGE_TAG.length();
             }

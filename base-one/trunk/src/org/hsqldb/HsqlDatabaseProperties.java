@@ -47,15 +47,26 @@ import org.hsqldb.lib.HashSet;
 class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
 
     // db files modified
-    public static final int FILES_NOT_MODIFIED       = 0;
-    public static final int FILES_MODIFIED           = 1;
-    public static final int FILES_MODIFIED_NEW       = 2;
-    public static final int FILES_NEW                = 3;
-    private static HashSet  fullyProtectedProperties = new HashSet();
-    private static HashSet  setProtectedProperties   = new HashSet();
-    private static HashSet  booleanProperties        = new HashSet();
-    private static HashSet  integralProperties       = new HashSet();
-    private static HashSet  stringProperties         = new HashSet();
+    public static final int FILES_NOT_MODIFIED = 0;
+    public static final int FILES_MODIFIED     = 1;
+    public static final int FILES_MODIFIED_NEW = 2;
+    public static final int FILES_NEW          = 3;
+
+    // sets of properties
+    private static HashSet fullyProtectedProperties = new HashSet();
+    private static HashSet setProtectedProperties   = new HashSet();
+    private static HashSet booleanProperties        = new HashSet();
+    private static HashSet integralProperties       = new HashSet();
+    private static HashSet stringProperties         = new HashSet();
+
+    // versions
+    public static final String VERSION_STRING_1_7_0     = "1.7.0";
+    public static final String FIRST_COMPATIBLE_VERSION = "1.7.2";
+    public static final String THIS_VERSION             = "1.7.3";
+    public static final String PRODUCT_NAME = "HSQL Database Engine";
+    public static final int    MAJOR                    = 1,
+                               MINOR                    = 7,
+                               REVISION                 = 3;
 
     static {
 
@@ -90,15 +101,14 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
             "runtime.gc_interval", "hsqldb.max_nio_scale",
             "hsqldb.cache_file_scale", "hsqldb.cache_scale",
             "hsqldb.cache_size_scale", "hsqldb.first_identity",
-            "hsqldb.log_size", "textdb.cache_scale"
+            "hsqldb.log_size", "textdb.cache_scale", "textdb.cache_size_scale"
         };
 
         integralProperties.addAll(integralPropertiesNames);
 
         // user defined string properties
         String[] stringPropertiesNames = {
-            "hsqldb.script_format", "textdb.fs", "textdb.vs", "textdb.lvs",
-            "textdb.encoding"
+            "textdb.fs", "textdb.vs", "textdb.lvs", "textdb.encoding"
         };
 
         stringProperties.addAll(stringPropertiesNames);
@@ -136,15 +146,15 @@ class HsqlDatabaseProperties extends org.hsqldb.HsqlProperties {
         // *.data.
         // the earliest version that can open this database
         // this is set to 1.7.2 when the db is written to
-        setProperty("hsqldb.compatible_version", "1.6.0");
+        setProperty("hsqldb.compatible_version", FIRST_COMPATIBLE_VERSION);
 
         // data format of the cache file
         // this is set to 1.7.0 when a new *.data file is created
-        setProperty("hsqldb.cache_version", "1.7.0");
+        setProperty("hsqldb.cache_version", VERSION_STRING_1_7_0);
 
         // the version that created this database
         // once created, this won't change if db is used with a future version
-        setProperty("hsqldb.original_version", "1.7.3");
+        setProperty("hsqldb.original_version", THIS_VERSION);
         /*
                 garbage collection with gc_interval
                 Setting this value can be useful when HSQLDB is used as an

@@ -748,22 +748,22 @@ class Select {
             boolean     outerfound;
 
             if (!first[level]) {
-                found = t.findFirst();
+                found = t.findFirst(session);
 
                 // if outer join, and no inner result, get next outer row
                 // nonJoinIsNull disallows getting the next outer row in some circumstances
                 outerused[level] = outerfound = t.isOuterJoin &&!found
                                                 &&!outerused[level]
                                                 &&!t.nonJoinIsNull
-                                                && t.nextOuter();
+                                                && t.nextOuter(session);
                 first[level] = found;
             } else {
-                found = t.next();
+                found = t.next(session);
                 outerused[level] = outerfound = t.isOuterJoin &&!found
                                                 &&!first[level]
                                                 &&!outerused[level]
                                                 &&!t.nonJoinIsNull
-                                                && t.nextOuter();
+                                                && t.nextOuter(session);
                 first[level] = found;
             }
 

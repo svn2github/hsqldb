@@ -42,7 +42,8 @@ import org.hsqldb.lib.HashSet;
  * INTEGER and narrower types.
  *
  * @author fredt@users
- * @version 1.7.2
+ * @author boucherb@users
+ * @version 1.7.3
  * @since 1.7.2
  *
  */
@@ -59,11 +60,11 @@ public class SetFunction {
     private int count;
 
     //
+    private boolean    hasNull;
     private long       currentLong;
     private double     currentDouble;
     private BigDecimal currentBigDecimal;
     private Object     currentValue;
-    private LongSum    longSum;
 
     SetFunction(int setType, int type, boolean isDistinct) {
 
@@ -74,16 +75,13 @@ public class SetFunction {
             this.isDistinct = true;
             distinctValues  = new HashSet();
         }
-
-        if (type == Types.BIGINT
-                && (setType == Expression.SUM || setType == Expression.AVG)) {
-            longSum = new LongSum();
-        }
     }
 
     void add(Object item) throws HsqlException {
 
         if (item == null) {
+            hasNull = true;
+
             return;
         }
 
@@ -110,7 +108,7 @@ public class SetFunction {
                         return;
 
                     case Types.BIGINT :
-                        longSum.add(((Number) item).longValue());
+                        addLong(((Number) item).longValue());
 
                         return;
 
@@ -162,6 +160,17 @@ public class SetFunction {
 
                 return;
             }
+            case Expression.EVERY :
+            case Expression.SOME :
+                return;
+
+            case Expression.STDDEV_POP :
+            case Expression.STDDEV_SAMP :
+            case Expression.VAR_POP :
+            case Expression.VAR_SAMP :
+                addDataPoint((Number) item);
+
+                return;
         }
     }
 
@@ -186,7 +195,7 @@ public class SetFunction {
                         return new Long(currentLong / count);
 
                     case Types.BIGINT : {
-                        long value = longSum.getValue().divide(
+                        long value = getLongSum().divide(
                             BigInteger.valueOf(count)).longValue();
 
                         return new Long(value);
@@ -215,7 +224,7 @@ public class SetFunction {
                         return new Long(currentLong);
 
                     case Types.BIGINT :
-                        return new BigDecimal(longSum.getValue());
+                        return new BigDecimal(getLongSum());
 
                     case Types.REAL :
                     case Types.FLOAT :
@@ -233,6 +242,26 @@ public class SetFunction {
             case Expression.MIN :
             case Expression.MAX :
                 return currentValue;
+
+            case Expression.EVERY :
+                return hasNull ? Boolean.FALSE
+                               : Boolean.TRUE;
+
+            case Expression.SOME :
+                return count == 0 ? Boolean.FALSE
+                                  : Boolean.TRUE;
+
+            case Expression.STDDEV_POP :
+                return getStdDev();
+
+            case Expression.STDDEV_SAMP :
+                return getStdDevSamp();
+
+            case Expression.VAR_POP :
+                return getVariance();
+
+            case Expression.VAR_SAMP :
+                return getVarianceSamp();
 
             default :
                 throw Trace.error(Trace.INVALID_CONVERSION);
@@ -303,56 +332,124 @@ public class SetFunction {
             case Expression.MAX :
                 return type;
 
+            case Expression.EVERY :
+            case Expression.SOME :
+                return Types.BOOLEAN;
+
+            case Expression.STDDEV_POP :
+            case Expression.STDDEV_SAMP :
+            case Expression.VAR_POP :
+            case Expression.VAR_SAMP :
+                return Types.DOUBLE;
+
             default :
                 throw Trace.error(Trace.INVALID_CONVERSION);
         }
     }
 
+    // long sum - originally a separate class
+
     /**
      * Maintain the sum of multiple long values without creating a new
      * BigInteger object for each addition.
      */
-    static class LongSum {
-
-        static BigInteger multiplier =
-            BigInteger.valueOf(0x0000000100000000L);
+    static BigInteger multiplier = BigInteger.valueOf(0x0000000100000000L);
 
 //        BigInteger bigint = BigInteger.ZERO;
-        long hi;
-        long lo;
+    long hi;
+    long lo;
 
-        void add(long value) {
+    void addLong(long value) {
 
-            if (value == 0) {}
-            else if (value > 0) {
-                hi += value >> 32;
-                lo += value & 0x00000000ffffffffL;
+        if (value == 0) {}
+        else if (value > 0) {
+            hi += value >> 32;
+            lo += value & 0x00000000ffffffffL;
+        } else {
+            if (value == Long.MIN_VALUE) {
+                hi -= 0x000000080000000L;
             } else {
-                if (value == Long.MIN_VALUE) {
-                    hi -= 0x000000080000000L;
-                } else {
-                    long temp = ~value + 1;
+                long temp = ~value + 1;
 
-                    hi -= temp >> 32;
-                    lo -= temp & 0x00000000ffffffffL;
-                }
+                hi -= temp >> 32;
+                lo -= temp & 0x00000000ffffffffL;
             }
-
-//            bigint = bigint.add(BigInteger.valueOf(value));
         }
 
-        BigInteger getValue() throws HsqlException {
+//            bigint = bigint.add(BigInteger.valueOf(value));
+    }
 
-            BigInteger biglo  = BigInteger.valueOf(lo);
-            BigInteger bighi  = BigInteger.valueOf(hi);
-            BigInteger result = (bighi.multiply(multiplier)).add(biglo);
+    BigInteger getLongSum() throws HsqlException {
+
+        BigInteger biglo  = BigInteger.valueOf(lo);
+        BigInteger bighi  = BigInteger.valueOf(hi);
+        BigInteger result = (bighi.multiply(multiplier)).add(biglo);
 
 /*
             if ( result.compareTo(bigint) != 0 ){
                  throw Trace.error(Trace.GENERAL_ERROR, "longSum mismatch");
             }
 */
-            return result;
-        }
+        return result;
     }
+
+    // end long sum
+    // statistics support - written by Campbell
+    // this section was orginally an independent class
+    private double  sk;
+    private double  vk;
+    private long    n;
+    private boolean initialized;
+
+    private void addDataPoint(Number x) {
+
+        double xi;
+
+        if (x == null) {
+            return;
+        }
+
+        xi = x.doubleValue();
+
+        if (!initialized) {
+            n           = 1;
+            sk          = xi;
+            vk          = 0.0;
+            initialized = true;
+
+            return;
+        }
+
+        n++;
+
+        vk += (Math.pow((sk - (double) (n - 1) * xi), 2.0) / (double) n)
+              / (double) (n - 1);
+        sk += xi;
+    }
+
+    private Number getVariance() {
+        return initialized ? new Double(vk / (double) (n))
+                           : null;
+    }
+
+    private Number getStdDev() {
+
+        return initialized
+               ? new Double(java.lang.Math.sqrt(vk / (double) (n)))
+               : null;
+    }
+
+    private Number getVarianceSamp() {
+        return initialized ? new Double(vk / ((double) (n) - 1))
+                           : null;
+    }
+
+    private Number getStdDevSamp() {
+
+        return initialized
+               ? new Double(java.lang.Math.sqrt(vk / ((double) (n) - 1)))
+               : null;
+    }
+
+    // end statistics support
 }

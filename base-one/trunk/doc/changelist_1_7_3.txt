@@ -1,10 +1,16 @@
 Chronological Change List
 
 This file is the accumulated list of changes in the course of development of
-hsqldb 1.7.3 in reverse chronological order. A list of changes by subject 
-area will be found later in changelog_1_7_3.txt.
+hsqldb 1.7.3 in reverse chronological order.
 
 Fred Toussi (fredt@users.sourceforge.net)
+
+2004.12.24 1.7.3.1
+
+Corrected scripting of CHECK constraints with NOT NULL and IS NULL
+Fixed NPE error when functions in subqueries.
+Added support for STDDEV_POP, STDDEV_SAMP, VAR_POP, VAR_SAMP, EVERY and SOME set functions.
+Fixed potential issues with logging DELETE statements for tables with multi-key primary keys.
 
 2004.12.05 First release 1.7.3.0
 

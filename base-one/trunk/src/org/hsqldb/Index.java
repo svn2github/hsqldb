@@ -248,7 +248,7 @@ public class Index {
 
             Object nData[] = n.getData();
 
-            compare = compareRowUnique(data, nData);
+            compare = compareRowForInsert(data, nData);
 
             if (compare == 0) {
                 throw Trace.error(Trace.VIOLATION_OF_UNIQUE_INDEX,
@@ -1037,8 +1037,8 @@ public class Index {
      *
      * @throws HsqlException
      */
-    private int compareRowUnique(Object a[],
-                                 Object b[]) throws HsqlException {
+    private int compareRowForInsert(Object a[],
+                                    Object b[]) throws HsqlException {
 
         Object value = a[colIndex_0];
         int    i     = Column.compare(value, b[colIndex_0], colType_0);

@@ -888,21 +888,16 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Returns the user defined primary index or null.
+     *  Returns the primary index (user defined or system defined)
      */
-    Index getPrimaryIndex() {
-
-        if (primaryKeyCols == null) {
-            return null;
-        }
-
+    public Index getPrimaryIndex() {
         return getIndex(0);
     }
 
     /**
      *  Return the user defined primary key column index array or null if not defined.
      */
-    int[] getPrimaryKey() {
+    public int[] getPrimaryKey() {
         return (primaryKeyCols[0] == visibleColumnCount) ? null
                                                          : primaryKeyCols;
     }

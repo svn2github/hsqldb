@@ -111,16 +111,22 @@ public class JavaSystem {
 
         fos = new FileOutputStream(file);
 
+        saveProperties(props, name, fos);
+        fos.close();
+    }
+
+    public static void saveProperties(Properties props, String name,
+                                      OutputStream os) throws IOException {
+
 //#ifdef JAVA1TARGET
 /*
-    props.save(fos, name);
+    props.save(os, name);
 */
 
 //#else
-        props.store(fos, name);
+        props.store(os, name);
 
 //#endif
-        fos.close();
     }
 
     public static void runFinalizers() {
@@ -133,27 +139,17 @@ public class JavaSystem {
 //#endif
     }
 
-    public static String getTempDir(String tempdir) {
+    public static void createNewFile(File file) {
 
 //#ifdef JAVA1TARGET
 /*
 */
 
 //#else
-        if (tempdir == null) {
-            try {
-                Class.forName("sun.security.action.GetPropertyAction");
-
-                sun.security.action.GetPropertyAction a =
-                    new sun.security.action.GetPropertyAction(
-                        "java.io.tmpdir");
-
-                tempdir =
-                    ((String) java.security.AccessController.doPrivileged(a));
-            } catch (Exception e) {}
-        }
+        try {
+            file.createNewFile();
+        } catch (IOException e) {}
 
 //#endif
-        return tempdir;
     }
 }

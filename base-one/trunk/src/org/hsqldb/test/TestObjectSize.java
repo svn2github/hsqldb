@@ -31,6 +31,8 @@
 
 package org.hsqldb.test;
 
+import java.sql.Timestamp;
+
 import org.hsqldb.lib.StopWatch;
 
 public class TestObjectSize {
@@ -45,7 +47,7 @@ public class TestObjectSize {
         Object[] objectArray = new Object[testCount];
 
         for (int j = 0; j < objectArray.length; j++) {
-            objectArray[j] = new java.sql.Timestamp(0);
+            objectArray[j] = new Timestamp(0);
         }
 
         System.out.println("Array Filled " + sw.elapsedTime());

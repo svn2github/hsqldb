@@ -1329,17 +1329,13 @@ class DatabaseCommandInterpreter {
         } else {
 
             // the exp table must have a user defined primary key
-            Index expIndex = expTable.getPrimaryIndex();
-
-            if (expIndex != null) {
-                expcol = expIndex.getColumns();
-
-                if (expcol[0] == expTable.getColumnCount()) {
-                    throw Trace.error(Trace.INDEX_NOT_FOUND,
-                                      Trace.TABLE_HAS_NO_PRIMARY_KEY,
-                                      new Object[]{ expTableName });
-                }
+            if (!expTable.hasPrimaryKey()) {
+                throw Trace.error(Trace.CONSTRAINT_NOT_FOUND,
+                                  Trace.TABLE_HAS_NO_PRIMARY_KEY,
+                                  new Object[]{ expTableName });
             }
+
+            expcol = expTable.getPrimaryKey();
 
             // with CREATE TABLE, (expIndex == null) when self referencing FK
             // is declared in CREATE TABLE
@@ -2354,7 +2350,7 @@ class DatabaseCommandInterpreter {
 
     private void checkIsReallyTable(Table t) throws HsqlException {
 
-        if (t.isView() || t.tableType == Table.SYSTEM_TABLE) {
+        if (t.isView() || t.getTableType() == Table.SYSTEM_TABLE) {
             throw Trace.error(Trace.NOT_A_TABLE);
         }
     }

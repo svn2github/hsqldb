@@ -54,7 +54,7 @@ import java.net.URL;
  *  long-term code flexibility.
  *
  * @author fredt@users
- * @version 1.7.2
+ * @version 1.7.3
  * @since 1.7.0
  */
 class Logger {
@@ -245,6 +245,13 @@ class Logger {
         }
     }
 
+    void synchLogForce() {
+
+        if (lLog != null) {
+            lLog.synchLog();
+        }
+    }
+
     /**
      *  Checkpoints the database. <p>
      *
@@ -343,7 +350,7 @@ class Logger {
             return;
         }
 
-        lf = LockFile.newLockFileLock(path + ".lck");
+        lf = LockFile.newLockFileLock(path);
     }
 
     void releaseLock() {

@@ -1042,6 +1042,7 @@ class Parser {
     private Expression readAggregate() throws HsqlException {
 
         boolean distinct = false;
+        boolean all      = false;
         int     type     = iToken;
 
         read();
@@ -1050,8 +1051,9 @@ class Parser {
 
         if (token.equals(Token.T_DISTINCT)) {
             distinct = true;
-        } else if (token.equals(Token.T_ALL)) {}
-        else {
+        } else if (token.equals(Token.T_ALL)) {
+            all = true;
+        } else {
             tokenizer.back();
         }
 
@@ -1060,6 +1062,14 @@ class Parser {
         Expression s = readOr();
 
         readThis(Expression.CLOSE);
+
+        if ((all || distinct)
+                && (type == Expression.STDDEV_POP
+                    || type == Expression.STDDEV_SAMP
+                    || type == Expression.VAR_POP
+                    || type == Expression.VAR_SAMP)) {
+            throw Trace.error(Trace.INVALID_FUNCTION_ARGUMENT);
+        }
 
         Expression aggregateExp = new Expression(type, s, null);
 
@@ -2120,6 +2130,12 @@ class Parser {
                 case Expression.MIN :
                 case Expression.MAX :
                 case Expression.AVG :
+                case Expression.EVERY :
+                case Expression.SOME :
+                case Expression.STDDEV_POP :
+                case Expression.STDDEV_SAMP :
+                case Expression.VAR_POP :
+                case Expression.VAR_SAMP :
                 case Expression.CONVERT :
                 case Expression.CAST :
                 case Expression.SEQUENCE :
@@ -2200,6 +2216,12 @@ class Parser {
         tokenSet.put(Token.T_MIN, Expression.MIN);
         tokenSet.put(Token.T_MAX, Expression.MAX);
         tokenSet.put(Token.T_AVG, Expression.AVG);
+        tokenSet.put(Token.T_EVERY, Expression.EVERY);
+        tokenSet.put(Token.T_SOME, Expression.SOME);
+        tokenSet.put(Token.T_STDDEV_POP, Expression.STDDEV_POP);
+        tokenSet.put(Token.T_STDDEV_SAMP, Expression.STDDEV_SAMP);
+        tokenSet.put(Token.T_VAR_POP, Expression.VAR_POP);
+        tokenSet.put(Token.T_VAR_SAMP, Expression.VAR_SAMP);
         tokenSet.put(Token.T_IFNULL, Expression.IFNULL);
         tokenSet.put(Token.T_NULLIF, Expression.NULLIF);
         tokenSet.put(Token.T_CONVERT, Expression.CONVERT);

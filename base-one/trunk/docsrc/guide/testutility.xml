@@ -1,10 +1,10 @@
-<!-- $Id: testutility.xml,v 1.9 2004/06/04 11:26:33 fredt Exp $ -->
+<!-- $Id: testutility.xml,v 1.10 2004/06/18 13:04:05 fredt Exp $ -->
 
 <appendix>
     <title>Hsqldb Test Utility</title>
     <appendixinfo>
-        <edition>$Revision: 1.9 $</edition>
-        <pubdate>$Date: 2004/06/04 11:26:33 $</pubdate>
+        <edition>$Revision: 1.10 $</edition>
+        <pubdate>$Date: 2004/06/18 13:04:05 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Test</keyword>
@@ -22,10 +22,12 @@
     </para> <para>
         For <classname>TestSelf</classname>, a batch file is provided in the 
 		testrun/hsqldb directory, together with a set of TestSelf*.txt files.
-        To start the application in Windows, type:
+        To start the application in Windows, change to the directory and type:
     </para><screen>
-    runtest TestSelf</screen>
-    <para>
+    runtest TestSelf</screen><para>
+        In Unix / Linux, type:
+    </para><screen>
+    ./runTest.sh TestSelf</screen>    <para>
         The new version of <classname>TestSelf</classname> runs multiple SQL 
         test files to test different SQL operations of the database.
         All files in the working directory with names matching

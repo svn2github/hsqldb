@@ -93,7 +93,7 @@ public class TestUtil {
                 }
 
                 line = line.substring(
-                    0, org.hsqldb.lib.StringUtil.rTrimSize(line));;
+                    0, org.hsqldb.lib.StringUtil.rTrimSize(line));
 
                 //if the line is blank or a comment, then ignore it
                 if ((line.length() == 0) || line.startsWith("--")) {
@@ -672,7 +672,7 @@ class CountParsedSection extends ParsedSection {
         return countWeWant;
     }
 
-    protected boolean test(java.sql.Statement aStatement) {
+    protected boolean test(Statement aStatement) {
 
         try {
 
@@ -734,7 +734,7 @@ class ExceptionParsedSection extends ParsedSection {
         return "SQLException";
     }
 
-    protected boolean test(java.sql.Statement aStatement) {
+    protected boolean test(Statement aStatement) {
 
         try {
             aStatement.execute(getSql());

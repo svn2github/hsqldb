@@ -53,7 +53,8 @@ public class TestSubselect extends TestCase {
     // Class variables
     //------------------------------------------------------------
     private static final String databaseDriver   = "org.hsqldb.jdbcDriver";
-    private static final String databaseURL = "jdbc:hsqldb:../test/subselect";
+    private static final String databaseURL =
+        "jdbc:hsqldb:/hsql/test/subselect";
     private static final String databaseUser     = "sa";
     private static final String databasePassword = "";
 

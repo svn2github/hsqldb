@@ -452,7 +452,7 @@ class TableFilter {
      *
      * @return true if first row was found, else false
      */
-    boolean findFirst() throws HsqlException {
+    boolean findFirst(Session session) throws HsqlException {
 
         nonJoinIsNull  = false;
         isCurrentOuter = false;
@@ -469,7 +469,7 @@ class TableFilter {
                 Expression e = findFirstExpressions[i];
 
                 if (e != null) {
-                    data[i] = e.getValue(null, types[i]);
+                    data[i] = e.getValue(session, types[i]);
                 }
             }
 
@@ -479,7 +479,7 @@ class TableFilter {
                                        : filterIndex.findFirstNotNull();
         } else {
             int    type = eStart.getArg().getDataType();
-            Object o    = eStart.getArg2().getValue(null, type);
+            Object o    = eStart.getArg2().getValue(session, type);
 
             currentNode = filterIndex.findFirst(o, eStart.getType());
         }
@@ -488,11 +488,11 @@ class TableFilter {
             currentData = currentNode.getData();
             currentRow  = currentNode.getRow();
 
-            if (!(eEnd == null || eEnd.testCondition(null))) {
+            if (!(eEnd == null || eEnd.testCondition(session))) {
                 break;
             }
 
-            if (eAnd == null || eAnd.testCondition(null)) {
+            if (eAnd == null || eAnd.testCondition(session)) {
                 return true;
             }
 
@@ -512,7 +512,7 @@ class TableFilter {
      *
      * @throws HsqlException if a database access error occurs
      */
-    boolean next() throws HsqlException {
+    boolean next(Session session) throws HsqlException {
 
         nonJoinIsNull  = false;
         isCurrentOuter = false;
@@ -522,11 +522,11 @@ class TableFilter {
             currentData = currentNode.getData();
             currentRow  = currentNode.getRow();
 
-            if (!(eEnd == null || eEnd.testCondition(null))) {
+            if (!(eEnd == null || eEnd.testCondition(session))) {
                 break;
             }
 
-            if (eAnd == null || eAnd.testCondition(null)) {
+            if (eAnd == null || eAnd.testCondition(session)) {
                 return true;
             }
 
@@ -539,7 +539,7 @@ class TableFilter {
         return false;
     }
 
-    boolean nextOuter() throws HsqlException {
+    boolean nextOuter(Session session) throws HsqlException {
 
         nonJoinIsNull  = false;
         isCurrentOuter = true;
@@ -547,7 +547,7 @@ class TableFilter {
         currentRow     = null;
 
         return eAnd == null || (eAnd.getFilter() != this && eAnd.isInJoin)
-               || eAnd.testCondition(null);
+               || eAnd.testCondition(session);
     }
 
     /**

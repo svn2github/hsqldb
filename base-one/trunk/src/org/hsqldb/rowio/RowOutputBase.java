@@ -185,7 +185,7 @@ implements RowOutputInterface {
         int[] types = t.getColumnTypes();
         int   l     = t.getColumnCount();
 
-        writeData(l, types, data, null, false);
+        writeData(l, types, data, null, null);
     }
 
     /**
@@ -200,22 +200,23 @@ implements RowOutputInterface {
      */
     public void writeData(int l, int types[], Object data[],
                           HashMappedList cols,
-                          boolean primarykeys)
+                          int[] primaryKeys)
                           throws IOException, HsqlException {
 
-        for (int i = 0; i < l; i++) {
-            Object o = data[i];
-            int    t = types[i];
+        int limit = primaryKeys == null ? l
+                                        : primaryKeys.length;
+
+        for (int i = 0; i < limit; i++) {
+            int    j = primaryKeys == null ? i
+                                           : primaryKeys[i];
+            Object o = data[j];
+            int    t = types[j];
 
             if (cols != null) {
-                Column col = (Column) cols.get(i);
+                Column col = (Column) cols.get(j);
 
-                if (primarykeys &&!col.isPrimaryKey()) {
-                    continue;
-                } else {
-                    writeFieldPrefix();
-                    writeString(col.columnName.statementName);
-                }
+                writeFieldPrefix();
+                writeString(col.columnName.statementName);
             }
 
             if (o == null) {

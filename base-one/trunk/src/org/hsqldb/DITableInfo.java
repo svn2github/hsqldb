@@ -407,7 +407,7 @@ final class DITableInfo {
 
         String key;
 
-        if (table.tableType != Table.SYSTEM_TABLE) {
+        if (table.getTableType() != Table.SYSTEM_TABLE) {
             return null;
         }
 
@@ -545,7 +545,7 @@ final class DITableInfo {
      */
     String getHsqlType() {
 
-        switch (table.tableType) {
+        switch (table.getTableType()) {
 
             case Table.MEMORY_TABLE :
             case Table.TEMP_TABLE :
@@ -696,7 +696,7 @@ final class DITableInfo {
      */
     String getRemark() {
 
-        return (table.tableType == Table.SYSTEM_TABLE)
+        return (table.getTableType() == Table.SYSTEM_TABLE)
                ? BundleHandler.getString(hnd_table_remarks, getName())
                : null;
     }
@@ -711,7 +711,7 @@ final class DITableInfo {
      */
     String getStandardType() {
 
-        switch (table.tableType) {
+        switch (table.getTableType()) {
 
             case Table.VIEW :
                 return "VIEW";

@@ -132,15 +132,18 @@ public class Expression {
                      IS_NULL       = 32;
 
     // aggregate functions
-    static final int COUNT = 40,
-                     SUM   = 41,
-                     MIN   = 42,
-                     MAX   = 43,
-                     AVG   = 44;
+    static final int COUNT       = 40,
+                     SUM         = 41,
+                     MIN         = 42,
+                     MAX         = 43,
+                     AVG         = 44,
+                     EVERY       = 45,
+                     SOME        = 46,
+                     STDDEV_POP  = 47,
+                     STDDEV_SAMP = 48,
+                     VAR_POP     = 49,
+                     VAR_SAMP    = 50;
 
-// TODO: Variance, std. deviation and maybe other stat. aggregate functions
-//                   VARIANCE = 45;
-//                   STDDEV   = 46;
     // system functions
     static final int IFNULL      = 60,
                      CONVERT     = 61,
@@ -256,7 +259,7 @@ public class Expression {
 
 // rougier@users 20020522 - patch 552830 - COUNT(DISTINCT)
     // {COUNT|SUM|MIN|MAX|AVG}(distinct ...)
-    private boolean isDistinctAggregate;
+    boolean isDistinctAggregate;
 
     // PARAM
     private boolean isParam;
@@ -611,16 +614,20 @@ public class Expression {
                 return buf.toString();
 
             case NOT :
+                if (eArg.exprType == IS_NULL) {
+                    buf.append(getContextDDL(eArg.eArg)).append(' ').append(
+                        Token.T_IS).append(' ').append(Token.T_NOT).append(
+                        ' ').append(Token.T_NULL);
+
+                    return buf.toString();
+                }
+
                 buf.append(Token.T_NOT).append(' ').append(left);
 
                 return buf.toString();
 
             case EQUAL :
-                if (Token.T_NULL.equals(right)) {
-                    buf.append(left).append(" IS ").append(right);
-                } else {
-                    buf.append(left).append('=').append(right);
-                }
+                buf.append(left).append('=').append(right);
 
                 return buf.toString();
 
@@ -743,6 +750,36 @@ public class Expression {
 
             case AVG :
                 buf.append(' ').append(Token.T_AVG).append('(');
+                buf.append(left).append(')');
+                break;
+
+            case EVERY :
+                buf.append(' ').append(Token.T_EVERY).append('(');
+                buf.append(left).append(')');
+                break;
+
+            case SOME :
+                buf.append(' ').append(Token.T_SOME).append('(');
+                buf.append(left).append(')');
+                break;
+
+            case STDDEV_POP :
+                buf.append(' ').append(Token.T_STDDEV_POP).append('(');
+                buf.append(left).append(')');
+                break;
+
+            case STDDEV_SAMP :
+                buf.append(' ').append(Token.T_STDDEV_SAMP).append('(');
+                buf.append(left).append(')');
+                break;
+
+            case VAR_POP :
+                buf.append(' ').append(Token.T_VAR_POP).append('(');
+                buf.append(left).append(')');
+                break;
+
+            case VAR_SAMP :
+                buf.append(' ').append(Token.T_VAR_SAMP).append('(');
                 buf.append(left).append(')');
                 break;
         }
@@ -923,6 +960,30 @@ public class Expression {
 
             case AVG :
                 buf.append("AVG ");
+                break;
+
+            case EVERY :
+                buf.append(Token.T_EVERY).append(' ');
+                break;
+
+            case SOME :
+                buf.append(Token.T_SOME).append(' ');
+                break;
+
+            case STDDEV_POP :
+                buf.append(Token.T_STDDEV_POP).append(' ');
+                break;
+
+            case STDDEV_SAMP :
+                buf.append(Token.T_STDDEV_SAMP).append(' ');
+                break;
+
+            case VAR_POP :
+                buf.append(Token.T_VAR_POP).append(' ');
+                break;
+
+            case VAR_SAMP :
+                buf.append(Token.T_VAR_SAMP).append(' ');
                 break;
 
             case CONVERT :
@@ -1224,6 +1285,12 @@ public class Expression {
             case MIN :
             case SUM :
             case AVG :
+            case EVERY :
+            case SOME :
+            case STDDEV_POP :
+            case STDDEV_SAMP :
+            case VAR_POP :
+            case VAR_SAMP :
                 return true;
         }
 
@@ -2072,6 +2139,12 @@ public class Expression {
             case MIN :
             case SUM :
             case AVG :
+            case EVERY :
+            case SOME :
+            case STDDEV_POP :
+            case STDDEV_SAMP :
+            case VAR_POP :
+            case VAR_SAMP :
                 if (eArg.isParam) {
                     throw Trace.error(Trace.UNRESOLVED_PARAMETER_TYPE,
                                       Trace.Expression_resolveTypes4);
@@ -2644,6 +2717,11 @@ public class Expression {
 
 /** @todo fredt - should be rewritten to handle only set function operation,
      *  with other operations handled in the normal way */
+    Object getAggregatedValue(Session session, Object currValue,
+                              int type) throws HsqlException {
+        return Column.convertObject(getAggregatedValue(session, currValue),
+                                    type);
+    }
 
     /**
      * Get the result of a SetFunction or an ordinary value
@@ -2675,6 +2753,12 @@ public class Expression {
             case MIN :
             case SUM :
             case AVG :
+            case EVERY :
+            case SOME :
+            case STDDEV_POP :
+            case STDDEV_SAMP :
+            case VAR_POP :
+            case VAR_SAMP :
                 if (currValue == null) {
                     return null;
                 }

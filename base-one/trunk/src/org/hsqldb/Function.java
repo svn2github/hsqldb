@@ -69,6 +69,7 @@ package org.hsqldb;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.sql.Connection;
 
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HsqlArrayList;
@@ -253,7 +254,7 @@ class Function {
             Class  a    = aArgClasses[i];
             String type = a.getName();
 
-            if ((i == 0) && a.equals(java.sql.Connection.class)) {
+            if ((i == 0) && a.equals(Connection.class)) {
 
                 // TODO: provide jdbc:default:connection url functionality
                 //
@@ -432,8 +433,10 @@ class Function {
 
             if (eArg[i] != null) {
                 valueArray[i] = eArg[i].isAggregate()
-                                ? e.getAggregatedValue(session, valueArray[i])
-                                : e.getValue(session);
+                                ? e.getAggregatedValue(session,
+                                                       valueArray[i],
+                                                       iArgType[i])
+                                : e.getValue(session, iArgType[i]);
             }
         }
 

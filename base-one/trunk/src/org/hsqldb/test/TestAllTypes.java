@@ -37,6 +37,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Random;
 
 import org.hsqldb.HsqlProperties;
 import org.hsqldb.lib.StopWatch;
@@ -50,8 +51,9 @@ public class TestAllTypes {
     protected String url = "jdbc:hsqldb:";
 
 //    protected String filepath = ".";
-//    protected String filepath = "/hsql/testalltypes/test";
-    protected String filepath = "hsql://localhost/yourtest";
+    protected String filepath = "/hsql/testalltypes/test";
+
+//    protected String filepath = "hsql://localhost/yourtest";
     boolean          network  = true;
     String           user;
     String           password;
@@ -75,7 +77,7 @@ public class TestAllTypes {
     int     deleteWhileInsertInterval = 10000;
 
     //
-    int bigrows = 100;
+    int bigrows = 1000;
 
     protected void setUp() {
 
@@ -200,18 +202,18 @@ public class TestAllTypes {
             ps.setString(2, "Clancy");
 
             for (i = 0; i < bigrows; i++) {
-                ps.setInt(3, randomgen.nextInt(smallrows));
+                ps.setInt(3, nextIntRandom(randomgen, smallrows));
 
-                int nextrandom   = randomgen.nextInt(filler.length());
-                int randomlength = randomgen.nextInt(filler.length());
+                int nextrandom   = nextIntRandom(randomgen, filler.length());
+                int randomlength = nextIntRandom(randomgen, filler.length());
 
                 ps.setLong(4, randomgen.nextLong());
                 ps.setDouble(5, randomgen.nextDouble());
                 ps.setBigDecimal(6, null);
 
 //                ps.setDouble(6, randomgen.nextDouble());
-                ps.setDate(7, new java.sql.Date(randomgen.nextInt(1000) * 24
-                                                * 3600 * 1000));
+                ps.setDate(7, new java.sql.Date(nextIntRandom(randomgen, 1000)
+                                                * 24 * 3600 * 1000));
 
                 String varfiller = filler.substring(0, randomlength);
 
@@ -324,7 +326,7 @@ public class TestAllTypes {
                 PreparedStatement ps = cConnection.prepareStatement(
                     "SELECT TOP 1 firstname,lastname,zip,filler FROM test WHERE zip = ?");
 
-                ps.setInt(1, randomgen.nextInt(smallrows));
+                ps.setInt(1, nextIntRandom(randomgen, smallrows));
                 ps.execute();
 
                 if ((i + 1) == 100 && sw.elapsedTime() > 5000) {
@@ -350,7 +352,7 @@ public class TestAllTypes {
                 PreparedStatement ps = cConnection.prepareStatement(
                     "SELECT firstname,lastname,zip,filler FROM test WHERE id = ?");
 
-                ps.setInt(1, randomgen.nextInt(bigrows - 1));
+                ps.setInt(1, nextIntRandom(randomgen, bigrows - 1));
                 ps.execute();
 
                 if (reportProgress && (i + 1) % 10000 == 0
@@ -379,7 +381,7 @@ public class TestAllTypes {
             for (; i < smallrows; i++) {
                 PreparedStatement ps = cConnection.prepareStatement(
                     "UPDATE test SET filler = filler || zip WHERE zip = ?");
-                int random = randomgen.nextInt(smallrows - 1);
+                int random = nextIntRandom(randomgen, smallrows - 1);
 
                 ps.setInt(1, random);
 
@@ -402,7 +404,7 @@ public class TestAllTypes {
             for (i = 0; i < bigrows; i++) {
                 PreparedStatement ps = cConnection.prepareStatement(
                     "UPDATE test SET zip = zip + 1 WHERE id = ?");
-                int random = randomgen.nextInt(bigrows - 1);
+                int random = nextIntRandom(randomgen, bigrows - 1);
 
                 ps.setInt(1, random);
                 ps.execute();
@@ -419,6 +421,13 @@ public class TestAllTypes {
         System.out.println("Update with random id " + i + " rows : "
                            + sw.elapsedTime() + " rps: "
                            + (i * 1000 / sw.elapsedTime()));
+    }
+
+    int nextIntRandom(Random r, int range) {
+
+        int b = Math.abs(r.nextInt());
+
+        return b % range;
     }
 
     public static void main(String argv[]) {

@@ -1715,7 +1715,7 @@ public class Library {
      * @since HSQLDB 1.7.2
      */
     public static String getDatabaseProductName() {
-        return "HSQL Database Engine";
+        return HsqlDatabaseProperties.PRODUCT_NAME;
     }
 
     /**
@@ -1725,7 +1725,7 @@ public class Library {
      * @since HSQLDB 1.7.2
      */
     public static String getDatabaseProductVersion() {
-        return "1.7.3";
+        return HsqlDatabaseProperties.THIS_VERSION;
     }
 
     /**
@@ -1735,7 +1735,7 @@ public class Library {
      * @since HSQLDB 1.7.2
      */
     public static int getDatabaseMajorVersion() {
-        return 1;
+        return HsqlDatabaseProperties.MAJOR;
     }
 
     /**
@@ -1745,7 +1745,7 @@ public class Library {
      * @since HSQLDB 1.7.2
      */
     public static int getDatabaseMinorVersion() {
-        return 7;
+        return HsqlDatabaseProperties.MINOR;
     }
 
     /**

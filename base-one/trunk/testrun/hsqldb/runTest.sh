@@ -29,8 +29,8 @@ done
 progdir=`dirname $PRG`
 progname=`basename $0`
 
-# ../ will lead us to the home
-dbhome="$progdir/.."
+# ../.. will lead us to the home
+dbhome="$progdir/../.."
 
 # absolutize dbhome
 
@@ -46,6 +46,9 @@ pre_main
 
 #
 # let's go
+# This presumes that hsqldbtest.jar was built in ${dbhome}/lib.
+# If you haven't done this run "ant jartest" in the ${dbhome}/build directory.
 #
+    cp=$cp:${dbhome}/lib/hsqldbtest.jar
     exec "$jdkhome/bin/java" $thread_flag -classpath "$cp" $jargs "org.hsqldb.test.$@"
 # and we exit.

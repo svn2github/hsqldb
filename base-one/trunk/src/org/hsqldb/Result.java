@@ -1224,7 +1224,7 @@ public class Result {
                 Record n = rRoot;
 
                 while (n != null) {
-                    out.writeData(l, metaData.colTypes, n.data, null, false);
+                    out.writeData(l, metaData.colTypes, n.data, null, null);
 
                     n = n.next;
                 }
@@ -1240,7 +1240,7 @@ public class Result {
 
                 while (n != null) {
                     out.writeData(significantColumns, metaData.colTypes,
-                                  n.data, null, false);
+                                  n.data, null, null);
 
                     n = n.next;
                 }

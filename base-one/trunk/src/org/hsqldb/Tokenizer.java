@@ -515,6 +515,9 @@ public class Tokenizer {
 
         switch (iType) {
 
+            case NULL :
+                return null;
+
             case STRING :
 
                 //fredt - no longer returning string with a singlequote as last char
@@ -569,9 +572,6 @@ public class Tokenizer {
 
             case TIMESTAMP :
                 return HsqlDateTime.timestampValue(sToken);
-
-            case NULL :
-                return null;
 
             default :
                 return sToken;

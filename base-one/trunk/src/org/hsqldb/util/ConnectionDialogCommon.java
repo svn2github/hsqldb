@@ -73,8 +73,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.Hashtable;
+import java.util.Enumeration;
+import java.lang.reflect.Constructor;
 
-import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.lib.java.JavaSystem;
 
 // sqlbob@users 20020407 - patch 1.7.0 - reengineering
@@ -187,26 +189,23 @@ class ConnectionDialogCommon {
     private static final String fileName       = "hsqlprefs.dat";
     private static File         recentSettings = null;
 
-    static HashMappedList loadRecentConnectionSettings() throws IOException {
+    static Hashtable loadRecentConnectionSettings() throws IOException {
 
-        HashMappedList list = new HashMappedList();
-
-        list.add(emptySetting.getName(), emptySetting);
+        Hashtable list = new Hashtable();
 
         try {
             if (recentSettings == null) {
-                String dir = JavaSystem.getTempDir(tempdir);
+                setTempDir();
 
-                if (dir == null) {
+                if (tempdir == null) {
                     return list;
                 }
 
-                recentSettings = new File(dir, fileName);
+                recentSettings = new File(tempdir, fileName);
 
                 if (!recentSettings.exists()) {
+                    JavaSystem.createNewFile(recentSettings);
 
-// jdk 1.1 doesn't support this
-//                    recentSettings.createNewFile();
                     return list;
                 }
             }
@@ -214,10 +213,11 @@ class ConnectionDialogCommon {
             return list;
         }
 
-        FileInputStream   in        = new FileInputStream(recentSettings);
+        FileInputStream   in        = null;
         ObjectInputStream objStream = null;
 
         try {
+            in        = new FileInputStream(recentSettings);
             objStream = new ObjectInputStream(in);
 
             list.clear();
@@ -226,7 +226,9 @@ class ConnectionDialogCommon {
                 ConnectionSetting setting =
                     (ConnectionSetting) objStream.readObject();
 
-                list.add(setting.getName(), setting);
+                if (!emptySettingName.equals(setting.getName())) {
+                    list.put(setting.getName(), setting);
+                }
             }
         } catch (EOFException eof) {
 
@@ -243,23 +245,20 @@ class ConnectionDialogCommon {
                 objStream.close();
             }
 
-            in.close();
-        }
-
-        if (list.size() == 0) {
-            list.add(emptySetting.getName(), emptySetting);
+            if (in != null) {
+                in.close();
+            }
         }
 
         return list;
     }
 
-    static ConnectionSetting emptySetting =
-        new ConnectionSetting("Recent settings...", null, null, null, null);
+    static String emptySettingName = "Recent settings...";
 
     /**
      * Adds the new settings name if it does not nexist, or overwrites the old one.
      */
-    static void addToRecentConnectionSettings(HashMappedList settings,
+    static void addToRecentConnectionSettings(Hashtable settings,
             ConnectionSetting newSetting) throws IOException {
         settings.put(newSetting.getName(), newSetting);
         ConnectionDialogCommon.storeRecentConnectionSettings(settings);
@@ -271,18 +270,17 @@ class ConnectionDialogCommon {
      * @param settings ConnectionSetting[]
      * @throw IOException if something goes wrong while writing
      */
-    private static void storeRecentConnectionSettings(
-            HashMappedList settings) {
+    private static void storeRecentConnectionSettings(Hashtable settings) {
 
         try {
             if (recentSettings == null) {
-                String dir = JavaSystem.getTempDir(tempdir);
+                setTempDir();
 
-                if (dir == null) {
+                if (tempdir == null) {
                     return;
                 }
 
-                recentSettings = new File(dir, fileName);
+                recentSettings = new File(tempdir, fileName);
 
                 if (!recentSettings.exists()) {
 
@@ -297,9 +295,10 @@ class ConnectionDialogCommon {
             // setup a stream to a physical file on the filesystem
             FileOutputStream   out = new FileOutputStream(recentSettings);
             ObjectOutputStream objStream = new ObjectOutputStream(out);
+            Enumeration        en        = settings.elements();
 
-            for (int i = 0; i < settings.size(); i++) {
-                objStream.writeObject(settings.get(i));
+            while (en.hasMoreElements()) {
+                objStream.writeObject(en.nextElement());
             }
 
             objStream.flush();
@@ -315,13 +314,13 @@ class ConnectionDialogCommon {
 
         try {
             if (recentSettings == null) {
-                String dir = JavaSystem.getTempDir(tempdir);
+                setTempDir();
 
-                if (dir == null) {
+                if (tempdir == null) {
                     return;
                 }
 
-                recentSettings = new File(dir, fileName);
+                recentSettings = new File(tempdir, fileName);
             }
 
             if (!recentSettings.exists()) {
@@ -337,4 +336,31 @@ class ConnectionDialogCommon {
     }
 
     private static String tempdir = null;
+
+    public static void setTempDir() {
+
+//#ifdef JAVA1TARGET
+/*
+*/
+
+//#else
+        if (tempdir == null) {
+            try {
+                Class c =
+                    Class.forName("sun.security.action.GetPropertyAction");
+                Constructor constructor = c.getConstructor(new Class[]{
+                    String.class });
+                java.security.PrivilegedAction a =
+                    (java.security.PrivilegedAction) constructor.newInstance(
+                        new Object[]{ "java.io.tmpdir" });
+
+                tempdir =
+                    (String) java.security.AccessController.doPrivileged(a);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+//#endif
+    }
 }

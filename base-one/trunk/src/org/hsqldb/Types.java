@@ -45,7 +45,15 @@ import org.hsqldb.lib.IntValueHashMap;
  * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
-public final class Types {
+public class Types {
+
+    /**
+     * Names of types used for external, JDBC reporting
+     */
+    public static final String DecimalClassName   = "java.math.BigDecimal";
+    public static final String DateClassName      = "java.sql.Date";
+    public static final String TimeClassName      = "java.sql.Time";
+    public static final String TimestampClassName = "java.sql.Timestamp";
 
     /**
      * The constant in the Java programming language, sometimes referred to
@@ -473,14 +481,14 @@ public final class Types {
         typeAliases.put("LONGVARCHAR", Types.LONGVARCHAR);
         typeAliases.put("VARCHAR_IGNORECASE", VARCHAR_IGNORECASE);
         typeAliases.put("DATE", Types.DATE);
-        typeAliases.put("java.sql.Date", Types.DATE);
+        typeAliases.put(DateClassName, Types.DATE);
         typeAliases.put("TIME", Types.TIME);
-        typeAliases.put("java.sql.Time", Types.TIME);
+        typeAliases.put(TimeClassName, Types.TIME);
         typeAliases.put("TIMESTAMP", Types.TIMESTAMP);
-        typeAliases.put("java.sql.Timestamp", Types.TIMESTAMP);
+        typeAliases.put(TimestampClassName, Types.TIMESTAMP);
         typeAliases.put("DATETIME", Types.TIMESTAMP);
         typeAliases.put("DECIMAL", Types.DECIMAL);
-        typeAliases.put("java.math.BigDecimal", Types.DECIMAL);
+        typeAliases.put(DecimalClassName, Types.DECIMAL);
         typeAliases.put("NUMERIC", Types.NUMERIC);
         typeAliases.put("BIT", Types.BOOLEAN);
         typeAliases.put("BOOLEAN", Types.BOOLEAN);
@@ -597,7 +605,9 @@ public final class Types {
         String name;
         int    type;
 
-        Trace.doAssert(c != null, "c is null");
+        if (c == null) {
+            Trace.doAssert(false, "c is null");
+        }
 
         if (Void.TYPE.equals(c)) {
             return Types.NULL;
@@ -1263,11 +1273,11 @@ public final class Types {
                 return "java.net.URL";
 
             case Types.DATE :
-                return "java.sql.Date";
+                return DateClassName;
 
             case Types.DECIMAL :
             case Types.NUMERIC :
-                return "java.math.BigDecimal";
+                return DecimalClassName;
 
             case Types.DOUBLE :
             case Types.FLOAT :
@@ -1280,10 +1290,10 @@ public final class Types {
                 return "java.lang.Integer";
 
             case Types.TIME :
-                return "java.sql.Time";
+                return TimeClassName;
 
             case Types.TIMESTAMP :
-                return "java.sql.Timestamp";
+                return TimestampClassName;
 
             default :
                 return null;

@@ -570,6 +570,10 @@ class Log {
         }
     }
 
+    void synchLog() {
+        dbLogWriter.sync();
+    }
+
     void writeCommit() throws HsqlException {
         dbLogWriter.sync();
     }

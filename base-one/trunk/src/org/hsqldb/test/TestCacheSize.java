@@ -41,6 +41,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Random;
 
+import org.hsqldb.HsqlProperties;
 import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.StopWatch;
 
@@ -89,7 +90,7 @@ public class TestCacheSize {
     String  tableType      = "CACHED";
     int     cacheScale     = 10;
     int     cacheSizeScale = 10;
-    boolean nioMode        = true;
+    boolean nioMode        = false;
 
     // script format {TEXT | BINARY | COMPRESSED}
     String  logType       = "BINARY";
@@ -107,11 +108,11 @@ public class TestCacheSize {
     int     deleteWhileInsertInterval = 10000;
 
     // size of the tables used in test
-    int bigrows = 64000;
+    int bigrows = 256000;
 
     // number of ops
-    int bigops    = 64000;
-    int smallops  = 8000;
+    int bigops    = 256000;
+    int smallops  = 32000;
     int smallrows = 0xfff;
 
     // if the extra table needs to be created and filled up
@@ -146,6 +147,7 @@ public class TestCacheSize {
             writer = new FileWriter("speedtests.html", true);
 
             writer.write("<table>\n");
+            storeResult(new java.util.Date().toString(), 0, 0, 0);
             storeResult(filepath + " " + tableType + " " + nioMode,
                         cacheScale, 0, 0);
         } catch (Exception e) {}
@@ -329,7 +331,7 @@ public class TestCacheSize {
         ps.setString(2, "Clancy");
 
         for (i = 0; i < bigrows; i++) {
-            ps.setInt(3, randomgen.nextInt(smallrows));
+            ps.setInt(3, nextIntRandom(randomgen, smallrows));
 
             long nextrandom   = randomgen.nextLong();
             int  randomlength = (int) nextrandom & 0x7f;
@@ -394,15 +396,15 @@ public class TestCacheSize {
         int id1 = 0;
 
         for (i = 0; i < bigrows; i++) {
-            int id2 = randomgen.nextInt(Integer.MAX_VALUE);
+            int id2 = nextIntRandom(randomgen, Integer.MAX_VALUE);
 
             if (i % 1000 == 0) {
-                id1 = randomgen.nextInt(Integer.MAX_VALUE);
+                id1 = nextIntRandom(randomgen, Integer.MAX_VALUE);
             }
 
             ps.setInt(1, id1);
             ps.setInt(2, id2);
-            ps.setInt(5, randomgen.nextInt(smallrows));
+            ps.setInt(5, nextIntRandom(randomgen, smallrows));
 
             long nextrandom   = randomgen.nextLong();
             int  randomlength = (int) nextrandom & 0x7f;
@@ -491,7 +493,7 @@ public class TestCacheSize {
                 "SELECT TOP 1 firstname,lastname,zip,filler FROM test WHERE zip = ?");
 
             for (; i < bigops; i++) {
-                ps.setInt(1, randomgen.nextInt(smallrows));
+                ps.setInt(1, nextIntRandom(randomgen, smallrows));
                 ps.execute();
 
                 if ((i + 1) == 100 && sw.elapsedTime() > 50000) {
@@ -529,7 +531,7 @@ public class TestCacheSize {
                 "SELECT firstname,lastname,zip,filler FROM test WHERE id = ?");
 
             for (i = 0; i < bigops; i++) {
-                ps.setInt(1, randomgen.nextInt(bigrows - 1));
+                ps.setInt(1, nextIntRandom(randomgen, bigrows - 1));
                 ps.execute();
 
                 if (reportProgress && (i + 1) % 10000 == 0
@@ -562,7 +564,7 @@ public class TestCacheSize {
                 "SELECT zip FROM zip WHERE zip = ?");
 
             for (i = 0; i < bigops; i++) {
-                ps.setInt(1, randomgen.nextInt(smallrows - 1));
+                ps.setInt(1, nextIntRandom(randomgen, smallrows - 1));
                 ps.execute();
 
                 if (reportProgress && (i + 1) % 10000 == 0
@@ -599,7 +601,7 @@ public class TestCacheSize {
             int time = (int) sw.elapsedTime();
             int rate = (bigrows * 1000) / (time + 1);
 
-            storeResult("count (index on id)", bigrows, time, rate);
+            storeResult("count (index on id)", rs.getInt(1), time, rate);
             System.out.println("count time (index on id) " + rs.getInt(1)
                                + " rows  -- " + time + " ms -- " + rate
                                + " tps");
@@ -620,7 +622,7 @@ public class TestCacheSize {
             int time = (int) sw.elapsedTime();
             int rate = (bigrows * 1000) / (time + 1);
 
-            storeResult("count (index on zip)", bigrows, time, rate);
+            storeResult("count (index on zip)", rs.getInt(1), time, rate);
             System.out.println("count time (index on zip) " + rs.getInt(1)
                                + " rows  -- " + time + " ms -- " + rate
                                + " tps");
@@ -656,7 +658,7 @@ public class TestCacheSize {
                 "UPDATE test SET filler = filler || zip WHERE zip = ?");
 
             for (; i < smallrows; i++) {
-                random = randomgen.nextInt(smallrows - 1);
+                random = nextIntRandom(randomgen, smallrows - 1);
 
                 ps.setInt(1, random);
 
@@ -695,7 +697,7 @@ public class TestCacheSize {
                 + smallrows);
 
             for (i = 0; i < bigops; i++) {
-                random = randomgen.nextInt(bigrows - 1);
+                random = nextIntRandom(randomgen, bigrows - 1);
 
                 ps.setInt(1, random);
                 ps.execute();
@@ -734,7 +736,7 @@ public class TestCacheSize {
                 cConnection.prepareStatement("DELETE FROM test WHERE id = ?");
 
             for (i = 0; count < smallops; i++) {
-                random = randomgen.nextInt(bigrows);
+                random = nextIntRandom(randomgen, bigrows);
 
 //                random = i;
                 ps.setInt(1, random);
@@ -824,9 +826,32 @@ public class TestCacheSize {
         } catch (IOException e) {}
     }
 
+    int nextIntRandom(Random r, int range) {
+
+        int b = Math.abs(r.nextInt());
+
+        return b % range;
+    }
+
     public static void main(String argv[]) {
 
         TestCacheSize test = new TestCacheSize();
+        HsqlProperties props = HsqlProperties.argArrayToProps(argv, "test");
+
+        test.bigops   = props.getIntegerProperty("test.bigops", test.bigops);
+        test.bigrows  = test.bigops;
+        test.smallops = test.bigops / 8;
+        test.cacheScale = props.getIntegerProperty("test.scale",
+                test.cacheScale);
+        test.logType   = props.getProperty("test.logtype", test.logType);
+        test.tableType = props.getProperty("test.tabletype", test.tableType);
+        test.nioMode   = props.isPropertyTrue("test.nio", test.nioMode);
+
+        if (props.getProperty("test.dbtype", "").equals("mem")) {
+            test.filepath = "mem:test";
+            test.filedb   = false;
+            test.shutdown = false;
+        }
 
         test.setUp();
 
@@ -834,7 +859,11 @@ public class TestCacheSize {
 
         test.testFillUp();
         test.checkResults();
-        test.tearDown();
+
+        long time = sw.elapsedTime();
+
+        test.storeResult("total test time", 0, (int) time, 0);
         System.out.println("total test time -- " + sw.elapsedTime() + " ms");
+        test.tearDown();
     }
 }

@@ -192,7 +192,7 @@ final class CompiledStatementExecutor {
         TableFilter filter = cs.targetFilter;
         int         count  = 0;
 
-        if (filter.findFirst()) {
+        if (filter.findFirst(session)) {
             Expression    c = cs.condition;
             HsqlArrayList del;
 
@@ -201,7 +201,7 @@ final class CompiledStatementExecutor {
             if (c == null) {
                 do {
                     del.add(filter.currentRow);
-                } while (filter.next());
+                } while (filter.next(session));
 
                 count = table.delete(session, del);
             } else {
@@ -209,7 +209,7 @@ final class CompiledStatementExecutor {
                     if (c.testCondition(session)) {
                         del.add(filter.currentRow);
                     }
-                } while (filter.next());
+                } while (filter.next(session));
 
                 count = table.delete(session, del);
             }
@@ -362,7 +362,7 @@ final class CompiledStatementExecutor {
         TableFilter filter = cs.targetFilter;
         int         count  = 0;
 
-        if (filter.findFirst()) {
+        if (filter.findFirst(session)) {
             int[]          colmap    = cs.columnMap;    // column map
             Expression[]   colvalues = cs.columnValues;
             Expression     condition = cs.condition;    // update condition
@@ -390,7 +390,7 @@ final class CompiledStatementExecutor {
                         rowset.add(row, ni);
                     } catch (HsqlInternalException e) {}
                 }
-            } while (filter.next());
+            } while (filter.next(session));
 
             session.beginNestedTransaction();
 

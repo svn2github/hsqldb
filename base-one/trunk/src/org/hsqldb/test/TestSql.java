@@ -413,6 +413,7 @@ public class TestSql extends TestBase {
             ps.execute();
             ps.setObject(1, new Float(0), Types.INTEGER);
             ps.setObject(4, new Float(1), Types.INTEGER);
+            ps.setDouble(2, java.lang.Double.NEGATIVE_INFINITY);
             ps.execute();
 
             ResultSet rs =
@@ -432,6 +433,16 @@ public class TestSql extends TestBase {
                 // tests for conversion
                 // getInt on DECIMAL
                 integerValue = rs.getInt(1);
+            }
+
+            if (rs.next()) {
+                value    = rs.getDouble(2);
+                wasEqual = wasEqual && value == Double.POSITIVE_INFINITY;
+            }
+
+            if (rs.next()) {
+                value    = rs.getDouble(2);
+                wasEqual = wasEqual && value == Double.NEGATIVE_INFINITY;
             }
 
             rs = stmnt.executeQuery("SELECT MAX(i) FROM t1");

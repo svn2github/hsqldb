@@ -85,8 +85,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-
-import org.hsqldb.lib.HashMappedList;
+import java.util.Enumeration;
+import java.util.Hashtable;
 
 // sqlbob@users 20020325 - patch 1.7.0 - enhancements
 // sqlbob@users 20020407 - patch 1.7.0 - reengineering
@@ -100,12 +100,12 @@ import org.hsqldb.lib.HashMappedList;
 class ConnectionDialog extends Dialog
 implements ActionListener, ItemListener {
 
-    protected Connection   mConnection;
-    protected TextField    mName, mDriver, mURL, mUser, mPassword;
-    protected Label        mError;
-    private String         connTypes[][];
-    private HashMappedList settings;
-    private Choice         types, recent;
+    protected Connection mConnection;
+    protected TextField  mName, mDriver, mURL, mUser, mPassword;
+    protected Label      mError;
+    private String       connTypes[][];
+    private Hashtable    settings;
+    private Choice       types, recent;
 
     /**
      * Method declaration
@@ -187,8 +187,12 @@ implements ActionListener, ItemListener {
             ioe.printStackTrace();
         }
 
-        for (int i = 0; i < settings.size(); i++) {
-            recent.add(((ConnectionSetting) settings.get(i)).getName());
+        recent.add(ConnectionDialogCommon.emptySettingName);
+
+        Enumeration en = settings.elements();
+
+        while (en.hasMoreElements()) {
+            recent.add(((ConnectionSetting) en.nextElement()).getName());
         }
 
         recent.addItemListener(new ItemListener() {
@@ -221,12 +225,10 @@ implements ActionListener, ItemListener {
 
                 ConnectionDialogCommon.deleteRecentConnectionSettings();
 
-                settings = new HashMappedList();
+                settings = new Hashtable();
 
-                settings.add(ConnectionDialogCommon.emptySetting.getName(),
-                             ConnectionDialogCommon.emptySetting);
                 recent.removeAll();
-                recent.add(ConnectionDialogCommon.emptySetting.getName());
+                recent.add(ConnectionDialogCommon.emptySettingName);
                 mName.setText(null);
             }
         });

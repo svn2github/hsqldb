@@ -634,7 +634,7 @@ public class Server implements HsqlSocketRequestHandler {
      *  description="Of Server"
      */
     public String getProductVersion() {
-        return org.hsqldb.jdbc.jdbcUtil.VERSION;
+        return HsqlDatabaseProperties.THIS_VERSION;
     }
 
     /**
@@ -1257,7 +1257,7 @@ public class Server implements HsqlSocketRequestHandler {
         // call synchronized getState() to become owner of the Server Object's monitor
         while (getState() == ServerConstants.SERVER_STATE_OPENING) {
             try {
-                wait(100);
+                Thread.sleep(100);
             } catch (InterruptedException e) {}
         }
 
@@ -2079,7 +2079,7 @@ public class Server implements HsqlSocketRequestHandler {
                     int count;
 
                     try {
-                        wait(100);
+                        Thread.sleep(100);
                     } catch (Exception e) {
 
                         // e.getMessage();
