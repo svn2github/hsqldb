@@ -426,8 +426,8 @@ class TableWorks {
 
             // all is well if dropIndex throws for lack of resources
             dropIndex(refIndex.getName().name);
-            mainTable.vConstraint.remove(k);
-            table.vConstraint.remove(j);
+            mainTable.constraintList.remove(k);
+            table.constraintList.remove(j);
         } else if (c.getType() == Constraint.UNIQUE) {
             HashSet cset = new HashSet();
 
@@ -438,9 +438,9 @@ class TableWorks {
 
             // all is well if dropIndex throws for lack of resources
             dropIndex(c.getMainIndex().getName().name);
-            table.vConstraint.remove(j);
+            table.constraintList.remove(j);
         } else if (c.getType() == Constraint.CHECK) {
-            table.vConstraint.remove(j);
+            table.constraintList.remove(j);
         }
 
         table.database.constraintNameList.removeName(name);

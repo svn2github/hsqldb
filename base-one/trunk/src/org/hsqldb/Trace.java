@@ -308,6 +308,7 @@ public class Trace {
      TEXT_SOURCE_EXISTS                             = 196,
      COLUMN_IS_REFERENCED                           = 197,
      FUNCTION_CALL_ERROR                            = 198,
+     TRIGGERED_DATA_CHANGE                          = 199,
 
     //
     INTERNAL_unknown_internal_statement_type                       = 201,
@@ -537,7 +538,7 @@ public class Trace {
         "S1000 text source file already exists",    // SELECT INTO TEXT <name>
         "23000 column is referenced in",    //
         "S1000 Error calling function",    //
-        "reserved 199",    //
+        "27000 Triggered data change violation",    //
         "reserved 200",    //
         "S1000 Internal Error : Unknown SQL Statement Type:",                                                                   //
         "S1000 Internal Error : Unknown Session Operation Type:",                                                               //

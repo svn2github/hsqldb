@@ -46,9 +46,9 @@ import org.hsqldb.lib.Iterator;
  */
 class View extends Table {
 
-    Table          workingTable;
-    Select         viewSelect;
-    SubQuery       viewSubQuery;
+    Table              workingTable;
+    Select             viewSelect;
+    SubQuery           viewSubQuery;
     private String     statement;
     private HsqlName[] colList;
 
@@ -137,8 +137,8 @@ class View extends Table {
             }
         }
 
-        if (super.iColumnCount == 0) {
-        super.addColumns(metadata, columns);
+        if (super.columnCount == 0) {
+            super.addColumns(metadata, columns);
         }
     }
 

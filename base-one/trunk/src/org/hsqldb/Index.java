@@ -1018,6 +1018,33 @@ class Index {
     }
 
     /**
+     * compares two full table rows based on a set of columns
+     *
+     *
+     * @param a a full row
+     * @param b a full row
+     *
+     * @return
+     *
+     * @throws HsqlException
+     */
+    static int compareRows(Object a[], Object b[],
+                           int[] cols) throws HsqlException {
+
+        int fieldcount = cols.length;
+
+        for (int j = 0; j < fieldcount; j++) {
+            int i = Column.compare(a[cols[j]], b[cols[j]], cols[j]);
+
+            if (i != 0) {
+                return i;
+            }
+        }
+
+        return 0;
+    }
+
+    /**
      * For inserting rows into unique indexes
      *
      *

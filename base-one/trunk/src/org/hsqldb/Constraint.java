@@ -498,7 +498,7 @@ Referential Constraint 4 SET DEFAULT
         }
     }
 
-    private void checkCheckConstraint(Object[] row) throws HsqlException {
+    void checkCheckConstraint(Object[] row) throws HsqlException {
 
         core.checkFilter.currentData = row;
 
@@ -594,32 +594,6 @@ Referential Constraint 4 SET DEFAULT
         }
 
         return node;
-    }
-
-    /**
-     *  Checks if updating a set of columns in a table row breaks the
-     *  check and referential integrity constraint.
-     *
-     * @param  col array of column indexes for columns to check
-     * @param  deleted  rows to delete
-     * @param  inserted rows to insert
-     * @throws  HsqlException
-     */
-    void checkUpdate(Result inserted) throws HsqlException {
-
-        if (constType == Constraint.CHECK) {
-
-            // check inserted records
-            Record r = inserted.rRoot;
-
-            while (r != null) {
-                checkCheckConstraint(r.data);
-
-                r = r.next;
-            }
-
-            return;
-        }
     }
 
     static boolean hasReferencedRow(Object[] rowdata, int[] rowColArray,

@@ -31,6 +31,7 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.jdbc.jdbcResultSet;
 
@@ -331,15 +332,14 @@ final class CompiledStatementExecutor {
         int         count  = 0;
 
         if (filter.findFirst()) {
-            int[]         colmap    = cs.columnMap;    // column map
-            Expression[]  colvalues = cs.columnValues;
-            Expression    condition = cs.condition;    // update condition
-            int           len       = colvalues.length;
-            HsqlArrayList del       = new HsqlArrayList();
-            Result        ins       = new Result(ResultConstants.UPDATECOUNT);
-            int           size      = table.getColumnCount();
-            int[]         coltypes  = table.getColumnTypes();
-            boolean       success   = false;
+            int[]          colmap    = cs.columnMap;    // column map
+            Expression[]   colvalues = cs.columnValues;
+            Expression     condition = cs.condition;    // update condition
+            int            len       = colvalues.length;
+            HashMappedList del       = new HashMappedList();
+            int            size      = table.getColumnCount();
+            int[]          coltypes  = table.getColumnTypes();
+            boolean        success   = false;
 
             do {
                 if (condition == null || condition.test()) {
@@ -355,8 +355,7 @@ final class CompiledStatementExecutor {
                             ni[ci] = colvalues[i].getValue(coltypes[ci]);
                         }
 
-                        del.add(row);
-                        ins.add(ni);
+                        del.add(row, ni);
                     } catch (HsqlInternalException e) {}
                 }
             } while (filter.next());
@@ -364,7 +363,7 @@ final class CompiledStatementExecutor {
             session.beginNestedTransaction();
 
             try {
-                count   = table.update(del, ins, colmap, session);
+                count   = table.update(del, colmap, session);
                 success = true;
             } finally {
 

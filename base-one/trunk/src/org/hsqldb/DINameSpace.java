@@ -798,7 +798,7 @@ final class DINameSpace {
                 continue;
             }
 
-            triggerLists = table.vTrigs;
+            triggerLists = table.triggerLists;
 
             if (triggerLists == null) {
                 continue;
@@ -884,7 +884,7 @@ final class DINameSpace {
                 continue;
             }
 
-            triggerLists = table.vTrigs;
+            triggerLists = table.triggerLists;
 
             if (triggerLists == null) {
                 continue;

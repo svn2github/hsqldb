@@ -1521,7 +1521,7 @@ extends org.hsqldb.DatabaseInformationMain {
         // Do it.
         while (tables.hasNext()) {
             table  = (Table) tables.next();
-            vTrigs = table.vTrigs;
+            vTrigs = table.triggerLists;
 
             // faster test first
             if (vTrigs == null) {

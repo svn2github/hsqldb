@@ -198,7 +198,7 @@ public class DatabaseScript {
             int numTrigs = TriggerDef.NUM_TRIGS;
 
             for (int tv = 0; tv < numTrigs; tv++) {
-                HsqlArrayList trigVec = t.vTrigs[tv];
+                HsqlArrayList trigVec = t.triggerLists[tv];
                 int           trCount = trigVec.size();
 
                 for (int k = 0; k < trCount; k++) {

@@ -125,10 +125,9 @@ public class Table extends BaseTable {
 
     // main properties
 // boucherb@users - access changed in support of metadata 1.7.2
-    public HashMappedList vColumn;                    // columns in table
-    private HsqlArrayList vIndex;                     // vIndex(0) is the primary key index
-    int[]                 iPrimaryKey;                // column numbers for primary key
-    int                   iIndexCount;                // size of vIndex
+    public HashMappedList columnList;                 // columns in table
+    private HsqlArrayList indexList;                  // vIndex(0) is the primary key index
+    private int[]         primaryKeyCols;             // column numbers for primary key
     int[]                 bestRowIdentifierCols;      // column set for best index
     boolean               bestRowIdentifierStrict;    // true if it has no nullable column
     int[]                 bestIndexForColumn;         // index of the 'best' index for each column
@@ -139,24 +138,22 @@ public class Table extends BaseTable {
     NumberSequence        rowIdSequence;              // next value of optional rowid
 
 // -----------------------------------------------------------------------
-    HsqlArrayList     vConstraint;                    // constrainst for the table
-    HsqlArrayList[]   vTrigs;                         // array of trigger lists
+    HsqlArrayList     constraintList;                 // constrainst for the table
+    HsqlArrayList[]   triggerLists;                   // array of trigger lists
     private int[]     colTypes;                       // fredt - types of columns
     private int[]     colSizes;                       // fredt - copy of SIZE values for columns
     private boolean[] colNullable;                    // fredt - modified copy of isNullable() values
     private String[] colDefaults;                     // fredt - copy of DEFAULT values
     private int[]    defaultColumnMap;                // fred - holding 0,1,2,3,...
     private boolean  hasDefaultValues;                //fredt - shortcut for above
-    private boolean  isSystem;
     private boolean  isText;
     private boolean  isView;
     boolean          sqlEnforceSize;                  // inherited for the database -
     boolean          sqlEnforceStrictSize;            // inherited for the database -
 
     // properties for subclasses
-// boucherb@users - access changes in support of metadata 1.7.2
-    protected int      iColumnCount;                  // inclusive the hidden primary key
-    protected int      iVisibleColumns;               // exclusive of hidden primary key
+    protected int      columnCount;                   // inclusive the hidden primary key
+    protected int      visibleColumnCount;            // exclusive of hidden primary key
     protected Database database;
     protected Cache    cache;
     protected HsqlName tableName;                     // SQL name
@@ -167,8 +164,10 @@ public class Table extends BaseTable {
     protected boolean  isCached;
     protected int      indexType;                     // fredt - type of index used
 
+    //
+
     /**
-     *  Constructor declaration
+     *  Constructor
      *
      * @param  db
      * @param  isTemp
@@ -243,15 +242,15 @@ public class Table extends BaseTable {
         // type may have changed above for CACHED tables
         tableType      = type;
         tableName      = name;
-        iPrimaryKey    = null;
+        primaryKeyCols = null;
         identityColumn = -1;
-        vColumn        = new HashMappedList();
-        vIndex         = new HsqlArrayList();
-        vConstraint    = new HsqlArrayList();
-        vTrigs         = new HsqlArrayList[TriggerDef.NUM_TRIGS];
+        columnList     = new HashMappedList();
+        indexList      = new HsqlArrayList();
+        constraintList = new HsqlArrayList();
+        triggerLists   = new HsqlArrayList[TriggerDef.NUM_TRIGS];
 
         for (int vi = 0; vi < TriggerDef.NUM_TRIGS; vi++) {
-            vTrigs[vi] = new HsqlArrayList();    // defer init...should be "pay to use"
+            triggerLists[vi] = new HsqlArrayList();    // defer init...should be "pay to use"
         }
 
 // ----------------------------------------------------------------------------
@@ -339,11 +338,17 @@ public class Table extends BaseTable {
         return isCached | isText;
     }
 
-// ----------------------------------------------------------------------------
+    /**
+     * Retuns the session id for the owner of the table. Significant for temp
+     * tables only.
+     */
     int getOwnerSessionId() {
         return ownerSessionId;
     }
 
+    /**
+     * For text tables
+     */
     protected void setDataSource(String source, boolean isDesc, Session s,
                                  boolean newFile) throws HsqlException {
 
@@ -351,30 +356,36 @@ public class Table extends BaseTable {
         throw (Trace.error(Trace.TABLE_NOT_FOUND));
     }
 
+    /**
+     * For text tables
+     */
     protected String getDataSource() {
         return null;
     }
 
+    /**
+     * For text tables
+     */
     protected boolean isDescDataSource() {
         return false;
     }
 
     /**
-     *  Method declaration
+     *  Adds a constraint
      *
      * @param  c
      */
     void addConstraint(Constraint c) {
-        vConstraint.add(c);
+        constraintList.add(c);
     }
 
     /**
-     *  Method declaration
+     *  returns the list of constraints
      *
      * @return
      */
     HsqlArrayList getConstraints() {
-        return vConstraint;
+        return constraintList;
     }
 
 /** @todo fredt - this can be improved to ignore order of columns in
@@ -394,8 +405,8 @@ public class Table extends BaseTable {
             return getPrimaryIndex();
         }
 
-        for (int i = 0, size = vConstraint.size(); i < size; i++) {
-            Constraint c = (Constraint) vConstraint.get(i);
+        for (int i = 0, size = constraintList.size(); i < size; i++) {
+            Constraint c = (Constraint) constraintList.get(i);
 
             if (c.getType() != Constraint.UNIQUE) {
                 continue;
@@ -420,8 +431,8 @@ public class Table extends BaseTable {
     Constraint getConstraintForColumns(Table tablemain, int[] colmain,
                                        int[] colref) {
 
-        for (int i = 0, size = vConstraint.size(); i < size; i++) {
-            Constraint c = (Constraint) vConstraint.get(i);
+        for (int i = 0, size = constraintList.size(); i < size; i++) {
+            Constraint c = (Constraint) constraintList.get(i);
 
             if (c.isEquivalent(tablemain, colmain, this, colref)) {
                 return c;
@@ -432,7 +443,7 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Method declaration
+     *  Returns the next constraint of a given type
      *
      * @param  from
      * @param  type
@@ -440,8 +451,8 @@ public class Table extends BaseTable {
      */
     int getNextConstraintIndex(int from, int type) {
 
-        for (int i = from, size = vConstraint.size(); i < size; i++) {
-            Constraint c = (Constraint) vConstraint.get(i);
+        for (int i = from, size = constraintList.size(); i < size; i++) {
+            Constraint c = (Constraint) constraintList.get(i);
 
             if (c.getType() == type) {
                 return i;
@@ -452,7 +463,7 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Method declaration
+     *  Low level method to add a column
      *
      * @param  name
      * @param  type
@@ -490,18 +501,18 @@ public class Table extends BaseTable {
             Trace.check(identityColumn == -1, Trace.SECOND_PRIMARY_KEY,
                         column.columnName.name);
 
-            identityColumn = iColumnCount;
+            identityColumn = columnCount;
         }
 
-        Trace.doAssert(iPrimaryKey == null, "Table.addColumn");
-        vColumn.add(column.columnName.name, column);
+        Trace.doAssert(primaryKeyCols == null, "Table.addColumn");
+        columnList.add(column.columnName.name, column);
 
-        iColumnCount++;
-        iVisibleColumns++;
+        columnCount++;
+        visibleColumnCount++;
     }
 
     /**
-     *  Method declaration
+     *  Add a set of columns based on a ResultMetaData
      *
      * @param  result
      * @throws  HsqlException
@@ -521,7 +532,7 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Method declaration
+     *  Adds a set of columns based on a compiled Select
      *
      * @param  result
      * @throws  HsqlException
@@ -543,7 +554,7 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Method declaration
+     *  Returns the HsqlName object fo the table
      *
      * @return
      */
@@ -574,17 +585,17 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Method declaration
+     *  Returns total column counts, including hidden ones.
      *
      * @return
      */
     int getInternalColumnCount() {
-
-        // todo: this is a temporary solution;
-        // the the hidden column is not really required
-        return iColumnCount;
+        return columnCount;
     }
 
+    /**
+     * returns a basic duplicate of the table without the data structures.
+     */
     protected Table duplicate() throws HsqlException {
 
         Table t = (new Table(database, tableName, tableType, ownerSessionId));
@@ -610,7 +621,7 @@ public class Table extends BaseTable {
         for (int i = 0; i < col.length; i++) {
 
             // integrity check - should not throw in normal operation
-            if (col[i] >= iColumnCount || othercol[i] >= other.iColumnCount) {
+            if (col[i] >= columnCount || othercol[i] >= other.columnCount) {
                 throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
             }
 
@@ -648,7 +659,7 @@ public class Table extends BaseTable {
 
         Table tn = duplicate();
 
-        for (int i = 0; i < iVisibleColumns + 1; i++) {
+        for (int i = 0; i < visibleColumnCount + 1; i++) {
             if (i == colindex) {
                 if (adjust > 0) {
                     tn.addColumn(newcolumn);
@@ -657,7 +668,7 @@ public class Table extends BaseTable {
                 }
             }
 
-            if (i == iVisibleColumns) {
+            if (i == visibleColumnCount) {
                 break;
             }
 
@@ -666,8 +677,8 @@ public class Table extends BaseTable {
 
         // treat it the same as new table creation and
         // take account of the a hidden column
-        int[] primarykey = (iPrimaryKey[0] == iVisibleColumns) ? null
-                                                               : iPrimaryKey;
+        int[] primarykey = (primaryKeyCols[0] == visibleColumnCount) ? null
+                                                                     : primaryKeyCols;
 
         if (primarykey != null) {
             int[] newpk = ArrayUtil.toAdjustedColumnArray(primarykey,
@@ -685,7 +696,7 @@ public class Table extends BaseTable {
 // tony_lai@users - 20020820 - patch 595099 - primary key names
         tn.createPrimaryKey(getIndex(0).getName(), primarykey, false);
 
-        tn.vConstraint = vConstraint;
+        tn.constraintList = constraintList;
 
         for (int i = 1; i < getIndexCount(); i++) {
             Index idx = getIndex(i);
@@ -704,7 +715,7 @@ public class Table extends BaseTable {
             }
         }
 
-        tn.vTrigs = vTrigs;
+        tn.triggerLists = triggerLists;
 
         return tn;
     }
@@ -712,8 +723,8 @@ public class Table extends BaseTable {
     void updateConstraintsTables(Table old, int colindex,
                                  int adjust) throws HsqlException {
 
-        for (int j = 0, size = vConstraint.size(); j < size; j++) {
-            Constraint c = (Constraint) vConstraint.get(j);
+        for (int j = 0, size = constraintList.size(); j < size; j++) {
+            Constraint c = (Constraint) constraintList.get(j);
 
             c.replaceTable(old, this, colindex, adjust);
 
@@ -725,8 +736,8 @@ public class Table extends BaseTable {
 
     private void recompileCheckConstraints() throws HsqlException {
 
-        for (int j = 0, size = vConstraint.size(); j < size; j++) {
-            Constraint c = (Constraint) vConstraint.get(j);
+        for (int j = 0, size = constraintList.size(); j < size; j++) {
+            Constraint c = (Constraint) constraintList.get(j);
 
             if (c.constType == Constraint.CHECK) {
                 recompileCheckConstraint(c);
@@ -765,8 +776,8 @@ public class Table extends BaseTable {
      */
     void checkColumnInCheckConstraint(String colname) throws HsqlException {
 
-        for (int j = 0, size = vConstraint.size(); j < size; j++) {
-            Constraint c = (Constraint) vConstraint.get(j);
+        for (int j = 0, size = constraintList.size(); j < size; j++) {
+            Constraint c = (Constraint) constraintList.get(j);
 
             if (c.constType == Constraint.CHECK) {
                 if (c.hasColumn(this, colname)) {
@@ -783,8 +794,8 @@ public class Table extends BaseTable {
     private void renameColumnInCheckConstraints(String oldname,
             String newname, boolean isquoted) throws HsqlException {
 
-        for (int j = 0, size = vConstraint.size(); j < size; j++) {
-            Constraint c = (Constraint) vConstraint.get(j);
+        for (int j = 0, size = constraintList.size(); j < size; j++) {
+            Constraint c = (Constraint) constraintList.get(j);
 
             if (c.constType == Constraint.CHECK) {
                 Expression.Collector coll = new Expression.Collector();
@@ -810,8 +821,8 @@ public class Table extends BaseTable {
     private void renameTableInCheckConstraints(String oldname,
             String newname) throws HsqlException {
 
-        for (int j = 0, size = vConstraint.size(); j < size; j++) {
-            Constraint c = (Constraint) vConstraint.get(j);
+        for (int j = 0, size = constraintList.size(); j < size; j++) {
+            Constraint c = (Constraint) constraintList.get(j);
 
             if (c.constType == Constraint.CHECK) {
                 Expression.Collector coll = new Expression.Collector();
@@ -834,25 +845,25 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Method declaration
+     *  Returns the count of user defined columns
      *
      * @return
      */
     public int getColumnCount() {
-        return iVisibleColumns;
+        return visibleColumnCount;
     }
 
     /**
-     *  Method declaration
+     *  Returns the count of indexes on this table
      *
      * @return
      */
     int getIndexCount() {
-        return iIndexCount;
+        return indexList.size();
     }
 
     /**
-     *  Method declaration
+     *  Returns the identity column or null
      *
      * @return
      */
@@ -861,7 +872,7 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Method declaration
+     *  Returns the index of given column name or throws if not found
      *
      * @param  c
      * @return
@@ -879,28 +890,28 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Method declaration
+     *  Returns the index of given column name or -1 if not found
      *
      * @param  c
      * @return
      */
     int searchColumn(String c) {
 
-        int index = vColumn.getIndex(c);
+        int index = columnList.getIndex(c);
 
-        return index == iVisibleColumns ? -1
-                                        : index;
+        return index == visibleColumnCount ? -1
+                                           : index;
     }
 
     /**
-     *  Method declaration
+     *  Returns the user defined primary index or null
      *
      * @return
      * @throws  HsqlException
      */
     Index getPrimaryIndex() {
 
-        if (iPrimaryKey == null) {
+        if (primaryKeyCols == null) {
             return null;
         }
 
@@ -908,18 +919,18 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Method declaration
+     *  Return the user defined primary key column index array or null if not defined
      *
      * @return
      * @throws  HsqlException
      */
     int[] getPrimaryKey() {
-        return (iPrimaryKey[0] == iVisibleColumns) ? null
-                                                   : iPrimaryKey;
+        return (primaryKeyCols[0] == visibleColumnCount) ? null
+                                                         : primaryKeyCols;
     }
 
     public boolean hasPrimaryKey() {
-        return !(iPrimaryKey[0] == iVisibleColumns);
+        return !(primaryKeyCols[0] == visibleColumnCount);
     }
 
     int[] getBestRowIdentifiers() {
@@ -956,15 +967,15 @@ public class Table extends BaseTable {
             return;
         }
 
-        bestIndexForColumn = new int[vColumn.size()];
-        nullRowIDCols      = new int[vColumn.size()];
+        bestIndexForColumn = new int[columnList.size()];
+        nullRowIDCols      = new int[columnList.size()];
 
         for (int i = 0; i < bestIndexForColumn.length; i++) {
             nullRowIDCols[i] = bestIndexForColumn[i] = -1;
         }
 
-        for (int i = 0; i < vIndex.size(); i++) {
-            Index index     = (Index) vIndex.get(i);
+        for (int i = 0; i < indexList.size(); i++) {
+            Index index     = (Index) indexList.get(i);
             int[] cols      = index.getColumns();
             int   colsCount = index.getVisibleColumns();
 
@@ -1051,10 +1062,10 @@ public class Table extends BaseTable {
 
         hasDefaultValues = false;
 
-        for (int i = 0; i < iColumnCount; i++) {
+        for (int i = 0; i < columnCount; i++) {
             column = getColumn(i);
 
-            if (i < iVisibleColumns) {
+            if (i < visibleColumnCount) {
                 hasDefaultValues = hasDefaultValues
                                    || column.getDefaultString() != null;
                 colDefaults[i] = column.getDefaultString();
@@ -1098,8 +1109,8 @@ public class Table extends BaseTable {
         Index indexChoice = null;
         int   colCount    = 0;
 
-        for (int i = 0; i < vIndex.size(); i++) {
-            Index index = (Index) vIndex.get(i);
+        for (int i = 0; i < indexList.size(); i++) {
+            Index index = (Index) indexList.get(i);
             boolean result = ArrayUtil.containsAllTrueElements(columnCheck,
                 index.colCheck);
 
@@ -1121,7 +1132,7 @@ public class Table extends BaseTable {
      */
     Index getIndexForColumns(int col[], boolean unique) throws HsqlException {
 
-        for (int i = 0; i < iIndexCount; i++) {
+        for (int i = 0, count = getIndexCount(); i < count; i++) {
             Index currentindex = getIndex(i);
             int   indexcol[]   = currentindex.getColumns();
 
@@ -1141,9 +1152,9 @@ public class Table extends BaseTable {
      */
     int[] getIndexRootsArray() {
 
-        int[] roots = new int[iIndexCount];
+        int[] roots = new int[getIndexCount()];
 
-        for (int i = 0; i < iIndexCount; i++) {
+        for (int i = 0; i < getIndexCount(); i++) {
             Node f = getIndex(i).getRoot();
 
             roots[i] = (f != null) ? f.getKey()
@@ -1154,7 +1165,9 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Method declaration
+     * Returns the string consisting of file pointers to roots of indexes
+     * plus the next identity value (hidden or user defined). This is used
+     * with CACHED tables.
      *
      * @return
      * @throws  HsqlException
@@ -1184,7 +1197,7 @@ public class Table extends BaseTable {
 
         Trace.check(isCached, Trace.TABLE_NOT_FOUND);
 
-        for (int i = 0; i < iIndexCount; i++) {
+        for (int i = 0; i < getIndexCount(); i++) {
             int p = roots[i];
             Row r = null;
 
@@ -1203,7 +1216,7 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Method declaration
+     *  Sets the index roots and next identity.
      *
      * @param  s
      * @throws  HsqlException
@@ -1213,10 +1226,10 @@ public class Table extends BaseTable {
         // the user may try to set this; this is not only internal problem
         Trace.check(isCached, Trace.TABLE_NOT_FOUND);
 
-        int[] roots = new int[iIndexCount];
+        int[] roots = new int[getIndexCount()];
         int   j     = 0;
 
-        for (int i = 0; i < iIndexCount; i++) {
+        for (int i = 0; i < getIndexCount(); i++) {
             int n = s.indexOf(' ', j);
             int p = Integer.parseInt(s.substring(j, n));
 
@@ -1226,31 +1239,6 @@ public class Table extends BaseTable {
 
         setIndexRoots(roots);
         identitySequence.reset(Long.parseLong(s.substring(j)));
-    }
-
-    /**
-     *  Method declaration
-     *
-     * @param  index
-     * @return
-     */
-    Index getNextIndex(Index index) {
-
-        int i = 0;
-
-        if (index != null) {
-            for (; i < iIndexCount && getIndex(i) != index; i++) {
-                ;
-            }
-
-            i++;
-        }
-
-        if (i < iIndexCount) {
-            return getIndex(i);
-        }
-
-        return null;    // no more indexes
     }
 
     /**
@@ -1284,7 +1272,8 @@ public class Table extends BaseTable {
     void createPrimaryKey(HsqlName pkName, int[] columns,
                           boolean columnsNotNull) throws HsqlException {
 
-        Trace.doAssert(iPrimaryKey == null, "Table.createPrimaryKey(column)");
+        Trace.doAssert(primaryKeyCols == null,
+                       "Table.createPrimaryKey(column)");
 
         Column column =
             new Column(database.nameManager.newAutoName(DEFAULT_PK), false,
@@ -1293,10 +1282,10 @@ public class Table extends BaseTable {
 
         addColumn(column);
 
-        iVisibleColumns--;
+        visibleColumnCount--;
 
         if (columns == null) {
-            columns = new int[]{ iVisibleColumns };
+            columns = new int[]{ visibleColumnCount };
         } else {
             for (int i = 0; i < columns.length; i++) {
                 if (columnsNotNull) {
@@ -1307,7 +1296,7 @@ public class Table extends BaseTable {
             }
         }
 
-        iPrimaryKey = columns;
+        primaryKeyCols = columns;
 
 // tony_lai@users 20020820 - patch 595099
         HsqlName name = pkName != null ? pkName
@@ -1317,17 +1306,17 @@ public class Table extends BaseTable {
 
         createIndexStructure(columns, name, true, true, true, false);
 
-        colTypes         = new int[iColumnCount];
-        colDefaults      = new String[iVisibleColumns];
-        colSizes         = new int[iVisibleColumns];
-        colNullable      = new boolean[iVisibleColumns];
-        defaultColumnMap = new int[iVisibleColumns];
+        colTypes         = new int[columnCount];
+        colDefaults      = new String[visibleColumnCount];
+        colSizes         = new int[visibleColumnCount];
+        colNullable      = new boolean[visibleColumnCount];
+        defaultColumnMap = new int[visibleColumnCount];
 
-        for (int i = 0; i < iColumnCount; i++) {
+        for (int i = 0; i < columnCount; i++) {
             column      = getColumn(i);
             colTypes[i] = column.getType();
 
-            if (i < iVisibleColumns) {
+            if (i < visibleColumnCount) {
                 hasDefaultValues = hasDefaultValues
                                    || column.getDefaultString() != null;
                 colDefaults[i] = column.getDefaultString();
@@ -1388,7 +1377,7 @@ public class Table extends BaseTable {
 
         int newindexNo = createIndexStructureGetNo(column, name, false,
             unique, constraint, forward);
-        Index newindex     = (Index) vIndex.get(newindexNo);
+        Index newindex     = (Index) indexList.get(newindexNo);
         Index primaryindex = getPrimaryIndex();
         Node  n            = primaryindex.first();
         int   error        = 0;
@@ -1432,40 +1421,40 @@ public class Table extends BaseTable {
             n              = primaryindex.next(n);
         }
 
-        vIndex.remove(newindex);
-
-        iIndexCount = vIndex.size();
-
+        indexList.remove(newindex);
         setBestRowIdentifiers();
 
         throw Trace.error(error);
     }
 
     /**
-     *  Method declaration
+     * Creates the internal structures for an index
      *
      * @param  column
      * @param  name
+     * @param pk
      * @param  unique
-     * @return                Description of the Return Value
+     * @param constraint
+     * @param forward
+     * @return
      * @throws  HsqlException
      */
     Index createIndexStructure(int column[], HsqlName name, boolean pk,
                                boolean unique, boolean constraint,
                                boolean forward) throws HsqlException {
-        return (Index) vIndex.get(createIndexStructureGetNo(column, name, pk,
-                unique, constraint, forward));
+        return (Index) indexList.get(createIndexStructureGetNo(column, name,
+                pk, unique, constraint, forward));
     }
 
     int createIndexStructureGetNo(int column[], HsqlName name, boolean pk,
                                   boolean unique, boolean constraint,
                                   boolean forward) throws HsqlException {
 
-        Trace.doAssert(iPrimaryKey != null, "createIndex");
+        Trace.doAssert(primaryKeyCols != null, "createIndex");
 
         int s = column.length;
         int t = pk ? 0
-                   : iPrimaryKey.length;
+                   : primaryKeyCols.length;
 
         // The primary key fields are added for all indexes except primary
         // key thus making all indexes unique
@@ -1479,21 +1468,19 @@ public class Table extends BaseTable {
 
         if (!pk) {
             for (int j = 0; j < t; j++) {
-                col[s + j]  = iPrimaryKey[j];
-                type[s + j] = getColumn(iPrimaryKey[j]).getType();
+                col[s + j]  = primaryKeyCols[j];
+                type[s + j] = getColumn(primaryKeyCols[j]).getType();
             }
         }
 
         // fredt - visible columns of index is 0 for system generated PK
-        if (col[0] == iVisibleColumns) {
+        if (col[0] == visibleColumnCount) {
             s = 0;
         }
 
         Index newindex = new Index(name, this, col, type, unique, constraint,
                                    forward, s);
         int indexNo = addIndex(newindex);
-
-        iIndexCount = vIndex.size();
 
         setBestRowIdentifiers();
 
@@ -1504,8 +1491,8 @@ public class Table extends BaseTable {
 
         int i = 0;
 
-        for (; i < vIndex.size(); i++) {
-            Index current = (Index) vIndex.get(i);
+        for (; i < indexList.size(); i++) {
+            Index current = (Index) indexList.get(i);
             int order = index.getIndexOrderValue()
                         - current.getIndexOrderValue();
 
@@ -1514,7 +1501,7 @@ public class Table extends BaseTable {
             }
         }
 
-        vIndex.add(i, index);
+        indexList.add(i, index);
 
         return i;
     }
@@ -1526,9 +1513,6 @@ public class Table extends BaseTable {
     boolean isIndexingMutable() {
         return !isIndexCached();
     }
-
-// fredt@users 20020315 - patch 1.7.0 - drop index bug
-// don't drop an index used for a foreign key
 
     /**
      *  Checks for use of a named index in table constraints
@@ -1550,8 +1534,8 @@ public class Table extends BaseTable {
             throw Trace.error(Trace.DROP_PRIMARY_KEY, indexname);
         }
 
-        for (int i = 0, size = vConstraint.size(); i < size; i++) {
-            Constraint c = (Constraint) vConstraint.get(i);
+        for (int i = 0, size = constraintList.size(); i < size; i++) {
+            Constraint c = (Constraint) constraintList.get(i);
 
             if (ignore != null && ignore.contains(c)) {
                 continue;
@@ -1570,13 +1554,13 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Method declaration
+     *  Returns true if the table has any rows at all.
      *
      * @return
      */
     boolean isEmpty() {
 
-        if (iIndexCount == 0) {
+        if (getIndexCount() == 0) {
             return true;
         }
 
@@ -1594,21 +1578,21 @@ public class Table extends BaseTable {
      * Returns empty mapping array.
      */
     int[] getNewColumnMap() {
-        return new int[iVisibleColumns];
+        return new int[visibleColumnCount];
     }
 
     /**
      * Returns empty boolean array.
      */
     boolean[] getNewColumnCheckList() {
-        return new boolean[iVisibleColumns];
+        return new boolean[visibleColumnCount];
     }
 
     /**
      * Returns empty Object array for a new row.
      */
     Object[] getNewRow() {
-        return new Object[iColumnCount];
+        return new Object[columnCount];
     }
 
     /**
@@ -1619,11 +1603,11 @@ public class Table extends BaseTable {
      */
     Object[] getNewRow(boolean[] exists) throws HsqlException {
 
-        Object[] row = new Object[iColumnCount];
+        Object[] row = new Object[columnCount];
         int      i;
 
         if (exists != null && hasDefaultValues) {
-            for (i = 0; i < iVisibleColumns; i++) {
+            for (i = 0; i < visibleColumnCount; i++) {
                 String def = colDefaults[i];
 
                 if (exists[i] == false && def != null) {
@@ -1650,10 +1634,7 @@ public class Table extends BaseTable {
             Index tempidx = getIndex(todrop);
 
             if (tempidx.getName().name.equals(indexname)) {
-                vIndex.remove(todrop);
-
-                iIndexCount = vIndex.size();
-
+                indexList.remove(todrop);
                 setBestRowIdentifiers();
 
                 break;
@@ -1677,7 +1658,7 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Method declaration
+     * Moves the data from table to table
      *
      * @param  from
      * @param  colindex index of the column that was added or removed
@@ -1738,7 +1719,7 @@ public class Table extends BaseTable {
         int    count = 0;
 
         while (ni != null) {
-            enforceCheckConstraints(ni.data);
+            enforceNullConstraints(ni.data);
 
             ni = ni.next;
         }
@@ -1767,7 +1748,7 @@ public class Table extends BaseTable {
      */
     void insert(Object row[], Session c) throws HsqlException {
 
-        enforceCheckConstraints(row);
+        enforceNullConstraints(row);
         fireAll(Trigger.INSERT_BEFORE);
         insertRow(row, c);
         fireAll(Trigger.INSERT_AFTER);
@@ -1782,8 +1763,8 @@ public class Table extends BaseTable {
         fireAll(Trigger.INSERT_BEFORE_ROW, null, row);
 
         if (database.isReferentialIntegrity()) {
-            for (int i = 0, size = vConstraint.size(); i < size; i++) {
-                ((Constraint) vConstraint.get(i)).checkInsert(row);
+            for (int i = 0, size = constraintList.size(); i < size; i++) {
+                ((Constraint) constraintList.get(i)).checkInsert(row);
             }
         }
 
@@ -1834,8 +1815,8 @@ public class Table extends BaseTable {
      *  UNIQUE or PRIMARY constraints are enforced by attempting to
      *  add the row to the indexes.
      */
-    public void insertNoCheck(Object row[], Session c,
-                              boolean log) throws HsqlException {
+    public Row insertNoCheck(Object row[], Session c,
+                             boolean log) throws HsqlException {
 
         // this is necessary when rebuilding from the *.script but not
         // for transaction rollback
@@ -1860,6 +1841,8 @@ public class Table extends BaseTable {
                 && database.logger.hasLog()) {
             database.logger.writeInsertStatement(c, this, row);
         }
+
+        return r;
     }
 
     /**
@@ -1888,7 +1871,7 @@ public class Table extends BaseTable {
 
         Object[] row = r.getData();
 
-        enforceCheckConstraints(row);
+        enforceNullConstraints(row);
         setIdentityColumn(row, null);
         indexRow(r);
     }
@@ -1896,10 +1879,10 @@ public class Table extends BaseTable {
     /**
      * Checks a row against NOT NULL constraints on columns.
      */
-    protected void enforceCheckConstraints(Object[] data)
+    protected void enforceNullConstraints(Object[] data)
     throws HsqlException {
 
-        for (int i = 0; i < iVisibleColumns; i++) {
+        for (int i = 0; i < visibleColumnCount; i++) {
             if (data[i] == null &&!colNullable[i]) {
                 Trace.throwerror(Trace.TRY_TO_INSERT_NULL,
                                  "column: " + getColumn(i).columnName.name
@@ -1946,7 +1929,7 @@ public class Table extends BaseTable {
         int colindex;
 
         if (sqlEnforceSize || sqlEnforceStrictSize) {
-            for (colindex = 0; colindex < iVisibleColumns; colindex++) {
+            for (colindex = 0; colindex < visibleColumnCount; colindex++) {
                 if (colSizes[colindex] != 0 && row[colindex] != null) {
                     row[colindex] = enforceSize(row[colindex],
                                                 colTypes[colindex],
@@ -2067,7 +2050,7 @@ public class Table extends BaseTable {
             return;
         }
 
-        HsqlArrayList trigVec = vTrigs[trigVecIndx];
+        HsqlArrayList trigVec = triggerLists[trigVecIndx];
 
         for (int i = 0, size = trigVec.size(); i < size; i++) {
             TriggerDef td = (TriggerDef) trigVec.get(i);
@@ -2086,21 +2069,24 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Method declaration
+     * Adds a trigger
      *
      * @param  trigDef
      */
     void addTrigger(TriggerDef trigDef) {
-        vTrigs[trigDef.vectorIndx].add(trigDef);
+        triggerLists[trigDef.vectorIndx].add(trigDef);
     }
 
+    /**
+     * Drops a trigger.
+     */
     void dropTrigger(String name) {
 
         // look in each trigger list of each type of trigger for each table
         int numTrigs = TriggerDef.NUM_TRIGS;
 
         for (int tv = 0; tv < numTrigs; tv++) {
-            HsqlArrayList v = vTrigs[tv];
+            HsqlArrayList v = triggerLists[tv];
 
             for (int tr = v.size() - 1; tr >= 0; tr--) {
                 TriggerDef td = (TriggerDef) v.get(tr);
@@ -2113,8 +2099,22 @@ public class Table extends BaseTable {
         }
     }
 
-    /** @todo fredt - reused structure to be reviewed for multi-threading */
-    HashSet constraintPath = new HashSet();
+    /** @todo fredt - reused structures to be reviewed for multi-threading */
+
+    /**
+     * Reusable set of all FK constraints that have so far been enforced while
+     * a cascading insert or delete is in progress. This is emptied and passed
+     * with the first call to checkCascadeDelete or checkCascadeUpdate. During
+     * recursion, if an FK constraint is encountered and is already present
+     * in the set, the recursion stops.
+     */
+    HashSet constraintPath;
+
+    /**
+     * Current list of updates on this table. This is emptied once a cascading
+     * operation is over.
+     */
+    HashMappedList tableUpdateList;
 
 // fredt@users 20020225 - patch 1.7.0 - CASCADING DELETES
 
@@ -2122,7 +2122,7 @@ public class Table extends BaseTable {
      *  Method is called recursively on a tree of tables from the current one
      *  until no referring foreign-key table is left. In the process, if a
      *  non-cascading foreign-key referring table contains data, an exception
-     *  is thrown. Parameter doIt indicates whether to delete refering rows.
+     *  is thrown. Parameter delete indicates whether to delete refering rows.
      *  The method is called first to check if the row can be deleted, then to
      *  delete the row and all the refering rows.<p>
      *
@@ -2130,16 +2130,21 @@ public class Table extends BaseTable {
      *  switching to checkCascadeUpdate(,,,,) when these rules are encountered
      *  in the constraint.(fredt@users)
      *
-     * @param  row
+     * @table  table table to update
+     * @param  tableUpdateList list of update lists
+     * @param  row row to delete
      * @param  session
      * @param  delete
+     * @param  path
      * @throws  HsqlException
      */
-    void checkCascadeDelete(Row row, Session session, boolean doIt,
-                            HashSet path) throws HsqlException {
+    static void checkCascadeDelete(Table table,
+                                   HashMappedList tableUpdateLists, Row row,
+                                   Session session, boolean delete,
+                                   HashSet path) throws HsqlException {
 
-        for (int i = 0, cSize = vConstraint.size(); i < cSize; i++) {
-            Constraint c = (Constraint) vConstraint.get(i);
+        for (int i = 0, cSize = table.constraintList.size(); i < cSize; i++) {
+            Constraint c = (Constraint) table.constraintList.get(i);
 
             if (c.getType() != Constraint.MAIN || c.getRef() == null) {
                 continue;
@@ -2160,17 +2165,31 @@ public class Table extends BaseTable {
                 reftable.getNextConstraintIndex(0, Constraint.MAIN) != -1;
 
             // if (reftable == this) we don't need to go further and can return ??
-            if (doIt == false && hasref == false) {
+            if (delete == false && hasref == false) {
                 return;
             }
 
-            // -- result set for records to be inserted if this is
-            // -- a 'ON DELETE SET [NULL|DEFAULT]' constraint
-            Result   ri          = new Result(ResultConstants.DATA);
             Index    refindex    = c.getRefIndex();
             int      m_columns[] = c.getMainColumns();
             int      r_columns[] = c.getRefColumns();
             Object[] mdata       = row.getData();
+            boolean isUpdate = c.getDeleteAction() == Constraint.SET_NULL
+                               || c.getDeleteAction()
+                                  == Constraint.SET_DEFAULT;
+
+            // -- result set for records to be inserted if this is
+            // -- a 'ON DELETE SET [NULL|DEFAULT]' constraint
+            HashMappedList rowSet = null;
+
+            if (isUpdate) {
+                rowSet = (HashMappedList) tableUpdateLists.get(reftable);
+
+                if (rowSet == null) {
+                    rowSet = new HashMappedList();
+
+                    tableUpdateLists.add(reftable, rowSet);
+                }
+            }
 
             // walk the index for all the nodes that reference delnode
             for (Node n = refnode;
@@ -2184,11 +2203,10 @@ public class Table extends BaseTable {
                 // get the next node before n is deleted
                 Node nextn = refindex.next(n);
 
-                // -- if the constraint is a 'SET [DEFAULT|NULL]' constraint we have to remember
+                // -- if the constraint is a 'SET [DEFAULT|NULL]' constraint we have to keep
                 // -- a new record to be inserted after deleting the current. We also have to
-                // -- switch over to the 'checkCascadeUpdate' method afterwards
-                if (c.getDeleteAction() == Constraint.SET_NULL
-                        || c.getDeleteAction() == Constraint.SET_DEFAULT) {
+                // -- switch over to the 'checkCascadeUpdate' method below this level
+                if (isUpdate) {
                     Object[] rnd = reftable.getNewRow();
 
                     System.arraycopy(n.getData(), 0, rnd, 0, rnd.length);
@@ -2212,9 +2230,8 @@ public class Table extends BaseTable {
                         // fredt - avoid infinite recursion on circular references
                         // these can be rings of two or more mutually dependent tables
                         // so only one visit per constraint is allowed
-                        reftable.checkCascadeUpdate(n.getRow(), rnd, session,
-                                                    r_columns, null, doIt,
-                                                    path);
+                        checkCascadeUpdate(reftable, null, n.getRow(), rnd,
+                                           session, r_columns, null, path);
                         path.remove(c);
 
                         // get updated node in case they moved out of cache
@@ -2223,19 +2240,20 @@ public class Table extends BaseTable {
                                               : nextn.getUpdatedNode();
                     }
 
-                    if (doIt) {
+                    if (delete) {
 
                         //  foreign key referencing own table - do not update the row to be deleted
-                        if (reftable != this
+                        if (reftable != table
                                 || n.getRow() != row.getUpdatedRow()) {
-                            ri.add(rnd);
+                            mergeUpdate(rowSet, n.getRow(), rnd, r_columns);
                         }
                     }
                 } else if (hasref) {
-                    if (reftable != this) {
+                    if (reftable != table) {
                         if (path.add(c)) {
-                            reftable.checkCascadeDelete(n.getRow(), session,
-                                                        doIt, path);
+                            checkCascadeDelete(reftable, tableUpdateLists,
+                                               n.getRow(), session, delete,
+                                               path);
                             path.remove(c);
 
                             // get updated node in case they moved out of cache
@@ -2251,8 +2269,9 @@ public class Table extends BaseTable {
                                           : row.getUpdatedRow();
 
                         if (n.getRow() != row) {
-                            reftable.checkCascadeDelete(n.getRow(), session,
-                                                        doIt, path);
+                            checkCascadeDelete(reftable, tableUpdateLists,
+                                               n.getRow(), session, delete,
+                                               path);
 
                             // get updated node in case they moved out of cache
                             n     = n.getUpdatedNode();
@@ -2262,10 +2281,8 @@ public class Table extends BaseTable {
                     }
                 }
 
-                if (doIt) {
-                    if (!n.isDeleted()) {
-                        reftable.deleteNoRefCheck(n.getRow(), session);
-                    }
+                if (delete &&!isUpdate &&!n.isDeleted()) {
+                    reftable.deleteNoRefCheck(n.getRow(), session);
                 }
 
                 if (nextn == null) {
@@ -2274,40 +2291,33 @@ public class Table extends BaseTable {
 
                 n = nextn;
             }
-
-            if (doIt) {
-                Record r = ri.rRoot;
-
-                while (r != null) {
-                    reftable.insertNoCheck(r.data, session, true);
-
-                    r = r.next;
-                }
-            }
         }
     }
 
     /**
      * Check or perform an update cascade operation on a single row.
-     *   Check or cascade an update (delete/insert) operation.
-     *   The method takes a pair of rows (new data,old data) and checks
-     *   if Constraints permit the update operation.
-     *   A boolean arguement determines if the operation should
-     *   realy take place or if we just have to check for constraint violation.
+     * Check or cascade an update (delete/insert) operation.
+     * The method takes a pair of rows (new data,old data) and checks
+     * if Constraints permit the update operation.
+     * A boolean arguement determines if the operation should
+     * realy take place or if we just have to check for constraint violation.
+     * fredt - cyclic conditions are now avoided by checking for second visit
+     * to each constraint. The set of list of updates for all tables is passed
+     * and filled in recursive calls.
      *
      *
-     *
-     *   @param orow Object[]; old row data to be deleted.
-     *   @param nrow Object[]; new row data to be inserted.
-     *   @param session Session; current database session
-     *   @param cols int[]; indices of the columns actually changed.
-     *   @param ref Table; This should be initialized to null when the
+     *   @param list of updates
+     *   @param orow old row data to be deleted.
+     *   @param nrow new row data to be inserted.
+     *   @param session current database session
+     *   @param cols indices of the columns actually changed.
+     *   @param ref This should be initialized to null when the
      *   method is called from the 'outside'. During recursion this will be the
      *   current table (i.e. this) to indicate from where we came.
      *   Foreign keys to this table do not have to be checked since they have
      *   triggered the update and are valid by definition.
      *
-     *   @param update boolean; if true the update will take place. Otherwise
+     *   @param update if true the update will take place. Otherwise
      *   we just check for referential integrity.
      *
      *   @see #checkCascadeDelete(Object[],Session,boolean)
@@ -2316,17 +2326,22 @@ public class Table extends BaseTable {
      *
      *
      */
-
-// fredt - cyclic conditions are now avoided by checking for second visit
-// to each constraint
-    void checkCascadeUpdate(Row orow, Object[] nrow, Session session,
-                            int[] cols, Table ref, boolean update,
-                            HashSet path) throws HsqlException {
+    static void checkCascadeUpdate(Table table,
+                                   HashMappedList tableUpdateLists, Row orow,
+                                   Object[] nrow, Session session,
+                                   int[] cols, Table ref,
+                                   HashSet path) throws HsqlException {
 
         // -- We iterate through all constraints associated with this table
         // --
-        for (int i = 0; i < vConstraint.size(); i++) {
-            Constraint c = (Constraint) vConstraint.get(i);
+        for (int i = 0; i < table.constraintList.size(); i++) {
+            Constraint c = (Constraint) table.constraintList.get(i);
+
+            if (c.getType() == Constraint.CHECK) {
+                c.checkCheckConstraint(nrow);
+
+                continue;
+            }
 
             if (c.getType() == Constraint.FOREIGN_KEY && c.getRef() != null) {
 
@@ -2340,10 +2355,8 @@ public class Table extends BaseTable {
                 if (ref == null || c.getMain() != ref) {
 
                     // -- common indexes of the changed columns and the main/ref constraint
-                    int[] common;
-
-                    if ((common = ArrayUtil.commonElements(
-                            cols, c.getRefColumns())) == null) {
+                    if (ArrayUtil.countCommonElements(cols, c.getRefColumns())
+                            == 0) {
 
                         // -- Table::checkCascadeUpdate -- NO common cols; reiterating
                         continue;
@@ -2360,10 +2373,10 @@ public class Table extends BaseTable {
                 // --
                 // -- if there are no common columns between the reference constraint
                 // -- and the changed columns we reiterate.
-                int[] common;
+                int[] common = ArrayUtil.commonElements(cols,
+                    c.getMainColumns());
 
-                if ((common = ArrayUtil.commonElements(
-                        cols, c.getMainColumns())) == null) {
+                if (common == null) {
 
                     // -- NO common cols between; reiterating
                     continue;
@@ -2401,13 +2414,17 @@ public class Table extends BaseTable {
                 // -- unused shortcut when update table has no imported constraint
                 boolean hasref =
                     reftable.getNextConstraintIndex(0, Constraint.MAIN) != -1;
-                Index    refindex   = c.getRefIndex();
-                Object[] refobjects = new Object[r_columns.length];
-
-                ArrayUtil.copyColumnValues(nrow, r_columns, refobjects);
+                Index refindex = c.getRefIndex();
 
                 // -- walk the index for all the nodes that reference update node
-                Result ri = new Result(ResultConstants.DATA);
+                HashMappedList rowSet =
+                    (HashMappedList) tableUpdateLists.get(reftable);
+
+                if (rowSet == null) {
+                    rowSet = new HashMappedList();
+
+                    tableUpdateLists.add(reftable, rowSet);
+                }
 
                 for (Node n = refnode;
                         refindex.compareRowNonUnique(
@@ -2447,9 +2464,9 @@ public class Table extends BaseTable {
                         }
 
                         if (path.add(c)) {
-                            reftable.checkCascadeUpdate(n.getRow(), rnd,
-                                                        session, r_columns,
-                                                        null, update, path);
+                            checkCascadeUpdate(reftable, tableUpdateLists,
+                                               n.getRow(), rnd, session,
+                                               r_columns, null, path);
                             path.remove(c);
                         }
                     } else {
@@ -2461,21 +2478,14 @@ public class Table extends BaseTable {
                         }
 
                         if (path.add(c)) {
-                            reftable.checkCascadeUpdate(n.getRow(), rnd,
-                                                        session, common,
-                                                        this, update, path);
+                            checkCascadeUpdate(reftable, tableUpdateLists,
+                                               n.getRow(), rnd, session,
+                                               common, table, path);
                             path.remove(c);
                         }
                     }
 
-                    if (update) {
-                        ri.add(rnd);
-                        reftable.deleteNoRefCheck(n.getRow(), session);
-
-                        if (reftable == this) {
-                            nextn = c.findFkRef(orow.getData(), false);
-                        }
-                    }
+                    mergeUpdate(rowSet, n.getRow(), rnd, r_columns);
 
                     if (nextn == null) {
                         break;
@@ -2483,17 +2493,63 @@ public class Table extends BaseTable {
 
                     n = nextn;
                 }
-
-                if (update) {
-                    Record r = ri.rRoot;
-
-                    while (r != null) {
-                        reftable.insertNoCheck(r.data, session, true);
-
-                        r = r.next;
-                    }
-                }
             }
+        }
+    }
+
+    /**
+     * Merge a triggered change with a previous triggered change, or add to
+     * list.
+     */
+    static void mergeUpdate(HashMappedList rowSet, Row row, Object[] newData,
+                            int[] cols) {
+
+        Object[] data = (Object[]) rowSet.get(row);
+
+        if (data != null) {
+            for (int j = 0; j < cols.length; j++) {
+                data[cols[j]] = newData[cols[j]];
+            }
+        } else {
+            rowSet.add(row, newData);
+        }
+    }
+
+    /**
+     * Merge the full triggered change with the updated row, or add to list.
+     * Return false if changes conflict.
+     */
+    static boolean mergeKeepUpdate(HashMappedList rowSet, int[] cols,
+                                   Row row,
+                                   Object[] newData) throws HsqlException {
+
+        Object[] data = (Object[]) rowSet.get(row);
+
+        if (data != null) {
+            if (Index.compareRows(row.getData(), newData, cols) != 0
+                    && Index.compareRows(newData, data, cols) != 0) {
+                return false;
+            }
+
+            for (int j = 0; j < cols.length; j++) {
+                newData[cols[j]] = data[cols[j]];
+            }
+
+            rowSet.put(row, newData);
+        } else {
+            rowSet.add(row, newData);
+        }
+
+        return true;
+    }
+
+    static void clearUpdateLists(HashMappedList tableUpdateList) {
+
+        for (int i = 0; i < tableUpdateList.size(); i++) {
+            HashMappedList updateList =
+                (HashMappedList) tableUpdateList.get(i);
+
+            updateList.clear();
         }
     }
 
@@ -2501,45 +2557,62 @@ public class Table extends BaseTable {
      *  Highest level multiple row delete method. Corresponds to an SQL
      *  DELETE.
      */
-    int delete(HsqlArrayList del, Session c) throws HsqlException {
+    int delete(HsqlArrayList deleteList,
+               Session session) throws HsqlException {
 
-        int count = 0;
-        Row r;
+        HashSet path = constraintPath == null ? new HashSet()
+                                              : constraintPath;
 
-        for (int i = 0; i < del.size(); i++) {
-            r = (Row) del.get(i);
+        constraintPath = null;
 
-            delete(r, c, false);
+        HashMappedList tUpdateList = tableUpdateList == null
+                                     ? new HashMappedList()
+                                     : tableUpdateList;
+
+        tableUpdateList = null;
+
+        if (database.isReferentialIntegrity()) {
+            for (int i = 0; i < deleteList.size(); i++) {
+                Row row = (Row) deleteList.get(i);
+
+                path.clear();
+                checkCascadeDelete(this, tUpdateList, row, session, false,
+                                   path);
+            }
         }
 
         fireAll(Trigger.DELETE_BEFORE);
 
-        for (int i = 0; i < del.size(); i++) {
-            r = (Row) del.get(i);
+        for (int i = 0; i < deleteList.size(); i++) {
+            Row row = (Row) deleteList.get(i);
 
-            delete(r, c, true);
+            path.clear();
+            checkCascadeDelete(this, tUpdateList, row, session, true, path);
+        }
+
+        for (int i = 0; i < deleteList.size(); i++) {
+            Row row = (Row) deleteList.get(i);
+
+            if (!row.isDeleted()) {
+                deleteNoRefCheck(row, session);
+            }
+        }
+
+        for (int i = 0; i < tUpdateList.size(); i++) {
+            Table          table      = (Table) tUpdateList.getKey(i);
+            HashMappedList updateList = (HashMappedList) tUpdateList.get(i);
+
+            table.updateRowSet(updateList, session, false);
+            updateList.clear();
         }
 
         fireAll(Trigger.DELETE_AFTER);
+        path.clear();
 
-        return del.size();
-    }
+        constraintPath  = path;
+        tableUpdateList = tUpdateList;
 
-    /**
-     *  High level row delete method. Fires triggers and performs integrity
-     *  constraint checks.
-     */
-    private void delete(Row r, Session session,
-                        boolean doit) throws HsqlException {
-
-        if (database.isReferentialIntegrity()) {
-            constraintPath.clear();
-            checkCascadeDelete(r, session, doit, constraintPath);
-        }
-
-        if (doit &&!r.isDeleted()) {
-            deleteNoRefCheck(r, session);
-        }
+        return deleteList.size();
     }
 
     /** @todo move trigger work into calling method above and make sure it is always called */
@@ -2571,7 +2644,11 @@ public class Table extends BaseTable {
 
         r = r.getUpdatedRow();
 
-        for (int i = iIndexCount - 1; i >= 0; i--) {
+        if (r.isDeleted()) {
+            return;
+        }
+
+        for (int i = getIndexCount() - 1; i >= 0; i--) {
             Node node = r.getNode(i);
 
             getIndex(i).delete(node);
@@ -2595,13 +2672,13 @@ public class Table extends BaseTable {
      * Low level row delete method. Removes the row from the indexes and
      * from the Cache. Used by rollback.
      */
-    void deleteNoCheckRollback(Object data[], Session c,
+    void deleteNoCheckRollback(Object row[], Session c,
                                boolean log) throws HsqlException {
 
-        Node node = getIndex(0).search(data);
+        Node node = getIndex(0).search(row);
         Row  r    = node.getRow();
 
-        for (int i = iIndexCount - 1; i >= 0; i--) {
+        for (int i = getIndexCount() - 1; i >= 0; i--) {
             node = r.getNode(i);
 
             getIndex(i).delete(node);
@@ -2613,7 +2690,7 @@ public class Table extends BaseTable {
 
         if (log &&!isTemp &&!isText &&!isReadOnly
                 && database.logger.hasLog()) {
-            database.logger.writeDeleteStatement(c, this, data);
+            database.logger.writeDeleteStatement(c, this, row);
         }
     }
 
@@ -2627,70 +2704,122 @@ public class Table extends BaseTable {
      * After performing each cascade update, delete the main row.
      * After all cascade ops and deletes have been performed, insert new
      * rows. (fredt)
+     *
+     * The following clauses from SQL Standard section 11.8 are enforced
+     * 9) Let ISS be the innermost SQL-statement being executed.
+     * 10) If evaluation of these General Rules during the execution of ISS
+     * would cause an update of some site to a value that is distinct from the
+     * value to which that site was previously updated during the execution of
+     * ISS, then an exception condition is raised: triggered data change
+     * violation.
+     * 11) If evaluation of these General Rules during the execution of ISS
+     * would cause deletion of a row containing a site that is identified for
+     * replacement in that row, then an exception condition is raised:
+     * triggered data change violation.
      */
-    int update(HsqlArrayList del, Result ins, int[] col,
+    int update(HashMappedList updateList, int[] cols,
                Session session) throws HsqlException {
 
-        Record ni = ins.rRoot;
+        HashSet path = constraintPath == null ? new HashSet()
+                                              : constraintPath;
 
-        for (int i = 0; i < del.size(); i++) {
-            enforceFieldValueLimits(ni.data, col);
-            enforceCheckConstraints(ni.data);
+        constraintPath = null;
+
+        HashMappedList tUpdateList = tableUpdateList == null
+                                     ? new HashMappedList()
+                                     : tableUpdateList;
+
+        tableUpdateList = null;
+
+        // set identity column where null
+        for (int i = 0; i < updateList.size(); i++) {
+            Object[] data = (Object[]) updateList.get(i);
 
             // this means the identity column can be set to null to force
             // creation of a new identity value
-            setIdentityColumn(ni.data, null);
-
-            if (database.isReferentialIntegrity()) {
-                constraintPath.clear();
-                checkCascadeUpdate((Row) del.get(i), ni.data, session, col,
-                                   null, false, constraintPath);
-            }
-
-            ni = ni.next;
+            setIdentityColumn(data, null);
         }
 
-        for (int j = 0, cSize = vConstraint.size(); j < cSize; j++) {
-            Constraint c = (Constraint) vConstraint.get(j);
+        // perform check/cascade operations
+        for (int i = 0; i < updateList.size(); i++) {
+            Object[] data = (Object[]) updateList.get(i);
+            Row      row  = (Row) updateList.getKey(i);
 
-            c.checkUpdate(ins);
+            checkCascadeUpdate(this, tUpdateList, row, data, session, cols,
+                               null, path);
         }
 
         fireAll(Trigger.UPDATE_BEFORE);
 
-        ni = ins.rRoot;
+        // merge any triggered change to this table with the update list
+        HashMappedList triggeredList = (HashMappedList) tUpdateList.get(this);
 
-        for (int i = 0; i < del.size(); i++) {
-            Row row = (Row) del.get(i);
+        if (triggeredList != null) {
+            for (int i = 0; i < triggeredList.size(); i++) {
+                Row      row  = (Row) triggeredList.getKey(i);
+                Object[] data = (Object[]) triggeredList.get(i);
 
-            del.set(i, row.getData());
-            constraintPath.clear();
-            checkCascadeUpdate(row, ni.data, session, col, null, true,
-                               constraintPath);
-            deleteNoCheck(row, session, true);
+                mergeKeepUpdate(updateList, cols, row, data);
+            }
 
-            ni = ni.next;
+            triggeredList.clear();
         }
 
-        ni = ins.rRoot;
+        for (int i = 0; i < tUpdateList.size(); i++) {
+            Table          table       = (Table) tUpdateList.getKey(i);
+            HashMappedList updateListT = (HashMappedList) tUpdateList.get(i);
 
-        for (int i = 0; i < del.size(); i++) {
-            Object[] data = (Object[]) del.get(i);
-
-            fireAll(Trigger.UPDATE_BEFORE_ROW, data, ni.data);
-            insertNoCheck(ni.data, session, true);
-            fireAll(Trigger.UPDATE_AFTER_ROW, data, ni.data);
-
-            ni = ni.next;
+            table.updateRowSet(updateListT, session, false);
+            updateListT.clear();
         }
 
+        // update main list
+        updateRowSet(updateList, session, true);
         fireAll(Trigger.UPDATE_AFTER);
+        path.clear();
 
-        return del.size();
+        constraintPath  = path;
+        tableUpdateList = tUpdateList;
+
+        clearUpdateLists(tableUpdateList);
+
+        return updateList.size();
+    }
+
+    void updateRowSet(HashMappedList rowSet, Session session,
+                      boolean nodelete) throws HsqlException {
+
+        for (int i = rowSet.size() - 1; i >= 0; i--) {
+            Row      row  = (Row) rowSet.getKey(i);
+            Object[] data = (Object[]) rowSet.get(i);
+
+            if (row.isDeleted()) {
+                if (nodelete) {
+                    throw Trace.error(Trace.TRIGGERED_DATA_CHANGE);
+                } else {
+                    rowSet.remove(i);
+
+                    continue;
+                }
+            }
+
+            enforceFieldValueLimits(data);
+            enforceNullConstraints(data);
+            deleteNoCheck(row, session, true);
+        }
+
+        for (int i = 0; i < rowSet.size(); i++) {
+            Row      row  = (Row) rowSet.getKey(i);
+            Object[] data = (Object[]) rowSet.get(i);
+
+            fireAll(Trigger.UPDATE_BEFORE_ROW, data, row.getData());
+            insertNoCheck(data, session, true);
+            fireAll(Trigger.UPDATE_AFTER_ROW, data, row.getData());
+        }
     }
 
     /**
-     *  Method declaration
+     *  True if table is CACHED or TEXT
      *
      * @return
      */
@@ -2699,7 +2828,7 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Method declaration
+     *  True if table is CACHED or TEXT
      *
      * @return
      */
@@ -2708,14 +2837,14 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Method declaration
+     * Returns the index of the given name or null if not found.
      *
      * @param  s
      * @return
      */
     Index getIndex(String s) {
 
-        for (int i = 0; i < iIndexCount; i++) {
+        for (int i = 0; i < getIndexCount(); i++) {
             Index h = getIndex(i);
 
             if (s.equals(h.getName().name)) {
@@ -2735,8 +2864,8 @@ public class Table extends BaseTable {
      */
     int getConstraintIndex(String s) {
 
-        for (int j = 0, size = vConstraint.size(); j < size; j++) {
-            Constraint tempc = (Constraint) vConstraint.get(j);
+        for (int j = 0, size = constraintList.size(); j < size; j++) {
+            Constraint tempc = (Constraint) constraintList.get(j);
 
             if (tempc.getName().name.equals(s)) {
                 return j;
@@ -2757,20 +2886,20 @@ public class Table extends BaseTable {
         int j = getConstraintIndex(s);
 
         if (j >= 0) {
-            return (Constraint) vConstraint.get(j);
+            return (Constraint) constraintList.get(j);
         } else {
             return null;
         }
     }
 
     /**
-     *  Method declaration
+     *  Returns the Column object at the given index
      *
      * @param  i
      * @return
      */
     Column getColumn(int i) {
-        return (Column) vColumn.get(i);
+        return (Column) columnList.get(i);
     }
 
     void renameColumn(Column column, String newName,
@@ -2779,13 +2908,13 @@ public class Table extends BaseTable {
         String oldname = column.columnName.name;
         int    i       = getColumnNr(oldname);
 
-        vColumn.setKey(i, newName);
+        columnList.setKey(i, newName);
         column.columnName.rename(newName, isquoted);
         renameColumnInCheckConstraints(oldname, newName, isquoted);
     }
 
     /**
-     *  Method declaration
+     *  Returns an array of int valuse indicating the SQL type of the columns
      *
      * @return
      */
@@ -2794,13 +2923,13 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Method declaration
+     *  Returns the Index object at the given index
      *
      * @param  i
      * @return
      */
     protected Index getIndex(int i) {
-        return (Index) vIndex.get(i);
+        return (Index) indexList.get(i);
     }
 
     /**
@@ -2827,16 +2956,12 @@ public class Table extends BaseTable {
 
         if (isCached && cache != null) {
             cache.add((CachedRow) r);
-
-//            r.getData()[iVisibleColumns] = new Integer(((CachedRow)r).iPos);
-//            r.getData()[iVisibleColumns] = ValuePool.getInt(((CachedRow)r).iPos);
         } else if (needsRowID) {
 
             // fredt - this is required when there is a non-primary index
             // and a user defined pk - should reduce the cases where it is
             // necessary
-//            r.getData()[iVisibleColumns] = new Integer((int)rowIdSequence.getValue());
-            r.getData()[iVisibleColumns] =
+            r.getData()[visibleColumnCount] =
                 ValuePool.getInt((int) rowIdSequence.getValue());
         }
     }
@@ -2844,7 +2969,7 @@ public class Table extends BaseTable {
     void registerRow(CachedRow r) {
 
         if (needsRowID) {
-            r.getData()[iVisibleColumns] = new Integer(r.iPos);
+            r.getData()[visibleColumnCount] = new Integer(r.iPos);
         }
     }
 
@@ -2862,7 +2987,7 @@ public class Table extends BaseTable {
         try {
             Node n = null;
 
-            for (; i < iIndexCount; i++) {
+            for (; i < getIndexCount(); i++) {
                 n = r.getNextNode(n);
 
                 getIndex(i).insert(n);
@@ -2889,7 +3014,7 @@ public class Table extends BaseTable {
      */
     void clearAllRows() {
 
-        for (int i = 0; i < iIndexCount; i++) {
+        for (int i = 0; i < getIndexCount(); i++) {
             getIndex(i).setRoot(null);
         }
 

@@ -190,7 +190,7 @@ public class ScriptWriterText extends ScriptWriterBase {
         rowOut.writeString(table.getName().statementName);
         rowOut.write(BYTES_WHERE);
         rowOut.writeData(table.getColumnCount(), table.getColumnTypes(),
-                         data, table.vColumn, table.hasPrimaryKey());
+                         data, table.columnList, table.hasPrimaryKey());
         rowOut.write(BYTES_LINE_SEP);
         fileStreamOut.write(rowOut.getBuffer(), 0, rowOut.size());
 

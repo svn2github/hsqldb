@@ -56,7 +56,7 @@ import java.util.TimeZone;
  *
  *  HSQLDB uses the client and server's default timezone for all DATETIME
  *  operations. It stores the DATETIME values in .log and .script files using
- *  the default local of the server. The same values are stored as binary
+ *  the default locale of the server. The same values are stored as binary
  *  UTC timestamps in .data files. If the database is trasported from one
  *  timezone to another, then the DATETIME values in cached tables will be
  *  handled as UTC but those in other tables will be treated as local. So
@@ -77,8 +77,6 @@ public class HsqlDateTime {
     private static Calendar today          = new GregorianCalendar();
     private static Calendar tempCalDefault = new GregorianCalendar();
     private static Calendar tempCalGMT1 =
-        new GregorianCalendar(TimeZone.getTimeZone("GMT"));
-    private static Calendar tempCalGMT2 =
         new GregorianCalendar(TimeZone.getTimeZone("GMT"));
     private static Date tempDate = new Date(0);
 
@@ -208,13 +206,8 @@ public class HsqlDateTime {
             return 0;
         }
 
-        synchronized (tempCalGMT1) {
-            tempCalGMT1.setTime(a);
-            tempCalGMT2.setTime(b);
-
-            return tempCalGMT1.after(tempCalGMT2) ? 1
-                : -1;
-        }
+        return a.getTime() > b.getTime() ? 1
+                                         : -1;
     }
 
     public static Time getCurrentTime() {
@@ -406,11 +399,11 @@ public class HsqlDateTime {
 
     public static Time getNormalisedTime(long t) {
 
-        synchronized (tempCalGMT1) {
-            setTimeInMillis(tempCalGMT1, t);
-            resetToTime(tempCalGMT1);
+        synchronized (tempCalDefault) {
+            setTimeInMillis(tempCalDefault, t);
+            resetToTime(tempCalDefault);
 
-            long value = getTimeInMillis(tempCalGMT1);
+            long value = getTimeInMillis(tempCalDefault);
 
             return new Time(value);
         }

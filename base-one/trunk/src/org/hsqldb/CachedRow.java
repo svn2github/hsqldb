@@ -243,7 +243,9 @@ public class CachedRow extends Row {
 
     /**
      *  Using the internal reference to the Table, returns the current valid
-     *  Row that represents the database row for this Object.
+     *  Row that represents the database row for this Object. Valid for
+     *  deleted rows only before any subsequent insert or update on any
+     *  cached table.
      */
     Row getUpdatedRow() throws HsqlException {
         return tTable == null ? null
@@ -324,5 +326,39 @@ public class CachedRow extends Row {
         }
 
         return nextrow;
+    }
+
+    /**
+     * Lifetime scope of this method depends on the operations performed on
+     * any cached tables since this row or the parameter were constructed.
+     * If only deletes or only inserts have been performed, this method
+     * remains valid. Otherwise it can return invalid results.
+     *
+     * @param obj the reference object with which to compare.
+     * @return <code>true</code> if this object is the same as the obj argument;
+     *   <code>false</code> otherwise.
+     * @todo Implement this java.lang.Object method
+     */
+    public boolean equals(Object obj) {
+
+        if (obj == this) {
+            return true;
+        }
+
+        if (obj == null ||!(obj instanceof CachedRow)) {
+            return false;
+        }
+
+        return ((CachedRow) obj).iPos == iPos;
+    }
+
+    /**
+     * Returns a hash code value for the object.
+     *
+     * @return a hash code value for this object.
+     * @todo Implement this java.lang.Object method
+     */
+    public int hashCode() {
+        return iPos;
     }
 }
