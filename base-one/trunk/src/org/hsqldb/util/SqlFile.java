@@ -45,7 +45,7 @@ import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
-/* $Id: SqlFile.java,v 1.38 2004/02/17 13:20:25 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.39 2004/02/18 22:59:02 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -81,7 +81,7 @@ import java.util.StringTokenizer;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.38 $
+ * @version $Revision: 1.39 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -457,7 +457,8 @@ public class SqlFile {
             case 's':
             case 'S':
                 try {
-                    StringBuffer sb = new StringBuffer(commandFromHistory(0));
+                    String fromHist = commandFromHistory(0);
+                    StringBuffer sb = new StringBuffer(fromHist);
                     if (other == null) throw new BadSwitch(0);
                     String delim = other.substring(0, 1);
                     StringTokenizer toker =
@@ -482,8 +483,8 @@ public class SqlFile {
                     if (toker.countTokens() > 0) {
                         throw new BadSwitch(4);
                     }
-                    int i = sb.length();
-                    while ((i = sb.lastIndexOf(from, i-1)) > -1) {
+                    int i = fromHist.length();
+                    while ((i = fromHist.lastIndexOf(from, i-1)) > -1) {
                         sb.replace(i, i + from.length(), to);
                     }
                     statementHistory[curHist] = sb.toString();
