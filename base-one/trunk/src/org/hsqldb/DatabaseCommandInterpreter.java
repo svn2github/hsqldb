@@ -2608,9 +2608,6 @@ class DatabaseCommandInterpreter {
 
         cname = tokenizer.getName();
 
-        // CHECKME:
-        // shouldn't the commit come only *after* the DDL is
-        // actually successful?
         session.commit();
 
         TableWorks tableWorks = new TableWorks(t);
@@ -3038,23 +3035,24 @@ class DatabaseCommandInterpreter {
                                     tc.core.updateAction);
     }
 
-    private void processAlterTableAddCheckConstraint(Table t,
-            HsqlName n) throws HsqlException {
+    private void processAlterTableAddCheckConstraint(Table table,
+            HsqlName name) throws HsqlException {
 
         Constraint check;
 
-        if (n == null) {
-            n = database.nameManager.newAutoName("CT");
+        if (name == null) {
+            name = database.nameManager.newAutoName("CT");
         }
 
-        check = new Constraint(n, null, null, null, Constraint.CHECK, 0, 0);
-        check.core.check = processCreateCheckConstraintCondition(t);
+        check = new Constraint(name, null, null, null, Constraint.CHECK, 0,
+                               0);
+        check.core.check = processCreateCheckConstraintCondition(table);
 
         session.commit();
 
-        TableWorks tableWorks = new TableWorks(t);
+        TableWorks tableWorks = new TableWorks(table);
 
-        tableWorks.createCheckConstraint(check, n);
+        tableWorks.createCheckConstraint(check, name);
     }
 
     private void processReleaseSavepoint() throws HsqlException {

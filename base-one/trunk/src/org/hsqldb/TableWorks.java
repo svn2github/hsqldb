@@ -146,12 +146,16 @@ class TableWorks {
      * @param  updateAction
      * @throws HsqlException
      */
-    void createForeignKey(int fkcol[], int expcol[], HsqlName fkname,
+    void createForeignKey(int fkcol[], int expcol[], HsqlName name,
                           Table expTable, int deleteAction,
                           int updateAction) throws HsqlException {
 
+        if (table.database.constraintNameList.containsName(name.name)) {
+            throw Trace.error(Trace.CONSTRAINT_ALREADY_EXISTS, name.name);
+        }
+
         // name check
-        if (table.getConstraint(fkname.name) != null) {
+        if (table.getConstraint(name.name) != null) {
             throw Trace.error(Trace.CONSTRAINT_ALREADY_EXISTS);
         }
 
@@ -180,13 +184,14 @@ class TableWorks {
         HsqlName iname   = table.database.nameManager.newAutoName("IDX");
         Index    fkindex = createIndex(fkcol, iname, false, true, isforward);
         HsqlName pkname = table.database.nameManager.newAutoName("REF",
-            fkname.name);
-        Constraint c = new Constraint(pkname, fkname, expTable, table,
-                                      expcol, fkcol, exportindex, fkindex,
+            name.name);
+        Constraint c = new Constraint(pkname, name, expTable, table, expcol,
+                                      fkcol, exportindex, fkindex,
                                       deleteAction, updateAction);
 
         table.addConstraint(c);
         expTable.addConstraint(new Constraint(pkname, c));
+        table.database.constraintNameList.addName(name.name, table.getName());
     }
 
 // fredt@users 20020315 - patch 1.7.0 - create index bug
@@ -261,6 +266,10 @@ class TableWorks {
     void createUniqueConstraint(int[] col,
                                 HsqlName name) throws HsqlException {
 
+        if (table.database.constraintNameList.containsName(name.name)) {
+            throw Trace.error(Trace.CONSTRAINT_ALREADY_EXISTS, name.name);
+        }
+
         HsqlArrayList constraints = table.getConstraints();
 
         for (int i = 0, size = constraints.size(); i < size; i++) {
@@ -279,10 +288,15 @@ class TableWorks {
         Constraint newconstraint = new Constraint(name, table, index);
 
         table.addConstraint(newconstraint);
+        table.database.constraintNameList.addName(name.name, table.getName());
     }
 
     void createCheckConstraint(Constraint c,
                                HsqlName name) throws HsqlException {
+
+        if (table.database.constraintNameList.containsName(name.name)) {
+            throw Trace.error(Trace.CONSTRAINT_ALREADY_EXISTS, name.name);
+        }
 
         // check the existing rows
         Expression e = c.core.check;
@@ -303,6 +317,7 @@ class TableWorks {
         // getDDL() is here to ensure no subselects etc. are in condition
         e.getDDL();
         table.addConstraint(c);
+        table.database.constraintNameList.addName(name.name, table.getName());
     }
 
 /** @todo
@@ -426,5 +441,7 @@ class TableWorks {
         } else if (c.getType() == Constraint.CHECK) {
             table.vConstraint.remove(j);
         }
+
+        table.database.constraintNameList.removeName(name);
     }
 }

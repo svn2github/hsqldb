@@ -151,6 +151,7 @@ public class Database {
     HsqlNameManager                nameManager;
     DatabaseObjectNames            triggerNameList;
     DatabaseObjectNames            indexNameList;
+    DatabaseObjectNames            constraintNameList;
     SequenceManager                sequenceManager;
     final static int               DATABASE_ONLINE       = 1;
     final static int               DATABASE_OPENING      = 4;
@@ -259,6 +260,7 @@ public class Database {
             nameManager           = new HsqlNameManager();
             triggerNameList       = new DatabaseObjectNames();
             indexNameList         = new DatabaseObjectNames();
+            constraintNameList    = new DatabaseObjectNames();
             sequenceManager       = new SequenceManager();
             bReferentialIntegrity = true;
             sysUser               = userManager.createSysUser(this);
@@ -299,6 +301,7 @@ public class Database {
         hAlias          = null;
         nameManager     = null;
         triggerNameList = null;
+        constraintNameList = null;
         indexNameList   = null;
         sequenceManager = null;
         sessionManager  = null;
@@ -884,6 +887,7 @@ public class Database {
         userManager.removeDbObject(toDrop.getName());
         triggerNameList.removeOwner(toDrop.tableName);
         indexNameList.removeOwner(toDrop.tableName);
+        constraintNameList.removeOwner(toDrop.tableName);
         toDrop.drop();
         session.setScripting(!toDrop.isTemp());
         session.commit();

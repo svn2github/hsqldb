@@ -4,6 +4,8 @@ Readme File
 
 Fixes various reported bugs.
 
+Constraint names must be unique within each database.
+
 Values for BOOLEAN expressions containing AND, OR, LIKE and used in columns
 returned by queries are now correct.
 
