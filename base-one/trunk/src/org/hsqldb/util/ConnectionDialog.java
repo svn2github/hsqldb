@@ -75,6 +75,7 @@ import org.hsqldb.lib.HashMappedList;
 
 // sqlbob@users 20020325 - patch 1.7.0 - enhancements
 // sqlbob@users 20020407 - patch 1.7.0 - reengineering
+// fredt@users - 20040508 - modified patch by lonbinder@users for saving settings
 
 /**
  * Opens a connection to a database
@@ -84,12 +85,12 @@ import org.hsqldb.lib.HashMappedList;
 class ConnectionDialog extends Dialog
 implements ActionListener, ItemListener {
 
-    protected Connection      mConnection;
-    protected TextField       mName, mDriver, mURL, mUser, mPassword;
-    protected Label           mError;
-    private String            connTypes[][];
+    protected Connection   mConnection;
+    protected TextField    mName, mDriver, mURL, mUser, mPassword;
+    protected Label        mError;
+    private String         connTypes[][];
     private HashMappedList settings;
-    private Choice            types, recent;
+    private Choice         types, recent;
 
     /**
      * Method declaration

@@ -569,8 +569,7 @@ public class StringConverter {
         return writer.toString();
     }
 
-// fredt@users 20020130 - patch 497872 by Nitin Chauhan - modified
-// use of string buffer of ample size
+// fredt@users 20020130 - patch 497872 by Nitin Chauhan - use byte[] of exact size
 
     /**
      * Returns the quoted version of the string using the quotechar argument.

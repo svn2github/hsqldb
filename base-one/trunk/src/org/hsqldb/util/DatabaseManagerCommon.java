@@ -69,7 +69,6 @@ package org.hsqldb.util;
 
 import java.sql.Statement;
 import java.sql.SQLException;
-import java.util.Vector;
 import java.util.Random;
 import java.io.*;
 
