@@ -124,22 +124,22 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
 
     /**
      * The minimum value that this object returns in response to
-     * calling {@link getDisplaySize(int) getDisplaySize()}.
+     * calling {@link #getColumnDisplaySize(int) getColumnDisplaySize()}.
      */
     public static final int MIN_DISPLAY_SIZE = 1;
 
     /**
      * The maximum value that this object returns in response to
-     * calling {@link getDisplaySize(int) getDisplaySize()}.
+     * calling {@link #getColumnDisplaySize(int) getColumnDisplaySize()}.
      */
     public static final int MAX_DISPLAY_SIZE = 255;
 
     /**
      * The maximum number of rows in this object's parent ResultSet that
      * will be scanned to calculate an approximation of
-     * {@link getDisplaySize(int) getDisplaySize()}, when the value is not to
-     * be determined statically from the known maximum length or
-     * precision of the column's data type.
+     * {@link #getColumnDisplaySize(int) getColumnDisplaySize()}, when the
+     * value is not to be determined statically from the known maximum
+     * length or precision of the column's data type.
      */
     public static final int MAX_SCAN = 512;
 

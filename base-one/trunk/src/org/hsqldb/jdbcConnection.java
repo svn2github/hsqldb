@@ -440,6 +440,7 @@ public class jdbcConnection implements Connection {
 
     /** Synchronizes concurrent modification of the statement set */
     private Object statementSet_mutex = new Object();
+    private org.hsqldb.lib.HashSet savepointSet;
 
 // ----------------------------------- JDBC 1 -------------------------------
 
@@ -1781,7 +1782,6 @@ public class jdbcConnection implements Connection {
 
         if (holdability != jdbcResultSet.HOLD_CURSORS_OVER_COMMIT) {
             String msg = "ResultSet holdability: " + holdability;
-
             throw jdbcDriver.sqlException(Trace.FUNCTION_NOT_SUPPORTED, msg);
         }
     }
@@ -1896,9 +1896,33 @@ public class jdbcConnection implements Connection {
 /*
     public Savepoint setSavepoint(String name) throws SQLException {
 
+        jdbcSavepoint sp;
+        Result        req;
+
         checkClosed();
 
-        throw jdbcDriver.notSupportedJDBC3;
+        if (name == null) {
+            String msg = "name is null";
+            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+        }
+
+        req = Result.newSetSavepointRequest(name);
+
+        try {
+            sessionProxy.execute(req);
+        } catch (HsqlException e) {
+            jdbcDriver.throwError(e);
+        }
+
+        sp = new jdbcSavepoint(name);
+
+        if (savepointSet == null) {
+            savepointSet = new org.hsqldb.lib.HashSet();
+        }
+
+        savepointSet.add(sp);
+
+        return sp;
     }
 */
 
@@ -1938,9 +1962,46 @@ public class jdbcConnection implements Connection {
 /*
     public void rollback(Savepoint savepoint) throws SQLException {
 
+        String        msg;
+        jdbcSavepoint sp;
+        Result        req;
+
         checkClosed();
 
-        throw jdbcDriver.notSupportedJDBC3;
+        if (savepoint == null) {
+            msg = "savepoint is null";
+            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+        }
+
+        if (!(savepoint instanceof jdbcSavepoint)) {
+            msg = "" + savepoint + " not instanceof " + jdbcSavepoint.class;
+            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+        }
+
+        sp = (jdbcSavepoint) savepoint;
+
+        if (!sp.valid) {
+            msg = "" + savepoint + " was previously released or rolled back";
+            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+        }
+
+        if (savepointSet == null || !savepointSet.contains(sp)) {
+            msg = "" + savepoint + " was not issued on " + this;
+            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+        }
+
+        sp.valid = false;
+
+        savepointSet.remove(sp);
+
+        req = Result.newRollbackToSavepointRequest(sp.name);
+
+        try {
+            sessionProxy.execute(req);
+        } catch (HsqlException e) {
+            jdbcDriver.throwError(e);
+        }
+
     }
 */
 
@@ -1978,9 +2039,45 @@ public class jdbcConnection implements Connection {
 /*
     public void releaseSavepoint(Savepoint savepoint) throws SQLException {
 
+        String        msg;
+        jdbcSavepoint sp;
+        Result        req;
+
         checkClosed();
 
-        throw jdbcDriver.notSupportedJDBC3;
+        if (savepoint == null) {
+            msg = "savepoint is null";
+            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+        }
+
+        if (!(savepoint instanceof jdbcSavepoint)) {
+            msg = "" + savepoint + " not instanceof " + jdbcSavepoint.class;
+            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+        }
+
+        sp = (jdbcSavepoint) savepoint;
+
+        if (!sp.valid) {
+            msg = "" + savepoint + " was previously released or rolled back";
+            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+        }
+
+        if (savepointSet == null || !savepointSet.contains(sp)) {
+            msg = "" + savepoint + " was not issued on " + this;
+            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+        }
+
+        sp.valid = false;
+
+        savepointSet.remove(sp);
+
+        req = Result.newReleaseSavepointRequest(sp.name);
+
+        try {
+            sessionProxy.execute(req);
+        } catch (HsqlException e) {
+            jdbcDriver.throwError(e);
+        }
     }
 */
 
@@ -2037,7 +2134,6 @@ public class jdbcConnection implements Connection {
                                      int resultSetConcurrency,
                                      int resultSetHoldability)
                                      throws SQLException {
-
         Statement stmt;
 
         checkClosed();
@@ -2196,7 +2292,6 @@ public class jdbcConnection implements Connection {
                                          int resultSetConcurrency,
                                          int resultSetHoldability)
                                          throws SQLException {
-
         CallableStatement stmt;
 
         checkClosed();

@@ -44,7 +44,7 @@ import org.hsqldb.store.ValuePool;
  * @since HSQLDB 1.7.2
  * @version 1.7.2
  */
-public class CompiledStatementManager {
+final class CompiledStatementManager {
 
     /**
      * The Database for which this object is managing

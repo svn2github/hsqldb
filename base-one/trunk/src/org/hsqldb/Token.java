@@ -144,6 +144,7 @@ class Token {
     static final String T_READONLY              = "READONLY";
     static final String T_REFERENCES            = "REFERENCES";
     static final String T_REFERENTIAL_INTEGRITY = "REFERENTIAL_INTEGRITY";
+    static final String T_RELEASE               = "RELEASE";
     static final String T_RENAME                = "RENAME";
     static final String T_REVOKE                = "REVOKE";
     static final String T_ROLLBACK              = "ROLLBACK";
@@ -216,25 +217,26 @@ class Token {
     static final int PROPERTY              = 29;
     static final int READONLY              = 30;
     static final int REFERENTIAL_INTEGRITY = 31;
-    static final int RENAME                = 32;
-    static final int REVOKE                = 33;
-    static final int ROLLBACK              = 34;
-    static final int SAVEPOINT             = 35;
-    static final int SCRIPT                = 36;
-    static final int SCRIPTFORMAT          = 37;
-    static final int SELECT                = 38;
-    static final int SEMICOLON             = 39;
-    static final int SET                   = 40;
-    static final int SHUTDOWN              = 41;
-    static final int SOURCE                = 42;
-    static final int TABLE                 = 43;
-    static final int TEXT                  = 44;
-    static final int TRIGGER               = 45;
-    static final int UNIQUE                = 46;
-    static final int UPDATE                = 47;
-    static final int USER                  = 48;
-    static final int VIEW                  = 49;
-    static final int WRITE_DELAY           = 50;
+    static final int RELEASE               = 32;
+    static final int RENAME                = 33;
+    static final int REVOKE                = 34;
+    static final int ROLLBACK              = 35;
+    static final int SAVEPOINT             = 36;
+    static final int SCRIPT                = 37;
+    static final int SCRIPTFORMAT          = 38;
+    static final int SELECT                = 39;
+    static final int SEMICOLON             = 40;
+    static final int SET                   = 41;
+    static final int SHUTDOWN              = 42;
+    static final int SOURCE                = 43;
+    static final int TABLE                 = 44;
+    static final int TEXT                  = 45;
+    static final int TRIGGER               = 46;
+    static final int UNIQUE                = 47;
+    static final int UPDATE                = 48;
+    static final int USER                  = 49;
+    static final int VIEW                  = 50;
+    static final int WRITE_DELAY           = 51;
 
     //
     static {
@@ -284,6 +286,7 @@ class Token {
         commandSet.put(T_PROPERTY, PROPERTY);
         commandSet.put(T_READONLY, READONLY);
         commandSet.put(T_REFERENTIAL_INTEGRITY, REFERENTIAL_INTEGRITY);
+        commandSet.put(T_RELEASE, RELEASE);
         commandSet.put(T_RENAME, RENAME);
         commandSet.put(T_REVOKE, REVOKE);
         commandSet.put(T_ROLLBACK, ROLLBACK);

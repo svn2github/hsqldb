@@ -5881,7 +5881,8 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Up to and including 1.7.2, HSQLDB always returns false. <p>
+     * Starting with 1.7.2, HSQLDB returns true for
+     * HOLD_CURSORS_OVER_COMMIT, else false. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -5898,12 +5899,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
     public boolean supportsResultSetHoldability(int holdability)
     throws SQLException {
 
-        // TODO: fredt@users - sure
-        // we should probably return false here
-        // for now, instead of throwing.
-        // boucherb@users 20020426
-        // return false;
-        return false;
+        return holdability == jdbcResultSet.HOLD_CURSORS_OVER_COMMIT;
     }
 */
 
@@ -5944,6 +5940,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
         // boucherb@users 20020426
         // return ResultSet.CLOSE_CURSORS_AT_COMMIT; // ???
         //throw jdbcDriver.notSupportedJDBC3;
+
 // YES:
 // JDBC 3.0 fr spec:
 // 14.1.3 ResultSet Holdability
@@ -5972,6 +5969,7 @@ public class jdbcDatabaseMetaData implements java.sql.DatabaseMetaData {
 //   determine the default holdability of result sets returned by the
 //   underlying data
 //   source.
+
 // boucherb@users 20030819
 // Our ResultSet objects are never closed as the result of a commit
         return jdbcResultSet.HOLD_CURSORS_OVER_COMMIT;

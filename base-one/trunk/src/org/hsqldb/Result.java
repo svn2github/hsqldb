@@ -416,8 +416,25 @@ class Result {
 
             switch (iMode) {
 
+// SQLGETSESSIONINFO does not implement spec semantics, table 15, 5Wd 200n FCD
+//
+// Information Type                   | Code  | Data Type     | <general value specification>
+// -----------------------------------+-------+---------------+----------------------------------------------                
+// CURRENT USER                        47      CHARACTER(L)    USER and CURRENT_USER
+// CURRENT DEFAULT TRANSFORM GROUP     20004   CHARACTER(L)    CURRENT_DEFAULT_TRANSFORM_GROUP
+// CURRENT PATH                        20005   CHARACTER(L)    CURRENT_PATH
+// CURRENT ROLE                        20006   CHARACTER(L)    CURRENT_ROLE
+// SESSION USER                        20007   CHARACTER(L)    SESSION_USER
+// SYSTEM USER                         20008   CHARACTER(L)    SYSTEM_USER
+// Where L is the implementation-defined maximum length of the corresponding <general value specification>.
+//
+// If we are using a proprietary mechanism, fine, but then we should use an HSQL_API_BASE value
                 case ResultConstants.SQLGETSESSIONINFO :
                 case ResultConstants.SQLDISCONNECT :
+
+// SQLSTARTTRAN currently unused and is done with SQLSETENVVAR instead; why?
+// SQLSETENVVAR is supposed to be for setting whether null terminated strings are used in communication
+// If we are using a proprietary mechanism, fine, but then we should use an HSQL_API_BASE value
                 case ResultConstants.SQLSTARTTRAN :
                     break;
 
@@ -450,12 +467,26 @@ class Result {
                     iUpdateCount = in.readIntData();
                     break;
 
-                case ResultConstants.SQLENDTRAN :
-                    iUpdateCount = in.readIntData();
-                    mainString   = in.readString();
-                    break;
+                case ResultConstants.SQLENDTRAN : {
+                    int type = in.readIntData();
 
+                    setEndTranType(type);                    // endtran type
+
+                    switch (type) {
+
+                        case ResultConstants.SAVEPOINT_NAME_RELEASE :
+                        case ResultConstants.SAVEPOINT_NAME_ROLLBACK :
+                            mainString = in.readString();    // savepoint name
+
+                        //  default: throw - case never happens
+                    }
+
+                    break;
+                }
                 case ResultConstants.SQLEXECUTE :
+
+// SQLSETENVVAR is supposed to be for setting whether null terminated strings are used in communication
+// If we are using a proprietary mechanism, fine, but then we should use an HSQL_API_BASE value
                 case ResultConstants.SQLSETENVATTR : {
                     if (iMode == ResultConstants.SQLEXECUTE) {
                         statementID = in.readIntData();
@@ -497,6 +528,23 @@ class Result {
 
                     while (count-- > 0) {
                         add(in.readData(metaData.colType));
+                    }
+
+                    break;
+                }
+                case ResultConstants.SQLSETCONNECTATTR : {
+                    int type = in.readIntData();             // attr type
+
+                    setConnectionAttrType(type);
+
+                    switch (type) {
+
+                        case ResultConstants.SQL_ATTR_SAVEPOINT_NAME :
+                            mainString = in.readString();    // savepoint name
+
+                        //  case ResultConstants.SQL_ATTR_AUTO_IPD : 
+                        //      - always true
+                        //  default: throw - case never happens
                     }
 
                     break;
@@ -557,6 +605,53 @@ class Result {
         r.statementID = statementID;
 
         return r;
+    }
+
+    static Result newExecuteDirectRequest(String sql) {
+
+        Result out;
+
+        out = new Result(ResultConstants.SQLEXECDIRECT);
+
+        out.setMainString(sql);
+
+        return out;
+    }
+
+    static Result newReleaseSavepointRequest(String name) {
+
+        Result out;
+
+        out = new Result(ResultConstants.SQLENDTRAN);
+
+        out.setMainString(name);
+        out.setEndTranType(ResultConstants.SAVEPOINT_NAME_RELEASE);
+
+        return out;
+    }
+
+    static Result newRollbackToSavepointRequest(String name) {
+
+        Result out;
+
+        out = new Result(ResultConstants.SQLENDTRAN);
+
+        out.setMainString(name);
+        out.setEndTranType(ResultConstants.SAVEPOINT_NAME_ROLLBACK);
+
+        return out;
+    }
+
+    static Result newSetSavepointRequest(String name) {
+
+        Result out;
+
+        out = new Result(ResultConstants.SQLSETCONNECTATTR);
+
+        out.setConnectionAttrType(ResultConstants.SQL_ATTR_SAVEPOINT_NAME);
+        out.setMainString(name);
+
+        return out;
     }
 
     static Result newSelectResult(Result in) {
@@ -1091,18 +1186,35 @@ class Result {
 
         switch (iMode) {
 
+// SQLGETSESSIONINFO does not implement spec semantics, table 15, 5Wd 200n FCD
+//
+// Information Type                   | Code  | Data Type     | <general value specification>
+// -----------------------------------+-------+---------------+----------------------------------------------                
+// CURRENT USER                        47      CHARACTER(L)    USER and CURRENT_USER
+// CURRENT DEFAULT TRANSFORM GROUP     20004   CHARACTER(L)    CURRENT_DEFAULT_TRANSFORM_GROUP
+// CURRENT PATH                        20005   CHARACTER(L)    CURRENT_PATH
+// CURRENT ROLE                        20006   CHARACTER(L)    CURRENT_ROLE
+// SESSION USER                        20007   CHARACTER(L)    SESSION_USER
+// SYSTEM USER                         20008   CHARACTER(L)    SYSTEM_USER
+// Where L is the implementation-defined maximum length of the corresponding <general value specification>.
+//
+// If we are using a proprietary mechanism, fine, but then we should use an HSQL_API_BASE value
             case ResultConstants.SQLGETSESSIONINFO :
             case ResultConstants.SQLDISCONNECT :
+
+// SQLSTARTTRAN currently unused and is done with SQLSETENVVAR instead; why?
+// SQLSETENVVAR is supposed to be for setting whether null terminated strings are used in communication
+// If we are using a proprietary mechanism, fine, but then we should use an HSQL_API_BASE value
             case ResultConstants.SQLSTARTTRAN :
                 break;
 
             case ResultConstants.SQLPREPARE :
 
-                // allows the engine side to
-                // fast-fail prepare of non-CALL
-                // statement against a CallableStatement
-                // object.  May be useful in the future
-                // for other things
+                // Allows the engine side to fast-fail prepare of non-CALL
+                // statement against a CallableStatement object and CALL
+                // statement against PreparedStatement.
+                //
+                // May be useful in the future for other things
                 out.writeIntData(getStatementType());
                 out.writeString(mainString);
                 break;
@@ -1113,7 +1225,7 @@ class Result {
                 break;
 
             case ResultConstants.SQLEXECDIRECT :
-                out.writeIntData(statementID);
+                out.writeIntData(statementID);          // currently unused
                 out.writeString(mainString);
                 break;
 
@@ -1128,12 +1240,26 @@ class Result {
                 out.writeIntData(iUpdateCount);
                 break;
 
-            case ResultConstants.SQLENDTRAN :
-                out.writeIntData(iUpdateCount);
-                out.writeString(mainString);
-                break;
+            case ResultConstants.SQLENDTRAN : {
+                int type = getEndTranType();
 
+                out.writeIntData(type);                 // endtran type
+
+                switch (type) {
+
+                    case ResultConstants.SAVEPOINT_NAME_RELEASE :
+                    case ResultConstants.SAVEPOINT_NAME_ROLLBACK :
+                        out.writeString(mainString);    // savepoint name
+
+                    // default; // do nothing
+                }
+
+                break;
+            }
             case ResultConstants.SQLEXECUTE :
+
+// SQLSETENVVAR is supposed to be for setting whether null terminated strings are used in communication
+// If we are using a proprietary mechanism, fine, but then we should use an HSQL_API_BASE value
             case ResultConstants.SQLSETENVATTR : {
                 out.writeIntData(iMode == ResultConstants.SQLEXECUTE
                                  ? statementID
@@ -1171,6 +1297,22 @@ class Result {
                                   n.data, null, false);
 
                     n = n.next;
+                }
+
+                break;
+            }
+            case ResultConstants.SQLSETCONNECTATTR : {
+                int type = getConnectionAttrType();
+
+                out.writeIntData(type);                 // attr type
+
+                switch (type) {
+
+                    case ResultConstants.SQL_ATTR_SAVEPOINT_NAME :
+                        out.writeString(mainString);    // savepoint name
+
+                    // case ResultConstants.SQL_ATTR_AUTO_IPD // always true
+                    // default: // throw, but case never happens
                 }
 
                 break;
@@ -1343,8 +1485,20 @@ class Result {
         return iUpdateCount;
     }
 
+    int getConnectionAttrType() {
+        return iUpdateCount;
+    }
+
+    void setConnectionAttrType(int type) {
+        iUpdateCount = type;
+    }
+
     int getEndTranType() {
         return iUpdateCount;
+    }
+
+    void setEndTranType(int type) {
+        iUpdateCount = type;
     }
 
     /** @todo fred - check this reporposing */

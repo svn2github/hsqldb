@@ -314,6 +314,10 @@ class DatabaseCommandInterpreter {
                 result = processExplainPlan();
                 break;
 
+            case Token.RELEASE :
+                processReleaseSavepoint();
+                break;
+
             default :
                 throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
         }
@@ -2831,5 +2835,22 @@ class DatabaseCommandInterpreter {
                                     tc.updateAction);
 
         return;
+    }
+
+    private void processReleaseSavepoint() throws HsqlException {
+
+        String token;
+
+        tokenizer.getThis(Token.T_SAVEPOINT);
+
+        token = tokenizer.getString();
+
+        if (token.length() == 0) {
+            String msg = "zero-length savepoint name";
+
+            throw Trace.error(Trace.UNEXPECTED_TOKEN, msg);
+        }
+
+        session.releaseSavepoint(token);
     }
 }

@@ -2048,7 +2048,7 @@ class Parser {
 
             cs.setAsInsertValues(t, cm, acve, ccl, getParameters());
 
-            cs.subqueries = cs.subqueries = getSubqueries();
+            cs.subqueries = getSubqueries();
 
             return cs;
         } else if (token.equals(Token.T_SELECT)) {

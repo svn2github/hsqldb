@@ -206,6 +206,7 @@ class TestSelf {
         testMainScript(cConnection, persistent);
         testTabProfile(cConnection, persistent);
         testMarotest(cConnection, persistent);
+        cConnection.createStatement().execute("SHUTDOWN");
         cConnection.close();
     }
 
@@ -785,7 +786,6 @@ class TestSelf {
                         password);
                 sStatement = cConnection.createStatement();
 
-                readTabProfileTest(sStatement);
             }
 
             start = System.currentTimeMillis();

@@ -170,7 +170,7 @@ import org.hsqldb.resources.BundleHandler;
  *
  *   <li>The value of <em>database.0</em> is special in that the corresponding
  *       database instance is the one to which a connection is made when
- *       the <b>&lt;alias&gt;<b> component of an HSQLDB HSQL protocol database
+ *       the <b>&lt;alias&gt;</b> component of an HSQLDB HSQL protocol database
  *       connection url is omitted. <p>
  *
  *       This behaviour allows the previous
@@ -190,7 +190,7 @@ import org.hsqldb.resources.BundleHandler;
  * ...
  * server.database.n=...
  * server.dbname.n=...
- * server.silent=true<p>
+ * server.silent=true
  * </pre>
  *
  * Starting with 1.7.2, Server has been refactored to become a simple JavaBean
@@ -294,9 +294,9 @@ public class Server implements HsqlSocketRequestHandler {
             trace("ServerThread.run() exiting");
         }
 
-        public String toString() {
-            return super.toString() + "[" + socket + "]";
-        }
+//        public String toString() {
+//            return super.toString() + "[" + socket + "]";
+//        }
     }
 
     public Server() {
@@ -376,7 +376,7 @@ public class Server implements HsqlSocketRequestHandler {
         int     state;
         boolean error;
 
-        trace("checkRunning() entered");
+        trace("checkRunning(" + running + ") entered");
 
         state = getState();
         error = (running && state != ServerConstants.SERVER_STATE_ONLINE)
@@ -384,8 +384,8 @@ public class Server implements HsqlSocketRequestHandler {
                     && state != ServerConstants.SERVER_STATE_SHUTDOWN);
 
         if (error) {
-            String msg = "server is " + (running ? "not"
-                                                 : "") + " running";
+            String msg = "server is " + (running ? "not "
+                                                 : "") + "running";
 
             throw new RuntimeException(msg);
         }
@@ -405,7 +405,6 @@ public class Server implements HsqlSocketRequestHandler {
         ServerConnection sc;
 
         trace("closeAllServerConnections() entered");
-        trace("Closing all server connections:");
 
         Object[] connections =
             serverConnSet.toArray(new Object[serverConnSet.size()]);
@@ -450,9 +449,27 @@ public class Server implements HsqlSocketRequestHandler {
     }
 
     /**
-     * Retrieves the absolute path of the database this Server hosts.
+     * Retrieves the url alias (external name) of the i'th database
+     * that this Server hosts.
      *
-     * @return the absolute path of the database this Server hosts
+     * @return the url alias of the i'th database
+     *      that this Server hosts.
+     *
+     * @jmx.managed-attribute
+     *  access="read-write"
+     *  description="For hosted database"
+     */
+    public String getDatabaseName(int index) {
+        return serverProperties.getProperty(ServerConstants.SC_KEY_DBNAME
+                                            + "." + index);
+    }
+
+    /**
+     * Retrieves the HSQLDB database path descriptor of the i'th database
+     * that this Server hosts.
+     *
+     * @return the HSQLDB database path descriptor of the i'th database
+     *      that this Server hosts
      *
      * @jmx.managed-attribute
      *  access="read-write"
@@ -527,7 +544,7 @@ public class Server implements HsqlSocketRequestHandler {
     public String getDefaultWebPage() {
 
         if (serverProtocol != ServerConstants.SC_PROTOCOL_HTTP) {
-            return "IGNORED";
+            return "[IGNORED]";
         }
 
         return serverProperties.getProperty(
@@ -760,7 +777,7 @@ public class Server implements HsqlSocketRequestHandler {
     public String getWebRoot() {
 
         if (serverProtocol != ServerConstants.SC_PROTOCOL_HTTP) {
-            return "IGNORED";
+            return "[IGNORED]";
         }
 
         return serverProperties.getProperty(ServerConstants.SC_KEY_WEB_ROOT);
@@ -770,14 +787,15 @@ public class Server implements HsqlSocketRequestHandler {
      * Assigns the specified socket to a new conection handler and
      * starts the handler in a new Thread.
      *
-     * @param socket the socket to connect
+     * @param s the socket to connect
      */
     public void handleConnection(Socket s) {
 
         Thread   t;
         Runnable r;
+        String   ctn;
 
-        trace("handleConnection(): " + s);
+        trace("handleConnection(" + s + ") entered");
         checkRunning(true);
 
         if (!allowConnection(s)) {
@@ -796,17 +814,20 @@ public class Server implements HsqlSocketRequestHandler {
 
         if (serverProtocol == ServerConstants.SC_PROTOCOL_HSQL) {
             r = new ServerConnection(s, this);
+            ctn = ((ServerConnection) r).getConnectionThreadName();
 
             synchronized (serverConnSet) {
                 serverConnSet.add(r);
             }
         } else {
             r = new WebServerConnection(s, (WebServer) this);
+            ctn = ((WebServerConnection) r).getConnectionThreadName();
         }
 
-        t = new Thread(serverConnectionThreadGroup, r, "[" + s + "]");
+        t = new Thread(serverConnectionThreadGroup, r, ctn);
 
         t.start();
+        trace("handleConnection() exited");
     }
 
     /**
@@ -914,7 +935,7 @@ public class Server implements HsqlSocketRequestHandler {
             path = (new File(path)).getAbsolutePath();
         }
 
-        trace("putPropertiesFromFile(): [" + path + "]");
+        trace("putPropertiesFromFile(): [" + path + ".properties]");
 
         p      = new HsqlProperties(path);
         loaded = false;
@@ -954,12 +975,11 @@ public class Server implements HsqlSocketRequestHandler {
 
         HsqlProperties p;
 
-        checkRunning(false);
-
         if (s == null || s.length() == 0) {
             return;
         }
 
+        checkRunning(false);
         trace("putPropertiesFromString(): [" + s + "]");
 
         p = HsqlProperties.delimitedArgPairsToProps(s, "=", ";",
@@ -985,8 +1005,31 @@ public class Server implements HsqlSocketRequestHandler {
     public void setAddress(String address) throws RuntimeException {
 
         checkRunning(false);
-        trace("setAddress(): " + address);
+
+        if (org.hsqldb.lib.StringUtil.isEmpty(address)) {
+            address = ServerConstants.SC_DEFAULT_ADDRESS;
+        }
+
+        trace("setAddress(" + address + ")");
         serverProperties.setProperty(ServerConstants.SC_KEY_ADDRESS, address);
+    }
+
+    /**
+     * Sets the external name (url alias) of the i'th hosted database.
+     *
+     * @param name external name (url alias) of the i'th HSQLDB database
+     *      instance this server is to host.
+     * @throws RuntimeException if this server is running
+     *
+     * @jmx.managed-operation
+     */
+    public void setDatabaseName(int index,
+                                String name) throws RuntimeException {
+
+        checkRunning(false);
+        trace("setDatabaseName(" + index + "," + name + ")");
+        serverProperties.setProperty(ServerConstants.SC_KEY_DBNAME + "."
+                                     + index, name);
     }
 
     /**
@@ -1003,7 +1046,7 @@ public class Server implements HsqlSocketRequestHandler {
                                 String path) throws RuntimeException {
 
         checkRunning(false);
-        trace("setDatabasePath(): " + path);
+        trace("setDatabasePath(" + index + "," + path + ")");
         serverProperties.setProperty(ServerConstants.SC_KEY_DATABASE + "."
                                      + index, path);
     }
@@ -1018,7 +1061,7 @@ public class Server implements HsqlSocketRequestHandler {
     public void setDefaultWebPage(String file) {
 
         checkRunning(false);
-        trace("setDefaultWebPage(): " + file);
+        trace("setDefaultWebPage(" + file + ")");
 
         if (serverProtocol != ServerConstants.SC_PROTOCOL_HTTP) {
             return;
@@ -1039,14 +1082,14 @@ public class Server implements HsqlSocketRequestHandler {
     public void setPort(int port) throws RuntimeException {
 
         checkRunning(false);
-        trace("setPort(): " + port);
+        trace("setPort(" + port + ")");
         serverProperties.setProperty(ServerConstants.SC_KEY_PORT, port);
     }
 
     /**
-     * Sets the stream to which server messages are logged.
+     * Sets the PrintWriter to which server messages are logged.
      *
-     * @param ps the stream to which server messages are logged
+     * @param pw the PrintWriter to which server messages are logged
      */
     public void setLogWriter(PrintWriter pw) {
 
@@ -1064,7 +1107,7 @@ public class Server implements HsqlSocketRequestHandler {
      */
     public void setNoSystemExit(boolean noExit) {
 
-        trace("setNoSystemExit(): " + noExit);
+        trace("setNoSystemExit(" + noExit + ")");
         serverProperties.setProperty(ServerConstants.SC_KEY_NO_SYSTEM_EXIT,
                                      noExit);
     }
@@ -1079,7 +1122,7 @@ public class Server implements HsqlSocketRequestHandler {
      */
     public void setRestartOnShutdown(boolean restart) {
 
-        trace("setRestartOnShutdown(): " + restart);
+        trace("setRestartOnShutdown(" + restart + ")");
         serverProperties.setProperty(
             ServerConstants.SC_KEY_AUTORESTART_SERVER, restart);
     }
@@ -1093,7 +1136,7 @@ public class Server implements HsqlSocketRequestHandler {
      * @jmx.managed-operation
      */
     public void setSilent(boolean silent) {
-        trace("setSilent(): " + silent);
+        trace("setSilent(" + silent + ")");
         serverProperties.setProperty(ServerConstants.SC_KEY_SILENT, silent);
     }
 
@@ -1108,7 +1151,7 @@ public class Server implements HsqlSocketRequestHandler {
     public void setTls(boolean tls) throws RuntimeException {
 
         checkRunning(false);
-        trace("setTls(): " + tls);
+        trace("setTls(" + tls + ")");
         serverProperties.setProperty(ServerConstants.SC_KEY_TLS, tls);
     }
 
@@ -1121,8 +1164,10 @@ public class Server implements HsqlSocketRequestHandler {
      * @jmx.managed-operation
      */
     public void setTrace(boolean trace) {
-        trace("setTrace(): " + trace);
+
+        trace("setTrace(" + trace + ")");
         serverProperties.setProperty(ServerConstants.SC_KEY_TRACE, trace);
+        javaSystem.setLogToSystem(trace);
     }
 
     /**
@@ -1139,7 +1184,7 @@ public class Server implements HsqlSocketRequestHandler {
 
         root = (new File(root)).getAbsolutePath();
 
-        trace("setWebRoot(): " + root);
+        trace("setWebRoot(" + root + ")");
 
         if (serverProtocol != ServerConstants.SC_PROTOCOL_HTTP) {
             return;
@@ -1170,35 +1215,6 @@ public class Server implements HsqlSocketRequestHandler {
             p.getIntegerProperty(ServerConstants.SC_KEY_MAX_CONNECTIONS, 16);
 
         javaSystem.setLogToSystem(isTrace());
-
-        String[]    dblist   = new String[10];
-        Enumeration enum     = serverProperties.getProperties().keys();
-        int         maxindex = 0;
-
-        try {
-            for (int i = 0; enum.hasMoreElements(); ) {
-                String key = (String) enum.nextElement();
-
-                if (key.startsWith("server.dbname.")) {
-                    String number = key.substring("server.dbname.".length());
-                    int    dbnumber = Integer.parseInt(number);
-
-                    maxindex         = dbnumber < maxindex ? maxindex
-                                                           : dbnumber;
-                    dblist[dbnumber] = serverProperties.getProperty(key);
-                }
-            }
-        } catch (ArrayIndexOutOfBoundsException e) {
-
-            /** @todo fredt - this should display an error */
-        }
-
-        dbAlias = new String[maxindex + 1];
-        dbType  = new String[maxindex + 1];
-        dbPath  = new String[maxindex + 1];
-        dbID    = new int[maxindex + 1];
-
-        ArrayUtil.copyArray(dblist, dbAlias, maxindex + 1);
     }
 
     /**
@@ -1228,8 +1244,7 @@ public class Server implements HsqlSocketRequestHandler {
                 return getState();
             }
 
-            serverThread = new ServerThread(serverThreadGroup,
-                                            serverId + "[LISTENER]");
+            serverThread = new ServerThread(serverThreadGroup, "listener");
 
             serverThread.start();
             waitForStatus();
@@ -1280,7 +1295,7 @@ public class Server implements HsqlSocketRequestHandler {
      * true, but it can be overidden to implement hosts allow-deny
      * functionality.
      *
-     * @param the socket to test.
+     * @param socket the socket to test.
      */
     protected boolean allowConnection(Socket socket) {
         return true;
@@ -1297,12 +1312,10 @@ public class Server implements HsqlSocketRequestHandler {
         serverState      = ServerConstants.SERVER_STATE_SHUTDOWN;
         serverConnSet    = new HashSet();
         serverId         = toString();
+        serverId          = serverId.substring(serverId.lastIndexOf('.') + 1);
         serverProtocol   = protocol;
         serverProperties = newDefaultProperties();
-        serverThreadGroup =
-            new ThreadGroup(protocol == ServerConstants.SC_PROTOCOL_HSQL
-                            ? "hsqldb-hsql-servers"
-                            : "hsqldb-http-servers");
+        serverThreadGroup = new ThreadGroup(serverId);
         logWriter = new PrintWriter(System.out);
 
         javaSystem.setLogToSystem(isTrace());
@@ -1319,7 +1332,7 @@ public class Server implements HsqlSocketRequestHandler {
      */
     final void notify(int action, int id) {
 
-        trace("notifiy() entered");
+        trace("notifiy(" + action + "," + id + ") entered");
 
         if (action != ServerConstants.SC_DATABASE_SHUTDOWN) {
             return;
@@ -1345,7 +1358,7 @@ public class Server implements HsqlSocketRequestHandler {
      */
     synchronized void releaseDatabase(int id) {
 
-        trace("releaseDatabase() entered");
+        trace("releaseDatabase(" + id + ") entered");
 
         for (int i = 0; i < dbID.length; i++) {
             if (dbID[i] == id) {
@@ -1385,6 +1398,7 @@ public class Server implements HsqlSocketRequestHandler {
         synchronized (logWriter_mutex) {
             if (logWriter != null) {
                 logWriter.println("[" + serverId + "]: " + msg);
+                logWriter.flush();
             }
         }
     }
@@ -1467,6 +1481,110 @@ public class Server implements HsqlSocketRequestHandler {
     }
 
     /**
+     * Prints a message iff isSilent() is false.  The message is formatted
+     * similarly to print(String), additionally identifying the
+     * current (calling) thread.
+     *
+     * @param s the message to print
+     */
+    final void traceRequest(int cid, Result r) {
+
+        if (!isSilent()) {
+            StringBuffer sb = new StringBuffer();
+
+            sb.append(cid);
+            sb.append(':');
+
+            switch (r.iMode) {
+
+                case ResultConstants.SQLPREPARE : {
+                    sb.append("CLI:SQLPREPARE ");
+                    sb.append(r.getMainString());
+
+                    break;
+                }
+                case ResultConstants.SQLEXECDIRECT : {
+                    sb.append(r.getMainString());
+
+                    break;
+                }
+                case ResultConstants.SQLEXECUTE : {
+                    sb.append("CLI:SQLEXECUTE ");
+                    sb.append(r.getStatementID());
+
+                    break;
+                }
+                case ResultConstants.SQLFREESTMT : {
+                    sb.append("CLI:SQLFREESTMT ");
+                    sb.append(r.getStatementID());
+
+                    break;
+                }
+                case ResultConstants.SQLGETSESSIONINFO : {
+                    sb.append("CLI:GETCONNECTIONATTRS");
+
+                    break;
+                }
+                case ResultConstants.SQLSETENVATTR : {
+                    sb.append("CLI:SETCONNECTIONATTRS ");
+                    sb.append("AUTOCOMMIT ");
+                    sb.append(r.rRoot.data[Session.INFO_AUTOCOMMIT]);
+                    sb.append(" CONNECTION_READONOLY ");
+                    sb.append(r.rRoot.data[Session.INFO_CONNECTION_READONLY]);
+
+                    break;
+                }
+                case ResultConstants.SQLENDTRAN : {
+                    switch (r.getEndTranType()) {
+
+                        case ResultConstants.COMMIT :
+                            sb.append("CLI:COMMIT");
+                            break;
+
+                        case ResultConstants.ROLLBACK :
+                            sb.append("CLI:ROLLBACK");
+                            break;
+
+                        case ResultConstants.SAVEPOINT_NAME_RELEASE :
+                            sb.append("CLI:RELEASE SAVEPOINT ");
+                            sb.append(r.getMainString());
+                            break;
+
+                        case ResultConstants.SAVEPOINT_NAME_ROLLBACK :
+                            sb.append("CLI:ROLLBACK TO SAVEPOINT ");
+                            sb.append(r.getMainString());
+                            break;
+
+                        default :
+                            sb.append("CLI:SQLENDTRAN ");
+                            sb.append(r.getEndTranType());
+                    }
+
+                    break;
+                }
+                case ResultConstants.SQLSTARTTRAN : {
+                    sb.append("CLI:SQLSTARTTRAN");
+
+                    break;
+                }
+                case ResultConstants.SQLDISCONNECT : {
+                    sb.append("CLI:SQLDISCONNECT");
+
+                    break;
+                }
+                default : {
+                    sb.append("CLI:UNKNOWNCODE ");
+                    sb.append(r.iMode);
+
+                    break;
+                }
+            }
+
+            print(sb.toString());
+        }
+    }
+
+    /**
      * Retrieves a new default properties object for this server
      *
      * @return a new default properties object
@@ -1528,18 +1646,52 @@ public class Server implements HsqlSocketRequestHandler {
     final void openDB() throws HsqlException {
 
         StopWatch sw;
+        String[]       dblist;
+        Enumeration    enum;
+        int            maxindex;
+        String         key;
+        int            dbnum;
+        HsqlProperties dbURL;
+        final String   prefix    = "server.dbname.";
+        final int      prefixLen = prefix.length();
 
-        trace("openDB() entered");
+        trace("openDB() entered");;
+
+        dblist   = new String[10];
+        enum     = serverProperties.getProperties().keys();
+        maxindex = 0;
+
+        try {
+            for (int i = 0; enum.hasMoreElements(); ) {
+                key = (String) enum.nextElement();
+
+                if (!key.startsWith(prefix)) {
+                    continue;
+                }
+
+                dbnum         = Integer.parseInt(key.substring(prefixLen));
+                maxindex      = dbnum < maxindex ? maxindex
+                                                 : dbnum;
+                dblist[dbnum] = serverProperties.getProperty(key);
+            }
+        } catch (ArrayIndexOutOfBoundsException aioob) {
+
+            /** @todo fredt - this should display an error */
+        }
+
+        dbAlias = new String[maxindex + 1];
+        dbType  = new String[maxindex + 1];
+        dbPath  = new String[maxindex + 1];
+        dbID    = new int[maxindex + 1];
+
+        ArrayUtil.copyArray(dblist, dbAlias, maxindex + 1);
 
         synchronized (mDatabase_mutex) {
             for (int i = 0; i < dbAlias.length; i++) {
-                HsqlProperties dbURL =
-                    DatabaseManager.parseURL(getDatabasePath(i), false);
-
+                dbURL = DatabaseManager.parseURL(getDatabasePath(i), false);
                 dbPath[i] = dbURL.getProperty("database");
                 dbType[i] = dbURL.getProperty("connection_type");
 
-//            if (mDatabase == null) {
                 trace("Opening database: [" + dbType[i] + dbPath[i] + "]");
 
                 sw = new StopWatch();
@@ -1548,12 +1700,11 @@ public class Server implements HsqlSocketRequestHandler {
                                                      this);
 
                 dbID[i] = id;
-/*
-                print(sw.elapsedTimeToMessage("Database opened sucessfully"));
-            } else {
-                trace("database already open: [" + dbType + dbPath + "]");
-            }
-*/
+
+                String msg = "Database [" + i + "]:[" + dbType[i] + dbPath[i]
+                             + "]:[" + dbAlias[i] + "] opened sucessfully";
+
+                print(sw.elapsedTimeToMessage(msg));
             }
         }
 
@@ -1585,9 +1736,9 @@ public class Server implements HsqlSocketRequestHandler {
         address       = getAddress();
         port          = getPort();
 
-        if (address == null
+        if (org.hsqldb.lib.StringUtil.isEmpty(address)
                 || ServerConstants.SC_DEFAULT_ADDRESS.equalsIgnoreCase(
-                    address)) {
+                    address.trim())) {
             socket = socketFactory.createServerSocket(port);
         } else {
             try {
@@ -1694,7 +1845,7 @@ public class Server implements HsqlSocketRequestHandler {
         setState(ServerConstants.SERVER_STATE_OPENING);
 
         serverConnectionThreadGroup = new ThreadGroup(serverThreadGroup,
-                serverId + "[CONNECTIONS]");
+                "connections");
 
         serverConnectionThreadGroup.setDaemon(false);
 
@@ -1770,6 +1921,8 @@ public class Server implements HsqlSocketRequestHandler {
     /** Shuts down this server. */
     private final void shutdown() {
 
+        trace("shutdown() entered");
+
         StopWatch sw = new StopWatch();
 
         print("Initiating shutdown sequence...");
@@ -1786,9 +1939,39 @@ public class Server implements HsqlSocketRequestHandler {
         // paranoia:  try { sctg.destroy() } is probably fine
         if (serverConnectionThreadGroup != null) {
             if (!serverConnectionThreadGroup.isDestroyed()) {
-                for (int i = 0; serverConnectionThreadGroup.activeCount() > 0;
-                        i++) {
+
+                // We don't want the (very small) possibility of waiting
+                // forever or even a very long (relatively speaking) time.
+                // 16 (default max connections) should be more than enough.
+                //
+                // TODO:
+                //
+                // Consider not bothering to destroy this thead group
+                // until the Server instance is finalized.  The only reason
+                // we do it at present is so that the VM can exit when this
+                // server is in the stopped state under no_system_exit=true.
+                // That is, the serverConnectionThreadGroup must not be daemon
+                // or new connections will fail after some connections are made
+                // and then all close, as this will destroy the thread group
+                // automatically.
+                //
+                // Maybe add a public Server.close() method to allow clients
+                // to permanently free any resources and mark the instance
+                // invalid so that an exiting application can call close() on
+                // on the server, rather than doing this on each shutdown.
+                for (int i = 0; i < 16; i++) {
+                    int count;
+
                     try {
+                        count = serverConnectionThreadGroup.activeCount();
+
+                        trace("serverConnectionThreadGroup.activeCount: "
+                              + count);
+
+                        if (count == 0) {
+                            break;
+                        }
+
                         wait(100);
                     } catch (Exception e) {
 
@@ -1798,7 +1981,10 @@ public class Server implements HsqlSocketRequestHandler {
 
                 try {
                     serverConnectionThreadGroup.destroy();
+                    trace("serverConnectionThreadGroup destroyed");
                 } catch (Throwable t) {
+                    trace("serverConnectionThreadGroup not destroyed");
+
                     if (Trace.TRACE) {
                         Trace.trace(t.toString());
                     }

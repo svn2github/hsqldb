@@ -70,7 +70,7 @@ package org.hsqldb;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.HashSet;
-import org.hsqldb.lib.IntValueHashMap;
+import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.store.ValuePool;
 
@@ -109,13 +109,20 @@ class Session implements SessionInterface {
     private Number          iLastIdentity = ValuePool.getInt(0);
     private boolean         isClosed;
     private int             iId;
-    private IntValueHashMap savepoints;
+
+    // Really, this should be a HashMappedList, since the spec says that
+    // a savepoint rollback or release destroys all _following_ savepoints,
+    // but not preceeding ones.  That is, if for some strange reason two
+    // distinctly named savepoints are set in the same place in a transaction,
+    // then rolling back or releasing the second one will destroy the first
+    // one, despite the fact that, strictly speaking, it preceeds the second.
+    private HashMappedList savepoints = new HashMappedList(4);
     private boolean         script;
     private jdbcConnection  intConnection;
     final static Result emptyUpdateCount =
         new Result(ResultConstants.UPDATECOUNT);
 
-/** @todo fredt - clarify in which circumstances Session has to disconnet */
+/** @todo fredt - clarify in which circumstances Session has to disconnect */
     public Session getSession() {
         return this;
     }
@@ -385,13 +392,9 @@ class Session implements SessionInterface {
      * @throws  HsqlException
      */
     public void commit() {
-
         tTransaction.clear();
-
-        if (savepoints != null) {
             savepoints.clear();
         }
-    }
 
     /**
      * Rolls back any uncommited transaction this Session may have open.
@@ -411,27 +414,19 @@ class Session implements SessionInterface {
         }
 
         tTransaction.clear();
-
-        if (savepoints != null) {
             savepoints.clear();
         }
-    }
 
     /**
-     *  Implements a transaction SAVEPOIINT. Applications may do a partial
+     *  Implements a transaction SAVEPOINT. Applications may do a partial
      *  rollback by calling rollbackToSavepoint(). A new SAVEPOINT with the
-     *  name of an existing one, replaces the old SAVEPOINT.
+     *  name of an existing one replaces the old SAVEPOINT.
      *
      * @param  name Name of savepoint
      * @throws  HsqlException
      */
     void savepoint(String name) throws HsqlException {
-
-        if (savepoints == null) {
-            savepoints = new IntValueHashMap(4);
-        }
-
-        savepoints.put(name, tTransaction.size());
+        savepoints.add(name, ValuePool.getInt(tTransaction.size()));
     }
 
     /**
@@ -443,13 +438,13 @@ class Session implements SessionInterface {
      */
     void rollbackToSavepoint(String name) throws HsqlException {
 
-        int index = -1;
-
-        if (savepoints != null) {
-            index = savepoints.get(name, -1);
-        }
+        int index = savepoints.getIndex(name);
 
         Trace.check(index >= 0, Trace.SAVEPOINT_NOT_FOUND, name);
+
+        Integer oi = (Integer) savepoints.get(index);
+
+        index = oi.intValue();
 
         int i = tTransaction.size() - 1;
 
@@ -460,15 +455,26 @@ class Session implements SessionInterface {
             tTransaction.remove(i);
         }
 
-        // remove all rows above index
-        Iterator it = savepoints.keySet().iterator();
+        releaseSavepoint(name);
+    }
 
-        for (; it.hasNext(); ) {
-            Object key = it.next();
+    /**
+     * Implements release of named SAVEPOINT.  Destroys the named SAVEPOINT
+     * and all subsequent SAVEPOINTs.  Preceding SAVEPOINTs remain intact.
+     *
+     * @param  name Name of savepoint that was marked before by savepoint()
+     *      call
+     * @throws  HsqlException if name does not correspond to a savepoint
+     */
+    void releaseSavepoint(String name) throws HsqlException {
 
-            if (savepoints.get(key, -1) >= index) {
-                it.remove();
-            }
+        // remove this and all later savepoints
+        int index = savepoints.getIndex(name);
+
+        Trace.check(index >= 0, Trace.SAVEPOINT_NOT_FOUND, name);
+
+        for (int i = savepoints.size() - 1; i >= index; i--) {
+            savepoints.remove(i);
         }
     }
 
@@ -808,11 +814,61 @@ class Session implements SessionInterface {
 
                         case ResultConstants.COMMIT :
                             commit();
+
+                            // dDatabase.logger.writeToLog(this,
+                            //                             Token.T_COMMIT);
                             break;
 
                         case ResultConstants.ROLLBACK :
                             rollback();
+
+                            // dDatabase.logger.writeToLog(this,
+                            //                             Token.T_ROLLBACK);
                             break;
+
+                        case ResultConstants.SAVEPOINT_NAME_RELEASE :
+                            try {
+                                String name = cmd.getMainString();
+
+                                releaseSavepoint(name);
+
+                                // dDatabase.logger.writeToLog(this,
+                                //     Token.T_RELEASE + " "
+                                //     + Token.T_SAVEPOINT + " "
+                                //     + name);
+                            } catch (Throwable t) {
+                                return new Result(t, null);
+                            }
+                            break;
+
+                        case ResultConstants.SAVEPOINT_NAME_ROLLBACK :
+                            try {
+                                rollbackToSavepoint(cmd.getMainString());
+                            } catch (Throwable t) {
+                                return new Result(t, null);
+                            }
+                            break;
+
+                        // not yet
+                        //                        case ResultConstants.COMMIT_AND_CHAIN :
+                        //                        case ResultConstants.ROLLBACK_AND_CHAIN :
+                    }
+
+                    return emptyUpdateCount;
+                }
+                case ResultConstants.SQLSETCONNECTATTR : {
+                    switch (cmd.getConnectionAttrType()) {
+
+                        case ResultConstants.SQL_ATTR_SAVEPOINT_NAME :
+                            try {
+                                savepoint(cmd.getMainString());
+                            } catch (Throwable t) {
+                                return new Result(t, null);
+                            }
+
+                        // case ResultConstants.SQL_ATTR_AUTO_IPD
+                        //   - always true
+                        // default: throw - case never happens
                     }
 
                     return emptyUpdateCount;
@@ -1258,10 +1314,11 @@ class Session implements SessionInterface {
             try {
                 switch (i) {
 
-                    case INFO_AUTOCOMMIT :
+                    case INFO_AUTOCOMMIT : {
                         this.setAutoCommit(((Boolean) value).booleanValue());
-                        break;
 
+                        break;
+                    }
                     case INFO_CONNECTION_READONLY :
                         this.setReadOnly(((Boolean) value).booleanValue());
                         break;

@@ -38,10 +38,10 @@ import org.hsqldb.store.ValuePool;
  * statement compilation for later execution.
  *
  * @author  boucherb@users.sourceforge.net
- * @vesrion 1.7.2
+ * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
-public class CompiledStatement {
+final class CompiledStatement {
 
     static final int UNKNOWN = 0;
 

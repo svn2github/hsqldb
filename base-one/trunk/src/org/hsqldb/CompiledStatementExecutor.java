@@ -45,10 +45,10 @@ import org.hsqldb.lib.StringUtil;
  * object's Database object.
  *
  * @author  boucherb@users.sourceforge.net
- * @vesrion 1.7.2
+ * @version 1.7.2
  * @since HSQLDB 1.7.2
  */
-public final class CompiledStatementExecutor {
+final class CompiledStatementExecutor {
 
     private Session  session;
     private Database database;

@@ -412,11 +412,12 @@ public interface ResultConstants {
      */
     int SQLROWCOUNT = SQL_API_BASE + 20;
 
-//    /**
-//     * Indicates that Result encapsulates a request to set the value of an
-//     * SQL-connection attribute.
-//     */
-//    int SQLSETCONNECTATTR   = SQL_API_BASE + 1016;
+    /**
+     * Indicates that Result encapsulates a request to set the value of an
+     * SQL-connection attribute.
+     */
+    int SQLSETCONNECTATTR = SQL_API_BASE + 1016;
+
 //
 //    /** Indicates that Result encapsulates a request to set a cursor name. */
 //    int SQLSETCURSORNAME    = SQL_API_BASE + 21;
@@ -489,6 +490,16 @@ Implementation-defined termination type <0
     int ROLLBACK                = 1;
     int SAVEPOINT_NAME_ROLLBACK = 2;
     int SAVEPOINT_NAME_RELEASE  = 4;
+
+/* Environment attributes */
+
+//#define SQL_ATTR_OUTPUT_NTS 10001
+
+/* Connection attributes */
+
+//#define SQL_ATTR_AUTO_IPD 10001
+//#define SQL_ATTR_SAVEPOINT_NAME 10027
+    int SQL_ATTR_SAVEPOINT_NAME = 10027;
 
 // Batched execution constants:
 

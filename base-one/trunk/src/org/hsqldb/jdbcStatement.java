@@ -1647,10 +1647,7 @@ public class jdbcStatement implements java.sql.Statement {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * HSQLDB 1.7.2 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with 1.7.2, this method returns HOLD_CURSORS_OVER_COMMIT<p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1663,7 +1660,7 @@ public class jdbcStatement implements java.sql.Statement {
 //#ifdef JDBC3
 /*
     public int getResultSetHoldability() throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        return jdbcResultSet.HOLD_CURSORS_OVER_COMMIT;
     }
 */
 

@@ -366,6 +366,7 @@ class DatabaseManager {
         }
 
         IntValueHashMap accessMap = databaseAccessMap;
+
         if (databaseAccessMap.get(database, 0) == 0) {
             databaseIDMap.remove(dbID);
             databaseMap.remove(key);

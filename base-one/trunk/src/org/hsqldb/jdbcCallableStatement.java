@@ -37,6 +37,7 @@ import java.util.*;
 import java.io.*;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.IntKeyIntValueHashMap;
+import org.hsqldb.lib.IntValueHashMap;
 
 // boucherb@users patch 1.7.2 - CallableStatement impl removed
 // from jdbcPreparedStatement and moved here; sundry changes elsewhere to
@@ -85,158 +86,175 @@ import org.hsqldb.lib.IntKeyIntValueHashMap;
  * <span class="ReleaseSpecificDocumentation">
  * <B>HSQLDB-Specific Information:</B> <p>
  *
- * Up to and including HSQLDB 1.7.2, support for stored procedures is
- * not provided in the conventional fashion, if there is such a thing. <p>
+ * Starting with HSQLDB 1.7.2, the JDBC CallableStatement interface
+ * implementation has been broken out of the jdbcPreparedStatement class
+ * into this one.  Some of the previously unsupported features of this
+ * interface are now supported, such as the parameterName-based setter
+ * methods. More importantly, however, JDBC CallableStatement objects are now
+ * backed in the engine core using an underlying true precompiled parameteric
+ * representation. As such, there are significant performance gains to
+ * be had by using CallableStatement over Statement objects if a CALL statement
+ * is to be executed more than a small number of times. Moreover, although not
+ * yet supported, the internal work has opened the door for support of
+ * OUT parameters for retrieving Java method return values, as well the
+ * generation and retrieval of multiple results in response to the execution
+ * of a CallableStatement object.  Indeed, the getter methods of this class,
+ * although not fully supported yet, report more accurate exceptions, stating
+ * that index values are out of range, parameter names are not found or
+ * that the indicated parameters have not been registered.  Similarly,
+ * the registerOutParameter methods report more accurately, throwing
+ * exceptions indicating range violation or incompatible parameter mode,
+ * rather than simply indicating the operation is totally
+ * unsupported.  This lays the foundation for work in 1.7.3 to implement
+ * greater support for OUT (and possibly IN OUT) parameters, as well as
+ * multiple results, under CallableStatement execution. <p>
  *
- * Stored procedures are typically supported in ways that vary greatly
- * from one DBMS implementation to the next.  So, it is almost
- * guaranteed that the code for a stored procedure written under a
- * specific DBMS product will not work without modification in the
- * context of another vendor's product or even across a single vendor's
- * product lines.  Moving stored procedures from one DBMS product line to
- * another almost invariably involves complex porting issues and often
- * may not be possible at all.  Be warned. <p>
+ * As with many DBMS, support for stored procedures is not provided in
+ * a completely standard fashion. <p>
  *
- * Up to and including 1.7.2, HSQLDB stored procedures map directly onto the
- * methods of compiled Java classes found on the classpath of the engine.
- * This is done in a non-standard but fairly efficient way by issuing a class
+ * Beyond the XOpen/ODBC extended scalar functions, stored procedures are
+ * typically supported in ways that vary greatly from one DBMS implementation
+ * to the next.  So, it is almost guaranteed that the code for a stored
+ * procedure written under a specific DBMS product will not work without
+ * at least some modification in the context of another vendor's product
+ * or even across a single vendor's product lines.  Moving stored procedures
+ * from one DBMS product line to another almost invariably involves complex
+ * porting issues and often may not be possible at all. <em>Be warned</em>. <p>
+ *
+ * At present, HSQLDB stored procedures map directly onto the methods of
+ * compiled Java classes found on the classpath of the engine. This is done
+ * in a non-standard but fairly efficient way by issuing a class
  * grant (and possibly method aliases) of the form: <p>
  *
  * <PRE>
- * GRANT ALL ON CLASS "package.class" TO [user_name | PUBLIC]
- * CREATE ALIAS call_name FOR ""package.class.method" -- optional
+ * GRANT ALL ON CLASS &quot;package.class&quot; TO [&lt;user-name&gt; | PUBLIC]
+ * CREATE ALIAS &ltcall-alias&gt; FOR &quot;package.class.method&quot; -- optional
  * </PRE>
  *
- * This has the effect of allowing the specified user(s) to access to the
+ * This has the effect of allowing the specified user(s) to access the
  * set of uniquely named public static methods of the specified class,
  * in either the role of SQL functions or stored procedures.
 
  * For example: <p>
  *
  * <PRE>
- * GRANT ALL ON CLASS "java.lang.Math" TO PUBLIC;
- * CONNECT anyuser PASSWORD *****;
- * SELECT "java.lang.Math.abs"(column_1) FROM table_1;
- * CREATE ALIAS abs FOR "java.lang.Math.abs"
- * CALL 2 + abs(-5);
+ * CONNECT &lt;admin-user&gt; PASSWORD &lt;admin-user-password&gt;;
+ * GRANT ALL ON CLASS &quot;org.myorg.MyClass&quot; TO PUBLIC;
+ * CREATE ALIAS sp_my_method FOR &quot;org.myorg.MyClass.myMethod&quot;
+ * CONNECT &lt;any-user&gt; PASSWORD &lt;any-user-password&gt;;
+ * SELECT &quot;org.myorg.MyClass.myMethod&quot;(column_1) FROM table_1;
+ * SELECT sp_my_method(column_1) FROM table_1;
+ * CALL 2 + &quot;org.myorg.MyClass.myMethod&quot;(-5);
+ * CALL 2 + sp_my_method(-5);
  * </PRE>
  *
- * Please note the use of the term "uniquely named" above.  Up to and including
- * HSQLDB 1.7.2, no support is provided to deterministically resolve overloaded
- * method names or inherited public static methods, so it is strongly
- * recommended that developers creating stored procedure libraries for HSQLDB
- * do not design them such that the SQL stored procedure call interface
- * includes: <p>
+ * Please note the use of the term &quot;uniquely named&quot; above.  Up to
+ * and including HSQLDB 1.7.2, no support is provided to deterministically
+ * resolve overloaded method names, and there can be issues with inherited
+ * methods as well, so it is strongly recommended that developers creating
+ * stored procedure library classes for HSQLDB simply avoid designs such
+ * that the SQL stored procedure call interface includes: <p>
  *
  * <ol>
  * <li>inherited public static methods
  * <li>overloaded public static methods
  * </ol>
  *
- * Also, please note that no support for more advanced features is provided at
- * this time. That is, the <code>CallableStatement</code> methods for working
- * with <code>OUT</code> parameters are not yet supported because there is
- * no low level support for this yet written into the engine internals.
- *
- * So, while some systems may <I>require</I> working with <code>OUT</code>
- * parameters when calling stored procedures, this is currently never
- * the case for HSQLDB; attempting to do so will always result in
- * throwing a <code>SQLException</code> stating that the function
- * is not supported. <p>
- *
- * Although there is currently no support for <code>OUT</code>
- * parameters, a future version of the HSQLDB product <i>may</i> include
- * this feature. <p>
- *
- * Please also note that the HSQLDB stored procedure mechanism is essentially
- * a thin wrap of the HSQLDB SQL function mechanism, in combination with the
- * more general HSQLDB sql expression evaluation mechanism, allowing
- * simple SQL expressions, possibly containing Java method invocations, to
- * be evaluated outside of an <code>INSERT</code>, <code>UPDATE</code>,
- * <code>DELETE</code> or <code>SELECT</code> statement context.
- * That is, issuing a <code>CALL</code> statement returning an
- * opaque (OTHER type) or known scalar object reference (an instance of
- * a Java class automatically mapped to a supported HSQLDB data type) has
- * virtually the same effect as:
+ * Also, please recall that, as stated above, <code>OUT</code> and
+ * <code>IN OUT</code> parameters are not yet supported due to lack of
+ * low level support for this in the engine.  In fact, the HSQLDB stored
+ * procedure call mechanism is essentially a thin wrap of the HSQLDB SQL
+ * function call mechanism, in combination with the more general HSQLDB
+ * sql expression evaluation mechanism, allowing simple SQL expressions,
+ * possibly containing Java method invocations, to be evaluated outside of
+ * an <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code> or
+ * <code>SELECT</code> statement context. That is, issuing a
+ * <code>CALL</code> statement returning an opaque (OTHER type) or known
+ * scalar object reference (an instance of a Java class automatically mapped
+ * to a supported HSQLDB data type) has virtually the same effect as:
  *
  * <PRE>
  * CREATE TABLE DUAL (dummy VARCHAR);
  * INSERT INTO DUAL VALUES(NULL);
- * SELECT <simple-expression> FROM DUAL;
+ * SELECT &lt;simple-expression&gt; FROM DUAL;
  * </PRE>
  *
- * The exception is the case where one wishes to allow the client to
- * materialize a custom-built result set by calling a stored procedure.
- * In this case, the stored procedure's Java method descriptor must specify a
- * return type of java.lang.Object and must return an instance of
- * either: <p>
+ * As a transitional measure, 1.7.2 further provides the ability to materialize
+ * a custom-built result of arbitrary arity in response to a stored procedure
+ * execution. In this case, the stored procedure's Java method descriptor
+ * must specify a return type of java.lang.Object or, preferably for
+ * metadata reporting, org.hsqldb.jdbcResultSet. When HSQLDB detects that
+ * the class of the Object returned by evaluating a CALL expression is
+ * an instance of jdbcResultSet, an automatic internal unwrapping is performed,
+ * such that the arity of the underlying result is exposed to the client.
+ * Also, the stored procedure and SQL function call mechanisms automatically
+ * detect if Connection is the class of the first argument of any underlying
+ * Java method(s).  If it is, then the engine transparently supplies a
+ * Connection object that is equivalent to the Connection executing the call,
+ * adjusting the positions of other arguments to suit the SQL context. <p>
  *
- * 1.) org.hsqldb.jdbcResultSet <p>
- *
- * - can be obtained, for instance, by executing a query against connection to
- * an HSQLDB database instance. <p>
- *
- * 2.) org.hsqldb.Result <p>
- *
- * - can be created, manipulated and returned if the stored procedure method is
- * written inside the org.hsqldb package.  This would be done, for
- * instance, to allow advanced/more efficient interaction with the database
- * internals when executing the body of the stored procedure. <p>
- *
- * Starting with 1.7.2, when HSQLDB detects that the class of the Object
- * returned by evaluating a CALL expression is either of the above, then an
- * automatic unwrapping is performed, and the arity of of the underlying result
- * is exposed to the client in the form of a ResultSet with possibly more (or
- * fewer) than one row and column. <p>
+ * These features definitely are not permanent, as more general and powerful
+ * mechanisms will be offered in a future release.  As such, it is recommended
+ * to use them only as a temporary convenience, for instance by writing
+ * HSQLDB-specific adapter methods that in turn call the real logic
+ * of an underlying generalized SQL stored procedure libarary. <p>
  *
  * Here is a very simple example of an HSQLDB stored procedure returning a
- * result set: <p>
+ * custom built result set:
  *
  * <PRE>
  * package mypackage;
  *
- * class myclass {
+ * import org.hsqldb.jdbcResultSet;
  *
- *      public static Object my_stored_procedure(Connection conn) throws Exception {
+ * class MyClass {
+ *
+ *      public static jdbcResultSet mySp(Connection conn) throws SQLException {
  *          return conn.createStatement().executeQuery("select * from names");
  *      }
  * }
  * </PRE>
  *
- * Here is a more advanced example of an HSQLDB stored procedure using the
- * internal API to create, fill and return a result: <p>
+ * Here is a slightly more complex example demonstrating the essence of the
+ * idea behind a more portable style:
  *
  * <PRE>
- * package org.hsqldb;
+ * package mylibrarypackage;
  *
- * class myclass {
+ * import java.sql.Connection;
+ * import java.sql.SQLException;
  *
- *      public static Object my_stored_procedure() {
- *          Result r;
+ * class MyLibraryClass {
  *
- *          r = Result.newSingleColumnResult("NAME", Types.VARCHAR);
- *          r.add( new Object[]{ "TOM" } );
- *          r.add( new Object[]{ "DICK" } );
- *          r.add( new Object[]{ "HARRY" } );
+ *      public static ResultSet mySp() throws SQLException {
+ *          Connection conn = ctx.getConnection();
+ *          return conn.createStatement().executeQuery("select * from names");
+ *      }
  *
- *          r.sortResult( new int[1] { 0 }, new int[] { 1 } );
+ *      ...
+ * }
  *
- *          return r;
+ * //--
+ *
+ * package myadaptorpackage;
+ *
+ * import java.sql.Connection;
+ * import java.sql.SQLException;
+ * import org.hsqldb.jdbcResultSet;
+ *
+ * class MyAdaptorClass {
+ *
+ *      public static jdbcResultSet mySp(Connection conn) throws SQLException {
+ *          MyLibraryClass.getCtx().setConnection(conn);
+ *          return (jdbcResultSet) MyLibraryClass.mySp();
  *      }
  * }
  * </PRE>
  *
- * Please note that by using the internal API to build up results, one is
- * forgoing the SQL/Java integrity checks typically enforced by the engine
- * when building results purely via execution of SQL statements.  That is,
- * for instance, given the above example, one is free to add Object[] rows
- * to the output result object whose length do not match the column count
- * and whose elements are not String objects.  Be warned that doing so may
- * very well cause either obvious or subtle data integrity problems or
- * otherwise unexpected exceptions to be thrown. <p>
- *
- * Please note also that the mechanisms described above are subject to
- * change over both point and major releases as work progresses. <p>
+ * In a future release, it is intended to allow writing fairly portable
+ * stored procedure code by supporting the special "jdbc:default:connection"
+ * database connection url and a well-defined specification of the behaviour
+ * of the execution stack under stored procedure calls. <p>
  *
  * (boucherb@users)
  * </span>
@@ -248,7 +266,10 @@ import org.hsqldb.lib.IntKeyIntValueHashMap;
 public class jdbcCallableStatement extends jdbcPreparedStatement
 implements CallableStatement {
 
-    private String[]              parameterNames;
+    /** parameter name => parameter index */
+    private IntValueHashMap parameterNameMap;
+
+    /** parameter index => registered OUT type */
     private IntKeyIntValueHashMap outRegistrationMap;
 
     /** Creates a new instance of jdbcCallableStatement */
@@ -259,19 +280,70 @@ implements CallableStatement {
         super(c, sql, type);
 
         outRegistrationMap = new IntKeyIntValueHashMap();
-        parameterNames     = pmdDescriptor.metaData.sName;
+
+        String[] names = pmdDescriptor.metaData.sName;
+        String   name;
+
+        for (int i = 0; i > names.length; i++) {
+            name = names[i];
+
+            // PRE:  should never happen in practice
+            if (name == null || name.length() == 0) {
+                continue;
+            }
+
+            parameterNameMap.put(name, i);
+        }
+    }
+
+    /**
+     * Retrieves the parameter index corresponding to the given
+     * parameter name. <p>
+     *
+     * @param parameterName to look up
+     * @throws SQLException if not found
+     * @return index for name
+     */
+    int findParameterIndex(String parameterName) throws SQLException {
+
+        checkClosed();
+
+        int index = parameterNameMap.get(parameterName, -1);
+
+        if (index >= 0) {
+            return index;
+        }
+
+        throw jdbcDriver.sqlException(Trace.COLUMN_NOT_FOUND, parameterName);
+    }
+
+    /**
+     * Does the specialized work required to free this object's resources and
+     * that of it's parent classes. <p>
+     *
+     * @param isDisconnect true if parenet connection is closing
+     * @throws SQLException if a database access error occurs
+     */
+    void closeImpl(boolean isDisconnect) throws SQLException {
+
+        parameterNameMap   = null;
+        outRegistrationMap = null;
+
+        super.closeImpl(isDisconnect);
     }
 
     /**
      * Performs an internal check for column index validity. <p>
      *
-     * @param column index of column to check
+     * @param i
      * @throws SQLException when this object's parent ResultSet has
      *      no such column
      */
-    private void checkIsGetParameterIndex(int i) throws SQLException {
+    private void checkGetParameterIndex(int i) throws SQLException {
 
         String msg;
+
+        checkClosed();
 
         if (i < 1 || i > parameterModes.length) {
             msg = "Parameter index out of bounds: " + i;
@@ -297,11 +369,20 @@ implements CallableStatement {
         }
     }
 
-    void checkIsRegisteredParameterIndex(int parameterIndex)
+    /**
+     * Checks if the parameter of the given index has been successfully
+     * registered as an OUT parameter. <p>
+     *
+     * @param parameterIndex to check
+     * @throws SQLException if not registered
+     */
+    private void checkIsRegisteredParameterIndex(int parameterIndex)
     throws SQLException {
 
         int    type;
         String msg;
+
+        checkClosed();
 
         type = outRegistrationMap.get(parameterIndex, Integer.MIN_VALUE);
 
@@ -335,10 +416,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>.<p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -356,9 +436,9 @@ implements CallableStatement {
     public void registerOutParameter(int parameterIndex,
                                      int sqlType) throws SQLException {
 
-        checkIsGetParameterIndex(parameterIndex);
-        outRegistrationMap.put(parameterIndex, sqlType);
+        checkGetParameterIndex(parameterIndex);
 
+//        outRegistrationMap.put(parameterIndex, sqlType);
         throw jdbcDriver.notSupported;
     }
 
@@ -384,8 +464,7 @@ implements CallableStatement {
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>.<p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -417,8 +496,7 @@ implements CallableStatement {
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>.<p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -453,8 +531,7 @@ implements CallableStatement {
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -469,7 +546,6 @@ implements CallableStatement {
      */
     public String getString(int parameterIndex) throws SQLException {
 
-        checkClosed();
         checkIsRegisteredParameterIndex(parameterIndex);
 
         throw jdbcDriver.notSupported;
@@ -487,8 +563,7 @@ implements CallableStatement {
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -502,7 +577,6 @@ implements CallableStatement {
      */
     public boolean getBoolean(int parameterIndex) throws SQLException {
 
-        checkClosed();
         checkIsRegisteredParameterIndex(parameterIndex);
 
         throw jdbcDriver.notSupported;
@@ -520,8 +594,7 @@ implements CallableStatement {
      *
      * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>.<p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -535,7 +608,6 @@ implements CallableStatement {
      */
     public byte getByte(int parameterIndex) throws SQLException {
 
-        checkClosed();
         checkIsRegisteredParameterIndex(parameterIndex);
 
         throw jdbcDriver.notSupported;
@@ -551,10 +623,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>.<p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -568,7 +639,6 @@ implements CallableStatement {
      */
     public short getShort(int parameterIndex) throws SQLException {
 
-        checkClosed();
         checkIsRegisteredParameterIndex(parameterIndex);
 
         throw jdbcDriver.notSupported;
@@ -584,10 +654,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -601,7 +670,6 @@ implements CallableStatement {
      */
     public int getInt(int parameterIndex) throws SQLException {
 
-        checkClosed();
         checkIsRegisteredParameterIndex(parameterIndex);
 
         throw jdbcDriver.notSupported;
@@ -617,10 +685,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -634,7 +701,6 @@ implements CallableStatement {
      */
     public long getLong(int parameterIndex) throws SQLException {
 
-        checkClosed();
         checkIsRegisteredParameterIndex(parameterIndex);
 
         throw jdbcDriver.notSupported;
@@ -650,10 +716,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -667,7 +732,6 @@ implements CallableStatement {
      */
     public float getFloat(int parameterIndex) throws SQLException {
 
-        checkClosed();
         checkIsRegisteredParameterIndex(parameterIndex);
 
         throw jdbcDriver.notSupported;
@@ -683,10 +747,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -700,7 +763,6 @@ implements CallableStatement {
      */
     public double getDouble(int parameterIndex) throws SQLException {
 
-        checkClosed();
         checkIsRegisteredParameterIndex(parameterIndex);
 
         throw jdbcDriver.notSupported;
@@ -717,10 +779,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -738,7 +799,6 @@ implements CallableStatement {
     public BigDecimal getBigDecimal(int parameterIndex,
                                     int scale) throws SQLException {
 
-        checkClosed();
         checkIsRegisteredParameterIndex(parameterIndex);
 
         throw jdbcDriver.notSupported;
@@ -755,10 +815,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -771,7 +830,6 @@ implements CallableStatement {
      */
     public byte[] getBytes(int parameterIndex) throws SQLException {
 
-        checkClosed();
         checkIsRegisteredParameterIndex(parameterIndex);
 
         throw jdbcDriver.notSupported;
@@ -787,10 +845,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -803,7 +860,6 @@ implements CallableStatement {
      */
     public java.sql.Date getDate(int parameterIndex) throws SQLException {
 
-        checkClosed();
         checkIsRegisteredParameterIndex(parameterIndex);
 
         throw jdbcDriver.notSupported;
@@ -819,10 +875,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -836,7 +891,6 @@ implements CallableStatement {
      */
     public java.sql.Time getTime(int parameterIndex) throws SQLException {
 
-        checkClosed();
         checkIsRegisteredParameterIndex(parameterIndex);
 
         throw jdbcDriver.notSupported;
@@ -852,10 +906,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -870,7 +923,6 @@ implements CallableStatement {
     public java.sql.Timestamp getTimestamp(int parameterIndex)
     throws SQLException {
 
-        checkClosed();
         checkIsRegisteredParameterIndex(parameterIndex);
 
         throw jdbcDriver.notSupported;
@@ -893,10 +945,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -910,7 +961,6 @@ implements CallableStatement {
      */
     public Object getObject(int parameterIndex) throws SQLException {
 
-        checkClosed();
         checkIsRegisteredParameterIndex(parameterIndex);
 
         throw jdbcDriver.notSupported;
@@ -929,10 +979,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -948,7 +997,6 @@ implements CallableStatement {
      */
     public BigDecimal getBigDecimal(int parameterIndex) throws SQLException {
 
-        checkClosed();
         checkIsRegisteredParameterIndex(parameterIndex);
 
         throw jdbcDriver.notSupported;
@@ -971,10 +1019,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -988,7 +1035,6 @@ implements CallableStatement {
      */
     public Object getObject(int i, Map map) throws SQLException {
 
-        checkClosed();
         checkIsRegisteredParameterIndex(i);
 
         throw jdbcDriver.notSupported;
@@ -1005,10 +1051,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1023,7 +1068,6 @@ implements CallableStatement {
      */
     public Ref getRef(int i) throws SQLException {
 
-        checkClosed();
         checkIsRegisteredParameterIndex(i);
 
         throw jdbcDriver.notSupported;
@@ -1040,10 +1084,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1058,7 +1101,6 @@ implements CallableStatement {
      */
     public Blob getBlob(int i) throws SQLException {
 
-        checkClosed();
         checkIsRegisteredParameterIndex(i);
 
         throw jdbcDriver.notSupported;
@@ -1075,10 +1117,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1093,7 +1134,6 @@ implements CallableStatement {
      */
     public Clob getClob(int i) throws SQLException {
 
-        checkClosed();
         checkIsRegisteredParameterIndex(i);
 
         throw jdbcDriver.notSupported;
@@ -1110,10 +1150,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1128,7 +1167,6 @@ implements CallableStatement {
      */
     public Array getArray(int i) throws SQLException {
 
-        checkClosed();
         checkIsRegisteredParameterIndex(i);
 
         throw jdbcDriver.notSupported;
@@ -1148,6 +1186,12 @@ implements CallableStatement {
      *
      * <!-- start release-specific documentation -->
      * <span class="ReleaseSpecificDocumentation">
+     * <B>HSQLDB-Specific Information:</B> <p>
+     *
+     * HSQLDB 1.7.2 does not support this feature. <p>
+     *
+     * Calling this method always throws an <code>SQLException</code>. <p>
+     *
      * </span>
      * <!-- end release-specific documentation -->
      *
@@ -1165,12 +1209,16 @@ implements CallableStatement {
     public java.sql.Date getDate(int parameterIndex,
                                  Calendar cal) throws SQLException {
 
-        try {
-            return HsqlDateTime.getDate(getString(parameterIndex), cal);
-        } catch (Exception e) {
-            throw jdbcDriver.sqlException(Trace.INVALID_ESCAPE,
-                                          e.getMessage());
-        }
+        checkIsRegisteredParameterIndex(parameterIndex);
+
+        throw jdbcDriver.notSupported;
+
+//        try {
+//            return HsqlDateTime.getDate(getString(parameterIndex), cal);
+//        } catch (Exception e) {
+//            throw jdbcDriver.sqlException(Trace.INVALID_ESCAPE,
+//                                          e.getMessage());
+//        }
     }
 
     /**
@@ -1187,7 +1235,14 @@ implements CallableStatement {
      *
      * <!-- start release-specific documentation -->
      * <span class="ReleaseSpecificDocumentation">
+     * <B>HSQLDB-Specific Information:</B> <p>
+     *
+     * HSQLDB 1.7.2 does not support this feature. <p>
+     *
+     * Calling this method always throws an <code>SQLException</code>. <p>
+     *
      * </span>
+     * <!-- end release-specific documentation -->
      *
      * @param parameterIndex the first parameter is 1, the second is 2,
      * and so on
@@ -1203,12 +1258,16 @@ implements CallableStatement {
     public java.sql.Time getTime(int parameterIndex,
                                  Calendar cal) throws SQLException {
 
-        try {
-            return HsqlDateTime.getTime(getString(parameterIndex), cal);
-        } catch (Exception e) {
-            throw jdbcDriver.sqlException(Trace.INVALID_ESCAPE,
-                                          e.getMessage());
-        }
+        checkIsRegisteredParameterIndex(parameterIndex);
+
+        throw jdbcDriver.notSupported;
+
+//        try {
+//            return HsqlDateTime.getTime(getString(parameterIndex), cal);
+//        } catch (Exception e) {
+//            throw jdbcDriver.sqlException(Trace.INVALID_ESCAPE,
+//                                          e.getMessage());
+//        }
     }
 
     /**
@@ -1225,8 +1284,14 @@ implements CallableStatement {
      *
      * <!-- start release-specific documentation -->
      * <span class="ReleaseSpecificDocumentation">
-     * </span>
+     * <B>HSQLDB-Specific Information:</B> <p>
      *
+     * HSQLDB 1.7.2 does not support this feature. <p>
+     *
+     * Calling this method always throws an <code>SQLException</code>. <p>
+     *
+     * </span>
+     * <!-- end release-specific documentation -->
      *
      * @param parameterIndex the first parameter is 1, the second is 2,
      * and so on
@@ -1242,12 +1307,16 @@ implements CallableStatement {
     public java.sql.Timestamp getTimestamp(int parameterIndex,
                                            Calendar cal) throws SQLException {
 
-        try {
-            return HsqlDateTime.getTimestamp(getString(parameterIndex), cal);
-        } catch (Exception e) {
-            throw jdbcDriver.sqlException(Trace.INVALID_ESCAPE,
-                                          e.getMessage());
-        }
+        checkIsRegisteredParameterIndex(parameterIndex);
+
+        throw jdbcDriver.notSupported;
+
+//        try {
+//            return HsqlDateTime.getTimestamp(getString(parameterIndex), cal);
+//        } catch (Exception e) {
+//            throw jdbcDriver.sqlException(Trace.INVALID_ESCAPE,
+//                                          e.getMessage());
+//        }
     }
 
     /**
@@ -1283,10 +1352,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1328,10 +1396,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1349,7 +1416,7 @@ implements CallableStatement {
 /*
     public void registerOutParameter(String parameterName,
                                      int sqlType) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        registerOutParameter(findParameterIndex(parameterName), sqlType);
     }
 */
 
@@ -1375,10 +1442,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1394,7 +1460,7 @@ implements CallableStatement {
 /*
     public void registerOutParameter(String parameterName, int sqlType,
                                      int scale) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        registerOutParameter(findParameterIndex(parameterName), sqlType);
     }
 */
 
@@ -1433,10 +1499,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1452,7 +1517,7 @@ implements CallableStatement {
 /*
     public void registerOutParameter(String parameterName, int sqlType,
                                      String typeName) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        registerOutParameter(findParameterIndex(parameterName), sqlType);
     }
 */
 
@@ -1468,10 +1533,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1490,7 +1554,6 @@ implements CallableStatement {
 /*
     public java.net.URL getURL(int parameterIndex) throws SQLException {
 
-        checkClosed();
         checkIsRegisteredParameterIndex(parameterIndex);
 
         throw jdbcDriver.notSupportedJDBC3;
@@ -1510,10 +1573,7 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with 1.7.2, HSLQDB supports this. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1529,7 +1589,7 @@ implements CallableStatement {
 /*
     public void setURL(String parameterName,
                        java.net.URL val) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        setURL(findParameterIndex(parameterName), val);
     }
 */
 
@@ -1546,10 +1606,7 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with 1.7.2, HSLQDB supports this. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1561,9 +1618,8 @@ implements CallableStatement {
      */
 //#ifdef JDBC3
 /*
-    public void setNull(String parameterName,
-                        int sqlType) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+    public void setNull(String parameterName, int sqlType) throws SQLException {
+        setNull(findParameterIndex(parameterName), sqlType);
     }
 */
 
@@ -1580,10 +1636,7 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with 1.7.2, HSLQDB supports this. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1596,9 +1649,8 @@ implements CallableStatement {
      */
 //#ifdef JDBC3
 /*
-    public void setBoolean(String parameterName,
-                           boolean x) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+    public void setBoolean(String parameterName, boolean x) throws SQLException {
+        setBoolean(findParameterIndex(parameterName), x);
     }
 */
 
@@ -1615,10 +1667,7 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with 1.7.2, HSLQDB supports this. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1632,7 +1681,7 @@ implements CallableStatement {
 //#ifdef JDBC3
 /*
     public void setByte(String parameterName, byte x) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        setByte(findParameterIndex(parameterName), x);
     }
 */
 
@@ -1649,10 +1698,7 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with 1.7.2, HSLQDB supports this. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1666,7 +1712,7 @@ implements CallableStatement {
 //#ifdef JDBC3
 /*
     public void setShort(String parameterName, short x) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        setShort(findParameterIndex(parameterName), x);
     }
 */
 
@@ -1683,10 +1729,7 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with 1.7.2, HSLQDB supports this. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1700,7 +1743,7 @@ implements CallableStatement {
 //#ifdef JDBC3
 /*
     public void setInt(String parameterName, int x) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        setInt(findParameterIndex(parameterName), x);
     }
 */
 
@@ -1717,10 +1760,7 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with 1.7.2, HSLQDB supports this. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1734,7 +1774,7 @@ implements CallableStatement {
 //#ifdef JDBC3
 /*
     public void setLong(String parameterName, long x) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        setLong(findParameterIndex(parameterName), x);
     }
 */
 
@@ -1751,10 +1791,7 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with 1.7.2, HSLQDB supports this. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1768,7 +1805,7 @@ implements CallableStatement {
 //#ifdef JDBC3
 /*
     public void setFloat(String parameterName, float x) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        setFloat(findParameterIndex(parameterName), x);
     }
 */
 
@@ -1785,10 +1822,7 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with 1.7.2, HSLQDB supports this. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1801,9 +1835,8 @@ implements CallableStatement {
      */
 //#ifdef JDBC3
 /*
-    public void setDouble(String parameterName,
-                          double x) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+    public void setDouble(String parameterName, double x) throws SQLException {
+        setDouble(findParameterIndex(parameterName), x);
     }
 */
 
@@ -1821,10 +1854,7 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with 1.7.2, HSLQDB supports this. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1839,7 +1869,7 @@ implements CallableStatement {
 /*
     public void setBigDecimal(String parameterName,
                               BigDecimal x) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        setBigDecimal(findParameterIndex(parameterName), x);
     }
 */
 
@@ -1858,10 +1888,7 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with 1.7.2, HSLQDB supports this. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1874,9 +1901,8 @@ implements CallableStatement {
      */
 //#ifdef JDBC3
 /*
-    public void setString(String parameterName,
-                          String x) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+    public void setString(String parameterName, String x) throws SQLException {
+        setString(findParameterIndex(parameterName), x);
     }
 */
 
@@ -1895,10 +1921,7 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with 1.7.2, HSLQDB supports this. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1912,7 +1935,7 @@ implements CallableStatement {
 //#ifdef JDBC3
 /*
     public void setBytes(String parameterName, byte[] x) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        setBytes(findParameterIndex(parameterName), x);
     }
 */
 
@@ -1929,10 +1952,7 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with 1.7.2, HSLQDB supports this. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1947,7 +1967,7 @@ implements CallableStatement {
 /*
     public void setDate(String parameterName,
                         java.sql.Date x) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        setDate(findParameterIndex(parameterName), x);
     }
 */
 
@@ -1964,10 +1984,7 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with 1.7.2, HSLQDB supports this. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -1982,7 +1999,7 @@ implements CallableStatement {
 /*
     public void setTime(String parameterName,
                         java.sql.Time x) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        setTime(findParameterIndex(parameterName), x);
     }
 */
 
@@ -2000,10 +2017,7 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with 1.7.2, HSLQDB supports this. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -2018,7 +2032,7 @@ implements CallableStatement {
 /*
     public void setTimestamp(String parameterName,
                              java.sql.Timestamp x) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        setTimestamp(findParameterIndex(parameterName), x);
     }
 */
 
@@ -2043,10 +2057,7 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with 1.7.2, HSLQDB supports this. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -2061,7 +2072,7 @@ implements CallableStatement {
 /*
     public void setAsciiStream(String parameterName, java.io.InputStream x,
                                int length) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        setAsciiStream(findParameterIndex(parameterName), x, length);
     }
 */
 
@@ -2085,10 +2096,7 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with 1.7.2, HSLQDB supports this. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -2103,7 +2111,7 @@ implements CallableStatement {
 /*
     public void setBinaryStream(String parameterName, java.io.InputStream x,
                                 int length) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        setBinaryStream(findParameterIndex(parameterName), x, length);
     }
 */
 
@@ -2135,10 +2143,7 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with 1.7.2, HSLQDB supports this. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -2159,7 +2164,7 @@ implements CallableStatement {
 /*
     public void setObject(String parameterName, Object x, int targetSqlType,
                           int scale) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        setObject(findParameterIndex(parameterName), x, targetSqlType, scale);
     }
 */
 
@@ -2176,10 +2181,7 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with 1.7.2, HSLQDB supports this. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -2196,7 +2198,7 @@ implements CallableStatement {
 /*
     public void setObject(String parameterName, Object x,
                           int targetSqlType) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        setObject(findParameterIndex(parameterName), x, targetSqlType);
     }
 */
 
@@ -2235,10 +2237,7 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with 1.7.2, HSLQDB supports this. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -2252,9 +2251,8 @@ implements CallableStatement {
      */
 //#ifdef JDBC3
 /*
-    public void setObject(String parameterName,
-                          Object x) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+    public void setObject(String parameterName, Object x) throws SQLException {
+        setObject(findParameterIndex(parameterName), x);
     }
 */
 
@@ -2279,10 +2277,7 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with 1.7.2, HSLQDB supports this. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -2296,10 +2291,9 @@ implements CallableStatement {
      */
 //#ifdef JDBC3
 /*
-    public void setCharacterStream(String parameterName,
-                                   java.io.Reader reader,
+    public void setCharacterStream(String parameterName, java.io.Reader reader,
                                    int length) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        setCharacterStream(findParameterIndex(parameterName), reader, length);
     }
 */
 
@@ -2322,10 +2316,7 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with 1.7.2, HSLQDB supports this. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -2342,7 +2333,7 @@ implements CallableStatement {
 /*
     public void setDate(String parameterName, java.sql.Date x,
                         Calendar cal) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        setDate(findParameterIndex(parameterName), x, cal);
     }
 */
 
@@ -2365,10 +2356,7 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with 1.7.2, HSLQDB supports this. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -2385,7 +2373,7 @@ implements CallableStatement {
 /*
     public void setTime(String parameterName, java.sql.Time x,
                         Calendar cal) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        setTime(findParameterIndex(parameterName), x, cal);
     }
 */
 
@@ -2409,10 +2397,7 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with 1.7.2, HSLQDB supports this. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -2429,7 +2414,7 @@ implements CallableStatement {
 /*
     public void setTimestamp(String parameterName, java.sql.Timestamp x,
                              Calendar cal) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        setTimestamp(findParameterIndex(parameterName), x, cal);
     }
 */
 
@@ -2462,14 +2447,10 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
-     *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Starting with 1.7.2, HSLQDB supports this. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
-     *
      *
      * @param parameterName the name of the parameter
      * @param sqlType a value from <code>java.sql.Types</code>
@@ -2483,7 +2464,7 @@ implements CallableStatement {
 /*
     public void setNull(String parameterName, int sqlType,
                         String typeName) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        setNull(findParameterIndex(parameterName), sqlType, typeName);
     }
 */
 
@@ -2506,10 +2487,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -2523,7 +2503,7 @@ implements CallableStatement {
 //#ifdef JDBC3
 /*
     public String getString(String parameterName) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        return getString(findParameterIndex(parameterName));
     }
 */
 
@@ -2539,10 +2519,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -2556,7 +2535,7 @@ implements CallableStatement {
 //#ifdef JDBC3
 /*
     public boolean getBoolean(String parameterName) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        return getBoolean(findParameterIndex(parameterName));
     }
 */
 
@@ -2572,10 +2551,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -2589,7 +2567,7 @@ implements CallableStatement {
 //#ifdef JDBC3
 /*
     public byte getByte(String parameterName) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        return getByte(findParameterIndex(parameterName));
     }
 */
 
@@ -2605,10 +2583,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -2622,7 +2599,7 @@ implements CallableStatement {
 //#ifdef JDBC3
 /*
     public short getShort(String parameterName) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        return getShort(findParameterIndex(parameterName));
     }
 */
 
@@ -2638,10 +2615,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -2656,7 +2632,7 @@ implements CallableStatement {
 //#ifdef JDBC3
 /*
     public int getInt(String parameterName) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        return getInt(findParameterIndex(parameterName));
     }
 */
 
@@ -2672,10 +2648,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -2690,7 +2665,7 @@ implements CallableStatement {
 //#ifdef JDBC3
 /*
     public long getLong(String parameterName) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        return getLong(findParameterIndex(parameterName));
     }
 */
 
@@ -2706,10 +2681,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -2723,7 +2697,7 @@ implements CallableStatement {
 //#ifdef JDBC3
 /*
     public float getFloat(String parameterName) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        return getFloat(findParameterIndex(parameterName));
     }
 */
 
@@ -2739,10 +2713,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -2756,7 +2729,7 @@ implements CallableStatement {
 //#ifdef JDBC3
 /*
     public double getDouble(String parameterName) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        return getDouble(findParameterIndex(parameterName));
     }
 */
 
@@ -2773,10 +2746,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -2790,7 +2762,7 @@ implements CallableStatement {
 //#ifdef JDBC3
 /*
     public byte[] getBytes(String parameterName) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        return getBytes(findParameterIndex(parameterName));
     }
 */
 
@@ -2806,10 +2778,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -2824,7 +2795,7 @@ implements CallableStatement {
 //#ifdef JDBC3
 /*
     public java.sql.Date getDate(String parameterName) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        return getDate(findParameterIndex(parameterName));
     }
 */
 
@@ -2840,10 +2811,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -2858,7 +2828,7 @@ implements CallableStatement {
 //#ifdef JDBC3
 /*
     public java.sql.Time getTime(String parameterName) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        return getTime(findParameterIndex(parameterName));
     }
 */
 
@@ -2874,10 +2844,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -2892,7 +2861,7 @@ implements CallableStatement {
 /*
     public java.sql.Timestamp getTimestamp(String parameterName)
     throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        return getTimestamp(findParameterIndex(parameterName));
     }
 */
 
@@ -2915,10 +2884,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -2932,7 +2900,7 @@ implements CallableStatement {
 //#ifdef JDBC3
 /*
     public Object getObject(String parameterName) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        return getObject(findParameterIndex(parameterName));
     }
 */
 
@@ -2949,10 +2917,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -2965,9 +2932,8 @@ implements CallableStatement {
      */
 //#ifdef JDBC3
 /*
-    public BigDecimal getBigDecimal(String parameterName)
-    throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+    public BigDecimal getBigDecimal(String parameterName) throws SQLException {
+        return getBigDecimal(findParameterIndex(parameterName));
     }
 */
 
@@ -2990,10 +2956,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -3008,7 +2973,7 @@ implements CallableStatement {
 /*
     public Object getObject(String parameterName,
                             Map map) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        return getObject(findParameterIndex(parameterName), map);
     }
 */
 
@@ -3024,10 +2989,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -3042,7 +3006,7 @@ implements CallableStatement {
 //#ifdef JDBC3
 /*
     public Ref getRef(String parameterName) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        return getRef(findParameterIndex(parameterName));
     }
 */
 
@@ -3058,10 +3022,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -3076,7 +3039,7 @@ implements CallableStatement {
 //#ifdef JDBC3
 /*
     public Blob getBlob(String parameterName) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        return getBlob(findParameterIndex(parameterName));
     }
 */
 
@@ -3092,10 +3055,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -3109,7 +3071,7 @@ implements CallableStatement {
 //#ifdef JDBC3
 /*
     public Clob getClob(String parameterName) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        return getClob(findParameterIndex(parameterName));
     }
 */
 
@@ -3125,10 +3087,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -3143,7 +3104,7 @@ implements CallableStatement {
 //#ifdef JDBC3
 /*
     public Array getArray(String parameterName) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        return getArray(findParameterIndex(parameterName));
     }
 */
 
@@ -3165,10 +3126,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -3186,7 +3146,7 @@ implements CallableStatement {
 /*
     public java.sql.Date getDate(String parameterName,
                                  Calendar cal) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        return getDate(findParameterIndex(parameterName), cal);
     }
 */
 
@@ -3208,10 +3168,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -3229,7 +3188,7 @@ implements CallableStatement {
 /*
     public java.sql.Time getTime(String parameterName,
                                  Calendar cal) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        return getTime(findParameterIndex(parameterName), cal);
     }
 */
 
@@ -3251,10 +3210,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -3273,7 +3231,7 @@ implements CallableStatement {
 /*
     public java.sql.Timestamp getTimestamp(String parameterName,
                                            Calendar cal) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        return getTimestamp(findParameterIndex(parameterName), cal);
     }
 */
 
@@ -3289,10 +3247,9 @@ implements CallableStatement {
      * <span class="ReleaseSpecificDocumentation">
      * <B>HSQLDB-Specific Information:</B> <p>
      *
-     * HSQLDB 1.7.1 does not support this feature. <p>
+     * HSQLDB 1.7.2 does not support this feature. <p>
      *
-     * Calling this method always throws a <code>SQLException</code>,
-     * stating that the function is not supported. <p>
+     * Calling this method always throws an <code>SQLException</code>. <p>
      *
      * </span>
      * <!-- end release-specific documentation -->
@@ -3309,7 +3266,7 @@ implements CallableStatement {
 //#ifdef JDBC3
 /*
     public java.net.URL getURL(String parameterName) throws SQLException {
-        throw jdbcDriver.notSupportedJDBC3;
+        return getURL(findParameterIndex(parameterName));
     }
 */
 

@@ -332,6 +332,8 @@ class WebServerConnection implements Runnable {
                                                server.dbPath[dbIndex],
                                                resultIn.sessionID);
 
+                //server.traceConnection(resultIn.sessionID + " : "
+                //                       + resultIn.getMainString());
                 resultOut = session.execute(resultIn);
             }
 
@@ -484,5 +486,12 @@ class WebServerConnection implements Runnable {
             server.traceError("processError: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    String getConnectionThreadName() {
+
+        String s = toString();
+
+        return s.substring(s.lastIndexOf('.') + 1);
     }
 }

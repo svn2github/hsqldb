@@ -230,7 +230,7 @@ class ServerConnection implements Runnable {
                 while (keepAlive) {
                     Result resultIn = Result.read(rowIn, dataInput);
 
-                    server.trace(mThread + ":" + resultIn.getMainString());
+                    server.traceRequest(mThread, resultIn);
 
                     Result resultOut = session.execute(resultIn);
 
@@ -252,5 +252,12 @@ class ServerConnection implements Runnable {
 
             close();
         }
+    }
+
+    String getConnectionThreadName() {
+
+        String s = toString();
+
+        return s.substring(s.lastIndexOf('.') + 1);
     }
 }

@@ -114,8 +114,7 @@ import org.hsqldb.resources.BundleHandler;
  * ...
  * server.database.n=...
  * server.dbname.n=...
- * server.silent=true<p>
- * </pre>
+ * server.silent=true
  *
  * .htm=text/html
  * .html=text/html
@@ -127,8 +126,10 @@ import org.hsqldb.resources.BundleHandler;
  * .zip=application/x-zip-compressed
  * </pre>
  *
- *  For server.root, use '/'  as the separator, even for DOS/Windows.<br>
- *  File extensions for mime types must be lowercase and start with '.'<br>
+ * <ul>
+ *   <li>For server.root, use '/'  as the separator, even for DOS/Windows.
+ *   <li>File extensions for mime types must be lowercase and start with '.'
+ * </ul>
  *
  * @version 1.7.2
  */
