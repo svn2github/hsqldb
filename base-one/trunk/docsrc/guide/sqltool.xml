@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.43 2004/06/16 22:00:47 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.44 2004/06/19 13:08:07 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.43 $</edition>
-        <pubdate>$Date: 2004/06/16 22:00:47 $</pubdate>
+        <edition>$Revision: 1.44 $</edition>
+        <pubdate>$Date: 2004/06/19 13:08:07 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -1053,6 +1053,11 @@ java -Dsqltool.charset=UTF-8 -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sq
             repeat until I'm finished.
             (Every time you turn \o on, it will append to the file, just
             like we need).
+            </simpara><simpara>
+            Usually it doesn't come to mind that I need a wider screen until
+            a query produces lines that are too long.
+            In this case, stretch your window and repeat the last command with
+            the ":;" Buffer Command.
         </simpara></tip>
     </section>
 
