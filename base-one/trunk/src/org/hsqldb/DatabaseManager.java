@@ -486,19 +486,21 @@ public class DatabaseManager {
      * for each protocol if port number is not in the url<p>
      * Additional connection properties specified as key/value pairs.
      * </ul>
-     * @return null returned if url does not begin with valid protocol or the
-     * part that should represent the port is not an integer.
+     * @return null returned if the part that should represent the port is not
+     * an integer or the part for database name is empty.
+     * Empty HsqlProperties returned if if url does not begin with valid
+     * protocol and could refer to another JDBC driver.
      *
      */
     static HsqlProperties parseURL(String url, boolean hasPrefix) {
 
         String urlImage = url.toLowerCase();
+        HsqlProperties props    = new HsqlProperties();
 
         if (hasPrefix &&!urlImage.startsWith(S_URL_PREFIX)) {
-            return null;
+            return props;
         }
 
-        HsqlProperties props = new HsqlProperties();
         int            pos   = hasPrefix ? S_URL_PREFIX.length()
                                          : 0;
         String         type  = null;

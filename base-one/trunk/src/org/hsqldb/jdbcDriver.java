@@ -173,8 +173,14 @@ public class jdbcDriver implements Driver {
         HsqlProperties props = DatabaseManager.parseURL(url, true);
 
         if (props == null) {
+
+            // supposed to be an HSQLDB driver url but has errors
             throw new SQLException(
                 Trace.getMessage(Trace.INVALID_JDBC_ARGUMENT));
+        } else if (props.isEmpty()) {
+
+            // is not an HSQLDB driver url
+            return null;
         }
 
         props.addProperties(info);
