@@ -1,12 +1,13 @@
 How to build Hsqldb documentation from DocBook source
 -----------------------------------------------------
 
-$Id: readmedocbook.txt,v 1.3 2004/04/17 18:08:24 unsaved Exp $
+$Id: readmedocbook.txt,v 1.4 2004/05/17 12:50:20 fredt Exp $
 
 1.  OBTAIN REQUIRED LIBRARIES AND STYLE SHEETS
 
 If you are using a version of Java earlier than 1.4, then you will
 have to get XML and XSLT libraries supported by DocBook.
+
 (Java 1.4 users skip to the next paragraph).
 I suggest the Xerces XML library and Xalan XSLT libraries, both
 of which are available in the Xalan Java 2 distribution file
@@ -14,6 +15,10 @@ xalan-j-*-bin.* (not xalan-j--bin-2jars.*), available at
 http://www.apache.org/dyn/closer.cgi/xml/xalan-j
 You will need to put the jars xalan.jar, xml-apis.jar, and xercesImpl.jar
 into your classpath.
+
+If you are using the Sun JDK 1.4, and get an exception when building
+the docbooks, you may need newer Xerces / Xalan libraries. See also
+http://xml.apache.org/xalan-j/faq.html
 
 If you are building on one of the Sourceforge shell servers, then you can 
 skip this step because I have all of the needed resources under
