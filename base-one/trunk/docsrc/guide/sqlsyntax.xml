@@ -1,4 +1,4 @@
-<!-- $Id: sqlsyntax.xml,v 1.16 2004/07/01 23:20:33 fredt Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.17 2004/07/14 21:52:13 fredt Exp $ -->
 
 <chapter id='sqlsyntax-chapter'>
 <title id='sqlsyntax-title'>SQL Syntax</title>
@@ -34,8 +34,8 @@
             </affiliation>
         </editor>
     </authorgroup>
-    <edition>$Revision: 1.16 $</edition>
-    <pubdate>$Date: 2004/07/01 23:20:33 $</pubdate>
+    <edition>$Revision: 1.17 $</edition>
+    <pubdate>$Date: 2004/07/14 21:52:13 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Syntax</keyword>
@@ -1403,7 +1403,7 @@ UPDATE table SET column = Expression [, ...] [WHERE Expression];</programlisting
     </para><programlisting>
     SELECT SQRT(A) , B FROM MYTABLE;</programlisting>
     <para>
-        Only static java methods can be used as stored procedurs.
+        Only static java methods can be used as stored procedures.
         If, within the same class, there are overloaded methods with the same 
         number of arguments, then the first one encountered by the program will 
         be used.
