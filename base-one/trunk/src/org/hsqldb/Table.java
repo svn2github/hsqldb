@@ -71,6 +71,7 @@ import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.lib.HsqlLinkedList;
 import org.hsqldb.lib.HsqlStringBuffer;
 import org.hsqldb.lib.StringUtil;
@@ -120,43 +121,43 @@ class Table {
 
     // main properties
 // boucherb@users - access changed in support of metadata 1.7.2
-    HsqlArrayList vColumn;                    // columns in table
-    HsqlArrayList vIndex;                     // vIndex(0) is the primary key index
-    int[]         iPrimaryKey;                // column numbers for primary key
-    int           iIndexCount;                // size of vIndex
-    int[]         bestRowIdentifierCols;      // column set for best index
-    boolean       bestRowIdentifierStrict;    // true if it has no nullable column
-    int[]         bestIndexForColumn;         // index of the 'best' index for each column
-    int           iIdentityColumn;            // -1 means no such row
-    long          iIdentityId;                // next value of identity column
+    HashMappedList vColumn;                    // columns in table
+    HsqlArrayList  vIndex;                     // vIndex(0) is the primary key index
+    int[]          iPrimaryKey;                // column numbers for primary key
+    int            iIndexCount;                // size of vIndex
+    int[]          bestRowIdentifierCols;      // column set for best index
+    boolean        bestRowIdentifierStrict;    // true if it has no nullable column
+    int[]          bestIndexForColumn;         // index of the 'best' index for each column
+    int            iIdentityColumn;            // -1 means no such row
+    long           iIdentityId;                // next value of identity column
 
 // -----------------------------------------------------------------------
-    HsqlArrayList     vConstraint;            // constrainst for the table
-    HsqlArrayList     vTrigs[];               // array of trigger lists
-    private int[]     colTypes;               // fredt - types of columns
-    private int[]     colSizes;               // fredt - copy of SIZE values for columns
-    private boolean[] colNullable;            // fredt - modified copy of isNullable() values
-    private String[] colDefaults;             // fredt - copy of DEFAULT values
-    private int[]    defaultColumnMap;        // fred - holding 0,1,2,3,...
-    private boolean  hasDefaultValues;        //fredt - shortcut for above
+    HsqlArrayList     vConstraint;             // constrainst for the table
+    HsqlArrayList     vTrigs[];                // array of trigger lists
+    private int[]     colTypes;                // fredt - types of columns
+    private int[]     colSizes;                // fredt - copy of SIZE values for columns
+    private boolean[] colNullable;             // fredt - modified copy of isNullable() values
+    private String[] colDefaults;              // fredt - copy of DEFAULT values
+    private int[]    defaultColumnMap;         // fred - holding 0,1,2,3,...
+    private boolean  hasDefaultValues;         //fredt - shortcut for above
     private boolean  isSystem;
     private boolean  isText;
     private boolean  isView;
-    boolean          sqlEnforceSize;          // inherited for the database -
+    boolean          sqlEnforceSize;           // inherited for the database -
 
     // properties for subclasses
 // boucherb@users - access changes in support of metadata 1.7.2
-    protected int      iColumnCount;          // inclusive the hidden primary key
-    protected int      iVisibleColumns;       // exclusive of hidden primary key
+    protected int      iColumnCount;           // inclusive the hidden primary key
+    protected int      iVisibleColumns;        // exclusive of hidden primary key
     protected Database database;
     protected Cache    cache;
-    protected HsqlName tableName;             // SQL name
+    protected HsqlName tableName;              // SQL name
     protected int      tableType;
-    protected int      ownerSessionId;        // fredt - set for temp tables only
+    protected int      ownerSessionId;         // fredt - set for temp tables only
     protected boolean  isReadOnly;
     protected boolean  isTemp;
     protected boolean  isCached;
-    protected int      indexType;             // fredt - type of index used
+    protected int      indexType;              // fredt - type of index used
 
     /**
      *  Constructor declaration
@@ -233,7 +234,7 @@ class Table {
         tableName       = name;
         iPrimaryKey     = null;
         iIdentityColumn = -1;
-        vColumn         = new HsqlArrayList();
+        vColumn         = new HashMappedList();
         vIndex          = new HsqlArrayList();
         vConstraint     = new HsqlArrayList();
         vTrigs          = new HsqlArrayList[TriggerDef.numTrigs()];    // defer init...should be "pay to use"
@@ -469,7 +470,7 @@ class Table {
         }
 
         Trace.doAssert(iPrimaryKey == null, "Table.addColumn");
-        vColumn.add(column);
+        vColumn.add(column.columnName.name, column);
 
         iColumnCount++;
         iVisibleColumns++;
@@ -744,6 +745,8 @@ class Table {
      */
     int searchColumn(String c) {
 
+        return vColumn.getIndex(c);
+/*
         for (int i = 0; i < this.iVisibleColumns; i++) {
             if (c.equals(((Column) vColumn.get(i)).columnName.name)) {
                 return i;
@@ -751,6 +754,7 @@ class Table {
         }
 
         return -1;
+*/
     }
 
     /**
@@ -838,7 +842,6 @@ class Table {
             if (!index.isUnique()) {
                 continue;
             }
-
 
             int nnullc = 0;
 

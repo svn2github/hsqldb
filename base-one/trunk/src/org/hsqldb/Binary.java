@@ -78,6 +78,10 @@ public class Binary {
 
     public boolean equals(Object other) {
 
+        if (other == this) {
+            return true;
+        }
+
         if (other == null ||!(other instanceof Binary)) {
             return false;
         }

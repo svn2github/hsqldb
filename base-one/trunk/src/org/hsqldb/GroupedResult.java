@@ -58,7 +58,8 @@ import org.hsqldb.lib.HashMap;
  * @author  Tony Lai
  * @see     Expression
  * @see     Select
- * @since   1.7.0+
+ * @version   1.7.2
+ * @since   1.7.2
  */
 class GroupedResult {
 

@@ -90,7 +90,7 @@ class TableFilter {
     private Object     oEmptyData[];
     private Expression eStart, eEnd;
     private Expression eAnd;
-    private boolean    bOuterJoin;
+    boolean            isOuterJoin;
 
     // this is public to improve performance
     Object oCurrentData[];
@@ -110,11 +110,11 @@ class TableFilter {
      */
     TableFilter(Table t, String alias, boolean outerjoin) {
 
-        tTable     = t;
-        sAlias     = (alias != null) ? alias
-                                     : t.getName().name;
-        bOuterJoin = outerjoin;
-        oEmptyData = tTable.getNewRow();
+        tTable      = t;
+        sAlias      = (alias != null) ? alias
+                                      : t.getName().name;
+        isOuterJoin = outerjoin;
+        oEmptyData  = tTable.getNewRow();
     }
 
     /**
@@ -389,6 +389,12 @@ class TableFilter {
         boolean andtested = false;
 
         if (iIndex == null) {
+            if (isOuterJoin) {
+                throw Trace.error(Trace.TableFilter_findFirst, new Object[] {
+                    tTable.getName().name, eAnd.getColumnName()
+                });
+            }
+
             iIndex = tTable.getPrimaryIndex();
         }
 
@@ -405,11 +411,11 @@ class TableFilter {
             oCurrentData = nCurrent.getData();
             currentRow   = nCurrent.getRow();
 
-            if (!(eEnd == null || eEnd.test() )) {
+            if (!(eEnd == null || eEnd.test())) {
                 break;
             }
 
-            if (eAnd == null || eAnd.test() ) {
+            if (eAnd == null || eAnd.test()) {
                 return true;
             }
 
@@ -420,10 +426,13 @@ class TableFilter {
         oCurrentData = oEmptyData;
         currentRow   = null;
 
-        if (bOuterJoin) {
-            return eAnd == null ? true
-                                : andtested ? false
-                                            : eAnd.test();
+        if (isOuterJoin) {
+            if (eAnd == null) {
+                return true;
+            } else {
+                return andtested ? false
+                                 : eAnd.test();
+            }
         }
 
         return false;
@@ -439,7 +448,7 @@ class TableFilter {
      */
     boolean next() throws HsqlException {
 
-        if (bOuterJoin && nCurrent == null) {
+        if (isOuterJoin && nCurrent == null) {
             return false;
         }
 
@@ -449,11 +458,11 @@ class TableFilter {
             oCurrentData = nCurrent.getData();
             currentRow   = nCurrent.getRow();
 
-            if (!(eEnd == null || eEnd.test() )) {
+            if (!(eEnd == null || eEnd.test())) {
                 break;
             }
 
-            if (eAnd == null || eAnd.test() ) {
+            if (eAnd == null || eAnd.test()) {
                 return true;
             }
 
@@ -523,7 +532,7 @@ class TableFilter {
                                 : index.getName().name);
         sb.append(hidden ? "[HIDDEN]]\n"
                          : "]\n");
-        sb.append("bOuterJoin=[").append(bOuterJoin).append("]\n");
+        sb.append("bOuterJoin=[").append(isOuterJoin).append("]\n");
         sb.append("eStart=[").append(eStart).append("]\n");
         sb.append("eEnd=[").append(eEnd).append("]\n");
         sb.append("eAnd=[").append(eAnd).append("]\n");

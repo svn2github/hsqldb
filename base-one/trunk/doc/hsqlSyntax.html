@@ -979,7 +979,7 @@ In practice, objects of up to a megabyte in size have been successfully used in 
 <p> <font face="Arial"><b>System</b> <br>
    <br>
   IFNULL(exp,value) (if exp is null, value is returned else exp) <br>
-  CASEWHEN(exp,v2,v2) (if exp is true, v1 is returned, else v2) <br>
+  CASEWHEN(exp,v1,v2) (if exp is true, v1 is returned, else v2) <br>
   CONVERT(term,type) (converts exp to another data type) <br>
   CAST(term AS type) (converts exp to another data type) 
 </font>
@@ -1023,8 +1023,9 @@ strings.</font>
 <p><font face="Arial">name: <br>
   </font><font face="Arial, Helvetica" size="2"><font face="Arial"> The character set for identifiers (names) in HSQLDB is Unicode.</font></font>
 <p><font face="Arial">A unquoted identifier (name) starts with a letter and is followed by any number of letters or digits. 
-  </font><font face="Arial, Helvetica" size="2"><font face="Arial"> In  unquoted identifiers</font></font>, l<font face="Arial">owercase characters are converted to uppercase. 
-  Because of this, unquoted names are not case sensitive when used in SQL statements.</font>
+  </font><font face="Arial, Helvetica" size="2"><font face="Arial"> When an SQL statement is issued, any </font></font>l<font face="Arial">owercase characters in </font><font face="Arial, Helvetica" size="2"><font face="Arial, Helvetica" size="2"><font face="Arial">unquoted identifiers </font></font></font><font face="Arial">are converted to uppercase. 
+  Because of this, unquoted names are in fact ALL UPPERCASE when used in SQL statements.</font>
+An important implication of this is the for accessing columns or aliases via JDBC: the internal form, which is the ALL UPPERCASE must be used if the column name or the alias was not quoted in the CREATE TABLE statement.
 <p><font face="Arial">Quoted identifiers can be used as names (for tables, columns, constraints or indexes). Quoted identifiers start and end with " </font><font face="Arial, Helvetica" size="2"><font face="Arial">(one doublequote)</font></font><font face="Arial">. A quoted identifier can contain any Unicode character, including space. In a quoted 
   identifier use "" (two doublequotes) to create a " (one doublequote). With quoted identifiers it is possible to create 
   mixed-case table and column names. Example: CREATE TABLE "Address" ("Nr" INTEGER,"Name" 

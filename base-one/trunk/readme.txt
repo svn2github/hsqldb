@@ -2,7 +2,23 @@ Readme File
 
 
 leading to HSQLDB 1.7.2 ALPHA_N
-2003.07.29
+
+
+2003.07.30
+
+IMPORTANT FIX IN SELECT QUERY PROCESSING
+
+Problems with OUTER and INNER joins returning incorrect results 
+have been reported over the last couple of years. A new fix is 
+intended to ensure correct results in all cases.
+
+- When two tables are joined, rows resulting from joining null
+values on in the joined columns are no longer returned.
+
+- Use of OUTER requires the existence of an index on a joined OUTER column
+- There are still limitations on the conditions used in OUTER joins.
+
+AGGREGATES
 
 - enhancements to aggregate functions: aggregates of different numeric
 types are now supported
@@ -11,7 +27,8 @@ SUM returns a BIGINT for TINYINT, SMALLINT and INTEGER columns. It
 returns a DECIMAL for BIGINT columns (scale 0) and DECIMAL columns 
 scale equals to that of the column).
 
-AVG returns the same type as the column.
+AVG returns the same type as the column or the expression in its 
+argument.
 
 - aggregates with GROUP BY do not return any rows if table is empty
 
@@ -22,27 +39,35 @@ OLDER ENHANCEMENTS NOT PREVIOUSLY REPORTED
 CREATE TABLE <name> (<column> BIGINT IDENTITY, ...)
 
 - With contributed patch, TEXT TABLES encoding of the source file can
-now be set. UTF-8 and other encodings can be used.
+now be specified. UTF-8 and other encodings can be used.
 
 - Two new options for databases: files_read_only and files_in_jar
 were added based on submitted patches.
 
-- files_read_only
+FILE READ-ONLY
 
 If the property files_read_only=true is set in the database 
 .properties file, no attempt is made to write the changes to data to
-file. Default, memory tables can be read/write.
+file. Default, memory tables can be read/write but TEXT and CACHED
+tables are treated as read-only.
 
-- files in jar
+FILES IN JAR
 
-The files_in_jar option allows database files to be distributed
-in the application jar. The url for this mode is in the form of:
+This option allows database files to be distributed
+in the application jar. We have changed the original contribution so
+that a special URL is used this mode is in the form of:
 
 jdbc:hsqldb:hsql:res:<path in jar>
 
-The database can be readonly or files_read_only
+The URL type 'res' determines that the path that follows is a path
+into the JAR.
+
+The database can be readonly or files_read_only, depending on the
+value set in .properties file.
 
 2003.07.09
+
+SCRIPT FORMAT
 
 - change to command previously named SET LOGTYPE (discussed below for
 earlier alphas) new form is:
@@ -52,35 +77,55 @@ The new binary and compressed formats are not compatible with previous
 ones, so you should change any old 1.7.2 ALPHA_? database to text
 mode with SET LOGTYPE 0 before openning with the new version.
 
+'OTHER' DATA TYPE
+
 - change to handling of OTHER columns. It is no longer required that
 the classes for objects stored in OTHER columns to be available on
 the path of an HSQLDB engine running as a server. Classes must be
 available on the JDBC client's path.
 
+OBJECT POOLING
+
 - the new Object pool has been incorporated. This reduces memory
 usage to varying degrees depending on the contents of database
-tables and speeds up the database in most cases.
+tables and speeds up the database in most cases. Currently the
+size of the pool is hard-coded but it will be user adjustable in the
+release version.
 
-- a new property, ifexists={true|false} can be specified for connections
-to in-process databases. The default is false and corresponds to
-current behaviour. if set true, the connection is opened only if
+CONNECTION PROPERTY
+
+- a new property, ifexists={true|false} can be specified for connections.
+It has an effect only on connections to in-process databases. The default
+is false and corresponds to current behaviour. 
+
+If set true, the connection is opened only if
 the database files have already been created -- otherwise no new database
 is created and the connection attemp will fail. Example:
 
 jdbc:hsqldb:hsql:mydb;ifexists=true
 
+This property is intended to reduce problems resulting from wrong URL's 
+which get translated to unintended new database files. It is recommended
+to use this property for troubleshooting.
+
 2003.07.04
 
-- support for real PreparedStatements - major speedup
+PREPARED STATEMENTS
+
+- support for real PreparedStatements - major speedup. Current limitations
+include lack of support for parameters in IN() predicates of queries.
+
+TRANSACTIONS VIA WEB SERVER
 
 - uniform support for transactions via HSQL and HTTP (WebServer and Servlet)
 protocols
+
+MULTIPLE IN-MEMORY AND SERVERS DATABASES
 
 - support for multiple memory-only databases within the same JVM
 
 - support for simultaneous multiple servers, multiple internal
 connections and multiple databases within the same JVM
-
 
 
 NEW CONVENTIONS FOR URL'S AND .properties FILES
@@ -132,14 +177,20 @@ jdbc:hsqldb:hsql://localhost:8080/servlet/HsqlServlet/
 
 2003.03.10
 
--system table support and DatabaseMetadate results have been overhauled
-by Campbell.
+DATABASE METADATA
+
+-system table support and java.sql.DatabaseMetadate results have been
+overhauled by Campbell.
+
+STRICT FOREIGN KEYS
 
 -strict treatment of foreign key index requirements is now enforeced.
 A foreign key declaration _requires_ a unique constraint or index to exist
 on the columns of the referenced table. This applies both to old and
 new databases. Duplicate foreign keys (with exactly the same column sets)
 are now disallowed.
+
+TEXT TABLES
 
 -further improvements to TEXT table support. Smaller cache sizes are
 now the default and the default properties can be specified in the 
@@ -172,7 +223,7 @@ various patches and fixes
 -fixes old issues related to uncommited transactions in
 abnormal shutdown
 -fixes old issues with SAVEPOINT names
--enhances TEXT table handling and reporting of errors in
+-enhanced TEXT table handling and reporting of errors in
 CSV (source) files
 
 

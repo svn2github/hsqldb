@@ -2038,6 +2038,15 @@ class Expression {
         Object o2 = eArg2.getValue(type);
 
         if (o == null || o2 == null) {
+
+// fredt@users - patch 1.7.2 - SQL CONFORMANCE - do not join tables on nulls apart from outer joins
+            if (iType == EQUAL && eArg.tFilter != null
+                    && eArg2.tFilter != null) {
+
+                // here we should have (eArg.iType == COLUMN && eArg2.iType == COLUMN)
+                return eArg.tFilter.isOuterJoin;
+            }
+
             return testNull(o, o2, iType);
         }
 
