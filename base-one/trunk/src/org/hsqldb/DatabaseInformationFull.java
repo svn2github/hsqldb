@@ -2503,8 +2503,8 @@ extends org.hsqldb.DatabaseInformationMain {
         tables    = database.getTables().iterator();
         collector = new Expression.Collector();
         result    = new Result(ResultConstants.DATA, 4);
-        result.metaData.colType[0] = result.metaData.colType[1] =
-            result.metaData.colType[2] = result.metaData.colType[3] =
+        result.metaData.colTypes[0] = result.metaData.colTypes[1] =
+            result.metaData.colTypes[2] = result.metaData.colTypes[3] =
             Types.VARCHAR;
 
         // Do it.
@@ -3213,8 +3213,8 @@ extends org.hsqldb.DatabaseInformationMain {
         tables    = database.getTables().iterator();
         collector = new Expression.Collector();
         result    = new Result(ResultConstants.DATA, 4);
-        result.metaData.colType[0] = result.metaData.colType[1] =
-            result.metaData.colType[2] = result.metaData.colType[3] =
+        result.metaData.colTypes[0] = result.metaData.colTypes[1] =
+            result.metaData.colTypes[2] = result.metaData.colTypes[3] =
             Types.VARCHAR;
 
         // Do it.

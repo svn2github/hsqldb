@@ -32,7 +32,7 @@
  *
  *
  * For work added by the HSQL Development Group:
- * 
+ *
  * Copyright (c) 2001-2004, The HSQL Development Group
  * All rights reserved.
  *
@@ -642,10 +642,6 @@ public class Column {
         // Note, standard SQL null handling is handled by Expression.test() calling testNull() instead of this!
         // Attention, this is also used for grouping ('null' is one group)
         if (a == null) {
-            if (b == null) {
-                return 0;
-            }
-
             return -1;
         }
 

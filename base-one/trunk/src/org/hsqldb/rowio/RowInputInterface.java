@@ -45,7 +45,7 @@ import org.hsqldb.HsqlException;
  */
 public interface RowInputInterface {
 
-    public int getPos() throws IOException;
+    public int getPos();
 
     public int getNextPos() throws IOException;
 

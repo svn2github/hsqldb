@@ -32,7 +32,7 @@
  *
  *
  * For work added by the HSQL Development Group:
- * 
+ *
  * Copyright (c) 2001-2004, The HSQL Development Group
  * All rights reserved.
  *
@@ -1612,7 +1612,7 @@ public class jdbcResultSet implements ResultSet {
     public int findColumn(String columnName) throws SQLException {
 
         for (int i = 0; i < iColumnCount; i++) {
-            String name = rResult.metaData.sLabel[i];
+            String name = rResult.metaData.colLabels[i];
 
             if (columnName.equalsIgnoreCase(name)) {
                 return i + 1;
@@ -4882,7 +4882,7 @@ public class jdbcResultSet implements ResultSet {
         Object o;
 
         try {
-            t = rResult.metaData.colType[--columnIndex];
+            t = rResult.metaData.colTypes[--columnIndex];
             o = nCurrent.data[columnIndex];
         } catch (ArrayIndexOutOfBoundsException e) {
             throw jdbcUtil.sqlException(Trace.COLUMN_NOT_FOUND,
@@ -4942,9 +4942,9 @@ public class jdbcResultSet implements ResultSet {
         connProperties = props;
         this.isNetConn = isNetConnection;
 
-        if (r.iMode == ResultConstants.UPDATECOUNT) {
+        if (r.mode == ResultConstants.UPDATECOUNT) {
             iUpdateCount = r.getUpdateCount();
-        } else if (r.iMode == ResultConstants.ERROR) {
+        } else if (r.mode == ResultConstants.ERROR) {
             jdbcUtil.throwError(r);
         } else {
             if (s != null) {

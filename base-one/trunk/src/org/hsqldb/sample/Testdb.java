@@ -45,9 +45,9 @@ import java.sql.*;
  */
 public class Testdb {
 
-    Connection conn;    //our connnection to the db - presist for life of program
-                        // we dont want this garbage collected until we are done
+    Connection conn;                                              //our connnection to the db - presist for life of program
 
+    // we dont want this garbage collected until we are done
     public Testdb(String db_file_name_prefix) throws Exception    // note more general exception
     {
 
@@ -69,10 +69,11 @@ public class Testdb {
 
     public void shutdown() throws SQLException {
 
-        conn.close();   // if there are no other open connection
-                        // db writes out to files and shuts down
-                        // this happens anyway at garbage collection
-                        // when program ends
+        conn.close();    // if there are no other open connection
+
+        // db writes out to files and shuts down
+        // this happens anyway at garbage collection
+        // when program ends
     }
 
 //use for SQL command SELECT
@@ -81,19 +82,21 @@ public class Testdb {
         Statement st = null;
         ResultSet rs = null;
 
-        st = conn.createStatement();            // statement objects can be reused with
-                                                // repeated calls to execute but we
-                                                // choose to make a new one each time
-        rs = st.executeQuery(expression);       // run the query
+        st = conn.createStatement();         // statement objects can be reused with
+
+        // repeated calls to execute but we
+        // choose to make a new one each time
+        rs = st.executeQuery(expression);    // run the query
 
         // do something with the result set.
         dump(rs);
-        st.close();     // NOTE!! if you close a statement the associated ResultSet is
-                        // closed too
-                        // so you should copy the contents to some other object.
-                        // the result set is invalidated also  if you recycle an Statement
-                        // and try to execute some other query before the result set has been
-                        // completely examined.
+        st.close();    // NOTE!! if you close a statement the associated ResultSet is
+
+        // closed too
+        // so you should copy the contents to some other object.
+        // the result set is invalidated also  if you recycle an Statement
+        // and try to execute some other query before the result set has been
+        // completely examined.
     }
 
 //use for SQL commands CREATE, DROP, INSERT and UPDATE
@@ -101,9 +104,9 @@ public class Testdb {
 
         Statement st = null;
 
-        st = conn.createStatement();                // statements
+        st = conn.createStatement();    // statements
 
-        int i = st.executeUpdate(expression);       // run the query
+        int i = st.executeUpdate(expression);    // run the query
 
         if (i == -1) {
             System.out.println("db error : " + expression);
@@ -129,7 +132,8 @@ public class Testdb {
         for (; rs.next(); ) {
             for (i = 0; i < colmax; ++i) {
                 o = rs.getObject(i + 1);    // Is SQL the first column is indexed
-                                            // with 1 not 0
+
+                // with 1 not 0
                 System.out.print(o.toString() + " ");
             }
 
@@ -144,9 +148,9 @@ public class Testdb {
         try {
             db = new Testdb("db_file");
         } catch (Exception ex1) {
-            ex1.printStackTrace();          // could not start db
+            ex1.printStackTrace();    // could not start db
 
-            return;                         // bye bye
+            return;                   // bye bye
         }
 
         try {

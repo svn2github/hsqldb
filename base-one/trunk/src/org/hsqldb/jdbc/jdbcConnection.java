@@ -1874,7 +1874,7 @@ public class jdbcConnection implements Connection {
         try {
             Result result = sessionProxy.execute(req);
 
-            if (result.iMode == ResultConstants.ERROR) {
+            if (result.mode == ResultConstants.ERROR) {
                 jdbcUtil.throwError(result);
             }
         } catch (HsqlException e) {
@@ -1937,7 +1937,7 @@ public class jdbcConnection implements Connection {
         try {
             Result result = sessionProxy.execute(req);
 
-            if (result.iMode == ResultConstants.ERROR) {
+            if (result.mode == ResultConstants.ERROR) {
                 jdbcUtil.throwError(result);
             }
         } catch (HsqlException e) {

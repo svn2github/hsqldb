@@ -32,7 +32,7 @@
  *
  *
  * For work added by the HSQL Development Group:
- * 
+ *
  * Copyright (c) 2001-2004, The HSQL Development Group
  * All rights reserved.
  *
@@ -149,9 +149,9 @@ class Log {
     int scriptFormat;
 
     //private Thread tRunner;
-    private Object timerTask;
-    volatile int   writeDelay = 60;
-    private Cache  cCache;
+    private Object        timerTask;
+    volatile int          writeDelay = 60;
+    private DataFileCache cCache;
 
     // used for tracing
     private static final HsqlTimer timer = DatabaseManager.getTimer();
@@ -315,7 +315,7 @@ class Log {
         openLog();
     }
 
-    Cache getCache() throws HsqlException {
+    DataFileCache getCache() throws HsqlException {
 
         if (dDatabase.isFilesInJar()) {
             return null;
@@ -676,8 +676,9 @@ class Log {
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP) - text tables
     private HashMap textCacheList = new HashMap();
 
-    Cache openTextCache(Table table, String source, boolean readOnlyData,
-                        boolean reversed) throws HsqlException {
+    DataFileCache openTextCache(Table table, String source,
+                                boolean readOnlyData,
+                                boolean reversed) throws HsqlException {
 
         closeTextCache(table);
 

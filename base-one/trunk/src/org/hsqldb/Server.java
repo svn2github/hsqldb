@@ -32,7 +32,7 @@
  *
  *
  * For work added by the HSQL Development Group:
- * 
+ *
  * Copyright (c) 2001-2004, The HSQL Development Group
  * All rights reserved.
  *
@@ -1540,7 +1540,7 @@ public class Server implements HsqlSocketRequestHandler {
         sb.append(cid);
         sb.append(':');
 
-        switch (r.iMode) {
+        switch (r.mode) {
 
             case ResultConstants.SQLPREPARE : {
                 sb.append("SQLCLI:SQLPREPARE ");
@@ -1664,7 +1664,7 @@ public class Server implements HsqlSocketRequestHandler {
             }
             default : {
                 sb.append("SQLCLI:MODE:");
-                sb.append(r.iMode);
+                sb.append(r.mode);
 
                 break;
             }

@@ -32,7 +32,7 @@
  *
  *
  * For work added by the HSQL Development Group:
- * 
+ *
  * Copyright (c) 2001-2004, The HSQL Development Group
  * All rights reserved.
  *
@@ -164,7 +164,7 @@ class DatabaseCommandInterpreter {
                 result = executePart(cmd, token, parser);
 
                 // PATCH -- needs executePart to return not null result
-                if (result.iMode == ResultConstants.ERROR) {
+                if (result.mode == ResultConstants.ERROR) {
                     break;
                 }
 
@@ -2859,7 +2859,7 @@ class DatabaseCommandInterpreter {
         int colCount = result.getColumnCount();
 
         for (int i = 0; i < colCount; i++) {
-            if (result.metaData.sLabel[i].length() == 0) {
+            if (result.metaData.colLabels[i].length() == 0) {
                 throw Trace.error(Trace.LABEL_REQUIRED);
             }
         }
@@ -2901,7 +2901,7 @@ class DatabaseCommandInterpreter {
 
         Result uc = new Result(ResultConstants.UPDATECOUNT);
 
-        uc.iUpdateCount = result.getSize();
+        uc.updateCount = result.getSize();
 
         return uc;
     }

@@ -32,7 +32,7 @@
  *
  *
  * For work added by the HSQL Development Group:
- * 
+ *
  * Copyright (c) 2001-2004, The HSQL Development Group
  * All rights reserved.
  *
@@ -100,13 +100,13 @@ public class Result {
     // record list
     public Record  rRoot;
     private Record rTail;
-    private int    iSize;
+    private int    size;
 
     // transient - number of significant columns
     private int significantColumns;
 
     // type of result
-    public int iMode;
+    public int mode;
 
 //    boolean isMulti;
     // database ID
@@ -126,36 +126,36 @@ public class Result {
     int statementID;
 
     // max rows (out) or update count (in)
-    int                   iUpdateCount;
+    int                   updateCount;
     public ResultMetaData metaData;
 
     /** A Result object's metadata */
     public static class ResultMetaData {
 
         // always resolved
-        public String  sLabel[];
-        public String  sTable[];
-        public String  sName[];
-        public boolean isLabelQuoted[];
-        public int     colType[];
-        public int     colSize[];
-        public int     colScale[];
+        public String[]  colLabels;
+        public String[]  tableNames;
+        public String[]  colNames;
+        public boolean[] isLabelQuoted;
+        public int[]     colTypes;
+        public int[]     colSizes;
+        public int[]     colScales;
 
         // extra attrs, sometimes resolved
-        public String    sCatalog[];
-        public String    sSchema[];
-        public int       nullability[];
-        public boolean   isIdentity[];
+        public String[]  catalogNames;
+        public String[]  schemaNames;
+        public int[]     colNullable;
+        public boolean[] isIdentity;
         public boolean[] isWritable;
-        public int       paramMode[];
+        public int[]     paramMode;
 
         // It's possible to do better than java.lang.Object
         // for type OTHER if the expression generating the value
         // is of type FUNCTION.  This applies to result set columns
         // whose value is the result of a SQL function call and
         // especially to the arguments and return value of a CALL
-        public String sClassName[];
-        boolean       isParameterDescription;
+        public String[] classNames;
+        boolean         isParameterDescription;
 
         ResultMetaData() {}
 
@@ -170,33 +170,33 @@ public class Result {
          */
         private void prepareData(int columns) {
 
-            sLabel        = new String[columns];
-            sTable        = new String[columns];
-            sName         = new String[columns];
+            colLabels     = new String[columns];
+            tableNames    = new String[columns];
+            colNames      = new String[columns];
             isLabelQuoted = new boolean[columns];
-            colType       = new int[columns];
-            colSize       = new int[columns];
-            colScale      = new int[columns];
-            sCatalog      = new String[columns];
-            sSchema       = new String[columns];
-            nullability   = new int[columns];
+            colTypes      = new int[columns];
+            colSizes      = new int[columns];
+            colScales     = new int[columns];
+            catalogNames  = new String[columns];
+            schemaNames   = new String[columns];
+            colNullable   = new int[columns];
             isIdentity    = new boolean[columns];
             isWritable    = new boolean[columns];
-            sClassName    = new String[columns];
+            classNames    = new String[columns];
         }
 
         public int[] getParameterTypes() {
-            return colType;
+            return colTypes;
         }
 
         boolean isTableColumn(int i) {
-            return sTable[i] != null && sTable[i].length() > 0
-                   && sName[i] != null && sName[i].length() > 0;
+            return tableNames[i] != null && tableNames[i].length() > 0
+                   && colNames[i] != null && colNames[i].length() > 0;
         }
 
         private void decodeTableColumnAttrs(int in, int i) {
 
-            nullability[i] = in & 0x0000000f;
+            colNullable[i] = in & 0x0000000f;
             isIdentity[i]  = (in & 0x00000010) != 0;
             isWritable[i]  = (in & 0x00000020) != 0;
         }
@@ -245,15 +245,15 @@ public class Result {
 //            }
 //        }
             out.writeIntData(encodeTableColumnAttrs(i));
-            out.writeString(sCatalog[i] == null ? ""
-                                                : sCatalog[i]);
-            out.writeString(sSchema[i] == null ? ""
-                                               : sSchema[i]);
+            out.writeString(catalogNames[i] == null ? ""
+                                                    : catalogNames[i]);
+            out.writeString(schemaNames[i] == null ? ""
+                                                   : schemaNames[i]);
         }
 
         private int encodeTableColumnAttrs(int i) {
 
-            int out = nullability[i];    // always between 0x00 and 0x02
+            int out = colNullable[i];    // always between 0x00 and 0x02
 
             if (isIdentity[i]) {
                 out |= 0x00000010;
@@ -277,8 +277,8 @@ public class Result {
 //        colSize[i] = in.readIntData();
             decodeTableColumnAttrs(in.readIntData(), i);
 
-            sCatalog[i] = in.readString();
-            sSchema[i]  = in.readString();
+            catalogNames[i] = in.readString();
+            schemaNames[i]  = in.readString();
         }
 
         void read(RowInputBinary in) throws HsqlException, IOException {
@@ -292,11 +292,11 @@ public class Result {
             }
 
             for (int i = 0; i < l; i++) {
-                colType[i]    = in.readType();
-                sLabel[i]     = in.readString();
-                sTable[i]     = in.readString();
-                sName[i]      = in.readString();
-                sClassName[i] = in.readString();
+                colTypes[i]   = in.readType();
+                colLabels[i]  = in.readString();
+                tableNames[i] = in.readString();
+                colNames[i]   = in.readString();
+                classNames[i] = in.readString();
 
                 if (isTableColumn(i)) {
                     readTableColumnAttrs(in, i);
@@ -314,7 +314,7 @@ public class Result {
             out.writeIntData(colCount);
 
             for (int i = 0; i < colCount; i++) {
-                out.writeType(colType[i]);
+                out.writeType(colTypes[i]);
 
                 // CAREFUL: writeString will throw NPE if passed NULL
                 // There is no guarantee that these will all be non-null
@@ -325,14 +325,14 @@ public class Result {
                 // end will simply turn it into a zero-length string
                 // anyway, as nulls are only handled "properly" by
                 // readData(...), not by the individual readXXX methods.
-                out.writeString(sLabel[i] == null ? ""
-                                                  : sLabel[i]);
-                out.writeString(sTable[i] == null ? ""
-                                                  : sTable[i]);
-                out.writeString(sName[i] == null ? ""
-                                                 : sName[i]);
-                out.writeString(sClassName[i] == null ? ""
-                                                      : sClassName[i]);
+                out.writeString(colLabels[i] == null ? ""
+                                                     : colLabels[i]);
+                out.writeString(tableNames[i] == null ? ""
+                                                      : tableNames[i]);
+                out.writeString(colNames[i] == null ? ""
+                                                    : colNames[i]);
+                out.writeString(classNames[i] == null ? ""
+                                                      : classNames[i]);
 
                 if (isTableColumn(i)) {
                     writeTableColumnAttrs(out, i);
@@ -350,7 +350,7 @@ public class Result {
      */
     public Result(int type) {
 
-        iMode = type;
+        mode = type;
 
 /*
         if (type == ResultConstants.MULTI) {
@@ -367,8 +367,8 @@ public class Result {
 
     Result(ResultMetaData md) {
 
-        iMode              = ResultConstants.DATA;
-        significantColumns = md.colType.length;
+        mode               = ResultConstants.DATA;
+        significantColumns = md.colTypes.length;
         metaData           = md;
     }
 
@@ -383,7 +383,7 @@ public class Result {
      */
     Result(String error, String state, int code) {
 
-        iMode        = ResultConstants.ERROR;
+        mode         = ResultConstants.ERROR;
         mainString   = error;
         subString    = state;
         statementID  = code;
@@ -406,7 +406,7 @@ public class Result {
             metaData.paramMode              = new int[columns];
         }
 
-        iMode              = type;
+        mode               = type;
         significantColumns = columns;
     }
 
@@ -415,9 +415,9 @@ public class Result {
      */
     public Result(int type, int types[], int id) {
 
-        iMode              = type;
+        mode               = type;
         metaData           = new ResultMetaData();
-        metaData.colType   = types;
+        metaData.colTypes  = types;
         significantColumns = types.length;
         statementID        = id;
     }
@@ -431,9 +431,9 @@ public class Result {
     Result(RowInputBinary in) throws HsqlException {
 
         try {
-            iMode = in.readIntData();
+            mode = in.readIntData();
 
-            if (iMode == ResultConstants.MULTI) {
+            if (mode == ResultConstants.MULTI) {
                 readMultiResult(in);
 
                 return;
@@ -442,7 +442,7 @@ public class Result {
             databaseID = in.readIntData();
             sessionID  = in.readIntData();
 
-            switch (iMode) {
+            switch (mode) {
 
                 case ResultConstants.GETSESSIONATTR :
                 case ResultConstants.SQLDISCONNECT :
@@ -461,9 +461,9 @@ public class Result {
                     break;
 
                 case ResultConstants.SQLEXECDIRECT :
-                    iUpdateCount = in.readIntData();
-                    statementID  = in.readIntData();
-                    mainString   = in.readString();
+                    updateCount = in.readIntData();
+                    statementID = in.readIntData();
+                    mainString  = in.readString();
                     break;
 
                 case ResultConstants.ERROR :
@@ -477,7 +477,7 @@ public class Result {
                     break;
 
                 case ResultConstants.UPDATECOUNT :
-                    iUpdateCount = in.readIntData();
+                    updateCount = in.readIntData();
                     break;
 
                 case ResultConstants.SQLENDTRAN : {
@@ -500,8 +500,8 @@ public class Result {
                 case ResultConstants.BATCHEXECDIRECT :
                 case ResultConstants.SQLEXECUTE :
                 case ResultConstants.SETSESSIONATTR : {
-                    iUpdateCount = in.readIntData();
-                    statementID  = in.readIntData();
+                    updateCount = in.readIntData();
+                    statementID = in.readIntData();
 
                     int l = in.readIntData();
 
@@ -509,13 +509,13 @@ public class Result {
                     significantColumns = l;
 
                     for (int i = 0; i < l; i++) {
-                        metaData.colType[i] = in.readType();
+                        metaData.colTypes[i] = in.readType();
                     }
 
                     int count = in.readIntData();
 
                     while (count-- > 0) {
-                        add(in.readData(metaData.colType));
+                        add(in.readData(metaData.colTypes));
                     }
 
                     break;
@@ -524,16 +524,16 @@ public class Result {
                 case ResultConstants.PARAM_META_DATA : {
                     metaData = new ResultMetaData();
                     metaData.isParameterDescription =
-                        iMode == ResultConstants.PARAM_META_DATA;
+                        mode == ResultConstants.PARAM_META_DATA;
 
                     metaData.read(in);
 
-                    significantColumns = metaData.sLabel.length;
+                    significantColumns = metaData.colLabels.length;
 
                     int count = in.readIntData();
 
                     while (count-- > 0) {
-                        add(in.readData(metaData.colType));
+                        add(in.readData(metaData.colTypes));
                     }
 
                     break;
@@ -559,7 +559,7 @@ public class Result {
                     throw new HsqlException(
                         Trace.getMessage(
                             Trace.Result_Result, true, new Object[]{
-                                new Integer(iMode) }), null, 0);
+                                new Integer(mode) }), null, 0);
             }
         } catch (IOException e) {
             throw Trace.error(Trace.TRANSFER_CORRUPTED);
@@ -570,10 +570,10 @@ public class Result {
 
         Result result = new Result(ResultConstants.DATA, 1);
 
-        result.metaData.sName[0]   = colName;
-        result.metaData.sLabel[0]  = colName;
-        result.metaData.sTable[0]  = "";
-        result.metaData.colType[0] = colType;
+        result.metaData.colNames[0]   = colName;
+        result.metaData.colLabels[0]  = colName;
+        result.metaData.tableNames[0] = "";
+        result.metaData.colTypes[0]   = colType;
 
         return result;
     }
@@ -668,7 +668,7 @@ public class Result {
      * @return
      */
     public int getSize() {
-        return iSize;
+        return size;
     }
 
     /**
@@ -707,7 +707,7 @@ public class Result {
         }
 
         rTail = a.rTail;
-        iSize += a.iSize;
+        size  += a.size;
     }
 
     void addAll(Result r) {
@@ -729,7 +729,7 @@ public class Result {
 
         rRoot = null;
         rTail = null;
-        iSize = 0;
+        size  = 0;
     }
 
     public boolean isEmpty() {
@@ -746,11 +746,11 @@ public class Result {
         if (a == null) {
             rRoot = null;
             rTail = null;
-            iSize = 0;
+            size  = 0;
         } else {
             rRoot = a.rRoot;
             rTail = a.rTail;
-            iSize = a.iSize;
+            size  = a.size;
         }
     }
 
@@ -773,7 +773,7 @@ public class Result {
 
         rTail = r;
 
-        iSize++;
+        size++;
     }
 
     /**
@@ -793,14 +793,14 @@ public class Result {
             return;
         }
 
-        if (limitstart >= iSize) {
-            iSize = 0;
+        if (limitstart >= size) {
+            size  = 0;
             rRoot = rTail = null;
 
             return;
         }
 
-        iSize -= limitstart;
+        size -= limitstart;
 
         for (int i = 0; i < limitstart; i++) {
             n = n.next;
@@ -808,7 +808,7 @@ public class Result {
             if (n == null) {
 
                 // if iSize is consistent this block will never be reached
-                iSize = 0;
+                size  = 0;
                 rRoot = rTail = n;
 
                 return;
@@ -817,7 +817,7 @@ public class Result {
 
         rRoot = n;
 
-        if (limitcount == 0 || limitcount >= iSize) {
+        if (limitcount == 0 || limitcount >= size) {
             return;
         }
 
@@ -831,7 +831,7 @@ public class Result {
             }
         }
 
-        iSize  = limitcount;
+        size   = limitcount;
         n.next = null;
         rTail  = n;
     }
@@ -883,7 +883,7 @@ public class Result {
             if (compareRecord(n.data, next.data, columnCount) == 0) {
                 n.next = next.next;
 
-                iSize--;
+                size--;
             } else {
                 n = next;
             }
@@ -922,7 +922,7 @@ public class Result {
 
                 n = n.next;
 
-                iSize--;
+                size--;
             } else if (i > 0) {    // r > minus
                 n2 = n2.next;
             } else {               // r < minus
@@ -959,7 +959,7 @@ public class Result {
         Record  n2    = r2.rRoot;
         int     i     = 0;
 
-        iSize = 0;
+        size = 0;
 
         while (n != null && n2 != null) {
             i = compareRecord(n.data, n2.data, columnCount);
@@ -976,7 +976,7 @@ public class Result {
                 n     = n.next;
                 n2    = n2.next;
 
-                iSize++;
+                size++;
             } else if (i > 0) {       // r > r2
                 n2 = n2.next;
             } else {                  // r < r2
@@ -1090,12 +1090,12 @@ public class Result {
                               int way[]) throws HsqlException {
 
         int i = Column.compare(a[order[0]], b[order[0]],
-                               metaData.colType[order[0]]);
+                               metaData.colTypes[order[0]]);
 
         if (i == 0) {
             for (int j = 1; j < order.length; j++) {
                 i = Column.compare(a[order[j]], b[order[j]],
-                                   metaData.colType[order[j]]);
+                                   metaData.colTypes[order[j]]);
 
                 if (i != 0) {
                     return i * way[j];
@@ -1119,7 +1119,7 @@ public class Result {
                               int len) throws HsqlException {
 
         for (int j = 0; j < len; j++) {
-            int i = Column.compare(a[j], b[j], metaData.colType[j]);
+            int i = Column.compare(a[j], b[j], metaData.colTypes[j]);
 
             if (i != 0) {
                 return i;
@@ -1132,7 +1132,7 @@ public class Result {
     void write(RowOutputBinary out) throws IOException, HsqlException {
 
 //        if (isMulti) {
-        if (iMode == ResultConstants.MULTI) {
+        if (mode == ResultConstants.MULTI) {
             writeMulti(out);
 
             return;
@@ -1141,11 +1141,11 @@ public class Result {
         int startPos = out.size();
 
         out.writeSize(0);
-        out.writeIntData(iMode);
+        out.writeIntData(mode);
         out.writeIntData(databaseID);
         out.writeIntData(sessionID);
 
-        switch (iMode) {
+        switch (mode) {
 
             case ResultConstants.GETSESSIONATTR :
             case ResultConstants.SQLDISCONNECT :
@@ -1169,7 +1169,7 @@ public class Result {
                 break;
 
             case ResultConstants.SQLEXECDIRECT :
-                out.writeIntData(iUpdateCount);
+                out.writeIntData(updateCount);
                 out.writeIntData(statementID);          // currently unused
                 out.writeString(mainString);
                 break;
@@ -1183,7 +1183,7 @@ public class Result {
                 break;
 
             case ResultConstants.UPDATECOUNT :
-                out.writeIntData(iUpdateCount);
+                out.writeIntData(updateCount);
                 break;
 
             case ResultConstants.SQLENDTRAN : {
@@ -1206,7 +1206,7 @@ public class Result {
             case ResultConstants.BATCHEXECDIRECT :
             case ResultConstants.SQLEXECUTE :
             case ResultConstants.SETSESSIONATTR : {
-                out.writeIntData(iUpdateCount);
+                out.writeIntData(updateCount);
                 out.writeIntData(statementID);
 
                 int l = significantColumns;
@@ -1214,15 +1214,15 @@ public class Result {
                 out.writeIntData(l);
 
                 for (int i = 0; i < l; i++) {
-                    out.writeType(metaData.colType[i]);
+                    out.writeType(metaData.colTypes[i]);
                 }
 
-                out.writeIntData(iSize);
+                out.writeIntData(size);
 
                 Record n = rRoot;
 
                 while (n != null) {
-                    out.writeData(l, metaData.colType, n.data, null, false);
+                    out.writeData(l, metaData.colTypes, n.data, null, false);
 
                     n = n.next;
                 }
@@ -1232,12 +1232,12 @@ public class Result {
             case ResultConstants.DATA :
             case ResultConstants.PARAM_META_DATA : {
                 metaData.write(out, significantColumns);
-                out.writeIntData(iSize);
+                out.writeIntData(size);
 
                 Record n = rRoot;
 
                 while (n != null) {
-                    out.writeData(significantColumns, metaData.colType,
+                    out.writeData(significantColumns, metaData.colTypes,
                                   n.data, null, false);
 
                     n = n.next;
@@ -1265,7 +1265,7 @@ public class Result {
                 throw new HsqlException(
                     Trace.getMessage(
                         Trace.Result_Result, true, new Object[]{
-                            new Integer(iMode) }), null, 0);
+                            new Integer(mode) }), null, 0);
         }
 
         out.writeIntData(out.size(), startPos);
@@ -1274,7 +1274,7 @@ public class Result {
     void readMultiResult(RowInputBinary in)
     throws HsqlException, IOException {
 
-        iMode      = ResultConstants.MULTI;
+        mode       = ResultConstants.MULTI;
         databaseID = in.readIntData();
         sessionID  = in.readIntData();
 
@@ -1295,10 +1295,10 @@ public class Result {
         int startPos = out.size();
 
         out.writeSize(0);
-        out.writeIntData(iMode);
+        out.writeIntData(mode);
         out.writeIntData(databaseID);
         out.writeIntData(sessionID);
-        out.writeIntData(iSize);
+        out.writeIntData(size);
 
         Record n = rRoot;
 
@@ -1355,7 +1355,7 @@ public class Result {
 /** @todo fredt - move the messages to Trace.java */
     public Result(Throwable t, String statement) {
 
-        iMode = ResultConstants.ERROR;
+        mode = ResultConstants.ERROR;
 
         if (t instanceof HsqlException) {
             HsqlException he = (HsqlException) t;
@@ -1414,32 +1414,32 @@ public class Result {
     }
 
     public void setMaxRows(int count) {
-        this.iUpdateCount = count;
+        updateCount = count;
     }
 
     public int getUpdateCount() {
-        return iUpdateCount;
+        return updateCount;
     }
 
     int getConnectionAttrType() {
-        return iUpdateCount;
+        return updateCount;
     }
 
     void setConnectionAttrType(int type) {
-        iUpdateCount = type;
+        updateCount = type;
     }
 
     int getEndTranType() {
-        return iUpdateCount;
+        return updateCount;
     }
 
     void setEndTranType(int type) {
-        iUpdateCount = type;
+        updateCount = type;
     }
 
     /** @todo fred - check this repurposing */
     public int[] getUpdateCounts() {
-        return metaData.colType;
+        return metaData.colTypes;
     }
 
     Object[] getParameterData() {
@@ -1456,19 +1456,19 @@ public class Result {
         rRoot.data = data;
         rRoot.next = null;
         rTail      = rRoot;
-        iSize      = 1;
+        size       = 1;
     }
 
     public void setResultType(int type) {
-        iMode = type;
+        mode = type;
     }
 
     public void setStatementType(int type) {
-        iUpdateCount = type;
+        updateCount = type;
     }
 
     public int getStatementType() {
-        return iUpdateCount;
+        return updateCount;
     }
 
     public Iterator iterator() {
@@ -1483,7 +1483,7 @@ public class Result {
         Record  last;
 
         public boolean hasNext() {
-            return counter < iSize;
+            return counter < size;
         }
 
         public Object next() {
@@ -1514,7 +1514,7 @@ public class Result {
 
         public void remove() {
 
-            if (counter <= iSize && counter != 0 &&!removed) {
+            if (counter <= size && counter != 0 &&!removed) {
                 removed = true;
 
                 if (current == rTail) {
@@ -1529,7 +1529,7 @@ public class Result {
                     current.next = current.next.next;
                 }
 
-                iSize--;
+                size--;
                 counter--;
 
                 return;

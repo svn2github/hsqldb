@@ -186,7 +186,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
                                         Trace.JDBC_NO_RESULT_SET, null);
         }
 
-        if (r.iMode != ResultConstants.DATA) {
+        if (r.mode != ResultConstants.DATA) {
 
             // implied: columnCount = 0;
             return;
@@ -209,26 +209,29 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
             // above, it is not _guaranteed_ that these values
             // will be non-null.   So, it is better to do the work
             // here than have to perform checks and conversions later.
-            cmd.catalogName    = rmd.sCatalog[i] == null ? ""
-                                                         : rmd.sCatalog[i];
-            cmd.schemaName     = rmd.sSchema[i] == null ? ""
-                                                        : rmd.sSchema[i];
-            cmd.tableName      = rmd.sTable[i] == null ? ""
-                                                       : rmd.sTable[i];
-            cmd.columnName     = rmd.sName[i] == null ? ""
-                                                      : rmd.sName[i];
-            cmd.columnLabel    = rmd.sLabel[i] == null ? ""
-                                                       : rmd.sLabel[i];
-            cmd.columnType     = rmd.colType[i];
+            cmd.catalogName = rmd.catalogNames[i] == null ? ""
+                                                          : rmd
+                                                          .catalogNames[i];
+            cmd.schemaName     = rmd.schemaNames[i] == null ? ""
+                                                            : rmd
+                                                            .schemaNames[i];
+            cmd.tableName      = rmd.tableNames[i] == null ? ""
+                                                           : rmd
+                                                           .tableNames[i];
+            cmd.columnName     = rmd.colNames[i] == null ? ""
+                                                         : rmd.colNames[i];
+            cmd.columnLabel    = rmd.colLabels[i] == null ? ""
+                                                          : rmd.colLabels[i];
+            cmd.columnType     = rmd.colTypes[i];
             cmd.columnTypeName = Types.getTypeString(cmd.columnType);
             cmd.isWritable     = rmd.isWritable[i];
             cmd.isReadOnly     = !cmd.isWritable;
 
             // default: cmd.isDefinitelyWritable = false;
             cmd.isAutoIncrement = rmd.isIdentity[i];
-            cmd.isNullable      = rmd.nullability[i];
+            cmd.isNullable      = rmd.colNullable[i];
             type                = cmd.columnType;
-            cmd.columnClassName = rmd.sClassName[i];
+            cmd.columnClassName = rmd.classNames[i];
 
             if (cmd.columnClassName == null
                     || cmd.columnClassName.length() == 0) {
@@ -246,10 +249,10 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
             // properties that is expected to be unlikely to cause problems in
             // the majority of cases.
             if (Types.acceptsPrecisionCreateParam(type)) {
-                if (rmd.colSize[i] == 0) {
+                if (rmd.colSizes[i] == 0) {
                     cmd.columnDisplaySize = Types.getMaxDisplaySize(type);
                 } else {
-                    cmd.columnDisplaySize = rmd.colSize[i];
+                    cmd.columnDisplaySize = rmd.colSizes[i];
                 }
             } else {
                 cmd.columnDisplaySize = Types.getMaxDisplaySize(type);
@@ -276,7 +279,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
             // help, but currently only as long as one is connected to an
             // embedded instance at design time, not via a network connection.
             if (Types.acceptsScaleCreateParam(type)) {
-                cmd.scale = rmd.colScale[i];
+                cmd.scale = rmd.colScales[i];
             }
 
             Boolean iua = Types.isUnsignedAttribute(type);

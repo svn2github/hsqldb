@@ -100,11 +100,11 @@ public class jdbcParameterMetaData implements ParameterMetaData {
         }
 
         rmd            = r.metaData;
-        types          = rmd.colType;
+        types          = rmd.colTypes;
         parameterCount = types.length;
-        nullability    = rmd.nullability;
+        nullability    = rmd.colNullable;
         isIdentity     = rmd.isIdentity;
-        classNames     = rmd.sClassName;
+        classNames     = rmd.classNames;
         modes          = rmd.paramMode;
     }
 

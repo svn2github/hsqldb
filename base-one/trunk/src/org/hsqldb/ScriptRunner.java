@@ -32,7 +32,7 @@
  *
  *
  * For work added by the HSQL Development Group:
- * 
+ *
  * Copyright (c) 2001-2004, The HSQL Development Group
  * All rights reserved.
  *
@@ -143,7 +143,7 @@ public class ScriptRunner {
                     Result result = current.sqlExecuteDirectNoPreChecks(s);
 
                     if (result != null
-                            && result.iMode == ResultConstants.ERROR) {
+                            && result.mode == ResultConstants.ERROR) {
 
 /** @todo fredt - must catch out of  memory errors and terminate */
 

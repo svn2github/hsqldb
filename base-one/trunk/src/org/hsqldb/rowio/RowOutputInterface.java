@@ -61,6 +61,9 @@ public interface RowOutputInterface {
 
     public void writeIntData(int i, int position) throws IOException;
 
+    public void writeRow(Object[] data,
+                         Table t) throws IOException, HsqlException;
+
     public void writeData(Object[] data,
                           Table t) throws IOException, HsqlException;
 

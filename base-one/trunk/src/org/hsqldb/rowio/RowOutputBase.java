@@ -164,6 +164,14 @@ implements RowOutputInterface {
                                         int t)
                                         throws IOException, HsqlException;
 
+    public void writeRow(Object data[],
+                         Table t) throws IOException, HsqlException {
+
+        writeSize(0);
+        writeData(data, t);
+        writeIntData(size(), 0);
+    }
+
     /**
      *  This method is called to write data for a table.
      *

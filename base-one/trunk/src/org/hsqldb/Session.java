@@ -32,7 +32,7 @@
  *
  *
  * For work added by the HSQL Development Group:
- * 
+ *
  * Copyright (c) 2001-2004, The HSQL Development Group
  * All rights reserved.
  *
@@ -113,7 +113,7 @@ public class Session implements SessionInterface {
     private int            nestedOldTransIndex;
     private int            currentMaxRows;
     private int            sessionMaxRows;
-    private Number         iLastIdentity = ValuePool.getInt(0);
+    private Number         lastIdentity = ValuePool.getInt(0);
     private final int      sessionId;
     private HashMappedList savepoints;
     private boolean        script;
@@ -197,7 +197,7 @@ public class Session implements SessionInterface {
             compiledStatementExecutor = null;
             compiledStatementManager  = null;
             dbCommandInterpreter      = null;
-            iLastIdentity             = null;
+            lastIdentity              = null;
             isClosed                  = true;
         }
     }
@@ -217,7 +217,7 @@ public class Session implements SessionInterface {
      * @param  i the new value
      */
     void setLastIdentity(Number i) {
-        iLastIdentity = i;
+        lastIdentity = i;
     }
 
     /**
@@ -226,7 +226,7 @@ public class Session implements SessionInterface {
      * @return the current value
      */
     Number getLastIdentity() {
-        return iLastIdentity;
+        return lastIdentity;
     }
 
     /**
@@ -813,10 +813,10 @@ public class Session implements SessionInterface {
         }
 
         synchronized (database) {
-            int type = cmd.iMode;
+            int type = cmd.mode;
 
             if (sessionMaxRows == 0) {
-                currentMaxRows = cmd.iUpdateCount;
+                currentMaxRows = cmd.updateCount;
             }
 
             // we simply get the next system change number - no matter what type of query
@@ -1064,9 +1064,9 @@ public class Session implements SessionInterface {
             // On the client side, iterate over the vals and throw
             // a BatchUpdateException if a batch status value of
             // esultConstants.EXECUTE_FAILED is encountered in the result
-            if (in.iMode == ResultConstants.UPDATECOUNT) {
-                updateCounts[count++] = in.iUpdateCount;
-            } else if (in.iMode == ResultConstants.DATA) {
+            if (in.mode == ResultConstants.UPDATECOUNT) {
+                updateCounts[count++] = in.updateCount;
+            } else if (in.mode == ResultConstants.DATA) {
 
                 // FIXME:  we don't have what it takes yet
                 // to differentiate between things like
@@ -1119,9 +1119,9 @@ public class Session implements SessionInterface {
             // On the client side, iterate over the colType vals and throw
             // a BatchUpdateException if a batch status value of
             // ResultConstants.EXECUTE_FAILED is encountered
-            if (in.iMode == ResultConstants.UPDATECOUNT) {
-                updateCounts[count++] = in.iUpdateCount;
-            } else if (in.iMode == ResultConstants.DATA) {
+            if (in.mode == ResultConstants.UPDATECOUNT) {
+                updateCounts[count++] = in.updateCount;
+            } else if (in.mode == ResultConstants.DATA) {
 
                 // FIXME:  we don't have what it takes yet
                 // to differentiate between things like
@@ -1203,7 +1203,7 @@ public class Session implements SessionInterface {
 
         Result r = sqlPrepare(sql);
 
-        if (r.iMode == ResultConstants.ERROR) {
+        if (r.mode == ResultConstants.ERROR) {
 
             // sql is invalid due to DDL changes
             compiledStatementManager.freeStatement(csid, sessionId);
@@ -1225,8 +1225,8 @@ public class Session implements SessionInterface {
 
         compiledStatementManager.freeStatement(csid, sessionId);
 
-        result              = new Result(ResultConstants.UPDATECOUNT);
-        result.iUpdateCount = 1;
+        result             = new Result(ResultConstants.UPDATECOUNT);
+        result.updateCount = 1;
 
         return result;
     }
@@ -1319,20 +1319,20 @@ public class Session implements SessionInterface {
 
         Result r = new Result(ResultConstants.DATA, 7);
 
-        r.metaData.sName = r.metaData.sLabel = r.metaData.sTable =
+        r.metaData.colNames = r.metaData.colLabels = r.metaData.tableNames =
             new String[] {
             "", "", "", "", "", "", ""
         };
-        r.metaData.colType = new int[] {
+        r.metaData.colTypes = new int[] {
             Types.VARCHAR, Types.VARCHAR, Types.INTEGER,
-            iLastIdentity instanceof Long ? Types.BIGINT
-                                          : Types.INTEGER, Types.BOOLEAN,
+            lastIdentity instanceof Long ? Types.BIGINT
+                                         : Types.INTEGER, Types.BOOLEAN,
             Types.BOOLEAN, Types.BOOLEAN
         };
 
         Object[] row = new Object[] {
             database.getURI(), getUsername(), ValuePool.getInt(sessionId),
-            iLastIdentity, ValuePool.getBoolean(isAutoCommit),
+            lastIdentity, ValuePool.getBoolean(isAutoCommit),
             ValuePool.getBoolean(database.databaseReadOnly),
             ValuePool.getBoolean(isReadOnly)
         };

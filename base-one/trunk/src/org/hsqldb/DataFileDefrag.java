@@ -77,11 +77,11 @@ class DataFileDefrag {
             throw Trace.error(Trace.FILE_IO_ERROR, filename + ".new");
         }
 
-        for (int i = 0; i < Cache.INITIAL_FREE_POS; i++) {
+        for (int i = 0; i < DataFileCache.INITIAL_FREE_POS; i++) {
             fileStreamOut.write(0);
         }
 
-        filePos = Cache.INITIAL_FREE_POS;
+        filePos = DataFileCache.INITIAL_FREE_POS;
 
         for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
             Table t = (Table) tTable.get(i);
@@ -103,7 +103,7 @@ class DataFileDefrag {
         // write out the end of file position
         RandomAccessFile dest = new RandomAccessFile(filename + ".new", "rw");
 
-        dest.seek(Cache.FREE_POS_POS);
+        dest.seek(DataFileCache.FREE_POS_POS);
         dest.writeInt((int) filePos);
         dest.close();
 

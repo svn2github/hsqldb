@@ -152,6 +152,15 @@ public class RowOutputBinary extends RowOutputBase {
         return getSize(data, cols, type);
     }
 
+    public static int getRowSize(CachedRow row) {
+
+        Object data[] = row.getData();
+        int    type[] = row.getTable().getColumnTypes();
+        int    cols   = row.getTable().getColumnCount();
+
+        return getSize(data, cols, type);
+    }
+
 // fredt@users - comment - methods used for writing each SQL type
     protected void writeFieldType(int type) throws IOException {
         write(1);
@@ -249,8 +258,7 @@ public class RowOutputBinary extends RowOutputBase {
      * @return size of byte array
      * @exception  HsqlException when data is inconsistent
      */
-    private static int getSize(Object data[], int l,
-                               int type[]) throws HsqlException {
+    private static int getSize(Object data[], int l, int type[]) {
 
         int s = 0;
 
@@ -339,8 +347,9 @@ public class RowOutputBinary extends RowOutputBase {
                         break;
 
                     default :
-                        throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED,
-                                          Types.getTypeString(type[i]));
+                        Trace.printSystemOut(Trace.FUNCTION_NOT_SUPPORTED
+                                             + " "
+                                             + Types.getTypeString(type[i]));
                 }
             }
         }

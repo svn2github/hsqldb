@@ -173,7 +173,7 @@ class Logger {
     /**
      *  Returns the Cache object or null if one doesn't exist.
      */
-    Cache getCache() throws HsqlException {
+    DataFileCache getCache() throws HsqlException {
 
         if (lLog != null) {
             return lLog.getCache();
@@ -308,8 +308,9 @@ class Logger {
     /**
      *  Opens the TextCache object.
      */
-    Cache openTextCache(Table table, String source, boolean readOnlyData,
-                        boolean reversed) throws HsqlException {
+    DataFileCache openTextCache(Table table, String source,
+                                boolean readOnlyData,
+                                boolean reversed) throws HsqlException {
         return lLog.openTextCache(table, source, readOnlyData, reversed);
     }
 

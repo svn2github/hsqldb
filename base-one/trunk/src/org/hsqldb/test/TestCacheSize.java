@@ -83,7 +83,7 @@ public class TestCacheSize {
     boolean reportProgress = false;
 
     // type of the big table {MEMORY | CACHED | TEXT}
-    String tableType      = "MEMORY";
+    String tableType      = "CACHED";
     int    cacheScale     = 15;
     int    cacheSizeScale = 8;
 
@@ -103,7 +103,7 @@ public class TestCacheSize {
     int     deleteWhileInsertInterval = 10000;
 
     // size of the tables used in test
-    int bigrows   = 32000;
+    int bigrows   = 512000;
     int smallrows = 0xfff;
 
     // if the extra table needs to be created and filled up
@@ -137,7 +137,7 @@ public class TestCacheSize {
                 sStatement = cConnection.createStatement();
 
                 sStatement.execute("SET SCRIPTFORMAT " + logType);
-                sStatement.execute("SET LOGSIZE " + 1);
+                sStatement.execute("SET LOGSIZE " + 0);
                 sStatement.execute("SHUTDOWN");
                 cConnection.close();
                 props.load();
@@ -413,7 +413,6 @@ public class TestCacheSize {
             sStatement = cConnection.createStatement();
 
             sStatement.execute("SET WRITE_DELAY " + writeDelay);
-            countRows();
             checkSelects();
             checkUpdates();
             checkSelects();
@@ -441,6 +440,22 @@ public class TestCacheSize {
 
     private void checkSelects() {
 
+        countRows();
+        selectZip();
+        selectID();
+        selectZipTable();
+    }
+
+    private void checkUpdates() {
+
+        updateZip();
+        countRows();
+        updateID();
+        countRows();
+    }
+
+    void selectZip() {
+
         StopWatch        sw        = new StopWatch();
         java.util.Random randomgen = new java.util.Random();
         int              i         = 0;
@@ -454,7 +469,7 @@ public class TestCacheSize {
                 ps.setInt(1, randomgen.nextInt(smallrows));
                 ps.execute();
 
-                if ((i + 1) == 100 && sw.elapsedTime() > 5000) {
+                if ((i + 1) == 100 && sw.elapsedTime() > 50000) {
                     slow = true;
                 }
 
@@ -472,7 +487,14 @@ public class TestCacheSize {
         System.out.println("Select random zip " + i + " rows : "
                            + sw.elapsedTime() + " rps: "
                            + (i * 1000 / (sw.elapsedTime() + 1)));
-        sw.zero();
+    }
+
+    void selectID() {
+
+        StopWatch        sw        = new StopWatch();
+        java.util.Random randomgen = new java.util.Random();
+        int              i         = 0;
+        boolean          slow      = false;
 
         try {
             PreparedStatement ps = cConnection.prepareStatement(
@@ -495,7 +517,14 @@ public class TestCacheSize {
         System.out.println("Select random id " + i + " rows : "
                            + sw.elapsedTime() + " rps: "
                            + (i * 1000 / (sw.elapsedTime() + 1)));
-        sw.zero();
+    }
+
+    void selectZipTable() {
+
+        StopWatch        sw        = new StopWatch();
+        java.util.Random randomgen = new java.util.Random();
+        int              i         = 0;
+        boolean          slow      = false;
 
         try {
             PreparedStatement ps = cConnection.prepareStatement(
@@ -544,11 +573,10 @@ public class TestCacheSize {
             rs.next();
             System.out.println("Row Count: " + rs.getInt(1));
             System.out.println("Time to count: " + sw.elapsedTime());
-            sw.stop();
         } catch (SQLException e) {}
     }
 
-    private void checkUpdates() {
+    private void updateZip() {
 
         StopWatch        sw        = new StopWatch();
         java.util.Random randomgen = new java.util.Random();
@@ -582,8 +610,16 @@ public class TestCacheSize {
                            + " UPDATE commands, " + count + " rows : "
                            + sw.elapsedTime() + " rps: "
                            + (count * 1000 / (sw.elapsedTime() + 1)));
-        countRows();
-        sw.zero();
+    }
+
+    void updateID() {
+
+        StopWatch        sw        = new StopWatch();
+        java.util.Random randomgen = new java.util.Random();
+        int              i         = 0;
+        boolean          slow      = false;
+        int              count     = 0;
+        int              random    = 0;
 
         try {
             PreparedStatement ps = cConnection.prepareStatement(
@@ -610,7 +646,6 @@ public class TestCacheSize {
         System.out.println("Update with random id " + i + " rows : "
                            + sw.elapsedTime() + " rps: "
                            + (i * 1000 / (sw.elapsedTime() + 1)));
-        countRows();
     }
 
     static void deleteDatabase(String path) {

@@ -32,7 +32,7 @@
  *
  *
  * For work added by the HSQL Development Group:
- * 
+ *
  * Copyright (c) 2001-2004, The HSQL Development Group
  * All rights reserved.
  *
@@ -152,17 +152,17 @@ public class Table extends BaseTable {
     boolean              sqlEnforceStrictSize;        // inherited for the database -
 
     // properties for subclasses
-    protected int      columnCount;                   // inclusive the hidden primary key
-    protected int      visibleColumnCount;            // exclusive of hidden primary key
-    protected Database database;
-    protected Cache    cache;
-    protected HsqlName tableName;                     // SQL name
-    protected int      tableType;
-    protected int      ownerSessionId;                // fredt - set for temp tables only
-    protected boolean  isReadOnly;
-    protected boolean  isTemp;
-    protected boolean  isCached;
-    protected int      indexType;                     // fredt - type of index used
+    protected int           columnCount;              // inclusive the hidden primary key
+    protected int           visibleColumnCount;       // exclusive of hidden primary key
+    protected Database      database;
+    protected DataFileCache cache;
+    protected HsqlName      tableName;                // SQL name
+    protected int           tableType;
+    protected int           ownerSessionId;           // fredt - set for temp tables only
+    protected boolean       isReadOnly;
+    protected boolean       isTemp;
+    protected boolean       isCached;
+    protected int           indexType;                // fredt - type of index used
 
     //
 
@@ -526,9 +526,9 @@ public class Table extends BaseTable {
         for (int i = 0; i < count; i++) {
             Column column = new Column(
                 database.nameManager.newHsqlName(
-                    metadata.sLabel[i], metadata.isLabelQuoted[i]), true,
-                        metadata.colType[i], metadata.colSize[i],
-                        metadata.colScale[i], false, 0, 0, false, null);
+                    metadata.colLabels[i], metadata.isLabelQuoted[i]), true,
+                        metadata.colTypes[i], metadata.colSizes[i],
+                        metadata.colScales[i], false, 0, 0, false, null);
 
             addColumn(column);
         }

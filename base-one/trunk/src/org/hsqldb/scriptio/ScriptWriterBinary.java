@@ -71,9 +71,7 @@ class ScriptWriterBinary extends ScriptWriterBase {
                             Object[] data) throws IOException, HsqlException {
 
         rowOut.reset();
-        rowOut.writeSize(0);
-        rowOut.writeData(data, t);
-        rowOut.writeIntData(rowOut.size(), 0);
+        rowOut.writeRow(data, t);
         fileStreamOut.write(rowOut.getBuffer(), 0, rowOut.size());
 
         tableRowCount++;

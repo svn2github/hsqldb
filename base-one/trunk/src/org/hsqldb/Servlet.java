@@ -32,7 +32,7 @@
  *
  *
  * For work added by the HSQL Development Group:
- * 
+ *
  * Copyright (c) 2001-2004, The HSQL Development Group
  * All rights reserved.
  *
@@ -253,7 +253,7 @@ public class Servlet extends javax.servlet.http.HttpServlet {
                 Result resultIn = Result.read(rowIn, inStream);
                 Result resultOut;
 
-                if (resultIn.iMode == ResultConstants.SQLCONNECT) {
+                if (resultIn.mode == ResultConstants.SQLCONNECT) {
                     try {
                         Session session = DatabaseManager.newSession(dbType,
                             dbPath, resultIn.getMainString(),

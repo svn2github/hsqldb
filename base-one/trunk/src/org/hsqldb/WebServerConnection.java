@@ -32,7 +32,7 @@
  *
  *
  * For work added by the HSQL Development Group:
- * 
+ *
  * Copyright (c) 2001-2004, The HSQL Development Group
  * All rights reserved.
  *
@@ -325,7 +325,7 @@ class WebServerConnection implements Runnable {
             //
             Result resultOut;
 
-            if (resultIn.iMode == ResultConstants.SQLCONNECT) {
+            if (resultIn.mode == ResultConstants.SQLCONNECT) {
                 try {
                     int dbIndex = ArrayUtil.find(server.dbAlias,
                                                  resultIn.subSubString);

@@ -32,7 +32,7 @@
  *
  *
  * For work added by the HSQL Development Group:
- * 
+ *
  * Copyright (c) 2001-2004, The HSQL Development Group
  * All rights reserved.
  *
@@ -289,9 +289,9 @@ class Select {
         if (size == 1 && len == 1) {
             Object o = r.rRoot.data[0];
 
-            return r.metaData.colType[0] == type ? o
-                                                 : Column.convertObject(o,
-                                                 type);
+            return r.metaData.colTypes[0] == type ? o
+                                                  : Column.convertObject(o,
+                                                  type);
         }
 
         HsqlException e = Trace.error(Trace.SINGLE_VALUE_EXPECTED);
@@ -336,9 +336,9 @@ class Select {
         for (int i = 0; i < len; i++) {
             Expression e = exprColumns[i];
 
-            rmd.colType[i]  = e.getDataType();
-            rmd.colSize[i]  = e.getColumnSize();
-            rmd.colScale[i] = e.getColumnScale();
+            rmd.colTypes[i]  = e.getDataType();
+            rmd.colSizes[i]  = e.getColumnSize();
+            rmd.colScales[i] = e.getColumnScale();
 
             if (e.isAggregate()) {
                 isAggregated = true;
@@ -359,18 +359,18 @@ class Select {
             }
 
             if (i < iResultLen) {
-                rmd.sLabel[i]        = e.getAlias();
+                rmd.colLabels[i]     = e.getAlias();
                 rmd.isLabelQuoted[i] = e.isAliasQuoted();
-                rmd.sTable[i]        = e.getTableName();
-                rmd.sName[i]         = e.getColumnName();
+                rmd.tableNames[i]    = e.getTableName();
+                rmd.colNames[i]      = e.getColumnName();
 
                 if (rmd.isTableColumn(i)) {
-                    rmd.nullability[i] = e.nullability;
+                    rmd.colNullable[i] = e.nullability;
                     rmd.isIdentity[i]  = e.isIdentity;
                     rmd.isWritable[i]  = e.isWritable;
                 }
 
-                rmd.sClassName[i] = e.getValueClassName();
+                rmd.classNames[i] = e.getValueClassName();
             }
         }
 
@@ -1108,16 +1108,16 @@ class Select {
 
         for (int i = 0; i < iResultLen; i++) {
             e                    = exprColumns[i];
-            rmd.colType[i]       = e.getDataType();
-            rmd.colSize[i]       = e.getColumnSize();
-            rmd.colScale[i]      = e.getColumnScale();
-            rmd.sLabel[i]        = e.getAlias();
+            rmd.colTypes[i]      = e.getDataType();
+            rmd.colSizes[i]      = e.getColumnSize();
+            rmd.colScales[i]     = e.getColumnScale();
+            rmd.colLabels[i]     = e.getAlias();
             rmd.isLabelQuoted[i] = e.isAliasQuoted();
-            rmd.sTable[i]        = e.getTableName();
-            rmd.sName[i]         = e.getColumnName();
+            rmd.tableNames[i]    = e.getTableName();
+            rmd.colNames[i]      = e.getColumnName();
 
             if (rmd.isTableColumn(i)) {
-                rmd.nullability[i] = e.nullability;
+                rmd.colNullable[i] = e.nullability;
                 rmd.isIdentity[i]  = e.isIdentity;
                 rmd.isWritable[i]  = e.isWritable;
             }

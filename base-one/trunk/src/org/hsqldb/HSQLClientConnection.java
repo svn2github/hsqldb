@@ -94,7 +94,7 @@ public class HSQLClientConnection implements SessionInterface {
 
         Result resultIn = execute(login);
 
-        if (resultIn.iMode == ResultConstants.ERROR) {
+        if (resultIn.mode == ResultConstants.ERROR) {
 
 /** @todo fredt - review error message */
             throw Trace.error(resultIn);
@@ -113,14 +113,14 @@ public class HSQLClientConnection implements SessionInterface {
         rowOut    = new RowOutputBinary(mainBuffer);
         rowIn     = new RowInputBinary(rowOut);
         resultOut = new Result(ResultConstants.DATA, 7);
-        resultOut.metaData.sName = resultOut.metaData.sLabel =
-            resultOut.metaData.sTable = new String[] {
+        resultOut.metaData.colNames = resultOut.metaData.colLabels =
+            resultOut.metaData.tableNames = new String[] {
             "", "", "", "", "", "", ""
         };
 
         resultOut.add(new Object[7]);
 
-        resultOut.metaData.colType = new int[] {
+        resultOut.metaData.colTypes = new int[] {
             Types.VARCHAR, Types.VARCHAR, Types.INTEGER, Types.INTEGER,
             Types.BOOLEAN, Types.BOOLEAN, Types.BOOLEAN
         };
@@ -196,7 +196,7 @@ public class HSQLClientConnection implements SessionInterface {
 
         Result in = execute(resultOut);
 
-        if (in.iMode == ResultConstants.ERROR) {
+        if (in.mode == ResultConstants.ERROR) {
             throw Trace.error(in);
         }
 
@@ -212,7 +212,7 @@ public class HSQLClientConnection implements SessionInterface {
 
         Result resultIn = execute(resultOut);
 
-        if (resultIn.iMode == ResultConstants.ERROR) {
+        if (resultIn.mode == ResultConstants.ERROR) {
             throw Trace.error(resultIn);
         }
     }
@@ -253,7 +253,7 @@ public class HSQLClientConnection implements SessionInterface {
 
         resultOut.setResultType(ResultConstants.SQLENDTRAN);
 
-        resultOut.iUpdateCount = ResultConstants.COMMIT;
+        resultOut.updateCount = ResultConstants.COMMIT;
 
         resultOut.setMainString("");
         execute(resultOut);
@@ -263,7 +263,7 @@ public class HSQLClientConnection implements SessionInterface {
 
         resultOut.setResultType(ResultConstants.SQLENDTRAN);
 
-        resultOut.iUpdateCount = ResultConstants.ROLLBACK;
+        resultOut.updateCount = ResultConstants.ROLLBACK;
 
         resultOut.setMainString("");
         execute(resultOut);

@@ -93,11 +93,11 @@ public abstract class RowInputBase extends HsqlByteArrayInputStream {
         size = buf.length;
     }
 
-    public int getPos() throws IOException {
+    public int getPos() {
 
         if (filePos == NO_POS) {
-            throw new IOException(
-                Trace.getMessage(Trace.DatabaseRowInput_getPos));
+
+//                Trace.printSystemOut(Trace.DatabaseRowInput_getPos);
         }
 
         return (filePos);

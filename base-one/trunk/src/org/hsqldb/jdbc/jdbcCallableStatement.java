@@ -314,7 +314,7 @@ implements CallableStatement {
         parameterNameMap = new IntValueHashMap();
 
         if (pmdDescriptor != null && pmdDescriptor.metaData != null) {
-            names = pmdDescriptor.metaData.sName;
+            names = pmdDescriptor.metaData.colNames;
 
             for (int i = 0; i < names.length; i++) {
                 name = names[i];

@@ -170,7 +170,7 @@ final class CompiledStatementExecutor {
         Object[] row = new Object[1];
 
         row[0]                   = o;
-        r.metaData.sClassName[0] = e.getValueClassName();
+        r.metaData.classNames[0] = e.getValueClassName();
 
         r.add(row);
 
@@ -215,7 +215,7 @@ final class CompiledStatementExecutor {
             }
         }
 
-        updateResult.iUpdateCount = count;
+        updateResult.updateCount = count;
 
         return updateResult;
     }
@@ -252,7 +252,7 @@ final class CompiledStatementExecutor {
                 for (int i = 0; i < len; i++) {
                     int j = cm[i];
 
-                    if (ct[j] != r.metaData.colType[i]) {
+                    if (ct[j] != r.metaData.colTypes[i]) {
                         row[j] = Column.convertObject(rc.data[i], ct[j]);
                     } else {
                         row[j] = rc.data[i];
@@ -269,7 +269,7 @@ final class CompiledStatementExecutor {
             session.endNestedTransaction(!success);
         }
 
-        updateResult.iUpdateCount = count;
+        updateResult.updateCount = count;
 
         return updateResult;
     }
@@ -302,7 +302,7 @@ final class CompiledStatementExecutor {
 
         t.insert(session, row);
 
-        updateResult.iUpdateCount = 1;
+        updateResult.updateCount = 1;
 
         return updateResult;
     }
@@ -404,7 +404,7 @@ final class CompiledStatementExecutor {
             }
         }
 
-        updateResult.iUpdateCount = count;
+        updateResult.updateCount = count;
 
         return updateResult;
     }

@@ -75,7 +75,7 @@ public class ScriptReaderText extends ScriptReaderBase {
 
             Result result = session.sqlExecuteDirectNoPreChecks(lastLine);
 
-            if (result != null && result.iMode == ResultConstants.ERROR) {
+            if (result != null && result.mode == ResultConstants.ERROR) {
                 throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
                                   Trace.DatabaseScriptReader_readDDL,
                                   new Object[] {
@@ -102,7 +102,7 @@ public class ScriptReaderText extends ScriptReaderBase {
 
             Result result = session.sqlExecuteDirectNoPreChecks(lastLine);
 
-            if (result != null && result.iMode == ResultConstants.ERROR) {
+            if (result != null && result.mode == ResultConstants.ERROR) {
                 throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
                                   Trace.DatabaseScriptReader_readExistingData,
                                   new Object[] {

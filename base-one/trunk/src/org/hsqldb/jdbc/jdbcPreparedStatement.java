@@ -329,12 +329,12 @@ implements java.sql.PreparedStatement {
             throw jdbcUtil.sqlException(e);
         }
 
-        if (resultIn.iMode == ResultConstants.ERROR) {
+        if (resultIn.mode == ResultConstants.ERROR) {
             jdbcUtil.throwError(resultIn);
         }
 
-        return resultIn.iMode == ResultConstants.DATA ? true
-                                                      : false;
+        return resultIn.mode == ResultConstants.DATA ? true
+                                                     : false;
     }
 
     /**
@@ -365,9 +365,9 @@ implements java.sql.PreparedStatement {
             throw jdbcUtil.sqlException(e);
         }
 
-        if (resultIn.iMode == ResultConstants.ERROR) {
+        if (resultIn.mode == ResultConstants.ERROR) {
             jdbcUtil.throwError(resultIn);
-        } else if (resultIn.iMode != ResultConstants.DATA) {
+        } else if (resultIn.mode != ResultConstants.DATA) {
             String msg = "Expected but did not recieve a result set";
 
             throw jdbcUtil.sqlException(Trace.UNEXPECTED_EXCEPTION, msg);
@@ -408,9 +408,9 @@ implements java.sql.PreparedStatement {
             throw jdbcUtil.sqlException(e);
         }
 
-        if (resultIn.iMode == ResultConstants.ERROR) {
+        if (resultIn.mode == ResultConstants.ERROR) {
             jdbcUtil.throwError(resultIn);
-        } else if (resultIn.iMode != ResultConstants.UPDATECOUNT) {
+        } else if (resultIn.mode != ResultConstants.UPDATECOUNT) {
             String msg = "Expected but did not recieve a row update count";
 
             throw jdbcUtil.sqlException(Trace.UNEXPECTED_EXCEPTION, msg);
@@ -1785,7 +1785,7 @@ implements java.sql.PreparedStatement {
 
         Result in = connection.sessionProxy.execute(resultOut);
 
-        if (in.iMode == ResultConstants.ERROR) {
+        if (in.mode == ResultConstants.ERROR) {
             jdbcUtil.throwError(in);
         }
 
@@ -1839,7 +1839,7 @@ implements java.sql.PreparedStatement {
             // DATA - isParameterDescription == false
             row            = (Object[]) i.next();
             rsmdDescriptor = (Result) row[0];
-            isRowCount = rsmdDescriptor.iMode == ResultConstants.UPDATECOUNT;
+            isRowCount = rsmdDescriptor.mode == ResultConstants.UPDATECOUNT;
 
             // DATA - isParameterDescription == true
             row             = (Object[]) i.next();

@@ -32,7 +32,7 @@
  *
  *
  * For work added by the HSQL Development Group:
- * 
+ *
  * Copyright (c) 2001-2004, The HSQL Development Group
  * All rights reserved.
  *
@@ -312,8 +312,9 @@ class TableWorks {
         e.setLikeOptimised();
 
         Select s = Expression.getCheckSelect(table, e);
-        Result r = s.getResult(
-            this.table.database.getSessionManager().getSysSession(), 1);
+        Result r =
+            s.getResult(table.database.getSessionManager().getSysSession(),
+                        1);
 
         c.core.checkFilter = s.tFilter[0];
         c.core.mainTable   = table;

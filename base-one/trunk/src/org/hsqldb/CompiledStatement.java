@@ -399,7 +399,7 @@ final class CompiledStatement {
         }
     }
 
-    private static final Result updateCount =
+    private static final Result updateCountResult =
         new Result(ResultConstants.UPDATECOUNT);
 
     Result describeResult() {
@@ -428,14 +428,14 @@ final class CompiledStatement {
                 e = expression;
                 r = Result.newSingleColumnResult(
                     DIProcedureInfo.RETURN_COLUMN_NAME, e.getDataType());
-                r.metaData.sClassName[0] = e.getValueClassName();
+                r.metaData.classNames[0] = e.getValueClassName();
 
                 // no more setup for r; all the defaults apply
                 return r;
             }
             case SELECT :
                 return select.sIntoTable == null ? select.describeResult()
-                                                 : updateCount;
+                                                 : updateCountResult;
 
             case DELETE :
             case INSERT_SELECT :
@@ -444,7 +444,7 @@ final class CompiledStatement {
             case DDL :
 
                 // will result in
-                return updateCount;
+                return updateCountResult;
 
             default :
                 return Trace.toResult(
@@ -492,14 +492,15 @@ final class CompiledStatement {
 
             // always i + 1.  We currently use the convention of @p0 to name the
             // return value OUT parameter
-            out.metaData.sName[idx] = DIProcedureInfo.PCOL_PREFIX + (i + 1);
+            out.metaData.colNames[idx] = DIProcedureInfo.PCOL_PREFIX
+                                         + (i + 1);
 
             // sLabel is meaningless in this context.
-            out.metaData.sClassName[idx]  = e.getValueClassName();
-            out.metaData.colType[idx]     = e.getDataType();
-            out.metaData.colSize[idx]     = e.getColumnSize();
-            out.metaData.colScale[idx]    = e.getColumnScale();
-            out.metaData.nullability[idx] = e.nullability;
+            out.metaData.classNames[idx]  = e.getValueClassName();
+            out.metaData.colTypes[idx]    = e.getDataType();
+            out.metaData.colSizes[idx]    = e.getColumnSize();
+            out.metaData.colScales[idx]   = e.getColumnScale();
+            out.metaData.colNullable[idx] = e.nullability;
             out.metaData.isIdentity[idx]  = e.isIdentity;
 
             // currently will always be Expression.PARAM_IN

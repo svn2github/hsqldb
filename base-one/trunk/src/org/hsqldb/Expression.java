@@ -32,7 +32,7 @@
  *
  *
  * For work added by the HSQL Development Group:
- * 
+ *
  * Copyright (c) 2001-2004, The HSQL Development Group
  * All rights reserved.
  *
@@ -3204,7 +3204,7 @@ public class Expression {
             r.removeDuplicates();
 
             Record n    = r.rRoot;
-            int    type = r.metaData.colType[0];
+            int    type = r.metaData.colTypes[0];
 
             try {
                 o = Column.convertObject(o, type);

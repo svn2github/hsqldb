@@ -218,7 +218,7 @@ public class jdbcStatement implements java.sql.Statement {
         connection.clearWarningsNoCheck();
         fetchResult(sql);
 
-        if (resultIn == null || resultIn.iMode == ResultConstants.DATA) {
+        if (resultIn == null || resultIn.mode == ResultConstants.DATA) {
 
             /**
              * @todo: - fredt@users - check for type of statement _must_ be done
@@ -226,7 +226,7 @@ public class jdbcStatement implements java.sql.Statement {
              */
             throw new SQLException(
                 Trace.getMessage(Trace.jdbcStatement_executeUpdate));
-        } else if (resultIn.iMode == ResultConstants.ERROR) {
+        } else if (resultIn.mode == ResultConstants.ERROR) {
             jdbcUtil.throwError(resultIn);
         }
 
@@ -624,7 +624,7 @@ public class jdbcStatement implements java.sql.Statement {
         connection.clearWarningsNoCheck();
         fetchResult(sql);
 
-        return resultIn.iMode == ResultConstants.DATA;
+        return resultIn.mode == ResultConstants.DATA;
     }
 
     /**
@@ -653,7 +653,7 @@ public class jdbcStatement implements java.sql.Statement {
 
         checkClosed();
 
-        return resultIn == null || resultIn.iMode != ResultConstants.DATA
+        return resultIn == null || resultIn.mode != ResultConstants.DATA
                ? null
                : new jdbcResultSet(this, resultIn, connection.connProperties,
                                    connection.isNetConn);
@@ -676,7 +676,7 @@ public class jdbcStatement implements java.sql.Statement {
 // fredt - omit checkClosed() in order to be able to handle the result of a
 // SHUTDOWN query
 //        checkClosed();
-        return (resultIn == null || resultIn.iMode == ResultConstants.DATA)
+        return (resultIn == null || resultIn.mode == ResultConstants.DATA)
                ? -1
                : resultIn.getUpdateCount();
     }
@@ -1086,7 +1086,7 @@ public class jdbcStatement implements java.sql.Statement {
 
         batchResultOut.clear();
 
-        if (resultIn.iMode == ResultConstants.ERROR) {
+        if (resultIn.mode == ResultConstants.ERROR) {
             jdbcUtil.throwError(resultIn);
         }
 
@@ -1569,7 +1569,7 @@ public class jdbcStatement implements java.sql.Statement {
         try {
             resultIn = connection.sessionProxy.execute(resultOut);
 
-            if (resultIn.iMode == ResultConstants.ERROR) {
+            if (resultIn.mode == ResultConstants.ERROR) {
                 throw new HsqlException(resultIn);
             }
         } catch (HsqlException e) {
