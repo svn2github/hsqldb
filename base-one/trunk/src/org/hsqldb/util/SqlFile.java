@@ -52,7 +52,7 @@ import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 
-/* $Id: SqlFile.java,v 1.75 2004/06/08 22:31:08 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.76 2004/06/09 02:57:23 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -88,7 +88,7 @@ import java.io.FileOutputStream;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.75 $
+ * @version $Revision: 1.76 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -101,6 +101,24 @@ public class SqlFile {
     private boolean    htmlMode         = false;
     private HashMap    userVars         = null;
 
+    /**
+     * Private class to "share" a variable among a family of SqlFile
+     * instances.
+     */
+    static private class BooleanBucket {
+        private boolean bPriv = false;
+        public void set(boolean bIn) {
+            bPriv = bIn;
+        }
+        public boolean get() {
+            return bPriv;
+        }
+    }
+    // This is an imperfect solution since when user runs SQL they could
+    // be running DDL or a commit or rollback statement.  All we know is,
+    // they MAY run some DML that needs to be committed.
+    BooleanBucket possiblyUncommitteds = new BooleanBucket();
+
     // Ascii field separator blanks
     final private static int SEP_LEN = 2;
     final private static String DIVIDER =
@@ -111,14 +129,14 @@ public class SqlFile {
           + "                                                                 ";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.75 $".substring("$Revision: ".length(),
-                "$Revision: 1.75 $".length() - 2);
+        revnum = "$Revision: 1.76 $".substring("$Revision: ".length(),
+                "$Revision: 1.76 $".length() - 2);
     }
     private static String BANNER =
         "(SqlFile processor v. " + revnum + ")\n"
         + "Distribution is permitted under the terms of the HSQLDB license.\n"
         + "(c) 2004 Blaine Simpson and the HSQLDB Development Group.\n\n"
-        + "    \\q    to Fuit.\n"
+        + "    \\q    to Quit.\n"
         + "    \\?    lists Special Commands.\n"
         + "    :?    lists Buffer/Editing commands.\n"
         + "    * ?   lists PL commands (including alias commands).\n\n"
@@ -175,6 +193,8 @@ public class SqlFile {
     final private static String PL_HELP_TEXT =
         "PROCEDURAL LANGUAGE Commands.  MUST have white space after '*'.\n"
         + "    * ?                           Help\n"
+        + "    *                             Expand PL variables from now on.\n"
+        + "                                  (this is also implied by all the following).\n"
         + "    * VARNAME = Variable value    Set variable value (note spaces around =)\n"
         + "    * VARNAME =                   Unset variable (note space before =)\n"
         + "    * VARNAME ~                   Set variable value to the value of the very\n"
@@ -187,10 +207,10 @@ public class SqlFile {
         + "    * while (logical expr)        Repeat following PL block while expr true\n"
         + "    * end foreach|if|while        Ends a PL block\n"
         + "    * break [foreach|if|while|file] Exits a PL block or file early\n"
-        + "    * continue [foreach|while]    Exits a PL block iteration early\n"
+        + "    * continue [foreach|while]    Exits a PL block iteration early\n\n"
         + "Use PL variables (which you have set) like: *{VARNAME}.\n"
         + "You may omit the {}'s iff *VARNAME is the first word of a SQL command.\n"
-        + "Use defined PL variables in logical expressions like: *VARNAME.\n\n"
+        + "Use PL variables in logical expressions like: *VARNAME.\n\n"
         + "* VARNAME ~ sets the variable value according to the very next SQL statement:\n"
         + "    Query:  The value of the first field of the first row returned\n"
         + "    other:  Return status of the command (for updates this will be\n"
@@ -266,6 +286,7 @@ public class SqlFile {
     private boolean             continueOnError = false;
     static private final String DEFAULT_CHARSET = "US-ASCII";
     private BufferedReader br       = null;
+    private String              charset = null;
 
     /**
      * Process all the commands in the file (or stdin) associated with
@@ -298,13 +319,17 @@ public class SqlFile {
         continueOnError = (coeOverride == null)
                 ? interactive
                 : coeOverride.booleanValue();
-        plMode = userVars != null && userVars.size() > 0;
+        if (userVars != null && userVars.size() > 0) {
+            plMode = true;
+        }
         String specifiedCharSet = System.getProperty("sqlfile.charset");
+        charset = ((specifiedCharSet == null)
+                  ? DEFAULT_CHARSET
+                  : specifiedCharSet);
         try {
             br = new BufferedReader(new InputStreamReader((file == null)
                     ? System.in
-                    : new FileInputStream(file), ((specifiedCharSet == null)
-                            ? DEFAULT_CHARSET : specifiedCharSet)));
+                    : new FileInputStream(file), charset));
             curLinenum = 0;
             if (interactive) {
                 stdprintln(BANNER);
@@ -372,9 +397,11 @@ public class SqlFile {
                         if (trimmedInput.length() == 0) {
                             continue;
                         }
-                        if (trimmedInput.startsWith("* ")) {
+                        if (trimmedInput.startsWith("* ")
+                                || trimmedInput.equals("*")) {
                             try {
-                                processPL(trimmedInput.substring(2));
+                                processPL((trimmedInput.length() == 1)
+                                        ? "" : trimmedInput.substring(2));
                             } catch (BadSpecial bs) {
                                 errprintln("Error at '" + ((file == null)
                                         ? "stdin"
@@ -448,7 +475,7 @@ public class SqlFile {
                     if (interactive) {
                         setBuf(curCommand);
                     }
-                    processStatement();
+                    processSQL();
                 } catch (SQLException se) {
                     errprintln("SQL Error at '" + ((file == null)
                             ? "stdin"
@@ -484,7 +511,7 @@ public class SqlFile {
                 } catch (QuitNow qn) {
                     throw qn;
                 } catch (SqlToolError ste) {
-                    if ((!recursed) && !continueOnError) {
+                    if (!continueOnError) {
                         throw ste;
                     }
                 }
@@ -514,9 +541,10 @@ public class SqlFile {
             if (br != null) {
                 br.close();
             }
-            if ((!gracefulExit) && curConn.getAutoCommit() == false) {
-                errprintln("Rolling back transactions.");
+            if ((!gracefulExit) && possiblyUncommitteds.get()) {
+                errprintln("Rolling back SQL transaction.");
                 curConn.rollback();
+                possiblyUncommitteds.set(false);
             }
         }
     }
@@ -607,7 +635,7 @@ public class SqlFile {
      * Process a Buffer/Edit Command.
      *
      * @param inString Complete command, less the leading ':' character.
-     * @throws SQLException Passed through from processStatement()
+     * @throws SQLException Passed through from processSQL()
      * @throws BadSpecial Runtime error()
      */
     private void processBuffer(String inString)
@@ -629,7 +657,7 @@ public class SqlFile {
                 curCommand = commandFromHistory(0);
                 stdprintln("Executing command from buffer:\n" + curCommand
                          + '\n');
-                processStatement();
+                processSQL();
                 return;
             case 'a':
             case 'A':
@@ -646,7 +674,7 @@ public class SqlFile {
                         curCommand = stringBuffer.toString();
                         setBuf(curCommand);
                         stdprintln("Executing:\n" + curCommand + '\n');
-                        processStatement();
+                        processSQL();
                         stringBuffer.setLength(0);
                         return;
                     }
@@ -775,7 +803,7 @@ public class SqlFile {
                 }
                 if (modeExecute) {
                     curCommand = commandFromHistory(0);
-                    processStatement();
+                    processSQL();
                 }
                 return;
             case '?':
@@ -789,7 +817,7 @@ public class SqlFile {
      * Process a Special Command.
      *
      * @param inString Complete command, less the leading '\' character.
-     * @throws SQLException Passed through from processStatement()
+     * @throws SQLException Passed through from processSQL()
      * @throws BadSpecial Runtime error()
      * @throws QuitNot Command execution (but not the JVM!) should stop
      */
@@ -849,7 +877,8 @@ public class SqlFile {
                 try {
                     pwQuery = new PrintWriter(
                             new OutputStreamWriter(
-                                    new FileOutputStream(other, true)));
+                                    new FileOutputStream(other, true),
+                                            charset));
                     /* Opening in append mode, so it's possible that we will
                      * be adding superfluous <HTML> and <BODY> tages.
                      * I think that browsers can handle that */
@@ -874,7 +903,8 @@ public class SqlFile {
                 try {
                     PrintWriter pw = new PrintWriter(
                             new OutputStreamWriter(
-                                    new FileOutputStream(other, true)));
+                                    new FileOutputStream(other, true),
+                                            charset));
                     pw.println(commandFromHistory(0) + ';');
                     pw.flush();
                     pw.close();
@@ -890,6 +920,9 @@ public class SqlFile {
                 try {
                     SqlFile sf = new SqlFile(new File(other), false, userVars);
                     sf.recursed = true;
+                    // Share the possiblyUncommitted state
+                    sf.possiblyUncommitteds = possiblyUncommitteds;
+                    sf.plMode = plMode;
                     sf.execute(curConn, continueOnError);
                 } catch (ContinueException ce) {
                     throw ce;
@@ -1041,7 +1074,7 @@ public class SqlFile {
         return expandBuffer.toString();
     }
 
-    private boolean plMode = false;
+    public boolean plMode = false;
     //  PL variable name currently awaiting query output.
     private String fetchingVar = null;
 
@@ -1055,7 +1088,9 @@ public class SqlFile {
     private void processPL(String inString)
     throws BadSpecial, SqlToolError, SQLException {
         if (inString.length() < 1) {
-            throw new BadSpecial("Null PL command");
+            plMode = true;
+            stdprintln("PL variable expansion mode is now on");
+            return;
         }
         if (inString.charAt(0) == '?') {
             stdprintln(PL_HELP_TEXT);
@@ -1144,7 +1179,10 @@ public class SqlFile {
                         varVal = values[i];
                         userVars.put(varName, varVal);
                         sf = new SqlFile(tmpFile, false, userVars);
+                        sf.plMode = true;
                         sf.recursed = true;
+                        // Share the possiblyUncommitted state
+                        sf.possiblyUncommitteds = possiblyUncommitteds;
                         sf.execute(curConn, continueOnError);
                     } catch (ContinueException ce) {
                         String ceMessage = ce.getMessage();
@@ -1197,7 +1235,10 @@ public class SqlFile {
             try {
                 if (eval(values)) {
                     SqlFile sf = new SqlFile(tmpFile, false, userVars);
+                    sf.plMode = true;
                     sf.recursed = true;
+                    // Share the possiblyUncommitted state
+                    sf.possiblyUncommitteds = possiblyUncommitteds;
                     sf.execute(curConn, continueOnError);
                 }
             } catch (BreakException be) {
@@ -1248,6 +1289,9 @@ public class SqlFile {
                     try {
                         sf = new SqlFile(tmpFile, false, userVars);
                         sf.recursed = true;
+                        // Share the possiblyUncommitted state
+                        sf.possiblyUncommitteds = possiblyUncommitteds;
+                        sf.plMode = true;
                         sf.execute(curConn, continueOnError);
                     } catch (ContinueException ce) {
                         String ceMessage = ce.getMessage();
@@ -1322,11 +1366,26 @@ public class SqlFile {
     private File plBlockFile(String type) throws IOException, SqlToolError {
         String s;
         StringTokenizer toker;
+        // Have already read the if/while/foreach statement, so we are already
+        // at nest level 1.  When we reach nestlevel 1 (read 1 net "end"
+        // statement), we're at level 0 and return.
+        int nestlevel = 1;
+        String curPlCommand;
+
+        if (type == null || (
+                    (!type.equals("foreach"))
+                 && (!type.equals("if"))
+                 && (!type.equals("while"))
+        )) {
+            throw new RuntimeException(
+                    "Assertion failed.  Unsupported PL block type:  "
+                    + type);
+        }
 
         File tmpFile = File.createTempFile("sqltool-", ".sql");
         PrintWriter pw = new PrintWriter(
                 new OutputStreamWriter(
-                        new FileOutputStream(tmpFile)));
+                        new FileOutputStream(tmpFile), charset));
         pw.println("/* " + (new java.util.Date())
                 + ". " + getClass().getName() + " PL block. */\n");
         while (true) {
@@ -1335,25 +1394,34 @@ public class SqlFile {
                 errprintln("Unterminated '" + type + "' PL block");
                 throw new SqlToolError("Unterminated '" + type + "' PL block");
             }
+            curLinenum++;
             toker = new StringTokenizer(s);
-            if (toker.countTokens() > 1 && toker.nextToken().equals("*")
-                    && toker.nextToken().equals("end")) {
-                if (toker.countTokens() < 1) {
-                    errprintln("PL end statement requires arg of "
-                            + "'foreach' or 'if' or 'while' (1)");
-                    throw new SqlToolError("PL end statement requires arg of "
-                            + "'foreach' or 'if' or 'while' (1)");
-                }
-                String inType = toker.nextToken();
-                if (inType.equals(type)) {
-                    break;
-                }
-                if ((!inType.equals("foreach")) && (!inType.equals("if"))
-                        && (!inType.equals("while"))) {
-                    errprintln("PL end statement requires arg of "
-                            + "'foreach' or 'if' or 'while' (2)");
-                    throw new SqlToolError("PL end statement requires arg of "
-                            + "'foreach' or 'if' or 'while' (2)");
+            if (toker.countTokens() > 1 && toker.nextToken().equals("*")) {
+                curPlCommand = toker.nextToken();
+                // PL COMMAND of some sort.
+                if (curPlCommand.equals(type)) {
+                    nestlevel++;
+                } else if (curPlCommand.equals("end")) {
+                    if (toker.countTokens() < 1) {
+                        errprintln("PL end statement requires arg of "
+                                + "'foreach' or 'if' or 'while' (1)");
+                        throw new SqlToolError("PL end statement requires arg "
+                                + " of 'foreach' or 'if' or 'while' (1)");
+                    }
+                    String inType = toker.nextToken();
+                    if (inType.equals(type)) {
+                        nestlevel--;
+                        if (nestlevel < 1) {
+                            break;
+                        }
+                    }
+                    if ((!inType.equals("foreach")) && (!inType.equals("if"))
+                            && (!inType.equals("while"))) {
+                        errprintln("PL end statement requires arg of "
+                                + "'foreach' or 'if' or 'while' (2)");
+                        throw new SqlToolError("PL end statement requires arg of "
+                                + "'foreach' or 'if' or 'while' (2)");
+                    }
                 }
             }
             pw.println(s);
@@ -1509,8 +1577,18 @@ public class SqlFile {
     /**
      * Process the current command as an SQL Statement
      */
-    private void processStatement() throws SQLException {
+    private void processSQL() throws SQLException {
         Statement statement = curConn.createStatement();
+        // Really don't know whether to take the network latency hit here
+        // in order to check autoCommit in order to set 
+        // possiblyUncommitteds more accurately.
+        // I'm going with "NO" for now, since autoCommit will usually be off.
+        // If we do ever check autocommit, we have to keep track of the 
+        // autocommit state when every SQL statement is run, since I may
+        // be able to have uncommitted DML, turn autocommit on, then run 
+        // other DDL with autocommit on.  As a result, I could be running
+        // SQL commands with autotommit on but still have uncommitted mods.
+        possiblyUncommitteds.set(true);
 
         statement.execute(plMode ? dereference(curCommand, true) : curCommand);
         displayResultSet(statement, statement.getResultSet(), null, null,
