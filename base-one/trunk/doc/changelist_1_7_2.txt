@@ -6,6 +6,12 @@ area is in changelog_1_7_2.txt.
 
 Fred Toussi (fredt@users.sourceforge.net)
 
+2004.06.28 RC_6e
+
+Enhancements to ALTER TABLE ADD COLUMN and DROP COLUMN.
+Fixed bug with closed HTTP connections.
+Fixed bug with large .data files switching to random access from nio. 
+
 2004.06.28 RC_6d
 
 The implemntation of UNION, EXCEPT and INTERSECT set operations has been 
