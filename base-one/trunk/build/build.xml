@@ -217,6 +217,20 @@ examples:
       </javac>
    </target>
 
+   <target name="-test14" if="ant.java.iscjava14"
+           description="compiles 1.4-specific test classes">
+      <javac srcdir="${src}"
+             destdir="classes"
+             debug="${build.debug}"
+             optimize="${build.optimize}"
+             classpath="lib/junit.jar"
+       >
+          <include name="org/hsqldb/test/TestJDBCSavepoints.java"/>
+          <include name="org/hsqldb/test/ExecHarness.java"/>
+          <include name="org/hsqldb/test/TestSqlTool*.java"/>
+      </javac>
+   </target>
+
     <target name="util" depends="lib"
             description="compiles the /util folder">
       <javac srcdir="${src}"
@@ -262,8 +276,14 @@ examples:
             <pathelement location="lib/dbunit.jar"/>
          </classpath>
          <include name="org/hsqldb/test/**"/>
+         <!-- This line does nothing.
          <exclude name="org/hsqldb/test/TestSqlPersistent.java"/>
+         -->
+         <exclude name="org/hsqldb/test/TestJDBCSavepoints.java"/>
+         <exclude name="org/hsqldb/test/ExecHarness.java"/>
+         <exclude name="org/hsqldb/test/SqlTool*.java"/>
       </javac>
+      <antcall inheritall='true' target='-test14'/>
    </target>
 
     <target name="jarzaurus" depends="classes14,util"
