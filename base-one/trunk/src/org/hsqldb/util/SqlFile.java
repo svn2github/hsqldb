@@ -1,5 +1,5 @@
 /*
- * $Id: SqlFile.java,v 1.12 2004/01/20 22:34:18 unsaved Exp $
+ * $Id: SqlFile.java,v 1.13 2004/01/21 15:49:40 unsaved Exp $
  *
  * Copyright (c) 2001-2003, The HSQL Development Group
  * All rights reserved.
@@ -73,35 +73,31 @@ public class SqlFile {
         "-----------------------------------------------------------------";
 
     final private static String BANNER =
-            "SqlFile processor.  Enter \"\\?\" for help, \"\\q\" to quit.\n"
-       + "REMEMBER TO TERMINATE EVERY SQL STATEMENT WITH EITHER\n"
-       + "    ';' AT THE END OF A LINE in order to execute it\n"
-       + "OR\n"
-       + "    A BLANK LINE to clear the command without executing.\n"
-       + "Just hit the ENTER key after a Special command to execute it.";
-    final private static String HELP_TEXT =
-"**********    MOST OF THE SPECIAL COMMANDS DO NOT WORK YET!!!  *******\n" +
-      "SPECIAL Commands all begin with '\\', SQL Statements do not.\n\n"
+            "SqlFile processor.  Enter \"\\?\" to list Special Commands, "
+        + "\"\\q\" to quit.\n\n"
       + "SPECIAL Commands begin with '\\' and execute when you hit ENTER.\n"
-      + "SQL Statement lines ending with ';' cause the current statement to be executed.\n"
-      + "An empty line within an SQL Statement clears it (but it can "
-      + "be recalled).\n\n"
-        + "SPECIAL Commands:  (* commands only available for interactive use)\n"
+      + "An empty line within an SQL Statement clears it (but it can be reloaded later).\n"
+      + "All other lines comprise SQL Statements.\n"
+      + "SQL Statement lines ending with ';' cause the current Statement to be executed.\n"
+  + "SQL Statements consisting of only /* SQL comment */ are not executed, therefore\n"
+      + "you can comment scripts like \"/* This is a comment */; \"\n";
+    final private static String HELP_TEXT =
+"**********    SPECIAL COMMANDS MARKED !!! DO NOT WORK YET!!!  *******\n" +
+          "SPECIAL Commands:  (* commands only available for interactive use)\n"
         + "    \\?                   Help\n"
-        + "    \\! [command to run]  * Shell out\n"
+        + " !!!\\! [command to run]  * Shell out\n"
         + "    \\e                   * Open last command in external editor\n"
         + "    \\p [line to print]   Print string to stdout\n"
         + "    \\* [true|false]      Continue upon errors (a.o.t. abort upon error)\n"
         + "    \\s                   * Show previous commands\n"
         + "    \\-                   * reload last command\n"
         + "    \\-2;                 * reload and run 2nd-to-last command, etc.\n"
-        + "    \\q                   Quit (alternatively, end input,\n"
-        + "                           like Ctrl-Z or Ctrl-D)\n\n"
+        + "    \\q                   Quit (alternatively, end input like Ctrl-Z or Ctrl-D)\n\n"
         + "EXAMPLE:  To show previous commands then edit then execute the 3rd-to-last:\n"
         + "    \\s\n"
         + "    \\-3\n"
         + "    \\e\n"
-        + "    ;";
+        + "    ;\n";
 
     /**
      * @param inFile  inFile of null means to read stdin.
@@ -153,6 +149,7 @@ public class SqlFile {
         curLinenum = -1;
         String inputLine;
         String trimmedCommand;
+        String trimmedInput;
         String deTerminated;
 
         continueOnError = interactive;
@@ -169,7 +166,7 @@ public class SqlFile {
             inputLine = br.readLine();
             if (inputLine == null) break;
             curLinenum++;
-            trimmedCommand = inputLine.trim();
+            trimmedInput = inputLine.trim();
             try {
                 // This is the try for SQLException.  SQLExceptions are
                 // normally thrown below in Statement processing, but 
@@ -178,10 +175,10 @@ public class SqlFile {
                 if (curBuffer.length() == 0) {
                     // This is just to filter out useless newlines at 
                     // beginning of commands.
-                    if (trimmedCommand.length() == 0) continue;
-                    if (trimmedCommand.charAt(0) == '\\') {
+                    if (trimmedInput.length() == 0) continue;
+                    if (trimmedInput.charAt(0) == '\\') {
                         try {
-                            processSpecial(trimmedCommand.substring(1));
+                            processSpecial(trimmedInput.substring(1));
                         } catch (QuitNow qn) {
                             return;
                         } catch (BadSpecial bs) {
@@ -194,7 +191,7 @@ public class SqlFile {
                         continue;
                     }
                 }
-                if (trimmedCommand.length() == 0) {
+                if (trimmedInput.length() == 0) {
                     if (interactive) {
                         setHist(curBuffer.toString());
                         curBuffer.setLength(0);
@@ -205,7 +202,7 @@ public class SqlFile {
                 }
                 deTerminated = deTerminated(inputLine);
                 // A null terminal line (i.e., /\s*;\s*$/) is never useful.
-                if (!trimmedCommand.equals(";")) {
+                if (!trimmedInput.equals(";")) {
                     if (curBuffer.length() > 0) curBuffer.append('\n');
                     curBuffer.append((deTerminated == null)
                             ? inputLine
@@ -213,11 +210,19 @@ public class SqlFile {
                 }
                 if (deTerminated == null) continue;
                 curCommand = curBuffer.toString();
-                if (curCommand.trim().length() == 0) {
+                trimmedCommand = curCommand.trim();
+                if (trimmedCommand.length() == 0) {
                     throw new SQLException("Empty SQL Statement");
                 }
-                if (interactive) setHist(curCommand);
-                processStatement();
+                // If not completely SQL comment
+                if ((!trimmedCommand.startsWith("/*"))
+                        || (!trimmedCommand.endsWith("*/"))
+                        || (trimmedCommand.indexOf("/*", 2) > -1)
+                        || (trimmedCommand.lastIndexOf("*/", 
+                                trimmedCommand.length()-4) > -1)) {
+                    if (interactive) setHist(curCommand);
+                    processStatement();
+                }
             } catch (SQLException se) {
                 psErr.println("SQL Error at '"
                     + ((file == null) ? "stdin" : file.toString())
