@@ -1111,13 +1111,13 @@ implements ActionListener, WindowListener, KeyListener {
                     tableNode);
                 ResultSet ind = dMeta.getIndexInfo(null, null, name, false,
                                                    false);
-                String oldiname = null;
+                String                 oldiname  = null;
+                DefaultMutableTreeNode indexNode = null;
 
                 // A child node to contain each index - and its attributes
                 while (ind.next()) {
-                    DefaultMutableTreeNode indexNode = null;
-                    boolean                nonunique = ind.getBoolean(4);
-                    String                 iname     = ind.getString(6);
+                    boolean nonunique = ind.getBoolean(4);
+                    String  iname     = ind.getString(6);
 
                     if ((oldiname == null ||!oldiname.equals(iname))) {
                         indexNode = makeNode(iname, indexesNode);

@@ -240,6 +240,7 @@ class Column {
     void setDefaultString(String value) {
         defaultString = value;
     }
+
     /**
      *  Type of the column.
      *

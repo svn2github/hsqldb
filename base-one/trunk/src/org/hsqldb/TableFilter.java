@@ -456,8 +456,9 @@ class TableFilter {
         }
 
         if (this.isMultiFindFirst) {
-            Object[] data = filterTable.getNewRow();
-            int[] types = filterTable.getColumnTypes();
+            Object[] data  = filterTable.getNewRow();
+            int[]    types = filterTable.getColumnTypes();
+
             for (int i = 0; i < findFirstExpressions.length; i++) {
                 Expression e = findFirstExpressions[i];
 
@@ -466,7 +467,7 @@ class TableFilter {
                 }
             }
 
-            currentNode = filterIndex.find(data);
+            currentNode = filterIndex.findFirst(data);
         } else if (eStart == null) {
             currentNode = eEnd == null ? filterIndex.first()
                                        : filterIndex.findFirstNotNull();

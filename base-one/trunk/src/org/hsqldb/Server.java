@@ -1724,7 +1724,6 @@ public class Server implements HsqlSocketRequestHandler {
          * comment elsewhere in this file.
          */
         socket.setSoTimeout(1000);
-
         trace("Got server socket: " + socket);
         print(sw.elapsedTimeToMessage("Server socket opened successfully"));
 
@@ -1866,7 +1865,6 @@ public class Server implements HsqlSocketRequestHandler {
         printServerOnlineMessage();
 
         try {
-
             /*
              * This loop is necessary for UNIX w/ Sun Java 1.3 because
              * in that case the socket.close() elsewhere will not
@@ -1874,9 +1872,8 @@ public class Server implements HsqlSocketRequestHandler {
              */
             while (true) {
                 try {
-                handleConnection(socket.accept());
-                } catch (java.io.InterruptedIOException iioe) {
-                }
+                    handleConnection(socket.accept());
+                } catch (java.io.InterruptedIOException iioe) {}
             }
         } catch (IOException ioe) {
             if (getState() == ServerConstants.SERVER_STATE_ONLINE) {

@@ -124,16 +124,16 @@ class Index {
             boolean unique, boolean constraint, boolean forward,
             int visColumns) {
 
-        indexName           = name;
-        colIndex            = column;
-        colType             = type;
-        isUnique            = unique;
-        isConstraint        = constraint;
-        isForward           = forward;
-        colIndex_0          = colIndex[0];
-        colType_0           = colType[0];
+        indexName      = name;
+        colIndex       = column;
+        colType        = type;
+        isUnique       = unique;
+        isConstraint   = constraint;
+        isForward      = forward;
+        colIndex_0     = colIndex[0];
+        colType_0      = colType[0];
         visibleColumns = visColumns;
-        isExact             = colIndex.length == visibleColumns;
+        isExact        = colIndex.length == visibleColumns;
         colCheck       = table.getNewColumnCheckList();
 
         ArrayUtil.intIndexesToBooleanArray(colIndex, colCheck);
@@ -574,9 +574,7 @@ class Index {
      *
      *
      * @param data
-     *
      * @return
-     *
      * @throws HsqlException
      */
     Node find(Object d[]) throws HsqlException {
@@ -596,6 +594,52 @@ class Index {
         }
 
         return null;
+    }
+
+    private boolean isNotNull(Object a[]) {
+
+        for (int j = 0; j < visibleColumns; j++) {
+            if (a[colIndex[j]] == null) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Return the first node equal to the row object. Use visible columns
+     * only.
+     *
+     * @param data
+     * @return
+     * @throws HsqlException
+     */
+    Node findFirst(Object d[]) throws HsqlException {
+
+        Node    x      = root;
+        Node    found  = null;
+        boolean unique = isUnique && isNotNull(d);
+
+        while (x != null) {
+            int c = compareRowNonUnique(d, x.getData());
+
+            if (c == 0) {
+                found = x;
+
+                if (unique) {
+                    break;
+                }
+
+                x = x.getLeft();
+            } else if (c < 0) {
+                x = x.getLeft();
+            } else {
+                x = x.getRight();
+            }
+        }
+
+        return found;
     }
 
     /**
@@ -672,8 +716,8 @@ class Index {
             } else {
                 if (compare == Expression.EQUAL) {
                     if (result != 0) {
-                    x = null;
-                }
+                        x = null;
+                    }
                 } else if (colvalue == null) {
                     x = next(x);
 
@@ -946,7 +990,6 @@ class Index {
 
     /**
      * compares two full table rows based on the columns of the index
-     *
      *
      * @param a a full row
      * @param b a full row

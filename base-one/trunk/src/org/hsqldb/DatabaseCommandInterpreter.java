@@ -1610,10 +1610,10 @@ class DatabaseCommandInterpreter {
      */
     private void processAlterColumn(Table t) throws HsqlException {
 
-        String columnName = tokenizer.getString();
-        int columnIndex   = t.getColumnNr(columnName);
-        Column column     = t.getColumn(columnIndex);
-        String token      = tokenizer.getString();
+        String columnName  = tokenizer.getString();
+        int    columnIndex = t.getColumnNr(columnName);
+        Column column      = t.getColumn(columnIndex);
+        String token       = tokenizer.getString();
 
         switch (Token.get(token)) {
 
@@ -1628,8 +1628,8 @@ class DatabaseCommandInterpreter {
             }
             case Token.DROP : {
                 tokenizer.getThis(Token.T_DEFAULT);
-
                 t.setDefaultString(columnIndex, null);
+
                 return;
             }
             case Token.SET : {
@@ -1638,7 +1638,8 @@ class DatabaseCommandInterpreter {
                 int iType = column.getType();
                 int iLen  = column.getSize();
 
-                t.setDefaultString(columnIndex, processCreateDefaultValue(iType, iLen));
+                t.setDefaultString(columnIndex,
+                                   processCreateDefaultValue(iType, iLen));
             }
         }
     }

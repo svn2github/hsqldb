@@ -914,14 +914,17 @@ class Table {
         needsRowID = getPrimaryKey() == null;
     }
 
-    void setDefaultString(int columnIndex, String def){
-        Column column     = getColumn(columnIndex);
+    void setDefaultString(int columnIndex, String def) {
+
+        Column column = getColumn(columnIndex);
+
         column.setDefaultString(def);
 
         hasDefaultValues = false;
 
         for (int i = 0; i < iColumnCount; i++) {
-            column      = getColumn(i);
+            column = getColumn(i);
+
             if (i < iVisibleColumns) {
                 hasDefaultValues = hasDefaultValues
                                    || column.getDefaultString() != null;
@@ -929,6 +932,7 @@ class Table {
             }
         }
     }
+
     /**
      *  Used in TableFilter to get an index for the column
      *

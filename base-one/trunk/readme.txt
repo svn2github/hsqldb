@@ -1,6 +1,10 @@
 Readme File
 
 
+2003.10.13
+
+Fixed reported bugs.
+
 2003.10.28
 
 Fixed reported bugs.
