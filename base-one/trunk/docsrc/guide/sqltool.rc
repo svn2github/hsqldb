@@ -18,9 +18,16 @@ username sa
 password
 
 
-# Template for a second urlid definition.
+# Template for another urlid definition.
 #urlid cardiff2
 #url jdbc:oracle:thin:@aegir.admc.com:1522:TRAFFIC_SID
 #username blaine
 #password secretpassword
 #driver oracle.jdbc.OracleDriver
+
+# You can use this right now to work with a personal Memory-Only database.
+# Just run "java org.hsqldb.util.SqlTool mem".
+urlid mem
+url jdbc:hsqldb:mem:memdbid
+username sa
+password
