@@ -994,7 +994,7 @@ class Index {
      * Among a group of indexes, the order is based on the order of creation
      * of the index.
      */
-    private int getIndexOrderValue() {
+    int getIndexOrderValue() {
 
         int value = 0;
 

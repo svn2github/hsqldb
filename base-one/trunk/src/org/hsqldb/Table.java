@@ -1325,13 +1325,12 @@ class Table {
 
     private int addIndex(Index index) {
 
-        Index.IndexOrderComparator comparator =
-            new Index.IndexOrderComparator();
         int i = 0;
 
         for (; i < vIndex.size(); i++) {
             Index current = (Index) vIndex.get(i);
-            int   order   = comparator.compare(index, current);
+            int order = index.getIndexOrderValue()
+                        - current.getIndexOrderValue();
 
             if (order < 0) {
                 break;
