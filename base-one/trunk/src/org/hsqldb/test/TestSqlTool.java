@@ -30,25 +30,25 @@
 
 package org.hsqldb.test;
 
+import java.io.File;
+
 public class TestSqlTool extends junit.framework.TestCase {
-    protected void setUp() throws Exception {
-        System.err.println("Running setUp()");
+    SqlToolHarness harness = new SqlToolHarness();
+
+    public void testHistory() throws Exception {
+        assertTrue("Recall command from SQL History",
+                harness.execute(new File("hist-recall-19.sql")));
+        assertTrue("Recall and execute a query from SQL History",
+                harness.execute(new File("hist-recall-runquery.sql")));
     }
 
-    protected void tearDown() {
-        System.err.println("Running tearDown()");
-    }
-
-    public void testBadOther() throws Exception {
-        System.err.println("Running testBadOther()");
-        System.err.println("Pre-failure");
-        assertTrue("testBadOther failed", false);
-        System.err.println("Post-failure");
-    }
-
-    public void testGoodBrother() throws Exception {
-        System.err.println("Running testGoodBrother()");
-        assertTrue("testGoodOther failed", true);
+    public void testEditing() throws Exception {
+        assertTrue("s: command, no switches",
+                harness.execute(new File("edit-s-noswitches.sql")));
+        assertTrue("s: command w/ switches",
+                harness.execute(new File("edit-s-switches.sql")));
+        assertTrue("a: command",
+                harness.execute(new File("edit-a.sql")));
     }
 
     // public TestSqlTool() { super(); } necessary?
@@ -69,8 +69,8 @@ public class TestSqlTool extends junit.framework.TestCase {
 
     static public junit.framework.Test suite() {
         junit.framework.TestSuite newSuite = new junit.framework.TestSuite();
-        newSuite.addTest(new TestSqlTool("testGoodBrother"));
-        newSuite.addTest(new TestSqlTool("testBadOther"));
+        newSuite.addTest(new TestSqlTool("testHistory"));
+        newSuite.addTest(new TestSqlTool("testEditing"));
         return newSuite;
     };
 }
