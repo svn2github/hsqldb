@@ -42,7 +42,7 @@ import java.io.FileReader;
 import java.util.StringTokenizer;
 import java.util.HashMap;
 
-/* $Id: SqlTool.java,v 1.35 2004/06/08 13:59:24 unsaved Exp $ */
+/* $Id: SqlTool.java,v 1.36 2004/06/08 22:31:08 unsaved Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -53,7 +53,7 @@ import java.util.HashMap;
  * See JavaDocs for the main method for syntax of how to run.
  *
  * @see @main()
- * @version $Revision: 1.35 $
+ * @version $Revision: 1.36 $
  * @author Blaine Simpson
  */
 public class SqlTool {
@@ -65,8 +65,8 @@ public class SqlTool {
         System.getProperty("user.home") + "/sqltool.rc";
     private static String revnum = null;
     static {
-        revnum = "$Revision: 1.35 $".substring("$Revision: ".length(),
-                "$Revision: 1.35 $".length() - 2);
+        revnum = "$Revision: 1.36 $".substring("$Revision: ".length(),
+                "$Revision: 1.36 $".length() - 2);
     }
 
     /**
@@ -184,7 +184,7 @@ public class SqlTool {
     }
 
     static final private String SYNTAX_MESSAGE =
-        "Usage: java [-Dsqlfile.charset=x.y.z*] org.hsqldb.util.SqlTool \\\n"
+        "Usage: java [-Dsqlfile.X=Y...] org.hsqldb.util.SqlTool \\\n"
         + "    [--optname [optval...]] urlid [file1.sql...]\n"
         + "where arguments are:\n"
         + "    --help                   Prints this message\n"
@@ -207,6 +207,7 @@ public class SqlTool {
         + "    file1.sql...             SQL files to be executed [stdin]\n"
         + "                             "
         + "(Use '-' for non-interactively stdin).\n"
+        + "See the SqlTool Manual for the supported sqltool.* System Properties.\n"
         + "SqlTool v. " + revnum + ".";
 
     /** Utility nested class for internal use. */
