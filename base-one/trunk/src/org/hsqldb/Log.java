@@ -437,7 +437,7 @@ class Log {
             return;
         }
 
-        if (defrag) {
+        if (defrag && cCache != null) {
             cCache.defrag();
         }
 

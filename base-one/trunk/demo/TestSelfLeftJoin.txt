@@ -69,6 +69,10 @@ insert into credits values(4,2,200);
  where accounttype=0
  group by ac.accountnr,ac.accountname
 
+--join like above but condition changed to return only one not-null item from cred table
+/*c4*/select ac.accountname,ac.accountnr, cred.amount from accounts ac 
+ left outer join credits cred on cred.accountid=ac.id and amount=200
+
 --OWNER and ACCOUNT are inner joined then outer joined with credits to show balance
 /*c3*/select own.name, ac.accountname,ac.accountnr,sum(cred.amount) from owners own
  inner join accounts ac on own.id = ac.ownerid

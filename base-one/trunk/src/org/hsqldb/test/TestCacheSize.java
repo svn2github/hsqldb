@@ -99,7 +99,7 @@ public class TestCacheSize {
     int     deleteWhileInsertInterval = 10000;
 
     // size of the tables used in test
-    int bigrows   = 40000;
+    int bigrows   = 4000;
     int smallrows = 0xfff;
 
     //

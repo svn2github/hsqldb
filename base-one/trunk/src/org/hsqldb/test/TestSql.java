@@ -42,7 +42,7 @@ import junit.framework.*;
  */
 public class TestSql extends TestCase {
 
-    String path = "test3";
+    String           path = "test3";
     protected String url  = "jdbc:hsqldb:hsql://localhost/yourtest";
 
 //    protected String     url = "jdbc:hsqldb:test3";
@@ -86,7 +86,9 @@ public class TestSql extends TestCase {
     }
 
     public void testMetaData() {
-        String ddl0 = "DROP TABLE ADDRESSBOOK IF EXISTS; DROP TABLE ADDRESSBOOK_CATEGORY IF EXISTS; DROP TABLE USER IF EXISTS;";
+
+        String ddl0 =
+            "DROP TABLE ADDRESSBOOK IF EXISTS; DROP TABLE ADDRESSBOOK_CATEGORY IF EXISTS; DROP TABLE USER IF EXISTS;";
         String ddl1 =
             "CREATE TABLE USER(USER_ID INTEGER NOT NULL PRIMARY KEY,LOGIN_ID VARCHAR(128) NOT NULL,USER_NAME VARCHAR(254) DEFAULT ' ' NOT NULL,CREATE_DATE TIMESTAMP DEFAULT 'CURRENT_TIMESTAMP' NOT NULL,UPDATE_DATE TIMESTAMP DEFAULT 'CURRENT_TIMESTAMP' NOT NULL,LAST_ACCESS_DATE TIMESTAMP,CONSTRAINT IXUQ_LOGIN_ID0 UNIQUE(LOGIN_ID))";
         String ddl2 =
@@ -226,7 +228,8 @@ public class TestSql extends TestCase {
 
             {
                 stmnt.execute("DROP TABLE T IF EXISTS;");
-                stmnt.executeQuery("CREATE TABLE T (I IDENTITY, A CHAR, B CHAR);");
+                stmnt.executeQuery(
+                    "CREATE TABLE T (I IDENTITY, A CHAR, B CHAR);");
                 stmnt.executeQuery(
                     "INSERT INTO T VALUES (NULL, 'get_column_name', '"
                     + getColumnName + "');");

@@ -91,6 +91,20 @@ List compiled by Andrew Knight (quozzbat@users)
  */
 public interface Trigger {
 
+    // indexes into the triggers list
+    int INSERT_AFTER      = 0;
+    int DELETE_AFTER      = 1;
+    int UPDATE_AFTER      = 2;
+    int INSERT_BEFORE     = INSERT_AFTER + TriggerDef.NUM_TRIGGER_OPS;
+    int DELETE_BEFORE     = DELETE_AFTER + TriggerDef.NUM_TRIGGER_OPS;
+    int UPDATE_BEFORE     = UPDATE_AFTER + TriggerDef.NUM_TRIGGER_OPS;
+    int INSERT_AFTER_ROW  = INSERT_AFTER + 2 * TriggerDef.NUM_TRIGGER_OPS;
+    int DELETE_AFTER_ROW  = DELETE_AFTER + 2 * TriggerDef.NUM_TRIGGER_OPS;
+    int UPDATE_AFTER_ROW  = UPDATE_AFTER + 2 * TriggerDef.NUM_TRIGGER_OPS;
+    int INSERT_BEFORE_ROW = INSERT_BEFORE + 2 * TriggerDef.NUM_TRIGGER_OPS;
+    int DELETE_BEFORE_ROW = DELETE_BEFORE + 2 * TriggerDef.NUM_TRIGGER_OPS;
+    int UPDATE_BEFORE_ROW = UPDATE_BEFORE + 2 * TriggerDef.NUM_TRIGGER_OPS;
+
     /**
      * When UPDATE triggers are fired, row1 contains the
      * existing values of the table row and row2 contains the new values.<p>
@@ -99,13 +113,16 @@ public interface Trigger {
      * table row to be inserted.
      *
      * For DELETE triggers, row2 is null and row1 contains the
-     * table row to be deleted. (fredt)
+     * table row to be deleted.
+     *
+     * type contains the integer index id for trigger type, e.g.
+     * TriggerDef.INSERT_AFTER (fredt@users)
      *
      * @param trigName
      * @param tabName
      * @param row1
      * @param row2
      */
-    public void fire(String trigName, String tabName, Object row1[],
-                     Object row2[]);
+    public void fire(int type, String trigName, String tabName,
+                     Object row1[], Object row2[]);
 }

@@ -31,9 +31,7 @@
 
 package org.hsqldb;
 
-import java.io.RandomAccessFile;
 import java.io.IOException;
-import java.io.EOFException;
 import java.io.FileNotFoundException;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -51,7 +49,7 @@ class NIOScaledRAFile extends ScaledRAFile {
     MappedByteBuffer buffer;
     FileChannel      channel;
     long             fileLength;
-    int              INITIAL_FILE_LENGTH = 0x100000;
+    int              FILE_LENGTH_INCREMENT = 0x800000;
 
     public NIOScaledRAFile(String name, boolean mode,
                            int multiplier)
@@ -60,14 +58,12 @@ class NIOScaledRAFile extends ScaledRAFile {
         super(name, mode, multiplier);
 
         channel    = file.getChannel();
-        fileLength = INITIAL_FILE_LENGTH;
+        fileLength = 0;
 
         enlargeBuffer(file.length());
     }
 
     private void enlargeBuffer(long newPos) throws IOException {
-
-        System.out.println("NIO next enlargeBuffer()");
 
         int position = 0;
 
@@ -77,9 +73,11 @@ class NIOScaledRAFile extends ScaledRAFile {
             buffer.force();
         }
 
-        while (fileLength < newPos) {
-            fileLength *= 2;
+        while (fileLength <= newPos) {
+            fileLength += FILE_LENGTH_INCREMENT;
         }
+
+        System.out.println("NIO next enlargeBuffer():  " + fileLength);
 
         buffer = channel.map(FileChannel.MapMode.READ_WRITE, 0, fileLength);
 
@@ -92,7 +90,7 @@ class NIOScaledRAFile extends ScaledRAFile {
 
     public void seek(long newPos) throws IOException {
 
-        if (newPos > fileLength) {
+        if (newPos >= fileLength) {
             enlargeBuffer(newPos);
         }
 

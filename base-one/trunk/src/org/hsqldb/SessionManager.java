@@ -159,7 +159,6 @@ public class SessionManager {
 
             if (s != sysSession) {
                 it.remove();
-                DatabaseManager.releaseAccessCount(s.getDatabase());
                 s.disconnect();
             }
         }
@@ -175,7 +174,6 @@ public class SessionManager {
     Result processDisconnect(Session session) {
 
         sessionMap.remove(session.getId());
-        DatabaseManager.releaseAccessCount(session.getDatabase());
 
         if (!session.isClosed()) {
             session.disconnect();

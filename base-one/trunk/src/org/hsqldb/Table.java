@@ -172,8 +172,8 @@ class Table {
      * @param  isTemp
      * @param  name
      * @param  cached
-     * @param  nameQuoted        Description of the Parameter
-     * @exception  HsqlException  Description of the Exception
+     * @param  nameQuoted        table name is quoted
+     * @exception  HsqlException
      */
     Table(Database db, HsqlName name, int type,
             int sessionid) throws HsqlException {
@@ -245,9 +245,9 @@ class Table {
         vColumn        = new HashMappedList();
         vIndex         = new HsqlArrayList();
         vConstraint    = new HsqlArrayList();
-        vTrigs         = new HsqlArrayList[TriggerDef.numTrigs()];    // defer init...should be "pay to use"
+        vTrigs         = new HsqlArrayList[TriggerDef.NUM_TRIGS];
 
-        for (int vi = 0; vi < TriggerDef.numTrigs(); vi++) {
+        for (int vi = 0; vi < TriggerDef.NUM_TRIGS; vi++) {
             vTrigs[vi] = new HsqlArrayList();    // defer init...should be "pay to use"
         }
 
@@ -1599,7 +1599,7 @@ class Table {
 
         ni = ins.rRoot;
 
-        fireAll(TriggerDef.INSERT_BEFORE);
+        fireAll(Trigger.INSERT_BEFORE);
 
         while (ni != null) {
             insertRow(ni.data, c);
@@ -1609,7 +1609,7 @@ class Table {
             count++;
         }
 
-        fireAll(TriggerDef.INSERT_AFTER);
+        fireAll(Trigger.INSERT_AFTER);
 
         return count;
     }
@@ -1622,9 +1622,9 @@ class Table {
     void insert(Object row[], Session c) throws HsqlException {
 
         checkNullColumns(row);
-        fireAll(TriggerDef.INSERT_BEFORE);
+        fireAll(Trigger.INSERT_BEFORE);
         insertRow(row, c);
-        fireAll(TriggerDef.INSERT_AFTER);
+        fireAll(Trigger.INSERT_AFTER);
     }
 
     /**
@@ -1633,7 +1633,7 @@ class Table {
      */
     private void insertRow(Object row[], Session c) throws HsqlException {
 
-        fireAll(TriggerDef.INSERT_BEFORE_ROW, null, row);
+        fireAll(Trigger.INSERT_BEFORE_ROW, null, row);
 
         if (database.isReferentialIntegrity()) {
             for (int i = 0, size = vConstraint.size(); i < size; i++) {
@@ -1642,7 +1642,7 @@ class Table {
         }
 
         insertNoCheck(row, c, true);
-        fireAll(TriggerDef.INSERT_AFTER_ROW, null, row);
+        fireAll(Trigger.INSERT_AFTER_ROW, null, row);
     }
 
     /**
@@ -1911,7 +1911,7 @@ class Table {
         for (int i = 0, size = trigVec.size(); i < size; i++) {
             TriggerDef td = (TriggerDef) trigVec.get(i);
 
-            td.push(oldrow, newrow);    // tell the trigger thread to fire with this row
+            td.pushPair(oldrow, newrow);    // tell the trigger thread to fire with this row
         }
     }
 
@@ -1921,12 +1921,7 @@ class Table {
      * @param  trigVecIndx
      */
     void fireAll(int trigVecIndx) {
-
-        Object row[] = new Object[1];
-
-        row[0] = "Statement-level";
-
-        fireAll(trigVecIndx, row, null);
+        fireAll(trigVecIndx, null, null);
     }
 
     /**
@@ -1942,6 +1937,29 @@ class Table {
         }
 
         vTrigs[trigDef.vectorIndx].add(trigDef);
+    }
+
+    void dropTrigger(String name) {
+
+        // look in each trigger list of each type of trigger for each table
+        int numTrigs = TriggerDef.NUM_TRIGS;
+
+        for (int tv = 0; tv < numTrigs; tv++) {
+            HsqlArrayList v = vTrigs[tv];
+
+            for (int tr = v.size() - 1; tr >= 0; tr--) {
+                TriggerDef td = (TriggerDef) v.get(tr);
+
+                if (td.name.name.equals(name)) {
+                    v.remove(tr);
+                    td.terminate();
+
+                    if (Trace.TRACE) {
+                        Trace.trace("Trigger dropped " + name);
+                    }
+                }
+            }
+        }
     }
 
     /** @todo fredt - reused structure to be reviewed for multi-threading */
@@ -2337,29 +2355,26 @@ class Table {
      *  Highest level multiple row delete method. Corresponds to an SQL
      *  DELETE.
      */
-    int delete(HsqlLinkedList del, Session c) throws HsqlException {
+    int delete(HsqlArrayList del, Session c) throws HsqlException {
 
-        Iterator it    = del.iterator();
-        int      count = 0;
-        Row      r;
+        int count = 0;
+        Row r;
 
-        while (it.hasNext()) {
-            r = (Row) it.next();
+        for (int i = 0; i < del.size(); i++) {
+            r = (Row) del.get(i);
 
             delete(r, c, false);
         }
 
-        fireAll(TriggerDef.DELETE_BEFORE);
+        fireAll(Trigger.DELETE_BEFORE);
 
-        it = del.iterator();
-
-        while (it.hasNext()) {
-            r = (Row) it.next();
+        for (int i = 0; i < del.size(); i++) {
+            r = (Row) del.get(i);
 
             delete(r, c, true);
         }
 
-        fireAll(TriggerDef.DELETE_AFTER);
+        fireAll(Trigger.DELETE_AFTER);
 
         return del.size();
     }
@@ -2382,18 +2397,20 @@ class Table {
     }
 
     /**
-     *  Mid level row delete method. Fires triggers but no integrity
+     *  Mid level row cascade delete method. Fires triggers but no integrity
      *  constraint checks.
      */
-    private void deleteNoRefCheck(Object row[],
+    private void deleteNoRefCheck(Object data[],
                                   Session session) throws HsqlException {
 
-        fireAll(TriggerDef.DELETE_BEFORE_ROW, row, null);
-        deleteNoCheck(row, session, true);
+        fireAll(Trigger.DELETE_BEFORE_ROW, data, null);
+        deleteNoCheck(data, session, true);
 
         // fire the delete after statement trigger
-        fireAll(TriggerDef.DELETE_AFTER_ROW, row, null);
+        fireAll(Trigger.DELETE_AFTER_ROW, data, null);
     }
+
+    /** @todo move trigger work into calling method above and make sure it is always called */
 
     /**
      *  Mid level row delete method. Fires triggers but no integrity
@@ -2402,11 +2419,13 @@ class Table {
     private void deleteNoRefCheck(Row r,
                                   Session session) throws HsqlException {
 
-        fireAll(TriggerDef.DELETE_BEFORE_ROW, r.getData(), null);
+        Object[] data = r.getData();
+
+        fireAll(Trigger.DELETE_BEFORE_ROW, data, null);
         deleteNoCheck(r, session, true);
 
         // fire the delete after statement trigger
-        fireAll(TriggerDef.DELETE_AFTER_ROW, r.getData(), null);
+        fireAll(Trigger.DELETE_AFTER_ROW, data, null);
     }
 
     /**
@@ -2445,10 +2464,10 @@ class Table {
      * Low level row delete method. Removes the row from the indexes and
      * from the Cache.
      */
-    void deleteNoCheck(Object row[], Session c,
+    void deleteNoCheck(Object data[], Session c,
                        boolean log) throws HsqlException {
 
-        Node node = getIndex(0).search(row);
+        Node node = getIndex(0).search(data);
         Row  r    = node.getRow();
 
         for (int i = iIndexCount - 1; i >= 0; i--) {
@@ -2462,18 +2481,18 @@ class Table {
         r.delete();
 
         if (c != null) {
-            c.addTransactionDelete(this, row);
+            c.addTransactionDelete(this, data);
         }
 
         if (log &&!isTemp &&!isText &&!isReadOnly
                 && database.logger.hasLog()) {
-            database.logger.writeDeleteStatement(c, this, row);
+            database.logger.writeDeleteStatement(c, this, data);
         }
     }
 
     /**
      * Low level row delete method. Removes the row from the indexes and
-     * from the Cache.
+     * from the Cache. Used by rollback.
      */
     void deleteNoCheckRollback(Object row[], Session c,
                                boolean log) throws HsqlException {
@@ -2508,14 +2527,13 @@ class Table {
      * After all cascade ops and deletes have been performed, insert new
      * rows. (fredt)
      */
-    int update(HsqlLinkedList del, Result ins, int[] col,
+    int update(HsqlArrayList del, Result ins, int[] col,
                Session c) throws HsqlException {
 
-        Iterator it = del.iterator();
-        Record   ni = ins.rRoot;
+        Record ni = ins.rRoot;
 
-        while (it.hasNext() && ni != null) {
-            Row row = (Row) it.next();
+        for (int i = 0; i < del.size(); i++) {
+            Row row = (Row) del.get(i);
 
             enforceFieldValueLimits(ni.data, col);
 
@@ -2532,14 +2550,14 @@ class Table {
             ni = ni.next;
         }
 
-        fireAll(TriggerDef.UPDATE_BEFORE);
+        fireAll(Trigger.UPDATE_BEFORE);
 
-        it = del.iterator();
         ni = ins.rRoot;
 
-        while (it.hasNext() && ni != null) {
-            Row row = (Row) it.next();
+        for (int i = 0; i < del.size(); i++) {
+            Row row = (Row) del.get(i);
 
+            del.set(i, row.getData());
             constraintPath.clear();
             checkCascadeUpdate(row, ni.data, c, col, null, true,
                                constraintPath);
@@ -2548,20 +2566,19 @@ class Table {
             ni = ni.next;
         }
 
-        it = del.iterator();
         ni = ins.rRoot;
 
-        while (it.hasNext() && ni != null) {
-            Row row = (Row) it.next();
+        for (int i = 0; i < del.size(); i++) {
+            Object[] data = (Object[]) del.get(i);
 
-            fireAll(TriggerDef.UPDATE_BEFORE_ROW, row.getData(), ni.data);
+            fireAll(Trigger.UPDATE_BEFORE_ROW, data, ni.data);
             insertNoCheck(ni.data, c, true);
-            fireAll(TriggerDef.UPDATE_AFTER_ROW, row.getData(), ni.data);
+            fireAll(Trigger.UPDATE_AFTER_ROW, data, ni.data);
 
             ni = ni.next;
         }
 
-        fireAll(TriggerDef.UPDATE_AFTER);
+        fireAll(Trigger.UPDATE_AFTER);
 
         return del.size();
     }

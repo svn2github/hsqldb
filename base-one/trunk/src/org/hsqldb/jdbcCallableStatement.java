@@ -329,7 +329,7 @@ implements CallableStatement {
         parameterNameMap   = null;
         outRegistrationMap = null;
 
-        super.closeImpl(isDisconnect);
+        super.close();
     }
 
     /**
@@ -341,12 +341,10 @@ implements CallableStatement {
      */
     private void checkGetParameterIndex(int i) throws SQLException {
 
-        String msg;
-
         checkClosed();
 
         if (i < 1 || i > parameterModes.length) {
-            msg = "Parameter index out of bounds: " + i;
+            String msg = "Parameter index out of bounds: " + i;
 
             throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
         }
@@ -356,8 +354,8 @@ implements CallableStatement {
         switch (mode) {
 
             default :
-                msg = "Not OUT or IN OUT mode: " + mode + " for parameter: "
-                      + i;
+                String msg = "Not OUT or IN OUT mode: " + mode
+                             + " for parameter: " + i;
 
                 throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT,
                                               msg);

@@ -62,28 +62,6 @@ import java.io.File;
  */
 class DatabaseManager {
 
-    // Garbage Collection
-    static void gc() {
-
-        if ((Record.gcFrequency > 0)
-                && (Record.memoryRecords > Record.gcFrequency)) {
-            if (Trace.TRACE) {
-                Trace.trace("gc at " + Record.memoryRecords);
-            }
-
-            Record.memoryRecords = 0;
-
-            System.gc();
-        }
-    }
-
-    // Timer
-    private static HsqlTimer timer = new HsqlTimer();
-
-    static HsqlTimer getTimer() {
-        return timer;
-    }
-
     // Database and Server registry
 
     /** provides unique ID's for the Databases currently in registry */
@@ -98,9 +76,6 @@ class DatabaseManager {
     /** File to Database mapping for res: databases */
     private static HashMap resDatabaseMap = new HashMap();
 
-    /** Database to current number of Sessions, including those in queue */
-    private static IntValueHashMap databaseAccessMap = new IntValueHashMap();
-
     /** id number to Database for Databases currently in registry */
     private static IntKeyHashMap databaseIDMap = new IntKeyHashMap();
 
@@ -111,8 +86,6 @@ class DatabaseManager {
                               String password) throws HsqlException {
 
         Database db = (Database) databaseIDMap.get(dbID);
-
-        addAccessCount(db);
 
         return db.connect(user, password);
     }
@@ -134,7 +107,8 @@ class DatabaseManager {
      * belonging to the same JDBC Conenction / HSQL Session pair.
      *
      */
-    static Session getSession(int dbID, int sessionID) throws HsqlException {
+    private static Session getSession(int dbID,
+                                      int sessionID) throws HsqlException {
 
         Database db = (Database) databaseIDMap.get(dbID);
 
@@ -142,7 +116,8 @@ class DatabaseManager {
     }
 
     /**
-     * Unused alternative to above.
+     * This returns an existing session. Used with repeat HTTP connections
+     * belonging to the same JDBC Conenction / HSQL Session pair.
      */
     static Session getSession(String type, String path,
                               int sessionId) throws HsqlException {
@@ -191,19 +166,19 @@ class DatabaseManager {
         Database db = getDatabaseObject(type, path, ifexists);
 
         synchronized (db) {
-
-            /** @todo  set the size of value pool */
-            if (databaseAccessMap.size() == 1
-                    && databaseAccessMap.get(db, Integer.MIN_VALUE) == 1) {
-                ValuePool.resetPool();
-            }
-
             switch (db.getState()) {
 
                 case Database.DATABASE_ONLINE :
                     break;
 
                 case Database.DATABASE_SHUTDOWN :
+
+                    // if the database was shutdown while this attempt
+                    // was waiting, add the database back to the registry
+                    if (lookupDatabaseObject(type, path) == null) {
+                        addDatabaseObject(type, path, db);
+                    }
+
                     db.open();
                     break;
 
@@ -229,12 +204,8 @@ class DatabaseManager {
         return db;
     }
 
-    /**
-     * The access counters maintained by this and other methods are not
-     * actually used outside this class
-     */
-    static synchronized Database getDatabaseObject(String type, String path,
-            boolean ifexists) throws HsqlException {
+    private static synchronized Database getDatabaseObject(String type,
+            String path, boolean ifexists) throws HsqlException {
 
         Database db;
         Object   key = path;
@@ -260,39 +231,16 @@ class DatabaseManager {
             dbIDCounter++;
 
             databaseMap.put(key, db);
-            databaseAccessMap.put(db, 1);
-        } else {
-            int accessCount = databaseAccessMap.get(db, Integer.MIN_VALUE);
-
-            if (accessCount == Integer.MIN_VALUE) {
-                throw Trace.error(Trace.GENERAL_ERROR,
-                                  Trace.DatabaseManager_getDatabaseObject,
-                                  null);
-            }
-
-            databaseAccessMap.put(db, ++accessCount);
         }
 
         return db;
-    }
-
-    static void addAccessCount(Database db) throws HsqlException {
-
-        int accessCount = databaseAccessMap.get(db, Integer.MIN_VALUE);
-
-        if (accessCount == Integer.MIN_VALUE) {
-            throw Trace.error(Trace.GENERAL_ERROR,
-                              Trace.DatabaseManager_getDatabaseObject, null);
-        }
-
-        databaseAccessMap.put(db, ++accessCount);
     }
 
     /**
      * Looks up database of a given type and path in the registry. Returns
      * null if there is none.
      */
-    static synchronized Database lookupDatabaseObject(String type,
+    private static synchronized Database lookupDatabaseObject(String type,
             String path) throws HsqlException {
 
         Database db;
@@ -312,35 +260,26 @@ class DatabaseManager {
     }
 
     /**
-     * Reduces the accessCount of a database when a session is closed.
+     * Adds a database to the registry. Returns
+     * null if there is none.
      */
-    static synchronized void releaseAccessCount(Database database) {
+    private static synchronized void addDatabaseObject(String type,
+            String path, Database db) throws HsqlException {
 
-        int accessCount = databaseAccessMap.get(database, Integer.MIN_VALUE);
+        Object  key = path;
+        HashMap databaseMap;
 
-        /*
-         // debug code
-        if (accessCount == Integer.MIN_VALUE || accessCount == 0) {
-            throw Trace.error(Trace.GENERAL_ERROR,
-                              Trace.DatabaseManager_releaseSession, null);
-        }
-        */
-        databaseAccessMap.put(database, --accessCount);
-    }
-
-    /**
-     * Not used. Different signature for the above method.
-     */
-    static synchronized void releaseDatabase(String type,
-            String path) throws HsqlException {
-
-        Database database = lookupDatabaseObject(type, path);
-
-        if (database == null) {
-            return;
+        if (type == S_FILE) {
+            databaseMap = fileDatabaseMap;
+            key         = new File(path);
+        } else if (type == S_RES) {
+            databaseMap = resDatabaseMap;
+        } else {
+            databaseMap = memDatabaseMap;
         }
 
-        releaseAccessCount(database);
+        databaseIDMap.put(db.databaseID, db);
+        databaseMap.put(key, db);
     }
 
     /**
@@ -365,15 +304,10 @@ class DatabaseManager {
             databaseMap = memDatabaseMap;
         }
 
-        IntValueHashMap accessMap = databaseAccessMap;
+        databaseIDMap.remove(dbID);
+        databaseMap.remove(key);
 
-        if (databaseAccessMap.get(database, 0) == 0) {
-            databaseIDMap.remove(dbID);
-            databaseMap.remove(key);
-            databaseAccessMap.remove(database);
-        }
-
-        if (databaseAccessMap.isEmpty()) {
+        if (databaseIDMap.isEmpty()) {
             ValuePool.resetPool();
         }
     }
@@ -397,7 +331,7 @@ class DatabaseManager {
     /**
      * Deregisters a server as serving a given database.
      */
-    static void deRegisterServer(Server server, Database db) {
+    private static void deRegisterServer(Server server, Database db) {
 
         Iterator it = serverMap.values().iterator();
 
@@ -633,5 +567,27 @@ class DatabaseManager {
         parseURL("JDBC:hsqldb:Http://localhost/servlet/org.hsqldb.Servlet/",
                  true);
         parseURL("JDBC:hsqldb:hsql://myhost", true);
+    }
+
+    // Garbage Collection
+    static void gc() {
+
+        if ((Record.gcFrequency > 0)
+                && (Record.memoryRecords > Record.gcFrequency)) {
+            if (Trace.TRACE) {
+                Trace.trace("gc at " + Record.memoryRecords);
+            }
+
+            Record.memoryRecords = 0;
+
+            System.gc();
+        }
+    }
+
+    // Timer
+    private static HsqlTimer timer = new HsqlTimer();
+
+    static HsqlTimer getTimer() {
+        return timer;
     }
 }

@@ -646,7 +646,7 @@ class DatabaseCommandInterpreter {
         }
 
         if (token.equals(Token.T_QUEUE)) {
-            queueSize = Integer.parseInt(tokenizer.getString());
+            queueSize = tokenizer.getInt();    //queueSize = Integer.parseInt(tokenizer.getString());
 
             // should be 'CALL'
             token = tokenizer.getString();
@@ -821,6 +821,13 @@ class DatabaseCommandInterpreter {
             token        = tokenizer.getString();
         }
 
+        // fredt@users - accept IDENTITY before or after NOT NULL
+        if (token.equals(Token.T_IDENTITY)) {
+            isIdentity   = true;
+            isPrimaryKey = true;
+            token        = tokenizer.getString();
+        }
+
         if (token.equals(Token.T_NULL)) {
             token = tokenizer.getString();
         } else if (token.equals(Token.T_NOT)) {
@@ -831,16 +838,12 @@ class DatabaseCommandInterpreter {
         }
 
         if (token.equals(Token.T_IDENTITY)) {
+            if (isIdentity) {
+                throw Trace.error(Trace.SECOND_PRIMARY_KEY, Token.T_IDENTITY);
+            }
+
             isIdentity   = true;
             isPrimaryKey = true;
-            token        = tokenizer.getString();
-        }
-
-        // fredt@users - workaround for some tools that add NOT NULL after IDENTITY
-        if (isNullable && token.equals(Token.T_NOT)) {
-            tokenizer.getThis(Token.T_NULL);
-
-            isNullable = false;
             token        = tokenizer.getString();
         }
 
@@ -1495,9 +1498,6 @@ class DatabaseCommandInterpreter {
 
                 switch (Token.get(token)) {
 
-                    default : {
-                        throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
-                    }
                     case Token.CONSTRAINT : {
                         processAlterTableAddConstraint(t);
 
@@ -1514,7 +1514,8 @@ class DatabaseCommandInterpreter {
 
                         return;
                     }
-                    case Token.COLUMN : {
+                    case Token.COLUMN :
+                    default : {
                         processAlterTableAddColumn(t);
 
                         return;
@@ -1820,7 +1821,7 @@ class DatabaseCommandInterpreter {
                 session.checkAdmin();
                 session.checkDDLWrite();
 
-                int i = Integer.parseInt(tokenizer.getString());
+                int i = tokenizer.getInt();        // Integer.parseInt(tokenizer.getString());
 
                 database.logger.setLogSize(i);
 
@@ -1853,7 +1854,7 @@ class DatabaseCommandInterpreter {
             case Token.MAXROWS : {
                 session.setScripting(false);
 
-                int i = Integer.parseInt(tokenizer.getString());
+                int i = tokenizer.getInt();        // Integer.parseInt(tokenizer.getString());
 
                 session.setSQLMaxRows(i);
 
@@ -1942,7 +1943,9 @@ class DatabaseCommandInterpreter {
                 } else if (s.equals(Token.T_FALSE)) {
                     delay = 0;
                 } else {
-                    delay = Integer.parseInt(s);
+                    tokenizer.back();
+
+                    delay = tokenizer.getInt();    // Integer.parseInt(s);
                 }
 
                 database.logger.setWriteDelay(delay);
@@ -2004,7 +2007,7 @@ class DatabaseCommandInterpreter {
         } else if (token.equals(Token.T_TO)) {
             tokenizer.getThis(Token.T_SAVEPOINT);
 
-            token = tokenizer.getString();
+            token       = tokenizer.getString();
             toSavepoint = true;
         } else {
             tokenizer.back();

@@ -2261,6 +2261,12 @@ class Expression {
 
         isInJoin = true;
 
+        if (eArg != null) {
+            if (eArg.setForOuterJoin() == false) {
+                return false;
+            }
+        }
+
         if (eArg2 != null) {
             if (eArg2.setForOuterJoin() == false) {
                 return false;

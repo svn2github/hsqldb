@@ -91,42 +91,54 @@ public class TriggerSample implements org.hsqldb.Trigger {
      * fire method declaration
      * <P> This is a sample implementation that simply prints information
      * about the trigger firing.
-     *
+     * @param index
      * @param trigName
      * @param tabName
-     * @param row
+     * @param row1
+     * @param row2
      */
-    public void fire(String trigName, String tabName, Object row1[],
-                     Object row2[]) {
+    public void fire(int index, String trigName, String tabName,
+                     Object row1[], Object row2[]) {
 
-        System.out.println(trigName + " trigger fired on " + tabName);
-        System.out.print(" col 0 value <");
-        System.out.print(row1[0]);
-        System.out.println(">");
+        synchronized (TriggerSample.class) {
+            System.out.println(trigName + " trigger [" + index
+                               + "] fired on " + tabName);
+            System.out.print(" left col 0 value <");
 
-        // you can cast row[i] given your knowledge of what the table
-        // format is.
+            String value = row1 == null ? "null"
+                                        : row1[0] + "";
+
+            System.out.print(value);
+            System.out.println(">");
+            System.out.print(" right col 0 value <");
+
+            value = row2 == null ? "null"
+                                 : row2[0] + "";
+
+            System.out.print(value);
+            System.out.println(">");
+
+            // you can cast row[i] given your knowledge of what the table
+            // format is.
+        }
     }
 }
-
-/**
- *
- *
- * test SQL
- * CREATE CACHED TABLE trig_test (int_field     integer)
- * CREATE TRIGGER ins_before BEFORE INSERT ON trig_test CALL "org.hsqldb.sample.TriggerSample"
- * CREATE TRIGGER ins_after  AFTER  INSERT ON trig_test CALL "org.hsqldb.sample.TriggerSample"
- * CREATE TRIGGER upd_before BEFORE UPDATE ON trig_test CALL "org.hsqldb.sample.TriggerSample"
- * CREATE TRIGGER upd_after  AFTER  UPDATE ON trig_test CALL "org.hsqldb.sample.TriggerSample"
- * CREATE TRIGGER upd_before_row BEFORE UPDATE ON trig_test FOR EACH ROW CALL "org.hsqldb.sample.TriggerSample"
- * CREATE TRIGGER upd_after_row  AFTER  UPDATE ON trig_test FOR EACH ROW CALL "org.hsqldb.sample.TriggerSample"
- * CREATE TRIGGER del_before BEFORE DELETE ON trig_test CALL "org.hsqldb.sample.TriggerSample"
- * CREATE TRIGGER del_after  AFTER  DELETE ON trig_test CALL "org.hsqldb.sample.TriggerSample"
- * CREATE TRIGGER del_before_row BEFORE DELETE ON trig_test FOR EACH ROW CALL "org.hsqldb.sample.TriggerSample"
- * CREATE TRIGGER del_after_row  AFTER  DELETE ON trig_test FOR EACH ROW CALL "org.hsqldb.sample.TriggerSample"
- * INSERT INTO trig_test VALUES (1)
- * INSERT INTO trig_test VALUES (2)
- * INSERT INTO trig_test VALUES (3)
- * UPDATE trig_test SET int_field = int_field + 3
- * DELETE FROM trig_test
- */
+/*
+    test SQL
+    CREATE CACHED TABLE trig_test (int_field     integer)
+    CREATE TRIGGER ins_before BEFORE INSERT ON trig_test CALL "org.hsqldb.sample.TriggerSample"
+    CREATE TRIGGER ins_after  AFTER  INSERT ON trig_test CALL "org.hsqldb.sample.TriggerSample"
+    CREATE TRIGGER upd_before BEFORE UPDATE ON trig_test CALL "org.hsqldb.sample.TriggerSample"
+    CREATE TRIGGER upd_after  AFTER  UPDATE ON trig_test CALL "org.hsqldb.sample.TriggerSample"
+    CREATE TRIGGER upd_before_row BEFORE UPDATE ON trig_test FOR EACH ROW CALL "org.hsqldb.sample.TriggerSample"
+    CREATE TRIGGER upd_after_row  AFTER  UPDATE ON trig_test FOR EACH ROW CALL "org.hsqldb.sample.TriggerSample"
+    CREATE TRIGGER del_before BEFORE DELETE ON trig_test CALL "org.hsqldb.sample.TriggerSample"
+    CREATE TRIGGER del_after  AFTER  DELETE ON trig_test CALL "org.hsqldb.sample.TriggerSample"
+    CREATE TRIGGER del_before_row BEFORE DELETE ON trig_test FOR EACH ROW CALL "org.hsqldb.sample.TriggerSample"
+    CREATE TRIGGER del_after_row  AFTER  DELETE ON trig_test FOR EACH ROW CALL "org.hsqldb.sample.TriggerSample"
+    INSERT INTO trig_test VALUES (1)
+    INSERT INTO trig_test VALUES (2)
+    INSERT INTO trig_test VALUES (3)
+    UPDATE trig_test SET int_field = int_field + 3
+    DELETE FROM trig_test
+*/

@@ -143,7 +143,7 @@ class Tokenizer {
             "COALESCE", "DISTINCT", "ELSE", "END", "EXISTS", "EXCEPT",
             "EXTRACT",                                                      /* "FALSE",*/
             "FOR", "FROM", "GROUP", "IF", "INTO", "IFNULL", "IS", "IN",
-            "INTERSECT", "INNER", "LEADING",
+            "JOIN", "INTERSECT", "INNER", "LEADING",
 
             /* "LEFT" ,*/
             "LIKE", "MAX", "MIN", /* "NULL", */ "NULLIF", "NOT", "MINUS",

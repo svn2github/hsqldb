@@ -952,35 +952,15 @@ class Database {
      */
     void dropTrigger(String name, Session session) throws HsqlException {
 
-        boolean found = false;
-
-        // look in each trigger list of each type of trigger for each table
-        for (int i = 0, tsize = tTable.size(); i < tsize; i++) {
-            Table t        = (Table) tTable.get(i);
-            int   numTrigs = TriggerDef.numTrigs();
-
-            for (int tv = 0; tv < numTrigs; tv++) {
-                HsqlArrayList v = t.vTrigs[tv];
-
-                for (int tr = v.size() - 1; tr >= 0; tr--) {
-                    TriggerDef td = (TriggerDef) v.get(tr);
-
-                    if (td.name.name.equals(name)) {
-                        session.setScripting(!td.table.isTemp());
-                        v.remove(tr);
-
-                        found = true;
-
-                        if (Trace.TRACE) {
-                            Trace.trace("Trigger dropped " + name);
-                        }
-                    }
-                }
-            }
-        }
+        boolean found = triggerNameList.containsName(name);
 
         Trace.check(found, Trace.TRIGGER_NOT_FOUND, name);
-        triggerNameList.removeName(name);
+
+        HsqlName tableName = (HsqlName) triggerNameList.removeName(name);
+        Table    t         = this.findUserTable(tableName.name, session);
+
+        t.dropTrigger(name);
+        session.setScripting(!t.isTemp());
     }
 
     /**

@@ -105,8 +105,8 @@ import org.hsqldb.lib.StringUtil;
 // fredt@users 20020930 - patch 1.7.1 - support for connection properties
 // kneedeepincode@users 20021110 - patch 635816 - correction to properties
 // unsaved@users 20021113 - patch 1.7.2 - SSL support
-// fredt@users 20030620 - patch 1.7.2 - reworked to use a SessionInterface
 // boucherb@users 2003 ??? - patch 1.7.2 - SSL support moved to factory interface
+// fredt@users 20030620 - patch 1.7.2 - reworked to use a SessionInterface
 // boucherb@users 20030801 - JavaDoc updates to reflect new connection urls
 // boucherb@users 20030819 - patch 1.7.2 - partial fix for broken nativeSQL method
 // boucherb@users 20030819 - patch 1.7.2 - SQLWarning cases implemented
@@ -307,7 +307,7 @@ import org.hsqldb.lib.StringUtil;
  * directories along the file path specified in the persistent, in-process mode
  * database connection <b>&lt;url&gt;</b> form, in the case that they did
  * not already exist.  Starting with HSQLDB 1.7.0, directories <i>will</i>
- * be created if they do not already exist, but only if HSQLDB is built under
+ * be created if they do not already exist., but only if HSQLDB is built under
  * a version of the compiler greater than JDK 1.1.x. <p>
  *
  * The new <b>'jdbc:hsqldb:res:&lt;path&gt;'</b> database connection
@@ -434,13 +434,13 @@ public class jdbcConnection implements Connection {
 
     /**
      * The set of open Statement objects returned by this Connection from
-     * calls to createStatement, prepareCall and prepareStatement.
+     * calls to createStatement, prepareCall and prepareStatement. This is
+     * used solely for closing the statements when this Connection is closed.
      */
+    /*
     private org.hsqldb.lib.HashSet statementSet =
         new org.hsqldb.lib.HashSet();
-
-    /** Synchronizes concurrent modification of the statement set */
-    private Object statementSet_mutex = new Object();
+     */
 
 // ----------------------------------- JDBC 1 -------------------------------
 
@@ -497,8 +497,6 @@ public class jdbcConnection implements Connection {
 
         Statement stmt = new jdbcStatement(this,
                                            jdbcResultSet.TYPE_FORWARD_ONLY);
-
-        addStatement(stmt);
 
         return stmt;
     }
@@ -562,8 +560,6 @@ public class jdbcConnection implements Connection {
             stmt = new jdbcPreparedStatement(this, sql,
                                              jdbcResultSet.TYPE_FORWARD_ONLY);
 
-            addStatement(stmt);
-
             return stmt;
         } catch (HsqlException e) {
             throw jdbcDriver.sqlException(e);
@@ -621,8 +617,6 @@ public class jdbcConnection implements Connection {
         try {
             stmt = new jdbcCallableStatement(this, sql,
                                              jdbcResultSet.TYPE_FORWARD_ONLY);
-
-            addStatement(stmt);
 
             return stmt;
         } catch (HsqlException e) {
@@ -757,7 +751,9 @@ public class jdbcConnection implements Connection {
                         state = outside_escape_inside_double_quotes;
                     } else if (c == '{') {
                         sb.setCharAt(i++, ' ');
-                        i = StringUtil.skipSpaces(sql,i);
+
+                        i = StringUtil.skipSpaces(sql, i);
+
                         if (sql.regionMatches(true, i, "fn ", 0, 3)
                                 || sql.regionMatches(true, i, "oj ", 0, 3)
                                 || sql.regionMatches(true, i, "ts ", 0, 3)) {
@@ -954,7 +950,7 @@ public class jdbcConnection implements Connection {
      * <span class="ReleaseSpecificDocumentation">
      * <b>HSQLDB-Specific Information:</b> <p>
      *
-     * Starting with HSQLDB 1.7.2, savepoints are fully supported both
+     * Starting with HSQLDB 1.7.2, savepoints are supported both
      * in SQL and via the JDBC interface. <p>
      *
      * Using SQL, savepoints may be set, released and used in rollback
@@ -1053,13 +1049,13 @@ public class jdbcConnection implements Connection {
             return;
         }
 
-        closeAllStatements();
+        isClosed = true;
+
         sessionProxy.close();
 
         sessionProxy   = null;
         rootWarning    = null;
         connProperties = null;
-        isClosed       = true;
     }
 
     /**
@@ -1069,15 +1065,6 @@ public class jdbcConnection implements Connection {
      *      open
      */
     public synchronized boolean isClosed() {
-
-        // There is no point to checking if the session proxy is null or
-        // closed every time.  It's a waste.  The session proxy does not
-        // call back to the database across the network each time its
-        // isClosed method is called, so the only time the session proxy
-        // will return true from isClosed() is when we are in-process or
-        // internal and the SQL DISCONNECT is issued or when we call
-        // sessionProxy.close() explicilty, which only happens when
-        // our close() method is called.
         return isClosed;
     }
 
@@ -1467,8 +1454,6 @@ public class jdbcConnection implements Connection {
         concurrency = xlateRSConcurrency(concurrency);
         stmt        = new jdbcStatement(this, type);
 
-        addStatement(stmt);
-
         return stmt;
     }
 
@@ -1531,8 +1516,6 @@ public class jdbcConnection implements Connection {
 
         try {
             stmt = new jdbcPreparedStatement(this, sql, type);
-
-            addStatement(stmt);
 
             return stmt;
         } catch (HsqlException e) {
@@ -1597,8 +1580,6 @@ public class jdbcConnection implements Connection {
 
         try {
             stmt = new jdbcCallableStatement(this, sql, resultSetType);
-
-            addStatement(stmt);
 
             return stmt;
         } catch (HsqlException e) {
@@ -1971,10 +1952,6 @@ public class jdbcConnection implements Connection {
             throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
         }
 
-//        if (!(savepoint instanceof jdbcSavepoint)) {
-//            msg = "" + savepoint + " not instanceof " + jdbcSavepoint.class;
-//            throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
-//        }
         sp = (jdbcSavepoint) savepoint;
 
         if (this != sp.connection) {
@@ -2060,8 +2037,6 @@ public class jdbcConnection implements Connection {
         resultSetHoldability = xlateRSHoldability(resultSetHoldability);
         stmt                 = new jdbcStatement(this, resultSetType);
 
-        addStatement(stmt);
-
         return stmt;
     }
 */
@@ -2138,8 +2113,6 @@ public class jdbcConnection implements Connection {
 
         try {
             stmt = new jdbcPreparedStatement(this, sql, resultSetType);
-
-            addStatement(stmt);
 
             return stmt;
         } catch (HsqlException e) {
@@ -2220,8 +2193,6 @@ public class jdbcConnection implements Connection {
 
         try {
             stmt = new jdbcCallableStatement(this, sql, resultSetType);
-
-            addStatement(stmt);
 
             return stmt;
         } catch (HsqlException e) {
@@ -2547,29 +2518,6 @@ public class jdbcConnection implements Connection {
     }
 
     /**
-     * Closes all open statements derived from this connection.
-     */
-    private void closeAllStatements() {
-
-        org.hsqldb.lib.Iterator i = statementSet.iterator();
-        jdbcStatement           stmt;
-
-        while (i.hasNext()) {
-            try {
-                stmt = (jdbcStatement) i.next();
-
-                stmt.closeImpl(true);
-            } catch (Exception e) {
-                if (Trace.TRACE) {
-                    Trace.trace(e.toString());
-                }
-            }
-        }
-
-        statementSet = null;
-    }
-
-    /**
      *  The default implementation simply attempts to silently {@link
      *  #close() close()} this <code>Connection</code>
      */
@@ -2762,20 +2710,6 @@ public class jdbcConnection implements Connection {
                 throw jdbcDriver.sqlException(Trace.INVALID_JDBC_ARGUMENT,
                                               msg);
             }
-        }
-    }
-
-    void addStatement(Statement stmt) {
-
-        synchronized (statementSet_mutex) {
-            statementSet.add(stmt);
-        }
-    }
-
-    void removeStatement(Statement stmt) {
-
-        synchronized (statementSet_mutex) {
-            statementSet.remove(stmt);
         }
     }
 }

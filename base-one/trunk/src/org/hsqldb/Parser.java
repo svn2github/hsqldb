@@ -406,6 +406,11 @@ class Parser {
                 tokenizer.getThis(Token.T_ON);
 
                 condition = addCondition(condition, parseExpression());
+            } else if (token.equals(Token.T_JOIN)) {
+                vfilter.add(parseTableFilter(false));
+                tokenizer.getThis(Token.T_ON);
+
+                condition = addCondition(condition, parseExpression());
             } else if (token.equals(Token.T_COMMA)) {
                 vfilter.add(parseTableFilter(false));
             } else {

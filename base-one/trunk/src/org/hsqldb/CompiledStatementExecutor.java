@@ -32,6 +32,7 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.HsqlLinkedList;
+import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.lib.StringUtil;
 
@@ -191,29 +192,30 @@ final class CompiledStatementExecutor {
     private Result executeDeleteStatement(CompiledStatement cs)
     throws HsqlException {
 
-        Table          t     = cs.targetTable;
-        TableFilter    tf    = cs.tf;
-        Expression     c     = cs.condition;    // delete condition
-        int            count = 0;
-        HsqlLinkedList del;                     // tuples to delete
+        Table       table  = cs.targetTable;
+        TableFilter filter = cs.tf;
+        int         count  = 0;
 
-        if (tf.findFirst()) {
-            del = new HsqlLinkedList();
+        if (filter.findFirst()) {
+            Expression    c = cs.condition;
+            HsqlArrayList del;
+
+            del = new HsqlArrayList();
 
             if (c == null) {
                 do {
-                    del.add(tf.currentRow);
-                } while (tf.next());
+                    del.add(filter.currentRow);
+                } while (filter.next());
 
-                count = t.delete(del, session);
+                count = table.delete(del, session);
             } else {
                 do {
                     if (c.test()) {
-                        del.add(tf.currentRow);
+                        del.add(filter.currentRow);
                     }
-                } while (tf.next());
+                } while (filter.next());
 
-                count = t.delete(del, session);
+                count = table.delete(del, session);
             }
         }
 
@@ -364,71 +366,68 @@ final class CompiledStatementExecutor {
     private Result executeUpdateStatement(CompiledStatement cs)
     throws HsqlException {
 
-        Table          t    = cs.targetTable;
-        TableFilter    f    = cs.tf;
-        int[]          cm   = cs.columnMap;    // column map
-        Expression[]   acve = cs.columnValues;
-        Expression     cve;
-        Expression     c = cs.condition;       // update condition
-        int[]          ct;                     // column types
-        int            ci;                     // column index
-        int            len   = acve.length;
-        int            count = 0;
-        HsqlLinkedList del;
-        Result         ins;
-        int            size;
-        Row            row;
-        Object[]       ni;
+        Table       table  = cs.targetTable;
+        TableFilter filter = cs.tf;
+        int         count  = 0;
 
-        if (f.findFirst()) {
-            del  = new HsqlLinkedList();
-            ins  = new Result(ResultConstants.UPDATECOUNT);
-            size = t.getColumnCount();
-            len  = cm.length;
-            ct   = t.getColumnTypes();
+        if (filter.findFirst()) {
+            int[]         colmap    = cs.columnMap;    // column map
+            Expression[]  colvalues = cs.columnValues;
+            Expression    cve;
+            Expression    c = cs.condition;            // update condition
+            int           ci;                          // column index
+            int           len = colvalues.length;
+            Object[]      ni;
+            HsqlArrayList del  = new HsqlArrayList();
+            Result        ins  = new Result(ResultConstants.UPDATECOUNT);
+            int           size = table.getColumnCount();
+
+            len = colmap.length;
+
+            int[] coltypes = table.getColumnTypes();
 
             if (c == null) {
                 do {
-                    row = f.currentRow;
+                    Row row = filter.currentRow;
 
                     del.add(row);
 
-                    ni = t.getNewRow();
+                    ni = table.getNewRow();
 
                     System.arraycopy(row.getData(), 0, ni, 0, size);
 
                     for (int i = 0; i < len; i++) {
-                        ci     = cm[i];
-                        ni[ci] = acve[i].getValue(ct[ci]);
+                        ci     = colmap[i];
+                        ni[ci] = colvalues[i].getValue(coltypes[ci]);
                     }
 
                     ins.add(ni);
-                } while (f.next());
+                } while (filter.next());
             } else {
                 do {
                     if (c.test()) {
-                        row = f.currentRow;
+                        Row row = filter.currentRow;
 
                         del.add(row);
 
-                        ni = t.getNewRow();
+                        ni = table.getNewRow();
 
                         System.arraycopy(row.getData(), 0, ni, 0, size);
 
                         for (int i = 0; i < len; i++) {
-                            ci     = cm[i];
-                            ni[ci] = acve[i].getValue(ct[ci]);
+                            ci     = colmap[i];
+                            ni[ci] = colvalues[i].getValue(coltypes[ci]);
                         }
 
                         ins.add(ni);
                     }
-                } while (f.next());
+                } while (filter.next());
             }
 
             session.beginNestedTransaction();
 
             try {
-                count = t.update(del, ins, cm, session);
+                count = table.update(del, ins, colmap, session);
 
                 session.endNestedTransaction(false);
             } catch (HsqlException se) {

@@ -44,79 +44,6 @@ import org.hsqldb.HsqlNameManager.HsqlName;
  */
 class DatabaseObjectNames {
 
-/*
-    UnifiedTable nameList = new UnifiedTable(Object.class, 2);
-    Object[]     tempName = new Object[2];
-
-    DatabaseObjectNames() {
-        nameList.sort(0, true);
-    }
-
-    boolean containsName(String name) {
-        return nameList.search(name) != -1;
-    }
-
-    HsqlName getOwner(String name) {
-
-        int i = nameList.search(name);
-
-        if (i == -1) {
-            return null;
-        }
-
-        return (HsqlName) nameList.getCell(i, 1);
-    }
-
-    void addName(String name, Object owner) throws HsqlException {
-
-        // should not contain name
-        if (containsName(name)) {
-            throw Trace.error(Trace.GENERAL_ERROR);
-        }
-
-        tempName[0] = name;
-        tempName[1] = owner;
-
-        nameList.addRow(tempName);
-        nameList.sort(0, true);
-    }
-
-    void rename(String name, String newname) throws HsqlException {
-
-        int i = nameList.search(name);
-
-        if (i != -1) {
-            nameList.setCell(i, 0, newname);
-            nameList.sort(0, true);
-        }
-    }
-
-    void removeName(String name) throws HsqlException {
-
-        int i = nameList.search(name);
-
-        if (i != -1) {
-            nameList.removeRow(i);
-        } else {
-
-            // should contain name
-            throw Trace.error(Trace.GENERAL_ERROR);
-        }
-    }
-
-    void removeOwner(Object name) {
-
-        int i = nameList.size();
-
-        while (i-- > 0) {
-            Object owner = nameList.getCell(i, 1);
-
-            if (owner == name || (owner != null && owner.equals(name))) {
-                nameList.removeRow(i);
-            }
-        }
-    }
-*/
     HashMap nameList = new HashMap();
 
     DatabaseObjectNames() {}
@@ -147,13 +74,17 @@ class DatabaseObjectNames {
         nameList.remove(name);
     }
 
-    void removeName(String name) throws HsqlException {
+    Object removeName(String name) throws HsqlException {
 
-        if (nameList.remove(name) == null) {
+        Object owner = nameList.remove(name);
+
+        if (owner == null) {
 
             // should contain name
             throw Trace.error(Trace.GENERAL_ERROR);
         }
+
+        return owner;
     }
 
     void removeOwner(Object value) {

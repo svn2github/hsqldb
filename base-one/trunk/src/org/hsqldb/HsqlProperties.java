@@ -43,7 +43,7 @@ import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.ArrayUtil;
 
 /**
- * Wrapper for java.util.Properties to limit values to String objects and
+ * Wrapper for java.util.Properties to limit values to Specific types and
  * allow saving and loading.<p>
  *
  * Is public because it is used in the org.hsqldb.test package.
@@ -401,12 +401,11 @@ public class HsqlProperties {
     public Enumeration propertyNames() {
         return stringProps.propertyNames();
     }
-/*
+
     public static void main(String[] argv) {
 
         HsqlProperties props = delimitedArgPairsToProps(
-            "filename.cvs;a=123 ;  b=\\delta ;c= another; derrorkey", "=",
+            "filename.cvs;a=123 ;  b=\\delta ;c= another; derrorkey;", "=",
             ";", "textdb");
     }
-*/
 }

@@ -896,7 +896,7 @@ implements java.sql.PreparedStatement {
         }
 
 // NOTE:
-//        
+//
 // No longer using StringBuffer, as chlen may end up exceeding
 // chread.  The new way ensures that the slack is taken up so
 // that no larger a character array than necessary is ever
@@ -905,7 +905,7 @@ implements java.sql.PreparedStatement {
 // the undocumented behavior of String is to share the array with
 // the StringBuffer from which it was created, until such time,
 // if any, that the StringBuffer is later modified.
-// CHECKME: 
+// CHECKME:
 //
 // what about when length is odd?
         int    chlen  = length / 2;
@@ -1403,8 +1403,8 @@ implements java.sql.PreparedStatement {
     public void setRef(int i, Ref x) throws SQLException {
 
 // boucherb@users 20030801 - method implemented
-        checkSetParameterIndex(i);
         checkClosed();
+        checkSetParameterIndex(i);
 
 // Note:  Ref surrogate in jdbcStubs cannot support this
 //        since Ref.getObject() is JDBC3-only.  Need SQLData support
@@ -1635,7 +1635,7 @@ implements java.sql.PreparedStatement {
             // This will work in general if the base component type of the
             // array is primitive or Serializable and the type of the parameter
             // is OTHER.  Otherwise, Column.convertObject(o, type) will almost
-            // certainly fail.           
+            // certainly fail.
             inType = Types.OTHER;
         }
 
@@ -1736,7 +1736,7 @@ implements java.sql.PreparedStatement {
 //           If this happens, do we properly use the default
 //           timezone, which is that of the virtual machine running the
 //           application?
-//        
+//
 //        if (cal == null) {
 //            cal = ??? java.util.Calendar.getInstance();
 //        }
@@ -1795,7 +1795,7 @@ implements java.sql.PreparedStatement {
 //           If this happens, do we properly use the default
 //           timezone, which is that of the virtual machine running the
 //           application?
-//        
+//
 //        if (cal == null) {
 //            cal = ??? java.util.Calendar.getInstance();
 //        }
@@ -1852,10 +1852,10 @@ implements java.sql.PreparedStatement {
 //           If this happens, do we properly use the default
 //           timezone, which is that of the virtual machine running the
 //           application?
-//        
+//
 //        if (cal == null) {
 //            cal = ??? java.util.Calendar.getInstance();
-//        }        
+//        }
         String s;
 
         if (x == null) {
@@ -2242,7 +2242,7 @@ implements java.sql.PreparedStatement {
 
         // synchronized, as we would not want the effect of setting
         // a parameter in one thread during an executeXXX call in
-        // another to be visible to the execute call.                                                             
+        // another to be visible to the execute call.
         // PRE: Already passed checkSetParameterIndex(i)
         i--;
 
@@ -2321,16 +2321,7 @@ implements java.sql.PreparedStatement {
         throw jdbcDriver.notSupported;
     }
 
-    /**
-     * Implements the public close() method so as to avoid excessive calls
-     * to close this connection's open statment objects. Overrides closeImpl()
-     * in jdbcStatement.
-     *
-     * @param isDisconnect if true, called from Connection.close, else from
-     *      this.close
-     * @throws SQLException if a database access error occurs
-     */
-    synchronized void closeImpl(boolean isDisconnect) throws SQLException {
+    public void close() throws java.sql.SQLException {
 
         HsqlException he;
 
@@ -2340,25 +2331,17 @@ implements java.sql.PreparedStatement {
 
         he = null;
 
-        // If the parent connection is closing, then the CompiledStatementManger
-        // instance at the other end of the connection will perform a
-        // processDisconnect(sid), which free's, in one go, all of the
-        // CompiledStatement objects that the Session has open.  If the
-        // connection is a network connection and has any prepared or
-        // callable statements open, we certainly do not want to make a
-        // separate call across the network to free each one when the
-        // connection closes; not only would this be a waste considering the
-        // above, it could also represent a large time delay, since the latency
-        // for each execute cycle across the network may, for internet and WAN
-        // situations, easily be as much as ~100-200 ms (or even worse, for
-        // example over a dialup connection).
-        if (!isDisconnect) {
-            try {
+        try {
+
+            // fredt - if this is called by Connection.close() then there's no
+            // need to free the prepared statements on the server - it is done
+            // by Connection.close()
+            if (!connection.isClosed) {
                 connection.sessionProxy.execute(
                     Result.newFreeStmtRequest(statementID));
-            } catch (HsqlException e) {
-                he = e;
             }
+        } catch (HsqlException e) {
+            he = e;
         }
 
         parameterValues = null;
@@ -2369,7 +2352,7 @@ implements java.sql.PreparedStatement {
         rsmd            = null;
         pmd             = null;
 
-        super.closeImpl(isDisconnect);
+        super.close();
 
         if (he != null) {
             throw jdbcDriver.sqlException(he);
