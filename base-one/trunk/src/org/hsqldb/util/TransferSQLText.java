@@ -312,7 +312,6 @@ class TransferSQLText extends DataAccessPoint {
         int             currentPos     = 0;
         String          columnName     = "";
         String          columnType     = "";
-        StringTokenizer Tokenizer;
         int             colnum = 0;
         ColumnDef       cDef;
 

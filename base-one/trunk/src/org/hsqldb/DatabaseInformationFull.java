@@ -1966,7 +1966,6 @@ extends org.hsqldb.DatabaseInformationMain {
         Parser    parser;
         String    defn;
         Select    select;
-        Tokenizer tokenizer;
         Iterator  tables;
         Table     table;
         Object[]  row;
