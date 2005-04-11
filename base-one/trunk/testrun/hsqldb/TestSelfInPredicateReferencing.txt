@@ -1,3 +1,4 @@
+DROP TABLE dups IF EXISTS;
 CREATE TABLE dups(pk INTEGER NOT NULL PRIMARY KEY,val VARCHAR NOT NULL);
 INSERT INTO dups VALUES (1, 'first');
 INSERT INTO dups VALUES (2, 'second');
@@ -13,14 +14,79 @@ SELECT a.pk, a.val FROM dups a WHERE a.pk in (SELECT sa.pk FROM dups sa, dups sb
  1,first
  4,first
  5,first
+*/SELECT a.pk, a.val FROM dups a WHERE a.val =
+  ALL(SELECT sa.val FROM dups sa WHERE sa.val = 'first') ORDER BY a.pk;
+/*r
+ 1,first
+ 2,second
+ 3,third
+ 4,first
+ 5,first
+ 6,second
+*/SELECT a.pk, a.val FROM dups a WHERE a.val >=  ALL(SELECT sa.val FROM dups sa WHERE sa.val = 'first') ORDER BY a.pk;
+/*r
+ 2,second
+ 3,third
+ 6,second
+*/SELECT a.pk, a.val FROM dups a WHERE a.val > ALL(SELECT sa.val FROM dups sa WHERE sa.val = 'first') ORDER BY a.pk;
+/*r
+ 1,first
+ 2,second
+ 4,first
+ 5,first
+ 6,second
 */SELECT a.pk, a.val FROM dups a WHERE a.val
- = ALL(SELECT sa.val FROM dups sa WHERE sa.pk BETWEEN 4 AND 5) ORDER BY a.pk;
-/*c3
- first
- first
- first
-*/SELECT a.val FROM dups a WHERE a.val
- = ALL(SELECT sa.val FROM dups sa WHERE sa.pk BETWEEN 4 AND 5);
+  <= ALL(SELECT sa.val FROM dups sa WHERE sa.val = 'second') ORDER BY a.pk;
+/*r
+ 1,first
+ 2,second
+ 4,first
+ 5,first
+ 6,second
+*/SELECT a.pk, a.val FROM dups a WHERE a.val
+ < ALL(SELECT sa.val FROM dups sa WHERE sa.val = 'third') ORDER BY a.pk;
+
+/*r
+ 1,first
+ 4,first
+ 5,first
+*/SELECT a.pk, a.val FROM dups a WHERE a.val
+ <= ALL(SELECT sa.val FROM dups sa) ORDER BY a.pk;
+
+-- ANY
+
+/*r
+ 1,first
+ 2,second
+ 4,first
+ 5,first
+ 6,second
+*/SELECT a.pk, a.val FROM dups a WHERE a.val
+ < ANY(SELECT sa.val FROM dups sa) ORDER BY a.pk;
+
+/*r
+ 2,second
+ 3,third
+ 6,second
+*/SELECT a.pk, a.val FROM dups a WHERE a.val
+ > ANY(SELECT sa.val FROM dups sa) ORDER BY a.pk;
+
+/*r
+ 1,first
+ 2,second
+ 3,third
+ 4,first
+ 5,first
+ 6,second
+*/SELECT a.pk, a.val FROM dups a WHERE a.val
+ <= ANY(SELECT sa.val FROM dups sa) ORDER BY a.pk;
+
+/*c0*/SELECT a.pk, a.val FROM dups a WHERE a.val
+ <= ANY(SELECT NULL FROM dups sa) ORDER BY a.pk;
+
+/*c0*/SELECT a.pk, a.val FROM dups a WHERE a.val
+ <= ANY(SELECT NULL FROM dups sa WHERE sa.val ='fourth') ORDER BY a.pk;
+
 -- non-correlated single value
 /*r
  1,first

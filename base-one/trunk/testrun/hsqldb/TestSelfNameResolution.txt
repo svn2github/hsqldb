@@ -1,0 +1,35 @@
+create table t0(c varchar(20), i integer);
+insert into t0 values ('first', 1);
+insert into t0 values ('second', 2);
+insert into t0 values ('third', 3);
+select * from t0 order by c;
+select t0.c, t0.i from t0 order by c, t0.i;
+select c as cc from t0 order by cc;
+select c as cc from t0 order by i;
+select upper(c) as uc from t0 t order by uc;
+select i, c from t0 order by upper(c);
+/*C3*/select i, c as cc from t0 order by upper(cc);
+/*e*/select distinct upper(c) as uc from t0 t order by i;
+/*C3*/select c as ccol, sum(i) as sumi from t0 group by ccol;
+/*c1*/select c as ccol, sum(i) as sumi from t0
+ group by c
+ having substring(upper(c) from 1 for 1) = 'S'
+/*c2*/select c as ccol, sum(i) as sumi from t0
+ group by c
+ having avg(i) < 3
+/*C1*/select c as ccol, sum(i) as sumi from t0
+ group by c
+ having substring(upper(c) from 1 for 1) = 'S'
+ and avg(i) < 10 order by c desc
+-- bug item #1167704
+create table Test(ID Integer, Cost Float);
+insert into test values(1,10);
+insert into test values(2,20);
+insert into test values (3,1);
+insert into test values (4,2);
+/*r
+ 3,kr 1.0
+ 4,kr 2.0
+ 1,kr 10.0
+ 2,kr 20.0
+*/SELECT ID, 'kr ' + Cost FROM Test ORDER BY Cost;
