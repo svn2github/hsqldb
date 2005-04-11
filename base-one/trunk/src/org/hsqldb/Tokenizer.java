@@ -192,13 +192,7 @@ public class Tokenizer {
     void getThis(String match) throws HsqlException {
 
         getToken();
-
-        if (!sToken.equals(match)) {
-            throw Trace.error(Trace.UNEXPECTED_TOKEN, Trace.TOKEN_REQUIRED,
-                              new Object[] {
-                sToken, match
-            });
-        }
+        matchThis(match);
     }
 
     void matchThis(String match) throws HsqlException {
@@ -220,14 +214,7 @@ public class Tokenizer {
      * @throws HsqlException
      */
     String getCurrentThis(String match) throws HsqlException {
-
-        if (!sToken.equals(match)) {
-            throw Trace.error(Trace.UNEXPECTED_TOKEN, Trace.TOKEN_REQUIRED,
-                              new Object[] {
-                sToken, match
-            });
-        }
-
+        matchThis(match);
         return sToken;
     }
 
