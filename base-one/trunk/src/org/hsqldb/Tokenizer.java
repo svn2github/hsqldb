@@ -309,7 +309,7 @@ public class Tokenizer {
      * Name means all quoted and unquoted identifiers plus any word not in the
      * hKeyword list.
      * 
-     * "Aname" is more broad thatn "Name" in that it includes FULL_NAMEs
+     * "Aname" is more broad than "Name" in that it includes FULL_NAMEs
      * (i.e., 2-part names).
      *
      * @return true if it's AName
@@ -350,7 +350,7 @@ public class Tokenizer {
 
     /**
      *
-     * "Aname" is more broad thatn "Name" in that it includes FULL_NAMEs
+     * "Aname" is more broad than "Name" in that it includes FULL_NAMEs
      * (i.e., 2-part names).
      *
      * @return Popped AName
