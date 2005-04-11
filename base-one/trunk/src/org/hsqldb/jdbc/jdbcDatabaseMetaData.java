@@ -2861,7 +2861,7 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
      * <div class="ReleaseSpecificDocumentation">
      * <h3>HSQLDB-Specific Information</h3>
      *
-     * Including 1.7.2, HSQLDB supports only TRANSACTION_READ_COMMITED
+     * Including 1.7.2, HSQLDB supports only TRANSACTION_READ_UNCOMMITED
      * and <em>always</em> returns this value here.
      * </div>
      * <!-- end release-specific documentation -->

@@ -43,8 +43,6 @@ import java.lang.reflect.Array;
  */
 public class StringUtil {
 
-    private StringUtil() {}
-
     /**
      * Returns a string with non alphanumeric chars converted to the
      * substitute character. A digit first character is also converted.

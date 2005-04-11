@@ -33,16 +33,13 @@ package org.hsqldb.scriptio;
 
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
 import org.hsqldb.Database;
 import org.hsqldb.HsqlException;
-import org.hsqldb.rowio.RowInputBase;
-
-import java.io.InputStream;
 
 /**
  *

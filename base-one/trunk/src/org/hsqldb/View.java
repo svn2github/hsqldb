@@ -31,8 +31,8 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.Iterator;
 import org.hsqldb.HsqlNameManager.HsqlName;
+import org.hsqldb.lib.Iterator;
 
 // fredt@users 20020420 - patch523880 by leptipre@users - VIEW support - modified
 // fredt@users 20031227 - remimplementated as compiled query

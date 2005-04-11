@@ -283,6 +283,19 @@ public class HsqlDateTime {
     static SimpleDateFormat sdftsSys = new SimpleDateFormat(sdftsSysPattern);
 
     /**
+     * Creates a valid timestamp string - jre 1.3 returns incorrect date part
+     * for Timestamp.toString();
+     */
+    public static String getTimestampString(Timestamp x) {
+
+        synchronized (sdfts) {
+            sdfts.setCalendar(tempCalDefault);
+
+            return sdfts.format(x) + x.getNanos();
+        }
+    }
+
+    /**
      * Creates a full length timestamp string, with 9 digist for nanos
      */
     public static String getTimestampString(Timestamp x, Calendar cal) {

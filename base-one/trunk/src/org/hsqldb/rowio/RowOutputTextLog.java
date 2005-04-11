@@ -31,7 +31,6 @@
 
 package org.hsqldb.rowio;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Time;
@@ -40,7 +39,6 @@ import java.sql.Timestamp;
 import org.hsqldb.CachedRow;
 import org.hsqldb.Column;
 import org.hsqldb.HsqlDateTime;
-import org.hsqldb.HsqlException;
 import org.hsqldb.lib.StringConverter;
 import org.hsqldb.types.Binary;
 import org.hsqldb.types.JavaObject;
@@ -189,8 +187,12 @@ public class RowOutputTextLog extends RowOutputBase {
     protected void writeTimestamp(Timestamp o) {
 
         write('\'');
-        this.writeBytes(HsqlDateTime.getTimestampString(o, null));
+        this.writeBytes(HsqlDateTime.getTimestampString(o));
         write('\'');
+    }
+
+    public void writeShortData(short i) {
+        writeBytes(Integer.toString(i));
     }
 
     public void writeIntData(int i) {

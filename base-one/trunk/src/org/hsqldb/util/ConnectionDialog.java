@@ -33,6 +33,8 @@ package org.hsqldb.util;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.util.Enumeration;
+import java.util.Hashtable;
 import java.awt.BorderLayout;
 import java.awt.Button;
 import java.awt.Choice;
@@ -50,8 +52,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.Enumeration;
-import java.util.Hashtable;
 
 // sqlbob@users 20020325 - patch 1.7.0 - enhancements
 // sqlbob@users 20020407 - patch 1.7.0 - reengineering

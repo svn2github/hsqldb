@@ -379,18 +379,11 @@ final class CompiledStatement {
                 continue;
             }
 
-            Table  t = sq.table;
-            Select s = sq.select;
-            Result r = s.getResult(session, sq.isExistsPredicate ? 1
-                                                                 : 0);
+            if (sq.isResolved) {
+                sq.populateTable(session);
 
-            if (sq.uniqueRows) {
-                r.removeDuplicates(session, 1);
+                sq.isMaterialised = true;
             }
-
-            t.insertResult(session, r);
-
-            sq.isMaterialised = true;
         }
     }
 

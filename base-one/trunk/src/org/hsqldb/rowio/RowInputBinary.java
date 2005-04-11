@@ -92,6 +92,10 @@ implements org.hsqldb.rowio.RowInputInterface {
         return readShort();
     }
 
+    public short readShortData() throws IOException {
+        return readShort();
+    }
+
     public int readIntData() throws IOException {
         return readInt();
     }

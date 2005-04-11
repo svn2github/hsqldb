@@ -176,6 +176,10 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
         return getField(longvarSep, longvarSepLen, longvarSepEnd);
     }
 
+    public short readShortData() throws IOException {
+        return (short) readIntData();
+    }
+
     public int readIntData() throws IOException {
 
         String s = readString();

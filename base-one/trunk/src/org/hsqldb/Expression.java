@@ -66,10 +66,10 @@
 
 package org.hsqldb;
 
+import org.hsqldb.index.RowIterator;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.store.ValuePool;
-import org.hsqldb.index.RowIterator;
 
 // fredt@users 20020215 - patch 1.7.0 by fredt
 // to preserve column size etc. when SELECT INTO TABLE is used
@@ -233,9 +233,8 @@ public class Expression {
     private boolean isFixedConstantValueList;
 
     // QUERY - in single value selects, IN or EXISTS predicates
-    Select  subSelect;
-    boolean isCorrelated;                           // correlated subquery
-    Table   subTable;                               // if not correlated
+    SubQuery subQuery;
+    boolean  isQueryCorrelated;
 
     // FUNCTION
     Function function;
@@ -325,7 +324,7 @@ public class Expression {
 
         //
         likeObject = e.likeObject;
-        subSelect  = e.subSelect;
+        subQuery   = e.subQuery;
         function   = e.function;
 
         checkAggregate();
@@ -333,16 +332,11 @@ public class Expression {
 
     /**
      * Creates a new QUERY expression
-     * @param s select
-     * @param t table
-     * @param correlated boolean
+     * @param sq subquery
      */
-    Expression(Select s, Table t, boolean correlated) {
-
+    Expression(SubQuery sq) {
         exprType     = QUERY;
-        subSelect    = s;
-        subTable     = t;
-        isCorrelated = correlated;
+        subQuery = sq;
     }
 
     /**
@@ -871,7 +865,7 @@ public class Expression {
 
             case QUERY :
                 buf.append("QUERY ");
-                buf.append(subSelect);
+                buf.append(subQuery.select);
 
                 return buf.toString();
 
@@ -1118,7 +1112,7 @@ public class Expression {
         return exprType == exp.exprType && dataType == exp.dataType
                && equals(valueData, exp.valueData)
                && equals(valueList, exp.valueList)
-               && equals(subSelect, exp.subSelect)
+               && equals(subQuery, exp.subQuery)
                && equals(function, exp.function)
                && equals(tableName, exp.tableName)
                && equals(columnName, exp.columnName)
@@ -1561,8 +1555,8 @@ public class Expression {
             result = result && eArg2.checkResolved(check);
         }
 
-        if (subSelect != null) {
-            result = result && subSelect.checkResolved(check);
+        if (subQuery != null) {
+            result = result && subQuery.select.checkResolved(check);
         }
 
         if (function != null) {
@@ -1845,8 +1839,8 @@ public class Expression {
 
                 // we now (1_7_2_ALPHA_R) resolve independently first, then
                 // resolve in the enclosing context
-                if (subSelect != null) {
-                    subSelect.resolveTables(f);
+                if (subQuery != null) {
+                    subQuery.select.resolveTables(f);
                 }
                 break;
 
@@ -1904,9 +1898,9 @@ public class Expression {
                 break;
 
             case QUERY : {
-                subSelect.resolveTypes(database);
+                subQuery.select.resolveTypes(database);
 
-                dataType = subSelect.exprColumns[0].dataType;
+                dataType = subQuery.select.exprColumns[0].dataType;
 
                 break;
             }
@@ -2442,19 +2436,13 @@ public class Expression {
         }
     }
 
-// PARAM Resolution rules:
-//
-// Expression used with IN:    Same as the first value or the result column
-//                             of the subquery
-//
-// A value used with IN:       Same as the expression or the first value if
-//                             there is a parameter marker in the expression
-// Implies ambiguity if:       A parameter marker is both the expression and
-//                             the first value of an IN operation, from which
-//                             follows that it is ambiguous for the expression
-//                             to be a parameter marker if the list is empty.
-// CHECKME:
-// Is an empty IN list legal?  Why would anyone ever use it?
+    /**
+     * Parametric or fixed value lists plus queries are handled.
+     *
+     * Empty lists are not allowed.
+     *
+     * Parametric predicand is resolved against the value list and vice versa.
+     */
     void resolveTypeForIn(Database database) throws HsqlException {
 
         Session session = database.sessionManager.getSysSession();
@@ -2464,17 +2452,12 @@ public class Expression {
                 eArg.dataType = eArg2.dataType;
             }
 
-            isCorrelated = eArg2.isCorrelated;
-        } else {    // eArg2.exprType == VALUELIST
+            isQueryCorrelated = !eArg2.subQuery.isResolved;
+        } else {
             Expression[] vl  = eArg2.valueList;
             int          len = vl.length;
 
             if (eArg.isParam) {
-                if (len == 0) {
-                    throw Trace.error(Trace.UNRESOLVED_PARAMETER_TYPE,
-                                      Trace.Expression_resolveTypeForIn1);
-                }
-
                 if (vl[0].isParam) {
                     throw Trace.error(Trace.UNRESOLVED_PARAMETER_TYPE,
                                       Trace.Expression_resolveTypeForIn2);
@@ -2534,7 +2517,7 @@ public class Expression {
             for (int i = 0; i < len; i++) {
                 if (!vl[i].isFixedConstant()) {
                     eArg2.isFixedConstantValueList = false;
-                    isCorrelated                   = true;
+                    isQueryCorrelated              = true;
 
                     break;
                 }
@@ -2923,54 +2906,34 @@ public class Expression {
                 return likeObject.compare(session, c);
 
             case ALL :
-                return eArg.getSingleValueFromQurey(session);
+            case ANY :
+                return null;
 
             case IN :
-                return eArg2.testValueList(session, leftValue);
+                return eArg2.testInCondition(session, leftValue);
 
             case EXISTS :
-                if (eArg.isCorrelated) {
-                    Result r = eArg.subSelect.getResult(session, 1);    // 1 is already enough
+                if (!eArg.subQuery.isResolved) {
+                    Result r = eArg.subQuery.select.getResult(session, 1);    // 1 is already enough
 
                     return r.rRoot == null ? Boolean.FALSE
                                            : Boolean.TRUE;
                 } else {
-                    return subTable.isEmpty() ? Boolean.FALSE
+                    return subQuery.table.isEmpty() ? Boolean.FALSE
                                               : Boolean.TRUE;
                 }
             case CASEWHEN :
-                if (leftValue instanceof SetFunction) {
-                    leftValue = Column.convertObject(
-                        ((SetFunction) leftValue).getValue(), Types.BOOLEAN);
-                } else {
-                    leftValue = Column.convertObject(leftValue,
-                                                     Types.BOOLEAN);
-                }
+                leftValue = Column.convertObject(leftValue, Types.BOOLEAN);
 
                 boolean test   = ((Boolean) leftValue).booleanValue();
                 Object  result = test ? ((Object[]) rightValue)[0]
                                       : ((Object[]) rightValue)[1];
 
-                if (result instanceof SetFunction) {
-                    return Column.convertObject(
-                        ((SetFunction) result).getValue(), dataType);
-                } else {
                     return Column.convertObject(result, dataType);
-                }
-            case ALTERNATIVE :
-                if (leftValue instanceof SetFunction) {
-                    leftValue = Column.convertObject(
-                        ((SetFunction) leftValue).getValue(), dataType);
-                } else {
-                    leftValue = Column.convertObject(leftValue, dataType);
-                }
 
-                if (rightValue instanceof SetFunction) {
-                    rightValue = Column.convertObject(
-                        ((SetFunction) rightValue).getValue(), dataType);
-                } else {
+            case ALTERNATIVE :
+                    leftValue = Column.convertObject(leftValue, dataType);
                     rightValue = Column.convertObject(rightValue, dataType);
-                }
 
                 Object[] objectPair = new Object[2];
 
@@ -2984,14 +2947,13 @@ public class Expression {
         }
 
         // handle comparisons
-        // convert vals
         if (isCompare(exprType)) {
-            int valueType = eArg.isColumn() ? eArg.dataType
-                                            : eArg2.dataType;
+            if (eArg2.exprType == Expression.ANY
+                    || eArg2.exprType == Expression.ALL) {
+                return testAnyAllCondition(session, leftValue);
+            }
 
-            return compareValues(session, leftValue, rightValue, valueType, exprType)
-                   ? Boolean.TRUE
-                   : Boolean.FALSE;
+            return compareValues(session, leftValue, rightValue);
         }
 
         // handle arithmetic and concat operations
@@ -3036,10 +2998,6 @@ public class Expression {
      */
     Object updateAggregatingValue(Session session,
                                   Object currValue) throws HsqlException {
-
-        if (!isAggregate()) {
-            return getValue(session);
-        }
 
         switch (aggregateSpec) {
 
@@ -3130,14 +3088,15 @@ public class Expression {
                 return function.getValue(session);
 
             case QUERY :
-                return subSelect.getValue(session, dataType);
+                return subQuery.select.getValue(session, dataType);
 
             case NEGATE :
                 return Column.negate(eArg.getValue(session, dataType),
                                      dataType);
 
             case ALL :
-                return eArg.getSingleValueFromQurey(session);
+            case ANY :
+                return null;
 
             case AND :
             case OR :
@@ -3279,10 +3238,10 @@ public class Expression {
                 return likeObject.compare(session, c);
 
             case IN :
-                return eArg2.testValueList(session, eArg.getValue(session));
+                return eArg2.testInCondition(session, eArg.getValue(session));
 
             case EXISTS :
-                Result r = eArg.subSelect.getResult(session, 1);    // 1 is already enough
+                Result r = eArg.subQuery.select.getResult(session, 1);    // 1 is already enough
 
                 return r.rRoot == null ? Boolean.FALSE
                                        : Boolean.TRUE;
@@ -3309,11 +3268,15 @@ public class Expression {
             throw Trace.error(Trace.NULL_VALUE_AS_BOOLEAN);
         }
 
-        int    type = eArg.dataType;
-        Object o    = eArg.getValue(session, type);
-        Object o2   = eArg2.getValue(session, type);
+        if (eArg2.exprType == Expression.ANY
+                || eArg2.exprType == Expression.ALL) {
+            return testAnyAllCondition(session, eArg.getValue(session));
+        }
 
-        if (o == null || o2 == null) {
+        Object o1 = eArg.getValue(session);
+        Object o2 = eArg2.getValue(session);
+
+        if (o1 == null || o2 == null) {
 /*
  TableFilter.swapCondition() ensures that with LEFT OUTER, eArg is the
  column expression for the table on the right hand side.
@@ -3322,7 +3285,7 @@ public class Expression {
 */
             if (eArg.tableFilter != null && eArg.tableFilter.isOuterJoin) {
                 if (isInJoin) {
-                    if (eArg.tableFilter.isCurrentOuter && o == null) {
+                    if (eArg.tableFilter.isCurrentOuter && o1 == null) {
                         return Boolean.TRUE;
                     }
                 } else {
@@ -3335,36 +3298,52 @@ public class Expression {
             return null;
         }
 
-        return compareValues(session, o, o2, type, exprType) ? Boolean.TRUE
-                                                             : Boolean.FALSE;
+        return compareValues(session, o1, o2);
     }
 
-    private static boolean compareValues(Session session, Object o,
-                                         Object o2, int valueType,
-                                         int exprType) throws HsqlException {
+    private Boolean compareValues(Session session, Object o1,
+                                  Object o2) throws HsqlException {
 
-        int result = Column.compare(session.database.collation, o, o2,
-                                    valueType);
+        int type = eArg.dataType;
+
+        if (eArg.dataType != eArg2.dataType) {
+            if (Types.isNumberType(eArg.dataType)
+                    && Types.isNumberType(eArg2.dataType)) {
+                type = Column.getCombinedNumberType(eArg.dataType,
+                                                    eArg2.dataType, exprType);
+    }
+
+            o1 = Column.convertObject(o1, type);
+            o2 = Column.convertObject(o2, type);
+        }
+
+        int result = Column.compare(session.database.collation, o1, o2, type);
 
         switch (exprType) {
 
             case EQUAL :
-                return result == 0;
+                return result == 0 ? Boolean.TRUE
+                                   : Boolean.FALSE;
 
             case BIGGER :
-                return result > 0;
+                return result > 0 ? Boolean.TRUE
+                                  : Boolean.FALSE;
 
             case BIGGER_EQUAL :
-                return result >= 0;
+                return result >= 0 ? Boolean.TRUE
+                                   : Boolean.FALSE;
 
             case SMALLER_EQUAL :
-                return result <= 0;
+                return result <= 0 ? Boolean.TRUE
+                                   : Boolean.FALSE;
 
             case SMALLER :
-                return result < 0;
+                return result < 0 ? Boolean.TRUE
+                                  : Boolean.FALSE;
 
             case NOT_EQUAL :
-                return result != 0;
+                return result != 0 ? Boolean.TRUE
+                                   : Boolean.FALSE;
 
             default :
                 throw Trace.error(Trace.GENERAL_ERROR,
@@ -3380,12 +3359,7 @@ public class Expression {
      * @return boolean
      * @throws HsqlException
      */
-
-// fredt - in the future testValueList can be turned into a join query
-// boucherb@users - 2003-09-25 - patch 1.7.2 Alpha Q - parametric IN lists
-//                  and correlated IN list expressions
-// fredt - catch type conversion exception due to narrowing
-    private Boolean testValueList(Session session,
+    private Boolean testInCondition(Session session,
                                   Object o) throws HsqlException {
 
         if (o == null) {
@@ -3419,121 +3393,227 @@ public class Expression {
         } else if (exprType == QUERY) {
 
             /** @todo fredt - convert to join */
-            if (subTable != null) {
                 try {
-                    o = Column.convertObject(o, subTable.getColumnTypes()[0]);
+                o = Column.convertObject(
+                    o, subQuery.table.getColumnTypes()[0]);
                 } catch (HsqlException e) {
                     return Boolean.FALSE;
                 }
 
-                return subTable.getPrimaryIndex().findFirstRow(session, o, Expression.EQUAL).hasNext()
-                       ? Boolean.TRUE
+            if (!subQuery.isResolved) {
+                subQuery.populateTable(session);
+            }
+
+            Boolean result =
+                subQuery.table.getPrimaryIndex().findFirstRow(
+                    session, o, Expression.EQUAL).hasNext() ? Boolean.TRUE
                        : Boolean.FALSE;
+
+            if (!subQuery.isResolved) {
+                subQuery.table.clearAllRows();
             }
 
-            Result r = subSelect.getResult(session, 0);
+            return result;
+        }
 
-            // fredt - reduce the size if possible
-            r.removeDuplicates(session);
+        throw Trace.error(Trace.WRONG_DATA_TYPE);
+    }
 
-            Record n    = r.rRoot;
-            int    type = r.metaData.colTypes[0];
+    private Boolean testAnyAllCondition(Session session,
+                                        Object o) throws HsqlException {
 
-            try {
-                o = Column.convertObject(o, type);
-            } catch (HsqlException e) {
-                return Boolean.FALSE;
+        if (o == null) {
+            return null;
             }
 
-            while (n != null) {
-                Object o2 = n.data[0];
+        SubQuery subquery = eArg2.eArg.subQuery;
+        boolean  populate = !subquery.isResolved;
 
-                if (o2 != null
-                        && Column.compare(
-                            session.database.collation, o2, o, type) == 0) {
-                    return Boolean.TRUE;
+        if (populate) {
+            subquery.populateTable(session);
                 }
 
-                n = n.next;
-            }
+        boolean     empty    = subquery.table.isEmpty();
+        Index       index    = subquery.table.getPrimaryIndex();
+        RowIterator it       = index.findFirstRowNotNull(session);
+        Row         firstrow = it.next();
 
+        switch (eArg2.exprType) {
+
+            case ANY : {
+                if (empty) {
             return Boolean.FALSE;
         }
 
-        throw Trace.error(Trace.WRONG_DATA_TYPE);
+                if (firstrow == null) {
+                    return null;
     }
 
-    /**
-     *
-     */
-    private Object getSingleValueFromQurey(Session session)
-    throws HsqlException {
+                int range =
+                    Column.compareToTypeRange(o, eArg2.eArg.getDataType());
 
-        if (exprType == QUERY) {
-            if (subTable != null) {
-                RowIterator it = subTable.getPrimaryIndex().firstRow(session);
-                Row         row = it.next();
+                if (range != 0) {
+                    switch (exprType) {
 
-                if (row == null) {
-                    return null;
+                        case EQUAL :
+                            return Boolean.FALSE;
+
+                        case NOT_EQUAL :
+                            return Boolean.TRUE;
+
+                        case BIGGER :
+                        case BIGGER_EQUAL :
+                            return range > 0 ? Boolean.TRUE
+                                             : Boolean.FALSE;
+
+                        case SMALLER_EQUAL :
+                        case SMALLER :
+                            return range < 0 ? Boolean.TRUE
+                                             : Boolean.FALSE;
+                    }
                 }
 
-                Object value = row.getData()[0];
+                o = Column.convertObject(o, eArg2.eArg.getDataType());
 
-                row = it.next();
+                if (exprType == EQUAL) {
+                    it = index.findFirstRow(session, o,
+                                            eArg2.eArg.getDataType());
 
-                return row == null ? value
-                                   : null;
+                    return it.hasNext() ? Boolean.TRUE
+                                        : Boolean.FALSE;
             }
 
-            Result r = subSelect.getResult(session, 0);
+                Row    lastrow   = index.lastRow(session);
+                Object firstdata = firstrow.getData()[0];
+                Object lastdata  = lastrow.getData()[0];
+                int comparefirst = Column.compare(session.database.collation,
+                                                  o, firstdata,
+                                                  eArg.getDataType());
+                int comparelast = Column.compare(session.database.collation,
+                                                 o, lastdata,
+                                                 eArg.getDataType());
 
-            r.removeDuplicates(session);
+                switch (exprType) {
 
-            if (r.getSize() == 1) {
-                Record n = r.rRoot;
+                    case NOT_EQUAL :
+                        return (comparefirst == 0 && comparelast == 0)
+                               ? Boolean.FALSE
+                               : Boolean.TRUE;
 
-                return n.data[0];
+                    case BIGGER :
+                        return comparefirst > 0 ? Boolean.TRUE
+                                                : Boolean.FALSE;
+
+                    case BIGGER_EQUAL :
+                        return comparefirst >= 0 ? Boolean.TRUE
+                                                 : Boolean.FALSE;
+
+                    case SMALLER :
+                        return comparelast < 0 ? Boolean.TRUE
+                                               : Boolean.FALSE;
+
+                    case SMALLER_EQUAL :
+                        return comparelast <= 0 ? Boolean.TRUE
+                                                : Boolean.FALSE;
+                }
+
+                break;
+            }
+            case ALL : {
+                if (empty) {
+                    return Boolean.TRUE;
             }
 
+                if (firstrow == null) {
             return null;
         }
 
-        throw Trace.error(Trace.WRONG_DATA_TYPE);
+                int range =
+                    Column.compareToTypeRange(o, eArg2.eArg.getDataType());
+
+                if (range != 0) {
+                    switch (exprType) {
+
+                        case EQUAL :
+                            return Boolean.FALSE;
+
+                        case NOT_EQUAL :
+                            return Boolean.TRUE;
+
+                        case BIGGER :
+                        case BIGGER_EQUAL :
+                            return range > 0 ? Boolean.TRUE
+                                             : Boolean.FALSE;
+
+                        case SMALLER_EQUAL :
+                        case SMALLER :
+                            return range < 0 ? Boolean.TRUE
+                                             : Boolean.FALSE;
+                    }
+                }
+
+                o = Column.convertObject(o, eArg2.eArg.getDataType());
+
+                if (exprType == EQUAL || exprType == NOT_EQUAL) {
+                    it = index.findFirstRow(session, o,
+                                            eArg2.eArg.getDataType());
+
+                    if (exprType == EQUAL) {
+                        return (it.hasNext() && subquery.table.getRowCount() == 1)
+                               ? Boolean.TRUE
+                               : Boolean.FALSE;
     }
 
-    /**
-     * For ANY expressions. Todo
-     */
-    private boolean compareValues(Session session, Object o,
-                                  int exprType) throws HsqlException {
+                    return (it.hasNext()) ? Boolean.FALSE
+                                          : Boolean.TRUE;
+                }
 
-        int result = 0;
+                Row    lastrow   = index.lastRow(session);
+                Object firstdata = firstrow.getData()[0];
+                Object lastdata  = lastrow.getData()[0];
+
+                o = Column.convertObject(o, eArg2.eArg.getDataType());
+
+                int comparefirst = Column.compare(session.database.collation,
+                                                  o, firstdata,
+                                                  eArg.getDataType());
+                int comparelast = Column.compare(session.database.collation,
+                                                 o, lastdata,
+                                                 eArg.getDataType());
 
         switch (exprType) {
 
-            case EQUAL :
-                return result == 0;
+                    case NOT_EQUAL :
+                        return (comparefirst == 0 || comparelast == 0)
+                               ? Boolean.FALSE
+                               : Boolean.TRUE;
 
             case BIGGER :
-                return result > 0;
+                        return comparelast > 0 ? Boolean.TRUE
+                                               : Boolean.FALSE;
 
             case BIGGER_EQUAL :
-                return result >= 0;
+                        return comparelast >= 0 ? Boolean.TRUE
+                                                : Boolean.FALSE;
+
+                    case SMALLER :
+                        return comparefirst < 0 ? Boolean.TRUE
+                                                : Boolean.FALSE;
 
             case SMALLER_EQUAL :
-                return result <= 0;
+                        return comparefirst <= 0 ? Boolean.TRUE
+                                                 : Boolean.FALSE;
+                }
 
-            case SMALLER :
-                return result < 0;
-
-            case NOT_EQUAL :
-                return result != 0;
-
-            default :
-                throw Trace.error(Trace.GENERAL_ERROR,
-                                  Trace.Expression_compareValues);
+                break;
+            }
         }
+
+        if (populate) {
+            subquery.table.clearAllRows();
+        }
+
+        return null;
     }
 
     /**
@@ -3820,7 +3900,9 @@ public class Expression {
                 add(e);
             }
 
-            addAll(e.subSelect, type);
+            if (e.subQuery != null) {
+                addAll(e.subQuery.select, type);
+            }
 
             function = e.function;
 

@@ -31,7 +31,9 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.*;
+import org.hsqldb.lib.HashMappedList;
+import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.LongKeyIntValueHashMap;
 
 class TxManager {
 

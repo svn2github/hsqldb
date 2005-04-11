@@ -66,7 +66,6 @@
 
 package org.hsqldb;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;

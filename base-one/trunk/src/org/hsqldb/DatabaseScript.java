@@ -93,7 +93,6 @@ public class DatabaseScript {
 
         HsqlArrayList tTable          = dDatabase.getTables();
         HsqlArrayList forwardFK       = new HsqlArrayList();
-        HsqlArrayList forwardFKSource = new HsqlArrayList();
         Result r = Result.newSingleColumnResult("COMMAND", Types.VARCHAR);
 
         r.metaData.tableNames[0] = "SYSTEM_SCRIPT";
@@ -139,7 +138,7 @@ public class DatabaseScript {
 
             StringBuffer a = new StringBuffer(128);
 
-            getTableDDL(dDatabase, t, i, forwardFK, forwardFKSource, a);
+            getTableDDL(dDatabase, t, i, forwardFK, a);
             addRow(r, a.toString());
 
             // indexes for table
@@ -337,8 +336,7 @@ public class DatabaseScript {
     }
 
     static void getTableDDL(Database dDatabase, Table t, int i,
-                            HsqlArrayList forwardFK,
-                            HsqlArrayList forwardFKSource, StringBuffer a) {
+                            HsqlArrayList forwardFK, StringBuffer a) {
 
         a.append(Token.T_CREATE).append(' ');
 
@@ -450,11 +448,6 @@ public class DatabaseScript {
                     int   maintableindex = dDatabase.getTableIndex(maintable);
 
                     if (maintableindex > i) {
-                        if (i >= forwardFKSource.size()) {
-                            forwardFKSource.setSize(i + 1);
-                        }
-
-                        forwardFKSource.set(i, c);
                         forwardFK.add(c);
                     } else {
                         a.append(',');

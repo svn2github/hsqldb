@@ -31,9 +31,9 @@
 
 package org.hsqldb.persist;
 
+import java.io.DataInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.DataInputStream;
 import java.io.InputStream;
 
 import org.hsqldb.lib.HsqlByteArrayInputStream;

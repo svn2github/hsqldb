@@ -31,10 +31,11 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.*;
-
-import java.util.Locale;
 import java.text.Collator;
+import java.util.Locale;
+
+import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.StringUtil;
 
 public class Collation {
 

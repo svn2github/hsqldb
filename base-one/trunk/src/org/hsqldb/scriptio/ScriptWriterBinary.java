@@ -35,10 +35,10 @@ import java.io.IOException;
 
 import org.hsqldb.Database;
 import org.hsqldb.HsqlException;
+import org.hsqldb.NumberSequence;
 import org.hsqldb.Result;
 import org.hsqldb.Table;
 import org.hsqldb.rowio.RowOutputBinary;
-import org.hsqldb.NumberSequence;
 
 /**
  *  @author fredt@users

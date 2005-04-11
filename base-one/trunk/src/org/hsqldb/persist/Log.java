@@ -76,7 +76,6 @@ import org.hsqldb.Session;
 import org.hsqldb.Table;
 import org.hsqldb.Trace;
 import org.hsqldb.lib.FileAccess;
-import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.ZipUnzipFile;

@@ -108,6 +108,7 @@ public class Index {
     boolean                isForward;
     private Node           root;
     private int            depth;
+    Collation              collation;
     static IndexRowIterator emptyIterator = new IndexRowIterator(null, null,
         null);
     IndexRowIterator updatableIterators;
@@ -125,9 +126,9 @@ public class Index {
      * @param forward is this an auto-index for an FK that refers to a table defined after this table
      * @param visColumns count of visible columns
      */
-    Index(HsqlName name, Table table, int[] column, int[] type, boolean isPk,
-            boolean unique, boolean constraint, boolean forward,
-            int[] pkcols, int[] pktypes) {
+    Index(Database database, HsqlName name, Table table, int[] column,
+            int[] type, boolean isPk, boolean unique, boolean constraint,
+            boolean forward, int[] pkcols, int[] pktypes) {
 
         indexName    = name;
         colIndex     = column;
@@ -146,6 +147,7 @@ public class Index {
         updatableIterators = Index.emptyIterator;
         updatableIterators.next = updatableIterators.last =
             updatableIterators;
+        collation = database.collation;
     }
 
     /**
@@ -222,6 +224,8 @@ public class Index {
         RowIterator it    = firstRow(null);
 
         while (it.hasNext()) {
+            it.next();
+
             count++;
         }
 
@@ -757,8 +761,8 @@ public class Index {
         while (x != null) {
             boolean t =
                 Column.compare(
-                    session.database.collation, value,
-                    x.getData()[colIndex[0]], colType[0]) >= iTest;
+                    collation, value, x.getData()[colIndex[0]],
+                    colType[0]) >= iTest;
 
             if (t) {
                 Node r = x.getRight();
@@ -788,8 +792,8 @@ public class Index {
 */
         while (x != null) {
             Object colvalue = x.getData()[colIndex[0]];
-            int result = Column.compare(session.database.collation, value,
-                                        colvalue, colType[0]);
+            int result = Column.compare(collation, value, colvalue,
+                                        colType[0]);
 
             if (result >= iTest) {
                 x = next(x);
@@ -824,10 +828,8 @@ public class Index {
         Node x = root;
 
         while (x != null) {
-            boolean t =
-                Column.compare(
-                    session.database.collation, null,
-                    x.getData()[colIndex[0]], colType[0]) >= 0;
+            boolean t = Column.compare(
+                collation, null, x.getData()[colIndex[0]], colType[0]) >= 0;
 
             if (t) {
                 Node r = x.getRight();
@@ -863,9 +865,9 @@ public class Index {
     }
 
     /**
-     * Returns the first node of the index
+     * Returns the row for the first node of the index
      *
-     * @return first node
+     * @return Iterator for first row
      *
      * @throws HsqlException
      */
@@ -885,6 +887,27 @@ public class Index {
 
         return x == null ? emptyIterator
                          : new IndexRowIterator(session, this, x);
+    }
+
+    /**
+     * Returns the row for the last node of the index
+     *
+     * @return last row
+     *
+     * @throws HsqlException
+     */
+    Row lastRow(Session session) throws HsqlException {
+
+        Node x = root,
+             l = x;
+
+        while (l != null) {
+            x = l;
+            l = x.getRight();
+        }
+
+        return x == null ? null
+                         : x.getRow();
     }
 
     /**
@@ -1033,8 +1056,8 @@ public class Index {
     int compareRowNonUnique(Session session, Object[] a, int[] rowColMap,
                             Object[] b) throws HsqlException {
 
-        int i = Column.compare(session.database.collation, a[rowColMap[0]],
-                               b[colIndex[0]], colType[0]);
+        int i = Column.compare(collation, a[rowColMap[0]], b[colIndex[0]],
+                               colType[0]);
 
         if (i != 0) {
             return i;
@@ -1043,8 +1066,8 @@ public class Index {
         int fieldcount = rowColMap.length;
 
         for (int j = 1; j < fieldcount; j++) {
-            i = Column.compare(session.database.collation, a[rowColMap[j]],
-                               b[colIndex[j]], colType[j]);
+            i = Column.compare(collation, a[rowColMap[j]], b[colIndex[j]],
+                               colType[j]);
 
             if (i != 0) {
                 return i;
@@ -1101,8 +1124,8 @@ public class Index {
 
         for (; j < colIndex.length; j++) {
             Object currentvalue = a[colIndex[j]];
-            int i = Column.compare(session.database.collation, currentvalue,
-                                   b[colIndex[j]], colType[j]);
+            int i = Column.compare(collation, currentvalue, b[colIndex[j]],
+                                   colType[j]);
 
             if (i != 0) {
                 return i;
@@ -1119,8 +1142,8 @@ public class Index {
 
         for (j = 0; j < pkCols.length; j++) {
             Object currentvalue = a[pkCols[j]];
-            int i = Column.compare(session.database.collation, currentvalue,
-                                   b[pkCols[j]], pkTypes[j]);
+            int i = Column.compare(collation, currentvalue, b[pkCols[j]],
+                                   pkTypes[j]);
 
             if (i != 0) {
                 return i;

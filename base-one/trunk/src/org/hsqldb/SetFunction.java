@@ -35,6 +35,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import org.hsqldb.lib.HashSet;
+import org.hsqldb.store.ValuePool;
 
 /**
  * Implementation of SQL set functions (currently only aggregate functions).
@@ -181,7 +182,7 @@ public class SetFunction {
     Object getValue() throws HsqlException {
 
         if (setType == Expression.COUNT) {
-            return new Integer(count);
+            return ValuePool.getInt(count);
         }
 
         if (count == 0) {

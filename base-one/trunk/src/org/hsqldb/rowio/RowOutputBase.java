@@ -31,14 +31,12 @@
 
 package org.hsqldb.rowio;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
 
 import org.hsqldb.Column;
-import org.hsqldb.HsqlException;
 import org.hsqldb.Table;
 import org.hsqldb.Trace;
 import org.hsqldb.Types;
@@ -99,6 +97,8 @@ implements RowOutputInterface {
     public abstract void writeSize(int size);
 
     public abstract void writeType(int type);
+
+    public abstract void writeShortData(short i);
 
     public abstract void writeIntData(int i);
 

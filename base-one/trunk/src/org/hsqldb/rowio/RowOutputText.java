@@ -31,7 +31,6 @@
 
 package org.hsqldb.rowio;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.sql.Date;
@@ -208,6 +207,10 @@ public class RowOutputText extends RowOutputBase {
         StringConverter.writeHex(this.getBuffer(), count, b);
 
         count += b.length * 2;
+    }
+
+    public void writeShortData(short i) {
+        writeIntData(i);
     }
 
     public void writeIntData(int i) {

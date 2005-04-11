@@ -32,14 +32,13 @@
 package org.hsqldb.lib;
 
 import java.io.File;
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Random;
 
 import org.hsqldb.lib.java.JavaSystem;
-
-import java.io.FileDescriptor;
-import java.io.FileOutputStream;
-import java.io.FileInputStream;
 
 /**
  * A collection of static file management methods.

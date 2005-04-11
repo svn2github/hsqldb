@@ -55,6 +55,18 @@ class SubQuery implements ObjectComparator {
     View    view;
     boolean isMaterialised;
 
+    void populateTable(Session session) throws HsqlException {
+
+        Result r = select.getResult(session, isExistsPredicate ? 1
+                                                               : 0);
+
+        if (uniqueRows) {
+            r.removeDuplicates(session, select.iResultLen);
+        }
+
+        table.insertResult(session, r);
+    }
+
     /**
      * This results in the following sort order:
      *

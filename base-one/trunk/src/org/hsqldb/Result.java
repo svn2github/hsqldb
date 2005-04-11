@@ -66,13 +66,11 @@
 
 package org.hsqldb;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.DataInput;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.NoSuchElementException;
 
-import org.hsqldb.lib.InOutUtil;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.rowio.RowInputBinary;
 import org.hsqldb.rowio.RowOutputBinary;

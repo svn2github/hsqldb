@@ -7,7 +7,18 @@ Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
 
-2005.03.28
+2005.04.11
+
+Full support for ALL(SELECT ....) and ANY(SELECT ....) with comparison operators:
+=, >, <, <>, >=, <=
+Example:
+
+SELECT ... WHERE <value expression> >= ALL(SELECT ...)
+
+Correct range checking and type casting for joins and comparison of numeric
+values of different types. Cases such as comparison with a value beyond the
+range of the type are covered, including joins on columns of different numeric
+types where one value is beyond the type range of the other. 
 
 Various bug fixes and enhancements in query processing.
 
@@ -30,11 +41,6 @@ SELECT ... FROM ... ORDER BY .. LIMIT
 
 
 Support for ORDER BY, LIMIT and OFFSET in CREATE VIEW statements
-
-Support for ALL(SELECT ....) with comparison operators: =, >, <, <>, >=, <=
-Example:
-
-SELECT ... WHERE <value expression> >= ALL(SELECT ...) 
 
 Support for correct casting of TIME into TIMESTAMP, using CURRENT_DATE 
 

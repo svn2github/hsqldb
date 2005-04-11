@@ -72,7 +72,6 @@ import java.sql.Timestamp;
 import org.hsqldb.jdbc.jdbcConnection;
 import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HashMappedList;
-import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.store.ValuePool;
 
@@ -453,7 +452,7 @@ public class Session implements SessionInterface {
      * No-op in this implementation
      */
     public void resetSession() throws HsqlException {
-        throw new HsqlException("","",0);
+        throw new HsqlException("", "", 0);
     }
 
     /**

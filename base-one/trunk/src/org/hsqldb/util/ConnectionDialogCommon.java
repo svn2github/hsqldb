@@ -38,9 +38,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.Hashtable;
-import java.util.Enumeration;
 import java.lang.reflect.Constructor;
+import java.util.Enumeration;
+import java.util.Hashtable;
 
 import org.hsqldb.lib.java.JavaSystem;
 

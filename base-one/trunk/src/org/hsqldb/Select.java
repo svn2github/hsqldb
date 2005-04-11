@@ -664,8 +664,17 @@ class Select {
             for (int i = 0, size = colExps.size(); i < size; i++) {
                 Expression exp = (Expression) colExps.get(i);
 
-                Trace.check(inAggregateOrGroupByClause(exp),
-                            Trace.NOT_IN_AGGREGATE_OR_GROUP_BY, exp);
+                if (inAggregateOrGroupByClause(exp)) {
+                    continue;
+                }
+
+                if (isDistinctSelect) {
+                    throw Trace.error(
+                        Trace.INVALID_ORDER_BY_IN_DISTINCT_SELECT, exp);
+                } else {
+                    throw Trace.error(Trace.NOT_IN_AGGREGATE_OR_GROUP_BY,
+                                      exp);
+                }
             }
         }
     }
@@ -689,6 +698,8 @@ class Select {
                    || allColumnsAreDefinedIn(exp, groupColumnNames);
         } else if (isAggregated) {
             return exp.canBeInAggregate();
+        } else if (isDistinctSelect) {
+            return isSimilarIn(exp, 0, iResultLen);
         } else {
             return true;
         }

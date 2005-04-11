@@ -37,11 +37,11 @@ import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
 
-import org.hsqldb.types.Binary;
 import org.hsqldb.HsqlException;
 import org.hsqldb.Trace;
 import org.hsqldb.Types;
 import org.hsqldb.lib.HsqlByteArrayInputStream;
+import org.hsqldb.types.Binary;
 
 /**
  * Base class for reading the data for a database row in different formats.

@@ -31,17 +31,17 @@
 
 package org.hsqldb.util;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.Vector;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.Vector;
 
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -53,7 +53,6 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 
 // sqlbob@users 20020325 - patch 1.7.0 - enhancements

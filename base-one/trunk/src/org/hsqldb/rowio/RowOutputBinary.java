@@ -31,7 +31,6 @@
 
 package org.hsqldb.rowio;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Date;
@@ -39,7 +38,6 @@ import java.sql.Time;
 import java.sql.Timestamp;
 
 import org.hsqldb.CachedRow;
-import org.hsqldb.HsqlException;
 import org.hsqldb.Trace;
 import org.hsqldb.Types;
 import org.hsqldb.lib.StringConverter;
@@ -80,6 +78,10 @@ public class RowOutputBinary extends RowOutputBase {
     }
 
 // fredt@users - comment - methods for writing column type, name and data size
+    public void writeShortData(short i) {
+        writeShort(i);
+    }
+
     public void writeIntData(int i) {
         writeInt(i);
     }

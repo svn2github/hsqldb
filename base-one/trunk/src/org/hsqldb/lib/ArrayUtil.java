@@ -64,8 +64,6 @@ public class ArrayUtil {
         classCodeMap.put(Object.class, ArrayUtil.CLASS_CODE_OBJECT);
     }
 
-    private ArrayUtil() {}
-
     /**
      * Returns a distinct int code for each primitive type and for all Object types.
      */

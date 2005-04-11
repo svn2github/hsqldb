@@ -32,7 +32,6 @@
 package org.hsqldb;
 
 import java.lang.reflect.Method;
-import java.sql.Timestamp;
 
 import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.HashMap;
@@ -40,8 +39,8 @@ import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.persist.DataFileCache;
-import org.hsqldb.persist.HsqlProperties;
 import org.hsqldb.persist.HsqlDatabaseProperties;
+import org.hsqldb.persist.HsqlProperties;
 import org.hsqldb.persist.Log;
 import org.hsqldb.persist.TextCache;
 import org.hsqldb.scriptio.ScriptWriterBase;
@@ -1203,7 +1202,7 @@ extends org.hsqldb.DatabaseInformationMain {
             s              = sessions[i];
             row            = t.getEmptyRowData();
             row[isid]      = ValuePool.getInt(s.getId());
-            row[ict]       = new Timestamp(s.getConnectTime());
+            row[ict]       = HsqlDateTime.getTimestamp(s.getConnectTime());
             row[iuname]    = s.getUsername();
             row[iis_admin] = ValuePool.getBoolean(s.isAdmin());
             row[iautocmt]  = ValuePool.getBoolean(s.isAutoCommit());

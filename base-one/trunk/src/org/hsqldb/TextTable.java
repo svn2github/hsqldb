@@ -32,8 +32,8 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.FileUtil;
-import org.hsqldb.persist.TextCache;
 import org.hsqldb.lib.StringConverter;
+import org.hsqldb.persist.TextCache;
 
 // tony_lai@users 20020820 - patch 595099 - user define PK name
 
@@ -95,12 +95,12 @@ class TextTable extends org.hsqldb.Table {
 
                 // read and insert all the rows from the source file
                 TextCache     textCache = (TextCache) cache;
-                CachedDataRow row       = null;
+                CachedRow row       = null;
                 int           pos       = 0;
 
                 while (true) {
                     pos = textCache.getNextRowPos();
-                    row = (CachedDataRow) rowStore.get(pos);
+                    row = (CachedRow) rowStore.get(pos);
 
                     if (row == null) {
                         break;

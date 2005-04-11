@@ -31,8 +31,8 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.HsqlDeque;
 import org.hsqldb.HsqlNameManager.HsqlName;
+import org.hsqldb.lib.HsqlDeque;
 
 // peterhudson@users 20020130 - patch 478657 by peterhudson - triggers support
 // fredt@users 20020130 - patch 1.7.0 by fredt

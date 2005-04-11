@@ -2989,7 +2989,7 @@ class DatabaseCommandInterpreter {
 
     /**
      *  Logs the DDL for a table created with INTO.
-     *  Uses three dummy arguments for getTableDDL() as the new table has no
+     *  Uses two dummy arguments for getTableDDL() as the new table has no
      *  FK constraints.
      *
      *
@@ -3007,7 +3007,7 @@ class DatabaseCommandInterpreter {
 
         tableDDL = new StringBuffer();
 
-        DatabaseScript.getTableDDL(database, t, 0, null, null, tableDDL);
+        DatabaseScript.getTableDDL(database, t, 0, null, tableDDL);
 
         sourceDDL = DatabaseScript.getDataSource(t);
 

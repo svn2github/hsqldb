@@ -31,10 +31,10 @@
 
 package org.hsqldb;
 
+import org.hsqldb.HsqlNameManager.HsqlName;
+import org.hsqldb.index.RowIterator;
 import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HashSet;
-import org.hsqldb.index.RowIterator;
-import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users 20020520 - patch 1.7.0 - ALTER TABLE support
 // tony_lai@users 20020820 - patch 595172 - drop constraint fix
@@ -130,7 +130,9 @@ class TableWorks {
         }
 
         boolean isSelf = table == expTable;
-        boolean isforward = table.database.getTableIndex(table)
+        int     offset = table.database.getTableIndex(table);
+        boolean isforward = offset != -1
+                            && offset
                             < table.database.getTableIndex(expTable);
         Index exportindex = expTable.getConstraintIndexForColumns(expcol);
 

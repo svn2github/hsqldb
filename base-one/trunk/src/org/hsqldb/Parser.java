@@ -237,7 +237,7 @@ class Parser {
     /**
      * The SubQuery objects are added to the end of subquery list.
      *
-     * When parsing the SELECT for a view, optional HsqlName[] array ise used
+     * When parsing the SELECT for a view, optional HsqlName[] array is used
      * for view column aliases.
      *
      */
@@ -268,10 +268,6 @@ class Parser {
 
         sq.select     = s;
         sq.isResolved = isResolved;
-
-        if (!isResolved) {
-            return sq;
-        }
 
         // it's not a problem that this table has not a unique name
         Table table = new Table(
@@ -306,11 +302,17 @@ class Parser {
 
         table.addColumns(s);
 
-        boolean uniqueValues = predicateType == Expression.IN
+        boolean uniqueValues = predicateType == Expression.EXISTS
+                               || predicateType == Expression.IN
                                || predicateType == Expression.ALL
                                || predicateType == Expression.ANY;
-        int[] pcol = uniqueValues ? new int[]{ 0 }
-                                  : null;
+        int[] pcol = null;
+
+        if (uniqueValues) {
+            pcol = new int[s.iResultLen];
+
+            ArrayUtil.fillSequence(pcol);
+        }
 
         table.createPrimaryKey(pcol);
 
@@ -1212,9 +1214,7 @@ class Parser {
 
                 SubQuery sq = parseSubquery(brackets, null, false,
                                             Expression.EXISTS);
-                Select select = sq.select;
-                Expression s = new Expression(select, sq.table,
-                                              !sq.isResolved);
+                Expression s = new Expression(sq);
 
                 read();
                 readThis(Expression.CLOSE);
@@ -1383,12 +1383,12 @@ class Parser {
 
         if (iToken == Expression.SELECT) {
             SubQuery sq = parseSubquery(brackets, null, false, Expression.IN);
-            Select   select = sq.select;
 
             // until we support rows in IN predicates
-            Trace.check(select.iResultLen == 1, Trace.SINGLE_COLUMN_EXPECTED);
+            Trace.check(sq.select.iResultLen == 1,
+                        Trace.SINGLE_COLUMN_EXPECTED);
 
-            b = new Expression(select, sq.table, !sq.isResolved);
+            b = new Expression(sq);
 
             read();
         } else {
@@ -1447,9 +1447,9 @@ class Parser {
         Select   select = sq.select;
 
         // until we support rows
-        Trace.check(select.iResultLen == 1, Trace.SINGLE_COLUMN_EXPECTED);
+        Trace.check(sq.select.iResultLen == 1, Trace.SINGLE_COLUMN_EXPECTED);
 
-        b = new Expression(select, sq.table, !sq.isResolved);
+        b = new Expression(sq);
 
         read();
         readThis(Expression.CLOSE);
@@ -1632,7 +1632,10 @@ class Parser {
 
                 select.resolve(database);
 
-                r = new Expression(select, null, true);
+                SubQuery sq = new SubQuery();
+
+                sq.select = select;
+                r         = new Expression(sq);
 
                 read();
 
@@ -2337,8 +2340,7 @@ class Parser {
         tokenSet.put(Token.T_NOT, Expression.NOT);
         tokenSet.put(Token.T_OR, Expression.OR);
         tokenSet.put(Token.T_ALL, Expression.ALL);
-
-//        tokenSet.put(Token.T_ANY, Expression.ANY); todo
+        tokenSet.put(Token.T_ANY, Expression.ANY);
         tokenSet.put(Token.T_IN, Expression.IN);
         tokenSet.put(Token.T_EXISTS, Expression.EXISTS);
         tokenSet.put(Token.T_BETWEEN, Expression.BETWEEN);

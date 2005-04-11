@@ -1356,8 +1356,9 @@ public class Table extends BaseTable {
             pkcoltypes[j] = colTypes[pkcols[j]];
         }
 
-        Index newindex = new Index(name, this, pkcols, pkcoltypes, true,
-                                   true, true, false, pkcols, pkcoltypes);
+        Index newindex = new Index(database, name, this, pkcols, pkcoltypes,
+                                   true, true, true, false, pkcols,
+                                   pkcoltypes);
 
         addIndex(newindex);
     }
@@ -1476,8 +1477,9 @@ public class Table extends BaseTable {
 
         int[] pkcols  = getPrimaryKey();
         int[] pktypes = getPrimaryKeyTypes();
-        Index newindex = new Index(name, this, col, type, false, unique,
-                                   constraint, forward, pkcols, pktypes);
+        Index newindex = new Index(database, name, this, col, type, false,
+                                   unique, constraint, forward, pkcols,
+                                   pktypes);
         int indexNo = addIndex(newindex);
 
         setBestRowIdentifiers();

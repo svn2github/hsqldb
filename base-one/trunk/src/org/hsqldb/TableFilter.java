@@ -66,8 +66,8 @@
 
 package org.hsqldb;
 
-import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.index.RowIterator;
+import org.hsqldb.lib.ArrayUtil;
 
 // fredt@users 20030813 - patch 1.7.2 - fix for column comparison within same table bugs #572075 and 722443
 // fredt@users 20031012 - patch 1.7.2 - better OUTER JOIN implementation
@@ -108,6 +108,9 @@ final class TableFilter {
     private RowIterator it;
     Object[]            currentData;
     Row                 currentRow;
+
+    //
+    Object[] currentJoinData;
 
     // addendum to the result of findFirst() and next() with isOuterJoin==true
     // when the result is false, it indicates if a non-join condition caused the failure
@@ -171,7 +174,7 @@ final class TableFilter {
                 return CONDITION_UNORDERED;
 
             case Expression.IN : {
-                return e.isCorrelated ? CONDITION_NONE
+                return e.isQueryCorrelated ? CONDITION_NONE
                                       : CONDITION_UNORDERED;
             }
             case Expression.IS_NULL :
@@ -315,6 +318,7 @@ final class TableFilter {
         if (ArrayUtil.containsAllTrueElements(check, filterIndex.colCheck)) {
             isMultiFindFirst     = true;
             findFirstExpressions = expr;
+            currentJoinData      = filterTable.getEmptyRowData();
         }
     }
 
@@ -478,28 +482,45 @@ final class TableFilter {
         }
 
         if (isMultiFindFirst) {
-            Object[] data  = filterTable.getEmptyRowData();
+            boolean convertible = true;
             int[]    types = filterTable.getColumnTypes();
 
             for (int i = 0; i < findFirstExpressions.length; i++) {
                 Expression e = findFirstExpressions[i];
 
                 if (e != null) {
-                    data[i] = e.getValue(session, types[i]);
+                    Object value = e.getValue(session);
+
+                    if (Column.compareToTypeRange(value, types[i]) != 0) {
+                        convertible = false;
+
+                        break;
+                    }
+
+                    value = Column.convertObject(value, types[i]);
+                    currentJoinData[i] = e.getValue(session, types[i]);
                 }
             }
 
-            it = filterIndex.findFirstRow(session, data);
+            it = convertible
+                 ? filterIndex.findFirstRow(session, currentJoinData)
+                 : filterIndex.emptyIterator();
+
+            if (!it.hasNext()) {
+                ArrayUtil.clearArray(ArrayUtil.CLASS_CODE_OBJECT,
+                                     currentJoinData, 0,
+                                     currentJoinData.length);
+            }
         } else if (eStart == null) {
             it = eEnd == null ? filterIndex.firstRow(session)
                               : filterIndex.findFirstRowNotNull(session);
         } else {
+            Object value      = eStart.getArg2().getValue(session);
+            int    valuetype  = eStart.getArg2().getDataType();
+            int    targettype = eStart.getArg().getDataType();
 
-/** @todo fredt -- check - if a compare value is wider than the column of the index, incorrect results may emerge */
-            int    type = eStart.getArg().getDataType();
-            Object o    = eStart.getArg2().getValue(session, type);
-
-            it = filterIndex.findFirstRow(session, o, eStart.getType());
+            it = getFirstIterator(session, eStart.getType(), value,
+                                  valuetype, filterIndex, targettype);
         }
 
         while (true) {
@@ -524,6 +545,39 @@ final class TableFilter {
         currentData = emptyData;
 
         return false;
+    }
+
+    static RowIterator getFirstIterator(Session session, int eType,
+                                        Object value, int valueType,
+                                        Index index,
+                                        int targetType) throws HsqlException {
+
+        RowIterator it;
+        int         range = 0;
+
+        if (targetType != valueType) {
+            range = Column.compareToTypeRange(value, targetType);
+        }
+
+        if (range == 0) {
+            value = Column.convertObject(value, targetType);
+            it    = index.findFirstRow(session, value, eType);
+        } else {
+            switch (eType) {
+
+                case Expression.BIGGER_EQUAL :
+                case Expression.BIGGER :
+                    if (range < 0) {
+                        it = index.findFirstRowNotNull(session);
+
+                        break;
+                    }
+                default :
+                    it = index.emptyIterator();
+            }
+        }
+
+        return it;
     }
 
     /**

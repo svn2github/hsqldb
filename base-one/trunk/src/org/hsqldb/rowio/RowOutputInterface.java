@@ -31,10 +31,7 @@
 
 package org.hsqldb.rowio;
 
-import java.io.IOException;
-
 import org.hsqldb.CachedRow;
-import org.hsqldb.HsqlException;
 import org.hsqldb.Table;
 import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.lib.HsqlByteArrayOutputStream;
@@ -56,6 +53,8 @@ public interface RowOutputInterface {
     void writeType(int type);
 
     void writeString(String value);
+
+    void writeShortData(short i);
 
     void writeIntData(int i);
 

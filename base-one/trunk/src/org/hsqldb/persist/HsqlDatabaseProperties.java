@@ -33,7 +33,6 @@ package org.hsqldb.persist;
 
 import java.util.Enumeration;
 
-import org.hsqldb.Column;
 import org.hsqldb.Database;
 import org.hsqldb.DatabaseManager;
 import org.hsqldb.HsqlException;

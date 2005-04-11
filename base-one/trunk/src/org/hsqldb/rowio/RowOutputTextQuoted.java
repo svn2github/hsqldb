@@ -31,9 +31,6 @@
 
 package org.hsqldb.rowio;
 
-import java.io.IOException;
-
-import org.hsqldb.Trace;
 import org.hsqldb.lib.StringConverter;
 
 /**

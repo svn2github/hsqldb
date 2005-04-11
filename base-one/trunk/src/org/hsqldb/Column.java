@@ -76,7 +76,6 @@ import java.sql.Timestamp;
 
 import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.StringConverter;
-import org.hsqldb.lib.java.JavaSystem;
 import org.hsqldb.store.ValuePool;
 import org.hsqldb.types.Binary;
 import org.hsqldb.types.JavaObject;
@@ -652,8 +651,7 @@ public class Column {
      * @return result 1 if a>b, 0 if a=b, -1 if b>a
      * @throws  HsqlException
      */
-    static int compare(Collation collation, Object a, Object b,
-                       int type) throws HsqlException {
+    static int compare(Collation collation, Object a, Object b, int type) {
 
         int i = 0;
 
@@ -745,18 +743,11 @@ public class Column {
                 if (a instanceof Binary && b instanceof Binary) {
                     i = compareTo(((Binary) a).getBytes(),
                                   ((Binary) b).getBytes());
-                } else {
-                    throw Trace.error(Trace.INVALID_CONVERSION,
-                                      Types.getTypeString(type));
                 }
                 break;
 
             case Types.OTHER :
                 return 0;
-
-            default :
-                throw Trace.error(Trace.INVALID_CONVERSION,
-                                  Types.getTypeString(type));
         }
 
         return (i == 0) ? 0
@@ -1419,7 +1410,6 @@ public class Column {
 
                     return HsqlDateTime.getTimestamp(millis);
                 }
-            default :
         }
 
         return convertObject(o, type);
@@ -1658,6 +1648,12 @@ public class Column {
 
         switch (expType) {
 
+            case Expression.EQUAL :
+            case Expression.BIGGER :
+            case Expression.BIGGER_EQUAL :
+            case Expression.SMALLER_EQUAL :
+            case Expression.SMALLER :
+            case Expression.NOT_EQUAL :
             case Expression.ALTERNATIVE :
             case Expression.DIVIDE :
                 return (typeWidth1 > typeWidth2) ? type1
@@ -1710,6 +1706,73 @@ public class Column {
             default :
                 return 32;
         }
+    }
+
+    /**
+     * returns -1, 0 , +1
+     */
+    static int compareToTypeRange(Object o, int targettype) {
+
+        if (!(o instanceof Number)) {
+            return 0;
+        }
+
+        if (o instanceof Integer || o instanceof Long) {
+            long temp = ((Number) o).longValue();
+            int  min;
+            int  max;
+
+            switch (targettype) {
+
+                case Types.TINYINT :
+                    min = Byte.MIN_VALUE;
+                    max = Byte.MAX_VALUE;
+                    break;
+
+                case Types.SMALLINT :
+                    min = Short.MIN_VALUE;
+                    max = Short.MAX_VALUE;
+                    break;
+
+                case Types.INTEGER :
+                    min = Integer.MIN_VALUE;
+                    max = Integer.MAX_VALUE;
+                    break;
+
+                case Types.BIGINT :
+                case Types.DECIMAL :
+                case Types.NUMERIC :
+                default :
+                    return 0;
+            }
+
+            if (max < temp) {
+                return 1;
+            }
+
+            if (temp < min) {
+                return -1;
+            }
+
+            return 0;
+        } else {
+            try {
+                o = convertToLong(o);
+
+                return compareToTypeRange(o, targettype);
+            } catch (HsqlException e) {
+                if (e.getErrorCode() == -Trace.NUMERIC_VALUE_OUT_OF_RANGE) {
+                    if (o instanceof BigDecimal) {
+                        return ((BigDecimal) o).signum();
+                    } else if (o instanceof Double) {
+                        return ((Double) o).doubleValue() > 0 ? 1
+                                                              : -1;
+                    }
+                }
+            }
+        }
+
+        return 0;
     }
 
     /**

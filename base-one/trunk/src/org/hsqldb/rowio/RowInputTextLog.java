@@ -158,6 +158,17 @@ implements RowInputInterface {
         return ValuePool.getString(s);
     }
 
+    public short readShortData() throws IOException {
+
+        String s = readNumberField();
+
+        if (s == null) {
+            return 0;
+        }
+
+        return Short.parseShort(s);
+    }
+
     public int readIntData() throws IOException {
 
         String s = readNumberField();

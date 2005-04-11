@@ -68,9 +68,9 @@ package org.hsqldb;
 
 import java.io.IOException;
 
+import org.hsqldb.lib.IntLookup;
 import org.hsqldb.rowio.RowInputInterface;
 import org.hsqldb.rowio.RowOutputInterface;
-import org.hsqldb.lib.IntLookup;
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
 // fredt@users 20020920 - patch 1.7.1 - refactoring to cut memory footprint
@@ -281,6 +281,11 @@ public class CachedRow extends Row {
         return tTable == null ? null
                               : (CachedRow) tTable.rowStore.get(iPos);
     }
+
+    /**
+     * used in CachedDataRow
+     */
+    void setNewNodes() {}
 
     /**
      *  Used exclusively by Cache to save the row to disk. New implementation
