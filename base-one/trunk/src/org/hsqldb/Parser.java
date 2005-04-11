@@ -209,7 +209,7 @@ class Parser {
 
         while (true) {
             if (full) {
-                String   token  = t.getIdentifier();
+                String   token  = t.getName();
                 boolean  quoted = t.wasQuotedIdentifier();
                 HsqlName name   = db.nameManager.newHsqlName(token, quoted);
 
@@ -2082,7 +2082,7 @@ class Parser {
         tokenizer.getThis(Token.T_VALUE);
         tokenizer.getThis(Token.T_FOR);
 
-        String name = tokenizer.getIdentifier();
+        String name = tokenizer.getName();
 
         tokenizer.getString();
 
