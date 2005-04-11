@@ -653,7 +653,7 @@ class DatabaseCommandInterpreter {
         Trigger    o;
         Class      cl;
 
-        triggerName = tokenizer.getName();
+        triggerName = tokenizer.getAName();
 
         checkTriggerExists(triggerName, false);
 
@@ -1150,7 +1150,7 @@ class DatabaseCommandInterpreter {
         boolean       constraint;
         HsqlArrayList tempConstraints;
 
-        token = tokenizer.getName();
+        token = tokenizer.getAName();
 
         checkTableExists(token, false);
 
@@ -1422,7 +1422,7 @@ class DatabaseCommandInterpreter {
      */
     private void processCreateView() throws HsqlException {
 
-        String token       = tokenizer.getName();
+        String token       = tokenizer.getAName();
         int    logposition = tokenizer.getPartMarker();
 
         checkViewExists(token, false);
@@ -2138,7 +2138,7 @@ class DatabaseCommandInterpreter {
                 session.checkDDLWrite();
                 tokenizer.getThis(Token.T_COLLATION);
 
-                String cname = tokenizer.getIdentifier();
+                String cname = tokenizer.getName();
 
                 if (!tokenizer.wasQuotedIdentifier()) {
                     throw Trace.error(Trace.INVALID_IDENTIFIER);
@@ -2503,7 +2503,7 @@ class DatabaseCommandInterpreter {
     private void processAlterSequence() throws HsqlException {
 
         long   start;
-        String name = tokenizer.getIdentifier();
+        String name = tokenizer.getName();
 
         tokenizer.getThis(Token.T_RESTART);
         tokenizer.getThis(Token.T_WITH);
@@ -2664,7 +2664,7 @@ class DatabaseCommandInterpreter {
         boolean isQuoted;
         Table   t;
 
-        name     = tokenizer.getName();
+        name = tokenizer.getAName();
         isQuoted = tokenizer.wasQuotedIdentifier();
 
         tokenizer.getThis(Token.T_ON);
@@ -2696,7 +2696,7 @@ class DatabaseCommandInterpreter {
         int     type      = Types.INTEGER;
         long    increment = 1;
         long    start     = 0;
-        String  name      = tokenizer.getIdentifier();
+        String  name      = tokenizer.getAName();
         boolean isquoted  = tokenizer.wasQuotedIdentifier();
 
         if (tokenizer.isGetThis(Token.T_AS)) {
@@ -3135,7 +3135,7 @@ class DatabaseCommandInterpreter {
         String    token = tokenizer.getString();
         Tokenizer t     = new Tokenizer(token);
 
-        return t.getIdentifier();
+        return t.getName();
     }
 
     private String getPassword() throws HsqlException {

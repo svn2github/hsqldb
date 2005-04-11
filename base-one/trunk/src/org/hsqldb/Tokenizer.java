@@ -305,13 +305,21 @@ public class Tokenizer {
         return !Token.isKeyword(sToken);
     }
 
-    boolean wasIdentifier() {
-
+    /**
+     * Name means all quoted and unquoted identifiers plus any word not in the
+     * hKeyword list.
+     * 
+     * "Aname" is more broad thatn "Name" in that it includes FULL_NAMEs
+     * (i.e., 2-part names).
+     *
+     * @return true if it's AName
+     */
+    boolean wasAName() {
         if (iType == QUOTED_IDENTIFIER) {
             return true;
         }
 
-        if (iType != NAME) {
+        if (iType != NAME && iType != LONG_NAME) {
             return false;
         }
 
@@ -341,6 +349,24 @@ public class Tokenizer {
 */
 
     /**
+     *
+     * "Aname" is more broad thatn "Name" in that it includes FULL_NAMEs
+     * (i.e., 2-part names).
+     *
+     * @return Popped AName
+     * @throws HsqlException if next token is not an AName
+     */
+    String getAName() throws HsqlException {
+
+        getToken();
+
+        if (!wasAName()) {
+            throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
+        }
+
+        return sToken;
+    }
+    /**
      * Method declaration
      *
      *
@@ -353,17 +379,6 @@ public class Tokenizer {
         getToken();
 
         if (!wasName()) {
-            throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
-        }
-
-        return sToken;
-    }
-
-    String getIdentifier() throws HsqlException {
-
-        getToken();
-
-        if (!wasIdentifier()) {
             throw Trace.error(Trace.UNEXPECTED_TOKEN, sToken);
         }
 
