@@ -95,7 +95,7 @@ import org.hsqldb.store.ValuePool;
  */
 public class Tokenizer {
 
-    private static final int NO_TYPE   = 0,
+    protected static final int NO_TYPE   = 0,
                              NAME      = 1,
                              LONG_NAME = 2,
                              SPECIAL   = 3,
@@ -123,9 +123,14 @@ public class Tokenizer {
     private int              beginIndex;
     protected int              iType;
     private String           sToken;
-    private String           sLongNameFirst;
+    private String           sLongNameFirst = null;
+    protected int            typeLongNameFirst;
+    // getToken() will clear LongNameFirst unless retainFirst is set.
+    private boolean          retainFirst = false;
 
 //    private String           sLongNameLast;
+    // WAIT.  Don't do anything before popping another Token (because the
+    // state variables aren't set properly due to a call of wait()).
     private boolean bWait;
     private boolean lastTokenQuotedID;
 
@@ -159,12 +164,14 @@ public class Tokenizer {
         nextTokenIndex = 0;
         beginIndex     = 0;
         iType          = NO_TYPE;
+        typeLongNameFirst = NO_TYPE;
         sToken         = null;
         sLongNameFirst = null;
 
 //        sLongNameLast  = null;
         bWait = false;
         lastTokenQuotedID = false;
+        retainFirst = false;
     }
 
     /**
@@ -175,9 +182,7 @@ public class Tokenizer {
      */
     void back() throws HsqlException {
 
-        if (bWait) {
-            Trace.doAssert(!bWait, "back");
-        }
+        Trace.doAssert(!bWait, "back");
 
         nextTokenIndex = iIndex;
         iIndex         = tokenIndex;
@@ -198,6 +203,7 @@ public class Tokenizer {
     }
 
     void matchThis(String match) throws HsqlException {
+        Trace.doAssert(!bWait, "Querying state when in Wait mode");
 
         if (!sToken.equals(match)) {
             throw Trace.error(Trace.UNEXPECTED_TOKEN, Trace.TOKEN_REQUIRED,
@@ -243,7 +249,8 @@ public class Tokenizer {
      * this methode is called before other wasXXX methods and takes
      * precedence
      */
-    boolean wasValue() {
+    boolean wasValue() throws HsqlException {
+        Trace.doAssert(!bWait, "Querying state when in Wait mode");
 
         switch (iType) {
 
@@ -261,10 +268,16 @@ public class Tokenizer {
         }
     }
 
-    boolean wasQuotedIdentifier() {
+    boolean wasQuotedIdentifier() throws HsqlException {
+        Trace.doAssert(!bWait, "Querying state when in Wait mode");
         return lastTokenQuotedID;
         // iType won't help for LONG_NAMEs.
         //return iType == QUOTED_IDENTIFIER;
+    }
+
+    boolean wasFirstQuotedIdentifier() throws HsqlException {
+        Trace.doAssert(!bWait, "Querying state when in Wait mode");
+        return (typeLongNameFirst == QUOTED_IDENTIFIER);
     }
 
     /**
@@ -273,7 +286,8 @@ public class Tokenizer {
      *
      * @return
      */
-    boolean wasLongName() {
+    boolean wasLongName() throws HsqlException {
+        Trace.doAssert(!bWait, "Querying state when in Wait mode");
         return iType == LONG_NAME;
     }
 
@@ -283,7 +297,8 @@ public class Tokenizer {
      *
      * @return
      */
-    boolean wasName() {
+    boolean wasName() throws HsqlException {
+        Trace.doAssert(!bWait, "Querying state when in Wait mode");
 
         if (iType == QUOTED_IDENTIFIER) {
             return true;
@@ -305,7 +320,8 @@ public class Tokenizer {
      *
      * @return true if it's AName
      */
-    boolean wasAName() {
+    boolean wasAName() throws HsqlException {
+        Trace.doAssert(!bWait, "Querying state when in Wait mode");
         if (iType == QUOTED_IDENTIFIER) {
             return true;
         }
@@ -323,21 +339,21 @@ public class Tokenizer {
      *
      * @return
      */
-    String getLongNameFirst() {
+    String getLongNameFirst() throws HsqlException {
+        Trace.doAssert(!bWait, "Querying state when in Wait mode");
         return sLongNameFirst;
     }
 
     /**
-     * Return second part of long name
+     * Return first part of long name
      *
      *
      * @return
      */
-/*
-    String getLongNameLast() {
-        return sLongNameLast;
+    int getLongNameFirstType() throws HsqlException {
+        Trace.doAssert(!bWait, "Querying state when in Wait mode");
+        return typeLongNameFirst;
     }
-*/
 
     /**
      *
@@ -462,7 +478,8 @@ public class Tokenizer {
      *
      * @return
      */
-    public int getType() {
+    public int getType() throws HsqlException {
+        Trace.doAssert(!bWait, "Querying state when in Wait mode");
 
         // todo: make sure it's used only for Values!
         // todo: synchronize iType with hColumn
@@ -647,6 +664,10 @@ public class Tokenizer {
 
             return;
         }
+        if (!retainFirst) {
+            sLongNameFirst = null;
+            typeLongNameFirst = NO_TYPE;
+        }
 
         while (iIndex < iLength
                 && Character.isWhitespace(sCommand.charAt(iIndex))) {
@@ -767,12 +788,18 @@ public class Tokenizer {
 
                     if (c == '.') {
                         sLongNameFirst = sToken;
+                        typeLongNameFirst = iType;
 
                         iIndex++;
+                        if (retainFirst) {
+                            throw Trace.error(Trace.THREE_PART_IDENTIFIER);
+                        }
 
 // fredt - todo - avoid recursion - this has problems when there is whitespace
 // after the dot - the same with NAME
+                        retainFirst = true;
                         getToken();
+                        retainFirst = false;
 
                         iType = LONG_NAME;
                     }
@@ -834,11 +861,17 @@ public class Tokenizer {
                         Locale.ENGLISH);
 
                     if (c == '.') {
+                        typeLongNameFirst = iType;
                         sLongNameFirst = sToken;
 
                         iIndex++;
 
+                        if (retainFirst) {
+                            throw Trace.error(Trace.THREE_PART_IDENTIFIER);
+                        }
+                        retainFirst = true;
                         getToken();    // todo: eliminate recursion
+                        retainFirst = false;
 
                         iType = LONG_NAME;
                     } else if (c == '(') {
