@@ -2082,8 +2082,11 @@ class Parser {
         tokenizer.getThis(Token.T_VALUE);
         tokenizer.getThis(Token.T_FOR);
 
-        String name = tokenizer.getName();
+        String name = tokenizer.getAName();
 
+        // Read next because Tokenizer.back() will run after this.
+        // (This is because usually when reading expressions, you need to
+        // get the following token to know whether you have finished.
         tokenizer.getString();
 
         NumberSequence sequence =

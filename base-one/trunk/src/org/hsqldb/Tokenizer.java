@@ -121,12 +121,13 @@ public class Tokenizer {
     private int              tokenIndex;
     private int              nextTokenIndex;
     private int              beginIndex;
-    private int              iType;
+    protected int              iType;
     private String           sToken;
     private String           sLongNameFirst;
 
 //    private String           sLongNameLast;
     private boolean bWait;
+    private boolean lastTokenQuotedID;
 
     // literals that are values
     static IntValueHashMap valueTokens;
@@ -163,6 +164,7 @@ public class Tokenizer {
 
 //        sLongNameLast  = null;
         bWait = false;
+        lastTokenQuotedID = false;
     }
 
     /**
@@ -260,7 +262,9 @@ public class Tokenizer {
     }
 
     boolean wasQuotedIdentifier() {
-        return iType == QUOTED_IDENTIFIER;
+        return lastTokenQuotedID;
+        // iType won't help for LONG_NAMEs.
+        //return iType == QUOTED_IDENTIFIER;
     }
 
     /**
@@ -665,6 +669,7 @@ public class Tokenizer {
                 afterexp = false;
         boolean end      = false;
         char    cfirst   = 0;
+        lastTokenQuotedID = false;
 
         if (Character.isJavaIdentifierStart(c)) {
             iType = NAME;
@@ -747,6 +752,7 @@ public class Tokenizer {
                     return;
 
                 case '\"' :
+                    lastTokenQuotedID = true;
                     iType = QUOTED_IDENTIFIER;
 
                     iIndex++;

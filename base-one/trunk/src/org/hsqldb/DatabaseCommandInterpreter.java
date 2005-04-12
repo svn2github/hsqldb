@@ -1011,7 +1011,7 @@ class DatabaseCommandInterpreter {
             HsqlName cname = null;
 
             if (tokenizer.isGetThis(Token.T_CONSTRAINT)) {
-                token = tokenizer.getName();
+                token = tokenizer.getAName();
                 cname = database.nameManager.newHsqlName(token,
                         tokenizer.wasQuotedIdentifier());
             }
@@ -1490,7 +1490,7 @@ class DatabaseCommandInterpreter {
 
         tokenizer.getThis(Token.T_TO);
 
-        newName  = tokenizer.getName();
+        newName  = tokenizer.getAName();
         isquoted = tokenizer.wasQuotedIdentifier();
 
         checkTableExists(newName, false);
@@ -1577,7 +1577,7 @@ class DatabaseCommandInterpreter {
                 HsqlName cname = null;
 
                 if (tokenizer.isGetThis(Token.T_CONSTRAINT)) {
-                    token = tokenizer.getName();
+                    token = tokenizer.getAName();
                     cname = database.nameManager.newHsqlName(token,
                             tokenizer.wasQuotedIdentifier());
                 }
@@ -2503,7 +2503,7 @@ class DatabaseCommandInterpreter {
     private void processAlterSequence() throws HsqlException {
 
         long   start;
-        String name = tokenizer.getName();
+        String name = tokenizer.getAName();
 
         tokenizer.getThis(Token.T_RESTART);
         tokenizer.getThis(Token.T_WITH);
@@ -2528,12 +2528,12 @@ class DatabaseCommandInterpreter {
         boolean isQuoted;
         Table   t;
 
-        indexName = tokenizer.getName();
+        indexName = tokenizer.getAName();
 
         tokenizer.getThis(Token.T_RENAME);
         tokenizer.getThis(Token.T_TO);
 
-        newName  = tokenizer.getName();
+        newName  = tokenizer.getAName();
         isQuoted = tokenizer.wasQuotedIdentifier();
         t        = database.findUserTableForIndex(session, indexName);
 
@@ -2622,7 +2622,7 @@ class DatabaseCommandInterpreter {
      */
     private void processAlterTableDropConstraint(Table t)
     throws HsqlException {
-        processAlterTableDropConstraint(t, tokenizer.getName());
+        processAlterTableDropConstraint(t, tokenizer.getAName());
     }
 
     /**
@@ -2669,7 +2669,7 @@ class DatabaseCommandInterpreter {
 
         tokenizer.getThis(Token.T_ON);
 
-        t = database.getTable(session, tokenizer.getName());
+        t = database.getTable(session, tokenizer.getAName());
 
         addIndexOn(t, name, isQuoted, unique);
 
