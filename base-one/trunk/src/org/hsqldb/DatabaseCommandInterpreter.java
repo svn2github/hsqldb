@@ -1957,7 +1957,8 @@ class DatabaseCommandInterpreter {
 
                 p.setProperty(token, value.toString().toLowerCase());
 
-                token = tokenizer.getString();
+                // Why reading a token that will never be used?
+                //token = tokenizer.getString();
 
                 break;
             }
@@ -2292,8 +2293,12 @@ class DatabaseCommandInterpreter {
         token  = tokenizer.getString();
 
         // fredt - todo - catch misspelt qualifiers here and elsewhere
-        if (token.equals(Token.T_DEFRAG)) {
-            defrag = true;
+        if (token.length() > 0) { 
+            if (token.equals(Token.T_DEFRAG)) {
+                defrag = true;
+            } else {
+                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+            }
         }
 
         database.logger.checkpoint(defrag);
