@@ -114,7 +114,7 @@ public class ScriptRunner {
             scr = ScriptReaderBase.newScriptReader(
                 database, logFilename, ScriptWriterBase.SCRIPT_TEXT_170);
 
-            while (scr.readLoggedStatement()) {
+            while (scr.readLoggedStatement(current)) {
                 int sessionId = scr.getSessionNumber();
 
                 if (currentId != sessionId) {

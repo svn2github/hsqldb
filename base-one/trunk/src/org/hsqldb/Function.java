@@ -506,6 +506,23 @@ class Function {
         }
     }
 */
+    void replaceAliases(Expression[] columns,
+                        int length) throws HsqlException {
+
+        Expression e;
+
+        for (int i = iSqlArgStart; i < iArgCount; i++) {
+            e = eArg[i];
+
+            if (e != null) {
+                if (e.exprType == Expression.COLUMN) {
+                    eArg[i] = e.getExpressionForAlias(e, columns, length);
+                } else {
+                    e.replaceAliases(columns, length);
+                }
+            }
+        }
+    }
 
     /**
      * Checks the Expresion parameters to this Function object against the

@@ -172,6 +172,23 @@ class Select {
      */
     void resolveTables() throws HsqlException {
 
+        // replace the aliases with expressions
+        for (int i = iResultLen; i < exprColumns.length; i++) {
+            if (exprColumns[i].exprType == Expression.COLUMN) {
+                if (exprColumns[i].joinedTableColumnIndex == -1) {
+                    exprColumns[i] =
+                        exprColumns[i].getExpressionForAlias(exprColumns[i],
+                            exprColumns, iResultLen);
+                }
+            } else {
+                exprColumns[i].replaceAliases(exprColumns, iResultLen);
+            }
+        }
+
+        if (queryCondition != null) {
+            queryCondition.replaceAliases(exprColumns, iResultLen);
+        }
+
         int len = tFilter.length;
 
         for (int i = 0; i < len; i++) {

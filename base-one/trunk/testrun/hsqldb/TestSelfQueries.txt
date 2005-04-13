@@ -100,5 +100,6 @@ CREATE TABLE IBANX_PERMIT(ID INT, A1 VARCHAR);
 -- use of column aliases in the where clause
 --bug #696595
 CREATE TABLE "liste"("kosten" INT, "preis" INT);
-/*e*/SELECT "kosten" AS "total" FROM "liste" WHERE "total" > 0 ORDER BY "total" DESC;
-/*e*/SELECT ("kosten"+"preis") AS "total" FROM "liste" WHERE "total" > 0 ORDER BY "total" DESC;
+insert into "liste" values(100, 10);
+/*r100*/SELECT "kosten" AS "total" FROM "liste" WHERE "total" > 0 ORDER BY "total" DESC;
+/*r110*/SELECT ("kosten"+"preis") AS "total" FROM "liste" WHERE "total" > 0 ORDER BY "total" DESC;

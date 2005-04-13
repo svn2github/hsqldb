@@ -347,7 +347,7 @@ final class DINameSpace {
 
         return name.startsWith(prefix)
                ? database.findUserTable(session,
-                                        name.substring(prefix.length()))
+                                        name.substring(prefix.length()), null)
                : null;
     }
 

@@ -326,8 +326,8 @@ public class Trace {
                             Session_sqlExecuteDirect                  = 223,
                             Session_sqlExecuteCompiled                = 224,
                             DATA_FILE_IS_FULL                         = 225,
-                            LAST_ERROR_HANDLE                         = 226,
-                            THREE_PART_IDENTIFIER                     = 227;
+                            THREE_PART_IDENTIFIER                     = 226,
+                            LAST_ERROR_HANDLE                         = 227;
 
     //
     static String MESSAGE_TAG = "$$";
@@ -560,8 +560,8 @@ public class Trace {
         "Session is closed",                                            // Session_sqlExecuteDirect
         "Session is closed",                                            // Session_sqlExecuteCompiled
         "S1000 Data file size limit is reached",
-        "LAST",                                                         // Control variable,
         "22019 Three part identifiers prohibited",
+        "LAST",                                                         // Control variable,
     };
 
     /** Used during tests. */

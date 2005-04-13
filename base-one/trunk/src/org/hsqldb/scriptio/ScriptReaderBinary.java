@@ -109,7 +109,7 @@ class ScriptReaderBinary extends ScriptReaderBase {
                 break;
             }
 
-            Table t = db.getUserTable(session, s);
+            Table t = db.getUserTable(session, s, null);
             int   j = 0;
 
             for (j = 0; ; j++) {
@@ -189,7 +189,7 @@ class ScriptReaderBinary extends ScriptReaderBase {
         return true;
     }
 
-    public boolean readLoggedStatement() throws IOException {
+    public boolean readLoggedStatement(Session session) throws IOException {
         return false;
     }
 

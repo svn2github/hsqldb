@@ -548,7 +548,7 @@ class DatabaseCommandInterpreter {
         tokenizer.getThis(Token.T_OPENBRACKET);
 
         while (true) {
-            token = tokenizer.getName();
+            token = tokenizer.getSimpleName();
 
             list.add(token);
             set.add(token);
@@ -653,7 +653,7 @@ class DatabaseCommandInterpreter {
         Trigger    o;
         Class      cl;
 
-        triggerName = tokenizer.getAName();
+        triggerName = tokenizer.getName();
 
         checkTriggerExists(triggerName, false);
 
@@ -667,7 +667,7 @@ class DatabaseCommandInterpreter {
         tokenizer.getThis(Token.T_ON);
 
         tableName = tokenizer.getString();
-        t         = database.getTable(session, tableName);
+        t         = database.getTable(session, tableName, null);
 
         checkIsReallyTable(t);
 
@@ -1011,7 +1011,7 @@ class DatabaseCommandInterpreter {
             HsqlName cname = null;
 
             if (tokenizer.isGetThis(Token.T_CONSTRAINT)) {
-                token = tokenizer.getAName();
+                token = tokenizer.getName();
                 cname = database.nameManager.newHsqlName(token,
                         tokenizer.wasQuotedIdentifier());
             }
@@ -1150,7 +1150,7 @@ class DatabaseCommandInterpreter {
         boolean       constraint;
         HsqlArrayList tempConstraints;
 
-        token = tokenizer.getAName();
+        token = tokenizer.getName();
 
         checkTableExists(token, false);
 
@@ -1309,7 +1309,7 @@ class DatabaseCommandInterpreter {
         if (t.getName().name.equals(expTableName)) {
             expTable = t;
         } else {
-            expTable = database.getTable(session, expTableName);
+            expTable = database.getTable(session, expTableName, null);
         }
 
         expcol = null;
@@ -1422,7 +1422,7 @@ class DatabaseCommandInterpreter {
      */
     private void processCreateView() throws HsqlException {
 
-        String token       = tokenizer.getAName();
+        String token       = tokenizer.getName();
         int    logposition = tokenizer.getPartMarker();
 
         checkViewExists(token, false);
@@ -1490,7 +1490,7 @@ class DatabaseCommandInterpreter {
 
         tokenizer.getThis(Token.T_TO);
 
-        newName  = tokenizer.getAName();
+        newName  = tokenizer.getName();
         isquoted = tokenizer.wasQuotedIdentifier();
 
         checkTableExists(newName, false);
@@ -1558,7 +1558,7 @@ class DatabaseCommandInterpreter {
     private void processAlterTable() throws HsqlException {
 
         String tableName = tokenizer.getString();
-        Table  t         = database.getUserTable(session, tableName);
+        Table  t         = database.getUserTable(session, tableName, null);
         String token;
 
         checkIsReallyTable(t);
@@ -1577,7 +1577,7 @@ class DatabaseCommandInterpreter {
                 HsqlName cname = null;
 
                 if (tokenizer.isGetThis(Token.T_CONSTRAINT)) {
-                    token = tokenizer.getAName();
+                    token = tokenizer.getName();
                     cname = database.nameManager.newHsqlName(token,
                             tokenizer.wasQuotedIdentifier());
                 }
@@ -1732,7 +1732,7 @@ class DatabaseCommandInterpreter {
                                           Column column)
                                           throws HsqlException {
 
-        String  newName  = tokenizer.getName();
+        String  newName  = tokenizer.getSimpleName();
         boolean isquoted = tokenizer.wasQuotedIdentifier();
 
         if (t.searchColumn(newName) > -1) {
@@ -1848,7 +1848,7 @@ class DatabaseCommandInterpreter {
 
             // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
             // to make sure the table exists
-            Table t = database.getTable(session, token);
+            Table t = database.getTable(session, token, null);
 
             accessKey = t.getName();
 
@@ -1959,7 +1959,6 @@ class DatabaseCommandInterpreter {
 
                 // Why reading a token that will never be used?
                 //token = tokenizer.getString();
-
                 break;
             }
             case Token.PASSWORD : {
@@ -2030,7 +2029,8 @@ class DatabaseCommandInterpreter {
 // sqlbob@users 20020427 support for SET TABLE <table> SOURCE "spec" [DESC]
                 session.checkDDLWrite();
 
-                Table t = database.getTable(session, tokenizer.getString());
+                Table t = database.getTable(session, tokenizer.getString(),
+                                            null);
 
                 token = tokenizer.getString();
 
@@ -2139,7 +2139,7 @@ class DatabaseCommandInterpreter {
                 session.checkDDLWrite();
                 tokenizer.getThis(Token.T_COLLATION);
 
-                String cname = tokenizer.getName();
+                String cname = tokenizer.getSimpleName();
 
                 if (!tokenizer.wasQuotedIdentifier()) {
                     throw Trace.error(Trace.INVALID_IDENTIFIER);
@@ -2293,7 +2293,7 @@ class DatabaseCommandInterpreter {
         token  = tokenizer.getString();
 
         // fredt - todo - catch misspelt qualifiers here and elsewhere
-        if (token.length() > 0) { 
+        if (token.length() > 0) {
             if (token.equals(Token.T_DEFRAG)) {
                 defrag = true;
             } else {
@@ -2349,7 +2349,8 @@ class DatabaseCommandInterpreter {
         boolean exists;
         int     code;
 
-        exists = database.findUserTableForIndex(session, indexName) != null;
+        exists = database.findUserTableForIndex(session, indexName, null)
+                 != null;
 
         if (exists != yes) {
             code = yes ? Trace.INDEX_NOT_FOUND
@@ -2377,7 +2378,7 @@ class DatabaseCommandInterpreter {
         exists = database.dInfo.isSystemTable(tableName);
 
         if (!exists) {
-            exists = database.findUserTable(session, tableName) != null;
+            exists = database.findUserTable(session, tableName, null) != null;
         }
 
         if (exists != yes) {
@@ -2405,7 +2406,7 @@ class DatabaseCommandInterpreter {
         boolean isView;
         int     code;
 
-        t      = database.findUserTable(session, viewName);
+        t      = database.findUserTable(session, viewName, null);
         exists = (t != null);
         isView = exists && t.isView();
 
@@ -2508,7 +2509,7 @@ class DatabaseCommandInterpreter {
     private void processAlterSequence() throws HsqlException {
 
         long   start;
-        String name = tokenizer.getAName();
+        String name = tokenizer.getName();
 
         tokenizer.getThis(Token.T_RESTART);
         tokenizer.getThis(Token.T_WITH);
@@ -2533,14 +2534,14 @@ class DatabaseCommandInterpreter {
         boolean isQuoted;
         Table   t;
 
-        indexName = tokenizer.getAName();
+        indexName = tokenizer.getName();
 
         tokenizer.getThis(Token.T_RENAME);
         tokenizer.getThis(Token.T_TO);
 
-        newName  = tokenizer.getAName();
+        newName  = tokenizer.getName();
         isQuoted = tokenizer.wasQuotedIdentifier();
-        t        = database.findUserTableForIndex(session, indexName);
+        t        = database.findUserTableForIndex(session, indexName, null);
 
         if (t == null) {
             throw Trace.error(Trace.INDEX_NOT_FOUND, indexName);
@@ -2579,7 +2580,7 @@ class DatabaseCommandInterpreter {
         token = tokenizer.getString();
 
         if (token.equals(Token.T_BEFORE)) {
-            token    = tokenizer.getName();
+            token    = tokenizer.getSimpleName();
             colindex = t.getColumnNr(token);
         } else {
             tokenizer.back();
@@ -2605,7 +2606,7 @@ class DatabaseCommandInterpreter {
         String token;
         int    colindex;
 
-        token    = tokenizer.getName();
+        token    = tokenizer.getSimpleName();
         colindex = t.getColumnNr(token);
 
         // CHECKME:
@@ -2627,7 +2628,7 @@ class DatabaseCommandInterpreter {
      */
     private void processAlterTableDropConstraint(Table t)
     throws HsqlException {
-        processAlterTableDropConstraint(t, tokenizer.getAName());
+        processAlterTableDropConstraint(t, tokenizer.getName());
     }
 
     /**
@@ -2669,12 +2670,12 @@ class DatabaseCommandInterpreter {
         boolean isQuoted;
         Table   t;
 
-        name = tokenizer.getAName();
+        name     = tokenizer.getName();
         isQuoted = tokenizer.wasQuotedIdentifier();
 
         tokenizer.getThis(Token.T_ON);
 
-        t = database.getTable(session, tokenizer.getAName());
+        t = database.getTable(session, tokenizer.getName(), null);
 
         addIndexOn(t, name, isQuoted, unique);
 
@@ -2701,7 +2702,7 @@ class DatabaseCommandInterpreter {
         int     type      = Types.INTEGER;
         long    increment = 1;
         long    start     = 0;
-        String  name      = tokenizer.getAName();
+        String  name      = tokenizer.getName();
         boolean isquoted  = tokenizer.wasQuotedIdentifier();
 
         if (tokenizer.isGetThis(Token.T_AS)) {
@@ -2789,7 +2790,7 @@ class DatabaseCommandInterpreter {
             }
         }
 
-        database.dropTable(session, tableName, ifExists, isView);
+        database.dropTable(session, tableName, null, ifExists, isView);
     }
 
     private void processDropUser() throws HsqlException {
@@ -2813,7 +2814,7 @@ class DatabaseCommandInterpreter {
 
     private void processDropTrigger() throws HsqlException {
         session.checkDDLWrite();
-        database.dropTrigger(session, tokenizer.getString());
+        database.dropTrigger(session, tokenizer.getString(), null);
     }
 
     private void processDropIndex() throws HsqlException {
@@ -2821,12 +2822,12 @@ class DatabaseCommandInterpreter {
         String  indexName = tokenizer.getString();
         String  token     = tokenizer.getString();
         boolean ifExists  = false;
-        String  tableName = null;
 
         // accept a table name - no check performed if it is the right table
         if (token.equals(Token.T_ON)) {
-            tableName = tokenizer.getString();
-            token     = tokenizer.getString();
+            tokenizer.getString();
+
+            token = tokenizer.getString();
         }
 
         if (token.equals(Token.T_IF)) {
@@ -2974,7 +2975,8 @@ class DatabaseCommandInterpreter {
                 logTableDDL(t);
                 t.insertIntoTable(session, result);
             } catch (HsqlException e) {
-                database.dropTable(session, intoHsqlName.name, false, false);
+                database.dropTable(session, intoHsqlName.name, null, false,
+                                   false);
 
                 throw (e);
             }
@@ -3140,7 +3142,7 @@ class DatabaseCommandInterpreter {
         String    token = tokenizer.getString();
         Tokenizer t     = new Tokenizer(token);
 
-        return t.getName();
+        return t.getSimpleName();
     }
 
     private String getPassword() throws HsqlException {

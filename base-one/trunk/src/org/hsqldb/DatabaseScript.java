@@ -91,8 +91,8 @@ public class DatabaseScript {
      */
     public static Result getScript(Database dDatabase, boolean indexRoots) {
 
-        HsqlArrayList tTable          = dDatabase.getTables();
-        HsqlArrayList forwardFK       = new HsqlArrayList();
+        HsqlArrayList tTable    = dDatabase.getTables();
+        HsqlArrayList forwardFK = new HsqlArrayList();
         Result r = Result.newSingleColumnResult("COMMAND", Types.VARCHAR);
 
         r.metaData.tableNames[0] = "SYSTEM_SCRIPT";
@@ -623,28 +623,28 @@ public class DatabaseScript {
     private static void addRightsStatements(Database dDatabase, Result r) {
 
         StringBuffer   a;
-        HashMappedList uv = dDatabase.getUserManager().getUsers();
-        Iterator       it = uv.values().iterator();
+        HashMappedList userlist = dDatabase.getUserManager().getUsers();
+        Iterator       users    = userlist.values().iterator();
 
-        for (; it.hasNext(); ) {
-            User   u    = (User) it.next();
+        for (; users.hasNext(); ) {
+            User   u    = (User) users.next();
             String name = u.getName();
 
             if (!name.equals(Token.T_PUBLIC)) {
                 addRow(r, u.getCreateUserDDL());
             }
 
-            IntValueHashMap rights = u.getRights();
+            IntValueHashMap rightsmap = u.getRights();
 
-            if (rights == null) {
+            if (rightsmap == null) {
                 continue;
             }
 
-            Iterator e = rights.keySet().iterator();
+            Iterator dbobjects = rightsmap.keySet().iterator();
 
-            while (e.hasNext()) {
-                Object object = e.next();
-                int    right  = rights.get(object, 0);
+            while (dbobjects.hasNext()) {
+                Object nameobject = dbobjects.next();
+                int    right      = rightsmap.get(nameobject, 0);
 
                 a = new StringBuffer(64);
 
@@ -652,24 +652,26 @@ public class DatabaseScript {
                 a.append(UserManager.getRight(right));
                 a.append(' ').append(Token.T_ON).append(' ');
 
-                if (object instanceof String) {
-                    if (object.equals("java.lang.Math")
-                            || object.equals("org.hsqldb.Library")) {
+                if (nameobject instanceof String) {
+                    if (nameobject.equals("java.lang.Math")
+                            || nameobject.equals("org.hsqldb.Library")) {
                         continue;
                     }
 
                     a.append("CLASS \"");
-                    a.append((String) object);
+                    a.append((String) nameobject);
                     a.append('\"');
                 } else {
 
-                    // either table != null or is system table
-                    Table table =
-                        dDatabase.findUserTable(((HsqlName) object).name);
-
                     // assumes all non String objects are table names
+                    Table table =
+                        dDatabase.findUserTable(null,
+                                                ((HsqlName) nameobject).name,
+                                                null);
+
+                    // either table != null or is system table
                     if (table != null) {
-                        a.append(((HsqlName) object).statementName);
+                        a.append(((HsqlName) nameobject).statementName);
                     } else {
                         continue;
                     }

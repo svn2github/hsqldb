@@ -83,7 +83,7 @@ public class ScriptReaderText extends ScriptReaderBase {
     protected void readDDL(Session session)
     throws IOException, HsqlException {
 
-        for (; readLoggedStatement(); ) {
+        for (; readLoggedStatement(session); ) {
             if (rowIn.getStatementType() == INSERT_STATEMENT) {
                 isInsert = true;
 
@@ -113,10 +113,10 @@ public class ScriptReaderText extends ScriptReaderBase {
             // fredt - needed for forward referencing FK constraints
             db.setReferentialIntegrity(false);
 
-            for (; isInsert || readLoggedStatement(); isInsert = false) {
+            for (; isInsert || readLoggedStatement(session); isInsert = false) {
                 if (!rowIn.getTableName().equals(tablename)) {
                     tablename    = rowIn.getTableName();
-                    currentTable = db.getUserTable(null, tablename);
+                    currentTable = db.getUserTable(session, tablename, null);
                 }
 
                 currentTable.insertFromScript(rowData);
@@ -134,7 +134,7 @@ public class ScriptReaderText extends ScriptReaderBase {
         }
     }
 
-    public boolean readLoggedStatement() throws IOException {
+    public boolean readLoggedStatement(Session session) throws IOException {
 
         //fredt temporary solution - should read bytes directly from buffer
         String s = dataStreamIn.readLine();
@@ -181,7 +181,7 @@ public class ScriptReaderText extends ScriptReaderBase {
 
             String name = rowIn.getTableName();
 
-            currentTable = db.getUserTable(null, name);
+            currentTable = db.getUserTable(null, name, null);
 
             int[] colTypes;
 

@@ -87,7 +87,7 @@ public abstract class ScriptReaderBase {
     protected abstract void readExistingData(Session session)
     throws IOException, HsqlException;
 
-    public abstract boolean readLoggedStatement() throws IOException;
+    public abstract boolean readLoggedStatement(Session session) throws IOException;
 
     int            statementType;
     int            sessionNumber;

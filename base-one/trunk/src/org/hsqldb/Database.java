@@ -490,9 +490,10 @@ public class Database {
      *  name. It excludes any temp tables created in different Sessions.
      *  Throws if the table does not exist in the context.
      */
-    public Table getTable(Session session, String name) throws HsqlException {
+    public Table getTable(Session session, String name,
+                          String schema) throws HsqlException {
 
-        Table t = findUserTable(session, name);
+        Table t = findUserTable(session, name, schema);
 
         if (t == null) {
             t = dInfo.getSystemTable(session, name);
@@ -511,10 +512,10 @@ public class Database {
      *  any temp tables created in different Sessions.
      *  Throws if the table does not exist in the context.
      */
-    public Table getUserTable(Session session,
-                              String name) throws HsqlException {
+    public Table getUserTable(Session session, String name,
+                              String schema) throws HsqlException {
 
-        Table t = findUserTable(session, name);
+        Table t = findUserTable(session, name, schema);
 
         if (t == null) {
             throw Trace.error(Trace.TABLE_NOT_FOUND, name);
@@ -524,9 +525,10 @@ public class Database {
     }
 
     /**
-     *  Retruns the specified user-defined table or view. It excludes system
-     *  tables and all temp tables.
-     *  Returns null if the table does not exist.
+     * Deprecated pending rewrite of system table population code
+     * Retruns the specified user-defined table or view. It excludes system
+     * tables and all temp tables.
+     * Returns null if the table does not exist.
      */
     public Table findUserTable(String name) {
 
@@ -549,7 +551,7 @@ public class Database {
      *  any temp tables created in different Sessions.
      *  Returns null if the table does not exist in the context.
      */
-    Table findUserTable(Session session, String name) {
+    Table findUserTable(Session session, String name, String schema) {
 
         for (int i = 0, tsize = tTable.size(); i < tsize; i++) {
             Table t = (Table) tTable.get(i);
@@ -590,7 +592,7 @@ public class Database {
      * whole database and is visible in this session.
      * Returns null if not found.
      */
-    Table findUserTableForIndex(Session session, String name) {
+    Table findUserTableForIndex(Session session, String name, String schema) {
 
         HsqlName hsqlname = indexNameList.getOwner(name);
 
@@ -598,7 +600,7 @@ public class Database {
             return null;
         }
 
-        return findUserTable(session, hsqlname.name);
+        return findUserTable(session, hsqlname.name, null);
     }
 
     /**
@@ -630,10 +632,10 @@ public class Database {
      * @throws HsqlException if the index does not exist, the session lacks
      *        the permission or the operation violates database integrity
      */
-    void dropIndex(Session session, String indexname, String tableName,
+    void dropIndex(Session session, String indexname, String schema,
                    boolean ifExists) throws HsqlException {
 
-        Table t = findUserTableForIndex(session, indexname);
+        Table t = findUserTableForIndex(session, indexname, null);
 
         if (t == null) {
             if (ifExists) {
@@ -641,10 +643,6 @@ public class Database {
             } else {
                 throw Trace.error(Trace.INDEX_NOT_FOUND, indexname);
             }
-        }
-
-        if (tableName != null &&!t.getName().name.equals(tableName)) {
-            throw Trace.error(Trace.INDEX_NOT_FOUND, indexname);
         }
 
         t.checkDropIndex(indexname, null, false);
@@ -795,8 +793,8 @@ public class Database {
      *      operation
      * @throws  HsqlException if any of the checks listed above fail
      */
-    void dropTable(Session session, String name, boolean ifExists,
-                   boolean isView) throws HsqlException {
+    void dropTable(Session session, String name, String schema,
+                   boolean ifExists, boolean isView) throws HsqlException {
 
         Table toDrop    = null;
         int   dropIndex = -1;
@@ -1076,14 +1074,15 @@ public class Database {
     /**
      *  Drops a trigger with the specified name in the given context.
      */
-    void dropTrigger(Session session, String name) throws HsqlException {
+    void dropTrigger(Session session, String name,
+                     String schema) throws HsqlException {
 
         boolean found = triggerNameList.containsName(name);
 
         Trace.check(found, Trace.TRIGGER_NOT_FOUND, name);
 
         HsqlName tableName = (HsqlName) triggerNameList.removeName(name);
-        Table    t         = this.findUserTable(session, tableName.name);
+        Table    t = this.findUserTable(session, tableName.name, null);
 
         t.dropTrigger(name);
         session.setScripting(!t.isTemp());

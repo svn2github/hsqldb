@@ -335,7 +335,7 @@ public class Expression {
      * @param sq subquery
      */
     Expression(SubQuery sq) {
-        exprType     = QUERY;
+        exprType = QUERY;
         subQuery = sq;
     }
 
@@ -1678,6 +1678,79 @@ public class Expression {
     }
 
     /**
+     * return the expression for an aliases
+     */
+    Expression getExpressionForAlias(Expression e, Expression[] columns,
+                                     int length) {
+
+        String name = e.columnName;
+
+        for (int i = 0; i < length; i++) {
+            if (name.equals(columns[i].columnAlias)) {
+                return columns[i];
+            }
+        }
+
+        return e;
+    }
+
+    /**
+     * Replace aliases with expression trees
+     */
+    void replaceAliases(Expression[] columns,
+                        int length) throws HsqlException {
+
+        if (eArg != null) {
+            if (eArg.exprType == Expression.COLUMN) {
+                eArg = getExpressionForAlias(eArg, columns, length);
+            } else {
+                eArg.replaceAliases(columns, length);
+            }
+        }
+
+        if (eArg2 != null) {
+            if (eArg2.exprType == Expression.COLUMN) {
+                eArg2 = getExpressionForAlias(eArg2, columns, length);
+            } else {
+                eArg2.replaceAliases(columns, length);
+            }
+        }
+
+        switch (exprType) {
+
+            case QUERY :
+                break;
+
+            case FUNCTION :
+                if (function != null) {
+                    function.replaceAliases(columns, length);
+                }
+                break;
+
+            case ALL :
+            case ANY :
+                break;
+
+            case IN :
+                if (eArg2.exprType != QUERY) {
+                    Expression[] vl = eArg2.valueList;
+
+                    for (int i = 0; i < vl.length; i++) {
+                        if (vl[i].exprType == Expression.COLUMN) {
+                            vl[i] = getExpressionForAlias(vl[i], columns,
+                                                          length);
+                        } else {
+                            vl[i].replaceAliases(columns, length);
+                        }
+                    }
+                }
+                break;
+
+            default :
+        }
+    }
+
+    /**
      * Workaround for CHECK constraints. We don't want optimisation so we
      * flag all LIKE expressions as already optimised.
      *
@@ -2920,7 +2993,7 @@ public class Expression {
                                            : Boolean.TRUE;
                 } else {
                     return subQuery.table.isEmpty() ? Boolean.FALSE
-                                              : Boolean.TRUE;
+                                                    : Boolean.TRUE;
                 }
             case CASEWHEN :
                 leftValue = Column.convertObject(leftValue, Types.BOOLEAN);
@@ -2929,11 +3002,11 @@ public class Expression {
                 Object  result = test ? ((Object[]) rightValue)[0]
                                       : ((Object[]) rightValue)[1];
 
-                    return Column.convertObject(result, dataType);
+                return Column.convertObject(result, dataType);
 
             case ALTERNATIVE :
-                    leftValue = Column.convertObject(leftValue, dataType);
-                    rightValue = Column.convertObject(rightValue, dataType);
+                leftValue  = Column.convertObject(leftValue, dataType);
+                rightValue = Column.convertObject(rightValue, dataType);
 
                 Object[] objectPair = new Object[2];
 
@@ -3311,7 +3384,7 @@ public class Expression {
                     && Types.isNumberType(eArg2.dataType)) {
                 type = Column.getCombinedNumberType(eArg.dataType,
                                                     eArg2.dataType, exprType);
-    }
+            }
 
             o1 = Column.convertObject(o1, type);
             o2 = Column.convertObject(o2, type);
@@ -3360,7 +3433,7 @@ public class Expression {
      * @throws HsqlException
      */
     private Boolean testInCondition(Session session,
-                                  Object o) throws HsqlException {
+                                    Object o) throws HsqlException {
 
         if (o == null) {
             return null;
@@ -3393,12 +3466,12 @@ public class Expression {
         } else if (exprType == QUERY) {
 
             /** @todo fredt - convert to join */
-                try {
+            try {
                 o = Column.convertObject(
                     o, subQuery.table.getColumnTypes()[0]);
-                } catch (HsqlException e) {
-                    return Boolean.FALSE;
-                }
+            } catch (HsqlException e) {
+                return Boolean.FALSE;
+            }
 
             if (!subQuery.isResolved) {
                 subQuery.populateTable(session);
@@ -3407,7 +3480,7 @@ public class Expression {
             Boolean result =
                 subQuery.table.getPrimaryIndex().findFirstRow(
                     session, o, Expression.EQUAL).hasNext() ? Boolean.TRUE
-                       : Boolean.FALSE;
+                                                            : Boolean.FALSE;
 
             if (!subQuery.isResolved) {
                 subQuery.table.clearAllRows();
@@ -3424,14 +3497,14 @@ public class Expression {
 
         if (o == null) {
             return null;
-            }
+        }
 
         SubQuery subquery = eArg2.eArg.subQuery;
         boolean  populate = !subquery.isResolved;
 
         if (populate) {
             subquery.populateTable(session);
-                }
+        }
 
         boolean     empty    = subquery.table.isEmpty();
         Index       index    = subquery.table.getPrimaryIndex();
@@ -3442,12 +3515,12 @@ public class Expression {
 
             case ANY : {
                 if (empty) {
-            return Boolean.FALSE;
-        }
+                    return Boolean.FALSE;
+                }
 
                 if (firstrow == null) {
                     return null;
-    }
+                }
 
                 int range =
                     Column.compareToTypeRange(o, eArg2.eArg.getDataType());
@@ -3481,7 +3554,7 @@ public class Expression {
 
                     return it.hasNext() ? Boolean.TRUE
                                         : Boolean.FALSE;
-            }
+                }
 
                 Row    lastrow   = index.lastRow(session);
                 Object firstdata = firstrow.getData()[0];
@@ -3522,11 +3595,11 @@ public class Expression {
             case ALL : {
                 if (empty) {
                     return Boolean.TRUE;
-            }
+                }
 
                 if (firstrow == null) {
-            return null;
-        }
+                    return null;
+                }
 
                 int range =
                     Column.compareToTypeRange(o, eArg2.eArg.getDataType());
@@ -3562,7 +3635,7 @@ public class Expression {
                         return (it.hasNext() && subquery.table.getRowCount() == 1)
                                ? Boolean.TRUE
                                : Boolean.FALSE;
-    }
+                    }
 
                     return (it.hasNext()) ? Boolean.FALSE
                                           : Boolean.TRUE;
@@ -3581,18 +3654,18 @@ public class Expression {
                                                  o, lastdata,
                                                  eArg.getDataType());
 
-        switch (exprType) {
+                switch (exprType) {
 
                     case NOT_EQUAL :
                         return (comparefirst == 0 || comparelast == 0)
                                ? Boolean.FALSE
                                : Boolean.TRUE;
 
-            case BIGGER :
+                    case BIGGER :
                         return comparelast > 0 ? Boolean.TRUE
                                                : Boolean.FALSE;
 
-            case BIGGER_EQUAL :
+                    case BIGGER_EQUAL :
                         return comparelast >= 0 ? Boolean.TRUE
                                                 : Boolean.FALSE;
 
@@ -3600,7 +3673,7 @@ public class Expression {
                         return comparefirst < 0 ? Boolean.TRUE
                                                 : Boolean.FALSE;
 
-            case SMALLER_EQUAL :
+                    case SMALLER_EQUAL :
                         return comparefirst <= 0 ? Boolean.TRUE
                                                  : Boolean.FALSE;
                 }

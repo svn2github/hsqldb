@@ -318,7 +318,7 @@ final class CompiledStatementExecutor {
 
             if (session.getDatabase()
                     .findUserTable(session, select.sIntoTable
-                        .name) != null || session.getDatabase().dInfo
+                        .name, null) != null || session.getDatabase().dInfo
                             .getSystemTable(session, select.sIntoTable
                                 .name) != null) {
                 throw Trace.error(Trace.TABLE_ALREADY_EXISTS,

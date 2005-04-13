@@ -209,7 +209,7 @@ class Parser {
 
         while (true) {
             if (full) {
-                String   token  = t.getName();
+                String   token  = t.getSimpleName();
                 boolean  quoted = t.wasQuotedIdentifier();
                 HsqlName name   = db.nameManager.newHsqlName(token, quoted);
 
@@ -376,11 +376,11 @@ class Parser {
             token = tokenizer.getString();
 
             if (token.equals(Token.T_AS)) {
-                e.setAlias(tokenizer.getName(),
+                e.setAlias(tokenizer.getSimpleName(),
                            tokenizer.wasQuotedIdentifier());
 
                 token = tokenizer.getString();
-            } else if (tokenizer.wasName()) {
+            } else if (tokenizer.wasSimpleName()) {
                 e.setAlias(token, tokenizer.wasQuotedIdentifier());
 
                 token = tokenizer.getString();
@@ -494,9 +494,8 @@ class Parser {
         if (token.equals(Token.T_WHERE)) {
             Expression newcondition = parseExpression();
 
-            newcondition = resolveWhereColumnAliases(newcondition, vcolumn);
-            condition    = addCondition(condition, newcondition);
-            token        = tokenizer.getString();
+            condition = addCondition(condition, newcondition);
+            token     = tokenizer.getString();
         }
 
         select.queryCondition = condition;
@@ -857,22 +856,6 @@ class Parser {
     }
 
     /**
-     * Checks an Expression in the WHERE clause and if it contains an alias or
-     * column index returns the column expression it refers to.
-     *
-     * todo
-     *
-     * @param  e                          Description of the Parameter
-     * @param  vcolumn                    Description of the Parameter
-     * @return                            Description of the Return Value
-     * @exception  HsqlException          Description of the Exception
-     */
-    private static Expression resolveWhereColumnAliases(Expression e,
-            HsqlArrayList vcolumn) throws HsqlException {
-        return e;
-    }
-
-    /**
      * Resolves an ORDER BY Expression, returning the column Expression object
      * to which it refers if it is an alias or column index. <p>
      *
@@ -954,7 +937,7 @@ class Parser {
 
         String alias = null;
         String token = tokenizer.getString();
-        Table  table = database.getTable(session, token);
+        Table  table = database.getTable(session, token, null);
 
         checkTableWriteAccess(table, type);
 
@@ -962,8 +945,8 @@ class Parser {
         token = tokenizer.getString();
 
         if (token.equals(Token.T_AS)) {
-            alias = tokenizer.getName();
-        } else if (tokenizer.wasName()) {
+            alias = tokenizer.getSimpleName();
+        } else if (tokenizer.wasSimpleName()) {
             alias = token;
         } else {
             tokenizer.back();
@@ -1005,7 +988,7 @@ class Parser {
 
             t = sq.table;
         } else {
-            t = database.getTable(session, token);
+            t = database.getTable(session, token, null);
 
             session.check(t.getName(), UserManager.SELECT);
 
@@ -1025,8 +1008,8 @@ class Parser {
         if (token.equals(Token.T_LEFT)) {
             tokenizer.back();
         } else if (token.equals(Token.T_AS)) {
-            sAlias = tokenizer.getName();
-        } else if (tokenizer.wasName()) {
+            sAlias = tokenizer.getSimpleName();
+        } else if (tokenizer.wasSimpleName()) {
             sAlias = token;
         } else {
             tokenizer.back();
@@ -2082,7 +2065,7 @@ class Parser {
         tokenizer.getThis(Token.T_VALUE);
         tokenizer.getThis(Token.T_FOR);
 
-        String name = tokenizer.getAName();
+        String name = tokenizer.getName();
 
         // Read next because Tokenizer.back() will run after this.
         // (This is because usually when reading expressions, you need to
@@ -2222,7 +2205,7 @@ class Parser {
             iToken = Expression.VALUE;
             oData  = tokenizer.getAsValue();
             iType  = tokenizer.getType();
-        } else if (tokenizer.wasName()) {
+        } else if (tokenizer.wasSimpleName()) {
             iToken = Expression.COLUMN;
             sTable = null;
         } else if (tokenizer.wasLongName()) {
@@ -2551,7 +2534,7 @@ class Parser {
         int[]         columnMap;
         int           len;
         String        token = tokenizer.getString();
-        Table         table = database.getTable(session, token);
+        Table         table = database.getTable(session, token, null);
 
         checkTableWriteAccess(table, UserManager.INSERT);
 
@@ -2651,7 +2634,7 @@ class Parser {
 
             intoName = select.sIntoTable.name;
 
-            if (database.findUserTable(session, intoName) != null) {
+            if (database.findUserTable(session, intoName, null) != null) {
                 throw Trace.error(Trace.TABLE_ALREADY_EXISTS, intoName);
             }
         }
