@@ -94,9 +94,9 @@ class TextTable extends org.hsqldb.Table {
                                                       isReversedNew);
 
                 // read and insert all the rows from the source file
-                TextCache     textCache = (TextCache) cache;
+                TextCache textCache = (TextCache) cache;
                 CachedRow row       = null;
-                int           pos       = 0;
+                int       pos       = 0;
 
                 while (true) {
                     pos = textCache.getNextRowPos();

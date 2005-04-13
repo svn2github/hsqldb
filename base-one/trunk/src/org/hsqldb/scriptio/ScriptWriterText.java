@@ -224,8 +224,6 @@ public class ScriptWriterText extends ScriptWriterBase {
         byteCount   += rowOut.size();
         busyWriting = false;
 
-        if (forceSync) {
-            sync();
-        }
+        sync();
     }
 }

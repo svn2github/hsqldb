@@ -307,13 +307,13 @@ class TransferSQLText extends DataAccessPoint {
                           DataAccessPoint Dest)
                           throws DataAccessPointException {
 
-        String          translatedLine = "";
-        JDBCTypes       JDBCT          = new JDBCTypes();
-        int             currentPos     = 0;
-        String          columnName     = "";
-        String          columnType     = "";
-        int             colnum = 0;
-        ColumnDef       cDef;
+        String    translatedLine = "";
+        JDBCTypes JDBCT          = new JDBCTypes();
+        int       currentPos     = 0;
+        String    columnName     = "";
+        String    columnType     = "";
+        int       colnum         = 0;
+        ColumnDef cDef;
 
         currentPos     = CreateLine.indexOf('(') + 1;
         translatedLine = CreateLine.substring(0, currentPos);

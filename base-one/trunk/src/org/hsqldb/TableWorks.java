@@ -133,7 +133,7 @@ class TableWorks {
         int     offset = table.database.getTableIndex(table);
         boolean isforward = offset != -1
                             && offset
-                            < table.database.getTableIndex(expTable);
+                               < table.database.getTableIndex(expTable);
         Index exportindex = expTable.getConstraintIndexForColumns(expcol);
 
         if (exportindex == null) {

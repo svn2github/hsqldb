@@ -175,7 +175,7 @@ final class TableFilter {
 
             case Expression.IN : {
                 return e.isQueryCorrelated ? CONDITION_NONE
-                                      : CONDITION_UNORDERED;
+                                           : CONDITION_UNORDERED;
             }
             case Expression.IS_NULL :
             case Expression.EQUAL : {
@@ -483,7 +483,7 @@ final class TableFilter {
 
         if (isMultiFindFirst) {
             boolean convertible = true;
-            int[]    types = filterTable.getColumnTypes();
+            int[]   types       = filterTable.getColumnTypes();
 
             for (int i = 0; i < findFirstExpressions.length; i++) {
                 Expression e = findFirstExpressions[i];
