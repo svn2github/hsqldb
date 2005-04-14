@@ -2269,8 +2269,11 @@ class DatabaseCommandInterpreter {
             closemode = Database.CLOSEMODE_COMPACT;
         } else if (token.equals(Token.T_SCRIPT)) {
             closemode = Database.CLOSEMODE_SCRIPT;
-        } else {
-            tokenizer.back();
+        } else if (token.equals(Token.T_SEMICOLON)) {
+
+            // only semicolon is accepted here
+        } else if (token.length() != 0) {
+            throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
         }
 
         database.close(closemode);
@@ -2293,12 +2296,13 @@ class DatabaseCommandInterpreter {
         token  = tokenizer.getString();
 
         // fredt - todo - catch misspelt qualifiers here and elsewhere
-        if (token.length() > 0) {
-            if (token.equals(Token.T_DEFRAG)) {
-                defrag = true;
-            } else {
-                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
-            }
+        if (token.equals(Token.T_DEFRAG)) {
+            defrag = true;
+        } else if (token.equals(Token.T_SEMICOLON)) {
+
+            // only semicolon is accepted here
+        } else if (token.length() != 0) {
+            throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
         }
 
         database.logger.checkpoint(defrag);
