@@ -891,11 +891,13 @@ implements ActionListener, WindowListener, KeyListener {
 
             while (r.next()) {
                 for (int i = 1; i <= col; i++) {
-                    h[i - 1] = r.getString(i);
+                    try {
+                        h[i - 1] = r.getString(i);
 
-                    if (r.wasNull()) {
-                        h[i - 1] = "(null)";
-                    }
+                        if (r.wasNull()) {
+                            h[i - 1] = "(null)";
+                        }
+                    } catch (SQLException e) {}
                 }
 
                 gResult.addRow(h);

@@ -34,10 +34,9 @@ package org.hsqldb.test;
 import java.util.Random;
 
 import org.hsqldb.lib.DoubleIntIndex;
+import org.hsqldb.lib.StopWatch;
 
 import junit.framework.TestCase;
-
-import org.hsqldb.lib.StopWatch;
 
 /**
  * @author fredt@users

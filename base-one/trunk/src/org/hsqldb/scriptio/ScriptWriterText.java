@@ -222,8 +222,11 @@ public class ScriptWriterText extends ScriptWriterBase {
         fileStreamOut.write(rowOut.getBuffer(), 0, rowOut.size());
 
         byteCount   += rowOut.size();
+        needsSync   = true;
         busyWriting = false;
 
-        sync();
+        if (forceSync) {
+            sync();
+        }
     }
 }

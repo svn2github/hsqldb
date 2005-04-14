@@ -1061,11 +1061,13 @@ implements ActionListener, WindowListener, KeyListener {
 
             while (r.next()) {
                 for (int i = 1; i <= col; i++) {
-                    h[i - 1] = r.getObject(i);
+                    try {
+                        h[i - 1] = r.getObject(i);
 
-                    if (r.wasNull()) {
-                        h[i - 1] = NULL_STR;
-                    }
+                        if (r.wasNull()) {
+                            h[i - 1] = NULL_STR;
+                        }
+                    } catch (SQLException e) {}
                 }
 
                 gResult.addRow(h);

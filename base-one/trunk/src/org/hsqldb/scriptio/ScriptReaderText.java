@@ -113,7 +113,8 @@ public class ScriptReaderText extends ScriptReaderBase {
             // fredt - needed for forward referencing FK constraints
             db.setReferentialIntegrity(false);
 
-            for (; isInsert || readLoggedStatement(session); isInsert = false) {
+            for (; isInsert || readLoggedStatement(session);
+                    isInsert = false) {
                 if (!rowIn.getTableName().equals(tablename)) {
                     tablename    = rowIn.getTableName();
                     currentTable = db.getUserTable(session, tablename, null);
