@@ -1,11 +1,11 @@
-<!-- $Id: dbfiles.xml,v 1.1 2004/04/20 04:33:23 unsaved Exp $ -->
+<!-- $Id: dbfiles.xml,v 1.2 2004/04/20 18:35:56 unsaved Exp $ -->
 
 <appendix>
 
 <title>Hsqldb Database Files and Recovery</title>
 <appendixinfo>
-    <edition>$Revision: 1.1 $</edition>
-    <pubdate>$Date: 2004/04/20 04:33:23 $</pubdate>
+    <edition>$Revision: 1.2 $</edition>
+    <pubdate>$Date: 2004/04/20 18:35:56 $</pubdate>
     <keywordset>
         <keyword>HSQLDB</keyword>
         <keyword>Data</keyword>
@@ -25,9 +25,7 @@
         procedures followed by the engine to recover the data.
     </para> <para>
         A database named 'test' is used in this description.
-        The database files will be <filename>test.script</filename>,
-        <filename>test.properties</filename>, <filename>test.data</filename> 
-        and <filename>test.backup</filename>.
+        The database files will be as follows.
     </para>
 </section>
 

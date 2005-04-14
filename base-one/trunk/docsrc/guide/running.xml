@@ -1,4 +1,4 @@
-<!-- $Id: running.xml,v 1.12 2004/08/09 17:10:11 fredt Exp $ -->
+<!-- $Id: running.xml,v 1.13 2004/12/24 23:40:59 fredt Exp $ -->
 
 <chapter>
     <title>Running and Using Hsqldb</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.12 $</edition>
-        <pubdate>$Date: 2004/08/09 17:10:11 $</pubdate>
+        <edition>$Revision: 1.13 $</edition>
+        <pubdate>$Date: 2004/12/24 23:40:59 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Guide</keyword>
@@ -284,13 +284,25 @@
             <section>
                 <title>Security Considerations</title>
                 <para>
-                    When HSQLDB is run as server, the port should be adequately 
-                    protected with a firewall.
-                    The password for the default system user should also be 
-                    changed from the default empty string.
-                    When the server is run with the HTTP protocol, public 
-                    access should not be allowed to confidential databases as 
-                    it is not difficult to spoof an existing open session.
+                    When HSQLDB is run as a server, network access should 
+                    be adequately protected.
+                    Source IP addresses may be restricted by use of TCP
+                    filtering or firewall programs, or standalone firewalls.
+                    If the traffic will cross an unprotected network (such
+                    as the Internet), the stream should be encrypted (for
+                    example by VPN, ssh tunneling, or
+                    <link linkend='tls-chapter' endterm='tls-title'/>).
+                    Only secure passwords should be used--
+                    most importantly, the password for the default system 
+                    user should be changed from the default empty string.
+                    If you are purposefully providing data to the public, 
+                    then the wide-open public network connection should be
+                    used exclusively to access the public data via read-only 
+                    accounts.
+                    (I.e., neither secure data nor privileged accounts should
+                    use this connection).
+                    These considerations also apply to HSQLDB servers run 
+                    with the HTTP protocol.
                 </para>
             </section>
         </section>
