@@ -53,7 +53,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.90 2004/09/19 03:44:46 fredt Exp $ */
+/* $Id: SqlFile.java,v 1.93 2005/03/02 14:31:00 fredt Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -89,7 +89,7 @@ import java.util.TreeMap;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.90 $
+ * @version $Revision: 1.93 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -137,8 +137,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.90 $".substring("$Revision: ".length(),
-                                               "$Revision: 1.90 $".length()
+        revnum = "$Revision: 1.93 $".substring("$Revision: ".length(),
+                                               "$Revision: 1.93 $".length()
                                                - 2);
     }
 
@@ -1892,7 +1892,9 @@ public class SqlFile {
         {
             2, 3
         },        // Default
-        { 3 },    // HSQLDB
+        {
+            2, 3
+        },    // HSQLDB
         {
             2, 3
         },        // Oracle
