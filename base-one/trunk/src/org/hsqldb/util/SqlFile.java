@@ -53,7 +53,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.95 2005/04/23 14:06:38 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.96 2005/04/23 14:19:39 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -89,7 +89,7 @@ import java.util.TreeMap;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.95 $
+ * @version $Revision: 1.96 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -137,8 +137,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.95 $".substring("$Revision: ".length(),
-                                               "$Revision: 1.95 $".length()
+        revnum = "$Revision: 1.96 $".substring("$Revision: ".length(),
+                                               "$Revision: 1.96 $".length()
                                                - 2);
     }
 
@@ -187,8 +187,9 @@ public class SqlFile {
         + "    \\p [line to print]   Print string to stdout\n"
         + "    \\w file/path.sql     Append current buffer to file\n"
         + "    \\i file/path.sql     Include/execute commands from external file\n"
-        + "    \\d{tv*San} [substr]  List Tbls/Views/all/SystemTbls/Aliases/schemaNames\n"
-        + "    \\d OBJECTNAME        Describe table or view\n"
+        + "    \\d{tvsSan*} [substr]  List objects of specified type:\n"
+        +"                            Tbls/Views/Seqs/SysTbls/Aliases/schemaNames/all\n"
+        + "    \\d OBJECTNAME [subs] Describe table or view columns\n"
         + "    \\o [file/path.html]  Tee (or stop teeing) query output to specified file\n"
         + "    \\H                   Toggle HTML output mode\n"
         + "    \\! COMMAND ARGS      Execute external program (no support for stdin)\n"
@@ -826,12 +827,10 @@ public class SqlFile {
             case 's' :
             case 'S' :
 
-                // For now, I'm only keeping the "modified" SQL command in
-                // history.  This is because a user could make 10 modifications
-                // to a command before it is usable, and we don't want those
-                // intermediate commands cluttering up the history.
-                // Note that this behavior is inconsistent with that of :a.
-                // Should probably refactor this.
+                // Sat Apr 23 14:14:57 EDT 2005.  Changing history behavior.
+                // It's very inconvenient to lose all modified SQL 
+                // commands from history just because _some_ may be modified
+                // because they are bad or obsolete. 
                 boolean modeIC      = false;
                 boolean modeGlobal  = false;
                 boolean modeExecute = false;
@@ -955,11 +954,13 @@ public class SqlFile {
                         sb.replace(i, i + from.length(), to);
                     }
 
-                    statementHistory[curHist] = sb.toString();
+                    //statementHistory[curHist] = sb.toString();
+                    curCommand = sb.toString();
+                    setBuf(curCommand);
 
                     stdprintln((modeExecute ? "Executing"
                                             : "Current Buffer") + ":\n"
-                                            + commandFromHistory(0));
+                                            + curCommand);
 
                     if (modeExecute) {
                         stdprintln();
@@ -972,9 +973,8 @@ public class SqlFile {
                 }
 
                 if (modeExecute) {
-                    curCommand = commandFromHistory(0);
-
                     processSQL();
+                    stringBuffer.setLength(0);
                 }
 
                 return;
@@ -1043,7 +1043,13 @@ public class SqlFile {
                 }
 
                 if (arg1.length() == 1 && other != null) {
-                    describe(other);
+                    int space = other.indexOf(' ');
+                    if (space < 0) {
+                        describe(other, null);
+                    } else {
+                        describe(other.substring(0, space),
+                                other.substring(space + 1).trim());
+                    }
 
                     return;
                 }
@@ -1904,10 +1910,12 @@ public class SqlFile {
 
     /**
      * Lists available database tables.
-     * This method needs work.  See the implementation comments.
+     * 
+     * @throws BadSpecial
      */
     private void listTables(char c,
-                            String filter) throws SQLException, BadSpecial {
+                            String filter) throws BadSpecial {
+        try {
 
         int[]                     listSet       = null;
         String[]                  types         = null;
@@ -1925,6 +1933,10 @@ public class SqlFile {
 
                 case 'S' :
                     types[0] = "SYSTEM TABLE";
+                    break;
+
+                case 's' :
+                    types[0] = "SYNONYM";
                     break;
 
                 case 'a' :
@@ -1960,6 +1972,9 @@ public class SqlFile {
 
         displayResultSet(null, md.getTables(null, null, null, types),
                          listSet, filter);
+        } catch (SQLException se) {
+            throw new BadSpecial("Failure getting MetaData: " + se);
+        }
     }
 
     /**
@@ -2378,8 +2393,13 @@ public class SqlFile {
      * Describe the columns of specified table.
      *
      * @param tableName  Table that will be described.
+     * @param filter  Substring to filter by
      */
-    private void describe(String tableName) throws SQLException {
+    private void describe(String tableName, String filter)
+    throws SQLException {
+        if (filter != null) {
+            filter = filter.toUpperCase();
+        }
 
         Statement statement = curConn.createStatement();
 
@@ -2390,8 +2410,7 @@ public class SqlFile {
         int               cols = m.getColumnCount();
         String            val;
         ArrayList         rows        = new ArrayList();
-        String[]          headerArray = {
-            "name", "datatype", "width", "no-nulls"
+        String[]          headerArray = { "name", "datatype", "width", "no-nulls"
         };
         String[]          fieldArray;
         int[]             maxWidth  = {
@@ -2415,6 +2434,10 @@ public class SqlFile {
         for (int i = 0; i < cols; i++) {
             fieldArray    = new String[4];
             fieldArray[0] = m.getColumnName(i + 1);
+            if (filter != null
+                    && fieldArray[0].toUpperCase().indexOf(filter) < 0) {
+                continue;
+            }
             fieldArray[1] = m.getColumnTypeName(i + 1);
             fieldArray[2] = Integer.toString(m.getColumnDisplaySize(i + 1));
             fieldArray[3] =
