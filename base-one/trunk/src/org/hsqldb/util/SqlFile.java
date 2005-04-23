@@ -53,7 +53,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.94 2005/04/21 11:06:04 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.95 2005/04/23 14:06:38 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -89,7 +89,7 @@ import java.util.TreeMap;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.94 $
+ * @version $Revision: 1.95 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -137,8 +137,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.94 $".substring("$Revision: ".length(),
-                                               "$Revision: 1.94 $".length()
+        revnum = "$Revision: 1.95 $".substring("$Revision: ".length(),
+                                               "$Revision: 1.95 $".length()
                                                - 2);
     }
 
@@ -187,7 +187,7 @@ public class SqlFile {
         + "    \\p [line to print]   Print string to stdout\n"
         + "    \\w file/path.sql     Append current buffer to file\n"
         + "    \\i file/path.sql     Include/execute commands from external file\n"
-        + "    \\d{tv*Sau} [substr]  List names of Tbls/Views/all/System Tbls/Aliases/Schemas\n"
+        + "    \\d{tv*San} [substr]  List Tbls/Views/all/SystemTbls/Aliases/schemaNames\n"
         + "    \\d OBJECTNAME        Describe table or view\n"
         + "    \\o [file/path.html]  Tee (or stop teeing) query output to specified file\n"
         + "    \\H                   Toggle HTML output mode\n"
@@ -1939,7 +1939,7 @@ public class SqlFile {
                     types[0] = "VIEW";
                     break;
 
-                case 'u' :
+                case 'n' :
                     displayResultSet(null, md.getSchemas(), 
                             listMDSchemaCols, filter);
                    return;
