@@ -53,7 +53,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.93 2005/03/02 14:31:00 fredt Exp $ */
+/* $Id: SqlFile.java,v 1.94 2005/04/21 11:06:04 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -89,7 +89,7 @@ import java.util.TreeMap;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.93 $
+ * @version $Revision: 1.94 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -137,8 +137,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.93 $".substring("$Revision: ".length(),
-                                               "$Revision: 1.93 $".length()
+        revnum = "$Revision: 1.94 $".substring("$Revision: ".length(),
+                                               "$Revision: 1.94 $".length()
                                                - 2);
     }
 
@@ -187,7 +187,7 @@ public class SqlFile {
         + "    \\p [line to print]   Print string to stdout\n"
         + "    \\w file/path.sql     Append current buffer to file\n"
         + "    \\i file/path.sql     Include/execute commands from external file\n"
-        + "    \\d{tv*sa} [substr]   List names of Tbls/Views/all/System Tbls/Aliases\n"
+        + "    \\d{tv*Sau} [substr]  List names of Tbls/Views/all/System Tbls/Aliases/Schemas\n"
         + "    \\d OBJECTNAME        Describe table or view\n"
         + "    \\o [file/path.html]  Tee (or stop teeing) query output to specified file\n"
         + "    \\H                   Toggle HTML output mode\n"
@@ -1887,6 +1887,8 @@ public class SqlFile {
                              ORACLE_ELEMENT  = 2
     ;
 
+    private static final int[] listMDSchemaCols = { 1 };
+
     /** Column numbering starting at 1. */
     private static final int[][] listMDTableCols = {
         {
@@ -1921,7 +1923,7 @@ public class SqlFile {
 
             switch (c) {
 
-                case 's' :
+                case 'S' :
                     types[0] = "SYSTEM TABLE";
                     break;
 
@@ -1936,6 +1938,11 @@ public class SqlFile {
                 case 'v' :
                     types[0] = "VIEW";
                     break;
+
+                case 'u' :
+                    displayResultSet(null, md.getSchemas(), 
+                            listMDSchemaCols, filter);
+                   return;
 
                 default :
                     throw new BadSpecial("Unknown describe option: '" + c
