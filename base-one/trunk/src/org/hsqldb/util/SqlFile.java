@@ -1936,7 +1936,7 @@ public class SqlFile {
                     break;
 
                 case 's' :
-                    types[0] = "SYNONYM";
+                    types[0] = "SEQUENCE";
                     break;
 
                 case 'a' :
