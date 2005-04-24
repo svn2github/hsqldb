@@ -1936,10 +1936,32 @@ public class SqlFile {
                     break;
 
                 case 's' :
+                    if (dbProductName.indexOf("HSQL") > -1) {
+                        //  HSQLDB does not currently list Sequences in
+                        //  DatabaseMetaData.getTables().
+                        Statement statement = curConn.createStatement();
+                        statement.execute(
+                            "SELECT sequence_schema, sequence_name FROM " + 
+                                "information_schema.system_sequences");
+                        displayResultSet(null, statement.getResultSet(),
+                                null, filter);
+                        return;
+                    }
                     types[0] = "SEQUENCE";
                     break;
 
                 case 'a' :
+                    if (dbProductName.indexOf("HSQL") > -1) {
+                        //  HSQLDB does not currently list Aliases in
+                        //  DatabaseMetaData.getTables().
+                        Statement statement = curConn.createStatement();
+                        statement.execute(
+                                "SELECT alias_schem, alias FROM " + 
+                                "information_schema.system_aliases");
+                        displayResultSet(null, statement.getResultSet(),
+                                null, filter);
+                        return;
+                    }
                     types[0] = "ALIAS";
                     break;
 
