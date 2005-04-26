@@ -135,21 +135,31 @@ import org.hsqldb.lib.java.JavaSystem;
 //      Added: Ability to switch the current LAF while runing (Native,Java or Motif)
 
 /**
- * Swing Tool for manageing a JDBC database.<p>
+ * Swing Tool for managing a JDBC database.<p>
  * <pre>
  *             Usage: java DatabaseManagerSwing [-options]
  *             where options include:
- *              -driver <classname>  jdbc driver class
- *              -url <name>          jdbc url
- *              -user <name>         username used for connection
- *              -password <password> password for this user
- *              -dir <path>          default directory
- *              -script <file>       reads from script file
+ *              --driver <classname>  jdbc driver class
+ *              --url <name>          jdbc url
+ *              --user <name>         username used for connection
+ *              --password <password> password for this user
+ *              --dir <path>          default directory
+ *              --script <file>       reads from script file
+ *              --urlid <urlid>       get connection info from RC file
+ *              --rcfile <file>       use instead of default (with urlid)
+ *              --noexit              Don't exit JVM
  *</pre>
+ * Tue Apr 26 16:38:54 EDT 2005
+ * Switched default switch method from "-switch" to "--switch" because
+ * "-switch" usage is ambiguous as used here.  Single switches should 
+ * be reserved for single-letter switches which can be mixed like
+ * "-u -r -l" = "-url".  -blaine
  * @version 1.7.2
  */
 public class DatabaseManagerSwing extends JApplet
 implements ActionListener, WindowListener, KeyListener {
+    private static final String DEFAULT_RCFILE =
+        System.getProperty("user.home") + "/dbmanager.rc";
 
     static final String    NL         = System.getProperty("line.separator");
     static final String    NULL_STR   = "\t(null)";
@@ -242,12 +252,18 @@ implements ActionListener, WindowListener, KeyListener {
 
         // (ulrivo): read all arguments from the command line
         String  lowerArg;
+        String urlid = null;
+        String rcFile = null;
         boolean autoConnect = false;
+        boolean urlidConnect = false;
 
         bMustExit = true;
 
         for (int i = 0; i < arg.length; i++) {
             lowerArg = arg[i].toLowerCase();
+            if (lowerArg.length() > 1 && lowerArg.charAt(1) == '-') {
+                lowerArg = lowerArg.substring(1);
+            }
 
             i++;
 
@@ -263,6 +279,12 @@ implements ActionListener, WindowListener, KeyListener {
             } else if (lowerArg.equals("-password")) {
                 defPassword = arg[i];
                 autoConnect = true;
+            } else if (lowerArg.equals("-urlid")) {
+                urlid = arg[i];
+                urlidConnect = true;
+            } else if (lowerArg.equals("-rcfile")) {
+                rcFile = arg[i];
+                urlidConnect = true;
             } else if (lowerArg.equals("-dir")) {
                 defDirectory = arg[i];
             } else if (lowerArg.equals("-script")) {
@@ -288,9 +310,24 @@ implements ActionListener, WindowListener, KeyListener {
         Connection c = null;
 
         try {
+            if (autoConnect && urlidConnect) {
+                throw new IllegalArgumentException(
+                "You may not specify both (urlid) AND (url/user/password).");
+            }
             if (autoConnect) {
                 c = ConnectionDialogSwing.createConnection(defDriver, defURL,
                         defUser, defPassword);
+            } else if (urlidConnect) {
+                if (urlid == null) {
+                    throw new IllegalArgumentException(
+                            "You must specify an 'urlid' to use an RC file");
+                }
+                autoConnect = true;
+                c = (new RCData(
+                    new File((rcFile == null) ? DEFAULT_RCFILE : rcFile),
+                    urlid).getConnection(null,
+                            System.getProperty("sqlfile.charset"),
+                            System.getProperty("javax.net.ssl.trustStore")));
             } else {
                 c = ConnectionDialogSwing.createConnection(m.fMain,
                         "Connect");
@@ -351,13 +388,16 @@ implements ActionListener, WindowListener, KeyListener {
         System.out.println(
             "Usage: java DatabaseManagerSwing [-options]\n"
             + "where options include:\n"
-            + "    -driver <classname>  jdbc driver class\n"
-            + "    -url <name>          jdbc url\n"
-            + "    -user <name>         username used for connection\n"
-            + "    -password <password> password for this user\n"
-            + "    -dir <path>          default directory\n"
-            + "    -script <file>       reads from script file\n"
-            + "    -noexit              do not call system.exit()");
+            + "    --driver <classname>  jdbc driver class\n"
+            + "    --url <name>          jdbc url\n"
+            + "    --user <name>         username used for connection\n"
+            + "    --password <password> password for this user\n"
+      + "    --urlid <urlid>       use url/user/password/driver in rc file\n"
+      + "    --rcfile <file>       (defaults to 'dbmanager.rc' in home dir)\n"
+            + "    --dir <path>          default directory\n"
+            + "    --script <file>       reads from script file\n"
+            + "    --noexit              do not call system.exit()\n"
+            + "(Single-hypen switches like '-driver' are also supported)");
     }
 
     private void insertTestData() {
