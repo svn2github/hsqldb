@@ -42,7 +42,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.StringTokenizer;
 
-/* $Id: SqlTool.java,v 1.39 2004/09/19 03:44:46 fredt Exp $ */
+/* $Id: SqlTool.java,v 1.42 2005/03/02 14:31:01 fredt Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -53,176 +53,23 @@ import java.util.StringTokenizer;
  * See JavaDocs for the main method for syntax of how to run.
  *
  * @see @main()
- * @version $Revision: 1.39 $
+ * @version $Revision: 1.42 $
  * @author Blaine Simpson
  */
 public class SqlTool {
+    private static final String DEFAULT_RCFILE =
+        System.getProperty("user.home") + "/sqltool.rc";
 
-    private static final String DEFAULT_JDBC_DRIVER = "org.hsqldb.jdbcDriver";
     private static Connection   conn;
 
     // N.b. the following is static!
     private static boolean noexit;    // Whether System.exit() may be called.
-    private static final String DEFAULT_RCFILE =
-        System.getProperty("user.home") + "/sqltool.rc";
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.39 $".substring("$Revision: ".length(),
-                                               "$Revision: 1.39 $".length()
+        revnum = "$Revision: 1.42 $".substring("$Revision: ".length(),
+                                               "$Revision: 1.42 $".length()
                                                - 2);
-    }
-
-    /**
-     * All the info we need to connect up to a database.
-     * If it is anticipated that SqlTool.execute() will be executed
-     * from other code directly rather than from SqlTool.main(), then
-     * make this a global-level class.
-     * I expect other Java code to invoke SqlFile.execute(), but not
-     * anything in this class.
-     */
-    private static class ConnectData {
-
-        /**
-         * Just for testing and debugging.
-         */
-        public void report() {
-
-            System.err.println("urlid: " + id + ", url: " + url
-                               + ", username: " + username + ", password: "
-                               + password);
-        }
-
-        /**
-         * Creates a ConnectDataObject by looking up the given key in the
-         * given authentication file.
-         *
-         * @param String dbKey Key to look up in the file.
-         * @param inFile File containing the authentication information.
-         */
-        public ConnectData(String inFile, String dbKey) throws Exception {
-
-            File file = new File((inFile == null) ? DEFAULT_RCFILE
-                                                  : inFile);
-
-            if (!file.canRead()) {
-                throw new IOException("Please set up authentication file '"
-                                      + file + "'");
-            }
-
-            // System.err.println("Using RC file '" + file + "'");
-            StringTokenizer tokenizer = null;
-            boolean         thisone   = false;
-            String          s;
-            String          keyword, value;
-            int             linenum = 0;
-            BufferedReader  br = new BufferedReader(new FileReader(file));
-
-            while ((s = br.readLine()) != null) {
-                ++linenum;
-
-                s = s.trim();
-
-                if (s.length() == 0) {
-                    continue;
-                }
-
-                if (s.charAt(0) == '#') {
-                    continue;
-                }
-
-                tokenizer = new StringTokenizer(s);
-
-                if (tokenizer.countTokens() == 1) {
-                    keyword = tokenizer.nextToken();
-                    value   = "";
-                } else if (tokenizer.countTokens() > 1) {
-                    keyword = tokenizer.nextToken();
-                    value   = tokenizer.nextToken("").trim();
-                } else {
-                    try {
-                        br.close();
-                    } catch (IOException e) {}
-
-                    throw new Exception("Corrupt line " + linenum + " in '"
-                                        + file + "':  " + s);
-                }
-
-                if (dbKey == null) {
-                    if (keyword.equals("urlid")) {
-                        System.out.println(value);
-                    }
-
-                    continue;
-                }
-
-                if (keyword.equals("urlid")) {
-                    if (value.equals(dbKey)) {
-                        if (id == null) {
-                            id      = dbKey;
-                            thisone = true;
-                        } else {
-                            try {
-                                br.close();
-                            } catch (IOException e) {}
-
-                            throw new Exception("Key '" + dbKey
-                                                + " redefined at" + " line "
-                                                + linenum + " in '" + file);
-                        }
-                    } else {
-                        thisone = false;
-                    }
-
-                    continue;
-                }
-
-                if (thisone) {
-                    if (keyword.equals("url")) {
-                        url = value;
-                    } else if (keyword.equals("username")) {
-                        username = value;
-                    } else if (keyword.equals("driver")) {
-                        driver = value;
-                    } else if (keyword.equals("charset")) {
-                        charset = value;
-                    } else if (keyword.equals("truststore")) {
-                        truststore = value;
-                    } else if (keyword.equals("password")) {
-                        password = value;
-                    } else {
-                        try {
-                            br.close();
-                        } catch (IOException e) {}
-
-                        throw new Exception("Bad line " + linenum + " in '"
-                                            + file + "':  " + s);
-                    }
-                }
-            }
-
-            try {
-                br.close();
-            } catch (IOException e) {}
-
-            if (dbKey == null) {
-                return;
-            }
-
-            if (url == null || username == null || password == null) {
-                throw new Exception("url or username or password not set "
-                                    + "for '" + dbKey + "' in file '" + file
-                                    + "'");
-            }
-        }
-
-        String id         = null;
-        String url        = null;
-        String username   = null;
-        String password   = null;
-        String driver     = null;
-        String charset    = null;
-        String truststore = null;
     }
 
     private static final String SYNTAX_MESSAGE =
@@ -244,7 +91,7 @@ public class SqlTool {
         + "    --continueOnErr          Continue on Error (overrides defaults)\n"
         + "    --setvar NAME1=val1[,NAME2=val2...]   PL variables\n"
         + "    --driver a.b.c.Driver    JDBC driver class ["
-        + DEFAULT_JDBC_DRIVER + "]\n"
+        + RCData.DEFAULT_JDBC_DRIVER + "]\n"
         + "    urlid                    ID of url/userame/password in rcfile\n"
         + "    file1.sql...             SQL files to be executed [stdin]\n"
         + "                             "
@@ -320,8 +167,8 @@ public class SqlTool {
     public static void main(String[] arg) throws SqlToolException {
 
         /*
-         * The big picture is, we parse input args; load a ConnectData;
-         * get a JDBC Connection with the ConnectData; instantiate and
+         * The big picture is, we parse input args; load a RCData;
+         * get a JDBC Connection with the RCData; instantiate and
          * execute as many SqlFiles as we need to.
          */
         String  rcFile      = null;
@@ -512,10 +359,12 @@ public class SqlTool {
             return;
         }
 
-        ConnectData conData = null;
+        RCData conData = null;
 
         try {
-            conData = new ConnectData(rcFile, targetDb);
+            conData = new RCData(
+                    new File((rcFile == null) ? DEFAULT_RCFILE : rcFile),
+                    targetDb);
         } catch (Exception e) {
             exitMain(1, "Failed to retrieve connection info for database '"
                      + targetDb + "': " + e.getMessage());
@@ -533,34 +382,10 @@ public class SqlTool {
             conData.report();
         }
 
-        if (driver == null) {
-
-            // If user didn't set driver on command-line.
-            driver = ((conData.driver == null) ? DEFAULT_JDBC_DRIVER
-                                               : conData.driver);
-        }
-
-        if (System.getProperty("sqlfile.charset") == null
-                && conData.charset != null) {
-            System.setProperty("sqlfile.charset", conData.charset);
-        }
-
-        if (conData.truststore != null) {
-            System.setProperty("javax.net.ssl.trustStore",
-                               conData.truststore);
-        }
-
         try {
-
-            // As described in the JDBC FAQ:
-            // http://java.sun.com/products/jdbc/jdbc-frequent.html;
-            // Why doesn't calling class.forName() load my JDBC driver?
-            // There is a bug in the JDK 1.1.x that can cause Class.forName()
-            // to fail. // new org.hsqldb.jdbcDriver();
-            Class.forName(driver).newInstance();
-
-            conn = DriverManager.getConnection(conData.url, conData.username,
-                                               conData.password);
+            conn = conData.getConnection(driver,
+                    System.getProperty("sqlfile.charset"),
+                    System.getProperty("javax.net.ssl.trustStore"));
 
             conn.setAutoCommit(autoCommit);
 
@@ -575,7 +400,7 @@ public class SqlTool {
             }
         } catch (Exception e) {
 
-            //e.printStackTrace();
+            e.printStackTrace();
             // Let's not continue as if nothing is wrong.
             exitMain(10,
                      "Failed to get a connection to " + conData.url + " as "
