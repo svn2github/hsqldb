@@ -600,6 +600,7 @@ examples:
                           org/hsqldb/Trace*
                           org/hsqldb/Types*
                           org/hsqldb/util/SqlTool*
+                          org/hsqldb/util/RCData*
                           org/hsqldb/util/SqlFile*
                           '/>
         </jar>
@@ -645,6 +646,7 @@ examples:
 		   				${src}/org/hsqldb/WebServer.java,
 		   				${src}/org/hsqldb/jdbc/*.java,
 		   				${src}/org/hsqldb/sample/TriggerSample.java,
+		   				${src}/org/hsqldb/util/RCData.java,
 		   				${src}/org/hsqldb/util/SqlTool.java"
            destdir="${basedir}/doc/src"
            classpath="${basedir}/lib/servlet.jar;${basedir}/lib/junit.jar"
