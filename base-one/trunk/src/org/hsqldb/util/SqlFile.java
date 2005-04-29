@@ -54,7 +54,7 @@ import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.sql.DatabaseMetaData;
 
-/* $Id: SqlFile.java,v 1.99 2005/04/24 08:44:55 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.100 2005/04/29 16:59:41 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -87,10 +87,10 @@ import java.sql.DatabaseMetaData;
  * commands and editing commands are not stored for later viewing or
  * editing).
  *
- * Most of the Special Commands and all of the Editing Commands are for
+ * Most of the Special Commands and Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.99 $
+ * @version $Revision: 1.100 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -99,11 +99,13 @@ public class SqlFile {
     private File             file;
     private boolean          interactive;
     private String           primaryPrompt    = "sql> ";
+    private String           chunkPrompt      = "raw> ";
     private String           contPrompt       = "  +> ";
     private Connection       curConn          = null;
     private boolean          htmlMode         = false;
     private HashMap          userVars         = null;
     private String[]         statementHistory = null;
+    private boolean          chunking         = false;
 
     /**
      * Private class to "share" a variable among a family of SqlFile
@@ -138,8 +140,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.99 $".substring("$Revision: ".length(),
-                                               "$Revision: 1.99 $".length()
+        revnum = "$Revision: 1.100 $".substring("$Revision: ".length(),
+                                               "$Revision: 1.100 $".length()
                                                - 2);
     }
 
@@ -159,7 +161,7 @@ public class SqlFile {
         + "  statement into the buffer without executing) or a line ending with ';'\n"
         + "  (which executes the statement).\n";
     private static final String BUFFER_HELP_TEXT =
-        "BUFFER Commands (only available for interactive use).\n\n"
+    "BUFFER Commands (only \":;\" is available for non-interactive use).\n"
         + "    :?                Help\n"
         + "    :;                Execute current buffer as an SQL Statement\n"
         + "    :a[text]          Enter append mode with a copy of the buffer\n"
@@ -184,7 +186,7 @@ public class SqlFile {
         + "* commands only available for interactive use.\n"
         + "In place of \"3\" below, you can use nothing for the previous command, or\n"
         + "an integer \"X\" to indicate the Xth previous command.\n"
-+ "Filter substrings are cases-sensitive!  Use \"SCHEMANAME.\" to narrow schema.\n\n"
++ "Filter substrings are cases-sensitive!  Use \"SCHEMANAME.\" to narrow schema.\n"
         + "    \\?                   Help\n"
         + "    \\p [line to print]   Print string to stdout\n"
         + "    \\w file/path.sql     Append current buffer to file\n"
@@ -197,6 +199,7 @@ public class SqlFile {
         + "    \\! COMMAND ARGS      Execute external program (no support for stdin)\n"
         + "    \\c [true|false]      Continue upon errors (a.o.t. abort upon error)\n"
         + "    \\a [true|false]      Auto-commit JDBC DML commands\n"
+        + "    \\.                   Enter raw SQL.  End with line containing only \".\"\n"
         + "    \\s                   * Show previous commands (i.e. SQL command history)\n"
         + "    \\-[3]                * reload a command to buffer (for : commands)\n"
         + "    \\-[3];               * reload command and execute (via \":;\")\n"
@@ -247,19 +250,17 @@ public class SqlFile {
         interactive = inInteractive;
         userVars    = inVars;
 
-        if (interactive) {
-            String tmpStr = System.getProperty("sqltool.historyLength");
+        try {
+            statementHistory = new String[interactive
+              ? Integer.parseInt(System.getProperty("sqltool.historyLength"))
+              : 1
+            ];
+        } catch (Throwable t) {
+            statementHistory = null;
+        }
 
-            try {
-                statementHistory =
-                    new String[Integer.parseInt(System.getProperty("sqltool.historyLength"))];
-            } catch (Throwable t) {
-                statementHistory = null;
-            }
-
-            if (statementHistory == null) {
-                statementHistory = new String[DEFAULT_HISTORY_SIZE];
-            }
+        if (statementHistory == null) {
+            statementHistory = new String[DEFAULT_HISTORY_SIZE];
         }
 
         if (file != null &&!file.canRead()) {
@@ -374,7 +375,8 @@ public class SqlFile {
 
             while (true) {
                 if (interactive) {
-                    psStd.print((stringBuffer.length() == 0) ? primaryPrompt
+                    psStd.print((stringBuffer.length() == 0) ? 
+                            (chunking ? chunkPrompt : primaryPrompt)
                                                              : contPrompt);
                 }
 
@@ -395,6 +397,24 @@ public class SqlFile {
                 }
 
                 curLinenum++;
+
+                if (chunking) {
+                    if (inputLine.equals(".")) {
+                        chunking = false;
+                        setBuf(stringBuffer.toString());
+                        stringBuffer.setLength(0);
+                        if (interactive) {
+                            stdprintln("Raw SQL chunk moved into buffer.  "
+                                    + "Run \":;\" to execute the chunk.");
+                        }
+                    } else {
+                        if (stringBuffer.length() > 0) {
+                            stringBuffer.append('\n');
+                        }
+                        stringBuffer.append(inputLine);
+                    }
+                    continue;
+                }
 
                 if (inComment) {
                     postCommentIndex = inputLine.indexOf("*/") + 2;
@@ -501,7 +521,9 @@ public class SqlFile {
                             continue;
                         }
 
-                        if (interactive && trimmedInput.charAt(0) == ':') {
+                        if (trimmedInput.charAt(0) == ':'
+                                && (interactive
+                                    || (trimmedInput.charAt(1) == ';'))) {
                             try {
                                 processBuffer(trimmedInput.substring(1));
                             } catch (BadSpecial bs) {
@@ -521,10 +543,24 @@ public class SqlFile {
 
                             continue;
                         }
+                        String ucased = trimmedInput.toUpperCase();
+                        if (ucased.startsWith("DECLARE") ||
+                                ucased.startsWith("BEGIN")) {
+                            chunking = true;
+                            stringBuffer.append(inputLine);
+                            if (interactive) {
+                                stdprintln(
+                                    "Enter RAW SQL.  No \\, :, * commands.  "
+                                + "End with a line containing only \".\":");
+                            }
+                            continue;
+                        }
                     }
 
                     if (trimmedInput.length() == 0) {
-                        if (interactive &&!inComment) {
+                        // Blank lines delimit commands ONLY IN INTERACTIVE 
+                        // MODE!
+                        if (interactive && !inComment) {
                             setBuf(stringBuffer.toString());
                             stringBuffer.setLength(0);
                             stdprintln("Current input moved into buffer.");
@@ -558,9 +594,7 @@ public class SqlFile {
                         throw new SQLException("Empty SQL Statement");
                     }
 
-                    if (interactive) {
-                        setBuf(curCommand);
-                    }
+                    setBuf(curCommand);
 
                     processSQL();
                 } catch (SQLException se) {
@@ -1282,6 +1316,14 @@ public class SqlFile {
                 }
 
                 return;
+            case '.' :
+                chunking = true;
+                if (interactive) {
+                    stdprintln("Enter RAW SQL.  No \\, :, * commands.  "
+                            + "End with a line containing only \".\":");
+                }
+                return;
+
         }
 
         throw new BadSpecial("Unknown Special Command");
@@ -2502,8 +2544,8 @@ public class SqlFile {
                                  + statementHistory.length + " commands");
         }
 
-        String s =
-            statementHistory[(statementHistory.length + curHist - commandsAgo) % statementHistory.length];
+        String s = statementHistory[(statementHistory.length + curHist 
+                - commandsAgo) % statementHistory.length];
 
         if (s == null) {
             throw new BadSpecial("History doesn't go back that far");
