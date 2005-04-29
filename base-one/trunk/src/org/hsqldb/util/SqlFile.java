@@ -52,8 +52,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
+import java.sql.DatabaseMetaData;
 
-/* $Id: SqlFile.java,v 1.96 2005/04/23 14:19:39 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.99 2005/04/24 08:44:55 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -89,7 +90,7 @@ import java.util.TreeMap;
  * Most of the Special Commands and all of the Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.96 $
+ * @version $Revision: 1.99 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -137,8 +138,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.96 $".substring("$Revision: ".length(),
-                                               "$Revision: 1.96 $".length()
+        revnum = "$Revision: 1.99 $".substring("$Revision: ".length(),
+                                               "$Revision: 1.99 $".length()
                                                - 2);
     }
 
@@ -182,23 +183,24 @@ public class SqlFile {
     private static final String HELP_TEXT = "SPECIAL Commands.\n"
         + "* commands only available for interactive use.\n"
         + "In place of \"3\" below, you can use nothing for the previous command, or\n"
-        + "an integer \"X\" to indicate the Xth previous command.\n\n"
+        + "an integer \"X\" to indicate the Xth previous command.\n"
++ "Filter substrings are cases-sensitive!  Use \"SCHEMANAME.\" to narrow schema.\n\n"
         + "    \\?                   Help\n"
         + "    \\p [line to print]   Print string to stdout\n"
         + "    \\w file/path.sql     Append current buffer to file\n"
         + "    \\i file/path.sql     Include/execute commands from external file\n"
-        + "    \\d{tvsSan*} [substr]  List objects of specified type:\n"
-        +"                            Tbls/Views/Seqs/SysTbls/Aliases/schemaNames/all\n"
+        + "    \\d{tvsiSanu*} [substr]  List objects of specified type:\n"
+        +"             Tbls/Views/Seqs/Indexes/SysTbls/Aliases/schemaNames/Users/all\n"
         + "    \\d OBJECTNAME [subs] Describe table or view columns\n"
         + "    \\o [file/path.html]  Tee (or stop teeing) query output to specified file\n"
         + "    \\H                   Toggle HTML output mode\n"
         + "    \\! COMMAND ARGS      Execute external program (no support for stdin)\n"
-        + "    \\* [true|false]      Continue upon errors (a.o.t. abort upon error)\n"
+        + "    \\c [true|false]      Continue upon errors (a.o.t. abort upon error)\n"
         + "    \\a [true|false]      Auto-commit JDBC DML commands\n"
         + "    \\s                   * Show previous commands (i.e. SQL command history)\n"
         + "    \\-[3]                * reload a command to buffer (for : commands)\n"
         + "    \\-[3];               * reload command and execute (via \":;\")\n"
-        + "    \\q [abort message]   Quit (alternatively, end input like Ctrl-Z or Ctrl-D)\n"
+        + "    \\q [abort message]   Quit (or end input like Ctrl-Z or Ctrl-D)\n"
     ;
     private static final String PL_HELP_TEXT =
         "PROCEDURAL LANGUAGE Commands.  MUST have white space after '*'.\n"
@@ -1178,6 +1180,7 @@ public class SqlFile {
                 return;
 
             case '*' :
+            case 'c' :
                 if (other != null) {
 
                     // But remember that we have to abort on some I/O errors.
@@ -1893,7 +1896,9 @@ public class SqlFile {
                              ORACLE_ELEMENT  = 2
     ;
 
+    // These do not specify order listed, just inclusion.
     private static final int[] listMDSchemaCols = { 1 };
+    private static final int[] listMDIndexCols = { 2, 6, 3, 9, 4, 10, 11 };
 
     /** Column numbering starting at 1. */
     private static final int[][] listMDTableCols = {
@@ -1910,26 +1915,49 @@ public class SqlFile {
 
     /**
      * Lists available database tables.
+     *
+     * When a filter is given, we assume that there are no lower-case
+     * characters in the object names (which would require "quotes" when
+     * creating them).
      * 
      * @throws BadSpecial
      */
     private void listTables(char c,
-                            String filter) throws BadSpecial {
+                            String inFilter) throws BadSpecial {
+
+        int[]                     listSet   = null;
+        String[]                  types     = null;
+        /** This is for specific non-getTable() queries */
+        Statement                 statement = null;
+        ResultSet                 rs;
+        String                    narrower = "";
+        /*
+         * Doing case-sensitive filters now, for greater portability. 
+        String                    filter = ((inFilter == null)
+                                          ? null : inFilter.toUpperCase());
+         */
+        String                    filter = inFilter;
+
         try {
+            DatabaseMetaData md = curConn.getMetaData();
+            String                dbProductName = md.getDatabaseProductName();
 
-        int[]                     listSet       = null;
-        String[]                  types         = null;
-        java.sql.DatabaseMetaData md            = curConn.getMetaData();
-        String                    dbProductName = md.getDatabaseProductName();
+            //System.err.println("DB NAME = (" + dbProductName + ')');
+            // Database-specific table filtering.
+            String excludePrefix = null;
 
-        //System.err.println("DB NAME = (" + dbProductName + ')');
-        // Database-specific table filtering.
-        String excludePrefix = null;
-
-        if (c != '*') {
+            /* 3 Types of actions:
+             *    1) Special handling.  Return from the "case" block directly.
+             *    2) Execute a specific query.  Set statement in the "case". 
+             *    3) Otherwise, set filter info for dbmd.getTable() in the
+             *       "case".
+             */
             types = new String[1];
 
             switch (c) {
+                case '*' :
+                    types = null;
+                    break;
 
                 case 'S' :
                     types[0] = "SYSTEM TABLE";
@@ -1937,32 +1965,68 @@ public class SqlFile {
 
                 case 's' :
                     if (dbProductName.indexOf("HSQL") > -1) {
-                        //  HSQLDB does not currently list Sequences in
+                        //  HSQLDB does not consider Sequences as "tables",
+                        //  hence we do not list them in 
                         //  DatabaseMetaData.getTables().
-                        Statement statement = curConn.createStatement();
+                        if (filter != null
+                                && filter.charAt(filter.length()-1) == '.') {
+                            narrower = "\nWHERE sequence_schema = '"
+                                + filter.substring(0, filter.length() - 1)
+                                + "'";
+                            filter = null;
+                        }
+                        statement = curConn.createStatement();
                         statement.execute(
                             "SELECT sequence_schema, sequence_name FROM " + 
-                                "information_schema.system_sequences");
-                        displayResultSet(null, statement.getResultSet(),
-                                null, filter);
-                        return;
+                                "information_schema.system_sequences"
+                                + narrower);
+                    } else {
+                        types[0] = "SEQUENCE";
                     }
-                    types[0] = "SEQUENCE";
+                    break;
+
+                case 'u' :
+                    if (dbProductName.indexOf("HSQL") > -1) {
+                        statement = curConn.createStatement();
+                        statement.execute(
+                            "SELECT user, admin FROM " + 
+                                "information_schema.system_users\n"
+                                + "ORDER BY user");
+                    } else if (dbProductName.indexOf("Oracle") > -1) {
+                        statement = curConn.createStatement();
+                        statement.execute(
+                            "SELECT username, created FROM all_users "
+                                + "ORDER BY username");
+                    } else if (dbProductName.indexOf("PostgreSQL") > -1) {
+                        statement = curConn.createStatement();
+                        statement.execute(
+                        "SELECT usename, usesuper FROM pg_catalog.pg_user "
+                                + "ORDER BY usename");
+                    } else {
+                        throw new BadSpecial("SqlFile does not yet support "
+                                + "\\du for your database vendor");
+                    }
                     break;
 
                 case 'a' :
                     if (dbProductName.indexOf("HSQL") > -1) {
-                        //  HSQLDB does not currently list Aliases in
-                        //  DatabaseMetaData.getTables().
-                        Statement statement = curConn.createStatement();
+                        //  HSQLDB Aliases are not the same things as the
+                        //  aliases listed in DatabaseMetaData.getTables().
+                        if (filter != null
+                                && filter.charAt(filter.length()-1) == '.') {
+                            narrower = "\nWHERE alias_schem = '"
+                                + filter.substring(0, filter.length() - 1)
+                                + "'";
+                            filter = null;
+                        }
+                        statement = curConn.createStatement();
                         statement.execute(
-                                "SELECT alias_schem, alias FROM " + 
-                                "information_schema.system_aliases");
-                        displayResultSet(null, statement.getResultSet(),
-                                null, filter);
-                        return;
+                                "SELECT alias_schem, alias FROM "
+                                + "information_schema.system_aliases"
+                                + narrower);
+                    } else {
+                        types[0] = "ALIAS";
                     }
-                    types[0] = "ALIAS";
                     break;
 
                 case 't' :
@@ -1974,28 +2038,82 @@ public class SqlFile {
                     break;
 
                 case 'n' :
-                    displayResultSet(null, md.getSchemas(), 
-                            listMDSchemaCols, filter);
+                    rs = md.getSchemas();
+                    if (rs == null) {
+                        throw new BadSpecial(
+                                "Failed to get metadata from database");
+                    }
+                    displayResultSet(null, rs, listMDSchemaCols, filter);
+                   return;
+
+                case 'i' :
+                    // Some databases require to specify table, some don't.
+                    /*
+                    if (filter == null) {
+                        throw new BadSpecial("You must specify the index's "
+                                + "table as argument to \\di");
+                    }
+                     */
+                    String schema = null;
+                    String table = null;
+                    if (filter != null) {
+                        int dotat = filter.indexOf('.');
+                        schema = ((dotat > 0)
+                                ? filter.substring(0, dotat)
+                                : null);
+                        if (dotat < filter.length() - 1) {
+                            // Not a schema-only specifier
+                            table = ((dotat > 0)
+                                    ? filter.substring(dotat + 1)
+                                    : filter);
+                        }
+                        filter = null;
+                    }
+                    // N.b. Oracle incorrectly reports the INDEX SCHEMA as
+                    // the TABLE SCHEMA.  The Metadata structure seems to
+                    // be designed with the assumption that the INDEX schema
+                    // will be the same as the TABLE schema.
+                    rs = md.getIndexInfo(null, schema, table, false, true);
+                    if (rs == null) {
+                        throw new BadSpecial(
+                                "Failed to get metadata from database");
+                    }
+                    displayResultSet(null, rs, listMDIndexCols, null);
                    return;
 
                 default :
                     throw new BadSpecial("Unknown describe option: '" + c
                                          + "'");
             }
-        }
 
-        if (dbProductName.indexOf("HSQL") > -1) {
-            listSet = listMDTableCols[HSQLDB_ELEMENT];
-        } else if (dbProductName.indexOf("Oracle") > -1) {
-            listSet = listMDTableCols[ORACLE_ELEMENT];
-        } else {
-            listSet = listMDTableCols[DEFAULT_ELEMENT];
-        }
+            String schema = null;
+            if (statement == null) {
+                if (dbProductName.indexOf("HSQL") > -1) {
+                    listSet = listMDTableCols[HSQLDB_ELEMENT];
+                } else if (dbProductName.indexOf("Oracle") > -1) {
+                    listSet = listMDTableCols[ORACLE_ELEMENT];
+                } else {
+                    listSet = listMDTableCols[DEFAULT_ELEMENT];
+                }
+                if (filter != null
+                        && filter.charAt(filter.length()-1) == '.') {
+                    schema = filter.substring(0, filter.length() - 1);
+                    filter = null;
+                }
+            }
 
-        displayResultSet(null, md.getTables(null, null, null, types),
-                         listSet, filter);
+            rs = ((statement == null)
+                    ? md.getTables(null, schema, null, types)
+                    : statement.getResultSet());
+            if (rs == null) {
+                throw new BadSpecial(
+                        "Failed to get metadata from database");
+            }
+            displayResultSet(null, rs, listSet, filter);
         } catch (SQLException se) {
             throw new BadSpecial("Failure getting MetaData: " + se);
+        } catch (NullPointerException npe) {
+            throw new BadSpecial("Failure getting MetaData (NPE)");
         }
     }
 
@@ -2036,10 +2154,8 @@ public class SqlFile {
      */
     private void displayResultSet(Statement statement, ResultSet r,
                                   int[] incCols,
-                                  String inFilter) throws SQLException {
+                                  String filter) throws SQLException {
 
-        String filter      = ((inFilter == null) ? null
-                                                 : inFilter.toUpperCase());
         int    updateCount = (statement == null) ? -1
                                                  : statement.getUpdateCount();
 
@@ -2145,8 +2261,8 @@ public class SqlFile {
                             val = "NON-CONVERTIBLE TYPE!";
                         }
 
-                        if (filter != null
-                                && val.toUpperCase().indexOf(filter) > -1) {
+                        if (filter != null && (val == null
+                                || val.indexOf(filter) > -1)) {
                             filteredOut = false;
                         }
 
@@ -2417,11 +2533,13 @@ public class SqlFile {
      * @param tableName  Table that will be described.
      * @param filter  Substring to filter by
      */
-    private void describe(String tableName, String filter)
+    private void describe(String tableName, String inFilter)
     throws SQLException {
-        if (filter != null) {
-            filter = filter.toUpperCase();
-        }
+        /*
+         * Doing case-sensitive filters now, for greater portability. 
+        String filter = ((inFilter == null) ? null : inFilter.toUpperCase());
+         */
+        String                    filter = inFilter;
 
         Statement statement = curConn.createStatement();
 
@@ -2456,8 +2574,7 @@ public class SqlFile {
         for (int i = 0; i < cols; i++) {
             fieldArray    = new String[4];
             fieldArray[0] = m.getColumnName(i + 1);
-            if (filter != null
-                    && fieldArray[0].toUpperCase().indexOf(filter) < 0) {
+            if (filter != null && fieldArray[0].indexOf(filter) < 0) {
                 continue;
             }
             fieldArray[1] = m.getColumnTypeName(i + 1);
