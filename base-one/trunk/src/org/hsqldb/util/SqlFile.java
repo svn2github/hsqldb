@@ -54,7 +54,7 @@ import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.sql.DatabaseMetaData;
 
-/* $Id: SqlFile.java,v 1.100 2005/04/29 16:59:41 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.101 2005/04/29 18:45:09 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -90,7 +90,7 @@ import java.sql.DatabaseMetaData;
  * Most of the Special Commands and Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.100 $
+ * @version $Revision: 1.101 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -140,8 +140,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.100 $".substring("$Revision: ".length(),
-                                               "$Revision: 1.100 $".length()
+        revnum = "$Revision: 1.101 $".substring("$Revision: ".length(),
+                                               "$Revision: 1.101 $".length()
                                                - 2);
     }
 
@@ -2156,6 +2156,14 @@ public class SqlFile {
             throw new BadSpecial("Failure getting MetaData: " + se);
         } catch (NullPointerException npe) {
             throw new BadSpecial("Failure getting MetaData (NPE)");
+        } finally {
+            if (statement != null) {
+                try {
+                    statement.close();
+                } catch (Exception e) {
+                }
+                statement = null;
+            }
         }
     }
 
@@ -2175,10 +2183,17 @@ public class SqlFile {
         // be able to have uncommitted DML, turn autocommit on, then run
         // other DDL with autocommit on.  As a result, I could be running
         // SQL commands with autotommit on but still have uncommitted mods.
-        possiblyUncommitteds.set(true);
         statement.execute(plMode ? dereference(curCommand, true)
                                  : curCommand);
-        displayResultSet(statement, statement.getResultSet(), null, null);
+        possiblyUncommitteds.set(true);
+        try {
+            displayResultSet(statement, statement.getResultSet(), null, null);
+        } finally {
+            try {
+                statement.close();
+            } catch (Exception e) {
+            }
+        }
     }
 
     /**
@@ -2583,13 +2598,6 @@ public class SqlFile {
          */
         String                    filter = inFilter;
 
-        Statement statement = curConn.createStatement();
-
-        statement.execute("SELECT * FROM " + tableName + " WHERE 1 = 2");
-
-        ResultSet         r    = statement.getResultSet();
-        ResultSetMetaData m    = r.getMetaData();
-        int               cols = m.getColumnCount();
         String            val;
         ArrayList         rows        = new ArrayList();
         String[]          headerArray = { "name", "datatype", "width", "no-nulls"
@@ -2613,6 +2621,15 @@ public class SqlFile {
             }
         }
 
+        Statement statement = curConn.createStatement();
+        ResultSet        r     = null;
+
+        try {
+        statement.execute("SELECT * FROM " + tableName + " WHERE 1 = 2");
+
+        r = statement.getResultSet();
+        ResultSetMetaData m    = r.getMetaData();
+        int               cols = m.getColumnCount();
         for (int i = 0; i < cols; i++) {
             fieldArray    = new String[4];
             fieldArray[0] = m.getColumnName(i + 1);
@@ -2682,8 +2699,16 @@ public class SqlFile {
         }
 
         condlPrintln("\n</TABLE>\n<HR>", true);
-        r.close();
-        statement.close();
+        } finally {
+            try {
+                if (r != null) {
+                    r.close();
+                    r = null;
+                }
+                statement.close();
+            } catch (Exception e) {
+            }
+        }
     }
 
     public static String[] getTokenArray(String inString) {
