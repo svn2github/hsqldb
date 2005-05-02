@@ -1,4 +1,4 @@
-<!-- $Id: dbmanager.xml,v 1.2 2004/06/04 11:26:33 fredt Exp $ -->
+<!-- $Id: dbmanager.xml,v 1.3 2004/06/18 14:24:42 fredt Exp $ -->
 
 <appendix>
 <title>Database Manager</title>
@@ -12,8 +12,8 @@
             </affiliation>
         </author>
     </authorgroup>
-    <edition>$Revision: 1.2 $</edition>
-    <pubdate>$Date: 2004/06/04 11:26:33 $</pubdate>
+    <edition>$Revision: 1.3 $</edition>
+    <pubdate>$Date: 2004/06/18 14:24:42 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Database</keyword>
@@ -55,5 +55,63 @@
 	the connection. The modified values will be saved.
 	</para>
 </section> 
-
+<section>
+    <title>Automatic Connection</title>
+    <para>
+        You can use command-line switches to supply connection information.
+        If you use these switch(es), then the connection dialog window will
+        be skipped and a JDBC connection will be established immediately.
+        Assuming that the hsqldb.jar (or an alternative jar) are in your
+        CLASSPATH, this command will list the available command-line options.
+        <informalexample><screen>
+    java org.hsqldb.util.DatabaseManagerSwing --help</screen>
+        </informalexample>
+    </para><simpara>
+        It's convenient to skip the connection dialog window if you always
+        work with the same database account.
+    </simpara> <warning><simpara>
+        Use of the --password switch is not secure.
+        Everything typed on command-lines is generally available to other
+        users on the computer.
+        The problem is compounded if you use a network connection to 
+        obtain your command line.
+        The RC File section explains how you can set up automatic
+        connections without supplying a password on the command line.
+    </simpara></warning>
+</section>
+<section>
+    <title>RC File</title>
+    <simpara>
+        You can skip the connection dialog window securely by putting
+        the connection information into an RC file and then using the
+        <literal>--urlid</literal> switch to DatabaseManager or
+        DatabaseManagerSwing.
+        This strategy is great for adding launch menu items and/or launch 
+        icons to your desktop.
+        You can set up one icon for each of the database accounts which
+        you regularly use.
+    </simpara> <simpara>
+        The default location for the RC file is 
+        <filename>dbmanager.rc</filename> in your home directory.
+        The <link linkend='auth-section' endterm='auth-title'/> section 
+        explains how to put the connection information into this text file.
+        If you also run 
+        <link linkend='sqltool-chapter' endterm='sqltool-title'/>, then
+        you can share the RC file with SqlTool by using a sym-link (if
+        your operating system supports sym links), or by using the
+        <literal>--rcfile</literal> switch for either SqlTool or
+        DatabaseManagerSwing.
+    </simpara><warning><simpara>
+        Use your operating system facilities to prevent others from reading
+        your RC file, since it contains passwords.
+    </simpara></warning>
+    <simpara>
+        To set up launch items/icons, first experiment on your command
+        line to find exactly what command works.  For example,
+        <informalexample><screen>
+    java -cp /path/to/hsqldb.jar org.hsqldb.util.DatabaseManagerSwing --urlid mem</screen>
+        </informalexample>
+        Then, use your window manager to add an item that runs this command.
+    </simpara>
+</section>
 </appendix>
