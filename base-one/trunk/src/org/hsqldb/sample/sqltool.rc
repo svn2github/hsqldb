@@ -1,6 +1,7 @@
-# $Id: sqltool.rc,v 1.5 2004/06/11 04:54:24 unsaved Exp $
+# $Id: sqltool.rc,v 1.12 2005/02/25 23:34:30 fredt Exp $
 
-# This is a sample SqlTool configuration file, a.k.a. rc file.
+# This is a sample RC configuration file used by SqlTool, DatabaseManager,
+# and any other program that uses the org.hsqldb.util.RCData class.
 
 # You can run SqlTool right now by copying this file to your home directory
 # and running
@@ -9,7 +10,7 @@
 # personal Memory-Only database.
 
 # If you have the least concerns about security, then secure access to
-# your sqltool.rc file.
+# your RC file.
 # See the documentation for SqlTool for various ways to use this file.
 
 # A personal Memory-Only database.
