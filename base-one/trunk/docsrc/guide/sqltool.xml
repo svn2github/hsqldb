@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.62 2005/05/02 15:11:04 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.63 2005/05/02 16:35:10 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.62 $</edition>
-        <pubdate>$Date: 2005/05/02 15:11:04 $</pubdate>
+        <edition>$Revision: 1.63 $</edition>
+        <pubdate>$Date: 2005/05/02 16:35:10 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -518,6 +518,11 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
                     SqlTool.
                     You can use spaces and other special characters in
                     the string.
+                </simpara>
+                    Note that this is a change in behavior from SqlFile
+                    before about version 1.100, where substring tests
+                    were case-insensitive.
+                <simpara>
                 </simpara></important>
                 <tip><simpara>
                     Beginning with the current version of SqlFile, filter
