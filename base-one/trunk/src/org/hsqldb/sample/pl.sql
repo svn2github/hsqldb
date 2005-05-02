@@ -1,5 +1,5 @@
 /*
-    $Id: pl.sql,v 1.2 2004/06/09 20:12:31 unsaved Exp $
+    $Id: pl.sql,v 1.3 2004/06/10 01:44:52 unsaved Exp $
     SQL File to illustrate the use of SqlTool PL features.
     Invoke like
         java -jar .../hsqldb.jar .../pl.sql mem
@@ -17,7 +17,7 @@
 * end if
 
 /* Turning on Continue-upon-errors so that we can check for errors ourselves.*/
-\* true
+\c true
 
 \p
 \p Loading up a table named '*{MYTABLE}'...
@@ -42,7 +42,7 @@ CREATE TABLE *{MYTABLE} (
 * end if
 
 /* Default Continue-on-error behavior is what you usually want */
-\* false
+\c false
 \p
 
 /* Insert data with a foreach loop.
