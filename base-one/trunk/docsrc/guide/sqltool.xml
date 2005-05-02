@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.58 2004/10/20 01:46:51 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.59 2005/03/15 13:42:24 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.58 $</edition>
-        <pubdate>$Date: 2004/10/20 01:46:51 $</pubdate>
+        <edition>$Revision: 1.59 $</edition>
+        <pubdate>$Date: 2005/03/15 13:42:24 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -40,8 +40,8 @@
             SqlTool is still a very useful tool even if you have no quoting
             capability at all.
         </simpara><simpara>
-            This document is now updated for version 1.37 of SqlTool and
-            1.86 of SqlFile (the latter is the class which does most of the
+            This document is now updated for version 1.43 of SqlTool and
+            1.102 of SqlFile (the latter is the class which does most of the
             work for SqlTool).
             The startup banner will report both versions when you run SqlTool
             interactively.
@@ -98,7 +98,7 @@
                     Note that you don't need to worry about setting the 
                     CLASSPATH when you use the <literal>-jar</literal> switch
                     to <filename>java</filename>.
-                    Assuming that you set up your SqlTool configuration file 
+                    Assuming that you set up your SqlTool RC file 
                     at the default location and you want to use the HSQLDB 
                     JDBC driver, you will want to run something like
                 <informalexample><screen>
@@ -120,7 +120,7 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar --noinput --sql 'SQL statement;' mem</scre
                     </para><simpara>
                     The <emphasis>urlid</emphasis> <literal>mem
                     </literal>in these commands is a key 
-                    into your SqlTool configuration file, as explained in the 
+                    into your RC file, as explained in the 
                     <link linkend='auth-section' endterm='auth-title'/> section.
                     Since this is a Memory Only database, you can use SqlTool
                     with this urlid immediately with no database setup 
@@ -194,34 +194,40 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
     </section>
 
     <section id='auth-section'>
-        <title id='auth-title'>Authentication Setup</title>
+        <title id='auth-title'>RC File Authentication Setup</title>
         <simpara>
-            Authentication setup is accomplished by creating a text SqlTool
+            Authentication setup is accomplished by creating a text RC
             configuration file.
             In this section, when I say <emphasis>configuration</emphasis>
-            or <emphasis>config</emphasis> file, I mean an SqlTool 
-            configuration file (aka SqlTool RC file).
+            or <emphasis>config</emphasis> file, I mean an RC configuration 
+            file.
+            RC files can be used by any JDBC client program that uses the
+            org.hsqldb.util.RCData class-- this includes
+            SqlTool, DatabaseManager, DatabaseManagerSwing.
+            You can use it for your own JDBC client programs too.
         </simpara><simpara>
-            The following sample <filename>sqltool.rc</filename> file resides
-            in the directory <filename>src/org/hsqldb/sample</filename> of your
+            The following sample RC file resides at 
+            <filename>src/org/hsqldb/sample/sqltool.rc</filename> in your
             HSQLDB distribution.
         </simpara>
         <example>
-            <title>Sample sqltool.rc File</title>
+            <title>Sample RC File</title>
             <programlisting>&sqltool.rc-cdata;</programlisting>
         </example>
         <para>
             You can put this file anywhere you want to, and specify the 
-            location to SqlTool by using the "--rcfile" argument.
+            location to SqlTool/DatabaseManager/DatabaseManagerSwing by
+            using the <literal>--rcfile</literal> argument.
             If there is no reason to not use the default location (and there 
             are situations where you would not want to), then use the default
-            location and you won't have to give "--rcfile" arguments to 
-            SQLTool.
-            The default location is <emphasis>sqltool.rc</emphasis> in your 
-            home directory.
-            If you have any doubt about where that is, then just run SqlTool 
-            with a phony urlid and it will tell you where it expects the 
-            configuration file to be.
+            location and you won't have to give <literal>--rcfile</literal>
+            arguments to SqlTool/DatabaseManager/DatabaseManagerSwing.
+            The default location is <filename>sqltool.rc</filename> or
+            <filename>dbmanager.rc</filename> in your home directory
+            (corresponding to the program using it).
+            If you have any doubt about where your home directory is, just 
+            run SqlTool with a phony urlid and it will tell you where it 
+            expects the configuration file to be.
         <informalexample><screen>
     java -jar $HSQLDB_HOME/lib/hsqldb.jar x</screen>
         </informalexample></para><para>
@@ -242,14 +248,14 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
         </para><simpara>
             in the file as you like.
             The whole point is that the <emphasis>urlid</emphasis> that you 
-            give in your SqlTool command must match a <emphasis>urlid
-            </emphasis> in your configuration file.
+            give in your SqlTool/DatabaseManager command must match a 
+            <emphasis>urlid </emphasis> in your configuration file.
         </simpara><important><simpara>
             Use whatever facilities are at  your disposal to protect your 
             configuration file.
         </simpara></important><simpara>
             It should be readable, both locally and remotely, only to users 
-            who need to use the records in it to run SqlTool.
+            who run programs that need it.
             On UNIX, this is easily accomplished by using <literal>chmod/chown
             </literal> commands and making sure that it is protected from 
             anonymous remote access (like via NFS, FTP or Samba).
@@ -259,7 +265,8 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
         </simpara>
         <variablelist>
             <varlistentry><term>charset</term><listitem><simpara>
-                Sets encoding character set for input.
+                This is used by the SqlTool program, but not by the
+                DatabaseManager programs.
                 See the <link linkend='charencoding-section'
                     endterm='charencoding-title'/> section of the
                 <link linkend='nonint-section' endterm='nonint-title'/>
@@ -271,8 +278,9 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
             </simpara></listitem></varlistentry>
             <varlistentry><term>driver</term><listitem><simpara>
                 Sets the JDBC driver class name.
-                You can, alternatively, set this for one SqlTool invocation 
-                by using the SqlTool switch <emphasis>--driver</emphasis>.
+                You can, alternatively, set this for one 
+                SqlTool/DatabaseManager invocation by using the command 
+                line switch <emphasis>--driver</emphasis>.
                 Defaults to <emphasis>org.hsqldb.jdbcDriver</emphasis>.
             </simpara></listitem></varlistentry>
             <varlistentry><term>truststore</term><listitem><simpara>
@@ -327,12 +335,12 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
         <important><simpara>
             Every command (regardless of type) and comment must begin at the
             beginning of a line or immediately after a comment ends with
-            "*/").
+            "*/".
         </simpara><simpara>
             You can't nest commands or comments.
             You can only start new commands (and comments) after the preceding
             statement has been terminated.
-            (Remember that you if you're running SqlTool interactively, you 
+            (Remember that if you're running SqlTool interactively, you 
             can terminate an SQL statement without executing it by entering a
             blank line).
         </simpara><simpara>
@@ -340,6 +348,12 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
             of just one line.
             Any of these commands or comments may be preceded by space 
             characters.)
+        </simpara><simpara>
+            These rules do not apply at all to
+            <link linkend='raw-section' endterm='raw-title'/>.
+            Raw mode is for use by advanced users when they want to completely
+            bypass SqlTool processing in order to enter a chunk of text for
+            direct transmission to the database engine.
         </simpara></important>
         <simpara>
             When you are typing into SqlTool, you are always typing part of
@@ -349,7 +363,7 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
             If you're typing an SQL command, then the previous SQL command
             will be in the buffer, not the one you are currently typing.
             The current command could be any type of command, but only SQL
-            commands get moved to the buffer when they are completed.
+           
             When you type command-editing commands, the <emphasis>current
             command</emphasis> is the editing command (like
             "<literal>:s/tbl/table/</literal>"), the result of which is to
@@ -377,6 +391,8 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
                 line), the command will go to the buffer and SQL history, but 
                 will not be executed (but you can execute it later from the 
                 buffer).
+                (See the note immediately above about multiple SQL statements 
+                in one SqlTool command).
             </simpara><simpara>
                 (Blank lines are only interpreted this way when SqlTool is
                 run interactively.
@@ -417,6 +433,36 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
                 PL features, with examples, are covered in the
                 <link linkend='pl-section' endterm='pl-title'/> section.
             </simpara></listitem></varlistentry>
+            <varlistentry><term>Raw Mode</term><listitem><simpara>
+                The descriptions of command-types above do not apply to
+                <link linkend='raw-section' endterm='raw-title'/>.
+                In raw mode, SqlTool
+                doesn't interpret what you type at all.  It all just
+                goes into a buffer which you can send to the database
+                engine.
+                Beginners can safely ignore raw mode.
+                You will never encounter it unless you run the "\."
+                special command, or enter a PL/SQL command.
+                See the 
+                <link linkend='raw-section' endterm='raw-title'/> section
+                for the details.
+            </simpara></listitem></varlistentry>
+            <note><simpara>
+                Above, we said that if you enter an SQL command, one
+                SQL command corresponds to one SqlTool command.
+                This is the most typical usage, however,
+                you can actually put multiple SQL statements into one
+                SQL command.
+                One example would be
+        <informalexample><screen>
+    INSERT INTO t1 VALUES(0); SELECT * FROM t1;</screen>
+        </informalexample>
+                This is one SqlTool command containing two SQL statements.
+                See the 
+                <link linkend='chunk-section' endterm='chunk-title'/>
+                section to see why you may want to <emphasis>chunk</emphasis>
+                SQL commands, how, and the implications.
+            </simpara></note>
         </variablelist>
         <variablelist><title>Essential Special Commands</title>
             <varlistentry><term>\?</term><listitem><simpara>
@@ -427,16 +473,24 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
             </simpara></listitem></varlistentry>
             <varlistentry><term>\dt [filter_substring]</term><listitem><simpara/></listitem></varlistentry>
             <varlistentry><term>\dv [filter_substring]</term><listitem><simpara/></listitem></varlistentry>
-            <varlistentry><term>\d* [filter_substring]</term><listitem><simpara/></listitem></varlistentry>
             <varlistentry><term>\ds [filter_substring]</term><listitem><simpara/></listitem></varlistentry>
-            <varlistentry><term>\da [filter_substring]</term><listitem><para>
-                Lists available table-like objects of the given type.
+            <varlistentry><term>\di [table_name]</term><listitem><simpara/></listitem></varlistentry>
+            <varlistentry><term>\dS [filter_substring]</term><listitem><simpara/></listitem></varlistentry>
+            <varlistentry><term>\da [filter_substring]</term><listitem><simpara/></listitem></varlistentry>
+            <varlistentry><term>\dn [filter_substring]</term><listitem><simpara/></listitem></varlistentry>
+            <varlistentry><term>\du [filter_substring]</term><listitem><simpara/></listitem></varlistentry>
+            <varlistentry><term>\d* [filter_substring]</term><listitem><para>
+                Lists available objects of the given type.
                 <itemizedlist>
                     <listitem><simpara>t: non-system Tableѕ</simpara></listitem>
                     <listitem><simpara>v: Views</simpara></listitem>
+                    <listitem><simpara>s: Synonyms</simpara></listitem>
+                    <listitem><simpara>i: Indexes</simpara></listitem>
+                    <listitem><simpara>S: System tableѕ</simpara></listitem>
+                    <listitem><simpara>a: Aliases</simpara></listitem>
+                    <listitem><simpara>n: schema Names</simpara></listitem>
+                    <listitem><simpara>u: database Users</simpara></listitem>
                     <listitem><simpara>*: all table-like objects</simpara></listitem>
-                    <listitem><simpara>s: System tableѕ</simpara></listitem>
-                    <listitem><simpara>a: database SQL Aliases</simpara></listitem>
                 </itemizedlist>
                 If your database supports schemas, then the schema name will
                 also be listed.
@@ -444,17 +498,44 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
                 If you supply an optional <emphasis>filter substring</emphasis>,
                 then only items which contain the given substring (in the object
                 name or schema name) will be listed.
-                The substring test is case-insensitive.
-                </simpara><simpara>
-                I do intent to change "\ds" to "\dS".
-                I would do it right now if the SqlTool code weren't going
-                production in two days.
-                The reason is, I want \ds for listing either Sequences (like
-                psql) or Synonyms.
-            </simpara>
+                </simpara><important><simpara>
+                    The substring test is case-sensitive!
+                    Even though in SQL queries and for the "\d objectname"
+                    command object names are usually case-insensitive, for 
+                    the \dX commands, you must capitalize the filter 
+                    substring exactly as it will appear in the output.
+                </simpara></important>
+                <tip><simpara>
+                    Beginning with the current version of SqlFile, filter
+                    substrings ending with "." are special.
+                    If a substring ends with ".", then this means to narrow
+                    the search by the exact, case-sensitive schema name
+                    given.
+                    For example, if I run "\d* BLAINE.", this will list all
+                    table-like database objects in the "BLAINE" schema.
+                </simpara></tip>
+                <note><simpara>
+                Several new \dX commands have been added with the current
+                of SqlFile.
+                Be aware that the meaning of the \s command has changed!
+                </simpara></note>
+                <important><simpara>
+                Indexes may not be searched for by 
+                <emphasis>substring</emphasis>, only by
+                exact target table name.
+                So if <literal>I1</literal> is an index on table
+                <literal>T1</literal>, then you list this index by running
+                "\di T1".
+                In addition, many database vendors will report on indexes 
+                only if a target table is identified.
+                Therefore, "\di" with no argument will fail if your database
+                vendor does not support it.
+            </simpara></important>
             </listitem></varlistentry>
             <varlistentry><term>\d objectname</term><listitem><simpara>
                 Lists names of all columns in the specified table or view.
+                <literal>objectname</literal> may be a base table name or
+                a schema.object name.
                 </simpara><tip><simpara>
                 When working with real data (as opposed to learning or playing),
                 I often find it useful to run two SqlTool sessions in two
@@ -689,31 +770,27 @@ java -Dsqltool.historyLength=40 -jar $HSQLDB_HOME/lib/hsqldb.jar urlid</screen>
             of the history).
         </simpara>
         </section>
-    </section>
-
-    <section><title>Raw mode</title>
-        <para>
-            If for some reason you want SqlTool to process your commands as 
-            if it were reading an SQL file (i.e., no startup banner,
-            no command prompts, no Buffer/history commands, aborting upon
-            failure by default, allow blank lines with SQL statements),
-            then specify a SQL filepath of "-", like
-        <informalexample><screen>
-    java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid -</screen>
-        </informalexample></para><para>
-            This is very useful in (at least) two situations.
-            This is how you would pipe input into SqlTool, which is 
-            extremely useful in shell scripts where the SQL code is
-            generated dynamically, like
-        <example><title>Piping input into SqlTool</title><screen>
-    echo "Some SQL commands with '$VARIABLES';" |
-    java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid -</screen>
-        </example></para><simpara>
-            This is also a good way to test what SqlTool will do when it 
-            encounters a specific command in a SQL file.
-            You <emphasis>emulate</emphasis> SQL file execution while
-            giving SqlTool commands interactively.
-        </simpara>
+        <section><title>Shell scripting and command-line piping</title>
+            <simpara>
+            You normally use non-interactive mode for piping.  You specify
+            "-" as the SQL file name.  
+            See the <link linkend='scripting-section' endterm='scripting-title'/>
+            subsection of the Non-Interactive chapter.
+            </simpara>
+        </section>
+        <section><title>Emulating Non-Interactive mode</title>
+            <simpara>
+            You can run SqlTool <emphasis>interactively</emphasis>, but
+            have SqlTool behave exactly as if it were processing an SQL
+            file (i.e., no command-line prompts, error-handling
+            that defaults to fail-upon-error, etc.).
+            Just specify "-" as the SQL file name in the command line.
+            This is a good way to test what SqlTool will do when it 
+            encounters any specific command in an SQL file.
+            See the <link linkend='scripting-section' endterm='scripting-title'/>
+            subsection of the Non-Interactive chapter for an example.
+            </simpara>
+        </section>
     </section>
 
     <section id='nonint-section'>
@@ -795,13 +872,13 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar sql... > /tmp/log.sql 2>&amp;1</screen>
                 If the SQL file was written without any concern for error
                 handling, then the file will continue to execute after errors
                 occur.
-                You could run <literal>\* false</literal> before 
+                You could run <literal>\c false</literal> before 
                 <literal>\i filename</literal>, but then your SqlTool session
                 will exit if an error is encountered in the SQL file.
                 If you have an SQL file without error handling, and you want
                 to abort that file when an error occurs, but not exit 
                 SqlTool, the easiest way to accomplish this is usually to add
-                <literal>\* false</literal> to the top of the script.
+                <literal>\c false</literal> to the top of the script.
             </simpara><simpara>
                 If you specify multiple SQL files on the command-line, the
                 default behavior is to exit SqlTool if any of the SQL files
@@ -835,6 +912,31 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar sql... > /tmp/log.sql 2>&amp;1</screen>
                 (The <literal>--sql "create..."</literal> arguments create an
                 account which the script uses).
             </simpara>
+        </section>
+        <section id='scripting-section'>
+            <title id='scripting-title'>Piping and shell scripting</title>
+            <para>
+                You can of course, redirect output
+                <emphasis>from</emphasis> SqlTool to a file
+                or another program.
+            <informalexample><screen>
+    java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid file.sql > file.txt 2>&amp;1
+
+    java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid file.sql 2>&amp;1 | someprogram...</screen>
+            </informalexample></para><para>
+                You can type commands in to SqlTool while being in 
+                non-interactive mode by supplying "-" as the file name.
+                This is a good way to test how SqlTool will behave when 
+                processing your SQL files.
+            <informalexample><screen>
+        java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid -</screen>
+            </informalexample></para><para>
+                This is how you have SqlTool read its input from another 
+                program:
+            <example><title>Piping input into SqlTool</title><screen>
+        echo "Some SQL commands with '$VARIABLES';" |
+        java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid -</screen>
+            </example></para>
         </section>
         <section>
             <title>Optimally Compatible SQL Files</title>
@@ -917,6 +1019,9 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar sql... > /tmp/log.sql 2>&amp;1</screen>
                 Don't use Buffer Commands in your sql files, because they won't 
                 work.
                 Buffer Commands are for interactive use only.
+                (But, see the 
+                <link linkend='raw-section' endterm='raw-title'/> section 
+                for an exception).
             </simpara>
             <variablelist>
                 <varlistentry><term>\q [abort message]</term><listitem><para>
@@ -973,11 +1078,11 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sql... > /tmp/log.html 2>&
                     behavior by using the <literal>--autoCommit</literal>
                     command-line switch.
                 </simpara></listitem></varlistentry>
-                <varlistentry><term>\* [true|false]</term><listitem><simpara>
-                    A "true" setting tells SqlTool to continue when errors are 
+                <varlistentry><term>\c [true|false]</term><listitem><simpara>
+                    A "true" setting tells SqlTool to Continue when errors are 
                     encountered.
                     The current transaction will not be rolled back upon SQL
-                    errors, so if \* is true, then run the
+                    errors, so if \c is true, then run the
                     <literal>ROLLCACK;</literal> command yourself if that's 
                     what you want to happen.
                     The default for interactive use is to continue upon error, 
@@ -1001,7 +1106,7 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sql... > /tmp/log.html 2>&
                         an error is encountered, without necessarily killing 
                         the SqlTool session.
                         If this is the behavior that you want, then
-                        put an explicit <literal>\* false</literal>
+                        put an explicit <literal>\c false</literal>
                         at the top of your SQL file and turn on
                         continue-upon-error only for sections where you really
                         want to permit errors, or where you are using PL
@@ -1012,7 +1117,7 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sql... > /tmp/log.html 2>&
                         or included in another SQL file (i.e. nested).
                     </simpara></tip><important><simpara>
                         The default settings are usually best for people who 
-                        don't want to put in any explicit \* or error handling 
+                        don't want to put in any explicit \c or error handling 
                         code at all.
                         If you run SQL files from the SqlTool command line,
                         then any errors will cause SqlTool to roll back and
@@ -1030,6 +1135,16 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sql... > /tmp/log.html 2>&
                         Only you know whether errors in your SQL files can
                         safely be ignored.
                     </simpara></important>
+                    <note><simpara>
+                        In previous versions of SqlTool, this special command
+                        was "\*".  This usage is still supported, but is
+                        deprecated.  It was changed because "\*" is a very
+                        poor mnemonic.
+                        Even the author of the program had to constantly 
+                        look up whether "\* true" meant to Continue on
+                        error or to Abort upon error.
+                        Now, the "c" signifies <emphasis>Continue</emphasis>.
+                    </simpara></note>
                 </listitem></varlistentry>
             </variablelist>
         </section>
@@ -1040,7 +1155,7 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sql... > /tmp/log.html 2>&
                 status and gives you control over error handling and SQL 
                 transactions.
                 Autocommit is off by default, so you can build a completely
-                dependable solution by intelligently using \* commands 
+                dependable solution by intelligently using \c commands 
                 (Continue upon Errors) and commit statements, and by
                 verifying exit statuses.
             </simpara> <simpara>
@@ -1171,7 +1286,7 @@ java -Dsqlfile.charset=UTF-8 -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sq
     </section>
 
     <section id='pl-section'>
-        <title id='pl-title'>Procedural Language</title>
+        <title id='pl-title'>SqlTool Procedural Language</title>
         <subtitle>Aka PL</subtitle>
         <simpara>
             Most importantly, run <filename>SqlTool</filename> interactively 
@@ -1218,6 +1333,8 @@ java -Dsqlfile.charset=UTF-8 -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sq
         sql> * qq = p Hello Butch
         sql> \*{qq} done now
         Hello Butch done now</programlisting>
+            (Note that the \* here is not the special command "\*", but is
+            the special command "\p" because "*{qq}" resolves to "p").
         </para>
         <section>
             <title>Variables</title>
@@ -1445,6 +1562,188 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar mem $HSQLDB_HOME/src/org/hsqldb/sample/pl.
         <example><title>SQL File showing use of most PL features</title>
             <programlisting>&pl.sql-cdata;</programlisting>
         </example>
+    </section>
+
+    <section id='chunk-section'>
+        <title id='chunk-title'>Chunking</title>
+        <para>
+            We hereby call the ability to transmit multiple SQL commands to
+            the database in one transmission <emphasis>chunking</emphasis>.
+            Unless you are in Raw mode, SqlTool only transmits commands to the
+            database engine when it reads in a ";" at the end of a line of an
+            SQL command.
+            Therefore, you normally want to end each and every SQL command 
+            with ";" at the end of a line.
+            This is because the database can only send one status reply to
+            each JDBC transmission.
+            So, while you could run
+        <informalexample><screen>
+    SELECT * FROM t1; SELECT * FROM t2;</screen>
+        </informalexample>
+            SqlTool can only display the results from the last query.
+            This is a limitation of the client/server nature of JDBC, and
+            applies to any JDBC client.
+            There are, however, situations where you don't need immediate
+            feedback from every SQL command.  For example,
+        <example><title>Single-line chunking example</title><screen>
+    INSERT INTO t1 VALUES(0); SELECT * FROM t1;</screen>
+        </example>
+            It's useful because the output of the second SQL command will tell
+            you whether the first SQL command succeeded.  So, you won't miss
+            the status output from the first command.
+        </para>
+        <section>
+            <title>Why?</title>
+            <simpara>
+                The first general reason to chunk SQL commands is performance.
+                For standalone databases, the most common performance 
+                bottleneck is network latency.
+                Chunking SQL commands can dramatically reduce network traffic.
+            </simpara> <simpara>
+                The second general reason to chunk SQL commands is if your
+                database requires you to send multiple commands in one
+                transmission.
+                This is often the case when you need to tell the database
+                the SQL or PL/SQL commands that comprise a stored procedure,
+                function, trigger, etc.
+            </simpara>
+        </section>
+        <section>
+            <title>How?</title>
+            <para>
+                The most simple way is enter as many SQL commands as you 
+                want, but just do not end a line with ";" until you want
+                the chunk to transmit.
+                <example><title>Multi-line chunking example</title><screen>
+    INSERT INTO t1 VALUES (1)
+    ; INSERT INTO t1 VALUES (2)
+    ; SELECT * FROM t1;</screen>
+                </example>
+                If you list your command history with \s, you will see that
+                all 3 SQL commands in 3 lines are in one SqlTool command.
+                You can recall this SqlTool command from history to
+                re-execute all three SQL commands.
+            </para>
+            <simpara>
+                The other method is by using 
+                <link linkend='raw-section' endterm='raw-title'/>.
+                See the
+                <link linkend='raw-section' endterm='raw-title'/>.
+                to see how.
+                You can enter any text at all, exactly how you want it to
+                be sent to the database engine.
+                Therefore, in addition to chunking SQL commands, you can
+                give commands for non-SQL extensions to the database.
+                For example, you could enter JavaScript code to be used
+                in a stored procedure.
+            </simpara>
+        </section>
+    </section>
+
+    <section id='raw-section'>
+        <title id='raw-title'>Raw Mode</title>
+        <simpara>
+            You begin raw mode by issuing the Special Command "\.".
+            You can then enter as much text in any format you want.
+            When you are finished, enter a line consisting of only ".".
+            If you are running SqlTool interactively, you'll notice that
+            your prompt will be the continuation prompt until you enter
+            the "." line.
+        </simpara> <simpara>
+            When you terminate raw entry with the "\." line, the command
+            does not <emphasis>execute</emphasis>, it just goes into the
+            command buffer.
+            If running interactively, you can look at the buffer with the
+            ":l" Buffer Command.
+            What you will normally want to do is to enter the Buffer Command
+            ":;" to transmit the buffer to the database engine.
+        </simpara>
+        <para>
+            <example><title>Raw Mode example</title><screen>
+    sql> \.
+    Enter RAW SQL.  No \, :, * commands.  End with a line containing only ".":
+    raw> line one;
+      +> line two;
+      +> line three;
+      +> .
+    Raw SQL chunk moved into buffer.  Run ":;" to execute the chunk.
+    sql> :;
+    Executing command from buffer:
+    line one;
+    line two;
+    line three;
+
+    SQL Error at 'stdin' line 13:
+    "line one;
+    line two;
+    line three;"
+    Unexpected token: LINE in statement [line]
+    sql></screen>
+            </example>
+            The error message "Unexpected token: LINE in statement [line]"
+            comes from the database engine, not SqlTool.
+            All three lines were transmitted to the database engine.
+        </para>
+        <simpara>
+            Buffer Commands are generally unavailable when runninb SqlTool
+            interactively.
+            However, the command ":;", and the command buffer have been
+            enabled for non-interactive use, because they are required for
+            using raw mode, and it is definitely useful to be able to
+            use raw mode in SQL files.
+        </simpara>
+    </section>
+
+    <section>
+        <title>PL/SQL</title>
+        <simpara>
+            Use <link linkend='raw-section' endterm='raw-title'/> to send
+            PL/SQL code blocks to the database engine.
+            You do not need to enter the "\." command to enter raw mode.
+            Just begin a new SqlTool command line with "DECLARE" or 
+            "BEGIN", and SqlTool will automatically put you into raw mode.
+            See the <link linkend='raw-section' endterm='raw-title'/>
+            section for details.
+        </simpara>
+        <para>
+            <example><title>Raw Mode example</title><screen>
+    CREATE TABLE T1(
+        e INTEGER,
+        f INTEGER
+    );
+    DELETE FROM T1;
+    INSERT INTO T1 VALUES(1, 3);
+    INSERT INTO T1 VALUES(2, 4);
+    /* Above is plain SQL; below is the PL/SQL program. */
+    DECLARE
+
+        a NUMBER;
+
+        b NUMBER;
+
+    BEGIN
+
+        SELECT e,f INTO a,b FROM T1 WHERE e>1;
+
+        INSERT INTO T1 VALUES(b,a);
+
+    END;
+
+    .
+    :;</screen>
+            </example>
+            This example is copied from the "Simple Programs in PL/SQL"
+            example by Yu-May Chang, Jeff Ullman, Prof. Jennifer Widom at
+            the Standord University Database Group's page
+            <ulink url='http://www-db.stanford.edu/~ullman/fcdb/oracle/or-plsql.html'/>.
+            I have only removed some blank lines (because you can't use blank
+            linkes inside of SQL commands in non-raw mode SqlTool when running
+            it interactively), and replaced the client-specific, non-standard
+            command "run;" with SqlTool's corresponding command ":;".
+            Note that, inside of raw mode, you can use any kind of formatting
+            you want:  Whatever you enter--  blank lines, comments,
+            everything-- will be transmitted to the database engine.
+        </para>
     </section>
 
     <section>
