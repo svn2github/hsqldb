@@ -1,5 +1,6 @@
 /*
- * $Id: plsql.sql,v 1.1 2005/05/02 13:23:58 unsaved Exp $
+ * $Id: plsql.sql,v 1.2 2005/05/02 13:27:53 unsaved Exp $
+ *
  * This example is copied from the "Simple Programs in PL/SQL"
  * example by Yu-May Chang, Jeff Ullman, Prof. Jennifer Widom at
  * the Standord University Database Group's page
