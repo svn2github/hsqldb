@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.61 2005/05/02 13:29:23 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.62 2005/05/02 15:11:04 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.61 $</edition>
-        <pubdate>$Date: 2005/05/02 13:29:23 $</pubdate>
+        <edition>$Revision: 1.62 $</edition>
+        <pubdate>$Date: 2005/05/02 15:11:04 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -376,6 +376,7 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
             <emphasis>now current</emphasis> command.
             The buffer is the zeroeth item of the SQL command history.
         </simpara>
+        <section><title>Command Types</title>
         <variablelist><title>Command types</title>
             <varlistentry><term>SQL Statement</term><listitem><simpara>
                 Any command that you enter which does not begin with "\", ":", 
@@ -467,6 +468,8 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
                 SQL commands, how, and the implications.
             </simpara></note>
         </variablelist>
+        </section>
+        <section><title>Special Commands</title>
         <variablelist><title>Essential Special Commands</title>
             <varlistentry><term>\?</term><listitem><simpara>
                 help
@@ -501,12 +504,20 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
                 If you supply an optional <emphasis>filter substring</emphasis>,
                 then only items which contain the given substring (in the object
                 name or schema name) will be listed.
-                </simpara><important><simpara>
+                </simpara> <important><simpara>
                     The substring test is case-sensitive!
                     Even though in SQL queries and for the "\d objectname"
                     command object names are usually case-insensitive, for 
                     the \dX commands, you must capitalize the filter 
-                    substring exactly as it will appear in the output.
+                    substring exactly as it will appear in the special
+                    command output.
+                    This is an inconvenience, since the database engine
+                    will change names in SQL to default case unless you 
+                    double-quote the name, but that is server-side 
+                    functionality which cannot (portably) be reproduced by 
+                    SqlTool.
+                    You can use spaces and other special characters in
+                    the string.
                 </simpara></important>
                 <tip><simpara>
                     Beginning with the current version of SqlFile, filter
@@ -516,6 +527,17 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
                     given.
                     For example, if I run "\d* BLAINE.", this will list all
                     table-like database objects in the "BLAINE" schema.
+                    The capitalization of the schema must be exactly the same 
+                    as how the schema name is listed by the "\dn" command.
+                    You can use spaces and other special characters in
+                    the string.
+                    (I.e., enter the name exactly how you would enter it 
+                    inside of double-quotes in an SQL command).
+                    This is an inconvenience, since the database engine
+                    will change names in SQL to default case unless you 
+                    double-quote the name, but that is server-side 
+                    functionality which cannot (portably) be reproduced by 
+                    SqlTool.
                 </simpara></tip>
                 <note><simpara>
                 Several new \dX commands have been added with the current
@@ -600,6 +622,8 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
             element of the history) with a command like "\-4" before you give
             the \w command.
         </simpara>
+        </section>
+        <section><title>Buffer Commands</title>
         <variablelist><title>Buffer Commands</title>
             <varlistentry><term>:?</term><listitem><simpara>
                 help
@@ -731,7 +755,9 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
                 string manipulation functions.
             </simpara> </listitem></varlistentry>
         </variablelist>
+        </section>
 
+        <section><title>PL Commands</title>
         <variablelist><title>Essential PL Command</title>
             <varlistentry><term>* VARNAME = value</term><listitem><simpara>
                 Set the value of a variable.
@@ -758,6 +784,7 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
             below for information on using variables in other ways, and 
             information on the other PL commands and features.
         </simpara>
+        </section>
         <section><title>SQL History</title>
         <simpara>
             The SQL history shown by the \s command, and used by other commands,
