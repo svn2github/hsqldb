@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.60 2005/05/02 04:50:38 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.61 2005/05/02 13:29:23 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.60 $</edition>
-        <pubdate>$Date: 2005/05/02 04:50:38 $</pubdate>
+        <edition>$Revision: 1.61 $</edition>
+        <pubdate>$Date: 2005/05/02 13:29:23 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -387,6 +387,9 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
                 In the former case, the SQL Statement will be executed against 
                 the SQL database and the command will go into the command 
                 buffer and SQL command history for editing or viewing later on.
+                In the former case, 
+                <emphasis>execute against the SQL database</emphasis> means
+                to transmit the SQL text to the database engine for execution.
                 In the latter case (you end an SQL Statement with a blank 
                 line), the command will go to the buffer and SQL history, but 
                 will not be executed (but you can execute it later from the 
@@ -604,6 +607,11 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
             <varlistentry><term>:;</term><listitem><simpara>
                 Executes the SQL statement in the current buffer against the 
                 database.
+                This is an extremely useful command.
+                It's easy to remember because it consists of
+                ":", meaning <emphasis>Buffer Command</emphasis>; plus a
+                line-terminating ";", which sends the preceding SQL to the
+                database engine for execution.
             </simpara></listitem></varlistentry>
             <varlistentry><term>:l</term><listitem><simpara>
                 (This is a lower case L).
@@ -823,10 +831,11 @@ java -Dsqltool.historyLength=40 -jar $HSQLDB_HOME/lib/hsqldb.jar urlid</screen>
             <informalexample><screen>
 java -jar $HSQLDB_HOME/lib/hsqldb.jar --noinput --sql 'SQL statement;' urlid</screen>
             </informalexample></para><para>
-                Since SqlTool executes SQL statements only when a statement 
-                line is terminated with ";", you can only execute more than one 
-                SQL statement this way if your OS shell has some mechanism to 
-                pass linebreaks in arguments through to the target program.
+                Since SqlTool transmits SQL statements to the database engine
+                only when a line is terminated with ";", if you want feedback
+                from multiple SQL statements in an --sql expression, you will
+                need to use functionality of your OS shell to include
+                linebreaks after the semicolons in the expression.
                 With any Bourne-compatible shell, you can include linebreaks in 
                 the SQL statements like this.
             <informalexample><screen>
@@ -836,7 +845,11 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar --noinput --sql 'SQL statement;' urlid '
         number two;
     SQL statement three;
 ' urlid</screen>
-            </informalexample></para><simpara>
+            </informalexample>
+                If you don't need feedback, just separate the SQL commands
+                with semicolons and the entire expression will be
+                <link linkend='chunk-section'>chunked</link>.
+            </para><simpara>
                 If you don't give the <literal>--noinput</literal> switch, then 
                 after executing the given statements, an interactive session 
                 will be started.
@@ -1706,6 +1719,9 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar mem $HSQLDB_HOME/src/org/hsqldb/sample/pl.
             section for details.
         </simpara>
         <para>
+            The following sample SQL file resides at 
+            <filename>src/org/hsqldb/sample/plsql.sql</filename> in your
+            HSQLDB distribution.
             This script will only work if your database engine supports
             standard PL/SQL, if you have permission to create the table
             "T1" in the default schema, and if that object does not 
@@ -1739,11 +1755,8 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar mem $HSQLDB_HOME/src/org/hsqldb/sample/pl.
         </simpara><simpara>
             The HSQLDB distribution doesn't "come with" a pre-built 
             <filename>hsqlsqltool.jar</filename> file.
-            I recommend that you either download the Java 1.4 jar at
-            <ulink url='http://admc.com/dist/hsqlsqltool-1.7.2.jar'/>
-            (by right-clicking and downloading if you're reading this with a
-            web browser), or build the <emphasis>jarsqltool</emphasis> target, 
-            as explained in the 
+            I recommend that you build the <emphasis>jarsqltool</emphasis> 
+            target, as explained in the 
             <link linkend='building-appendix' endterm='building-title'/>
             appendix.
         </simpara> <simpara>
@@ -1751,7 +1764,7 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar mem $HSQLDB_HOME/src/org/hsqldb/sample/pl.
             up to a URL like jdbc:hsqldb:hsql + something or
             jdbc:hsqldb:http + something), you run SqlTool exactly as with
             hsqldb.jar except you use the file path to your hsqlsqltool.jar
-            file (for example, <filename>hsqlsqltool-1.7.2.jar</filename>)
+            file (for example, <filename>hsqlsqltool.jar</filename>)
             instead of the path to hsqldb.jar.
         </simpara> <simpara>
             If you are using a non-HSQLDB JDBC driver, follow the instructions
