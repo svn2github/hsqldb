@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: plsql.sql,v 1.1 2005/05/02 13:23:58 unsaved Exp $
  * This example is copied from the "Simple Programs in PL/SQL"
  * example by Yu-May Chang, Jeff Ullman, Prof. Jennifer Widom at
  * the Standord University Database Group's page
@@ -9,7 +9,7 @@
  * it interactively); and, at the bottom I have  replaced the
  * client-specific, non-standard command "run;" with SqlTool's
  * corresponding command ":;" and added a plain SQL SELECT command
- * to show whether the PL/SQL code worked.
+ * to show whether the PL/SQL code worked.  - Blaine
  */
 
 CREATE TABLE T1(
@@ -41,7 +41,9 @@ END;
 .
 
 /**************************************************************************/
-/* Remaining code added by Blaine Simpson of the HSQLDB Development Group.*/
+/* Remaining SqlTool-specific code added by Blaine Simpson of the 
+ * HSQLDB Development Group.
+ */
 
 :;
 
