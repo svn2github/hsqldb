@@ -74,7 +74,7 @@ import org.hsqldb.lib.java.JavaSystem;
 /**
  * AWT Tool for manageing a JDBC database.<p>
  * <pre>
- *             Usage: java DatabaseManagerSwing [-options]
+ *             Usage: java DatabaseManagerSwing [--options]
  *             where options include:
  *              --driver <classname>  jdbc driver class
  *              --url <name>          jdbc url
@@ -286,7 +286,7 @@ implements ActionListener, WindowListener, KeyListener {
     private static void showUsage() {
 
         System.out.println(
-            "Usage: java DatabaseManager [-options]\n"
+            "Usage: java DatabaseManager [--options]\n"
             + "where options include:\n"
             + "    --driver <classname>  jdbc driver class\n"
             + "    --url <name>          jdbc url\n"

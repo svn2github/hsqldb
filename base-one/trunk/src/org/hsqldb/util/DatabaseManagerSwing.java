@@ -137,7 +137,7 @@ import org.hsqldb.lib.java.JavaSystem;
 /**
  * Swing Tool for managing a JDBC database.<p>
  * <pre>
- *             Usage: java DatabaseManagerSwing [-options]
+ *             Usage: java DatabaseManagerSwing [--options]
  *             where options include:
  *              --driver <classname>  jdbc driver class
  *              --url <name>          jdbc url
@@ -386,7 +386,7 @@ implements ActionListener, WindowListener, KeyListener {
     private static void showUsage() {
 
         System.out.println(
-            "Usage: java DatabaseManagerSwing [-options]\n"
+            "Usage: java DatabaseManagerSwing [--options]\n"
             + "where options include:\n"
             + "    --driver <classname>  jdbc driver class\n"
             + "    --url <name>          jdbc url\n"
