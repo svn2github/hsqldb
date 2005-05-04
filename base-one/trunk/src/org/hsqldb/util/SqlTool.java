@@ -42,7 +42,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.StringTokenizer;
 
-/* $Id: SqlTool.java,v 1.42 2005/03/02 14:31:01 fredt Exp $ */
+/* $Id: SqlTool.java,v 1.43 2005/04/26 16:38:55 unsaved Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -53,7 +53,7 @@ import java.util.StringTokenizer;
  * See JavaDocs for the main method for syntax of how to run.
  *
  * @see @main()
- * @version $Revision: 1.42 $
+ * @version $Revision: 1.43 $
  * @author Blaine Simpson
  */
 public class SqlTool {
@@ -67,8 +67,8 @@ public class SqlTool {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.42 $".substring("$Revision: ".length(),
-                                               "$Revision: 1.42 $".length()
+        revnum = "$Revision: 1.43 $".substring("$Revision: ".length(),
+                                               "$Revision: 1.43 $".length()
                                                - 2);
     }
 
@@ -76,16 +76,17 @@ public class SqlTool {
         "Usage: java [-Dsqlfile.X=Y...] org.hsqldb.util.SqlTool \\\n"
         + "    [--optname [optval...]] urlid [file1.sql...]\n"
         + "where arguments are:\n"
-        + "    --help                   Prints this message\n"
+        + "    --help                   Displays this message\n"
         + "    --list                   List urlids in the rcfile\n"
-        + "    --noinput                Do not read stdin (default if sql file(s)\n"
-        + "                             given or --sql switch used).\n"
+        + "    --noinput                Do not read stdin (default if sql file given\n"
+        + "                             or --sql switch used).\n"
+        + "    --stdinput               Read stdin IN ADDITION to sql files/--sql input\n"
         + "    --debug                  Print Debug info to stderr\n"
         + "    --noAutoFile             Do not execute auto.sql from home dir\n"
         + "    --autoCommit             Auto-commit JDBC DML commands\n"
-        + "    --sql \"SQL;\"             Execute given SQL before stdin/files,\n"
-        + "                             where \"SQL;\" consists of SQL command(s) like\n"
-        + "                             in an SQL file, and may contain line breaks.\n"
+        + "    --sql \"SQL; Statements\"  Execute given SQL instead of stdin (before\n"
+        + "                             SQL files if any are specified) where \"SQL\"\n"
+        + "                             consists of SQL command(s).  See the Guide.\n"
         + "    --rcfile /file/path.rc   Connect Info File [$HOME/sqltool.rc]\n"
         + "    --abortOnErr             Abort on Error (overrides defaults)\n"
         + "    --continueOnErr          Continue on Error (overrides defaults)\n"
@@ -186,6 +187,7 @@ public class SqlTool {
         boolean noautoFile  = false;
         boolean autoCommit  = false;
         Boolean coeOverride = null;
+        Boolean stdinputOverride = null;
 
         noexit = System.getProperty("sqltool.noexit") != null;
 
@@ -258,11 +260,15 @@ public class SqlTool {
                 }
 
                 if (arg[i].substring(2).equals("sql")) {
+                    noinput = true; // but turn back on if file "-" specs.
                     if (++i == arg.length) {
                         throw bcl;
                     }
 
                     sqlText = arg[i];
+                    if (sqlText.charAt(sqlText.length() - 1) != ';') {
+                        sqlText += ";";
+                    }
 
                     continue;
                 }
@@ -285,8 +291,16 @@ public class SqlTool {
                     continue;
                 }
 
+                if (arg[i].substring(2).equals("stdinput")) {
+                    noinput = false;
+                    stdinputOverride = Boolean.TRUE;
+
+                    continue;
+                }
+
                 if (arg[i].substring(2).equals("noinput")) {
                     noinput = true;
+                    stdinputOverride = Boolean.FALSE;
 
                     continue;
                 }
@@ -335,13 +349,21 @@ public class SqlTool {
                 }
             }
 
+            if (stdinputOverride != null) {
+                noinput = !stdinputOverride.booleanValue();
+            }
             interactive = (!noinput) && (arg.length <= i + 1);
 
-            if ((arg.length > i + 1)
-                    && (arg.length != i + 2 ||!arg[i + 1].equals("-"))) {
+            if (arg.length == i + 2  && arg[i + 1].equals("-")) {
+                if (stdinputOverride == null) {
+                    noinput = false;
+                }
+            } else if (arg.length > i + 1) {
 
                 // I.e., if there are any SQL files specified.
-                noinput     = true;
+                if (stdinputOverride == null) {
+                    noinput     = true;
+                }
                 scriptFiles = new File[arg.length - i - 1];
 
                 if (debug) {
