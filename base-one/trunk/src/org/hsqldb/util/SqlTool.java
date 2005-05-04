@@ -42,7 +42,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.StringTokenizer;
 
-/* $Id: SqlTool.java,v 1.43 2005/04/26 16:38:55 unsaved Exp $ */
+/* $Id: SqlTool.java,v 1.44 2005/05/04 04:26:32 unsaved Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -53,7 +53,7 @@ import java.util.StringTokenizer;
  * See JavaDocs for the main method for syntax of how to run.
  *
  * @see @main()
- * @version $Revision: 1.43 $
+ * @version $Revision: 1.44 $
  * @author Blaine Simpson
  */
 public class SqlTool {
@@ -67,8 +67,8 @@ public class SqlTool {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.43 $".substring("$Revision: ".length(),
-                                               "$Revision: 1.43 $".length()
+        revnum = "$Revision: 1.44 $".substring("$Revision: ".length(),
+                                               "$Revision: 1.44 $".length()
                                                - 2);
     }
 
@@ -260,7 +260,7 @@ public class SqlTool {
                 }
 
                 if (arg[i].substring(2).equals("sql")) {
-                    noinput = true; // but turn back on if file "-" specs.
+                    noinput = true; // but turn back on if file "-" specd.
                     if (++i == arg.length) {
                         throw bcl;
                     }
@@ -361,10 +361,9 @@ public class SqlTool {
             } else if (arg.length > i + 1) {
 
                 // I.e., if there are any SQL files specified.
-                if (stdinputOverride == null) {
-                    noinput     = true;
-                }
-                scriptFiles = new File[arg.length - i - 1];
+                scriptFiles = new File[arg.length - i - 1
+                    + ((stdinputOverride == null 
+                                || !stdinputOverride.booleanValue()) ? 0 : 1)];
 
                 if (debug) {
                     System.err.println("scriptFiles has "
@@ -373,6 +372,11 @@ public class SqlTool {
 
                 while (i + 1 < arg.length) {
                     scriptFiles[scriptIndex++] = new File(arg[++i]);
+                }
+                if (stdinputOverride != null
+                        && stdinputOverride.booleanValue()) {
+                    scriptFiles[scriptIndex++] = null;
+                    noinput     = true;
                 }
             }
         } catch (BadCmdline bcl) {
@@ -451,11 +455,15 @@ public class SqlTool {
             scriptFiles = (noinput ? emptyFileArray
                                    : singleNullFileArray);
         }
+        int numFiles = scriptFiles.length;
+        if (tmpFile != null) {
+            numFiles += 1;
+        }
+        if (autoFile != null) {
+            numFiles += 1;
+        }
 
-        SqlFile[] sqlFiles =
-            new SqlFile[scriptFiles.length + ((tmpFile == null) ? 0
-                                                                : 1) + ((autoFile == null) ? 0
-                                                                                           : 1)];
+        SqlFile[] sqlFiles = new SqlFile[numFiles];
         HashMap userVars = new HashMap();
 
         if (varSettings != null) {
