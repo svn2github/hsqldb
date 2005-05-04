@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.63 2005/05/02 16:35:10 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.64 2005/05/02 19:28:52 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.63 $</edition>
-        <pubdate>$Date: 2005/05/02 16:35:10 $</pubdate>
+        <edition>$Revision: 1.64 $</edition>
+        <pubdate>$Date: 2005/05/02 19:28:52 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -106,7 +106,7 @@
                 </informalexample>
                     for interactive use, or
                 <informalexample><screen>
-java -jar $HSQLDB_HOME/lib/hsqldb.jar --noinput --sql 'SQL statement;' mem</screen>
+    java -jar $HSQLDB_HOME/lib/hsqldb.jar --sql 'SQL statement' mem</screen>
                     </informalexample>
                     or
                     <informalexample><screen>
@@ -140,14 +140,7 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar --noinput --sql 'SQL statement;' mem</scre
             before quitting SqlTool, or use the <literal>--autoCommit</literal>
             command-line switch.
         </simpara></important>
-        <simpara>
-            Note that the <literal>--sql</literal> switch runs the given
-            commands <emphasis>in addition</emphasis> to standard input
-            and/or specified SQL files.
-            If you want to run only SQL command(s) which you give on the
-            command-line, then use the <literal>--sql</literal> switch
-            <emphasis>and</emphasis> the <literal>--noinput</literal> switch.
-        </simpara> <simpara>
+                <simpara>
             If you put a file named <filename>auto.sql</filename> into your
             home directory, this file will be executed automatically every
             time that you run SqlTool interactively and without the
@@ -855,14 +848,37 @@ java -Dsqltool.historyLength=40 -jar $HSQLDB_HOME/lib/hsqldb.jar urlid</screen>
             is the ability to reliably detect errors and to control JDBC
             transactions.
         </simpara>
-        <section><title>Giving SQL on the Command Line</title>
+        <section id='sqlswitch-section'>
+            <title id='sqlswitch-title'>Giving SQL on the Command Line</title>
             <para>
                 If you just have a couple SQL commands to run, you can run them 
                 directly from the comand-line or from a shell script without an 
                 SQL file, like this.
             <informalexample><screen>
-java -jar $HSQLDB_HOME/lib/hsqldb.jar --noinput --sql 'SQL statement;' urlid</screen>
-            </informalexample></para><para>
+    java -jar $HSQLDB_HOME/lib/hsqldb.jar --sql 'SQL statement' urlid</screen>
+            </informalexample>
+            <note><simpara>
+                With the current version of SqlTool, we have changed the default
+                behavior of the <literal>--sql</literal> switch.
+                The <literal>--sql</literal> automatically implies
+                <literal>--noinput</literal>, so if you want to execute the
+                specified SQL before <emphasis>and in addition to</emphasis> an
+                interactive session (or stdin piping), then you must also give
+                the (new) <emphasis>--stdinput</emphasis> switch.
+                This was changed because it turns out that this is the desired
+                behavior well over 90% of the time that you would want to use
+                the <literal>--sql</literal> switch.
+            </simpara></note> <note><simpara>
+                Beginning with the current version of SqlTool, SqlTool will
+                automatically add a trailing semicolon to your
+                <literal>--sql</literal> SQL.  You may still give the trailing
+                semicolon if you wish to, and you must still delimit multiple
+                SQL commands with a simicolon, of course.
+                This was changed because in the very few sitations where you
+                do not want to execute your SQL by a terminating semicolon, you
+                would be better off using an SQL file.
+            </simpara></note>
+            </para><para>
                 Since SqlTool transmits SQL statements to the database engine
                 only when a line is terminated with ";", if you want feedback
                 from multiple SQL statements in an --sql expression, you will
@@ -871,27 +887,23 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar --noinput --sql 'SQL statement;' urlid</sc
                 With any Bourne-compatible shell, you can include linebreaks in 
                 the SQL statements like this.
             <informalexample><screen>
-java -jar $HSQLDB_HOME/lib/hsqldb.jar --noinput --sql 'SQL statement;' urlid '
-    SQL statement number one;
-    SQL statement
-        number two;
-    SQL statement three;
-' urlid</screen>
+    java -jar $HSQLDB_HOME/lib/hsqldb.jar --sql 'SQL statement' urlid '
+        SQL statement number one;
+        SQL statement
+            number two;
+        SQL statement three;
+    ' urlid</screen>
             </informalexample>
                 If you don't need feedback, just separate the SQL commands
                 with semicolons and the entire expression will be
                 <link linkend='chunk-section'>chunked</link>.
-            </para><simpara>
-                If you don't give the <literal>--noinput</literal> switch, then 
-                after executing the given statements, an interactive session 
-                will be started.
-            </simpara><para>
+            </para><para>
                 The <emphasis>--sql</emphasis> switch is very useful for 
                 setting shell variables to the output of SQL Statements, like 
                 this.
             <informalexample><programlisting>
     # A shell script
-    USERCOUNT=`java -jar $HSQLDB_HOME/lib/hsqldb.jar --noinput --sql 'select count(*) from usertbl;' urlid` || {
+    USERCOUNT=`java -jar $HSQLDB_HOME/lib/hsqldb.jar --sql 'select count(*) from usertbl' urlid` || {
         # Handle the SqlTool error
     }
     echo "There are $USERCOUNT users registered in the database."
@@ -982,6 +994,13 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar sql... > /tmp/log.sql 2>&amp;1</screen>
         echo "Some SQL commands with '$VARIABLES';" |
         java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid -</screen>
             </example></para>
+            <simpara>
+                Make sure that you also read the
+                <link linkend='sqlswitch-section' endterm='sqlswitch-title'/>
+                section.
+                The <literal>--sql</literal> switch is a great facility to use
+                with shell scripts.
+            </simpara>
         </section>
         <section>
             <title>Optimally Compatible SQL Files</title>
