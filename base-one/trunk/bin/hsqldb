@@ -33,7 +33,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.28 2004/07/15 17:50:56 unsaved Exp $
+# $Id: hsqldb,v 1.29 2004/07/15 17:52:36 unsaved Exp $
 
 # UNIX init script for HSQLDB.
 
@@ -393,7 +393,7 @@ See log file '$LOGFILE'." 1>&2
         export PATH   # Required only for some funny init environments.
         "$JAVA_EXECUTABLE" $AUTH_FILE_SWITCH $CLIENT_JVMARGS \
             "-Dsqltoolsprayer.propfile=$PROPERTY_FILE" \
-            org.hsqldb.util.SqlToolSprayer "shutdown ${SHUTDOWN_OPTION};" \
+            org.hsqldb.util.SqlToolSprayer "shutdown ${SHUTDOWN_OPTION}" \
             $SHUTDOWN_URLIDS
         sleep $MAX_TERMINATE_SECS  # Give the JVM a sec. or 2 to fully exit.
         kill -0 "$HSQLDB_PID" > /dev/null 2>&1 && {
