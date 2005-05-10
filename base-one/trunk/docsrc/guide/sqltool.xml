@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.64 2005/05/02 19:28:52 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.65 2005/05/04 04:51:26 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.64 $</edition>
-        <pubdate>$Date: 2005/05/02 19:28:52 $</pubdate>
+        <edition>$Revision: 1.65 $</edition>
+        <pubdate>$Date: 2005/05/04 04:51:26 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -53,6 +53,19 @@
     <section id='baremin-section'>
         <title>The Bare Minimum You Need to Know to Run SqlTool</title>
         <titleabbrev id='baremin-title'>The Bare Minimum</titleabbrev>
+        <warning><simpara>
+            If you are using an Oracle database server, it will commit your
+            current transaction if you cleanly disconnect, regardless of
+            whether you have set auto-commit or not.
+            This will occur if you exit SqlTool (or any other client) in
+            the normal way (as opposed to killing the process or using
+            Ctrl-C, etc.).
+            This is mentioned in this section only for brevity, so I don't
+            need to mention it in the main text in the many places where
+            auto-commit is discussed.
+            This behavior has nothing to do with SqlTool.
+            It is a quirk of Oracle.
+        </simpara></warning>
         <simpara>
             If you want to use SqlTool, then you either have an SQL text file, 
             or you want to interactively type in SQL commands.
