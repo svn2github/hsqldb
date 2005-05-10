@@ -1,4 +1,4 @@
-<!-- $Id: advancedtopics.xml,v 1.21 2004/09/22 17:53:41 fredt Exp $ -->
+<!-- $Id: advancedtopics.xml,v 1.22 2004/11/24 23:06:35 fredt Exp $ -->
 
 <chapter id='advanced-chapter'>
     <title id='advanced-title'>Advanced Topics</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.21 $</edition>
-        <pubdate>$Date: 2004/09/22 17:53:41 $</pubdate>
+        <edition>$Revision: 1.22 $</edition>
+        <pubdate>$Date: 2004/11/24 23:06:35 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Advanced</keyword>
@@ -618,6 +618,28 @@
                         </para> </entry>
                     </row>
                     <row>
+                        <entry><property>hsqldb.cache_file_scale</property></entry>
+                        <entry><literal>1</literal></entry>
+                        <entry>
+                            Set larger data file limits.
+                            Once set, the limit will go up to 8GB.
+                        </entry>
+                    </row>
+                    <row>
+                        <entry namest='c1' nameend='c3'> <para>
+                            To apply the change to an existing database,
+                            SHUTDOWN SCRIPT should be performed first, then 
+                            the property=value line below should be added to 
+                            the .properties file before reopening the 
+                            database.
+                            The property can be set with the SQL command 
+                            only (as opposed to changing the value in the
+                            properties file) when the database has no tables 
+                            (new database).
+                            <literal>(SET PROPERTY)</literal>
+                        </para> </entry>
+                    </row>
+                    <row>
                         <entry><property>sql.enforce_size</property></entry>
                         <entry><literal>false</literal></entry>
                         <entry>trimming and padding string columns</entry>
@@ -655,11 +677,6 @@
                                 that is inserted.
                                 <literal> (SET PROPERTY)</literal>
                         </para> </entry>
-                    </row>
-                    <row>
-                        <entry><property>sql.compare_in_locale</property></entry>
-                        <entry><literal>false</literal></entry>
-                        <entry>locale used for sorting</entry>
                     </row>
                     <row>
                         <entry namest='c1' nameend='c3'> <para>
@@ -835,6 +852,14 @@
                 All files belonging to a database should reside in the same
                 directory.
             </para></note>
+            <simpara>
+                The property sql.compare_in_locale=true is no longer supported.
+                If the line exists in a .properties file, it will switch the 
+                database to the collation for the current default.  
+                See the 
+                <link linkend='collation-section' endterm='collation-title'/>
+                command.
+            </simpara>
         </section>
     </section>
 

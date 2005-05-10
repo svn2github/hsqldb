@@ -1,4 +1,4 @@
-<!-- $Id: sqlsyntax.xml,v 1.22 2004/11/24 23:06:37 fredt Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.23 2004/12/25 04:12:40 fredt Exp $ -->
 
 <chapter id='sqlsyntax-chapter'>
 <title id='sqlsyntax-title'>SQL Syntax</title>
@@ -34,8 +34,8 @@
             </affiliation>
         </editor>
     </authorgroup>
-    <edition>$Revision: 1.22 $</edition>
-    <pubdate>$Date: 2004/11/24 23:06:37 $</pubdate>
+    <edition>$Revision: 1.23 $</edition>
+    <pubdate>$Date: 2004/12/25 04:12:40 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Syntax</keyword>
@@ -109,6 +109,19 @@ ALTER SEQUENCE &lt;sequencename&gt; RESTART WITH &lt;value&gt;;</programlisting>
         </para>
     </section>
 
+    <section>
+        <title >ALTER SCHEMA<footnoteref linkend='posthyper'/></title>
+        <programlisting>
+ALTER SCHEMA &lt;schemaname&gt; RENAME TO &lt;newname&gt;;</programlisting>
+        <para>
+            Renames schema as specified.
+            All objects of the schema will hereafter be accessible only
+            with the new schema name.
+        </para><simpara>
+            Requires Administrative privileges.
+        </simpara>
+    </section>
+
     <section id="alter_table-section">
         <title id="alter_table-title">ALTER TABLE<footnoteref linkend='posthyper'/></title>
         <programlisting>
@@ -141,8 +154,15 @@ ALTER TABLE &lt;tablename&gt; ADD [COLUMN] &lt;columnname&gt; <link linkend='dat
         <informalexample><programlisting>
     ALTER TABLE &lt;tablename&gt; ALTER COLUMN &lt;columnname&gt; {RENAME TO &lt;newname&gt; | DROP DEFAULT | SET DEFAULT &lt;defaultvalue&gt;};</programlisting>
         </informalexample>
+        <informalexample><programlisting>
+    ALTER TABLE &lt;tablename&gt; ALTER COLUMN &lt;columnDefinition&gt;<footnoteref linkend="posthyper"/>;</programlisting>
+        </informalexample>
         <para>
-            Changes column name. Or adds or drops the default value.
+            The first form changes column name, or adds or drops the default
+            value.
+            See <link linkend='columnDef-entry' endterm='columnDef-title'/>
+            for the second form.
+            No change to the primary key is allowed with this command. 
         </para>
         <informalexample><programlisting>
     ALTER TABLE &lt;tablename&gt; ADD [CONSTRAINT &lt;constraintname&gt;] CHECK (&lt;search condition&gt;);</programlisting>
@@ -161,6 +181,14 @@ Adds a unique constraint to the table. This will not work if there is already  a
 This will work only if the values of the column list for the existing rows are  unique or include a null value.
         </para>
         <informalexample><programlisting>
+    ALTER TABLE &lt;tablename&gt; ADD [CONSTRAINT &lt;constraintname&gt;] PRIMARY KEY (&lt;column list&gt;)<footnoteref linkend="posthyper"/>;</programlisting>
+        </informalexample>
+        <simpara>
+            Adds a primary key constraint to the table, using the same 
+            constraint syntax as when the primary key is specified in a table 
+            definition.
+        </simpara>
+        <informalexample><programlisting>
     ALTER TABLE &lt;tablename&gt; ADD [CONSTRAINT &lt;constraintname&gt;] FOREIGN KEY (&lt;column list&gt;) REFERENCES &lt;exptablename&gt; (&lt;column list&gt;)
     [ON {DELETE | UPDATE} {CASCADE | SET DEFAULT | SET NULL}];</programlisting>
         </informalexample>
@@ -176,8 +204,11 @@ This will work only if the values of the column list for the existing rows are  
         <informalexample><programlisting>
     ALTER TABLE &lt;tablename&gt; DROP CONSTRAINT &lt;constraintname&gt;;</programlisting>
         </informalexample>
+        <informalexample><programlisting>
+    ALTER TABLE &lt;tablename&gt; DROP FOREIGN KEY&gt;<footnoteref linkend="posthyper"/>;</programlisting>
+        </informalexample>
         <para>
-            Drops a named unique, check or foreign key constraint from the 
+            Drop a named unique, check or foreign key constraint from the 
             table.
         </para>
         <informalexample><programlisting>
@@ -297,6 +328,33 @@ CREATE [UNIQUE] INDEX &lt;index&gt; ON &lt;table&gt; (&lt;column&gt; [DESC] [, .
         </para>
     </section>
 
+    <section id="create_role-section">
+        <title id="create_role-title">CREATE ROLE<footnoteref linkend='posthyper'/></title>
+        <programlisting>
+CREATE ROLE &lt;rolename&gt;;</programlisting>
+        <simpara>
+            Creates the named role with no members.
+            Requires Administrative privileges.
+        </simpara>
+    </section>
+
+    <section>
+        <title>CREATE SCHEMA<footnoteref linkend='posthyper'/></title>
+        <programlisting>
+CREATE SCHEMA &lt;schemaname&gt; AUTHORIZATION DBA [&lt;createStatement&gt; [&lt;grantStatement&lt;] [...]</programlisting>
+        <simpara>
+            Creates the named schema.
+        </simpara> <simpara>
+            Optional (nested) CREATE and GRANT statements can be given only 
+            for new objects in this new schema.
+            Only the last nested statement can be terminated with a 
+            semicolon, because the first semicolon encountered after 
+            "CREATE SCHEMA" will end the CREATE SCHEMA command.
+        </simpara> <simpara>
+            Requires Administrative privileges.
+        </simpara>
+    </section>
+
     <section id="create_sequence-section">
         <title id="create_sequence-title">CREATE SEQUENCE<footnoteref linkend='posthyper'/></title>
         <programlisting>
@@ -334,7 +392,8 @@ CREATE [MEMORY | CACHED | TEMP<footnoteref linkend="posthyper"/> | TEXT<footnote
         </para>
         <variablelist>
             <title>Components of a CREATE TABLE command</title>
-            <varlistentry><term>columnDefinition</term>
+            <varlistentry id='columnDef-entry'>
+                <term id='columnDef-title'>columnDefinition</term>
                 <listitem><programlisting>
     columnname <link linkend='datatypes-section'>Datatype</link> [(columnSize[,precision])] [{DEFAULT &lt;defaultValue&gt; |
     GENERATED BY DEFAULT AS IDENTITY (START WITH &lt;n&gt;[, INCREMENT BY &lt;m&gt;])}] |
@@ -550,7 +609,9 @@ CREATE USER username PASSWORD password [ADMIN];</programlisting>
     <section id="create_view-section">
         <title id="create_view-title">CREATE VIEW<footnoteref linkend='posthyper'/></title>
         <programlisting>
-CREATE VIEW &lt;viewname&gt;[(&lt;viewcolumn&gt;,..) AS SELECT ... FROM ... [WHERE Expression];</programlisting>
+CREATE VIEW &lt;viewname&gt;[(&lt;viewcolumn&gt;,..) AS SELECT ... FROM ... [WHERE Expression];
+[ORDER BY orderExpression [, ...]]
+[LIMIT l [OFFSET 0]];</programlisting>
         <para>
             A view can be thought of as either a virtual table or a stored 
             query.
@@ -674,28 +735,63 @@ DROP INDEX index [IF EXISTS];</programlisting>
         </para>
     </section>
 
+    <section>
+        <title>DROP ROLE<footnoteref linkend='posthyper'/></title>
+        <programlisting>
+DROP ROLE &lt;rolename&gt;;</programlisting>
+        <para>
+            Removes all members from specified role, then removes the role
+            itself.
+        </para>
+    </section>
+
     <section id="drop_sequence-section">
         <title id="drop_sequence-title">DROP SEQUENCE<footnoteref linkend='posthyper'/></title>
         <programlisting>
-DROP SEQUENCE &lt;sequencename&gt;;</programlisting>
-        <para>
+DROP SEQUENCE &lt;sequencename&gt; [IF EXISTS] [CASCADE];</programlisting>
+        <simpara>
             Removes the specified sequence from the database.
-        </para>
+            When IF EXIST is used, the statement returns without an error if 
+            the sequence does not exist.  
+            The <literal>CASCADE</literal> option silently drops all tables 
+            and views that reference the sequence.
+        </simpara>
+    </section>
+
+    <section>
+        <title>DROP SCHEMA<footnoteref linkend='posthyper'/></title>
+        <programlisting>
+DROP SCHEMA &lt;schemaname&gt; [CASCADE | RESTRICT];</programlisting>
+        <simpara>
+            Removes the specified schema from the database.
+            By default the DROP will fail if any objects reside in the
+            schema.
+            The <literal>RESTRICT</literal> option will also abort if
+            there are external references to this schema.
+            The <literal>CASCADE</literal> option will silently drop all
+            database objects in the schema.
+        </simpara> <simpara>
+            Requires Administrative privileges.
+        </simpara>
     </section>
 
     <section id="drop_table-section">
         <title id="drop_table-title">DROP TABLE</title>
         <programlisting>
-DROP TABLE &lt;table&gt; [IF EXISTS];</programlisting>
-        <para>
+DROP TABLE &lt;table&gt; [IF EXISTS] [CASCADE];</programlisting>
+        <simpara>
             Removes a table, the data and indexes from the database.
             When IF EXIST is used, the statement returns without an error even 
             if the table does not exist. Will fail if the table has been 
 			reference by a foreign key or a view.
-        </para> <para>
+        </simpara> <simpara>
+            The <literal>CASCADE</literal> option silently drops all tables 
+            and views that reference the table.
+        </simpara> <simpara>
             See also:
+        </simpara><simpara>
             <link linkend='create_table-section' endterm='create_table-title'/>.
-        </para>
+        </simpara>
     </section>
 
     <section id="drop_trigger-section">
@@ -728,38 +824,51 @@ DROP USER &lt;username&gt;;</programlisting>
     <section id="drop_view-section">
         <title id="drop_view-title">DROP VIEW<footnoteref linkend='posthyper'/></title>
         <programlisting>
-DROP VIEW &lt;viewname&gt; [IF EXISTS];</programlisting>
-        <para>
+DROP VIEW &lt;viewname&gt; [IF EXISTS] [CASCADE];</programlisting>
+        <simpara>
             Removes a view from the database.
             When IF EXIST is used, the statement returns without an error if 
             the view does not exist.  
-        </para> <para>
+            The <literal>CASCADE</literal> option silently drops all tables 
+            and views that reference the view.
+        </simpara> <simpara>
             See also:
             <link linkend='create_view-section' endterm='create_view-title'/>.
-        </para>
+        </simpara>
     </section>
 
     <section id="grant-section">
         <title id="grant-title">GRANT</title>
         <programlisting>
 GRANT { SELECT | DELETE | INSERT | UPDATE | ALL } [,...]
-ON { table | CLASS "package.class" } TO { username | PUBLIC };</programlisting>
-        <para>
-            Assigns privileges to a user or to all users (PUBLIC) for a table 
-            or for a class.
-            To allow a user to call a function from a class, the right ALL must 
-            be used.
+ON { table | CLASS "package.class" } TO &lt;grantee&gt;;</programlisting>
+        <programlisting>
+GRANT &lt;rolename&gt; [,...] TO &lt;grantee&gt;<footnoteref linkend="posthyper"/>;</programlisting>
+        <simpara>
+            Both forms require Administrative privileges.
+        </simpara> <simpara>
+            &lt;grantee&gt; is either a user name, a role name, or 
+            <literal>PUBLIC</literal>.
+            <literal>PUBLIC</literal> means <emphasis>all users</emphasis>.
+        </simpara> <para>
+            The first form of the GRANT command assigns privileges to a 
+            grantee for a table or for a class.
+            To allow a user to call a function from a class, the right ALL 
+            must be used.
             Examples:
-        </para> <informalexample><programlisting>
+         <informalexample><programlisting>
     GRANT SELECT ON Test TO GUEST;
     GRANT ALL ON CLASS "java.lang.String" TO PUBLIC;</programlisting>
-        </informalexample><para>
-            Only an administrator do this. 
-        </para> <para>
+        </informalexample> </para>
+        <simpara>
+            The second form of the GRANT command gives the specified 
+            &lt;grantee&gt; membership in the specified role.
+        </simpara> <simpara>
             See also:
             <link linkend='revoke-section' endterm='revoke-title'/>,
-            <link linkend='create_user-section' endterm='create_user-title'/>.
-        </para>
+            <link linkend='create_user-section' endterm='create_user-title'/>,
+            <link linkend='create_role-section' endterm='create_role-title'/>.
+        </simpara>
     </section>
 
     <section id="insert-section">
@@ -775,16 +884,25 @@ INSERT INTO table [( column [,...] )]
         <title id="revoke-title">REVOKE</title>
         <programlisting>
 REVOKE { SELECT | DELETE | INSERT | UPDATE | ALL } [,...]
-ON { table | CLASS "package.class" } TO { username | PUBLIC };</programlisting>
-        <para>
-            Withdraws privileges from a user or for PUBLIC (all users) for a 
-            table or class. 
-        </para> <para>
-            Only an administrator may do this. 
-        </para> <para>
+ON { table | CLASS "package.class" } FROM &lt;grantee&gt;;</programlisting>
+        <programlisting>
+REVOKE &lt;rolename&gt; [,...] FROM &lt;grantee&gt;<footnoteref linkend="posthyper"/>;</programlisting>
+        <simpara>
+            Both forms require Administrative privileges.
+        </simpara> <simpara>
+            &lt;grantee&gt; is either a user name, a role name, or 
+            <literal>PUBLIC</literal>.
+            <literal>PUBLIC</literal> means <emphasis>all users</emphasis>.
+        </simpara> <simpara>
+            The first form of the REVOKE command withdraws privileges from a 
+            grantee for a table or for a class.
+        </simpara><simpara>
+            The second form of the REVOKE command withdraws membership of
+            the specified &lt;grantee&gt; from the specified role.
+        </simpara> <simpara>
             See also:
             <link linkend='grant-section' endterm='grant-title'/>.
-        </para>
+        </simpara>
     </section>
 
     <section id="rollback-section">
@@ -842,7 +960,8 @@ FROM tableList
 [GROUP BY Expression [, ...]]
 [HAVING Expression]
 [{ UNION [ALL | DISTINCT] | {MINUS [DISTINCT] | EXCEPT [DISTINCT] } | INTERSECT [DISTINCT] } selectStatement]
-[ORDER BY orderExpression [, ...]];</programlisting>
+[ORDER BY orderExpression [, ...]]
+[LIMIT l [OFFSET 0]];</programlisting>
 
         <para>
             Retrieves information from one or more tables in the database. 
@@ -939,6 +1058,39 @@ SET AUTOCOMMIT { TRUE | FALSE };</programlisting>
         </para>
     </section>
 
+    <section id="collation-section">
+        <title id="collation-title">SET DATABASE COLLATION<footnoteref linkend='posthyper'/></title>
+        <programlisting>
+SET DATABASE COLLATION &lt;double quoted collation name&gt;;</programlisting>
+        <simpara>
+            Each database can have its own collation.
+            Sets the collation from the set of collations in the source 
+            for org.hsqldb.Collation.
+        <simpara> </simpara>
+            Once this command has been issued, the database can be opened 
+            in any JVM and will retain its collation.
+        </simpara>
+    </section>
+  
+    <section>
+        <title>SET CHECKPOINT DEFRAG<footnoteref linkend='posthyper'/></title>
+        <programlisting>
+SET CHECKPOINT DEFRAG size;</programlisting>
+        <simpara>
+            Allows a CHECKPOINT DEFRAG to be performed 
+            automatically whenever CHECKPOINT is performed internally or 
+            via a user command.
+        <simpara> </simpara>
+            The parameter <literal>size</literal> is the megabytes of 
+            abandoned space in the .data file.
+            When a CHECKPOINT is performed either as a result of the .log 
+            file reaching the limit set by "SET LOGSIZE size", or by the
+            user issuing a CHECKPOINT command, the amount of space abandoned 
+            during the session is checked and if it is larger than size, a 
+            CHECKPOINT DEFRAG is performed instead of a checkpoint.
+        </simpara>
+    </section>
+  
     <section id="set_ignorecase-section">
           <title id="set_ignorecase-title">SET IGNORECASE</title>
           <programlisting>
@@ -1022,6 +1174,28 @@ SET REFERENTIAL_INTEGRITY { TRUE | FALSE };</programlisting>
         </para>
     </section>
   
+    <section>
+        <title >SET SCHEMA<footnoteref linkend='posthyper'/></title>
+        <programlisting>
+SET SCHEMA &lt;schemaname&gt;;</programlisting>
+        <simpara>
+            Sets the current JDBC session's schema.
+            The sole purpose for the session schema is to provide a default
+            schema name for schema objects which do not have the schema
+            name specified explicitly in the SQL command, or by 
+            association with another object of known schema.
+            For example, if you run
+            <literal>SELECT * FROM atbl;</literal>, HSQLDB will look for
+            the table or view named <literal>atbl</literal> in the
+            session's current schema.
+        </simpara> <simpara>
+            Session schemas last only for the duration of the current
+            session.
+            When a new JDBC session is obtained, the new session will 
+            have the default schema.
+        </simpara>
+    </section>
+
     <section id="set_scriptformat-section">
         <title id="set_scriptformat-title">SET SCRIPTFORMAT<footnoteref linkend='posthyper'/></title>
         <programlisting>
@@ -1361,25 +1535,25 @@ UPDATE table SET column = Expression [, ...] [WHERE Expression];</programlisting
         add a database property value to enforce the sizes:
     </para> <programlisting>
     SET PROPERTY &quot;sql.enforce_strict_size&quot; true</programlisting>
-    <para>
+    <simpara>
         This will enforce the specified size and pad CHAR fields with 
         spaces to fill the size.
         This complies with SQL standards by throwing an exception if an 
         attempt is made to insert a string longer than the maximum size.
-    </para> <para>
+    </simpara> <simpara>
         CHAR and VARCHAR and LONGVARCHAR columns are by default compared 
         and sorted according to POSIX standards.
-        To use the current JRE locale for sorting and comparison, add the 
-        following database property to the properties file.
-    </para> <programlisting>
-    sql.compare_in_locale=true</programlisting>
-    <para>
+        See the <link linkend='collation-section' endterm='collation-title'/>
+        section above to modify this behavior.
+        The property <literal>sql.compare_in_locale</literal> is no longer
+        supported.
+    </simpara> <simpara>
         Columns of the type OTHER or OBJECT contain the serialized form of 
         a Java Object in binary format.
         To insert or update such columns, a binary format string (see below 
         under Expression) should be used.
         Using PreparedStatements with JDBC automates this transformation.
-    </para>
+    </simpara>
 </section>
 
 <section>
@@ -1926,7 +2100,8 @@ UPDATE table SET column = Expression [, ...] [WHERE Expression];</programlisting
   [+ | -] { term [{ + | - | * | / | || } term]
   | ( condition )
   | function ( [parameter] [,...] )
-  | selectStatement giving one value]]></programlisting>
+  | selectStatement giving one value
+  | {ANY|ALL} (selectStatement)]]></programlisting>
             </listitem>
         </varlistentry>
         <varlistentry><term>term</term>
