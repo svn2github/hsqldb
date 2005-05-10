@@ -1,4 +1,4 @@
-<!-- $Id: sqlsyntax.xml,v 1.24 2005/05/10 19:54:21 unsaved Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.25 2005/05/10 23:01:52 unsaved Exp $ -->
 
 <chapter id='sqlsyntax-chapter'>
 <title id='sqlsyntax-title'>SQL Syntax</title>
@@ -34,8 +34,8 @@
             </affiliation>
         </editor>
     </authorgroup>
-    <edition>$Revision: 1.24 $</edition>
-    <pubdate>$Date: 2005/05/10 19:54:21 $</pubdate>
+    <edition>$Revision: 1.25 $</edition>
+    <pubdate>$Date: 2005/05/10 23:01:52 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Syntax</keyword>
@@ -155,14 +155,14 @@ ALTER TABLE &lt;tablename&gt; ADD [COLUMN] &lt;columnname&gt; <link linkend='dat
         <informalexample><programlisting>
     ALTER TABLE &lt;tablename&gt; ALTER COLUMN &lt;columnname&gt; {RENAME TO &lt;newname&gt; | SET DEFAULT &lt;defaultvalue&gt;};</programlisting>
         </informalexample>
-            This form of ALTER TABLE ALTER COLUMN changes column name, or 
+            This form of ALTER TABLE ALTER COLUMN changes a column name, or 
             adds the specified default value.
         </para><para>
         <informalexample><programlisting>
     ALTER TABLE &lt;tablename&gt; ALTER COLUMN &lt;columnDefinition&gt;<footnoteref linkend="posthyper"/>;</programlisting>
         </informalexample>
             This form of ALTER TABLE ALTER COLUMN accepts a 
-            See <link linkend='columnDef-entry' endterm='columnDef-title'/>
+            <link linkend='columnDef-entry' endterm='columnDef-title'/>
             as in a CREATE TABLE command, with the following restrictions.
             <itemizedlist>
                 <listitem>
@@ -180,9 +180,9 @@ ALTER TABLE &lt;tablename&gt; ADD [COLUMN] &lt;columnname&gt; <link linkend='dat
                     The NOT NULL attribute will be that of the new 
                     definition (similar to previous item).
                 </listitem> <listitem>
-                    Depending on the type switch, the table may have to be 
+                    Depending on the type of change, the table may have to be 
                     empty for the command to work.
-                    It always works when the type switch is possible in 
+                    It always works when the type of change is possible in 
                     general and the individual existing values can all 
                     be converted.
                 </listitem>
@@ -772,28 +772,28 @@ DROP ROLE &lt;rolename&gt;;</programlisting>
     <section id="drop_sequence-section">
         <title id="drop_sequence-title">DROP SEQUENCE<footnoteref linkend='posthyper'/></title>
         <programlisting>
-DROP SEQUENCE &lt;sequencename&gt; [IF EXISTS] [CASCADE];</programlisting>
+DROP SEQUENCE &lt;sequencename&gt; [IF EXISTS] [RESTRICT | CASCADE];</programlisting>
         <simpara>
             Removes the specified sequence from the database.
             When IF EXIST is used, the statement returns without an error if 
             the sequence does not exist.  
-            The <literal>CASCADE</literal> option silently drops all tables 
-            and views that reference the sequence.
+            The RESTRICT option is in effect by default, meaning that
+            DROP will fail if any other objects require in the schema.
+            Specify the <literal>CASCADE</literal> option to silently drop 
+            all dependent database objects.
         </simpara>
     </section>
 
     <section>
         <title>DROP SCHEMA<footnoteref linkend='posthyper'/></title>
         <programlisting>
-DROP SCHEMA &lt;schemaname&gt; [CASCADE | RESTRICT];</programlisting>
+DROP SCHEMA &lt;schemaname&gt; [RESTRICT | CASCADE];</programlisting>
         <simpara>
             Removes the specified schema from the database.
-            By default the DROP will fail if any objects reside in the
-            schema.
-            The <literal>RESTRICT</literal> option will also abort if
-            there are external references to this schema.
-            The <literal>CASCADE</literal> option will silently drop all
-            database objects in the schema.
+            The RESTRICT option is in effect by default, meaning that
+            DROP will fail if any objects reside in the schema.
+            Specify the <literal>CASCADE</literal> option to silently drop 
+            all database objects in the schema.
         </simpara> <simpara>
             Requires Administrative privileges.
         </simpara>
@@ -802,15 +802,16 @@ DROP SCHEMA &lt;schemaname&gt; [CASCADE | RESTRICT];</programlisting>
     <section id="drop_table-section">
         <title id="drop_table-title">DROP TABLE</title>
         <programlisting>
-DROP TABLE &lt;table&gt; [IF EXISTS] [CASCADE];</programlisting>
+    DROP TABLE &lt;table&gt; [IF EXISTS] [RESTRICT | CASCADE];</programlisting>
         <simpara>
             Removes a table, the data and indexes from the database.
             When IF EXIST is used, the statement returns without an error even 
-            if the table does not exist. Will fail if the table has been 
-			reference by a foreign key or a view.
+            if the table does not exist.
         </simpara> <simpara>
-            The <literal>CASCADE</literal> option silently drops all tables 
-            and views that reference the table.
+            The RESTRICT option is in effect by default, meaning that
+            DROP will fail if any other objects refer to this table.
+            Specify the <literal>CASCADE</literal> option to silently drop 
+            all dependent database objects.
         </simpara> <simpara>
             See also:
         </simpara><simpara>
@@ -848,13 +849,15 @@ DROP USER &lt;username&gt;;</programlisting>
     <section id="drop_view-section">
         <title id="drop_view-title">DROP VIEW<footnoteref linkend='posthyper'/></title>
         <programlisting>
-DROP VIEW &lt;viewname&gt; [IF EXISTS] [CASCADE];</programlisting>
+DROP VIEW &lt;viewname&gt; [IF EXISTS] [RESTRICT | CASCADE];</programlisting>
         <simpara>
             Removes a view from the database.
             When IF EXIST is used, the statement returns without an error if 
             the view does not exist.  
-            The <literal>CASCADE</literal> option silently drops all tables 
-            and views that reference the view.
+            The RESTRICT option is in effect by default, meaning that
+            DROP will fail if any objects refer to this view.
+            Specify the <literal>CASCADE</literal> option to silently drop 
+            all dependent database objects.
         </simpara> <simpara>
             See also:
             <link linkend='create_view-section' endterm='create_view-title'/>.
