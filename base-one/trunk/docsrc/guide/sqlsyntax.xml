@@ -1,4 +1,4 @@
-<!-- $Id: sqlsyntax.xml,v 1.23 2004/12/25 04:12:40 fredt Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.24 2005/05/10 19:54:21 unsaved Exp $ -->
 
 <chapter id='sqlsyntax-chapter'>
 <title id='sqlsyntax-title'>SQL Syntax</title>
@@ -34,8 +34,8 @@
             </affiliation>
         </editor>
     </authorgroup>
-    <edition>$Revision: 1.23 $</edition>
-    <pubdate>$Date: 2004/12/25 04:12:40 $</pubdate>
+    <edition>$Revision: 1.24 $</edition>
+    <pubdate>$Date: 2005/05/10 19:54:21 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Syntax</keyword>
@@ -151,18 +151,42 @@ ALTER TABLE &lt;tablename&gt; ADD [COLUMN] &lt;columnname&gt; <link linkend='dat
         </para> <para>
             This will fail if an SQL view includes the column.
         </para>
+        <para>
         <informalexample><programlisting>
-    ALTER TABLE &lt;tablename&gt; ALTER COLUMN &lt;columnname&gt; {RENAME TO &lt;newname&gt; | DROP DEFAULT | SET DEFAULT &lt;defaultvalue&gt;};</programlisting>
+    ALTER TABLE &lt;tablename&gt; ALTER COLUMN &lt;columnname&gt; {RENAME TO &lt;newname&gt; | SET DEFAULT &lt;defaultvalue&gt;};</programlisting>
         </informalexample>
+            This form of ALTER TABLE ALTER COLUMN changes column name, or 
+            adds the specified default value.
+        </para><para>
         <informalexample><programlisting>
     ALTER TABLE &lt;tablename&gt; ALTER COLUMN &lt;columnDefinition&gt;<footnoteref linkend="posthyper"/>;</programlisting>
         </informalexample>
-        <para>
-            The first form changes column name, or adds or drops the default
-            value.
+            This form of ALTER TABLE ALTER COLUMN accepts a 
             See <link linkend='columnDef-entry' endterm='columnDef-title'/>
-            for the second form.
-            No change to the primary key is allowed with this command. 
+            as in a CREATE TABLE command, with the following restrictions.
+            <itemizedlist>
+                <listitem>
+                    The column must be already be a PK column to accept an 
+                    IDENTITY definition.
+                </listitem> <listitem>
+                    If the column is already an IDENTITY column and there 
+                    is no IDENTITY definition, the existing IDENTITY 
+                    attribute is removed.
+                </listitem> <listitem>
+                    The default expression will be that of the new 
+                    definition, meaning an existing default can be dropped 
+                    by ommission, or a new default added.
+                </listitem> <listitem>
+                    The NOT NULL attribute will be that of the new 
+                    definition (similar to previous item).
+                </listitem> <listitem>
+                    Depending on the type switch, the table may have to be 
+                    empty for the command to work.
+                    It always works when the type switch is possible in 
+                    general and the individual existing values can all 
+                    be converted.
+                </listitem>
+            </itemizedlist>
         </para>
         <informalexample><programlisting>
     ALTER TABLE &lt;tablename&gt; ADD [CONSTRAINT &lt;constraintname&gt;] CHECK (&lt;search condition&gt;);</programlisting>
@@ -1204,7 +1228,7 @@ SET SCRIPTFORMAT {TEXT | BINARY | COMPRESSED};</programlisting>
             Changes the format of the script file.
             BINARY and COMPRESSED formats are slightly faster and more compact 
             than the default TEXT.
-            Recommended only for very larg script files.
+            Recommended only for very large script files.
         </para>
     </section>
   
