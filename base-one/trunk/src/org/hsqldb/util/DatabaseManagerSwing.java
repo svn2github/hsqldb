@@ -1459,12 +1459,14 @@ implements ActionListener, WindowListener, KeyListener {
             };
             ResultSet result = dMeta.getTables(null, null, null, usertables);
             Vector    tables     = new Vector();
+            Vector    schemas    = new Vector();
 
             // sqlbob@users Added remarks.
             Vector remarks = new Vector();
 
             while (result.next()) {
                 tables.addElement(result.getString(3));
+                schemas.addElement(result.getString(2));
                 remarks.addElement(result.getString(5));
             }
 
@@ -1487,15 +1489,15 @@ implements ActionListener, WindowListener, KeyListener {
             // For each table, build a tree node with interesting info
             for (int i = 0; i < tables.size(); i++) {
                 String name = (String) tables.elementAt(i);
+                String schema = (String) schemas.elementAt(i);
+                String displayedName =
+                          ((schema == null) ? "" : (schema + '.'))
+                        + name
+                        + (displayRowCounts ? (", " 
+                                    + DECFMT.format(rowCounts[i])) : "");
 
                 // weconsul@ptd.net Add rowCounts if needed.
-                if (!displayRowCounts) {
-                    tableNode = makeNode(name, rootNode);
-                } else {
-                    tableNode =
-                        makeNode(name + ", " + DECFMT.format(rowCounts[i]),
-                                 rootNode);
-                }
+                tableNode = makeNode(displayedName, rootNode); 
 
                 ResultSet col = dMeta.getColumns(null, null, name, null);
 
