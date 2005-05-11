@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.65 2005/05/04 04:51:26 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.66 2005/05/10 12:26:25 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.65 $</edition>
-        <pubdate>$Date: 2005/05/04 04:51:26 $</pubdate>
+        <edition>$Revision: 1.66 $</edition>
+        <pubdate>$Date: 2005/05/10 12:26:25 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -40,7 +40,7 @@
             SqlTool is still a very useful tool even if you have no quoting
             capability at all.
         </simpara><simpara>
-            This document is now updated for version 1.43 of SqlTool and
+            This document is now updated for version 1.45 of SqlTool and
             1.102 of SqlFile (the latter is the class which does most of the
             work for SqlTool).
             The startup banner will report both versions when you run SqlTool
