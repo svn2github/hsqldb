@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.66 2005/05/10 12:26:25 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.67 2005/05/11 05:51:49 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.66 $</edition>
-        <pubdate>$Date: 2005/05/10 12:26:25 $</pubdate>
+        <edition>$Revision: 1.67 $</edition>
+        <pubdate>$Date: 2005/05/11 05:51:49 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -301,6 +301,41 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
             Property and SqlTool command-line switches override settings made 
             in the configuration file.
         </simpara>
+    </section>
+
+    <section>
+        <title>
+            Updating your old HSQLDB distrubution to use current SqlTool
+            This procedure works for distros going back to 1.7.3.3 at least,
+            probably much farther.
+        </title>
+        <simpara>This procedure will allow users of a legacy version of
+            HSQLDB to use all of the new features of SqlTool.
+            You will also get the new versions of the DatabaseManagers!
+        </simpara>
+        <procedure>
+            <step><simpara>
+                Copy these files from src/org/hsqldb/util of the current
+                HSQLDB distribution to the same directory within your
+                new distribution: <literal>DatabaseMan* SqlTool*
+                SqlFile* RCData* *Swing.java *.gif *.png</literal>
+            </simpara></step><step><simpara>
+                cd to the build directory of your new distro and run
+                <literal>ant clean</literal>
+            </simpara></step><step><simpara>
+                <literal>ant classes</literal>
+            </simpara></step><step><simpara>
+                <literal>
+                    cp -p ../src/org/hsqldb/util/*.gif
+                    ../src/org/hsqldb/util/*.png ../classes/org/hsqldb/util
+                </literal>
+                </simpara><simpara>
+                    Windows users will obviously need to adjust the copy
+                    command.
+            </simpara></step><step><simpara>
+                <literal>ant jar</literal>
+            </simpara></step>
+        </procedure>
     </section>
 
     <section id='int-section'>

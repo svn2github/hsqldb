@@ -1,4 +1,4 @@
-<!-- $Id: dbmanager.xml,v 1.4 2005/05/02 04:50:18 unsaved Exp $ -->
+<!-- $Id: dbmanager.xml,v 1.5 2005/05/11 05:52:27 unsaved Exp $ -->
 
 <appendix>
 <title>Database Manager</title>
@@ -19,8 +19,8 @@
             </affiliation>
         </author>
     </authorgroup>
-    <edition>$Revision: 1.4 $</edition>
-    <pubdate>$Date: 2005/05/02 04:50:18 $</pubdate>
+    <edition>$Revision: 1.5 $</edition>
+    <pubdate>$Date: 2005/05/11 05:52:27 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Database</keyword>
@@ -147,4 +147,39 @@
         Then, use your window manager to add an item that runs this command.
     </simpara>
 </section>
+    <section>
+        <title>
+            Updating your old HSQLDB distrubution to use current
+            DatabaseManagers
+            This procedure works for distros going back to 1.7.3.3 at least,
+            probably much farther.
+        </title>
+        <simpara>This procedure will allow users of a legacy version of
+            HSQLDB to use all of the new features of the DatabaseManagers.
+            You will also get the new versions of the SqlTool!
+        </simpara>
+        <procedure>
+            <step><simpara>
+                Copy these files from src/org/hsqldb/util of the current
+                HSQLDB distribution to the same directory within your
+                new distribution: <literal>DatabaseMan* SqlTool*
+                SqlFile* RCData* *Swing.java *.gif *.png</literal>
+            </simpara></step><step><simpara>
+                cd to the build directory of your new distro and run
+                <literal>ant clean</literal>
+            </simpara></step><step><simpara>
+                <literal>ant classes</literal>
+            </simpara></step><step><simpara>
+                <literal>
+                    cp -p ../src/org/hsqldb/util/*.gif
+                    ../src/org/hsqldb/util/*.png ../classes/org/hsqldb/util
+                </literal>
+                </simpara><simpara>
+                    Windows users will obviously need to adjust the copy
+                    command.
+            </simpara></step><step><simpara>
+                <literal>ant jar</literal>
+            </simpara></step>
+        </procedure>
+    </section>
 </appendix>
