@@ -1,4 +1,4 @@
-<!-- $Id: sqlsyntax.xml,v 1.25 2005/05/10 23:01:52 unsaved Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.26 2005/05/10 23:14:17 unsaved Exp $ -->
 
 <chapter id='sqlsyntax-chapter'>
 <title id='sqlsyntax-title'>SQL Syntax</title>
@@ -34,8 +34,8 @@
             </affiliation>
         </editor>
     </authorgroup>
-    <edition>$Revision: 1.25 $</edition>
-    <pubdate>$Date: 2005/05/10 23:01:52 $</pubdate>
+    <edition>$Revision: 1.26 $</edition>
+    <pubdate>$Date: 2005/05/10 23:14:17 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Syntax</keyword>
@@ -1318,15 +1318,15 @@ SET TABLE &lt;tablename&gt; SOURCE &lt;file and options&gt; [DESC];</programlist
     </section>
 
     <section id="set_write_delay-section">
-        <title id="set_write_delay-title">SET WRITE DELAY</title>
+        <title id="set_write_delay-title">SET WRITE DELAY<footnoteref linkend="posthyper"/></title>
         <programlisting>
 SET WRITE_DELAY {{ TRUE | FALSE } | &lt;seconds&gt;};</programlisting>
         <para>
-            In 1.7.2 this controls the frequencty of file synch.
-            When WRITE_DELAY is set to FALSE, the synch takes place once every 
-            second.
-            WRITE_DELAY TRUE performs the synch once every minute.
-            The default is TRUE (60 seconds).
+            This controls the frequency of file synch.
+            When WRITE_DELAY is set to FALSE or 0, the synch takes place 
+            immediately.
+            WRITE_DELAY TRUE performs the synch once 20 seconds (which is
+            the default).
             A numeric value can be specified instead.
         </para> <para>
             Only an administrator may do this.
