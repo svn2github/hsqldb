@@ -1,4 +1,4 @@
-<!-- $Id: dbmanager.xml,v 1.6 2005/05/11 13:12:12 unsaved Exp $ -->
+<!-- $Id: dbmanager.xml,v 1.7 2005/05/11 17:23:29 unsaved Exp $ -->
 
 <appendix>
 <title>Database Manager</title>
@@ -19,8 +19,8 @@
             </affiliation>
         </author>
     </authorgroup>
-    <edition>$Revision: 1.6 $</edition>
-    <pubdate>$Date: 2005/05/11 13:12:12 $</pubdate>
+    <edition>$Revision: 1.7 $</edition>
+    <pubdate>$Date: 2005/05/11 17:23:29 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Database</keyword>
@@ -164,6 +164,12 @@
             You will also get the new versions of the SqlTool!
             This procedure works for distros going back to 1.7.3.3 at least,
             probably much farther.
+            </simpara><simpara>
+            These instructions assume that you are capable of running an Ant
+            build. 
+            See the
+            <link linkend='building-appendix' endterm='building-title'/>
+            chapter.
         </simpara>
         <procedure>
             <step><simpara>

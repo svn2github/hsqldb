@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.67 2005/05/11 05:51:49 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.68 2005/05/11 13:12:12 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.67 $</edition>
-        <pubdate>$Date: 2005/05/11 05:51:49 $</pubdate>
+        <edition>$Revision: 1.68 $</edition>
+        <pubdate>$Date: 2005/05/11 13:12:12 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -306,12 +306,18 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
     <section>
         <title>
             Updating your old HSQLDB distrubution to use current SqlTool
-            This procedure works for distros going back to 1.7.3.3 at least,
-            probably much farther.
         </title>
         <simpara>This procedure will allow users of a legacy version of
             HSQLDB to use all of the new features of SqlTool.
             You will also get the new versions of the DatabaseManagers!
+            This procedure works for distros going back to 1.7.3.3 at least,
+            probably much farther.
+        </simpara><simpara>
+            These instructions assume that you are capable of running an Ant
+            build. 
+            See the
+            <link linkend='building-appendix' endterm='building-title'/>
+            chapter.
         </simpara>
         <procedure>
             <step><simpara>
