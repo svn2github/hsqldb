@@ -119,7 +119,7 @@ import javax.swing.JOptionPane;
 
 import java.util.HashMap;
 import java.util.Iterator;
-
+import java.util.ArrayList;
 import javax.swing.JComponent;
 
 import org.hsqldb.lib.java.JavaSystem;
@@ -157,16 +157,24 @@ import org.hsqldb.lib.java.JavaSystem;
  *              --urlid <urlid>       get connection info from RC file
  *              --rcfile <file>       use instead of default (with urlid)
  *              --noexit              Don't exit JVM
- *</pre>
- * Tue Apr 26 16:38:54 EDT 2005
- * Switched default switch method from "-switch" to "--switch" because
- * "-switch" usage is ambiguous as used here.  Single switches should
- * be reserved for single-letter switches which can be mixed like
- * "-u -r -l" = "-url".  -blaine
+ * </pre>
+ *
+ * Note that the sys-table switch will not work for Oracle, because Oracle
+ * does not categorize their system tables correctly in the JDBC Metadata.
+ *
  * @version 1.7.2
  */
 public class DatabaseManagerSwing extends JApplet
 implements ActionListener, WindowListener, KeyListener {
+    /*
+     * This is down here because it is an  implementation note, not a 
+     * Javadoc comment! 
+     * Tue Apr 26 16:38:54 EDT 2005
+     * Switched default switch method from "-switch" to "--switch" because
+     * "-switch" usage is ambiguous as used here.  Single switches should
+     * be reserved for single-letter switches which can be mixed like
+     * "-u -r -l" = "-url".  -blaine
+     */ 
 
     private static final String DEFAULT_RCFILE =
         System.getProperty("user.home") + "/dbmanager.rc";
@@ -174,9 +182,9 @@ implements ActionListener, WindowListener, KeyListener {
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.sourceforge.net.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.32 $";
+        + "problem reports or help requests:  $Revision: 1.33 $";
     private static final String ABOUT_TEXT =
-        "$Revision: 1.32 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.33 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2000-2005, The HSQL Development Group.\n"
         + "http://hsqldb.sourceforge.net\n\n\n"
@@ -222,11 +230,16 @@ implements ActionListener, WindowListener, KeyListener {
     // Added: (weconsultants@users)
     static DatabaseManagerSwing refForFontDialogSwing;
     boolean                     displayRowCounts;
+    boolean                     showSys = false;
     String                      currentLAF = null;
     JPanel                      pStatus;
     static JRadioButton         iReadyStatus;
+    JRadioButtonMenuItem        radAllSchemas =
+                                new JRadioButtonMenuItem("*");
     JMenuItem                   mitemAbout = new JMenuItem("About", 'A');
     JMenuItem                   mitemHelp  = new JMenuItem("Help", 'H');
+    JMenuItem                   mitemUpdateSchemas  =
+                                new JMenuItem("Update Schemas");
     JCheckBoxMenuItem boxAutoCommit =
         new JCheckBoxMenuItem(AUTOCOMMIT_BOX_TEXT);
     JCheckBoxMenuItem boxLogging = new JCheckBoxMenuItem(LOGGING_BOX_TEXT);
@@ -235,7 +248,8 @@ implements ActionListener, WindowListener, KeyListener {
     JCheckBoxMenuItem boxAutoRefresh =
         new JCheckBoxMenuItem(AUTOREFRESH_BOX_TEXT);
     JCheckBoxMenuItem boxTooltips = new JCheckBoxMenuItem(SHOWTIPS_BOX_TEXT);
-
+    JCheckBoxMenuItem boxRowCounts = new JCheckBoxMenuItem(ROWCOUNTS_BOX_TEXT); 
+    JCheckBoxMenuItem boxShowSys = new JCheckBoxMenuItem(SHOWSYS_BOX_TEXT); 
     // Consider adding GTK and Plaf L&Fs.
     JRadioButtonMenuItem rbNativeLF =
         new JRadioButtonMenuItem("Native Look & Feel");
@@ -251,6 +265,8 @@ implements ActionListener, WindowListener, KeyListener {
     static private final String SHOWSCHEMAS_BOX_TEXT = "Show schemas";
     static private final String AUTOREFRESH_BOX_TEXT = "Auto-refresh tree";
     static private final String SHOWTIPS_BOX_TEXT    = "Show Tooltips";
+    static private final String ROWCOUNTS_BOX_TEXT    = "Show row counts";
+    static private final String SHOWSYS_BOX_TEXT    = "Show system tables";
 
     // variables to hold the default cursors for these top level swing objects
     // so we can restore them when we exit our thread
@@ -258,6 +274,7 @@ implements ActionListener, WindowListener, KeyListener {
     Cursor  txtCommandCursor;
     Cursor  txtResultCursor;
     HashMap tipMap = new HashMap();
+    private JMenu mnuSchemas = new JMenu("Schemas");
 
     /**
      * Wait Cursor
@@ -275,6 +292,7 @@ implements ActionListener, WindowListener, KeyListener {
     static String defPassword = "";
     static String defScript;
     static String defDirectory;
+    private String schemaFilter = null;
 
     public void init() {
 
@@ -286,6 +304,7 @@ implements ActionListener, WindowListener, KeyListener {
             m.connect(ConnectionDialogSwing.createConnection(defDriver,
                     defURL, defUser, defPassword));
             m.insertTestData();
+            m.updateAutoCommitBox();
             m.refreshTree();
         } catch (Exception e) {
 
@@ -461,7 +480,10 @@ implements ActionListener, WindowListener, KeyListener {
             // refreshTree();
             txtCommand.setText(
                 DatabaseManagerCommon.createTestData(sStatement));
-            refreshTree();
+            // This just as overkill (blaine).  insertTestData() is only
+            // called in a couple places, and refreshTree() is called right
+            // afterward every time.
+            //refreshTree();
 
             for (int i = 0; i < DatabaseManagerCommon.testDataSql.length;
                     i++) {
@@ -503,8 +525,8 @@ implements ActionListener, WindowListener, KeyListener {
         addMenu(bar, "File", fitems);
 
         Object[] vitems = {
-            "RRefresh Tree", boxAutoRefresh, "--", boxShowSchemas, "--",
-            "GResults in Grid", "TResults in Text"
+            "RRefresh Tree", boxAutoRefresh, "--", boxRowCounts, boxShowSys,
+            boxShowSchemas, "--", "GResults in Grid", "TResults in Text"
         };
 
         addMenu(bar, "View", vitems);
@@ -532,11 +554,13 @@ implements ActionListener, WindowListener, KeyListener {
         rbNativeLF.setActionCommand("LFMODE:" + CommonSwing.Native);
         rbJavaLF.setActionCommand("LFMODE:" + CommonSwing.Java);
         rbMotifLF.setActionCommand("LFMODE:" + CommonSwing.Motif);
+        tipMap.put(mitemUpdateSchemas, "Refresh the schema list in this menu");
+        tipMap.put(radAllSchemas, "Display items in all schemas");
         tipMap.put(mitemAbout, "Display product information");
         tipMap.put(mitemHelp, "Display advice for obtaining help");
         tipMap.put(
-            boxAutoRefresh,
-            "Refresh tree automatically when YOU modify database objects");
+            boxAutoRefresh, "Refresh tree (and schema list) automatically"
+                    + "when YOU modify database objects");
         tipMap.put(boxShowSchemas,
                    "Display object names in tree like schemaname.basename");
         tipMap.put(rbNativeLF,
@@ -549,12 +573,13 @@ implements ActionListener, WindowListener, KeyListener {
         tipMap.put(
             boxLogging,
             "Shows current JDBC DriverManager logging mode.  Click to change");
+        tipMap.put(boxShowSys, "Show system tables in table tree to the left");
 
         Object[] soptions = {
 
             // Added: (weconsultants@users) New menu options
             rbNativeLF, rbJavaLF, rbMotifLF, "--", "-Set Fonts", "--",
-            "-Set Table RowCount", "--", boxAutoCommit, "OCommit",
+            boxAutoCommit, "OCommit",
             "LRollback", "--", "-Disable MaxRows", "-Set MaxRows to 100",
             "--", boxLogging, "--", "-Insert test data"
         };
@@ -567,12 +592,24 @@ implements ActionListener, WindowListener, KeyListener {
 
         addMenu(bar, "Tools", stools);
 
+        mnuSchemas.setMnemonic(java.awt.event.KeyEvent.VK_S);
+        bar.add(mnuSchemas);
+
         JMenu mnuHelp = new JMenu("Help");
 
         mnuHelp.setMnemonic(java.awt.event.KeyEvent.VK_H);
         mnuHelp.add(mitemAbout);
         mnuHelp.add(mitemHelp);
         mnuHelp.add(boxTooltips);
+        radAllSchemas.addActionListener(schemaListListener);
+        // May be illegal:
+        radAllSchemas.setActionCommand(null);
+        mitemUpdateSchemas.addActionListener(new ActionListener() {
+
+            public void actionPerformed(ActionEvent actionevent) {
+                updateSchemaList();
+            }
+        });
         mitemHelp.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent actionevent) {
@@ -823,14 +860,18 @@ implements ActionListener, WindowListener, KeyListener {
             }
         } else if (s.equals("Results in Text")) {
             setResultsInText();
-        } else if (s.equals("Set Table RowCount")) {
+        } else if (s.equals(SHOWSYS_BOX_TEXT)) {
+            showSys = boxShowSys.isSelected();
 
-            // Added: (weconsultants@users)
-            if (displayRowCounts) {
-                displayRowCounts = false;
-            } else {
-                displayRowCounts = true;
+            try {
+                refreshTree();
+            } catch (Exception e) {
+
+                //  Added: (weconsultants@users)
+                CommonSwing.errorMessage(e);
             }
+        } else if (s.equals(ROWCOUNTS_BOX_TEXT)) {
+            displayRowCounts = boxRowCounts.isSelected();
 
             try {
                 refreshTree();
@@ -864,6 +905,7 @@ implements ActionListener, WindowListener, KeyListener {
             }
         } else if (s.equals("Insert test data")) {
             insertTestData();
+            refreshTree();
         } else if (s.equals("Rollback")) {
             try {
                 cConn.rollback();
@@ -1548,19 +1590,27 @@ implements ActionListener, WindowListener, KeyListener {
 
             // get metadata about user tables by building a vector of table names
             String[]  usertables = {
-                "TABLE", "GLOBAL TEMPORARY", "VIEW", "SYSTEM"
+                "TABLE", "GLOBAL TEMPORARY", "VIEW", "SYSTEM TABLE"
             };
-            ResultSet result = dMeta.getTables(null, null, null, usertables);
+            String[]  nonSystables = {
+                "TABLE", "GLOBAL TEMPORARY", "VIEW"
+            };
+            ResultSet result = dMeta.getTables(null, null, null,
+                    (showSys ? usertables: nonSystables));
             Vector    tables     = new Vector();
             Vector    schemas    = new Vector();
 
             // sqlbob@users Added remarks.
             Vector remarks = new Vector();
+            String schema;
 
             while (result.next()) {
-                schemas.addElement(result.getString(2));
-                tables.addElement(result.getString(3));
-                remarks.addElement(result.getString(5));
+                schema = result.getString(2);
+                if (schemaFilter == null || schema.equals(schemaFilter)) {
+                    schemas.addElement(schema);
+                    tables.addElement(result.getString(3));
+                    remarks.addElement(result.getString(5));
+                }
             }
 
             result.close();
@@ -1572,7 +1622,7 @@ implements ActionListener, WindowListener, KeyListener {
             rowCounts = new int[tables.size()];
 
             try {
-                rowCounts = getRowCounts(tables);
+                rowCounts = getRowCounts(tables, schemas);
             } catch (Exception e) {
 
                 //  Added: (weconsultants@users)
@@ -1582,7 +1632,7 @@ implements ActionListener, WindowListener, KeyListener {
             // For each table, build a tree node with interesting info
             for (int i = 0; i < tables.size(); i++) {
                 String name   = (String) tables.elementAt(i);
-                String schema = (String) schemas.elementAt(i);
+                schema = (String) schemas.elementAt(i);
 
                 // weconsul@ptd.net Add rowCounts if needed.
                 tableNode = makeNode(name, rootNode);
@@ -1619,7 +1669,9 @@ implements ActionListener, WindowListener, KeyListener {
 
                 DefaultMutableTreeNode indexesNode = makeNode("Indices",
                     tableNode);
-                ResultSet ind = dMeta.getIndexInfo(null, schema, name, false,
+                ResultSet ind = null;
+                try {
+                ind = dMeta.getIndexInfo(null, schema, name, false,
                                                    false);
                 String                 oldiname  = null;
                 DefaultMutableTreeNode indexNode = null;
@@ -1640,8 +1692,18 @@ implements ActionListener, WindowListener, KeyListener {
                     // And the ordered column list for index components
                     makeNode(ind.getString(9), indexNode);
                 }
-
-                ind.close();
+                } catch (SQLException se) {
+                    // Workaround for Oracle
+                    if (se.getMessage() == null
+                            || !se.getMessage().startsWith("ORA-25191:")) {
+                        throw se;
+                    }
+                } finally {
+                    if (ind != null) {
+                        ind.close();
+                        ind = null;
+                    }
+                }
             }
 
             // Finally - a little additional metadata on this connection
@@ -1666,6 +1728,8 @@ implements ActionListener, WindowListener, KeyListener {
         treeModel.nodeStructureChanged(rootNode);
         treeModel.reload();
         tScrollPane.repaint();
+        // We want the Schema List to always be in sync with the displayed tree
+        updateSchemaList();
     }
 
     // Added: (weconsultants@users) Sets up\changes the running status icon
@@ -1688,7 +1752,8 @@ implements ActionListener, WindowListener, KeyListener {
     }
 
     // Added: (weconsultants@users) Needed to aggragate counts per table in jTree
-    protected int[] getRowCounts(Vector inTable) throws Exception {
+    protected int[] getRowCounts(Vector inTable, Vector inSchema)
+        throws Exception {
 
         if (!displayRowCounts) {
             return (null);
@@ -1696,6 +1761,7 @@ implements ActionListener, WindowListener, KeyListener {
 
         String rowCountSelect = "SELECT COUNT(*) FROM ";
         int[]  counts;
+        String name;
 
         counts = new int[inTable.size()];
 
@@ -1703,8 +1769,10 @@ implements ActionListener, WindowListener, KeyListener {
             Statement select = rowConn.createStatement();
 
             for (int i = 0; i < inTable.size(); i++) {
-                String displayRowCounts = rowCountSelect
-                                          + (String) inTable.elementAt(i);
+                name = ((inSchema.elementAt(i) == null) ? ""
+                            : ((String) inSchema.elementAt(i) + '.'))
+                                      + (String) inTable.elementAt(i);
+                String displayRowCounts = rowCountSelect + name;
                 ResultSet resultSet = select.executeQuery(displayRowCounts);
 
                 while (resultSet.next()) {
@@ -1725,13 +1793,16 @@ implements ActionListener, WindowListener, KeyListener {
 
         jtoolbar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
 
-        // Build jbuttonClear Buttons
+        // I'm dropping "Statement" from  "Execute SQL Statement", etc.,
+        // because it may or may not be "one statement", but it is SQL.
+        // Build jbuttonClear Buttons - blaine
+
         JButton jbuttonClear =
-            new JButton("Clear SQL Statement",
+            new JButton("Clear SQL",
                         new ImageIcon(CommonSwing.getIcon("Clear")));
 
         jbuttonClear.putClientProperty("is3DEnabled", Boolean.TRUE);
-        tipMap.put(jbuttonClear, "Clear SQL Statement");
+        tipMap.put(jbuttonClear, "Clear SQL");
         jbuttonClear.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent actionevent) {
@@ -1740,10 +1811,10 @@ implements ActionListener, WindowListener, KeyListener {
         });
 
         JButton jbuttonExecute =
-            new JButton("Execute SQL Statement",
+            new JButton("Execute SQL",
                         new ImageIcon(CommonSwing.getIcon("Execute")));
 
-        tipMap.put(jbuttonExecute, "Execute SQL Statement");
+        tipMap.put(jbuttonExecute, "Execute SQL");
         jbuttonExecute.putClientProperty("is3DEnabled", Boolean.TRUE);
         jbuttonExecute.addActionListener(new ActionListener() {
 
@@ -1812,4 +1883,47 @@ implements ActionListener, WindowListener, KeyListener {
                                           : (String) null);
         }
     }
+
+    private void updateSchemaList() {
+        ButtonGroup group = new ButtonGroup();
+        ArrayList list = new ArrayList();
+        try {
+            ResultSet result = dMeta.getSchemas();
+            if (result == null) {
+                throw new SQLException("Failed to get metadata from database");
+            }
+            while (result.next()) {
+                list.add(result.getString(1));
+            }
+            result = null;
+        } catch (SQLException se) {
+            CommonSwing.errorMessage(se);
+        }
+        mnuSchemas.removeAll();
+        radAllSchemas.setSelected(schemaFilter == null);
+        group.add(radAllSchemas);
+        mnuSchemas.add(radAllSchemas);
+        String s;
+        JRadioButtonMenuItem radioButton;
+        for (int i = 0; i < list.size(); i++) {
+            s = (String) list.get(i);
+            radioButton = new JRadioButtonMenuItem(s);
+            group.add(radioButton);
+            mnuSchemas.add(radioButton);
+            radioButton.setSelected(schemaFilter != null
+                    && schemaFilter.equals(s));
+            radioButton.addActionListener(schemaListListener);
+            radioButton.setEnabled(list.size() > 1);
+        }
+        mnuSchemas.addSeparator();
+        mnuSchemas.add(mitemUpdateSchemas);
+    }
+
+    ActionListener schemaListListener = (new ActionListener() {
+
+        public void actionPerformed(ActionEvent actionevent) {
+            schemaFilter = actionevent.getActionCommand();
+            refreshTree();
+        }
+    });
 }
