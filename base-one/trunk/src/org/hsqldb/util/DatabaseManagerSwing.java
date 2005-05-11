@@ -112,6 +112,11 @@ import javax.swing.table.TableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JRadioButtonMenuItem;
+import javax.swing.ButtonGroup;
+import javax.swing.JOptionPane;
+
 
 import org.hsqldb.lib.java.JavaSystem;
 
@@ -194,16 +199,34 @@ implements ActionListener, WindowListener, KeyListener {
     static boolean         bMustExit;
     String                 ifHuge = "";
     JToolBar               jtoolbar;
+    private boolean        showSchemas = true;
 
     // Added: (weconsultants@users)
     static DatabaseManagerSwing refForFontDialogSwing;
     boolean                     displayRowCounts;
-    String                      currentLAF = CommonSwing.Native;
+    String                      currentLAF = null;
     JPanel                      pStatus;
     static JRadioButton         iReadyStatus;
+    JCheckBoxMenuItem           boxAutoCommit =
+                                new JCheckBoxMenuItem(AUTOCOMMIT_BOX_TEXT);
+    JCheckBoxMenuItem           boxLogging =
+                                new JCheckBoxMenuItem(LOGGING_BOX_TEXT);
+    JCheckBoxMenuItem           boxShowSchemas =
+                                new JCheckBoxMenuItem(SHOWSCHEMAS_BOX_TEXT);
+    // Consider adding GTK and Plaf L&Fs.
+    JRadioButtonMenuItem        rbNativeLF = new JRadioButtonMenuItem(
+                                "Native Look & Feel");
+    JRadioButtonMenuItem        rbJavaLF = new JRadioButtonMenuItem(
+                                "Java Look & Feel");
+    JRadioButtonMenuItem        rbMotifLF = new JRadioButtonMenuItem(
+                                "Motif Look & Feel");
     static JLabel               jStatusLine;
     static String               READY_STATUS   = "Ready...";
     static String               RUNNING_STATUS = "Running...";
+
+    static private final String AUTOCOMMIT_BOX_TEXT = "Autocommit mode";
+    static private final String LOGGING_BOX_TEXT = "Logging mode";
+    static private final String SHOWSCHEMAS_BOX_TEXT = "Show schemas";
 
     // variables to hold the default cursors for these top level swing objects
     // so we can restore them when we exit our thread
@@ -374,6 +397,7 @@ implements ActionListener, WindowListener, KeyListener {
         try {
             dMeta      = cConn.getMetaData();
             sStatement = cConn.createStatement();
+            updateAutoCommitBox();
 
             refreshTree();
         } catch (SQLException e) {
@@ -433,8 +457,7 @@ implements ActionListener, WindowListener, KeyListener {
 
         fMain = new JFrame("HSQL Database Manager");
 
-        // Added: (weconsultants@users) Default LAF (Goodies)
-        CommonSwing.setSwingLAF(fMain, CommonSwing.Native);
+        setLF(CommonSwing.Native);
 
         // (ulrivo): An actual icon.
         fMain.getContentPane().add(createToolBar(), "North");
@@ -451,8 +474,9 @@ implements ActionListener, WindowListener, KeyListener {
 
         addMenu(bar, "File", fitems);
 
-        String[] vitems = {
-            "RRefresh Tree", "--", "GResults in Grid", "TResults in Text"
+        Object[] vitems = {
+            "RRefresh Tree", "--", boxShowSchemas, "--",
+            "GResults in Grid", "TResults in Text"
         };
 
         addMenu(bar, "View", vitems);
@@ -470,14 +494,22 @@ implements ActionListener, WindowListener, KeyListener {
 
         bar.add(mRecent);
 
-        String[] soptions = {
+        ButtonGroup lfGroup = new ButtonGroup();
+        lfGroup.add(rbNativeLF);
+        lfGroup.add(rbJavaLF);
+        lfGroup.add(rbMotifLF);
+        boxShowSchemas.setSelected(showSchemas);
+        rbNativeLF.setActionCommand("LFMODE:" + CommonSwing.Native);
+        rbJavaLF.setActionCommand("LFMODE:" + CommonSwing.Java);
+        rbMotifLF.setActionCommand("LFMODE:" + CommonSwing.Motif);
+
+        Object[] soptions = {
 
             // Added: (weconsultants@users) New menu options
-            "-Set Look and Feel( Native )", "-Set Look and Feel( Java )",
-            "-Set Look and Feel( Motif )", "--", "-Set Fonts", "--",
-            "-Set Table RowCount", "--", "-AutoCommit on", "-AutoCommit off",
+            rbNativeLF, rbJavaLF, rbMotifLF, "--", "-Set Fonts", "--",
+            "-Set Table RowCount", "--", boxAutoCommit,
             "OCommit", "LRollback", "--", "-Disable MaxRows",
-            "-Set MaxRows to 100", "--", "-Logging on", "-Logging off", "--",
+            "-Set MaxRows to 100", "--", boxLogging, "--",
             "-Insert test data"
         };
 
@@ -488,11 +520,34 @@ implements ActionListener, WindowListener, KeyListener {
         };
 
         addMenu(bar, "Tools", stools);
+
+        JMenu mnuHelp = new JMenu("Help");
+        mnuHelp.setMnemonic(java.awt.event.KeyEvent.VK_H);
+        JMenuItem mitemAbout = new JMenuItem("About", 'A');
+        JMenuItem mitemHelp = new JMenuItem("Help", 'H');
+        mnuHelp.add(mitemAbout);
+        mnuHelp.add(mitemHelp);
+        mitemHelp.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent actionevent) {
+                JOptionPane.showMessageDialog(fMain.getContentPane(),
+                    "See HSQLDB User Manual at http://hsqldb.sourceforge.net",
+                        "HELP", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+        mitemAbout.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent actionevent) {
+                JOptionPane.showMessageDialog(fMain.getContentPane(),
+                        "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
+                        + "http://hsqldb.sourceforge.net",
+                        "About", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+        bar.add(mnuHelp);
+
         fMain.setJMenuBar(bar);
         initGUI();
 
         sRecent = new String[iMaxRecent];
-
         // Modified: (weconsultants@users)Mode code to CommonSwing for general use
         CommonSwing.setFramePositon(fMain);
 
@@ -523,7 +578,7 @@ implements ActionListener, WindowListener, KeyListener {
         txtCommand.requestFocus();
     }
 
-    private void addMenu(JMenuBar b, String name, String[] items) {
+    private void addMenu(JMenuBar b, String name, Object[] items) {
 
         JMenu menu = new JMenu(name);
 
@@ -531,7 +586,15 @@ implements ActionListener, WindowListener, KeyListener {
         b.add(menu);
     }
 
-    private void addMenuItems(JMenu f, String[] m) {
+    private void addMenuItems(JMenu f, Object[] m) {
+        /*
+         * This is a mis-mash of 2 conflicting strategies.
+         * There are serious problems with accepting an array of Strings as
+         * input elements.  Can't use non-text menu items (an important
+         * part of a good Gui), and we have to resort to troublesome
+         * tricks to generate hot-keys and mnemonic keys (you'll notice
+         * that mnemonics aren't even attempted).
+         */ 
 
         Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
 
@@ -547,14 +610,23 @@ implements ActionListener, WindowListener, KeyListener {
                     return;
                 }
             } else {
-                JMenuItem item = new JMenuItem(m[i].substring(1));
-                char      c    = m[i].charAt(0);
+                JMenuItem item;
+                if (m[i] instanceof JMenuItem) {
+                    item = (JMenuItem) m[i];
+                } else if (m[i] instanceof String) {
+                    item = new JMenuItem(((String) m[i]).substring(1));
+                    char      c    = ((String) m[i]).charAt(0);
 
-                if (c != '-') {
-                    KeyStroke key =
-                        KeyStroke.getKeyStroke(c, Event.CTRL_MASK);
+                    if (c != '-') {
+                        KeyStroke key =
+                            KeyStroke.getKeyStroke(c, Event.CTRL_MASK);
 
-                    item.setAccelerator(key);
+                        item.setAccelerator(key);
+                    }
+                } else {
+                    throw new RuntimeException(
+                            "Unexpected element for menu item creation: "
+                            + m[i].getClass().getName());
                 }
 
                 item.addActionListener(this);
@@ -602,10 +674,8 @@ implements ActionListener, WindowListener, KeyListener {
             Transfer.work(new String[]{ "-d" });
         } else if (s.equals("Restore")) {
             Transfer.work(new String[]{ "-r" });
-        } else if (s.equals("Logging on")) {
-            JavaSystem.setLogToSystem(true);
-        } else if (s.equals("Logging off")) {
-            JavaSystem.setLogToSystem(false);
+        } else if (s.equals(AUTOCOMMIT_BOX_TEXT)) {
+            JavaSystem.setLogToSystem(boxLogging.isSelected());
         } else if (s.equals("Refresh Tree")) {
             refreshTree();
         } else if (s.startsWith("#")) {
@@ -706,81 +776,18 @@ implements ActionListener, WindowListener, KeyListener {
                 //  Added: (weconsultants@users)
                 CommonSwing.errorMessage(e);
             }
-        } else if (s.equals("Set Look and Feel( Native )")) {
-
-            // Added: (weconsultants@users)
-            if (currentLAF != CommonSwing.Native) {
-                if (iResult == 0) {
-                    pResult.removeAll();
-                }
-
-                currentLAF = CommonSwing.Native;
-
-                CommonSwing.setSwingLAF(fMain, currentLAF);
-
-                if (iResult == 0) {
-                    setResultsInGrid();
-                }
-            }
-        } else if (s.equals("Set Look and Feel( Java )")) {
-
-            // Added: (weconsultants@users)
-            if (currentLAF != CommonSwing.Java) {
-                if (iResult == 0) {
-                    pResult.removeAll();
-                }
-
-                currentLAF = CommonSwing.Java;
-
-                CommonSwing.setSwingLAF(fMain, currentLAF);
-
-                if (iResult == 0) {
-                    setResultsInGrid();
-                }
-            }
-        } else if (s.equals("Set Look and Feel( Motif )")) {
-            if (currentLAF != CommonSwing.Motif) {
-                if (iResult == 0) {
-                    pResult.removeAll();
-                }
-
-                currentLAF = CommonSwing.Motif;
-
-                CommonSwing.setSwingLAF(fMain, currentLAF);
-
-                if (iResult == 0) {
-                    setResultsInGrid();
-                }
-            }
-        }
-
-//        else if (s.equals("Set Look and Feel( GTK )")) {
-//            // Added: (weconsultants@users) Not using currently
-//            currentLAF = CommonSwing.GTK;
-//            CommonSwing.setSwingLAF(fMain, currentLAF);
-//        }
-//        else if (s.equals("Set Look and Feel( Plaf )")) {
-//            // Added: (weconsultants@users) Not using currently
-//            currentLAF = CommonSwing.plaf;
-//            CommonSwing.setSwingLAF(fMain, currentLAF);
-//        }
-        else if (s.equals("Set Fonts")) {
+        } else if (s.startsWith("LFMODE:")) {
+            setLF(s.substring("LFMODE:".length()));
+        } else if (s.equals("Set Fonts")) {
 
             // Added: (weconsultants@users)
             FontDialogSwing.CreatFontDialog(refForFontDialogSwing);
-        } else if (s.equals("AutoCommit on")) {
+        } else if (s.equals(AUTOCOMMIT_BOX_TEXT)) {
             try {
-                cConn.setAutoCommit(true);
+                cConn.setAutoCommit(boxAutoCommit.isSelected());
             } catch (SQLException e) {
 
-                //  Added: (weconsultants@users)
-                CommonSwing.errorMessage(e);
-            }
-        } else if (s.equals("AutoCommit off")) {
-            try {
-                cConn.setAutoCommit(false);
-            } catch (SQLException e) {
-
+                boxAutoCommit.setSelected(!boxAutoCommit.isSelected());
                 //  Added: (weconsultants@users)
                 CommonSwing.errorMessage(e);
             }
@@ -844,6 +851,11 @@ implements ActionListener, WindowListener, KeyListener {
             showHelp(DatabaseManagerCommon.setHelp);
         } else if (s.equals("Test Script")) {
             showHelp(DatabaseManagerCommon.testHelp);
+        } else if (s.equals(SHOWSCHEMAS_BOX_TEXT)) {
+            showSchemas = boxShowSchemas.isSelected();
+            refreshTree();
+        } else {
+            throw new RuntimeException("Unexpected action triggered: " + s);
         }
     }
 
@@ -1048,6 +1060,7 @@ implements ActionListener, WindowListener, KeyListener {
             //  Added: (weconsultants@users)
             CommonSwing.errorMessage(e);
         }
+        updateAutoCommitBox();
     }
 
     private void updateResult() {
@@ -1491,7 +1504,8 @@ implements ActionListener, WindowListener, KeyListener {
                 String name = (String) tables.elementAt(i);
                 String schema = (String) schemas.elementAt(i);
                 String displayedName =
-                          ((schema == null) ? "" : (schema + '.'))
+                        ((schema == null || !showSchemas)
+                                ? "" : (schema + '.'))
                         + name
                         + (displayRowCounts ? (", " 
                                     + DECFMT.format(rowCounts[i])) : "");
@@ -1670,5 +1684,37 @@ implements ActionListener, WindowListener, KeyListener {
         jbuttonExecute.setAlignmentX(0.5F);
 
         return jtoolbar;
+    }
+
+    void updateAutoCommitBox() {
+        try {
+            boxAutoCommit.setSelected(cConn.getAutoCommit());
+        } catch (SQLException se) {
+            CommonSwing.errorMessage(se);
+        }
+    }
+
+    private void setLF(String newLAF) {
+        if (currentLAF != null && currentLAF == newLAF) {
+            return;
+        }
+
+        if (pResult != null && iResult == 0) {
+            pResult.removeAll();
+        }
+
+        CommonSwing.setSwingLAF(fMain, newLAF);
+
+        if (pResult != null && iResult == 0) {
+            setResultsInGrid();
+        }
+        currentLAF = newLAF;
+        if (currentLAF.equals(CommonSwing.Native)) {
+            rbNativeLF.setSelected(true);
+        } else if (currentLAF.equals(CommonSwing.Java)) {
+            rbJavaLF.setSelected(true);
+        } else if (currentLAF.equals(CommonSwing.Motif)) {
+            rbMotifLF.setSelected(true);
+        }
     }
 }
