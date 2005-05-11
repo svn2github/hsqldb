@@ -141,12 +141,6 @@ class DatabaseInformationMain extends DatabaseInformation {
     protected static final HashMap columnNameMap;
 
     /**
-     * Map: simple <code>Index</code> name <code>String</code> object =>
-     * <code>HsqlName</code> object.
-     */
-    protected static final HashMap indexNameMap;
-
-    /**
      * The <code>Session</code> object under consideration in the current
      * executution context.
      */
@@ -162,13 +156,14 @@ class DatabaseInformationMain extends DatabaseInformation {
 
     static {
         columnNameMap      = new HashMap();
-        indexNameMap       = new HashMap();
         nonCachedTablesSet = new HashSet();
         sysTableHsqlNames  = new HsqlName[sysTableNames.length];
 
         for (int i = 0; i < sysTableNames.length; i++) {
             sysTableHsqlNames[i] =
-                HsqlNameManager.newHsqlSystemTableName(sysTableNames[i]);
+                HsqlNameManager.newHsqlSystemObjectName(sysTableNames[i]);
+            sysTableHsqlNames[i].schema =
+                SchemaManager.INFORMATION_SCHEMA_HSQLNAME;
         }
 
         // build the set of non-cached tables
@@ -208,7 +203,6 @@ class DatabaseInformationMain extends DatabaseInformation {
         super(db);
 
         Trace.doAssert(db != null, "db != null");
-        Trace.doAssert(db.getTables() != null, "db.getTables() != null");
         Trace.doAssert(db.getUserManager() != null,
                        "db.getUserManager() != null");
         init();
@@ -234,8 +228,15 @@ class DatabaseInformationMain extends DatabaseInformation {
         HsqlName cn;
         Column   c;
 
-        cn = ns.findOrCreateHsqlName(name, columnNameMap);
-        c = new Column(cn, nullable, type, size, 0, false, 0, 0, false, null);
+        cn = (HsqlName) columnNameMap.get(name);
+
+        if (cn == null) {
+            cn = database.nameManager.newHsqlName(name, false);
+
+            columnNameMap.put(name, cn);
+        }
+
+        c = new Column(cn, nullable, type, size, 0, false, null);
 
         t.addColumn(c);
     }
@@ -280,7 +281,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      * @return an enumeration over all of the tables in this database
      */
     protected final Iterator allTables() {
-        return new WrapperIterator(database.getTables().iterator(),
+        return new WrapperIterator(database.schemaManager.allTablesIterator(),
                                    new WrapperIterator(sysTables, true));
     }
 
@@ -298,7 +299,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             Table t = sysTables[i];
 
             if (t != null) {
-                t.clearAllRows();
+                t.clearAllRows(session);
             }
 
             sysTableSessions[i] = -1;
@@ -452,14 +453,14 @@ class DatabaseInformationMain extends DatabaseInformation {
             sysTableSessionDependent[SYSTEM_VIEW_TABLE_USAGE] =
             sysTableSessionDependent[SYSTEM_VIEW_ROUTINE_USAGE] = true;
 
-        Table   t;
+        Table t;
+
+/*
         Session oldSession = session;
 
-        session = database.sessionManager.getSysSession();
-
-        Trace.check(session != null, Trace.USER_NOT_FOUND,
-                    UserManager.SYS_USER_NAME);
-
+        session = database.sessionManager.getSysSession(
+            database.schemaManager.INFORMATION_SCHEMA);
+*/
         for (int i = 0; i < sysTables.length; i++) {
             t = sysTables[i] = generateTable(i);
 
@@ -468,16 +469,17 @@ class DatabaseInformationMain extends DatabaseInformation {
             }
         }
 
-        UserManager um = database.getUserManager();
+        GranteeManager gm = database.getGranteeManager();
 
         for (int i = 0; i < sysTableHsqlNames.length; i++) {
             if (sysTables[i] != null) {
-                um.grant(UserManager.PUBLIC_USER_NAME, sysTableHsqlNames[i],
+                gm.grant(UserManager.PUBLIC_USER_NAME, sysTableHsqlNames[i],
                          UserManager.SELECT);
             }
         }
-
+/*
         session = oldSession;
+*/
     }
 
     /**
@@ -491,15 +493,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      */
     protected final boolean isAccessibleTable(Table table)
     throws HsqlException {
-
-        if (!session.isAccessible(table.getName())) {
-            return false;
-        }
-
-        // so that admin users don't see other's temp tables
-        return (table.isTemp() && table.getTableType() != Table.SYSTEM_TABLE)
-               ? (table.getOwnerSessionId() == session.getId())
-               : true;
+        return session.isAccessible(table.getName());
     }
 
     /**
@@ -511,7 +505,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      */
     protected final Table createBlankTable(HsqlName name)
     throws HsqlException {
-        return new Table(database, name, Table.SYSTEM_TABLE, 0);
+        return new Table(database, name, Table.SYSTEM_TABLE);
     }
 
     /**
@@ -536,30 +530,7 @@ class DatabaseInformationMain extends DatabaseInformation {
 
         // must come first...many methods depend on this being set properly
         this.session = session;
-        t            = ns.findPubSchemaTable(name);
 
-        if (t != null) {
-            return t;
-        }
-
-        t = ns.findUserSchemaTable(session, name);
-
-        if (t != null) {
-            return t;
-        }
-
-        name = ns.withoutDefnSchema(name);
-
-        // At this point, we still might have a "special" system table
-        // that must be in database.tTable in order to get persisted...
-        //
-        // TODO:  Formalize system/interface for persistent SYSTEM tables
-        //
-        // Once the TODO is done, there needs to be code here, something like:
-        //
-        // if (persistedSystemTablesSet.contains(name)) {
-        //      return database.findUserTable(name);
-        // }
         if (!isSystemTable(name)) {
             return null;
         }
@@ -604,7 +575,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         }
 
         // fredt - clear the contents of table and set new User
-        t.clearAllRows();
+        t.clearAllRows(session);
 
         sysTableSessions[tableIndex] = session.getId();
 
@@ -822,8 +793,8 @@ class DatabaseInformationMain extends DatabaseInformation {
         p      = database.getProperties();
         tables = p.isPropertyTrue("hsqldb.system_table_bri") ? allTables()
                                                              : database
-                                                             .getTables()
-                                                                 .iterator();
+                                                             .schemaManager
+                                                                 .allTablesIterator();
 
         // Do it.
         while (tables.hasNext()) {
@@ -843,7 +814,7 @@ class DatabaseInformationMain extends DatabaseInformation {
 
             inKey = ValuePool.getBoolean(table.isBestRowIdentifiersStrict());
             tableCatalog = ns.getCatalogName(table);
-            tableSchema  = ns.getSchemaName(table);
+            tableSchema  = table.getSchemaName();
             tableName    = ti.getName();
             scope        = ti.getBRIScope();
             pseudo       = ti.getBRIPseudo();
@@ -983,7 +954,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         rs = session.sqlExecuteDirectNoPreChecks(
             "select a.TABLE_CAT, a.TABLE_SCHEM, a.TABLE_NAME, b.COLUMN_NAME, "
             + "a.GRANTOR, a.GRANTEE, a.PRIVILEGE, a.IS_GRANTABLE "
-            + "from  SYSTEM_TABLEPRIVILEGES a, SYSTEM_COLUMNS b where a.TABLE_NAME = b.TABLE_NAME;");
+            + "from  INFORMATION_SCHEMA.SYSTEM_TABLEPRIVILEGES a, INFORMATION_SCHEMA.SYSTEM_COLUMNS b where a.TABLE_NAME = b.TABLE_NAME;");
 
         t.insertSys(rs);
         t.setDataReadOnly(true);
@@ -1118,7 +1089,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             ti.setTable(table);
 
             tableCatalog = ns.getCatalogName(table);
-            tableSchema  = ns.getSchemaName(table);
+            tableSchema  = table.getSchemaName();
             tableName    = ti.getName();
             columnCount  = table.getColumnCount();
 
@@ -1268,12 +1239,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         final int ipk_name        = 12;
         final int ideferrability  = 13;
 
-        // TODO: (one of)
-        // 1.) disallow DDL that creates references to system tables
-        // 2.) make all system tables static
-        // 3.) implement way to re-resolve references after a cache clear
-        // Initialization
-        tables = database.getTables().iterator();
+        tables = database.schemaManager.allTablesIterator();
         pkInfo = new DITableInfo();
         fkInfo = new DITableInfo();
 
@@ -1327,9 +1293,9 @@ class DatabaseInformationMain extends DatabaseInformation {
 
             fkTableName    = fkInfo.getName();
             pkTableCatalog = ns.getCatalogName(pkTable);
-            pkTableSchema  = ns.getSchemaName(pkTable);
+            pkTableSchema  = pkTable.getSchemaName();
             fkTableCatalog = ns.getCatalogName(fkTable);
-            fkTableSchema  = ns.getSchemaName(fkTable);
+            fkTableSchema  = fkTable.getSchemaName();
             mainCols       = constraint.getMainColumns();
             refCols        = constraint.getRefColumns();
             columnCount    = refCols.length;
@@ -1476,7 +1442,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         p  = database.getProperties();
         tables = p.isPropertyTrue("hsqldb.system_table_indexinfo")
                  ? allTables()
-                 : database.getTables().iterator();
+                 : database.schemaManager.allTablesIterator();
 
         // Do it.
         while (tables.hasNext()) {
@@ -1489,7 +1455,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             ti.setTable(table);
 
             tableCatalog = ns.getCatalogName(table);
-            tableSchema  = ns.getSchemaName(table);
+            tableSchema  = table.getSchemaName();
             tableName    = ti.getName();
 
             // not supported yet
@@ -1619,7 +1585,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         p  = database.getProperties();
         tables = p.isPropertyTrue("hsqldb.system_table_primarykeys")
                  ? allTables()
-                 : database.getTables().iterator();
+                 : database.schemaManager.allTablesIterator();
 
         while (tables.hasNext()) {
             table = (Table) tables.next();
@@ -1634,7 +1600,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             ti.setTable(table);
 
             tableCatalog   = ns.getCatalogName(table);
-            tableSchema    = ns.getSchemaName(table);
+            tableSchema    = table.getSchemaName();
             tableName      = ti.getName();
             primaryKeyName = index.getName().name;
             cols           = index.getColumns();
@@ -1861,7 +1827,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         Object[] row;
 
         // Initialization
-        schemas = ns.iterateVisibleSchemaNames(session);
+        schemas = database.schemaManager.userSchemaNameIterator();
 
         // Do it.
         while (schemas.hasNext()) {
@@ -1956,7 +1922,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         final int iis_grantable = 6;
 
         // Initialization
-        grantorName = UserManager.SYS_USER_NAME;
+        grantorName = RoleManager.ADMIN_ROLE_NAME;
         users = database.getUserManager().listVisibleUsers(session, true);
         tables      = allTables();
 
@@ -1973,13 +1939,13 @@ class DatabaseInformationMain extends DatabaseInformation {
 
             tableName    = table.getName().name;
             tableCatalog = ns.getCatalogName(table);
-            tableSchema  = ns.getSchemaName(table);
+            tableSchema  = table.getSchemaName();
 
             for (int i = 0; i < users.size(); i++) {
                 user        = (User) users.get(i);
                 granteeName = user.getName();
 
-                if (user.isAdmin() &&!table.isTemp()) {
+                if (user.isAdmin()) {
                     tablePrivileges =
                         UserManager.getRightsArray(UserManager.ALL);
                 } else {
@@ -2125,7 +2091,7 @@ class DatabaseInformationMain extends DatabaseInformation {
 
             row               = t.getEmptyRowData();
             row[itable_cat]   = ns.getCatalogName(table);
-            row[itable_schem] = ns.getSchemaName(table);
+            row[itable_schem] = table.getSchemaName();
             row[itable_name]  = ti.getName();
             row[itable_type]  = ti.getStandardType();
             row[iremark]      = ti.getRemark();
@@ -2301,7 +2267,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             "select TYPE_NAME, DATA_TYPE, PRECISION, LITERAL_PREFIX, LITERAL_SUFFIX, CREATE_PARAMS, NULLABLE, CASE_SENSITIVE, SEARCHABLE,"
             + "UNSIGNED_ATTRIBUTE, FIXED_PREC_SCALE, AUTO_INCREMENT, LOCAL_TYPE_NAME, MINIMUM_SCALE, "
             + "MAXIMUM_SCALE, SQL_DATA_TYPE, SQL_DATETIME_SUB, NUM_PREC_RADIX, TYPE_SUB "
-            + "from SYSTEM_ALLTYPEINFO  where AS_TAB_COL = true;");
+            + "from INFORMATION_SCHEMA.SYSTEM_ALLTYPEINFO  where AS_TAB_COL = true;");
 
         t.insertSys(rs);
         t.setDataReadOnly(true);
@@ -2771,7 +2737,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         final int icons_name   = 2;
         final int icons_clause = 3;
 
-        tables         = database.getTables().iterator();
+        tables         = database.schemaManager.allTablesIterator();
         constraintList = new HsqlArrayList();
 
         while (tables.hasNext()) {
@@ -2798,7 +2764,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             constraint       = (Constraint) constraintList.get(i);
             table            = constraint.getMain();
             row[icons_cat]   = ns.getCatalogName(table);
-            row[icons_schem] = ns.getSchemaName(table);
+            row[icons_schem] = table.getSchemaName();
             row[icons_name]  = constraint.constName.name;
 
             try {
@@ -2943,7 +2909,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         NumberSequence sequence;
         int            dataType;
 
-        it = database.sequenceManager.sequenceMap.values().iterator();
+        it = database.schemaManager.allSequencesIterator();
 
         while (it.hasNext()) {
             row              = t.getEmptyRowData();
@@ -2951,7 +2917,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             dataType         = sequence.getType();
             sequenceName     = sequence.getName().name;
             row[iseq_cat]    = ns.getCatalogName(sequence);
-            row[iseq_schem]  = ns.getSchemaName(sequence);
+            row[iseq_schem]  = sequence.getSchemaName();
             row[iseq_name]   = sequenceName;
             row[iseq_dtdid]  = Types.getTypeString(dataType);
             row[iseq_min]    = min;

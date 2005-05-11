@@ -179,6 +179,10 @@ public class IntValueHashMap extends BaseHashMap {
             throw new RuntimeException();
         }
 
+        public boolean addAll(Collection c) {
+            throw new RuntimeException();
+        }
+
         public boolean remove(Object o) {
 
             int oldSize = size();

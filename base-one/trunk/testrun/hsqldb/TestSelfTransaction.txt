@@ -1,4 +1,6 @@
 -- ON DELETE SET NULL
+set property "hsqldb.nio_data_file" false
+set write_delay false;
 set autocommit false;
 drop table testB if exists;
 create cached table testB(id integer, parent integer, ref integer,

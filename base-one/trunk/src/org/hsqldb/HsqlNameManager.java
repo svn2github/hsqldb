@@ -56,25 +56,29 @@ import org.hsqldb.lib.StringConverter;
  * than all the existing names.
  *
  * @author fredt@users
- * @version 1.7.2
+ * @version 1.8.0
  * @since 1.7.2
  */
-class HsqlNameManager {
+public class HsqlNameManager {
 
     private static HsqlNameManager staticManager = new HsqlNameManager();
-    private int                    serialNumber  = 1;    // 0 is reserved in lookups
-    private int                    sysNumber     = 0;
 
-    static HsqlName newHsqlSystemTableName(String name) {
+    static {
+        staticManager.serialNumber = Integer.MIN_VALUE;
+    }
+
+    private int serialNumber = 1;    // 0 is reserved in lookups
+    private int sysNumber    = 0;
+
+    static HsqlName newHsqlSystemObjectName(String name) {
         return new HsqlName(staticManager, name);
     }
 
-    HsqlName newHsqlName(String name, boolean isquoted) throws HsqlException {
+    HsqlName newHsqlName(String name, boolean isquoted) {
         return new HsqlName(this, name, isquoted);
     }
 
-    HsqlName newHsqlName(String prefix, String name,
-                         boolean isquoted) throws HsqlException {
+    HsqlName newHsqlName(String prefix, String name, boolean isquoted) {
         return new HsqlName(this, prefix, name, isquoted);
     }
 
@@ -128,6 +132,7 @@ class HsqlNameManager {
         public String     name;
         boolean           isNameQuoted;
         public String     statementName;
+        public HsqlName   schema;
         private final int hashCode;
 
         private HsqlName(HsqlNameManager man) {
@@ -135,8 +140,7 @@ class HsqlNameManager {
             hashCode = manager.serialNumber++;
         }
 
-        private HsqlName(HsqlNameManager man, String name,
-                         boolean isquoted) throws HsqlException {
+        private HsqlName(HsqlNameManager man, String name, boolean isquoted) {
 
             this(man);
 
@@ -144,7 +148,7 @@ class HsqlNameManager {
         }
 
         private HsqlName(HsqlNameManager man, String prefix, String name,
-                         boolean isquoted) throws HsqlException {
+                         boolean isquoted) {
 
             this(man);
 
@@ -158,15 +162,11 @@ class HsqlNameManager {
             this.name = this.statementName = name;
         }
 
-        void rename(String name, boolean isquoted) throws HsqlException {
+        void rename(String name, boolean isquoted) {
 
             this.name          = name;
             this.statementName = name;
             this.isNameQuoted  = isquoted;
-
-            if (name == null || name.length() == 0) {
-                throw Trace.error(Trace.INVALID_IDENTIFIER);
-            }
 
             if (isNameQuoted) {
                 statementName = StringConverter.toQuotedString(name, '"',
@@ -186,8 +186,7 @@ class HsqlNameManager {
             }
         }
 
-        void rename(String prefix, String name,
-                    boolean isquoted) throws HsqlException {
+        void rename(String prefix, String name, boolean isquoted) {
 
             StringBuffer sbname = new StringBuffer(prefix);
 

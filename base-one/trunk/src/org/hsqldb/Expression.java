@@ -66,6 +66,7 @@
 
 package org.hsqldb;
 
+import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.index.RowIterator;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HsqlArrayList;
@@ -1624,7 +1625,7 @@ public class Expression {
 
                     if (tableName == null || filterName.equals(tableName)) {
                         Table table = filter.getTable();
-                        int   i     = table.searchColumn(columnName);
+                        int   i     = table.findColumn(columnName);
 
                         if (i != -1) {
                             if (tableName == null) {
@@ -1680,18 +1681,17 @@ public class Expression {
     /**
      * return the expression for an aliases
      */
-    Expression getExpressionForAlias(Expression e, Expression[] columns,
-                                     int length) {
-
-        String name = e.columnName;
+    Expression getExpressionForAlias(Expression[] columns, int length) {
 
         for (int i = 0; i < length; i++) {
-            if (name.equals(columns[i].columnAlias)) {
+            if (columnName.equals(columns[i].columnAlias)
+                    && (tableName == null
+                        || tableName.equals(columns[i].tableName))) {
                 return columns[i];
             }
         }
 
-        return e;
+        return this;
     }
 
     /**
@@ -1702,7 +1702,7 @@ public class Expression {
 
         if (eArg != null) {
             if (eArg.exprType == Expression.COLUMN) {
-                eArg = getExpressionForAlias(eArg, columns, length);
+                eArg = eArg.getExpressionForAlias(columns, length);
             } else {
                 eArg.replaceAliases(columns, length);
             }
@@ -1710,7 +1710,7 @@ public class Expression {
 
         if (eArg2 != null) {
             if (eArg2.exprType == Expression.COLUMN) {
-                eArg2 = getExpressionForAlias(eArg2, columns, length);
+                eArg2 = eArg2.getExpressionForAlias(columns, length);
             } else {
                 eArg2.replaceAliases(columns, length);
             }
@@ -1737,8 +1737,8 @@ public class Expression {
 
                     for (int i = 0; i < vl.length; i++) {
                         if (vl[i].exprType == Expression.COLUMN) {
-                            vl[i] = getExpressionForAlias(vl[i], columns,
-                                                          length);
+                            vl[i] = vl[i].getExpressionForAlias(columns,
+                                                                length);
                         } else {
                             vl[i].replaceAliases(columns, length);
                         }
@@ -1893,7 +1893,7 @@ public class Expression {
 
                 if (tableName == null || tableName.equals(filterName)) {
                     Table table = f.getTable();
-                    int   i     = table.searchColumn(columnName);
+                    int   i     = table.findColumn(columnName);
 
                     if (i != -1) {
                         tableFilter = f;
@@ -1941,23 +1941,19 @@ public class Expression {
         }
     }
 
-    void resolveTypes(Database database) throws HsqlException {
-
-        Session session;
+    void resolveTypes(Session session) throws HsqlException {
 
         if (isParam || exprType == Expression.VALUE) {
             return;
         }
 
         if (eArg != null) {
-            eArg.resolveTypes(database);
+            eArg.resolveTypes(session);
         }
 
         if (eArg2 != null) {
-            eArg2.resolveTypes(database);
+            eArg2.resolveTypes(session);
         }
-
-        session = database.sessionManager.getSysSession();
 
         switch (exprType) {
 
@@ -1965,13 +1961,13 @@ public class Expression {
                 break;
 
             case FUNCTION :
-                function.resolveType(database);
+                function.resolveType(session);
 
                 dataType = function.getReturnType();
                 break;
 
             case QUERY : {
-                subQuery.select.resolveTypes(database);
+                subQuery.select.resolveTypes(session);
 
                 dataType = subQuery.select.exprColumns[0].dataType;
 
@@ -2111,7 +2107,7 @@ public class Expression {
                 break;
 
             case LIKE :
-                resolveTypeForLike(database);
+                resolveTypeForLike(session);
 
                 dataType = Types.BOOLEAN;
                 break;
@@ -2224,7 +2220,7 @@ public class Expression {
                 break;
 
             case IN :
-                resolveTypeForIn(database);
+                resolveTypeForIn(session);
 
                 dataType = Types.BOOLEAN;
                 break;
@@ -2347,14 +2343,12 @@ public class Expression {
         }
     }
 
-    void resolveTypeForLike(Database database) throws HsqlException {
+    void resolveTypeForLike(Session session) throws HsqlException {
 
         if (eArg.isParam && eArg2.isParam) {
             throw Trace.error(Trace.UNRESOLVED_PARAMETER_TYPE,
                               Trace.Expression_resolveTypeForLike);
         }
-
-        Session session = database.sessionManager.getSysSession();
 
         if (isFixedConditional()) {
             Boolean arg = test(session);
@@ -2516,9 +2510,7 @@ public class Expression {
      *
      * Parametric predicand is resolved against the value list and vice versa.
      */
-    void resolveTypeForIn(Database database) throws HsqlException {
-
-        Session session = database.sessionManager.getSysSession();
+    void resolveTypeForIn(Session session) throws HsqlException {
 
         if (eArg2.exprType == QUERY) {
             if (eArg.isParam) {
@@ -2562,7 +2554,7 @@ public class Expression {
                             e.dataType = dt;
                         }
                     } else {
-                        e.resolveTypes(database);
+                        e.resolveTypes(session);
                     }
                 }
             } else {
@@ -2580,7 +2572,7 @@ public class Expression {
                             e.dataType = dt;
                         }
                     } else {
-                        e.resolveTypes(database);
+                        e.resolveTypes(session);
                     }
                 }
             }
@@ -2698,6 +2690,20 @@ public class Expression {
     }
 
     /**
+     * Returns the HsqlName of the table for a column expression
+     *
+     * @return table name
+     */
+    HsqlName getTableHsqlName() {
+
+        if (tableFilter == null) {
+            return null;
+        } else {
+            return tableFilter.getTable().getName();
+        }
+    }
+
+    /**
      * Returns the name of a column as string
      *
      * @return column name
@@ -2714,6 +2720,21 @@ public class Expression {
         }
 
         return getAlias();
+    }
+
+    /**
+     * Returns the name of a column as string
+     *
+     * @return column name
+     */
+    String getBaseColumnName() {
+
+        if (exprType == COLUMN && tableFilter != null) {
+            return tableFilter.getTable().getColumn(
+                columnIndex).columnName.name;
+        }
+
+        return null;
     }
 
     /**
@@ -2992,8 +3013,8 @@ public class Expression {
                     return r.rRoot == null ? Boolean.FALSE
                                            : Boolean.TRUE;
                 } else {
-                    return subQuery.table.isEmpty() ? Boolean.FALSE
-                                                    : Boolean.TRUE;
+                    return subQuery.table.isEmpty(session) ? Boolean.FALSE
+                                                           : Boolean.TRUE;
                 }
             case CASEWHEN :
                 leftValue = Column.convertObject(leftValue, Types.BOOLEAN);
@@ -3483,7 +3504,7 @@ public class Expression {
                                                             : Boolean.FALSE;
 
             if (!subQuery.isResolved) {
-                subQuery.table.clearAllRows();
+                subQuery.table.clearAllRows(session);
             }
 
             return result;
@@ -3506,7 +3527,19 @@ public class Expression {
             subquery.populateTable(session);
         }
 
-        boolean     empty    = subquery.table.isEmpty();
+        Boolean result = getAnyAllValue(session, o, subquery);
+
+        if (populate) {
+            subquery.table.clearAllRows(session);
+        }
+
+        return result;
+    }
+
+    private Boolean getAnyAllValue(Session session, Object o,
+                                   SubQuery subquery) throws HsqlException {
+
+        boolean     empty    = subquery.table.isEmpty(session);
         Index       index    = subquery.table.getPrimaryIndex();
         RowIterator it       = index.findFirstRowNotNull(session);
         Row         firstrow = it.next();
@@ -3632,7 +3665,7 @@ public class Expression {
                                             eArg2.eArg.getDataType());
 
                     if (exprType == EQUAL) {
-                        return (it.hasNext() && subquery.table.getRowCount() == 1)
+                        return (it.hasNext() && subquery.table.getRowCount(session) == 1)
                                ? Boolean.TRUE
                                : Boolean.FALSE;
                     }
@@ -3680,10 +3713,6 @@ public class Expression {
 
                 break;
             }
-        }
-
-        if (populate) {
-            subquery.table.clearAllRows();
         }
 
         return null;
@@ -3747,7 +3776,8 @@ public class Expression {
      * @return select object
      * @throws HsqlException
      */
-    static Select getCheckSelect(Table t, Expression e) throws HsqlException {
+    static Select getCheckSelect(Session session, Table t,
+                                 Expression e) throws HsqlException {
 
         Select s = new Select();
 
@@ -3760,7 +3790,7 @@ public class Expression {
 
         s.queryCondition = condition;
 
-        s.resolveAll(t.database, true);
+        s.resolveAll(session, true);
 
         return s;
     }

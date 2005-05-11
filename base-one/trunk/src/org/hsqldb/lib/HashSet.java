@@ -80,6 +80,18 @@ public class HashSet extends BaseHashMap implements Set {
         return oldSize != size();
     }
 
+    public boolean addAll(Collection c) {
+
+        int      oldSize = size();
+        Iterator it      = c.iterator();
+
+        while (it.hasNext()) {
+            add(it.next());
+        }
+
+        return oldSize != size();
+    }
+
     public boolean addAll(Object[] keys) {
 
         boolean changed = false;
@@ -119,5 +131,27 @@ public class HashSet extends BaseHashMap implements Set {
 
     public Iterator iterator() {
         return new BaseHashIterator(true);
+    }
+
+    /**
+     * Returns a String like "[Drei, zwei, Eins]", exactly like
+     * java.util.HashSet.
+     */
+    public String toString() {
+
+        Iterator     it = iterator();
+        StringBuffer sb = new StringBuffer();
+
+        while (it.hasNext()) {
+            if (sb.length() > 0) {
+                sb.append(", ");
+            } else {
+                sb.append('[');
+            }
+
+            sb.append(it.next());
+        }
+
+        return sb.toString() + ']';
     }
 }

@@ -60,9 +60,9 @@ class TextTable extends org.hsqldb.Table {
      * @param  sessionid the id of the owning session (for temp table)
      * @exception  HsqlException  Description of the Exception
      */
-    TextTable(Database db, HsqlNameManager.HsqlName name, int type,
-              int sessionid) throws HsqlException {
-        super(db, name, type, sessionid);
+    TextTable(Database db, HsqlNameManager.HsqlName name,
+              int type) throws HsqlException {
+        super(db, name, type);
     }
 
     /**
@@ -84,7 +84,7 @@ class TextTable extends org.hsqldb.Table {
 
         cache = null;
 
-        clearAllRows();
+        clearAllRows(null);
 
         // Open new cache:
         if (dataSourceNew.length() > 0) {
@@ -107,7 +107,7 @@ class TextTable extends org.hsqldb.Table {
                     }
 
                     row.setNewNodes();
-                    insertNoChange(row);
+                    insertFromTextSource(row);
                 }
             } catch (HsqlException e) {
                 int linenumber = cache == null ? 0
@@ -153,8 +153,8 @@ class TextTable extends org.hsqldb.Table {
                                  boolean isReversedNew,
                                  boolean newFile) throws HsqlException {
 
-        if (isTemp) {
-            Trace.check(s.getId() == ownerSessionId, Trace.ACCESS_IS_DENIED);
+        if (getTableType() == Table.TEMP_TEXT_TABLE) {
+            ;
         } else {
             s.checkAdmin();
         }
@@ -236,8 +236,7 @@ class TextTable extends org.hsqldb.Table {
     }
 
     protected Table duplicate() throws HsqlException {
-        return new TextTable(database, tableName, getTableType(),
-                             ownerSessionId);
+        return new TextTable(database, tableName, getTableType());
     }
 
     void drop() throws HsqlException {

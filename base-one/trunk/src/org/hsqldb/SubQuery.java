@@ -88,15 +88,17 @@ class SubQuery implements ObjectComparator {
             return sqb.level - sqa.level;
         } else if (sqa.view != null && sqb.view != null) {
             Database db = sqa.view.database;
-            int      ia = db.getTableIndex(sqa.view);
-            int      ib = db.getTableIndex(sqb.view);
+            int      ia = db.schemaManager.getTableIndex(sqa.view);
+            int      ib = db.schemaManager.getTableIndex(sqb.view);
 
             if (ia == -1) {
-                ia = db.getTables().size();
+                ia = db.schemaManager.getTables(
+                    sqa.view.getSchemaName()).size();
             }
 
             if (ib == -1) {
-                ib = db.getTables().size();
+                ib = db.schemaManager.getTables(
+                    sqb.view.getSchemaName()).size();
             }
 
             int diff = ia - ib;

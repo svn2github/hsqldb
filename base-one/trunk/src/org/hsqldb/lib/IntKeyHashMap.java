@@ -122,6 +122,10 @@ public class IntKeyHashMap extends BaseHashMap {
             throw new RuntimeException();
         }
 
+        public boolean addAll(Collection c) {
+            throw new RuntimeException();
+        }
+
         public boolean remove(Object o) {
             throw new RuntimeException();
         }
@@ -150,6 +154,10 @@ public class IntKeyHashMap extends BaseHashMap {
         }
 
         public boolean add(Object value) {
+            throw new RuntimeException();
+        }
+
+        public boolean addAll(Collection c) {
             throw new RuntimeException();
         }
 

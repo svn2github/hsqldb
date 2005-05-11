@@ -59,6 +59,7 @@ public interface ServerConstants {
     int SC_DEFAULT_HSQLS_SERVER_PORT = 554;
     int SC_DEFAULT_HTTP_SERVER_PORT  = 80;
     int SC_DEFAULT_HTTPS_SERVER_PORT = 443;
+    int SC_DEFAULT_DBD_SERVER_PORT   = 9101;
 
     // operation modes
     boolean SC_DEFAULT_SERVER_AUTORESTART = false;
@@ -70,6 +71,7 @@ public interface ServerConstants {
     // type of server
     int SC_PROTOCOL_HTTP = 0;
     int SC_PROTOCOL_HSQL = 1;
+    int SC_PROTOCOL_DBD  = 2;
 
     // keys to properties
     String SC_KEY_PREFIX             = "server";

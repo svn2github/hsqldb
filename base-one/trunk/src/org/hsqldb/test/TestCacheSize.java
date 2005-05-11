@@ -107,10 +107,10 @@ public class TestCacheSize {
     int     deleteWhileInsertInterval = 10000;
 
     // size of the tables used in test
-    int bigrows = 256000;
+    int bigrows = 512000;
 
     // number of ops
-    int bigops    = 256000;
+    int bigops    = 512000;
     int smallops  = 8000;
     int smallrows = 0xfff;
 
@@ -167,10 +167,10 @@ public class TestCacheSize {
                         user, password);
                 sStatement = cConnection.createStatement();
 
-                sStatement.execute("SET WRITE_DELAY " + 60);
-                sStatement.execute("SET CHECKPOINT DEFRAG " + 100);
+                sStatement.execute("SET WRITE_DELAY " + 10);
+                sStatement.execute("SET CHECKPOINT DEFRAG " + 5);
                 sStatement.execute("SET SCRIPTFORMAT " + logType);
-                sStatement.execute("SET LOGSIZE " + 0);
+                sStatement.execute("SET LOGSIZE " + 10);
                 sStatement.execute("SET PROPERTY \"hsqldb.cache_scale\" "
                                    + cacheScale);
                 sStatement.execute("SET PROPERTY \"hsqldb.cache_size_scale\" "

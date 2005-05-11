@@ -54,7 +54,7 @@ import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.sql.DatabaseMetaData;
 
-/* $Id: SqlFile.java,v 1.101 2005/04/29 18:45:09 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.90 2004/09/19 03:44:46 fredt Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -90,7 +90,7 @@ import java.sql.DatabaseMetaData;
  * Most of the Special Commands and Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.101 $
+ * @version $Revision: 1.90 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -140,8 +140,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.101 $".substring("$Revision: ".length(),
-                                               "$Revision: 1.101 $".length()
+        revnum = "$Revision: 1.90 $".substring("$Revision: ".length(),
+                                               "$Revision: 1.90 $".length()
                                                - 2);
     }
 
@@ -161,7 +161,7 @@ public class SqlFile {
         + "  statement into the buffer without executing) or a line ending with ';'\n"
         + "  (which executes the statement).\n";
     private static final String BUFFER_HELP_TEXT =
-    "BUFFER Commands (only \":;\" is available for non-interactive use).\n"
+        "BUFFER Commands (only \":;\" is available for non-interactive use).\n"
         + "    :?                Help\n"
         + "    :;                Execute current buffer as an SQL Statement\n"
         + "    :a[text]          Enter append mode with a copy of the buffer\n"
@@ -186,13 +186,13 @@ public class SqlFile {
         + "* commands only available for interactive use.\n"
         + "In place of \"3\" below, you can use nothing for the previous command, or\n"
         + "an integer \"X\" to indicate the Xth previous command.\n"
-+ "Filter substrings are cases-sensitive!  Use \"SCHEMANAME.\" to narrow schema.\n"
+        + "Filter substrings are cases-sensitive!  Use \"SCHEMANAME.\" to narrow schema.\n"
         + "    \\?                   Help\n"
         + "    \\p [line to print]   Print string to stdout\n"
         + "    \\w file/path.sql     Append current buffer to file\n"
         + "    \\i file/path.sql     Include/execute commands from external file\n"
         + "    \\d{tvsiSanu*} [substr]  List objects of specified type:\n"
-        +"             Tbls/Views/Seqs/Indexes/SysTbls/Aliases/schemaNames/Users/all\n"
+        + "             Tbls/Views/Seqs/Indexes/SysTbls/Aliases/schemaNames/Users/all\n"
         + "    \\d OBJECTNAME [subs] Describe table or view columns\n"
         + "    \\o [file/path.html]  Tee (or stop teeing) query output to specified file\n"
         + "    \\H                   Toggle HTML output mode\n"
@@ -251,10 +251,9 @@ public class SqlFile {
         userVars    = inVars;
 
         try {
-            statementHistory = new String[interactive
-              ? Integer.parseInt(System.getProperty("sqltool.historyLength"))
-              : 1
-            ];
+            statementHistory =
+                new String[interactive ? Integer.parseInt(System.getProperty("sqltool.historyLength"))
+                                       : 1];
         } catch (Throwable t) {
             statementHistory = null;
         }
@@ -375,9 +374,10 @@ public class SqlFile {
 
             while (true) {
                 if (interactive) {
-                    psStd.print((stringBuffer.length() == 0) ? 
-                            (chunking ? chunkPrompt : primaryPrompt)
-                                                             : contPrompt);
+                    psStd.print((stringBuffer.length() == 0)
+                                ? (chunking ? chunkPrompt
+                                            : primaryPrompt)
+                                : contPrompt);
                 }
 
                 inputLine = br.readLine();
@@ -401,18 +401,22 @@ public class SqlFile {
                 if (chunking) {
                     if (inputLine.equals(".")) {
                         chunking = false;
+
                         setBuf(stringBuffer.toString());
                         stringBuffer.setLength(0);
+
                         if (interactive) {
                             stdprintln("Raw SQL chunk moved into buffer.  "
-                                    + "Run \":;\" to execute the chunk.");
+                                       + "Run \":;\" to execute the chunk.");
                         }
                     } else {
                         if (stringBuffer.length() > 0) {
                             stringBuffer.append('\n');
                         }
+
                         stringBuffer.append(inputLine);
                     }
+
                     continue;
                 }
 
@@ -543,24 +547,30 @@ public class SqlFile {
 
                             continue;
                         }
+
                         String ucased = trimmedInput.toUpperCase();
-                        if (ucased.startsWith("DECLARE") ||
-                                ucased.startsWith("BEGIN")) {
+
+                        if (ucased.startsWith("DECLARE")
+                                || ucased.startsWith("BEGIN")) {
                             chunking = true;
+
                             stringBuffer.append(inputLine);
+
                             if (interactive) {
                                 stdprintln(
                                     "Enter RAW SQL.  No \\, :, * commands.  "
-                                + "End with a line containing only \".\":");
+                                    + "End with a line containing only \".\":");
                             }
+
                             continue;
                         }
                     }
 
                     if (trimmedInput.length() == 0) {
+
                         // Blank lines delimit commands ONLY IN INTERACTIVE 
                         // MODE!
-                        if (interactive && !inComment) {
+                        if (interactive &&!inComment) {
                             setBuf(stringBuffer.toString());
                             stringBuffer.setLength(0);
                             stdprintln("Current input moved into buffer.");
@@ -595,7 +605,6 @@ public class SqlFile {
                     }
 
                     setBuf(curCommand);
-
                     processSQL();
                 } catch (SQLException se) {
                     errprintln("SQL Error at '" + ((file == null) ? "stdin"
@@ -992,8 +1001,8 @@ public class SqlFile {
 
                     //statementHistory[curHist] = sb.toString();
                     curCommand = sb.toString();
-                    setBuf(curCommand);
 
+                    setBuf(curCommand);
                     stdprintln((modeExecute ? "Executing"
                                             : "Current Buffer") + ":\n"
                                             + curCommand);
@@ -1080,11 +1089,12 @@ public class SqlFile {
 
                 if (arg1.length() == 1 && other != null) {
                     int space = other.indexOf(' ');
+
                     if (space < 0) {
                         describe(other, null);
                     } else {
                         describe(other.substring(0, space),
-                                other.substring(space + 1).trim());
+                                 other.substring(space + 1).trim());
                     }
 
                     return;
@@ -1316,14 +1326,16 @@ public class SqlFile {
                 }
 
                 return;
+
             case '.' :
                 chunking = true;
+
                 if (interactive) {
                     stdprintln("Enter RAW SQL.  No \\, :, * commands.  "
-                            + "End with a line containing only \".\":");
+                               + "End with a line containing only \".\":");
                 }
-                return;
 
+                return;
         }
 
         throw new BadSpecial("Unknown Special Command");
@@ -1940,19 +1952,21 @@ public class SqlFile {
 
     // These do not specify order listed, just inclusion.
     private static final int[] listMDSchemaCols = { 1 };
-    private static final int[] listMDIndexCols = { 2, 6, 3, 9, 4, 10, 11 };
+    private static final int[] listMDIndexCols  = {
+        2, 6, 3, 9, 4, 10, 11
+    };
 
     /** Column numbering starting at 1. */
     private static final int[][] listMDTableCols = {
         {
             2, 3
-        },        // Default
+        },    // Default
         {
             2, 3
         },    // HSQLDB
         {
             2, 3
-        },        // Oracle
+        },    // Oracle
     };
 
     /**
@@ -1961,28 +1975,28 @@ public class SqlFile {
      * When a filter is given, we assume that there are no lower-case
      * characters in the object names (which would require "quotes" when
      * creating them).
-     * 
+     *
      * @throws BadSpecial
      */
-    private void listTables(char c,
-                            String inFilter) throws BadSpecial {
+    private void listTables(char c, String inFilter) throws BadSpecial {
 
-        int[]                     listSet   = null;
-        String[]                  types     = null;
+        int[]    listSet = null;
+        String[] types   = null;
+
         /** This is for specific non-getTable() queries */
-        Statement                 statement = null;
-        ResultSet                 rs;
-        String                    narrower = "";
+        Statement statement = null;
+        ResultSet rs;
+        String    narrower = "";
         /*
-         * Doing case-sensitive filters now, for greater portability. 
+         * Doing case-sensitive filters now, for greater portability.
         String                    filter = ((inFilter == null)
                                           ? null : inFilter.toUpperCase());
          */
-        String                    filter = inFilter;
+        String filter = inFilter;
 
         try {
-            DatabaseMetaData md = curConn.getMetaData();
-            String                dbProductName = md.getDatabaseProductName();
+            DatabaseMetaData md            = curConn.getMetaData();
+            String           dbProductName = md.getDatabaseProductName();
 
             //System.err.println("DB NAME = (" + dbProductName + ')');
             // Database-specific table filtering.
@@ -1990,13 +2004,14 @@ public class SqlFile {
 
             /* 3 Types of actions:
              *    1) Special handling.  Return from the "case" block directly.
-             *    2) Execute a specific query.  Set statement in the "case". 
+             *    2) Execute a specific query.  Set statement in the "case".
              *    3) Otherwise, set filter info for dbmd.getTable() in the
              *       "case".
              */
             types = new String[1];
 
             switch (c) {
+
                 case '*' :
                     types = null;
                     break;
@@ -2007,21 +2022,26 @@ public class SqlFile {
 
                 case 's' :
                     if (dbProductName.indexOf("HSQL") > -1) {
+
                         //  HSQLDB does not consider Sequences as "tables",
                         //  hence we do not list them in 
                         //  DatabaseMetaData.getTables().
                         if (filter != null
-                                && filter.charAt(filter.length()-1) == '.') {
-                            narrower = "\nWHERE sequence_schema = '"
+                                && filter.charAt(filter.length() - 1)
+                                   == '.') {
+                            narrower =
+                                "\nWHERE sequence_schema = '"
                                 + filter.substring(0, filter.length() - 1)
                                 + "'";
                             filter = null;
                         }
+
                         statement = curConn.createStatement();
+
                         statement.execute(
-                            "SELECT sequence_schema, sequence_name FROM " + 
-                                "information_schema.system_sequences"
-                                + narrower);
+                            "SELECT sequence_schema, sequence_name FROM "
+                            + "information_schema.system_sequences"
+                            + narrower);
                     } else {
                         types[0] = "SEQUENCE";
                     }
@@ -2030,42 +2050,50 @@ public class SqlFile {
                 case 'u' :
                     if (dbProductName.indexOf("HSQL") > -1) {
                         statement = curConn.createStatement();
+
                         statement.execute(
-                            "SELECT user, admin FROM " + 
-                                "information_schema.system_users\n"
-                                + "ORDER BY user");
+                            "SELECT user, admin FROM "
+                            + "information_schema.system_users\n"
+                            + "ORDER BY user");
                     } else if (dbProductName.indexOf("Oracle") > -1) {
                         statement = curConn.createStatement();
+
                         statement.execute(
                             "SELECT username, created FROM all_users "
-                                + "ORDER BY username");
+                            + "ORDER BY username");
                     } else if (dbProductName.indexOf("PostgreSQL") > -1) {
                         statement = curConn.createStatement();
+
                         statement.execute(
-                        "SELECT usename, usesuper FROM pg_catalog.pg_user "
-                                + "ORDER BY usename");
+                            "SELECT usename, usesuper FROM pg_catalog.pg_user "
+                            + "ORDER BY usename");
                     } else {
-                        throw new BadSpecial("SqlFile does not yet support "
-                                + "\\du for your database vendor");
+                        throw new BadSpecial(
+                            "SqlFile does not yet support "
+                            + "\\du for your database vendor");
                     }
                     break;
 
                 case 'a' :
                     if (dbProductName.indexOf("HSQL") > -1) {
+
                         //  HSQLDB Aliases are not the same things as the
                         //  aliases listed in DatabaseMetaData.getTables().
                         if (filter != null
-                                && filter.charAt(filter.length()-1) == '.') {
-                            narrower = "\nWHERE alias_schem = '"
+                                && filter.charAt(filter.length() - 1)
+                                   == '.') {
+                            narrower =
+                                "\nWHERE alias_schem = '"
                                 + filter.substring(0, filter.length() - 1)
                                 + "'";
                             filter = null;
                         }
+
                         statement = curConn.createStatement();
+
                         statement.execute(
-                                "SELECT alias_schem, alias FROM "
-                                + "information_schema.system_aliases"
-                                + narrower);
+                            "SELECT alias_schem, alias FROM "
+                            + "information_schema.system_aliases" + narrower);
                     } else {
                         types[0] = "ALIAS";
                     }
@@ -2081,14 +2109,18 @@ public class SqlFile {
 
                 case 'n' :
                     rs = md.getSchemas();
+
                     if (rs == null) {
                         throw new BadSpecial(
-                                "Failed to get metadata from database");
+                            "Failed to get metadata from database");
                     }
+
                     displayResultSet(null, rs, listMDSchemaCols, filter);
-                   return;
+
+                    return;
 
                 case 'i' :
+
                     // Some databases require to specify table, some don't.
                     /*
                     if (filter == null) {
@@ -2097,31 +2129,38 @@ public class SqlFile {
                     }
                      */
                     String schema = null;
-                    String table = null;
+                    String table  = null;
+
                     if (filter != null) {
                         int dotat = filter.indexOf('.');
-                        schema = ((dotat > 0)
-                                ? filter.substring(0, dotat)
-                                : null);
+
+                        schema = ((dotat > 0) ? filter.substring(0, dotat)
+                                              : null);
+
                         if (dotat < filter.length() - 1) {
+
                             // Not a schema-only specifier
-                            table = ((dotat > 0)
-                                    ? filter.substring(dotat + 1)
-                                    : filter);
+                            table = ((dotat > 0) ? filter.substring(dotat + 1)
+                                                 : filter);
                         }
+
                         filter = null;
                     }
+
                     // N.b. Oracle incorrectly reports the INDEX SCHEMA as
                     // the TABLE SCHEMA.  The Metadata structure seems to
                     // be designed with the assumption that the INDEX schema
                     // will be the same as the TABLE schema.
                     rs = md.getIndexInfo(null, schema, table, false, true);
+
                     if (rs == null) {
                         throw new BadSpecial(
-                                "Failed to get metadata from database");
+                            "Failed to get metadata from database");
                     }
+
                     displayResultSet(null, rs, listMDIndexCols, null);
-                   return;
+
+                    return;
 
                 default :
                     throw new BadSpecial("Unknown describe option: '" + c
@@ -2129,6 +2168,7 @@ public class SqlFile {
             }
 
             String schema = null;
+
             if (statement == null) {
                 if (dbProductName.indexOf("HSQL") > -1) {
                     listSet = listMDTableCols[HSQLDB_ELEMENT];
@@ -2137,20 +2177,22 @@ public class SqlFile {
                 } else {
                     listSet = listMDTableCols[DEFAULT_ELEMENT];
                 }
+
                 if (filter != null
-                        && filter.charAt(filter.length()-1) == '.') {
+                        && filter.charAt(filter.length() - 1) == '.') {
                     schema = filter.substring(0, filter.length() - 1);
                     filter = null;
                 }
             }
 
             rs = ((statement == null)
-                    ? md.getTables(null, schema, null, types)
-                    : statement.getResultSet());
+                  ? md.getTables(null, schema, null, types)
+                  : statement.getResultSet());
+
             if (rs == null) {
-                throw new BadSpecial(
-                        "Failed to get metadata from database");
+                throw new BadSpecial("Failed to get metadata from database");
             }
+
             displayResultSet(null, rs, listSet, filter);
         } catch (SQLException se) {
             throw new BadSpecial("Failure getting MetaData: " + se);
@@ -2160,8 +2202,8 @@ public class SqlFile {
             if (statement != null) {
                 try {
                     statement.close();
-                } catch (Exception e) {
-                }
+                } catch (Exception e) {}
+
                 statement = null;
             }
         }
@@ -2186,13 +2228,13 @@ public class SqlFile {
         statement.execute(plMode ? dereference(curCommand, true)
                                  : curCommand);
         possiblyUncommitteds.set(true);
+
         try {
             displayResultSet(statement, statement.getResultSet(), null, null);
         } finally {
             try {
                 statement.close();
-            } catch (Exception e) {
-            }
+            } catch (Exception e) {}
         }
     }
 
@@ -2213,8 +2255,8 @@ public class SqlFile {
                                   int[] incCols,
                                   String filter) throws SQLException {
 
-        int    updateCount = (statement == null) ? -1
-                                                 : statement.getUpdateCount();
+        int updateCount = (statement == null) ? -1
+                                              : statement.getUpdateCount();
 
         switch (updateCount) {
 
@@ -2318,8 +2360,9 @@ public class SqlFile {
                             val = "NON-CONVERTIBLE TYPE!";
                         }
 
-                        if (filter != null && (val == null
-                                || val.indexOf(filter) > -1)) {
+                        if (filter != null
+                                && (val == null
+                                    || val.indexOf(filter) > -1)) {
                             filteredOut = false;
                         }
 
@@ -2559,8 +2602,8 @@ public class SqlFile {
                                  + statementHistory.length + " commands");
         }
 
-        String s = statementHistory[(statementHistory.length + curHist 
-                - commandsAgo) % statementHistory.length];
+        String s =
+            statementHistory[(statementHistory.length + curHist - commandsAgo) % statementHistory.length];
 
         if (s == null) {
             throw new BadSpecial("History doesn't go back that far");
@@ -2590,23 +2633,24 @@ public class SqlFile {
      * @param tableName  Table that will be described.
      * @param filter  Substring to filter by
      */
-    private void describe(String tableName, String inFilter)
-    throws SQLException {
+    private void describe(String tableName,
+                          String inFilter) throws SQLException {
+
         /*
-         * Doing case-sensitive filters now, for greater portability. 
+         * Doing case-sensitive filters now, for greater portability.
         String filter = ((inFilter == null) ? null : inFilter.toUpperCase());
          */
-        String                    filter = inFilter;
-
-        String            val;
-        ArrayList         rows        = new ArrayList();
-        String[]          headerArray = { "name", "datatype", "width", "no-nulls"
+        String    filter = inFilter;
+        String    val;
+        ArrayList rows        = new ArrayList();
+        String[]  headerArray = {
+            "name", "datatype", "width", "no-nulls"
         };
-        String[]          fieldArray;
-        int[]             maxWidth  = {
+        String[]  fieldArray;
+        int[]     maxWidth  = {
             0, 0, 0, 0
         };
-        boolean[]         rightJust = {
+        boolean[] rightJust = {
             false, false, true, false
         };
 
@@ -2622,92 +2666,99 @@ public class SqlFile {
         }
 
         Statement statement = curConn.createStatement();
-        ResultSet        r     = null;
+        ResultSet r         = null;
 
         try {
-        statement.execute("SELECT * FROM " + tableName + " WHERE 1 = 2");
+            statement.execute("SELECT * FROM " + tableName + " WHERE 1 = 2");
 
-        r = statement.getResultSet();
-        ResultSetMetaData m    = r.getMetaData();
-        int               cols = m.getColumnCount();
-        for (int i = 0; i < cols; i++) {
-            fieldArray    = new String[4];
-            fieldArray[0] = m.getColumnName(i + 1);
-            if (filter != null && fieldArray[0].indexOf(filter) < 0) {
-                continue;
-            }
-            fieldArray[1] = m.getColumnTypeName(i + 1);
-            fieldArray[2] = Integer.toString(m.getColumnDisplaySize(i + 1));
-            fieldArray[3] =
-                ((m.isNullable(i + 1) == java.sql.ResultSetMetaData.columnNullable)
-                 ? (htmlMode ? "&nbsp;"
-                             : "")
-                 : "*");
+            r = statement.getResultSet();
 
-            rows.add(fieldArray);
+            ResultSetMetaData m    = r.getMetaData();
+            int               cols = m.getColumnCount();
 
-            for (int j = 0; j < fieldArray.length; j++) {
-                if (fieldArray[j].length() > maxWidth[j]) {
-                    maxWidth[j] = fieldArray[j].length();
+            for (int i = 0; i < cols; i++) {
+                fieldArray    = new String[4];
+                fieldArray[0] = m.getColumnName(i + 1);
+
+                if (filter != null && fieldArray[0].indexOf(filter) < 0) {
+                    continue;
+                }
+
+                fieldArray[1] = m.getColumnTypeName(i + 1);
+                fieldArray[2] = Integer.toString(m.getColumnDisplaySize(i
+                        + 1));
+                fieldArray[3] =
+                    ((m.isNullable(i + 1) == java.sql.ResultSetMetaData.columnNullable)
+                     ? (htmlMode ? "&nbsp;"
+                                 : "")
+                     : "*");
+
+                rows.add(fieldArray);
+
+                for (int j = 0; j < fieldArray.length; j++) {
+                    if (fieldArray[j].length() > maxWidth[j]) {
+                        maxWidth[j] = fieldArray[j].length();
+                    }
                 }
             }
-        }
 
-        // STEP 2: DISPLAY DATA
-        condlPrint("<TABLE border='1'>\n" + htmlRow(COL_HEAD) + '\n'
-                   + PRE_TD, true);
+            // STEP 2: DISPLAY DATA
+            condlPrint("<TABLE border='1'>\n" + htmlRow(COL_HEAD) + '\n'
+                       + PRE_TD, true);
 
-        for (int i = 0; i < headerArray.length; i++) {
-            condlPrint("<TD>" + headerArray[i] + "</TD>", true);
-            condlPrint(((i > 0) ? spaces(2)
-                                : "") + pad(headerArray[i], maxWidth[i],
-                                            rightJust[i],
-                                            (i < headerArray.length - 1
-                                             || rightJust[i])), false);
-        }
-
-        condlPrintln("\n" + PRE_TR + "</TR>", true);
-        condlPrintln("", false);
-
-        if (!htmlMode) {
             for (int i = 0; i < headerArray.length; i++) {
+                condlPrint("<TD>" + headerArray[i] + "</TD>", true);
                 condlPrint(((i > 0) ? spaces(2)
-                                    : "") + divider(maxWidth[i]), false);
-            }
-
-            condlPrintln("", false);
-        }
-
-        for (int i = 0; i < rows.size(); i++) {
-            condlPrint(htmlRow(((i % 2) == 0) ? COL_EVEN
-                                              : COL_ODD) + '\n'
-                                              + PRE_TD, true);
-
-            fieldArray = (String[]) rows.get(i);
-
-            for (int j = 0; j < fieldArray.length; j++) {
-                condlPrint("<TD>" + fieldArray[j] + "</TD>", true);
-                condlPrint(((j > 0) ? spaces(2)
-                                    : "") + pad(fieldArray[j], maxWidth[j],
-                                                rightJust[j],
-                                                (j < fieldArray.length - 1
-                                                 || rightJust[j])), false);
+                                    : "") + pad(headerArray[i], maxWidth[i],
+                                                rightJust[i],
+                                                (i < headerArray.length - 1
+                                                 || rightJust[i])), false);
             }
 
             condlPrintln("\n" + PRE_TR + "</TR>", true);
             condlPrintln("", false);
-        }
 
-        condlPrintln("\n</TABLE>\n<HR>", true);
+            if (!htmlMode) {
+                for (int i = 0; i < headerArray.length; i++) {
+                    condlPrint(((i > 0) ? spaces(2)
+                                        : "") + divider(maxWidth[i]), false);
+                }
+
+                condlPrintln("", false);
+            }
+
+            for (int i = 0; i < rows.size(); i++) {
+                condlPrint(htmlRow(((i % 2) == 0) ? COL_EVEN
+                                                  : COL_ODD) + '\n'
+                                                  + PRE_TD, true);
+
+                fieldArray = (String[]) rows.get(i);
+
+                for (int j = 0; j < fieldArray.length; j++) {
+                    condlPrint("<TD>" + fieldArray[j] + "</TD>", true);
+                    condlPrint(((j > 0) ? spaces(2)
+                                        : "") + pad(
+                                            fieldArray[j], maxWidth[j],
+                                            rightJust[j],
+                                            (j < fieldArray.length - 1
+                                             || rightJust[j])), false);
+                }
+
+                condlPrintln("\n" + PRE_TR + "</TR>", true);
+                condlPrintln("", false);
+            }
+
+            condlPrintln("\n</TABLE>\n<HR>", true);
         } finally {
             try {
                 if (r != null) {
                     r.close();
+
                     r = null;
                 }
+
                 statement.close();
-            } catch (Exception e) {
-            }
+            } catch (Exception e) {}
         }
     }
 

@@ -138,9 +138,8 @@ final class TableFilter {
     }
 
     /**
-     * Method declaration
-     *
-     *
+     * Returns the alias or the table name.
+     * Never returns null;
      * @return
      */
     String getName() {
@@ -293,9 +292,10 @@ final class TableFilter {
      *
      * @throws HsqlException
      */
-    void setConditions(Expression condition) throws HsqlException {
+    void setConditions(Session session,
+                       Expression condition) throws HsqlException {
 
-        setCondition(condition);
+        setCondition(session, condition);
 
         if (filterIndex == null) {
             filterIndex = filterTable.getPrimaryIndex();
@@ -322,7 +322,8 @@ final class TableFilter {
         }
     }
 
-    private void setCondition(Expression e) throws HsqlException {
+    private void setCondition(Session session,
+                              Expression e) throws HsqlException {
 
         int        type = e.getType();
         Expression e1   = e.getArg();
@@ -331,8 +332,8 @@ final class TableFilter {
         isAssigned = true;
 
         if (type == Expression.AND) {
-            setCondition(e1);
-            setCondition(e2);
+            setCondition(session, e1);
+            setCondition(session, e2);
 
             return;
         }
@@ -369,7 +370,7 @@ final class TableFilter {
 
             // swap and try again to allow index usage
             e.swapCondition();
-            setCondition(e);
+            setCondition(session, e);
 
             return;
         } else if (e1.outerFilter == this) {
@@ -408,7 +409,7 @@ final class TableFilter {
         }
 
         int   i     = e1.getColumnNr();
-        Index index = filterTable.getIndexForColumn(i);
+        Index index = filterTable.getIndexForColumn(session, i);
 
         if (index == null || (filterIndex != index && filterIndex != null)) {
             addAndCondition(e);

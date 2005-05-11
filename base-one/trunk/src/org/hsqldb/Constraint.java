@@ -379,7 +379,7 @@ class Constraint {
                          int[] colref) {
 
         if (constType != Constraint.MAIN
-                || constType != Constraint.FOREIGN_KEY) {
+                && constType != Constraint.FOREIGN_KEY) {
             return false;
         }
 
@@ -592,7 +592,7 @@ class Constraint {
                                     int[] rowColArray,
                                     Index mainIndex) throws HsqlException {
 
-        RowIterator it = table.rowIterator(session);
+        RowIterator it = table.rowIterator(null);
 
         while (true) {
             Row row = it.next();

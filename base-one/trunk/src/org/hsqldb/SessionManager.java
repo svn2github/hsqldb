@@ -40,13 +40,13 @@ import org.hsqldb.lib.Iterator;
  *
  * @author fredt@usrs
  * @since 1.7.2
- * @version 1.7.2
+ * @version 1.8.0
  */
 public class SessionManager {
 
-    int                   sessionIdCount;
-    private IntKeyHashMap sessionMap = new IntKeyHashMap();
-    Session               sysSession;
+    int                   sessionIdCount = 1;
+    private IntKeyHashMap sessionMap     = new IntKeyHashMap();
+    private Session       sysSession;
 
 // TODO:
 //
@@ -60,7 +60,7 @@ public class SessionManager {
      * the specified SYS User
      */
     public SessionManager(Database db, User sysUser) {
-        sysSession = newSession(db, sysUser, false);
+        sysSession = new Session(db, sysUser, false, false, 0);
     }
 
 // TODO:
@@ -87,9 +87,12 @@ public class SessionManager {
      * @param user the initial Session User
      * @param readonly the initial ReadOnly attribute for the new Session
      */
-    public Session newSession(Database db, User user, boolean readonly) {
+    public Session newSession(Database db, User user, boolean readonly,
+                              boolean forlog) {
 
         Session s = new Session(db, user, true, readonly, sessionIdCount);
+
+        s.isProcessingLog = forlog;
 
         sessionMap.put(sessionIdCount, s);
 
@@ -98,14 +101,27 @@ public class SessionManager {
         return s;
     }
 
-/** @todo sig change should be either:  getSysSession(Database) or getSysSession(dbID) */
-
     /**
      * Retrieves the special SYS Session.
      *
      * @return the special SYS Session
      */
+    public Session getSysSession(String schema,
+                                 boolean forScript) throws HsqlException {
+
+        sysSession.currentSchema =
+            sysSession.database.schemaManager.getSchemaHsqlName(schema);
+        sysSession.isProcessingScript = forScript;
+        sysSession.isProcessingLog    = false;
+
+        return sysSession;
+    }
+
     public Session getSysSession() {
+
+        sysSession.currentSchema =
+            sysSession.database.schemaManager.defaultSchemaHsqlName;
+
         return sysSession;
     }
 
@@ -122,10 +138,8 @@ public class SessionManager {
         for (; it.hasNext(); ) {
             Session s = (Session) it.next();
 
-            if (s != sysSession) {
-                it.remove();
-                s.close();
-            }
+            it.remove();
+            s.close();
         }
     }
 

@@ -156,11 +156,11 @@ class Select {
      *
      * @throws HsqlException
      */
-    void resolve(Database database) throws HsqlException {
+    void resolve(Session session) throws HsqlException {
 
         resolveTables();
-        resolveTypes(database);
-        setFilterConditions();
+        resolveTypes(session);
+        setFilterConditions(session);
         setLimitCounts();
     }
 
@@ -177,8 +177,8 @@ class Select {
             if (exprColumns[i].exprType == Expression.COLUMN) {
                 if (exprColumns[i].joinedTableColumnIndex == -1) {
                     exprColumns[i] =
-                        exprColumns[i].getExpressionForAlias(exprColumns[i],
-                            exprColumns, iResultLen);
+                        exprColumns[i].getExpressionForAlias(exprColumns,
+                            iResultLen);
                 }
             } else {
                 exprColumns[i].replaceAliases(exprColumns, iResultLen);
@@ -201,16 +201,16 @@ class Select {
      *
      * @throws HsqlException
      */
-    void resolveTypes(Database database) throws HsqlException {
+    void resolveTypes(Session session) throws HsqlException {
 
         int len = exprColumns.length;
 
         for (int i = 0; i < len; i++) {
-            exprColumns[i].resolveTypes(database);
+            exprColumns[i].resolveTypes(session);
         }
 
         if (queryCondition != null) {
-            queryCondition.resolveTypes(database);
+            queryCondition.resolveTypes(session);
         }
     }
 
@@ -235,14 +235,14 @@ class Select {
         }
     }
 
-    private void setFilterConditions() throws HsqlException {
+    private void setFilterConditions(Session session) throws HsqlException {
 
         if (queryCondition == null) {
             return;
         }
 
         for (int i = 0; i < tFilter.length; i++) {
-            tFilter[i].setConditions(queryCondition);
+            tFilter[i].setConditions(session, queryCondition);
         }
     }
 
@@ -310,37 +310,39 @@ class Select {
      */
     Object getValue(Session session, int type) throws HsqlException {
 
-        resolve(session.database);
+        resolve(session);
 
-        Result r    = getResult(session, 2);    // 2 records are (already) too much
+        Result r    = getResult(session, 2);    // 2 records are required for test
         int    size = r.getSize();
         int    len  = r.getColumnCount();
 
-        if (size == 1 && len == 1) {
-            Object o = r.rRoot.data[0];
+        if (len == 1) {
+            if (size == 0) {
+                return null;
+            } else if (size == 1) {
+                Object o = r.rRoot.data[0];
 
-            return r.metaData.colTypes[0] == type ? o
-                                                  : Column.convertObject(o,
-                                                  type);
+                return r.metaData.colTypes[0] == type ? o
+                                                      : Column.convertObject(
+                                                      o, type);
+            } else {
+                throw Trace.error(Trace.CARDINALITY_VIOLATION_NO_SUBCLASS);
+            }
         }
 
         HsqlException e =
             Trace.error(Trace.CARDINALITY_VIOLATION_NO_SUBCLASS);
 
-        if (size == 0 && len == 1) {
-            throw new HsqlInternalException(e);
-        }
-
-        throw e;
+        throw new HsqlInternalException(e);
     }
 
     /**
      * Prepares rResult having structure compatible with
      * internally building the set of rows returned from getResult().
      */
-    void prepareResult(Database database) throws HsqlException {
+    void prepareResult(Session session) throws HsqlException {
 
-        resolveAll(database, true);
+        resolveAll(session, true);
 
         if (iGroupLen > 0) {    // has been set in Parser
             isGrouped        = true;
@@ -603,7 +605,7 @@ class Select {
                                    int maxrows) throws HsqlException {
 
         if (resultMetaData == null) {
-            prepareResult(session.database);
+            prepareResult(session);
         }
 
         int newlimitcount = getLimitCount(maxrows);
@@ -612,7 +614,7 @@ class Select {
                   ? limitStart + newlimitcount
                   : Integer.MAX_VALUE;
 
-        Result r = buildResult(maxrows, session);
+        Result r = buildResult(session, maxrows);
 
         // the result is perhaps wider (due to group and order by)
         // so use the visible columns to remove duplicates
@@ -764,8 +766,8 @@ class Select {
     }
 
 // fredt@users 20030810 - patch 1.7.2 - OUTER JOIN rewrite
-    private Result buildResult(int limitcount,
-                               Session session) throws HsqlException {
+    private Result buildResult(Session session,
+                               int limitcount) throws HsqlException {
 
         GroupedResult gResult   = new GroupedResult(this, resultMetaData);
         final int     len       = exprColumns.length;
@@ -1018,8 +1020,7 @@ class Select {
 
     boolean isResolved = false;
 
-    boolean resolveAll(Database database,
-                       boolean check) throws HsqlException {
+    boolean resolveAll(Session session, boolean check) throws HsqlException {
 
         boolean result = true;
 
@@ -1027,7 +1028,7 @@ class Select {
             return true;
         }
 
-        resolve(database);
+        resolve(session);
 
         result = result && checkResolved(check);
 
@@ -1036,7 +1037,7 @@ class Select {
                 throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
             }
 
-            unionSelect.resolveAll(database, check);
+            unionSelect.resolveAll(session, check);
         }
 
         isResolved = result;

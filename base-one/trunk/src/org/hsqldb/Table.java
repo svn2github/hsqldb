@@ -130,7 +130,6 @@ public class Table extends BaseTable {
     // main properties
 // boucherb@users - access changed in support of metadata 1.7.2
     public HashMappedList columnList;                 // columns in table
-    Index[]               indexList;                  // vIndex(0) is the primary key index
     private int[]         primaryKeyCols;             // column numbers for primary key
     private int[]         primaryKeyTypes;            // types for primary key
     private int[]         primaryKeyColsSequence;     // {0,1,2,...}
@@ -163,14 +162,16 @@ public class Table extends BaseTable {
     protected DataFileCache cache;
     protected HsqlName      tableName;                // SQL name
     private int             tableType;
-    protected int           ownerSessionId;           // fredt - set for temp tables only
     protected boolean       isReadOnly;
     protected boolean       isTemp;
     protected boolean       isCached;
+    protected boolean       isLogged;
     protected int           indexType;                // fredt - type of index used
+    protected boolean       onCommitPreserve;         // for temp tables
 
     //
     PersistentStore rowStore;
+    Index[]         indexList;                        // vIndex(0) is the primary key index
 
     /**
      *  Constructor
@@ -181,8 +182,7 @@ public class Table extends BaseTable {
      * @param  sessionid
      * @exception  HsqlException
      */
-    Table(Database db, HsqlName name, int type,
-            int sessionid) throws HsqlException {
+    Table(Database db, HsqlName name, int type) throws HsqlException {
 
         database             = db;
         sqlEnforceSize       = db.sqlEnforceSize;
@@ -193,61 +193,58 @@ public class Table extends BaseTable {
         switch (type) {
 
             case SYSTEM_SUBQUERY :
-            case SYSTEM_TABLE :
                 isTemp = true;
-                break;
-
-            case TEMP_TABLE :
-                isTemp         = true;
-                ownerSessionId = sessionid;
+            case SYSTEM_TABLE :
                 break;
 
             case CACHED_TABLE :
-                if (!db.logger.hasLog()) {
-                    type = MEMORY_TABLE;
+                if (!db.getType().equals(DatabaseManager.S_MEM)) {
+                    cache     = db.logger.getCache();
+                    isCached  = true;
+                    isLogged  = !database.isFilesReadOnly();
+                    indexType = Index.DISK_INDEX;
+                    rowStore  = new RowStore();
 
                     break;
                 }
 
-                cache    = db.logger.getCache();
-                isCached = true;
+                type = MEMORY_TABLE;
+            case MEMORY_TABLE :
+                isLogged = !database.isFilesReadOnly();
+                break;
+
+            case TEMP_TABLE :
+                isTemp = true;
                 break;
 
             case TEMP_TEXT_TABLE :
-                if (!db.logger.hasLog()) {
+                if (db.getType().equals(DatabaseManager.S_MEM)) {
                     throw Trace.error(Trace.DATABASE_IS_MEMORY_ONLY);
                 }
 
-                isTemp         = true;
-                isText         = true;
-                isReadOnly     = true;
-                isCached       = true;
-                ownerSessionId = sessionid;
+                isTemp     = true;
+                isText     = true;
+                isReadOnly = true;
+                isCached   = true;
+                indexType  = Index.POINTER_INDEX;
+                rowStore   = new RowStore();
                 break;
 
             case TEXT_TABLE :
-                if (!db.logger.hasLog()) {
+                if (db.getType().equals(DatabaseManager.S_MEM)) {
                     throw Trace.error(Trace.DATABASE_IS_MEMORY_ONLY);
                 }
 
-                isText   = true;
-                isCached = true;
+                isText    = true;
+                isCached  = true;
+                indexType = Index.POINTER_INDEX;
+                rowStore  = new RowStore();
                 break;
 
             case VIEW :
             case SYSTEM_VIEW :
                 isView = true;
                 break;
-        }
-
-        if (isText || isCached) {
-            rowStore = new RowStore();
-        }
-
-        if (isText) {
-            indexType = Index.POINTER_INDEX;
-        } else if (isCached) {
-            indexType = Index.DISK_INDEX;
         }
 
         // type may have changed above for CACHED tables
@@ -264,7 +261,7 @@ public class Table extends BaseTable {
 // ----------------------------------------------------------------------------
 // akede@users - 1.7.2 patch Files readonly
         // Changing the mode of the table if necessary
-        if (db.isFilesReadOnly() && checkTableFileBased()) {
+        if (db.isFilesReadOnly() && isTableFileBased()) {
             this.isReadOnly = true;
         }
 
@@ -273,16 +270,21 @@ public class Table extends BaseTable {
 
     boolean equals(Session session, String name) {
 
+/*
         if (isTemp && (session != null
                        && session.getId() != ownerSessionId)) {
             return false;
         }
-
+*/
         return (tableName.name.equals(name));
     }
 
     boolean equals(String name) {
         return (tableName.name.equals(name));
+    }
+
+    boolean equals(HsqlName name) {
+        return (tableName.equals(name));
     }
 
     public final boolean isText() {
@@ -295,11 +297,6 @@ public class Table extends BaseTable {
 
     public final boolean isReadOnly() {
         return isReadOnly;
-    }
-
-    final boolean isSystem() {
-        return tableType == SYSTEM_TABLE || tableType == SYSTEM_SUBQUERY
-               || tableType == SYSTEM_VIEW;
     }
 
     final boolean isView() {
@@ -334,7 +331,7 @@ public class Table extends BaseTable {
 
         // Changing the Read-Only mode for the table is only allowed if the
         // the database can realize it.
-        if (!value && database.isFilesReadOnly() && checkTableFileBased()) {
+        if (!value && database.isFilesReadOnly() && isTableFileBased()) {
             throw Trace.error(Trace.DATA_IS_READONLY);
         }
 
@@ -344,16 +341,8 @@ public class Table extends BaseTable {
     /**
      * Text or Cached Tables are normally file based
      */
-    boolean checkTableFileBased() {
+    boolean isTableFileBased() {
         return isCached || isText;
-    }
-
-    /**
-     * Retuns the session id for the owner of the table. Significant for temp
-     * tables only.
-     */
-    int getOwnerSessionId() {
-        return ownerSessionId;
     }
 
     /**
@@ -416,7 +405,7 @@ public class Table extends BaseTable {
      *  Returns the index supporting a constraint with the given column signature.
      *  Only Unique constraints are considered.
      */
-    Index getConstraintIndexForColumns(int[] col) {
+    Index getUniqueConstraintIndexForColumns(int[] col) {
 
         if (ArrayUtil.areEqual(getPrimaryIndex().getColumns(), col,
                                col.length, true)) {
@@ -457,12 +446,28 @@ public class Table extends BaseTable {
     }
 
     /**
+     *  Returns any unique constraint equivalent to the column set
+     */
+    Constraint getUniqueConstraintForColumns(int[] cols) {
+
+        for (int i = 0, size = constraintList.length; i < size; i++) {
+            Constraint c = constraintList[i];
+
+            if (c.isEquivalent(cols, Constraint.UNIQUE)) {
+                return c;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      *  Returns any unique Constraint using this index
      *
      * @param  index
      * @return
      */
-    Constraint getConstraintForIndex(Index index) {
+    Constraint getUniqueConstraintForIndex(Index index) {
 
         for (int i = 0, size = constraintList.length; i < size; i++) {
             Constraint c = constraintList[i];
@@ -504,7 +509,7 @@ public class Table extends BaseTable {
      */
     void addColumn(Column column) throws HsqlException {
 
-        if (searchColumn(column.columnName.name) >= 0) {
+        if (findColumn(column.columnName.name) >= 0) {
             throw Trace.error(Trace.COLUMN_ALREADY_EXISTS);
         }
 
@@ -536,7 +541,7 @@ public class Table extends BaseTable {
                 database.nameManager.newHsqlName(
                     metadata.colLabels[i], metadata.isLabelQuoted[i]), true,
                         metadata.colTypes[i], metadata.colSizes[i],
-                        metadata.colScales[i], false, 0, 0, false, null);
+                        metadata.colScales[i], false, null);
 
             addColumn(column);
         }
@@ -554,8 +559,7 @@ public class Table extends BaseTable {
             Column column = new Column(
                 database.nameManager.newHsqlName(
                     e.getAlias(), e.isAliasQuoted()), true, e.getDataType(),
-                        e.getColumnSize(), e.getColumnScale(), false, 0, 0,
-                        false, null);
+                        e.getColumnSize(), e.getColumnScale(), false, null);
 
             addColumn(column);
         }
@@ -577,7 +581,8 @@ public class Table extends BaseTable {
      * Essential to use the existing HsqlName as this is is referenced by
      * intances of Constraint etc.
      */
-    void renameTable(String newname, boolean isquoted) throws HsqlException {
+    void rename(Session session, String newname,
+                boolean isquoted) throws HsqlException {
 
         String oldname = tableName.name;
 
@@ -587,7 +592,7 @@ public class Table extends BaseTable {
             getPrimaryIndex().getName().rename("SYS_PK", newname, isquoted);
         }
 
-        renameTableInCheckConstraints(oldname, newname);
+        renameTableInCheckConstraints(session, oldname, newname);
     }
 
     /**
@@ -602,7 +607,7 @@ public class Table extends BaseTable {
      */
     protected Table duplicate() throws HsqlException {
 
-        Table t = (new Table(database, tableName, tableType, ownerSessionId));
+        Table t = (new Table(database, tableName, tableType));
 
         return t;
     }
@@ -640,13 +645,13 @@ public class Table extends BaseTable {
 
     /**
      * Constraints that need removing are removed outside this method.<br>
-     * withoutindex is the name of an index to be removed, in which case
+     * removeIndex is the index of an index to be removed, in which case
      * no change is made to columns <br>
      * When withoutindex is null,  adjust {-1 | 0 | +1} indicates if a
      * column is {removed | replaced | added}
      *
      */
-    Table moveDefinition(String withoutIndex, Column newColumn, int colIndex,
+    Table moveDefinition(int[] removeIndex, Column newColumn, int colIndex,
                          int adjust) throws HsqlException {
 
         Table tn = duplicate();
@@ -690,16 +695,75 @@ public class Table extends BaseTable {
             }
         }
 
-// tony_lai@users - 20020820 - patch 595099 - primary key names
         tn.createPrimaryKey(getIndex(0).getName(), primarykey, false);
 
         tn.constraintList = constraintList;
 
-        for (int i = 1; i < getIndexCount(); i++) {
-            Index idx = getIndex(i);
+        Index idx = getIndex(removeIndex, colIndex);
 
-            if (withoutIndex != null
-                    && idx.getName().name.equals(withoutIndex)) {
+        if (idx != null) {
+            if (idx.isConstraint()) {
+                throw Trace.error(Trace.COLUMN_IS_IN_CONSTRAINT);
+            } else {
+                throw Trace.error(Trace.COLUMN_IS_IN_INDEX);
+            }
+        }
+
+        for (int i = 1; i < indexList.length; i++) {
+            if (removeIndex != null && ArrayUtil.find(removeIndex, i) != -1) {
+                continue;
+            }
+
+            tn.createAdjustedIndex(indexList[i], colIndex, adjust);
+        }
+
+        tn.triggerLists = triggerLists;
+
+        return tn;
+    }
+
+    Index getIndex(int[] exclude, int colIndex) {
+
+        for (int i = 1; i < indexList.length; i++) {
+            if (exclude != null && ArrayUtil.find(exclude, i) != -1) {
+                continue;
+            }
+
+            Index idx  = indexList[i];
+            int[] cols = idx.getColumns();
+
+            if (ArrayUtil.find(cols, colIndex) != -1) {
+                return idx;
+            }
+        }
+
+        return null;
+    }
+
+    private Table newDuplicate() throws HsqlException {
+
+        Table tn = duplicate();
+
+        for (int i = 0; i < columnCount; i++) {
+            Column column = (Column) columnList.get(i);
+
+            column = column.duplicate(false);
+
+            tn.columnList.add(column.columnName.name, column);
+        }
+
+        tn.triggerLists = triggerLists;
+
+        return tn;
+    }
+
+    private void copyIndexes(Table tn, int removeIndex, int colIndex,
+                             int adjust) throws HsqlException {
+
+        for (int i = 1; i < getIndexCount(); i++) {
+            Index idx = indexList[i];
+
+            if (removeIndex == i) {
                 continue;
             }
 
@@ -708,11 +772,46 @@ public class Table extends BaseTable {
             if (newidx == null) {
 
                 // column to remove is part of an index
-                throw Trace.error(Trace.Table_moveDefinition);
+                throw Trace.error(Trace.COLUMN_IS_IN_INDEX);
             }
         }
+    }
 
-        tn.triggerLists = triggerLists;
+    Table moveDefinitionNew(int[] primaryKey, int removeIndex,
+                            Column newColumn, int colIndex,
+                            int adjust) throws HsqlException {
+
+        Table tn = newDuplicate();
+
+        if (adjust == 0) {
+            if (newColumn != null) {
+                tn.columnList.set(colIndex, newColumn.columnName.name,
+                                  newColumn);
+            }
+        } else if (adjust > 0) {
+            tn.columnList.insert(colIndex, newColumn.columnName.name,
+                                 newColumn);
+        } else if (adjust < 0) {
+            tn.columnList.remove(colIndex);
+        }
+
+        int[] primarykey = hasPrimaryKey() ? primaryKeyCols
+                                           : null;
+
+        if (primarykey == null) {
+            if (newColumn.isPrimaryKey()) {
+                primarykey = new int[colIndex];
+            }
+        } else {
+            primarykey = ArrayUtil.toAdjustedColumnArray(primarykey,
+                    colIndex, adjust);
+        }
+
+        tn.createPrimaryKey(getIndex(0).getName(), primarykey, false);
+        copyIndexes(tn, removeIndex, colIndex, adjust);
+
+        tn.constraintList = constraintList;
+        tn.triggerLists   = triggerLists;
 
         return tn;
     }
@@ -720,7 +819,8 @@ public class Table extends BaseTable {
     /**
      * cols == null means drop
      */
-    Table moveDefinitionPK(HsqlName name, int[] pkCols) throws HsqlException {
+    Table moveDefinitionPK(HsqlName name, int[] pkCols,
+                           boolean withIdentity) throws HsqlException {
 
         // some checks
         if ((hasPrimaryKey() && pkCols != null)
@@ -731,7 +831,7 @@ public class Table extends BaseTable {
         Table tn = duplicate();
 
         for (int i = 0; i < columnCount; i++) {
-            tn.addColumn(getColumn(i).duplicate());
+            tn.addColumn(getColumn(i).duplicate(withIdentity));
         }
 
         tn.createPrimaryKey(name, pkCols, true);
@@ -753,7 +853,7 @@ public class Table extends BaseTable {
      * Updates the constraint and replaces references to the old table with
      * the new one, adjusting column index arrays by the given amount.
      */
-    void updateConstraintsTables(Table old, int colindex,
+    void updateConstraintsTables(Session session, Table old, int colindex,
                                  int adjust) throws HsqlException {
 
         for (int i = 0, size = constraintList.length; i < size; i++) {
@@ -762,18 +862,19 @@ public class Table extends BaseTable {
             c.replaceTable(old, this, colindex, adjust);
 
             if (c.constType == Constraint.CHECK) {
-                recompileCheckConstraint(c);
+                recompileCheckConstraint(session, c);
             }
         }
     }
 
-    private void recompileCheckConstraints() throws HsqlException {
+    private void recompileCheckConstraints(Session session)
+    throws HsqlException {
 
         for (int i = 0, size = constraintList.length; i < size; i++) {
             Constraint c = constraintList[i];
 
             if (c.constType == Constraint.CHECK) {
-                recompileCheckConstraint(c);
+                recompileCheckConstraint(session, c);
             }
         }
     }
@@ -781,13 +882,12 @@ public class Table extends BaseTable {
     /**
      * Used after adding columns or indexes to the table.
      */
-    private void recompileCheckConstraint(Constraint c) throws HsqlException {
+    private void recompileCheckConstraint(Session session,
+                                          Constraint c) throws HsqlException {
 
-        String    ddl       = c.core.check.getDDL();
-        Tokenizer tokenizer = new Tokenizer(ddl);
-        Parser parser =
-            new Parser(database.getSessionManager().getSysSession(),
-                       database, tokenizer);
+        String     ddl       = c.core.check.getDDL();
+        Tokenizer  tokenizer = new Tokenizer(ddl);
+        Parser     parser    = new Parser(session, database, tokenizer);
         Expression condition = parser.parseExpression();
 
         c.core.check = condition;
@@ -795,7 +895,7 @@ public class Table extends BaseTable {
         // this workaround is here to stop LIKE optimisation (for proper scripting)
         condition.setLikeOptimised();
 
-        Select s = Expression.getCheckSelect(this, condition);
+        Select s = Expression.getCheckSelect(session, this, condition);
 
         c.core.checkFilter = s.tFilter[0];
 
@@ -823,7 +923,7 @@ public class Table extends BaseTable {
 
     /**
      * Used for retype column. Checks whether column is in an FK or is
-     * referenced by an FK
+     * referenced by a FK
      */
     void checkColumnInFKConstraint(String colname) throws HsqlException {
 
@@ -832,7 +932,9 @@ public class Table extends BaseTable {
         for (int i = 0, size = constraintList.length; i < size; i++) {
             Constraint c = constraintList[i];
 
-            if (c.hasColumn(colIndex)) {
+            if (c.hasColumn(colIndex)
+                    && (c.getType() == Constraint.MAIN
+                        || c.getType() == Constraint.FOREIGN_KEY)) {
                 throw Trace.error(Trace.COLUMN_IS_REFERENCED, c.getName());
             }
         }
@@ -868,8 +970,8 @@ public class Table extends BaseTable {
     /**
      * Used for drop column.
      */
-    private void renameTableInCheckConstraints(String oldname,
-            String newname) throws HsqlException {
+    private void renameTableInCheckConstraints(Session session,
+            String oldname, String newname) throws HsqlException {
 
         for (int i = 0, size = constraintList.length; i < size; i++) {
             Constraint c = constraintList[i];
@@ -891,7 +993,7 @@ public class Table extends BaseTable {
             }
         }
 
-        recompileCheckConstraints();
+        recompileCheckConstraints(session);
     }
 
     /**
@@ -920,7 +1022,7 @@ public class Table extends BaseTable {
      */
     int getColumnNr(String c) throws HsqlException {
 
-        int i = searchColumn(c);
+        int i = findColumn(c);
 
         if (i == -1) {
             throw Trace.error(Trace.COLUMN_NOT_FOUND, c);
@@ -932,7 +1034,7 @@ public class Table extends BaseTable {
     /**
      *  Returns the index of given column name or -1 if not found.
      */
-    int searchColumn(String c) {
+    int findColumn(String c) {
 
         int index = columnList.getIndex(c);
 
@@ -1116,7 +1218,7 @@ public class Table extends BaseTable {
      *  Used in TableFilter to get an index for the column.
      *  An index is created automatically for system tables or subqueries.
      */
-    Index getIndexForColumn(int column) {
+    Index getIndexForColumn(Session session, int column) {
 
         int i = bestIndexForColumn[column];
 
@@ -1124,7 +1226,10 @@ public class Table extends BaseTable {
                 && (tableType == Table.SYSTEM_SUBQUERY
                     || tableType == Table.SYSTEM_TABLE)) {
             try {
-                createIndex(new int[]{ column }, null, false, false, false);
+                HsqlName indexName = database.nameManager.newAutoName("IDX");
+
+                createIndex(session, new int[]{ column }, indexName, false,
+                            false, false);
 
                 i = bestIndexForColumn[column];
             } catch (Exception e) {}
@@ -1184,7 +1289,7 @@ public class Table extends BaseTable {
         int[] roots = new int[getIndexCount()];
 
         for (int i = 0; i < getIndexCount(); i++) {
-            Node f = indexList[i].getRoot();
+            Node f = indexList[i].getRoot(null);
 
             roots[i] = (f != null) ? f.getKey()
                                    : -1;
@@ -1234,7 +1339,7 @@ public class Table extends BaseTable {
                 f = r.getNode(i);
             }
 
-            indexList[i].setRoot(f);
+            indexList[i].setRoot(null, f);
         }
     }
 
@@ -1341,10 +1446,7 @@ public class Table extends BaseTable {
     }
 
     HsqlName makeSysPKName() throws HsqlException {
-
-        return isTemp ? database.nameManager.newAutoName("PK")
-                      : database.nameManager.newHsqlName("SYS_PK",
-                      tableName.name, tableName.isNameQuoted);
+        return database.nameManager.newAutoName("PK");
     }
 
     void createPrimaryIndex(int[] pkcols,
@@ -1358,7 +1460,7 @@ public class Table extends BaseTable {
 
         Index newindex = new Index(database, name, this, pkcols, pkcoltypes,
                                    true, true, true, false, pkcols,
-                                   pkcoltypes);
+                                   pkcoltypes, isTemp);
 
         addIndex(newindex);
     }
@@ -1388,15 +1490,14 @@ public class Table extends BaseTable {
     /**
      *  Create new memory-resident index. For MEMORY and TEXT tables.
      */
-    Index createIndex(int[] column, HsqlName name, boolean unique,
-                      boolean constraint,
+    Index createIndex(Session session, int[] column, HsqlName name,
+                      boolean unique, boolean constraint,
                       boolean forward) throws HsqlException {
 
         int newindexNo = createIndexStructureGetNo(column, name, unique,
             constraint, forward);
         Index       newindex     = indexList[newindexNo];
         Index       primaryindex = getPrimaryIndex();
-        Session     session      = database.sessionManager.getSysSession();
         RowIterator it           = primaryindex.firstRow(session);
         int         rowCount     = 0;
         int         error        = 0;
@@ -1479,7 +1580,7 @@ public class Table extends BaseTable {
         int[] pktypes = getPrimaryKeyTypes();
         Index newindex = new Index(database, name, this, col, type, false,
                                    unique, constraint, forward, pkcols,
-                                   pktypes);
+                                   pktypes, isTemp);
         int indexNo = addIndex(newindex);
 
         setBestRowIdentifiers();
@@ -1555,13 +1656,13 @@ public class Table extends BaseTable {
     /**
      *  Returns true if the table has any rows at all.
      */
-    boolean isEmpty() {
+    public boolean isEmpty(Session session) {
 
         if (getIndexCount() == 0) {
             return true;
         }
 
-        return getIndex(0).isEmpty();
+        return getIndex(0).isEmpty(session);
     }
 
     /**
@@ -1619,33 +1720,28 @@ public class Table extends BaseTable {
 
     /**
      *  Performs Table structure modification and changes to the index nodes
-     *  to remove a given index from a MEMORY or TEXT table.
+     *  to remove a given index from a MEMORY or TEXT table. Not for PK index.
      *
      */
     void dropIndex(String indexname) throws HsqlException {
 
         // find the array index for indexname and remove
-        int todrop = 1;
+        int todrop = getIndexIndex(indexname);
 
-        for (; todrop < getIndexCount(); todrop++) {
-            Index tempidx = getIndex(todrop);
+        indexList = (Index[]) ArrayUtil.toAdjustedArray(indexList, null,
+                todrop, -1);
 
-            if (tempidx.getName().name.equals(indexname)) {
-                indexList = (Index[]) ArrayUtil.toAdjustedArray(indexList,
-                        null, todrop, -1);
+        setBestRowIdentifiers();
+        dropIndexFromRows(todrop);
+    }
 
-                setBestRowIdentifiers();
+    void dropIndexFromRows(int index) throws HsqlException {
 
-                break;
-            }
-        }
-
-        Index       primaryindex = getPrimaryIndex();
-        RowIterator it           = primaryindex.firstRow(null);
+        RowIterator it = rowIterator(null);
 
         while (it.hasNext()) {
             Row  row      = it.next();
-            int  i        = todrop - 1;
+            int  i        = index - 1;
             Node backnode = row.getNode(0);
 
             while (i-- > 0) {
@@ -1672,7 +1768,8 @@ public class Table extends BaseTable {
             colvalue = column.getDefaultValue(session);
         }
 
-        RowIterator it = from.rowIterator(session);
+        // do not use session
+        RowIterator it = from.rowIterator(null);
 
         while (it.hasNext()) {
             Row      row  = it.next();
@@ -1687,7 +1784,7 @@ public class Table extends BaseTable {
             }
 
             ArrayUtil.copyAdjustArray(o, data, colvalue, colindex, adjust);
-            updateIdentityValue(data);
+            setIdentityColumn(session, data);
             enforceNullConstraints(data);
 
             Row newrow = newRow(data);
@@ -1767,7 +1864,7 @@ public class Table extends BaseTable {
 
         insertResult(session, result);
 
-        if (isTemp || isText ||!database.logger.hasLog()) {
+        if (!isLogged) {
             return;
         }
 
@@ -1797,7 +1894,7 @@ public class Table extends BaseTable {
             session.addTransactionInsert(this, r);
         }
 
-        if (!isTemp &&!isText &&!isReadOnly && database.logger.hasLog()) {
+        if (isLogged) {
             database.logger.writeInsertStatement(session, this, data);
         }
 
@@ -1821,18 +1918,22 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Low level method for row insert.
-     *  UNIQUE or PRIMARY constraints are enforced by attempting to
-     *  add the row to the indexes.
+     *  Low level method for restoring deleted rows
      */
     void insertNoCheckRollback(Session session, Row row,
                                boolean log) throws HsqlException {
 
-        row = newRow(row.getData());
+        Row newrow = restoreRow(row);
 
-        indexRow(session, row);
+        // instead of new row, use new routine so that the row does not use
+        // rowstore.add(), which will allocate new space and different pos
+        // Define new method that will not allocate new space
+        // all delete methods that call addTransactionDelete() should use
+        // a replacement delete() that does not free the space
+        // when delete is committed, the spaces should be released
+        indexRow(session, newrow);
 
-        if (log &&!isTemp &&!isText &&!isReadOnly) {
+        if (log && isLogged) {
             database.logger.writeInsertStatement(session, this,
                                                  row.getData());
         }
@@ -1844,12 +1945,11 @@ public class Table extends BaseTable {
      */
     int insertSys(Result ins) throws HsqlException {
 
-        Session session = database.sessionManager.getSysSession();
-        Record  ni      = ins.rRoot;
-        int     count   = 0;
+        Record ni    = ins.rRoot;
+        int    count = 0;
 
         while (ni != null) {
-            insertData(session, ni.data);
+            insertData(null, ni.data);
 
             ni = ni.next;
 
@@ -1885,11 +1985,8 @@ public class Table extends BaseTable {
      * the table when the .script file is read.
      */
     public void insertFromScript(Object[] data) throws HsqlException {
-
-        Session session = database.sessionManager.getSysSession();
-
         updateIdentityValue(data);
-        insertData(session, data);
+        insertData(null, data);
     }
 
     /**
@@ -1908,25 +2005,23 @@ public class Table extends BaseTable {
      */
     public void insertSys(Object[] data) throws HsqlException {
 
-        Session session = database.sessionManager.getSysSession();
-        Row     r       = newRow(data);
+        Row r = newRow(data);
 
-        indexRow(session, r);
+        indexRow(null, r);
     }
 
     /**
      * Used by TextCache to insert a row into the indexes when the source
      * file is first read.
      */
-    protected void insertNoChange(CachedRow row) throws HsqlException {
+    protected void insertFromTextSource(CachedRow row) throws HsqlException {
 
-        Session  session = database.sessionManager.getSysSession();
-        Object[] data    = row.getData();
+        Object[] data = row.getData();
 
         updateIdentityValue(data);
         enforceFieldValueLimits(data, defaultColumnMap);
         enforceNullConstraints(data);
-        indexRow(session, row);
+        indexRow(null, row);
     }
 
     /**
@@ -2674,16 +2769,22 @@ public class Table extends BaseTable {
         for (int i = indexList.length - 1; i >= 0; i--) {
             Node node = row.getNode(i);
 
-            indexList[i].delete(node);
+            indexList[i].delete(session, node);
         }
 
         row.delete();
 
         if (session != null) {
-            session.addTransactionDelete(this, row);
+            boolean tx = session.addTransactionDelete(this, row);
+
+            if (tx) {
+                releaseRowFromStore(row);
+            } else {
+                removeRowFromStore(row);
+            }
         }
 
-        if (log &&!isTemp &&!isText &&!isReadOnly) {
+        if (log && isLogged) {
             database.logger.writeDeleteStatement(session, this, data);
         }
     }
@@ -2756,13 +2857,19 @@ public class Table extends BaseTable {
         for (int i = indexList.length - 1; i >= 0; i--) {
             Node node = row.getNode(i);
 
-            indexList[i].delete(node);
+            indexList[i].delete(session, node);
         }
 
         row.delete();
 
         if (session != null) {
-            session.addTransactionDelete(this, row);
+            boolean tx = session.addTransactionDelete(this, row);
+
+            if (tx) {
+                releaseRowFromStore(row);
+            } else {
+                removeRowFromStore(row);
+            }
         }
     }
 
@@ -2773,18 +2880,18 @@ public class Table extends BaseTable {
     void deleteNoCheckRollback(Session session, Row row,
                                boolean log) throws HsqlException {
 
-        row = getIndex(0).findRow(session, row);
+        row = indexList[0].findRow(session, row);
 
         for (int i = indexList.length - 1; i >= 0; i--) {
             Node node = row.getNode(i);
 
-            indexList[i].delete(node);
+            indexList[i].delete(session, node);
         }
 
         row.delete();
+        removeRowFromStore(row);
 
-        if (log &&!isTemp &&!isText &&!isReadOnly
-                && database.logger.hasLog()) {
+        if (log && isLogged) {
             database.logger.writeDeleteStatement(session, this,
                                                  row.getData());
         }
@@ -2994,20 +3101,32 @@ public class Table extends BaseTable {
     }
 
     /**
-     * Returns the Index object of the given name or null if not found.
+     * Returns the index of the Index object of the given name or -1 if not found.
      */
-    Index getIndex(String indexName) {
+    int getIndexIndex(String indexName) {
 
-        for (int i = 0; i < getIndexCount(); i++) {
-            Index indexObject = getIndex(i);
+        Index[] indexes = indexList;
 
-            if (indexName.equals(indexObject.getName().name)) {
-                return indexObject;
+        for (int i = 0; i < indexes.length; i++) {
+            if (indexName.equals(indexes[i].getName().name)) {
+                return i;
             }
         }
 
         // no such index
-        return null;
+        return -1;
+    }
+
+    /**
+     * Returns the Index object of the given name or null if not found.
+     */
+    Index getIndex(String indexName) {
+
+        Index[] indexes = indexList;
+        int     i       = getIndexIndex(indexName);
+
+        return i == -1 ? null
+                       : indexes[i];
     }
 
     /**
@@ -3033,6 +3152,18 @@ public class Table extends BaseTable {
 
         return (i < 0) ? null
                        : (Constraint) constraintList[i];
+    }
+
+    /**
+     * remove a named constraint
+     */
+    void removeConstraint(String name) {
+
+        int index = getConstraintIndex(name);
+
+        constraintList =
+            (Constraint[]) ArrayUtil.toAdjustedArray(constraintList, null,
+                index, -1);
     }
 
     /**
@@ -3093,25 +3224,23 @@ public class Table extends BaseTable {
         return null;
     }
 
-    void addRowToStore(Row row) throws HsqlException {
-
-        if (isCached && cache != null) {
-            try {
-                cache.add((CachedRow) row);
-            } catch (IOException e) {
-                throw new HsqlException(
-                    e, Trace.getMessage(Trace.GENERAL_IO_ERROR),
-                    Trace.GENERAL_IO_ERROR);
-            }
-        }
-    }
-
     void registerRow(CachedRow row) {}
 
     /**
+     * called in autocommit mode or by transaction manager when a a delete is committed
      */
-    void removeRow(CachedRow row) throws HsqlException {
-        rowStore.remove(row.getPos());
+    void removeRowFromStore(Row row) throws HsqlException {
+
+        if (isCached && cache != null) {
+            rowStore.remove(row.getPos());
+        }
+    }
+
+    void releaseRowFromStore(Row row) throws HsqlException {
+
+        if (isCached && cache != null) {
+            rowStore.release(row.getPos());
+        }
     }
 
     void indexRow(Session session, Row row) throws HsqlException {
@@ -3130,13 +3259,14 @@ public class Table extends BaseTable {
             for (--i; i >= 0; i--) {
                 Node n = row.getNode(i);
 
-                indexList[i].delete(n);
+                indexList[i].delete(session, n);
             }
 
             row.delete();
+            removeRowFromStore(row);
 
             if (isconstraint) {
-                Constraint c    = getConstraintForIndex(index);
+                Constraint c    = getUniqueConstraintForIndex(index);
                 String     name = c == null ? ""
                                             : c.getName().name;
 
@@ -3148,16 +3278,18 @@ public class Table extends BaseTable {
     }
 
     /**
-     * Currently only for temp system tables and TEXT tables.
+     *
      */
-    void clearAllRows() {
+    void clearAllRows(Session session) {
 
-        for (int i = 0; i < getIndexCount(); i++) {
-            getIndex(i).clearAll();
+        for (int i = 0; i < indexList.length; i++) {
+            indexList[i].clearAll(session);
         }
 
-        identitySequence.reset();
-        rowIdSequence.reset();
+        if (!isTemp) {
+            identitySequence.reset();
+            rowIdSequence.reset();
+        }
     }
 
 /** @todo -- release the rows */
@@ -3180,51 +3312,14 @@ public class Table extends BaseTable {
     }
 
     /**
-     * Returns the schema name or null, depending on a database property.
+     * Returns the schema name.
      */
-    String getSchemaName() {
-
-        // PRE: database is never null
-        if (!database.getProperties().isPropertyTrue("hsqldb.schemas")) {
-            return null;
-        }
-
-        switch (tableType) {
-
-            case SYSTEM_TABLE : {
-                return "DEFINITION_SCHEMA";
-            }
-            case SYSTEM_VIEW : {
-                return "INFORMATION_SCHEMA";
-            }
-            case MEMORY_TABLE :
-            case CACHED_TABLE :
-            case TEXT_TABLE :
-            case VIEW : {
-                return UserManager.PUBLIC_USER_NAME;
-            }
-            case TEMP_TABLE :
-            case TEMP_TEXT_TABLE : {
-                Session s =
-                    database.sessionManager.getSession(ownerSessionId);
-
-                if (s == null) {
-                    return null;
-                } else if (s.getId() == ownerSessionId) {
-                    return s.getUsername();
-                } else {
-                    return null;
-                }
-            }
-            case SYSTEM_SUBQUERY :
-            default : {
-                return null;
-            }
-        }
+    public String getSchemaName() {
+        return tableName.schema.name;
     }
 
-    public int getRowCount() throws HsqlException {
-        return getPrimaryIndex().size();
+    public int getRowCount(Session session) throws HsqlException {
+        return getPrimaryIndex().size(session);
     }
 
     /**
@@ -3237,11 +3332,9 @@ public class Table extends BaseTable {
             return;
         }
 
-        Session session = database.sessionManager.getSysSession();
-
         rowIdSequence = new NumberSequence(null, 0, 1, Types.BIGINT);
 
-        RowIterator it = rowIterator(session);
+        RowIterator it = rowIterator(null);
 
         while (it.hasNext()) {
             Row row = it.next();
@@ -3283,6 +3376,36 @@ public class Table extends BaseTable {
         return row;
     }
 
+    Row restoreRow(Row oldrow) throws HsqlException {
+
+        Row row;
+
+        try {
+            if (isText) {
+                row = new CachedDataRow(this, oldrow.oData);
+
+                row.setPos(oldrow.getPos());
+                rowStore.restore(row);
+            } else if (isCached) {
+                row = new CachedRow(this, oldrow.oData);
+
+                row.setStorageSize(oldrow.getStorageSize());
+                row.setPos(oldrow.getPos());
+                rowStore.restore(row);
+            } else {
+                row = new Row(this, oldrow.oData);
+
+                row.setPos(oldrow.getPos());
+            }
+        } catch (IOException e) {
+            throw new HsqlException(
+                e, Trace.getMessage(Trace.GENERAL_IO_ERROR),
+                Trace.GENERAL_IO_ERROR);
+        }
+
+        return row;
+    }
+
     public class RowStore implements PersistentStore {
 
         public CachedObject get(int i) {
@@ -3314,6 +3437,10 @@ public class Table extends BaseTable {
 
         public void add(CachedObject row) throws IOException {
             cache.add(row);
+        }
+
+        public void restore(CachedObject row) throws IOException {
+            cache.restore(row);
         }
 
         public CachedObject get(RowInputInterface in) {

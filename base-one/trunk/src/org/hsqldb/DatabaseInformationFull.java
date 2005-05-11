@@ -417,7 +417,7 @@ extends org.hsqldb.DatabaseInformationMain {
         cacheSet = new HashSet();
 
         // dynamic system tables are never cached
-        tables = database.getTables().iterator();
+        tables = database.schemaManager.allTablesIterator();
 
         while (tables.hasNext()) {
             table = (Table) tables.next();
@@ -536,7 +536,7 @@ extends org.hsqldb.DatabaseInformationMain {
         final int iis_grntbl = 6;
 
         // Initialization
-        grantorName = UserManager.SYS_USER_NAME;
+        grantorName = RoleManager.ADMIN_ROLE_NAME;
         um          = database.getUserManager();
         users       = um.listVisibleUsers(session, true);
 
@@ -1131,7 +1131,7 @@ extends org.hsqldb.DatabaseInformationMain {
 
     /**
      * Retrieves a <code>Table</code> object describing all visible
-     * sessions. ADMIN users see *all* sessions, including the SYS session,
+     * sessions. ADMIN users see *all* sessions
      * while non-admin users see only their own session.<p>
      *
      * Each row is a session state description with the following columns: <p>
@@ -1383,7 +1383,7 @@ extends org.hsqldb.DatabaseInformationMain {
         final int iid          = 12;
 
         // Initialization
-        tables = database.getTables().iterator();
+        tables = database.schemaManager.allTablesIterator();
 
         // Do it.
         while (tables.hasNext()) {
@@ -1395,7 +1395,7 @@ extends org.hsqldb.DatabaseInformationMain {
 
             row               = t.getEmptyRowData();
             row[itable_cat]   = ns.getCatalogName(table);
-            row[itable_schem] = ns.getSchemaName(table);
+            row[itable_schem] = table.getSchemaName();
             row[itable_name]  = table.getName().name;
 
             if (table.getCache() != null
@@ -1478,7 +1478,7 @@ extends org.hsqldb.DatabaseInformationMain {
         // - used appends to make class file constant pool smaller
         // - saves ~ 100 bytes jar space
         rs = session.sqlExecuteDirectNoPreChecks(
-            (new StringBuffer(185)).append("select").append(' ').append(
+            (new StringBuffer(185)).append("SELECT").append(' ').append(
                 "a.").append("TRIGGER_CAT").append(',').append("a.").append(
                 "TRIGGER_SCHEM").append(',').append("a.").append(
                 "TRIGGER_NAME").append(',').append("a.").append(
@@ -1487,7 +1487,9 @@ extends org.hsqldb.DatabaseInformationMain {
                 "TABLE_NAME").append(',').append("b.").append(
                 "COLUMN_NAME").append(',').append("'Y'").append(',').append(
                 "'IN'").append(' ').append("from").append(' ').append(
+                "INFORMATION_SCHEMA").append('.').append(
                 "SYSTEM_TRIGGERS").append(" a,").append(
+                "INFORMATION_SCHEMA").append('.').append(
                 "SYSTEM_COLUMNS").append(" b ").append("where").append(
                 ' ').append("a.").append("TABLE_NAME").append('=').append(
                 "b.").append("TABLE_NAME").toString());
@@ -1608,7 +1610,7 @@ extends org.hsqldb.DatabaseInformationMain {
         final int itrigger_body      = 15;
 
         // Initialization
-        tables = database.getTables().iterator();
+        tables = database.schemaManager.allTablesIterator();
 
         // these are the only values supported, currently
         actionType       = "CALL";
@@ -1633,7 +1635,7 @@ extends org.hsqldb.DatabaseInformationMain {
 
             tableCatalog   = ns.getCatalogName(table);
             triggerCatalog = tableCatalog;
-            tableSchema    = ns.getSchemaName(table);
+            tableSchema    = table.getSchemaName();
             triggerSchema  = tableSchema;
             tableName      = table.getName().name;
 
@@ -1655,7 +1657,7 @@ extends org.hsqldb.DatabaseInformationMain {
                     description = def.getDDL().toString();
                     status      = def.valid ? "ENABLED"
                                             : "DISABLED";
-                    triggerBody = def.fire;
+                    triggerBody = def.triggerClassName;
                     triggerType = def.when;
 
                     if (def.forEachRow) {
@@ -1962,13 +1964,10 @@ extends org.hsqldb.DatabaseInformationMain {
             return t;
         }
 
-        Parser    parser;
         String    defn;
-        Select    select;
         Iterator  tables;
         Table     table;
         Object[]  row;
-        Session   sys;
         final int icat   = 0;
         final int ischem = 1;
         final int iname  = 2;
@@ -1977,8 +1976,7 @@ extends org.hsqldb.DatabaseInformationMain {
         final int iiupd  = 5;
         final int ivalid = 6;
 
-        tables = database.getTables().iterator();
-        sys    = database.sessionManager.getSysSession();
+        tables = database.schemaManager.allTablesIterator();
 
         while (tables.hasNext()) {
             table = (Table) tables.next();
@@ -1990,7 +1988,7 @@ extends org.hsqldb.DatabaseInformationMain {
             row         = t.getEmptyRowData();
             defn        = ((View) table).getStatement();
             row[icat]   = ns.getCatalogName(table);
-            row[ischem] = ns.getSchemaName(table);
+            row[ischem] = table.getSchemaName();
             row[iname]  = table.getName().name;
             row[idefn]  = defn;
             row[icopt]  = "NONE";
@@ -2352,9 +2350,10 @@ extends org.hsqldb.DatabaseInformationMain {
             return t;
         }
 
-        Result rs = session.sqlExecuteDirectNoPreChecks(
-            "select 'SYS', 'PUBLIC', SEQUENCE_CATALOG, SEQUENCE_SCHEMA, "
-            + "SEQUENCE_NAME, 'SEQUENCE', 'FALSE' from  SYSTEM_SEQUENCES");
+        Result rs = session.sqlExecuteDirectNoPreChecks("SELECT "
+            + RoleManager.ADMIN_ROLE_NAME
+            + ", 'PUBLIC', SEQUENCE_CATALOG, SEQUENCE_SCHEMA, "
+            + "SEQUENCE_NAME, 'SEQUENCE', 'FALSE' FROM  INFORMATION_SCHEMA.SYSTEM_SEQUENCES");
 
         t.insertSys(rs);
         t.setDataReadOnly(true);
@@ -2451,7 +2450,7 @@ extends org.hsqldb.DatabaseInformationMain {
         final int itab_col    = 6;
 
         // Initialization
-        tables    = database.getTables().iterator();
+        tables    = database.schemaManager.allTablesIterator();
         collector = new Expression.Collector();
         result    = new Result(ResultConstants.DATA, 4);
         result.metaData.colTypes[0] = result.metaData.colTypes[1] =
@@ -2469,7 +2468,7 @@ extends org.hsqldb.DatabaseInformationMain {
             constraints       = table.getConstraints();
             constraintCount   = constraints.length;
             constraintCatalog = ns.getCatalogName(table);
-            constraintSchema  = ns.getSchemaName(table);
+            constraintSchema  = table.getSchemaName();
 
             // process constraints
             for (int i = 0; i < constraintCount; i++) {
@@ -2500,13 +2499,17 @@ extends org.hsqldb.DatabaseInformationMain {
 
                     result.add(new Object[] {
                         ns.getCatalogName(columnTable),
-                        ns.getSchemaName(columnTable),
+                        columnTable.getSchemaName(),
                         columnTable.getName().name, expression.getColumnName()
                     });
                 }
 
+/*
                 result.removeDuplicates(
-                    database.sessionManager.getSysSession());
+                    database.sessionManager.getSysSession(
+                        database.schemaManager.INFORMATION_SCHEMA));
+*/
+                result.removeDuplicates(session);
 
                 iterator = result.iterator();
 
@@ -2624,7 +2627,7 @@ extends org.hsqldb.DatabaseInformationMain {
         final int ir_schem    = 4;
         final int ir_name     = 5;
 
-        tables    = database.getTables().iterator();
+        tables    = database.schemaManager.allTablesIterator();
         collector = new Expression.Collector();
 
         while (tables.hasNext()) {
@@ -2639,7 +2642,7 @@ extends org.hsqldb.DatabaseInformationMain {
             constraints       = table.getConstraints();
             constraintCount   = constraints.length;
             constraintCatalog = ns.getCatalogName(table);
-            constraintSchema  = ns.getSchemaName(table);
+            constraintSchema  = table.getSchemaName();
 
             for (int i = 0; i < constraintCount; i++) {
                 constraint = (Constraint) constraints[i];
@@ -2750,7 +2753,7 @@ extends org.hsqldb.DatabaseInformationMain {
         Result rs = session.sqlExecuteDirectNoPreChecks(
             "select DISTINCT CONSTRAINT_CATALOG, CONSTRAINT_SCHEMA, "
             + "CONSTRAINT_NAME, TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME "
-            + "from SYSTEM_CHECK_COLUMN_USAGE");
+            + "from INFORMATION_SCHEMA.SYSTEM_CHECK_COLUMN_USAGE");
 
         t.insertSys(rs);
         t.setDataReadOnly(true);
@@ -2909,7 +2912,7 @@ extends org.hsqldb.DatabaseInformationMain {
         final int iinit_defr  = 8;
 
         // initialization
-        tables        = database.getTables().iterator();
+        tables        = database.schemaManager.allTablesIterator();
         constraintSet = new HashSet();
         table         = null;    // else complier complains
 
@@ -2926,7 +2929,7 @@ extends org.hsqldb.DatabaseInformationMain {
             if (table.hasPrimaryKey()) {
                 row              = t.getEmptyRowData();
                 cat              = ns.getCatalogName(table);
-                schem            = ns.getSchemaName(table);
+                schem            = table.getSchemaName();
                 row[icons_cat]   = cat;
                 row[icons_schem] = schem;
                 row[icons_name]  = index.getName().name;
@@ -2986,7 +2989,7 @@ extends org.hsqldb.DatabaseInformationMain {
             }
 
             cat              = ns.getCatalogName(table);
-            schem            = ns.getSchemaName(table);
+            schem            = table.getSchemaName();
             row[icons_cat]   = cat;
             row[icons_schem] = schem;
             row[icons_name]  = constraint.constName.name;
@@ -3065,7 +3068,7 @@ extends org.hsqldb.DatabaseInformationMain {
         Result rs = session.sqlExecuteDirectNoPreChecks(
             "select DISTINCT VIEW_CATALOG, VIEW_SCHEMA, "
             + "VIEW_NAME, TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME "
-            + "from SYSTEM_VIEW_COLUMN_USAGE");
+            + "from INFORMATION_SCHEMA.SYSTEM_VIEW_COLUMN_USAGE");
 
         t.insertSys(rs);
         t.setDataReadOnly(true);
@@ -3163,7 +3166,7 @@ extends org.hsqldb.DatabaseInformationMain {
         final int it_cname = 6;
 
         // Initialization
-        tables    = database.getTables().iterator();
+        tables    = database.schemaManager.allTablesIterator();
         collector = new Expression.Collector();
         result    = new Result(ResultConstants.DATA, 4);
         result.metaData.colTypes[0] = result.metaData.colTypes[1] =
@@ -3185,7 +3188,7 @@ extends org.hsqldb.DatabaseInformationMain {
             }
 
             viewCatalog = ns.getCatalogName(table);
-            viewSchema  = ns.getSchemaName(table);
+            viewSchema  = table.getSchemaName();
             viewName    = table.getName().name;
             view        = (View) table;
             subqueries  = view.viewSubqueries;
@@ -3210,12 +3213,17 @@ extends org.hsqldb.DatabaseInformationMain {
 
                 result.add(new Object[] {
                     ns.getCatalogName(columnTable),
-                    ns.getSchemaName(columnTable), columnTable.getName().name,
+                    columnTable.getSchemaName(), columnTable.getName().name,
                     expression.getColumnName()
                 });
             }
 
-            result.removeDuplicates(database.sessionManager.getSysSession());
+/*
+            result.removeDuplicates(
+                database.sessionManager.getSysSession(
+                    database.schemaManager.INFORMATION_SCHEMA));
+*/
+            result.removeDuplicates(session);
 
             iterator = result.iterator();
 
@@ -3327,7 +3335,7 @@ extends org.hsqldb.DatabaseInformationMain {
         final int ir_sig   = 6;
 
         // Initialization
-        tables    = database.getTables().iterator();
+        tables    = database.schemaManager.allTablesIterator();
         collector = new Expression.Collector();
 
         // Do it.
@@ -3344,7 +3352,7 @@ extends org.hsqldb.DatabaseInformationMain {
             }
 
             viewCat    = ns.getCatalogName(table);
-            viewSchem  = ns.getSchemaName(table);
+            viewSchem  = table.getSchemaName();
             viewName   = table.getName().name;
             view       = (View) table;
             subqueries = view.viewSubqueries;

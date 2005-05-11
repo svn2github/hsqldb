@@ -31,6 +31,8 @@
 
 package org.hsqldb;
 
+import org.hsqldb.HsqlNameManager.HsqlName;
+
 /**
  * A simple structure class for holding the products of
  * statement compilation for later execution.
@@ -60,6 +62,9 @@ final class CompiledStatement {
     static final int DML = 7;
     static final int DQL = 8;
     static final int DDL = 9;
+
+    /** false when cleared */
+    boolean isValid = true;
 
     /** target table for INSERT_XXX, UPDATE and DELETE */
     Table targetTable;
@@ -132,30 +137,21 @@ final class CompiledStatement {
     String sql;
 
     /**
+     * The default schema name used to resolve names in the sql
+     */
+    final HsqlName schemaHsqlName;
+
+    /**
      * Creates a new instance of CompiledStatement for DDL
      *
      */
-    CompiledStatement() {
+    CompiledStatement(HsqlName schema) {
 
-        parameters = new Expression[0];
-        paramTypes = new int[0];
-        subqueries = new SubQuery[0];
-        type       = DDL;
-    }
-
-    void bind(Object[] values) throws HsqlException {
-
-        int len;
-
-        Trace.check(parameters != null, Trace.COLUMN_COUNT_DOES_NOT_MATCH);
-
-        len = parameters.length;
-
-        Trace.check(values.length >= len, Trace.COLUMN_COUNT_DOES_NOT_MATCH);
-
-        for (int i = 0; i < len; i++) {
-            parameters[i].bind(values[i]);
-        }
+        parameters     = new Expression[0];
+        paramTypes     = new int[0];
+        subqueries     = new SubQuery[0];
+        type           = DDL;
+        schemaHsqlName = schema;
     }
 
     /**
@@ -165,10 +161,11 @@ final class CompiledStatement {
      * @param deleteCondition
      * @param parameters
      */
-    CompiledStatement(Database database, TableFilter targetFilter,
-                      Expression deleteCondition,
+    CompiledStatement(Session session, Database database, HsqlName schema,
+                      TableFilter targetFilter, Expression deleteCondition,
                       Expression[] params) throws HsqlException {
 
+        schemaHsqlName    = schema;
         this.targetFilter = targetFilter;
         targetTable       = targetFilter.filterTable;
 
@@ -176,8 +173,8 @@ final class CompiledStatement {
             condition = new Expression(deleteCondition);
 
             condition.resolveTables(targetFilter);
-            condition.resolveTypes(database);
-            targetFilter.setConditions(condition);
+            condition.resolveTypes(session);
+            targetFilter.setConditions(session, condition);
         }
 
         setParameters(params);
@@ -194,11 +191,12 @@ final class CompiledStatement {
      * @param updateCondition
      * @param params
      */
-    CompiledStatement(Database database, TableFilter targetFilter,
-                      int[] columnMap, Expression[] columnValues,
-                      Expression updateCondition,
+    CompiledStatement(Session session, Database database, HsqlName schema,
+                      TableFilter targetFilter, int[] columnMap,
+                      Expression[] columnValues, Expression updateCondition,
                       Expression[] params) throws HsqlException {
 
+        schemaHsqlName    = schema;
         this.targetFilter = targetFilter;
         targetTable       = targetFilter.filterTable;
         this.columnMap    = columnMap;
@@ -207,15 +205,11 @@ final class CompiledStatement {
         for (int i = 0; i < columnValues.length; i++) {
             Expression cve = columnValues[i];
 
-            // CHECKME:  expressions are resolved previously in
-            // Parser.getColumnValueExpressions.  Can this cause problems
-            // for some types of expressions?  What about column values
-            // derived from (correlated) subqueries?
             if (cve.isParam()) {
                 cve.setTableColumnAttributes(targetTable, columnMap[i]);
             } else {
                 cve.resolveTables(targetFilter);
-                cve.resolveTypes(database);
+                cve.resolveTypes(session);
             }
         }
 
@@ -223,8 +217,8 @@ final class CompiledStatement {
             condition = new Expression(updateCondition);
 
             condition.resolveTables(targetFilter);
-            condition.resolveTypes(database);
-            targetFilter.setConditions(condition);
+            condition.resolveTypes(session);
+            targetFilter.setConditions(session, condition);
         }
 
         setParameters(params);
@@ -241,10 +235,11 @@ final class CompiledStatement {
      * @param checkColumns
      * @param params
      */
-    CompiledStatement(Table targetTable, int[] columnMap,
+    CompiledStatement(HsqlName schema, Table targetTable, int[] columnMap,
                       Expression[] columnValues, boolean[] checkColumns,
                       Expression[] params) throws HsqlException {
 
+        schemaHsqlName    = schema;
         this.targetTable  = targetTable;
         this.columnMap    = columnMap;
         this.checkColumns = checkColumns;
@@ -274,10 +269,12 @@ final class CompiledStatement {
      * @param select
      * @param params
      */
-    CompiledStatement(Database database, Table targetTable, int[] columnMap,
+    CompiledStatement(Session session, Database database, HsqlName schema,
+                      Table targetTable, int[] columnMap,
                       boolean[] checkColumns, Select select,
                       Expression[] params) throws HsqlException {
 
+        schemaHsqlName    = schema;
         this.targetTable  = targetTable;
         this.columnMap    = columnMap;
         this.checkColumns = checkColumns;
@@ -287,7 +284,7 @@ final class CompiledStatement {
         resolveInsertParameterTypes();
 
         // set select result metadata etc.
-        select.prepareResult(database);
+        select.prepareResult(session);
         setParameters(params);
 
         type = INSERT_SELECT;
@@ -299,10 +296,12 @@ final class CompiledStatement {
      * @param select
      * @param params
      */
-    CompiledStatement(Database database, Select select,
+    CompiledStatement(Session session, Database database, HsqlName schema,
+                      Select select,
                       Expression[] params) throws HsqlException {
 
-        this.select = select;
+        schemaHsqlName = schema;
+        this.select    = select;
 
         // resolve any parameters in SELECT as VARCHAR
         for (int i = 0; i < select.iResultLen; i++) {
@@ -314,7 +313,7 @@ final class CompiledStatement {
         }
 
         // set select result metadata etc.
-        select.prepareResult(database);
+        select.prepareResult(session);
         setParameters(params);
 
         type = SELECT;
@@ -326,18 +325,35 @@ final class CompiledStatement {
      * @param expression
      * @param params
      */
-    CompiledStatement(Database database, Expression expression,
+    CompiledStatement(Session session, Database database, HsqlName schema,
+                      Expression expression,
                       Expression[] params) throws HsqlException {
 
+        schemaHsqlName  = schema;
         this.expression = expression;
 
-        expression.resolveTypes(database);
+        expression.resolveTypes(session);
 
         expression.paramMode = Expression.PARAM_OUT;
 
         setParameters(params);
 
         type = CALL;
+    }
+
+    void bind(Object[] values) throws HsqlException {
+
+        int len;
+
+        Trace.check(parameters != null, Trace.COLUMN_COUNT_DOES_NOT_MATCH);
+
+        len = parameters.length;
+
+        Trace.check(values.length >= len, Trace.COLUMN_COUNT_DOES_NOT_MATCH);
+
+        for (int i = 0; i < len; i++) {
+            parameters[i].bind(values[i]);
+        }
     }
 
     /**
@@ -387,13 +403,33 @@ final class CompiledStatement {
         }
     }
 
-    void dematerializeSubQueries() {
+    void dematerializeSubQueries(Session session) {
+
+        if (subqueries == null) {
+            return;
+        }
 
         for (int i = 0; i < subqueries.length; i++) {
-            subqueries[i].table.clearAllRows();
+            subqueries[i].table.clearAllRows(session);
 
             subqueries[i].isMaterialised = false;
         }
+    }
+
+    void clearVariables() {
+
+        isValid      = false;
+        targetTable  = null;
+        targetFilter = null;
+        condition    = null;
+        columnMap    = null;
+        columnValues = null;
+        checkColumns = null;
+        expression   = null;
+        select       = null;
+        parameters   = null;
+        paramTypes   = null;
+        subqueries   = null;
     }
 
     private static final Result updateCountResult =

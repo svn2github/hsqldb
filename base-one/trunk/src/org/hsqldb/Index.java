@@ -86,7 +86,7 @@ import org.hsqldb.lib.ArrayUtil;
  * An Index object also holds information on table columns (in the form of int
  * indexes) that are covered by it.(fredt@users)
  *
- * @version 1.7.2
+ * @version 1.8.0
  */
 public class Index {
 
@@ -104,14 +104,16 @@ public class Index {
     final int[]            pkTypes;
     private final boolean  isUnique;    // DDL uniqueness
     private final boolean  useRowId;
-    boolean                isConstraint;
-    boolean                isForward;
+    final boolean          isConstraint;
+    final boolean          isForward;
+    final boolean          isTemp;
     private Node           root;
     private int            depth;
-    Collation              collation;
+    final Collation        collation;
     static IndexRowIterator emptyIterator = new IndexRowIterator(null, null,
         null);
     IndexRowIterator updatableIterators;
+    final boolean    onCommitPreserve;
 
     /**
      * Constructor declaration
@@ -128,7 +130,7 @@ public class Index {
      */
     Index(Database database, HsqlName name, Table table, int[] column,
             int[] type, boolean isPk, boolean unique, boolean constraint,
-            boolean forward, int[] pkcols, int[] pktypes) {
+            boolean forward, int[] pkcols, int[] pktypes, boolean temp) {
 
         indexName    = name;
         colIndex     = column;
@@ -147,22 +149,9 @@ public class Index {
         updatableIterators = Index.emptyIterator;
         updatableIterators.next = updatableIterators.last =
             updatableIterators;
-        collation = database.collation;
-    }
-
-    /**
-     * Returns the root node
-     */
-    Node getRoot() {
-        return root;
-    }
-
-    /**
-     * Set the root node
-     */
-    void setRoot(Node r) {
-        root  = r;
-        depth = 0;
+        collation        = database.collation;
+        isTemp           = temp;
+        onCommitPreserve = table.onCommitPreserve;
     }
 
     /**
@@ -218,10 +207,10 @@ public class Index {
     /**
      * Returns the node count.
      */
-    int size() throws HsqlException {
+    int size(Session session) throws HsqlException {
 
         int         count = 0;
-        RowIterator it    = firstRow(null);
+        RowIterator it    = firstRow(session);
 
         while (it.hasNext()) {
             it.next();
@@ -232,8 +221,8 @@ public class Index {
         return count;
     }
 
-    boolean isEmpty() {
-        return root == null;
+    boolean isEmpty(Session session) {
+        return getRoot(session) == null;
     }
 
     public int sizeEstimate() throws HsqlException {
@@ -243,9 +232,10 @@ public class Index {
         return (int) (1L << depth);
     }
 
-    void clearAll() {
+    void clearAll(Session session) {
 
-        root  = null;
+        setRoot(session, null);
+
         depth = 0;
 
         for (IndexRowIterator it = updatableIterators.next;
@@ -254,20 +244,38 @@ public class Index {
         }
     }
 
+    void setRoot(Session session, Node node) {
+
+        if (isTemp) {
+            session.setIndexRoot(indexName, onCommitPreserve, node);
+        } else {
+            root = node;
+        }
+    }
+
+    Node getRoot(Session session) {
+
+        if (isTemp) {
+            return session.getIndexRoot(indexName);
+        } else {
+            return root;
+        }
+    }
+
     /**
      * Insert a node into the index
      */
     void insert(Session session, Row row, int offset) throws HsqlException {
 
-        Node    n       = root,
-                x       = n;
+        Node    n       = getRoot(session);
+        Node    x       = n;
         boolean isleft  = true;
         int     compare = -1;
 
         while (true) {
             if (n == null) {
                 if (x == null) {
-                    root = row.getNode(offset);
+                    setRoot(session, row.getNode(offset));
 
                     return;
                 }
@@ -289,13 +297,14 @@ public class Index {
             n      = child(x, isleft);
         }
 
-        balance(x, isleft);
+        balance(session, x, isleft);
     }
 
     /**
      * Balances part of the tree after an alteration to the index.
      */
-    private void balance(Node x, boolean isleft) throws HsqlException {
+    private void balance(Session session, Node x,
+                         boolean isleft) throws HsqlException {
 
         while (true) {
             int sign = isleft ? 1
@@ -316,7 +325,7 @@ public class Index {
                     Node l = child(x, isleft);
 
                     if (l.getBalance() == -sign) {
-                        replace(x, l);
+                        replace(session, x, l);
                         set(x, isleft, child(l, !isleft));
                         set(l, !isleft, x);
                         x.setBalance(0);
@@ -324,7 +333,7 @@ public class Index {
                     } else {
                         Node r = child(l, !isleft);
 
-                        replace(x, r);
+                        replace(session, x, r);
                         set(l, !isleft, child(r, isleft));
                         set(r, isleft, l);
                         set(x, isleft, child(r, !isleft));
@@ -342,7 +351,7 @@ public class Index {
                     return;
             }
 
-            if (x.equals(root)) {
+            if (x.equals(getRoot(session))) {
                 return;
             }
 
@@ -354,7 +363,7 @@ public class Index {
     /**
      * Delete a node from the index
      */
-    void delete(Node x) throws HsqlException {
+    void delete(Session session, Node x) throws HsqlException {
 
         if (x == null) {
             return;
@@ -404,8 +413,8 @@ public class Index {
             Node xp = x.getParent();
             Node dp = d.getParent();
 
-            if (d == root) {
-                root = x;
+            if (d == getRoot(session)) {
+                setRoot(session, x);
             }
 
             x.setParent(dp);
@@ -455,7 +464,7 @@ public class Index {
 
         boolean isleft = x.isFromLeft();
 
-        replace(x, n);
+        replace(session, x, n);
 
         n = x.getParent();
 
@@ -483,7 +492,7 @@ public class Index {
                     int  b = r.getBalance();
 
                     if (b * sign >= 0) {
-                        replace(x, r);
+                        replace(session, x, r);
                         set(x, !isleft, child(r, isleft));
                         set(r, isleft, x);
 
@@ -501,7 +510,7 @@ public class Index {
                     } else {
                         Node l = child(r, isleft);
 
-                        replace(x, l);
+                        replace(session, x, l);
 
                         b = l.getBalance();
 
@@ -579,7 +588,8 @@ public class Index {
                              int[] rowColMap,
                              boolean first) throws HsqlException {
 
-        Node x      = root, n;
+        Node x = getRoot(session);
+        Node n;
         Node result = null;
 
         if (isNull(rowdata, rowColMap)) {
@@ -694,7 +704,7 @@ public class Index {
     RowIterator findFirstRow(Session session,
                              Object[] rowdata) throws HsqlException {
 
-        Node    x      = root;
+        Node    x      = getRoot(session);
         Node    found  = null;
         boolean unique = isUnique &&!isNull(rowdata);
 
@@ -737,7 +747,7 @@ public class Index {
 
         boolean isEqual = compare == Expression.EQUAL
                           || compare == Expression.IS_NULL;
-        Node x     = root;
+        Node x     = getRoot(session);
         int  iTest = 1;
 
         if (compare == Expression.BIGGER) {
@@ -825,7 +835,7 @@ public class Index {
      */
     RowIterator findFirstRowNotNull(Session session) throws HsqlException {
 
-        Node x = root;
+        Node x = getRoot(session);
 
         while (x != null) {
             boolean t = Column.compare(
@@ -875,8 +885,8 @@ public class Index {
 
         depth = 0;
 
-        Node x = root,
-             l = x;
+        Node x = getRoot(session);
+        Node l = x;
 
         while (l != null) {
             x = l;
@@ -898,8 +908,8 @@ public class Index {
      */
     Row lastRow(Session session) throws HsqlException {
 
-        Node x = root,
-             l = x;
+        Node x = getRoot(session);
+        Node l = x;
 
         while (l != null) {
             x = l;
@@ -975,10 +985,11 @@ public class Index {
      *
      * @throws HsqlException
      */
-    private void replace(Node x, Node n) throws HsqlException {
+    private void replace(Session session, Node x,
+                         Node n) throws HsqlException {
 
-        if (x.equals(root)) {
-            root = n;
+        if (x.equals(getRoot(session))) {
+            setRoot(session, n);
 
             if (n != null) {
                 n.setParent(null);
@@ -1022,7 +1033,7 @@ public class Index {
     Node search(Session session, Row row) throws HsqlException {
 
         Object[] d = row.getData();
-        Node     x = root;
+        Node     x = getRoot(session);
 
         while (x != null) {
             int c = compareRowUnique(session, row, x.getRow());
@@ -1204,6 +1215,9 @@ public class Index {
         protected IndexRowIterator last;
         protected IndexRowIterator next;
 
+        /**
+         * When session == null, rows from all sessions are returned
+         */
         private IndexRowIterator(Session session, Index index, Node node) {
 
             if (index == null) {

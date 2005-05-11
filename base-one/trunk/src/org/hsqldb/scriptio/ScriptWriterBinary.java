@@ -39,6 +39,7 @@ import org.hsqldb.NumberSequence;
 import org.hsqldb.Result;
 import org.hsqldb.Table;
 import org.hsqldb.rowio.RowOutputBinary;
+import org.hsqldb.*;
 
 /**
  *  @author fredt@users
@@ -51,7 +52,7 @@ class ScriptWriterBinary extends ScriptWriterBase {
 
     ScriptWriterBinary(Database db, String file, boolean includeCached,
                        boolean newFile) throws HsqlException {
-        super(db, file, includeCached, newFile);
+        super(db, file, includeCached, newFile, false);
     }
 
     protected void initBuffers() {
@@ -65,7 +66,7 @@ class ScriptWriterBinary extends ScriptWriterBase {
 
     // int : row size (0 if no more rows) ,
     // RowInput/OutputBinary : row (column values)
-    protected void writeRow(int sid, Table t,
+    protected void writeRow(Session session, Table t,
                             Object[] data) throws IOException, HsqlException {
 
         rowOut.reset();
@@ -83,7 +84,8 @@ class ScriptWriterBinary extends ScriptWriterBase {
         rowOut.reset();
         rowOut.writeSize(0);
         rowOut.writeString(t.getName().name);
-        rowOut.writeIntData(INSERT);
+        rowOut.writeIntData(INSERT_WITH_SCHEMA);
+        rowOut.writeString(t.getSchemaName());
         rowOut.writeIntData(rowOut.size(), 0);
         fileStreamOut.write(rowOut.getBuffer(), 0, rowOut.size());
     }
@@ -103,17 +105,19 @@ class ScriptWriterBinary extends ScriptWriterBase {
         fileStreamOut.write(rowOut.getBuffer(), 0, rowOut.size());
     }
 
-    public void writeLogStatement(String s,
-                                  int sid)
+    public void writeLogStatement(Session session,
+                                  String s)
                                   throws IOException, HsqlException {}
 
-    protected void writeSessionId(int sid) throws IOException {}
+    protected void addSessionId(Session session) throws IOException {}
 
-    public void writeDeleteStatement(int sid, Table table, Object[] ddata) {}
+    public void writeDeleteStatement(Session session, Table table,
+                                     Object[] ddata) {}
 
-    public void writeSequenceStatement(int sid, NumberSequence seq) {}
+    public void writeSequenceStatement(Session session, NumberSequence seq) {}
 
-    public void writeInsertStatement(int sid, Table table, Object[] data) {}
+    public void writeInsertStatement(Session session, Table table,
+                                     Object[] data) {}
 
-    public void writeCommitStatement(int sid) {}
+    public void writeCommitStatement(Session session) {}
 }

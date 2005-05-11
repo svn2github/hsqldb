@@ -210,10 +210,22 @@ public class Logger {
      */
     public DataFileCache getCache() throws HsqlException {
 
-        if (log != null) {
-            return log.getCache();
-        } else {
+        if (log == null) {
             return null;
+        } else {
+            return log.getCache();
+        }
+    }
+
+    /**
+     *  Returns the Cache object or null if one doesn't exist.
+     */
+    public boolean hasCache() {
+
+        if (log == null) {
+            return false;
+        } else {
+            return log.hasCache();
         }
     }
 
@@ -249,7 +261,7 @@ public class Logger {
             int id = (session == null) ? 0
                                        : session.getId();
 
-            log.writeStatement(id, statement);
+            log.writeStatement(session, statement);
         }
     }
 
@@ -260,7 +272,7 @@ public class Logger {
             int id = (session == null) ? 0
                                        : session.getId();
 
-            log.writeInsertStatement(id, table, row);
+            log.writeInsertStatement(session, table, row);
         }
     }
 
@@ -271,7 +283,7 @@ public class Logger {
             int id = (session == null) ? 0
                                        : session.getId();
 
-            log.writeDeleteStatement(id, t, row);
+            log.writeDeleteStatement(session, t, row);
         }
     }
 
@@ -283,7 +295,7 @@ public class Logger {
             int id = (session == null) ? 0
                                        : session.getId();
 
-            log.writeSequenceStatement(id, s);
+            log.writeSequenceStatement(session, s);
         }
     }
 
@@ -293,7 +305,7 @@ public class Logger {
             int id = (session == null) ? 0
                                        : session.getId();
 
-            log.writeCommitStatement(id);
+            log.writeCommitStatement(session);
             synchLog();
         }
     }

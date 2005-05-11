@@ -37,7 +37,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Properties;
 
-/* $Id: SqlToolSprayer.java,v 1.10 2005/03/02 14:31:01 fredt Exp $ */
+/* $Id: SqlToolSprayer.java,v 1.7 2004/09/22 17:53:49 fredt Exp $ */
 
 /**
  * Sql Tool Sprayer.
@@ -54,7 +54,7 @@ import java.util.Properties;
  * </UL>
  *
  * @see @main()
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.7 $
  * @author Blaine Simpson
  */
 public class SqlToolSprayer {
@@ -115,8 +115,12 @@ public class SqlToolSprayer {
             status[i] = false;
         }
 
-        String[] withRcArgs    = { "--sql", sa[0], "--rcfile", rcFile, null };
-        String[] withoutRcArgs = { "--sql", sa[0], null };
+        String[] withRcArgs    = {
+            "--sql", sa[0], "--rcfile", rcFile, null
+        };
+        String[] withoutRcArgs = {
+            "--sql", sa[0], null
+        };
         String[] sqlToolArgs   = (rcFile == null) ? withoutRcArgs
                                                   : withRcArgs;
         boolean  onefailed     = false;

@@ -33,6 +33,8 @@ package org.hsqldb;
 
 import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.HsqlDeque;
+import org.hsqldb.lib.StringConverter;
+import org.hsqldb.lib.StringUtil;
 
 // peterhudson@users 20020130 - patch 478657 by peterhudson - triggers support
 // fredt@users 20020130 - patch 1.7.0 by fredt
@@ -84,14 +86,14 @@ class TriggerDef extends Thread {
 
     protected static int defaultQueueSize = 1024;
     Table                table;
-    Trigger              trig;
-    String               fire;
-    int                  vectorIndex;           // index into HsqlArrayList[]
+    Trigger              trigger;
+    String               triggerClassName;
+    int                  vectorIndex;               // index into HsqlArrayList[]
 
     //protected boolean busy;               // firing trigger in progress
-    protected HsqlDeque        pendingQueue;    // row triggers pending
-    protected int              rowsQueued;      // rows in pendingQueue
-    protected boolean          valid;           // parsing valid
+    protected HsqlDeque        pendingQueue;        // row triggers pending
+    protected int              rowsQueued;          // rows in pendingQueue
+    protected boolean          valid     = true;    // parsing valid
     protected volatile boolean keepGoing = true;
 
     /**
@@ -105,50 +107,63 @@ class TriggerDef extends Thread {
      *  (fredt@users)
      *
      * @param  name The trigger object's HsqlName
-     * @param  sWhen the String representation of whether the trigger fires
+     * @param  when the String representation of whether the trigger fires
      *      before or after the triggering event
-     * @param  sOper the String representation of the triggering operation;
+     * @param  operation the String representation of the triggering operation;
      *      currently insert, update, or delete
-     * @param  bForEach indicates whether the trigger is fired for each row
+     * @param  forEach indicates whether the trigger is fired for each row
      *      (true) or statement (false)
-     * @param  pTab the Table object upon which the indicated operation
+     * @param  table the Table object upon which the indicated operation
      *      fires the trigger
-     * @param  pTrig the specific instance of the org.hsqldb.Trigger interface
-     *      implementation providing the behaviour of the trigger body
-     * @param  sFire the fully qualified named of the class implementing
+     * @param  triggerClassName the fully qualified named of the class implementing
      *      the org.hsqldb.Trigger (trigger body) interface
-     * @param  bNowait do not wait for available space on the pending queue; if
+     * @param  noWait do not wait for available space on the pending queue; if
      *      the pending queue does not have fewer than nQueueSize queued items,
      *      then overwrite the current tail instead
-     * @param  nQueueSize the length to which the pending queue may grow before
+     * @param  queueSize the length to which the pending queue may grow before
      *      further additions are either blocked or overwrite the tail entry,
-     *      as determined by bNowait
-     * @throws HsqlException never - reserved for future use
+     *      as determined by noWait
+     * @throws HsqlException - Invalid input parameter
      */
-    public TriggerDef(HsqlNameManager.HsqlName name, String sWhen,
-                      String sOper, boolean bForEach, Table pTab,
-                      Trigger pTrig, String sFire, boolean bNowait,
-                      int nQueueSize) throws HsqlException {
+    public TriggerDef(HsqlNameManager.HsqlName name, String when,
+                      String operation, boolean forEach, Table table,
+                      String triggerClassName, boolean noWait, int queueSize,
+                      ClassLoader loader) throws HsqlException {
 
-        this.name     = name;
-        when          = sWhen.toUpperCase();
-        operation     = sOper.toUpperCase();
-        forEachRow    = bForEach;
-        nowait        = bNowait;
-        maxRowsQueued = nQueueSize;
-        table         = pTab;
-        trig          = pTrig;
-        fire          = sFire;
-        vectorIndex   = SqlToIndex();
-
-        //busy = false;
-        rowsQueued   = 0;
-        pendingQueue = new HsqlDeque();
+        this.name             = name;
+        this.when             = when;
+        this.operation        = operation;
+        this.forEachRow       = forEach;
+        this.nowait           = noWait;
+        this.maxRowsQueued    = queueSize;
+        this.table            = table;
+        vectorIndex           = SqlToIndex();
+        this.triggerClassName = triggerClassName;
+        rowsQueued            = 0;
+        pendingQueue          = new HsqlDeque();
 
         if (vectorIndex < 0) {
+            throw Trace.error(Trace.UNEXPECTED_TOKEN,
+                              Trace.CREATE_TRIGGER_COMMAND_1);
+        }
+
+        Class cl;
+
+        try {
+            cl = loader == null ? Class.forName(triggerClassName)
+                                : loader.loadClass(triggerClassName);
+        } catch (ClassNotFoundException e) {
             valid = false;
-        } else {
-            valid = true;
+            cl    = DefaultTrigger.class;
+        }
+
+        try {
+
+            // dynamically instantiate it
+            trigger = (Trigger) cl.newInstance();
+        } catch (Exception e) {
+            throw Trace.error(Trace.UNEXPECTED_TOKEN,
+                              Trace.CREATE_TRIGGER_COMMAND_1);
         }
     }
 
@@ -187,7 +202,8 @@ class TriggerDef extends Thread {
         }
 
         a.append(Token.T_CALL).append(' ');
-        a.append(fire);
+        a.append(StringConverter.toQuotedString(triggerClassName, '"',
+                false));
 
         return a;
     }
@@ -211,13 +227,13 @@ class TriggerDef extends Thread {
         } else if (operation.equals(Token.T_UPDATE)) {
             indx = Trigger.UPDATE_AFTER;
         } else {
-            indx = -1;
+            return -1;
         }
 
         if (when.equals(Token.T_BEFORE)) {
             indx += NUM_TRIGGER_OPS;    // number of operations
         } else if (!when.equals(Token.T_AFTER)) {
-            indx = -1;
+            return -1;
         }
 
         if (forEachRow) {
@@ -268,9 +284,9 @@ class TriggerDef extends Thread {
 
             if (triggerData != null) {
                 if (triggerData.username != null) {
-                    trig.fire(this.vectorIndex, name.name,
-                              table.getName().name, triggerData.oldRow,
-                              triggerData.newRow);
+                    trigger.fire(this.vectorIndex, name.name,
+                                 table.getName().name, triggerData.oldRow,
+                                 triggerData.newRow);
                 }
             }
         }
@@ -341,8 +357,8 @@ class TriggerDef extends Thread {
                                Object[] row2) {
 
         if (maxRowsQueued == 0) {
-            trig.fire(vectorIndex, name.name, table.getName().name, row1,
-                      row2);
+            trigger.fire(vectorIndex, name.name, table.getName().name, row1,
+                         row2);
 
             return;
         }
@@ -403,6 +419,14 @@ class TriggerDef extends Thread {
             this.oldRow   = oldRow;
             this.newRow   = newRow;
             this.username = session.getUsername();
+        }
+    }
+
+    static class DefaultTrigger implements org.hsqldb.Trigger {
+
+        public void fire(int i, String name, String table, Object row1[],
+                         Object row2[]) {
+            throw new RuntimeException("Missing Trigger class!");
         }
     }
 }

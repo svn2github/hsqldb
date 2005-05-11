@@ -40,7 +40,7 @@ package org.hsqldb.lib;
  * @version 1.7.2
  * @since 1.7.2
  */
-public interface HsqlList {
+public interface HsqlList extends Collection {
 
     void add(int index, Object element);
 

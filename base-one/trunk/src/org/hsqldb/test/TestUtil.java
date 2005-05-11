@@ -257,6 +257,9 @@ public class TestUtil {
             case 'u' :
                 return new UpdateParsedSection(rows);
 
+            case 's' :
+                return new SilentParsedSection(rows);
+
             case 'r' :
                 return new ResultSetParsedSection(rows);
 
@@ -445,16 +448,23 @@ abstract class ParsedSection {
          * 'c' ('C') - count
          * 'e' ('E') - exception
          * 'r' ('R') - results
+         * 's' ('S') - silent
          * ' ' - not a test
          */
         char testChar = Character.toLowerCase(aCode);
 
-        if ((testChar == ' ') || (testChar == 'r') || (testChar == 'e')
-                || (testChar == 'c') || (testChar == 'u')) {
-            return true;
-        } else {
-            return false;
+        switch (testChar) {
+
+            case ' ' :
+            case 'r' :
+            case 'e' :
+            case 'c' :
+            case 'u' :
+            case 's' :
+                return true;
         }
+
+        return false;
     }
 }
 
@@ -648,6 +658,30 @@ class UpdateParsedSection extends ParsedSection {
 
             return false;
         }
+
+        return true;
+    }
+}
+
+/** Represents a ParsedSection for silent execution */
+class SilentParsedSection extends ParsedSection {
+
+    protected SilentParsedSection(String[] lines) {
+
+        super(lines);
+
+        type = 's';
+    }
+
+    protected String getResultString() {
+        return null;
+    }
+
+    protected boolean test(Statement aStatement) {
+
+        try {
+            aStatement.execute(getSql());
+        } catch (Exception x) {}
 
         return true;
     }

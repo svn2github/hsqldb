@@ -95,6 +95,7 @@ public class ScriptReaderText extends ScriptReaderBase {
             if (result != null && result.mode == ResultConstants.ERROR) {
                 db.logger.appLog.logContext(result.getException());
 
+                /** @todo fredt - if unavaialble external functions are to be ignored */
                 throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
                                   Trace.DatabaseScriptReader_readDDL,
                                   new Object[] {
@@ -115,12 +116,22 @@ public class ScriptReaderText extends ScriptReaderBase {
 
             for (; isInsert || readLoggedStatement(session);
                     isInsert = false) {
-                if (!rowIn.getTableName().equals(tablename)) {
-                    tablename    = rowIn.getTableName();
-                    currentTable = db.getUserTable(session, tablename, null);
-                }
+                if (statementType == SCHEMA_STATEMENT) {
+                    session.setSchema(currentSchema);
 
-                currentTable.insertFromScript(rowData);
+                    continue;
+                } else if (statementType == INSERT_STATEMENT) {
+                    if (!rowIn.getTableName().equals(tablename)) {
+                        tablename = rowIn.getTableName();
+
+                        String schema = session.getSchemaName(currentSchema);
+
+                        currentTable = db.schemaManager.getUserTable(session,
+                                tablename, schema);
+                    }
+
+                    currentTable.insertFromScript(rowData);
+                }
             }
 
             db.setReferentialIntegrity(true);
@@ -142,18 +153,19 @@ public class ScriptReaderText extends ScriptReaderBase {
 
         lineCount++;
 
+//        System.out.println(lineCount);
         statement = StringConverter.asciiToUnicode(s);
 
         if (statement == null) {
             return false;
         }
 
-        processStatement();
+        processStatement(session);
 
         return true;
     }
 
-    private void processStatement() throws IOException {
+    private void processStatement(Session session) throws IOException {
 
         try {
             if (statement.startsWith("/*C")) {
@@ -178,11 +190,19 @@ public class ScriptReaderText extends ScriptReaderBase {
                 currentTable = null;
 
                 return;
+            } else if (statementType == SCHEMA_STATEMENT) {
+                rowData       = null;
+                currentTable  = null;
+                currentSchema = rowIn.getSchemaName();
+
+                return;
             }
 
-            String name = rowIn.getTableName();
+            String name   = rowIn.getTableName();
+            String schema = session.getSchemaName(null);
 
-            currentTable = db.getUserTable(null, name, null);
+            currentTable = db.schemaManager.getUserTable(session, name,
+                    schema);
 
             int[] colTypes;
 

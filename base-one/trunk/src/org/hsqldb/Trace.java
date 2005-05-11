@@ -100,6 +100,9 @@ public class Trace {
     public static final boolean STOP           = false;
     public static final boolean DOASSERT       = false;
 
+    // SQL state for unavailable user function or trigger
+    public static final String FUNC_NOT_EXIST = "S3000";
+
     //
     public static final int DATABASE_ALREADY_IN_USE                   = 1,
                             CONNECTION_IS_CLOSED                      = 2,
@@ -223,7 +226,7 @@ public class Trace {
                             JDBC_NO_RESULT_SET                        = 120,
                             MISSING_CLOSEBRACKET                      = 121,
                             ITSNS_OVERWRITE                           = 122,
-                            Table_moveDefinition                      = 123,
+                            COLUMN_IS_IN_INDEX                        = 123,
                             STRING_DATA_TRUNCATION                    = 124,
                             QUOTED_IDENTIFIER_REQUIRED                = 125,
                             STATEMENT_IS_CLOSED                       = 126,
@@ -305,7 +308,7 @@ public class Trace {
                             INTERNAL_session_operation_not_supported  = 202,
                             INVALID_PREPARED_STATEMENT                = 203,
                             CREATE_TRIGGER_COMMAND_1                  = 204,
-                            CREATE_TRIGGER_COMMAND_2                  = 205,
+                            TRIGGER_FUNCTION_CLASS_NOT_FOUND          = 205,
                             BAD_SAVEPOINT_NAME                        = 206,
                             DataFileCache_defrag                      = 207,
                             INVALID_COLLATION_NAME_NO_SUBCLASS        = 208,
@@ -327,241 +330,293 @@ public class Trace {
                             Session_sqlExecuteCompiled                = 224,
                             DATA_FILE_IS_FULL                         = 225,
                             THREE_PART_IDENTIFIER                     = 226,
-                            LAST_ERROR_HANDLE                         = 227;
+                            INVALID_SCHEMA_NAME_NO_SUBCLASS           = 227,
+                            DEPENDENT_DATABASE_OBJECT_EXISTS          = 228,
+                            NO_SUCH_ROLE_GRANT                        = 229,
+                            NO_SUCH_ROLE_REVOKE                       = 230,
+                            NONMOD_ACCOUNT                            = 231,
+                            NO_SUCH_GRANTEE                           = 232,
+                            MISSING_SYSAUTH                           = 233,
+                            MISSING_GRANTEE                           = 234,
+                            CHANGE_GRANTEE                            = 235,
+                            NULL_NAME                                 = 236,
+                            ILLEGAL_ROLE_NAME                         = 237,
+                            ROLE_ALREADY_EXISTS                       = 238,
+                            NO_SUCH_ROLE                              = 239,
+                            MISSING_ROLEMANAGER                       = 240,
+                            GRANTEE_ALREADY_EXISTS                    = 241,
+                            MISSING_PUBLIC_GRANTEE                    = 242,
+                            NONMOD_GRANTEE                            = 243,
+                            CIRCULAR_GRANT                            = 244,
+                            ALREADY_HAVE_ROLE                         = 245,
+                            DONT_HAVE_ROLE                            = 246,
+                            ROLE_RECURSION_MAXED                      = 247,
+                            RETRIEVE_NEST_ROLE_FAIL                   = 248,
+                            NO_SUCH_RIGHT                             = 249,
+                            IN_SCHEMA_DEFINITION                      = 250,
+                            PRIMARY_KEY_NOT_ALLOWED                   = 251,
+                            COLUMN_IS_IN_CONSTRAINT                   = 252,
+                            LAST_ERROR_HANDLE                         = 253;
 
     //
     static String MESSAGE_TAG = "$$";
 
     //
     private static final String[] sDescription = {
-        "NOT USED",                                                     //
-        "08001 The database is already in use by another process",      // 1
-        "08003 Connection is closed",                                   //
-        "08003 Connection is broken",                                   //
-        "08003 The database is shutdown",                               //
-        "21000 Column count does not match",                            //
-        "22012 Division by zero",                                       //
-        "22019 Invalid escape character",                               //
-        "23000 Integrity constraint violation",                         //
-        "23000 Violation of unique index",                              //
-        "23000 Try to insert null into a non-nullable column",          //
-        "37000 Unexpected token",                                       // 11
-        "37000 Unexpected end of command",                              //
-        "37000 Unknown function",                                       //
-        "37000 Need aggregate function or group by",                    //
-        "37000 Sum on non-numeric data not allowed",                    //
-        "37000 Wrong data type",                                        //
-        "21000 Single value expected",                                  //
-        "40001 Serialization failure",                                  //
-        "40001 Transfer corrupted",                                     //
-        "IM001 This function is not supported",                         //
-        "S0001 Table already exists",                                   // 21
-        "S0002 Table not found",                                        //
-        "S0011 Index already exists",                                   //
-        "S0011 Attempt to define a second primary key",                 //
-        "S0011 Attempt to drop the primary key",                        //
-        "S0012 Index not found",                                        //
-        "S0021 Column already exists",                                  //
-        "S0022 Column not found",                                       //
-        "S1000 File input/output error",                                //
-        "S1000 Wrong database file version",                            //
-        "S1000 The database is in read only mode",                      // 31
-        "S1000 The table data is read only",                            //
-        "S1000 Access is denied",                                       //
-        "S1000 InputStream error",                                      //
-        "S1000 No data is available",                                   //
-        "S1000 User already exists",                                    //
-        "S1000 User not found",                                         //
-        "S1000 Assert failed",                                          //
-        "S1000 External stop request",                                  //
-        "S1000 General error",                                          //
-        "S1009 Wrong OUT parameter",                                    // 41
-        "S1010 Function not found",                                     //
-        "S0002 Trigger not found",                                      //
-        "S1011 Savepoint not found",                                    //
-        "37000 Label required for value list",                          //
-        "37000 Wrong data type or data too long in DEFAULT clause",     //
-        "S0011 Both tables must be permanent or temporary",             //
-        "S1000 The table's data source for has not been defined",       //
-        "S0000 Index or constraint name cannot begin with SYS_",        //
-        "S0011 Attempt to drop a foreign key index",                    //
-        "S1000 ResultSet was set to forward only",                      // 51
-        "S0003 View already exists",                                    //
-        "S0004 View not found",                                         //
-        "S0005 Not a View",                                             //
-        "S0005 Not a Table",                                            //
-        "S0011 Attempt to drop or rename a system index",               //
-        "S0021 Column types do not match",                              //
-        "s0021 Column constraints are not acceptable",                  //
-        "S0011 Attempt to drop a system constraint",                    //
-        "S0011 Constraint already exists",                              //
-        "S0011 Constraint not found",                                   // 61
-        "SOO10 Invalid argument in JDBC call",                          //
-        "S1000 Database is memory only",                                //
-        "37000 not allowed in OUTER JOIN condition",                    //
-        "22003 Numeric value out of range",                             //
-        "37000 Software module not installed",                          //
-        "37000 Not in aggregate function or group by clause",           //
-        "37000 Cannot be in GROUP BY clause",                           //
-        "37000 Cannot be in HAVING clause",                             //
-        "37000 Cannot be in ORDER BY clause",                           //
-        "37000 ORDER BY item should be in the SELECT DISTINCT list",    // 71
-        "S1000 Out of Memory",                                          //
-        "S1000 This operation is not supported",                        //
-        "22019 Invalid identifier",                                     //
-        "22019 Invalid TEXT table source string",                       //
-        "S1000 bad TEXT table source file - line number: $$ $$",        //
-        "23000 negative value not allowed for identity column",         //
-        "S1000 error in script file",                                   //
-        "37000 NULL in value list",                                     //
-        "08000 socket creation error",                                  //
-        "37000 invalid character encoding",                             // 81
-        "08000 Failed to obtain a Java Classloader for TLS",            //
-        "08000 Trying to use security, but JSSE not available",         //
-        "08000 Failed to obtain an SSL Socket Factory",                 //
-        "08000 Unexpected exceptin when setting up TLS",                //
-        "08000 TLS Error",                                              //
-        "08000 A required method for TLS capability is missing",        //
-        "08000 TLS Security error",                                     //
-        "08000 TLS failed to obtain security data",                     //
-        "08000 No authentication principal",                            //
-        "08000 Incomplete security certificate",                        // 91
-        "08000 Authentication refusal due to hostname mismatch",        //
-        "08000 Certificate or private key keystore problem",            //
-        "08003 Database does not exists",                               //
-        "22003 Type Conversion not supported",                          //
-        " table $$ row count error : $$ read, needed $$",               // BinaryDatabaseScriptReader_readExistingData
-        " wrong data for insert operation",                             // BinaryDatabaseScriptReader_readTableInit
-        "S1000",                                                        // GENERAL_IO_ERROR
-        "S1000 expression not supported in this context",               // EXPRESSION_NOT_SUPPORTED                                   // Cache_saveAll
-        " $$ table: $$",                                                // Constraint_checkInsert
-        " $$ table: $$",                                                // 101 Database_dropTable
-        "duplicate column in list",                                     // DatabaseCommandInterpreter_processColumnList
-        "table has no primary key",                                     // DatabaseCommandInterpreter_processCreateConstraints
-        "23000 Unique constraint violation",                            //
-        "missing DEFAULT value on column '$$'",                         // DatabaseCommandInterpreter_checkFKColumnDefaults
-        "S1000 NULL value as BOOLEAN",                                  //
-        "attempt to connect while db opening /closing",                 // DatabaseManager_getDatabase
-        "problem in db access count",                                   // DatabaseManager_getDatabaseObject
-        "problem in db access count",                                   // DatabaseManager_releaseSession
-        "problem in db access count",                                   // DatabaseManager_releaseDatabase
-        "legacy db support",                                            // 111 DatabaseRowInput_newDatabaseRowInput
-        "legacy db support",                                            // DatabaseRowOutput_newDatabaseRowOutput
-        " line: $$ $$",                                                 // DatabaseScriptReader_readDDL
-        " line: $$ $$",                                                 // DatabaseScriptReader_readExistingData
-        " $$ $$",                                                       // Function_Function
-        " $$.properties $$",                                            // HsqlDatabaseProperties_load
-        "25000 invalid transaction state",                              // INVALID_TRANSACTION_STATE_NO_SUBCLASS
-        "invalid scope value",                                          // jdbcDatabaseMetaData_getBestRowIdentifier
-        "result set is null",                                           // jdbcResultSetMetaData_jdbcResultSetMetaData
-        "result set is closed",                                         // jdbcResultSetMetaData_jdbcResultSetMetaData_2
-        "37000 missing )",                                              // MISSING_CLOSEBRACKET
-        "row has been modified by another transaction",                 // TableFilter_findFirst
-        "37000 there is an index on the column to be removed",          // Table_moveDefinition
-        "22001 string too long",                                        //
-        "00000 quoted identifier required",                             // SET PROPERTY "name" "value"
-        "00000 statement is closed",                                    // SET PROPERTY "name" "value"
-        "Method skipBytes() not yet implemented.",                      // DatabaseRowInput_skipBytes
-        "Method readLine() not yet implemented.",                       // DatabaseRowInput_readLine
-        "S1000 Data File input/output error",                           //
-        "S1000 ",                                                       // DiskNode_writeTranslatePointer
-        "null string",                                                  // 131 HsqlDateTime_null_string
-        "invalid timestamp",                                            // HsqlDateTime_invalid_timestamp
-        "null date",                                                    // HsqlDateTime_null_date
-        "invalid date",                                                 // HsqlDateTime_invalid_date
-        "properties name is null or empty",                             // HsqlProperties_load
-        "Server certificate has no Common Name",                        // HsqlSocketFactorySecure_verify
-        "Server certificate has empty Common Name",                     // HsqlSocketFactorySecure_verify2
-        "Unknown JDBC escape sequence: {",                              // jdbcConnection_nativeSQL
-        "Certificate Common Name[$$] does not match host name[$$]",     // HsqlSocketFactorySecure_verify3
-        "End of stream with no data read",                              // jdbcPreparedStatement_setCharacterStream
-        "End of stream with no data read",                              // 141 jdbcPreparedStatement_setClob
-        "executeUpdate() cannot be used with this statement",           // jdbcStatement_executeUpdate
-        " $$ : $$",                                                     // LockFile_checkHeartbeat
-        "$$$$ is presumably locked by another process.",                // LockFile_checkHeartbeat2
-        "22001 end of line characters not allowed",                     // TEXT_STRING_HAS_NEWLINE
-        "trying to use unsupported result mode: $$",                    // Result_Result
-        "no valid database paths",                                      // SERVER_NO_DATABASE
-        "Invalid address : $$\nTry one of: $$",                         // Server_openServerSocket
-        "Invalid address : $$",                                         // Server_openServerSocket2
-        "22001 header not allowed or too long",                         // TEXT_TABLE_HEADER
-        "22001 separator not allowed in unquoted string",               // 151 TextDatabaseRowOutput_checkConvertString2
-        "not implemented",                                              // TextDatabaseRowOutput_writeIntData
-        "00000 LIMIT or TOP not allowed",                               //
-        "00000 Statement does not generate a row count",                //
-        "00000 Statement does not generate a result set",               //
-        "S0022 ambiguous Column reference",                             //
-        "23000 Check constraint violation",                             //
-        "S1000 ResultSet is closed",                                    //
-        "37000 Single column select required in IN predicate",          //
-        " $$, requires $$",                                             // Tokenizer.getThis()
-        "path is null",                                                 // 161
-        "file does not exist: ",                                        //
-        "00000 ORDER BY with LIMIT required",                           //
-        "S0002 Trigger already exists",                                 //
-        "S0000 direct execute with param count > 0",                    //
-        "while creating ",                                              // DataFileCache_backup
-        "Expression.compareValues",                                     // Expression_compareValues
-        "LIMIT clause",                                                 //
-        "TOP clause",                                                   //
-        "S0011 primary or unique constraint required on main table",    //
-        " $$ in table: $$",                                             // 171
-        "no file name specified for source",                            //
-        "no value for: ",                                               //
-        "zero length separator",                                        //
-        "Unsupported parameter/return value class: ",                   //
-        "input stream is null",                                         //
-        "23000 Integrity constraint violation - no parent",             //
-        "No position specified",                                        // DatabaseRowInput_getPos
-        "No next position specified",                                   // DatabaseRowInput_getNextPos
-        "No sep.",                                                      // QuotedTextDatabaseRowInput_getField
-        "field $$ ($$)",                                                // 181 QuotedTextDatabaseRowInput_getField2
-        "No end sep.",                                                  // TextDatabaseRowInput_getField
-        "No end sep.",                                                  // TextDatabaseRowInput_getField2
-        "field $$ ($$)",                                                // TextDatabaseRowInput_getField3
-        "as operands of a BETWEEN predicate",                           //
-        "23000 Sequence is referenced by view",                         //
-        "error reading script file",                                    //
-        "openning file: $$ error: $$",                                  // TextCache - or generic file error
-        "closing file: $$ error: $$",                                   // TextCache - or generic file error
-        "purging file: $$ error: $$",                                   // TextCache - or generic file error
-        "S0002 Sequence not found",                                     // 191
-        "S1000 Sequence already exists",                                //
-        "23000 Table is referenced by a constraint in table",           //
-        "23000 Table is referenced by view",                            //
-        "parametric table identifier",                                  // Parser
-        "S1000 text source file already exists",                        // SELECT INTO TEXT <name>
-        "23000 column is referenced in",                                //
-        "S1000 Error calling function",                                 //
-        "27000 Triggered data change violation",                        //
-        "37000 Invalid argument",                                       //
-        "S1000 Internal Error : Unknown SQL Statement Type:",           // 201
-        "S1000 Internal Error : Unknown Session Operation Type:",       //
-        "S1000 prepared statement is no longer valid",                  //
-        "parsing trigger command ",                                     // DatabaseCommandInterpreter_processCreateTrigger1
-        "loading trigger class ",                                       // DatabaseCommandInterpreter_processCreateTrigger2
-        "missing or zero-length savepoint name",                        // DatabaseCommandInterpreter_processSavepoint
-        "error $$ during defrag - file $$",                             // DataFileCache_defrag
-        "invalid collation name",                                       // INVALID_COLLATION_NAME_NO_SUBCLASS
-        "error $$ reading row - file $$",                               // DataFileCache_makeRow
-        "error $$ opening file - file $$",                              // DataFileCache_makeRow
-        "error $$ closing file - file $$",                              // 211 DataFileCache_makeRow
-        "in unary negation operation",                                  // Expression_resolveTypes1
-        "as both operands of aritmetic operator",                       // Expression_resolveTypes2
-        "as both comparison expression",                                // Expression_resolveTypes3
-        "parameter not allowed as the argument of a set function",      // Expression_resolveTypes4
-        "unresolved parameter type ",                                   // Expression_resolveTypes5
-        "as both operands of a CASE operation",                         // Expression_resolveTypes6
-        "as output of CASE when operand types are $$ and $$",           // Expression_resolveTypes7
-        "as both expressions of LIKE",                                  // Expression_resolveTypeForLike
-        "when the value list is empty",                                 // Expression_resolveTypeForIn1
-        "as both expression and first entry of an IN operation",        // 221 Expression_resolveTypeForIn2
-        "Session is closed",                                            // Session_execute
-        "Session is closed",                                            // Session_sqlExecuteDirect
-        "Session is closed",                                            // Session_sqlExecuteCompiled
-        "S1000 Data file size limit is reached",
-        "22019 Three part identifiers prohibited",
-        "LAST",                                                         // Control variable,
+        "NOT USED",                                                         //
+        "08001 The database is already in use by another process",          // 1
+        "08003 Connection is closed",                                       //
+        "08003 Connection is broken",                                       //
+        "08003 The database is shutdown",                                   //
+        "21000 Column count does not match",                                //
+        "22012 Division by zero",                                           //
+        "22019 Invalid escape character",                                   //
+        "23000 Integrity constraint violation",                             //
+        "23000 Violation of unique index",                                  //
+        "23000 Try to insert null into a non-nullable column",              //
+        "37000 Unexpected token",                                           // 11
+        "37000 Unexpected end of command",                                  //
+        "37000 Unknown function",                                           //
+        "37000 Need aggregate function or group by",                        //
+        "37000 Sum on non-numeric data not allowed",                        //
+        "37000 Wrong data type",                                            //
+        "21000 Single value expected",                                      //
+        "40001 Serialization failure",                                      //
+        "40001 Transfer corrupted",                                         //
+        "IM001 This function is not supported",                             //
+        "S0001 Table already exists",                                       // 21
+        "S0002 Table not found",                                            //
+        "S0011 Index already exists",                                       //
+        "S0011 Attempt to define a second primary key",                     //
+        "S0011 Attempt to drop the primary key",                            //
+        "S0012 Index not found",                                            //
+        "S0021 Column already exists",                                      //
+        "S0022 Column not found",                                           //
+        "S1000 File input/output error",                                    //
+        "S1000 Wrong database file version",                                //
+        "S1000 The database is in read only mode",                          // 31
+        "S1000 The table data is read only",                                //
+        "S1000 Access is denied",                                           //
+        "S1000 InputStream error",                                          //
+        "S1000 No data is available",                                       //
+        "S1000 User already exists",                                        //
+        "S1000 User not found",                                             //
+        "S1000 Assert failed",                                              //
+        "S1000 External stop request",                                      //
+        "S1000 General error",                                              //
+        "S1009 Wrong OUT parameter",                                        // 41
+        "S1010 Function not found",                                         //
+        "S0002 Trigger not found",                                          //
+        "S1011 Savepoint not found",                                        //
+        "37000 Label required for value list",                              //
+        "37000 Wrong data type or data too long in DEFAULT clause",         //
+        "S0011 Both tables must be permanent or temporary",                 //
+        "S1000 The table's data source for has not been defined",           //
+        "S0000 Index or constraint name cannot begin with SYS_",            //
+        "S0011 Attempt to drop a foreign key index",                        //
+        "S1000 ResultSet was set to forward only",                          // 51
+        "S0003 View already exists",                                        //
+        "S0004 View not found",                                             //
+        "S0005 Not a View",                                                 //
+        "S0005 Not a Table",                                                //
+        "S0011 Attempt to drop or rename a system index",                   //
+        "S0021 Column types do not match",                                  //
+        "s0021 Column constraints are not acceptable",                      //
+        "S0011 Attempt to drop a system constraint",                        //
+        "S0011 Constraint already exists",                                  //
+        "S0011 Constraint not found",                                       // 61
+        "SOO10 Invalid argument in JDBC call",                              //
+        "S1000 Database is memory only",                                    //
+        "37000 not allowed in OUTER JOIN condition",                        //
+        "22003 Numeric value out of range",                                 //
+        "37000 Software module not installed",                              //
+        "37000 Not in aggregate function or group by clause",               //
+        "37000 Cannot be in GROUP BY clause",                               //
+        "37000 Cannot be in HAVING clause",                                 //
+        "37000 Cannot be in ORDER BY clause",                               //
+        "37000 ORDER BY item should be in the SELECT DISTINCT list",        // 71
+        "S1000 Out of Memory",                                              //
+        "S1000 This operation is not supported",                            //
+        "22019 Invalid identifier",                                         //
+        "22019 Invalid TEXT table source string",                           //
+        "S1000 bad TEXT table source file - line number: $$ $$",            //
+        "23000 negative value not allowed for identity column",             //
+        "S1000 error in script file",                                       //
+        "37000 NULL in value list",                                         //
+        "08000 socket creation error",                                      //
+        "37000 invalid character encoding",                                 // 81
+        "08000 Failed to obtain a Java Classloader for TLS",                //
+        "08000 Trying to use security, but JSSE not available",             //
+        "08000 Failed to obtain an SSL Socket Factory",                     //
+        "08000 Unexpected exceptin when setting up TLS",                    //
+        "08000 TLS Error",                                                  //
+        "08000 A required method for TLS capability is missing",            //
+        "08000 TLS Security error",                                         //
+        "08000 TLS failed to obtain security data",                         //
+        "08000 No authentication principal",                                //
+        "08000 Incomplete security certificate",                            // 91
+        "08000 Authentication refusal due to hostname mismatch",            //
+        "08000 Certificate or private key keystore problem",                //
+        "08003 Database does not exists",                                   //
+        "22003 Type Conversion not supported",                              //
+        " table $$ row count error : $$ read, needed $$",                   // BinaryDatabaseScriptReader_readExistingData
+        " wrong data for insert operation",                                 // BinaryDatabaseScriptReader_readTableInit
+        "S1000",                                                            // GENERAL_IO_ERROR
+        "S1000 expression not supported in this context",                   // EXPRESSION_NOT_SUPPORTED                                   // Cache_saveAll
+        " $$ table: $$",                                                    // Constraint_checkInsert
+        " $$ table: $$",                                                    // 101 Database_dropTable
+        "duplicate column in list",                                         // DatabaseCommandInterpreter_processColumnList
+        "table has no primary key",                                         // DatabaseCommandInterpreter_processCreateConstraints
+        "23000 Unique constraint violation",                                //
+        "missing DEFAULT value on column '$$'",                             // DatabaseCommandInterpreter_checkFKColumnDefaults
+        "S1000 NULL value as BOOLEAN",                                      //
+        "attempt to connect while db opening /closing",                     // DatabaseManager_getDatabase
+        "problem in db access count",                                       // DatabaseManager_getDatabaseObject
+        "problem in db access count",                                       // DatabaseManager_releaseSession
+        "problem in db access count",                                       // DatabaseManager_releaseDatabase
+        "legacy db support",                                                // 111 DatabaseRowInput_newDatabaseRowInput
+        "legacy db support",                                                // DatabaseRowOutput_newDatabaseRowOutput
+        " line: $$ $$",                                                     // DatabaseScriptReader_readDDL
+        " line: $$ $$",                                                     // DatabaseScriptReader_readExistingData
+        " $$ $$",                                                           // Function_Function
+        " $$.properties $$",                                                // HsqlDatabaseProperties_load
+        "25000 invalid transaction state",                                  // INVALID_TRANSACTION_STATE_NO_SUBCLASS
+        "invalid scope value",                                              // jdbcDatabaseMetaData_getBestRowIdentifier
+        "result set is null",                                               // jdbcResultSetMetaData_jdbcResultSetMetaData
+        "result set is closed",                                             // jdbcResultSetMetaData_jdbcResultSetMetaData_2
+        "37000 missing )",                                                  // 121 MISSING_CLOSEBRACKET
+        "row has been modified by another transaction",                     // TableFilter_findFirst
+        "37000 there is an index on the column to be removed",              // Table_moveDefinition
+        "22001 string too long",                                            //
+        "00000 quoted identifier required",                                 // SET PROPERTY "name" "value"
+        "00000 statement is closed",                                        // SET PROPERTY "name" "value"
+        "Method skipBytes() not yet implemented.",                          // DatabaseRowInput_skipBytes
+        "Method readLine() not yet implemented.",                           // DatabaseRowInput_readLine
+        "S1000 Data File input/output error",                               //
+        "S1000 ",                                                           // DiskNode_writeTranslatePointer
+        "null string",                                                      // 131 HsqlDateTime_null_string
+        "invalid timestamp",                                                // HsqlDateTime_invalid_timestamp
+        "null date",                                                        // HsqlDateTime_null_date
+        "invalid date",                                                     // HsqlDateTime_invalid_date
+        "properties name is null or empty",                                 // HsqlProperties_load
+        "Server certificate has no Common Name",                            // HsqlSocketFactorySecure_verify
+        "Server certificate has empty Common Name",                         // HsqlSocketFactorySecure_verify2
+        "Unknown JDBC escape sequence: {",                                  // jdbcConnection_nativeSQL
+        "Certificate Common Name[$$] does not match host name[$$]",         // HsqlSocketFactorySecure_verify3
+        "End of stream with no data read",                                  // jdbcPreparedStatement_setCharacterStream
+        "End of stream with no data read",                                  // 141 jdbcPreparedStatement_setClob
+        "executeUpdate() cannot be used with this statement",               // jdbcStatement_executeUpdate
+        " $$ : $$",                                                         // LockFile_checkHeartbeat
+        "$$$$ is presumably locked by another process.",                    // LockFile_checkHeartbeat2
+        "22001 end of line characters not allowed",                         // TEXT_STRING_HAS_NEWLINE
+        "trying to use unsupported result mode: $$",                        // Result_Result
+        "no valid database paths",                                          // SERVER_NO_DATABASE
+        "Invalid address : $$\nTry one of: $$",                             // Server_openServerSocket
+        "Invalid address : $$",                                             // Server_openServerSocket2
+        "22001 header not allowed or too long",                             // TEXT_TABLE_HEADER
+        "22001 separator not allowed in unquoted string",                   // 151 TextDatabaseRowOutput_checkConvertString2
+        "not implemented",                                                  // TextDatabaseRowOutput_writeIntData
+        "00000 LIMIT or TOP not allowed",                                   //
+        "00000 Statement does not generate a row count",                    //
+        "00000 Statement does not generate a result set",                   //
+        "S0022 ambiguous Column reference",                                 //
+        "23000 Check constraint violation",                                 //
+        "S1000 ResultSet is closed",                                        //
+        "37000 Single column select required in IN predicate",              //
+        " $$, requires $$",                                                 // Tokenizer.getThis()
+        "path is null",                                                     // 161
+        "file does not exist: ",                                            //
+        "00000 ORDER BY with LIMIT required",                               //
+        "S0002 Trigger already exists",                                     //
+        "S0000 direct execute with param count > 0",                        //
+        "while creating ",                                                  // DataFileCache_backup
+        "Expression.compareValues",                                         // Expression_compareValues
+        "LIMIT clause",                                                     //
+        "TOP clause",                                                       //
+        "S0011 primary or unique constraint required on main table",        //
+        " $$ in table: $$",                                                 // 171
+        "no file name specified for source",                                //
+        "no value for: ",                                                   //
+        "zero length separator",                                            //
+        "Unsupported parameter/return value class: ",                       //
+        "input stream is null",                                             //
+        "23000 Integrity constraint violation - no parent",                 //
+        "No position specified",                                            // DatabaseRowInput_getPos
+        "No next position specified",                                       // DatabaseRowInput_getNextPos
+        "No sep.",                                                          // QuotedTextDatabaseRowInput_getField
+        "field $$ ($$)",                                                    // 181 QuotedTextDatabaseRowInput_getField2
+        "No end sep.",                                                      // TextDatabaseRowInput_getField
+        "No end sep.",                                                      // TextDatabaseRowInput_getField2
+        "field $$ ($$)",                                                    // TextDatabaseRowInput_getField3
+        "as operands of a BETWEEN predicate",                               //
+        "23000 Sequence is referenced by view",                             //
+        "error reading script file",                                        //
+        "openning file: $$ error: $$",                                      // TextCache - or generic file error
+        "closing file: $$ error: $$",                                       // TextCache - or generic file error
+        "purging file: $$ error: $$",                                       // TextCache - or generic file error
+        "S0002 Sequence not found",                                         // 191
+        "S1000 Sequence already exists",                                    //
+        "23000 Table is referenced by a constraint in table",               //
+        "23000 Table is referenced by view",                                //
+        "parametric table identifier",                                      // Parser
+        "S1000 text source file already exists",                            // SELECT INTO TEXT <name>
+        "23000 column is referenced in constraint",                         //
+        "S1000 Error calling function",                                     //
+        "27000 Triggered data change violation",                            //
+        "37000 Invalid argument",                                           //
+        "S1000 Internal Error : Unknown SQL Statement Type:",               // 201
+        "S1000 Internal Error : Unknown Session Operation Type:",           //
+        "S1000 prepared statement is no longer valid",                      //
+        "parsing trigger command ",                                         // DatabaseCommandInterpreter_processCreateTrigger1
+        FUNC_NOT_EXIST + " trigger or function not in path",                // TRIGGER_FUNCTION_CLASS_NOT_FOUND
+        "missing or zero-length savepoint name",                            // DatabaseCommandInterpreter_processSavepoint
+        "error $$ during defrag - file $$",                                 // DataFileCache_defrag
+        "invalid collation name",                                           // INVALID_COLLATION_NAME_NO_SUBCLASS
+        "error $$ reading row - file $$",                                   // DataFileCache_makeRow
+        "error $$ opening file - file $$",                                  // DataFileCache_makeRow
+        "error $$ closing file - file $$",                                  // 211 DataFileCache_makeRow
+        "in unary negation operation",                                      // Expression_resolveTypes1
+        "as both operands of aritmetic operator",                           // Expression_resolveTypes2
+        "as both comparison expression",                                    // Expression_resolveTypes3
+        "parameter not allowed as the argument of a set function",          // Expression_resolveTypes4
+        "unresolved parameter type ",                                       // Expression_resolveTypes5
+        "as both operands of a CASE operation",                             // Expression_resolveTypes6
+        "as output of CASE when operand types are $$ and $$",               // Expression_resolveTypes7
+        "as both expressions of LIKE",                                      // Expression_resolveTypeForLike
+        "when the value list is empty",                                     // Expression_resolveTypeForIn1
+        "as both expression and first entry of an IN operation",            // 221 Expression_resolveTypeForIn2
+        "Session is closed",                                                // Session_execute
+        "Session is closed",                                                // Session_sqlExecuteDirect
+        "Session is closed",                                                // Session_sqlExecuteCompiled
+        "S1000 Data file size limit is reached",                            //
+        "22019 Three part identifiers prohibited",                          //
+        "3F000 invalid schema name",                                        //
+        "S3000 dependent database object exists",                           //
+        "01007 No such role",                                               // not granted
+        "01006 No such role",                                               // not revoked                           // 230
+        "2F003 Non-modifiable account",                                     // 231
+        "01006 No such grantee",                                            //
+        "2F000 System Authorization user not created yet",
+        "2F000 Can't create a normal User without a Grantee object",
+        "2F000 Can't change the Grantee for an existing User or Role object",
+        "0Z000 Null name",                                                  //
+        "OP000 Illegal role name",                                          //
+        "0P000 Role already exists",                                        //
+        "0P000 No such role",                                               //
+        "0Z000 Linking to RoleManager before one is set for database",      //
+        "28000 Grantee already exists",                                     // 241
+        "0Z000 Need Public-grantee nesting, but PUBLIC Grantee not set",    //
+        "2F003 Non-modifiable grantee",                                     //
+        "28000 Circular grant",                                             //
+        "01007 Already have role",                                          //
+        "01006 Don't have role",                                            //
+        "0P000 Roles nested too deeply, or are circular",                   //
+        "0Z000 Error retrieving a nested role",                             //
+        "28000 No such right",                                              //
+        "not allowed in schema definition",                                 //
+        "S0011 Primary key not allowd",                                     // 251
+        "37000 column is part of a constraint",                             //
+        "LAST",                                                             //
     };
 
     /** Used during tests. */
@@ -657,7 +712,7 @@ public class Trace {
     }
 
     public static HsqlException error(int code, int code2, String add) {
-        return error(code, getMessage(code2) + add);
+        return error(code, getMessage(code2) + ' ' + add);
     }
 
     public static HsqlException error(int code, int code2) {

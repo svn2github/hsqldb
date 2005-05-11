@@ -524,6 +524,22 @@ public class DataFileCache {
         }
     }
 
+    /**
+     * For a CacheObject that had been previously released from the cache.
+     * A new version is introduced, using the preallocated space for the object.
+     */
+    public void restore(CachedObject object) throws IOException {
+
+        int i = object.getPos();
+
+        cache.put(i, object);
+
+        // for text tables
+        if (storeOnInsert) {
+            saveRow(object);
+        }
+    }
+
     public synchronized int getStorageSize(int i) throws HsqlException {
 
         try {

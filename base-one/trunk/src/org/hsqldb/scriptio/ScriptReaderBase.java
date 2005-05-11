@@ -59,6 +59,7 @@ public abstract class ScriptReaderBase {
     public static final int SEQUENCE_STATEMENT = 4;
     public static final int COMMIT_STATEMENT   = 5;
     public static final int SESSION_ID         = 6;
+    public static final int SCHEMA_STATEMENT   = 7;
     Database                db;
     int                     lineCount;
 
@@ -97,6 +98,7 @@ public abstract class ScriptReaderBase {
     String         statement;
     Table          currentTable;
     NumberSequence currentSequence;
+    String         currentSchema;
 
     public int getStatementType() {
         return statementType;
@@ -124,6 +126,10 @@ public abstract class ScriptReaderBase {
 
     public Table getCurrentTable() {
         return currentTable;
+    }
+
+    public String getCurrentSchema() {
+        return currentSchema;
     }
 
     public int getLineNumber() {

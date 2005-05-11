@@ -253,7 +253,7 @@ public class Server implements HsqlSocketRequestHandler {
     HashSet serverConnSet;
 
 //
-    String[]         dbAlias;
+    public String[]  dbAlias;
     String[]         dbType;
     String[]         dbPath;
     HsqlProperties[] dbProps;
@@ -549,6 +549,11 @@ public class Server implements HsqlSocketRequestHandler {
         } else {
             return null;
         }
+    }
+
+    public String getDatabaseType(int index) {
+        return (dbType == null || index < 0 || index >= dbType.length) ? null
+                                                                       : dbType[index];
     }
 
     /**
@@ -1904,7 +1909,7 @@ public class Server implements HsqlSocketRequestHandler {
     /**
      * Prints a description of the server properties iff !isSilent().
      */
-    private void printProperties() {
+    protected void printProperties() {
 
         Enumeration e;
         String      key;
@@ -2062,7 +2067,7 @@ public class Server implements HsqlSocketRequestHandler {
      * @param error true if shutdown is in response to an error
      *      state, else false
      */
-    private void shutdown(boolean error) {
+    protected void shutdown(boolean error) {
 
         StopWatch sw;
 

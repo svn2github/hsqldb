@@ -36,13 +36,11 @@ import org.hsqldb.index.RowIterator;
 import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HashSet;
 
-// fredt@users 20020520 - patch 1.7.0 - ALTER TABLE support
-// tony_lai@users 20020820 - patch 595172 - drop constraint fix
-
 /**
  * The methods in this class perform alterations to the structure of an
  * existing table which may result in a new Table object
  *
+ * @author fredt@users
  * @version 1.8.0
  * @since 1.7.0
  */
@@ -59,9 +57,6 @@ class TableWorks {
     Table getTable() {
         return table;
     }
-
-// fredt@users 20020225 - patch 1.7.0 - require existing index for foreign key
-// fredt@users 20030309 - patch 1.7.2 - more rigorous rules
 
     /**
      *  Creates a foreign key according to current sql.strict_fk or
@@ -108,12 +103,11 @@ class TableWorks {
      * @throws HsqlException
      */
     void createForeignKey(int[] fkcol, int[] expcol, HsqlName name,
-                          Table expTable, int deleteAction,
+                          Table mainTable, int deleteAction,
                           int updateAction) throws HsqlException {
 
-        if (table.database.constraintNameList.containsName(name.name)) {
-            throw Trace.error(Trace.CONSTRAINT_ALREADY_EXISTS, name.name);
-        }
+        table.database.schemaManager.checkConstraintExists(name.name,
+                table.getSchemaName(), false);
 
         // name check
         if (table.getConstraint(name.name) != null) {
@@ -121,24 +115,25 @@ class TableWorks {
         }
 
         // existing FK check
-        if (table.getConstraintForColumns(expTable, expcol, fkcol) != null) {
+        if (table.getConstraintForColumns(mainTable, expcol, fkcol) != null) {
             throw Trace.error(Trace.CONSTRAINT_ALREADY_EXISTS);
         }
 
-        if (expTable.isTemp() != table.isTemp()) {
+        if (mainTable.isTemp() != table.isTemp()) {
             throw Trace.error(Trace.FOREIGN_KEY_NOT_ALLOWED);
         }
 
-        boolean isSelf = table == expTable;
-        int     offset = table.database.getTableIndex(table);
-        boolean isforward = offset != -1
-                            && offset
-                               < table.database.getTableIndex(expTable);
-        Index exportindex = expTable.getConstraintIndexForColumns(expcol);
+        boolean isSelf = table == mainTable;
+        int     offset = table.database.schemaManager.getTableIndex(table);
+        boolean isforward =
+            offset != -1
+            && offset < table.database.schemaManager.getTableIndex(mainTable);
+        Index exportindex =
+            mainTable.getUniqueConstraintIndexForColumns(expcol);
 
         if (exportindex == null) {
             throw Trace.error(Trace.SQL_CONSTRAINT_REQUIRED,
-                              expTable.getName().statementName);
+                              mainTable.getName().statementName);
         }
 
         // existing rows, value checks
@@ -153,22 +148,18 @@ class TableWorks {
         if (isSelf) {
 
             // in case createIndex resulted in new Table object
-            expTable = table;
+            mainTable = table;
         }
 
-        Constraint c = new Constraint(pkname, name, expTable, table, expcol,
+        Constraint c = new Constraint(pkname, name, mainTable, table, expcol,
                                       fkcol, exportindex, fkindex,
                                       deleteAction, updateAction);
 
         table.addConstraint(c);
-        expTable.addConstraint(new Constraint(pkname, c));
-        table.database.constraintNameList.addName(name.name, table.getName(),
-                Trace.CONSTRAINT_ALREADY_EXISTS);
+        mainTable.addConstraint(new Constraint(pkname, c));
+        table.database.schemaManager.registerConstraintName(name.name,
+                table.getName());
     }
-
-// fredt@users 20020315 - patch 1.7.0 - create index bug
-// this method would break existing foreign keys as the table order in the DB
-// was changed. Instead, we now link in place of the old table
 
     /**
      *  Because of the way indexes and column data are held in memory and
@@ -194,9 +185,11 @@ class TableWorks {
 
         Index newindex;
 
-        if (table.isEmpty() || table.isIndexingMutable()) {
-            newindex = table.createIndex(col, name, unique, constraint,
-                                         forward);
+        if (table.isEmpty(session) || table.isIndexingMutable()) {
+            newindex = table.createIndex(session, col, name, unique,
+                                         constraint, forward);
+
+            table.database.schemaManager.clearTempTables(session, table);
         } else {
             Table tn = table.moveDefinition(null, null, -1, 0);
 
@@ -204,60 +197,66 @@ class TableWorks {
                                                forward);
 
             tn.moveData(session, table, -1, 0);
-            tn.updateConstraintsTables(table, -1, 0);
+            tn.updateConstraintsTables(session, table, -1, 0);
 
-            int index = table.database.getTableIndex(table);
+            int index = table.database.schemaManager.getTableIndex(table);
 
-            table.database.getTables().set(index, tn);
+            table.database.schemaManager.setTable(index, tn);
 
             table = tn;
         }
 
-        table.database.indexNameList.addName(newindex.getName().name,
-                                             table.getName(),
-                                             Trace.INDEX_ALREADY_EXISTS);
-        table.database.recompileViews(table.getName().name);
+        table.database.schemaManager.registerIndexName(
+            newindex.getName().name, table.getName());
+        table.database.schemaManager.recompileViews(table);
 
         return newindex;
     }
 
     void addPrimaryKey(int[] cols, HsqlName name) throws HsqlException {
 
+        boolean keepname = false;
+
         if (name == null) {
             name = table.makeSysPKName();
         }
 
-        if (table.database.constraintNameList.containsName(name.name)) {
-            throw Trace.error(Trace.CONSTRAINT_ALREADY_EXISTS, name.name);
+        if (table.indexList[0].getName().name.equals(name.name)) {
+            keepname = true;
+        } else {
+            table.database.schemaManager.checkConstraintExists(name.name,
+                    table.getSchemaName(), false);
         }
 
-        addOrDropPrimaryKey(cols, name);
-        table.database.constraintNameList.addName(name.name, table.getName(),
-                Trace.CONSTRAINT_ALREADY_EXISTS);
+        addOrDropPrimaryKey(cols, name, false);
+
+        if (!keepname) {
+            table.database.schemaManager.registerConstraintName(name.name,
+                    table.getName());
+        }
     }
 
-    void addOrDropPrimaryKey(int[] cols, HsqlName name) throws HsqlException {
+    void addOrDropPrimaryKey(int[] cols, HsqlName name,
+                             boolean identity) throws HsqlException {
 
         if (cols == null) {
             table.checkDropIndex(table.getIndexes()[0].getName().name, null,
                                  true);
         }
 
-        Table tn = table.moveDefinitionPK(name, cols);
+        Table tn = table.moveDefinitionPK(name, cols, identity);
 
         tn.moveData(session, table, -1, 0);
-        tn.updateConstraintsTables(table, -1, 0);
+        tn.updateConstraintsTables(session, table, -1, 0);
 
-        int index = table.database.getTableIndex(table);
+        int index = table.database.schemaManager.getTableIndex(table);
 
-        table.database.getTables().set(index, tn);
+        table.database.schemaManager.setTable(index, tn);
 
         table = tn;
 
-        table.database.recompileViews(table.getName().name);
+        table.database.schemaManager.recompileViews(table);
     }
-
-// fredt@users 20020225 - avoid duplicate constraints
 
     /**
      *  A unique constraint relies on a unique indexe on the table. It can
@@ -275,9 +274,8 @@ class TableWorks {
     void createUniqueConstraint(int[] col,
                                 HsqlName name) throws HsqlException {
 
-        if (table.database.constraintNameList.containsName(name.name)) {
-            throw Trace.error(Trace.CONSTRAINT_ALREADY_EXISTS, name.name);
-        }
+        table.database.schemaManager.checkConstraintExists(name.name,
+                table.getSchemaName(), false);
 
         Constraint[] constraints = table.getConstraints();
 
@@ -297,16 +295,15 @@ class TableWorks {
         Constraint newconstraint = new Constraint(name, table, index);
 
         table.addConstraint(newconstraint);
-        table.database.constraintNameList.addName(name.name, table.getName(),
-                Trace.CONSTRAINT_ALREADY_EXISTS);
+        table.database.schemaManager.registerConstraintName(name.name,
+                table.getName());
     }
 
     void createCheckConstraint(Constraint c,
                                HsqlName name) throws HsqlException {
 
-        if (table.database.constraintNameList.containsName(name.name)) {
-            throw Trace.error(Trace.CONSTRAINT_ALREADY_EXISTS, name.name);
-        }
+        table.database.schemaManager.checkConstraintExists(name.name,
+                table.getSchemaName(), false);
 
         // check the existing rows
         Expression e = c.core.check;
@@ -314,10 +311,8 @@ class TableWorks {
         // this workaround is here to stop LIKE optimisation (for proper scripting)
         e.setLikeOptimised();
 
-        Select s = Expression.getCheckSelect(table, e);
-        Result r =
-            s.getResult(table.database.getSessionManager().getSysSession(),
-                        1);
+        Select s = Expression.getCheckSelect(session, table, e);
+        Result r = s.getResult(session, 1);
 
         c.core.checkFilter = s.tFilter[0];
         c.core.mainTable   = table;
@@ -332,11 +327,9 @@ class TableWorks {
         // removes reference to the Index object in filter
         c.core.checkFilter.setAsCheckFilter();
         table.addConstraint(c);
-        table.database.constraintNameList.addName(name.name, table.getName(),
-                Trace.CONSTRAINT_ALREADY_EXISTS);
+        table.database.schemaManager.registerConstraintName(name.name,
+                table.getName());
     }
-
-// fredt@users 20020315 - patch 1.7.0 - drop index bug
 
     /**
      *  Because of the way indexes and column data are held in memory and
@@ -354,20 +347,22 @@ class TableWorks {
         if (table.isIndexingMutable()) {
             table.dropIndex(indexname);
         } else {
-            Table tn = table.moveDefinition(indexname, null, -1, 0);
+            int[] removeIndex = new int[]{ table.getIndexIndex(indexname) };
+            Table tn = table.moveDefinition(removeIndex, null, -1, 0);
 
             tn.moveData(session, table, -1, 0);
-            tn.updateConstraintsTables(table, -1, 0);
+            tn.updateConstraintsTables(session, table, -1, 0);
 
-            int i = table.database.getTableIndex(table);
+            int i = table.database.schemaManager.getTableIndex(table);
 
-            table.database.getTables().set(i, tn);
+            table.database.schemaManager.setTable(i, tn);
 
             table = tn;
         }
 
-        table.database.indexNameList.removeName(indexname);
-        table.database.recompileViews(table.getName().name);
+        table.database.schemaManager.removeIndexName(indexname,
+                table.getName());
+        table.database.schemaManager.recompileViews(table);
     }
 
     /**
@@ -377,17 +372,16 @@ class TableWorks {
      * @param  adjust +1, 0 -1
      * @throws  HsqlException
      */
-    void addDropRetypeColumn(Column column, int colindex,
-                             int adjust) throws HsqlException {
+    void addDropRetypeColumnOrig(Column column, int colindex,
+                                 int adjust) throws HsqlException {
 
         if (table.isText()) {
             throw Trace.error(Trace.OPERATION_NOT_SUPPORTED);
         }
 
         if (adjust == -1 || adjust == 0) {
-            table.database.checkColumnIsInView(
-                table.getName().name,
-                table.getColumn(colindex).columnName.name);
+            table.database.schemaManager.checkColumnIsInView(table,
+                    table.getColumn(colindex).columnName.name);
             table.checkColumnInCheckConstraint(
                 table.getColumn(colindex).columnName.name);
         }
@@ -395,24 +389,168 @@ class TableWorks {
         Table tn = table.moveDefinition(null, column, colindex, adjust);
 
         tn.moveData(session, table, colindex, adjust);
-        tn.updateConstraintsTables(table, colindex, adjust);
+        tn.updateConstraintsTables(session, table, colindex, adjust);
 
-        int i = table.database.getTableIndex(table);
+        int i = table.database.schemaManager.getTableIndex(table);
 
-        table.database.getTables().set(i, tn);
+        table.database.schemaManager.setTable(i, tn);
 
         table = tn;
 
-        table.database.recompileViews(table.getName().name);
+        table.database.schemaManager.recompileViews(table);
     }
 
     /**
-     *  Method declaration
+     *
+     * @param  column
+     * @param  colindex
+     * @throws  HsqlException
+     */
+    void retypeColumn(Column column, int colindex) throws HsqlException {
+
+        if (table.isText()) {
+            throw Trace.error(Trace.OPERATION_NOT_SUPPORTED);
+        }
+
+        table.database.schemaManager.checkColumnIsInView(table,
+                table.getColumn(colindex).columnName.name);
+        table.checkColumnInCheckConstraint(
+            table.getColumn(colindex).columnName.name);
+
+        int[] dropIndexes = null;
+        Table tn = table.moveDefinition(dropIndexes, column, colindex, 0);
+
+        tn.moveData(session, table, colindex, 0);
+        tn.updateConstraintsTables(session, table, colindex, 0);
+
+        int i = table.database.schemaManager.getTableIndex(table);
+
+        table.database.schemaManager.setTable(i, tn);
+
+        table = tn;
+
+        table.database.schemaManager.recompileViews(table);
+    }
+
+    /**
+     *
+     * @param  colindex
+     * @throws  HsqlException
+     */
+    void dropColumn(int colindex) throws HsqlException {
+
+        HsqlName pkNameRemove    = null;
+        HsqlName constNameRemove = null;
+
+        if (table.isText()) {
+            throw Trace.error(Trace.OPERATION_NOT_SUPPORTED);
+        }
+
+        table.database.schemaManager.checkColumnIsInView(table,
+                table.getColumn(colindex).columnName.name);
+        table.checkColumnInCheckConstraint(
+            table.getColumn(colindex).columnName.name);
+
+        Table  tn          = table;
+        int[]  dropIndexes = null;
+        String colName     = tn.getColumn(colindex).columnName.name;
+
+        tn.checkColumnInFKConstraint(colName);
+
+        if (table.getPrimaryKey().length == 1
+                && table.getPrimaryKey()[0] == colindex) {
+            table.checkDropIndex(table.getIndex(0).getName().name, null,
+                                 true);
+
+            pkNameRemove = table.getIndex(0).getName();
+            tn           = table.moveDefinitionPK(null, null, false);
+        }
+
+        Constraint c = tn.getUniqueConstraintForColumns(new int[]{
+            colindex });
+
+        if (c != null) {
+            Index idx = c.getMainIndex();
+
+            dropIndexes = new int[]{ tn.getIndexIndex(idx.getName().name) };
+            constNameRemove = c.getName();
+        }
+
+        tn = tn.moveDefinition(dropIndexes, null, colindex, -1);
+
+        tn.moveData(session, table, colindex, -1);
+
+        if (constNameRemove != null) {
+            tn.removeConstraint(constNameRemove.name);
+        }
+
+        tn.updateConstraintsTables(session, table, colindex, -1);
+
+        int i = table.database.schemaManager.getTableIndex(table);
+
+        table.database.schemaManager.setTable(i, tn);
+
+        table = tn;
+
+        table.database.schemaManager.recompileViews(table);
+
+        if (pkNameRemove != null) {
+            table.database.schemaManager.removeConstraintName(
+                pkNameRemove.name, table.getName());
+        }
+
+        if (constNameRemove != null) {
+            table.database.schemaManager.removeConstraintName(
+                constNameRemove.name, table.getName());
+        }
+    }
+
+    /**
+     *
+     * @param  column
+     * @param  colindex
+     * @throws  HsqlException
+     */
+    void addColumn(Column column, int colindex) throws HsqlException {
+
+        HsqlName pkNameAdd = null;
+
+        if (table.isText()) {
+            throw Trace.error(Trace.OPERATION_NOT_SUPPORTED);
+        }
+
+        Table tn = table;
+
+        tn = tn.moveDefinition(null, column, colindex, 1);
+
+        if (column.isPrimaryKey()) {
+            pkNameAdd = tn.makeSysPKName();
+            tn = tn.moveDefinitionPK(pkNameAdd, new int[]{ colindex }, true);
+        }
+
+        tn.moveData(session, table, colindex, 1);
+        tn.updateConstraintsTables(session, table, colindex, 1);
+
+        int i = table.database.schemaManager.getTableIndex(table);
+
+        table.database.schemaManager.setTable(i, tn);
+
+        table = tn;
+
+        table.database.schemaManager.recompileViews(table);
+
+        if (pkNameAdd != null) {
+            table.database.schemaManager.registerConstraintName(
+                pkNameAdd.name, table.getName());
+        }
+    }
+
+    /**
+     *  Drop a named constraint
      *
      */
     void dropConstraint(String name) throws HsqlException {
 
-        int        j = table.getConstraintIndex(name);
         Constraint c = table.getConstraint(name);
         int        ctype;
 
@@ -432,23 +570,9 @@ class TableWorks {
         }
 
         if (ctype == Constraint.PRIMARY_KEY) {
-            addOrDropPrimaryKey(null, null);
+            addOrDropPrimaryKey(null, null, false);
         } else if (ctype == Constraint.FOREIGN_KEY) {
-            Table mainTable = c.getMain();
-            int   k         = mainTable.getConstraintIndex(c.getPkName());
-
-            // drop the reference index, which is automatic and unused elsewhere
-            Index refIndex = c.getRefIndex();
-
-            // all is well if dropIndex throws for lack of resources
-            dropIndex(refIndex.getName().name);
-
-            mainTable.constraintList =
-                (Constraint[]) ArrayUtil.toAdjustedArray(
-                    mainTable.constraintList, null, k, -1);
-            table.constraintList =
-                (Constraint[]) ArrayUtil.toAdjustedArray(table.constraintList,
-                    null, j, -1);
+            dropFKConstraint(c);
         } else if (ctype == Constraint.UNIQUE) {
             HashSet cset = new HashSet();
 
@@ -460,17 +584,29 @@ class TableWorks {
 
             // all is well if dropIndex throws for lack of resources
             dropIndex(c.getMainIndex().getName().name);
-
-            table.constraintList =
-                (Constraint[]) ArrayUtil.toAdjustedArray(table.constraintList,
-                    null, j, -1);
+            table.removeConstraint(name);
         } else if (ctype == Constraint.CHECK) {
-            table.constraintList =
-                (Constraint[]) ArrayUtil.toAdjustedArray(table.constraintList,
-                    null, j, -1);
+            table.removeConstraint(name);
         }
 
-        table.database.constraintNameList.removeName(name);
+        table.database.schemaManager.removeConstraintName(name,
+                table.getName());
+    }
+
+    void dropFKConstraint(Constraint c) throws HsqlException {
+
+        // drop the reference index, which is automatic and unused elsewhere
+        Index constIndex = c.getRefIndex();
+
+        // all is well if dropIndex throws for lack of resources
+        dropIndex(constIndex.getName().name);
+
+        int   refIndex  = table.getConstraintIndex(c.getFkName());
+        Table mainTable = c.getMain();
+
+        // MAIN constraint was created after REF, so delete first
+        mainTable.removeConstraint(c.getPkName());
+        table.removeConstraint(c.getFkName());
     }
 
     void reTypeColumn(Column oldCol, Column newCol) throws HsqlException {
@@ -479,6 +615,11 @@ class TableWorks {
         int     oldtype    = oldCol.getType();
         int     newtype    = newCol.getType();
 
+        if (newtype == oldtype && oldCol.isIdentity() == newCol.isIdentity()
+                && oldCol.isPrimaryKey() == newCol.isPrimaryKey()) {
+            return;
+        }
+
         switch (newtype) {
 
             case Types.BINARY :
@@ -486,7 +627,7 @@ class TableWorks {
             case Types.LONGVARBINARY :
             case Types.OTHER :
             case Types.JAVA_OBJECT :
-                notallowed = !table.isEmpty();
+                notallowed = !table.isEmpty(session);
         }
 
         switch (oldtype) {
@@ -496,7 +637,7 @@ class TableWorks {
             case Types.LONGVARBINARY :
             case Types.OTHER :
             case Types.JAVA_OBJECT :
-                notallowed = !table.isEmpty();
+                notallowed = !table.isEmpty(session);
                 break;
 
             case Types.TINYINT :
@@ -513,7 +654,7 @@ class TableWorks {
                     case Types.DATE :
                     case Types.TIME :
                     case Types.TIMESTAMP :
-                        notallowed = !table.isEmpty();
+                        notallowed = !table.isEmpty(session);
                     default :
                 }
                 break;
@@ -532,7 +673,7 @@ class TableWorks {
                     case Types.DOUBLE :
                     case Types.NUMERIC :
                     case Types.DECIMAL :
-                        notallowed = !table.isEmpty();
+                        notallowed = !table.isEmpty(session);
                     default :
                 }
                 break;
@@ -564,18 +705,16 @@ class TableWorks {
                 throw Trace.error(Trace.SECOND_PRIMARY_KEY);
             }
         } else if (newCol.isPrimaryKey()) {
-
-            // use a better error message
-            throw Trace.error(Trace.SECOND_PRIMARY_KEY);
+            throw Trace.error(Trace.PRIMARY_KEY_NOT_ALLOWED);
         }
 
-        table.database.checkColumnIsInView(
-            table.getName().name, table.getColumn(colindex).columnName.name);
+        table.database.schemaManager.checkColumnIsInView(table,
+                table.getColumn(colindex).columnName.name);
         table.checkColumnInCheckConstraint(
             table.getColumn(colindex).columnName.name);
         table.checkColumnInFKConstraint(oldCol.columnName.name);
         checkConvertColDataType(oldCol, newCol);
-        addDropRetypeColumn(newCol, colindex, 0);
+        retypeColumn(newCol, colindex);
     }
 
     void checkConvertColDataType(Column oldCol,

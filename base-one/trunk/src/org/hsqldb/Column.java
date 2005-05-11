@@ -151,7 +151,6 @@ public class Column {
      * @param  defstring
      */
     Column(HsqlName name, boolean nullable, int type, int size, int scale,
-            boolean identity, long startvalue, long increment,
             boolean primarykey,
             Expression defexpression) throws HsqlException {
 
@@ -160,18 +159,23 @@ public class Column {
         colType           = type;
         colSize           = size;
         colScale          = scale;
+        isPrimaryKey      = primarykey;
+        defaultExpression = defexpression;
+    }
+
+    void setIdentity(boolean identity, long startvalue,
+                     long increment) throws HsqlException {
+
         isIdentity        = identity;
         identityStart     = startvalue;
         identityIncrement = increment;
-        isPrimaryKey      = primarykey;
-        defaultExpression = defexpression;
 
         if (isIdentity) {
-            if (type == Types.INTEGER) {
+            if (colType == Types.INTEGER) {
                 if (identityStart > Integer.MAX_VALUE
                         || identityIncrement > Integer.MAX_VALUE) {
                     throw Trace.error(Trace.NUMERIC_VALUE_OUT_OF_RANGE,
-                                      name.statementName);
+                                      columnName.statementName);
                 }
             }
         }
@@ -180,10 +184,9 @@ public class Column {
     private Column() {}
 
     /**
-     * Used for primary key changes, does not copy primary key or identity
-     * settings.
+     * Used for primary key changes.
      */
-    Column duplicate() {
+    Column duplicate(boolean withIdentity) throws HsqlException {
 
         Column newCol = new Column();
 
@@ -193,6 +196,10 @@ public class Column {
         newCol.colSize           = colSize;
         newCol.colScale          = colScale;
         newCol.defaultExpression = defaultExpression;
+
+        if (withIdentity) {
+            newCol.setIdentity(isIdentity, identityStart, identityIncrement);
+        }
 
         return newCol;
     }

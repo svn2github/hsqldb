@@ -84,182 +84,46 @@ public class DatabaseScript {
     /**
      * Returns the DDL and all other statements for the database excluding
      * INSERT and SET <tablename> READONLY statements.
-     * cachedData == true indicates that SET <tablenmae> INDEX statements should
+     * cachedData == true indicates that SET <tablename> INDEX statements should
      * also be included.
      *
      * This class should not have any dependencies on metadata reporting.
      */
-    public static Result getScript(Database dDatabase, boolean indexRoots) {
+    public static Result getScript(Database database, boolean indexRoots) {
 
-        HsqlArrayList tTable    = dDatabase.getTables();
-        HsqlArrayList forwardFK = new HsqlArrayList();
-        Result r = Result.newSingleColumnResult("COMMAND", Types.VARCHAR);
+        Iterator it;
+        Result   r = Result.newSingleColumnResult("COMMAND", Types.VARCHAR);
 
         r.metaData.tableNames[0] = "SYSTEM_SCRIPT";
 
-        // sequences
-        /*
-        CREATE SEQUENCE <name>
-        [AS {INTEGER | BIGINT}]
-        [START WITH <value>]
-        [INCREMENT BY <value>]
-        */
-        HashMappedList seqmap = dDatabase.sequenceManager.sequenceMap;
-
-        for (int i = 0, sSize = seqmap.size(); i < sSize; i++) {
-            NumberSequence seq = (NumberSequence) seqmap.get(i);
-            StringBuffer   a   = new StringBuffer(128);
-
-            a.append(Token.T_CREATE).append(' ');
-            a.append(Token.T_SEQUENCE).append(' ');
-            a.append(seq.getName().statementName).append(' ');
-            a.append(Token.T_AS).append(' ');
-            a.append(Types.getTypeString(seq.getType())).append(' ');
-            a.append(Token.T_START).append(' ');
-            a.append(Token.T_WITH).append(' ');
-            a.append(seq.peek()).append(' ');
-
-            if (seq.getIncrement() != 1) {
-                a.append(Token.T_INCREMENT).append(' ');
-                a.append(Token.T_BY).append(' ');
-                a.append(seq.getIncrement()).append(' ');
-            }
-
-            addRow(r, a.toString());
-        }
-
-        // tables
-        for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
-            Table t = (Table) tTable.get(i);
-
-            if (t.isTemp() || t.isView()) {
-                continue;
-            }
-
-            StringBuffer a = new StringBuffer(128);
-
-            getTableDDL(dDatabase, t, i, forwardFK, a);
-            addRow(r, a.toString());
-
-            // indexes for table
-            for (int j = 1; j < t.getIndexCount(); j++) {
-                Index index = t.getIndex(j);
-
-                if (HsqlName.isReservedIndexName(index.getName().name)) {
-
-                    // the following are autocreated with the table
-                    // indexes for primary keys
-                    // indexes for unique constraints
-                    // own table indexes for foreign keys
-                    continue;
-                }
-
-                a = new StringBuffer(64);
-
-                a.append(Token.T_CREATE).append(' ');
-
-                if (index.isUnique()) {
-                    a.append(Token.T_UNIQUE).append(' ');
-                }
-
-                a.append(Token.T_INDEX).append(' ');
-                a.append(index.getName().statementName);
-                a.append(' ').append(Token.T_ON).append(' ');
-                a.append(t.getName().statementName);
-
-                int[] col = index.getColumns();
-                int   len = index.getVisibleColumns();
-
-                getColumnList(t, col, len, a);
-                addRow(r, a.toString());
-            }
-
-            // readonly for TEXT tables only
-            if (t.isText() && t.isDataReadOnly()) {
-                a = new StringBuffer(64);
-
-                a.append(Token.T_SET).append(' ').append(
-                    Token.T_TABLE).append(' ');
-                a.append(t.getName().statementName);
-                a.append(' ').append(Token.T_READONLY).append(' ').append(
-                    Token.T_TRUE);
-                addRow(r, a.toString());
-            }
-
-            // data source
-            String dataSource = getDataSource(t);
-
-            if (dataSource != null) {
-                addRow(r, dataSource);
-            }
-
-            // header
-            String header = getDataSourceHeader(t);
-
-            if (!indexRoots && header != null) {
-                addRow(r, header);
-            }
-
-            // triggers
-            int numTrigs = TriggerDef.NUM_TRIGS;
-
-            for (int tv = 0; tv < numTrigs; tv++) {
-                HsqlArrayList trigVec = t.triggerLists[tv];
-
-                if (trigVec == null) {
-                    continue;
-                }
-
-                int trCount = trigVec.size();
-
-                for (int k = 0; k < trCount; k++) {
-                    a = ((TriggerDef) trigVec.get(k)).getDDL();
-
-                    addRow(r, a.toString());
-                }
-            }
-        }
-
-        // forward referencing foreign keys
-        for (int i = 0, tSize = forwardFK.size(); i < tSize; i++) {
-            Constraint   c = (Constraint) forwardFK.get(i);
-            StringBuffer a = new StringBuffer(128);
-
-            a.append(Token.T_ALTER).append(' ').append(Token.T_TABLE).append(
-                ' ');
-            a.append(c.getRef().getName().statementName);
-            a.append(' ').append(Token.T_ADD).append(' ');
-            getFKStatement(c, a);
-            addRow(r, a.toString());
-        }
-
-        // SET <tablename> INDEX statements
-        for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
-            Table t = (Table) tTable.get(i);
-
-            if (indexRoots && t.isIndexCached() &&!t.isEmpty()) {
-                addRow(r, getIndexRootsDDL((Table) tTable.get(i)));
-            }
-        }
-
-        // ignorecase for future CREATE TABLE statements
-        if (dDatabase.isIgnoreCase()) {
-            addRow(r, "SET IGNORECASE TRUE");
-        }
-
         // collation for database
-        if (dDatabase.collation.name != null) {
+        if (database.collation.name != null) {
             String name =
-                StringConverter.toQuotedString(dDatabase.collation.name, '"',
+                StringConverter.toQuotedString(database.collation.name, '"',
                                                true);
 
             addRow(r, "SET DATABASE COLLATION " + name);
         }
 
+        // Role definitions
+        it = database.getRoleManager().getRoleNames().iterator();
+
+        String role;
+
+        while (it.hasNext()) {
+            role = (String) it.next();
+
+            // ADMIN_ROLE_NAME is not persisted
+            if (!RoleManager.ADMIN_ROLE_NAME.equals(role)) {
+                addRow(r, "CREATE ROLE " + role);
+            }
+        }
+
         // aliases
-        HashMap  h       = dDatabase.getAliasMap();
-        HashMap  builtin = Library.getAliasMap();
-        Iterator it      = h.keySet().iterator();
+        HashMap h       = database.getAliasMap();
+        HashMap builtin = Library.getAliasMap();
+
+        it = h.keySet().iterator();
 
         while (it.hasNext()) {
             String alias  = (String) it.next();
@@ -281,45 +145,243 @@ public class DatabaseScript {
             addRow(r, buffer.toString());
         }
 
-        // views
-        for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
-            Table t = (Table) tTable.get(i);
-
-            if (t.isView()) {
-                View         v = (View) tTable.get(i);
-                StringBuffer a = new StringBuffer(128);
-
-                a.append(Token.T_CREATE).append(' ').append(
-                    Token.T_VIEW).append(' ');
-                a.append(v.getName().statementName).append(' ').append('(');
-
-                int count = v.getColumnCount();
-
-                for (int j = 0; j < count; j++) {
-                    a.append(v.getColumn(j).columnName.statementName);
-
-                    if (j < count - 1) {
-                        a.append(',');
-                    }
-                }
-
-                a.append(')').append(' ').append(Token.T_AS).append(' ');
-                a.append(v.getStatement());
-                addRow(r, a.toString());
-            }
-        }
+        addSchemaStatements(database, r, indexRoots);
 
         // rights for classes, tables and views
-        addRightsStatements(dDatabase, r);
+        addRightsStatements(database, r);
 
-        if (dDatabase.logger.hasLog()) {
-            int    delay     = dDatabase.logger.getWriteDelay();
+        if (database.logger.hasLog()) {
+            int    delay     = database.logger.getWriteDelay();
             String statement = "SET WRITE_DELAY " + delay;
 
             addRow(r, statement);
         }
 
         return r;
+    }
+
+    static void addSchemaStatements(Database database, Result r,
+                                    boolean indexRoots) {
+
+        Iterator schemas = database.schemaManager.userSchemaNameIterator();
+
+        while (schemas.hasNext()) {
+            HsqlName schema = database.schemaManager.toSchemaHsqlName(
+                (String) schemas.next());
+            HashMappedList tTable =
+                database.schemaManager.getTables(schema.name);
+            HsqlArrayList forwardFK = new HsqlArrayList();
+
+            // schema creation
+            StringBuffer ab = new StringBuffer(128);
+
+            ab.append(Token.T_CREATE).append(' ');
+            ab.append(Token.T_SCHEMA).append(' ');
+            ab.append(schema.statementName).append(' ');
+            ab.append(Token.T_AUTHORIZATION).append(' ');
+            ab.append(database.getRoleManager().ADMIN_ROLE_NAME);
+            addRow(r, ab.toString());
+
+            // sequences
+            /*
+                     CREATE SEQUENCE <name>
+                     [AS {INTEGER | BIGINT}]
+                     [START WITH <value>]
+                     [INCREMENT BY <value>]
+             */
+            Iterator it =
+                database.schemaManager.sequenceIterator(schema.name);
+
+            while (it.hasNext()) {
+                NumberSequence seq = (NumberSequence) it.next();
+                StringBuffer   a   = new StringBuffer(128);
+
+                a.append(Token.T_CREATE).append(' ');
+                a.append(Token.T_SEQUENCE).append(' ');
+                a.append(seq.getName().statementName).append(' ');
+                a.append(Token.T_AS).append(' ');
+                a.append(Types.getTypeString(seq.getType())).append(' ');
+                a.append(Token.T_START).append(' ');
+                a.append(Token.T_WITH).append(' ');
+                a.append(seq.peek()).append(' ');
+
+                if (seq.getIncrement() != 1) {
+                    a.append(Token.T_INCREMENT).append(' ');
+                    a.append(Token.T_BY).append(' ');
+                    a.append(seq.getIncrement()).append(' ');
+                }
+
+                addRow(r, a.toString());
+            }
+
+            // tables
+            for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
+                Table t = (Table) tTable.get(i);
+
+                if (t.isView()) {
+                    continue;
+                }
+
+                StringBuffer a = new StringBuffer(128);
+
+                getTableDDL(database, t, i, forwardFK, false, a);
+                addRow(r, a.toString());
+
+                // indexes for table
+                for (int j = 1; j < t.getIndexCount(); j++) {
+                    Index index = t.getIndex(j);
+
+                    if (HsqlName.isReservedIndexName(index.getName().name)) {
+
+                        // the following are autocreated with the table
+                        // indexes for primary keys
+                        // indexes for unique constraints
+                        // own table indexes for foreign keys
+                        continue;
+                    }
+
+                    a = new StringBuffer(64);
+
+                    a.append(Token.T_CREATE).append(' ');
+
+                    if (index.isUnique()) {
+                        a.append(Token.T_UNIQUE).append(' ');
+                    }
+
+                    a.append(Token.T_INDEX).append(' ');
+                    a.append(index.getName().statementName);
+                    a.append(' ').append(Token.T_ON).append(' ');
+                    a.append(t.getName().statementName);
+
+                    int[] col = index.getColumns();
+                    int   len = index.getVisibleColumns();
+
+                    getColumnList(t, col, len, a);
+                    addRow(r, a.toString());
+                }
+
+                // readonly for TEXT tables only
+                if (t.isText() && t.isDataReadOnly()) {
+                    a = new StringBuffer(64);
+
+                    a.append(Token.T_SET).append(' ').append(
+                        Token.T_TABLE).append(' ');
+                    a.append(t.getName().statementName);
+                    a.append(' ').append(Token.T_READONLY).append(' ').append(
+                        Token.T_TRUE);
+                    addRow(r, a.toString());
+                }
+
+                // data source
+                String dataSource = getDataSource(t);
+
+                if (dataSource != null) {
+                    addRow(r, dataSource);
+                }
+
+                // header
+                String header = getDataSourceHeader(t);
+
+                if (!indexRoots && header != null) {
+                    addRow(r, header);
+                }
+
+                // triggers
+                int numTrigs = TriggerDef.NUM_TRIGS;
+
+                for (int tv = 0; tv < numTrigs; tv++) {
+                    HsqlArrayList trigVec = t.triggerLists[tv];
+
+                    if (trigVec == null) {
+                        continue;
+                    }
+
+                    int trCount = trigVec.size();
+
+                    for (int k = 0; k < trCount; k++) {
+                        a = ((TriggerDef) trigVec.get(k)).getDDL();
+
+                        addRow(r, a.toString());
+                    }
+                }
+            }
+
+            // forward referencing foreign keys
+            for (int i = 0, tSize = forwardFK.size(); i < tSize; i++) {
+                Constraint   c = (Constraint) forwardFK.get(i);
+                StringBuffer a = new StringBuffer(128);
+
+                a.append(Token.T_ALTER).append(' ').append(
+                    Token.T_TABLE).append(' ');
+                a.append(c.getRef().getName().statementName);
+                a.append(' ').append(Token.T_ADD).append(' ');
+                getFKStatement(c, a);
+                addRow(r, a.toString());
+            }
+
+            // SET <tablename> INDEX statements
+            Session sysSession = database.sessionManager.getSysSession();
+
+            for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
+                Table t = (Table) tTable.get(i);
+
+                if (indexRoots && t.isIndexCached()
+                        &&!t.isEmpty(sysSession)) {
+                    addRow(r, getIndexRootsDDL((Table) tTable.get(i)));
+                }
+            }
+
+            // RESTART WITH <value> statements
+            for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
+                Table t       = (Table) tTable.get(i);
+                int   idindex = t.getIdentityColumn();
+
+                if (!t.isIndexCached() && idindex != -1) {
+                    String tablename = t.getName().statementName;
+                    String colname =
+                        t.getColumn(idindex).columnName.statementName;
+                    long         idval = t.identitySequence.peek();
+                    StringBuffer a     = new StringBuffer(128);
+
+                    a.append(Token.T_ALTER).append(' ').append(
+                        Token.T_TABLE).append(' ').append(tablename).append(
+                        ' ').append(Token.T_ALTER).append(' ').append(
+                        Token.T_COLUMN).append(' ').append(colname).append(
+                        ' ').append(Token.T_RESTART).append(' ').append(
+                        Token.T_WITH).append(' ').append(idval);
+                    addRow(r, a.toString());
+                }
+            }
+
+            // views
+            for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
+                Table t = (Table) tTable.get(i);
+
+                if (t.isView()) {
+                    View         v = (View) tTable.get(i);
+                    StringBuffer a = new StringBuffer(128);
+
+                    a.append(Token.T_CREATE).append(' ').append(
+                        Token.T_VIEW).append(' ');
+                    a.append(v.getName().statementName).append(' ').append(
+                        '(');
+
+                    int count = v.getColumnCount();
+
+                    for (int j = 0; j < count; j++) {
+                        a.append(v.getColumn(j).columnName.statementName);
+
+                        if (j < count - 1) {
+                            a.append(',');
+                        }
+                    }
+
+                    a.append(')').append(' ').append(Token.T_AS).append(' ');
+                    a.append(v.getStatement());
+                    addRow(r, a.toString());
+                }
+            }
+        }
     }
 
     static String getIndexRootsDDL(Table t) {
@@ -335,10 +397,16 @@ public class DatabaseScript {
         return a.toString();
     }
 
-    static void getTableDDL(Database dDatabase, Table t, int i,
-                            HsqlArrayList forwardFK, StringBuffer a) {
+    static void getTableDDL(Database database, Table t, int i,
+                            HsqlArrayList forwardFK, boolean useSchema,
+                            StringBuffer a) {
 
         a.append(Token.T_CREATE).append(' ');
+
+        if (t.isTemp) {
+            a.append(Token.T_GLOBAL).append(' ');
+            a.append(Token.T_TEMPORARY).append(' ');
+        }
 
         if (t.isText()) {
             a.append(Token.T_TEXT).append(' ');
@@ -349,6 +417,11 @@ public class DatabaseScript {
         }
 
         a.append(Token.T_TABLE).append(' ');
+
+        if (useSchema) {
+            a.append(t.getName().schema.statementName).append('.');
+        }
+
         a.append(t.getName().statementName);
         a.append('(');
 
@@ -397,7 +470,7 @@ public class DatabaseScript {
                     a.append(column.identityIncrement);
                 }
 
-                a.append(") ");
+                a.append(")");
             }
 
             if (!column.isNullable()) {
@@ -416,11 +489,16 @@ public class DatabaseScript {
             }
         }
 
-        if (pk.length > 1 ||!pki.getName().isReservedIndexName()) {
-            a.append(',').append(Token.T_CONSTRAINT).append(' ');
-            a.append(pki.getName().statementName);
-            a.append(' ').append(Token.T_PRIMARY).append(' ').append(
-                Token.T_KEY);
+        if (pk.length > 1
+                || (pk.length == 1 &&!pki.getName().isReservedIndexName())) {
+            a.append(',');
+
+            if (!pki.getName().isReservedIndexName()) {
+                a.append(Token.T_CONSTRAINT).append(' ');
+                a.append(pki.getName().statementName).append(' ');
+            }
+
+            a.append(Token.T_PRIMARY).append(' ').append(Token.T_KEY);
             getColumnList(t, pk, pk.length, a);
         }
 
@@ -444,8 +522,9 @@ public class DatabaseScript {
                 case Constraint.FOREIGN_KEY :
 
                     // forward referencing FK
-                    Table maintable      = c.getMain();
-                    int   maintableindex = dDatabase.getTableIndex(maintable);
+                    Table maintable = c.getMain();
+                    int maintableindex =
+                        database.schemaManager.getTableIndex(maintable);
 
                     if (maintableindex > i) {
                         forwardFK.add(c);
@@ -609,7 +688,7 @@ public class DatabaseScript {
     }
 
     /**
-     * Generates the GRANT statements for users.
+     * Generates the GRANT statements for grantees.
      *
      * When views is true, generates rights for views only. Otherwise generates
      * rights for tables and classes.
@@ -625,16 +704,38 @@ public class DatabaseScript {
         StringBuffer   a;
         HashMappedList userlist = dDatabase.getUserManager().getUsers();
         Iterator       users    = userlist.values().iterator();
+        GranteeManager gm       = dDatabase.getGranteeManager();
+        Iterator       grantees = gm.getGrantees().iterator();
 
         for (; users.hasNext(); ) {
             User   u    = (User) users.next();
             String name = u.getName();
 
+            // PUBLIC user is not persisted.  (However, his
+            // grants/revokes are).  _SYSTEM user not in user list.
             if (!name.equals(Token.T_PUBLIC)) {
                 addRow(r, u.getCreateUserDDL());
             }
+        }
 
-            IntValueHashMap rightsmap = u.getRights();
+        // grantees has ALL Users and Roles, incl. hidden and reserved ones.
+        // Therefore, we filter out the non-persisting ones.
+        for (; grantees.hasNext(); ) {
+            Grantee g    = (Grantee) grantees.next();
+            String  name = g.getName();
+
+            // _SYSTEM user, DBA Role grants/revokes not persisted
+            if (name.equals("_SYSTEM") || name.equals("DBA")) {
+                continue;
+            }
+
+            String roleString = g.allRolesString();
+
+            if (roleString != null) {
+                addRow(r, "GRANT " + roleString + " TO " + name);
+            }
+
+            IntValueHashMap rightsmap = g.getRights();
 
             if (rightsmap == null) {
                 continue;
@@ -649,7 +750,7 @@ public class DatabaseScript {
                 a = new StringBuffer(64);
 
                 a.append(Token.T_GRANT).append(' ');
-                a.append(UserManager.getRight(right));
+                a.append(GranteeManager.getRightsList(right));
                 a.append(' ').append(Token.T_ON).append(' ');
 
                 if (nameobject instanceof String) {
@@ -662,23 +763,23 @@ public class DatabaseScript {
                     a.append((String) nameobject);
                     a.append('\"');
                 } else {
+                    HsqlName hsqlname = (HsqlName) nameobject;
 
                     // assumes all non String objects are table names
-                    Table table =
-                        dDatabase.findUserTable(null,
-                                                ((HsqlName) nameobject).name,
-                                                null);
+                    Table table = dDatabase.schemaManager.findUserTable(null,
+                        hsqlname.name, hsqlname.schema.name);
 
                     // either table != null or is system table
                     if (table != null) {
-                        a.append(((HsqlName) nameobject).statementName);
+                        a.append(hsqlname.schema.statementName).append(
+                            '.').append(hsqlname.statementName);
                     } else {
                         continue;
                     }
                 }
 
                 a.append(' ').append(Token.T_TO).append(' ');
-                a.append(u.getName());
+                a.append(g.getName());
                 addRow(r, a.toString());
             }
         }

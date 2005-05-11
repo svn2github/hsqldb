@@ -79,22 +79,20 @@ class ScriptReaderBinary extends ScriptReaderBase {
 
     protected void readDDL(Session session)
     throws IOException, HsqlException {
-        readSingleColumnResult(session);
-    }
-
-    protected void readSingleColumnResult(Session session)
-    throws IOException, HsqlException {
 
         Result   r  = Result.read(rowIn, dataStreamIn);
         Iterator it = r.iterator();
 
         while (it.hasNext()) {
-            Object[] data = (Object[]) it.next();
-            String   s    = (String) data[0];
-            Result   re   = session.sqlExecuteDirectNoPreChecks(s);
+            Object[] data   = (Object[]) it.next();
+            String   s      = (String) data[0];
+            Result   result = session.sqlExecuteDirectNoPreChecks(s);
 
-            if (re.mode == ResultConstants.ERROR) {
-                throw Trace.error(re);
+            if (result.mode == ResultConstants.ERROR) {
+                db.logger.appLog.logContext(result.getException());
+
+                /** @todo fredt - trap if unavaialble external functions are to be ignored */
+                throw Trace.error(result);
             }
         }
     }
@@ -109,8 +107,9 @@ class ScriptReaderBinary extends ScriptReaderBase {
                 break;
             }
 
-            Table t = db.getUserTable(session, s, null);
-            int   j = 0;
+            String schema = session.getSchemaName(currentSchema);
+            Table  t      = db.schemaManager.getUserTable(session, s, schema);
+            int    j      = 0;
 
             for (j = 0; ; j++) {
                 if (readRow(t) == false) {
@@ -153,6 +152,7 @@ class ScriptReaderBinary extends ScriptReaderBase {
     }
 
     // int : headersize (0 if no more tables), String : tablename, int : operation,
+    // String : schemaname
     protected String readTableInit() throws IOException, HsqlException {
 
         boolean more = readRow(rowIn, 0);
@@ -166,7 +166,14 @@ class ScriptReaderBinary extends ScriptReaderBase {
         // operation is always INSERT
         int checkOp = rowIn.readIntData();
 
-        if (checkOp != ScriptWriterBase.INSERT) {
+        if (checkOp == ScriptWriterBase.INSERT_WITH_SCHEMA) {
+            currentSchema = rowIn.readString();
+        } else {
+            currentSchema = null;
+        }
+
+        if (checkOp != ScriptWriterBase.INSERT
+                && checkOp != ScriptWriterBase.INSERT_WITH_SCHEMA) {
             throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
                               Trace.ERROR_IN_BINARY_SCRIPT_2);
         }

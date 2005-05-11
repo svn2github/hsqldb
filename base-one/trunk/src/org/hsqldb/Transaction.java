@@ -110,6 +110,21 @@ class Transaction {
             } else {
                 tTable.deleteNoCheckRollback(session, row, log);
             }
-        } catch (Exception e) {}
+        } catch (Exception e) {
+
+//            System.out.println("rollback error: isDelete " + isDelete);
+        }
+    }
+
+    void commit(Session session) {
+
+        try {
+            if (isDelete) {
+                tTable.removeRowFromStore(row);
+            }
+        } catch (Exception e) {
+
+//            System.out.println("rollback error: isDelete " + isDelete);
+        }
     }
 }

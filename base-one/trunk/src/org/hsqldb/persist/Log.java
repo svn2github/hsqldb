@@ -349,7 +349,7 @@ public class Log {
 
                 if (session.isAutoCommit() == false) {
                     dbLogWriter.writeLogStatement(
-                        session.getAutoCommitStatement(), session.getId());
+                        session, session.getAutoCommitStatement());
                 }
             }
         } catch (IOException e) {
@@ -368,6 +368,13 @@ public class Log {
         long defraglimit = megas * 1024 * 1024;
 
         return cache.freeBlocks.getLostBlocksSize() > defraglimit;
+    }
+
+    /**
+     *
+     */
+    boolean hasCache() {
+        return cache != null;
     }
 
     /**
@@ -446,14 +453,14 @@ public class Log {
     /**
      * Various writeXXX() methods are used for logging statements.
      */
-    void writeStatement(int id, String s) throws HsqlException {
+    void writeStatement(Session session, String s) throws HsqlException {
 
         if (s == null || s.length() == 0) {
             return;
         }
 
         try {
-            dbLogWriter.writeLogStatement(s, id);
+            dbLogWriter.writeLogStatement(session, s);
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR, logFileName);
         }
@@ -463,11 +470,11 @@ public class Log {
         }
     }
 
-    void writeInsertStatement(int id, Table t,
+    void writeInsertStatement(Session session, Table t,
                               Object[] row) throws HsqlException {
 
         try {
-            dbLogWriter.writeInsertStatement(id, t, row);
+            dbLogWriter.writeInsertStatement(session, t, row);
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR, logFileName);
         }
@@ -477,11 +484,11 @@ public class Log {
         }
     }
 
-    void writeDeleteStatement(int id, Table t,
+    void writeDeleteStatement(Session session, Table t,
                               Object[] row) throws HsqlException {
 
         try {
-            dbLogWriter.writeDeleteStatement(id, t, row);
+            dbLogWriter.writeDeleteStatement(session, t, row);
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR, logFileName);
         }
@@ -491,11 +498,11 @@ public class Log {
         }
     }
 
-    void writeSequenceStatement(int id,
+    void writeSequenceStatement(Session session,
                                 NumberSequence s) throws HsqlException {
 
         try {
-            dbLogWriter.writeSequenceStatement(id, s);
+            dbLogWriter.writeSequenceStatement(session, s);
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR, logFileName);
         }
@@ -505,10 +512,10 @@ public class Log {
         }
     }
 
-    void writeCommitStatement(int id) throws HsqlException {
+    void writeCommitStatement(Session session) throws HsqlException {
 
         try {
-            dbLogWriter.writeCommitStatement(id);
+            dbLogWriter.writeCommitStatement(session);
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR, logFileName);
         }
@@ -591,7 +598,8 @@ public class Log {
                                                        scriptFileName,
                                                        scriptFormat);
 
-                scr.readAll(database.sessionManager.getSysSession());
+                scr.readAll(database.sessionManager.getSysSession(null,
+                        true));
                 scr.close();
             }
         } catch (IOException e) {

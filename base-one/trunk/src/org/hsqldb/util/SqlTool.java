@@ -42,7 +42,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.StringTokenizer;
 
-/* $Id: SqlTool.java,v 1.44 2005/05/04 04:26:32 unsaved Exp $ */
+/* $Id: SqlTool.java,v 1.39 2004/09/19 03:44:46 fredt Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -53,22 +53,22 @@ import java.util.StringTokenizer;
  * See JavaDocs for the main method for syntax of how to run.
  *
  * @see @main()
- * @version $Revision: 1.44 $
+ * @version $Revision: 1.39 $
  * @author Blaine Simpson
  */
 public class SqlTool {
+
     private static final String DEFAULT_RCFILE =
         System.getProperty("user.home") + "/sqltool.rc";
-
-    private static Connection   conn;
+    private static Connection conn;
 
     // N.b. the following is static!
     private static boolean noexit;    // Whether System.exit() may be called.
-    private static String revnum = null;
+    private static String  revnum = null;
 
     static {
-        revnum = "$Revision: 1.44 $".substring("$Revision: ".length(),
-                                               "$Revision: 1.44 $".length()
+        revnum = "$Revision: 1.45 $".substring("$Revision: ".length(),
+                                               "$Revision: 1.45 $".length()
                                                - 2);
     }
 
@@ -172,21 +172,21 @@ public class SqlTool {
          * get a JDBC Connection with the RCData; instantiate and
          * execute as many SqlFiles as we need to.
          */
-        String  rcFile      = null;
-        File    tmpFile     = null;
-        String  sqlText     = null;
-        String  driver      = null;
-        String  targetDb    = null;
-        String  varSettings = null;
-        boolean debug       = false;
-        File[]  scriptFiles = null;
-        int     i           = -1;
-        boolean listMode    = false;
-        boolean interactive = false;
-        boolean noinput     = false;
-        boolean noautoFile  = false;
-        boolean autoCommit  = false;
-        Boolean coeOverride = null;
+        String  rcFile           = null;
+        File    tmpFile          = null;
+        String  sqlText          = null;
+        String  driver           = null;
+        String  targetDb         = null;
+        String  varSettings      = null;
+        boolean debug            = false;
+        File[]  scriptFiles      = null;
+        int     i                = -1;
+        boolean listMode         = false;
+        boolean interactive      = false;
+        boolean noinput          = false;
+        boolean noautoFile       = false;
+        boolean autoCommit       = false;
+        Boolean coeOverride      = null;
         Boolean stdinputOverride = null;
 
         noexit = System.getProperty("sqltool.noexit") != null;
@@ -196,7 +196,7 @@ public class SqlTool {
                 i++;
 
                 if (arg[i].length() == 2) {
-                    break;    // "--"
+                    break;             // "--"
                 }
 
                 if (arg[i].substring(2).equals("help")) {
@@ -260,12 +260,14 @@ public class SqlTool {
                 }
 
                 if (arg[i].substring(2).equals("sql")) {
-                    noinput = true; // but turn back on if file "-" specd.
+                    noinput = true;    // but turn back on if file "-" specd.
+
                     if (++i == arg.length) {
                         throw bcl;
                     }
 
                     sqlText = arg[i];
+
                     if (sqlText.charAt(sqlText.length() - 1) != ';') {
                         sqlText += ";";
                     }
@@ -292,14 +294,14 @@ public class SqlTool {
                 }
 
                 if (arg[i].substring(2).equals("stdinput")) {
-                    noinput = false;
+                    noinput          = false;
                     stdinputOverride = Boolean.TRUE;
 
                     continue;
                 }
 
                 if (arg[i].substring(2).equals("noinput")) {
-                    noinput = true;
+                    noinput          = true;
                     stdinputOverride = Boolean.FALSE;
 
                     continue;
@@ -352,18 +354,19 @@ public class SqlTool {
             if (stdinputOverride != null) {
                 noinput = !stdinputOverride.booleanValue();
             }
+
             interactive = (!noinput) && (arg.length <= i + 1);
 
-            if (arg.length == i + 2  && arg[i + 1].equals("-")) {
+            if (arg.length == i + 2 && arg[i + 1].equals("-")) {
                 if (stdinputOverride == null) {
                     noinput = false;
                 }
             } else if (arg.length > i + 1) {
 
                 // I.e., if there are any SQL files specified.
-                scriptFiles = new File[arg.length - i - 1
-                    + ((stdinputOverride == null 
-                                || !stdinputOverride.booleanValue()) ? 0 : 1)];
+                scriptFiles =
+                    new File[arg.length - i - 1 + ((stdinputOverride == null ||!stdinputOverride.booleanValue()) ? 0
+                                                                                                                 : 1)];
 
                 if (debug) {
                     System.err.println("scriptFiles has "
@@ -373,10 +376,11 @@ public class SqlTool {
                 while (i + 1 < arg.length) {
                     scriptFiles[scriptIndex++] = new File(arg[++i]);
                 }
+
                 if (stdinputOverride != null
                         && stdinputOverride.booleanValue()) {
                     scriptFiles[scriptIndex++] = null;
-                    noinput     = true;
+                    noinput                    = true;
                 }
             }
         } catch (BadCmdline bcl) {
@@ -388,9 +392,8 @@ public class SqlTool {
         RCData conData = null;
 
         try {
-            conData = new RCData(
-                    new File((rcFile == null) ? DEFAULT_RCFILE : rcFile),
-                    targetDb);
+            conData = new RCData(new File((rcFile == null) ? DEFAULT_RCFILE
+                                                           : rcFile), targetDb);
         } catch (Exception e) {
             exitMain(1, "Failed to retrieve connection info for database '"
                      + targetDb + "': " + e.getMessage());
@@ -409,9 +412,9 @@ public class SqlTool {
         }
 
         try {
-            conn = conData.getConnection(driver,
-                    System.getProperty("sqlfile.charset"),
-                    System.getProperty("javax.net.ssl.trustStore"));
+            conn = conData.getConnection(
+                driver, System.getProperty("sqlfile.charset"),
+                System.getProperty("javax.net.ssl.trustStore"));
 
             conn.setAutoCommit(autoCommit);
 
@@ -425,8 +428,8 @@ public class SqlTool {
                                    + "'.");
             }
         } catch (Exception e) {
-
             e.printStackTrace();
+
             // Let's not continue as if nothing is wrong.
             exitMain(10,
                      "Failed to get a connection to " + conData.url + " as "
@@ -455,16 +458,19 @@ public class SqlTool {
             scriptFiles = (noinput ? emptyFileArray
                                    : singleNullFileArray);
         }
+
         int numFiles = scriptFiles.length;
+
         if (tmpFile != null) {
             numFiles += 1;
         }
+
         if (autoFile != null) {
             numFiles += 1;
         }
 
         SqlFile[] sqlFiles = new SqlFile[numFiles];
-        HashMap userVars = new HashMap();
+        HashMap   userVars = new HashMap();
 
         if (varSettings != null) {
             int             equals;

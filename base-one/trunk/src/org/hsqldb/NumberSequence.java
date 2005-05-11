@@ -164,6 +164,10 @@ public class NumberSequence {
         return name;
     }
 
+    public String getSchemaName() {
+        return name.schema.name;
+    }
+
     long getIncrement() {
         return increment;
     }

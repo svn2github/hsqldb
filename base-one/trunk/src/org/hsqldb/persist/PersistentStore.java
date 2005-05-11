@@ -46,7 +46,9 @@ public interface PersistentStore {
 
     int getStorageSize(int key);
 
-    void add(CachedObject value) throws IOException;
+    void add(CachedObject object) throws IOException;
+
+    void restore(CachedObject object) throws IOException;
 
     CachedObject get(RowInputInterface in) throws IOException;
 

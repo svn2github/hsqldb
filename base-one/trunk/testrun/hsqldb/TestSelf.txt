@@ -71,11 +71,11 @@ DROP TABLE T4;Drop Table T5; drop table T6
 drop table t7; drop table t8; drop table t9
 create user 'test' password 'test-p'
 create table test (id integer)
-revoke all on test to 'test'
+revoke all on test from 'test'
 select * from test order by test.id
 grant all on test to 'test'
 grant select on test to 'test'
-revoke select,insert,update,delete on test to 'test'
+revoke select,insert,update,delete on test from 'test'
 connect user 'test' password 'test-p'
 set password 'test-p2'
 connect user 'sa' password ''
@@ -124,8 +124,10 @@ insert into invoice values(2,-4987770.01)
 insert into invoice select * from invoice where not total>=0.
 update invoice set total=10 where total < 0
 insert into invoice values(2,10)
+set schema INFORMATION_SCHEMA
 select * from system_tables
 select * from SYSTEM_SESSIONINFO
+set schema PUBLIC
 create table t_double(id integer,d double,f double)
 insert into t_double values(1,1.2,1.4)
 insert into t_double values(2,1.4,1.0)

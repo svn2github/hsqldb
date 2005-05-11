@@ -107,6 +107,10 @@ public class HsqlLinkedList extends BaseList implements HsqlList {
         return true;
     }
 
+    public void clear() {
+        first.next = null;
+    }
+
     /**
      * Gets the element at given position
      * @throws <code>IndexOutOfBoundsException</code> if index is not valid

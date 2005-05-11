@@ -35,11 +35,11 @@ import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.LongKeyIntValueHashMap;
 
-class TxManager {
+class TransactionManager {
 
     LongKeyIntValueHashMap rowSessionMap;
 
-    TxManager() {
+    TransactionManager() {
         rowSessionMap = new LongKeyIntValueHashMap();
     }
 
@@ -86,6 +86,7 @@ class TxManager {
             Transaction tx    = (Transaction) list[i];
             long        rowid = tx.row.getId();
 
+            tx.commit(session);
             rowSessionMap.remove(rowid);
         }
 
@@ -94,9 +95,6 @@ class TxManager {
     }
 
     synchronized void rollback(Session session) {
-
-        int size = session.transactionList.size();
-
         rollbackTransactions(session, 0, false);
         session.savepoints.clear();
     }

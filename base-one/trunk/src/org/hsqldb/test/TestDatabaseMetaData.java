@@ -68,7 +68,7 @@ public class TestDatabaseMetaData extends TestBase {
             pstmt.close();
 
             pstmt = conn.prepareStatement(
-                "CREATE TABLE t1 (cha CHARACTER, dec DECIMAL, doub DOUBLE, lon BIGINT, in INTEGER, sma SMALLINT, tin TINYINT, "
+                "CREATE TABLE t1 (cha CHARACTER, dec DECIMAL, doub DOUBLE, lon BIGINT, \"IN\" INTEGER, sma SMALLINT, tin TINYINT, "
                 + "dat DATE DEFAULT CURRENT_DATE, tim TIME DEFAULT CURRENT_TIME, timest TIMESTAMP DEFAULT CURRENT_TIMESTAMP );");
             updateCount = pstmt.executeUpdate();
 
@@ -79,7 +79,7 @@ public class TestDatabaseMetaData extends TestBase {
             pstmt       = conn.prepareStatement("DROP TABLE t2 IF EXISTS");
             updateCount = pstmt.executeUpdate();
             pstmt = conn.prepareStatement(
-                "CREATE TABLE t2 (cha CHARACTER, dec DECIMAL, doub DOUBLE, lon BIGINT, in INTEGER, sma SMALLINT, tin TINYINT, "
+                "CREATE TABLE t2 (cha CHARACTER, dec DECIMAL, doub DOUBLE, lon BIGINT, \"IN\" INTEGER, sma SMALLINT, tin TINYINT, "
                 + "dat DATE DEFAULT CURRENT_DATE, tim TIME DEFAULT CURRENT_TIME, timest TIMESTAMP DEFAULT CURRENT_TIMESTAMP );");
             updateCount = pstmt.executeUpdate();
             pstmt = conn.prepareStatement("CREATE INDEX t2 ON t2 (cha );");
@@ -154,7 +154,7 @@ public class TestDatabaseMetaData extends TestBase {
             pstmt.close();
 
             pstmt = conn.prepareStatement(
-                "CREATE TABLE t_1 (cha CHARACTER(10), dec DECIMAL(10,2), doub DOUBLE, lon BIGINT, in INTEGER, sma SMALLINT, tin TINYINT, "
+                "CREATE TABLE t_1 (cha CHARACTER(10), dec DECIMAL(10,2), doub DOUBLE, lon BIGINT, \"IN\" INTEGER, sma SMALLINT, tin TINYINT, "
                 + "dat DATE DEFAULT CURRENT_DATE, tim TIME DEFAULT CURRENT_TIME, timest TIMESTAMP DEFAULT CURRENT_TIMESTAMP );");
             updateCount = pstmt.executeUpdate();
 

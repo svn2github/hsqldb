@@ -92,7 +92,7 @@ final class CompiledStatementExecutor {
         }
 
         // clear redundant data
-        cs.dematerializeSubQueries();
+        cs.dematerializeSubQueries(session);
 
         if (result == null) {
             result = emptyResult;
@@ -316,11 +316,12 @@ final class CompiledStatementExecutor {
             // session level user rights
             session.checkDDLWrite();
 
-            if (session.getDatabase()
-                    .findUserTable(session, select.sIntoTable
-                        .name, null) != null || session.getDatabase().dInfo
-                            .getSystemTable(session, select.sIntoTable
-                                .name) != null) {
+            boolean exists =
+                session.database.schemaManager.findUserTable(
+                    session, select.sIntoTable.name,
+                    select.sIntoTable.schema.name) != null;
+
+            if (exists) {
                 throw Trace.error(Trace.TABLE_ALREADY_EXISTS,
                                   select.sIntoTable.name);
             }

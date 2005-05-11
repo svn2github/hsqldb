@@ -516,7 +516,7 @@ class Function {
 
             if (e != null) {
                 if (e.exprType == Expression.COLUMN) {
-                    eArg[i] = e.getExpressionForAlias(e, columns, length);
+                    eArg[i] = e.getExpressionForAlias(columns, length);
                 } else {
                     e.replaceAliases(columns, length);
                 }
@@ -562,7 +562,7 @@ class Function {
      * Resolves the type of this expression and performs certain
      * transformations and optimisations of the expression tree.
      */
-    void resolveType(Database database) throws HsqlException {
+    void resolveType(Session session) throws HsqlException {
 
         Expression e;
 
@@ -576,7 +576,7 @@ class Function {
                     e.nullability    = getArgNullability(i);
                     e.valueClassName = getArgClass(i).getName();
                 } else {
-                    e.resolveTypes(database);
+                    e.resolveTypes(session);
                 }
             }
         }

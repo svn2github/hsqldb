@@ -4,6 +4,7 @@
 -- Tests demonstrating remaining issues
 --
 -- bug #901313 - fixed - subselect results in error when it returns no rows
+-- corrected for 1.8.0 RC10 - scalar subquery should return null if no rows are returned
 drop table table2 if exists;
 drop table table1 if exists;
 create table table1 (col1 integer not null, col2 integer not null);
@@ -16,12 +17,12 @@ insert into table2 (col1, col2) values (2, 4)
 /*u2*/update table2 set col2=(select table1.col2 from table1 where table1.col1 = table2.col1)
 /*c2*/select t1.col1, t1.col2, t2.col2 from table1 t1, table2 t2 where t1.col1 = t2.col1
 /*u1*/insert into table2 (col1, col2) values (null, 5)
-/*u2*/update table2 set col2=(select table1.col2 from table1 where table1.col1 = table2.col1)
+/*u3*/update table2 set col2=(select table1.col2 from table1 where table1.col1 = table2.col1)
 -- support for aliases in UPDATE has been added
-/*u2*/update table2 b set col2 = (select a.col2 from table1 a where a.col1 = b.col1)
+/*u3*/update table2 b set col2 = (select a.col2 from table1 a where a.col1 = b.col1)
 /*c2*/select t1.col1, t1.col2, t2.col2 from table1 t1, table2 t2 where t1.col1 = t2.col1
 -- query returns only rows for which the correlated subquery returns a value
-/*c2*/select table2.col2,(select table1.col2 from table1 where table1.col1 = table2.col1) from table2
+/*c3*/select table2.col2,(select table1.col2 from table1 where table1.col1 = table2.col1) from table2
 -- add row so that subquery returns two rows
 /*u1*/insert into table1 (col1, col2) values (1, 6)
 /*e*/select table2.col2,(select table1.col2 from table1 where table1.col1 = table2.col1) from table2

@@ -100,9 +100,10 @@ public class ScriptRunner {
                                  int logType) throws HsqlException {
 
         IntKeyHashMap sessionMap = new IntKeyHashMap();
-        Session sysSession = database.getSessionManager().getSysSession();
-        Session       current    = sysSession;
-        int           currentId  = 0;
+        Session sysSession = database.getSessionManager().getSysSession(null,
+            false);
+        Session current   = sysSession;
+        int     currentId = 0;
 
         database.setReferentialIntegrity(false);
 
@@ -124,7 +125,7 @@ public class ScriptRunner {
                     if (current == null) {
                         current =
                             database.getSessionManager().newSession(database,
-                                sysSession.getUser(), false);
+                                sysSession.getUser(), false, true);
 
                         sessionMap.put(currentId, current);
                     }
@@ -136,6 +137,7 @@ public class ScriptRunner {
                     continue;
                 }
 
+                String schema = current.currentSchema.name;
                 Result result = null;
 
                 switch (scr.getStatementType()) {
@@ -178,6 +180,9 @@ public class ScriptRunner {
                                 data);
 
                         break;
+                    }
+                    case ScriptReaderBase.SCHEMA_STATEMENT : {
+                        current.setSchema(scr.getCurrentSchema());
                     }
                 }
 

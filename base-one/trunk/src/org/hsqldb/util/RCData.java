@@ -43,7 +43,7 @@ import java.util.HashMap;
 import java.util.StringTokenizer;
 import java.util.Properties;
 
-/* $Id$ */
+/* $Id: RCData.java,v 1.1 2005/04/26 16:38:04 unsaved Exp $ */
 
 /**
  * All the info we need to connect up to a database.
@@ -54,15 +54,15 @@ import java.util.Properties;
  * anything in this class.
  */
 public class RCData {
+
     public static final String DEFAULT_JDBC_DRIVER = "org.hsqldb.jdbcDriver";
+
     /**
      * Just for testing and debugging.
      */
     public void report() {
-
-        System.err.println("urlid: " + id + ", url: " + url
-                           + ", username: " + username + ", password: "
-                           + password);
+        System.err.println("urlid: " + id + ", url: " + url + ", username: "
+                           + username + ", password: " + password);
     }
 
     /**
@@ -73,10 +73,11 @@ public class RCData {
      * @param inFile File containing the authentication information.
      */
     public RCData(File file, String dbKey) throws Exception {
+
         if (file == null) {
-            throw new IllegalArgumentException(
-                    "RC file name not specified");
+            throw new IllegalArgumentException("RC file name not specified");
         }
+
         if (!file.canRead()) {
             throw new IOException("Please set up authentication file '"
                                   + file + "'");
@@ -88,7 +89,7 @@ public class RCData {
         String          s;
         String          keyword, value;
         int             linenum = 0;
-        BufferedReader  br = new BufferedReader(new FileReader(file));
+        BufferedReader  br      = new BufferedReader(new FileReader(file));
 
         while ((s = br.readLine()) != null) {
             ++linenum;
@@ -138,9 +139,9 @@ public class RCData {
                             br.close();
                         } catch (IOException e) {}
 
-                            throw new Exception("Key '" + dbKey
-                                            + " redefined at" + " line "
-                                            + linenum + " in '" + file);
+                        throw new Exception("Key '" + dbKey + " redefined at"
+                                            + " line " + linenum + " in '"
+                                            + file);
                     }
                 } else {
                     thisone = false;
@@ -167,7 +168,7 @@ public class RCData {
                         br.close();
                     } catch (IOException e) {}
 
-                        throw new Exception("Bad line " + linenum + " in '"
+                    throw new Exception("Bad line " + linenum + " in '"
                                         + file + "':  " + s);
                 }
             }
@@ -199,10 +200,11 @@ public class RCData {
     /**
      * Gets a JDBC Connection using the data of this RCData object.
      *
-     * @return New JDBC Connection 
+     * @return New JDBC Connection
      */
-    Connection getConnection() throws ClassNotFoundException,
-            InstantiationException, IllegalAccessException, SQLException {
+    Connection getConnection()
+    throws ClassNotFoundException, InstantiationException,
+           IllegalAccessException, SQLException {
         return getConnection(null, null, null);
     }
 
@@ -210,20 +212,27 @@ public class RCData {
      * Gets a JDBC Connection using the data of this RCData object with
      * specified override elements
      *
-     * @return New JDBC Connection 
+     * @return New JDBC Connection
      */
     Connection getConnection(String curDriver, String curCharset,
-            String curTrustStore) throws ClassNotFoundException,
-            InstantiationException, IllegalAccessException, SQLException {
+                             String curTrustStore)
+                             throws ClassNotFoundException,
+                                    InstantiationException,
+                                    IllegalAccessException, SQLException {
+
         Properties sysProps = System.getProperties();
 
         if (curDriver == null) {
+
             // If explicit driver not specified
-            curDriver = ((driver == null) ? DEFAULT_JDBC_DRIVER : driver);
+            curDriver = ((driver == null) ? DEFAULT_JDBC_DRIVER
+                                          : driver);
         }
+
         if (curCharset == null && charset != null) {
             curCharset = charset;
         }
+
         if (curTrustStore == null && truststore != null) {
             curTrustStore = truststore;
         }
@@ -233,6 +242,7 @@ public class RCData {
         } else {
             sysProps.put("sqlfile.charset", curCharset);
         }
+
         if (curTrustStore == null) {
             sysProps.remove("javax.net.ssl.trustStore");
         } else {

@@ -268,7 +268,7 @@ public class Token {
     static final String        T_SELECT          = "SELECT";                      //reserved
     static final String        T_SENSITIVE       = "SENSITIVE";                   //reserved
     static final String        T_SESSION_USER    = "SESSION_USER";                //reserved
-    static final String        T_SET             = "SET";                         //reserved
+    public static final String T_SET             = "SET";                         //reserved
     static final String        T_SIGNAL          = "SIGNAL";                      //reserved
     static final String        T_SIMILAR         = "SIMILAR";                     //reserved
     static final String        T_SMALLINT        = "SMALLINT";                    //reserved
@@ -371,7 +371,9 @@ public class Token {
     static final String        T_NVL            = "NVL";
     static final String        T_OFFSET         = "OFFSET";
     static final String        T_PASSWORD       = "PASSWORD";
+    public static final String T_SCHEMA         = "SCHEMA";
     static final String        T_PLAN           = "PLAN";
+    static final String        T_PRESERVE       = "PRESERVE";
     static final String        T_POSITION       = "POSITION";
     static final String        T_PROPERTY       = "PROPERTY";
     static final String        T_PUBLIC         = "PUBLIC";
@@ -381,6 +383,7 @@ public class Token {
     static final String        T_RENAME         = "RENAME";
     static final String        T_RESTART        = "RESTART";
     static final String        T_RESTRICT       = "RESTRICT";
+    static final String        T_ROLE           = "ROLE";
     static final String        T_SCRIPT         = "SCRIPT";
     static final String        T_SCRIPTFORMAT   = "SCRIPTFORMAT";
     static final String        T_SEQUENCE       = "SEQUENCE";
@@ -392,6 +395,7 @@ public class Token {
     static final String        T_SUM            = "SUM";
     static final String        T_SYSDATE        = "SYSDATE";
     static final String        T_TEMP           = "TEMP";
+    static final String        T_TEMPORARY      = "TEMPORARY";
     public static final String T_TEXT           = "TEXT";
     static final String        T_TODAY          = "TODAY";
     static final String        T_TOP            = "TOP";
@@ -673,16 +677,17 @@ public class Token {
     static final int        READONLY              = 317;
     static final int        REFERENTIAL_INTEGRITY = 318;
     static final int        RENAME                = 319;
-    static final int        SCRIPT                = 320;
-    static final int        SCRIPTFORMAT          = 321;
-    static final int        SEMICOLON             = 322;
-    static final int        SEQUENCE              = 323;
-    static final int        SHUTDOWN              = 324;
-    static final int        SOURCE                = 325;
-    static final int        TEMP                  = 326;
-    static final int        TEXT                  = 327;
-    static final int        VIEW                  = 328;
-    static final int        WRITE_DELAY           = 329;
+    static final int        RESTART               = 320;
+    static final int        SCRIPT                = 321;
+    static final int        SCRIPTFORMAT          = 322;
+    static final int        SEMICOLON             = 323;
+    static final int        SEQUENCE              = 324;
+    static final int        SHUTDOWN              = 325;
+    static final int        SOURCE                = 326;
+    static final int        TEMP                  = 327;
+    static final int        TEXT                  = 328;
+    static final int        VIEW                  = 329;
+    static final int        WRITE_DELAY           = 330;
 
     // added stuff
     static final int VAR_POP     = 330;
@@ -693,6 +698,8 @@ public class Token {
     static final int INCREMENT   = 335;
     static final int TOCHAR      = 336;
     static final int DATABASE    = 337;
+    static final int SCHEMA      = 338;
+    static final int ROLE        = 339;
 
     //
     static {
@@ -753,7 +760,9 @@ public class Token {
         commandSet.put(T_REFERENTIAL_INTEGRITY, REFERENTIAL_INTEGRITY);
         commandSet.put(T_RELEASE, RELEASE);
         commandSet.put(T_RENAME, RENAME);
+        commandSet.put(T_RESTART, RESTART);
         commandSet.put(T_REVOKE, REVOKE);
+        commandSet.put(T_ROLE, ROLE);
         commandSet.put(T_ROLLBACK, ROLLBACK);
         commandSet.put(T_SAVEPOINT, SAVEPOINT);
         commandSet.put(T_SCRIPT, SCRIPT);
@@ -775,6 +784,7 @@ public class Token {
         commandSet.put(T_VALUES, VALUES);
         commandSet.put(T_VIEW, VIEW);
         commandSet.put(T_WRITE_DELAY, WRITE_DELAY);
+        commandSet.put(T_SCHEMA, SCHEMA);
 
         return commandSet;
     }

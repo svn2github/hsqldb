@@ -60,7 +60,8 @@ public class RowInputTextLog extends RowInputBase
 implements RowInputInterface {
 
     Tokenizer tokenizer;
-    String    tableName = null;
+    String    tableName  = null;
+    String    schemaName = null;
     int       statementType;
 
     public RowInputTextLog() {
@@ -94,6 +95,11 @@ implements RowInputInterface {
             tableName = tokenizer.getString();
         } else if (s.equals(Token.T_COMMIT)) {
             statementType = ScriptReaderBase.COMMIT_STATEMENT;
+        } else if (s.equals(Token.T_SET)) {
+            if (tokenizer.isGetThis(Token.T_SCHEMA)) {
+                schemaName    = tokenizer.getSimpleName();
+                statementType = ScriptReaderBase.SCHEMA_STATEMENT;
+            }
         }
     }
 
@@ -103,6 +109,10 @@ implements RowInputInterface {
 
     public String getTableName() {
         return tableName;
+    }
+
+    public String getSchemaName() {
+        return schemaName;
     }
 
     protected String readField() throws IOException {

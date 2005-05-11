@@ -68,8 +68,6 @@ package org.hsqldb;
 
 import java.lang.reflect.Constructor;
 
-import org.hsqldb.HsqlNameManager.HsqlName;
-import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.FileAccess;
 import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.HashMap;
@@ -126,8 +124,6 @@ public class Database {
 // loosecannon1@users 1.7.2 patch properties on the JDBC URL
     private HsqlProperties urlProperties;
     private String         sPath;
-    private UserManager    userManager;
-    private HsqlArrayList  tTable;
     DatabaseInformation    dInfo;
     ClassLoader            classLoader;
 
@@ -149,19 +145,25 @@ public class Database {
     public boolean                 sqlEnforceSize;
     public boolean                 sqlEnforceStrictSize;
     public int                     firstIdentity;
-    private HashMap                hAlias;
     private boolean                bIgnoreCase;
     private boolean                bReferentialIntegrity;
-    public TxManager               txManager;
-    public SessionManager          sessionManager;
     private HsqlDatabaseProperties databaseProperties;
-    HsqlNameManager                nameManager;
-    DatabaseObjectNames            triggerNameList;
-    DatabaseObjectNames            indexNameList;
-    DatabaseObjectNames            constraintNameList;
-    public SequenceManager         sequenceManager;
-    CompiledStatementManager       compiledStatementManager;
-    public Collation               collation;
+
+    // schema invarient objects
+    private HashMap        hAlias;
+    private UserManager    userManager;
+    private GranteeManager granteeManager;
+    private RoleManager    roleManager;
+    HsqlNameManager        nameManager;
+
+    // session related objects
+    public SessionManager     sessionManager;
+    public TransactionManager txManager;
+    CompiledStatementManager  compiledStatementManager;
+
+    // schema objects
+    public SchemaManager schemaManager;
+    public Collation     collation;
 
     //
     public static final int DATABASE_ONLINE       = 1;
@@ -279,27 +281,31 @@ public class Database {
             databaseProperties.setURLProperties(urlProperties);
             compiledStatementManager.reset();
 
-            tTable                = new HsqlArrayList();
-            userManager           = new UserManager();
+            granteeManager        = new GranteeManager(this);
+            roleManager           = new RoleManager(this);
+            userManager           = new UserManager(this);
             hAlias                = Library.getAliasMap();
             nameManager           = new HsqlNameManager();
-            triggerNameList       = new DatabaseObjectNames();
-            indexNameList         = new DatabaseObjectNames();
-            constraintNameList    = new DatabaseObjectNames();
-            sequenceManager       = new SequenceManager();
+            schemaManager         = new SchemaManager(this);
             bReferentialIntegrity = true;
-            sysUser               = userManager.createSysUser();
-            sessionManager        = new SessionManager(this, sysUser);
-            txManager             = new TxManager();
-            collation             = new Collation();
-            dInfo = DatabaseInformation.newDatabaseInformation(this);
+            sysUser               = userManager.getSysUser();
+
+            // Couldn't do this in GranteeManager constructor, since it
+            // has to be constructed before the RoleManager.
+            granteeManager.linkRoleManager();
+
+            sessionManager = new SessionManager(this, sysUser);
+            txManager      = new TransactionManager();
+            collation      = new Collation();
+            dInfo          = DatabaseInformation.newDatabaseInformation(this);
 
             if (sType != DatabaseManager.S_MEM) {
                 logger.openLog(this);
             }
 
             if (isNew) {
-                sessionManager.getSysSession().sqlExecuteDirectNoPreChecks(
+                sessionManager.getSysSession(
+                    null, false).sqlExecuteDirectNoPreChecks(
                     "CREATE USER SA PASSWORD \"\" ADMIN");
                 logger.synchLogForce();
             }
@@ -326,24 +332,17 @@ public class Database {
      */
     void clearStructures() {
 
-        if (tTable != null) {
-            for (int i = 0; i < tTable.size(); i++) {
-                Table table = (Table) tTable.get(i);
-
-                table.dropTriggers();
-            }
+        if (schemaManager != null) {
+            schemaManager.clearStructures();
         }
 
-        tTable             = null;
-        userManager        = null;
-        hAlias             = null;
-        nameManager        = null;
-        triggerNameList    = null;
-        constraintNameList = null;
-        indexNameList      = null;
-        sequenceManager    = null;
-        sessionManager     = null;
-        dInfo              = null;
+        granteeManager = null;
+        userManager    = null;
+        hAlias         = null;
+        nameManager    = null;
+        schemaManager  = null;
+        sessionManager = null;
+        dInfo          = null;
     }
 
     /**
@@ -368,6 +367,13 @@ public class Database {
     }
 
     /**
+     * Returns the SessionManager for the database.
+     */
+    public SessionManager getSessionManager() {
+        return sessionManager;
+    }
+
+    /**
      *  Returns true if database has been shut down, false otherwise
      */
     synchronized boolean isShutdown() {
@@ -388,7 +394,7 @@ public class Database {
 
         User user = userManager.getUser(username, password);
         Session session = sessionManager.newSession(this, user,
-            databaseReadOnly);
+            databaseReadOnly, false);
 
         logger.logConnectUser(session);
 
@@ -431,12 +437,10 @@ public class Database {
     }
 
     /**
-     *  Returns an HsqlArrayList containing references to all non-system
-     *  tables and views. This includes all tables and views registered with
-     *  this Database.
+     *  Returns the Role Manager for this Database.
      */
-    public HsqlArrayList getTables() {
-        return tTable;
+    RoleManager getRoleManager() {
+        return roleManager;
     }
 
     /**
@@ -444,6 +448,13 @@ public class Database {
      */
     UserManager getUserManager() {
         return userManager;
+    }
+
+    /**
+     *  Returns the GranteeManager for this Database.
+     */
+    GranteeManager getGranteeManager() {
+        return granteeManager;
     }
 
     /**
@@ -481,96 +492,6 @@ public class Database {
                                : alias;
     }
 
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-// temp tables should be accessed by the owner and not scripted in the log
-
-    /**
-     *  Retruns the specified user-defined table or view visible within the
-     *  context of the specified Session, or any system table of the given
-     *  name. It excludes any temp tables created in different Sessions.
-     *  Throws if the table does not exist in the context.
-     */
-    public Table getTable(Session session, String name,
-                          String schema) throws HsqlException {
-
-        Table t = findUserTable(session, name, schema);
-
-        if (t == null) {
-            t = dInfo.getSystemTable(session, name);
-        }
-
-        if (t == null) {
-            throw Trace.error(Trace.TABLE_NOT_FOUND, name);
-        }
-
-        return t;
-    }
-
-    /**
-     *  Retruns the specified user-defined table or view visible within the
-     *  context of the specified Session. It excludes system tables and
-     *  any temp tables created in different Sessions.
-     *  Throws if the table does not exist in the context.
-     */
-    public Table getUserTable(Session session, String name,
-                              String schema) throws HsqlException {
-
-        Table t = findUserTable(session, name, schema);
-
-        if (t == null) {
-            throw Trace.error(Trace.TABLE_NOT_FOUND, name);
-        }
-
-        return t;
-    }
-
-    /**
-     * Deprecated pending rewrite of system table population code
-     * Retruns the specified user-defined table or view. It excludes system
-     * tables and all temp tables.
-     * Returns null if the table does not exist.
-     */
-    public Table findUserTable(String name) {
-
-        for (int i = 0, tsize = tTable.size(); i < tsize; i++) {
-            Table t = (Table) tTable.get(i);
-
-            if (t.tableName.name.equals(name)) {
-                return t;
-            }
-        }
-
-        return null;
-    }
-
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-
-    /**
-     *  Retruns the specified user-defined table or view visible within the
-     *  context of the specified Session. It excludes system tables and
-     *  any temp tables created in different Sessions.
-     *  Returns null if the table does not exist in the context.
-     */
-    Table findUserTable(Session session, String name, String schema) {
-
-        for (int i = 0, tsize = tTable.size(); i < tsize; i++) {
-            Table t = (Table) tTable.get(i);
-
-            if (t.equals(session, name)) {
-                return t;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     *  Registers the specified table or view with this Database.
-     */
-    void linkTable(Table t) {
-        tTable.add(t);
-    }
-
     /**
      * Sets the database to treat any new VARCHAR column declarations as
      * VARCHAR_IGNORECASE.
@@ -585,83 +506,6 @@ public class Database {
      */
     boolean isIgnoreCase() {
         return bIgnoreCase;
-    }
-
-    /**
-     * Returns the table that has an index with the given name in the
-     * whole database and is visible in this session.
-     * Returns null if not found.
-     */
-    Table findUserTableForIndex(Session session, String name, String schema) {
-
-        HsqlName hsqlname = indexNameList.getOwner(name);
-
-        if (hsqlname == null) {
-            return null;
-        }
-
-        return findUserTable(session, hsqlname.name, null);
-    }
-
-    /**
-     *  Returns index of a table or view in the HsqlArrayList that
-     *  contains the table objects for this Database.
-     *
-     * @param  table the Table object
-     * @return  the index of the specified table or view, or -1 if not found
-     */
-    int getTableIndex(Table table) {
-
-        for (int i = 0, tsize = tTable.size(); i < tsize; i++) {
-            Table t = (Table) tTable.get(i);
-
-            if (t == table) {
-                return i;
-            }
-        }
-
-        return -1;
-    }
-
-    /**
-     * Drops the index with the specified name from this database.
-     * @param indexname the name of the index to drop
-     * @param  ifExists if true and if the Index to drop does not exist, fail
-     *      silently, else throw
-     * @param session the execution context
-     * @throws HsqlException if the index does not exist, the session lacks
-     *        the permission or the operation violates database integrity
-     */
-    void dropIndex(Session session, String indexname, String schema,
-                   boolean ifExists) throws HsqlException {
-
-        Table t = findUserTableForIndex(session, indexname, null);
-
-        if (t == null) {
-            if (ifExists) {
-                return;
-            } else {
-                throw Trace.error(Trace.INDEX_NOT_FOUND, indexname);
-            }
-        }
-
-        t.checkDropIndex(indexname, null, false);
-
-// fredt@users 20020405 - patch 1.7.0 by fredt - drop index bug
-// see Table.moveDefinition();
-        session.commit();
-        session.setScripting(!t.isTemp());
-
-        TableWorks tw = new TableWorks(session, t);
-
-        tw.dropIndex(indexname);
-    }
-
-    /**
-     * Returns the SessionManager for the database.
-     */
-    public SessionManager getSessionManager() {
-        return sessionManager;
     }
 
     /**
@@ -738,354 +582,6 @@ public class Database {
         if (he != null) {
             throw he;
         }
-    }
-
-    /**
-     * Drops from this Database any temporary tables owned by the specified
-     * Session.
-     */
-    void dropTempTables(Session ownerSession) {
-
-        int i = tTable.size();
-
-        while (i-- > 0) {
-            Table toDrop = (Table) tTable.get(i);
-
-            if (toDrop.isTemp()
-                    && toDrop.getOwnerSessionId() == ownerSession.getId()) {
-                tTable.remove(i);
-            }
-        }
-    }
-
-// fredt@users 20020221 - patch 521078 by boucherb@users - DROP TABLE checks
-// avoid dropping tables referenced by foreign keys - also bug 451245
-// additions by fredt@users
-// remove redundant constrains on tables referenced by the dropped table
-// avoid dropping even with referential integrity off
-
-    /**
-     *  Drops the specified user-defined view or table from this Database
-     *  object. <p>
-     *
-     *  The process of dropping a table or view includes:
-     *  <OL>
-     *    <LI> checking that the specified Session's currently connected User
-     *    has the right to perform this operation and refusing to proceed if
-     *    not by throwing.
-     *    <LI> checking for referential constraints that conflict with this
-     *    operation and refusing to proceed if they exist by throwing.</LI>
-     *
-     *    <LI> removing the specified Table from this Database object.
-     *    <LI> removing any exported foreign keys Constraint objects held by
-     *    any tables referenced by the table to be dropped. This is especially
-     *    important so that the dropped Table ceases to be referenced,
-     *    eventually allowing its full garbage collection.
-     *    <LI>
-     *  </OL>
-     *  <p>
-     *
-     * @param  name of the table or view to drop
-     * @param  ifExists if true and if the Table to drop does not exist, fail
-     *      silently, else throw
-     * @param  isView true if the name argument refers to a View
-     * @param  session the connected context in which to perform this
-     *      operation
-     * @throws  HsqlException if any of the checks listed above fail
-     */
-    void dropTable(Session session, String name, String schema,
-                   boolean ifExists, boolean isView) throws HsqlException {
-
-        Table toDrop    = null;
-        int   dropIndex = -1;
-
-        for (int i = 0; i < tTable.size(); i++) {
-            toDrop = (Table) tTable.get(i);
-
-            if (toDrop.equals(session, name) && isView == toDrop.isView()) {
-                dropIndex = i;
-
-                break;
-            } else {
-                toDrop = null;
-            }
-        }
-
-        if (dropIndex == -1) {
-            if (ifExists) {
-                return;
-            } else {
-                throw Trace.error(isView ? Trace.VIEW_NOT_FOUND
-                                         : Trace.TABLE_NOT_FOUND, name);
-            }
-        }
-
-        if (!toDrop.isTemp()) {
-            session.checkDDLWrite();
-        }
-
-        if (isView) {
-            checkViewIsInView((View) toDrop);
-        } else {
-            checkTableIsReferenced(toDrop);
-            checkTableIsInView(toDrop.tableName.name);
-        }
-
-        tTable.remove(dropIndex);
-        removeExportedKeys(toDrop);
-        userManager.removeDbObject(toDrop.getName());
-        triggerNameList.removeOwner(toDrop.tableName);
-        indexNameList.removeOwner(toDrop.tableName);
-        constraintNameList.removeOwner(toDrop.tableName);
-        toDrop.dropTriggers();
-        toDrop.drop();
-        session.setScripting(!toDrop.isTemp());
-        session.commit();
-    }
-
-    /**
-     * Throws if the table is referenced in a foreign key constraint.
-     */
-    private void checkTableIsReferenced(Table toDrop) throws HsqlException {
-
-        Constraint[] constraints       = toDrop.getConstraints();
-        Constraint   currentConstraint = null;
-        Table        refTable          = null;
-        boolean      isRef             = false;
-        boolean      isSelfRef         = false;
-        int          refererIndex      = -1;
-
-        for (int i = 0; i < constraints.length; i++) {
-            currentConstraint = constraints[i];
-
-            if (currentConstraint.getType() != Constraint.MAIN) {
-                continue;
-            }
-
-            refTable  = currentConstraint.getRef();
-            isRef     = (refTable != null);
-            isSelfRef = (isRef && toDrop.equals(refTable));
-
-            if (isRef &&!isSelfRef) {
-
-                // cover the case where the referencing table
-                // may have already been dropped
-                for (int k = 0; k < tTable.size(); k++) {
-                    if (refTable.equals(tTable.get(k))) {
-                        refererIndex = k;
-
-                        break;
-                    }
-                }
-
-                if (refererIndex != -1) {
-                    throw Trace.error(Trace.TABLE_REFERENCED_CONSTRAINT,
-                                      Trace.Database_dropTable, new Object[] {
-                        currentConstraint.getName().name,
-                        refTable.getName().name
-                    });
-                }
-            }
-        }
-    }
-
-    /**
-     * Throws if the view is referenced in a view.
-     */
-    void checkViewIsInView(View view) throws HsqlException {
-
-        View[] views = getViewsWithView(view);
-
-        if (views != null) {
-            throw Trace.error(Trace.TABLE_REFERENCED_VIEW,
-                              views[0].getName().name);
-        }
-    }
-
-    /**
-     * Throws if the table is referenced in a view.
-     */
-    void checkTableIsInView(String table) throws HsqlException {
-
-        View[] views = getViewsWithTable(table, null);
-
-        if (views != null) {
-            throw Trace.error(Trace.TABLE_REFERENCED_VIEW,
-                              views[0].getName().name);
-        }
-    }
-
-    /**
-     * Throws if the view is referenced in a view.
-     */
-    void checkSequenceIsInView(NumberSequence sequence) throws HsqlException {
-
-        View[] views = getViewsWithSequence(sequence);
-
-        if (views != null) {
-            throw Trace.error(Trace.SEQUENCE_REFERENCED_BY_VIEW,
-                              views[0].getName().name);
-        }
-    }
-
-    /**
-     * Throws if the column is referenced in a view.
-     */
-    void checkColumnIsInView(String table,
-                             String column) throws HsqlException {
-
-        View[] views = getViewsWithTable(table, column);
-
-        if (views != null) {
-            throw Trace.error(Trace.COLUMN_IS_REFERENCED,
-                              views[0].getName().name);
-        }
-    }
-
-    /**
-     * Returns an array of views that reference another view.
-     */
-    private View[] getViewsWithView(View view) {
-
-        HsqlArrayList list = null;
-
-        for (int i = 0; i < tTable.size(); i++) {
-            Table t = (Table) tTable.get(i);
-
-            if (t.isView()) {
-                boolean found = ((View) t).hasView(view);
-
-                if (found) {
-                    if (list == null) {
-                        list = new HsqlArrayList();
-                    }
-
-                    list.add(t);
-                }
-            }
-        }
-
-        return list == null ? null
-                            : (View[]) list.toArray(new View[list.size()]);
-    }
-
-    /**
-     * Returns an array of views that reference the specified table or
-     * the specified column if column parameter is not null.
-     */
-    private View[] getViewsWithTable(String table, String column) {
-
-        HsqlArrayList list = null;
-
-        for (int i = 0; i < tTable.size(); i++) {
-            Table t = (Table) tTable.get(i);
-
-            if (t.isView()) {
-                boolean found = column == null ? ((View) t).hasTable(table)
-                                               : ((View) t).hasColumn(table,
-                                                   column);
-
-                if (found) {
-                    if (list == null) {
-                        list = new HsqlArrayList();
-                    }
-
-                    list.add(t);
-                }
-            }
-        }
-
-        return list == null ? null
-                            : (View[]) list.toArray(new View[list.size()]);
-    }
-
-    /**
-     * Returns an array of views that reference a sequence.
-     */
-    View[] getViewsWithSequence(NumberSequence sequence) {
-
-        HsqlArrayList list = null;
-
-        for (int i = 0; i < tTable.size(); i++) {
-            Table t = (Table) tTable.get(i);
-
-            if (t.isView()) {
-                boolean found = ((View) t).hasSequence(sequence);
-
-                if (found) {
-                    if (list == null) {
-                        list = new HsqlArrayList();
-                    }
-
-                    list.add(t);
-                }
-            }
-        }
-
-        return list == null ? null
-                            : (View[]) list.toArray(new View[list.size()]);
-    }
-
-    /**
-     * After addition or removal of columns and indexes all views that
-     * reference the table should be recompiled.
-     */
-    void recompileViews(String table) throws HsqlException {
-
-        View[] viewlist = getViewsWithTable(table, null);
-
-        if (viewlist != null) {
-            for (int i = 0; i < viewlist.length; i++) {
-                viewlist[i].compile();
-            }
-        }
-    }
-
-    /**
-     *  Removes any foreign key Constraint objects (exported keys) held by any
-     *  tables referenced by the specified table. <p>
-     *
-     *  This method is called as the last step of a successful call to
-     *  dropTable() in order to ensure that the dropped Table ceases to be
-     *  referenced when enforcing referential integrity.
-     *
-     * @param  toDrop The table to which other tables may be holding keys.
-     *      This is a table that is in the process of being dropped.
-     */
-    void removeExportedKeys(Table toDrop) {
-
-        for (int i = 0; i < tTable.size(); i++) {
-            Table table = (Table) tTable.get(i);
-
-            for (int j = table.constraintList.length - 1; j >= 0; j--) {
-                Table refTable = table.constraintList[j].getRef();
-
-                if (toDrop == refTable) {
-                    table.constraintList =
-                        (Constraint[]) ArrayUtil.toAdjustedArray(
-                            table.constraintList, null, j, -1);
-                }
-            }
-        }
-    }
-
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-
-    /**
-     *  Drops a trigger with the specified name in the given context.
-     */
-    void dropTrigger(Session session, String name,
-                     String schema) throws HsqlException {
-
-        boolean found = triggerNameList.containsName(name);
-
-        Trace.check(found, Trace.TRIGGER_NOT_FOUND, name);
-
-        HsqlName tableName = (HsqlName) triggerNameList.removeName(name);
-        Table    t = this.findUserTable(session, tableName.name, null);
-
-        t.dropTrigger(name);
-        session.setScripting(!t.isTemp());
     }
 
     /**

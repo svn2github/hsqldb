@@ -154,6 +154,18 @@ public class HsqlArrayList extends BaseList implements HsqlList {
         return elementData[index];
     }
 
+    /** returns the index of given object or -1 if nt found */
+    public int indexOf(Object o) {
+
+        for (int i = 0; i < elementCount; i++) {
+            if (elementData[i].equals(o)) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
     /** Removes and returns the element at given position */
     public Object remove(int index) {
 
@@ -333,18 +345,5 @@ public class HsqlArrayList extends BaseList implements HsqlList {
 
     public Object[] getArray() {
         return elementData;
-    }
-
-// fredt@users - temp - won't need this when start using HashedMappedList for Table
-    public void remove(Object obj) {
-
-        for (int i = 0; i < elementCount; i++) {
-            if (obj == elementData[i]
-                    || (obj != null && obj.equals(elementData[i]))) {
-                remove(i);
-
-                return;
-            }
-        }
     }
 }

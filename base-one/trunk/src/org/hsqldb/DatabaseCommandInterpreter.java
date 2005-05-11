@@ -77,7 +77,6 @@ import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.StringUtil;
 import org.hsqldb.persist.HsqlDatabaseProperties;
-import org.hsqldb.persist.Logger;
 import org.hsqldb.scriptio.ScriptWriterBase;
 import org.hsqldb.scriptio.ScriptWriterText;
 
@@ -89,6 +88,7 @@ import org.hsqldb.scriptio.ScriptWriterText;
  * @since HSQLDB 1.7.2
  */
 
+// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP) - various corrections
 // fredt@users 20020430 - patch 549741 by velichko - ALTER TABLE RENAME
 // fredt@users 20020405 - patch 1.7.0 - other ALTER TABLE statements
 // tony_lai@users 20020820 - patch 595099 - use user-defined PK name
@@ -149,54 +149,56 @@ class DatabaseCommandInterpreter {
      */
     Result execute(String sql) {
 
-        Parser parser;
         Result result;
         String token;
         int    cmd;
-        Logger logger;
 
         DatabaseManager.gc();
 
         result = null;
         cmd    = Token.UNKNOWNTOKEN;
-        logger = database.logger;
 
         try {
             tokenizer.reset(sql);
-
-            parser = new Parser(session, database, tokenizer);
 
             while (true) {
                 tokenizer.setPartMarker();
                 session.setScripting(false);
 
-                token = tokenizer.getString();
+                token = tokenizer.getSimpleToken();
 
                 if (token.length() == 0) {
+                    session.endSchemaDefinition();
+
                     break;
                 }
 
                 cmd = Token.get(token);
 
                 if (cmd == Token.SEMICOLON) {
+                    session.endSchemaDefinition();
+
                     continue;
                 }
 
-                // TODO:  build up list of Results in session context
-                // RE:    ability to gen/retrieve multiple result sets
-                // EX:    session.addResult(executePart(cmd, token, parser));
-                result = executePart(cmd, token, parser);
+                result = executePart(cmd, token);
 
-                // PATCH -- needs executePart to return not null result
                 if (result.mode == ResultConstants.ERROR) {
+                    session.endSchemaDefinition();
+
                     break;
                 }
 
                 if (session.getScripting()) {
-                    logger.writeToLog(session, tokenizer.getLastPart());
+                    database.logger.writeToLog(session,
+                                               tokenizer.getLastPart());
                 }
             }
         } catch (Throwable t) {
+            try {
+                session.endSchemaDefinition();
+            } catch (HsqlException e) {}
+
             result = new Result(t, tokenizer.getLastPart());
         }
 
@@ -204,11 +206,29 @@ class DatabaseCommandInterpreter {
                               : result;
     }
 
-    private Result executePart(int cmd, String token,
-                               Parser parser) throws Throwable {
+    private Result executePart(int cmd, String token) throws Throwable {
 
         Result result   = Session.emptyUpdateCount;
         int    brackets = 0;
+
+        if (session.isSchemaDefintion()) {
+            switch (cmd) {
+
+                case Token.CREATE :
+                case Token.GRANT :
+                    break;
+
+                default :
+                    String schema = session.getSchemaName(null);
+
+                    session.endSchemaDefinition();
+                    database.schemaManager.dropSchema(schema, true);
+
+                    throw Trace.error(Trace.INVALID_IDENTIFIER,
+                                      Trace.IN_SCHEMA_DEFINITION,
+                                      new Object[]{ token });
+            }
+        }
 
         switch (cmd) {
 
@@ -218,6 +238,7 @@ class DatabaseCommandInterpreter {
                 tokenizer.getThis(Token.T_SELECT);
             }
             case Token.SELECT : {
+                Parser parser = new Parser(session, database, tokenizer);
                 CompiledStatement cStatement =
                     parser.compileSelectStatement(brackets);
 
@@ -233,6 +254,7 @@ class DatabaseCommandInterpreter {
                 break;
             }
             case Token.INSERT : {
+                Parser parser = new Parser(session, database, tokenizer);
                 CompiledStatement cStatement =
                     parser.compileInsertStatement();
 
@@ -248,6 +270,7 @@ class DatabaseCommandInterpreter {
                 break;
             }
             case Token.UPDATE : {
+                Parser parser = new Parser(session, database, tokenizer);
                 CompiledStatement cStatement =
                     parser.compileUpdateStatement();
 
@@ -263,6 +286,7 @@ class DatabaseCommandInterpreter {
                 break;
             }
             case Token.DELETE : {
+                Parser parser = new Parser(session, database, tokenizer);
                 CompiledStatement cStatement =
                     parser.compileDeleteStatement();
 
@@ -278,6 +302,7 @@ class DatabaseCommandInterpreter {
                 break;
             }
             case Token.CALL : {
+                Parser parser = new Parser(session, database, tokenizer);
                 CompiledStatement cStatement = parser.compileCallStatement();
 
                 if (cStatement.parameters.length != 0) {
@@ -382,17 +407,21 @@ class DatabaseCommandInterpreter {
         String           token = tokenizer.getString();
         ScriptWriterText dsw   = null;
 
+        session.checkAdmin();
+
         try {
             if (tokenizer.wasValue()) {
-                token = (String) tokenizer.getAsValue();
-                dsw   = new ScriptWriterText(database, token, true, true);
+                if (tokenizer.getType() != Types.VARCHAR) {
+                    throw Trace.error(Trace.INVALID_IDENTIFIER);
+                }
+
+                dsw = new ScriptWriterText(database, token, true, true, true);
 
                 dsw.writeAll();
 
                 return new Result(ResultConstants.UPDATECOUNT);
             } else {
                 tokenizer.back();
-                session.checkAdmin();
 
                 return DatabaseScript.getScript(database, false);
             }
@@ -416,76 +445,67 @@ class DatabaseCommandInterpreter {
      */
     private void processCreate() throws HsqlException {
 
-        String  token;
-        boolean isTemp;
-        boolean unique;
+        boolean unique = false;
         int     tableType;
+        boolean isTempTable = false;
+        String  token;
 
-        session.checkReadWrite();
+        session.checkAdmin();
+        session.checkDDLWrite();
+        session.setScripting(true);
 
-        token  = tokenizer.getString();
-        isTemp = false;
+        if (tokenizer.isGetThis(Token.T_GLOBAL)) {
+            tokenizer.getThis(Token.T_TEMPORARY);
 
-        if (token.equals(Token.T_TEMP)) {
-            isTemp = true;
-            token  = tokenizer.getString();
-
-            switch (Token.get(token)) {
-
-                case Token.TEXT :
-                    session.checkAdmin();
-
-                // fall thru
-                case Token.TABLE :
-                case Token.MEMORY :
-                    session.setScripting(false);
-                    break;
-
-                default :
-                    throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
-            }
-        } else {
-            session.checkAdmin();
-            session.checkDDLWrite();
-            session.setScripting(true);
+            isTempTable = true;
+        } else if (tokenizer.isGetThis(Token.T_TEMP)) {
+            isTempTable = true;
+        } else if (tokenizer.isGetThis(Token.T_TEMPORARY)) {
+            isTempTable = true;
         }
 
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-        unique    = false;
-        tableType = 0;
+        token = tokenizer.getSimpleToken();
 
         switch (Token.get(token)) {
 
             // table
-            case Token.TABLE :
-                tableType = isTemp ? Table.TEMP_TABLE
-                                   : getDefaultTableType();
-
-                processCreateTable(tableType);
-                break;
-
             case Token.MEMORY :
                 tokenizer.getThis(Token.T_TABLE);
-
-                tableType = isTemp ? Table.TEMP_TABLE
-                                   : Table.MEMORY_TABLE;
+            case Token.TABLE :
+                tableType = isTempTable ? Table.TEMP_TABLE
+                                        : getDefaultTableType();
 
                 processCreateTable(tableType);
-                break;
+
+                return;
 
             case Token.CACHED :
+                if (isTempTable) {
+                    throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+                }
+
                 tokenizer.getThis(Token.T_TABLE);
                 processCreateTable(Table.CACHED_TABLE);
-                break;
+
+                return;
 
             case Token.TEXT :
+                if (isTempTable) {
+                    throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+                }
+
                 tokenizer.getThis(Token.T_TABLE);
+                processCreateTable(Table.TEXT_TABLE);
 
-                tableType = isTemp ? Table.TEMP_TEXT_TABLE
-                                   : Table.TEXT_TABLE;
+                return;
 
-                processCreateTable(tableType);
-                break;
+            default :
+                if (isTempTable) {
+                    throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+                }
+        }
+
+        switch (Token.get(token)) {
 
             // other objects
             case Token.ALIAS :
@@ -496,12 +516,20 @@ class DatabaseCommandInterpreter {
                 processCreateSequence();
                 break;
 
+            case Token.SCHEMA :
+                processCreateSchema();
+                break;
+
             case Token.TRIGGER :
                 processCreateTrigger();
                 break;
 
             case Token.USER :
                 processCreateUser();
+                break;
+
+            case Token.ROLE :
+                database.getRoleManager().createRole(getUserIdentifier());
                 break;
 
             case Token.VIEW :
@@ -558,10 +586,10 @@ class DatabaseCommandInterpreter {
                                   Trace.ERROR_IN_CONSTRAINT_COLUMN_LIST);
             }
 
-            token = tokenizer.getString();
+            token = tokenizer.getSimpleToken();
 
             if (token.equals(Token.T_DESC) || token.equals(Token.T_ASC)) {
-                token = tokenizer.getString();    // OJ: eat it up
+                token = tokenizer.getSimpleToken();    // OJ: eat it up
             }
 
             if (token.equals(Token.T_COMMA)) {
@@ -612,15 +640,14 @@ class DatabaseCommandInterpreter {
         HsqlName indexHsqlName;
         int[]    indexColumns;
 
-        if (database.indexNameList.containsName(indexName)) {
-            throw Trace.error(Trace.INDEX_ALREADY_EXISTS);
-        }
+        database.schemaManager.checkIndexExists(indexName, t.getSchemaName(),
+                false);
 
         indexHsqlName = newIndexHsqlName(indexName, indexNameQuoted);
         indexColumns  = processColumnList(t);
 
         session.commit();
-        session.setScripting(!t.isTemp());
+        session.setScripting(true);
 
         TableWorks tableWorks = new TableWorks(session, t);
 
@@ -651,43 +678,57 @@ class DatabaseCommandInterpreter {
         String     className;
         TriggerDef td;
         Trigger    o;
-        Class      cl;
 
         triggerName = tokenizer.getName();
 
-        checkTriggerExists(triggerName, false);
+        String schemaname = tokenizer.getLongNameFirst();
+
+        database.schemaManager.checkTriggerExists(triggerName,
+                session.getSchemaNameForWrite(schemaname), false);
 
         isQuoted  = tokenizer.wasQuotedIdentifier();
         isForEach = false;
         isNowait  = false;
         queueSize = TriggerDef.getDefaultQueueSize();
-        sWhen     = tokenizer.getString();
-        sOper     = tokenizer.getString();
+        sWhen     = tokenizer.getSimpleToken();
+        sOper     = tokenizer.getSimpleToken();
 
         tokenizer.getThis(Token.T_ON);
 
-        tableName = tokenizer.getString();
-        t         = database.getTable(session, tableName, null);
+        tableName = tokenizer.getName();
 
-        checkIsReallyTable(t);
+        if (schemaname == null) {
+            schemaname =
+                session.getSchemaNameForWrite(tokenizer.getLongNameFirst());
+        } else if (!schemaname.equals(
+                session.getSchemaNameForWrite(
+                    tokenizer.getLongNameFirst()))) {
+            throw Trace.error(Trace.INVALID_SCHEMA_NAME_NO_SUBCLASS);
+        }
 
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-        session.setScripting(!t.isTemp());
+        t = database.schemaManager.getUserTable(session, tableName,
+                schemaname);
+
+        if (t.isView()) {
+            throw Trace.error(Trace.NOT_A_TABLE);
+        }
+
+        session.setScripting(true);
 
         // "FOR EACH ROW" or "CALL"
-        token = tokenizer.getString();
+        token = tokenizer.getSimpleToken();
 
         if (token.equals(Token.T_FOR)) {
-            token = tokenizer.getString();
+            token = tokenizer.getSimpleToken();
 
             if (token.equals(Token.T_EACH)) {
-                token = tokenizer.getString();
+                token = tokenizer.getSimpleToken();
 
                 if (token.equals(Token.T_ROW)) {
                     isForEach = true;
 
                     // should be 'NOWAIT' or 'QUEUE' or 'CALL'
-                    token = tokenizer.getString();
+                    token = tokenizer.getSimpleToken();
                 } else {
                     throw Trace.error(Trace.UNEXPECTED_END_OF_COMMAND, token);
                 }
@@ -700,65 +741,54 @@ class DatabaseCommandInterpreter {
             isNowait = true;
 
             // should be 'CALL' or 'QUEUE'
-            token = tokenizer.getString();
+            token = tokenizer.getSimpleToken();
         }
 
         if (token.equals(Token.T_QUEUE)) {
-            queueSize = tokenizer.getInt();    //queueSize = Integer.parseInt(tokenizer.getString());
+            queueSize = tokenizer.getInt();
 
             // should be 'CALL'
-            token = tokenizer.getString();
+            token = tokenizer.getSimpleToken();
         }
 
         if (!token.equals(Token.T_CALL)) {
             throw Trace.error(Trace.UNEXPECTED_END_OF_COMMAND, token);
         }
 
-        // PRE: double quotes have been stripped
-        className = tokenizer.getString();
+        className = tokenizer.getSimpleName();
 
-        try {
+        if (!tokenizer.wasQuotedIdentifier()) {
+            throw Trace.error(Trace.UNEXPECTED_END_OF_COMMAND, className);
+        }
 
-            // dynamically load class
-            cl = classForName(className);
+        HsqlName name = database.nameManager.newHsqlName(triggerName,
+            isQuoted);
 
-            // dynamically instantiate it
-            o = (Trigger) cl.newInstance();
+        td = new TriggerDef(name, sWhen, sOper, isForEach, t, className,
+                            isNowait, queueSize, database.classLoader);
 
-            HsqlName name = database.nameManager.newHsqlName(triggerName,
-                isQuoted);
+        t.addTrigger(td);
 
-            td = new TriggerDef(name, sWhen, sOper, isForEach, t, o,
-                                "\"" + className + "\"", isNowait, queueSize);
-
-            if (td.isValid()) {
-                t.addTrigger(td);
+        if (td.isValid()) {
+            try {
 
                 // start the trigger thread
                 td.start();
-            } else {
-                throw Trace.error(Trace.UNEXPECTED_TOKEN,
-                                  Trace.CREATE_TRIGGER_COMMAND_1);
+            } catch (Exception e) {
+                throw Trace.error(Trace.UNKNOWN_FUNCTION, e.getMessage());
             }
-        } catch (Exception e) {
-            throw Trace.error(Trace.UNKNOWN_FUNCTION,
-                              Trace.CREATE_TRIGGER_COMMAND_2, e.getMessage());
         }
 
-// boucherb@users 20021128 - enforce unique trigger names
-        database.triggerNameList.addName(triggerName, t.getName(),
-                                         Trace.TRIGGER_ALREADY_EXISTS);
+        database.schemaManager.registerTriggerName(triggerName, t.getName());
 
 // --
     }
 
     private Column processCreateColumn() throws HsqlException {
 
-        String  token      = tokenizer.getString();
-        String  columnName = token;
-        boolean isQuoted   = tokenizer.wasQuotedIdentifier();
-        HsqlName hsqlName = database.nameManager.newHsqlName(columnName,
-            isQuoted);
+        String   token    = tokenizer.getSimpleName();
+        boolean  isQuoted = tokenizer.wasQuotedIdentifier();
+        HsqlName hsqlName = database.nameManager.newHsqlName(token, isQuoted);
 
         return processCreateColumn(hsqlName);
     }
@@ -786,7 +816,7 @@ class DatabaseCommandInterpreter {
         Expression defaultExpr = null;
         String     token;
 
-        typeName = tokenizer.getString();
+        typeName = tokenizer.getSimpleToken();
         type     = Types.getTypeNr(typeName);
 
         if (typeName.equals(Token.T_IDENTITY)) {
@@ -828,11 +858,11 @@ class DatabaseCommandInterpreter {
             throw Trace.error(Trace.NUMERIC_VALUE_OUT_OF_RANGE);
         }
 
-        token = tokenizer.getString();
+        token = tokenizer.getSimpleToken();
 
         if (token.equals(Token.T_DEFAULT)) {
             defaultExpr = processCreateDefaultExpression(type, length, scale);
-            token       = tokenizer.getString();
+            token       = tokenizer.getSimpleToken();
         } else if (token.equals(Token.T_GENERATED)) {
             tokenizer.getThis(Token.T_BY);
             tokenizer.getThis(Token.T_DEFAULT);
@@ -857,23 +887,23 @@ class DatabaseCommandInterpreter {
 
             isIdentity   = true;
             isPrimaryKey = true;
-            token        = tokenizer.getString();
+            token        = tokenizer.getSimpleToken();
         }
 
         // fredt@users - accept IDENTITY before or after NOT NULL
         if (token.equals(Token.T_IDENTITY)) {
             isIdentity   = true;
             isPrimaryKey = true;
-            token        = tokenizer.getString();
+            token        = tokenizer.getSimpleToken();
         }
 
         if (token.equals(Token.T_NULL)) {
-            token = tokenizer.getString();
+            token = tokenizer.getSimpleToken();
         } else if (token.equals(Token.T_NOT)) {
             tokenizer.getThis(Token.T_NULL);
 
             isNullable = false;
-            token      = tokenizer.getString();
+            token      = tokenizer.getSimpleToken();
         }
 
         if (token.equals(Token.T_IDENTITY)) {
@@ -883,7 +913,7 @@ class DatabaseCommandInterpreter {
 
             isIdentity   = true;
             isPrimaryKey = true;
-            token        = tokenizer.getString();
+            token        = tokenizer.getSimpleToken();
         }
 
         if (token.equals(Token.T_PRIMARY)) {
@@ -899,9 +929,12 @@ class DatabaseCommandInterpreter {
             throw Trace.error(Trace.UNEXPECTED_TOKEN, Token.T_DEFAULT);
         }
 
-        return new Column(hsqlName, isNullable, type, length, scale,
-                          isIdentity, identityStart, identityIncrement,
-                          isPrimaryKey, defaultExpr);
+        Column column = new Column(hsqlName, isNullable, type, length, scale,
+                                   isPrimaryKey, defaultExpr);
+
+        column.setIdentity(isIdentity, identityStart, identityIncrement);
+
+        return column;
     }
 
     /**
@@ -920,7 +953,7 @@ class DatabaseCommandInterpreter {
         Parser     parser = new Parser(session, database, tokenizer);
         Expression expr   = parser.readDefaultClause(type);
 
-        expr.resolveTypes(database);
+        expr.resolveTypes(session);
 
         if (expr.getType() == Expression.VALUE
                 || (expr.getType() == Expression.FUNCTION
@@ -1012,11 +1045,25 @@ class DatabaseCommandInterpreter {
 
             if (tokenizer.isGetThis(Token.T_CONSTRAINT)) {
                 token = tokenizer.getName();
+
+                String constraintSchema = tokenizer.getLongNameFirst();
+
+                if (constraintSchema != null) {
+                    constraintSchema = session.getSchemaNameForWrite(
+                        tokenizer.getLongNameFirst());
+
+                    if (!t.getSchemaName().equals(constraintSchema)) {
+                        throw Trace.error(
+                            Trace.INVALID_SCHEMA_NAME_NO_SUBCLASS,
+                            constraintSchema);
+                    }
+                }
+
                 cname = database.nameManager.newHsqlName(token,
                         tokenizer.wasQuotedIdentifier());
             }
 
-            token = tokenizer.getString();
+            token = tokenizer.getSimpleToken();
 
             switch (Token.get(token)) {
 
@@ -1099,7 +1146,7 @@ class DatabaseCommandInterpreter {
                 }
             }
 
-            token = tokenizer.getString();
+            token = tokenizer.getSimpleToken();
 
             if (token.equals(Token.T_COMMA)) {
                 continue;
@@ -1142,34 +1189,24 @@ class DatabaseCommandInterpreter {
      */
     private void processCreateTable(int type) throws HsqlException {
 
-        Table         t;
-        String        token;
-        boolean       isnamequoted;
-        int[]         pkCols;
-        int           colIndex;
-        boolean       constraint;
-        HsqlArrayList tempConstraints;
+        String token = tokenizer.getName();
+        HsqlName schemaname =
+            session.getSchemaHsqlNameForWrite(tokenizer.getLongNameFirst());
 
-        token = tokenizer.getName();
+        database.schemaManager.checkUserTableNotExists(session, token,
+                schemaname.name);
 
-        checkTableExists(token, false);
-
-        isnamequoted = tokenizer.wasQuotedIdentifier();
-        t            = newTable(type, token, isnamequoted);
+        boolean isnamequoted = tokenizer.wasQuotedIdentifier();
+        int[]   pkCols       = null;
+        int     colIndex     = 0;
+        boolean constraint   = false;
+        Table   t = newTable(type, token, isnamequoted, schemaname);
 
         tokenizer.getThis(Token.T_OPENBRACKET);
 
-        pkCols     = null;
-        colIndex   = 0;
-        constraint = false;
-
         while (true) {
-            token        = tokenizer.getString();
-            isnamequoted = tokenizer.wasQuotedIdentifier();
+            token = tokenizer.getString();
 
-            // fredt@users 20020225 - comment
-            // we can check here for reserved words used with
-            // quotes as column names
             switch (Token.get(token)) {
 
                 case Token.CONSTRAINT :
@@ -1177,7 +1214,10 @@ class DatabaseCommandInterpreter {
                 case Token.FOREIGN :
                 case Token.UNIQUE :
                 case Token.CHECK :
-                    constraint = true;
+
+                    // fredt@users : check for quoted reserved words used as column names
+                    constraint = !tokenizer.wasQuotedIdentifier()
+                                 &&!tokenizer.wasLongName();
             }
 
             tokenizer.back();
@@ -1197,7 +1237,7 @@ class DatabaseCommandInterpreter {
                 pkCols = new int[]{ colIndex };
             }
 
-            token = tokenizer.getString();
+            token = tokenizer.getSimpleToken();
 
             if (token.equals(Token.T_COMMA)) {
                 colIndex++;
@@ -1212,7 +1252,21 @@ class DatabaseCommandInterpreter {
             throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
         }
 
-        tempConstraints = processCreateConstraints(t, constraint, pkCols);
+        if (tokenizer.isGetThis(Token.T_ON)) {
+            tokenizer.getThis(Token.T_COMMIT);
+
+            if (tokenizer.isGetThis(Token.T_DELETE)) {}
+            else if (tokenizer.isGetThis(Token.T_PRESERVE)) {
+                t.onCommitPreserve = true;
+            } else {
+                throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+            }
+
+            tokenizer.getThis(Token.T_ROWS);
+        }
+
+        HsqlArrayList tempConstraints = processCreateConstraints(t,
+            constraint, pkCols);
 
         try {
             session.commit();
@@ -1223,12 +1277,10 @@ class DatabaseCommandInterpreter {
                 primaryConst.constName = t.makeSysPKName();
             }
 
-            database.indexNameList.addName(primaryConst.constName.name,
-                                           t.getName(),
-                                           Trace.INDEX_ALREADY_EXISTS);
-            database.constraintNameList.addName(
-                primaryConst.constName.name, t.getName(),
-                Trace.CONSTRAINT_ALREADY_EXISTS);
+            database.schemaManager.registerIndexName(
+                primaryConst.constName.name, t.getName());
+            database.schemaManager.registerConstraintName(
+                primaryConst.constName.name, t.getName());
             t.createPrimaryKey(primaryConst.constName,
                                primaryConst.core.mainColArray, true);
 
@@ -1267,16 +1319,16 @@ class DatabaseCommandInterpreter {
                 }
             }
 
-            database.linkTable(t);
+            database.schemaManager.linkTable(t);
         } catch (HsqlException e) {
 
 // fredt@users 20020225 - comment
 // if a HsqlException is thrown while creating table, any foreign key that has
 // been created leaves it modification to the expTable in place
 // need to undo those modifications. This should not happen in practice.
-            database.removeExportedKeys(t);
-            database.indexNameList.removeOwner(t.tableName);
-            database.constraintNameList.removeOwner(t.tableName);
+            database.schemaManager.removeExportedKeys(t);
+            database.schemaManager.removeIndexNames(t.tableName);
+            database.schemaManager.removeConstraintNames(t.tableName);
 
             throw e;
         }
@@ -1304,16 +1356,29 @@ class DatabaseCommandInterpreter {
 
         tokenizer.getThis(Token.T_REFERENCES);
 
-        expTableName = tokenizer.getString();
+        expTableName = tokenizer.getName();
+
+        String constraintSchema = tokenizer.getLongNameFirst();
+
+        if (constraintSchema != null) {
+            constraintSchema =
+                session.getSchemaNameForWrite(tokenizer.getLongNameFirst());
+
+            if (!t.getSchemaName().equals(constraintSchema)) {
+                throw Trace.error(Trace.INVALID_SCHEMA_NAME_NO_SUBCLASS,
+                                  constraintSchema);
+            }
+        }
 
         if (t.getName().name.equals(expTableName)) {
             expTable = t;
         } else {
-            expTable = database.getTable(session, expTableName, null);
+            expTable = database.schemaManager.getTable(session, expTableName,
+                    t.getSchemaName());
         }
 
         expcol = null;
-        token  = tokenizer.getString();
+        token  = tokenizer.getSimpleToken();
 
         tokenizer.back();
 
@@ -1337,7 +1402,7 @@ class DatabaseCommandInterpreter {
             }
         }
 
-        token = tokenizer.getString();
+        token = tokenizer.getSimpleToken();
 
         // -- In a while loop we parse a maximium of two
         // -- "ON" statements following the foreign key
@@ -1347,14 +1412,14 @@ class DatabaseCommandInterpreter {
         int updateAction = Constraint.NO_ACTION;
 
         while (token.equals(Token.T_ON)) {
-            token = tokenizer.getString();
+            token = tokenizer.getSimpleToken();
 
             if (deleteAction == Constraint.NO_ACTION
                     && token.equals(Token.T_DELETE)) {
-                token = tokenizer.getString();
+                token = tokenizer.getSimpleToken();
 
                 if (token.equals(Token.T_SET)) {
-                    token = tokenizer.getString();
+                    token = tokenizer.getSimpleToken();
 
                     if (token.equals(Token.T_DEFAULT)) {
                         deleteAction = Constraint.SET_DEFAULT;
@@ -1370,15 +1435,15 @@ class DatabaseCommandInterpreter {
                     // LEGACY compatibility/usability
                     // - same as NO ACTION or nothing at all
                 } else {
-                    tokenizer.getCurrentThis(Token.T_NO);
+                    tokenizer.matchThis(Token.T_NO);
                     tokenizer.getThis(Token.T_ACTION);
                 }
             } else if (updateAction == Constraint.NO_ACTION
                        && token.equals(Token.T_UPDATE)) {
-                token = tokenizer.getString();
+                token = tokenizer.getSimpleToken();
 
                 if (token.equals(Token.T_SET)) {
-                    token = tokenizer.getString();
+                    token = tokenizer.getSimpleToken();
 
                     if (token.equals(Token.T_DEFAULT)) {
                         updateAction = Constraint.SET_DEFAULT;
@@ -1394,14 +1459,14 @@ class DatabaseCommandInterpreter {
                     // LEGACY compatibility/usability
                     // - same as NO ACTION or nothing at all
                 } else {
-                    tokenizer.getCurrentThis(Token.T_NO);
+                    tokenizer.matchThis(Token.T_NO);
                     tokenizer.getThis(Token.T_ACTION);
                 }
             } else {
                 throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
             }
 
-            token = tokenizer.getString();
+            token = tokenizer.getSimpleToken();
         }
 
         tokenizer.back();
@@ -1422,13 +1487,19 @@ class DatabaseCommandInterpreter {
      */
     private void processCreateView() throws HsqlException {
 
-        String token       = tokenizer.getName();
-        int    logposition = tokenizer.getPartMarker();
+        String name = tokenizer.getName();
+        HsqlName schemaname =
+            session.getSchemaHsqlNameForWrite(tokenizer.getLongNameFirst());
+        int logposition = tokenizer.getPartMarker();
 
-        checkViewExists(token, false);
+        database.schemaManager.checkUserViewNotExists(session, name,
+                schemaname.name);
 
-        HsqlName viewHsqlName = database.nameManager.newHsqlName(token,
+        HsqlName viewHsqlName = database.nameManager.newHsqlName(name,
             tokenizer.wasQuotedIdentifier());
+
+        viewHsqlName.schema = schemaname;
+
         HsqlName[] colList = null;
 
         if (tokenizer.isGetThis(Token.T_OPENBRACKET)) {
@@ -1460,13 +1531,13 @@ class DatabaseCommandInterpreter {
             throw (Trace.error(Trace.TABLE_NOT_FOUND));
         }
 
-        select.prepareResult(database);
+        select.prepareResult(session);
 
-        View view = new View(database, viewHsqlName, tokenizer.getLastPart(),
-                             colList);
+        View view = new View(session, database, viewHsqlName,
+                             tokenizer.getLastPart(), colList);
 
         session.commit();
-        database.linkTable(view);
+        database.schemaManager.linkTable(view);
         tokenizer.setPartMarker(logposition);
     }
 
@@ -1477,26 +1548,36 @@ class DatabaseCommandInterpreter {
      */
     private void processAlterTableRename(Table t) throws HsqlException {
 
-        String  tableName;
+        String  name   = t.getName().name;
+        String  schema = t.getSchemaName();
         String  newName;
         boolean isquoted;
 
-        tableName = t.getName().name;
-
         // ensures that if temp table, it also belongs to this session
-        if (!t.equals(session, tableName)) {
+        if (!t.equals(session, name)) {
             throw Trace.error(Trace.TABLE_NOT_FOUND);
         }
 
         tokenizer.getThis(Token.T_TO);
 
-        newName  = tokenizer.getName();
-        isquoted = tokenizer.wasQuotedIdentifier();
+        newName = tokenizer.getName();
 
-        checkTableExists(newName, false);
+        String newSchema = tokenizer.getLongNameFirst();
+
+        isquoted  = tokenizer.wasQuotedIdentifier();
+        newSchema = newSchema == null ? schema
+                                      : session.getSchemaNameForWrite(
+                                          newSchema);
+
+        if (!schema.equals(newSchema)) {
+            throw Trace.error(Trace.INVALID_SCHEMA_NAME_NO_SUBCLASS);
+        }
+
+        database.schemaManager.checkUserTableNotExists(session, newName,
+                schema);
         session.commit();
-        session.setScripting(!t.isTemp());
-        t.renameTable(newName, isquoted);
+        session.setScripting(true);
+        t.rename(session, newName, isquoted);
     }
 
     /**
@@ -1516,16 +1597,21 @@ class DatabaseCommandInterpreter {
 
         String token;
 
-        session.checkDDLWrite();
         session.checkAdmin();
+        session.checkDDLWrite();
         session.setScripting(true);
 
-        token = tokenizer.getString();
+        token = tokenizer.getSimpleToken();
 
         switch (Token.get(token)) {
 
             case Token.INDEX : {
                 processAlterIndex();
+
+                break;
+            }
+            case Token.SCHEMA : {
+                processAlterSchema();
 
                 break;
             }
@@ -1557,14 +1643,20 @@ class DatabaseCommandInterpreter {
      */
     private void processAlterTable() throws HsqlException {
 
-        String tableName = tokenizer.getString();
-        Table  t         = database.getUserTable(session, tableName, null);
+        String tableName = tokenizer.getName();
+        String schema =
+            session.getSchemaNameForWrite(tokenizer.getLongNameFirst());
+        Table t = database.schemaManager.getUserTable(session, tableName,
+            schema);
         String token;
 
-        checkIsReallyTable(t);
-        session.setScripting(!t.isTemp());
+        if (t.isView()) {
+            throw Trace.error(Trace.NOT_A_TABLE);
+        }
 
-        token = tokenizer.getString();
+        session.setScripting(true);
+
+        token = tokenizer.getSimpleToken();
 
         switch (Token.get(token)) {
 
@@ -1578,11 +1670,37 @@ class DatabaseCommandInterpreter {
 
                 if (tokenizer.isGetThis(Token.T_CONSTRAINT)) {
                     token = tokenizer.getName();
+
+                    String constraintSchema = tokenizer.getLongNameFirst();
+
+                    if (constraintSchema != null) {
+                        constraintSchema = session.getSchemaNameForWrite(
+                            tokenizer.getLongNameFirst());
+
+                        if (!t.getSchemaName().equals(constraintSchema)) {
+                            throw Trace.error(
+                                Trace.INVALID_SCHEMA_NAME_NO_SUBCLASS,
+                                constraintSchema);
+                        }
+                    }
+
                     cname = database.nameManager.newHsqlName(token,
                             tokenizer.wasQuotedIdentifier());
                 }
 
                 token = tokenizer.getString();
+
+                if (tokenizer.wasQuotedIdentifier()
+                        && tokenizer.wasSimpleName()) {
+                    tokenizer.back();
+                    processAlterTableAddColumn(t);
+
+                    return;
+                }
+
+                if (!tokenizer.wasSimpleToken()) {
+                    throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+                }
 
                 switch (Token.get(token)) {
 
@@ -1623,6 +1741,18 @@ class DatabaseCommandInterpreter {
             case Token.DROP : {
                 token = tokenizer.getString();
 
+                if (tokenizer.wasQuotedIdentifier()
+                        && tokenizer.wasSimpleName()) {
+                    tokenizer.back();
+                    processAlterTableDropColumn(t);
+
+                    return;
+                }
+
+                if (!tokenizer.wasSimpleToken()) {
+                    throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+                }
+
                 switch (Token.get(token)) {
 
                     case Token.PRIMARY :
@@ -1655,7 +1785,7 @@ class DatabaseCommandInterpreter {
                 }
             }
             case Token.ALTER : {
-                tokenizer.getThis(Token.T_COLUMN);
+                tokenizer.isGetThis(Token.T_COLUMN);
                 processAlterColumn(t);
 
                 return;
@@ -1674,10 +1804,10 @@ class DatabaseCommandInterpreter {
      */
     private void processAlterColumn(Table t) throws HsqlException {
 
-        String columnName  = tokenizer.getString();
+        String columnName  = tokenizer.getSimpleName();
         int    columnIndex = t.getColumnNr(columnName);
         Column column      = t.getColumn(columnIndex);
-        String token       = tokenizer.getString();
+        String token       = tokenizer.getSimpleToken();
 
         switch (Token.get(token)) {
 
@@ -1703,6 +1833,20 @@ class DatabaseCommandInterpreter {
                 t.setDefaultExpression(columnIndex,
                                        processCreateDefaultExpression(type,
                                            length, scale));
+
+                return;
+            }
+            case Token.RESTART : {
+                tokenizer.getThis(Token.T_WITH);
+
+                long identityStart = tokenizer.getBigint();
+                int  id            = t.getIdentityColumn();
+
+                if (id == -1) {
+                    throw Trace.error(Trace.OPERATION_NOT_SUPPORTED);
+                }
+
+                t.identitySequence.reset(identityStart);
 
                 return;
             }
@@ -1735,12 +1879,12 @@ class DatabaseCommandInterpreter {
         String  newName  = tokenizer.getSimpleName();
         boolean isquoted = tokenizer.wasQuotedIdentifier();
 
-        if (t.searchColumn(newName) > -1) {
+        if (t.findColumn(newName) > -1) {
             throw Trace.error(Trace.COLUMN_ALREADY_EXISTS, newName);
         }
 
         session.commit();
-        session.setScripting(!t.isTemp());
+        session.setScripting(true);
         t.renameColumn(column, newName, isquoted);
     }
 
@@ -1753,6 +1897,12 @@ class DatabaseCommandInterpreter {
 
         // only the one supported operation, so far
         processAlterIndexRename();
+    }
+
+    private void processAlterSchema() throws HsqlException {
+
+        // only the one supported operation, so far
+        processAlterSequenceRename();
     }
 
     /**
@@ -1769,13 +1919,18 @@ class DatabaseCommandInterpreter {
         session.checkAdmin();
         session.setScripting(true);
 
-        token  = tokenizer.getString();
+        token  = tokenizer.getSimpleToken();
         isview = false;
 
         switch (Token.get(token)) {
 
             case Token.INDEX : {
                 processDropIndex();
+
+                break;
+            }
+            case Token.SCHEMA : {
+                processDropSchema();
 
                 break;
             }
@@ -1791,6 +1946,11 @@ class DatabaseCommandInterpreter {
             }
             case Token.USER : {
                 processDropUser();
+
+                break;
+            }
+            case Token.ROLE : {
+                database.getRoleManager().dropRole(tokenizer.getSimpleName());
 
                 break;
             }
@@ -1821,50 +1981,61 @@ class DatabaseCommandInterpreter {
         Object accessKey;
         String token;
 
-        session.checkDDLWrite();
         session.checkAdmin();
-
-        // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
+        session.checkDDLWrite();
         session.setScripting(true);
 
         right = 0;
+        token = tokenizer.getSimpleToken();
 
-        do {
-            token = tokenizer.getString();
-            right |= UserManager.getRight(token);
-            token = tokenizer.getString();
-        } while (token.equals(Token.T_COMMA));
+        tokenizer.back();
 
-        if (!token.equals(Token.T_ON)) {
-            throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+        if (!GranteeManager.validRightString(token)) {
+            processRoleGrantOrRevoke(grant);
+
+            return;
         }
 
+        do {
+            token = tokenizer.getSimpleToken();
+            right |= GranteeManager.getCheckRight(token);
+        } while (tokenizer.isGetThis(Token.T_COMMA));
+
+        tokenizer.getThis(Token.T_ON);
+
         accessKey = null;
-        token     = tokenizer.getString();
 
-        if (token.equals(Token.T_CLASS)) {
-            accessKey = tokenizer.getString();
+        if (tokenizer.isGetThis(Token.T_CLASS)) {
+            accessKey = tokenizer.getSimpleName();
+
+            if (!tokenizer.wasQuotedIdentifier()) {
+                throw Trace.error(Trace.QUOTED_IDENTIFIER_REQUIRED);
+            }
         } else {
+            token = tokenizer.getName();
 
-            // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-            // to make sure the table exists
-            Table t = database.getTable(session, token, null);
+            String schema =
+                session.getSchemaName(tokenizer.getLongNameFirst());
+            Table t = database.schemaManager.getTable(session, token, schema);
 
             accessKey = t.getName();
 
-            session.setScripting(!t.isTemp());
+            session.setScripting(true);
         }
 
-        tokenizer.getThis(Token.T_TO);
+        tokenizer.getThis(grant ? Token.T_TO
+                                : Token.T_FROM);
 
         token = getUserIdentifier();
 
-        UserManager um = database.getUserManager();
+        GranteeManager.verifyNotReserved(token);
+
+        GranteeManager gm = database.getGranteeManager();
 
         if (grant) {
-            um.grant(token, accessKey, right);
+            gm.grant(token, accessKey, right);
         } else {
-            um.revoke(token, accessKey, right);
+            gm.revoke(token, accessKey, right);
         }
     }
 
@@ -1892,14 +2063,11 @@ class DatabaseCommandInterpreter {
             session.commit();
             session.setUser(user);
             database.logger.logConnectUser(session);
-        } else if (session.getUser().isSys()) {
+        } else if (session.isProcessingLog) {
 
             // processing log statement
-            user = database.getUserManager().get(userName);
-
+            // do not change the user, as isSys() must remain true when processing log
             session.commit();
-            session.setUser(user);
-            database.logger.logConnectUser(session);
         } else {
 
             // force throw if not log statement
@@ -1916,10 +2084,9 @@ class DatabaseCommandInterpreter {
 
         String token;
 
-        // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
         session.setScripting(true);
 
-        token = tokenizer.getString();
+        token = tokenizer.getSimpleToken();
 
         switch (Token.get(token)) {
 
@@ -1928,7 +2095,7 @@ class DatabaseCommandInterpreter {
 
                 session.checkAdmin();
 
-                token = tokenizer.getString().toLowerCase();
+                token = tokenizer.getSimpleName();
 
                 if (!tokenizer.wasQuotedIdentifier()) {
                     throw Trace.error(Trace.QUOTED_IDENTIFIER_REQUIRED);
@@ -1949,7 +2116,7 @@ class DatabaseCommandInterpreter {
                                                              : Types.INTEGER);
 
                 if (HsqlDatabaseProperties.CACHE_FILE_SCALE.equals(token)) {
-                    if (database.getTables().size() != 0
+                    if (database.logger.hasCache()
                             || ((Integer) value).intValue() != 8) {
                         Trace.throwerror(Trace.ACCESS_IS_DENIED, token);
                     }
@@ -1957,8 +2124,12 @@ class DatabaseCommandInterpreter {
 
                 p.setProperty(token, value.toString().toLowerCase());
 
-                // Why reading a token that will never be used?
-                //token = tokenizer.getString();
+                break;
+            }
+            case Token.SCHEMA : {
+                session.setScripting(false);
+                session.setSchema(tokenizer.getSimpleName());
+
                 break;
             }
             case Token.PASSWORD : {
@@ -1988,7 +2159,7 @@ class DatabaseCommandInterpreter {
                 session.checkDDLWrite();
                 session.setScripting(false);
 
-                token = tokenizer.getString();
+                token = tokenizer.getSimpleToken();
 
                 int i = ArrayUtil.find(ScriptWriterBase.LIST_SCRIPT_FORMATS,
                                        token);
@@ -2023,18 +2194,19 @@ class DatabaseCommandInterpreter {
                 break;
             }
             case Token.TABLE : {
-
-// fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
-// support for SET TABLE <table> READONLY [TRUE|FALSE]
-// sqlbob@users 20020427 support for SET TABLE <table> SOURCE "spec" [DESC]
+                session.checkAdmin();
                 session.checkDDLWrite();
 
-                Table t = database.getTable(session, tokenizer.getString(),
-                                            null);
+                token = tokenizer.getName();
 
-                token = tokenizer.getString();
+                String schema = session.getSchemaNameForWrite(
+                    tokenizer.getLongNameFirst());
+                Table t = database.schemaManager.getTable(session, token,
+                    schema);
 
-                session.setScripting(!t.isTemp());
+                token = tokenizer.getSimpleToken();
+
+                session.setScripting(true);
 
                 switch (Token.get(token)) {
 
@@ -2042,12 +2214,10 @@ class DatabaseCommandInterpreter {
                         throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
                     }
                     case Token.SOURCE : {
-                        if (!t.isTemp()) {
-                            session.checkAdmin();
-                        }
+                        session.checkAdmin();
 
                         if (tokenizer.isGetThis(Token.T_HEADER)) {
-                            token = tokenizer.getString();
+                            token = tokenizer.getSimpleName();
 
                             if (!tokenizer.wasQuotedIdentifier()) {
                                 throw Trace.error(Trace.TEXT_TABLE_SOURCE);
@@ -2058,7 +2228,7 @@ class DatabaseCommandInterpreter {
                             break;
                         }
 
-                        token = tokenizer.getString();
+                        token = tokenizer.getSimpleName();
 
                         if (!tokenizer.wasQuotedIdentifier()) {
                             throw Trace.error(Trace.TEXT_TABLE_SOURCE);
@@ -2066,11 +2236,7 @@ class DatabaseCommandInterpreter {
 
                         boolean isDesc = false;
 
-                        if (tokenizer.getString().equals(Token.T_DESC)) {
-                            isDesc = true;
-                        } else {
-                            tokenizer.back();
-                        }
+                        isDesc = tokenizer.isGetThis(Token.T_DESC);
 
                         t.setDataSource(session, token, isDesc, false);
 
@@ -2084,8 +2250,11 @@ class DatabaseCommandInterpreter {
                     }
                     case Token.INDEX : {
                         session.checkAdmin();
-                        tokenizer.getString();
-                        t.setIndexRoots((String) tokenizer.getAsValue());
+
+                        String roots =
+                            (String) tokenizer.getInType(Types.VARCHAR);
+
+                        t.setIndexRoots(roots);
 
                         break;
                     }
@@ -2117,17 +2286,20 @@ class DatabaseCommandInterpreter {
                 session.checkAdmin();
                 session.checkDDLWrite();
 
-                int    delay = 0;
-                String s     = tokenizer.getString();
+                int delay = 0;
 
-                if (s.equals(Token.T_TRUE)) {
+                tokenizer.getString();
+
+                Object value = tokenizer.getAsValue();
+
+                if (tokenizer.getType() == Types.INTEGER) {
+                    delay = ((Integer) value).intValue();
+                } else if (Boolean.TRUE.equals(value)) {
                     delay = database.getProperties().getDefaultWriteDelay();
-                } else if (s.equals(Token.T_FALSE)) {
+                } else if (Boolean.FALSE.equals(value)) {
                     delay = 0;
                 } else {
-                    tokenizer.back();
-
-                    delay = tokenizer.getInt();
+                    throw Trace.error(Trace.UNEXPECTED_TOKEN);
                 }
 
                 database.logger.setWriteDelay(delay);
@@ -2163,7 +2335,7 @@ class DatabaseCommandInterpreter {
      */
     private boolean processTrueOrFalse() throws HsqlException {
 
-        String sToken = tokenizer.getString();
+        String sToken = tokenizer.getSimpleToken();
 
         if (sToken.equals(Token.T_TRUE)) {
             return true;
@@ -2180,11 +2352,7 @@ class DatabaseCommandInterpreter {
      * @throws  HsqlException
      */
     private void processCommit() throws HsqlException {
-
-        if (!tokenizer.getString().equals(Token.T_WORK)) {
-            tokenizer.back();
-        }
-
+        tokenizer.isGetThis(Token.T_WORK);
         session.commit();
     }
 
@@ -2198,7 +2366,7 @@ class DatabaseCommandInterpreter {
         String  token;
         boolean toSavepoint;
 
-        token       = tokenizer.getString();
+        token       = tokenizer.getSimpleToken();
         toSavepoint = false;
 
         if (token.equals(Token.T_WORK)) {
@@ -2207,18 +2375,13 @@ class DatabaseCommandInterpreter {
         } else if (token.equals(Token.T_TO)) {
             tokenizer.getThis(Token.T_SAVEPOINT);
 
-            token       = tokenizer.getString();
+            token       = tokenizer.getSimpleName();
             toSavepoint = true;
         } else {
             tokenizer.back();
         }
 
         if (toSavepoint) {
-            if (token.length() == 0) {
-                throw Trace.error(Trace.UNEXPECTED_TOKEN,
-                                  Trace.BAD_SAVEPOINT_NAME);
-            }
-
             session.rollbackToSavepoint(token);
         } else {
             session.rollback();
@@ -2234,12 +2397,7 @@ class DatabaseCommandInterpreter {
 
         String token;
 
-        token = tokenizer.getString();
-
-        if (token.length() == 0) {
-            throw Trace.error(Trace.UNEXPECTED_TOKEN,
-                              Trace.BAD_SAVEPOINT_NAME);
-        }
+        token = tokenizer.getSimpleName();
 
         session.savepoint(token);
     }
@@ -2260,7 +2418,7 @@ class DatabaseCommandInterpreter {
         }
 
         closemode = Database.CLOSEMODE_NORMAL;
-        token     = tokenizer.getString();
+        token     = tokenizer.getSimpleToken();
 
         // fredt - todo - catch misspelt qualifiers here and elsewhere
         if (token.equals(Token.T_IMMEDIATELY)) {
@@ -2293,9 +2451,8 @@ class DatabaseCommandInterpreter {
         session.checkDDLWrite();
 
         defrag = false;
-        token  = tokenizer.getString();
+        token  = tokenizer.getSimpleToken();
 
-        // fredt - todo - catch misspelt qualifiers here and elsewhere
         if (token.equals(Token.T_DEFRAG)) {
             defrag = true;
         } else if (token.equals(Token.T_SEMICOLON)) {
@@ -2317,145 +2474,24 @@ class DatabaseCommandInterpreter {
                : database.nameManager.newHsqlName(name, isQuoted);
     }
 
-    private Table newTable(int type, String name,
-                           boolean quoted) throws HsqlException {
+    private Table newTable(int type, String name, boolean quoted,
+                           HsqlName schema) throws HsqlException {
 
-        HsqlName tableHsqlName;
-        int      sid;
+        int sid = session.getId();
+        HsqlName tableHsqlName = database.nameManager.newHsqlName(name,
+            quoted);
 
-        tableHsqlName = database.nameManager.newHsqlName(name, quoted);
-        sid           = session.getId();
+        tableHsqlName.schema = schema;
 
         switch (type) {
 
             case Table.TEMP_TEXT_TABLE :
             case Table.TEXT_TABLE : {
-                return new TextTable(database, tableHsqlName, type, sid);
+                return new TextTable(database, tableHsqlName, type);
             }
             default : {
-                return new Table(database, tableHsqlName, type, sid);
+                return new Table(database, tableHsqlName, type);
             }
-        }
-    }
-
-    /**
-     * Checks if an Index object with given name either exists or does not,
-     * based on the value of the argument, yes.
-     *
-     * @param indexName to check
-     * @param yes if true, check if exists, else check not exists
-     * @throws HsqlException if existence of Index does not match value of
-     *      the argument, yes.
-     */
-    private void checkIndexExists(String indexName,
-                                  boolean yes) throws HsqlException {
-
-        boolean exists;
-        int     code;
-
-        exists = database.findUserTableForIndex(session, indexName, null)
-                 != null;
-
-        if (exists != yes) {
-            code = yes ? Trace.INDEX_NOT_FOUND
-                       : Trace.INDEX_ALREADY_EXISTS;
-
-            throw Trace.error(code, indexName);
-        }
-    }
-
-    /**
-     * Checks if a Table object with given name either exists or does not,
-     * based on the value of the argument, yes.
-     *
-     * @param tableName to check
-     * @param yes if true, check if exists, else check if not exists
-     * @throws HsqlException if existence of table does not match value of
-     *      the argument, yes.
-     */
-    private void checkTableExists(String tableName,
-                                  boolean yes) throws HsqlException {
-
-        boolean exists;
-        int     code;
-
-        exists = database.dInfo.isSystemTable(tableName);
-
-        if (!exists) {
-            exists = database.findUserTable(session, tableName, null) != null;
-        }
-
-        if (exists != yes) {
-            code = yes ? Trace.TABLE_NOT_FOUND
-                       : Trace.TABLE_ALREADY_EXISTS;
-
-            throw Trace.error(code, tableName);
-        }
-    }
-
-    /**
-     * Checks if a View object with given name either exists or does not,
-     * based on the value of the argument, yes.
-     *
-     * @param viewName to check
-     * @param yes if true, check if exists, else check not exists
-     * @throws HsqlException if existence of View does not match value of
-     *      the argument, yes.
-     */
-    private void checkViewExists(String viewName,
-                                 boolean yes) throws HsqlException {
-
-        Table   t;
-        boolean exists;
-        boolean isView;
-        int     code;
-
-        t      = database.findUserTable(session, viewName, null);
-        exists = (t != null);
-        isView = exists && t.isView();
-
-        if (!exists) {
-            exists = database.dInfo.isSystemTable(viewName);
-        }
-
-        if (exists != yes) {
-            if (exists) {
-                code = isView ? Trace.VIEW_ALREADY_EXISTS
-                              : Trace.TABLE_ALREADY_EXISTS;
-            } else {
-                code = Trace.VIEW_NOT_FOUND;
-            }
-
-            throw Trace.error(code, viewName);
-        }
-    }
-
-    private void checkIsReallyTable(Table t) throws HsqlException {
-
-        if (t.isView() || t.getTableType() == Table.SYSTEM_TABLE) {
-            throw Trace.error(Trace.NOT_A_TABLE);
-        }
-    }
-
-    /**
-     * Checks if a Trigger with given name either exists or does not, based on
-     * the value of the argument, yes.
-     *
-     * @param triggerName to check
-     * @param yes if true, check if exists, else check not exists
-     * @throws HsqlException if existence of trigger does not match value of
-     *      the argument, yes.
-     */
-    private void checkTriggerExists(String triggerName,
-                                    boolean yes) throws HsqlException {
-
-        boolean exists = database.triggerNameList.containsName(triggerName);
-
-        if (exists != yes) {
-            int code = yes ? Trace.TRIGGER_NOT_FOUND
-                           : Trace.TRIGGER_ALREADY_EXISTS;
-
-            throw Trace.error(code, triggerName);
         }
     }
 
@@ -2472,11 +2508,20 @@ class DatabaseCommandInterpreter {
 
         boolean canAdd = true;
 
+        if (t.findColumn(c.columnName.name) != -1) {
+            canAdd = false;
+        }
+
         if (c.isIdentity()) {
+
+//            canAdd = false;
+        }
+
+        if (c.isPrimaryKey() && t.hasPrimaryKey()) {
             canAdd = false;
-        } else if (c.isPrimaryKey()) {
-            canAdd = false;
-        } else if (!t.isEmpty()) {
+        }
+
+        if (!t.isEmpty(session)) {
             canAdd = c.isNullable() || c.getDefaultExpression() != null;
         }
 
@@ -2513,16 +2558,19 @@ class DatabaseCommandInterpreter {
     private void processAlterSequence() throws HsqlException {
 
         long   start;
-        String name = tokenizer.getName();
+        String name       = tokenizer.getName();
+        String schemaname = tokenizer.getLongNameFirst();
+
+        schemaname = session.getSchemaNameForWrite(schemaname);
 
         tokenizer.getThis(Token.T_RESTART);
         tokenizer.getThis(Token.T_WITH);
 
         start = tokenizer.getBigint();
 
-        NumberSequence seq = database.sequenceManager.getSequence(name);
+        NumberSequence seq = database.schemaManager.getSequence(name,
+            schemaname);
 
-        Trace.check(seq != null, Trace.SEQUENCE_NOT_FOUND);
         seq.reset(start);
     }
 
@@ -2533,39 +2581,66 @@ class DatabaseCommandInterpreter {
      */
     private void processAlterIndexRename() throws HsqlException {
 
-        String  indexName;
-        String  newName;
-        boolean isQuoted;
-        Table   t;
-
-        indexName = tokenizer.getName();
+        String name = tokenizer.getName();
+        String schema =
+            session.getSchemaNameForWrite(tokenizer.getLongNameFirst());
 
         tokenizer.getThis(Token.T_RENAME);
         tokenizer.getThis(Token.T_TO);
 
-        newName  = tokenizer.getName();
-        isQuoted = tokenizer.wasQuotedIdentifier();
-        t        = database.findUserTableForIndex(session, indexName, null);
+        String newName   = tokenizer.getName();
+        String newSchema = tokenizer.getLongNameFirst();
 
-        if (t == null) {
-            throw Trace.error(Trace.INDEX_NOT_FOUND, indexName);
+        newSchema = newSchema == null ? schema
+                                      : session.getSchemaNameForWrite(
+                                          newSchema);
+
+        boolean isQuoted = tokenizer.wasQuotedIdentifier();
+
+        if (!schema.equals(newSchema)) {
+            throw Trace.error(Trace.INVALID_SCHEMA_NAME_NO_SUBCLASS);
         }
 
-        checkIndexExists(newName, false);
+        Table t = database.schemaManager.findUserTableForIndex(session, name,
+            schema);
 
-        if (HsqlName.isReservedIndexName(indexName)) {
-            throw Trace.error(Trace.SYSTEM_INDEX, indexName);
+        if (t == null) {
+            throw Trace.error(Trace.INDEX_NOT_FOUND, name);
+        }
+
+        database.schemaManager.checkIndexExists(name, t.getSchemaName(),
+                true);
+
+        if (HsqlName.isReservedIndexName(name)) {
+            throw Trace.error(Trace.SYSTEM_INDEX, name);
         }
 
         if (HsqlName.isReservedIndexName(newName)) {
             throw Trace.error(Trace.BAD_INDEX_CONSTRAINT_NAME, newName);
         }
 
-        session.setScripting(!t.isTemp());
+        session.setScripting(true);
         session.commit();
-        t.getIndex(indexName).setName(newName, isQuoted);
-        database.indexNameList.rename(indexName, newName,
-                                      Trace.INDEX_ALREADY_EXISTS);
+        t.getIndex(name).setName(newName, isQuoted);
+        database.schemaManager.renameIndex(name, newName, t.getName());
+    }
+
+    /**
+     * Handles ALTER SEQUENCE ... RENAME TO .
+     *
+     * @throws HsqlException
+     */
+    private void processAlterSequenceRename() throws HsqlException {
+
+        String name = tokenizer.getSimpleName();
+
+        tokenizer.getThis(Token.T_RENAME);
+        tokenizer.getThis(Token.T_TO);
+
+        String  newName  = tokenizer.getSimpleName();
+        boolean isQuoted = tokenizer.wasQuotedIdentifier();
+
+        database.schemaManager.renameSchema(name, newName, isQuoted);
     }
 
     /**
@@ -2581,20 +2656,16 @@ class DatabaseCommandInterpreter {
 
         checkAddColumn(t, column);
 
-        token = tokenizer.getString();
-
-        if (token.equals(Token.T_BEFORE)) {
+        if (tokenizer.isGetThis(Token.T_BEFORE)) {
             token    = tokenizer.getSimpleName();
             colindex = t.getColumnNr(token);
-        } else {
-            tokenizer.back();
         }
 
         session.commit();
 
         TableWorks tableWorks = new TableWorks(session, t);
 
-        tableWorks.addDropRetypeColumn(column, colindex, 1);
+        tableWorks.addColumn(column, colindex);
 
         return;
     }
@@ -2610,18 +2681,14 @@ class DatabaseCommandInterpreter {
         String token;
         int    colindex;
 
-        token    = tokenizer.getSimpleName();
+        token    = tokenizer.getName();
         colindex = t.getColumnNr(token);
 
-        // CHECKME:
-        // shouldn't the commit come only *after* the DDL is
-        // actually successful?
-        // fredt - no, uncommitted data may include the column
         session.commit();
 
         TableWorks tableWorks = new TableWorks(session, t);
 
-        tableWorks.addDropRetypeColumn(null, colindex, -1);
+        tableWorks.dropColumn(colindex);
     }
 
     /**
@@ -2659,31 +2726,37 @@ class DatabaseCommandInterpreter {
         String alias;
         String methodFQN;
 
-        alias = tokenizer.getString();
+        alias = tokenizer.getSimpleName();
 
         tokenizer.getThis(Token.T_FOR);
 
-        methodFQN = upgradeMethodFQN(tokenizer.getString());
+        methodFQN = upgradeMethodFQN(tokenizer.getSimpleName());
 
         database.getAliasMap().put(alias, methodFQN);
     }
 
     private void processCreateIndex(boolean unique) throws HsqlException {
 
-        String  name;
-        boolean isQuoted;
         Table   t;
-
-        name     = tokenizer.getName();
-        isQuoted = tokenizer.wasQuotedIdentifier();
+        String  name     = tokenizer.getName();
+        String  schema   = tokenizer.getLongNameFirst();
+        boolean isQuoted = tokenizer.wasQuotedIdentifier();
 
         tokenizer.getThis(Token.T_ON);
 
-        t = database.getTable(session, tokenizer.getName(), null);
+        String tablename = tokenizer.getName();
+        String tableschema =
+            session.getSchemaNameForWrite(tokenizer.getLongNameFirst());
+
+        if (schema != null &&!schema.equals(tableschema)) {
+            throw Trace.error(Trace.INVALID_SCHEMA_NAME_NO_SUBCLASS);
+        }
+
+        t = database.schemaManager.getTable(session, tablename, tableschema);
 
         addIndexOn(t, name, isQuoted, unique);
 
-        String extra = tokenizer.getString();
+        String extra = tokenizer.getSimpleToken();
 
         if (!Token.T_DESC.equals(extra) &&!Token.T_ASC.equals(extra)) {
             tokenizer.back();
@@ -2708,9 +2781,11 @@ class DatabaseCommandInterpreter {
         long    start     = 0;
         String  name      = tokenizer.getName();
         boolean isquoted  = tokenizer.wasQuotedIdentifier();
+        HsqlName schemaname =
+            session.getSchemaHsqlNameForWrite(tokenizer.getLongNameFirst());
 
         if (tokenizer.isGetThis(Token.T_AS)) {
-            String typestring = tokenizer.getString();
+            String typestring = tokenizer.getSimpleToken();
 
             type = Types.getTypeNr(typestring);
 
@@ -2732,8 +2807,39 @@ class DatabaseCommandInterpreter {
 
         HsqlName hsqlname = database.nameManager.newHsqlName(name, isquoted);
 
-        database.sequenceManager.createSequence(hsqlname, start, increment,
-                type);
+        hsqlname.schema = schemaname;
+
+        database.schemaManager.createSequence(hsqlname, start, increment,
+                                              type);
+    }
+
+    /**
+     * CREATE SCHEMA PUBLIC in scripts should pass this, so we do not throw
+     * if this schema is created a second time
+     */
+    private void processCreateSchema() throws HsqlException {
+
+        String  name     = tokenizer.getSimpleName();
+        boolean isquoted = tokenizer.wasQuotedIdentifier();
+
+        if (session.isSchemaDefintion()) {
+            throw Trace.error(Trace.INVALID_IDENTIFIER);
+        }
+
+        tokenizer.getThis(Token.T_AUTHORIZATION);
+        tokenizer.getThis(database.getRoleManager().ADMIN_ROLE_NAME);
+
+        if (database.schemaManager.schemaExists(name)) {
+            if (!session.isProcessingScript) {
+                throw Trace.error(Trace.INVALID_SCHEMA_NAME_NO_SUBCLASS);
+            }
+        } else {
+            database.schemaManager.createSchema(name, isquoted);
+        }
+
+        session.startSchemaDefinition(name);
+
+        session.loggedSchema = session.currentSchema;
     }
 
     private void processCreateUser() throws HsqlException {
@@ -2747,13 +2853,14 @@ class DatabaseCommandInterpreter {
         tokenizer.getThis(Token.T_PASSWORD);
 
         password = getPassword();
-        admin    = tokenizer.getString().equals(Token.T_ADMIN);
+        admin    = tokenizer.isGetThis(Token.T_ADMIN);
 
-        if (!admin) {
-            tokenizer.back();
+        database.getUserManager().createUser(name, password);
+
+        if (admin) {
+            database.getGranteeManager().grant(name,
+                                               RoleManager.ADMIN_ROLE_NAME);
         }
-
-        database.getUserManager().createUser(name, password, admin);
     }
 
     private void processDisconnect() throws HsqlException {
@@ -2762,88 +2869,139 @@ class DatabaseCommandInterpreter {
 
     private void processDropTable(boolean isView) throws HsqlException {
 
-        String  tableName;
-        String  token;
-        boolean ifExists;
+        boolean ifexists = false;
+        boolean cascade  = false;
 
-        tableName = token = tokenizer.getString();
-        ifExists  = false;
+        if (tokenizer.isGetThis(Token.T_IF)) {
+            tokenizer.getThis(Token.T_EXISTS);
 
-        if (token.equals(Token.T_IF)) {
-            token = tokenizer.getString();
-
-            if (token.equals(Token.T_EXISTS)) {
-                ifExists  = true;
-                tableName = tokenizer.getString();
-            } else if (token.equals(Token.T_IF)) {
-                tokenizer.getThis(Token.T_EXISTS);
-
-                ifExists = true;
-            } else {
-                tokenizer.back();
-            }
-        } else {
-            token = tokenizer.getString();
-
-            if (token.equals(Token.T_IF)) {
-                tokenizer.getThis(Token.T_EXISTS);
-
-                ifExists = true;
-            } else {
-                tokenizer.back();
-            }
+            ifexists = true;
         }
 
-        database.dropTable(session, tableName, null, ifExists, isView);
+        String name   = tokenizer.getName();
+        String schema = tokenizer.getLongNameFirst();
+
+        if (tokenizer.isGetThis(Token.T_IF)) {
+            tokenizer.getThis(Token.T_EXISTS);
+
+            ifexists = true;
+        }
+
+        cascade = tokenizer.isGetThis(Token.T_CASCADE);
+
+        if (!cascade) {
+            tokenizer.isGetThis(Token.T_RESTRICT);
+        }
+
+        if (ifexists && schema != null
+                &&!database.schemaManager.schemaExists(schema)) {
+            return;
+        }
+
+        schema = session.getSchemaNameForWrite(schema);
+
+        database.schemaManager.dropTable(session, name, schema, ifexists,
+                                         isView, cascade);
     }
 
     private void processDropUser() throws HsqlException {
+
+        session.checkAdmin();
         session.checkDDLWrite();
         database.getUserManager().dropUser(getPassword());
     }
 
     private void processDropSequence() throws HsqlException {
 
+        boolean ifexists = false;
+
+        session.checkAdmin();
         session.checkDDLWrite();
 
-        String         name     = tokenizer.getString();
-        NumberSequence sequence = database.sequenceManager.getSequence(name);
+        String name = tokenizer.getName();
+        String schemaname =
+            session.getSchemaNameForWrite(tokenizer.getLongNameFirst());
 
-        if (sequence != null) {
-            database.checkSequenceIsInView(sequence);
+        if (tokenizer.isGetThis(Token.T_IF)) {
+            tokenizer.getThis(Token.T_EXISTS);
+
+            ifexists = true;
         }
 
-        database.sequenceManager.dropSequence(name);
+        boolean cascade = tokenizer.isGetThis(Token.T_CASCADE);
+
+        if (!cascade) {
+            tokenizer.isGetThis(Token.T_RESTRICT);
+        }
+
+        NumberSequence sequence = database.schemaManager.findSequence(name,
+            schemaname);
+
+        if (sequence == null) {
+            if (ifexists) {
+                return;
+            } else {
+                throw Trace.error(Trace.SEQUENCE_NOT_FOUND);
+            }
+        }
+
+        database.schemaManager.checkCascadeDropViews(sequence, cascade);
+        database.schemaManager.dropSequence(sequence);
     }
 
     private void processDropTrigger() throws HsqlException {
+
+        session.checkAdmin();
         session.checkDDLWrite();
-        database.dropTrigger(session, tokenizer.getString(), null);
+
+        String triggername = tokenizer.getName();
+        String schemaname =
+            session.getSchemaNameForWrite(tokenizer.getLongNameFirst());
+
+        database.schemaManager.dropTrigger(session, triggername, schemaname);
     }
 
     private void processDropIndex() throws HsqlException {
 
-        String  indexName = tokenizer.getString();
-        String  token     = tokenizer.getString();
-        boolean ifExists  = false;
+        String name = tokenizer.getName();
+        String schema =
+            session.getSchemaNameForWrite(tokenizer.getLongNameFirst());
+        boolean ifexists = false;
 
         // accept a table name - no check performed if it is the right table
-        if (token.equals(Token.T_ON)) {
-            tokenizer.getString();
-
-            token = tokenizer.getString();
+        if (tokenizer.isGetThis(Token.T_ON)) {
+            tokenizer.getName();
         }
 
-        if (token.equals(Token.T_IF)) {
+        if (tokenizer.isGetThis(Token.T_IF)) {
             tokenizer.getThis(Token.T_EXISTS);
 
-            ifExists = true;
-        } else {
-            tokenizer.back();
+            ifexists = true;
         }
 
+        session.checkAdmin();
         session.checkDDLWrite();
-        database.dropIndex(session, indexName, null, ifExists);
+        database.schemaManager.dropIndex(session, name, schema, ifexists);
+    }
+
+    private void processDropSchema() throws HsqlException {
+
+        String  name    = tokenizer.getSimpleName();
+        boolean cascade = tokenizer.isGetThis(Token.T_CASCADE);
+
+        if (!cascade) {
+            tokenizer.isGetThis(Token.T_RESTRICT);
+        }
+
+        if (!database.schemaManager.schemaExists(name)) {
+            throw Trace.error(Trace.INVALID_SCHEMA_NAME_NO_SUBCLASS);
+        }
+
+        database.schemaManager.dropSchema(name, cascade);
+
+        if (name.equals(session.getSchemaName(null))) {
+            session.setSchema(database.schemaManager.getDefaultSchemaName());
+        }
     }
 
     private Result processExplainPlan() throws IOException, HsqlException {
@@ -2863,7 +3021,7 @@ class DatabaseCommandInterpreter {
         tokenizer.getThis(Token.T_FOR);
 
         parser = new Parser(session, database, tokenizer);
-        token  = tokenizer.getString();
+        token  = tokenizer.getSimpleToken();
         cmd    = Token.get(token);
         result = Result.newSingleColumnResult("OPERATION", Types.VARCHAR);
 
@@ -2932,14 +3090,6 @@ class DatabaseCommandInterpreter {
         return fqn;
     }
 
-    private Class classForName(String fqn) throws ClassNotFoundException {
-
-        ClassLoader classLoader = database.classLoader;
-
-        return classLoader == null ? Class.forName(fqn)
-                                   : classLoader.loadClass(fqn);
-    }
-
     Result processSelectInto(Result result, HsqlName intoHsqlName,
                              int intoType) throws HsqlException {
 
@@ -2959,12 +3109,12 @@ class DatabaseCommandInterpreter {
 
         // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
         Table t = (intoType == Table.TEXT_TABLE)
-                  ? new TextTable(database, intoHsqlName, intoType, sid)
-                  : new Table(database, intoHsqlName, intoType, sid);
+                  ? new TextTable(database, intoHsqlName, intoType)
+                  : new Table(database, intoHsqlName, intoType);
 
         t.addColumns(result.metaData, result.getColumnCount());
         t.createPrimaryKey();
-        database.linkTable(t);
+        database.schemaManager.linkTable(t);
 
         // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
         if (intoType == Table.TEXT_TABLE) {
@@ -2979,8 +3129,8 @@ class DatabaseCommandInterpreter {
                 logTableDDL(t);
                 t.insertIntoTable(session, result);
             } catch (HsqlException e) {
-                database.dropTable(session, intoHsqlName.name, null, false,
-                                   false);
+                database.schemaManager.dropTable(session, intoHsqlName.name,
+                                                 null, false, false, false);
 
                 throw (e);
             }
@@ -3012,13 +3162,9 @@ class DatabaseCommandInterpreter {
         StringBuffer tableDDL;
         String       sourceDDL;
 
-        if (t.isTemp()) {
-            return;
-        }
-
         tableDDL = new StringBuffer();
 
-        DatabaseScript.getTableDDL(database, t, 0, null, tableDDL);
+        DatabaseScript.getTableDDL(database, t, 0, null, true, tableDDL);
 
         sourceDDL = DatabaseScript.getDataSource(t);
 
@@ -3110,12 +3256,7 @@ class DatabaseCommandInterpreter {
 
         tokenizer.getThis(Token.T_SAVEPOINT);
 
-        token = tokenizer.getString();
-
-        if (token.length() == 0) {
-            throw Trace.error(Trace.UNEXPECTED_TOKEN,
-                              Trace.BAD_SAVEPOINT_NAME);
-        }
+        token = tokenizer.getSimpleName();
 
         session.releaseSavepoint(token);
     }
@@ -3154,5 +3295,46 @@ class DatabaseCommandInterpreter {
         String token = tokenizer.getString();
 
         return token.toUpperCase(Locale.ENGLISH);
+    }
+
+    /**
+     *  Responsible for handling the execution of GRANT/REVOKE role...
+     *  statements.
+     *
+     * @throws HsqlException
+     */
+    private void processRoleGrantOrRevoke(boolean grant)
+    throws HsqlException {
+
+        String        token;
+        HsqlArrayList list = new HsqlArrayList();
+        String        role;
+        RoleManager   roleManager = database.getRoleManager();
+
+        do {
+            role = tokenizer.getSimpleToken();
+
+            Trace.check(roleManager.exists(role),
+                        (grant ? Trace.NO_SUCH_ROLE_GRANT
+                               : Trace.NO_SUCH_ROLE_REVOKE));
+            list.add(role);
+        } while (tokenizer.isGetThis(Token.T_COMMA));
+
+        tokenizer.getThis(grant ? Token.T_TO
+                                : Token.T_FROM);
+
+        token = getUserIdentifier();
+
+        GranteeManager.verifyNotReserved(token);
+
+        GranteeManager gm = database.getGranteeManager();
+
+        for (int i = 0; i < list.size(); i++) {
+            if (grant) {
+                gm.grant(token, (String) list.get(i));
+            } else {
+                gm.revoke(token, (String) list.get(i));
+            }
+        }
     }
 }

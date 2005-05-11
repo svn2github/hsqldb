@@ -69,9 +69,11 @@ package org.hsqldb;
 import java.sql.Time;
 import java.sql.Timestamp;
 
+import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.jdbc.jdbcConnection;
 import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HashMappedList;
+import org.hsqldb.lib.IntKeyHashMap;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.store.ValuePool;
 
@@ -127,6 +129,19 @@ public class Session implements SessionInterface {
     static final Result emptyUpdateCount =
         new Result(ResultConstants.UPDATECOUNT);
 
+    // schema
+    public HsqlName  currentSchema;
+    public HsqlName  loggedSchema;
+    private HsqlName oldSchema;
+
+    // query processing
+    boolean isProcessingScript;
+    boolean isProcessingLog;
+
+    // temp tables
+    private IntKeyHashMap indexArrayMap;
+    private IntKeyHashMap indexArrayKeepMap;
+
     /** @todo fredt - clarify in which circumstances Session has to disconnect */
     Session getSession() {
         return this;
@@ -156,6 +171,7 @@ public class Session implements SessionInterface {
         compiledStatementManager  = db.compiledStatementManager;
         tokenizer                 = new Tokenizer();
         parser                    = new Parser(this, database, tokenizer);
+        currentSchema = database.schemaManager.getDefaultSchemaHsqlName();
     }
 
     /**
@@ -189,7 +205,8 @@ public class Session implements SessionInterface {
 
             database.sessionManager.removeSession(this);
             rollback();
-            database.dropTempTables(this);
+            clearIndexRoots();
+            clearIndexRootsKeep();
             compiledStatementManager.removeSession(sessionId);
 
             database                  = null;
@@ -328,7 +345,10 @@ public class Session implements SessionInterface {
      * @throws  HsqlException
      */
     void checkReadWrite() throws HsqlException {
-        Trace.check(!isReadOnly, Trace.DATABASE_IS_READONLY);
+
+        if (isReadOnly) {
+            throw Trace.error(Trace.DATABASE_IS_READONLY);
+        }
     }
 
     /**
@@ -337,11 +357,9 @@ public class Session implements SessionInterface {
      */
     void checkDDLWrite() throws HsqlException {
 
-        if (user.isSys() ||!database.isFilesReadOnly()) {
-            return;
+        if (database.isFilesReadOnly()) {
+            throw Trace.error(Trace.DATABASE_IS_READONLY);
         }
-
-        Trace.check(false, Trace.DATABASE_IS_READONLY);
     }
 
     /**
@@ -351,14 +369,18 @@ public class Session implements SessionInterface {
      * @param  row the deleted row
      * @throws  HsqlException
      */
-    void addTransactionDelete(Table table, Row row) throws HsqlException {
+    boolean addTransactionDelete(Table table, Row row) throws HsqlException {
 
         if (!isAutoCommit || isNestedTransaction) {
             Transaction t = new Transaction(true, table, row, sessionSCN);
 
             transactionList.add(t);
             database.txManager.addTransaction(this, t);
+
+            return true;
         }
+
+        return false;
     }
 
     /**
@@ -368,14 +390,18 @@ public class Session implements SessionInterface {
      * @param  row the inserted row
      * @throws  HsqlException
      */
-    void addTransactionInsert(Table table, Row row) throws HsqlException {
+    boolean addTransactionInsert(Table table, Row row) throws HsqlException {
 
         if (!isAutoCommit || isNestedTransaction) {
             Transaction t = new Transaction(false, table, row, sessionSCN);
 
             transactionList.add(t);
             database.txManager.addTransaction(this, t);
+
+            return true;
         }
+
+        return false;
     }
 
     /**
@@ -423,6 +449,7 @@ public class Session implements SessionInterface {
             }
 
             database.txManager.commit(this);
+            clearIndexRoots();
         }
     }
 
@@ -445,6 +472,7 @@ public class Session implements SessionInterface {
             }
 
             database.txManager.rollback(this);
+            clearIndexRoots();
         }
     }
 
@@ -728,7 +756,7 @@ public class Session implements SessionInterface {
             default : {
 
                 // DDL statements
-                cs = new CompiledStatement();
+                cs = new CompiledStatement(currentSchema);
 
                 break;
             }
@@ -898,7 +926,7 @@ public class Session implements SessionInterface {
 
         try {
             if (database != null) {
-                database.sequenceManager.logSequences(this, database.logger);
+                database.schemaManager.logSequences(this, database.logger);
 
                 if (isAutoCommit) {
                     database.logger.synchLog();
@@ -948,17 +976,37 @@ public class Session implements SessionInterface {
      */
     private Result sqlPrepare(String sql) {
 
-        int               csid = compiledStatementManager.getStatementID(sql);
-        CompiledStatement cs   = compiledStatementManager.getStatement(csid);
+        int csid = compiledStatementManager.getStatementID(currentSchema,
+            sql);
+        CompiledStatement cs = compiledStatementManager.getStatement(csid);
         Result            rmd;
         Result            pmd;
 
         if (cs == null) {
 
-            // ...compile or (re)validate
+            // compile
             try {
-                cs = sqlCompileStatement(sql);
+                Session sys =
+                    database.sessionManager.getSysSession(currentSchema.name,
+                        false);
+
+                cs = sys.sqlCompileStatement(sql);
             } catch (Throwable t) {
+                return new Result(t, sql);
+            }
+
+            csid = compiledStatementManager.registerStatement(csid, cs);
+        } else if (!cs.isValid) {
+
+            // revalidate with the original contexts schema
+            try {
+                Session sys = database.sessionManager.getSysSession(
+                    cs.schemaHsqlName.name, false);
+
+                cs = sys.sqlCompileStatement(sql);
+            } catch (Throwable t) {
+                compiledStatementManager.freeStatement(csid, sessionId);
+
                 return new Result(t, sql);
             }
 
@@ -986,8 +1034,8 @@ public class Session implements SessionInterface {
         csid = cmd.getStatementID();
         cs   = compiledStatementManager.getStatement(csid);
 
-        if (cs == null) {
-            cs = recompileStatement(csid);
+        if (cs == null ||!cs.isValid) {
+            cs = recompileStatement(cs, csid);
 
             if (cs == null) {
 
@@ -1116,17 +1164,13 @@ public class Session implements SessionInterface {
      */
     private Result sqlExecute(Result cmd) {
 
-        int               csid;
-        Object[]          pvals;
-        CompiledStatement cs;
+        int               csid  = cmd.getStatementID();
+        Object[]          pvals = cmd.getParameterData();
+        CompiledStatement cs    = compiledStatementManager.getStatement(csid);
         Expression[]      parameters;
 
-        csid  = cmd.getStatementID();
-        pvals = cmd.getParameterData();
-        cs    = compiledStatementManager.getStatement(csid);
-
-        if (cs == null) {
-            cs = recompileStatement(csid);
+        if (cs == null ||!cs.isValid) {
+            cs = recompileStatement(cs, csid);
 
             if (cs == null) {
 
@@ -1157,7 +1201,8 @@ public class Session implements SessionInterface {
     /**
      * Recompile a prepard statement or free it if no longer valid
      */
-    private CompiledStatement recompileStatement(int csid) {
+    private CompiledStatement recompileStatement(CompiledStatement cs,
+            int csid) {
 
         String sql = compiledStatementManager.getSql(csid);
 
@@ -1333,5 +1378,160 @@ public class Session implements SessionInterface {
     // internal connections too.
     public String getInternalConnectionURL() {
         return DatabaseManager.S_URL_PREFIX + database.getURI();
+    }
+
+    boolean isProcessingScript() {
+        return isProcessingScript;
+    }
+
+    boolean isProcessingLog() {
+        return isProcessingLog;
+    }
+
+    boolean isSchemaDefintion() {
+        return oldSchema != null;
+    }
+
+    void startSchemaDefinition(String schema) throws HsqlException {
+
+        if (isProcessingScript) {
+            setSchema(schema);
+
+            return;
+        }
+
+        oldSchema = currentSchema;
+
+        setSchema(schema);
+    }
+
+    void endSchemaDefinition() throws HsqlException {
+
+        if (oldSchema == null) {
+            return;
+        }
+
+        currentSchema = oldSchema;
+        oldSchema     = null;
+
+        database.logger.writeToLog(this,
+                                   "SET SCHEMA "
+                                   + currentSchema.statementName);
+    }
+
+    // schema object methods
+    public void setSchema(String schema) throws HsqlException {
+        currentSchema = database.schemaManager.getSchemaHsqlName(schema);
+    }
+
+    /**
+     * If schemaName is null, return the current schema name, else return
+     * the HsqlName object for the schema. If schemaName does not exist,
+     * throw.
+     */
+    HsqlName getSchemaHsqlName(String name) throws HsqlException {
+        return name == null ? currentSchema
+                            : database.schemaManager.getSchemaHsqlName(name);
+    }
+
+    /**
+     * Same as above, but return string
+     */
+    public String getSchemaName(String name) throws HsqlException {
+        return name == null ? currentSchema.name
+                            : database.schemaManager.getSchemaName(name);
+    }
+
+    /**
+     * If schemaName is null, return the current schema name, else return
+     * the HsqlName object for the schema. If schemaName does not exist, or
+     * schema readonly, throw.
+     */
+    HsqlName getSchemaHsqlNameForWrite(String name) throws HsqlException {
+
+        HsqlName schema = getSchemaHsqlName(name);
+
+        if (database.schemaManager.isSystemSchema(schema)) {
+            throw Trace.error(Trace.INVALID_SCHEMA_NAME_NO_SUBCLASS);
+        }
+
+        return schema;
+    }
+
+    /**
+     * Same as above, but return string
+     */
+    public String getSchemaNameForWrite(String name) throws HsqlException {
+
+        HsqlName schema = getSchemaHsqlNameForWrite(name);
+
+        return schema.name;
+    }
+
+    /**
+     * get the root for a temp table index
+     */
+    Node getIndexRoot(HsqlName index) {
+
+        if (indexArrayMap == null) {
+            return null;
+        }
+
+        Node node = (Node) indexArrayMap.get(index.hashCode());
+
+        return node;
+    }
+
+    void setIndexRoot(HsqlName index, boolean preserve, Node root) {
+
+        if (preserve) {
+            if (indexArrayKeepMap == null) {
+                if (root == null) {
+                    return;
+                }
+            }
+
+            indexArrayKeepMap = new IntKeyHashMap();
+        } else {
+            if (indexArrayMap == null) {
+                if (root == null) {
+                    return;
+                }
+
+                indexArrayMap = new IntKeyHashMap();
+            }
+
+            indexArrayMap.put(index.hashCode(), root);
+        }
+    }
+
+    void dropIndex(HsqlName index, boolean preserve) {
+
+        if (preserve) {
+            if (indexArrayKeepMap != null) {
+                indexArrayKeepMap.remove(index.hashCode());
+            }
+        } else {
+            if (indexArrayMap != null) {
+                indexArrayMap.remove(index.hashCode());
+            }
+        }
+    }
+
+    /**
+     *
+     */
+    void clearIndexRoots() {
+
+        if (indexArrayMap != null) {
+            indexArrayMap.clear();
+        }
+    }
+
+    void clearIndexRootsKeep() {
+
+        if (indexArrayKeepMap != null) {
+            indexArrayKeepMap.clear();
+        }
     }
 }

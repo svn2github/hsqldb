@@ -6,31 +6,124 @@ hsqldb 1.8.0 in reverse chronological order.
 Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
+2005.05.11 1.8.0.RC10
 
-2005.04.11
+SCHEMAS
 
-Full support for ALL(SELECT ....) and ANY(SELECT ....) with comparison operators:
-=, >, <, <>, >=, <=
+Support for SQL schemas. Each database can contain multiple schemas. The 
+following commands have been introduced:
+
+CREATE SCHMEA <schemaname> AUTHORIZATION DBA
+DROP SCHEMA <schemaname> {CASCADE | RESTRICT}
+ALTER SCHEMA <schemaname> RENAME TO <newname>
+SET SCHEMA <schemaname>
+
+Initially, the default user schema will be created with the name PUBLIC. This 
+schema can be renamed or dropped. When the last user schema has been dropped, 
+an empty default schema with the name PUBLIC is created.
+
+System tables all belong to INFORMATION_SCHEMA. To access system tables, either
+SET SCHEMA INFORMATION_SCHEMA should be used once or they should be referred to
+by fully specified names, e.g. 
+INFORMATION_SCHEMA.SYSTEM_TABLES
+
+Similarly all database objects apart from columns can be referenced with fully
+qualified schema names.
+
+The CREATE SCHEMA command can be followed by other CREATE and GRANT commands 
+without an intervening semicolon. All such commands are executed in the context
+of the newly created schema. A semicolon terminates an extended CREATE SCHEMA
+command.
+
+ROLES
+
+Support for SQL standard roles.
+
+CREATE ROLE <role name>
+GRANT ... TO <role name>
+REVOKE ... FROM <role name>
+GRANT <role name> TO <user name>
+DROP ROLE <role name>
+
+The GRANT and REVOKE commands are similar to those used for granting 
+permissions on different objects to USER objects. A role can then be granted to
+or revoked from different users, simplifying permission management.
+
+GLOBAL TEMPORARY TABLES
+
+The implementation of temporary tables has changed to conform to SQL standards.
+
+The definition of a GLOBAL TEMPORARY table persists with the database. When a 
+session (JDBC Connection) is started, an empty instance of the table is created.
+Temporary tables can be created with (the default) ON COMMIT DELETE ROWS or 
+ON COMMIT PRESERVE ROWS behaviour. With ON COMMIT PRESERVE ROWS, the table 
+contents are not cleared when the session commits. In both cases, the contents 
+are cleared when the session is closed.
+
+
+SCHEMA MANIPULATION COMMANDS
+
+Several schema manipulation commands have been enhanced. 
+
+Tables, views and sequences can be dropped with the CASCADE option. This 
+silently drops all tables and views that reference the given database object.
+
+DROP TABLE <table name> [IF EXISTS] [CASCADE];
+DROP VIEW <view name> [IF EXISTS] [CASCADE];
+DROP SEQUENCE <sequence name> [IF EXISTS] [CASCADE];
+
+ALTER TABLE <table name> DROP COLUMN now silently drops any primary key or 
+unique constraint declared on the column (excluding multi-column constraints).
+
+ALTER TABLE <table name> ADD [COLUMN] now accepts primary key and identity 
+attributes.
+
+COLUMN MANIPULATION
+
+Support for converting type, nullability and identity attributes of a column
+
+ALTER TABLE <table name> ALTER COLUMN <column name> <column definition>
+
+<column definition> has the same syntax as normal column definition. The new 
+column definition replaces the old one, so it is possible to add/remove a 
+DEFAULT expression, a NOT NULL constraint, or an IDENTITY definition. 
+No change to the primary key is allowed with this command. 
+
+- The column must be already be a PK column to accept an IDENTITY definition.
+- If the column is already an IDENTITY column and there is no IDENTITY 
+definition, the existing IDENTITY attribute is removed.
+- The default expression will be that of the new definition, meaning an 
+existing default can be dropped by ommission, or a new default added.
+- The NOT NULL attribute will be that of the new definition, similar to above.
+- Depending on the conversion type, the table may have to be empty for the
+command to work. It always works when the conversion is possible in general and
+the individual existing values can all be converted.
+
+A different syntax can be used to change the next value from an IDENTITY column:
+
+ALTER TABLE <table name> ALTER [COLUMN] <column name> RESTART WITH <n>
+
+
+ALL and ANY expressions
+
+Full support for ALL(SELECT ....) and ANY(SELECT ....) with comparison o
+perators: =, >, <, <>, >=, <=
 Example:
 
 SELECT ... WHERE <value expression> >= ALL(SELECT ...)
 
-Correct range checking and type casting for joins and comparison of numeric
-values of different types. Cases such as comparison with a value beyond the
-range of the type are covered, including joins on columns of different numeric
-types where one value is beyond the type range of the other. 
-
-Various bug fixes and enhancements in query processing.
+LIMIT and OFFSET
 
 New alternative syntax for LIMIT at the end of the query:
 
 LIMIT L [OFFSET O]
 
-It is now possible to use LIMIT combined with ORDER BY in subqueries and
-SELECT statements in brackets that are terms of UNION and other set operations.
-An ORDER BY or LIMIT clause applies to the complete result of the UNION and
-other set operations or alternatively to one of its components depending on
-how parentheses are used. In the first example the scope is the second SELECT,
+It is now possible to use LIMIT combined with ORDER BY in subqueries and SELECT
+statements in brackets that are terms of UNION or other set operations.
+
+An ORDER BY or LIMIT clause applies to the complete result of the UNION and 
+other set operations or alternatively to one of its components depending on how 
+parentheses are used. In the first example the scope is the second SELECT, 
 while in the second query, the scope is the result of the UNION.
 
 SELECT ... FROM ... UNION 
@@ -39,48 +132,87 @@ SELECT ... FROM ... UNION
 SELECT ... FROM ... UNION 
 SELECT ... FROM ... ORDER BY .. LIMIT
 
-
 Support for ORDER BY, LIMIT and OFFSET in CREATE VIEW statements
 
-Support for correct casting of TIME into TIMESTAMP, using CURRENT_DATE 
 
-2005.03.18
+COLLATIONS
 
-Added support for collations. Each database can have its own collation. The
-SQL command below sets the collation from the set of collations in the source 
+Added support for collations. Each database can have its own collation. The SQL 
+command below sets the collation from the set of collations in the source 
 for org.hsqldb.Collation:
 
 SET DATABASE COLLATION <double quoted collation name>
 
-Once this command has been issued, the database can be opened in any JVM and
+Once this command has been issued, the database can be opened in any JVM and 
 will retain its collation.
 
-The property sql.compare_in_locale=true is no longer supported. If the line
-exists in a .properties file, it will switch the database to the collation for
+The property sql.compare_in_locale=true is no longer supported. If the line 
+exists in a .properties file, it will switch the database to the collation for 
 the current default.  
 
-Changed behaviour of transactions in the default READ UNCOMMITTED mode. A
-transaction is no longer allowed to delete or update a row that has already
-been updated or added by another transaction.
-
-Fixed various small bugs.
-
-Fixed reported bug with NOT LIKE and null values
-Fixed reported bug with OR conditions in OUTER JOIN
-Fixed reported bug with duplicated closing of prepared statements
+ENHANCEMENTS
 
 Support for the res: connection protocol (database files in a jar) has been
 extended to allow CACHED tables.
 
-Support for converting type, nullability, identity attributes of a column
+Support for correct casting of TIME into TIMESTAMP, using CURRENT_DATE 
 
-ALTER TABLE <mytable> ALTER COLUMN <mycol> <column definition>
 
-<column definition> has the same syntax as normal column definition. The new
-column definition replaces the old one, so it is possible to add/remove a
-DEFAULT, a NOT NULL constraint, and IDENTITY definition. 
-No change to the primary key is allowed with this command. 
+BUG FIX
 
+Fixed bug where two indexes where switched, causing wrong results in some 
+queries in the following circumstances:
+
+CREATE TABLE is executed.
+ALTER TABLE ADD FORIEGN KEY is used to create an FK on a different table that 
+was already present when the first command was issued.
+CREATE INDEX is used to add an index.
+Data is added to the table.
+Database is shutdown.
+Database is restarted.
+At this point the indexes are switched and queries that use either of the 
+indexes will not return the correct set of rows.
+
+BUG FIXES
+
+Fixed reported bug with NOT LIKE and null values
+
+Fixed bug with OR conditions in OUTER JOIN
+
+Fixed bug with duplicated closing of prepared statements
+
+Fixed bug with scalar subqueries. If the result of a scalar subquery is empty 
+(no rows returned), the value is NULL.
+
+Fixed various parsing anomalies where SQL commands were accepted when quoted, 
+double-quoted or prefixed with an identifier, or identifiers were accepted in 
+single quotes. Example of a command that is no-longer tolerated: 
+
+Malformed query: MY. "SELECT" ID FROM 'CUSTOMER' IF.WHERE ID=0;   
+Actual query: SELECT ID FROM CUSTOMER WHERE ID=0;
+
+Fixed bug that prevented adding a primary key with no name to a table.
+
+Fixed bug that resulted in an error when the type of a column was changed to 
+the same type as before. E.g. 
+ALTER TABLE <table name> ALTER COLUMN <column name> INTEGER
+
+BUG FIX
+
+Fixed bug in ROLLBACK. If several updates were made to a row of a table that 
+has no primary key, then ROLLBACK was issued, there would remain multiple 
+versions of the row. E.g.
+
+CREATE TABLE T (I INT);
+INSERT INTO T VALUES (0);
+SET AUTOCOMMIT FALSE;
+UPDATE T SET I=1 WHERE I = 0;
+UPDATE T SET I=2 WHERE I = 1;
+UPDATE T SET I=3 WHERE I = 2;
+UPDATE T SET I=4 WHERE I = 3;
+ROLLBACK
+
+After the rollback the table would contain more than one row.
 
 
 2005.03.02 1.8.0.RC9

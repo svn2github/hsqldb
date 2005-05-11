@@ -56,13 +56,13 @@ public class TestBug808460 extends TestBase {
         Connection conn = newConnection();
         Statement  stmt = conn.createStatement();
 
-        stmt.executeQuery("SELECT * FROM SYSTEM_SESSIONS");
+        stmt.executeQuery("SELECT * FROM INFORMATION_SCHEMA.SYSTEM_SESSIONS");
         conn.close();
 
         conn = newConnection();
         stmt = conn.createStatement();
 
-        stmt.executeQuery("SELECT * FROM SYSTEM_SESSIONS");
+        stmt.executeQuery("SELECT * FROM INFORMATION_SCHEMA.SYSTEM_SESSIONS");
         conn.close();
     }
 

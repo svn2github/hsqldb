@@ -1,4 +1,4 @@
-/* Copyright (c) 1995-2005, The Hypersonic SQL Group.
+/* Copyright (c) 1995-2000, The Hypersonic SQL Group.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -116,10 +116,11 @@ import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.ButtonGroup;
 import javax.swing.JOptionPane;
+
 import java.util.HashMap;
 import java.util.Iterator;
-import javax.swing.JComponent;
 
+import javax.swing.JComponent;
 
 import org.hsqldb.lib.java.JavaSystem;
 
@@ -159,28 +160,29 @@ import org.hsqldb.lib.java.JavaSystem;
  *</pre>
  * Tue Apr 26 16:38:54 EDT 2005
  * Switched default switch method from "-switch" to "--switch" because
- * "-switch" usage is ambiguous as used here.  Single switches should 
+ * "-switch" usage is ambiguous as used here.  Single switches should
  * be reserved for single-letter switches which can be mixed like
  * "-u -r -l" = "-url".  -blaine
  * @version 1.7.2
  */
 public class DatabaseManagerSwing extends JApplet
 implements ActionListener, WindowListener, KeyListener {
+
     private static final String DEFAULT_RCFILE =
         System.getProperty("user.home") + "/dbmanager.rc";
     private static final String HELP_TEXT =
-            "See the forums, mailing lists, and HSQLDB User Guide\n"
-            + "at http://hsqldb.sourceforge.net.\n\n"
-            + "Please paste the following version identifier with any\n"
-            + "problem reports or help requests:  $Revision: 1.31 $";
+        "See the forums, mailing lists, and HSQLDB User Guide\n"
+        + "at http://hsqldb.sourceforge.net.\n\n"
+        + "Please paste the following version identifier with any\n"
+        + "problem reports or help requests:  $Revision: 1.32 $";
     private static final String ABOUT_TEXT =
-            "$Revision: 1.31 $ of DatabaseManagerSwing\n\n"
-            + "Copyright (c) 1995-2005, The Hypersonic SQL Group.\n"
-            + "http://hsqldb.sourceforge.net\n\n\n"
-            + "You may use and redistribute according to the HSQLDB\n"
-            + "license documented in the source code and at the web\n"
-            + "site above.";
-
+        "$Revision: 1.32 $ of DatabaseManagerSwing\n\n"
+        + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
+        + "Copyright (c) 2000-2005, The HSQL Development Group.\n"
+        + "http://hsqldb.sourceforge.net\n\n\n"
+        + "You may use and redistribute according to the HSQLDB\n"
+        + "license documented in the source code and at the web\n"
+        + "site above.";
     static final String    NL         = System.getProperty("line.separator");
     static final String    NULL_STR   = "\t(null)";
     static int             iMaxRecent = 24;
@@ -224,39 +226,37 @@ implements ActionListener, WindowListener, KeyListener {
     JPanel                      pStatus;
     static JRadioButton         iReadyStatus;
     JMenuItem                   mitemAbout = new JMenuItem("About", 'A');
-    JMenuItem                   mitemHelp = new JMenuItem("Help", 'H');
-    JCheckBoxMenuItem           boxAutoCommit =
-                                new JCheckBoxMenuItem(AUTOCOMMIT_BOX_TEXT);
-    JCheckBoxMenuItem           boxLogging =
-                                new JCheckBoxMenuItem(LOGGING_BOX_TEXT);
-    JCheckBoxMenuItem           boxShowSchemas =
-                                new JCheckBoxMenuItem(SHOWSCHEMAS_BOX_TEXT);
-    JCheckBoxMenuItem           boxAutoRefresh =
-                                new JCheckBoxMenuItem(AUTOREFRESH_BOX_TEXT);
-    JCheckBoxMenuItem           boxTooltips =
-                                new JCheckBoxMenuItem(SHOWTIPS_BOX_TEXT);
-    // Consider adding GTK and Plaf L&Fs.
-    JRadioButtonMenuItem        rbNativeLF = new JRadioButtonMenuItem(
-                                "Native Look & Feel");
-    JRadioButtonMenuItem        rbJavaLF = new JRadioButtonMenuItem(
-                                "Java Look & Feel");
-    JRadioButtonMenuItem        rbMotifLF = new JRadioButtonMenuItem(
-                                "Motif Look & Feel");
-    static JLabel               jStatusLine;
-    static String               READY_STATUS   = "Ready...";
-    static String               RUNNING_STATUS = "Running...";
+    JMenuItem                   mitemHelp  = new JMenuItem("Help", 'H');
+    JCheckBoxMenuItem boxAutoCommit =
+        new JCheckBoxMenuItem(AUTOCOMMIT_BOX_TEXT);
+    JCheckBoxMenuItem boxLogging = new JCheckBoxMenuItem(LOGGING_BOX_TEXT);
+    JCheckBoxMenuItem boxShowSchemas =
+        new JCheckBoxMenuItem(SHOWSCHEMAS_BOX_TEXT);
+    JCheckBoxMenuItem boxAutoRefresh =
+        new JCheckBoxMenuItem(AUTOREFRESH_BOX_TEXT);
+    JCheckBoxMenuItem boxTooltips = new JCheckBoxMenuItem(SHOWTIPS_BOX_TEXT);
 
-    static private final String AUTOCOMMIT_BOX_TEXT = "Autocommit mode";
-    static private final String LOGGING_BOX_TEXT = "Logging mode";
+    // Consider adding GTK and Plaf L&Fs.
+    JRadioButtonMenuItem rbNativeLF =
+        new JRadioButtonMenuItem("Native Look & Feel");
+    JRadioButtonMenuItem rbJavaLF =
+        new JRadioButtonMenuItem("Java Look & Feel");
+    JRadioButtonMenuItem rbMotifLF =
+        new JRadioButtonMenuItem("Motif Look & Feel");
+    static JLabel               jStatusLine;
+    static String               READY_STATUS         = "Ready...";
+    static String               RUNNING_STATUS       = "Running...";
+    static private final String AUTOCOMMIT_BOX_TEXT  = "Autocommit mode";
+    static private final String LOGGING_BOX_TEXT     = "Logging mode";
     static private final String SHOWSCHEMAS_BOX_TEXT = "Show schemas";
     static private final String AUTOREFRESH_BOX_TEXT = "Auto-refresh tree";
-    static private final String SHOWTIPS_BOX_TEXT = "Show Tooltips";
+    static private final String SHOWTIPS_BOX_TEXT    = "Show Tooltips";
 
     // variables to hold the default cursors for these top level swing objects
     // so we can restore them when we exit our thread
-    Cursor fMainCursor;
-    Cursor txtCommandCursor;
-    Cursor txtResultCursor;
+    Cursor  fMainCursor;
+    Cursor  txtCommandCursor;
+    Cursor  txtResultCursor;
     HashMap tipMap = new HashMap();
 
     /**
@@ -300,15 +300,16 @@ implements ActionListener, WindowListener, KeyListener {
 
         // (ulrivo): read all arguments from the command line
         String  lowerArg;
-        String urlid = null;
-        String rcFile = null;
-        boolean autoConnect = false;
+        String  urlid        = null;
+        String  rcFile       = null;
+        boolean autoConnect  = false;
         boolean urlidConnect = false;
 
         bMustExit = true;
 
         for (int i = 0; i < arg.length; i++) {
             lowerArg = arg[i].toLowerCase();
+
             if (lowerArg.length() > 1 && lowerArg.charAt(1) == '-') {
                 lowerArg = lowerArg.substring(1);
             }
@@ -328,10 +329,10 @@ implements ActionListener, WindowListener, KeyListener {
                 defPassword = arg[i];
                 autoConnect = true;
             } else if (lowerArg.equals("-urlid")) {
-                urlid = arg[i];
+                urlid        = arg[i];
                 urlidConnect = true;
             } else if (lowerArg.equals("-rcfile")) {
-                rcFile = arg[i];
+                rcFile       = arg[i];
                 urlidConnect = true;
             } else if (lowerArg.equals("-dir")) {
                 defDirectory = arg[i];
@@ -360,22 +361,24 @@ implements ActionListener, WindowListener, KeyListener {
         try {
             if (autoConnect && urlidConnect) {
                 throw new IllegalArgumentException(
-                "You may not specify both (urlid) AND (url/user/password).");
+                    "You may not specify both (urlid) AND (url/user/password).");
             }
+
             if (autoConnect) {
                 c = ConnectionDialogSwing.createConnection(defDriver, defURL,
                         defUser, defPassword);
             } else if (urlidConnect) {
                 if (urlid == null) {
                     throw new IllegalArgumentException(
-                            "You must specify an 'urlid' to use an RC file");
+                        "You must specify an 'urlid' to use an RC file");
                 }
+
                 autoConnect = true;
-                c = (new RCData(
-                    new File((rcFile == null) ? DEFAULT_RCFILE : rcFile),
-                    urlid).getConnection(null,
-                            System.getProperty("sqlfile.charset"),
-                            System.getProperty("javax.net.ssl.trustStore")));
+                c = (new RCData(new File((rcFile == null) ? DEFAULT_RCFILE
+                                                          : rcFile), urlid).getConnection(
+                                                          null, System.getProperty(
+                                                              "sqlfile.charset"), System.getProperty(
+                                                                  "javax.net.ssl.trustStore")));
             } else {
                 c = ConnectionDialogSwing.createConnection(m.fMain,
                         "Connect");
@@ -422,8 +425,8 @@ implements ActionListener, WindowListener, KeyListener {
         try {
             dMeta      = cConn.getMetaData();
             sStatement = cConn.createStatement();
-            updateAutoCommitBox();
 
+            updateAutoCommitBox();
             refreshTree();
         } catch (SQLException e) {
 
@@ -441,8 +444,8 @@ implements ActionListener, WindowListener, KeyListener {
             + "    --url <name>          jdbc url\n"
             + "    --user <name>         username used for connection\n"
             + "    --password <password> password for this user\n"
-      + "    --urlid <urlid>       use url/user/password/driver in rc file\n"
-      + "    --rcfile <file>       (defaults to 'dbmanager.rc' in home dir)\n"
+            + "    --urlid <urlid>       use url/user/password/driver in rc file\n"
+            + "    --rcfile <file>       (defaults to 'dbmanager.rc' in home dir)\n"
             + "    --dir <path>          default directory\n"
             + "    --script <file>       reads from script file\n"
             + "    --noexit              do not call system.exit()\n"
@@ -520,6 +523,7 @@ implements ActionListener, WindowListener, KeyListener {
         bar.add(mRecent);
 
         ButtonGroup lfGroup = new ButtonGroup();
+
         lfGroup.add(rbNativeLF);
         lfGroup.add(rbJavaLF);
         lfGroup.add(rbMotifLF);
@@ -530,28 +534,29 @@ implements ActionListener, WindowListener, KeyListener {
         rbMotifLF.setActionCommand("LFMODE:" + CommonSwing.Motif);
         tipMap.put(mitemAbout, "Display product information");
         tipMap.put(mitemHelp, "Display advice for obtaining help");
-        tipMap.put(boxAutoRefresh,
+        tipMap.put(
+            boxAutoRefresh,
             "Refresh tree automatically when YOU modify database objects");
         tipMap.put(boxShowSchemas,
-                "Display object names in tree like schemaname.basename");
+                   "Display object names in tree like schemaname.basename");
         tipMap.put(rbNativeLF,
-                "Set Look and Feel to Native for your platform");
+                   "Set Look and Feel to Native for your platform");
         tipMap.put(rbJavaLF, "Set Look and Feel to Java");
         tipMap.put(rbMotifLF, "Set Look and Feel to Motif");
         boxTooltips.setToolTipText("Display tooltips (hover text)");
         tipMap.put(boxAutoCommit,
-                "Shows current Auto-commit mode.  Click to change");
-        tipMap.put(boxLogging,
+                   "Shows current Auto-commit mode.  Click to change");
+        tipMap.put(
+            boxLogging,
             "Shows current JDBC DriverManager logging mode.  Click to change");
 
         Object[] soptions = {
 
             // Added: (weconsultants@users) New menu options
             rbNativeLF, rbJavaLF, rbMotifLF, "--", "-Set Fonts", "--",
-            "-Set Table RowCount", "--", boxAutoCommit,
-            "OCommit", "LRollback", "--", "-Disable MaxRows",
-            "-Set MaxRows to 100", "--", boxLogging, "--",
-            "-Insert test data"
+            "-Set Table RowCount", "--", boxAutoCommit, "OCommit",
+            "LRollback", "--", "-Disable MaxRows", "-Set MaxRows to 100",
+            "--", boxLogging, "--", "-Insert test data"
         };
 
         addMenu(bar, "Options", soptions);
@@ -563,35 +568,43 @@ implements ActionListener, WindowListener, KeyListener {
         addMenu(bar, "Tools", stools);
 
         JMenu mnuHelp = new JMenu("Help");
+
         mnuHelp.setMnemonic(java.awt.event.KeyEvent.VK_H);
         mnuHelp.add(mitemAbout);
         mnuHelp.add(mitemHelp);
         mnuHelp.add(boxTooltips);
         mitemHelp.addActionListener(new ActionListener() {
+
             public void actionPerformed(ActionEvent actionevent) {
-                JOptionPane.showMessageDialog(fMain.getContentPane(),
-                    HELP_TEXT, "HELP", JOptionPane.INFORMATION_MESSAGE);
+
+                JOptionPane.showMessageDialog(
+                    fMain.getContentPane(), HELP_TEXT, "HELP",
+                    JOptionPane.INFORMATION_MESSAGE);
             }
         });
         mitemAbout.addActionListener(new ActionListener() {
+
             public void actionPerformed(ActionEvent actionevent) {
-                JOptionPane.showMessageDialog(fMain.getContentPane(),
-                    ABOUT_TEXT, "About", JOptionPane.INFORMATION_MESSAGE);
+
+                JOptionPane.showMessageDialog(
+                    fMain.getContentPane(), ABOUT_TEXT, "About",
+                    JOptionPane.INFORMATION_MESSAGE);
             }
         });
         boxTooltips.addActionListener(new ActionListener() {
+
             public void actionPerformed(ActionEvent actionevent) {
                 setTooltips(boxTooltips.isSelected());
             }
         });
         bar.add(mnuHelp);
-
         fMain.setJMenuBar(bar);
         setTooltips(true);
         boxTooltips.setSelected(true);
         initGUI();
 
         sRecent = new String[iMaxRecent];
+
         // Modified: (weconsultants@users)Mode code to CommonSwing for general use
         CommonSwing.setFramePositon(fMain);
 
@@ -631,15 +644,15 @@ implements ActionListener, WindowListener, KeyListener {
     }
 
     private void addMenuItems(JMenu f, Object[] m) {
+
         /*
-         * This method needs to be completely written or just 
+         * This method needs to be completely written or just
          * obliterated and we'll use the Menu objects directly.
          * Problem is, passing in Strings for menu elements makes it
          * extremely difficult to use non-text menu items (an important
          * part of a good Gui), hot-keys, mnemonic keys, tooltips.
          * Note the "trick" required here to set hot-keys.
-         */ 
-
+         */
         Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
 
         for (int i = 0; i < m.length; i++) {
@@ -655,11 +668,13 @@ implements ActionListener, WindowListener, KeyListener {
                 }
             } else {
                 JMenuItem item;
+
                 if (m[i] instanceof JMenuItem) {
                     item = (JMenuItem) m[i];
                 } else if (m[i] instanceof String) {
                     item = new JMenuItem(((String) m[i]).substring(1));
-                    char      c    = ((String) m[i]).charAt(0);
+
+                    char c = ((String) m[i]).charAt(0);
 
                     if (c != '-') {
                         KeyStroke key =
@@ -669,8 +684,8 @@ implements ActionListener, WindowListener, KeyListener {
                     }
                 } else {
                     throw new RuntimeException(
-                            "Unexpected element for menu item creation: "
-                            + m[i].getClass().getName());
+                        "Unexpected element for menu item creation: "
+                        + m[i].getClass().getName());
                 }
 
                 item.addActionListener(this);
@@ -722,6 +737,7 @@ implements ActionListener, WindowListener, KeyListener {
             JavaSystem.setLogToSystem(boxLogging.isSelected());
         } else if (s.equals(AUTOREFRESH_BOX_TEXT)) {
             autoRefresh = boxLogging.isSelected();
+
             refreshTree();
         } else if (s.equals("Refresh Tree")) {
             refreshTree();
@@ -833,8 +849,8 @@ implements ActionListener, WindowListener, KeyListener {
             try {
                 cConn.setAutoCommit(boxAutoCommit.isSelected());
             } catch (SQLException e) {
-
                 boxAutoCommit.setSelected(!boxAutoCommit.isSelected());
+
                 //  Added: (weconsultants@users)
                 CommonSwing.errorMessage(e);
             }
@@ -900,6 +916,7 @@ implements ActionListener, WindowListener, KeyListener {
             showHelp(DatabaseManagerCommon.testHelp);
         } else if (s.equals(SHOWSCHEMAS_BOX_TEXT)) {
             showSchemas = boxShowSchemas.isSelected();
+
             refreshTree();
         } else {
             throw new RuntimeException("Unexpected action triggered: " + s);
@@ -1066,8 +1083,8 @@ implements ActionListener, WindowListener, KeyListener {
 
     private void executeCommand() {
 
-        String[] g = new String[1];
-        String sql = txtCommand.getText();
+        String[] g   = new String[1];
+        String   sql = txtCommand.getText();
 
         try {
             lTime = System.currentTimeMillis();
@@ -1107,10 +1124,13 @@ implements ActionListener, WindowListener, KeyListener {
 
             //  Added: (weconsultants@users)
             CommonSwing.errorMessage(e);
+
             return;
         }
+
         if (autoRefresh) {
             String upper = sql.toUpperCase();
+
             // This test can be very liberal.  Too liberal will just do
             // some extra refreshes.  Too conservative will display
             // obsolete info.
@@ -1119,6 +1139,7 @@ implements ActionListener, WindowListener, KeyListener {
                 refreshTree();
             }
         }
+
         updateAutoCommitBox();
     }
 
@@ -1537,8 +1558,8 @@ implements ActionListener, WindowListener, KeyListener {
             Vector remarks = new Vector();
 
             while (result.next()) {
-                tables.addElement(result.getString(3));
                 schemas.addElement(result.getString(2));
+                tables.addElement(result.getString(3));
                 remarks.addElement(result.getString(5));
             }
 
@@ -1560,19 +1581,17 @@ implements ActionListener, WindowListener, KeyListener {
 
             // For each table, build a tree node with interesting info
             for (int i = 0; i < tables.size(); i++) {
-                String name = (String) tables.elementAt(i);
+                String name   = (String) tables.elementAt(i);
                 String schema = (String) schemas.elementAt(i);
-                String displayedName =
-                        ((schema == null || !showSchemas)
-                                ? "" : (schema + '.'))
-                        + name
-                        + (displayRowCounts ? (", " 
-                                    + DECFMT.format(rowCounts[i])) : "");
 
                 // weconsul@ptd.net Add rowCounts if needed.
-                tableNode = makeNode(displayedName, rootNode); 
+                tableNode = makeNode(name, rootNode);
 
-                ResultSet col = dMeta.getColumns(null, null, name, null);
+                ResultSet col = dMeta.getColumns(null, schema, name, null);
+
+                if ((schema != null) &&!schema.trim().equals("")) {
+                    makeNode(schema, tableNode);
+                }
 
                 // sqlbob@users Added remarks.
                 String remark = (String) remarks.elementAt(i);
@@ -1600,7 +1619,7 @@ implements ActionListener, WindowListener, KeyListener {
 
                 DefaultMutableTreeNode indexesNode = makeNode("Indices",
                     tableNode);
-                ResultSet ind = dMeta.getIndexInfo(null, null, name, false,
+                ResultSet ind = dMeta.getIndexInfo(null, schema, name, false,
                                                    false);
                 String                 oldiname  = null;
                 DefaultMutableTreeNode indexNode = null;
@@ -1746,6 +1765,7 @@ implements ActionListener, WindowListener, KeyListener {
     }
 
     void updateAutoCommitBox() {
+
         try {
             boxAutoCommit.setSelected(cConn.getAutoCommit());
         } catch (SQLException se) {
@@ -1754,6 +1774,7 @@ implements ActionListener, WindowListener, KeyListener {
     }
 
     private void setLF(String newLAF) {
+
         if (currentLAF != null && currentLAF == newLAF) {
             return;
         }
@@ -1767,7 +1788,9 @@ implements ActionListener, WindowListener, KeyListener {
         if (pResult != null && iResult == 0) {
             setResultsInGrid();
         }
+
         currentLAF = newLAF;
+
         if (currentLAF.equals(CommonSwing.Native)) {
             rbNativeLF.setSelected(true);
         } else if (currentLAF.equals(CommonSwing.Java)) {
@@ -1778,12 +1801,15 @@ implements ActionListener, WindowListener, KeyListener {
     }
 
     void setTooltips(boolean show) {
-        Iterator it = tipMap.keySet().iterator();
+
+        Iterator   it = tipMap.keySet().iterator();
         JComponent component;
+
         while (it.hasNext()) {
             component = (JComponent) it.next();
-            component.setToolTipText(
-                    show ? ((String) tipMap.get(component)) : (String) null);
+
+            component.setToolTipText(show ? ((String) tipMap.get(component))
+                                          : (String) null);
         }
     }
 }

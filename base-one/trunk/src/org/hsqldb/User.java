@@ -69,7 +69,6 @@ package org.hsqldb;
 import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.IntValueHashMap;
-import org.hsqldb.lib.Iterator;
 
 // fredt@users 20021103 - patch 1.7.2 - fix bug in revokeAll()
 // fredt@users 20021103 - patch 1.7.2 - allow for drop table, etc.
@@ -79,22 +78,11 @@ import org.hsqldb.lib.Iterator;
 // boucherb@users 200208-200212 - patch 1.7.2 - metadata
 
 /**
- * A User Object holds the name, password, role and access rights for a
+ * A User Object holds the name, password for a
  * particular database user.<p>
- * It supplies the methods used to grant, revoke, test
- * and check a user's access rights to other database objects.
- * It also holds a reference to the common PUBLIC User Object,
- * which represent the special user refered to in
- * GRANT ... TO PUBLIC statements.<p>
- * The check(), isAccessible() and getGrantedClassNames() methods check the
- * rights granted to the PUBLIC User Object, in addition to individually
- * granted rights, in order to decide which rights exist for the user.
- * @version 1.7.2
+ * @version 1.8.0
  */
 public class User {
-
-    /** true if this user has database administrator role. */
-    private boolean isAdministrator;
 
     /** true if this user is the sys user. */
     private boolean isSys;
@@ -102,65 +90,39 @@ public class User {
     /** true if this user is the public user. */
     private boolean isPublic;
 
-    /** map with database object identifier keys and access privileges values */
-    private IntValueHashMap rightsMap;
-
     /** user name. */
     private String sName;
 
     /** password. */
     private String sPassword;
 
-    /**
-     * A reference to the common, PUBLIC User object held by UserManager.
-     * For the special PUBLIC and SYS user objects, this attribute is null.
-     */
-    private User uPublic;
+    /** grantee object. */
+    private Grantee grantee;
 
     /**
-     * Constructor, with a argument reference to the PUBLIC User Object which
-     * is null if this is the SYS or PUBLIC user.
+     * Constructor
      */
-    User(String name, String password, boolean admin,
-            User pub) throws HsqlException {
+    User(String name, String password,
+            Grantee inGrantee) throws HsqlException {
 
-        rightsMap = new IntValueHashMap();
-        sName     = name;
+        sName   = name;
+        grantee = inGrantee;
 
+        boolean granteeOk =
+            (grantee != null
+             || name.equals(UserManager.SYSTEM_AUTHORIZATION_NAME)
+             || name.equals(UserManager.PUBLIC_USER_NAME));
+
+        Trace.doAssert(granteeOk,
+                       Trace.getMessage(Trace.MISSING_GRANTEE) + ": " + name);
         setPassword(password);
 
-        isAdministrator = admin;
-        isSys           = name.equals(UserManager.SYS_USER_NAME);
-        isPublic        = name.equals(UserManager.PUBLIC_USER_NAME);
-        uPublic         = pub;
+        isSys    = name.equals(UserManager.SYSTEM_AUTHORIZATION_NAME);
+        isPublic = name.equals(UserManager.PUBLIC_USER_NAME);
     }
 
     String getName() {
         return sName;
-    }
-
-    /**
-     * Retrieves the map object that represents the rights that have been
-     * granted on database objects.  <p>
-     *
-     * The map has keys and values with the following interpretation: <P>
-     *
-     * <UL>
-     * <LI> The keys are generally (but not limited to) objects having
-     *      an attribute or value equal to the name of an actual database
-     *      object.
-     *
-     * <LI> Specifically, the keys act as database object identifiers.
-     *
-     * <LI> The values are always Integer objects, each formed by combining
-     *      a set of flags, one for each of the access rights defined in
-     *      UserManager: {SELECT, INSERT, UPDATE and DELETE}.
-     * </UL>
-     */
-    IntValueHashMap getRights() {
-
-        // necessary to create the script
-        return rightsMap;
     }
 
     void setPassword(String password) throws HsqlException {
@@ -180,144 +142,6 @@ public class User {
     }
 
     /**
-     * Grants the specified rights on the specified database object. <p>
-     *
-     * Keys stored in rightsMap for database tables are their HsqlName
-     * attribute. This allows rights to persist when a table is renamed. <p>
-     */
-    void grant(Object dbobject, int rights) {
-
-        if (rights == 0) {
-            return;
-        }
-
-        int n = rightsMap.get(dbobject, 0);
-
-        n |= rights;
-
-        rightsMap.put(dbobject, n);
-    }
-
-    /**
-     * Revokes the specified rights on the specified database object. <p>
-     *
-     * If, after removing the specified rights, no rights remain on the
-     * database object, then the key/value pair for that object is removed
-     * from the rights map
-     */
-    void revoke(Object dbobject, int rights) {
-
-        if (rights == 0) {
-            return;
-        }
-
-        int n = rightsMap.get(dbobject, 0);
-
-        if (n == 0) {
-            return;
-        }
-
-        rights = n & (UserManager.ALL - rights);
-
-        if (rights == 0) {
-            rightsMap.remove(dbobject);
-        } else {
-            rightsMap.put(dbobject, rights);
-        }
-    }
-
-    /**
-     * Revokes all rights on the specified database object.<p>
-     *
-     * This method removes any existing mapping from the rights map
-     */
-    void revokeDbObject(Object dbobject) {
-        rightsMap.remove(dbobject);
-    }
-
-    /**
-     * Revokes all rights from this User object.  The map is cleared and
-     * the database administrator role attribute is set false.
-     */
-    void revokeAll() {
-
-        rightsMap.clear();
-
-        isAdministrator = false;
-    }
-
-    /**
-     * Checks if any of the rights represented by the rights
-     * argument have been granted on the specified database object. <p>
-     *
-     * This is done by checking that a mapping exists in the rights map
-     * from the dbobject argument for at least one of the rights
-     * contained in the rights argument. Otherwise, it throws.
-     */
-    void check(Object dbobject, int rights) throws HsqlException {
-
-        if (!isAccessible(dbobject, rights)) {
-            throw Trace.error(Trace.ACCESS_IS_DENIED);
-        }
-    }
-
-    /**
-     * Returns true if any of the rights represented by the
-     * rights argument has been granted on the database object identified
-     * by the dbobject argument. <p>
-     *
-     * This is done by checking that a mapping exists in the rights map
-     * from the dbobject argument for at least one of the rights
-     * contained in the rights argument.
-     */
-    boolean isAccessible(Object dbobject, int rights) {
-
-        if (isAdministrator) {
-            return true;
-        }
-
-        if (dbobject instanceof String) {
-            if (((String) dbobject).startsWith("org.hsqldb.Library")
-                    || ((String) dbobject).startsWith("java.lang.Math")) {
-                return true;
-            }
-        }
-
-        int n = rightsMap.get(dbobject, 0);
-
-        if (n != 0) {
-            return (n & rights) != 0;
-        }
-
-        return (uPublic == null) ? false
-                                 : uPublic.isAccessible(dbobject, rights);
-    }
-
-    /**
-     * Returns true if any right at all has been granted to this User object
-     * on the database object identified by the dbobject argument.
-     */
-    boolean isAccessible(Object dbobject) {
-        return isAccessible(dbobject, UserManager.ALL);
-    }
-
-    /**
-     * Checks that this User object is for a user with the
-     * database administrator role. Otherwise it throws.
-     */
-    void checkAdmin() throws HsqlException {
-        Trace.check(isAdmin(), Trace.ACCESS_IS_DENIED);
-    }
-
-    /**
-     * Returns true if this User object is for a user with the
-     * database administrator role.
-     */
-    boolean isAdmin() {
-        return isAdministrator;
-    }
-
-    /**
      * Returns true if this User object is for a user with the
      * database administrator role.
      */
@@ -330,81 +154,6 @@ public class User {
      */
     boolean isPublic() {
         return isPublic;
-    }
-
-    /**
-     * Retrieves the distinct set of Java <code>Class</code> FQNs
-     * for which this <code>User</code> object has been
-     * granted <code>ALL</code> (the Class execution privilege). <p>
-     * @param andToPublic if <code>true</code>, then the set includes the
-     *        names of classes accessible to this <code>User</code> object
-     *        through grants to its <code>PUBLIC</code> <code>User</code>
-     *        object attribute, else only direct grants are inlcuded.
-     * @return the distinct set of Java Class FQNs for which this
-     *        this <code>User</code> object has been granted
-     *        <code>ALL</code>.
-     * @since HSQLDB 1.7.2
-     *
-     */
-    HashSet getGrantedClassNames(boolean andToPublic) {
-
-        IntValueHashMap rights;
-        HashSet         out;
-        HashSet         pub;
-        Object          key;
-        int             right;
-        Iterator        i;
-
-        rights = rightsMap;
-        out    = new HashSet();
-        i      = rightsMap.keySet().iterator();
-
-        while (i.hasNext()) {
-            key = i.next();
-
-            if (key instanceof String) {
-                right = rights.get(key, 0);
-
-                if (right == UserManager.ALL) {
-                    out.add(key);
-                }
-            }
-        }
-
-        if (andToPublic && uPublic != null) {
-            rights = uPublic.rightsMap;
-            i      = rights.keySet().iterator();
-
-            while (i.hasNext()) {
-                key = i.next();
-
-                if (key instanceof String) {
-                    right = rights.get(key, 0);
-
-                    if (right == UserManager.ALL) {
-                        out.add(key);
-                    }
-                }
-            }
-        }
-
-        return out;
-    }
-
-    /**
-     * Retrieves a string[] whose elements are the names, of the rights
-     * explicitly granted with the GRANT command to this <code>User</code>
-     * object on the <code>Table</code> object identified by the
-     * <code>name</code> argument.
-     * * @return array of Strings naming the rights granted to this
-     *        <code>User</code> object on the <code>Table</code> object
-     *        identified by the <code>name</code> argument.
-     * @param name a <code>Table</code> object identifier
-     * @since HSQLDB 1.7.2
-     *
-     */
-    String[] listGrantedTablePrivileges(HsqlName name) {
-        return UserManager.getRightsArray(rightsMap.get(name, 0));
     }
 
     /**
@@ -442,10 +191,6 @@ public class User {
         sb.append(Token.T_PASSWORD).append(' ');
         sb.append('"').append(sPassword).append('"');
 
-        if (isAdministrator) {
-            sb.append(' ').append(Token.T_ADMIN);
-        }
-
         return sb.toString();
     }
 
@@ -465,5 +210,133 @@ public class User {
         sb.append(sName);
 
         return sb.toString();
+    }
+
+    /**
+     * Retrieves the Grantee object for this User.
+     */
+    Grantee getGrantee() {
+        return grantee;
+    }
+
+    /**
+     * Sets the Grantee object for this User.
+     * This is done in the constructor for all users except the special
+     * users SYSTEM and PUBLIC, which have to be set up before the
+     * Managers are initialized.
+     */
+    void setGrantee(Grantee inGrantee) throws HsqlException {
+
+        Trace.doAssert(grantee == null,
+                       Trace.getMessage(Trace.CHANGE_GRANTEE) + ": " + sName);
+
+        grantee = inGrantee;
+    }
+
+    // Legacy wrappers
+
+    /**
+     * Returns true if this User object is for a user with the
+     * database administrator role.
+     */
+    boolean isAdmin() {
+        return grantee.isAdmin();
+    }
+
+    /**
+     * Retrieves a string[] whose elements are the names, of the rights
+     * explicitly granted with the GRANT command to this <code>User</code>
+     * object on the <code>Table</code> object identified by the
+     * <code>name</code> argument.
+     * * @return array of Strings naming the rights granted to this
+     *        <code>User</code> object on the <code>Table</code> object
+     *        identified by the <code>name</code> argument.
+     * @param name a <code>Table</code> object identifier
+     * @since HSQLDB 1.7.2
+     *
+     */
+    String[] listGrantedTablePrivileges(HsqlName name) {
+        return grantee.listGrantedTablePrivileges(name);
+    }
+
+    /**
+     * Retrieves the distinct set of Java <code>Class</code> FQNs
+     * for which this <code>User</code> object has been
+     * granted <code>ALL</code> (the Class execution privilege). <p>
+     * @param andToPublic if <code>true</code>, then the set includes the
+     *        names of classes accessible to this <code>User</code> object
+     *        through grants to its <code>PUBLIC</code> <code>User</code>
+     *        object attribute, else only direct grants are inlcuded.
+     * @return the distinct set of Java Class FQNs for which this
+     *        this <code>User</code> object has been granted
+     *        <code>ALL</code>.
+     * @since HSQLDB 1.7.2
+     *
+     */
+    HashSet getGrantedClassNames(boolean andToPublic) throws HsqlException {
+        return grantee.getGrantedClassNames(andToPublic);
+    }
+
+    /**
+     * Retrieves the map object that represents the rights that have been
+     * granted on database objects.  <p>
+     *
+     * The map has keys and values with the following interpretation: <P>
+     *
+     * <UL>
+     * <LI> The keys are generally (but not limited to) objects having
+     *      an attribute or value equal to the name of an actual database
+     *      object.
+     *
+     * <LI> Specifically, the keys act as database object identifiers.
+     *
+     * <LI> The values are always Integer objects, each formed by combining
+     *      a set of flags, one for each of the access rights defined in
+     *      UserManager: {SELECT, INSERT, UPDATE and DELETE}.
+     * </UL>
+     */
+    IntValueHashMap getRights() {
+        return grantee.getRights();
+    }
+
+    /**
+     * Checks that this User object is for a user with the
+     * database administrator role. Otherwise it throws.
+     */
+    void checkAdmin() throws HsqlException {
+        grantee.checkAdmin();
+    }
+
+    /**
+     * Checks if any of the rights represented by the rights
+     * argument have been granted on the specified database object. <p>
+     *
+     * This is done by checking that a mapping exists in the rights map
+     * from the dbobject argument for at least one of the rights
+     * contained in the rights argument. Otherwise, it throws.
+     */
+    void check(Object dbobject, int rights) throws HsqlException {
+        grantee.check(dbobject, rights);
+    }
+
+    /**
+     * Returns true if any of the rights represented by the
+     * rights argument has been granted on the database object identified
+     * by the dbobject argument. <p>
+     *
+     * This is done by checking that a mapping exists in the rights map
+     * from the dbobject argument for at least one of the rights
+     * contained in the rights argument.
+     */
+    boolean isAccessible(Object dbobject, int rights) throws HsqlException {
+        return grantee.isAccessible(dbobject, rights);
+    }
+
+    /**
+     * Returns true if any right at all has been granted to this User object
+     * on the database object identified by the dbobject argument.
+     */
+    boolean isAccessible(Object dbobject) throws HsqlException {
+        return grantee.isAccessible(dbobject);
     }
 }

@@ -32,6 +32,7 @@
 package org.hsqldb;
 
 import org.hsqldb.HsqlNameManager.HsqlName;
+import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.Iterator;
 
 // fredt@users 20020420 - patch523880 by leptipre@users - VIEW support - modified
@@ -41,7 +42,8 @@ import org.hsqldb.lib.Iterator;
  * Represents an SQL VIEW based on a SELECT statement.
  *
  * @author leptipre@users
- * @version 1.7.2
+ * @author fredt@users
+ * @version 1.8.0
  * @since 1.7.0
  */
 class View extends Table {
@@ -52,6 +54,9 @@ class View extends Table {
     private String     statement;
     private HsqlName[] colList;
 
+    /** schema at the time of compilation */
+    HsqlName compileTimeSchema;
+
     /**
      * List of subqueries in this view in order of materialization. Last
      * element is the view itself.
@@ -60,23 +65,36 @@ class View extends Table {
 
     /**
      * Constructor.
-     *
+     * @param Session
      * @param db database
      * @param name HsqlName of the view
      * @param definition SELECT statement of the view
      * @param columns array of HsqlName column names
      * @throws HsqlException
      */
-    View(Database db, HsqlName name, String definition,
+    View(Session session, Database db, HsqlName name, String definition,
             HsqlName[] columns) throws HsqlException {
 
-        super(db, name, VIEW, 0);
+        super(db, name, VIEW);
 
-        isReadOnly = true;
-        colList    = columns;
-        statement  = trimStatement(definition);
+        isReadOnly        = true;
+        colList           = columns;
+        statement         = trimStatement(definition);
+        compileTimeSchema = session.getSchemaHsqlName(null);
 
-        compile();
+        compile(session);
+
+        HsqlName[] schemas = getSchemas();
+
+        for (int i = 0; i < schemas.length; i++) {
+            if (db.schemaManager.isSystemSchema(schemas[i])) {
+                continue;
+            }
+
+            if (!schemas[i].equals(name.schema)) {
+                throw Trace.error(Trace.INVALID_SCHEMA_NAME_NO_SUBCLASS);
+            }
+        }
     }
 
     /**
@@ -103,7 +121,7 @@ class View extends Table {
     /**
      * Compiles the SELECT statement and sets up the columns.
      */
-    void compile() throws HsqlException {
+    void compile(Session session) throws HsqlException {
 
         // create the working table
         Tokenizer tokenizer = new Tokenizer(statement);
@@ -115,8 +133,7 @@ class View extends Table {
 
         tokenizer.getThis(Token.T_SELECT);
 
-        Parser p = new Parser(database.sessionManager.getSysSession(),
-                              this.database, tokenizer);
+        Parser p = new Parser(session, this.database, tokenizer);
 
         viewSubQuery = p.parseSubquery(brackets, colList, true,
                                        Expression.VIEW);
@@ -127,7 +144,7 @@ class View extends Table {
         workingTable   = viewSubQuery.table;
         viewSelect     = viewSubQuery.select;
 
-        viewSelect.prepareResult(database);
+        viewSelect.prepareResult(session);
 
         Result.ResultMetaData metadata = viewSelect.resultMetaData;
         int                   columns  = viewSelect.iResultLen;
@@ -153,6 +170,28 @@ class View extends Table {
         throw Trace.error(Trace.NOT_A_TABLE);
     }
 
+    /**
+     * Returns list of schemas
+     */
+    HsqlName[] getSchemas() {
+
+        HsqlArrayList list = new HsqlArrayList();
+
+        for (int i = 0; i < viewSubqueries.length; i++) {
+            Select select = viewSubqueries[i].select;
+
+            for (; select != null; select = select.unionSelect) {
+                TableFilter[] tfilter = select.tFilter;
+
+                for (int j = 0; j < tfilter.length; j++) {
+                    list.add(tfilter[j].filterTable.tableName.schema);
+                }
+            }
+        }
+
+        return (HsqlName[]) list.toArray(new HsqlName[list.size()]);
+    }
+
     boolean hasView(View view) {
 
         if (view == this) {
@@ -171,7 +210,7 @@ class View extends Table {
     /**
      * Returns true if the view references any column of the named table.
      */
-    boolean hasTable(String table) {
+    boolean hasTable(Table table) {
 
         for (int i = 0; i < viewSubqueries.length; i++) {
             Select select = viewSubqueries[i].select;
@@ -180,7 +219,7 @@ class View extends Table {
                 TableFilter[] tfilter = select.tFilter;
 
                 for (int j = 0; j < tfilter.length; j++) {
-                    if (table.equals(tfilter[j].filterTable.tableName.name)) {
+                    if (table.equals(tfilter[j].filterTable.tableName)) {
                         return true;
                     }
                 }
@@ -194,7 +233,7 @@ class View extends Table {
      * Returns true if the view references the named column of the named table,
      * otherwise false.
      */
-    boolean hasColumn(String table, String colname) {
+    boolean hasColumn(Table table, String colname) {
 
         if (hasTable(table)) {
             Expression.Collector coll = new Expression.Collector();
@@ -207,8 +246,8 @@ class View extends Table {
             for (; it.hasNext(); ) {
                 Expression e = (Expression) it.next();
 
-                if (e.getColumnName().equals(colname)
-                        && table.equals(e.getTableName())) {
+                if (colname.equals(e.getBaseColumnName())
+                        && table.equals(e.getTableHsqlName())) {
                     return true;
                 }
             }

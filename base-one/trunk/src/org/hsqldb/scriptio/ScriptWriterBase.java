@@ -35,6 +35,7 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.Database;
 import org.hsqldb.DatabaseManager;
 import org.hsqldb.DatabaseScript;
@@ -47,7 +48,7 @@ import org.hsqldb.Token;
 import org.hsqldb.Trace;
 import org.hsqldb.index.RowIterator;
 import org.hsqldb.lib.FileAccess;
-import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.HsqlTimer;
 import org.hsqldb.lib.Iterator;
 
@@ -88,20 +89,23 @@ public abstract class ScriptWriterBase implements Runnable {
     OutputStream        fileStreamOut;
     FileAccess.FileSync outDescriptor;
     int                 tableRowCount;
+    HsqlName            schemaToLog;
 
     /**
      * this determines if the script is the normal script (false) used
      * internally by the engine or a user-initiated snapshot of the DB (true)
      */
+    boolean          isDump;
     boolean          includeCachedData;
     long             byteCount;
     volatile boolean needsSync;
     volatile boolean forceSync;
     volatile boolean busyWriting;
-    static final int INSERT = 0;
+    static final int INSERT             = 0;
+    static final int INSERT_WITH_SCHEMA = 1;
 
-    /** the ID of the last session that wrote to log */
-    int                          sessionId;
+    /** the last schema for last sessionId */
+    Session                      currentSession;
     public static final String[] LIST_SCRIPT_FORMATS      = new String[] {
         Token.T_TEXT, Token.T_BINARY, null, Token.T_COMPRESSED
     };
@@ -114,7 +118,8 @@ public abstract class ScriptWriterBase implements Runnable {
             int scriptType) throws HsqlException {
 
         if (scriptType == SCRIPT_TEXT_170) {
-            return new ScriptWriterText(db, file, includeCachedData, newFile);
+            return new ScriptWriterText(db, file, includeCachedData, newFile,
+                                        false);
         } else if (scriptType == SCRIPT_BINARY_172) {
             return new ScriptWriterBinary(db, file, includeCachedData,
                                           newFile);
@@ -127,13 +132,19 @@ public abstract class ScriptWriterBase implements Runnable {
     ScriptWriterBase() {}
 
     ScriptWriterBase(Database db, String file, boolean includeCachedData,
-                     boolean isNewFile) throws HsqlException {
+                     boolean isNewFile, boolean isDump) throws HsqlException {
+
+        this.isDump = isDump;
 
         initBuffers();
 
         boolean exists = false;
 
-        exists = db.getFileAccess().isStreamElement(file);
+        if (isDump) {
+            exists = FileUtil.exists(file);
+        } else {
+            exists = db.getFileAccess().isStreamElement(file);
+        }
 
         if (exists && isNewFile) {
             throw Trace.error(Trace.FILE_IO_ERROR, file);
@@ -142,6 +153,11 @@ public abstract class ScriptWriterBase implements Runnable {
         this.database          = db;
         this.includeCachedData = includeCachedData;
         outFile                = file;
+        currentSession         = database.sessionManager.getSysSession();
+
+        // start with neutral schema - no SET SCHEMA to log
+        schemaToLog = currentSession.loggedSchema =
+            currentSession.currentSchema;
 
         openFile();
     }
@@ -219,7 +235,8 @@ public abstract class ScriptWriterBase implements Runnable {
     protected void openFile() throws HsqlException {
 
         try {
-            FileAccess   fa  = database.getFileAccess();
+            FileAccess   fa  = isDump ? new FileUtil()
+                                      : database.getFileAccess();
             OutputStream fos = fa.openOutputStreamElement(outFile);
 
             outDescriptor = fa.getFileSync(fos);
@@ -248,47 +265,56 @@ public abstract class ScriptWriterBase implements Runnable {
 
     protected void writeExistingData() throws HsqlException, IOException {
 
-        HsqlArrayList tables  = database.getTables();
-        Session       session = database.sessionManager.getSysSession();
+        // start with blank schema - SET SCHEMA to log
+        currentSession.loggedSchema = null;
 
-        for (int i = 0, size = tables.size(); i < size; i++) {
-            Table t = (Table) tables.get(i);
+        Iterator schemas = database.schemaManager.userSchemaNameIterator();
 
-            // write all memory table data
-            // write cached table data unless index roots have been written
-            // write all text table data apart from readonly text tables
-            // unless index roots have been written
-            boolean script = false;
+        while (schemas.hasNext()) {
+            String   schema = (String) schemas.next();
+            Iterator tables = database.schemaManager.tablesIterator(schema);
 
-            switch (t.getTableType()) {
+            while (tables.hasNext()) {
+                Table t = (Table) tables.next();
 
-                case Table.MEMORY_TABLE :
-                    script = true;
-                    break;
+                // write all memory table data
+                // write cached table data unless index roots have been written
+                // write all text table data apart from readonly text tables
+                // unless index roots have been written
+                boolean script = false;
 
-                case Table.CACHED_TABLE :
-                    script = includeCachedData;
-                    break;
+                switch (t.getTableType()) {
 
-                case Table.TEXT_TABLE :
-                    script = includeCachedData &&!t.isReadOnly();
-                    break;
-            }
+                    case Table.MEMORY_TABLE :
+                        script = true;
+                        break;
 
-            try {
-                if (script) {
-                    writeTableInit(t);
+                    case Table.CACHED_TABLE :
+                        script = includeCachedData;
+                        break;
 
-                    RowIterator it = t.rowIterator(session);
-
-                    while (it.hasNext()) {
-                        writeRow(0, t, it.next().getData());
-                    }
-
-                    writeTableTerm(t);
+                    case Table.TEXT_TABLE :
+                        script = includeCachedData &&!t.isReadOnly();
+                        break;
                 }
-            } catch (Exception e) {
-                throw Trace.error(Trace.ASSERT_FAILED, e.getMessage());
+
+                try {
+                    if (script) {
+                        schemaToLog = t.getName().schema;
+
+                        writeTableInit(t);
+
+                        RowIterator it = t.rowIterator(null);
+
+                        while (it.hasNext()) {
+                            writeRow(currentSession, t, it.next().getData());
+                        }
+
+                        writeTableTerm(t);
+                    }
+                } catch (Exception e) {
+                    throw Trace.error(Trace.ASSERT_FAILED, e.getMessage());
+                }
             }
         }
 
@@ -305,7 +331,7 @@ public abstract class ScriptWriterBase implements Runnable {
 
             a.append(t.getName().statementName);
             a.append(" READONLY TRUE");
-            writeLogStatement(a.toString(), sessionId);
+            writeLogStatement(currentSession, a.toString());
         }
     }
 
@@ -317,31 +343,31 @@ public abstract class ScriptWriterBase implements Runnable {
         while (it.hasNext()) {
             Object[] data = (Object[]) it.next();
 
-            writeLogStatement((String) data[0], sessionId);
+            writeLogStatement(currentSession, (String) data[0]);
         }
     }
 
-    abstract void writeRow(int sid, Table table,
+    abstract void writeRow(Session session, Table table,
                            Object[] data) throws HsqlException, IOException;
 
     protected abstract void writeDataTerm() throws IOException;
 
-    protected abstract void writeSessionId(int sid) throws IOException;
+    protected abstract void addSessionId(Session session) throws IOException;
 
-    public abstract void writeLogStatement(String s,
-                                           int sid)
+    public abstract void writeLogStatement(Session session,
+                                           String s)
                                            throws IOException, HsqlException;
 
-    public abstract void writeInsertStatement(int sid, Table table,
+    public abstract void writeInsertStatement(Session session, Table table,
             Object[] data) throws HsqlException, IOException;
 
-    public abstract void writeDeleteStatement(int sid, Table table,
+    public abstract void writeDeleteStatement(Session session, Table table,
             Object[] data) throws HsqlException, IOException;
 
-    public abstract void writeSequenceStatement(int sid,
+    public abstract void writeSequenceStatement(Session session,
             NumberSequence seq) throws HsqlException, IOException;
 
-    public abstract void writeCommitStatement(int sid)
+    public abstract void writeCommitStatement(Session session)
     throws HsqlException, IOException;
 
     //

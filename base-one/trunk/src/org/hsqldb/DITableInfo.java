@@ -130,10 +130,8 @@ final class DITableInfo {
      * @return the scope of the best row identifier
      */
     Integer getBRIScope() {
-
-        return (table.isTemp() ||!table.isWritable())
-               ? ValuePool.getInt(bestRowSession)
-               : ValuePool.getInt(bestRowTemporary);
+        return (table.isWritable()) ? ValuePool.getInt(bestRowTemporary)
+                                    : ValuePool.getInt(bestRowSession);
     }
 
     /**

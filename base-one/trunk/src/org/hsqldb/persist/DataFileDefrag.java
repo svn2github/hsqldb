@@ -79,15 +79,17 @@ final class DataFileDefrag {
         this.cache    = cache;
         this.scale    = cache.cacheFileScale;
         this.filename = filename;
-        rootsList     = new int[db.getTables().size()][];
     }
 
     void process() throws HsqlException, IOException {
 
         Trace.printSystemOut("Defrag Transfer begins");
 
-        HsqlArrayList tTable = database.getTables();
-        Storage       dest   = null;
+        HsqlArrayList allTables = database.schemaManager.getAllTables();
+
+        rootsList = new int[allTables.size()][];
+
+        Storage dest = null;
 
         try {
             OutputStream fos =
@@ -102,8 +104,8 @@ final class DataFileDefrag {
 
             filePos = DataFileCache.INITIAL_FREE_POS;
 
-            for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
-                Table t = (Table) tTable.get(i);
+            for (int i = 0, tSize = allTables.size(); i < tSize; i++) {
+                Table t = (Table) allTables.get(i);
 
                 if (t.getTableType() == Table.CACHED_TABLE) {
                     int[] rootsArray = writeTableToDataFile(t);
@@ -157,10 +159,10 @@ final class DataFileDefrag {
      */
     void updateTableIndexRoots() throws HsqlException {
 
-        HsqlArrayList tTable = database.getTables();
+        HsqlArrayList allTables = database.schemaManager.getAllTables();
 
-        for (int i = 0, size = tTable.size(); i < size; i++) {
-            Table t = (Table) tTable.get(i);
+        for (int i = 0, size = allTables.size(); i < size; i++) {
+            Table t = (Table) allTables.get(i);
 
             if (t.getTableType() == Table.CACHED_TABLE) {
                 int[] rootsArray = rootsList[i];

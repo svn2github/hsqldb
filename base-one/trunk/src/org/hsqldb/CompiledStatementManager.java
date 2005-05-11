@@ -31,6 +31,7 @@
 
 package org.hsqldb;
 
+import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.IntKeyHashMap;
 import org.hsqldb.lib.IntKeyIntValueHashMap;
 import org.hsqldb.lib.IntValueHashMap;
@@ -83,7 +84,7 @@ final class CompiledStatementManager {
     private Database database;
 
     /** Map:  SQL String => Compiled Statement id (int) */
-    private IntValueHashMap sqlMap;
+    private IntKeyHashMap schemaMap;
 
     /** Map: Compiled Statement id (int) => SQL String */
     private IntKeyHashMap sqlLookup;
@@ -112,7 +113,7 @@ final class CompiledStatementManager {
     CompiledStatementManager(Database database) {
 
         this.database = database;
-        sqlMap        = new IntValueHashMap();
+        schemaMap     = new IntKeyHashMap();
         sqlLookup     = new IntKeyHashMap();
         csidMap       = new IntKeyHashMap();
         sessionMap    = new IntKeyHashMap();
@@ -125,7 +126,7 @@ final class CompiledStatementManager {
      */
     synchronized void reset() {
 
-        sqlMap.clear();
+        schemaMap.clear();
         sqlLookup.clear();
         csidMap.clear();
         sessionMap.clear();
@@ -141,12 +142,12 @@ final class CompiledStatementManager {
      */
     synchronized void resetStatements() {
 
-        Iterator it = csidMap.keySet().iterator();
+        Iterator it = csidMap.values().iterator();
 
         while (it.hasNext()) {
-            int key = it.nextInt();
+            CompiledStatement cs = (CompiledStatement) it.next();
 
-            csidMap.put(key, null);
+            cs.clearVariables();
         }
     }
 
@@ -171,7 +172,15 @@ final class CompiledStatementManager {
      * @return the compiled statement identifier associated with the
      *      specified SQL String
      */
-    synchronized int getStatementID(String sql) {
+    synchronized int getStatementID(HsqlName schema, String sql) {
+
+        IntValueHashMap sqlMap =
+            (IntValueHashMap) schemaMap.get(schema.hashCode());
+
+        if (sqlMap == null) {
+            return -1;
+        }
+
         return sqlMap.get(sql, -1);
     }
 
@@ -244,6 +253,16 @@ final class CompiledStatementManager {
         if (csid < 0) {
             csid = nextID();
 
+            int schemaid = cs.schemaHsqlName.hashCode();
+            IntValueHashMap sqlMap =
+                (IntValueHashMap) schemaMap.get(schemaid);
+
+            if (sqlMap == null) {
+                sqlMap = new IntValueHashMap();
+
+                schemaMap.put(schemaid, sqlMap);
+            }
+
             sqlMap.put(cs.sql, csid);
             sqlLookup.put(csid, cs.sql);
         }
@@ -276,10 +295,18 @@ final class CompiledStatementManager {
             int usecount = useMap.get(csid, 1) - 1;
 
             if (usecount == 0) {
-                String sql = (String) sqlLookup.remove(csid);
+                CompiledStatement cs =
+                    (CompiledStatement) csidMap.remove(csid);
 
-                sqlMap.remove(sql);
-                csidMap.remove(csid);
+                if (cs != null) {
+                    int schemaid = cs.schemaHsqlName.hashCode();
+                    IntValueHashMap sqlMap =
+                        (IntValueHashMap) schemaMap.get(schemaid);
+                    String sql = (String) sqlLookup.remove(csid);
+
+                    sqlMap.remove(sql);
+                }
+
                 useMap.remove(csid);
             } else {
                 useMap.put(csid, usecount);
@@ -316,10 +343,18 @@ final class CompiledStatementManager {
             int usecount = useMap.get(csid, 1) - 1;
 
             if (usecount == 0) {
-                String sql = (String) sqlLookup.remove(csid);
+                CompiledStatement cs =
+                    (CompiledStatement) csidMap.remove(csid);
 
-                sqlMap.remove(sql);
-                csidMap.remove(csid);
+                if (cs != null) {
+                    int schemaid = cs.schemaHsqlName.hashCode();
+                    IntValueHashMap sqlMap =
+                        (IntValueHashMap) schemaMap.get(schemaid);
+                    String sql = (String) sqlLookup.remove(csid);
+
+                    sqlMap.remove(sql);
+                }
+
                 useMap.remove(csid);
             } else {
                 useMap.put(csid, usecount);

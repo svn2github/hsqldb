@@ -55,9 +55,10 @@ public interface Collection {
 
     boolean remove(Object o);
 
+    boolean addAll(Collection c);
+
 /*
     boolean containsAll(Collection c);
-    boolean addAll(Collection c);
     boolean removeAll(Collection c);
     boolean retainAll(Collection c);
 */

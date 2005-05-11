@@ -38,6 +38,8 @@ import org.hsqldb.HsqlException;
 import org.hsqldb.NumberSequence;
 import org.hsqldb.Table;
 import org.hsqldb.rowio.RowOutputTextLog;
+import org.hsqldb.*;
+import org.hsqldb.HsqlNameManager.HsqlName;
 
 /**
  * Handles all scripting and logging operations. A script consists of two blocks:<p>
@@ -83,13 +85,14 @@ public class ScriptWriterText extends ScriptWriterBase {
     static final byte[] BYTES_SEQUENCE_MID = " RESTART WITH ".getBytes();
     static final byte[] BYTES_C_ID_INIT    = "/*C".getBytes();
     static final byte[] BYTES_C_ID_TERM    = "*/".getBytes();
+    static final byte[] BYTES_SCHEMA       = "SET SCHEMA ".getBytes();
 
     ScriptWriterText() {}
 
     public ScriptWriterText(Database db, String file,
-                            boolean includeCachedData,
-                            boolean newFile) throws HsqlException {
-        super(db, file, includeCachedData, newFile);
+                            boolean includeCachedData, boolean newFile,
+                            boolean isDump) throws HsqlException {
+        super(db, file, includeCachedData, newFile, isDump);
     }
 
     protected void initBuffers() {
@@ -98,24 +101,43 @@ public class ScriptWriterText extends ScriptWriterBase {
 
     protected void writeDataTerm() throws IOException {}
 
-    protected void writeSessionId(int sid) throws IOException {
+    protected void addSessionId(Session session) throws IOException {
 
-        if (sid != sessionId) {
+        if (session == null) {
+            return;
+        }
+
+        if (session != currentSession) {
             rowOut.write(BYTES_C_ID_INIT);
-            rowOut.writeIntData(sid);
+            rowOut.writeIntData(session.getId());
             rowOut.write(BYTES_C_ID_TERM);
 
-            sessionId = sid;
+            currentSession = session;
+        }
+
+        if (schemaToLog != session.loggedSchema) {
+            writeSchemaStatement(schemaToLog);
+
+            session.loggedSchema = schemaToLog;
         }
     }
 
-    public void writeLogStatement(String s,
-                                  int sid) throws IOException, HsqlException {
+    private void writeSchemaStatement(HsqlName schema) {
 
+        rowOut.write(BYTES_SCHEMA);
+        rowOut.writeString(schema.statementName);
+        rowOut.write(BYTES_LINE_SEP);
+    }
+
+    public void writeLogStatement(Session session,
+                                  String s)
+                                  throws IOException, HsqlException {
+
+        schemaToLog = session.currentSchema;
         busyWriting = true;
 
         rowOut.reset();
-        writeSessionId(sid);
+        addSessionId(session);
         rowOut.writeString(s);
         rowOut.write(BYTES_LINE_SEP);
         fileStreamOut.write(rowOut.getBuffer(), 0, rowOut.size());
@@ -129,14 +151,14 @@ public class ScriptWriterText extends ScriptWriterBase {
         }
     }
 
-    public void writeRow(int sid, Table table,
-                         Object[] data) throws HsqlException, IOException {
+    protected void writeRow(Session session, Table table,
+                            Object[] data) throws HsqlException, IOException {
 
         busyWriting = true;
 
         rowOut.reset();
         ((RowOutputTextLog) rowOut).setMode(RowOutputTextLog.MODE_INSERT);
-        writeSessionId(sid);
+        addSessionId(session);
         rowOut.write(BYTES_INSERT_INTO);
         rowOut.writeString(table.getName().statementName);
         rowOut.write(BYTES_VALUES);
@@ -154,21 +176,42 @@ public class ScriptWriterText extends ScriptWriterBase {
         }
     }
 
-    public void writeInsertStatement(int sid, Table table,
-                                     Object[] data)
-                                     throws HsqlException, IOException {
-        writeRow(sid, table, data);
+    protected void writeTableInit(Table t) throws HsqlException, IOException {
+
+        if (t.isEmpty(currentSession)) {
+            return;
+        }
+
+        if (schemaToLog == currentSession.loggedSchema) {
+            return;
+        }
+
+        rowOut.reset();
+        writeSchemaStatement(t.getName().schema);
+        fileStreamOut.write(rowOut.getBuffer(), 0, rowOut.size());
+
+        currentSession.loggedSchema = schemaToLog;
     }
 
-    public void writeDeleteStatement(int sid, Table table,
+    public void writeInsertStatement(Session session, Table table,
                                      Object[] data)
                                      throws HsqlException, IOException {
 
+        schemaToLog = table.getName().schema;
+
+        writeRow(session, table, data);
+    }
+
+    public void writeDeleteStatement(Session session, Table table,
+                                     Object[] data)
+                                     throws HsqlException, IOException {
+
+        schemaToLog = table.getName().schema;
         busyWriting = true;
 
         rowOut.reset();
         ((RowOutputTextLog) rowOut).setMode(RowOutputTextLog.MODE_DELETE);
-        writeSessionId(sid);
+        addSessionId(session);
         rowOut.write(BYTES_DELETE_FROM);
         rowOut.writeString(table.getName().statementName);
         rowOut.write(BYTES_WHERE);
@@ -186,14 +229,15 @@ public class ScriptWriterText extends ScriptWriterBase {
         }
     }
 
-    public void writeSequenceStatement(int sid,
+    public void writeSequenceStatement(Session session,
                                        NumberSequence seq)
                                        throws HsqlException, IOException {
 
+        schemaToLog = seq.getName().schema;
         busyWriting = true;
 
         rowOut.reset();
-        writeSessionId(sid);
+        addSessionId(session);
         rowOut.write(BYTES_SEQUENCE);
         rowOut.writeString(seq.getName().statementName);
         rowOut.write(BYTES_SEQUENCE_MID);
@@ -210,13 +254,13 @@ public class ScriptWriterText extends ScriptWriterBase {
         }
     }
 
-    public void writeCommitStatement(int sid)
+    public void writeCommitStatement(Session session)
     throws HsqlException, IOException {
 
         busyWriting = true;
 
         rowOut.reset();
-        writeSessionId(sid);
+        addSessionId(session);
         rowOut.write(BYTES_COMMIT);
         rowOut.write(BYTES_LINE_SEP);
         fileStreamOut.write(rowOut.getBuffer(), 0, rowOut.size());

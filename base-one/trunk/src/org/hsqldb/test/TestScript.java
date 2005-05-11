@@ -32,17 +32,24 @@
 package org.hsqldb.test;
 
 import java.sql.Connection;
-import java.sql.Statement;
 
 public class TestScript extends TestBase {
 
-    String path = "TestSelfConstraints.txt";
+    String path = "TestSelfAlterColumn.txt";
 
-//    String path = "TestSelfFieldLimits.txt";
-//    String path = "TestSelfLeftJoin.txt";
-//    String path = "TestSelfQueries.txt";
+//    String path = "TestSelfCaseWhen.txt";
 //    String path = "TestSelfCheckConstraints.txt";
+//    String path = "TestSelfConstraints.txt";
+//    String path = "TestSelfFieldLimits.txt";
+//      String path = "TestSelfIssues.txt";
 //    String path = "TestSelfLeftJoin.txt";
+//    String path = "TestSelfNameResolution.txt";
+//    String path = "TestSelfInPredicateReferencing.txt";
+//    String path = "TestSelfQueries.txt";
+//    String path = "TestSelfSchemaPersistB1.txt";
+//    String path = "TestSelfUnions.txt";
+//    String path = "TestSelfUserFunction.txt";
+//    String path = "TestTemp.txt";
     public TestScript(String name) {
         super(name);
     }
@@ -50,8 +57,14 @@ public class TestScript extends TestBase {
     public void test() throws java.lang.Exception {
 
         Connection conn = newConnection();
-        Statement  stmt = conn.createStatement();
 
         TestUtil.testScript(conn, path);
+    }
+
+    public static void main(String[] Args) throws Exception {
+
+        TestScript ts = new TestScript("test");
+
+        ts.test();
     }
 }

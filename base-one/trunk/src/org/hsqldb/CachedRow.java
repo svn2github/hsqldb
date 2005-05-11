@@ -187,8 +187,7 @@ public class CachedRow extends Row {
 
         hasNodesChanged = hasDataChanged = false;
 
-        tTable.removeRow(this);
-
+//        tTable.removeRow(this);
         tTable       = null;
         nPrimaryNode = null;
     }

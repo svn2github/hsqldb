@@ -134,6 +134,24 @@ public class StringUtil {
         return b.toString();
     }
 
+    public static String getList(Object[] s, String separator, String quote) {
+
+        int          len = s.length;
+        StringBuffer b   = new StringBuffer(len * 16);
+
+        for (int i = 0; i < len; i++) {
+            b.append(quote);
+            b.append(s[i]);
+            b.append(quote);
+
+            if (i + 1 < len) {
+                b.append(separator);
+            }
+        }
+
+        return b.toString();
+    }
+
     /**
      * Builds a CSV list from the specified int[], <code>separator</code>
      * <code>String</code> and <code>quote</code> <code>String</code>. <p>

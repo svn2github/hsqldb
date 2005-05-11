@@ -48,6 +48,59 @@ abstract class BaseList {
 
     abstract Object remove(int index);
 
+    abstract boolean add(Object o);
+
+    abstract int size();
+
+    public boolean contains(Object o) {
+        return find(o) == -1 ? false
+                             : true;
+    }
+
+    public boolean remove(Object o) {
+
+        int i = find(o);
+
+        if (i == -1) {
+            return false;
+        }
+
+        remove(i);
+
+        return true;
+    }
+
+    int find(Object o) {
+
+        for (int i = 0, size = size(); i < size; i++) {
+            Object current = get(i);
+
+            if (current == null) {
+                if (o == null) {
+                    return i;
+                }
+            } else if (current.equals(o)) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    public boolean addAll(Collection other) {
+
+        boolean  result = false;
+        Iterator it     = other.iterator();
+
+        while (it.hasNext()) {
+            result = true;
+
+            add(it.next());
+        }
+
+        return result;
+    }
+
     public boolean isEmpty() {
         return elementCount == 0;
     }
