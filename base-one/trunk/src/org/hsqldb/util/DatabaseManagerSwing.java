@@ -168,6 +168,15 @@ public class DatabaseManagerSwing extends JApplet
 implements ActionListener, WindowListener, KeyListener {
     private static final String DEFAULT_RCFILE =
         System.getProperty("user.home") + "/dbmanager.rc";
+    private static final String HELP_TEXT =
+            "See the forums, mailing lists, and HSQLDB User Guide\n"
+            + "at http://hsqldb.sourceforge.net.\n\n"
+            + "Please paste the following version identifier with any\n"
+            + "problem reports or help requests:  $Revision: 1.30 $";
+    private static final String ABOUT_TEXT =
+            "$Revision: 1.30 $ of DatabaseManagerSwing\n\n"
+            + "Copyright (c) 1995-2005, The Hypersonic SQL Group.\n"
+            + "http://hsqldb.sourceforge.net";
 
     static final String    NL         = System.getProperty("line.separator");
     static final String    NULL_STR   = "\t(null)";
@@ -558,18 +567,13 @@ implements ActionListener, WindowListener, KeyListener {
         mitemHelp.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent actionevent) {
                 JOptionPane.showMessageDialog(fMain.getContentPane(),
-                        "See the forums, mailing lists, and HSQLDB User "
-                        + "Guide\nat http://hsqldb.sourceforge.net.",
-                        "HELP", JOptionPane.INFORMATION_MESSAGE);
+                    HELP_TEXT, "HELP", JOptionPane.INFORMATION_MESSAGE);
             }
         });
         mitemAbout.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent actionevent) {
                 JOptionPane.showMessageDialog(fMain.getContentPane(),
-                        "$Revision$ of DatabaseManagerSwing\n\n"
-                    + "Copyright (c) 1995-2005, The Hypersonic SQL Group.\n"
-                        + "http://hsqldb.sourceforge.net",
-                        "About", JOptionPane.INFORMATION_MESSAGE);
+                    ABOUT_TEXT, "About", JOptionPane.INFORMATION_MESSAGE);
             }
         });
         boxTooltips.addActionListener(new ActionListener() {
