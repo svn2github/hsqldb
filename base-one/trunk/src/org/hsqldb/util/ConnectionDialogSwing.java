@@ -344,9 +344,7 @@ implements ActionListener, ItemListener {
             }
         } else if (s.equals("ConnectCancel")) {
 
-            // Changed to system exit.. Can't do anything any way ...
-            // dispose();
-            System.exit(0);
+            dispose();
 
             // (weconsultants@users) New code
         } else if (s.equals("Clear")) {
