@@ -172,11 +172,14 @@ implements ActionListener, WindowListener, KeyListener {
             "See the forums, mailing lists, and HSQLDB User Guide\n"
             + "at http://hsqldb.sourceforge.net.\n\n"
             + "Please paste the following version identifier with any\n"
-            + "problem reports or help requests:  $Revision: 1.30 $";
+            + "problem reports or help requests:  $Revision: 1.31 $";
     private static final String ABOUT_TEXT =
-            "$Revision: 1.30 $ of DatabaseManagerSwing\n\n"
+            "$Revision: 1.31 $ of DatabaseManagerSwing\n\n"
             + "Copyright (c) 1995-2005, The Hypersonic SQL Group.\n"
-            + "http://hsqldb.sourceforge.net";
+            + "http://hsqldb.sourceforge.net\n\n\n"
+            + "You may use and redistribute according to the HSQLDB\n"
+            + "license documented in the source code and at the web\n"
+            + "site above.";
 
     static final String    NL         = System.getProperty("line.separator");
     static final String    NULL_STR   = "\t(null)";
