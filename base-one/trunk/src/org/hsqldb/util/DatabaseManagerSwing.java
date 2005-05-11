@@ -1,4 +1,4 @@
-/* Copyright (c) 1995-2000, The Hypersonic SQL Group.
+/* Copyright (c) 1995-2005, The Hypersonic SQL Group.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -116,6 +116,9 @@ import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.ButtonGroup;
 import javax.swing.JOptionPane;
+import java.util.HashMap;
+import java.util.Iterator;
+import javax.swing.JComponent;
 
 
 import org.hsqldb.lib.java.JavaSystem;
@@ -200,6 +203,7 @@ implements ActionListener, WindowListener, KeyListener {
     String                 ifHuge = "";
     JToolBar               jtoolbar;
     private boolean        showSchemas = true;
+    private boolean        autoRefresh = true;
 
     // Added: (weconsultants@users)
     static DatabaseManagerSwing refForFontDialogSwing;
@@ -207,12 +211,18 @@ implements ActionListener, WindowListener, KeyListener {
     String                      currentLAF = null;
     JPanel                      pStatus;
     static JRadioButton         iReadyStatus;
+    JMenuItem                   mitemAbout = new JMenuItem("About", 'A');
+    JMenuItem                   mitemHelp = new JMenuItem("Help", 'H');
     JCheckBoxMenuItem           boxAutoCommit =
                                 new JCheckBoxMenuItem(AUTOCOMMIT_BOX_TEXT);
     JCheckBoxMenuItem           boxLogging =
                                 new JCheckBoxMenuItem(LOGGING_BOX_TEXT);
     JCheckBoxMenuItem           boxShowSchemas =
                                 new JCheckBoxMenuItem(SHOWSCHEMAS_BOX_TEXT);
+    JCheckBoxMenuItem           boxAutoRefresh =
+                                new JCheckBoxMenuItem(AUTOREFRESH_BOX_TEXT);
+    JCheckBoxMenuItem           boxTooltips =
+                                new JCheckBoxMenuItem(SHOWTIPS_BOX_TEXT);
     // Consider adding GTK and Plaf L&Fs.
     JRadioButtonMenuItem        rbNativeLF = new JRadioButtonMenuItem(
                                 "Native Look & Feel");
@@ -227,12 +237,15 @@ implements ActionListener, WindowListener, KeyListener {
     static private final String AUTOCOMMIT_BOX_TEXT = "Autocommit mode";
     static private final String LOGGING_BOX_TEXT = "Logging mode";
     static private final String SHOWSCHEMAS_BOX_TEXT = "Show schemas";
+    static private final String AUTOREFRESH_BOX_TEXT = "Auto-refresh tree";
+    static private final String SHOWTIPS_BOX_TEXT = "Show Tooltips";
 
     // variables to hold the default cursors for these top level swing objects
     // so we can restore them when we exit our thread
     Cursor fMainCursor;
     Cursor txtCommandCursor;
     Cursor txtResultCursor;
+    HashMap tipMap = new HashMap();
 
     /**
      * Wait Cursor
@@ -475,7 +488,7 @@ implements ActionListener, WindowListener, KeyListener {
         addMenu(bar, "File", fitems);
 
         Object[] vitems = {
-            "RRefresh Tree", "--", boxShowSchemas, "--",
+            "RRefresh Tree", boxAutoRefresh, "--", boxShowSchemas, "--",
             "GResults in Grid", "TResults in Text"
         };
 
@@ -499,9 +512,25 @@ implements ActionListener, WindowListener, KeyListener {
         lfGroup.add(rbJavaLF);
         lfGroup.add(rbMotifLF);
         boxShowSchemas.setSelected(showSchemas);
+        boxAutoRefresh.setSelected(autoRefresh);
         rbNativeLF.setActionCommand("LFMODE:" + CommonSwing.Native);
         rbJavaLF.setActionCommand("LFMODE:" + CommonSwing.Java);
         rbMotifLF.setActionCommand("LFMODE:" + CommonSwing.Motif);
+        tipMap.put(mitemAbout, "Display product information");
+        tipMap.put(mitemHelp, "Display advice for obtaining help");
+        tipMap.put(boxAutoRefresh,
+            "Refresh tree automatically when YOU modify database objects");
+        tipMap.put(boxShowSchemas,
+                "Display object names in tree like schemaname.basename");
+        tipMap.put(rbNativeLF,
+                "Set Look and Feel to Native for your platform");
+        tipMap.put(rbJavaLF, "Set Look and Feel to Java");
+        tipMap.put(rbMotifLF, "Set Look and Feel to Motif");
+        boxTooltips.setToolTipText("Display tooltips (hover text)");
+        tipMap.put(boxAutoCommit,
+                "Shows current Auto-commit mode.  Click to change");
+        tipMap.put(boxLogging,
+            "Shows current JDBC DriverManager logging mode.  Click to change");
 
         Object[] soptions = {
 
@@ -523,28 +552,36 @@ implements ActionListener, WindowListener, KeyListener {
 
         JMenu mnuHelp = new JMenu("Help");
         mnuHelp.setMnemonic(java.awt.event.KeyEvent.VK_H);
-        JMenuItem mitemAbout = new JMenuItem("About", 'A');
-        JMenuItem mitemHelp = new JMenuItem("Help", 'H');
         mnuHelp.add(mitemAbout);
         mnuHelp.add(mitemHelp);
+        mnuHelp.add(boxTooltips);
         mitemHelp.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent actionevent) {
                 JOptionPane.showMessageDialog(fMain.getContentPane(),
-                    "See HSQLDB User Manual at http://hsqldb.sourceforge.net",
+                        "See the forums, mailing lists, and HSQLDB User "
+                        + "Guide\nat http://hsqldb.sourceforge.net.",
                         "HELP", JOptionPane.INFORMATION_MESSAGE);
             }
         });
         mitemAbout.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent actionevent) {
                 JOptionPane.showMessageDialog(fMain.getContentPane(),
-                        "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
+                        "$Revision$ of DatabaseManagerSwing\n\n"
+                    + "Copyright (c) 1995-2005, The Hypersonic SQL Group.\n"
                         + "http://hsqldb.sourceforge.net",
                         "About", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+        boxTooltips.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent actionevent) {
+                setTooltips(boxTooltips.isSelected());
             }
         });
         bar.add(mnuHelp);
 
         fMain.setJMenuBar(bar);
+        setTooltips(true);
+        boxTooltips.setSelected(true);
         initGUI();
 
         sRecent = new String[iMaxRecent];
@@ -588,12 +625,12 @@ implements ActionListener, WindowListener, KeyListener {
 
     private void addMenuItems(JMenu f, Object[] m) {
         /*
-         * This is a mis-mash of 2 conflicting strategies.
-         * There are serious problems with accepting an array of Strings as
-         * input elements.  Can't use non-text menu items (an important
-         * part of a good Gui), and we have to resort to troublesome
-         * tricks to generate hot-keys and mnemonic keys (you'll notice
-         * that mnemonics aren't even attempted).
+         * This method needs to be completely written or just 
+         * obliterated and we'll use the Menu objects directly.
+         * Problem is, passing in Strings for menu elements makes it
+         * extremely difficult to use non-text menu items (an important
+         * part of a good Gui), hot-keys, mnemonic keys, tooltips.
+         * Note the "trick" required here to set hot-keys.
          */ 
 
         Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
@@ -676,6 +713,9 @@ implements ActionListener, WindowListener, KeyListener {
             Transfer.work(new String[]{ "-r" });
         } else if (s.equals(AUTOCOMMIT_BOX_TEXT)) {
             JavaSystem.setLogToSystem(boxLogging.isSelected());
+        } else if (s.equals(AUTOREFRESH_BOX_TEXT)) {
+            autoRefresh = boxLogging.isSelected();
+            refreshTree();
         } else if (s.equals("Refresh Tree")) {
             refreshTree();
         } else if (s.startsWith("#")) {
@@ -1020,11 +1060,12 @@ implements ActionListener, WindowListener, KeyListener {
     private void executeCommand() {
 
         String[] g = new String[1];
+        String sql = txtCommand.getText();
 
         try {
             lTime = System.currentTimeMillis();
 
-            sStatement.execute(txtCommand.getText());
+            sStatement.execute(sql);
 
             int r = sStatement.getUpdateCount();
 
@@ -1042,7 +1083,7 @@ implements ActionListener, WindowListener, KeyListener {
 
             lTime = System.currentTimeMillis() - lTime;
 
-            addToRecent(txtCommand.getText());
+            addToRecent(sql);
         } catch (SQLException e) {
             lTime = System.currentTimeMillis() - lTime;
             g[0]  = "SQL Error";
@@ -1059,6 +1100,17 @@ implements ActionListener, WindowListener, KeyListener {
 
             //  Added: (weconsultants@users)
             CommonSwing.errorMessage(e);
+            return;
+        }
+        if (autoRefresh) {
+            String upper = sql.toUpperCase();
+            // This test can be very liberal.  Too liberal will just do
+            // some extra refreshes.  Too conservative will display
+            // obsolete info.
+            if (upper.indexOf("ALTER") > -1 || upper.indexOf("DROP") > -1
+                    || upper.indexOf("CREATE") > -1) {
+                refreshTree();
+            }
         }
         updateAutoCommitBox();
     }
@@ -1652,8 +1704,8 @@ implements ActionListener, WindowListener, KeyListener {
             new JButton("Clear SQL Statement",
                         new ImageIcon(CommonSwing.getIcon("Clear")));
 
-        jbuttonClear.setToolTipText("Clear SQL Statement");
         jbuttonClear.putClientProperty("is3DEnabled", Boolean.TRUE);
+        tipMap.put(jbuttonClear, "Clear SQL Statement");
         jbuttonClear.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent actionevent) {
@@ -1665,7 +1717,7 @@ implements ActionListener, WindowListener, KeyListener {
             new JButton("Execute SQL Statement",
                         new ImageIcon(CommonSwing.getIcon("Execute")));
 
-        jbuttonExecute.setToolTipText("Execute SQL Statement");
+        tipMap.put(jbuttonExecute, "Execute SQL Statement");
         jbuttonExecute.putClientProperty("is3DEnabled", Boolean.TRUE);
         jbuttonExecute.addActionListener(new ActionListener() {
 
@@ -1715,6 +1767,16 @@ implements ActionListener, WindowListener, KeyListener {
             rbJavaLF.setSelected(true);
         } else if (currentLAF.equals(CommonSwing.Motif)) {
             rbMotifLF.setSelected(true);
+        }
+    }
+
+    void setTooltips(boolean show) {
+        Iterator it = tipMap.keySet().iterator();
+        JComponent component;
+        while (it.hasNext()) {
+            component = (JComponent) it.next();
+            component.setToolTipText(
+                    show ? ((String) tipMap.get(component)) : (String) null);
         }
     }
 }
