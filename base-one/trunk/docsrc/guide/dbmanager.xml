@@ -1,4 +1,4 @@
-<!-- $Id: dbmanager.xml,v 1.5 2005/05/11 05:52:27 unsaved Exp $ -->
+<!-- $Id: dbmanager.xml,v 1.6 2005/05/11 13:12:12 unsaved Exp $ -->
 
 <appendix>
 <title>Database Manager</title>
@@ -19,8 +19,8 @@
             </affiliation>
         </author>
     </authorgroup>
-    <edition>$Revision: 1.5 $</edition>
-    <pubdate>$Date: 2005/05/11 05:52:27 $</pubdate>
+    <edition>$Revision: 1.6 $</edition>
+    <pubdate>$Date: 2005/05/11 13:12:12 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Database</keyword>
@@ -67,6 +67,13 @@
         menu item.
         (Assuming that you don't turn Tooltips off under the
         <guimenu>Help</guimenu> menu.
+    </simpara>
+    <simpara>
+        The DatabaseManagers do work with HSQLDB servers serving 
+        TLS-encrypted JDBC data.
+        See the <link linkend='tls-chapter' endterm='tls-title'/> chapter and
+        the <link linkend='auth-section' endterm='auth-title'/> section of
+        this Guide.
     </simpara>
 </section> 
 <section>
@@ -149,14 +156,14 @@
 </section>
     <section>
         <title>
-            Updating your old HSQLDB distrubution to use current
+            Updating your old HSQLDB distrubution to use the current
             DatabaseManagers
-            This procedure works for distros going back to 1.7.3.3 at least,
-            probably much farther.
         </title>
         <simpara>This procedure will allow users of a legacy version of
             HSQLDB to use all of the new features of the DatabaseManagers.
             You will also get the new versions of the SqlTool!
+            This procedure works for distros going back to 1.7.3.3 at least,
+            probably much farther.
         </simpara>
         <procedure>
             <step><simpara>
