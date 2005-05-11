@@ -1,8 +1,7 @@
-<!-- $Id: building.xml,v 1.8 2004/06/04 11:26:33 fredt Exp $ -->
+<!-- $Id: building.xml,v 1.9 2004/06/06 08:45:56 unsaved Exp $ -->
 
 <appendix id='building-appendix'>
-    <title id='building-title'>Building Hsqldb version 1.7.2</title>
-    <titleabbrev>Building Hsqldb</titleabbrev>
+    <title id='building-title'>Building HSQLDB</title>
     <appendixinfo>
         <authorgroup>
             <author>
@@ -13,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.8 $</edition>
-        <pubdate>$Date: 2004/06/04 11:26:33 $</pubdate>
+        <edition>$Revision: 1.9 $</edition>
+        <pubdate>$Date: 2004/06/06 08:45:56 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Building</keyword>
