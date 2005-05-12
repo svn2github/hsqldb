@@ -164,13 +164,13 @@ class ConnectionDialogCommon {
 
         try {
             if (recentSettings == null) {
-                setTempDir();
+                setHomeDir();
 
-                if (tempdir == null) {
+                if (homedir == null) {
                     return list;
                 }
 
-                recentSettings = new File(tempdir, fileName);
+                recentSettings = new File(homedir, fileName);
 
                 if (!recentSettings.exists()) {
                     JavaSystem.createNewFile(recentSettings);
@@ -245,13 +245,13 @@ class ConnectionDialogCommon {
 
         try {
             if (recentSettings == null) {
-                setTempDir();
+                setHomeDir();
 
-                if (tempdir == null) {
+                if (homedir == null) {
                     return;
                 }
 
-                recentSettings = new File(tempdir, fileName);
+                recentSettings = new File(homedir, fileName);
 
                 if (!recentSettings.exists()) {
 
@@ -285,13 +285,13 @@ class ConnectionDialogCommon {
 
         try {
             if (recentSettings == null) {
-                setTempDir();
+                setHomeDir();
 
-                if (tempdir == null) {
+                if (homedir == null) {
                     return;
                 }
 
-                recentSettings = new File(tempdir, fileName);
+                recentSettings = new File(homedir, fileName);
             }
 
             if (!recentSettings.exists()) {
@@ -306,16 +306,16 @@ class ConnectionDialogCommon {
         } catch (Throwable t) {}
     }
 
-    private static String tempdir = null;
+    private static String homedir = null;
 
-    public static void setTempDir() {
+    public static void setHomeDir() {
 
 //#ifdef JAVA1TARGET
 /*
 */
 
 //#else
-        if (tempdir == null) {
+        if (homedir == null) {
             try {
                 Class c =
                     Class.forName("sun.security.action.GetPropertyAction");
@@ -323,9 +323,9 @@ class ConnectionDialogCommon {
                     String.class });
                 java.security.PrivilegedAction a =
                     (java.security.PrivilegedAction) constructor.newInstance(
-                        new Object[]{ "java.io.tmpdir" });
+                        new Object[]{ "user.home" });
 
-                tempdir =
+                homedir =
                     (String) java.security.AccessController.doPrivileged(a);
             } catch (Exception e) {
                 e.printStackTrace();
