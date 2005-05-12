@@ -54,7 +54,7 @@ import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.sql.DatabaseMetaData;
 
-/* $Id: SqlFile.java,v 1.90 2004/09/19 03:44:46 fredt Exp $ */
+/* $Id: SqlFile.java,v 1.103 2005/05/11 14:03:21 fredt Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -90,7 +90,7 @@ import java.sql.DatabaseMetaData;
  * Most of the Special Commands and Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.90 $
+ * @version $Revision: 1.103 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -140,8 +140,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.90 $".substring("$Revision: ".length(),
-                                               "$Revision: 1.90 $".length()
+        revnum = "$Revision: 1.103 $".substring("$Revision: ".length(),
+                                               "$Revision: 1.103 $".length()
                                                - 2);
     }
 
@@ -1969,6 +1969,8 @@ public class SqlFile {
         },    // Oracle
     };
 
+    String[] oracleSysSchemas = { "SYS", "SYSTEM", "WKSYS" };
+
     /**
      * Lists available database tables.
      *
@@ -1979,13 +1981,15 @@ public class SqlFile {
      * @throws BadSpecial
      */
     private void listTables(char c, String inFilter) throws BadSpecial {
-
+        String schema = null;
         int[]    listSet = null;
         String[] types   = null;
+        /** For workaround for \T for Oracle **/
+        String[]   additionalSchemas = null;
 
         /** This is for specific non-getTable() queries */
         Statement statement = null;
-        ResultSet rs;
+        ResultSet rs = null;
         String    narrower = "";
         /*
          * Doing case-sensitive filters now, for greater portability.
@@ -2017,7 +2021,18 @@ public class SqlFile {
                     break;
 
                 case 'S' :
-                    types[0] = "SYSTEM TABLE";
+                    if (dbProductName.indexOf("Oracle") > -1) {
+                        System.err.println(
+                                "*** WARNING:\n*** Listing tables in the "
+                              + "SYSTEM, SYS, WKSYS schemas since Oracle "
+                              + "doesn't\n*** return a JDBC system table list."
+                        );
+                        types[0] = "TABLE";
+                        schema = "SYS";
+                        additionalSchemas = oracleSysSchemas;
+                    } else {
+                        types[0] = "SYSTEM TABLE";
+                    }
                     break;
 
                 case 's' :
@@ -2100,6 +2115,7 @@ public class SqlFile {
                     break;
 
                 case 't' :
+                    excludeSysSchemas = (dbProductName.indexOf("Oracle") > -1);
                     types[0] = "TABLE";
                     break;
 
@@ -2128,7 +2144,7 @@ public class SqlFile {
                                 + "table as argument to \\di");
                     }
                      */
-                    String schema = null;
+                    schema = null;
                     String table  = null;
 
                     if (filter != null) {
@@ -2167,8 +2183,6 @@ public class SqlFile {
                                          + "'");
             }
 
-            String schema = null;
-
             if (statement == null) {
                 if (dbProductName.indexOf("HSQL") > -1) {
                     listSet = listMDTableCols[HSQLDB_ELEMENT];
@@ -2178,7 +2192,7 @@ public class SqlFile {
                     listSet = listMDTableCols[DEFAULT_ELEMENT];
                 }
 
-                if (filter != null
+                if (schema == null && filter != null
                         && filter.charAt(filter.length() - 1) == '.') {
                     schema = filter.substring(0, filter.length() - 1);
                     filter = null;
@@ -2194,11 +2208,28 @@ public class SqlFile {
             }
 
             displayResultSet(null, rs, listSet, filter);
+
+            if (additionalSchemas != null) {
+                for (int i = 1; i < additionalSchemas.length; i++) {
+                    rs = md.getTables(null, additionalSchemas[i], null, types);
+
+                    if (rs == null) {
+                        throw new BadSpecial(
+                                "Failed to get metadata from database for '"
+                                + additionalSchemas[i] + "'");
+                    }
+                    displayResultSet(null, rs, listSet, filter);
+                }
+            }
         } catch (SQLException se) {
             throw new BadSpecial("Failure getting MetaData: " + se);
         } catch (NullPointerException npe) {
             throw new BadSpecial("Failure getting MetaData (NPE)");
         } finally {
+            excludeSysSchemas = false;
+            if (rs != null) {
+                rs = null;
+            }
             if (statement != null) {
                 try {
                     statement.close();
@@ -2208,6 +2239,7 @@ public class SqlFile {
             }
         }
     }
+    private boolean excludeSysSchemas = false;
 
     /**
      * Process the current command as an SQL Statement
@@ -2257,6 +2289,11 @@ public class SqlFile {
 
         int updateCount = (statement == null) ? -1
                                               : statement.getUpdateCount();
+        if (excludeSysSchemas) {
+            stdprintln(
+              "*** WARNING:  Omitting tables from SYS, SYSTEM, WKSYS schemas\n"
+            + "*** (because Oracle (TM) doesn't differentiate them to JDBC).");
+        }
 
         switch (updateCount) {
 
@@ -2335,6 +2372,14 @@ public class SqlFile {
 
                     for (int i = 1; i <= cols; i++) {
                         val = r.getString(i);
+                        if (excludeSysSchemas && i == 2) {
+                            for (int z = 0; z < oracleSysSchemas.length; z++) {
+                                if (val.equals(oracleSysSchemas[z])) {
+                                    filteredOut = true;
+                                    break;
+                                }
+                            }
+                        }
 
                         if (fetchingVar != null) {
                             userVars.put(fetchingVar, val);
