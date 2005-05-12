@@ -33,6 +33,7 @@ package org.hsqldb.util;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Vector;
@@ -324,8 +325,10 @@ implements ActionListener, ItemListener {
                 }
 
                 dispose();
+            } catch (SQLException e) {
+                mConnection = null;
+                CommonSwing.errorMessage(e, true);
             } catch (Exception e) {
-
                 // Added: (weconsultants@users)
                 CommonSwing.errorMessage(e);
             }

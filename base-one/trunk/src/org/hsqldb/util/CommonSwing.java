@@ -149,8 +149,12 @@ class CommonSwing {
         // DatabaseManagerSwing.StatusMessage(READY_STATUS);
     }
 
-    // (weconsultants@users: Callable errorMessage method
     public static void errorMessage(Exception exceptionMsg) {
+        errorMessage(exceptionMsg, false);
+    }
+
+    // (weconsultants@users: Callable errorMessage method
+    public static void errorMessage(Exception exceptionMsg, boolean quiet) {
 
         /**
          * Display Jpanel Error messages any SQL Errors. Overloads
@@ -162,7 +166,9 @@ class CommonSwing {
                                      JOptionPane.DEFAULT_OPTION,
                                      JOptionPane.ERROR_MESSAGE, null,
                                      options, options[0]);
-        exceptionMsg.printStackTrace();
+        if (!quiet) {
+            exceptionMsg.printStackTrace();
+        }
 
         // DatabaseManagerSwing.StatusMessage(READY_STATUS);
     }
