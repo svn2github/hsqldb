@@ -182,9 +182,9 @@ implements ActionListener, WindowListener, KeyListener {
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.sourceforge.net.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.35 $";
+        + "problem reports or help requests:  $Revision: 1.36 $";
     private static final String ABOUT_TEXT =
-        "$Revision: 1.35 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.36 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2000-2005, The HSQL Development Group.\n"
         + "http://hsqldb.sourceforge.net\n\n\n"
@@ -211,7 +211,6 @@ implements ActionListener, WindowListener, KeyListener {
     DefaultMutableTreeNode rootNode;
     JPanel                 pResult;
     long                   lTime;
-    int                    iResult;        // 0: grid; 1: text
     GridSwing              gResult;
     JTable                 gResultTable;
     JScrollPane            gScrollPane;
@@ -226,6 +225,7 @@ implements ActionListener, WindowListener, KeyListener {
     JToolBar               jtoolbar;
     private boolean        showSchemas = true;
     private boolean        autoRefresh = true;
+    private boolean        gridFormat = true;
 
     // Added: (weconsultants@users)
     static DatabaseManagerSwing refForFontDialogSwing;
@@ -249,6 +249,7 @@ implements ActionListener, WindowListener, KeyListener {
         new JCheckBoxMenuItem(AUTOREFRESH_BOX_TEXT);
     JCheckBoxMenuItem boxTooltips = new JCheckBoxMenuItem(SHOWTIPS_BOX_TEXT);
     JCheckBoxMenuItem boxRowCounts = new JCheckBoxMenuItem(ROWCOUNTS_BOX_TEXT); 
+    JCheckBoxMenuItem boxShowGrid = new JCheckBoxMenuItem(GRID_BOX_TEXT);
     JCheckBoxMenuItem boxShowSys = new JCheckBoxMenuItem(SHOWSYS_BOX_TEXT); 
     // Consider adding GTK and Plaf L&Fs.
     JRadioButtonMenuItem rbNativeLF =
@@ -267,6 +268,8 @@ implements ActionListener, WindowListener, KeyListener {
     static private final String SHOWTIPS_BOX_TEXT    = "Show Tooltips";
     static private final String ROWCOUNTS_BOX_TEXT    = "Show row counts";
     static private final String SHOWSYS_BOX_TEXT    = "Show system tables";
+    static private final String GRID_BOX_TEXT       =
+            "Show results in Grid (a.o.t. Text)";
 
     // variables to hold the default cursors for these top level swing objects
     // so we can restore them when we exit our thread
@@ -526,7 +529,7 @@ implements ActionListener, WindowListener, KeyListener {
 
         Object[] vitems = {
             "RRefresh Tree", boxAutoRefresh, "--", boxRowCounts, boxShowSys,
-            boxShowSchemas, "--", "GResults in Grid", "TResults in Text"
+            boxShowSchemas, boxShowGrid
         };
 
         addMenu(bar, "View", vitems);
@@ -550,6 +553,7 @@ implements ActionListener, WindowListener, KeyListener {
         lfGroup.add(rbJavaLF);
         lfGroup.add(rbMotifLF);
         boxShowSchemas.setSelected(showSchemas);
+        boxShowGrid.setSelected(gridFormat);
         boxAutoRefresh.setSelected(autoRefresh);
         rbNativeLF.setActionCommand("LFMODE:" + CommonSwing.Native);
         rbJavaLF.setActionCommand("LFMODE:" + CommonSwing.Java);
@@ -574,6 +578,8 @@ implements ActionListener, WindowListener, KeyListener {
             boxLogging,
             "Shows current JDBC DriverManager logging mode.  Click to change");
         tipMap.put(boxShowSys, "Show system tables in table tree to the left");
+        tipMap.put(boxShowGrid,
+                "Show query results in grid (in text if off)");
 
         Object[] soptions = {
 
@@ -785,8 +791,9 @@ implements ActionListener, WindowListener, KeyListener {
         } else if (s.equals("Connect...")) {
             connect(ConnectionDialogSwing.createConnection(fMain, "Connect"));
             refreshTree();
-        } else if (s.equals("Results in Grid")) {
-            setResultsInGrid();
+        } else if (s.equals(GRID_BOX_TEXT)) {
+            gridFormat = boxShowGrid.isSelected();
+            displayResults();
         } else if (s.equals("Open Script...")) {
             JFileChooser f = new JFileChooser(".");
 
@@ -858,8 +865,6 @@ implements ActionListener, WindowListener, KeyListener {
                                                     txtResult.getText());
                 }
             }
-        } else if (s.equals("Results in Text")) {
-            setResultsInText();
         } else if (s.equals(SHOWSYS_BOX_TEXT)) {
             showSys = boxShowSys.isSelected();
 
@@ -965,10 +970,15 @@ implements ActionListener, WindowListener, KeyListener {
         }
     }
 
+    private void displayResults() {
+        if (gridFormat) {
+            setResultsInGrid();
+        } else {
+            setResultsInText();
+        }
+    }
+
     private void setResultsInGrid() {
-
-        iResult = 0;
-
         pResult.removeAll();
         pResult.add(gScrollPane, BorderLayout.CENTER);
         pResult.doLayout();
@@ -977,9 +987,6 @@ implements ActionListener, WindowListener, KeyListener {
     }
 
     private void setResultsInText() {
-
-        iResult = 1;
-
         pResult.removeAll();
         pResult.add(txtResultScroll, BorderLayout.CENTER);
         pResult.doLayout();
@@ -1187,7 +1194,7 @@ implements ActionListener, WindowListener, KeyListener {
 
     private void updateResult() {
 
-        if (iResult == 0) {
+        if (gridFormat) {
 
             // in case 'help' has removed the grid
             if (bHelp) {
@@ -1857,13 +1864,13 @@ implements ActionListener, WindowListener, KeyListener {
             return;
         }
 
-        if (pResult != null && iResult == 0) {
+        if (pResult != null && gridFormat) {
             pResult.removeAll();
         }
 
         CommonSwing.setSwingLAF(fMain, newLAF);
 
-        if (pResult != null && iResult == 0) {
+        if (pResult != null && gridFormat) {
             setResultsInGrid();
         }
 
