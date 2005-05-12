@@ -182,9 +182,9 @@ implements ActionListener, WindowListener, KeyListener {
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.sourceforge.net.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.36 $";
+        + "problem reports or help requests:  $Revision: 1.37 $";
     private static final String ABOUT_TEXT =
-        "$Revision: 1.36 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.37 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2000-2005, The HSQL Development Group.\n"
         + "http://hsqldb.sourceforge.net\n\n\n"
@@ -234,7 +234,7 @@ implements ActionListener, WindowListener, KeyListener {
     String                      currentLAF = null;
     JPanel                      pStatus;
     static JRadioButton         iReadyStatus;
-    JRadioButtonMenuItem        radAllSchemas =
+    JRadioButtonMenuItem        rbAllSchemas =
                                 new JRadioButtonMenuItem("*");
     JMenuItem                   mitemAbout = new JMenuItem("About", 'A');
     JMenuItem                   mitemHelp  = new JMenuItem("Help", 'H');
@@ -521,7 +521,7 @@ implements ActionListener, WindowListener, KeyListener {
 
         // used shortcuts: CERGTSIUDOLM
         String[] fitems = {
-            "-Connect...", "--", "-Open Script...", "-Save Script...",
+            "-Connect...", "--", "OOpen Script...", "-Save Script...",
             "-Save Result...", "--", "-Exit"
         };
 
@@ -544,6 +544,7 @@ implements ActionListener, WindowListener, KeyListener {
         addMenu(bar, "Command", sitems);
 
         mRecent = new JMenu("Recent");
+        mRecent.setMnemonic(KeyEvent.VK_R);
 
         bar.add(mRecent);
 
@@ -554,16 +555,18 @@ implements ActionListener, WindowListener, KeyListener {
         lfGroup.add(rbMotifLF);
         boxShowSchemas.setSelected(showSchemas);
         boxShowGrid.setSelected(gridFormat);
+        boxShowGrid.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G,
+                Event.CTRL_MASK));
         boxAutoRefresh.setSelected(autoRefresh);
         rbNativeLF.setActionCommand("LFMODE:" + CommonSwing.Native);
         rbJavaLF.setActionCommand("LFMODE:" + CommonSwing.Java);
         rbMotifLF.setActionCommand("LFMODE:" + CommonSwing.Motif);
         tipMap.put(mitemUpdateSchemas, "Refresh the schema list in this menu");
-        tipMap.put(radAllSchemas, "Display items in all schemas");
+        tipMap.put(rbAllSchemas, "Display items in all schemas");
         tipMap.put(mitemAbout, "Display product information");
         tipMap.put(mitemHelp, "Display advice for obtaining help");
-        tipMap.put(
-            boxAutoRefresh, "Refresh tree (and schema list) automatically"
+        tipMap.put(boxAutoRefresh,
+                "Refresh tree (and schema list) automatically"
                     + "when YOU modify database objects");
         tipMap.put(boxShowSchemas,
                    "Display object names in tree like schemaname.basename");
@@ -571,21 +574,34 @@ implements ActionListener, WindowListener, KeyListener {
                    "Set Look and Feel to Native for your platform");
         tipMap.put(rbJavaLF, "Set Look and Feel to Java");
         tipMap.put(rbMotifLF, "Set Look and Feel to Motif");
-        boxTooltips.setToolTipText("Display tooltips (hover text)");
+        boxTooltips.setToolTipText("Display tooltips (hover text), like this");
         tipMap.put(boxAutoCommit,
                    "Shows current Auto-commit mode.  Click to change");
-        tipMap.put(
-            boxLogging,
+        tipMap.put(boxLogging,
             "Shows current JDBC DriverManager logging mode.  Click to change");
         tipMap.put(boxShowSys, "Show system tables in table tree to the left");
         tipMap.put(boxShowGrid,
                 "Show query results in grid (in text if off)");
+        tipMap.put(boxRowCounts,
+                "Show row counts with table names in tree");
+        boxAutoRefresh.setMnemonic(KeyEvent.VK_C);
+        boxShowSchemas.setMnemonic(KeyEvent.VK_Y);
+        boxAutoCommit.setMnemonic(KeyEvent.VK_A);
+        boxShowSys.setMnemonic(KeyEvent.VK_Y);
+        boxShowGrid.setMnemonic(KeyEvent.VK_G);
+        boxRowCounts.setMnemonic(KeyEvent.VK_C);
+        boxLogging.setMnemonic(KeyEvent.VK_L);
+        rbAllSchemas.setMnemonic(KeyEvent.VK_ASTERISK);
+        rbNativeLF.setMnemonic(KeyEvent.VK_N);
+        rbJavaLF.setMnemonic(KeyEvent.VK_J);
+        rbMotifLF.setMnemonic(KeyEvent.VK_M);
+        mitemUpdateSchemas.setMnemonic(KeyEvent.VK_U);
 
         Object[] soptions = {
 
             // Added: (weconsultants@users) New menu options
             rbNativeLF, rbJavaLF, rbMotifLF, "--", "-Set Fonts", "--",
-            boxAutoCommit, "OCommit",
+            boxAutoCommit, "CCommit",
             "LRollback", "--", "-Disable MaxRows", "-Set MaxRows to 100",
             "--", boxLogging, "--", "-Insert test data"
         };
@@ -598,18 +614,18 @@ implements ActionListener, WindowListener, KeyListener {
 
         addMenu(bar, "Tools", stools);
 
-        mnuSchemas.setMnemonic(java.awt.event.KeyEvent.VK_S);
+        mnuSchemas.setMnemonic(KeyEvent.VK_S);
         bar.add(mnuSchemas);
 
         JMenu mnuHelp = new JMenu("Help");
 
-        mnuHelp.setMnemonic(java.awt.event.KeyEvent.VK_H);
+        mnuHelp.setMnemonic(KeyEvent.VK_H);
         mnuHelp.add(mitemAbout);
         mnuHelp.add(mitemHelp);
         mnuHelp.add(boxTooltips);
-        radAllSchemas.addActionListener(schemaListListener);
+        rbAllSchemas.addActionListener(schemaListListener);
         // May be illegal:
-        radAllSchemas.setActionCommand(null);
+        rbAllSchemas.setActionCommand(null);
         mitemUpdateSchemas.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent actionevent) {
@@ -681,6 +697,7 @@ implements ActionListener, WindowListener, KeyListener {
     private void addMenu(JMenuBar b, String name, Object[] items) {
 
         JMenu menu = new JMenu(name);
+        menu.setMnemonic(name.charAt(0));
 
         addMenuItems(menu, items);
         b.add(menu);
@@ -1914,9 +1931,9 @@ implements ActionListener, WindowListener, KeyListener {
             CommonSwing.errorMessage(se);
         }
         mnuSchemas.removeAll();
-        radAllSchemas.setSelected(schemaFilter == null);
-        group.add(radAllSchemas);
-        mnuSchemas.add(radAllSchemas);
+        rbAllSchemas.setSelected(schemaFilter == null);
+        group.add(rbAllSchemas);
+        mnuSchemas.add(rbAllSchemas);
         String s;
         JRadioButtonMenuItem radioButton;
         for (int i = 0; i < list.size(); i++) {
