@@ -182,9 +182,9 @@ implements ActionListener, WindowListener, KeyListener {
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.sourceforge.net.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.33 $";
+        + "problem reports or help requests:  $Revision: 1.35 $";
     private static final String ABOUT_TEXT =
-        "$Revision: 1.33 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.35 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2000-2005, The HSQL Development Group.\n"
         + "http://hsqldb.sourceforge.net\n\n\n"
@@ -229,7 +229,7 @@ implements ActionListener, WindowListener, KeyListener {
 
     // Added: (weconsultants@users)
     static DatabaseManagerSwing refForFontDialogSwing;
-    boolean                     displayRowCounts;
+    boolean                     displayRowCounts = false;
     boolean                     showSys = false;
     String                      currentLAF = null;
     JPanel                      pStatus;
@@ -1634,8 +1634,15 @@ implements ActionListener, WindowListener, KeyListener {
                 String name   = (String) tables.elementAt(i);
                 schema = (String) schemas.elementAt(i);
 
+                String displayedName =
+                        ((schema == null || !showSchemas)
+                                ? "" : (schema + '.'))
+                        + name
+                        + (displayRowCounts ? (", " 
+                                    + DECFMT.format(rowCounts[i])) : "");
+
                 // weconsul@ptd.net Add rowCounts if needed.
-                tableNode = makeNode(name, rootNode);
+                tableNode = makeNode(displayedName, rootNode); 
 
                 ResultSet col = dMeta.getColumns(null, schema, name, null);
 
