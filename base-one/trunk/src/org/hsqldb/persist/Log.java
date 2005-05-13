@@ -362,9 +362,8 @@ public class Log {
      */
     boolean forceDefrag() {
 
-        long megas =
-            properties.getIntegerProperty(HsqlDatabaseProperties.DEFRAG_LIMIT,
-                                          200);
+        long megas = properties.getIntegerProperty(
+            HsqlDatabaseProperties.hsqldb_defrag_limit, 200);
         long defraglimit = megas * 1024 * 1024;
 
         return cache.freeBlocks.getLostBlocksSize() > defraglimit;

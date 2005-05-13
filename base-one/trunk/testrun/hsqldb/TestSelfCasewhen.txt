@@ -1,7 +1,7 @@
 -- TESTS FOR CASE AND SIMILAR OPERATIONS
 --
 drop table testCase if exists;
-create table testCase(id integer, data varchar, filler varchar);
+create table testCase(id integer, data varchar(10), filler varchar(10));
 insert into testCase values(100,'xxxx',null);
 insert into testCase values(200,'yyyy',null);
 /*u1*/insert into testCase values(300,null,null);

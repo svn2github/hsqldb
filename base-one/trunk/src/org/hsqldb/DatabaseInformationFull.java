@@ -702,6 +702,12 @@ extends org.hsqldb.DatabaseInformationMain {
         row[1] = String.valueOf(session.getLastIdentity());
 
         t.insertSys(row);
+
+        row    = t.getEmptyRowData();
+        row[0] = "SCHEMA";
+        row[1] = String.valueOf(session.getSchemaName(null));
+
+        t.insertSys(row);
         t.setDataReadOnly(true);
 
         return t;
@@ -734,13 +740,11 @@ extends org.hsqldb.DatabaseInformationMain {
      *     <LI>hsqldb.catalogs - whether to report the database catalog (database uri)
      *     <LI>hsqldb.compatible_version -
      *     <LI>hsqldb.files_readonly - whether the database is in files_readonly mode
-     *     <LI>hsqldb.first_identity - the default first identity value
      *     <LI>hsqldb.gc_interval - # new records forcing gc ({0|NULL}=>never)
      *     <LI>hsqldb.max_nio_scale - scale factor for cache nio mapped buffers
      *     <LI>hsqldb.nio_data_file - whether cache uses nio mapped buffers
      *     <LI>hsqldb.original_version -
-     *     <LI>hsqldb.schemas - whether to report synthetic schema values for compatibility
-     *     <LI>sql.enforce_size - column length specifications enforced (truncate/pad)?
+     *     <LI>sql.enforce_sql_size - column length specifications enforced
      *     <LI>sql.enforce_strict_size - column length specifications enforced strictly (raise exception on overflow)?
      *     <LI>textdb.all_quoted - default policy regarding whether to quote all character field values
      *     <LI>textdb.cache_scale - base-2 exponent scaling allowable cache row count
@@ -751,7 +755,7 @@ extends org.hsqldb.DatabaseInformationMain {
      *     <LI>textdb.lvs - default long varchar field separator
      *     <LI>textdb.ignore_first - default policy regarding whether to ignore the first line
      *     <LI>textdb.quoted - default policy regarding treatement character field values that _may_ require quoting
-     *     <LI>IGNORECASE - currently ignoring case in character comparisons?
+     *     <LI>IGNORECASE - create table VARCHAR_IGNORECASE?
      *     <LI>LOGSIZSE - # bytes to which REDO log grows before auto-checkpoint
      *     <LI>REFERENTIAL_INTEGITY - currently enforcing referential integrity?
      *     <LI>SCRIPTFORMAT - 0 : TEXT, 1 : BINARY, ...
@@ -787,18 +791,10 @@ extends org.hsqldb.DatabaseInformationMain {
         // calculated column values
         String scope;
         String nameSpace;
-        String name;
-        Object value;
 
         // intermediate holders
-        Method[]       methods;
-        Class          returnType;
-        Method         method;
-        Object[]       emptyParms;
-        Object[]       row;
-        Result         r;
-        HsqlProperties props;
-        Log            log;
+        Object[]               row;
+        HsqlDatabaseProperties props;
 
         // column number mappings
         final int iscope = 0;
@@ -813,259 +809,53 @@ extends org.hsqldb.DatabaseInformationMain {
         props     = database.getProperties();
         nameSpace = "database.properties";
 
-        // hsqldb.catalogs
-        row         = t.getEmptyRowData();
-        row[iscope] = scope;
-        row[ins]    = nameSpace;
-        row[iname]  = "hsqldb.catalogs";
-        row[ivalue] = props.getProperty("hsqldb.catalogs", "false");
-        row[iclass] = "boolean";
+        // boolean properties
+        Iterator it = props.getBooleanPropertyNames().iterator();
 
-        t.insertSys(row);
+        while (it.hasNext()) {
+            String name = (String) it.next();
 
-        // hsqldb.schemas
-        row         = t.getEmptyRowData();
-        row[iscope] = scope;
-        row[ins]    = nameSpace;
-        row[iname]  = "hsqldb.schemas";
-        row[ivalue] = props.getProperty("hsqldb.schemas", "false");
-        row[iclass] = "boolean";
+            row         = t.getEmptyRowData();
+            row[iscope] = scope;
+            row[ins]    = nameSpace;
+            row[iname]  = name;
+            row[ivalue] = props.getProperty(name, "false");
+            row[iclass] = "boolean";
 
-        t.insertSys(row);
+            t.insertSys(row);
+        }
 
-        // sql.enforce_size
-        row         = t.getEmptyRowData();
-        row[iscope] = scope;
-        row[ins]    = nameSpace;
-        row[iname]  = "sql.enforce_size";
-        row[ivalue] = props.getProperty("sql.enforce_size", "false");
-        row[iclass] = "boolean";
+        // integral properties
+        it = props.getIntegralPropertyNames().iterator();
 
-        t.insertSys(row);
+        while (it.hasNext()) {
+            String name = (String) it.next();
 
-        // sql.enforce_strict_size
-        row         = t.getEmptyRowData();
-        row[iscope] = scope;
-        row[ins]    = nameSpace;
-        row[iname]  = "sql.enforce_strict_size";
-        row[ivalue] = props.getProperty("sql.enforce_strict_size", "false");
-        row[iclass] = "boolean";
+            row         = t.getEmptyRowData();
+            row[iscope] = scope;
+            row[ins]    = nameSpace;
+            row[iname]  = name;
+            row[ivalue] = props.getProperty(name, "0");
+            row[iclass] = "int";
 
-        t.insertSys(row);
+            t.insertSys(row);
+        }
 
-        // hsqldb.files_readonly
-        row         = t.getEmptyRowData();
-        row[iscope] = scope;
-        row[ins]    = nameSpace;
-        row[iname]  = "hsqldb.files_readonly";
-        row[ivalue] = props.getProperty("hsqldb.files_readonly", "false");
-        row[iclass] = "boolean";
+        // integral properties
+        it = props.getStringPropertyNames().iterator();
 
-        t.insertSys(row);
+        while (it.hasNext()) {
+            String name = (String) it.next();
 
-        // hsqldb.first_identity
-        row         = t.getEmptyRowData();
-        row[iscope] = scope;
-        row[ins]    = nameSpace;
-        row[iname]  = "hsqldb.first_identity";
-        row[ivalue] = props.getProperty("hsqldb.first_identity", "0");
-        row[iclass] = "int";
+            row         = t.getEmptyRowData();
+            row[iscope] = scope;
+            row[ins]    = nameSpace;
+            row[iname]  = name;
+            row[ivalue] = props.getProperty(name, "");
+            row[iclass] = "java.lang.String";
 
-        t.insertSys(row);
-
-        // hsqldb.compatible_version
-        row         = t.getEmptyRowData();
-        row[iscope] = scope;
-        row[ins]    = nameSpace;
-        row[iname]  = "hsqldb.compatible_version";
-        row[ivalue] = props.getProperty("hsqldb.compatible_version");
-        row[iclass] = "java.lang.String";
-
-        t.insertSys(row);
-
-        // hsqldb.cache_version
-        row         = t.getEmptyRowData();
-        row[iscope] = scope;
-        row[ins]    = nameSpace;
-        row[iname]  = HsqlDatabaseProperties.CACHE_VERSION;
-        row[ivalue] = props.getProperty(HsqlDatabaseProperties.CACHE_VERSION);
-        row[iclass] = "java.lang.String";
-
-        t.insertSys(row);
-
-        // hsqldb.original_version
-        row         = t.getEmptyRowData();
-        row[iscope] = scope;
-        row[ins]    = nameSpace;
-        row[iname]  = "hsqldb.original_version";
-        row[ivalue] = props.getProperty("hsqldb.original_version");
-        row[iclass] = "java.lang.String";
-
-        t.insertSys(row);
-
-        // hsqldb.cache_scale
-        row         = t.getEmptyRowData();
-        row[iscope] = scope;
-        row[ins]    = nameSpace;
-        row[iname]  = "hsqldb.cache_scale";
-        row[ivalue] = props.getProperty("hsqldb.cache_scale");
-        row[iclass] = "int";
-
-        t.insertSys(row);
-
-        // hsqldb.cache_file_scale
-        row         = t.getEmptyRowData();
-        row[iscope] = scope;
-        row[ins]    = nameSpace;
-        row[iname]  = HsqlDatabaseProperties.CACHE_FILE_SCALE;
-        row[ivalue] =
-            props.getProperty(HsqlDatabaseProperties.CACHE_FILE_SCALE);
-        row[iclass] = "int";
-
-        t.insertSys(row);
-
-        // hsqldb.cache_size_scale
-        row         = t.getEmptyRowData();
-        row[iscope] = scope;
-        row[ins]    = nameSpace;
-        row[iname]  = "hsqldb.cache_size_scale";
-        row[ivalue] = props.getProperty("hsqldb.cache_size_scale");
-        row[iclass] = "int";
-
-        t.insertSys(row);
-
-        // hsqldb.max_nio_scale
-        row         = t.getEmptyRowData();
-        row[iscope] = scope;
-        row[ins]    = nameSpace;
-        row[iname]  = "hsqldb.max_nio_scale";
-        row[ivalue] = props.getProperty("hsqldb.max_nio_scale");
-        row[iclass] = "int";
-
-        t.insertSys(row);
-
-        // hsqldb.nio_data_file
-        row         = t.getEmptyRowData();
-        row[iscope] = scope;
-        row[ins]    = nameSpace;
-        row[iname]  = "hsqldb.nio_data_file";
-        row[ivalue] = props.getProperty("hsqldb.nio_data_file");
-        row[iclass] = "boolean";
-
-        t.insertSys(row);
-
-        // textdb.all_quoted
-        row         = t.getEmptyRowData();
-        row[iscope] = scope;
-        row[ins]    = nameSpace;
-        row[iname]  = "textdb.all_quoted";
-        row[ivalue] = props.getProperty("textdb.all_quoted", "false");
-        row[iclass] = "boolean";
-
-        t.insertSys(row);
-
-        // textdb.cache_scale
-        row         = t.getEmptyRowData();
-        row[iscope] = scope;
-        row[ins]    = nameSpace;
-        row[iname]  = "textdb.cache_scale";
-        row[ivalue] = props.getProperty("textdb.cache_scale", "10");
-        row[iclass] = "int";
-
-        t.insertSys(row);
-
-        // textdb.cache_size_scale
-        row         = t.getEmptyRowData();
-        row[iscope] = scope;
-        row[ins]    = nameSpace;
-        row[iname]  = "textdb.cache_size_scale";
-        row[ivalue] = props.getProperty("textdb.cache_size_scale", "12");
-        row[iclass] = "int";
-
-        t.insertSys(row);
-
-        // textdb.ignore_first
-        row         = t.getEmptyRowData();
-        row[iscope] = scope;
-        row[ins]    = nameSpace;
-        row[iname]  = "textdb.ignore_first";
-        row[ivalue] = props.getProperty("textdb.ignore_first", "false");
-        row[iclass] = "boolean";
-
-        t.insertSys(row);
-
-        // textdb.quoted
-        row         = t.getEmptyRowData();
-        row[iscope] = scope;
-        row[ins]    = nameSpace;
-        row[iname]  = "textdb.quoted";
-        row[ivalue] = props.getProperty("textdb.quoted", "true");
-        row[iclass] = "boolean";
-
-        t.insertSys(row);
-
-        // textdb.fs
-        row         = t.getEmptyRowData();
-        row[iscope] = scope;
-        row[ins]    = nameSpace;
-        row[iname]  = "textdb.fs";
-        row[ivalue] = props.getProperty("textdb.fs", ",");
-        row[iclass] = "java.lang.String";
-
-        // textdb.vs
-        row         = t.getEmptyRowData();
-        row[iscope] = scope;
-        row[ins]    = nameSpace;
-        row[iname]  = "textdb.vs";
-        row[ivalue] = props.getProperty("textdb.vs", ",");
-        row[iclass] = "java.lang.String";
-
-        t.insertSys(row);
-
-        // textdb.lvs
-        row         = t.getEmptyRowData();
-        row[iscope] = scope;
-        row[ins]    = nameSpace;
-        row[iname]  = "textdb.lvs";
-        row[ivalue] = props.getProperty("textdb.lvs", ",");
-        row[iclass] = "java.lang.String";
-
-        t.insertSys(row);
-
-        // textdb.encoding
-        row         = t.getEmptyRowData();
-        row[iscope] = scope;
-        row[ins]    = nameSpace;
-        row[iname]  = "textdb.encoding";
-        row[ivalue] = props.getProperty("textdb.encoding", "ASCII");
-        row[iclass] = "java.lang.String";
-
-        t.insertSys(row);
-
-        // hsqldb.gc_interval
-        row         = t.getEmptyRowData();
-        row[iscope] = scope;
-        row[ins]    = nameSpace;
-        row[iname]  = "hsqldb.gc_interval";
-        row[ivalue] = props.getProperty("hsqldb.gc_interval", "0");
-        row[iclass] = "int";
-
-        t.insertSys(row);
-
-        // Now get a snapshot of the properties that may change over
-        // the lifetime of the session
-        scope     = "TRANSACTION";
-        nameSpace = "org.hsqldb.Database";
-
-        // log size
-        row         = t.getEmptyRowData();
-        row[iscope] = scope;
-        row[ins]    = nameSpace;
-        row[iname]  = "LOGSIZE";
-        row[ivalue] = "" + database.logger.getLogSize();
-        row[iclass] = "int";
-
-        t.insertSys(row);
+            t.insertSys(row);
+        }
 
         row         = t.getEmptyRowData();
         row[iscope] = scope;
@@ -1116,11 +906,17 @@ extends org.hsqldb.DatabaseInformationMain {
 
         // debug
         // oj@openoffice.org
+        int appLogLevel = 0;
+
+        if (database.logger.appLog != null) {
+            appLogLevel = database.logger.appLog.getLevel();
+        }
+
         row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
         row[iname]  = "hsqldb.applog";
-        row[ivalue] = "" + database.logger.appLog.getLevel();
+        row[ivalue] = String.valueOf(appLogLevel);
         row[iclass] = "int";
 
         t.insertSys(row);
@@ -1146,6 +942,7 @@ extends org.hsqldb.DatabaseInformationMain {
      * MAXROWS            INTEGER   session's MAXROWS setting
      * LAST_IDENTITY      INTEGER   last identity value used by this session
      * TRANSACTION_SIZE   INTEGER   # of undo items in current transaction
+     * SCHEMA             VARCHAR   current schema for session
      * </pre> <p>
      *
      * @return a <code>Table</code> object describing all visible
@@ -1170,6 +967,7 @@ extends org.hsqldb.DatabaseInformationMain {
             // Note: some sessions may have a NULL LAST_IDENTITY value
             addColumn(t, "LAST_IDENTITY", Types.BIGINT);
             addColumn(t, "TRANSACTION_SIZE", Types.INTEGER, false);
+            addColumn(t, "SCHEMA", Types.VARCHAR, false);
 
             // order:  SESSION_ID
             // true primary key
@@ -1193,6 +991,7 @@ extends org.hsqldb.DatabaseInformationMain {
         final int imaxrows  = 6;
         final int ilast_id  = 7;
         final int it_size   = 8;
+        final int it_schema = 9;
 
         // Initialisation
         sessions = ns.listVisibleSessions(session);
@@ -1210,7 +1009,8 @@ extends org.hsqldb.DatabaseInformationMain {
             row[imaxrows]  = ValuePool.getInt(s.getSQLMaxRows());
             row[ilast_id] =
                 ValuePool.getLong(s.getLastIdentity().longValue());
-            row[it_size] = ValuePool.getInt(s.getTransactionSize());
+            row[it_size]   = ValuePool.getInt(s.getTransactionSize());
+            row[it_schema] = s.getSchemaName(null);
 
             t.insertSys(row);
         }

@@ -327,8 +327,10 @@ implements ActionListener, ItemListener {
                 dispose();
             } catch (SQLException e) {
                 mConnection = null;
+
                 CommonSwing.errorMessage(e, true);
             } catch (Exception e) {
+
                 // Added: (weconsultants@users)
                 CommonSwing.errorMessage(e);
             }
@@ -346,7 +348,6 @@ implements ActionListener, ItemListener {
                 mPassword.setText(setting.getPassword());
             }
         } else if (s.equals("ConnectCancel")) {
-
             dispose();
 
             // (weconsultants@users) New code

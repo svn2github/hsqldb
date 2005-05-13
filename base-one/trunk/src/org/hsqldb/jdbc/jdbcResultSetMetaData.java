@@ -776,22 +776,14 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * <div class="ReleaseSpecificDocumentation">
      * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Up to and including HSQLDB 1.7.1, this method always returned 0,
-     * which was intended to convey that the precision was <em>unknown</em>,
-     * </em>undefined</em> or that <em>no applicable limit</em> was
-     * imposed. <p>
-     *
-     * Starting with 1.7.2, HSQLDB reports the maximum length or
-     * precision intrinsic to the data type of each result set column. <p>
-     *
-     * This method does not yet make any attempt to report the declared
+     * Starting with 1.8.0, HSQLDB reports the the declared
      * length or precision specifiers for table columns (if they are defined,
      * which up to 1.7.2 is not a requirement in DDL), as these values may or
      * may not be enforced, depending on the value of the database
      * property: <p>
      *
      * <pre>
-     * sql.enforce_size
+     * sql.enforce_sql_size
      * </pre>
      *
      * Because the property may change from one instantiation of a Database
@@ -826,18 +818,13 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * <div class="ReleaseSpecificDocumentation">
      * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Up to and including HSQLDB 1.7.2, this method always returns 0
-     * (which is the actual scale for integral types and is to be interpreted
-     * as <em>unknown</em> or <em>not applicable</em> for all other
-     * types). <p>
+     * Starting with 1.8.0, HSQLDB reports the declared
+     * scale for table columns depending on the value of the database
+     * property: <p>
      *
-     * HSQLDB currently implements DECIMAL and NUMERIC--the only HSQLDB
-     * types to which this value would apply, if supported--as a thin wrap
-     * of BigDecimal and thus does not presently ever enforce scale
-     * declarations.  Those wishing to determine the declared--intended, but
-     * not enforced--scale of a DECIMAL and NUMERIC table column should
-     * instead consult the DatabaseMetaData.getColumns() result using the
-     * required filter parameters. <p>
+     * <pre>
+     * sql.enforce_sql_size
+     * </pre>
      *
      * </div>
      * <!-- end release-specific documentation -->

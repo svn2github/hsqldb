@@ -166,6 +166,7 @@ class CommonSwing {
                                      JOptionPane.DEFAULT_OPTION,
                                      JOptionPane.ERROR_MESSAGE, null,
                                      options, options[0]);
+
         if (!quiet) {
             exceptionMsg.printStackTrace();
         }

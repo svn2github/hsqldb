@@ -1,6 +1,6 @@
 -- CREATE AND INITIALIZE CACHED TABLE OBJECTS
 
--- This CREATES the schema-specific objects to be used for 
+-- This CREATES the schema-specific objects to be used for
 -- schema-specific persistence tests.
 
 
@@ -15,7 +15,7 @@ DROP TABLE tblj1 IF exists;
 /*u0*/CREATE CACHED TABLE ctblt1 (i int);
 /*u0*/CREATE CACHED TABLE public.ctblt2 (i int);
 /*u0*/CREATE CACHED TABLE ctblt3 (i int);
-/*u0*/CREATE CACHED TABLE tblj1 (i int, vc varchar);  -- For testing Joins
+/*u0*/CREATE CACHED TABLE tblj1 (i int, vc varchar(10));  -- For testing Joins
 /*e*/CREATE CACHED TABLE information_schema.ctblt101 (i int);
 /*e*/CREATE CACHED TABLE ctblt1 (i int); -- Create existing object
 /*e*/CREATE CACHED TABLE public.ctblt1 (i int); -- Create existing object

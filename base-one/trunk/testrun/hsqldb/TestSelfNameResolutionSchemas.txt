@@ -18,7 +18,7 @@ DROP TABLE system_users IF exists;
 /*u0*/CREATE TABLE t1 (i int);
 /*u0*/CREATE TABLE public.t2 (i int);
 /*u0*/CREATE TABLE t3 (i int);
-/*u0*/CREATE TABLE j1 (i int, vc varchar);
+/*u0*/CREATE TABLE j1 (i int, vc varchar(10));
 /*u0*/CREATE CACHED TABLE public.t5 (i int);
 /*e*/CREATE TABLE information_schema.t101 (i int);
 /*e*/CREATE TABLE t1 (i int); -- Create existing object
@@ -176,7 +176,7 @@ DROP TABLE t1 IF exists;
 DROP TABLE t2 IF exists;
 DROP TABLE j1 IF exists;
 CREATE TABLE t1 (i int);
-CREATE TABLE j1 (i int, vc varchar);
+CREATE TABLE j1 (i int, vc varchar(10));
 INSERT INTO t1 values(0);
 INSERT INTO t1 values(1);
 INSERT INTO j1 values(1, 'one');

@@ -5,7 +5,7 @@
 -- bug #733940
 -- NOT NULL enforcement
 -- IDENTITY can be set to NULL to be regenerated but other NOT NULL columns can't
-CREATE CACHED TABLE THEME (idTheme integer NOT NULL IDENTITY,libelle VARCHAR NOT NULL,description VARCHAR);
+CREATE CACHED TABLE THEME (idTheme integer NOT NULL IDENTITY,libelle VARCHAR(10) NOT NULL,description VARCHAR(10));
 insert into theme(libelle, description) values('ESSAI', 'ESSAI');
 /*e*/update theme set libelle = null where idtheme = 0;
 /*u1*/update theme set idTheme = null where idtheme = 0;

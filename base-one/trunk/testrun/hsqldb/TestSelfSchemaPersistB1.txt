@@ -202,7 +202,7 @@ SET SCHEMA public;
 /*u0*/CREATE TABLE blaine.xtblt2 (i int);
 SET SCHEMA blaine;
 /*u0*/CREATE TABLE xtblt3 (i int);
-/*u0*/CREATE TABLE xtblj1 (i int, vc varchar);  -- For testing Joins
+/*u0*/CREATE TABLE xtblj1 (i int, vc varchar(10));  -- For testing Joins
 /*e*/CREATE TABLE information_schema.xtblt101 (i int);
 /*e*/CREATE TABLE xtblt1 (i int); -- Create existing object
 SET SCHEMA public;
@@ -238,7 +238,7 @@ SET SCHEMA public;
 /*u0*/CREATE CACHED TABLE blaine.xctblt2 (i int);
 SET SCHEMA blaine;
 /*u0*/CREATE CACHED TABLE xctblt3 (i int);
-/*u0*/CREATE CACHED TABLE xtblj1 (i int, vc varchar);  -- For testing Joins
+/*u0*/CREATE CACHED TABLE xtblj1 (i int, vc varchar(10));  -- For testing Joins
 /*e*/CREATE CACHED TABLE information_schema.xctblt101 (i int);
 /*e*/CREATE CACHED TABLE xctblt1 (i int); -- Create existing object
 SET SCHEMA public;
@@ -293,7 +293,7 @@ DROP TABLE xvwt2 IF exists;
 DROP TABLE xvwj1 IF exists;
 DROP TABLE public.pubtbl IF exists;
 CREATE TABLE xvwt1 (i int);
-CREATE TABLE xvwj1 (i int, vc varchar);
+CREATE TABLE xvwj1 (i int, vc varchar(10));
 CREATE TABLE public.pubtbl (i int);
 INSERT INTO public.pubtbl values(0);
 INSERT INTO xvwt1 values(0);
@@ -640,7 +640,7 @@ DROP TABLE xcont18 IF EXISTS;
 DROP TABLE xcont19 IF EXISTS;
 DROP TABLE xcont20 IF EXISTS;
 DROP TABLE xcont101 IF EXISTS;
-CREATE TABLE xconj1(i int, vc varchar, PRIMARY KEY (i));
+CREATE TABLE xconj1(i int, vc varchar(10), PRIMARY KEY (i));
 INSERT INTO xconj1 values(1, 'one');
 -- No "IF EXISTS" allowed with xconstrs., so can't verify they don't exists.
 /*e*/CREATE TABLE other.xcont101 (i int, CONSTRAINT xconuc1 UNIQUE(i));
@@ -697,8 +697,8 @@ SET SCHEMA public;
 
 -- schema definition containing illegal DDL statement
 /*e*/CREATE SCHEMA FELIX AUTHORIZATION DBA
-    CREATE TABLE FELIXT1 (AV1 VARCHAR, BV VARCHAR)
-    CREATE TABLE FELIXT2 (AV2 VARCHAR, BI INTEGER)
+    CREATE TABLE FELIXT1 (AV1 VARCHAR(10), BV VARCHAR(10))
+    CREATE TABLE FELIXT2 (AV2 VARCHAR(10), BI INTEGER)
     CREATE SEQUENCE FELIXS1
     CREATE VIEW FELIXV1 AS SELECT * FROM FELIXT1 JOIN FELIXT2 ON AV1 = AV2
     CREATE VIEW FELIXV2 AS SELECT AV1 AS C1, NEXT VALUE FOR FELIXS1 AS C2 FROM FELIXT1
@@ -708,8 +708,8 @@ SET SCHEMA public;
 
 -- schema definition
 CREATE SCHEMA FELIX AUTHORIZATION DBA
-    CREATE TABLE FELIXT1 (AV1 VARCHAR, BV VARCHAR)
-    CREATE TABLE FELIXT2 (AV2 VARCHAR, BI INTEGER)
+    CREATE TABLE FELIXT1 (AV1 VARCHAR(10), BV VARCHAR(10))
+    CREATE TABLE FELIXT2 (AV2 VARCHAR(10), BI INTEGER)
     CREATE SEQUENCE FELIXS1
     CREATE VIEW FELIXV1 AS SELECT * FROM FELIXT1 JOIN FELIXT2 ON AV1 = AV2
     CREATE VIEW FELIXV2 AS SELECT AV1 AS C1, NEXT VALUE FOR FELIXS1 AS C2 FROM FELIXT1;

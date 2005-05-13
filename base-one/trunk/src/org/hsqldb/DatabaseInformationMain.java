@@ -1798,8 +1798,9 @@ class DatabaseInformationMain extends DatabaseInformation {
      * columns: <p>
      *
      * <pre class="SqlCodeExample">
-     * TABLE_SCHEM   VARCHAR   simple schema name
-     * TABLE_CATALOG VARCHAR   catalog in which schema is defined
+     * TABLE_SCHEM      VARCHAR   simple schema name
+     * TABLE_CATALOG    VARCHAR   catalog in which schema is defined
+     * IS_DEFAULT       BOOLEAN   is the schema the default for new sessions
      * </pre> <p>
      *
      * @return table containing information about schemas defined
@@ -1815,6 +1816,7 @@ class DatabaseInformationMain extends DatabaseInformation {
 
             addColumn(t, "TABLE_SCHEM", Types.VARCHAR, false);    // not null
             addColumn(t, "TABLE_CATALOG", Types.VARCHAR);
+            addColumn(t, "IS_DEFAULT", Types.BOOLEAN);
 
             // order: TABLE_SCHEM
             // true PK, as rows never have null TABLE_SCHEM
@@ -1829,11 +1831,18 @@ class DatabaseInformationMain extends DatabaseInformation {
         // Initialization
         schemas = database.schemaManager.userSchemaNameIterator();
 
+        String defschema = database.schemaManager.getDefaultSchemaName();
+
         // Do it.
         while (schemas.hasNext()) {
-            row    = t.getEmptyRowData();
-            row[0] = schemas.next();
+            row = t.getEmptyRowData();
+
+            String schema = (String) schemas.next();
+
+            row[0] = schema;
             row[1] = ns.getCatalogName(row[0]);
+            row[2] = schema.equals(defschema) ? Boolean.TRUE
+                                              : Boolean.FALSE;
 
             t.insertSys(row);
         }

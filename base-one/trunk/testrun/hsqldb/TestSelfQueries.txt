@@ -53,14 +53,14 @@ alter table TESTTABLE add constraint tt_pk primary key (astring);
 alter table testtable drop column aname;
 /*c1*/select * from testtable where adate = '2003-11-10' and firstNum = 20;
 /*c11*/select * from testtable where adate = '2003-11-10' and thirdNum = 3;
-alter table testtable add column aname char default 'a string' not null;
+alter table testtable add column aname char(10) default 'a string' not null;
 /*c1*/select * from testtable where adate = '2003-11-10' and firstNum = 20;
 /*c11*/select * from testtable where adate = '2003-11-10' and thirdNum = 3;
 /*e*/update testtable set name=null;
 
 -- bug #722443
 DROP TABLE CONFIGUSER IF EXISTS;
-CREATE CACHED TABLE CONFIGUSER(USR_USERID NUMERIC NOT NULL PRIMARY KEY,USR_USERNAME VARCHAR NOT NULL,USR_PASSWORD VARCHAR);
+CREATE CACHED TABLE CONFIGUSER(USR_USERID NUMERIC NOT NULL PRIMARY KEY,USR_USERNAME VARCHAR(10) NOT NULL,USR_PASSWORD VARCHAR(10));
 INSERT INTO CONFIGUSER VALUES(-5,'guest','guest');
 INSERT INTO CONFIGUSER VALUES(-4,'user','user');
 INSERT INTO CONFIGUSER VALUES(-3,'owner','owner');
@@ -94,7 +94,7 @@ CREATE INDEX IDX_USERNAME ON CONFIGUSER(USR_USERNAME);
 --
 -- COUNT(DISTINCT ) when there are no records
 -- bug #718866
-CREATE TABLE IBANX_PERMIT(ID INT, A1 VARCHAR);
+CREATE TABLE IBANX_PERMIT(ID INT, A1 VARCHAR(10));
 /*r0*/SELECT count(distinct A0.ID) FROM IBANX_PERMIT A0;
 --
 -- use of column aliases in the where clause

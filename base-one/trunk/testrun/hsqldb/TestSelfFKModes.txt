@@ -78,13 +78,13 @@ insert into testA(a,b) values(9,3);
 -- MIXED SELF AND FORWARD REFERENCE
 -- UPDATE ISSUE
 CREATE CACHED TABLE GroupSubject (
- description VARCHAR,
+ description VARCHAR(10),
  parent BIGINT,
  admin BIGINT NOT NULL,
  id_ BIGINT,
  UNIQUE ( id_ ));
 CREATE CACHED TABLE UserSubject (
- subjectName VARCHAR NOT NULL,
+ subjectName VARCHAR(10) NOT NULL,
  id_ BIGINT,
  UNIQUE ( id_ ),
  PRIMARY KEY ( subjectName ));

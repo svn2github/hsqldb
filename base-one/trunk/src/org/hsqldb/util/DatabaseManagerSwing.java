@@ -120,6 +120,7 @@ import javax.swing.JOptionPane;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.ArrayList;
+
 import javax.swing.JComponent;
 
 import org.hsqldb.lib.java.JavaSystem;
@@ -166,27 +167,27 @@ import org.hsqldb.lib.java.JavaSystem;
  */
 public class DatabaseManagerSwing extends JApplet
 implements ActionListener, WindowListener, KeyListener {
+
     /*
-     * This is down here because it is an  implementation note, not a 
-     * Javadoc comment! 
+     * This is down here because it is an  implementation note, not a
+     * Javadoc comment!
      * Tue Apr 26 16:38:54 EDT 2005
      * Switched default switch method from "-switch" to "--switch" because
      * "-switch" usage is ambiguous as used here.  Single switches should
      * be reserved for single-letter switches which can be mixed like
      * "-u -r -l" = "-url".  -blaine
-     */ 
-
+     */
     private static final String DEFAULT_RCFILE =
         System.getProperty("user.home") + "/dbmanager.rc";
     private static final String HELP_TEXT =
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.sourceforge.net.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.39 $";
+        + "problem reports or help requests:  $Revision: 1.40 $";
     private static final String ABOUT_TEXT =
-        "$Revision: 1.39 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.40 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
-        + "Copyright (c) 2000-2005, The HSQL Development Group.\n"
+        + "Copyright (c) 2001-2005, The HSQL Development Group.\n"
         + "http://hsqldb.sourceforge.net\n\n\n"
         + "You may use and redistribute according to the HSQLDB\n"
         + "license documented in the source code and at the web\n"
@@ -225,22 +226,20 @@ implements ActionListener, WindowListener, KeyListener {
     JToolBar               jtoolbar;
     private boolean        showSchemas = true;
     private boolean        autoRefresh = true;
-    private boolean        gridFormat = true;
+    private boolean        gridFormat  = true;
 
     // Added: (weconsultants@users)
     static DatabaseManagerSwing refForFontDialogSwing;
     boolean                     displayRowCounts = false;
-    boolean                     showSys = false;
+    boolean                     showSys          = false;
     boolean                     showIndexDetails = true;
-    String                      currentLAF = null;
+    String                      currentLAF       = null;
     JPanel                      pStatus;
     static JButton              iReadyStatus;
-    JRadioButtonMenuItem        rbAllSchemas =
-                                new JRadioButtonMenuItem("*");
-    JMenuItem                   mitemAbout = new JMenuItem("About", 'A');
-    JMenuItem                   mitemHelp  = new JMenuItem("Help", 'H');
-    JMenuItem                   mitemUpdateSchemas  =
-                                new JMenuItem("Update Schemas");
+    JRadioButtonMenuItem        rbAllSchemas = new JRadioButtonMenuItem("*");
+    JMenuItem                   mitemAbout   = new JMenuItem("About", 'A');
+    JMenuItem                   mitemHelp    = new JMenuItem("Help", 'H');
+    JMenuItem mitemUpdateSchemas = new JMenuItem("Update Schemas");
     JCheckBoxMenuItem boxAutoCommit =
         new JCheckBoxMenuItem(AUTOCOMMIT_BOX_TEXT);
     JCheckBoxMenuItem boxLogging = new JCheckBoxMenuItem(LOGGING_BOX_TEXT);
@@ -249,9 +248,11 @@ implements ActionListener, WindowListener, KeyListener {
     JCheckBoxMenuItem boxAutoRefresh =
         new JCheckBoxMenuItem(AUTOREFRESH_BOX_TEXT);
     JCheckBoxMenuItem boxTooltips = new JCheckBoxMenuItem(SHOWTIPS_BOX_TEXT);
-    JCheckBoxMenuItem boxRowCounts = new JCheckBoxMenuItem(ROWCOUNTS_BOX_TEXT); 
+    JCheckBoxMenuItem boxRowCounts =
+        new JCheckBoxMenuItem(ROWCOUNTS_BOX_TEXT);
     JCheckBoxMenuItem boxShowGrid = new JCheckBoxMenuItem(GRID_BOX_TEXT);
-    JCheckBoxMenuItem boxShowSys = new JCheckBoxMenuItem(SHOWSYS_BOX_TEXT); 
+    JCheckBoxMenuItem boxShowSys  = new JCheckBoxMenuItem(SHOWSYS_BOX_TEXT);
+
     // Consider adding GTK and Plaf L&Fs.
     JRadioButtonMenuItem rbNativeLF =
         new JRadioButtonMenuItem("Native Look & Feel");
@@ -261,23 +262,23 @@ implements ActionListener, WindowListener, KeyListener {
         new JRadioButtonMenuItem("Motif Look & Feel");
     JLabel                      jStatusLine;
     static String               READY_STATUS         = "Ready...";
-    static String               BUZY_STATUS       = "Buzy...";
+    static String               BUZY_STATUS          = "Buzy...";
     static private final String AUTOCOMMIT_BOX_TEXT  = "Autocommit mode";
     static private final String LOGGING_BOX_TEXT     = "Logging mode";
     static private final String SHOWSCHEMAS_BOX_TEXT = "Show schemas";
     static private final String AUTOREFRESH_BOX_TEXT = "Auto-refresh tree";
     static private final String SHOWTIPS_BOX_TEXT    = "Show Tooltips";
-    static private final String ROWCOUNTS_BOX_TEXT    = "Show row counts";
-    static private final String SHOWSYS_BOX_TEXT    = "Show system tables";
-    static private final String GRID_BOX_TEXT       =
-            "Show results in Grid (a.o.t. Text)";
+    static private final String ROWCOUNTS_BOX_TEXT   = "Show row counts";
+    static private final String SHOWSYS_BOX_TEXT     = "Show system tables";
+    static private final String GRID_BOX_TEXT =
+        "Show results in Grid (a.o.t. Text)";
 
     // variables to hold the default cursors for these top level swing objects
     // so we can restore them when we exit our thread
-    Cursor  fMainCursor;
-    Cursor  txtCommandCursor;
-    Cursor  txtResultCursor;
-    HashMap tipMap = new HashMap();
+    Cursor        fMainCursor;
+    Cursor        txtCommandCursor;
+    Cursor        txtResultCursor;
+    HashMap       tipMap     = new HashMap();
     private JMenu mnuSchemas = new JMenu("Schemas");
 
     /**
@@ -290,12 +291,12 @@ implements ActionListener, WindowListener, KeyListener {
     //getToolkit().createCustomCursor(CommonSwing.getIcon("SystemCursor"),
     //                                new Point(4, 4), "HourGlass cursor");
     // (ulrivo): variables set by arguments from the commandline
-    static String defDriver   = "org.hsqldb.jdbcDriver";
-    static String defURL      = "jdbc:hsqldb:.";
-    static String defUser     = "sa";
-    static String defPassword = "";
-    static String defScript;
-    static String defDirectory;
+    static String  defDriver   = "org.hsqldb.jdbcDriver";
+    static String  defURL      = "jdbc:hsqldb:.";
+    static String  defUser     = "sa";
+    static String  defPassword = "";
+    static String  defScript;
+    static String  defDirectory;
     private String schemaFilter = null;
 
     public void init() {
@@ -305,10 +306,11 @@ implements ActionListener, WindowListener, KeyListener {
         m.main();
 
         try {
+
             // The connection dialog will be used before the
             // DatabaseManager window is drawn.
-            connect(ConnectionDialogSwing.createConnection(defDriver,
-                    defURL, defUser, defPassword));
+            connect(ConnectionDialogSwing.createConnection(defDriver, defURL,
+                    defUser, defPassword));
             m.setWaiting(m.dummyThread);
             m.insertTestData();
             m.updateAutoCommitBox();
@@ -386,6 +388,7 @@ implements ActionListener, WindowListener, KeyListener {
         Connection c = null;
 
         m.setWaiting(m.dummyThread);
+
         try {
             if (autoConnect && urlidConnect) {
                 throw new IllegalArgumentException(
@@ -402,11 +405,14 @@ implements ActionListener, WindowListener, KeyListener {
                 }
 
                 autoConnect = true;
-                c = (new RCData(new File((rcFile == null) ? DEFAULT_RCFILE
-                                                          : rcFile), urlid).getConnection(
-                                                          null, System.getProperty(
-                                                              "sqlfile.charset"), System.getProperty(
-                                                                  "javax.net.ssl.trustStore")));
+
+                String rcfilepath = (rcFile == null) ? DEFAULT_RCFILE
+                                                     : rcFile;
+                RCData rcdata     = new RCData(new File(rcfilepath), urlid);
+
+                c = rcdata.getConnection(
+                    null, System.getProperty("sqlfile.charset"),
+                    System.getProperty("javax.net.ssl.trustStore"));
             } else {
                 c = ConnectionDialogSwing.createConnection(m.fMain,
                         "Connect");
@@ -459,9 +465,11 @@ implements ActionListener, WindowListener, KeyListener {
             sStatement = cConn.createStatement();
 
             updateAutoCommitBox();
+
             // Workaround for EXTREME SLOWNESS getting this info from O.
-            showIndexDetails = 
-                    (dMeta.getDatabaseProductName().indexOf("Oracle") < 0);
+            showIndexDetails =
+                (dMeta.getDatabaseProductName().indexOf("Oracle") < 0);
+
             refreshTree();
         } catch (SQLException e) {
 
@@ -491,7 +499,6 @@ implements ActionListener, WindowListener, KeyListener {
 
         try {
             DatabaseManagerCommon.createTestTables(sStatement);
-
             txtCommand.setText(
                 DatabaseManagerCommon.createTestData(sStatement));
 
@@ -551,8 +558,8 @@ implements ActionListener, WindowListener, KeyListener {
         addMenu(bar, "Command", sitems);
 
         mRecent = new JMenu("Recent");
-        mRecent.setMnemonic(KeyEvent.VK_R);
 
+        mRecent.setMnemonic(KeyEvent.VK_R);
         bar.add(mRecent);
 
         ButtonGroup lfGroup = new ButtonGroup();
@@ -568,29 +575,32 @@ implements ActionListener, WindowListener, KeyListener {
         rbNativeLF.setActionCommand("LFMODE:" + CommonSwing.Native);
         rbJavaLF.setActionCommand("LFMODE:" + CommonSwing.Java);
         rbMotifLF.setActionCommand("LFMODE:" + CommonSwing.Motif);
-        tipMap.put(mitemUpdateSchemas, "Refresh the schema list in this menu");
+        tipMap.put(mitemUpdateSchemas,
+                   "Refresh the schema list in this menu");
         tipMap.put(rbAllSchemas, "Display items in all schemas");
         tipMap.put(mitemAbout, "Display product information");
         tipMap.put(mitemHelp, "Display advice for obtaining help");
         tipMap.put(boxAutoRefresh,
-                "Refresh tree (and schema list) automatically"
-                    + "when YOU modify database objects");
+                   "Refresh tree (and schema list) automatically"
+                   + "when YOU modify database objects");
         tipMap.put(boxShowSchemas,
                    "Display object names in tree like schemaname.basename");
         tipMap.put(rbNativeLF,
                    "Set Look and Feel to Native for your platform");
         tipMap.put(rbJavaLF, "Set Look and Feel to Java");
         tipMap.put(rbMotifLF, "Set Look and Feel to Motif");
-        boxTooltips.setToolTipText("Display tooltips (hover text), like this");
+        boxTooltips.setToolTipText(
+            "Display tooltips (hover text), like this");
         tipMap.put(boxAutoCommit,
                    "Shows current Auto-commit mode.  Click to change");
-        tipMap.put(boxLogging,
+        tipMap.put(
+            boxLogging,
             "Shows current JDBC DriverManager logging mode.  Click to change");
-        tipMap.put(boxShowSys, "Show system tables in table tree to the left");
+        tipMap.put(boxShowSys,
+                   "Show system tables in table tree to the left");
         tipMap.put(boxShowGrid,
-                "Show query results in grid (in text if off)");
-        tipMap.put(boxRowCounts,
-                "Show row counts with table names in tree");
+                   "Show query results in grid (in text if off)");
+        tipMap.put(boxRowCounts, "Show row counts with table names in tree");
         boxAutoRefresh.setMnemonic(KeyEvent.VK_C);
         boxShowSchemas.setMnemonic(KeyEvent.VK_Y);
         boxAutoCommit.setMnemonic(KeyEvent.VK_A);
@@ -608,9 +618,8 @@ implements ActionListener, WindowListener, KeyListener {
 
             // Added: (weconsultants@users) New menu options
             rbNativeLF, rbJavaLF, rbMotifLF, "--", "-Set Fonts", "--",
-            boxAutoCommit, "CCommit",
-            "LRollback", "--", "-Disable MaxRows", "-Set MaxRows to 100",
-            "--", boxLogging, "--", "-Insert test data"
+            boxAutoCommit, "CCommit", "LRollback", "--", "-Disable MaxRows",
+            "-Set MaxRows to 100", "--", boxLogging, "--", "-Insert test data"
         };
 
         addMenu(bar, "Options", soptions);
@@ -620,7 +629,6 @@ implements ActionListener, WindowListener, KeyListener {
         };
 
         addMenu(bar, "Tools", stools);
-
         mnuSchemas.setMnemonic(KeyEvent.VK_S);
         bar.add(mnuSchemas);
 
@@ -631,6 +639,7 @@ implements ActionListener, WindowListener, KeyListener {
         mnuHelp.add(mitemHelp);
         mnuHelp.add(boxTooltips);
         rbAllSchemas.addActionListener(schemaListListener);
+
         // May be illegal:
         mitemUpdateSchemas.addActionListener(new ActionListener() {
 
@@ -703,8 +712,8 @@ implements ActionListener, WindowListener, KeyListener {
     private void addMenu(JMenuBar b, String name, Object[] items) {
 
         JMenu menu = new JMenu(name);
-        menu.setMnemonic(name.charAt(0));
 
+        menu.setMnemonic(name.charAt(0));
         addMenuItems(menu, items);
         b.add(menu);
     }
@@ -809,15 +818,18 @@ implements ActionListener, WindowListener, KeyListener {
             txtCommand.setText(sRecent[i]);
         } else if (s.equals("Connect...")) {
             Connection newCon = null;
+
             try {
                 setWaiting(dummyThread);
                 ConnectionDialogSwing.createConnection(fMain, "Connect");
             } finally {
                 setWaiting(null);
             }
+
             connect(newCon);
         } else if (s.equals(GRID_BOX_TEXT)) {
             gridFormat = boxShowGrid.isSelected();
+
             displayResults();
         } else if (s.equals("Open Script...")) {
             JFileChooser f = new JFileChooser(".");
@@ -996,6 +1008,7 @@ implements ActionListener, WindowListener, KeyListener {
     }
 
     private void displayResults() {
+
         if (gridFormat) {
             setResultsInGrid();
         } else {
@@ -1004,6 +1017,7 @@ implements ActionListener, WindowListener, KeyListener {
     }
 
     private void setResultsInGrid() {
+
         pResult.removeAll();
         pResult.add(gScrollPane, BorderLayout.CENTER);
         pResult.doLayout();
@@ -1012,6 +1026,7 @@ implements ActionListener, WindowListener, KeyListener {
     }
 
     private void setResultsInText() {
+
         pResult.removeAll();
         pResult.add(txtResultScroll, BorderLayout.CENTER);
         pResult.doLayout();
@@ -1070,14 +1085,16 @@ implements ActionListener, WindowListener, KeyListener {
         txtCommand.setText(ifHuge);
     }
 
-
     private Thread backgroundThread = null;
 
     private void backgroundIt(Thread t) {
+
         if (backgroundThread != null) {
             Toolkit.getDefaultToolkit().beep();
+
             return;
         }
+
         // set Waiting mode here.  Inverse op must be called by final()
         // in the Thread.run() of every background thread.
         setWaiting(t);
@@ -1085,6 +1102,7 @@ implements ActionListener, WindowListener, KeyListener {
     }
 
     public void setWaiting(Thread t) {
+
         backgroundThread = t;
 
         if (backgroundThread == null) {
@@ -1095,7 +1113,6 @@ implements ActionListener, WindowListener, KeyListener {
             txtResult.setCursor(txtResultCursor);
 
             //TODO:  Enable actionButtons
-
             // Added: (weconsultants@users) Changes the buzy status icon
             setStatusLine(false);
         } else {
@@ -1112,20 +1129,21 @@ implements ActionListener, WindowListener, KeyListener {
             txtCommand.setCursor(waitCursor);
             txtResult.setCursor(waitCursor);
 
-
             //TODO:  Disable actionButtons
-
             // Added: (weconsultants@users) Changes the buzy status icon
             setStatusLine(true);
         }
     }
 
     private Thread treeRefreshThread = new Thread() {
+
         public void run() {
+
             try {
                 directRefreshTree();
             } catch (RuntimeException re) {
                 CommonSwing.errorMessage(re);
+
                 throw re;
             } finally {
                 setWaiting(null);
@@ -1140,10 +1158,12 @@ implements ActionListener, WindowListener, KeyListener {
         backgroundIt(new StatementExecThread());
     }
 
-
     protected class StatementExecThread extends Thread {
+
         private String sCmd;
+
         protected StatementExecThread() {
+
             if (4096 <= ifHuge.length()) {
                 sCmd = ifHuge;
             } else {
@@ -1152,6 +1172,7 @@ implements ActionListener, WindowListener, KeyListener {
         }
 
         public void run() {
+
             gResult.clear();
 
             try {
@@ -1166,12 +1187,14 @@ implements ActionListener, WindowListener, KeyListener {
                 System.gc();
             } catch (RuntimeException re) {
                 CommonSwing.errorMessage(re);
+
                 throw re;
             } finally {
                 setWaiting(null);
             }
         }
-    };
+    }
+    ;
 
     private void executeSQL() {
 
@@ -1571,8 +1594,8 @@ implements ActionListener, WindowListener, KeyListener {
 
         // Added: (weconsultants@users)
         jStatusLine = new JLabel();
-        iReadyStatus = new JButton(
-            new ImageIcon(CommonSwing.getIcon("StatusReady")));
+        iReadyStatus =
+            new JButton(new ImageIcon(CommonSwing.getIcon("StatusReady")));
 
         iReadyStatus.setSelectedIcon(
             new ImageIcon(CommonSwing.getIcon("StatusRunning")));
@@ -1602,13 +1625,13 @@ implements ActionListener, WindowListener, KeyListener {
         return node;
     }
 
-    static private final String[]  usertables = {
-            "TABLE", "GLOBAL TEMPORARY", "VIEW", "SYSTEM TABLE"
+    static private final String[] usertables     = {
+        "TABLE", "GLOBAL TEMPORARY", "VIEW", "SYSTEM TABLE"
     };
-    static private final String[]  nonSystables = {
-            "TABLE", "GLOBAL TEMPORARY", "VIEW"
+    static private final String[] nonSystables   = {
+        "TABLE", "GLOBAL TEMPORARY", "VIEW"
     };
-    static private final HashSet oracleSysUsers = new HashSet();
+    static private final HashSet  oracleSysUsers = new HashSet();
 
     static {
         oracleSysUsers.add("SYS");
@@ -1660,9 +1683,10 @@ implements ActionListener, WindowListener, KeyListener {
 
             // get metadata about user tables by building a vector of table names
             ResultSet result = dMeta.getTables(null, null, null,
-                    (showSys ? usertables: nonSystables));
-            Vector    tables     = new Vector();
-            Vector    schemas    = new Vector();
+                                               (showSys ? usertables
+                                                        : nonSystables));
+            Vector tables  = new Vector();
+            Vector schemas = new Vector();
 
             // sqlbob@users Added remarks.
             Vector remarks = new Vector();
@@ -1670,15 +1694,18 @@ implements ActionListener, WindowListener, KeyListener {
 
             while (result.next()) {
                 schema = result.getString(2);
+
                 if ((!showSys)
-                    && dMeta.getDatabaseProductName().indexOf("Oracle") > -1
-                    && oracleSysUsers.contains(schema)) {
+                        && dMeta.getDatabaseProductName().indexOf("Oracle")
+                           > -1 && oracleSysUsers.contains(schema)) {
                     continue;
                 }
+
                 if (schemaFilter == null || schema.equals(schemaFilter)) {
                     schemas.addElement(schema);
                     tables.addElement(result.getString(3));
                     remarks.addElement(result.getString(5));
+
                     continue;
                 }
             }
@@ -1701,18 +1728,23 @@ implements ActionListener, WindowListener, KeyListener {
 
             // For each table, build a tree node with interesting info
             for (int i = 0; i < tables.size(); i++) {
-                String name   = (String) tables.elementAt(i);
+                String name = (String) tables.elementAt(i);
+
                 schema = (String) schemas.elementAt(i);
 
-                String displayedName =
-                        ((schema == null || !showSchemas)
-                                ? "" : (schema + '.'))
-                        + name
-                        + (displayRowCounts ? (", " 
-                                    + DECFMT.format(rowCounts[i])) : "");
+                String schemaname = "";
+
+                if (schema != null && showSchemas) {
+                    schemaname = schema + '.';
+                }
+
+                String rowcount = displayRowCounts
+                                  ? (", " + DECFMT.format(rowCounts[i]))
+                                  : "";
+                String displayedName = schemaname + name + rowcount;
 
                 // weconsul@ptd.net Add rowCounts if needed.
-                tableNode = makeNode(displayedName, rootNode); 
+                tableNode = makeNode(displayedName, rootNode);
 
                 ResultSet col = dMeta.getColumns(null, schema, name, null);
 
@@ -1748,41 +1780,47 @@ implements ActionListener, WindowListener, KeyListener {
                 DefaultMutableTreeNode indexesNode = makeNode("Indices",
                     tableNode);
                 ResultSet ind = null;
-                if (showIndexDetails) try {
-                ind = dMeta.getIndexInfo(null, schema, name, false,
-                                                   false);
-                String                 oldiname  = null;
-                DefaultMutableTreeNode indexNode = null;
 
-                // A child node to contain each index - and its attributes
-                while (ind.next()) {
-                    boolean nonunique = ind.getBoolean(4);
-                    String  iname     = ind.getString(6);
+                if (showIndexDetails) {
+                    try {
+                        ind = dMeta.getIndexInfo(null, schema, name, false,
+                                                 false);
 
-                    if ((oldiname == null ||!oldiname.equals(iname))) {
-                        indexNode = makeNode(iname, indexesNode);
+                        String                 oldiname  = null;
+                        DefaultMutableTreeNode indexNode = null;
 
-                        makeNode("Unique: " + !nonunique, indexNode);
+                        // A child node to contain each index - and its attributes
+                        while (ind.next()) {
+                            boolean nonunique = ind.getBoolean(4);
+                            String  iname     = ind.getString(6);
 
-                        oldiname = iname;
-                    }
+                            if ((oldiname == null
+                                    ||!oldiname.equals(iname))) {
+                                indexNode = makeNode(iname, indexesNode);
 
-                    // And the ordered column list for index components
-                    makeNode(ind.getString(9), indexNode);
+                                makeNode("Unique: " + !nonunique, indexNode);
 
-                }
-                } catch (SQLException se) {
-                    // Workaround for Oracle
-                    if (se.getMessage() == null || (
-                                (!se.getMessage().startsWith("ORA-25191:"))
-                                && (!se.getMessage().startsWith("ORA-01702:"))
-                                && !se.getMessage().startsWith("ORA-01031:"))) {
-                        throw se;
-                    }
-                } finally {
-                    if (ind != null) {
-                        ind.close();
-                        ind = null;
+                                oldiname = iname;
+                            }
+
+                            // And the ordered column list for index components
+                            makeNode(ind.getString(9), indexNode);
+                        }
+                    } catch (SQLException se) {
+
+                        // Workaround for Oracle
+                        if (se.getMessage() == null || ((!se.getMessage()
+                                .startsWith("ORA-25191:")) && (!se
+                                .getMessage().startsWith("ORA-01702:")) &&!se
+                                    .getMessage().startsWith("ORA-01031:"))) {
+                            throw se;
+                        }
+                    } finally {
+                        if (ind != null) {
+                            ind.close();
+
+                            ind = null;
+                        }
                     }
                 }
             }
@@ -1809,6 +1847,7 @@ implements ActionListener, WindowListener, KeyListener {
         treeModel.nodeStructureChanged(rootNode);
         treeModel.reload();
         tScrollPane.repaint();
+
         // We want the Schema List to always be in sync with the displayed tree
         updateSchemaList();
     }
@@ -1817,19 +1856,24 @@ implements ActionListener, WindowListener, KeyListener {
     void setStatusLine(boolean busy) {
 
         iReadyStatus.setSelected(busy);
+
         if (busy) {
             jStatusLine.setText("  " + BUZY_STATUS);
         } else {
-            jStatusLine.setText("  " + READY_STATUS
-                    + ((schemaFilter == null) ? ""
-                    : (" /  Showing objects in schema '" + schemaFilter
-                        + "'")));
+            String schemaMessage = "";
+
+            if (schemaFilter != null) {
+                schemaMessage = " /  Showing objects in schema '"
+                                + schemaFilter + "'";
+            }
+
+            jStatusLine.setText("  " + READY_STATUS + schemaMessage);
         }
     }
 
     // Added: (weconsultants@users) Needed to aggragate counts per table in jTree
-    protected int[] getRowCounts(Vector inTable, Vector inSchema)
-        throws Exception {
+    protected int[] getRowCounts(Vector inTable,
+                                 Vector inSchema) throws Exception {
 
         if (!displayRowCounts) {
             return (null);
@@ -1845,10 +1889,13 @@ implements ActionListener, WindowListener, KeyListener {
             Statement select = rowConn.createStatement();
 
             for (int i = 0; i < inTable.size(); i++) {
-                name = ((inSchema.elementAt(i) == null) ? ""
-                            : ((String) inSchema.elementAt(i) + '.'))
-                                      + (String) inTable.elementAt(i);
-                String displayRowCounts = rowCountSelect + name;
+                String schemaPart = (String) inSchema.elementAt(i);
+
+                schemaPart = schemaPart == null ? ""
+                                                : (schemaPart + '.');
+                name       = schemaPart + (String) inTable.elementAt(i);
+
+                String    displayRowCounts = rowCountSelect + name;
                 ResultSet resultSet = select.executeQuery(displayRowCounts);
 
                 while (resultSet.next()) {
@@ -1872,7 +1919,6 @@ implements ActionListener, WindowListener, KeyListener {
         // I'm dropping "Statement" from  "Execute SQL Statement", etc.,
         // because it may or may not be "one statement", but it is SQL.
         // Build jbuttonClear Buttons - blaine
-
         JButton jbuttonClear =
             new JButton("Clear SQL",
                         new ImageIcon(CommonSwing.getIcon("Clear")));
@@ -1961,36 +2007,47 @@ implements ActionListener, WindowListener, KeyListener {
     }
 
     private void updateSchemaList() {
+
         ButtonGroup group = new ButtonGroup();
-        ArrayList list = new ArrayList();
+        ArrayList   list  = new ArrayList();
+
         try {
             ResultSet result = dMeta.getSchemas();
+
             if (result == null) {
-                throw new SQLException("Failed to get metadata from database");
+                throw new SQLException(
+                    "Failed to get metadata from database");
             }
+
             while (result.next()) {
                 list.add(result.getString(1));
             }
+
             result = null;
         } catch (SQLException se) {
             CommonSwing.errorMessage(se);
         }
+
         mnuSchemas.removeAll();
         rbAllSchemas.setSelected(schemaFilter == null);
         group.add(rbAllSchemas);
         mnuSchemas.add(rbAllSchemas);
-        String s;
+
+        String               s;
         JRadioButtonMenuItem radioButton;
+
         for (int i = 0; i < list.size(); i++) {
-            s = (String) list.get(i);
+            s           = (String) list.get(i);
             radioButton = new JRadioButtonMenuItem(s);
+
             group.add(radioButton);
             mnuSchemas.add(radioButton);
             radioButton.setSelected(schemaFilter != null
-                    && schemaFilter.equals(s));
+                                    && schemaFilter.equals(s));
             radioButton.addActionListener(schemaListListener);
             radioButton.setEnabled(list.size() > 1);
         }
+
         mnuSchemas.addSeparator();
         mnuSchemas.add(mitemUpdateSchemas);
     }
@@ -1998,10 +2055,13 @@ implements ActionListener, WindowListener, KeyListener {
     ActionListener schemaListListener = (new ActionListener() {
 
         public void actionPerformed(ActionEvent actionevent) {
+
             schemaFilter = actionevent.getActionCommand();
+
             if (schemaFilter.equals("*")) {
                 schemaFilter = null;
             }
+
             refreshTree();
         }
     });

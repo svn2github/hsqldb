@@ -171,7 +171,7 @@ public class DataFileCache {
             "hsqldb.cache_size_scale", 10, 6, 20);
 
         cacheFileScale = database.getProperties().getIntegerProperty(
-            HsqlDatabaseProperties.CACHE_FILE_SCALE, 1);
+            HsqlDatabaseProperties.hsqldb_cache_file_scale, 1);
 
         Trace.printSystemOut("cache_scale: " + cacheScale);
         Trace.printSystemOut("cache_size_scale: " + cacheSizeScale);
@@ -214,7 +214,7 @@ public class DataFileCache {
 
             if (preexists) {
                 String version = database.getProperties().getProperty(
-                    HsqlDatabaseProperties.CACHE_VERSION);
+                    HsqlDatabaseProperties.hsqldb_cache_version);
                 boolean v17 =
                     HsqlDatabaseProperties.VERSION_STRING_1_7_0.equals(
                         version);

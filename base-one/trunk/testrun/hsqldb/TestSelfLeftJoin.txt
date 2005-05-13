@@ -165,8 +165,8 @@ insert into emp values ('01','1001','1000');
 --
 DROP TABLE T_BOSS IF EXISTS;
 DROP TABLE T_EMPLOYEE IF EXISTS;
-CREATE TABLE T_BOSS (FIRST VARCHAR,LAST VARCHAR);
-CREATE TABLE T_EMPLOYEE (FIRST VARCHAR,LAST VARCHAR);
+CREATE TABLE T_BOSS (FIRST VARCHAR(10),LAST VARCHAR(10));
+CREATE TABLE T_EMPLOYEE (FIRST VARCHAR(10),LAST VARCHAR(10));
 INSERT INTO T_BOSS VALUES ('Ludovic','ANCIAUX');
 INSERT INTO T_EMPLOYEE VALUES ('Ludovic','ANCIAUX');
 INSERT INTO T_EMPLOYEE VALUES ('Bill','GATES');
@@ -175,8 +175,8 @@ INSERT INTO T_EMPLOYEE VALUES ('Bill','GATES');
 --
 --bug #674025
 --
-CREATE TABLE boss (id INTEGER PRIMARY KEY, name VARCHAR, UNIQUE(name));
-CREATE TABLE employee (id INTEGER PRIMARY KEY, name VARCHAR, bossid INTEGER,
+CREATE TABLE boss (id INTEGER PRIMARY KEY, name VARCHAR(10), UNIQUE(name));
+CREATE TABLE employee (id INTEGER PRIMARY KEY, name VARCHAR(10), bossid INTEGER,
  FOREIGN KEY(bossid) REFERENCES boss (id), UNIQUE(name));
 INSERT INTO boss (id, name) VALUES (1, 'phb');
 INSERT INTO employee (id, name, bossid) VALUES (2,'dilbert', 1);
@@ -255,12 +255,12 @@ create index idx3 on testb(a_oid)
 -- tests with OR in outer join condition
 drop table a if exists;
 drop table b if exists;
-create table a (a1 varchar, a2 integer);
+create table a (a1 varchar(10), a2 integer);
 insert into a values(null,12);
 insert into a values('a',22);
 insert into a values('b','32');
 
-create table b (b1 varchar, b2 integer);
+create table b (b1 varchar(10), b2 integer);
 insert into b values(null,14);
 insert into b values('a',14);
 insert into b values('c',15);

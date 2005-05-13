@@ -257,6 +257,11 @@ public class jdbcDriver implements Driver {
         p.required = false;
         p.choices  = choices;
         pinfo[3]   = p;
+        p          = new DriverPropertyInfo("default_schema", null);
+        p.value    = info.getProperty("default_schema");
+        p.required = false;
+        p.choices  = choices;
+        pinfo[4]   = p;
 
         return pinfo;
     }

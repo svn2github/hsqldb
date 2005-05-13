@@ -2703,6 +2703,15 @@ public class Expression {
         }
     }
 
+    String getTableSchemaName() {
+
+        if (tableFilter == null) {
+            return null;
+        } else {
+            return tableFilter.getTable().getName().schema.name;
+        }
+    }
+
     /**
      * Returns the name of a column as string
      *

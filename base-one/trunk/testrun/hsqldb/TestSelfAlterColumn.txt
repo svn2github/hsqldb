@@ -5,7 +5,7 @@ insert into "testac" values(6,6);
 insert into "testac" values(5,5);
 /*r2*/select count(*) from "testac"
 -- add column without COLUMN keyword
-alter table "testac" add "c" varchar
+alter table "testac" add "c" varchar(10)
 /*e*/alter table "testac" add "c" varchar
 /*r
  6,6,NULL
@@ -18,7 +18,7 @@ alter table "testac" drop "c"
  5,5
 */select * from "testac" order by "a" desc
 -- add column with COLUMN keyword
-alter table "testac" add column "c" varchar before "b"
+alter table "testac" add column "c" varchar(10) before "b"
 /*e*/alter table "testac" add column "c" varchar before "b"
 /*r
  6,NULL,6
@@ -31,7 +31,7 @@ alter table "testac" drop column "c";
  5,5
 */select * from "testac" order by "a" desc;
 --  add column without COLUMN keyword - unquoted
-alter table "testac" add c varchar;
+alter table "testac" add c varchar(10);
 /*r
  6,6,NULL
  5,5,NULL

@@ -293,6 +293,11 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
     private jdbcConnection connection;
 
     /**
+     * Connection property for schema reporting.
+     */
+    private boolean useSchemaDefault;
+
+    /**
      * A CSV list representing the SQL IN list to use when generating
      * queries for <code>getBestRowIdentifier</code> when the
      * <code>scope</code> argument is <code>bestRowSession</code>.
@@ -2929,6 +2934,8 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
             return executeSelect("SYSTEM_PROCEDURES", "0=1");
         }
 
+        schemaPattern = translateSchema(schemaPattern);
+
         StringBuffer select = toQueryPrefix("SYSTEM_PROCEDURES").append(
             and("PROCEDURE_CAT", "=", catalog)).append(
             and("PROCEDURE_SCHEM", "LIKE", schemaPattern)).append(
@@ -3033,6 +3040,8 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
             return executeSelect("SYSTEM_PROCEDURECOLUMNS", "0=1");
         }
 
+        schemaPattern = translateSchema(schemaPattern);
+
         StringBuffer select = toQueryPrefix("SYSTEM_PROCEDURECOLUMNS").append(
             and("PROCEDURE_CAT", "=", catalog)).append(
             and("PROCEDURE_SCHEM", "LIKE", schemaPattern)).append(
@@ -3123,6 +3132,8 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
                 || (types != null && types.length == 0)) {
             return executeSelect("SYSTEM_TABLES", "0=1");
         }
+
+        schemaPattern = translateSchema(schemaPattern);
 
         StringBuffer select =
             toQueryPrefix("SYSTEM_TABLES").append(and("TABLE_CAT", "=",
@@ -3337,6 +3348,8 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
             return executeSelect("SYSTEM_COLUMNS", "0=1");
         }
 
+        schemaPattern = translateSchema(schemaPattern);
+
         StringBuffer select = toQueryPrefix("SYSTEM_COLUMNS").append(
             and("TABLE_CAT", "=", catalog)).append(
             and("TABLE_SCHEM", "LIKE", schemaPattern)).append(
@@ -3418,6 +3431,8 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
             return executeSelect("SYSTEM_COLUMNPRIVILEGES", "0=1");
         }
 
+        schema = translateSchema(schema);
+
         StringBuffer select = toQueryPrefix("SYSTEM_COLUMNPRIVILEGES").append(
             and("TABLE_CAT", "=", catalog)).append(
             and("TABLE_SCHEM", "=", schema)).append(
@@ -3495,6 +3510,8 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
         if (wantsIsNull(tableNamePattern)) {
             return executeSelect("SYSTEM_TABLEPRIVILEGES", "0=1");
         }
+
+        schemaPattern = translateSchema(schemaPattern);
 
         StringBuffer select = toQueryPrefix("SYSTEM_TABLEPRIVILEGES").append(
             and("TABLE_CAT", "=", catalog)).append(
@@ -3604,6 +3621,8 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
             Util.sqlException(Trace.INVALID_JDBC_ARGUMENT);
         }
 
+        schema = translateSchema(schema);
+
         Integer Nullable = (nullable) ? null
                                       : INT_COLUMNS_NO_NULLS;
         StringBuffer select = toQueryPrefix(
@@ -3687,6 +3706,8 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
             Util.sqlException(Trace.INVALID_JDBC_ARGUMENT);
         }
 
+        schema = translateSchema(schema);
+
         StringBuffer select =
             toQueryPrefix("SYSTEM_VERSIONCOLUMNS").append(and("TABLE_CAT",
                 "=", catalog)).append(and("TABLE_SCHEM", "=",
@@ -3755,6 +3776,8 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
         if (table == null) {
             Util.sqlException(Trace.INVALID_JDBC_ARGUMENT);
         }
+
+        schema = translateSchema(schema);
 
         StringBuffer select =
             toQueryPrefix("SYSTEM_PRIMARYKEYS").append(and("TABLE_CAT", "=",
@@ -3869,6 +3892,8 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
             Util.sqlException(Trace.INVALID_JDBC_ARGUMENT);
         }
 
+        schema = translateSchema(schema);
+
         StringBuffer select = toQueryPrefix("SYSTEM_CROSSREFERENCE").append(
             and("FKTABLE_CAT", "=", catalog)).append(
             and("FKTABLE_SCHEM", "=", schema)).append(
@@ -3980,6 +4005,8 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
         if (table == null) {
             Util.sqlException(Trace.INVALID_JDBC_ARGUMENT);
         }
+
+        schema = translateSchema(schema);
 
         StringBuffer select =
             toQueryPrefix("SYSTEM_CROSSREFERENCE").append(and("PKTABLE_CAT",
@@ -4110,6 +4137,9 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
         if (primaryTable == null || foreignTable == null) {
             Util.sqlException(Trace.INVALID_JDBC_ARGUMENT);
         }
+
+        primarySchema = translateSchema(primarySchema);
+        foreignSchema = translateSchema(foreignSchema);
 
         StringBuffer select = toQueryPrefix("SYSTEM_CROSSREFERENCE").append(
             and("PKTABLE_CAT", "=", primaryCatalog)).append(
@@ -4278,6 +4308,8 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
         if (table == null) {
             Util.sqlException(Trace.INVALID_JDBC_ARGUMENT);
         }
+
+        schema = translateSchema(schema);
 
         Boolean nu = (unique) ? Boolean.FALSE
                               : null;
@@ -4664,6 +4696,8 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
             executeSelect("SYSTEM_UDTS", "0=1");
         }
 
+        schemaPattern = translateSchema(schemaPattern);
+
         StringBuffer select =
             toQueryPrefix("SYSTEM_UDTS").append(and("TYPE_CAT", "=",
                 catalog)).append(and("TYPE_SCHEM", "LIKE",
@@ -4877,6 +4911,8 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
             return executeSelect("SYSTEM_SUPERTYPES", "0=1");
         }
 
+        schemaPattern = translateSchema(schemaPattern);
+
         StringBuffer select =
             toQueryPrefix("SYSTEM_SUPERTYPES").append(and("TYPE_CAT", "=",
                 catalog)).append(and("TYPE_SCHEM", "LIKE",
@@ -4951,6 +4987,8 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
         if (wantsIsNull(tableNamePattern)) {
             return executeSelect("SYSTEM_SUPERTABLES", "0=1");
         }
+
+        schemaPattern = translateSchema(schemaPattern);
 
         StringBuffer select =
             toQueryPrefix("SYSTEM_SUPERTABLES").append(and("TABLE_CAT", "=",
@@ -5068,6 +5106,8 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
                 || wantsIsNull(attributeNamePattern)) {
             return executeSelect("SYSTEM_UDTATTRIBUTES", "0=1");
         }
+
+        schemaPattern = translateSchema(schemaPattern);
 
         StringBuffer select = toQueryPrefix("SYSTEM_UDTATTRIBUTES").append(
             and("TYPE_CAT", "=", catalog)).append(
@@ -5378,7 +5418,11 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
     jdbcDatabaseMetaData(jdbcConnection c) throws SQLException {
 
         // PRE: is non-null and not closed
-        connection = c;
+        connection       = c;
+        useSchemaDefault = c.connProperties.isPropertyTrue("default_schema");
+
+        // OOo temporary workaround
+        useSchemaDefault = true;
     }
 
     /**
@@ -5449,11 +5493,6 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
         //   Testing indicates that indeed, higher quiality popular JDBC
         //   database browsers do the escapes "properly."
         if (val == null) {
-            return "";
-        }
-
-        /** @todo fredt - 200505 - this is a workaround to get OpenOffice.org to work */
-        if (val.equals("")) {
             return "";
         }
 
@@ -5582,5 +5621,26 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
      */
     private static boolean wantsIsNull(String s) {
         return (s != null && s.length() == 0);
+    }
+
+    /**
+     * For compatibility, when the connection property "default_schame=true"
+     * is present, any DatabaseMetaData call with an empty string as the
+     * schema parameter will use the default schema (noramlly "PUBLIC2).
+     */
+    private String translateSchema(String schemaName) throws SQLException {
+
+        if (useSchemaDefault && schemaName != null
+                && schemaName.length() == 0) {
+            ResultSet rs = executeSelect("SYSTEM_SCHEMAS", "IS_DEFAULT=TRUE");
+
+            if (rs.next()) {
+                return rs.getString(1);
+            }
+
+            return schemaName;
+        }
+
+        return schemaName;
     }
 }

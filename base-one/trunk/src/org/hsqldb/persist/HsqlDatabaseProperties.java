@@ -38,6 +38,7 @@ import org.hsqldb.DatabaseManager;
 import org.hsqldb.HsqlException;
 import org.hsqldb.Record;
 import org.hsqldb.Trace;
+import org.hsqldb.lib.Set;
 import org.hsqldb.lib.HashSet;
 
 // loosecannon1@users 1.7.2 patch properties on the JDBC URL
@@ -47,7 +48,7 @@ import org.hsqldb.lib.HashSet;
  * Manages a .properties file for a database.
  *
  * @author fredt@users
- * @version 1.7.2
+ * @version 1.8.0
  * @since 1.7.0
  */
 public class HsqlDatabaseProperties extends HsqlProperties {
@@ -67,7 +68,7 @@ public class HsqlDatabaseProperties extends HsqlProperties {
     // versions
     public static final String VERSION_STRING_1_7_0     = "1.7.0";
     public static final String VERSION_STRING_1_8_0     = "1.8.0";
-    public static final String FIRST_COMPATIBLE_VERSION = "1.7.2";
+    public static final String FIRST_COMPATIBLE_VERSION = "1.8.0";
     public static final String THIS_VERSION             = "1.8.0";
     public static final String PRODUCT_NAME = "HSQL Database Engine";
     public static final int    MAJOR                    = 1,
@@ -75,54 +76,94 @@ public class HsqlDatabaseProperties extends HsqlProperties {
                                REVISION                 = 0;
 
     //
-    public static final String DEFRAG_LIMIT     = "hsqldb.defrag_limit";
-    public static final String CACHE_VERSION    = "hsqldb.cache_version";
-    public static final String CACHE_FILE_SCALE = "hsqldb.cache_file_scale";
-    public static final String DEFAULT_TABLE_TYPE =
+    private static final String db_version  = "version";
+    private static final String db_readonly = "readonly";
+    private static final String db_modified = "modified";
+
+    //
+    private static final String runtime_gc_interval  = "runtime.gc_interval";
+    private static final String hsqldb_max_nio_scale = "hsqldb.max_nio_scale";
+    private static final String hsqldb_cache_scale   = "hsqldb.cache_scale";
+    public static final String hsqldb_cache_file_scale =
+        "hsqldb.cache_file_scale";
+    private static final String hsqldb_cache_size_scale =
+        "hsqldb.cache_size_scale";
+    public static final String  hsqldb_cache_version = "hsqldb.cache_version";
+    private static final String hsqldb_catalogs      = "hsqldb.catalogs";
+    private static final String hsqldb_compatible_version =
+        "hsqldb.compatible_version";
+    public static final String hsqldb_default_table_type =
         "hsqldb.default_table_type";
+    public static final String hsqldb_defrag_limit = "hsqldb.defrag_limit";
+    private static final String hsqldb_files_readonly =
+        "hsqldb.files_readonly";
+    private static final String hsqldb_log_size      = "hsqldb.log_size";
+    private static final String hsqldb_nio_data_file = "hsqldb.nio_data_file";
+    private static final String hsqldb_original_version =
+        "hsqldb.original_version";
+
+    //
+    private static final String sql_compare_in_locale =
+        "sql.compare_in_locale";
+    private static final String hsqldb_script_format = "hsqldb.script_format";
+    private static final String sql_enforce_strict_size =
+        "sql.enforce_strict_size";
+
+    //
+    private static final String textdb_cache_scale = "textdb.cache_scale";
+    private static final String textdb_cache_size_scale =
+        "textdb.cache_size_scale";
+    private static final String textdb_all_quoted = "textdb.all_quoted";
+    private static final String textdb_allow_full_path =
+        "textdb.allow_full_path";
+    private static final String textdb_ignore_first = "textdb.ignore_first";
+    private static final String textdb_quoted       = "textdb.quoted";
+    private static final String textdb_fs           = "textdb.fs";
+    private static final String textdb_vs           = "textdb.vs";
+    private static final String textdb_lvs          = "textdb.lvs";
+    private static final String textdb_encoding     = "textdb.encoding";
 
     static {
 
         // properties that are not user-defined or only modified in the
         // *.properties file
         String[] fullyProtectedPropertiesNames = {
-            "version", "hsqldb.compatible_version", CACHE_VERSION,
-            "hsqldb.original_version", "hsqldb.files_readonly", "readonly",
-            "modified", "sql.compare_in_locale", "textdb.allow_full_path"
+            db_version, hsqldb_compatible_version, hsqldb_cache_version,
+            hsqldb_original_version, hsqldb_files_readonly, db_readonly,
+            db_modified, sql_compare_in_locale, textdb_allow_full_path
         };
 
         fullyProtectedProperties.addAll(fullyProtectedPropertiesNames);
 
         // properties that cannot be modified by SET PROPERTY command
         String[] setProtectedPropertiesNames = {
-            "hsqldb.log_size", "hsqldb.script_format", DEFRAG_LIMIT,
+            hsqldb_log_size, hsqldb_script_format, hsqldb_defrag_limit,
         };
 
         setProtectedProperties.addAll(setProtectedPropertiesNames);
 
         // user defined boolean properties
         String[] booleanPropertiesNames = {
-            "hsqldb.nio_data_file", "hsqldb.schemas", "hsqldb.catalogs",
-            "sql.enforce_size", "sql.enforce_strict_size", "textdb.quoted",
-            "textdb.all_quoted", "textdb.ignore_first"
+            hsqldb_nio_data_file, hsqldb_catalogs, sql_enforce_strict_size,
+            textdb_quoted, textdb_all_quoted, textdb_ignore_first
         };
 
         booleanProperties.addAll(booleanPropertiesNames);
 
         // user defined integral properties
         String[] integralPropertiesNames = {
-            "runtime.gc_interval", "hsqldb.max_nio_scale", CACHE_FILE_SCALE,
-            "hsqldb.cache_scale", "hsqldb.cache_size_scale",
-            "hsqldb.first_identity", "hsqldb.log_size", "textdb.cache_scale",
-            "textdb.cache_size_scale"
+            runtime_gc_interval, hsqldb_max_nio_scale,
+            hsqldb_cache_file_scale, hsqldb_cache_scale,
+            hsqldb_cache_size_scale, hsqldb_log_size, textdb_cache_scale,
+            textdb_cache_size_scale
         };
 
         integralProperties.addAll(integralPropertiesNames);
 
         // user defined string properties
         String[] stringPropertiesNames = {
-            "textdb.fs", "textdb.vs", "textdb.lvs", "textdb.encoding",
-            DEFAULT_TABLE_TYPE
+            textdb_fs, textdb_vs, textdb_lvs, textdb_encoding,
+            hsqldb_default_table_type
         };
 
         stringProperties.addAll(stringPropertiesNames);
@@ -138,11 +179,8 @@ public class HsqlDatabaseProperties extends HsqlProperties {
 
         database = db;
 
-        // char trimming and padding to size and varchar trimming to size
-        setProperty("sql.enforce_size", false);
-
-        // char and padding to size and exception if data is too long
-        setProperty("sql.enforce_strict_size", false);
+        // char padding to size and exception if data is too long
+        setProperty(sql_enforce_strict_size, false);
 
         // removed from 1.7.2 - sql.month is always true (1-12)
         // removed from 1.7.2 - sql.strict_fk is always enforced
@@ -158,19 +196,19 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         // existing database with all its files *.properties, *script and
         // *.data.
         // version of a new database
-        setProperty("version", THIS_VERSION);
+        setProperty(db_version, THIS_VERSION);
 
         // the earliest version that can open this database
         // this is set to 1.7.2 when the db is written to
-        setProperty("hsqldb.compatible_version", FIRST_COMPATIBLE_VERSION);
+        setProperty(hsqldb_compatible_version, FIRST_COMPATIBLE_VERSION);
 
         // data format of the cache file
         // this is set to 1.7.0 when a new *.data file is created
-        setProperty(CACHE_VERSION, VERSION_STRING_1_7_0);
+        setProperty(hsqldb_cache_version, VERSION_STRING_1_7_0);
 
         // the version that created this database
         // once created, this won't change if db is used with a future version
-        setProperty("hsqldb.original_version", THIS_VERSION);
+        setProperty(hsqldb_original_version, THIS_VERSION);
         /*
                 garbage collection with gc_interval
                 Setting this value can be useful when HSQLDB is used as an
@@ -196,13 +234,13 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         // the default, "0" means no garbage collection is forced by
         // hsqldb (the Java Runtime will do it's own garbage collection
         // in any case).
-        setProperty("runtime.gc_interval", 0);
+        setProperty(runtime_gc_interval, 0);
 
         // this property is either 1 or 8
-        setProperty(HsqlDatabaseProperties.CACHE_FILE_SCALE, 1);
+        setProperty(hsqldb_cache_file_scale, 1);
 
         // this property is between 6 - 20, default 8
-        setProperty("hsqldb.cache_size_scale", 8);
+        setProperty(hsqldb_cache_size_scale, 8);
 
         // number of rows from CACHED tables kept constantly in memory
         // the number of rows in up to 3 * (2 to the power of
@@ -210,24 +248,21 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         // reduce the default 14 (3*16K rows) if memory is limited and rows
         // are large.
         // values between 8-16 are allowed
-        setProperty("hsqldb.cache_scale", 14);
+        setProperty(hsqldb_cache_scale, 14);
 
         // maximum size of .log file in megabytes
-        setProperty("hsqldb.log_size", "200");
+        setProperty(hsqldb_log_size, "200");
 
         // type of logging (0 : text , 1 : binary, 3 : compressed)
-        setProperty("hsqldb.script_format", 0);
-
-        // initial value of idendity columns
-        setProperty("hsqldb.first_identity", 0);
-        setProperty("readonly", false);
-        setProperty("modified", "no-new-files");
+        setProperty(hsqldb_script_format, 0);
+        setProperty(db_readonly, false);
+        setProperty(db_modified, "no-new-files");
 
         // initial method of data file access
-        setProperty("hsqldb.nio_data_file", true);
+        setProperty(hsqldb_nio_data_file, true);
 
         // set default table type to MEMORY
-        setProperty(DEFAULT_TABLE_TYPE, "memory");
+        setProperty(hsqldb_default_table_type, "memory");
 
         // the property "version" is also set to the current version
         //
@@ -245,12 +280,11 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         //
         // settings for OOo integration
         if (db.isStoredFileAccess()) {
-            setProperty(DEFAULT_TABLE_TYPE, "cached");
-            setProperty("hsqldb.cache_scale", 13);
-            setProperty("hsqldb.log_size", 10);
-            setProperty("sql.enforce_strict_size", true);
-            setProperty("hsqldb.first_identity", 1);
-            setProperty("hsqldb.nio_data_file", false);
+            setProperty(hsqldb_default_table_type, "cached");
+            setProperty(hsqldb_cache_scale, 13);
+            setProperty(hsqldb_log_size, 10);
+            setProperty(sql_enforce_strict_size, true);
+            setProperty(hsqldb_nio_data_file, false);
         }
 
         setSystemVariables();
@@ -259,12 +293,12 @@ public class HsqlDatabaseProperties extends HsqlProperties {
 
     private void setSystemVariables() {
 
-        if (isPropertyTrue("sql.compare_in_locale")) {
-            stringProps.remove("sql.compare_in_locale");
+        if (isPropertyTrue(sql_compare_in_locale)) {
+            stringProps.remove(sql_compare_in_locale);
             database.collation.setCollationAsLocale();
         }
 
-        Record.gcFrequency = getIntegerProperty("runtime.gc_interval", 0);
+        Record.gcFrequency = getIntegerProperty(runtime_gc_interval, 0);
     }
 
     /**
@@ -283,7 +317,7 @@ public class HsqlDatabaseProperties extends HsqlProperties {
             exists = super.load();
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR,
-                              Trace.HsqlDatabaseProperties, new Object[] {
+                              Trace.LOAD_SAVE_PROPERTIES, new Object[] {
                 fileName, e
             });
         }
@@ -294,17 +328,17 @@ public class HsqlDatabaseProperties extends HsqlProperties {
 
         filterLoadedProperties();
 
-        String version = getProperty("hsqldb.compatible_version");
+        String version = getProperty(hsqldb_compatible_version);
 
         // do not open if the database belongs to a later (future) version
         int check = version.substring(0, 5).compareTo(THIS_VERSION);
 
         Trace.check(check <= 0, Trace.WRONG_DATABASE_FILE_VERSION);
 
-        version = getProperty("version");
+        version = getProperty(db_version);
 
         if (version.charAt(2) == '6') {
-            setProperty(CACHE_VERSION, "1.6.0");
+            setProperty(hsqldb_cache_version, "1.6.0");
         }
 
         setSystemVariables();
@@ -319,19 +353,16 @@ public class HsqlDatabaseProperties extends HsqlProperties {
      */
     private void setDatabaseVariables() {
 
-        if (isPropertyTrue("readonly")) {
+        if (isPropertyTrue(db_readonly)) {
             database.setReadOnly();
         }
 
-        if (isPropertyTrue("hsqldb.files_readonly")) {
+        if (isPropertyTrue(hsqldb_files_readonly)) {
             database.setFilesReadOnly();
         }
 
-        database.sqlEnforceSize = isPropertyTrue("sql.enforce_size");
         database.sqlEnforceStrictSize =
-            isPropertyTrue("sql.enforce_strict_size");
-        database.firstIdentity = getIntegerProperty("hsqldb.first_identity",
-                0);
+            isPropertyTrue(sql_enforce_strict_size);
 
         database.setMetaDirty(false);
     }
@@ -347,7 +378,7 @@ public class HsqlDatabaseProperties extends HsqlProperties {
             super.save();
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR,
-                              Trace.HsqlDatabaseProperties, new Object[] {
+                              Trace.LOAD_SAVE_PROPERTIES, new Object[] {
                 fileName, e
             });
         }
@@ -408,6 +439,18 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         return stringProperties.contains(property);
     }
 
+    public Set getBooleanPropertyNames() {
+        return booleanProperties;
+    }
+
+    public Set getIntegralPropertyNames() {
+        return integralProperties;
+    }
+
+    public Set getStringPropertyNames() {
+        return stringProperties;
+    }
+
     public String setProperty(String key, String value) {
 
         value = super.setProperty(key, value);
@@ -432,7 +475,7 @@ public class HsqlDatabaseProperties extends HsqlProperties {
             value = "no-new-files";
         }
 
-        setProperty("modified", value);
+        setProperty(db_modified, value);
         save();
     }
 

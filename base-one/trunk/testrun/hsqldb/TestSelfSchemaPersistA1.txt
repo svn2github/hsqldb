@@ -17,7 +17,7 @@ DROP TABLE tblj1 IF exists;
 /*u0*/CREATE TABLE tblt1 (i int);
 /*u0*/CREATE TABLE public.tblt2 (i int);
 /*u0*/CREATE TABLE tblt3 (i int);
-/*u0*/CREATE TABLE tblj1 (i int, vc varchar);  -- For testing Joins
+/*u0*/CREATE TABLE tblj1 (i int, vc varchar(10));  -- For testing Joins
 /*e*/CREATE TABLE information_schema.tblt101 (i int);
 /*e*/CREATE TABLE tblt1 (i int); -- Create existing object
 /*e*/CREATE TABLE public.tblt1 (i int); -- Create existing object
@@ -43,7 +43,7 @@ DROP TABLE tblj1 IF exists;
 /*u0*/CREATE CACHED TABLE ctblt1 (i int);
 /*u0*/CREATE CACHED TABLE public.ctblt2 (i int);
 /*u0*/CREATE CACHED TABLE ctblt3 (i int);
-/*u0*/CREATE CACHED TABLE tblj1 (i int, vc varchar);  -- For testing Joins
+/*u0*/CREATE CACHED TABLE tblj1 (i int, vc varchar(10));  -- For testing Joins
 /*e*/CREATE CACHED TABLE information_schema.ctblt101 (i int);
 /*e*/CREATE CACHED TABLE ctblt1 (i int); -- Create existing object
 /*e*/CREATE CACHED TABLE public.ctblt1 (i int); -- Create existing object
@@ -90,7 +90,7 @@ DROP TABLE vwt1 IF exists;
 DROP TABLE vwt2 IF exists;
 DROP TABLE vwj1 IF exists;
 CREATE TABLE vwt1 (i int);
-CREATE TABLE vwj1 (i int, vc varchar);
+CREATE TABLE vwj1 (i int, vc varchar(10));
 INSERT INTO vwt1 values(0);
 INSERT INTO vwt1 values(1);
 INSERT INTO vwj1 values(1, 'one');
@@ -391,7 +391,7 @@ DROP TABLE cont18 IF EXISTS;
 DROP TABLE cont19 IF EXISTS;
 DROP TABLE cont20 IF EXISTS;
 DROP TABLE cont101 IF EXISTS;
-CREATE TABLE conj1(i int, vc varchar, PRIMARY KEY (i));
+CREATE TABLE conj1(i int, vc varchar(10), PRIMARY KEY (i));
 INSERT INTO conj1 values(1, 'one');
 -- No "IF EXISTS" allowed with constrs., so can't verify they don't exists.
 /*e*/CREATE TABLE other.cont101 (i int, CONSTRAINT conuc1 UNIQUE(i));

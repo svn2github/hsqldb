@@ -54,7 +54,7 @@ import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.sql.DatabaseMetaData;
 
-/* $Id: SqlFile.java,v 1.103 2005/05/11 14:03:21 fredt Exp $ */
+/* $Id: SqlFile.java,v 1.104 2005/05/12 20:23:46 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -90,7 +90,7 @@ import java.sql.DatabaseMetaData;
  * Most of the Special Commands and Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.103 $
+ * @version $Revision: 1.104 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -140,9 +140,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.103 $".substring("$Revision: ".length(),
-                                               "$Revision: 1.103 $".length()
-                                               - 2);
+        revnum = "$Revision: 1.104 $".substring("$Revision: ".length(),
+                "$Revision: 1.104 $".length() - 2);
     }
 
     private static String BANNER =
@@ -1957,7 +1956,7 @@ public class SqlFile {
     };
 
     /** Column numbering starting at 1. */
-    private static final int[][] listMDTableCols = {
+    private static final int[][] listMDTableCols  = {
         {
             2, 3
         },    // Default
@@ -1968,8 +1967,9 @@ public class SqlFile {
             2, 3
         },    // Oracle
     };
-
-    String[] oracleSysSchemas = { "SYS", "SYSTEM", "WKSYS" };
+    String[]                     oracleSysSchemas = {
+        "SYS", "SYSTEM", "WKSYS"
+    };
 
     /**
      * Lists available database tables.
@@ -1981,16 +1981,18 @@ public class SqlFile {
      * @throws BadSpecial
      */
     private void listTables(char c, String inFilter) throws BadSpecial {
-        String schema = null;
+
+        String   schema  = null;
         int[]    listSet = null;
         String[] types   = null;
-        /** For workaround for \T for Oracle **/
-        String[]   additionalSchemas = null;
+
+        /** For workaround for \T for Oracle */
+        String[] additionalSchemas = null;
 
         /** This is for specific non-getTable() queries */
         Statement statement = null;
-        ResultSet rs = null;
-        String    narrower = "";
+        ResultSet rs        = null;
+        String    narrower  = "";
         /*
          * Doing case-sensitive filters now, for greater portability.
         String                    filter = ((inFilter == null)
@@ -2023,12 +2025,12 @@ public class SqlFile {
                 case 'S' :
                     if (dbProductName.indexOf("Oracle") > -1) {
                         System.err.println(
-                                "*** WARNING:\n*** Listing tables in the "
-                              + "SYSTEM, SYS, WKSYS schemas since Oracle "
-                              + "doesn't\n*** return a JDBC system table list."
-                        );
-                        types[0] = "TABLE";
-                        schema = "SYS";
+                            "*** WARNING:\n*** Listing tables in the "
+                            + "SYSTEM, SYS, WKSYS schemas since Oracle "
+                            + "doesn't\n*** return a JDBC system table list.");
+
+                        types[0]          = "TABLE";
+                        schema            = "SYS";
                         additionalSchemas = oracleSysSchemas;
                     } else {
                         types[0] = "SYSTEM TABLE";
@@ -2115,7 +2117,8 @@ public class SqlFile {
                     break;
 
                 case 't' :
-                    excludeSysSchemas = (dbProductName.indexOf("Oracle") > -1);
+                    excludeSysSchemas = (dbProductName.indexOf("Oracle")
+                                         > -1);
                     types[0] = "TABLE";
                     break;
 
@@ -2145,7 +2148,8 @@ public class SqlFile {
                     }
                      */
                     schema = null;
-                    String table  = null;
+
+                    String table = null;
 
                     if (filter != null) {
                         int dotat = filter.indexOf('.');
@@ -2211,13 +2215,15 @@ public class SqlFile {
 
             if (additionalSchemas != null) {
                 for (int i = 1; i < additionalSchemas.length; i++) {
-                    rs = md.getTables(null, additionalSchemas[i], null, types);
+                    rs = md.getTables(null, additionalSchemas[i], null,
+                                      types);
 
                     if (rs == null) {
                         throw new BadSpecial(
-                                "Failed to get metadata from database for '"
-                                + additionalSchemas[i] + "'");
+                            "Failed to get metadata from database for '"
+                            + additionalSchemas[i] + "'");
                     }
+
                     displayResultSet(null, rs, listSet, filter);
                 }
             }
@@ -2227,9 +2233,11 @@ public class SqlFile {
             throw new BadSpecial("Failure getting MetaData (NPE)");
         } finally {
             excludeSysSchemas = false;
+
             if (rs != null) {
                 rs = null;
             }
+
             if (statement != null) {
                 try {
                     statement.close();
@@ -2239,6 +2247,7 @@ public class SqlFile {
             }
         }
     }
+
     private boolean excludeSysSchemas = false;
 
     /**
@@ -2289,10 +2298,11 @@ public class SqlFile {
 
         int updateCount = (statement == null) ? -1
                                               : statement.getUpdateCount();
+
         if (excludeSysSchemas) {
             stdprintln(
-              "*** WARNING:  Omitting tables from SYS, SYSTEM, WKSYS schemas\n"
-            + "*** (because Oracle (TM) doesn't differentiate them to JDBC).");
+                "*** WARNING:  Omitting tables from SYS, SYSTEM, WKSYS schemas\n"
+                + "*** (because Oracle (TM) doesn't differentiate them to JDBC).");
         }
 
         switch (updateCount) {
@@ -2372,10 +2382,13 @@ public class SqlFile {
 
                     for (int i = 1; i <= cols; i++) {
                         val = r.getString(i);
+
                         if (excludeSysSchemas && i == 2) {
-                            for (int z = 0; z < oracleSysSchemas.length; z++) {
+                            for (int z = 0; z < oracleSysSchemas.length;
+                                    z++) {
                                 if (val.equals(oracleSysSchemas[z])) {
                                     filteredOut = true;
+
                                     break;
                                 }
                             }

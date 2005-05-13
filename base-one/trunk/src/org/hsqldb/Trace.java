@@ -219,7 +219,7 @@ public class Trace {
                             DatabaseScriptReader_readDDL              = 113,
                             DatabaseScriptReader_readExistingData     = 114,
                             Message_Pair                              = 115,
-                            HsqlDatabaseProperties                    = 116,
+                            LOAD_SAVE_PROPERTIES                      = 116,
                             INVALID_TRANSACTION_STATE_NO_SUBCLASS     = 117,
                             JDBC_INVALID_BRI_SCOPE                    = 118,
                             JDBC_NO_RESULT_SET_METADATA               = 119,
@@ -356,7 +356,9 @@ public class Trace {
                             IN_SCHEMA_DEFINITION                      = 250,
                             PRIMARY_KEY_NOT_ALLOWED                   = 251,
                             COLUMN_IS_IN_CONSTRAINT                   = 252,
-                            LAST_ERROR_HANDLE                         = 253;
+                            COLUMN_SIZE_REQUIRED                      = 253,
+                            INVALID_SIZE_PRECISION                    = 254,
+                            LAST_ERROR_HANDLE                         = 255;
 
     //
     static String MESSAGE_TAG = "$$";
@@ -616,6 +618,8 @@ public class Trace {
         "not allowed in schema definition",                                 //
         "S0011 Primary key not allowd",                                     // 251
         "37000 column is part of a constraint",                             //
+        "37000 column size is required",                                    //
+        "37000 invalid size or precision",                                  //
         "LAST",                                                             //
     };
 

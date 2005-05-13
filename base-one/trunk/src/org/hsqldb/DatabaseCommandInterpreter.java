@@ -127,7 +127,7 @@ class DatabaseCommandInterpreter {
 
         int dtt = Table.MEMORY_TABLE;
         String dttName = database.getProperties().getProperty(
-            HsqlDatabaseProperties.DEFAULT_TABLE_TYPE);
+            HsqlDatabaseProperties.hsqldb_default_table_type);
 
         if (dttName != null) {
             if (dttName.equalsIgnoreCase(Token.T_CACHED)) {
@@ -819,21 +819,18 @@ class DatabaseCommandInterpreter {
         typeName = tokenizer.getSimpleToken();
         type     = Types.getTypeNr(typeName);
 
+        if (type == Types.CHAR) {
+            if (tokenizer.isGetThis(Token.T_VARYING)) {
+                type = Types.VARCHAR;
+            }
+        }
+
         if (typeName.equals(Token.T_IDENTITY)) {
             isIdentity   = true;
             isPrimaryKey = true;
         }
 
         // fredt - when SET IGNORECASE is in effect, all new VARCHAR columns are defined as VARCHAR_IGNORECASE
-
-        /**
-         * @todo fredt - drop support for SET IGNORECASE and replace the
-         * type name with a qualifier specifying the case sensitivity of VARCHAR
-         */
-        if (type == Types.VARCHAR && database.isIgnoreCase()) {
-            type = Types.VARCHAR_IGNORECASE;
-        }
-
         if (type == Types.DOUBLE) {
             tokenizer.isGetThis(Token.T_PRECISION);
         }
@@ -844,6 +841,10 @@ class DatabaseCommandInterpreter {
             Trace.check(Types.acceptsPrecisionCreateParam(type),
                         Trace.UNEXPECTED_TOKEN);
 
+            if (length == 0) {
+                throw Trace.error(Trace.INVALID_SIZE_PRECISION);
+            }
+
             if (tokenizer.isGetThis(Token.T_COMMA)) {
                 scale = tokenizer.getInt();
 
@@ -852,6 +853,18 @@ class DatabaseCommandInterpreter {
             }
 
             tokenizer.getThis(Token.T_CLOSEBRACKET);
+        } else if (type == Types.CHAR && database.sqlEnforceStrictSize) {
+            length = 1;
+        } else if (type == Types.VARCHAR && database.sqlEnforceStrictSize) {
+            throw Trace.error(Trace.COLUMN_SIZE_REQUIRED);
+        }
+
+        /**
+         * @todo fredt - drop support for SET IGNORECASE and replace the
+         * type name with a qualifier specifying the case sensitivity of VARCHAR
+         */
+        if (type == Types.VARCHAR && database.isIgnoreCase()) {
+            type = Types.VARCHAR_IGNORECASE;
         }
 
         if (type == Types.FLOAT && length > 53) {
@@ -966,12 +979,9 @@ class DatabaseCommandInterpreter {
                 throw Trace.error(Trace.WRONG_DEFAULT_CLAUSE);
             }
 
-            if (defValTemp != null
-                    && (database.sqlEnforceSize
-                        || database.sqlEnforceStrictSize)) {
+            if (defValTemp != null && database.sqlEnforceStrictSize) {
                 try {
-                    Column.enforceSize(defValTemp, type, length, scale,
-                                       database.sqlEnforceStrictSize);
+                    Column.enforceSize(defValTemp, type, length, scale, true);
                 } catch (HsqlException e) {
 
                     // default value is too long for fixed size column
@@ -2115,7 +2125,8 @@ class DatabaseCommandInterpreter {
                 Object value = tokenizer.getInType(isboolean ? Types.BOOLEAN
                                                              : Types.INTEGER);
 
-                if (HsqlDatabaseProperties.CACHE_FILE_SCALE.equals(token)) {
+                if (HsqlDatabaseProperties.hsqldb_cache_file_scale.equals(
+                        token)) {
                     if (database.logger.hasCache()
                             || ((Integer) value).intValue() != 8) {
                         Trace.throwerror(Trace.ACCESS_IS_DENIED, token);
@@ -2278,7 +2289,7 @@ class DatabaseCommandInterpreter {
                 int size = tokenizer.getInt();
 
                 database.getProperties().setProperty(
-                    HsqlDatabaseProperties.DEFRAG_LIMIT, size);
+                    HsqlDatabaseProperties.hsqldb_defrag_limit, size);
 
                 break;
             }

@@ -270,11 +270,6 @@ public class Result {
                                           int i)
                                           throws IOException, HsqlException {
 
-// no point in transmitting these yet
-// if ever implemented, must follow logic of switch as outlined in comments
-// for corresponding write method
-//        colScale[i] = in.readIntData();
-//        colSize[i] = in.readIntData();
             decodeTableColumnAttrs(in.readIntData(), i);
 
             catalogNames[i] = in.readString();

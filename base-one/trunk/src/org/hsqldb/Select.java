@@ -394,6 +394,7 @@ class Select {
             if (i < iResultLen) {
                 rmd.colLabels[i]     = e.getAlias();
                 rmd.isLabelQuoted[i] = e.isAliasQuoted();
+                rmd.schemaNames[i]   = e.getTableSchemaName();
                 rmd.tableNames[i]    = e.getTableName();
                 rmd.colNames[i]      = e.getColumnName();
 

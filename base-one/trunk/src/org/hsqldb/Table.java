@@ -154,7 +154,6 @@ public class Table extends BaseTable {
     private boolean      isText;
     private boolean      isView;
     boolean              sqlEnforceSize;              // inherited for the database -
-    boolean              sqlEnforceStrictSize;        // inherited for the database -
 
     // properties for subclasses
     protected int           columnCount;              // inclusive the hidden primary key
@@ -184,11 +183,10 @@ public class Table extends BaseTable {
      */
     Table(Database db, HsqlName name, int type) throws HsqlException {
 
-        database             = db;
-        sqlEnforceSize       = db.sqlEnforceSize;
-        sqlEnforceStrictSize = db.sqlEnforceStrictSize;
-        identitySequence     = new NumberSequence(null, 0, 1, Types.BIGINT);
-        rowIdSequence        = new NumberSequence(null, 0, 1, Types.BIGINT);
+        database         = db;
+        sqlEnforceSize   = db.sqlEnforceStrictSize;
+        identitySequence = new NumberSequence(null, 0, 1, Types.BIGINT);
+        rowIdSequence    = new NumberSequence(null, 0, 1, Types.BIGINT);
 
         switch (type) {
 
@@ -2092,7 +2090,7 @@ public class Table extends BaseTable {
         int i;
         int colindex;
 
-        if (sqlEnforceSize || sqlEnforceStrictSize) {
+        if (sqlEnforceSize) {
             if (cols == null) {
                 cols = defaultColumnMap;
             }
@@ -2105,7 +2103,7 @@ public class Table extends BaseTable {
                                                         colTypes[colindex],
                                                         colSizes[colindex],
                                                         colScales[colindex],
-                                                        sqlEnforceStrictSize);
+                                                        true);
                 }
             }
         }

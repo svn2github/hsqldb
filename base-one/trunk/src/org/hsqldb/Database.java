@@ -142,7 +142,6 @@ public class Database {
 
     /** true means filesReadOnly but CACHED and TEXT tables are disallowed */
     private boolean                filesInJar;
-    public boolean                 sqlEnforceSize;
     public boolean                 sqlEnforceStrictSize;
     public int                     firstIdentity;
     private boolean                bIgnoreCase;
@@ -212,10 +211,10 @@ public class Database {
 
 // oj@openoffice.org - changed to file access api
         String fileaccess_class_name =
-            (String) props.getProperty("fileaccess_class_name");
+            (String) urlProperties.getProperty("fileaccess_class_name");
 
         if (fileaccess_class_name != null) {
-            String storagekey = props.getProperty("storage_key");
+            String storagekey = urlProperties.getProperty("storage_key");
 
             try {
                 Class zclass = Class.forName(fileaccess_class_name);
