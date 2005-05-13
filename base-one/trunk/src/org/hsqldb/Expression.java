@@ -2193,6 +2193,10 @@ public class Expression {
                     eArg     = null;
                 }
 
+                if (eArg.dataType == Types.NULL) {
+                    eArg.dataType = Types.VARCHAR;
+                }
+
                 dataType = Types.BOOLEAN;
                 break;
 
