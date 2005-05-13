@@ -183,9 +183,9 @@ implements ActionListener, WindowListener, KeyListener {
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.sourceforge.net.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.40 $";
+        + "problem reports or help requests:  $Revision: 1.41 $";
     private static final String ABOUT_TEXT =
-        "$Revision: 1.40 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.41 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2001-2005, The HSQL Development Group.\n"
         + "http://hsqldb.sourceforge.net\n\n\n"
@@ -261,8 +261,7 @@ implements ActionListener, WindowListener, KeyListener {
     JRadioButtonMenuItem rbMotifLF =
         new JRadioButtonMenuItem("Motif Look & Feel");
     JLabel                      jStatusLine;
-    static String               READY_STATUS         = "Ready...";
-    static String               BUZY_STATUS          = "Buzy...";
+    static String               READY_STATUS         = "Ready";
     static private final String AUTOCOMMIT_BOX_TEXT  = "Autocommit mode";
     static private final String LOGGING_BOX_TEXT     = "Logging mode";
     static private final String SHOWSCHEMAS_BOX_TEXT = "Show schemas";
@@ -311,7 +310,7 @@ implements ActionListener, WindowListener, KeyListener {
             // DatabaseManager window is drawn.
             connect(ConnectionDialogSwing.createConnection(defDriver, defURL,
                     defUser, defPassword));
-            m.setWaiting(m.dummyThread);
+            m.setWaiting("Initializing");
             m.insertTestData();
             m.updateAutoCommitBox();
         } catch (Exception e) {
@@ -387,8 +386,7 @@ implements ActionListener, WindowListener, KeyListener {
 
         Connection c = null;
 
-        m.setWaiting(m.dummyThread);
-
+        m.setWaiting("Initializing");
         try {
             if (autoConnect && urlidConnect) {
                 throw new IllegalArgumentException(
@@ -820,7 +818,7 @@ implements ActionListener, WindowListener, KeyListener {
             Connection newCon = null;
 
             try {
-                setWaiting(dummyThread);
+                setWaiting("Connecting");
                 ConnectionDialogSwing.createConnection(fMain, "Connect");
             } finally {
                 setWaiting(null);
@@ -1085,11 +1083,10 @@ implements ActionListener, WindowListener, KeyListener {
         txtCommand.setText(ifHuge);
     }
 
-    private Thread backgroundThread = null;
+    private String busyText = null;
 
-    private void backgroundIt(Thread t) {
-
-        if (backgroundThread != null) {
+    private void backgroundIt(Runnable r, String description) {
+        if (busyText != null) {
             Toolkit.getDefaultToolkit().beep();
 
             return;
@@ -1097,15 +1094,14 @@ implements ActionListener, WindowListener, KeyListener {
 
         // set Waiting mode here.  Inverse op must be called by final()
         // in the Thread.run() of every background thread.
-        setWaiting(t);
-        SwingUtilities.invokeLater(backgroundThread);
+        setWaiting(description);
+        SwingUtilities.invokeLater(r);
     }
 
-    public void setWaiting(Thread t) {
+    public void setWaiting(String description) {
+        busyText = description;
 
-        backgroundThread = t;
-
-        if (backgroundThread == null) {
+        if (busyText == null) {
 
             // restore the cursors we saved
             fMain.setCursor(fMainCursor);
@@ -1113,8 +1109,6 @@ implements ActionListener, WindowListener, KeyListener {
             txtResult.setCursor(txtResultCursor);
 
             //TODO:  Enable actionButtons
-            // Added: (weconsultants@users) Changes the buzy status icon
-            setStatusLine(false);
         } else {
 
             // save the old cursors
@@ -1130,17 +1124,16 @@ implements ActionListener, WindowListener, KeyListener {
             txtResult.setCursor(waitCursor);
 
             //TODO:  Disable actionButtons
-            // Added: (weconsultants@users) Changes the buzy status icon
-            setStatusLine(true);
         }
+        setStatusLine(busyText);
     }
 
-    private Thread treeRefreshThread = new Thread() {
-
+    private Runnable treeRefreshRunnable = new Runnable() {
         public void run() {
 
             try {
                 directRefreshTree();
+
             } catch (RuntimeException re) {
                 CommonSwing.errorMessage(re);
 
@@ -1155,15 +1148,12 @@ implements ActionListener, WindowListener, KeyListener {
      * Schedules to run in a Gui-safe thread
      */
     protected void executeCurrentSQL() {
-        backgroundIt(new StatementExecThread());
+        backgroundIt(new StatementExecRunnable(), "Executing SQL");
     }
 
-    protected class StatementExecThread extends Thread {
-
+    protected class StatementExecRunnable implements Runnable {
         private String sCmd;
-
-        protected StatementExecThread() {
-
+        protected StatementExecRunnable() {
             if (4096 <= ifHuge.length()) {
                 sCmd = ifHuge;
             } else {
@@ -1184,6 +1174,7 @@ implements ActionListener, WindowListener, KeyListener {
 
                 updateResult();
                 gResult.fireTableChanged(null);
+                updateAutoCommitBox();
                 System.gc();
             } catch (RuntimeException re) {
                 CommonSwing.errorMessage(re);
@@ -1244,6 +1235,9 @@ implements ActionListener, WindowListener, KeyListener {
         }
 
         if (autoRefresh) {
+            // We're already running in a "busy" thread.  Just update the
+            // status text.
+            setStatusLine("Refreshing object tree");
             String upper = sql.toUpperCase();
 
             // This test can be very liberal.  Too liberal will just do
@@ -1251,11 +1245,9 @@ implements ActionListener, WindowListener, KeyListener {
             // obsolete info.
             if (upper.indexOf("ALTER") > -1 || upper.indexOf("DROP") > -1
                     || upper.indexOf("CREATE") > -1) {
-                refreshTree();
+                directRefreshTree();
             }
         }
-
-        updateAutoCommitBox();
     }
 
     private void updateResult() {
@@ -1407,8 +1399,6 @@ implements ActionListener, WindowListener, KeyListener {
         gResult.addRow(g);
 
         lTime = System.currentTimeMillis() - lTime;
-
-        updateResult();
     }
 
     /**
@@ -1599,7 +1589,6 @@ implements ActionListener, WindowListener, KeyListener {
 
         iReadyStatus.setSelectedIcon(
             new ImageIcon(CommonSwing.getIcon("StatusRunning")));
-        setStatusLine(false);
 
         pStatus = new JPanel();
 
@@ -1643,7 +1632,7 @@ implements ActionListener, WindowListener, KeyListener {
      * Schedules to run in a Gui-safe thread
      */
     protected void refreshTree() {
-        backgroundIt(treeRefreshThread);
+        backgroundIt(treeRefreshRunnable, "Refreshing object tree");
     }
 
     /**
@@ -1853,21 +1842,16 @@ implements ActionListener, WindowListener, KeyListener {
     }
 
     // Added: (weconsultants@users) Sets up\changes the running status icon
-    void setStatusLine(boolean busy) {
+    void setStatusLine(String busyBaseString) {
 
-        iReadyStatus.setSelected(busy);
-
-        if (busy) {
-            jStatusLine.setText("  " + BUZY_STATUS);
+        iReadyStatus.setSelected(busyBaseString != null);
+        if (busyBaseString == null) {
+            jStatusLine.setText("  " + READY_STATUS
+                    + ((schemaFilter == null) ? ""
+                    : (" /  Tree showing objects in schema '" + schemaFilter
+                        + "'")));
         } else {
-            String schemaMessage = "";
-
-            if (schemaFilter != null) {
-                schemaMessage = " /  Showing objects in schema '"
-                                + schemaFilter + "'";
-            }
-
-            jStatusLine.setText("  " + READY_STATUS + schemaMessage);
+            jStatusLine.setText("  " + busyBaseString + "...");
         }
     }
 
