@@ -183,9 +183,9 @@ implements ActionListener, WindowListener, KeyListener {
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.sourceforge.net.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.41 $";
+        + "problem reports or help requests:  $Revision: 1.42 $";
     private static final String ABOUT_TEXT =
-        "$Revision: 1.41 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.42 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2001-2005, The HSQL Development Group.\n"
         + "http://hsqldb.sourceforge.net\n\n\n"
@@ -438,6 +438,7 @@ implements ActionListener, WindowListener, KeyListener {
      * will be backgrounded and this method will return.
      */
     public void connect(Connection c) {
+        schemaFilter = null;
 
         if (c == null) {
             return;
@@ -819,7 +820,8 @@ implements ActionListener, WindowListener, KeyListener {
 
             try {
                 setWaiting("Connecting");
-                ConnectionDialogSwing.createConnection(fMain, "Connect");
+                newCon = ConnectionDialogSwing.createConnection(
+                        fMain, "Connect");
             } finally {
                 setWaiting(null);
             }
@@ -1846,10 +1848,12 @@ implements ActionListener, WindowListener, KeyListener {
 
         iReadyStatus.setSelected(busyBaseString != null);
         if (busyBaseString == null) {
-            jStatusLine.setText("  " + READY_STATUS
-                    + ((schemaFilter == null) ? ""
-                    : (" /  Tree showing objects in schema '" + schemaFilter
-                        + "'")));
+            String additionalMsg = "";
+            if (schemaFilter != null) {
+                additionalMsg = " /  Tree showing objects in schema '"
+                        + schemaFilter + "'";
+            }
+            jStatusLine.setText("  " + READY_STATUS + additionalMsg);
         } else {
             jStatusLine.setText("  " + busyBaseString + "...");
         }
