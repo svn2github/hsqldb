@@ -183,9 +183,9 @@ implements ActionListener, WindowListener, KeyListener {
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.sourceforge.net.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.43 $";
+        + "problem reports or help requests:  $Revision: 1.44 $";
     private static final String ABOUT_TEXT =
-        "$Revision: 1.43 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.44 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2001-2005, The HSQL Development Group.\n"
         + "http://hsqldb.sourceforge.net\n\n\n"
@@ -193,7 +193,7 @@ implements ActionListener, WindowListener, KeyListener {
         + "license documented in the source code and at the web\n"
         + "site above.";
     static final String    NL         = System.getProperty("line.separator");
-    static final String    NULL_STR   = "\t(null)";
+    static final String    NULL_STR   = "[null]";
     static int             iMaxRecent = 24;
     Connection             cConn;
     Connection             rowConn;        // holds the connetion for getting table row counts
@@ -1276,6 +1276,12 @@ implements ActionListener, WindowListener, KeyListener {
         txtCommand.requestFocus();
     }
 
+    /**
+     * We let Swing handle displaying nulls (which it generally does by
+     * printing nothing for them), except for the case of database
+     * VARCHARs, because this is the only class where there is any
+     * ambiguity about where there is a null stored or not.
+     */
     private void formatResultSet(ResultSet r) {
 
         if (r == null) {
@@ -1296,9 +1302,12 @@ implements ActionListener, WindowListener, KeyListener {
             ResultSetMetaData m   = r.getMetaData();
             int               col = m.getColumnCount();
             Object[]          h   = new Object[col];
+            boolean[]         isVarChar = new boolean[col];
 
             for (int i = 1; i <= col; i++) {
                 h[i - 1] = m.getColumnLabel(i);
+                isVarChar[i - 1] =
+                        (m.getColumnType(i) == java.sql.Types.VARCHAR);
             }
 
             gResult.setHead(h);
@@ -1309,7 +1318,7 @@ implements ActionListener, WindowListener, KeyListener {
                         h[i - 1] = r.getObject(i);
 
                         if (r.wasNull()) {
-                            h[i - 1] = NULL_STR;
+                            h[i - 1] = (isVarChar[i - 1] ? NULL_STR : null);
                         }
                     } catch (SQLException e) {}
                 }
@@ -1426,12 +1435,8 @@ implements ActionListener, WindowListener, KeyListener {
             row = (Object[]) data.elementAt(i);
 
             for (int j = 0; j < width; j++) {
-                String item = row[j].toString();
+                String item = ((row[j] == null) ? "" : row[j].toString());
                 int    l    = item.length();
-
-                if (NULL_STR.equals(item)) {
-                    l--;
-                }
 
                 if (l > size[j]) {
                     size[j] = l;
@@ -1465,11 +1470,7 @@ implements ActionListener, WindowListener, KeyListener {
             row = (Object[]) data.elementAt(i);
 
             for (int j = 0; j < width; j++) {
-                String item = row[j].toString();
-
-                if (NULL_STR.equals(item)) {
-                    item = item.substring(1);
-                }
+                String item = ((row[j] == null) ? "" : row[j].toString());
 
                 b.append(item);
 
