@@ -75,6 +75,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.DecimalFormat;
 import java.util.Vector;
+import java.util.HashSet;
 import java.awt.BorderLayout;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -182,9 +183,9 @@ implements ActionListener, WindowListener, KeyListener {
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.sourceforge.net.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.37 $";
+        + "problem reports or help requests:  $Revision: 1.38 $";
     private static final String ABOUT_TEXT =
-        "$Revision: 1.37 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.38 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2000-2005, The HSQL Development Group.\n"
         + "http://hsqldb.sourceforge.net\n\n\n"
@@ -231,6 +232,7 @@ implements ActionListener, WindowListener, KeyListener {
     static DatabaseManagerSwing refForFontDialogSwing;
     boolean                     displayRowCounts = false;
     boolean                     showSys = false;
+    boolean                     showIndexDetails = true;
     String                      currentLAF = null;
     JPanel                      pStatus;
     static JRadioButton         iReadyStatus;
@@ -449,6 +451,9 @@ implements ActionListener, WindowListener, KeyListener {
             sStatement = cConn.createStatement();
 
             updateAutoCommitBox();
+            // Workaround for EXTREME SLOWNESS getting this info from O.
+            showIndexDetails = 
+                    (dMeta.getDatabaseProductName().indexOf("Oracle") < 0);
             refreshTree();
         } catch (SQLException e) {
 
@@ -625,7 +630,6 @@ implements ActionListener, WindowListener, KeyListener {
         mnuHelp.add(boxTooltips);
         rbAllSchemas.addActionListener(schemaListListener);
         // May be illegal:
-        rbAllSchemas.setActionCommand(null);
         mitemUpdateSchemas.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent actionevent) {
@@ -1580,6 +1584,20 @@ implements ActionListener, WindowListener, KeyListener {
         return node;
     }
 
+    static private final String[]  usertables = {
+            "TABLE", "GLOBAL TEMPORARY", "VIEW", "SYSTEM TABLE"
+    };
+    static private final String[]  nonSystables = {
+            "TABLE", "GLOBAL TEMPORARY", "VIEW"
+    };
+    static private final HashSet oracleSysUsers = new HashSet();
+
+    static {
+        oracleSysUsers.add("SYS");
+        oracleSysUsers.add("SYSTEM");
+        oracleSysUsers.add("WKSYS");
+    }
+
     /* Clear all existing nodes from the tree model and rebuild from scratch.
      */
     protected void refreshTree() {
@@ -1613,12 +1631,6 @@ implements ActionListener, WindowListener, KeyListener {
             rootNode.setUserObject(dMeta.getURL());
 
             // get metadata about user tables by building a vector of table names
-            String[]  usertables = {
-                "TABLE", "GLOBAL TEMPORARY", "VIEW", "SYSTEM TABLE"
-            };
-            String[]  nonSystables = {
-                "TABLE", "GLOBAL TEMPORARY", "VIEW"
-            };
             ResultSet result = dMeta.getTables(null, null, null,
                     (showSys ? usertables: nonSystables));
             Vector    tables     = new Vector();
@@ -1630,10 +1642,16 @@ implements ActionListener, WindowListener, KeyListener {
 
             while (result.next()) {
                 schema = result.getString(2);
+                if ((!showSys)
+                    && dMeta.getDatabaseProductName().indexOf("Oracle") > -1
+                    && oracleSysUsers.contains(schema)) {
+                    continue;
+                }
                 if (schemaFilter == null || schema.equals(schemaFilter)) {
                     schemas.addElement(schema);
                     tables.addElement(result.getString(3));
                     remarks.addElement(result.getString(5));
+                    continue;
                 }
             }
 
@@ -1681,6 +1699,7 @@ implements ActionListener, WindowListener, KeyListener {
                     makeNode(remark, tableNode);
                 }
 
+                // This block is very slow for some Oracle tables.
                 // With a child for each column containing pertinent attributes
                 while (col.next()) {
                     String c = col.getString(4);
@@ -1701,7 +1720,7 @@ implements ActionListener, WindowListener, KeyListener {
                 DefaultMutableTreeNode indexesNode = makeNode("Indices",
                     tableNode);
                 ResultSet ind = null;
-                try {
+                if (showIndexDetails) try {
                 ind = dMeta.getIndexInfo(null, schema, name, false,
                                                    false);
                 String                 oldiname  = null;
@@ -1722,11 +1741,14 @@ implements ActionListener, WindowListener, KeyListener {
 
                     // And the ordered column list for index components
                     makeNode(ind.getString(9), indexNode);
+
                 }
                 } catch (SQLException se) {
                     // Workaround for Oracle
-                    if (se.getMessage() == null
-                            || !se.getMessage().startsWith("ORA-25191:")) {
+                    if (se.getMessage() == null || (
+                                (!se.getMessage().startsWith("ORA-25191:"))
+                                && (!se.getMessage().startsWith("ORA-01702:"))
+                                && !se.getMessage().startsWith("ORA-01031:"))) {
                         throw se;
                     }
                 } finally {
@@ -1954,6 +1976,9 @@ implements ActionListener, WindowListener, KeyListener {
 
         public void actionPerformed(ActionEvent actionevent) {
             schemaFilter = actionevent.getActionCommand();
+            if (schemaFilter.equals("*")) {
+                schemaFilter = null;
+            }
             refreshTree();
         }
     });
