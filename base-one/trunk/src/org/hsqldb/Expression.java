@@ -2577,7 +2577,8 @@ public class Expression {
                 }
             }
 
-            eArg2.isFixedConstantValueList = true;
+            eArg2.isFixedConstantValueList = eArg2.dataType
+                                             != Types.VARCHAR_IGNORECASE;
 
             for (int i = 0; i < len; i++) {
                 if (!vl[i].isFixedConstant()) {
@@ -2596,6 +2597,10 @@ public class Expression {
                         Object value = eArg2.valueList[i].getValue(session);
 
                         value = Column.convertObject(value, eArg2.dataType);
+
+                        if (eArg2.dataType == Types.CHAR && value != null) {
+                            value = Library.rtrim((String) value);
+                        }
 
                         eArg2.hList.add(value);
                     } catch (HsqlException e) {}
@@ -3471,12 +3476,16 @@ public class Expression {
 
         if (exprType == VALUELIST) {
             try {
-                o = Column.convertObject(o, this.dataType);
+                o = Column.convertObject(o, dataType);
             } catch (HsqlException e) {
                 return Boolean.FALSE;
             }
 
             if (isFixedConstantValueList) {
+                if (dataType == Types.CHAR) {
+                    o = Library.rtrim((String) o);
+                }
+
                 return hList.contains(o) ? Boolean.TRUE
                                          : Boolean.FALSE;
             }
