@@ -100,7 +100,6 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
-import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
@@ -137,7 +136,7 @@ import org.hsqldb.lib.java.JavaSystem;
 //              Added: RowCounts for each JTree table nodes.
 //              Added: OneTouchExpandable attribute to JSplitPanes.
 //              Moved: setFramePositon code to a CommonSwing.setFramePositon() Method.
-//              Added: call to new method to handle exeption processing (CommonSwing.errorMessage());
+//              Added: call to new method to handle exception processing (CommonSwing.errorMessage());
 //              Added: Added a new pane added at the bottom of the Frame. (Status Icon and StatusLine).
 //              Added: 2 Methods (setStatusMessage()), one overrides the other. One to change the ruung status
 //                              another to allow a message to be posted without changing the Status Icon if needed.
@@ -183,9 +182,9 @@ implements ActionListener, WindowListener, KeyListener {
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.sourceforge.net.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.38 $";
+        + "problem reports or help requests:  $Revision: 1.39 $";
     private static final String ABOUT_TEXT =
-        "$Revision: 1.38 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.39 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2000-2005, The HSQL Development Group.\n"
         + "http://hsqldb.sourceforge.net\n\n\n"
@@ -235,7 +234,7 @@ implements ActionListener, WindowListener, KeyListener {
     boolean                     showIndexDetails = true;
     String                      currentLAF = null;
     JPanel                      pStatus;
-    static JRadioButton         iReadyStatus;
+    static JButton              iReadyStatus;
     JRadioButtonMenuItem        rbAllSchemas =
                                 new JRadioButtonMenuItem("*");
     JMenuItem                   mitemAbout = new JMenuItem("About", 'A');
@@ -260,9 +259,9 @@ implements ActionListener, WindowListener, KeyListener {
         new JRadioButtonMenuItem("Java Look & Feel");
     JRadioButtonMenuItem rbMotifLF =
         new JRadioButtonMenuItem("Motif Look & Feel");
-    static JLabel               jStatusLine;
+    JLabel                      jStatusLine;
     static String               READY_STATUS         = "Ready...";
-    static String               RUNNING_STATUS       = "Running...";
+    static String               BUZY_STATUS       = "Buzy...";
     static private final String AUTOCOMMIT_BOX_TEXT  = "Autocommit mode";
     static private final String LOGGING_BOX_TEXT     = "Logging mode";
     static private final String SHOWSCHEMAS_BOX_TEXT = "Show schemas";
@@ -306,15 +305,19 @@ implements ActionListener, WindowListener, KeyListener {
         m.main();
 
         try {
-            m.connect(ConnectionDialogSwing.createConnection(defDriver,
+            // The connection dialog will be used before the
+            // DatabaseManager window is drawn.
+            connect(ConnectionDialogSwing.createConnection(defDriver,
                     defURL, defUser, defPassword));
+            m.setWaiting(m.dummyThread);
             m.insertTestData();
             m.updateAutoCommitBox();
-            m.refreshTree();
         } catch (Exception e) {
 
             //  Added: (weconsultants@users)
             CommonSwing.errorMessage(e);
+        } finally {
+            setWaiting(null);
         }
     }
 
@@ -382,6 +385,7 @@ implements ActionListener, WindowListener, KeyListener {
 
         Connection c = null;
 
+        m.setWaiting(m.dummyThread);
         try {
             if (autoConnect && urlidConnect) {
                 throw new IllegalArgumentException(
@@ -411,6 +415,8 @@ implements ActionListener, WindowListener, KeyListener {
 
             //  Added: (weconsultants@users)
             CommonSwing.errorMessage(e);
+        } finally {
+            m.setWaiting(null);
         }
 
         if (c == null) {
@@ -420,11 +426,13 @@ implements ActionListener, WindowListener, KeyListener {
         // Added: (weconsultants@users): For preloadng FontDialogSwing
         FontDialogSwing.CreatFontDialog(refForFontDialogSwing);
         m.connect(c);
-
-        // Added: (weconsultants@users) Changes the running status icon
-        setStatusMessage(READY_STATUS);
     }
 
+    /**
+     * This stuff is all quick, except for the refreshTree().
+     * This unit can be kicked off in main Gui thread.  The refreshTree
+     * will be backgrounded and this method will return.
+     */
     public void connect(Connection c) {
 
         if (c == null) {
@@ -484,21 +492,15 @@ implements ActionListener, WindowListener, KeyListener {
         try {
             DatabaseManagerCommon.createTestTables(sStatement);
 
-            // Modified: (weconsultants@users)  Not needed, overkill.
-            // refreshTree();
             txtCommand.setText(
                 DatabaseManagerCommon.createTestData(sStatement));
-            // This just as overkill (blaine).  insertTestData() is only
-            // called in a couple places, and refreshTree() is called right
-            // afterward every time.
-            //refreshTree();
 
             for (int i = 0; i < DatabaseManagerCommon.testDataSql.length;
                     i++) {
                 addToRecent(DatabaseManagerCommon.testDataSql[i]);
             }
 
-            execute();
+            executeCurrentSQL();
         } catch (SQLException e) {
 
             //  Added: (weconsultants@users)
@@ -766,9 +768,11 @@ implements ActionListener, WindowListener, KeyListener {
 
         if (k.getKeyChar() == '\n' && k.isControlDown()) {
             k.consume();
-            execute();
+            executeCurrentSQL();
         }
     }
+
+    Thread dummyThread = new Thread("dummy");
 
     public void actionPerformed(ActionEvent ev) {
 
@@ -782,12 +786,6 @@ implements ActionListener, WindowListener, KeyListener {
             }
         }
 
-/*
-// button replace by toolbar
-        if (s.equals("Execute")) {
-            execute();
-        } else
-          */
         if (s == null) {}
         else if (s.equals("Exit")) {
             windowClosing(null);
@@ -810,8 +808,14 @@ implements ActionListener, WindowListener, KeyListener {
 
             txtCommand.setText(sRecent[i]);
         } else if (s.equals("Connect...")) {
-            connect(ConnectionDialogSwing.createConnection(fMain, "Connect"));
-            refreshTree();
+            Connection newCon = null;
+            try {
+                setWaiting(dummyThread);
+                ConnectionDialogSwing.createConnection(fMain, "Connect");
+            } finally {
+                setWaiting(null);
+            }
+            connect(newCon);
         } else if (s.equals(GRID_BOX_TEXT)) {
             gridFormat = boxShowGrid.isSelected();
             displayResults();
@@ -963,7 +967,7 @@ implements ActionListener, WindowListener, KeyListener {
         } else if (s.equals("DELETE")) {
             showHelp(DatabaseManagerCommon.deleteHelp);
         } else if (s.equals("EXECUTE")) {
-            execute();
+            executeCurrentSQL();
         } else if (s.equals("CREATE TABLE")) {
             showHelp(DatabaseManagerCommon.createTableHelp);
         } else if (s.equals("DROP TABLE")) {
@@ -1066,24 +1070,35 @@ implements ActionListener, WindowListener, KeyListener {
         txtCommand.setText(ifHuge);
     }
 
-    static Thread runningThread = null;
 
-    private void execute() {
+    private Thread backgroundThread = null;
 
-        if (runningThread != null && runningThread.isAlive()) {
+    private void backgroundIt(Thread t) {
+        if (backgroundThread != null) {
             Toolkit.getDefaultToolkit().beep();
-
             return;
         }
-
-        runningThread = new ExecuteThread();
-
-        runningThread.start();
+        // set Waiting mode here.  Inverse op must be called by final()
+        // in the Thread.run() of every background thread.
+        setWaiting(t);
+        SwingUtilities.invokeLater(backgroundThread);
     }
 
-    public void setWaiting(boolean waiting) {
+    public void setWaiting(Thread t) {
+        backgroundThread = t;
 
-        if (waiting) {
+        if (backgroundThread == null) {
+
+            // restore the cursors we saved
+            fMain.setCursor(fMainCursor);
+            txtCommand.setCursor(txtCommandCursor);
+            txtResult.setCursor(txtResultCursor);
+
+            //TODO:  Enable actionButtons
+
+            // Added: (weconsultants@users) Changes the buzy status icon
+            setStatusLine(false);
+        } else {
 
             // save the old cursors
             if (fMainCursor == null) {
@@ -1097,61 +1112,68 @@ implements ActionListener, WindowListener, KeyListener {
             txtCommand.setCursor(waitCursor);
             txtResult.setCursor(waitCursor);
 
-            // Added: (weconsultants@users) Changes the running status icon
-            setStatusMessage(RUNNING_STATUS);
-        } else {
 
-            // restore the cursors we saved
-            fMain.setCursor(fMainCursor);
-            txtCommand.setCursor(txtCommandCursor);
-            txtResult.setCursor(txtResultCursor);
+            //TODO:  Disable actionButtons
 
-            // Added: (weconsultants@users) Changes the running status icon
-            setStatusMessage(READY_STATUS);
+            // Added: (weconsultants@users) Changes the buzy status icon
+            setStatusLine(true);
         }
     }
 
-    private class ExecuteThread extends Thread {
-
+    private Thread treeRefreshThread = new Thread() {
         public void run() {
+            try {
+                directRefreshTree();
+            } catch (RuntimeException re) {
+                CommonSwing.errorMessage(re);
+                throw re;
+            } finally {
+                setWaiting(null);
+            }
+        }
+    };
 
-            setWaiting(true);
-            gResult.clear();
+    /**
+     * Schedules to run in a Gui-safe thread
+     */
+    protected void executeCurrentSQL() {
+        backgroundIt(new StatementExecThread());
+    }
 
-            String sCmd = null;
 
+    protected class StatementExecThread extends Thread {
+        private String sCmd;
+        protected StatementExecThread() {
             if (4096 <= ifHuge.length()) {
                 sCmd = ifHuge;
             } else {
                 sCmd = txtCommand.getText();
             }
-
-            if (sCmd.startsWith("-->>>TEST<<<--")) {
-                testPerformance();
-            } else {
-                executeCommand();
-            }
-
-            // Added: (weconsultants@users) Changes the running status icon
-            setStatusMessage(READY_STATUS);
-
-            // Call with invokeLater because these commands change the gui.
-            // Do not want to be updating the gui outside of the AWT event
-            // thread.
-            SwingUtilities.invokeLater(new Thread() {
-
-                public void run() {
-
-                    updateResult();
-                    gResult.fireTableChanged(null);
-                    System.gc();
-                    setWaiting(false);
-                }
-            });
         }
-    }
 
-    private void executeCommand() {
+        public void run() {
+            gResult.clear();
+
+            try {
+                if (sCmd.startsWith("-->>>TEST<<<--")) {
+                    testPerformance();
+                } else {
+                    executeSQL();
+                }
+
+                updateResult();
+                gResult.fireTableChanged(null);
+                System.gc();
+            } catch (RuntimeException re) {
+                CommonSwing.errorMessage(re);
+                throw re;
+            } finally {
+                setWaiting(null);
+            }
+        }
+    };
+
+    private void executeSQL() {
 
         String[] g   = new String[1];
         String   sql = txtCommand.getText();
@@ -1364,9 +1386,6 @@ implements ActionListener, WindowListener, KeyListener {
         lTime = System.currentTimeMillis() - lTime;
 
         updateResult();
-
-        // Added: (weconsultants@users) Clear HourGlass for "test Script"
-        setWaiting(false);
     }
 
     /**
@@ -1552,13 +1571,12 @@ implements ActionListener, WindowListener, KeyListener {
 
         // Added: (weconsultants@users)
         jStatusLine = new JLabel();
-        iReadyStatus = new JRadioButton(
+        iReadyStatus = new JButton(
             new ImageIcon(CommonSwing.getIcon("StatusReady")));
 
         iReadyStatus.setSelectedIcon(
             new ImageIcon(CommonSwing.getIcon("StatusRunning")));
-        iReadyStatus.setSelected(true);
-        setStatusMessage(RUNNING_STATUS);
+        setStatusLine(false);
 
         pStatus = new JPanel();
 
@@ -1598,9 +1616,19 @@ implements ActionListener, WindowListener, KeyListener {
         oracleSysUsers.add("WKSYS");
     }
 
-    /* Clear all existing nodes from the tree model and rebuild from scratch.
+    /**
+     * Schedules to run in a Gui-safe thread
      */
     protected void refreshTree() {
+        backgroundIt(treeRefreshThread);
+    }
+
+    /**
+     * Clear all existing nodes from the tree model and rebuild from scratch.
+     *
+     * This method executes in current thread
+     */
+    protected void directRefreshTree() {
 
         int[]                  rowCounts;
         DefaultMutableTreeNode propertiesNode;
@@ -1786,22 +1814,17 @@ implements ActionListener, WindowListener, KeyListener {
     }
 
     // Added: (weconsultants@users) Sets up\changes the running status icon
-    private static void setStatusMessage(String inStatus) {
+    void setStatusLine(boolean busy) {
 
-        if (inStatus.equals(READY_STATUS)) {
-            iReadyStatus.setSelected(false);
-            jStatusLine.setText("  " + READY_STATUS);
+        iReadyStatus.setSelected(busy);
+        if (busy) {
+            jStatusLine.setText("  " + BUZY_STATUS);
         } else {
-            iReadyStatus.setSelected(true);
-            jStatusLine.setText("  " + RUNNING_STATUS);
+            jStatusLine.setText("  " + READY_STATUS
+                    + ((schemaFilter == null) ? ""
+                    : (" /  Showing objects in schema '" + schemaFilter
+                        + "'")));
         }
-    }
-
-    // Added: (weconsultants@users) Overloads setStatusMessage, just a send message to
-    //                              the statusline, not changing the Icon oer status literal
-    private static void setStatusMessage(String inStatus,
-                                         String inStatusMsg) {
-        jStatusLine.setText(jStatusLine.getText() + "  " + inStatusMsg);
     }
 
     // Added: (weconsultants@users) Needed to aggragate counts per table in jTree
@@ -1872,7 +1895,7 @@ implements ActionListener, WindowListener, KeyListener {
         jbuttonExecute.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent actionevent) {
-                execute();
+                executeCurrentSQL();
             }
         });
         jtoolbar.addSeparator();
