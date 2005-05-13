@@ -1381,6 +1381,10 @@ public class Column {
                                        int precision,
                                        int scale) throws HsqlException {
 
+        if (o == null) {
+            return o;
+        }
+
         if (precision == 0) {
             return convertObject(o, type);
         }
@@ -1436,6 +1440,10 @@ public class Column {
      */
     static Object enforceSize(Object obj, int type, int size, int scale,
                               boolean check) throws HsqlException {
+
+        if (obj == null) {
+            return obj;
+        }
 
         if (size == 0) {
             return obj;

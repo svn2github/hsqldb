@@ -615,11 +615,6 @@ class TableWorks {
         int     oldtype    = oldCol.getType();
         int     newtype    = newCol.getType();
 
-        if (newtype == oldtype && oldCol.isIdentity() == newCol.isIdentity()
-                && oldCol.isPrimaryKey() == newCol.isPrimaryKey()) {
-            return;
-        }
-
         switch (newtype) {
 
             case Types.BINARY :
@@ -627,7 +622,7 @@ class TableWorks {
             case Types.LONGVARBINARY :
             case Types.OTHER :
             case Types.JAVA_OBJECT :
-                notallowed = !table.isEmpty(session);
+                notallowed = !(newtype == oldtype || table.isEmpty(session));
         }
 
         switch (oldtype) {
@@ -637,7 +632,7 @@ class TableWorks {
             case Types.LONGVARBINARY :
             case Types.OTHER :
             case Types.JAVA_OBJECT :
-                notallowed = !table.isEmpty(session);
+                notallowed = !(newtype == oldtype || table.isEmpty(session));
                 break;
 
             case Types.TINYINT :
