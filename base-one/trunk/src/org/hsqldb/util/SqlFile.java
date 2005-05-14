@@ -56,7 +56,7 @@ import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.sql.DatabaseMetaData;
 
-/* $Id: SqlFile.java,v 1.105 2005/05/13 13:18:10 fredt Exp $ */
+/* $Id: SqlFile.java,v 1.106 2005/05/14 00:28:34 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -92,7 +92,7 @@ import java.sql.DatabaseMetaData;
  * Most of the Special Commands and Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.105 $
+ * @version $Revision: 1.106 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -142,8 +142,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.105 $".substring("$Revision: ".length(),
-                "$Revision: 1.105 $".length() - 2);
+        revnum = "$Revision: 1.106 $".substring("$Revision: ".length(),
+                "$Revision: 1.106 $".length() - 2);
     }
 
     private static String BANNER =
@@ -2460,11 +2460,13 @@ public class SqlFile {
                         // certain that we need to increment the fieldArray
                         // index.
                         ++insi;
+                        if (dataType[insi] == java.sql.Types.BINARY
+                                || dataType[insi] == java.sql.Types.BLOB) {
+                            binaryThisTime = true;
+                        }
 
                         val = null;
-                        if ((!binaryThisTime)
-                                && dataType[insi] != java.sql.Types.BINARY
-                                && dataType[insi] != java.sql.Types.BLOB) {
+                        if (!binaryThisTime) {
                             val = r.getString(i);
                             // If we tried to get a String but it failed, 
                             // try getting it with a String Stream
@@ -2473,7 +2475,7 @@ public class SqlFile {
                             } catch (Exception e) {
                             }
                         }
-                        if (val == null &&!r.wasNull()) {
+                        if (binaryThisTime || (val == null && !r.wasNull())) {
                             // DB has a value but we either explicitly want
                             // it as binary, or we failed to get it as String.
                             try {
@@ -2484,7 +2486,8 @@ public class SqlFile {
                                         "Failed to read value using stream");
                             }
                             stdprintln("Read " + binBuffer.length 
-                                    + " from field '" + headerArray[insi]
+                                    + " bytes from field '"
+                                    + headerArray[insi]
                                     + "' into binary buffer");
                             return;
                         }
