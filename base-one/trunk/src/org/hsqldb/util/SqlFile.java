@@ -41,6 +41,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.ByteArrayOutputStream;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -54,7 +56,7 @@ import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.sql.DatabaseMetaData;
 
-/* $Id: SqlFile.java,v 1.104 2005/05/12 20:23:46 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.105 2005/05/13 13:18:10 fredt Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -90,7 +92,7 @@ import java.sql.DatabaseMetaData;
  * Most of the Special Commands and Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.104 $
+ * @version $Revision: 1.105 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -140,8 +142,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.104 $".substring("$Revision: ".length(),
-                "$Revision: 1.104 $".length() - 2);
+        revnum = "$Revision: 1.105 $".substring("$Revision: ".length(),
+                "$Revision: 1.105 $".length() - 2);
     }
 
     private static String BANNER =
@@ -198,6 +200,8 @@ public class SqlFile {
         + "    \\! COMMAND ARGS      Execute external program (no support for stdin)\n"
         + "    \\c [true|false]      Continue upon errors (a.o.t. abort upon error)\n"
         + "    \\a [true|false]      Auto-commit JDBC DML commands\n"
+        + "    \\b                   retain next result in Binary format (no display)\n"
+        + "    \\bd file/path.bin    Dump last stored Binary result to file\n"
         + "    \\.                   Enter raw SQL.  End with line containing only \".\"\n"
         + "    \\s                   * Show previous commands (i.e. SQL command history)\n"
         + "    \\-[3]                * reload a command to buffer (for : commands)\n"
@@ -214,7 +218,10 @@ public class SqlFile {
         + "    * VARNAME ~                   Set variable value to the value of the very\n"
         + "                                  next SQL statement executed (see details\n"
         + "                                  at the bottom of this listing).\n"
+        + "    * VARNAME _                   Same as * VARNAME _, except the query is\n"
+        + "                                  done silently (i.e, no rows to screen)\n"
         + "    * list [VARNAME1...]          List values of variable(s) (defaults to all)\n"
+        + "    * dump [VARNAME] path.bin     Dump variable value to text file\n"
         + "    * foreach VARNAME ([val1...]) Repeat the following PL block with the\n"
         + "                                  variable set to each value in turn.\n"
         + "    * if (logical expr)           Execute following PL block only if expr true\n"
@@ -226,7 +233,7 @@ public class SqlFile {
         + "You may omit the {}'s iff *VARNAME is the first word of a SQL command.\n"
         + "Use PL variables in logical expressions like: *VARNAME.\n\n"
         + "* VARNAME ~ sets the variable value according to the very next SQL statement:\n"
-        + "    Query:  The value of the first field of the first row returned\n"
+        + "    Query:  The value of the first field of the first row returned (~ or _).\n"
         + "    other:  Return status of the command (for updates this will be\n"
         + "            the number of rows updated).\n"
     ;
@@ -1222,6 +1229,23 @@ public class SqlFile {
 
                 return;
 
+            case 'b' :
+                if (arg1.length() == 1) {
+                    fetchBinary = true;
+                    return;
+                }
+                if (arg1.charAt(1) != 'd' || other == null) {
+                    throw new BadSpecial("Malformatted binary command");
+                }
+                try {
+                    dump(new File(other));
+                } catch (Exception e) {
+                    throw new BadSpecial(
+                            "Failed to dump binary  data to file '" 
+                            + other + "'");
+                }
+                return;
+
             case '*' :
             case 'c' :
                 if (other != null) {
@@ -1403,6 +1427,9 @@ public class SqlFile {
     //  PL variable name currently awaiting query output.
     private String fetchingVar = null;
 
+    private boolean silentFetch = false;
+    private boolean fetchBinary = false;
+
     /**
      * Process a Process Language Command.
      * Nesting not supported yet.
@@ -1494,6 +1521,21 @@ public class SqlFile {
                 }
             }
 
+            return;
+        }
+
+        if (arg1.equals("dump")) {
+            if (toker.countTokens() != 2) {
+                throw new BadSpecial("Malformatted PL dump command");
+            }
+            String varName = toker.nextToken();
+            String fileName = toker.nextToken();
+            try {
+                dump(varName, new File(fileName));
+            } catch (Exception e) {
+                throw new BadSpecial("Failed to dump variable '"
+                        + varName + "' to file '" + fileName + "'");
+            }
             return;
         }
 
@@ -1720,6 +1762,8 @@ public class SqlFile {
 
         switch (operator.charAt(0)) {
 
+            case '_' :
+                silentFetch = true;
             case '~' :
                 if (toker.countTokens() > 0) {
                     throw new BadSpecial(
@@ -2298,6 +2342,11 @@ public class SqlFile {
 
         int updateCount = (statement == null) ? -1
                                               : statement.getUpdateCount();
+        
+        boolean silentThisTime = silentFetch;
+        boolean binaryThisTime = fetchBinary;
+        silentFetch = false;
+        fetchBinary = false;
 
         if (excludeSysSchemas) {
             stdprintln(
@@ -2326,7 +2375,6 @@ public class SqlFile {
                 int[]             maxWidth = new int[incCount];
                 int               insi;
                 boolean           skip;
-                String            dataType;
                 boolean           ok;
 
                 // STEP 1: GATHER DATA
@@ -2337,8 +2385,8 @@ public class SqlFile {
                 }
 
                 boolean[] rightJust = new boolean[incCount];
+                int[] dataType      = new int[incCount];
 
-                if (incCount > 1) {
                     insi        = -1;
                     headerArray = new String[incCount];
 
@@ -2358,9 +2406,21 @@ public class SqlFile {
                         }
 
                         headerArray[++insi] = m.getColumnLabel(i);
-                        dataType            = m.getColumnTypeName(i);
-                        rightJust[insi] = dataType.equals("INTEGER")
-                                          || dataType.equals("NUMBER");
+                        dataType[insi]      = m.getColumnType(i);
+                        rightJust[insi]     = false;
+                        switch (dataType[insi]) {
+                            case java.sql.Types.BIGINT:
+                            case java.sql.Types.BIT:
+                            case java.sql.Types.DECIMAL:
+                            case java.sql.Types.DOUBLE:
+                            case java.sql.Types.FLOAT:
+                            case java.sql.Types.INTEGER:
+                            case java.sql.Types.NUMERIC:
+                            case java.sql.Types.REAL:
+                            case java.sql.Types.SMALLINT:
+                            case java.sql.Types.TINYINT:
+                                rightJust[insi] = true;
+                        }
 
                         if (htmlMode) {
                             continue;
@@ -2370,7 +2430,6 @@ public class SqlFile {
                             maxWidth[insi] = headerArray[insi].length();
                         }
                     }
-                }
 
                 boolean filteredOut;
 
@@ -2381,7 +2440,54 @@ public class SqlFile {
                     filteredOut = filter != null;
 
                     for (int i = 1; i <= cols; i++) {
-                        val = r.getString(i);
+                        // This is the only case where we can save a data 
+                        // read by recognizing we don't need this datum early.
+                        if (incCols != null) {
+                            skip = true;
+
+                            for (int j = 0; j < incCols.length; j++) {
+                                if (i == incCols[j]) {
+                                    skip = false;
+                                }
+                            }
+
+                            if (skip) {
+                                continue;
+                            }
+                        }
+
+                        // This row may still be ditched, but it is now
+                        // certain that we need to increment the fieldArray
+                        // index.
+                        ++insi;
+
+                        val = null;
+                        if ((!binaryThisTime)
+                                && dataType[insi] != java.sql.Types.BINARY
+                                && dataType[insi] != java.sql.Types.BLOB) {
+                            val = r.getString(i);
+                            // If we tried to get a String but it failed, 
+                            // try getting it with a String Stream
+                            if (val == null)  try {
+                                val = streamToString(r.getAsciiStream(i));
+                            } catch (Exception e) {
+                            }
+                        }
+                        if (val == null &&!r.wasNull()) {
+                            // DB has a value but we either explicitly want
+                            // it as binary, or we failed to get it as String.
+                            try {
+                                binBuffer =
+                                        streamToBytes(r.getBinaryStream(i)); 
+                            } catch (IOException ioe) {
+                                throw new SQLException(
+                                        "Failed to read value using stream");
+                            }
+                            stdprintln("Read " + binBuffer.length 
+                                    + " from field '" + headerArray[insi]
+                                    + "' into binary buffer");
+                            return;
+                        }
 
                         if (excludeSysSchemas && i == 2) {
                             for (int z = 0; z < oracleSysSchemas.length;
@@ -2399,35 +2505,33 @@ public class SqlFile {
 
                             fetchingVar = null;
                         }
-
-                        if (incCols != null) {
-                            skip = true;
-
-                            for (int j = 0; j < incCols.length; j++) {
-                                if (i == incCols[j]) {
-                                    skip = false;
-                                }
-                            }
-
-                            if (skip) {
-                                continue;
-                            }
+                        if (silentThisTime) {
+                            return;
                         }
 
-                        if (val == null &&!r.wasNull()) {
-                            val = "NON-CONVERTIBLE TYPE!";
-                        }
 
+                        // We do not omit rows here.  We collect information
+                        // so we can make the decision after all rows are
+                        // read in.
                         if (filter != null
                                 && (val == null
                                     || val.indexOf(filter) > -1)) {
                             filteredOut = false;
                         }
 
-                        fieldArray[++insi] = (val == null)
-                                             ? (htmlMode ? "<I>null</I>"
-                                                         : "null")
-                                             : val;
+                        ///////////////////////////////
+                        // A little tricky here.  fieldArray[] MUST get set.
+                        if (val == null) {
+                            if (dataType[insi] == java.sql.Types.VARCHAR) {
+                                fieldArray[insi] =
+                                        (htmlMode ? "<I>null</I>" : "[null]");
+                            } else {
+                                fieldArray[insi] = "";
+                            }
+                        } else {
+                            fieldArray[insi] = val;
+                        }
+                        ///////////////////////////////
 
                         if (htmlMode) {
                             continue;
@@ -2446,7 +2550,7 @@ public class SqlFile {
                 // STEP 2: DISPLAY DATA
                 condlPrintln("<TABLE border='1'>", true);
 
-                if (headerArray != null) {
+                if (incCount > 1) {
                     condlPrint(htmlRow(COL_HEAD) + '\n' + PRE_TD, true);
 
                     for (int i = 0; i < headerArray.length; i++) {
@@ -2958,5 +3062,66 @@ public class SqlFile {
         }
 
         return sb.toString();
+    }
+
+    /**
+     * Ascii file dump.
+     */
+    private void dump(String varName, File dumpFile) 
+    throws IOException, BadSpecial {
+        String val = (String) userVars.get(varName);
+        if (val == null) {
+            throw new BadSpecial("Variable '" + varName
+                    + "' has no value set");
+        }
+        
+        OutputStreamWriter osw = new OutputStreamWriter(
+                new FileOutputStream(dumpFile), charset);
+        osw.write(val);
+        osw.write('\n');
+        osw.flush();
+        osw.close();
+        stdprintln("Saved " + (val.length() + 1)
+                + " characters to '" + dumpFile + "'");
+    }
+
+    byte[] binBuffer = null;
+
+    /**
+     * Binary file dump
+     */
+    private void dump(File dumpFile) 
+    throws IOException, BadSpecial {
+        if (binBuffer == null) {
+            throw new BadSpecial("Binary buffer is currently empty");
+        }
+        FileOutputStream fos = new FileOutputStream(dumpFile);
+        fos.write(binBuffer);
+        int len = binBuffer.length;
+        binBuffer = null;
+        fos.flush();
+        fos.close();
+        stdprintln("Saved " + len + " bytes to '" + dumpFile + "'");
+    }
+
+    private String streamToString(InputStream is) throws IOException {
+        char[] xferBuffer = new char[10240];
+        StringWriter stringWriter = new StringWriter();
+        InputStreamReader isr = new InputStreamReader(is, charset);
+        int i;
+        while ((i = isr.read(xferBuffer)) > 0) {
+            stringWriter.write(xferBuffer, 0, i);
+        }
+        return stringWriter.toString();
+    }
+
+    private byte[] streamToBytes(InputStream is) throws IOException {
+        byte[] xferBuffer = new byte[10240];
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        int i;
+        while ((i = is.read(xferBuffer)) > 0) {
+            baos.write(xferBuffer, 0, i);
+        }
+        return baos.toByteArray();
     }
 }
