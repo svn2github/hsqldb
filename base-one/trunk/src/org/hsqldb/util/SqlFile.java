@@ -48,6 +48,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -56,7 +57,7 @@ import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.sql.DatabaseMetaData;
 
-/* $Id: SqlFile.java,v 1.106 2005/05/14 00:28:34 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.107 2005/05/14 02:45:27 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -92,7 +93,7 @@ import java.sql.DatabaseMetaData;
  * Most of the Special Commands and Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.106 $
+ * @version $Revision: 1.107 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -142,8 +143,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.106 $".substring("$Revision: ".length(),
-                "$Revision: 1.106 $".length() - 2);
+        revnum = "$Revision: 1.107 $".substring("$Revision: ".length(),
+                "$Revision: 1.107 $".length() - 2);
     }
 
     private static String BANNER =
@@ -200,8 +201,10 @@ public class SqlFile {
         + "    \\! COMMAND ARGS      Execute external program (no support for stdin)\n"
         + "    \\c [true|false]      Continue upon errors (a.o.t. abort upon error)\n"
         + "    \\a [true|false]      Auto-commit JDBC DML commands\n"
-        + "    \\b                   retain next result in Binary format (no display)\n"
-        + "    \\bd file/path.bin    Dump last stored Binary result to file\n"
+        + "    \\b                   save next result to Binary buffer (no display)\n"
+        + "    \\bd file/path.bin    Dump Binary buffer to file\n"
+        + "    \\bl file/path.bin    Load file into Binary buffer\n"
+        + "    \\bp                  Use ? in next SQL statement to upload Bin. buffer\n"
         + "    \\.                   Enter raw SQL.  End with line containing only \".\"\n"
         + "    \\s                   * Show previous commands (i.e. SQL command history)\n"
         + "    \\-[3]                * reload a command to buffer (for : commands)\n"
@@ -220,8 +223,10 @@ public class SqlFile {
         + "                                  at the bottom of this listing).\n"
         + "    * VARNAME _                   Same as * VARNAME _, except the query is\n"
         + "                                  done silently (i.e, no rows to screen)\n"
-        + "    * list [VARNAME1...]          List values of variable(s) (defaults to all)\n"
-        + "    * dump [VARNAME] path.bin     Dump variable value to text file\n"
+        + "    * list[value] [VARNAME1...]   List variable(s) (defaults to all)\n"
+        + "    * load VARNAME path.txt       Load variable value from text file\n"
+        + "    * dump VARNAME path.txt       Dump variable value to text file\n"
+        + "    * prepare VARNAME             Use ? in next SQL statement to upload val.\n"
         + "    * foreach VARNAME ([val1...]) Repeat the following PL block with the\n"
         + "                                  variable set to each value in turn.\n"
         + "    * if (logical expr)           Execute following PL block only if expr true\n"
@@ -1039,6 +1044,9 @@ public class SqlFile {
         throw new BadSpecial("Unknown Buffer Command");
     }
 
+    private boolean doPrepare = false;
+    private String prepareVar = null;
+
     /**
      * Process a Special Command.
      *
@@ -1234,14 +1242,24 @@ public class SqlFile {
                     fetchBinary = true;
                     return;
                 }
-                if (arg1.charAt(1) != 'd' || other == null) {
+                if (arg1.charAt(1) == 'p') {
+                    doPrepare = true;
+                    return;
+                }
+                if ((arg1.charAt(1) != 'd' && arg1.charAt(1) != 'l')
+                        || other == null) {
                     throw new BadSpecial("Malformatted binary command");
                 }
+                File file = new File(other);
                 try {
-                    dump(new File(other));
+                    if (arg1.charAt(1) == 'd') {
+                        dump(file);
+                    } else {
+                        load(file);
+                    }
                 } catch (Exception e) {
                     throw new BadSpecial(
-                            "Failed to dump binary  data to file '" 
+                            "Failed to load/dump binary  data to file '" 
                             + other + "'");
                 }
                 return;
@@ -1509,33 +1527,54 @@ public class SqlFile {
             throw new BreakException();
         }
 
-        if (arg1.equals("list")) {
+        if (arg1.equals("list") || arg1.equals("listvalue")) {
+            String s;
+            boolean doValues = (arg1.equals("listvalue"));
             if (toker.countTokens() == 0) {
-                stdprint(formatNicely(userVars));
+                stdprint(formatNicely(userVars, doValues));
             } else {
                 tokenArray = getTokenArray(toker.nextToken(""));
 
                 for (int i = 0; i < tokenArray.length; i++) {
-                    stdprintln("    " + tokenArray[i] + ": ("
-                               + userVars.get(tokenArray[i]) + ')');
+                    s = (String) userVars.get(tokenArray[i]);
+                    stdprintln("    " + tokenArray[i] + ": (" +
+                            (doValues ? s : Integer.toString(s.length()))
+                            + ')');
                 }
             }
 
             return;
         }
 
-        if (arg1.equals("dump")) {
+        if (arg1.equals("dump") || arg1.equals("load")) {
             if (toker.countTokens() != 2) {
-                throw new BadSpecial("Malformatted PL dump command");
+                throw new BadSpecial("Malformatted PL dump/load command");
             }
             String varName = toker.nextToken();
-            String fileName = toker.nextToken();
+            File file = new File(toker.nextToken());
             try {
-                dump(varName, new File(fileName));
+                if (arg1.equals("dump")) {
+                    dump(varName, file);
+                } else {
+                    load(varName, file);
+                }
             } catch (Exception e) {
-                throw new BadSpecial("Failed to dump variable '"
-                        + varName + "' to file '" + fileName + "'");
+                throw new BadSpecial("Failed to dump/load variable '"
+                        + varName + "' to file '" + file + "'");
             }
+            return;
+        }
+
+        if (arg1.equals("prepare")) {
+            if (toker.countTokens() != 1) {
+                throw new BadSpecial("Malformatted prepare command");
+            }
+            String s = toker.nextToken();
+            if (userVars.get(s) == null) {
+                throw new SQLException("Use of unset PL variable: " + s);
+            }
+            prepareVar = s;
+            doPrepare = true;
             return;
         }
 
@@ -2298,9 +2337,6 @@ public class SqlFile {
      * Process the current command as an SQL Statement
      */
     private void processSQL() throws SQLException {
-
-        Statement statement = curConn.createStatement();
-
         // Really don't know whether to take the network latency hit here
         // in order to check autoCommit in order to set
         // possiblyUncommitteds more accurately.
@@ -2310,8 +2346,35 @@ public class SqlFile {
         // be able to have uncommitted DML, turn autocommit on, then run
         // other DDL with autocommit on.  As a result, I could be running
         // SQL commands with autotommit on but still have uncommitted mods.
-        statement.execute(plMode ? dereference(curCommand, true)
-                                 : curCommand);
+        String sql = (plMode ? dereference(curCommand, true) : curCommand);
+        Statement statement = null;
+        if (doPrepare) {
+            if (sql.indexOf('?') < 1) {
+                throw new SQLException(
+                        "Prepared statements must contain one '?'");
+            }
+            doPrepare = false;
+            PreparedStatement ps = curConn.prepareStatement(sql);
+            if (prepareVar == null) {
+                if (binBuffer == null) {
+                    throw new SQLException("Binary SqlFile buffer is empty");
+                }
+                ps.setBytes(1, binBuffer);
+            } else {
+                String val = (String) userVars.get(prepareVar);
+                if (val == null) {
+                    throw new SQLException("PL Variable '" + prepareVar 
+                            + "' is empty");
+                }
+                prepareVar = null;
+                ps.setString(1, val);
+            }
+            ps.executeUpdate();
+            statement = ps;
+        } else {
+            statement = curConn.createStatement();
+            statement.execute(sql);
+        }
         possiblyUncommitteds.set(true);
 
         try {
@@ -3052,7 +3115,7 @@ public class SqlFile {
         }
     }
 
-    private static String formatNicely(Map map) {
+    private static String formatNicely(Map map, boolean withValues) {
 
         String       key;
         StringBuffer sb = new StringBuffer();
@@ -3060,8 +3123,11 @@ public class SqlFile {
 
         while (it.hasNext()) {
             key = (String) it.next();
+            String s = (String) map.get(key);
 
-            sb.append("    " + key + ": (" + map.get(key) + ")\n");
+            sb.append("    " + key + ": ("
+                    + (withValues ? s : Integer.toString(s.length()))
+                    +  ")\n");
         }
 
         return sb.toString();
@@ -3096,7 +3162,7 @@ public class SqlFile {
     private void dump(File dumpFile) 
     throws IOException, BadSpecial {
         if (binBuffer == null) {
-            throw new BadSpecial("Binary buffer is currently empty");
+            throw new BadSpecial("Binary SqlFile buffer is currently empty");
         }
         FileOutputStream fos = new FileOutputStream(dumpFile);
         fos.write(binBuffer);
@@ -3126,5 +3192,38 @@ public class SqlFile {
             baos.write(xferBuffer, 0, i);
         }
         return baos.toByteArray();
+    }
+
+    /**
+     * Ascii file load.
+     */
+    private void load(String varName, File asciiFile) throws IOException {
+        char[] xferBuffer = new char[10240];
+        StringWriter stringWriter = new StringWriter();
+        InputStreamReader isr = new InputStreamReader(
+                new FileInputStream(asciiFile), charset);
+        int i;
+        while ((i = isr.read(xferBuffer)) > 0) {
+            stringWriter.write(xferBuffer, 0, i);
+        }
+        isr.close();
+        userVars.put(varName, stringWriter.toString());
+    }
+
+    /**
+     * Binary file load
+     */
+    private void load(File binFile) throws IOException {
+        byte[] xferBuffer = new byte[10240];
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        FileInputStream fis = new FileInputStream(binFile);
+        int i;
+        while ((i = fis.read(xferBuffer)) > 0) {
+            baos.write(xferBuffer, 0, i);
+        }
+        fis.close();
+        binBuffer = baos.toByteArray();
+        stdprintln("Loaded " + binBuffer.length
+                + " bytes into Binary buffer");
     }
 }
