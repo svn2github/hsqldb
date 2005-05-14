@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.68 2005/05/11 13:12:12 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.69 2005/05/11 17:28:28 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.68 $</edition>
-        <pubdate>$Date: 2005/05/11 13:12:12 $</pubdate>
+        <edition>$Revision: 1.69 $</edition>
+        <pubdate>$Date: 2005/05/11 17:28:28 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -40,8 +40,8 @@
             SqlTool is still a very useful tool even if you have no quoting
             capability at all.
         </simpara><simpara>
-            This document is now updated for version 1.45 of SqlTool and
-            1.102 of SqlFile (the latter is the class which does most of the
+            This document is now updated for version 1.46 of SqlTool and
+            1.109 of SqlFile (the latter is the class which does most of the
             work for SqlTool).
             The startup banner will report both versions when you run SqlTool
             interactively.
@@ -809,8 +809,9 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
         </variablelist>
         </section>
 
-        <section><title>PL Commands</title>
-        <variablelist><title>Essential PL Command</title>
+        <section id='interactive_pl_commands-section'>
+        <title>PL Commands</title>
+        <variablelist><title id='interactive_pl_commands-title'>Essential PL Command</title>
             <varlistentry><term>* VARNAME = value</term><listitem><simpara>
                 Set the value of a variable.
                 If the variable doesn't exist yet, it will be created.
@@ -829,12 +830,68 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
                 If you put variable definitions into the SQL file
                 <filename>auto.sql</filename> in your home directory, those
                 aliases/variables will always be available for interactive use.
-        </simpara></listitem></varlistentry>
+            </simpara></listitem></varlistentry>
+            <varlistentry><term>* load VARNAME /file/path.txt</term><listitem><simpara>
+                Sets VARNAME to the content of the specified ASCII file.
+            </simpara></listitem></varlistentry>
+            <varlistentry><term>* prepare VARNAME</term><listitem><simpara>
+                Indicate that next command should be a SQL INSERT or UPDATE
+                command containing one question mark.
+                The value of VARNAME will be substuted for the ? variable.
+                This does work for CLOB columns.
+            </simpara></listitem></varlistentry>
+            <varlistentry><term>* VARNAME _</term><listitem><simpara>
+                When next SQL command is run, instead of displaying the rows,
+                just store the very first column value to variable VARNAME.
+                This works for CLOB columns.
+                It also works with Oracle XML type columns if you use
+                column labels and the <literal>getclobval</literal> function.
+            </simpara></listitem></varlistentry>
+            <varlistentry><term>* dump VARNAME /file/path.txt</term><listitem><simpara>
+                Store the value of VARNAME to the specified ASCII file.
+            </simpara></listitem></varlistentry>
         </variablelist>
         <simpara>
+            Note that PL commands are used to upload and download column
+            values to/from local ASCII files, but the corresponding actions 
+            for binary files use the special \b commands.
+            This is because PL variables are used for ASCII values and
+            you can store any number of column values in PL variables.
+            This is not true for binary column values.
+            The \b commands work with a single binary byte buffer.
+        </simpara> <simpara>
             See the <link linkend='pl-section' endterm='pl-title'/> section 
             below for information on using variables in other ways, and 
             information on the other PL commands and features.
+        </simpara>
+        </section>
+        <section><title>Storing and retrieving binary files</title>
+        <simpara>
+            You can upload binary files such as photographs, audio files,
+            or serialized Java objects into database columns.
+            SqlTool keeps one binary buffer which you can load from files
+            with the \bl command, or from a database query by giving the
+            \b command followed by a query.  In the latter case, the data 
+            returned for the first column of the first result row will be 
+            stored into the binary buffer.
+        </simpara><simpara>
+            Once you have data in the binary buffer, you can upload it
+            to a database column (including BLOB and OBJECT type columns),
+            or save it to a file.
+            The former is accomplished by the special command \bp followed
+            by a <emphasis>prepared</emphasis> SQL query containing one 
+            question mark place-holder to indicate where the data gets
+            inserted.
+        </simpara>
+        <example><title>Uploading binary data from a file</title><screen>
+    \bl /tmp/favoritesong.mp3
+    \bp
+    INSERT INTO musictbl (id, stream) VALUES(3112, ?);</screen>
+            </example>
+        <simpara>
+            You can do the same thing with ASCII files, as documented in the
+            <link linkend='interactive_pl_commands-section' endterm='interactive_pl_commands-title'/>
+            section.
         </simpara>
         </section>
         <section><title>SQL History</title>
@@ -1454,12 +1511,21 @@ java -Dsqlfile.charset=UTF-8 -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sq
             (Note that the \* here is not the special command "\*", but is
             the special command "\p" because "*{qq}" resolves to "p").
         </para>
+        <simpara>
+            PL is also used to upload and download column values to/from
+            local ASCII files, analogously to the special \b commands
+            for binary files.
+            This is explained above in the Interactive
+            <link linkend='interactive_pl_commands-section' endterm='interactive_pl_commands-title'/>
+            section above.
+        </simpara>
         <section>
             <title>Variables</title>
             <itemizedlist>
                 <listitem><simpara>
                     Use the <literal>* list</literal> command to list some or
-                    all variables and their values.
+                    all variables; or <literal>* listvalue</literal> to also
+                    see the values.
                 </simpara></listitem> <listitem><simpara>
                     You can set variables using the
                     <literal>* VARNAME = value</literal> command.
