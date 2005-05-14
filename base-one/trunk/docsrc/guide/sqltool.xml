@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.71 2005/05/14 13:03:52 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.72 2005/05/14 13:24:05 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.71 $</edition>
-        <pubdate>$Date: 2005/05/14 13:03:52 $</pubdate>
+        <edition>$Revision: 1.72 $</edition>
+        <pubdate>$Date: 2005/05/14 13:24:05 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -913,10 +913,14 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
             The very first column value from the first result row of the
             next SQL command will be stored to the binary byte buffer.
         </simpara>
-        <example><title>Uploading binary data from a file</title><screen>
+        <example><title>Inserting binary data into database from a file</title><screen>
     \bl /tmp/favoritesong.mp3
     \bp
     INSERT INTO musictbl (id, stream) VALUES(3112, ?);</screen>
+            </example>
+        <example><title>Downloading binary data from database to a file</title><screen>
+    SELECT stream FROM musictbl WHERE id = 3112;
+    \bd /tmp/favoritesong.mp3</screen>
             </example>
         <simpara>
             You can also store and retrieve text column values to/from
