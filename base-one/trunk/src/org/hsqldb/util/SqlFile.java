@@ -57,7 +57,7 @@ import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.sql.DatabaseMetaData;
 
-/* $Id: SqlFile.java,v 1.109 2005/05/14 06:45:50 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.110 2005/05/14 06:51:15 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -93,7 +93,7 @@ import java.sql.DatabaseMetaData;
  * Most of the Special Commands and Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.109 $
+ * @version $Revision: 1.110 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -143,8 +143,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.109 $".substring("$Revision: ".length(),
-                "$Revision: 1.109 $".length() - 2);
+        revnum = "$Revision: 1.110 $".substring("$Revision: ".length(),
+                "$Revision: 1.110 $".length() - 2);
     }
 
     private static String BANNER =
@@ -2406,8 +2406,8 @@ public class SqlFile {
         int updateCount = (statement == null) ? -1
                                               : statement.getUpdateCount();
         
-        boolean silentThisTime = silentFetch;
-        boolean binaryThisTime = fetchBinary;
+        boolean silent = silentFetch;
+        boolean binary = fetchBinary;
         silentFetch = false;
         fetchBinary = false;
 
@@ -2523,13 +2523,12 @@ public class SqlFile {
                         // certain that we need to increment the fieldArray
                         // index.
                         ++insi;
-                        if (dataType[insi] == java.sql.Types.BINARY
-                                || dataType[insi] == java.sql.Types.BLOB) {
-                            binaryThisTime = true;
+                        if (!canDisplayType(dataType[insi])) {
+                            binary = true;
                         }
 
                         val = null;
-                        if (!binaryThisTime) {
+                        if (!binary) {
                             val = r.getString(i);
                             // If we tried to get a String but it failed, 
                             // try getting it with a String Stream
@@ -2538,7 +2537,7 @@ public class SqlFile {
                             } catch (Exception e) {
                             }
                         }
-                        if (binaryThisTime || (val == null && !r.wasNull())) {
+                        if (binary || (val == null && !r.wasNull())) {
                             // DB has a value but we either explicitly want
                             // it as binary, or we failed to get it as String.
                             try {
@@ -2571,7 +2570,7 @@ public class SqlFile {
 
                             fetchingVar = null;
                         }
-                        if (silentThisTime) {
+                        if (silent) {
                             return;
                         }
 
@@ -3234,5 +3233,20 @@ public class SqlFile {
         binBuffer = baos.toByteArray();
         stdprintln("Loaded " + binBuffer.length
                 + " bytes into Binary buffer");
+    }
+
+    public static boolean canDisplayType(int i) {
+        switch (i) {
+            case java.sql.Types.BINARY:
+            case java.sql.Types.BLOB:
+            case java.sql.Types.JAVA_OBJECT:
+            case java.sql.Types.LONGVARBINARY:
+            case java.sql.Types.LONGVARCHAR:
+            case java.sql.Types.OTHER:
+            case java.sql.Types.STRUCT:
+            case java.sql.Types.VARBINARY:
+                return false;
+        }
+        return true;
     }
 }
