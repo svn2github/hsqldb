@@ -3104,8 +3104,6 @@ class DatabaseCommandInterpreter {
     Result processSelectInto(Result result, HsqlName intoHsqlName,
                              int intoType) throws HsqlException {
 
-        int sid;
-
         // fredt@users 20020215 - patch 497872 by Nitin Chauhan
         // to require column labels in SELECT INTO TABLE
         int colCount = result.getColumnCount();
@@ -3115,8 +3113,6 @@ class DatabaseCommandInterpreter {
                 throw Trace.error(Trace.LABEL_REQUIRED);
             }
         }
-
-        sid = session.getId();
 
         // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP)
         Table t = (intoType == Table.TEXT_TABLE)

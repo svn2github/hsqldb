@@ -57,8 +57,8 @@ public class TestBatchExecution extends TestBase {
     static final String create_memory  = "create memory ";
     static final String create_temp    = "create temp ";
     static final String table_sql = "table test(id int primary key,"
-                                    + "fname varchar, lname "
-                                    + "varchar, zip int)";
+                                    + "fname varchar(20), lname "
+                                    + "varchar(20), zip int)";
     static final String insert_sql = "insert into test values(?,?,?,?)";
     static final String update_sql =
         "update test set fname = 'Hans' where id = ?";

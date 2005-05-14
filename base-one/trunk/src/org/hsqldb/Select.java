@@ -112,7 +112,7 @@ class Select {
     int[]                 sortDirection;
     boolean               sortUnion;          // if true, sort the result of the full union
     HsqlName              sIntoTable;         // null means not select..into
-    int                   intoType = Table.MEMORY_TABLE;
+    int                   intoType;
     Select[]              unionArray;         // only set in the first Select in a union chain
     int                   unionMaxDepth;      // max unionDepth in chain
     Select                unionSelect;        // null means no union select
@@ -123,8 +123,6 @@ class Select {
                           UNIONALL  = 2,
                           INTERSECT = 3,
                           EXCEPT    = 4;
-    private int           limitStart;         // set only by the LIMIT keyword
-    private int           limitCount;         // set only by the LIMIT keyword
     private boolean       simpleLimit;        // true if maxrows can be uses as is
     Result.ResultMetaData resultMetaData;
 
@@ -161,7 +159,6 @@ class Select {
         resolveTables();
         resolveTypes(session);
         setFilterConditions(session);
-        setLimitCounts();
     }
 
     /**
@@ -412,6 +409,9 @@ class Select {
         checkAggregateOrGroupByColumns(groupByEnd, orderByStart);
         checkAggregateOrGroupByColumns(orderByStart, orderByEnd);
         prepareSort();
+
+        simpleLimit = (isDistinctSelect == false && isGrouped == false
+                       && unionSelect == null && iOrderLen == 0);
     }
 
     /**
@@ -449,50 +449,6 @@ class Select {
     }
 
     /**
-     * For SELECT LIMIT n m ....
-     * finds cases where the result does not have to be fully built and
-     * returns and adjusted maxrows with LIMIT params.
-     * LIMIT applies only to the result of UNION and other set operations,
-     * not to individual SELECT statements in the set.
-     *
-     */
-    private void setLimitCounts() throws HsqlException {
-
-        limitStart = limitCondition == null ? 0
-                                            : ((Integer) limitCondition
-                                            .getArg().getValue(null))
-                                                .intValue();
-        limitCount = limitCondition == null ? 0
-                                            : ((Integer) limitCondition
-                                            .getArg2().getValue(null))
-                                                .intValue();
-        simpleLimit = (isDistinctSelect == false && isGrouped == false
-                       && unionSelect == null && iOrderLen == 0);
-    }
-
-    /**
-     * For SELECT LIMIT n m ....
-     * finds cases where the result does not have to be fully built and
-     * returns and adjusted maxrows with LIMIT params.
-     * LIMIT applies only to the result of UNION and other set operations,
-     * not to individual SELECT statements in the set.
-     *
-     */
-    private int getLimitCount(int maxrows) throws HsqlException {
-
-        if (maxrows == 0) {
-            return limitCount;
-        }
-
-        if (limitCount == 0) {
-            return maxrows;
-        }
-
-        return (maxrows > limitCount) ? limitCount
-                                      : maxrows;
-    }
-
-    /**
      * Returns the result of executing this Select.
      *
      * @param maxrows may be 0 to indicate no limit on the number of rows.
@@ -510,10 +466,8 @@ class Select {
             r = getResultMain(session);
 
             if (sortUnion) {
-                int newlimitcount = getLimitCount(maxrows);
-
                 sortResult(session, r);
-                r.trimResult(limitStart, newlimitcount);
+                r.trimResult(getLimitStart(), getLimitCount(maxrows));
             }
         }
 
@@ -602,20 +556,78 @@ class Select {
         }
     }
 
+    int getLimitStart() throws HsqlException {
+
+        if (limitCondition != null) {
+            Integer limit = (Integer) limitCondition.getArg().getValue(null);
+
+            if (limit != null) {
+                return limit.intValue();
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * For SELECT LIMIT n m ....
+     * finds cases where the result does not have to be fully built and
+     * returns an adjusted rowCount with LIMIT params.
+     */
+
+    int getLimitCount(int rowCount) throws HsqlException {
+
+        int limitCount = 0;
+
+        if (limitCondition != null) {
+            Integer limit = (Integer) limitCondition.getArg2().getValue(null);
+
+            if (limit != null) {
+                limitCount = limit.intValue();
+            }
+        }
+
+        if (rowCount != 0 && (limitCount == 0 || rowCount < limitCount)) {
+            limitCount = rowCount;
+        }
+
+        return limitCount;
+    }
+
+    /**
+     * translate the rowCount into total number of rows needed from query,
+     * including any rows skipped at the beginning
+     */
+    int getMaxRowCount(int rowCount) throws HsqlException {
+
+        int limitStart = getLimitStart();
+        int limitCount = getLimitCount(rowCount);
+
+        if (!simpleLimit) {
+            rowCount = Integer.MAX_VALUE;
+        } else {
+            if (rowCount == 0) {
+                rowCount = limitCount;
+            }
+
+            if (rowCount == 0 || rowCount > Integer.MAX_VALUE - limitStart) {
+                rowCount = Integer.MAX_VALUE;
+            } else {
+                rowCount += limitStart;
+            }
+        }
+
+        return rowCount;
+    }
+
     private Result getSingleResult(Session session,
-                                   int maxrows) throws HsqlException {
+                                   int rowCount) throws HsqlException {
 
         if (resultMetaData == null) {
             prepareResult(session);
         }
 
-        int newlimitcount = getLimitCount(maxrows);
-
-        maxrows = newlimitcount != 0 && simpleLimit
-                  ? limitStart + newlimitcount
-                  : Integer.MAX_VALUE;
-
-        Result r = buildResult(session, maxrows);
+        Result r = buildResult(session, getMaxRowCount(rowCount));
 
         // the result is perhaps wider (due to group and order by)
         // so use the visible columns to remove duplicates
@@ -625,7 +637,7 @@ class Select {
 
         if (!sortUnion) {
             sortResult(session, r);
-            r.trimResult(limitStart, newlimitcount);
+            r.trimResult(getLimitStart(), getLimitCount(rowCount));
         }
 
         return r;

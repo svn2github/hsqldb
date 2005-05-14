@@ -736,12 +736,16 @@ class Parser {
             e1 = new Expression(Types.INTEGER, ValuePool.getInt(0));
         }
 
-        if ((e1.getType() == Expression.VALUE && e1.getDataType() == Types
-                .INTEGER && ((Integer) e1.getValue(null))
-                .intValue() >= 0) || e1.isParam()) {
-            if ((e2.getType() == Expression.VALUE && e2.getDataType() == Types
-                    .INTEGER && ((Integer) e1.getValue(null))
-                    .intValue() >= 0) || e2.isParam()) {
+        if (e1.isParam()
+                || (e1.getType() == Expression.VALUE
+                    && e1.getDataType() == Types.INTEGER
+                    && e1.getValue(null) != null
+                    && ((Integer) e1.getValue(null)).intValue() >= 0)) {
+            if (e2.isParam()
+                    || (e2.getType() == Expression.VALUE
+                        && e2.getDataType() == Types.INTEGER
+                        && e2.getValue(null) != null
+                        && ((Integer) e2.getValue(null)).intValue() >= 0)) {
 
                 // necessary for params
                 e1.setDataType(Types.INTEGER);
