@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.69 2005/05/11 17:28:28 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.70 2005/05/14 06:41:41 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.69 $</edition>
-        <pubdate>$Date: 2005/05/11 17:28:28 $</pubdate>
+        <edition>$Revision: 1.70 $</edition>
+        <pubdate>$Date: 2005/05/14 06:41:41 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -41,7 +41,7 @@
             capability at all.
         </simpara><simpara>
             This document is now updated for version 1.46 of SqlTool and
-            1.109 of SqlFile (the latter is the class which does most of the
+            1.110 of SqlFile (the latter is the class which does most of the
             work for SqlTool).
             The startup banner will report both versions when you run SqlTool
             interactively.
@@ -182,21 +182,39 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
             with others you use a menu system where you can enter the number
             of columns).
         </simpara></tip>
-        <para>
-            If you want some sample database objects and data to play with,
-            execute the <filename>sampledata.sql</filename> SQL file.
-            <filename>sampledata.sql</filename> resides in the
-            <filename>src/org/hsqldb/sample</filename> directory of your
-            HSQLDB distribution.
-            Run it like this from an SqlTool session
+        <section><title>Non-displayable Types</title>
+            There are many SQL types which SqlTool (being a text-based
+            program) can't display properly.
+            This includes the types <literal>BLOB</literal>,
+            <literal>BINARY</literal>, <literal>JAVA_OBJECT</literal>,
+            <literal>OTHER</literal>, and several other SQL types.
+            When you run a query that returns any of these, SqlTool will
+            save the very first such value obtained to a binary buffer
+            and will not display any output from this query.
+            You can then save the binary value to a file, as explained in the
+          <link linkend='binary_files-section' endterm='binary_files-title'/>
+            section.
+        </section>
+        <section><title>Loading sample data</title>
+            <para>
+                If you want some sample database objects and data to play 
+                with, execute the <filename>sampledata.sql</filename> SQL 
+                file.
+                <filename>sampledata.sql</filename> resides in the
+                <filename>src/org/hsqldb/sample</filename> directory of your
+                HSQLDB distribution.
+                Run it like this from an SqlTool session
     <programlisting>\i HSQLDB_HOME/src/org/hsqldb/sample/sampledata.sql</programlisting>
-            where <emphasis role='bold'>HSQLDB_HOME</emphasis> is the
-            base directory of your HSQLDB software installation.
-        </para>
-            For memory-only databases, you'll need to run this every time that
-            you run SqlTool.
-            For other (persistent) databases, the data will reside in your
-            database until you drop the tables.
+                where <emphasis role='bold'>HSQLDB_HOME</emphasis> is the
+                base directory of your HSQLDB software installation.
+            </para>
+            <simpara>
+                For memory-only databases, you'll need to run this every 
+                time that you run SqlTool.
+                For other (persistent) databases, the data will reside in 
+                your database until you drop the tables.
+            </simpara>
+        </section>
     </section>
 
     <section id='auth-section'>
@@ -865,23 +883,35 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
             information on the other PL commands and features.
         </simpara>
         </section>
-        <section><title>Storing and retrieving binary files</title>
+        <section id='binary_files-section'>
+            <title id='binary_files-title'>
+                Storing and retrieving binary files</title>
         <simpara>
             You can upload binary files such as photographs, audio files,
             or serialized Java objects into database columns.
             SqlTool keeps one binary buffer which you can load from files
-            with the \bl command, or from a database query by giving the
-            \b command followed by a query.  In the latter case, the data 
-            returned for the first column of the first result row will be 
-            stored into the binary buffer.
+            with the \bl command, or from a database query by doing a
+            one-row query for any non-displayable type (including
+            <literal>BLOB</literal>, <literal>OBJECT</literal>, and
+            <literal>OTHER</literal>).
+            In the latter case, the data returned for the first
+            non-displayable column of the first result row will be stored 
+            into the binary buffer.
         </simpara><simpara>
             Once you have data in the binary buffer, you can upload it
-            to a database column (including BLOB and OBJECT type columns),
-            or save it to a file.
+            to a database column (including <literal>BLOB</literal>,
+            <literal>OBJECT</literal>, and <literal>OTHER</literal> type
+            columns), or save it to a file.
             The former is accomplished by the special command \bp followed
             by a <emphasis>prepared</emphasis> SQL query containing one 
             question mark place-holder to indicate where the data gets
             inserted.
+            The latter is accomplished with the \bd command.
+        </simpara><simpara>
+            You can also store the output from normal, displayable column
+            into the binary buffer by using the special command \b.
+            The very first column value from the first result row of the
+            next SQL command will be stored to the binary byte buffer.
         </simpara>
         <example><title>Uploading binary data from a file</title><screen>
     \bl /tmp/favoritesong.mp3
@@ -889,7 +919,8 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
     INSERT INTO musictbl (id, stream) VALUES(3112, ?);</screen>
             </example>
         <simpara>
-            You can do the same thing with ASCII files, as documented in the
+            You can also store and retrieve text column values to/from
+            ASCII files, as documented in the
             <link linkend='interactive_pl_commands-section' endterm='interactive_pl_commands-title'/>
             section.
         </simpara>
