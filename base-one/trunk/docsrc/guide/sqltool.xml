@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.72 2005/05/14 13:24:05 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.73 2005/05/14 13:51:01 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.72 $</edition>
-        <pubdate>$Date: 2005/05/14 13:24:05 $</pubdate>
+        <edition>$Revision: 1.73 $</edition>
+        <pubdate>$Date: 2005/05/14 13:51:01 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -183,17 +183,28 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
             of columns).
         </simpara></tip>
         <section><title>Non-displayable Types</title>
+            <simpara>
             There are many SQL types which SqlTool (being a text-based
             program) can't display properly.
             This includes the types <literal>BLOB</literal>,
             <literal>BINARY</literal>, <literal>JAVA_OBJECT</literal>,
             <literal>OTHER</literal>, and several other SQL types.
             When you run a query that returns any of these, SqlTool will
-            save the very first such value obtained to a binary buffer
+            save the very first such value obtained to the binary buffer
             and will not display any output from this query.
             You can then save the binary value to a file, as explained in the
           <link linkend='binary_files-section' endterm='binary_files-title'/>
             section.
+            </simpara> <simpara>
+            Another restriction which all text-based database clients have
+            is the inability for the user to type in binary data such as 
+            photos, audio streams, and serialized Java objects.
+            You can use SqlTool to load any binary object into a database
+            by telling SqlTool to get the insert/update datum from a file.
+            This is also explained in the
+          <link linkend='binary_files-section' endterm='binary_files-title'/>
+            section.
+            </simpara>
         </section>
         <section><title>Loading sample data</title>
             <para>
