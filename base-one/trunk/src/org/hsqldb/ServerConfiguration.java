@@ -75,9 +75,9 @@ public final class ServerConfiguration implements ServerConstants {
                 return isTls ? SC_DEFAULT_HTTPS_SERVER_PORT
                              : SC_DEFAULT_HTTP_SERVER_PORT;
             }
-            case SC_PROTOCOL_DBD : {
+            case SC_PROTOCOL_BER : {
                 return isTls ? -1
-                             : SC_DEFAULT_DBD_SERVER_PORT;
+                             : SC_DEFAULT_BER_SERVER_PORT;
             }
             default : {
                 return -1;
