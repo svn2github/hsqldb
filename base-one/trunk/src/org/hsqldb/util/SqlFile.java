@@ -57,7 +57,7 @@ import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.sql.DatabaseMetaData;
 
-/* $Id: SqlFile.java,v 1.107 2005/05/14 02:45:27 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.108 2005/05/14 05:38:51 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -93,7 +93,7 @@ import java.sql.DatabaseMetaData;
  * Most of the Special Commands and Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.107 $
+ * @version $Revision: 1.108 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -143,8 +143,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.107 $".substring("$Revision: ".length(),
-                "$Revision: 1.107 $".length() - 2);
+        revnum = "$Revision: 1.108 $".substring("$Revision: ".length(),
+                "$Revision: 1.108 $".length() - 2);
     }
 
     private static String BANNER =
@@ -3147,7 +3147,12 @@ public class SqlFile {
         OutputStreamWriter osw = new OutputStreamWriter(
                 new FileOutputStream(dumpFile), charset);
         osw.write(val);
-        osw.write('\n');
+        if (val.length() > 0) {
+            char lastChar = val.charAt(val.length() - 1);
+            if (lastChar != '\n' && lastChar != '\r') {
+                osw.write('\n'); // I hope this really writes \r\n for DOS
+            }
+        }
         osw.flush();
         osw.close();
         stdprintln("Saved " + (val.length() + 1)
