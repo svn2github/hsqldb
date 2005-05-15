@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.73 2005/05/14 13:51:01 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.74 2005/05/14 14:41:57 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.73 $</edition>
-        <pubdate>$Date: 2005/05/14 13:51:01 $</pubdate>
+        <edition>$Revision: 1.74 $</edition>
+        <pubdate>$Date: 2005/05/14 14:41:57 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -1926,6 +1926,18 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar mem $HSQLDB_HOME/src/org/hsqldb/sample/pl.
 
     <section>
         <title>PL/SQL</title>
+        <note><simpara>
+            PL/SQL is <emphasis role='bold'>not</emphasis> the same as
+            PL.  PL is the procedural language of SqlFile and is 
+            independent of your back-end database.
+            PL commands always begin with *.
+            PL/SQL is processed on the server side and you can only use
+            it of your database supports it.
+            You can not intermix PL and PL/SQL (except for setting a
+            PL variable to the output of PL/SQL execution), because when
+            you enter PL/SQL to SqlTool that input is not processed
+            by SqlFile.
+        </simpara></note>
         <simpara>
             Use <link linkend='raw-section' endterm='raw-title'/> to send
             PL/SQL code blocks to the database engine.
