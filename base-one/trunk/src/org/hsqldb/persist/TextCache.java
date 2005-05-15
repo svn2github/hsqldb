@@ -72,7 +72,6 @@ public class TextCache extends DataFileCache {
     public boolean             ignoreFirst;
     protected String           header;
     protected Table            table;
-    int                        nextRowPos;
 
     //
 
@@ -385,10 +384,6 @@ public class TextCache extends DataFileCache {
         release(r.getPos());
     }
 
-    public int getNextRowPos() {
-        return nextRowPos;
-    }
-
     // sqlbob -- Allow line breaks in quoted fields.
     protected boolean readObject(int pos) throws IOException {
 
@@ -485,9 +480,9 @@ public class TextCache extends DataFileCache {
         }
 
         if (complete) {
-            ((RowInputText) rowIn).setSource(buffer.toString(), pos);
+            int length = buffer.length() + termCount;
 
-            this.nextRowPos = pos + buffer.length() + termCount;
+            ((RowInputText) rowIn).setSource(buffer.toString(), pos, length);
 
             return true;
         }

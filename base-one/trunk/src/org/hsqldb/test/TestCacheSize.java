@@ -64,7 +64,7 @@ import org.hsqldb.persist.HsqlProperties;
  * This test now incorporates the defunct TestTextTables
  *
  * @author fredt@users
- * @version 1.7.2
+ * @version 1.8.0
  * @since 1.7.0
  */
 public class TestCacheSize {
@@ -86,13 +86,13 @@ public class TestCacheSize {
     boolean reportProgress = false;
 
     // type of the big table {MEMORY | CACHED | TEXT | ""}
-    String  tableType      = "CACHED";
+    String  tableType      = "TEXT";
     int     cacheScale     = 12;
     int     cacheSizeScale = 10;
     boolean nioMode        = true;
 
     // script format {TEXT | BINARY | COMPRESSED}
-    String  logType       = "BINARY";
+    String  logType       = "TEXT";
     int     writeDelay    = 60;
     boolean indexZip      = false;
     boolean indexLastName = false;
@@ -107,10 +107,10 @@ public class TestCacheSize {
     int     deleteWhileInsertInterval = 10000;
 
     // size of the tables used in test
-    int bigrows = 512000;
+    int bigrows = 16000;
 
     // number of ops
-    int bigops    = 512000;
+    int bigops    = 16000;
     int smallops  = 8000;
     int smallrows = 0xfff;
 

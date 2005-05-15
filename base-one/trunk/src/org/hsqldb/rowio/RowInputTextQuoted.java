@@ -56,9 +56,9 @@ public class RowInputTextQuoted extends RowInputText {
         super(fieldSep, varSep, longvarSep, allQuoted);
     }
 
-    public void setSource(String text, int pos) {
+    public void setSource(String text, int pos, int byteSize) {
 
-        super.setSource(text, pos);
+        super.setSource(text, pos, byteSize);
 
         qtext = text.toCharArray();
     }

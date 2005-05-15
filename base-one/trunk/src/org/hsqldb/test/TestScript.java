@@ -35,8 +35,7 @@ import java.sql.Connection;
 
 public class TestScript extends TestBase {
 
-    String path = "TestSelfAlterColumn.txt";
-
+//    String path = "TestSelfAlterColumn.txt";
 //    String path = "TestSelfCaseWhen.txt";
 //    String path = "TestSelfCheckConstraints.txt";
 //    String path = "TestSelfConstraints.txt";
@@ -44,7 +43,8 @@ public class TestScript extends TestBase {
 //      String path = "TestSelfIssues.txt";
 //    String path = "TestSelfLeftJoin.txt";
 //    String path = "TestSelfNameResolution.txt";
-//    String path = "TestSelfInPredicateReferencing.txt";
+    String path = "TestSelfInPredicateReferencing.txt";
+
 //    String path = "TestSelfQueries.txt";
 //    String path = "TestSelfSchemaPersistB1.txt";
 //    String path = "TestSelfUnions.txt";

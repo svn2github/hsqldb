@@ -2019,7 +2019,24 @@ public class Table extends BaseTable {
         updateIdentityValue(data);
         enforceFieldValueLimits(data, defaultColumnMap);
         enforceNullConstraints(data);
-        indexRow(null, row);
+
+        int i = 0;
+
+        try {
+            for (; i < indexList.length; i++) {
+                indexList[i].insert(null, row, i);
+            }
+        } catch (HsqlException e) {
+            Index   index        = indexList[i];
+            boolean isconstraint = index.isConstraint;
+
+            if (isconstraint) {
+                throw Trace.error(Trace.VIOLATION_OF_UNIQUE_CONSTRAINT,
+                                  index.getName().name);
+            }
+
+            throw e;
+        }
     }
 
     /**
@@ -3382,6 +3399,7 @@ public class Table extends BaseTable {
             if (isText) {
                 row = new CachedDataRow(this, oldrow.oData);
 
+                row.setStorageSize(oldrow.getStorageSize());
                 row.setPos(oldrow.getPos());
                 rowStore.restore(row);
             } else if (isCached) {

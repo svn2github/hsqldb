@@ -341,21 +341,6 @@ final class CompiledStatement {
         type = CALL;
     }
 
-    void bind(Object[] values) throws HsqlException {
-
-        int len;
-
-        Trace.check(parameters != null, Trace.COLUMN_COUNT_DOES_NOT_MATCH);
-
-        len = parameters.length;
-
-        Trace.check(values.length >= len, Trace.COLUMN_COUNT_DOES_NOT_MATCH);
-
-        for (int i = 0; i < len; i++) {
-            parameters[i].bind(values[i]);
-        }
-    }
-
     /**
      * For parameters in INSERT_VALUES and INSERT_SELECT lists
      */

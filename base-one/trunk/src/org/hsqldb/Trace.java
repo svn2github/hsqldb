@@ -581,7 +581,7 @@ public class Trace {
         "as both operands of aritmetic operator",                           // Expression_resolveTypes2
         "as both comparison expression",                                    // Expression_resolveTypes3
         "parameter not allowed as the argument of a set function",          // Expression_resolveTypes4
-        "unresolved parameter type ",                                       // Expression_resolveTypes5
+        "S1000 unresolved parameter type ",                                 // Expression_resolveTypes5
         "as both operands of a CASE operation",                             // Expression_resolveTypes6
         "as output of CASE when operand types are $$ and $$",               // Expression_resolveTypes7
         "as both expressions of LIKE",                                      // Expression_resolveTypeForLike
