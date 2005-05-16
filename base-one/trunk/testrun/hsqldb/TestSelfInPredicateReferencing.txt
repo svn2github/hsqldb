@@ -108,4 +108,16 @@ insert into m(m_a_id, m_b_id) values(1, 10);
 insert into m(m_a_id, m_b_id) values(1, 20);
 /*r1,10*/select a.a_id, b.b_id from a, b
  where a.a_id in (select m.m_a_id from m where b.b_id = m.m_b_id);
+--
+CREATE TABLE T(C VARCHAR_IGNORECASE(10));
+INSERT INTO T VALUES ('felix');
+/*r
+ felix
+*/SELECT * FROM T WHERE C IN ('Felix', 'Feline');
+/*c0*/SELECT * FROM T WHERE C IN ('Pink', 'Feline');
+DROP TABLE T;
+CREATE TABLE T(C CHAR(10));
+INSERT INTO T VALUES ('felix');
+/*c1*/SELECT * FROM T WHERE C IN ('felix', 'pink');
+DROP TABLE T;
 

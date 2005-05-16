@@ -269,6 +269,22 @@ insert into test_maxrows values(0);
 insert into test_maxrows select id+1 from test_maxrows;
 insert into test_maxrows select id+2 from test_maxrows;
 insert into test_maxrows select id+4 from test_maxrows;
+/*r
+ 4
+ 3
+ 2
+ 1
+*/select id from test_maxrows order by id desc limit 4 offset 3
+/*r
+ 4
+ 3
+ 2
+ 1
+*/select limit 3 4 id from test_maxrows order by id desc
+/*r
+ 4
+ 3
+*/select id from test_maxrows order by id desc limit 2 offset 3
 set maxrows 3
 /*c3*/select * from test_maxrows
 /*c3*/select id from test_maxrows order by id desc
@@ -277,6 +293,15 @@ set maxrows 3
  6
  5
 */select id from test_maxrows order by id desc
+/*r
+ 4
+ 3
+ 2
+*/select id from test_maxrows order by id desc limit 4 offset 3
+/*r
+ 4
+ 3
+*/select id from test_maxrows order by id desc limit 2 offset 3
 /*r8*/select count(*) from test_maxrows
 /*r7*/select max(id) from test_maxrows
 /*c0*/select id from test_maxrows minus select id from test_maxrows

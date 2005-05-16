@@ -51,6 +51,7 @@ import org.hsqldb.store.ValuePool;
 // - factored out all reusable code into DIXXX support classes
 // - completed Fred's work on allowing inheritance
 // boucherb@users - 1.7.2 - 20020304 - bug fixes, refinements, better java docs
+// fredt@users - 1.8.0 - updated to report latest enhancements and changes
 // boucherb@users - 1.8.0 - 20050515 - furhter SQL 2003 metadata support
 
 /**
@@ -3403,22 +3404,22 @@ extends org.hsqldb.DatabaseInformationMain {
     }
 
 //------------------------------------------------------------------------------
-// boucherb@users 20050515 further SQL2003 metadata support 
+// boucherb@users 20050515 further SQL2003 metadata support
 
     /**
      *  SYSTEM_AUTHORIZATIONS<p>
-     * 
+     *
      *  <b>Function</b><p>
-     * 
+     *
      *  The AUTHORIZATIONS table has one row for each &lt;role name&gt; and
      *  one row for each &lt;authorization identifier &gt; referenced in the
      *  Information Schema. These are the &lt;role name&gt;s and
      *  &lt;authorization identifier&gt;s that may grant privileges as well as
      *  those that may create a schema, or currently own a schema created
      *  through a &lt;schema definition&gt;. <p>
-     * 
+     *
      *  <b>Definition</b><p>
-     * 
+     *
      *  <pre class="SqlCodeExample">
      *  CREATE TABLE AUTHORIZATIONS (
      *       AUTHORIZATION_NAME INFORMATION_SCHEMA.SQL_IDENTIFIER,
@@ -3431,12 +3432,12 @@ extends org.hsqldb.DatabaseInformationMain {
      *               PRIMARY KEY (AUTHORIZATION_NAME)
      *       )
      *  </pre>
-     * 
+     *
      *  <b>Description</b><p>
-     * 
+     *
      *  <ol>
      *  <li> The values of AUTHORIZATION_TYPE have the following meanings:<p>
-     * 
+     *
      *  <table border cellpadding="3">
      *       <tr>
      *           <td nowrap>USER</td>
@@ -3776,7 +3777,7 @@ extends org.hsqldb.DatabaseInformationMain {
         final int igrantor   = 2;
         final int igrantable = 3;
 
-        // Initialization        
+        // Initialization
         grantees = database.getGranteeManager().getGrantees().iterator();
 
         // Do it.

@@ -38,15 +38,24 @@ import org.hsqldb.lib.LongKeyIntValueHashMap;
 class TransactionManager {
 
     LongKeyIntValueHashMap rowSessionMap;
+    boolean                reWriteProtect;
 
     TransactionManager() {
         rowSessionMap = new LongKeyIntValueHashMap();
+    }
+
+    void setReWriteProtection(boolean value) {
+        reWriteProtect = value;
     }
 
     void checkDelete(Session session, Row row) throws HsqlException {}
 
     void checkDelete(Session session,
                      HashMappedList rowSet) throws HsqlException {
+
+        if (!reWriteProtect) {
+            return;
+        }
 
         int sessionid = session.getId();
 
@@ -63,6 +72,10 @@ class TransactionManager {
 
     void checkDelete(Session session,
                      HsqlArrayList rowSet) throws HsqlException {
+
+        if (!reWriteProtect) {
+            return;
+        }
 
         int sessionid = session.getId();
 
@@ -140,7 +153,10 @@ class TransactionManager {
     }
 
     void addTransaction(Session session, Transaction transaction) {
-        rowSessionMap.put(transaction.row.getId(), session.getId());
+
+        if (reWriteProtect) {
+            rowSessionMap.put(transaction.row.getId(), session.getId());
+        }
     }
 
     /**

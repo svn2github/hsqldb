@@ -45,8 +45,7 @@ import org.hsqldb.store.ValuePool;
 // - factored out all reusable code into DIXXX support classes
 // - completed Fred's work on allowing inheritance
 // boucherb@users - 1.7.2 - 20020304 - bug fixes, refinements, better java docs
-
-/**@todo fredt - move Trace.doAssert() literals to Trace*/
+// fredt@users - 1.8.0 - updated to report latest enhancements and changes
 
 /**
  * Produces a collection of tables that form the system data dictionary. <p>
@@ -1830,7 +1829,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         Object[] row;
 
         // Initialization
-        schemas = database.schemaManager.userSchemaNameIterator();
+        schemas = database.schemaManager.fullSchemaNamesIterator();
 
         String defschema = database.schemaManager.getDefaultSchemaName();
 

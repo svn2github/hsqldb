@@ -295,6 +295,7 @@ public class Database {
 
             sessionManager = new SessionManager(this, sysUser);
             txManager      = new TransactionManager();
+            txManager.setReWriteProtection(databaseProperties.isPropertyTrue(HsqlDatabaseProperties.sql_ru_no_multi_write));
             collation      = new Collation();
             dInfo          = DatabaseInformation.newDatabaseInformation(this);
 

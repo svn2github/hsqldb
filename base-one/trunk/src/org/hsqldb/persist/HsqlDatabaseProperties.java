@@ -108,6 +108,8 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         "sql.compare_in_locale";
     private static final String sql_enforce_strict_size =
         "sql.enforce_strict_size";
+    public static final String sql_ru_no_multi_write =
+        "sql.ru_no_multi_rewrite";
 
     //
     private static final String textdb_cache_scale = "textdb.cache_scale";
@@ -145,7 +147,8 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         // user defined boolean properties
         String[] booleanPropertiesNames = {
             hsqldb_nio_data_file, hsqldb_catalogs, sql_enforce_strict_size,
-            textdb_quoted, textdb_all_quoted, textdb_ignore_first
+            textdb_quoted, textdb_all_quoted, textdb_ignore_first,
+            sql_ru_no_multi_write
         };
 
         booleanProperties.addAll(booleanPropertiesNames);
