@@ -161,6 +161,8 @@ class GranteeManager implements GrantConstants {
         Trace.check(!r.hasRole(name),
                     Trace.CIRCULAR_GRANT, 
                     Trace.getMessage(Trace.ALREADY_HAVE_ROLE),
+                    // boucherb@users
+                    // TODO: Correct reporting of actual grant path
                     " GRANT " + name + " TO " + role);
         Trace.check(!g.getDirectRoles().contains(role),
                     Trace.ALREADY_HAVE_ROLE, role);
