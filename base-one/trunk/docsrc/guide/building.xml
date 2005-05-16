@@ -1,4 +1,4 @@
-<!-- $Id: building.xml,v 1.12 2005/05/16 13:27:48 unsaved Exp $ -->
+<!-- $Id: building.xml,v 1.13 2005/05/16 13:39:50 unsaved Exp $ -->
 
 <appendix id='building-appendix'>
     <title id='building-title'>Building HSQLDB</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.12 $</edition>
-        <pubdate>$Date: 2005/05/16 13:27:48 $</pubdate>
+        <edition>$Revision: 1.13 $</edition>
+        <pubdate>$Date: 2005/05/16 13:39:50 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Building</keyword>
@@ -287,7 +287,7 @@
             Build like
             <example><title>Building HTML User Guides</title>
     <screen>ant docbooks-html
-    ant docbooks-chunk</screen>
+ant docbooks-chunk</screen>
             </example>
         </para> <para>
             To build the User Guide in PDF format, you must also have the 
