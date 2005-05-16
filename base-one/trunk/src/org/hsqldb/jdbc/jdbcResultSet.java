@@ -4447,7 +4447,14 @@ public class jdbcResultSet implements ResultSet {
      */
     public Timestamp getTimestamp(int columnIndex,
                                   Calendar cal) throws SQLException {
-        return getTimestamp(columnIndex);
+
+        Timestamp ts = getTimestamp(columnIndex);
+
+        if (cal != null) {
+            ts.setTime(HsqlDateTime.getTimeInMillis(ts, null, cal));
+        }
+
+        return ts;
     }
 
     /**

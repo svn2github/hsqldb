@@ -75,6 +75,7 @@ public class HsqlDateTime {
      * by getToday()
      */
     private static Calendar today          = new GregorianCalendar();
+    private static Calendar tempCal        = new GregorianCalendar();
     private static Calendar tempCalDefault = new GregorianCalendar();
     private static Calendar tempCalGMT =
         new GregorianCalendar(TimeZone.getTimeZone("GMT"));
@@ -426,6 +427,26 @@ public class HsqlDateTime {
 //#endif JDBC3
     }
 
+    public static long getTimeInMillis(java.util.Date dt, Calendar source,
+                                       Calendar target) {
+
+        if (source == null) {
+            source = tempCalDefault;
+        }
+
+        if (target == null) {
+            target = tempCalDefault;
+        }
+
+        synchronized (tempCal) {
+            tempCal.setTimeZone(source.getTimeZone());
+            tempCal.setTime(dt);
+            tempCal.setTimeZone(target.getTimeZone());
+
+            return getTimeInMillis(tempCal);
+        }
+    }
+
     /**
      * Gets the time from the given Calendar as a milliseconds value; wrapper method to
      * allow use of more efficient JDK1.4 method on JDK1.4 (was protected in earlier versions).
@@ -502,11 +523,11 @@ public class HsqlDateTime {
 
     public static Timestamp getNormalisedTimestamp(Time t) {
 
-        synchronized (tempCalGMT) {
-            setTimeInMillis(tempCalGMT, System.currentTimeMillis());
-            resetToDate(tempCalGMT);
+        synchronized (tempCalDefault) {
+            setTimeInMillis(tempCalDefault, System.currentTimeMillis());
+            resetToDate(tempCalDefault);
 
-            long value = getTimeInMillis(tempCalGMT) + t.getTime();
+            long value = getTimeInMillis(tempCalDefault) + t.getTime();
 
             return new Timestamp(value);
         }

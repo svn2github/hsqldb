@@ -1656,21 +1656,15 @@ implements PreparedStatement {
 
         checkSetParameterIndex(parameterIndex);
 
-        if (cal == null) {
-            setTimestamp(parameterIndex, x);
+        if (cal != null) {
+            int ns = x.getNanos();
 
-            return;
+            x = new Timestamp(HsqlDateTime.getTimeInMillis(x, cal, null));
+
+            x.setNanos(ns);
         }
 
-        String s;
-
-        try {
-            s = HsqlDateTime.getTimestampString(x, cal);
-        } catch (Exception e) {
-            throw Util.sqlException(Trace.INVALID_ESCAPE, e.getMessage());
-        }
-
-        setParameter(parameterIndex, s);
+        setParameter(parameterIndex, x);
     }
 
     /**
