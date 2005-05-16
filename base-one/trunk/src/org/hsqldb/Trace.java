@@ -616,7 +616,7 @@ public class Trace {
         "0Z000 Error retrieving a nested role",                             //
         "28000 No such right",                                              //
         "not allowed in schema definition",                                 //
-        "S0011 Primary key not allowd",                                     // 251
+        "S0011 Primary key not allowed",                                    // 251
         "37000 column is part of a constraint",                             //
         "37000 column size is required",                                    //
         "37000 invalid size or precision",                                  //
