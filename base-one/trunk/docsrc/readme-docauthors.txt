@@ -74,11 +74,9 @@ sandwich it in a CDATA directive.
 If you want to provide a link to the document, you just ulink to 
 the document in the current directory, not to the one in the cdata
 
-(Note:  I realize now that, contrary to much DocBook documentation,
-current DocBook does support XML Schema.
-Therefore, at some point we should convert from this old-fashioned DTD
-macro and inclusion mechanism to something XML Schema-compatible, like
-XInclude.)
+POSTNOTE:  The long-term way to do this is with XInclude, or some
+other generic XML inclusion mechanism.  Unfortunately, none of the
+good methods work with the Java ports of DocBook!
 
 
 =======================================================================
