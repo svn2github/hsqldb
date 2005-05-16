@@ -24,34 +24,63 @@
 
    <target name='explainjars'
            description="List description of jars that you can build">
-     <echo>
-hsqldb.jar     	: default distribution jar
-hsqljdbc.jar   	: JDBC client only (no direct urls of form jdbc:hsqldb:mem/file/res:*)
-hsqldbmain.jar	: no utility programs
-hsqldbmin.jar  	: no utility or server programs
-hsqldbtest.jar 	: all including test classes
-hsqldbz.jar		: min jar plus necessary util classes for Zaurus
-hsqlsqltool.jar	: SqlTool client only (no direct urls of form jdbc:hsqldb:mem/file/res:*)
-
-jars built with JDK 1.2 OR 1.3 can now be used with JRE 1.1.
-
-Run 'ant -projecthelp' to list the target names to build these items.
-     </echo>
+     <echo>jar filename    build command   explanation
+--------------  -------------   -----------------------------------
+hsqldb.jar      ant hsqldb      Default distribution jar
+hsqljdbc.jar    ant hsqljdbc    JDBC client only.  (No direct urls
+                                of form jdbc:hsqldb:mem/file/res:*)
+hsqldbmain.jar  ant hsqldbmain  No utility programs
+hsqldbutil.jar  ant hsqldbutil  Utility programs only.  No JDBC 
+                                driver.  (Includes SqlTool and 
+                                DatabaseManagers)
+hsqldbmin.jar   ant hsqldbmin   No utility or server programs.
+                                (Include JDBC driver, but no support
+                                for urls of form jdbc:hsqldb:ht*...)
+hsqldbtest.jar  ant hsqldbtest  All, including test classes
+hsqldbz.jar     ant hsqldbz     Min jar plus necessary util classes
+                                for Zaurus
+hsqltool.jar    ant hsqltool    SqlTool client and JDBC driver.
+                                (No direct urls of form 
+                                jdbc:hsqldb:mem/file/res:*)
+ 
+jars built with JDK 1.2 OR 1.3 can now be used with JRE 1.1.</echo>
    </target>
 
+   <!-- Blaine's new jar target naming strategy.
+        Target name is always the same as the desired jar file name, less
+        the ".jar" extension. -->
+   <!-- Commented out descriptions can be enabled if we want to assist 
+        people using old-style target names.  If so, remember to remove
+        the trailing "/>" on every first target line. -->
+   <target name='jar' depends='hsqldb'/>
+       <!-- description="Same as target 'hsqldb'"/> -->
+   <target name='jarclient' depends='hsqljdbc'/>
+       <!-- description="Same as target 'hsqljdbc'"/> -->
+   <target name='jarmain' depends='hsqldbmain'/>
+       <!-- description="Same as target 'hsqldbmain'"/> -->
+   <target name='jarmin' depends='hsqldbmin'/>
+       <!-- description="Same as target 'hsqldbmin'"/> -->
+   <target name='jarsqltool' depends='hsqltool'/>
+       <!-- description="Same as target 'hsqltool'"/> -->
+   <target name='jartest' depends='hsqldbtest'/>
+       <!-- description="Same as target 'hsqldbtest'"/> -->
+   <target name='jarutil' depends='hsqldbutil'/>
+       <!-- description="Same as target 'hsqldbutil'"/> -->
+   <target name='jarzaurus' depends='hsqldbz'/>
+       <!-- description="Same as target 'hsqldbz'"/> -->
+
    <target name="help" description="Top-level help message">
-      <echo>
-usage:
+      <echo>usage:
    ant -help            Display ant help screen
    ant -projecthelp     Display all invocable targets
+   ant explainjars      List all targets which build jar files
    ant ANYTHING ELSE    Run 'ant -projecthelp' for details
 
    jars built with JDK 1.2 OR 1.3 can now be used with JRE 1.1
 
 examples:
    ant jar
-   ant clean
-      </echo>
+   ant clean</echo>
    </target>
 
    <target name="-javajsse">
@@ -230,17 +259,10 @@ examples:
          <include name="org/hsqldb/resources/*.java"/>
          <include name="org/hsqldb/rowio/*.java"/>
          <include name="org/hsqldb/scriptio/*.java"/>
-         <exclude name="org/hsqldb/jmx/*.java"/>
-         <exclude name="org/hsqldb/lib/*.java"/>
-         <exclude name="org/hsqldb/test/*.java"/>
-         <exclude name="org/hsqldb/sample/*.java"/>
-         <exclude name="org/hsqldb/util/*.java"/>
-         <exclude name="org/hsqldb/jdbc/jdbcDataSource*.java"/>
-         <exclude name="org/hsqldb/jdbc/jdbcParameterMetaData.java"/>
-         <exclude name="org/hsqldb/jdbc/jdbcSavepoint.java"/>
          <exclude name="org/hsqldb/HsqlSocketFactorySecure.java" unless="ant.java.hasjsse"/>
-         <exclude name="org/hsqldb/persist/NIOLockFile.java"/>
-         <exclude name="org/hsqldb/persist/NIOScaledRAFile.java"/>
+         <!-- DEVELOPERS:  Do not 'exclude' subsets of items which were not
+              otherwise included above.  If Javac needs anything outside of
+              the includes above, it will get them regardless of excludes. -->
       </javac>
       <copy todir="${basedir}/classes/org/hsqldb/resources">
          <fileset dir="${src}/org/hsqldb/resources" includes="*.properties"/>
@@ -300,21 +322,8 @@ examples:
          <exclude name="org/hsqldb/util/TableSorter.java"/>
       </javac>
       <copy todir="classes/org/hsqldb/util">
-      <fileset dir="${src}/org/hsqldb/util">
-         <include name="hsqldb.gif"/>
-         <include name="Bold.gif"/>
-         <include name="Clear.png"/>
-         <include name="Close.png"/>
-         <include name="Colors.png"/>
-         <include name="GreenCircle.gif"/>
-         <include name="Hourglass.gif"/>
-         <include name="hsqldb.gif"/>
-         <include name="Italic.gif"/>
-         <include name="problems.gif"/>
-         <include name="RedCircle.gif"/>
-         <include name="run_exc.gif"/>
-      </fileset>
-    </copy>
+          <fileset dir="${src}/org/hsqldb/util" includes='*.gif, *.png'/>
+      </copy>
     </target>
 
    <target name="swing" depends="util" unless="noswing"
@@ -345,13 +354,12 @@ examples:
          </classpath>
          <include name="org/hsqldb/test/**"/>
          <exclude name="org/hsqldb/test/TestJDBCSavepoints.java"/>
-         <exclude name="org/hsqldb/test/SqlToolHarness.java"/>
-         <exclude name="org/hsqldb/test/SqlTool*.java"/>
+         <exclude name="org/hsqldb/test/*SqlTool*.java"/>
       </javac>
       <antcall inheritall='true' target='-test14'/>
    </target>
 
-    <target name="jarzaurus" depends="classes14,util"
+    <target name="hsqldbz" depends="classes14,util"
             description="Build the hsqldbz.jar for Zaurus">
         <jar jarfile="lib/hsqldbz.jar"
              basedir="classes"
@@ -389,7 +397,7 @@ examples:
        </jar>
     </target>
 
-    <target name="jartest" depends="test,swing"
+    <target name="hsqldbtest" depends="test,swing"
             description="Build the hsqldbtest.jar (default plus test classes)">
         <jar jarfile="lib/hsqldbtest.jar"
              basedir="classes"
@@ -405,7 +413,7 @@ examples:
       </jar>
     </target>
 
-    <target name="jarmain" depends="classes14"
+    <target name="hsqldbmain" depends="classes14"
             description="Build the hsqldbmain.jar (no utilities) (use '-Dnoswing=true jarmain' to exclude swing classes)">
         <jar jarfile="lib/hsqldbmain.jar"
              basedir="classes"
@@ -423,7 +431,7 @@ examples:
       </jar>
     </target>
 
-    <target name="jarmin" depends="classes14"
+    <target name="hsqldbmin" depends="classes14"
             description="Build the hsqldbmin.jar (no servers)">
         <jar jarfile="lib/hsqldbmin.jar"
              basedir="classes"
@@ -464,7 +472,7 @@ examples:
        </jar>
     </target>
 
-    <target name="jar" depends="classes14,util,swing"
+    <target name="hsqldb" depends="classes14,util,swing"
             description="Build the default hsqldb.jar">
         <jar jarfile="lib/hsqldb.jar"
              basedir="classes"
@@ -492,12 +500,14 @@ examples:
 <!-- classes referenced by the org.hsqldb.jdbc package classes -->
 <!-- or the org.hsqldb.jdbcDriver class are included here with some -->
 <!-- ommissions where the calling methods are not actually used -->
-    <target name="jarclient" depends="classes14"
-            description="Build the hsqljdbc.jar">
+    <target name="hsqljdbc" depends="classes14"
+             description="Build the hsqljdbc.jar">
         <jar jarfile="lib/hsqljdbc.jar">
             <!-- including 'org/hsqldb/jdbc*' just to be safe -->
             <fileset dir='classes'
                 includes='org/hsqldb/jdbc/jdbc*,
+                          org/hsqldb/jdbc/Util*,
+                          org/hsqldb/types/*,
                           org/hsqldb/jdbcDriver*,
                           org/hsqldb/rowio/RowOutputBase*,
                           org/hsqldb/rowio/RowInputBase*,
@@ -530,7 +540,7 @@ examples:
                           org/hsqldb/Column*,
                           org/hsqldb/DatabaseManager*,
                           org/hsqldb/HSQLClient*,
-                          org/hsqldb/HsqlProperties*,
+                          org/hsqldb/persist/HsqlProperties*,
                           org/hsqldb/HsqlException*,
                           org/hsqldb/HsqlSocketFactory*,
                           org/hsqldb/HTTPClientConnection*,
@@ -545,15 +555,16 @@ examples:
                           '/>
         </jar>
     </target>
-    <target name="jarsqltool" depends="classes14"
-            description="Build the hsqlsqltool.jar">
-        <jar jarfile="lib/hsqlsqltool.jar">
+    <target name="hsqltool" depends="classes14, util"
+            description="Build the hsqltool.jar">
+        <jar jarfile="lib/hsqltool.jar">
             <manifest>
                 <attribute name='Main-Class' value='org.hsqldb.util.SqlTool'/>
             </manifest>
             <!-- including 'org/hsqldb/jdbc*' just to be safe -->
             <fileset dir='classes'
                 includes='org/hsqldb/jdbc/jdbc*,
+                          org/hsqldb/types/*,
                           org/hsqldb/jdbcDriver*,
                           org/hsqldb/rowio/RowOutputBase*,
                           org/hsqldb/rowio/RowInputBase*,
@@ -564,6 +575,7 @@ examples:
                           org/hsqldb/lib/InOutUtil*,
                           org/hsqldb/lib/AsciiStringInputStream*,
                           org/hsqldb/lib/StringInputStream*,
+                          org/hsqldb/lib/StringUtil*,
                           org/hsqldb/lib/IntValueHashMap*,
                           org/hsqldb/lib/ArrayUtil*,
                           org/hsqldb/lib/StringConverter*,
@@ -586,7 +598,7 @@ examples:
                           org/hsqldb/Column*,
                           org/hsqldb/DatabaseManager*,
                           org/hsqldb/HSQLClient*,
-                          org/hsqldb/HsqlProperties*,
+                          org/hsqldb/persist/HsqlProperties*,
                           org/hsqldb/HsqlException*,
                           org/hsqldb/HsqlSocketFactory*,
                           org/hsqldb/HTTPClientConnection*,
@@ -606,7 +618,7 @@ examples:
         </jar>
     </target>
 
-    <target name="jarutil" depends="util,swing"
+    <target name="hsqldbutil" depends="util,swing"
             description="Build the utility hsqldbutil.jar">
         <jar jarfile="lib/hsqldbutil.jar"
              basedir="classes"
