@@ -1,4 +1,4 @@
-<!-- $Id: dbmanager.xml,v 1.7 2005/05/11 17:23:29 unsaved Exp $ -->
+<!-- $Id: dbmanager.xml,v 1.8 2005/05/11 17:28:28 unsaved Exp $ -->
 
 <appendix>
 <title>Database Manager</title>
@@ -19,8 +19,8 @@
             </affiliation>
         </author>
     </authorgroup>
-    <edition>$Revision: 1.7 $</edition>
-    <pubdate>$Date: 2005/05/11 17:23:29 $</pubdate>
+    <edition>$Revision: 1.8 $</edition>
+    <pubdate>$Date: 2005/05/11 17:28:28 $</pubdate>
     <keywordset>
         <keyword>Hsqldb</keyword>
         <keyword>Database</keyword>
@@ -154,17 +154,18 @@
         Then, use your window manager to add an item that runs this command.
     </simpara>
 </section>
+
     <section>
         <title>
-            Updating your old HSQLDB distrubution to use the current
-            DatabaseManagers
+            Using the current DatabaseManagers with an older HSQLDB
+            distribution.
         </title>
         <simpara>This procedure will allow users of a legacy version of
             HSQLDB to use all of the new features of the DatabaseManagers.
-            You will also get the new versions of the SqlTool!
+            You will also get the new version of the SqlTool!
             This procedure works for distros going back to 1.7.3.3 at least,
             probably much farther.
-            </simpara><simpara>
+        </simpara><simpara>
             These instructions assume that you are capable of running an Ant
             build. 
             See the
@@ -173,26 +174,35 @@
         </simpara>
         <procedure>
             <step><simpara>
-                Copy these files from src/org/hsqldb/util of the current
-                HSQLDB distribution to the same directory within your
-                new distribution: <literal>DatabaseMan* SqlTool*
-                SqlFile* RCData* *Swing.java *.gif *.png</literal>
+                Download and extract a current HSQLDB distribution.
+                If you don't want to use the source code, documentation,
+                etc., you can use a temporary directory and remove it
+                afterwards.
             </simpara></step><step><simpara>
-                cd to the build directory of your new distro and run
-                <literal>ant clean</literal>
+                Cd to the build directory under the root directory where
+                you extracted the distribution to.
             </simpara></step><step><simpara>
-                <literal>ant classes</literal>
+                Run <literal>ant hsqldbutil</literal>.
             </simpara></step><step><simpara>
-                <literal>
-                    cp -p ../src/org/hsqldb/util/*.gif
-                    ../src/org/hsqldb/util/*.png ../classes/org/hsqldb/util
-                </literal>
-                </simpara><simpara>
-                    Windows users will obviously need to adjust the copy
-                    command.
+                If you're going to wipe out the build directory, copy
+                <filename>hsqldbutil.jar</filename> to a safe location first.
             </simpara></step><step><simpara>
-                <literal>ant jar</literal>
+                For now on, whenver you are going to run DatabaseManager*,
+                make sure that you have this 
+                <filename>hsqldbutil.jar</filename> as
+                the first item in your CLASSPATH.
             </simpara></step>
         </procedure>
+        <para>
+            Here's a UNIX example where somebody wants to use the new 
+            DatabaseManagerSwing
+            with their older HSQLDB database, as well as with Postgresql
+            and a local application.
+            <informalexample><screen>
+CLASSPATH=/path/to/hsqldbutil.jar:/home/bob/myapp/classes:/usr/local/lib/pg.jdbc3.jar
+export CLASSPATH
+java org.hsqldb.util.DatabaseManagerSwing --urlid urlid</screen>
+            </informalexample>
+        </para>
     </section>
 </appendix>

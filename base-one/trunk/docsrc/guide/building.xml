@@ -1,4 +1,4 @@
-<!-- $Id: building.xml,v 1.9 2004/06/06 08:45:56 unsaved Exp $ -->
+<!-- $Id: building.xml,v 1.10 2005/05/11 16:07:57 unsaved Exp $ -->
 
 <appendix id='building-appendix'>
     <title id='building-title'>Building HSQLDB</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.9 $</edition>
-        <pubdate>$Date: 2004/06/06 08:45:56 $</pubdate>
+        <edition>$Revision: 1.10 $</edition>
+        <pubdate>$Date: 2005/05/11 16:07:57 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Building</keyword>
@@ -66,9 +66,16 @@
 			<screen> ant -projecthelp</screen> </informalexample>
 			<para>This displays the available ant targets, which you can supply
 			as command line arguments to ant. These include </para>
-			<variablelist> <varlistentry><term>jar</term> 
+			<variablelist> <varlistentry><term>hsqldb</term> 
 			<listitem>
 			<para> to make the <filename>hsqldb.jar</filename> </para>
+			</listitem> </varlistentry><varlistentry>
+			<term>explainjars</term>
+			<listitem>
+            <para>
+                Lists all targets which build jar files, with an explanation
+                of the purposes of the different jars.
+            </para>
 			</listitem> </varlistentry><varlistentry>
 			<term>clean</term>
 			<listitem>
@@ -79,39 +86,42 @@
 			<listitem><para> to remove the old jar as well </para></listitem>
 			</varlistentry><varlistentry><term>javadoc</term> <listitem><para>
 			to build javadoc </para></listitem></varlistentry>
-			<varlistentry><term>jarmain</term> <listitem><para> to build a 
-			smaller jar for hsqldb that does not contain utilities
+			<varlistentry><term>hsqldbmain</term> <listitem><para> to build a 
+			smaller jar for HSQLDB that does not contain utilities
 			</para></listitem> </varlistentry>
-			<varlistentry><term>jarclient</term> <listitem><para> to build an
+			<varlistentry><term>hsqljdbc</term> <listitem><para> to build an
 			extremely small jar containing only the client-side JDBC driver
             (does not support direct connection to HSQLDB URLs of the form
             jdbc:hsldb:mem:*, jdbc:hsqldb:file:*, nor jdbc:hsqldb:res:*).
 			</para></listitem> </varlistentry> 
-			<varlistentry><term>jarmin</term>
-			<listitem>
-			<para> to build a very small jar with no support for servers </para>
+			<varlistentry><term>hsqldbmin</term>
+            <listitem> <para>
+                to build a small jar that supports HSQLDB URLs of the form
+                jdbc:hsqldb:mem:*, jdbc:hsqld:file*, jdbc:hsqldb:res:*; but
+                not network URLs like jdbc:hsql* or jdbc:http*.
+            </para>
 			</listitem> 
-			</varlistentry><varlistentry><term>jartest</term>
+			</varlistentry><varlistentry><term>hsqldbtest</term>
 			<listitem><para> to build a larger jar for hsqldb that contains
 			tests </para></listitem> </varlistentry>
 			<varlistentry><term>...</term> 
-			<listitem><para> Many more targets are available </para></listitem>
+            <listitem><para>
+                Many more targets are available.
+                Run <literal>ant -projecthelp</literal>
+                and <literal>ant explainjars</literal>.
+            </para></listitem>
 			</varlistentry> 
 			</variablelist>
-			<para> HSQLDB can be built in any combination of five different 
-			sizes and three JRE (Java Runtime Environment) versions. The
+            <para> HSQLDB can be built in any combination of three JRE 
+            (Java Runtime Environment) versions and many jar file sizes. The
 			smallest jar size(<filename>hsqljdbc.jar</filename>) contains only
-			the HSQLDB JDBC Driver client. The next smallest jar size
-			(<filename>hsqldbmin.jar</filename>) contains only the standalone
-			database (no servers) and JDBC support and is suitable for embedded 
-			applications. The default size (<filename>hsqldb.jar</filename>)
-			also contains server mode support and the utilities. The largest
-			size (<filename>hsqldbtest.jar</filename>)includes some test 
-            classes as well.
-            (You can also build hsqlsqltool.jar.
-            If you use SqlTool, see the
-            <link linkend='sqltool-chapter' endterm='sqltool-title'/> chapter
-            about that.)
+			the HSQLDB JDBC Driver client. 
+			The default size (<filename>hsqldb.jar</filename>)
+            also contains server mode support and the utilities.
+            The largest size (<filename>hsqldbtest.jar</filename>)includes 
+            some test classes as well.
+            Just run <literal>ant explainjars</literal> for a concise list
+            of all available jar files.
             </para>
             <para> In order to build and run the 
 			test classes, you need the JUnit jar in the 
@@ -126,7 +136,7 @@
 			The default is built using: </para>
 			<example> 
 			<title>Buiding the standard Hsqldb jar file with Ant</title>
-            <screen>    ant jar</screen>
+            <screen>ant hsqldb</screen>
             </example>
             <para>
                 The Ant method always builds a jar with the JDK that is used by 

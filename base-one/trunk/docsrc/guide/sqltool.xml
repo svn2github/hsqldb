@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.74 2005/05/14 14:41:57 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.75 2005/05/15 00:27:59 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.74 $</edition>
-        <pubdate>$Date: 2005/05/14 14:41:57 $</pubdate>
+        <edition>$Revision: 1.75 $</edition>
+        <pubdate>$Date: 2005/05/15 00:27:59 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -334,7 +334,8 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
 
     <section>
         <title>
-            Updating your old HSQLDB distrubution to use current SqlTool
+            Using the current version of SqlTool with an older HSQLDB
+            distribution.
         </title>
         <simpara>This procedure will allow users of a legacy version of
             HSQLDB to use all of the new features of SqlTool.
@@ -350,27 +351,39 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
         </simpara>
         <procedure>
             <step><simpara>
-                Copy these files from src/org/hsqldb/util of the current
-                HSQLDB distribution to the same directory within your
-                new distribution: <literal>DatabaseMan* SqlTool*
-                SqlFile* RCData* *Swing.java *.gif *.png</literal>
+                Download and extract a current HSQLDB distribution.
+                If you don't want to use the source code, documentation,
+                etc., you can use a temporary directory and remove it
+                afterwards.
             </simpara></step><step><simpara>
-                cd to the build directory of your new distro and run
-                <literal>ant clean</literal>
+                Cd to the build directory under the root directory where
+                you extracted the distribution to.
             </simpara></step><step><simpara>
-                <literal>ant classes</literal>
+                Run <literal>ant hsqldbutil</literal>.
+                Do not run <literal>ant hsqltool</literal>, because 
+                hsqlbutil.jar files contain the HSQLDB JDBC driver, and you 
+                can not use a newer JDBC driver with an older HSQLDB database.
             </simpara></step><step><simpara>
-                <literal>
-                    cp -p ../src/org/hsqldb/util/*.gif
-                    ../src/org/hsqldb/util/*.png ../classes/org/hsqldb/util
-                </literal>
-                </simpara><simpara>
-                    Windows users will obviously need to adjust the copy
-                    command.
+                If you're going to wipe out the build directory, copy
+                <filename>hsqldbutil.jar</filename> to a safe location first.
             </simpara></step><step><simpara>
-                <literal>ant jar</literal>
+                For now on, whenver you are going to run SqlTool, make sure
+                that you have this <filename>hsqldbutil.jar</filename> as
+                the first item in your CLASSPATH.
+                You can't run SqlTool with the "-jar" switch (because the
+                -jar switch doesn't permit setting your own class path).
             </simpara></step>
         </procedure>
+        <para>
+            Here's a UNIX example where somebody wants to use the new SqlTool
+            with their older HSQLDB database, as well as with Postgresql
+            and a local application.
+            <informalexample><screen>
+CLASSPATH=/path/to/hsqldbutil.jar:/home/bob/myapp/classes:/usr/local/lib/pg.jdbc3.jar
+export CLASSPATH
+java org.hsqldb.util.SqlTool urlid</screen>
+            </informalexample>
+        </para>
     </section>
 
     <section id='int-section'>
@@ -1965,7 +1978,7 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar mem $HSQLDB_HOME/src/org/hsqldb/sample/pl.
     </section>
 
     <section>
-        <title>Using hsqlsqltool.jar</title>
+        <title>Using hsqltool.jar and hsqldbutil.jar</title>
         <simpara>
             This section is only for those users who want to use SqlTool
             but without the overhead of hsqldb.jar.
@@ -1974,33 +1987,43 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar mem $HSQLDB_HOME/src/org/hsqldb/sample/pl.
             <literal>jdbc:hsqldb:mem:</literal> + something,
             <literal>jdbc:hsqldb:file:</literal> + something, or
             <literal>jdbc:hsqldb:res:</literal> + something,
-            then you can use <filename>hsqlsqltool.jar</filename> in place of
+            then you can use <filename>hsqltool.jar</filename> in place of
             the much larger <filename>hsqldb.jar</filename> file.
-            <filename>hsqlsqltool.jar</filename> will work for all JDBC
+            <filename>hsqltool.jar</filename> will work for all JDBC
             databases other than HSQLDB Memory-only and In-process databases
             (the latter are fine if you access them via a HSQLB Server or
             WebServer).
-            You will have to supply the JDBC driver for non-HSQLDB URLs.
+            You will have to supply the JDBC driver for non-HSQLDB URLs, of
+            course.
+        </simpara><simpara>
+            <filename>hsqltool.jar</filename> includes the HSQLDB JDBC
+            driver.
+            If you do not need to connect to HSQLDB databases at all, 
+            then <filename>hsqldbutil.jar</filename> is what you need.
+            <filename>hsqldbutil.jar</filename> contains everything you
+            need to run <filename>SqlTool</filename> and
+            <filename>DatabaseManagerSwing</filename> against non-HSQLDB
+            databases... well, besides the JDBC drivers for the target
+            databases.
         </simpara><simpara>
             The HSQLDB distribution doesn't "come with" a pre-built 
-            <filename>hsqlsqltool.jar</filename> file.
-            I recommend that you build the <emphasis>jarsqltool</emphasis> 
-            target, as explained in the 
+            <filename>hsqltool.jar</filename> and
+            <filename>hsqldbutil.jar</filename> files.
+            You should build the <emphasis>hsqltool</emphasis> 
+            or <emphasis>hsqldbutil</emphasis> target, as explained in the 
             <link linkend='building-appendix' endterm='building-title'/>
             appendix.
         </simpara> <simpara>
             If you are using the HSQLDB JDBC driver (i.e., you're connecting
             up to a URL like jdbc:hsqldb:hsql + something or
             jdbc:hsqldb:http + something), you run SqlTool exactly as with
-            hsqldb.jar except you use the file path to your hsqlsqltool.jar
-            file (for example, <filename>hsqlsqltool.jar</filename>)
-            instead of the path to hsqldb.jar.
+            hsqldb.jar except you use the file path to your new jar file
+            instead of the path to <filename>hsqldb.jar</filename>.
         </simpara> <simpara>
             If you are using a non-HSQLDB JDBC driver, follow the instructions
             at the end of the
             <link linkend='baremin-section' endterm='baremin-title'/> section,
-            but use your hsqlsqltool jar file in place of
-            <filename>hsqldb.jar</filename>.
+            but use your new file in place of <filename>hsqldb.jar</filename>.
         </simpara>
     </section>
 
