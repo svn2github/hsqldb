@@ -110,7 +110,7 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
 
     public void setSource(String text, int pos, int byteSize) {
 
-        size = byteSize;
+        size      = byteSize;
         this.text = text;
         textLen   = text.length();
         filePos   = pos;

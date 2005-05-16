@@ -451,7 +451,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             sysTableSessionDependent[SYSTEM_CHECK_TABLE_USAGE] =
             sysTableSessionDependent[SYSTEM_VIEW_COLUMN_USAGE] =
             sysTableSessionDependent[SYSTEM_VIEW_TABLE_USAGE] =
-            sysTableSessionDependent[SYSTEM_VIEW_ROUTINE_USAGE] = 
+            sysTableSessionDependent[SYSTEM_VIEW_ROUTINE_USAGE] =
             sysTableSessionDependent[SYSTEM_AUTHORIZATIONS] = true;
 
         Table t;

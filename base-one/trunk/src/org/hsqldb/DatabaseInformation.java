@@ -110,9 +110,8 @@ class DatabaseInformation {
     protected static final int SYSTEM_VIEW_COLUMN_USAGE   = 39;
     protected static final int SYSTEM_VIEW_TABLE_USAGE    = 40;
     protected static final int SYSTEM_VIEW_ROUTINE_USAGE  = 41;
-    
+
 // boucherb@users 20050514 - further SQL 200n metdata support
-    
     protected static final int SYSTEM_AUTHORIZATIONS                 = 42;
     protected static final int SYSTEM_COLLATIONS                     = 43;
     protected static final int SYSTEM_ROLE_AUTHORIZATION_DESCRIPTORS = 44;
@@ -120,38 +119,38 @@ class DatabaseInformation {
 
     /** system table names strictly in order of their ids */
     protected static final String[] sysTableNames = {
-        "SYSTEM_BESTROWIDENTIFIER",      //
-        "SYSTEM_CATALOGS",               //
-        "SYSTEM_COLUMNPRIVILEGES",       //
-        "SYSTEM_COLUMNS",                //
-        "SYSTEM_CROSSREFERENCE",         //
-        "SYSTEM_INDEXINFO",              //
-        "SYSTEM_PRIMARYKEYS",            //
-        "SYSTEM_PROCEDURECOLUMNS",       //
-        "SYSTEM_PROCEDURES",             //
-        "SYSTEM_SCHEMAS",                //
-        "SYSTEM_SUPERTABLES",            //
-        "SYSTEM_SUPERTYPES",             //
-        "SYSTEM_TABLEPRIVILEGES",        //
-        "SYSTEM_TABLES",                 //
-        "SYSTEM_TABLETYPES",             //
-        "SYSTEM_TYPEINFO",               //
-        "SYSTEM_UDTATTRIBUTES",          //
-        "SYSTEM_UDTS",                   //
-        "SYSTEM_USERS",                  //
-        "SYSTEM_VERSIONCOLUMNS",         //
+        "SYSTEM_BESTROWIDENTIFIER",                 //
+        "SYSTEM_CATALOGS",                          //
+        "SYSTEM_COLUMNPRIVILEGES",                  //
+        "SYSTEM_COLUMNS",                           //
+        "SYSTEM_CROSSREFERENCE",                    //
+        "SYSTEM_INDEXINFO",                         //
+        "SYSTEM_PRIMARYKEYS",                       //
+        "SYSTEM_PROCEDURECOLUMNS",                  //
+        "SYSTEM_PROCEDURES",                        //
+        "SYSTEM_SCHEMAS",                           //
+        "SYSTEM_SUPERTABLES",                       //
+        "SYSTEM_SUPERTYPES",                        //
+        "SYSTEM_TABLEPRIVILEGES",                   //
+        "SYSTEM_TABLES",                            //
+        "SYSTEM_TABLETYPES",                        //
+        "SYSTEM_TYPEINFO",                          //
+        "SYSTEM_UDTATTRIBUTES",                     //
+        "SYSTEM_UDTS",                              //
+        "SYSTEM_USERS",                             //
+        "SYSTEM_VERSIONCOLUMNS",                    //
 
         // HSQLDB-specific
-        "SYSTEM_ALIASES",                //
-        "SYSTEM_BYTECODE",               //
-        "SYSTEM_CACHEINFO",              //
-        "SYSTEM_CLASSPRIVILEGES",        //
-        "SYSTEM_SESSIONINFO",            //
-        "SYSTEM_PROPERTIES",             //
-        "SYSTEM_SESSIONS",               //
-        "SYSTEM_TRIGGERCOLUMNS",         //
-        "SYSTEM_TRIGGERS",               //
-        "SYSTEM_ALLTYPEINFO",            //
+        "SYSTEM_ALIASES",                           //
+        "SYSTEM_BYTECODE",                          //
+        "SYSTEM_CACHEINFO",                         //
+        "SYSTEM_CLASSPRIVILEGES",                   //
+        "SYSTEM_SESSIONINFO",                       //
+        "SYSTEM_PROPERTIES",                        //
+        "SYSTEM_SESSIONS",                          //
+        "SYSTEM_TRIGGERCOLUMNS",                    //
+        "SYSTEM_TRIGGERS",                          //
+        "SYSTEM_ALLTYPEINFO",                       //
 
         // boucherb@users 20030305 - brought in line with SQL 200n
         "SYSTEM_VIEWS",
@@ -160,26 +159,26 @@ class DatabaseInformation {
         "SYSTEM_TEXTTABLES",
 
         // boucherb@users 20040107 - metadata support for sequences - SQL 200n
-        "SYSTEM_SEQUENCES",              //
+        "SYSTEM_SEQUENCES",                         //
         "SYSTEM_USAGE_PRIVILEGES",
 
         // boucherb@users 20040107 - metadata support for constraints - SQL 200n
-        "SYSTEM_CHECK_CONSTRAINTS",      //
-        "SYSTEM_TABLE_CONSTRAINTS",      //
+        "SYSTEM_CHECK_CONSTRAINTS",                 //
+        "SYSTEM_TABLE_CONSTRAINTS",                 //
 
         // boucherb@users 20040107 - metadata support for usage - SQL 200n
-        "SYSTEM_CHECK_COLUMN_USAGE",     //
-        "SYSTEM_CHECK_ROUTINE_USAGE",    //
-        "SYSTEM_CHECK_TABLE_USAGE",      //
-        "SYSTEM_VIEW_COLUMN_USAGE",      //
-        "SYSTEM_VIEW_TABLE_USAGE",       //
-        "SYSTEM_VIEW_ROUTINE_USAGE",     //
+        "SYSTEM_CHECK_COLUMN_USAGE",                //
+        "SYSTEM_CHECK_ROUTINE_USAGE",               //
+        "SYSTEM_CHECK_TABLE_USAGE",                 //
+        "SYSTEM_VIEW_COLUMN_USAGE",                 //
+        "SYSTEM_VIEW_TABLE_USAGE",                  //
+        "SYSTEM_VIEW_ROUTINE_USAGE",                //
 
         // boucherb@users 20050514 - further SQL 200n metadata support
-        "SYSTEM_AUTHORIZATIONS",
-        "SYSTEM_COLLATIONS",                
-        "SYSTEM_ROLE_AUTHORIZATION_DESCRIPTORS",
-        "SYSTEM_SCHEMATA"
+        "SYSTEM_AUTHORIZATIONS",                    //
+        "SYSTEM_COLLATIONS",                        //
+        "SYSTEM_ROLE_AUTHORIZATION_DESCRIPTORS",    //
+        "SYSTEM_SCHEMATA"                           //
 
         // Future use
 //        "SYSTEM_ASSERTIONS",

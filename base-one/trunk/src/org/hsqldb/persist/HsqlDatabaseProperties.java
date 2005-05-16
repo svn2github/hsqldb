@@ -101,11 +101,11 @@ public class HsqlDatabaseProperties extends HsqlProperties {
     private static final String hsqldb_nio_data_file = "hsqldb.nio_data_file";
     private static final String hsqldb_original_version =
         "hsqldb.original_version";
+    private static final String hsqldb_script_format = "hsqldb.script_format";
 
     //
     private static final String sql_compare_in_locale =
         "sql.compare_in_locale";
-    private static final String hsqldb_script_format = "hsqldb.script_format";
     private static final String sql_enforce_strict_size =
         "sql.enforce_strict_size";
 
@@ -116,12 +116,12 @@ public class HsqlDatabaseProperties extends HsqlProperties {
     private static final String textdb_all_quoted = "textdb.all_quoted";
     private static final String textdb_allow_full_path =
         "textdb.allow_full_path";
+    private static final String textdb_encoding     = "textdb.encoding";
     private static final String textdb_ignore_first = "textdb.ignore_first";
     private static final String textdb_quoted       = "textdb.quoted";
     private static final String textdb_fs           = "textdb.fs";
     private static final String textdb_vs           = "textdb.vs";
     private static final String textdb_lvs          = "textdb.lvs";
-    private static final String textdb_encoding     = "textdb.encoding";
 
     static {
 

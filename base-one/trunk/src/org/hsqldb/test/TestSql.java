@@ -523,42 +523,70 @@ public class TestSql extends TestBase {
     /**
      * Fix for bug #1201135
      */
-    public void testBinds(){
+    public void testBinds() {
+
         try {
-        PreparedStatement pstmt = connection.prepareStatement("drop table test if exists");
-        pstmt.execute();
-        pstmt = connection.prepareStatement("create table test (id integer)");
-        pstmt.execute();
-        pstmt = connection.prepareStatement("insert into test values (10)");
-        pstmt.execute();
-        pstmt = connection.prepareStatement("insert into test values (20)");
-        pstmt.execute();
+            PreparedStatement pstmt =
+                connection.prepareStatement("drop table test if exists");
 
-        pstmt = connection.prepareStatement
-            ("select count(*) from test where ? is null");
-        pstmt.setString(1, "hello");
-        ResultSet rs = pstmt.executeQuery();
-        rs.next();
-        int count = rs.getInt(1);
-        assertEquals(0,count);
-        pstmt = connection.prepareStatement("select limit ? 1  id from test");
-        pstmt.setInt(1, 0);
-        rs = pstmt.executeQuery();
-        rs.next();
-        count = rs.getInt(1);
-        assertEquals(10,count);
-        pstmt.setInt(1, 1);
-        rs = pstmt.executeQuery();
-        rs.next();
-        count = rs.getInt(1);
-        assertEquals(20,count);
+            pstmt.execute();
 
+            pstmt =
+                connection.prepareStatement("create table test (id integer)");
 
-    } catch (SQLException e) {
-        e.printStackTrace();
-        System.out.println("TestSql.testBinds() error: " + e.getMessage());
+            pstmt.execute();
+
+            pstmt =
+                connection.prepareStatement("insert into test values (10)");
+
+            pstmt.execute();
+
+            pstmt =
+                connection.prepareStatement("insert into test values (20)");
+
+            pstmt.execute();
+
+            pstmt = connection.prepareStatement(
+                "select count(*) from test where ? is null");
+
+            pstmt.setString(1, "hello");
+
+            ResultSet rs = pstmt.executeQuery();
+
+            rs.next();
+
+            int count = rs.getInt(1);
+
+            assertEquals(0, count);
+
+            pstmt =
+                connection.prepareStatement("select limit ? 1  id from test");
+
+            pstmt.setInt(1, 0);
+
+            rs = pstmt.executeQuery();
+
+            rs.next();
+
+            count = rs.getInt(1);
+
+            assertEquals(10, count);
+            pstmt.setInt(1, 1);
+
+            rs = pstmt.executeQuery();
+
+            rs.next();
+
+            count = rs.getInt(1);
+
+            assertEquals(20, count);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("TestSql.testBinds() error: "
+                               + e.getMessage());
+        }
     }
-    }
+
     protected void tearDown() {
 
         try {

@@ -144,26 +144,27 @@ class GranteeManager implements GrantConstants {
     /**
      * Grant a role to this Grantee.
      */
-    void grant(String name, String role) throws HsqlException {        
+    void grant(String name, String role) throws HsqlException {
 
-        Grantee g = get(name);        
+        Grantee g = get(name);
 
         Trace.check(g != null, Trace.NO_SUCH_GRANTEE, name);
-        
+
         Grantee r = get(role);
-        
+
         Trace.check(r != null, Trace.NO_SUCH_ROLE, role);
-        Trace.check(!role.equals(name),
-                    Trace.CIRCULAR_GRANT, name + " = " + role );
+        Trace.check(!role.equals(name), Trace.CIRCULAR_GRANT,
+                    name + " = " + role);
+
         // boucherb@users 20050515 
         // SQL 2003 Foundation, 4.34.3
         // No cycles of role grants are allowed.
-        Trace.check(!r.hasRole(name),
-                    Trace.CIRCULAR_GRANT, 
+        Trace.check(!r.hasRole(name), Trace.CIRCULAR_GRANT,
                     Trace.getMessage(Trace.ALREADY_HAVE_ROLE),
-                    // boucherb@users
-                    // TODO: Correct reporting of actual grant path
-                    " GRANT " + name + " TO " + role);
+
+        // boucherb@users
+        // TODO: Correct reporting of actual grant path
+        " GRANT " + name + " TO " + role);
         Trace.check(!g.getDirectRoles().contains(role),
                     Trace.ALREADY_HAVE_ROLE, role);
         g.grant(role);

@@ -2191,7 +2191,7 @@ public class Expression {
                     exprType = Boolean.TRUE.equals(test(session)) ? TRUE
                                                                   : FALSE;
                     eArg     = null;
-                } else  if (eArg.dataType == Types.NULL) {
+                } else if (eArg.dataType == Types.NULL) {
                     eArg.dataType = Types.VARCHAR;
                 }
 

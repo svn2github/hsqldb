@@ -574,7 +574,6 @@ class Select {
      * finds cases where the result does not have to be fully built and
      * returns an adjusted rowCount with LIMIT params.
      */
-
     int getLimitCount(int rowCount) throws HsqlException {
 
         int limitCount = 0;

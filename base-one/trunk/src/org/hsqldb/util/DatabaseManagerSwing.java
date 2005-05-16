@@ -183,9 +183,9 @@ implements ActionListener, WindowListener, KeyListener {
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.sourceforge.net.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.44 $";
+        + "problem reports or help requests:  $Revision: 1.45 $";
     private static final String ABOUT_TEXT =
-        "$Revision: 1.44 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.45 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2001-2005, The HSQL Development Group.\n"
         + "http://hsqldb.sourceforge.net\n\n\n"
@@ -387,6 +387,7 @@ implements ActionListener, WindowListener, KeyListener {
         Connection c = null;
 
         m.setWaiting("Initializing");
+
         try {
             if (autoConnect && urlidConnect) {
                 throw new IllegalArgumentException(
@@ -438,6 +439,7 @@ implements ActionListener, WindowListener, KeyListener {
      * will be backgrounded and this method will return.
      */
     public void connect(Connection c) {
+
         schemaFilter = null;
 
         if (c == null) {
@@ -820,8 +822,9 @@ implements ActionListener, WindowListener, KeyListener {
 
             try {
                 setWaiting("Connecting");
-                newCon = ConnectionDialogSwing.createConnection(
-                        fMain, "Connect");
+
+                newCon = ConnectionDialogSwing.createConnection(fMain,
+                        "Connect");
             } finally {
                 setWaiting(null);
             }
@@ -1088,6 +1091,7 @@ implements ActionListener, WindowListener, KeyListener {
     private String busyText = null;
 
     private void backgroundIt(Runnable r, String description) {
+
         if (busyText != null) {
             Toolkit.getDefaultToolkit().beep();
 
@@ -1101,6 +1105,7 @@ implements ActionListener, WindowListener, KeyListener {
     }
 
     public void setWaiting(String description) {
+
         busyText = description;
 
         if (busyText == null) {
@@ -1127,15 +1132,16 @@ implements ActionListener, WindowListener, KeyListener {
 
             //TODO:  Disable actionButtons
         }
+
         setStatusLine(busyText);
     }
 
     private Runnable treeRefreshRunnable = new Runnable() {
+
         public void run() {
 
             try {
                 directRefreshTree();
-
             } catch (RuntimeException re) {
                 CommonSwing.errorMessage(re);
 
@@ -1154,8 +1160,11 @@ implements ActionListener, WindowListener, KeyListener {
     }
 
     protected class StatementExecRunnable implements Runnable {
+
         private String sCmd;
+
         protected StatementExecRunnable() {
+
             if (4096 <= ifHuge.length()) {
                 sCmd = ifHuge;
             } else {
@@ -1175,9 +1184,11 @@ implements ActionListener, WindowListener, KeyListener {
                 }
 
                 updateResult();
+
                 if (gridFormat) {
                     gResult.fireTableChanged(null);
                 }
+
                 updateAutoCommitBox();
                 System.gc();
             } catch (RuntimeException re) {
@@ -1239,9 +1250,11 @@ implements ActionListener, WindowListener, KeyListener {
         }
 
         if (autoRefresh) {
+
             // We're already running in a "busy" thread.  Just update the
             // status text.
             setStatusLine("Refreshing object tree");
+
             String upper = sql.toUpperCase();
 
             // This test can be very liberal.  Too liberal will just do
@@ -1299,15 +1312,15 @@ implements ActionListener, WindowListener, KeyListener {
         }
 
         try {
-            ResultSetMetaData m   = r.getMetaData();
-            int               col = m.getColumnCount();
-            Object[]          h   = new Object[col];
+            ResultSetMetaData m         = r.getMetaData();
+            int               col       = m.getColumnCount();
+            Object[]          h         = new Object[col];
             boolean[]         isVarChar = new boolean[col];
 
             for (int i = 1; i <= col; i++) {
                 h[i - 1] = m.getColumnLabel(i);
-                isVarChar[i - 1] =
-                        (m.getColumnType(i) == java.sql.Types.VARCHAR);
+                isVarChar[i - 1] = (m.getColumnType(i)
+                                    == java.sql.Types.VARCHAR);
             }
 
             gResult.setHead(h);
@@ -1318,7 +1331,8 @@ implements ActionListener, WindowListener, KeyListener {
                         h[i - 1] = r.getObject(i);
 
                         if (r.wasNull()) {
-                            h[i - 1] = (isVarChar[i - 1] ? NULL_STR : null);
+                            h[i - 1] = (isVarChar[i - 1] ? NULL_STR
+                                                         : null);
                         }
                     } catch (SQLException e) {}
                 }
@@ -1435,7 +1449,8 @@ implements ActionListener, WindowListener, KeyListener {
             row = (Object[]) data.elementAt(i);
 
             for (int j = 0; j < width; j++) {
-                String item = ((row[j] == null) ? "" : row[j].toString());
+                String item = ((row[j] == null) ? ""
+                                                : row[j].toString());
                 int    l    = item.length();
 
                 if (l > size[j]) {
@@ -1470,7 +1485,8 @@ implements ActionListener, WindowListener, KeyListener {
             row = (Object[]) data.elementAt(i);
 
             for (int j = 0; j < width; j++) {
-                String item = ((row[j] == null) ? "" : row[j].toString());
+                String item = ((row[j] == null) ? ""
+                                                : row[j].toString());
 
                 b.append(item);
 
@@ -1850,12 +1866,15 @@ implements ActionListener, WindowListener, KeyListener {
     void setStatusLine(String busyBaseString) {
 
         iReadyStatus.setSelected(busyBaseString != null);
+
         if (busyBaseString == null) {
             String additionalMsg = "";
+
             if (schemaFilter != null) {
                 additionalMsg = " /  Tree showing objects in schema '"
-                        + schemaFilter + "'";
+                                + schemaFilter + "'";
             }
+
             jStatusLine.setText("  " + READY_STATUS + additionalMsg);
         } else {
             jStatusLine.setText("  " + busyBaseString + "...");

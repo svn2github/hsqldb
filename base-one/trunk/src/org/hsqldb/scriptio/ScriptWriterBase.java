@@ -371,9 +371,11 @@ public abstract class ScriptWriterBase implements Runnable {
     throws HsqlException, IOException;
 
     //
-    private Object       timerTask;
-    private int          ticks;
-    private volatile int writeDelay;
+    private Object timerTask;
+    private int    ticks;
+
+    // long write delay for scripts
+    protected volatile int writeDelay = 60;
 
     public void run() {
 
