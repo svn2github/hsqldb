@@ -1,4 +1,4 @@
-<!-- $Id: building.xml,v 1.10 2005/05/11 16:07:57 unsaved Exp $ -->
+<!-- $Id: building.xml,v 1.11 2005/05/16 05:16:42 unsaved Exp $ -->
 
 <appendix id='building-appendix'>
     <title id='building-title'>Building HSQLDB</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.10 $</edition>
-        <pubdate>$Date: 2005/05/11 16:07:57 $</pubdate>
+        <edition>$Revision: 1.11 $</edition>
+        <pubdate>$Date: 2005/05/16 05:16:42 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Building</keyword>
@@ -126,7 +126,18 @@
             <para> In order to build and run the 
 			test classes, you need the JUnit jar in the 
 			<filename>/lib</filename> directory. This is available from
-			<ulink url="http://www.junit.org"/>. </para> <para> The preferred 
+            <ulink url="http://www.junit.org"/>. </para>
+            <para>
+                If you want your code built for debugging, as opposed to
+                high performance, make a file named
+                <filename>build.properties</filename> in your build 
+                directory with the contents
+        <informalexample><screen>build.debug: true</screen></informalexample>
+                The resulting Java binaries will be larger and slower, but
+                exception stack traces will contain source code line numbers,
+                which can be extremely useful for debugging.
+            </para>
+            <para> The preferred 
 			method of rebuilding the jar is with Ant. After installing Ant on
 			your system use the following command from the 
 			<filename>/build</filename> directory: </para>
@@ -258,5 +269,58 @@
             Usage examples can be found in the switchtojdk1*.bat files in the 
             <filename>/build</filename> directory.
         </para>
+    </section>
+    <section>
+        <title>Building documentation</title>
+        <para>
+            To build the User Guide in HTML format, you must have the Docbook 
+            stylesheets installed locally.
+            On Linux, the rpm for 
+            <literal>docbook-xsl-stylesheets</literal> is all you will need.
+            Add an entry to <filename>build.properties</filename> in your
+            build directory with contents like
+            <informalexample>
+<screen>docbook.xsl.home: /usr/share/sgml/docbook/docbook-xsl-stylesheets</screen></informalexample>
+            Where you specify your local path to the base directory of
+            your Docbook stylesheet installation.
+            Build like
+            <example><title>Building HTML User Guides</title>
+    <screen>ant docbooks-html
+    ant docbooks-chunk</screen>
+            </example>
+        </para> <para>
+            To build the User Guide in PDF format, you must also have the 
+            Java FOP system installed locally.
+            FOP is available for free download on the Internet.
+            Add an entry to <filename>build.properties</filename> in your
+            build directory with contents like
+            <informalexample>
+<screen>fop.home /usr/local/fop-0.20.5</screen></informalexample>
+            Where you specify your local path to the base directory of
+            your FOP installation.
+            <example><title>Building User Guides in all formats</title>
+        <screen>ant docbook</screen>
+            </example>
+            Don't pay too much attention to error messages by FOP, because
+            they are really warnings, but do check the output.  If there are 
+            problems with the PDF output, try using a newer version of FOP.
+        </para> <important><para>
+            By default, your docs will fail to build if you do not have
+            Internet connectivity.
+            This is because our primary Docbook source file references the
+            Docbook DTD via Inernet URL.
+            You can build without Internet connectivity by making one edit
+            to the file <filename>docsrc/guide/guide.xml</filename> in your
+            HSQLDB distribution.
+            Change the line containing
+<screen>"http://www.oasis-open.org/docbook/xml/4.2CR1/docbookx.dtd" [</screen>
+            to
+<screen>"file:///usr/share/xml/docbook/schema/dtd/4.2/docbookx.dtd" [</screen>
+            where the second filepath is the path to your local docbook DTD.
+            You can get this file by downloading it from the http URL above.
+            (You will already have a local copy if you have the Docbook base
+            product installed locally, like the <literal>docbook</literal>
+            rpm on Linux), 
+        </para></important>
     </section>
 </appendix>
