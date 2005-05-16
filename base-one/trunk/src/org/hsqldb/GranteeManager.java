@@ -45,9 +45,9 @@ import org.hsqldb.lib.Collection;
  * finding, modifying and deleting Grantee objects for a Database; plus
  * Administrative privileges.
  *
- * @version  1.8.0
- * @sincd 1.8.0
- * @see  Grantee
+ * @version 1.8.0
+ * @since 1.8.0
+ * @see Grantee
  */
 class GranteeManager implements GrantConstants {
 
@@ -144,13 +144,24 @@ class GranteeManager implements GrantConstants {
     /**
      * Grant a role to this Grantee.
      */
-    void grant(String name, String role) throws HsqlException {
+    void grant(String name, String role) throws HsqlException {        
 
-        Trace.check(!role.equals(name), Trace.CIRCULAR_GRANT, role);
-
-        Grantee g = get(name);
+        Grantee g = get(name);        
 
         Trace.check(g != null, Trace.NO_SUCH_GRANTEE, name);
+        
+        Grantee r = get(role);
+        
+        Trace.check(r != null, Trace.NO_SUCH_ROLE, role);
+        Trace.check(!role.equals(name),
+                    Trace.CIRCULAR_GRANT, name + " = " + role );
+        // boucherb@users 20050515 
+        // SQL 2003 Foundation, 4.34.3
+        // No cycles of role grants are allowed.
+        Trace.check(!r.hasRole(name),
+                    Trace.CIRCULAR_GRANT, 
+                    Trace.getMessage(Trace.ALREADY_HAVE_ROLE),
+                    " GRANT " + name + " TO " + role);
         Trace.check(!g.getDirectRoles().contains(role),
                     Trace.ALREADY_HAVE_ROLE, role);
         g.grant(role);
