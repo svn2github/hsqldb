@@ -1,4 +1,4 @@
-<!-- $Id: building.xml,v 1.11 2005/05/16 05:16:42 unsaved Exp $ -->
+<!-- $Id: building.xml,v 1.12 2005/05/16 13:27:48 unsaved Exp $ -->
 
 <appendix id='building-appendix'>
     <title id='building-title'>Building HSQLDB</title>
@@ -12,8 +12,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.11 $</edition>
-        <pubdate>$Date: 2005/05/16 05:16:42 $</pubdate>
+        <edition>$Revision: 1.12 $</edition>
+        <pubdate>$Date: 2005/05/16 13:27:48 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>Building</keyword>
@@ -275,9 +275,10 @@
         <para>
             To build the User Guide in HTML format, you must have the Docbook 
             stylesheets installed locally.
-            On Linux, the rpm for 
-            <literal>docbook-xsl-stylesheets</literal> is all you will need.
-            Add an entry to <filename>build.properties</filename> in your
+            The Docbook stylesheets are available on the Internet.
+            On Linux, just install the
+            <literal>docbook-xsl-stylesheets</literal> rpm.
+            Then add an entry to <filename>build.properties</filename> in your
             build directory with contents like
             <informalexample>
 <screen>docbook.xsl.home: /usr/share/sgml/docbook/docbook-xsl-stylesheets</screen></informalexample>
@@ -308,19 +309,22 @@
             By default, your docs will fail to build if you do not have
             Internet connectivity.
             This is because our primary Docbook source file references the
-            Docbook DTD via Inernet URL.
-            You can build without Internet connectivity by making one edit
-            to the file <filename>docsrc/guide/guide.xml</filename> in your
+            Docbook DTDs via Internet URL.
+            You can build without Internet connectivity by installing the
+            Docbook DTDs and editing our primary Docbook source file.
+            Docbook is available on the Internet.
+            On Linux, just install the <literal>docbook-dtds</literal> or
+            <literal>docbook</literal> rpm.
+            Then make one edit to the file 
+            <filename>docsrc/guide/guide.xml</filename> in your
             HSQLDB distribution.
             Change the line containing
 <screen>"http://www.oasis-open.org/docbook/xml/4.2CR1/docbookx.dtd" [</screen>
             to
 <screen>"file:///usr/share/xml/docbook/schema/dtd/4.2/docbookx.dtd" [</screen>
-            where the second filepath is the path to your local docbook DTD.
-            You can get this file by downloading it from the http URL above.
-            (You will already have a local copy if you have the Docbook base
-            product installed locally, like the <literal>docbook</literal>
-            rpm on Linux), 
+            where the second filepath is the path to the 
+            <filename>docbookx.dtd</filename> file within your Docbook 
+            installation.
         </para></important>
     </section>
 </appendix>
