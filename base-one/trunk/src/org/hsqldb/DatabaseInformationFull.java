@@ -51,13 +51,14 @@ import org.hsqldb.store.ValuePool;
 // - factored out all reusable code into DIXXX support classes
 // - completed Fred's work on allowing inheritance
 // boucherb@users - 1.7.2 - 20020304 - bug fixes, refinements, better java docs
+// boucherb@users - 1.8.0 - 20050515 - furhter SQL 2003 metadata support
 
 /**
  * Extends DatabaseInformationMain to provide additional system table
  * support. <p>
  *
  * @author boucherb@users
- * @version 1.7.2
+ * @version 1.8.0
  * @since HSQLDB 1.7.2
  */
 final class DatabaseInformationFull
@@ -165,6 +166,22 @@ extends org.hsqldb.DatabaseInformationMain {
 
             case SYSTEM_VIEW_ROUTINE_USAGE :
                 return SYSTEM_VIEW_ROUTINE_USAGE();
+                
+            case SYSTEM_AUTHORIZATIONS : {
+                return SYSTEM_AUTHORIZATIONS();
+            }
+            
+            case SYSTEM_ROLE_AUTHORIZATION_DESCRIPTORS : {
+                return SYSTEM_ROLE_AUTHORIZATION_DESCRIPTORS();
+            }
+            
+            case SYSTEM_SCHEMATA : {
+                return SYSTEM_SCHEMATA();
+            }
+            
+            case SYSTEM_COLLATIONS : {
+                return SYSTEM_COLLATIONS();
+            }
 
             default :
                 return super.generateTable(tableIndex);
@@ -2150,12 +2167,22 @@ extends org.hsqldb.DatabaseInformationMain {
             return t;
         }
 
-        Result rs = session.sqlExecuteDirectNoPreChecks("SELECT "
-            + RoleManager.ADMIN_ROLE_NAME
-            + ", 'PUBLIC', SEQUENCE_CATALOG, SEQUENCE_SCHEMA, "
+        Result rs;
+        
+        rs = session.sqlExecuteDirectNoPreChecks("SELECT '"
+            + UserManager.SYSTEM_AUTHORIZATION_NAME
+            + "', 'PUBLIC', SEQUENCE_CATALOG, SEQUENCE_SCHEMA, "
             + "SEQUENCE_NAME, 'SEQUENCE', 'FALSE' FROM  INFORMATION_SCHEMA.SYSTEM_SEQUENCES");
 
         t.insertSys(rs);
+        
+        rs = session.sqlExecuteDirectNoPreChecks("SELECT '"
+            + UserManager.SYSTEM_AUTHORIZATION_NAME
+            + "', 'PUBLIC', COLLATION_CATALOG, COLLATION_SCHEMA, "
+            + "COLLATION_NAME, 'COLLATION', 'FALSE' FROM  INFORMATION_SCHEMA.SYSTEM_COLLATIONS");
+        
+        t.insertSys(rs);
+        
         t.setDataReadOnly(true);
 
         return t;
@@ -3378,5 +3405,534 @@ extends org.hsqldb.DatabaseInformationMain {
                 t.insertSys(row);
             }
         }
+    }
+    
+//------------------------------------------------------------------------------
+// boucherb@users 20050515 further SQL2003 metadata support 
+    
+   /**
+     * SYSTEM_AUTHORIZATIONS<p>
+     *
+     * <b>Function</b><p>
+     *
+     * The AUTHORIZATIONS table has one row for each &lt;role name&gt; and
+     * one row for each &lt;authorization identifier &gt; referenced in the
+     * Information Schema. These are the &lt;role name&gt;s and
+     * &lt;authorization identifier&gt;s that may grant privileges as well as
+     * those that may create a schema, or currently own a schema created
+     * through a &lt;schema definition&gt;. <p>
+     *
+     * <b>Definition</b><p>
+     *
+     * <pre class="SqlCodeExample">
+     * CREATE TABLE AUTHORIZATIONS (
+     *      AUTHORIZATION_NAME INFORMATION_SCHEMA.SQL_IDENTIFIER,
+     *      AUTHORIZATION_TYPE INFORMATION_SCHEMA.CHARACTER_DATA
+     *          CONSTRAINT AUTHORIZATIONS_AUTHORIZATION_TYPE_NOT_NULL
+     *              NOT NULL
+     *          CONSTRAINT AUTHORIZATIONS_AUTHORIZATION_TYPE_CHECK
+     *              CHECK ( AUTHORIZATION_TYPE IN ( 'USER', 'ROLE' ) ),
+     *          CONSTRAINT AUTHORIZATIONS_PRIMARY_KEY
+     *              PRIMARY KEY (AUTHORIZATION_NAME)
+     *      )
+     * </pre>
+     *
+     * <b>Description</b><p>
+     *
+     * <ol>
+     * <li> The values of AUTHORIZATION_TYPE have the following meanings:<p>
+     *
+     * <table border cellpadding="3">
+     *      <tr>
+     *          <td nowrap>USER</td>
+     *          <td nowrap>The value of AUTHORIZATION_NAME is a known
+     *                     &lt;user identifier&gt;.</td>
+     *      <tr>
+     *      <tr>
+     *          <td nowrap>NO</td>
+     *          <td nowrap>The value of AUTHORIZATION_NAME is a &lt;role
+     *                     name&gt; defined by a &lt;role definition&gt;.</td>
+     *      <tr>
+     * </table> <p>
+     * </ol>
+     */   
+    Table SYSTEM_AUTHORIZATIONS() throws HsqlException {
+        Table t = sysTables[SYSTEM_AUTHORIZATIONS];
+
+        if (t == null) {
+            t = createBlankTable(
+                sysTableHsqlNames[SYSTEM_AUTHORIZATIONS]);
+
+            addColumn(t, "AUTHORIZATION_NAME", Types.VARCHAR, true); // not null
+            addColumn(t, "AUTHORIZATION_TYPE", Types.VARCHAR , true); // not null
+
+            // true PK
+            t.createPrimaryKey(null, new int[] {0}, true);
+
+            return t;
+        } 
+        
+        // Intermediate holders
+        HsqlArrayList users;
+        Iterator      roles;
+        User          user;
+        int           userCount;
+        Object[]      row;
+
+        // Initialization
+        users     = database.getUserManager().listVisibleUsers(session, false);
+        userCount = users.size();
+
+        // Do it.
+        for (int i = 0; i < users.size(); i++) {
+            row    = t.getEmptyRowData();
+            user   = (User) users.get(i);
+            row[0] = user.getName();
+            row[1] = "USER";
+
+            t.insertSys(row);
+        }
+        
+        roles = database.getRoleManager().getRoleNames().iterator();
+        
+        while(roles.hasNext()) {
+            row    = t.getEmptyRowData();            
+            row[0] = roles.next().toString();
+            row[1] = "ROLE";
+
+            t.insertSys(row);            
+        }
+
+        t.setDataReadOnly(true);
+
+        return t;
+    }
+    
+    /**
+     * SYSTEM_COLLATIONS<p>
+     *
+     * <b>Function<b><p>
+     *
+     * The COLLATIONS table has one row for each character collation
+     * descriptor. <p>
+     *
+     * <b>Definition</b>
+     * 
+     * <pre class="SqlCodeExample">
+     * CREATE TABLE COLLATIONS (
+     *      COLLATION_CATALOG INFORMATION_SCHEMA.SQL_IDENTIFIER,
+     *      COLLATION_SCHEMA INFORMATION_SCHEMA.SQL_IDENTIFIER,
+     *      COLLATION_NAME INFORMATION_SCHEMA.SQL_IDENTIFIER,
+     *      PAD_ATTRIBUTE INFORMATION_SCHEMA.CHARACTER_DATA
+     *          CONSTRAINT COLLATIONS_PAD_ATTRIBUTE_CHECK
+     *              CHECK ( PAD_ATTRIBUTE IN
+     *                  ( 'NO PAD', 'PAD SPACE' ) ),
+     *      COLLATION_TYPE INFORMATION_SCHEMA.SQL_IDENTIFIER,
+     *      COLLATION_DEFINITION INFORMATION_SCHEMA.CHARACTER_DATA,
+     *      COLLATION_DICTIONARY INFORMATION_SCHEMA.CHARACTER_DATA,
+     *      CHARACTER_REPERTOIRE_NAME INFORMATION_SCHEMA.SQL_IDENTIFIER
+     *          CONSTRAINT CHARACTER_REPERTOIRE_NAME_NOT_NULL
+     *              NOT NULL,
+     *      CONSTRAINT COLLATIONS_PRIMARY_KEY
+     *          PRIMARY KEY ( COLLATION_CATALOG, COLLATION_SCHEMA, COLLATION_NAME ),
+     *      CONSTRAINT COLLATIONS_FOREIGN_KEY_SCHEMATA
+     *          FOREIGN KEY ( COLLATION_CATALOG, COLLATION_SCHEMA )
+     *              REFERENCES SCHEMATA
+     * )
+     * </pre>
+     *
+     * <b>Description</b><p>
+     *
+     * <ol>
+     *      <li>The values of COLLATION_CATALOG, COLLATION_SCHEMA, and
+     *          COLLATION_NAME are the catalog name, unqualified schema name,
+     *          and qualified identifier, respectively, of the collation being
+     *          described.<p>
+     *
+     *      <li>The values of COLLATION_TYPE, COLLATION_DICTIONARY, and
+     *          COLLATION_DEFINITION are the null value (deprectated). <p>
+     *
+     *      <li>The values of PAD_ATTRIBUTE have the following meanings:<p>
+     *
+     *      <table border cellpadding="3">
+     *          <tr>
+     *              <td nowrap>NO PAD</td>
+     *              <td nowrap>The collation being described has the NO PAD
+     *                  characteristic.</td>
+     *          <tr>
+     *          <tr>
+     *              <td nowrap>PAD</td>
+     *              <td nowrap>The collation being described has the PAD SPACE
+     *                         characteristic.</td>
+     *          <tr>
+     *      </table> <p>
+     *
+     *      <li>The value of CHARACTER_REPERTOIRE_NAME is the name of the
+     *          character repertoire to which the collation being described
+     *          is applicable.
+     * </ol>
+     */
+    Table SYSTEM_COLLATIONS() throws HsqlException {
+        Table t = sysTables[SYSTEM_COLLATIONS];
+
+        if (t == null) {
+            t = createBlankTable(sysTableHsqlNames[SYSTEM_COLLATIONS]);
+
+            addColumn(t, "COLLATION_CATALOG", Types.VARCHAR);
+            addColumn(t, "COLLATION_SCHEMA", Types.VARCHAR, true);
+            addColumn(t, "COLLATION_NAME", Types.VARCHAR, true);
+            addColumn(t, "PAD_ATTRIBUTE", Types.VARCHAR, 9, true);
+            addColumn(t, "COLLATION_TYPE", Types.VARCHAR, true);
+            addColumn(t, "COLLATION_DEFINITION", Types.VARCHAR);
+            addColumn(t, "COLLATION_DICTIONARY", Types.VARCHAR);
+            addColumn(t, "CHARACTER_REPERTOIRE_NAME", Types.VARCHAR, true);
+            
+            // false PK, as rows may have NULL COLLATION_CATALOG
+            t.createPrimaryKey(null, new int[]{ 0, 1, 2 }, false);
+
+            return t;
+        }
+        
+        Iterator  collations;
+        String    collation;
+        String    collationSchema         = SchemaManager.PUBLIC_SCHEMA;
+        String    padAttribute            = "NO PAD";
+        String    characterRepertoireName = "UNICODE";
+        Object[]  row;
+        
+        final int icolcat   = 0;
+        final int icolschem = 1;
+        final int icolname  = 2;
+        final int ipadattr  = 3;
+        final int icoltype  = 4;
+        final int icoldef   = 5;
+        final int icoldict  = 6;
+        final int icharrep  = 7;
+        
+        collations = Collation.nameToJavaName.keySet().iterator();
+        
+        while(collations.hasNext()) {
+            row            = t.getEmptyRowData();
+            collation      = (String) collations.next();            
+            row[icolcat]   = ns.getCatalogName(collation);
+            row[icolschem] = collationSchema;
+            row[icolname]  = collation;
+            row[ipadattr]  = padAttribute;
+            row[icharrep]  = characterRepertoireName;
+            
+            t.insertSys(row);
+        }
+        
+        t.setDataReadOnly(true);
+
+        return t;        
+    }
+    
+    /**
+     * SYSTEM_ENABLED_ROLES<p>
+     *
+     * <b>Function</b><p>
+     *
+     * Identify the enabled roles for the current SQL-session.<p>
+     *
+     * Definition<p>
+     *
+     * <pre class="SqlCodeExample">
+     * CREATE RECURSIVE VIEW ENABLED_ROLES ( ROLE_NAME ) AS
+     *      VALUES ( CURRENT_ROLE )
+     *      UNION
+     *      SELECT RAD.ROLE_NAME
+     *        FROM DEFINITION_SCHEMA.ROLE_AUTHORIZATION_DESCRIPTORS RAD
+     *        JOIN ENABLED_ROLES R
+     *          ON RAD.GRANTEE = R.ROLE_NAME;
+     * 
+     * GRANT SELECT ON TABLE ENABLED_ROLES
+     *    TO PUBLIC WITH GRANT OPTION;
+     * </pre>
+     */
+    
+    /**
+     * SYSTEM_APPLICABLE_ROLES<p>
+     *
+     * <b>Function</b><p>
+     *
+     * Identifies the applicable roles for the current user.<p>
+     *
+     * <b>Definition</b><p>
+     *
+     * <pre class="SqlCodeExample">
+     * CREATE RECURSIVE VIEW APPLICABLE_ROLES ( GRANTEE, ROLE_NAME, IS_GRANTABLE ) AS
+     *      ( ( SELECT GRANTEE, ROLE_NAME, IS_GRANTABLE
+     *            FROM DEFINITION_SCHEMA.ROLE_AUTHORIZATION_DESCRIPTORS
+     *           WHERE ( GRANTEE IN ( CURRENT_USER, 'PUBLIC' )
+     *                OR GRANTEE IN ( SELECT ROLE_NAME
+     *                                  FROM ENABLED_ROLES ) ) )
+     *      UNION
+     *      ( SELECT RAD.GRANTEE, RAD.ROLE_NAME, RAD.IS_GRANTABLE
+     *          FROM DEFINITION_SCHEMA.ROLE_AUTHORIZATION_DESCRIPTORS RAD
+     *          JOIN APPLICABLE_ROLES R
+     *            ON RAD.GRANTEE = R.ROLE_NAME ) );
+     * 
+     * GRANT SELECT ON TABLE APPLICABLE_ROLES
+     *    TO PUBLIC WITH GRANT OPTION;
+     * </pre>
+     */
+    
+    /**
+     * SYSTEM_ROLE_AUTHORIZATION_DESCRIPTORS<p>
+     *
+     * <b>Function</b><p>
+     *
+     * Contains a representation of the role authorization descriptors.<p>
+     *
+     * <b>Definition</b>
+     *
+     * <pre class="SqlCodeExample">
+     * CREATE TABLE ROLE_AUTHORIZATION_DESCRIPTORS (
+     *      ROLE_NAME INFORMATION_SCHEMA.SQL_IDENTIFIER,
+     *      GRANTEE INFORMATION_SCHEMA.SQL_IDENTIFIER,
+     *      GRANTOR INFORMATION_SCHEMA.SQL_IDENTIFIER,
+     *      IS_GRANTABLE INFORMATION_SCHEMA.CHARACTER_DATA
+     *          CONSTRAINT ROLE_AUTHORIZATION_DESCRIPTORS_IS_GRANTABLE_CHECK
+     *              CHECK ( IS_GRANTABLE IN
+     *                  ( 'YES', 'NO' ) ),
+     *          CONSTRAINT ROLE_AUTHORIZATION_DESCRIPTORS_PRIMARY_KEY
+     *              PRIMARY KEY ( ROLE_NAME, GRANTEE ),
+     *          CONSTRAINT ROLE_AUTHORIZATION_DESCRIPTORS_CHECK_ROLE_NAME
+     *              CHECK ( ROLE_NAME IN
+     *                  ( SELECT AUTHORIZATION_NAME
+     *                      FROM AUTHORIZATIONS
+     *                     WHERE AUTHORIZATION_TYPE = 'ROLE' ) ),
+     *          CONSTRAINT ROLE_AUTHORIZATION_DESCRIPTORS_FOREIGN_KEY_AUTHORIZATIONS_GRANTOR
+     *              FOREIGN KEY ( GRANTOR )
+     *                  REFERENCES AUTHORIZATIONS,
+     *          CONSTRAINT ROLE_AUTHORIZATION_DESCRIPTORS_FOREIGN_KEY_AUTHORIZATIONS_GRANTEE
+     *              FOREIGN KEY ( GRANTEE )
+     *                  REFERENCES AUTHORIZATIONS
+     *      )
+     * </pre>
+     *
+     * <b>Description</b><p>
+     *
+     * <ol>
+     *      <li>The value of ROLE_NAME is the &lt;role name&gt; of some
+     *          &lt;role granted&gt; by the &lt;grant role statement&gt; or
+     *          the &lt;role name&gt; of a &lt;role definition&gt;. <p>
+     *
+     *      <li>The value of GRANTEE is an &lt;authorization identifier&gt;,
+     *          possibly PUBLIC, or &lt;role name&gt; specified as a
+     *          &lt;grantee&gt; contained in a &lt;grant role statement&gt;,
+     *          or the &lt;authorization identifier&gt; of the current
+     *          SQLsession when the &lt;role definition&gt; is executed. <p>
+     *
+     *      <li>The value of GRANTOR is the &lt;authorization identifier&gt;
+     *          of the user or role who granted the role identified by
+     *          ROLE_NAME to the user or role identified by the value of
+     *          GRANTEE. <p>
+     *
+     *      <li>The values of IS_GRANTABLE have the following meanings:<p>
+     *
+     *      <table border cellpadding="3">
+     *          <tr>
+     *              <td nowrap>YES</td>
+     *              <td nowrap>The described role is grantable.</td>
+     *          <tr>
+     *          <tr>
+     *              <td nowrap>NO</td>
+     *              <td nowrap>The described role is not grantable.</td>
+     *          <tr>
+     *      </table> <p>
+     * </ol>
+     */
+    Table SYSTEM_ROLE_AUTHORIZATION_DESCRIPTORS() throws HsqlException {
+        Table t = sysTables[SYSTEM_ROLE_AUTHORIZATION_DESCRIPTORS];
+
+        if (t == null) {
+            t = createBlankTable(
+                sysTableHsqlNames[SYSTEM_ROLE_AUTHORIZATION_DESCRIPTORS]);
+
+            addColumn(t, "ROLE_NAME", Types.VARCHAR, true); // not null
+            addColumn(t, "GRANTEE", Types.VARCHAR , true); // not null
+            addColumn(t, "GRANTOR", Types.VARCHAR , true); // not null
+            addColumn(t, "IS_GRANTABLE", Types.VARCHAR, true); // not null
+
+            // true PK
+            t.createPrimaryKey(null, new int[] {0, 1}, true);
+
+            return t;
+        } 
+        
+        // Intermediate holders
+        String        grantorName = UserManager.SYSTEM_AUTHORIZATION_NAME;
+        Iterator      grantees;
+        Grantee       grantee;
+        String        granteeName;
+        Iterator      roles;
+        String        roleName;
+        String        isGrantable;
+        Object[]      row;
+        
+        final int irole      = 0;
+        final int igrantee   = 1;
+        final int igrantor   = 2;
+        final int igrantable = 3;
+
+        // Initialization        
+        grantees = database.getGranteeManager().getGrantees().iterator();
+        
+        // Do it.
+        while(grantees.hasNext()) {            
+            grantee     = (Grantee) grantees.next();
+            granteeName = grantee.getName();            
+            roles       = grantee.getDirectRoles().iterator();
+            
+            while(roles.hasNext()) {
+                row         = t.getEmptyRowData(); 
+                roleName    = (String) roles.next();
+                isGrantable = grantee.hasRole(RoleManager.ADMIN_ROLE_NAME)
+                    ? "YES"
+                    : "NO";
+                
+                row[irole]      = roleName;
+                row[igrantee]   = granteeName;
+                row[igrantor]   = grantorName;
+                row[igrantable] = isGrantable;
+
+                t.insertSys(row);    
+            }
+        }
+
+        t.setDataReadOnly(true);
+
+        return t;
+    }
+    
+    /**
+     * SYSTEM_SCHEMATA<p>
+     *
+     * <b>Function</b><p>
+     *
+     * The SCHEMATA table has one row for each schema. <p>
+     *
+     * <b>Definition</b><p>
+     *
+     * <pre class="SqlCodeExample">
+     * CREATE TABLE SCHEMATA (
+     *      CATALOG_NAME INFORMATION_SCHEMA.SQL_IDENTIFIER,
+     *      SCHEMA_NAME INFORMATION_SCHEMA.SQL_IDENTIFIER,
+     *      SCHEMA_OWNER INFORMATION_SCHEMA.SQL_IDENTIFIER
+     *          CONSTRAINT SCHEMA_OWNER_NOT_NULL
+     *              NOT NULL,
+     *      DEFAULT_CHARACTER_SET_CATALOG INFORMATION_SCHEMA.SQL_IDENTIFIER
+     *          CONSTRAINT DEFAULT_CHARACTER_SET_CATALOG_NOT_NULL
+     *              NOT NULL,
+     *      DEFAULT_CHARACTER_SET_SCHEMA INFORMATION_SCHEMA.SQL_IDENTIFIER
+     *          CONSTRAINT DEFAULT_CHARACTER_SET_SCHEMA_NOT_NULL
+     *              NOT NULL,
+     *      DEFAULT_CHARACTER_SET_NAME INFORMATION_SCHEMA.SQL_IDENTIFIER
+     *          CONSTRAINT DEFAULT_CHARACTER_SET_NAME_NOT_NULL
+     *              NOT NULL,
+     *      SQL_PATH INFORMATION_SCHEMA.CHARACTER_DATA,
+     *          
+     *      CONSTRAINT SCHEMATA_PRIMARY_KEY
+     *          PRIMARY KEY ( CATALOG_NAME, SCHEMA_NAME ),
+     *      CONSTRAINT SCHEMATA_FOREIGN_KEY_AUTHORIZATIONS
+     *          FOREIGN KEY ( SCHEMA_OWNER )
+     *              REFERENCES AUTHORIZATIONS,
+     *      CONSTRAINT SCHEMATA_FOREIGN_KEY_CATALOG_NAMES
+     *          FOREIGN KEY ( CATALOG_NAME )
+     *              REFERENCES CATALOG_NAMES
+     *      )
+     * </pre>
+     *
+     * <b>Description</b><p>
+     *
+     * <ol>
+     *      <li>The value of CATALOG_NAME is the name of the catalog of the
+     *          schema described by this row.<p>
+     *
+     *      <li>The value of SCHEMA_NAME is the unqualified schema name of
+     *          the schema described by this row.<p>
+     *
+     *      <li>The values of SCHEMA_OWNER are the authorization identifiers
+     *          that own the schemata.<p>
+     *
+     *      <li>The values of DEFAULT_CHARACTER_SET_CATALOG,
+     *          DEFAULT_CHARACTER_SET_SCHEMA, and DEFAULT_CHARACTER_SET_NAME
+     *          are the catalog name, unqualified schema name, and qualified
+     *          identifier, respectively, of the default character set for
+     *          columns and domains in the schemata.<p>
+     *
+     *      <li>Case:<p>
+     *          <ul>
+     *              <li>If &lt;schema path specification&gt; was specified in
+     *                  the &lt;schema definition&gt; that defined the schema
+     *                  described by this row and the character representation
+     *                  of the &lt;schema path specification&gt; can be
+     *                  represented without truncation, then the value of
+     *                  SQL_PATH is that character representation.<p>
+     *
+     *              <li>Otherwise, the value of SQL_PATH is the null value.
+     *         </ul>
+     * </ol>
+     */    
+    Table SYSTEM_SCHEMATA() throws HsqlException {
+        Table t = sysTables[SYSTEM_SCHEMATA];
+
+        if (t == null) {
+            t = createBlankTable(sysTableHsqlNames[SYSTEM_SCHEMATA]);
+
+            addColumn(t, "CATALOG_NAME", Types.VARCHAR);
+            addColumn(t, "SCHEMA_NAME", Types.VARCHAR, true);
+            addColumn(t, "SCHEMA_OWNER", Types.VARCHAR, true);
+            addColumn(t, "DEFAULT_CHARACTER_SET_CATALOG", Types.VARCHAR);
+            addColumn(t, "DEFAULT_CHARACTER_SET_SCHEMA", Types.VARCHAR, true);
+            addColumn(t, "DEFAULT_CHARACTER_SET_NAME", Types.VARCHAR);
+            addColumn(t, "SQL_PATH", Types.VARCHAR);
+
+            // order: CATALOG_NAME, SCHEMA_NAME
+            // false PK, as rows may have NULL CATALOG_NAME
+            t.createPrimaryKey(null, new int[]{ 0, 1 }, false);
+
+            return t;
+        }
+
+        Iterator schemas;
+        String   schema;
+        String   schemaOwner = RoleManager.ADMIN_ROLE_NAME;
+        String   dcsSchema   = SchemaManager.INFORMATION_SCHEMA;
+        String   dcsName     = ValuePool.getString("UTF16");
+        String   sqlPath     = null;
+        Object[] row;
+        
+        final int ischema_catalog    = 0;
+        final int ischema_name       = 1;
+        final int ischema_owner      = 2;
+        final int idef_charset_cat   = 3;
+        final int idef_charset_schem = 4;
+        final int idef_charset_name  = 5;
+        final int isql_path          = 6;
+
+        // Initialization
+        schemas = database.schemaManager.fullSchemaNamesIterator();
+
+        // Do it.
+        while (schemas.hasNext()) {
+            row                     = t.getEmptyRowData();
+            schema                  = (String) schemas.next();
+            row[ischema_catalog]    = ns.getCatalogName(schema);
+            row[ischema_name]       = schema;
+            row[ischema_owner]      = schemaOwner;
+            row[idef_charset_cat]   = ns.getCatalogName(dcsSchema);
+            row[idef_charset_schem] = dcsSchema;
+            row[idef_charset_name]  = dcsName;
+            row[isql_path]          = sqlPath;
+
+            t.insertSys(row);
+        }
+
+        t.setDataReadOnly(true);
+
+        return t;        
     }
 }

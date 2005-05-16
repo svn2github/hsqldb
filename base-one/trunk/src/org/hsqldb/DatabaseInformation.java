@@ -39,6 +39,7 @@ import org.hsqldb.lib.IntValueHashMap;
 // boucherB@users 20020305 - completed inheritance work, including final access
 // boucherB@users 20020305 - javadoc updates/corrections
 // boucherB@users 20020305 - SYSTEM_VIEWS brought in line with SQL 200n
+// boucherb@users 20050514 - further SQL 200n metdata support
 
 /**
  * Base class for system tables. Includes a factory method which returns the
@@ -49,7 +50,7 @@ import org.hsqldb.lib.IntValueHashMap;
  * DatabaseInformation implementations. <p>
  *
  * @author boucherb@users
- * @version 1.7.2
+ * @version 1.8.0
  * @since 1.7.2
  */
 class DatabaseInformation {
@@ -109,6 +110,13 @@ class DatabaseInformation {
     protected static final int SYSTEM_VIEW_COLUMN_USAGE   = 39;
     protected static final int SYSTEM_VIEW_TABLE_USAGE    = 40;
     protected static final int SYSTEM_VIEW_ROUTINE_USAGE  = 41;
+    
+// boucherb@users 20050514 - further SQL 200n metdata support
+    
+    protected static final int SYSTEM_AUTHORIZATIONS                 = 42;
+    protected static final int SYSTEM_COLLATIONS                     = 43;
+    protected static final int SYSTEM_ROLE_AUTHORIZATION_DESCRIPTORS = 44;
+    protected static final int SYSTEM_SCHEMATA                       = 45;
 
     /** system table names strictly in order of their ids */
     protected static final String[] sysTableNames = {
@@ -165,11 +173,18 @@ class DatabaseInformation {
         "SYSTEM_CHECK_TABLE_USAGE",      //
         "SYSTEM_VIEW_COLUMN_USAGE",      //
         "SYSTEM_VIEW_TABLE_USAGE",       //
-        "SYSTEM_VIEW_ROUTINE_USAGE"      //
+        "SYSTEM_VIEW_ROUTINE_USAGE",     //
+
+        // boucherb@users 20050514 - further SQL 200n metadata support
+        "SYSTEM_AUTHORIZATIONS",
+        "SYSTEM_COLLATIONS",                
+        "SYSTEM_ROLE_AUTHORIZATION_DESCRIPTORS",
+        "SYSTEM_SCHEMATA"
 
         // Future use
 //        "SYSTEM_ASSERTIONS",
 //        "SYSTEM_ATTRIBUTES",
+//        "SYSTEM_AUTHORIZATIONS",                 // boucherb@users 20050514 - implemented
 //        "SYSTEM_CHARACTER_ENCODING_FORMS",
 //        "SYSTEM_CHARACTER_REPERTOIRES",
 //        "SYSTEM_CHARACTER_SETS",
@@ -178,7 +193,7 @@ class DatabaseInformation {
 //        "SYSTEM_CHECK_CONSTRAINTS",              // boucherb@users 20040107 - implemented
 //        "SYSTEM_CHECK_TABLE_USAGE",              // boucherb@users 20040107 - implemented
 //        "SYSTEM_COLLATION_CHARACTER_SET_APPLICABILITY",
-//        "SYSTEM_COLLATIONS",
+//        "SYSTEM_COLLATIONS",                     // boucherb@users 20050514 - implemented
 //        "SYSTEM_COLUMN_COLUMN_USAGE",
 //        "SYSTEM_COLUMN_OPTIONS",
 //        "SYSTEM_COLUMN_PRIVILEGES",
@@ -208,7 +223,7 @@ class DatabaseInformation {
 //        "SYSTEM_PARAMETERS",
 //        "SYSTEM_REFERENCED_TYPES",
 //        "SYSTEM_REFERENTIAL_CONSTRAINTS",
-//        "SYSTEM_ROLE_AUTHORIZATION_DESCRIPTORS",
+//        "SYSTEM_ROLE_AUTHORIZATION_DESCRIPTORS", // boucherb@users 20050514 - implemented
 //        "SYSTEM_ROLES",
 //        "SYSTEM_ROUTINE_COLUMN_USAGE",
 //        "SYSTEM_ROUTINE_JAR_USAGE",
@@ -219,7 +234,7 @@ class DatabaseInformation {
 //        "SYSTEM_ROUTINE_SEQUENCE_USAGE",
 //        "SYSTEM_ROUTINE_TABLE_USAGE",
 //        "SYSTEM_ROUTINES",
-//        "SYSTEM_SCHEMATA",
+//        "SYSTEM_SCHEMATA",                       // boucherb@users 20050514 - implemented
 //        "SYSTEM_SEQUENCES",                      // boucherb@users 20040107 - implemented
 //        "SYSTEM_SQL_FEATURES",
 //        "SYSTEM_SQL_IMPLEMENTATION_INFO",

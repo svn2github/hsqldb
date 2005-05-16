@@ -451,7 +451,8 @@ class DatabaseInformationMain extends DatabaseInformation {
             sysTableSessionDependent[SYSTEM_CHECK_TABLE_USAGE] =
             sysTableSessionDependent[SYSTEM_VIEW_COLUMN_USAGE] =
             sysTableSessionDependent[SYSTEM_VIEW_TABLE_USAGE] =
-            sysTableSessionDependent[SYSTEM_VIEW_ROUTINE_USAGE] = true;
+            sysTableSessionDependent[SYSTEM_VIEW_ROUTINE_USAGE] = 
+            sysTableSessionDependent[SYSTEM_AUTHORIZATIONS] = true;
 
         Table t;
 
@@ -600,7 +601,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      * <pre class="SqlCodeExample">
      * SCOPE          SMALLINT  scope of applicability
      * COLUMN_NAME    VARCHAR   simple name of the column
-     * DATA_TYPE      SMALLINT  SQL data type from DITypes
+     * DATA_TYPE      SMALLINT  SQL data type from Types
      * TYPE_NAME      VARCHAR   canonical type name
      * COLUMN_SIZE    INTEGER   precision
      * BUFFER_LENGTH  INTEGER   transfer size in bytes, if definitely known
@@ -1702,7 +1703,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             addColumn(t, "SEQ", Types.INTEGER, false);               // not null
 
             // ----------------------------------------------------------------
-            // order: PROCEDURE_SCHEM, PROCEDURE_NAME, SIGNATURE, SEQ
+            // order: PROCEDURE_SCHEM, PROCEDURE_NAME, SPECIFIC_NAME, SEQ
             // added for unique: PROCEDURE_CAT
             // false PK, as PROCEDURE_SCHEM and/or PROCEDURE_CAT may be null
             t.createPrimaryKey(null, new int[] {
@@ -2292,7 +2293,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      *
      * <pre class="SqlCodeExample">
      * TYPE_NAME          VARCHAR   the canonical name used in DDL statements.
-     * DATA_TYPE          SMALLINT  data type code from DITypes
+     * DATA_TYPE          SMALLINT  data type code from Types
      * PRECISION          INTEGER   max column size.
      *                              number => max. precision.
      *                              character => max characters.
@@ -2349,9 +2350,9 @@ class DatabaseInformationMain extends DatabaseInformation {
      *                              truncated using INTEGER
      * DEF_OR_FIXED_SCALE INTEGER   default or fixed scale for numeric types
      * REMARKS            VARCHAR   localized comment on the data type
-     * TYPE_SUB           INTEGER   From DITypes:
-     *                              {TYPE_SUB_DEFAULT | TYPE_SUB_IDENTITY |
-     *                               TYPE_SUB_IGNORECASE}
+     * TYPE_SUB           INTEGER   From Types:
+     *                              {TYPE_SUB_DEFAULT | TYPE_SUB_IGNORECASE}
+     *                              deprecated: TYPE_SUB_IDENTITY
      * </pre> <p>
      *
      * @return a <code>Table</code> object describing all of the
