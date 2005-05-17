@@ -86,6 +86,8 @@ import org.hsqldb.store.ValuePool;
 // fredt@users 20031012 - patch 1.7.2 - better OUTER JOIN implementation
 // thomasm@users 20041001 - patch 1.7.3 - BOOLEAN undefined handling
 // fredt@users 200412xx - patch 1.7.2 - evaluation of time functions
+// boucherb@users 20050516 - patch 1.8.0 - remove DITypeInfo usage for faster
+//                                         statement compilation
 
 /**
  * Expression class declaration
@@ -3932,35 +3934,24 @@ public class Expression {
     }
 
     String getValueClassName() {
-
-        int        ditype;
-        int        ditypesub;
-        DITypeInfo ti;
-
-        if (valueClassName != null) {
-            return valueClassName;
+    // boucherb@users 20050516 - patch 1.8.0
+    // Optimization: NetBeans 4.1 M6 profiler indicates new'ing DITypeInfo
+    //               in getValueClassName contributed up to 14% of CPU burst 
+    //               in Paser.compileSelectStatement() running the classic
+    //               DBM Peterson-Clancy test.
+    //
+    //               This was due to eager setLocale(Locale.getDefault())
+    //               DITypeInfo in constructor.
+    //            
+    //               Regardless, DIXXX classes should not be core, just as
+    //               DatabaseInformationMain/Full are not core
+        if (valueClassName == null) {
+            valueClassName =  (function == null)
+                ? Types.getColStClsName((dataType == Types.VARCHAR_IGNORECASE)
+                                            ? Types.VARCHAR
+                                            : dataType)
+                : function.getReturnClass().getName();
         }
-
-        if (function != null) {
-            valueClassName = function.getReturnClass().getName();
-
-            return valueClassName;
-        }
-
-        if (dataType == Types.VARCHAR_IGNORECASE) {
-            ditype    = Types.VARCHAR;
-            ditypesub = Types.TYPE_SUB_IGNORECASE;
-        } else {
-            ditype    = dataType;
-            ditypesub = Types.TYPE_SUB_DEFAULT;
-        }
-
-        ti = new DITypeInfo();
-
-        ti.setTypeCode(ditype);
-        ti.setTypeSub(ditypesub);
-
-        valueClassName = ti.getColStClsName();
 
         return valueClassName;
     }
