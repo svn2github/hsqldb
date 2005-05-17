@@ -1,6 +1,6 @@
 Readme File
 
-March 2005
+May 2005
 
 This package contains the RELEASE CANDIDATE 10 of HSQLDB 1.8.0
 

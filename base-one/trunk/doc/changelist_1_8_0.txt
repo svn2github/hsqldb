@@ -6,7 +6,7 @@ hsqldb 1.8.0 in reverse chronological order.
 Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
-2005.05.11 1.8.0.RC10
+2005.05.17 1.8.0.RC10
 
 SCHEMAS
 
@@ -56,9 +56,10 @@ The implementation of temporary tables has changed to conform to SQL standards.
 The definition of a GLOBAL TEMPORARY table persists with the database. When a 
 session (JDBC Connection) is started, an empty instance of the table is created.
 Temporary tables can be created with (the default) ON COMMIT DELETE ROWS or 
-ON COMMIT PRESERVE ROWS behaviour. With ON COMMIT PRESERVE ROWS, the table 
-contents are not cleared when the session commits. In both cases, the contents 
-are cleared when the session is closed.
+ON COMMIT PRESERVE ROWS added to the end of table definition. 
+With ON COMMIT PRESERVE ROWS, the table contents are not cleared when the 
+session commits. In both cases, the contents are cleared when the session is
+closed.
 
 
 SCHEMA MANIPULATION COMMANDS

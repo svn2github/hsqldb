@@ -550,6 +550,12 @@ public class DatabaseScript {
         }
 
         a.append(')');
+
+        if (t.onCommitPreserve) {
+            a.append(' ').append(Token.T_ON).append(' ');
+            a.append(Token.T_COMMIT).append(' ').append(Token.T_PRESERVE);
+            a.append(' ').append(Token.T_ROWS);
+        }
     }
 
     /**

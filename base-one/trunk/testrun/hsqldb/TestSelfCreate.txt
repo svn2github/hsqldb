@@ -116,6 +116,12 @@ update file set name = 'newdir' where id = '14';
   14,newdir,NULL,NULL,NULL
 */select * from file;
 
+--test TEMP TABLE
+
+create TEMPORARY TABLE TTEMP(C CHAR) ON COMMIT PRESERVE ROWS;
+create TEMPORARY TABLE TTEMP2(C CHAR) ON COMMIT DELETE ROWS;
+
 -- SHUTDOWN is necessary for test1
+
 SHUTDOWN;
 
