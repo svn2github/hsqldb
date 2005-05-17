@@ -1,0 +1,88 @@
+
+# Bourne shell Solaris packaging script (no interpreter line on purpose)
+
+# $Id: HSQLhsqldb.postinstall,v 1.1 2002/10/12 01:15:46 unsaved Exp $
+
+# N.b.  If $BASEDIR/hsqldb exists before installing this package, this
+# stuff will set up for that to be the default hsqldb home.  The 
+# newly installed hsqldb branch will be a non-default baseline.
+
+# Do not set path.  Pkgadd sets a safe path, it does not use any inherited path
+
+#set -x
+
+Failout() {
+    echo "Aborting.  $@" 1>&2
+    exit 1
+}
+
+safecd() {
+    # Failure of the built-in "cd" command can completely kill the shell,
+    # thereby aborting this script with no error-handling at all.
+    # Therefore, we need to try to see if the cd will work first.
+    `cd "$@"` || return $?
+    cd "$@"
+}
+
+BASE=hsqldb-1.7.1
+LIBJAR=
+JVER=`java -version 2>&1 |
+ grep -i '\<java version\>' | sed -e 's:[^"]*"::; s:\".*::;'`
+case "$JVER" in
+    1.4.*) LIBJAR=hsqldb_jre1_4_0.jar ;;
+    1.2.*|*JDK_1.2.*|1.3.*) LIBJAR=hsqldb_jre1_3_1.jar ;;
+    1.1.*) LIBJAR=hsqldb_jre1_1_8.jar ;;
+    *) echo 'Failed to find a supported version of Java.
+You MUST edit /etc/hsqldb.conf and add an entry for $JAVA_HOME; and create 
+a sym link '$BASEDIR/$BASE'/lib/hssqldb.jar pointing 
+to the appropriate hsqldb*.jar in that directory.' 1>&2;;
+esac
+
+LINK=$BASEDIR/hsqldb
+[ -L $LINK ] && {
+    rm $LINK || Failout "Failed to remove link $LINK"
+}
+safecd $BASEDIR 2> /dev/null || Failout "Failed to cd to '$BASEDIR'"
+# Existence tests do not work with Solaris Bourne (bullshit if you ask me).
+# Since this is run by root, every existing fs node is readable.
+[ -r hsqldb ] || {
+    ln -s $BASE hsqldb || Failout "Failed to create sym link '$LINK'"
+}
+
+[ -f $BASEDIR/$BASE/data/db1/server.properties ] ||  {
+ > $BASEDIR/$BASE/data/db1/server.properties ||
+ Failout "Failed to touch '$BASEDIR/$BASE/data/db1/server.properties'"
+}
+
+# Assertions.  If these fail, then the following usermod will fail.
+[ -x /etc/hsqldb.shell ] ||
+ Failout 'Postscript assertion failed for hsqldb.shell'
+[ -d $LINK ] ||
+ Failout "Postscript assertion failed.  '$LINK' is not a directory."
+
+[ -L $BASEDIR/$BASE/lib/hsqldb.jar ] && {
+    rm $BASEDIR/$BASE/lib/hsqldb.jar ||
+     Failout "Failed to remove hsqldb.jar link"
+}
+safecd $BASEDIR/$BASE/lib 2> /dev/null ||
+ Failout "Failed to cd to $BASEDIR/$BASE/lib"
+[ -n "$LIBJAR" ] && {
+    ln -s $LIBJAR hsqldb.jar || Failout 'Failed to create hsqldb.jar link'
+}
+
+# This method preserves perms/ownership & preserves both hard and sym links
+XTMPFILE=hsqldb.expand.$$
+for file in /etc/init.d/hsqldb /etc/hsqldb.shell /etc/hsqldb.conf; do
+    cp $file $XTMPFILE
+    sed -e "
+	s:%HSQLDB_HOME%:$LINK:g;
+	s:%CFGFILE%:/etc/hsqldb.conf:g;
+	s:%INITSCRIPT%:/etc/init.d/hsqldb:g;
+    " $XTMPFILE > $file
+done
+rm -f $XTMPFILE
+
+usermod -d $LINK -s /etc/hsqldb.shell hsqldb ||
+ Failout "Failed to set shell and home directory for user 'hsqldb'"
+
+exit 0
