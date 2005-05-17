@@ -1250,8 +1250,6 @@ public class Types {
             case Types.DOUBLE :
                 return 17;
 
-//            case Types.FLOAT :
-//            case Types.REAL :
             case Types.TIME :
                 return 8;
 

@@ -3934,23 +3934,15 @@ public class Expression {
     }
 
     String getValueClassName() {
-    // boucherb@users 20050516 - patch 1.8.0
-    // Optimization: NetBeans 4.1 M6 profiler indicates new'ing DITypeInfo
-    //               in getValueClassName contributed up to 14% of CPU burst 
-    //               in Paser.compileSelectStatement() running the classic
-    //               DBM Peterson-Clancy test.
-    //
-    //               This was due to eager setLocale(Locale.getDefault())
-    //               DITypeInfo in constructor.
-    //            
-    //               Regardless, DIXXX classes should not be core, just as
-    //               DatabaseInformationMain/Full are not core
+
+        // boucherb@users 20050516 - patch 1.8.0 removed DITypeInfo dependency
         if (valueClassName == null) {
-            valueClassName =  (function == null)
-                ? Types.getColStClsName((dataType == Types.VARCHAR_IGNORECASE)
-                                            ? Types.VARCHAR
-                                            : dataType)
-                : function.getReturnClass().getName();
+            valueClassName = (function == null)
+                             ? Types.getColStClsName(
+                                 (dataType == Types.VARCHAR_IGNORECASE)
+                                 ? Types.VARCHAR
+                                 : dataType)
+                             : function.getReturnClass().getName();
         }
 
         return valueClassName;

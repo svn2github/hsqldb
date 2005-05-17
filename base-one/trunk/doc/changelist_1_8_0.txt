@@ -99,7 +99,7 @@ existing default can be dropped by ommission, or a new default added.
 command to work. It always works when the conversion is possible in general and
 the individual existing values can all be converted.
 
-A different syntax can be used to change the next value from an IDENTITY column:
+A different syntax can be used to change the next value for an IDENTITY column:
 
 ALTER TABLE <table name> ALTER [COLUMN] <column name> RESTART WITH <n>
 
@@ -157,6 +157,8 @@ extended to allow CACHED tables.
 
 Support for correct casting of TIME into TIMESTAMP, using CURRENT_DATE 
 
+Symmetrical handling of setTimestamp() and getTimestamp() with Calendar
+parameters.
 
 BUG FIX
 

@@ -703,6 +703,27 @@ class TableWorks {
             throw Trace.error(Trace.PRIMARY_KEY_NOT_ALLOWED);
         }
 
+        // apply and return if only metadata change is required
+        if (newtype == oldtype && oldCol.isNullable() == newCol.isNullable()
+                && oldCol.getScale() == newCol.getScale()
+                && oldCol.isIdentity() == newCol.isIdentity()
+                && oldCol.identityIncrement == newCol.identityIncrement
+                && (oldCol.getSize() == newCol.getSize()
+                    || (oldCol.getSize() < newCol.getSize()
+                        && (oldtype == Types.VARCHAR
+                            || oldtype == Types.DECIMAL
+                            || oldtype == Types.NUMERIC)))) {
+
+            // size of some types may be increased with this command
+            // default expressions can change
+            oldCol.setType(newCol);
+            oldCol.setDefaultExpression(newCol.getDefaultExpression());
+            table.setColumnTypeVars(colindex);
+            table.resetDefaultsFlag();
+
+            return;
+        }
+
         table.database.schemaManager.checkColumnIsInView(table,
                 table.getColumn(colindex).columnName.name);
         table.checkColumnInCheckConstraint(

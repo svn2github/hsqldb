@@ -31,7 +31,6 @@ CREATE USER peon3 PASSWORD password;
 -- Same role may be nested under the same user/role multiple times.
 /*u0*/GRANT r3 TO r1;
 /*u0*/REVOKE r3 FROM r1;
-/*u0*/REVOKE r1 FROM r3;
 /*u0*/GRANT r1 TO peon1;
 -- Circular nesting not allowed.
 /*e*/GRANT r1 TO r3;

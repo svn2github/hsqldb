@@ -1192,19 +1192,21 @@ public class Table extends BaseTable {
         Column column = getColumn(columnIndex);
 
         column.setDefaultExpression(def);
-        resetDefaultValues();
+
+        colDefaults[columnIndex] = column.getDefaultExpression();
+
+        resetDefaultsFlag();
     }
 
-    void resetDefaultValues() {
+    /**
+     * sets the flag for the presence of any default expression
+     */
+    void resetDefaultsFlag() {
 
         hasDefaultValues = false;
 
         for (int i = 0; i < columnCount; i++) {
-            Column column = getColumn(i);
-
-            hasDefaultValues = hasDefaultValues
-                               || column.getDefaultExpression() != null;
-            colDefaults[i] = column.getDefaultExpression();
+            hasDefaultValues = hasDefaultValues || colDefaults[i] != null;
         }
     }
 
@@ -1412,18 +1414,7 @@ public class Table extends BaseTable {
         defaultColumnMap = new int[columnCount];
 
         for (int i = 0; i < columnCount; i++) {
-            Column column = getColumn(i);
-
-            colTypes[i]         = column.getType();
-            colSizes[i]         = column.getSize();
-            colScales[i]        = column.getScale();
-            colNullable[i]      = column.isNullable();
-            defaultColumnMap[i] = i;
-
-            if (column.isIdentity()) {
-                identitySequence.reset(column.identityStart,
-                                       column.identityIncrement);
-            }
+            setColumnTypeVars(i);
         }
 
         primaryKeyTypes = new int[primaryKeyCols.length];
@@ -1433,7 +1424,7 @@ public class Table extends BaseTable {
         primaryKeyColsSequence = new int[primaryKeyCols.length];
 
         ArrayUtil.fillSequence(primaryKeyColsSequence);
-        resetDefaultValues();
+        resetDefaultsFlag();
 
         // tony_lai@users 20020820 - patch 595099
         HsqlName name = pkName != null ? pkName
@@ -1441,6 +1432,24 @@ public class Table extends BaseTable {
 
         createPrimaryIndex(columns, name);
         setBestRowIdentifiers();
+    }
+
+    void setColumnTypeVars(int i) {
+
+        Column column = getColumn(i);
+
+        colTypes[i]         = column.getType();
+        colSizes[i]         = column.getSize();
+        colScales[i]        = column.getScale();
+        colNullable[i]      = column.isNullable();
+        defaultColumnMap[i] = i;
+
+        if (column.isIdentity()) {
+            identitySequence.reset(column.identityStart,
+                                   column.identityIncrement);
+        }
+
+        colDefaults[i] = column.getDefaultExpression();
     }
 
     HsqlName makeSysPKName() throws HsqlException {
