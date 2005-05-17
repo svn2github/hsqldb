@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.79 2005/05/17 17:51:24 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.80 2005/05/17 17:55:18 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.79 $</edition>
-        <pubdate>$Date: 2005/05/17 17:51:24 $</pubdate>
+        <edition>$Revision: 1.80 $</edition>
+        <pubdate>$Date: 2005/05/17 17:55:18 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -269,7 +269,9 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
                 SqlTool with all the arguments for one of your typical startup
                 needs).
                 One typical setup is to have one shortcut for each database 
-                account which you normally use.
+                account which you normally use (use a different
+                <literal>--urlid</literal> switch in each shortcut's
+                <guilabel>Target</guilabel> specification.
             </simpara><simpara>
                 Desktop icon setup varies depending on your Desktop manager,
                 of course.
