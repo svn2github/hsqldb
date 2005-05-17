@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.82 2005/05/17 18:07:09 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.83 2005/05/17 18:16:06 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.82 $</edition>
-        <pubdate>$Date: 2005/05/17 18:07:09 $</pubdate>
+        <edition>$Revision: 1.83 $</edition>
+        <pubdate>$Date: 2005/05/17 18:16:06 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -64,15 +64,11 @@
                     Therefore, in special commands only, you are safest to key 
                     in object names in the case exactly as the real object name
                     in your database.
-                    This is the only way to remove ambiguity from 
+                    This is the only way for me to remove ambiguity from 
                     case-specific object names without having to code different
                     rules for every database.
                     (Because, for example, Postgresql defaults object names to
                     lowercase and Oracle defaults them to uppercase).
-                    For HSQLDB database users using those special commands
-                    which pass the filter right to the database, cases will be
-                    converted exactly as you would want-- other users will 
-                    need to satisfy their database.
                 </simpara></listitem><listitem><simpara>
                     Added special command \dn.
                 </simpara></listitem><listitem><simpara>
@@ -743,10 +739,6 @@ java org.hsqldb.util.SqlTool urlid</screen>
                     SqlTool.
                     You can use spaces and other special characters in
                     the string.
-                    Some special commands transmit the filter argument to
-                    the database server.
-                    In these cases, it is entirely dependent on the
-                    database whether it will be case-sensitive or not.
                 </simpara>
                     Note that this is a change in behavior from SqlFile
                     before about version 1.100, where substring tests
