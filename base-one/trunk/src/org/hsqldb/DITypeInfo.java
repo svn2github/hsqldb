@@ -70,10 +70,15 @@ final class DITypeInfo {
 
     /** The HSQLDB subtype code on which this object is reporting. */
     private int typeSub = Types.TYPE_SUB_DEFAULT;
+    
+    boolean locale_set;
 
     /** Creates a new DITypeInfo object having the default Locale. */
     DITypeInfo() {
-        setLocale(Locale.getDefault());
+        // boucherb@users 20050515 - patch 1.8.0
+        // Netbeans 4.1 M6 profiler indicates that this Represents a
+        // *hugh* performance hit, so make it lazy
+        //setLocale(Locale.getDefault());
     }
 
     /**
@@ -137,6 +142,10 @@ final class DITypeInfo {
      *    parameters for the type.
      */
     String getCreateParams() {
+        
+        if (!locale_set) {
+            setLocale(Locale.getDefault());
+        }
 
         String names;
 
@@ -406,6 +415,9 @@ final class DITypeInfo {
      * @return a localized representation of the type's name
      */
     String getLocalName() {
+        if (!locale_set) {
+            setLocale(Locale.getDefault());
+        }
 
         String key = this.getTypeName();
 
@@ -587,6 +599,9 @@ final class DITypeInfo {
      * @return the localized remarks on the type.
      */
     String getRemarks() {
+        if (!locale_set) {
+            setLocale(Locale.getDefault());
+        }
 
         String key = this.getTypeName();
 
@@ -1123,6 +1138,12 @@ final class DITypeInfo {
      *      bundle dependent values
      */
     void setLocale(Locale l) {
+        
+        if (l == null) {
+            hnd_create_params = hnd_local_names = hnd_remarks = -1;
+            locale_set = false;
+            return;
+        }
 
         Locale oldLocale;
 
@@ -1140,6 +1161,8 @@ final class DITypeInfo {
                     null);
 
             BundleHandler.setLocale(oldLocale);
+            
+            locale_set = true;
         }
     }
 
