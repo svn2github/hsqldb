@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.75 2005/05/15 00:27:59 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.76 2005/05/16 05:16:42 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.75 $</edition>
-        <pubdate>$Date: 2005/05/15 00:27:59 $</pubdate>
+        <edition>$Revision: 1.76 $</edition>
+        <pubdate>$Date: 2005/05/16 05:16:42 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -48,6 +48,60 @@
             I expect this version of this document to accurately describe 
             SqlTool for some unknown number of versions into the future.
         </simpara>
+        <section><title>Recent changes</title>
+            <simpara>This section lists changes to SqlTool since the last
+                major release of HSQLDB.
+                For this version of this document, that means, changes since
+                HSQLDB versions 1.7.x.
+            </simpara>
+            <itemizedlist>
+                <listitem><simpara>
+                    Slight adjustments to command-line switch behavior to make
+                    them more convenient to the most common forms of usage.
+                </simpara></listitem><listitem><simpara>
+                    Added special command \dn.
+                </simpara></listitem><listitem><simpara>
+                    Added special command \ds (old \ds command is now \dS).
+                </simpara></listitem><listitem><simpara>
+                    Added special command \di.
+                </simpara></listitem><listitem><simpara>
+                    Renamed special command \* to \c.  (\* still supported
+                    for backward compatibility).
+                </simpara></listitem><listitem><simpara>
+                    Not so stingy about saving commands in history.
+                </simpara></listitem><listitem><simpara>
+                    Allow optional filter substring for many more \d commands,
+                    including for "\d TABLENAME".
+                </simpara></listitem><listitem><simpara>
+                    Implemented special use of substrings ending with dot.
+                    These do not just filter on the string, but mean to
+                    filter to only objects with this exact schema.
+                </simpara></listitem><listitem><simpara>
+                    \da and \ds commands now work for HSQLDB servers, even 
+                    though HSQLDB Aliases and Sequences are not listed in the
+                    JDBC Metadata.
+                </simpara></listitem><listitem><simpara>
+                    Improved exception handling.
+                </simpara></listitem><listitem><simpara>
+                    Implemented Raw SQL mode, and ability for users to enter
+                    PL/SQL.
+                </simpara></listitem><listitem><simpara>
+                    Fixed open Statement bug (HSQLDB bug #1191524).
+                </simpara></listitem><listitem><simpara>
+                    Improved Oracle idiosyncracy work-arounds.
+                </simpara></listitem><listitem><simpara>
+                    Added support for all non-text type fields, including BLOBs.
+                </simpara></listitem><listitem><simpara>
+                    Can download and upload both ASCII and binary column
+                    values to/from local files.
+                </simpara></listitem><listitem><simpara>
+                    Better display of null values occurring in result sets.
+                </simpara></listitem><listitem><simpara>
+                    RC file functionality isolated into separate class, RCData.
+                    Other programs can not use RC files by using this class.
+                </simpara></listitem>
+            </itemizedlist>
+        </section>
     </section>
 
     <section id='baremin-section'>
