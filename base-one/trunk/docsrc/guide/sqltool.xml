@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.77 2005/05/17 15:52:46 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.78 2005/05/17 15:56:14 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.77 $</edition>
-        <pubdate>$Date: 2005/05/17 15:52:46 $</pubdate>
+        <edition>$Revision: 1.78 $</edition>
+        <pubdate>$Date: 2005/05/17 15:56:14 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -259,6 +259,69 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
           <link linkend='binary_files-section' endterm='binary_files-title'/>
             section.
             </simpara>
+        </section>
+        <section><title>Desktop shortcuts</title>
+            <simpara>
+                Desktop shortcuts and quick launch icons are useful, especially 
+                if you often run SqlTool with the same set of arguments.
+                It's really easy to set up several of them-- one for each 
+                way that you invoke SqlTool (i.e., each one would start
+                SqlTool with all the arguments for one of your typical startup
+                needs).
+            </simpara><simpara>
+                Desktop icon setup varies depending on your Desktop manager,
+                of course.
+                I'll explain how to set up a SqlTool startup icon in Windows
+                XP.
+                Linux and Mac users should be able to take it from there, since
+                it's easier with the common Linux and Mac desktops.
+            </simpara>
+            <procedure>
+                <title>Creating a Desktop Shortcut for SqlTool</title>
+                <step><simpara>
+                    Right click in the main Windows background.
+                </simpara></step> <step><simpara>
+                    <guimenuitem>New</guimenuitem>
+                </simpara></step> <step><simpara>
+                    <guimenuitem>Shortcut</guimenuitem>
+                </simpara></step> <step><simpara>
+                    <guibutton>Browse</guibutton>
+                </simpara></step> <step><simpara>
+                    Navigate to where your good JRE lives.  For recent Sun
+                    JRE's, it installs to 
+                    <filename>C:\Program Files\Java\*\bin</filename>
+                    by default (the * will be a JDK or JRE name and version 
+                    number).
+                </simpara></step> <step><simpara>
+                    Select <filename>java.exe</filename>.
+                </simpara></step> <step><simpara>
+                    <guibutton>OK</guibutton>
+                </simpara></step> <step><simpara>
+                    <guimenuitem>Next</guimenuitem>
+                </simpara></step> <step><simpara>
+                    Enter any name
+                </simpara></step> <step><simpara>
+                    <guimenuitem>Finish</guimenuitem>
+                </simpara></step> <step><simpara>
+                    Right click the new icon.
+                </simpara></step> <step><simpara>
+                    <guimenuitem>Properties</guimenuitem>
+                </simpara></step> <step><simpara>
+                    Edit the <guilabel>Target</guilabel> field.
+                </simpara></step> <step><simpara>
+                    Leave the path to java.exe exactly as it is, including the 
+                    quotes, but append to what is there.
+                    Beginning with a space, enter the command-line that you
+                    want run.
+                </simpara></step> <step><simpara>
+                    <guibutton>Change Icon...</guibutton> to a pretty icon.
+                </simpara></step> <step><simpara>
+                    If you want a quick-launch icon instead of (or in addition 
+                    to) a desktop shortcut icon, click and drag it to your 
+                    quick launch bar.  (You may or may not need to edit the
+                    Windows Toolbar properties to let you add new items).
+                </simpara></step>
+            </procedure>
         </section>
         <section><title>Loading sample data</title>
             <para>
