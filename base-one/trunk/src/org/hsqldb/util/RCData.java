@@ -43,7 +43,7 @@ import java.util.HashMap;
 import java.util.StringTokenizer;
 import java.util.Properties;
 
-/* $Id: RCData.java,v 1.1 2005/04/26 16:38:04 unsaved Exp $ */
+/* $Id: RCData.java,v 1.2 2005/05/11 14:03:21 fredt Exp $ */
 
 /**
  * All the info we need to connect up to a database.
@@ -202,7 +202,7 @@ public class RCData {
      *
      * @return New JDBC Connection
      */
-    Connection getConnection()
+    public Connection getConnection()
     throws ClassNotFoundException, InstantiationException,
            IllegalAccessException, SQLException {
         return getConnection(null, null, null);
@@ -214,7 +214,7 @@ public class RCData {
      *
      * @return New JDBC Connection
      */
-    Connection getConnection(String curDriver, String curCharset,
+    public Connection getConnection(String curDriver, String curCharset,
                              String curTrustStore)
                              throws ClassNotFoundException,
                                     InstantiationException,
