@@ -163,11 +163,13 @@ public class HsqlProperties {
 
     public boolean isPropertyTrue(String key, boolean defaultValue) {
 
-        String value = stringProps.getProperty(key, defaultValue ? "true"
-                                                                 : "false");
+        String value = stringProps.getProperty(key);
 
-        return value == null ? false
-                             : value.toLowerCase().equals("true");
+        if (value == null) {
+            return defaultValue;
+        }
+
+        return value.toLowerCase().equals("true");
     }
 
     public void removeProperty(String key) {

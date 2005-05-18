@@ -43,7 +43,7 @@ import java.util.HashMap;
 import java.util.StringTokenizer;
 import java.util.Properties;
 
-/* $Id: RCData.java,v 1.2 2005/05/11 14:03:21 fredt Exp $ */
+/* $Id: RCData.java,v 1.3 2005/05/18 15:49:19 unsaved Exp $ */
 
 /**
  * All the info we need to connect up to a database.
@@ -215,10 +215,11 @@ public class RCData {
      * @return New JDBC Connection
      */
     public Connection getConnection(String curDriver, String curCharset,
-                             String curTrustStore)
-                             throws ClassNotFoundException,
-                                    InstantiationException,
-                                    IllegalAccessException, SQLException {
+                                    String curTrustStore)
+                                    throws ClassNotFoundException,
+                                           InstantiationException,
+                                           IllegalAccessException,
+                                           SQLException {
 
         Properties sysProps = System.getProperties();
 

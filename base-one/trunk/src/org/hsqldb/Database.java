@@ -320,6 +320,7 @@ public class Database {
             logger.releaseLock();
             setState(DATABASE_SHUTDOWN);
             clearStructures();
+            DatabaseManager.removeDatabase(this);
 
             if (!(e instanceof HsqlException)) {
                 e = Trace.error(Trace.GENERAL_ERROR, e.toString());
