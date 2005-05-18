@@ -33,7 +33,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.29 2004/07/15 17:52:36 unsaved Exp $
+# $Id: hsqldb,v 1.30 2005/05/04 07:53:06 unsaved Exp $
 
 # UNIX init script for HSQLDB.
 
@@ -291,7 +291,7 @@ running with pid $HSQLDB_PID."
         exec "$JAVA_EXECUTABLE" $AUTH_FILE_SWITCH $CLIENT_JVMARGS \
             "-Dsqltoolsprayer.propfile=$PROPERTY_FILE" \
             "-Dsqltoolsprayer.monfile=$PIDFILE" \
-            org.hsqldb.util.SqlToolSprayer ''
+            org.hsqldb.util.SqlToolSprayer --
     ;;
     start)
         [ -n "$HSQLDB_PID" ] && {
@@ -366,7 +366,7 @@ running with pid $HSQLDB_PID."
             "-Dsqltoolsprayer.propfile=$PROPERTY_FILE" \
             "-Dsqltoolsprayer.monfile=$PIDFILE" \
             "-Dsqltoolsprayer.maxtime=${MAX_START_SECS}000" \
-            org.hsqldb.util.SqlToolSprayer '' && {
+            org.hsqldb.util.SqlToolSprayer -- && {
             rm -f "$PIDCHECKER_FLAGFILE"
             echo "org.hsqldb.$TARGET_CLASS started with pid `cat $PIDFILE`"
             exit 0
