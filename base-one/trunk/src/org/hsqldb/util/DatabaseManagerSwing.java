@@ -183,9 +183,9 @@ implements ActionListener, WindowListener, KeyListener {
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.sourceforge.net.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.45 $";
+        + "problem reports or help requests:  $Revision: 1.46 $";
     private static final String ABOUT_TEXT =
-        "$Revision: 1.45 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.46 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2001-2005, The HSQL Development Group.\n"
         + "http://hsqldb.sourceforge.net\n\n\n"
@@ -805,10 +805,10 @@ implements ActionListener, WindowListener, KeyListener {
             Transfer.work(new String[]{ "-d" });
         } else if (s.equals("Restore")) {
             Transfer.work(new String[]{ "-r" });
-        } else if (s.equals(AUTOCOMMIT_BOX_TEXT)) {
+        } else if (s.equals(LOGGING_BOX_TEXT)) {
             JavaSystem.setLogToSystem(boxLogging.isSelected());
         } else if (s.equals(AUTOREFRESH_BOX_TEXT)) {
-            autoRefresh = boxLogging.isSelected();
+            autoRefresh = boxAutoRefresh.isSelected();
 
             refreshTree();
         } else if (s.equals("Refresh Tree")) {
