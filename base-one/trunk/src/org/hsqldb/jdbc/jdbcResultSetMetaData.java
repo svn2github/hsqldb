@@ -783,7 +783,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * property: <p>
      *
      * <pre>
-     * sql.enforce_sql_size
+     * sql.enforce_strict_size
      * </pre>
      *
      * Because the property may change from one instantiation of a Database
@@ -823,7 +823,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
      * property: <p>
      *
      * <pre>
-     * sql.enforce_sql_size
+     * sql.enforce_strict_size
      * </pre>
      *
      * </div>

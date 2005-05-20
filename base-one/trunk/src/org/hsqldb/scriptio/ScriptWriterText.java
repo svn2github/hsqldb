@@ -35,11 +35,12 @@ import java.io.IOException;
 
 import org.hsqldb.Database;
 import org.hsqldb.HsqlException;
+import org.hsqldb.HsqlNameManager;
+import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.NumberSequence;
+import org.hsqldb.Session;
 import org.hsqldb.Table;
 import org.hsqldb.rowio.RowOutputTextLog;
-import org.hsqldb.*;
-import org.hsqldb.HsqlNameManager.HsqlName;
 
 /**
  * Handles all scripting and logging operations. A script consists of two blocks:<p>

@@ -1934,10 +1934,6 @@ public class Table extends BaseTable {
 
         // instead of new row, use new routine so that the row does not use
         // rowstore.add(), which will allocate new space and different pos
-        // Define new method that will not allocate new space
-        // all delete methods that call addTransactionDelete() should use
-        // a replacement delete() that does not free the space
-        // when delete is committed, the spaces should be released
         indexRow(session, newrow);
 
         if (log && isLogged) {

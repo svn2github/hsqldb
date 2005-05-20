@@ -367,41 +367,6 @@ class TableWorks {
 
     /**
      *
-     * @param  column is null if adjust is -1
-     * @param  colindex
-     * @param  adjust +1, 0 -1
-     * @throws  HsqlException
-     */
-    void addDropRetypeColumnOrig(Column column, int colindex,
-                                 int adjust) throws HsqlException {
-
-        if (table.isText()) {
-            throw Trace.error(Trace.OPERATION_NOT_SUPPORTED);
-        }
-
-        if (adjust == -1 || adjust == 0) {
-            table.database.schemaManager.checkColumnIsInView(table,
-                    table.getColumn(colindex).columnName.name);
-            table.checkColumnInCheckConstraint(
-                table.getColumn(colindex).columnName.name);
-        }
-
-        Table tn = table.moveDefinition(null, column, colindex, adjust);
-
-        tn.moveData(session, table, colindex, adjust);
-        tn.updateConstraintsTables(session, table, colindex, adjust);
-
-        int i = table.database.schemaManager.getTableIndex(table);
-
-        table.database.schemaManager.setTable(i, tn);
-
-        table = tn;
-
-        table.database.schemaManager.recompileViews(table);
-    }
-
-    /**
-     *
      * @param  column
      * @param  colindex
      * @throws  HsqlException

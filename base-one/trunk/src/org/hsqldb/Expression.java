@@ -3604,8 +3604,7 @@ public class Expression {
                 o = Column.convertObject(o, eArg2.eArg.getDataType());
 
                 if (exprType == EQUAL) {
-                    it = index.findFirstRow(session, o,
-                                            eArg2.eArg.getDataType());
+                    it = index.findFirstRow(session, o, EQUAL);
 
                     return it.hasNext() ? Boolean.TRUE
                                         : Boolean.FALSE;
@@ -3683,8 +3682,7 @@ public class Expression {
                 o = Column.convertObject(o, eArg2.eArg.getDataType());
 
                 if (exprType == EQUAL || exprType == NOT_EQUAL) {
-                    it = index.findFirstRow(session, o,
-                                            eArg2.eArg.getDataType());
+                    it = index.findFirstRow(session, o, EQUAL);
 
                     if (exprType == EQUAL) {
                         return (it.hasNext() && subquery.table.getRowCount(session) == 1)

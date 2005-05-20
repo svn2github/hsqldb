@@ -37,9 +37,9 @@ import org.hsqldb.Database;
 import org.hsqldb.HsqlException;
 import org.hsqldb.NumberSequence;
 import org.hsqldb.Result;
+import org.hsqldb.Session;
 import org.hsqldb.Table;
 import org.hsqldb.rowio.RowOutputBinary;
-import org.hsqldb.*;
 
 /**
  *  @author fredt@users
@@ -112,12 +112,17 @@ class ScriptWriterBinary extends ScriptWriterBase {
     protected void addSessionId(Session session) throws IOException {}
 
     public void writeDeleteStatement(Session session, Table table,
-                                     Object[] ddata) {}
+                                     Object[] ddata)
+                                     throws HsqlException, IOException {}
 
-    public void writeSequenceStatement(Session session, NumberSequence seq) {}
+    public void writeSequenceStatement(Session session,
+                                       NumberSequence seq)
+                                       throws HsqlException, IOException {}
 
     public void writeInsertStatement(Session session, Table table,
-                                     Object[] data) {}
+                                     Object[] data)
+                                     throws HsqlException, IOException {}
 
-    public void writeCommitStatement(Session session) {}
+    public void writeCommitStatement(Session session)
+    throws HsqlException, IOException {}
 }

@@ -758,7 +758,6 @@ extends org.hsqldb.DatabaseInformationMain {
      *     <LI>hsqldb.max_nio_scale - scale factor for cache nio mapped buffers
      *     <LI>hsqldb.nio_data_file - whether cache uses nio mapped buffers
      *     <LI>hsqldb.original_version -
-     *     <LI>sql.enforce_sql_size - column length specifications enforced
      *     <LI>sql.enforce_strict_size - column length specifications enforced strictly (raise exception on overflow)?
      *     <LI>textdb.all_quoted - default policy regarding whether to quote all character field values
      *     <LI>textdb.cache_scale - base-2 exponent scaling allowable cache row count

@@ -54,7 +54,7 @@ import org.hsqldb.persist.HsqlDatabaseProperties;
 // 1.7.2 metadata features.
 // boucherb@users 20040422 - doc 1.7.2 - javadoc updates toward 1.7.2 final
 // boucherb@users 200404xx - misc changes
-// fredt@users 20050505 - patch 1.7.0 - enforced JDBC rules for non-pattern params
+// fredt@users 20050505 - patch 1.8.0 - enforced JDBC rules for non-pattern params
 
 /** Comprehensive information about the database as a whole.
  * <P>
