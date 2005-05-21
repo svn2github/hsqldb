@@ -1051,18 +1051,16 @@ public class Column {
                     }
 
                     if (o instanceof Time) {
-                        return HsqlDateTime.getTimeString((java.sql.Time) o,
-                                                          null);
+                        return HsqlDateTime.getTimeString((Time) o, null);
                     }
 
                     if (o instanceof Timestamp) {
-                        return HsqlDateTime.getTimestampString(
-                            (java.sql.Timestamp) o, null);
+                        return HsqlDateTime.getTimestampString((Timestamp) o,
+                                                               null);
                     }
 
-                    if (o instanceof java.sql.Date) {
-                        return HsqlDateTime.getDateString((java.sql.Date) o,
-                                                          null);
+                    if (o instanceof Date) {
+                        return HsqlDateTime.getDateString((Date) o, null);
                     }
 
                     if (o instanceof byte[]) {
@@ -1083,7 +1081,7 @@ public class Column {
                         return HsqlDateTime.timeValue((String) o);
                     }
 
-                    if (o instanceof java.sql.Date) {
+                    if (o instanceof Date) {
                         throw Trace.error(Trace.INVALID_CONVERSION,
                                           Types.getTypeString(type));
                     }
@@ -1098,9 +1096,8 @@ public class Column {
                         return HsqlDateTime.getNormalisedTimestamp((Time) o);
                     }
 
-                    if (o instanceof java.sql.Date) {
-                        return HsqlDateTime.getNormalisedTimestamp(
-                            (java.sql.Date) o);
+                    if (o instanceof Date) {
+                        return HsqlDateTime.getNormalisedTimestamp((Date) o);
                     }
 
                     if (o instanceof String) {
@@ -1109,9 +1106,8 @@ public class Column {
                     break;
 
                 case Types.DATE :
-                    if (o instanceof java.sql.Date) {
-                        return HsqlDateTime.getNormalisedDate(
-                            (java.sql.Date) o);
+                    if (o instanceof Date) {
+                        return HsqlDateTime.getNormalisedDate((Date) o);
                     }
 
                     if (o instanceof Timestamp) {

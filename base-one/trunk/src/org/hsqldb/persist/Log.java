@@ -154,11 +154,13 @@ public class Log {
     void open() throws HsqlException {
 
         // Allows the user to set log size in the properties file.
-        int logMegas = properties.getIntegerProperty("hsqldb.log_size", 0);
+        int logMegas = properties.getIntegerProperty(
+            HsqlDatabaseProperties.hsqldb_log_size, 0);
 
         maxLogSize = logMegas * 1024 * 1024;
-        scriptFormat = properties.getIntegerProperty("hsqldb.script_format",
-                ScriptWriterBase.SCRIPT_TEXT_170);
+        scriptFormat = properties.getIntegerProperty(
+            HsqlDatabaseProperties.hsqldb_script_format,
+            ScriptWriterBase.SCRIPT_TEXT_170);
         writeDelay     = properties.getDefaultWriteDelay();
         filesReadOnly  = database.isFilesReadOnly();
         scriptFileName = fileName + ".script";

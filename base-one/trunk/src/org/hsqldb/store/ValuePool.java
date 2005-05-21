@@ -32,6 +32,7 @@
 package org.hsqldb.store;
 
 import java.math.BigDecimal;
+import java.sql.Date;
 
 /**
  * Supports pooling of Integer, Long, Double, BigDecimal, String and Date
@@ -164,7 +165,7 @@ public class ValuePool {
         }
     }
 
-    public static java.sql.Date getDate(long val) {
+    public static Date getDate(long val) {
 
         synchronized (datePool) {
             return datePool.getOrAddDate(val);

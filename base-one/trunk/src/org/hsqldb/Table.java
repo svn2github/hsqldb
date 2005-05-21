@@ -3109,7 +3109,7 @@ public class Table extends BaseTable {
      *
      * @return
      */
-    boolean isCached() {
+    public boolean isCached() {
         return isCached;
     }
 
@@ -3214,7 +3214,7 @@ public class Table extends BaseTable {
     /**
      *  Returns the Index object at the given index
      */
-    protected Index getIndex(int i) {
+    public Index getIndex(int i) {
         return indexList[i];
     }
 

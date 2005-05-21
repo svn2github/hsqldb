@@ -83,10 +83,10 @@ public class HsqlDatabaseProperties extends HsqlProperties {
     //
     private static final String runtime_gc_interval  = "runtime.gc_interval";
     private static final String hsqldb_max_nio_scale = "hsqldb.max_nio_scale";
-    private static final String hsqldb_cache_scale   = "hsqldb.cache_scale";
+    public static final String  hsqldb_cache_scale   = "hsqldb.cache_scale";
     public static final String hsqldb_cache_file_scale =
         "hsqldb.cache_file_scale";
-    private static final String hsqldb_cache_size_scale =
+    public static final String hsqldb_cache_size_scale =
         "hsqldb.cache_size_scale";
     public static final String  hsqldb_cache_version = "hsqldb.cache_version";
     private static final String hsqldb_catalogs      = "hsqldb.catalogs";
@@ -97,11 +97,11 @@ public class HsqlDatabaseProperties extends HsqlProperties {
     public static final String hsqldb_defrag_limit = "hsqldb.defrag_limit";
     private static final String hsqldb_files_readonly =
         "hsqldb.files_readonly";
-    private static final String hsqldb_log_size      = "hsqldb.log_size";
-    private static final String hsqldb_nio_data_file = "hsqldb.nio_data_file";
+    public static final String hsqldb_log_size      = "hsqldb.log_size";
+    public static final String hsqldb_nio_data_file = "hsqldb.nio_data_file";
     private static final String hsqldb_original_version =
         "hsqldb.original_version";
-    private static final String hsqldb_script_format = "hsqldb.script_format";
+    public static final String hsqldb_script_format = "hsqldb.script_format";
 
     //
     private static final String sql_compare_in_locale =
@@ -112,18 +112,18 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         "sql.tx_no_multi_rewrite";
 
     //
-    private static final String textdb_cache_scale = "textdb.cache_scale";
-    private static final String textdb_cache_size_scale =
+    public static final String textdb_cache_scale = "textdb.cache_scale";
+    public static final String textdb_cache_size_scale =
         "textdb.cache_size_scale";
-    private static final String textdb_all_quoted = "textdb.all_quoted";
-    private static final String textdb_allow_full_path =
+    public static final String textdb_all_quoted = "textdb.all_quoted";
+    public static final String textdb_allow_full_path =
         "textdb.allow_full_path";
-    private static final String textdb_encoding     = "textdb.encoding";
-    private static final String textdb_ignore_first = "textdb.ignore_first";
-    private static final String textdb_quoted       = "textdb.quoted";
-    private static final String textdb_fs           = "textdb.fs";
-    private static final String textdb_vs           = "textdb.vs";
-    private static final String textdb_lvs          = "textdb.lvs";
+    public static final String textdb_encoding     = "textdb.encoding";
+    public static final String textdb_ignore_first = "textdb.ignore_first";
+    public static final String textdb_quoted       = "textdb.quoted";
+    public static final String textdb_fs           = "textdb.fs";
+    public static final String textdb_vs           = "textdb.vs";
+    public static final String textdb_lvs          = "textdb.lvs";
 
     static {
 

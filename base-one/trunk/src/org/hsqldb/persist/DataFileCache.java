@@ -164,11 +164,10 @@ public class DataFileCache {
      */
     protected void initParams() throws HsqlException {
 
-        int cacheScale =
-            database.getProperties().getIntegerProperty("hsqldb.cache_scale",
-                14, 8, 18);
+        int cacheScale = database.getProperties().getIntegerProperty(
+            HsqlDatabaseProperties.hsqldb_cache_scale, 14, 8, 18);
         int cacheSizeScale = database.getProperties().getIntegerProperty(
-            "hsqldb.cache_size_scale", 10, 6, 20);
+            HsqlDatabaseProperties.hsqldb_cache_size_scale, 10, 6, 20);
 
         cacheFileScale = database.getProperties().getIntegerProperty(
             HsqlDatabaseProperties.hsqldb_cache_file_scale, 1);
@@ -230,7 +229,7 @@ public class DataFileCache {
             }
 
             boolean isNio = database.getProperties().isPropertyTrue(
-                "hsqldb.nio_data_file");
+                HsqlDatabaseProperties.hsqldb_nio_data_file);
             int fileType = isNio ? ScaledRAFile.DATA_FILE_NIO
                                  : ScaledRAFile.DATA_FILE_RAF;
 

@@ -424,8 +424,9 @@ public class SchemaManager {
         return sequence;
     }
 
-    NumberSequence findSequence(String name,
-                                String schemaName) throws HsqlException {
+    public NumberSequence findSequence(String name,
+                                       String schemaName)
+                                       throws HsqlException {
 
         Schema         schema   = (Schema) schemaMap.get(schemaName);
         NumberSequence sequence = schema.sequenceManager.getSequence(name);

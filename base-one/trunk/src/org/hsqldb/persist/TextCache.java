@@ -120,11 +120,11 @@ public class TextCache extends DataFileCache {
         HsqlDatabaseProperties dbProps = database.getProperties();
 
         fs = translateSep(tableprops.getProperty("fs",
-                dbProps.getProperty("textdb.fs", ",")));
+                dbProps.getProperty(HsqlDatabaseProperties.textdb_fs, ",")));
         vs = translateSep(tableprops.getProperty("vs",
-                dbProps.getProperty("textdb.vs", fs)));
+                dbProps.getProperty(HsqlDatabaseProperties.textdb_vs, fs)));
         lvs = translateSep(tableprops.getProperty("lvs",
-                dbProps.getProperty("textdb.lvs", fs)));
+                dbProps.getProperty(HsqlDatabaseProperties.textdb_lvs, fs)));
 
         if (fs.length() == 0 || vs.length() == 0 || lvs.length() == 0) {
             throw Trace.error(Trace.TEXT_TABLE_SOURCE,
@@ -132,24 +132,33 @@ public class TextCache extends DataFileCache {
         }
 
         //-- Get booleans
-        ignoreFirst = tableprops.isPropertyTrue("ignore_first",
-                dbProps.isPropertyTrue("textdb.ignore_first", false));
-        isQuoted =
-            tableprops.isPropertyTrue("quoted",
-                                      dbProps.isPropertyTrue("textdb.quoted",
-                                          true));
-        isAllQuoted = tableprops.isPropertyTrue("all_quoted",
-                dbProps.isPropertyTrue("textdb.all_quoted", false));
+        ignoreFirst = tableprops.isPropertyTrue(
+            "ignore_first",
+            dbProps.isPropertyTrue(
+                HsqlDatabaseProperties.textdb_ignore_first, false));
+        isQuoted = tableprops.isPropertyTrue(
+            "quoted",
+            dbProps.isPropertyTrue(
+                HsqlDatabaseProperties.textdb_quoted, true));
+        isAllQuoted = tableprops.isPropertyTrue(
+            "all_quoted",
+            dbProps.isPropertyTrue(
+                HsqlDatabaseProperties.textdb_all_quoted, false));
 
         //-- Get encoding
         stringEncoding = translateSep(tableprops.getProperty("encoding",
-                dbProps.getProperty("textdb.encoding", "ASCII")));
+                dbProps.getProperty(HsqlDatabaseProperties.textdb_encoding,
+                                    "ASCII")));
 
         //-- Get size and scale
-        int cacheScale = tableprops.getIntegerProperty("cache_scale",
-            dbProps.getIntegerProperty("textdb.cache_scale", 10, 8, 16));
-        int cacheSizeScale = tableprops.getIntegerProperty("cache_size_scale",
-            dbProps.getIntegerProperty("textdb.cache_size_scale", 10, 8, 20));
+        int cacheScale = tableprops.getIntegerProperty(
+            "cache_scale",
+            dbProps.getIntegerProperty(
+                HsqlDatabaseProperties.textdb_cache_scale, 10, 8, 16));
+        int cacheSizeScale = tableprops.getIntegerProperty(
+            "cache_size_scale",
+            dbProps.getIntegerProperty(
+                HsqlDatabaseProperties.textdb_cache_size_scale, 10, 8, 20));
         int lookupTableLength = 1 << cacheScale;
         int avgRowBytes       = 1 << cacheSizeScale;
 

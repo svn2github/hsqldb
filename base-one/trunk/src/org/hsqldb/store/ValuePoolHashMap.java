@@ -31,6 +31,8 @@
 
 package org.hsqldb.store;
 
+import java.sql.Date;
+
 /**
  * Subclass of BaseHashMap for maintaining a pool of objects. Supports a
  * range of java.lang.* objects.
@@ -238,18 +240,18 @@ public class ValuePoolHashMap extends BaseHashMap {
         return testValue;
     }
 
-    protected java.sql.Date getOrAddDate(long longKey) {
+    protected Date getOrAddDate(long longKey) {
 
-        java.sql.Date testValue;
-        int           hash       = (int) longKey ^ (int) (longKey >>> 32);
-        int           index      = hashIndex.getHashIndex(hash);
-        int           lookup     = hashIndex.hashTable[index];
-        int           lastLookup = -1;
+        Date testValue;
+        int  hash       = (int) longKey ^ (int) (longKey >>> 32);
+        int  index      = hashIndex.getHashIndex(hash);
+        int  lookup     = hashIndex.hashTable[index];
+        int  lastLookup = -1;
 
         for (; lookup >= 0;
                 lastLookup = lookup,
                 lookup = hashIndex.getNextLookup(lookup)) {
-            testValue = (java.sql.Date) objectKeyTable[lookup];
+            testValue = (Date) objectKeyTable[lookup];
 
             if (testValue.getTime() == longKey) {
                 if (accessCount == Integer.MAX_VALUE) {
@@ -269,7 +271,7 @@ public class ValuePoolHashMap extends BaseHashMap {
         }
 
         lookup                 = hashIndex.linkNode(index, lastLookup);
-        testValue              = new java.sql.Date(longKey);
+        testValue              = new Date(longKey);
         objectKeyTable[lookup] = testValue;
 
         if (accessCount == Integer.MAX_VALUE) {

@@ -66,6 +66,7 @@
 
 package org.hsqldb;
 
+import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
 
@@ -1264,7 +1265,7 @@ public class Session implements SessionInterface {
      * CURRENT_XXXX calls in this scope will use this millisecond value.
      * (fredt@users)
      */
-    java.sql.Date getCurrentDate() {
+    Date getCurrentDate() {
 
         if (currentDateTimeSCN != sessionSCN) {
             currentDateTimeSCN = sessionSCN;

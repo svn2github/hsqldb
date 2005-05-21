@@ -1339,7 +1339,7 @@ public class Library {
      * @return the name of the day corresponding to the given
      * <code>java.sql.Date</code>
      */
-    public static String dayname(java.sql.Date d) {
+    public static String dayname(Date d) {
 
         if (d == null) {
             return null;
@@ -1360,7 +1360,7 @@ public class Library {
      * @param d the date value from which to extract the day of month
      * @return the day of the month from the given date value
      */
-    public static Integer dayofmonth(java.sql.Date d) {
+    public static Integer dayofmonth(Date d) {
 
         if (d == null) {
             return null;
@@ -1377,7 +1377,7 @@ public class Library {
      * @param d the date value from which to extract the day of week
      * @return the day of the week from the given date value
      */
-    public static Integer dayofweek(java.sql.Date d) {
+    public static Integer dayofweek(Date d) {
 
         if (d == null) {
             return null;
@@ -1394,7 +1394,7 @@ public class Library {
      * @param d the date value from which to extract the day of year
      * @return the day of the year from the given date value
      */
-    public static Integer dayofyear(java.sql.Date d) {
+    public static Integer dayofyear(Date d) {
 
         if (d == null) {
             return null;
@@ -1450,7 +1450,7 @@ public class Library {
      * @param d the date value from which to extract the month value
      * @return the month value from the given date value
      */
-    public static Integer month(java.sql.Date d) {
+    public static Integer month(Date d) {
 
         if (d == null) {
             return null;
@@ -1469,7 +1469,7 @@ public class Library {
      * @param d the date value from which to extract the month name
      * @return a String representing the month name from the given date value
      */
-    public static String monthname(java.sql.Date d) {
+    public static String monthname(Date d) {
 
         if (d == null) {
             return null;
@@ -1502,7 +1502,7 @@ public class Library {
      * @return an integer representing the quater of the year from the given
      *      date value
      */
-    public static Integer quarter(java.sql.Date d) {
+    public static Integer quarter(Date d) {
 
         if (d == null) {
             return null;
@@ -1556,7 +1556,7 @@ public class Library {
      * @return an integer value representing the year from the given
      *      date value
      */
-    public static Integer year(java.sql.Date d) {
+    public static Integer year(Date d) {
 
         if (d == null) {
             return null;
@@ -2226,7 +2226,8 @@ public class Library {
                     return year((Date) params[0]);
                 }
                 case to_char : {
-                    return to_char((Date) params[0], (String) params[1]);
+                    return to_char((java.util.Date) params[0],
+                                   (String) params[1]);
                 }
                 case isReadOnlyDatabaseFiles : {
                     return null;
