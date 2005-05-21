@@ -812,6 +812,7 @@ class DatabaseCommandInterpreter {
         int        type;
         int        length      = 0;
         int        scale       = 0;
+        boolean    hasLength   = false;
         boolean    isNullable  = true;
         Expression defaultExpr = null;
         String     token;
@@ -836,12 +837,13 @@ class DatabaseCommandInterpreter {
         }
 
         if (tokenizer.isGetThis(Token.T_OPENBRACKET)) {
-            length = tokenizer.getInt();
+            hasLength = true;
+            length    = tokenizer.getInt();
 
             Trace.check(Types.acceptsPrecisionCreateParam(type),
                         Trace.UNEXPECTED_TOKEN);
 
-            if (length == 0) {
+            if (type != Types.TIMESTAMP && length == 0) {
                 throw Trace.error(Trace.INVALID_SIZE_PRECISION);
             }
 
@@ -869,6 +871,14 @@ class DatabaseCommandInterpreter {
 
         if (type == Types.FLOAT && length > 53) {
             throw Trace.error(Trace.NUMERIC_VALUE_OUT_OF_RANGE);
+        }
+
+        if (type == Types.TIMESTAMP) {
+            if (!hasLength) {
+                length = 6;
+            } else if (length != 0 && length != 6) {
+                throw Trace.error(Trace.NUMERIC_VALUE_OUT_OF_RANGE);
+            }
         }
 
         token = tokenizer.getSimpleToken();

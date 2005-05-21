@@ -441,7 +441,17 @@ public class DatabaseScript {
             a.append(sType);
 
             // append the size and scale if > 0
-            if (column.getSize() > 0) {
+            boolean hasSize = false;
+
+            if (column.getType() == Types.TIMESTAMP) {
+                if (column.getSize() != 6) {
+                    hasSize = true;
+                }
+            } else {
+                hasSize = column.getSize() > 0;
+            }
+
+            if (hasSize) {
                 a.append('(');
                 a.append(column.getSize());
 

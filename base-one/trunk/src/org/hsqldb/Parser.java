@@ -1816,31 +1816,41 @@ class Parser {
             readThis(Expression.AS);
         }
 
-        int t = Types.getTypeNr(sToken);
-        int p = 0;
-        int s = 0;
+        int     typeNr    = Types.getTypeNr(sToken);
+        int     length    = 0;
+        int     scale     = 0;
+        boolean hasLength = false;
 
-        if (Types.acceptsPrecisionCreateParam(t)
+        if (Types.acceptsPrecisionCreateParam(typeNr)
                 && tokenizer.isGetThis(Token.T_OPENBRACKET)) {
-            p = tokenizer.getInt();
+            length    = tokenizer.getInt();
+            hasLength = true;
 
-            if (Types.acceptsScaleCreateParam(t)
+            if (Types.acceptsScaleCreateParam(typeNr)
                     && tokenizer.isGetThis(Token.T_COMMA)) {
-                s = tokenizer.getInt();
+                scale = tokenizer.getInt();
             }
 
             tokenizer.getThis(Token.T_CLOSEBRACKET);
         }
 
-        if (t == Types.FLOAT && p > 53) {
+        if (typeNr == Types.FLOAT && length > 53) {
             throw Trace.error(Trace.NUMERIC_VALUE_OUT_OF_RANGE);
         }
 
-        if (r.isParam()) {
-            r.setDataType(t);
+        if (typeNr == Types.TIMESTAMP) {
+            if (!hasLength) {
+                length = 6;
+            } else if (length != 0 && length != 6) {
+                throw Trace.error(Trace.NUMERIC_VALUE_OUT_OF_RANGE);
+            }
         }
 
-        r = new Expression(Expression.CONVERT, r, t, p, s);
+        if (r.isParam()) {
+            r.setDataType(typeNr);
+        }
+
+        r = new Expression(Expression.CONVERT, r, typeNr, length, scale);
 
         read();
         readThis(Expression.CLOSE);

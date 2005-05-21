@@ -1415,12 +1415,20 @@ public class Column {
                     long millis = session.currentDate.getTime()
                                   + ((Time) o).getTime();
 
-                    return HsqlDateTime.getTimestamp(millis);
+                    o = HsqlDateTime.getTimestamp(millis);
+                }
+
+                if (o instanceof Timestamp) {
+                    return enforceSize(o, type, precision, scale, false);
                 }
         }
 
         return convertObject(o, type);
     }
+
+    static int[] tenPower = {
+        1000000000, 100000000, 10000000, 1000000, 100000, 10000, 1000
+    };
 
     /**
      *  Check an object for type CHAR and VARCHAR and truncate/pad based on
@@ -1441,7 +1449,7 @@ public class Column {
             return obj;
         }
 
-        if (size == 0) {
+        if (size == 0 && type != Types.TIMESTAMP) {
             return obj;
         }
 
@@ -1469,6 +1477,20 @@ public class Column {
                 }
 
                 return dec;
+
+            case Types.TIMESTAMP :
+                if (size == 6) {
+                    return obj;
+                }
+
+                Timestamp ts       = (Timestamp) obj;
+                int       nanos    = ts.getNanos();
+                int       divisor  = tenPower[size];
+                int       newNanos = (nanos / divisor) * divisor;
+
+                ts.setNanos(newNanos);
+
+                return ts;
 
             default :
                 return obj;

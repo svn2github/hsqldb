@@ -859,6 +859,7 @@ public class Types {
             case DECIMAL :
             case NUMERIC :
             case FLOAT :
+            case TIMESTAMP :
                 return true;
 
             default :

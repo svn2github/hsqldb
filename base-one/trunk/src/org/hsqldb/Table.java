@@ -2120,7 +2120,8 @@ public class Table extends BaseTable {
             for (i = 0; i < cols.length; i++) {
                 colindex = cols[i];
 
-                if (colSizes[colindex] != 0 && data[colindex] != null) {
+                if ((colTypes[colindex] == Types.TIMESTAMP || colSizes[colindex] != 0)
+                        && data[colindex] != null) {
                     data[colindex] = Column.enforceSize(data[colindex],
                                                         colTypes[colindex],
                                                         colSizes[colindex],
