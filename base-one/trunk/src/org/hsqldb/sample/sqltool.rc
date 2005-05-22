@@ -1,4 +1,4 @@
-# $Id: sqltool.rc,v 1.12 2005/02/25 23:34:30 fredt Exp $
+# $Id: sqltool.rc,v 1.13 2005/05/02 04:51:56 unsaved Exp $
 
 # This is a sample RC configuration file used by SqlTool, DatabaseManager,
 # and any other program that uses the org.hsqldb.util.RCData class.
@@ -61,3 +61,19 @@ password
 #username blaine
 #password asecret
 #truststore /home/blaine/ca/db/db-trust.store
+
+
+# Template for a Postgresql database
+#urlid blainedb
+#url jdbc:postgresql://idun.africawork.org/blainedb
+#username blaine
+#password losung1
+#driver org.postgresql.Driver
+
+# Template for a MySQL database
+#urlid mysql-testdb
+#url jdbc:mysql:///test
+#username root
+#username blaine
+#password hiddenpwd
+#driver com.mysql.jdbc.Driver
