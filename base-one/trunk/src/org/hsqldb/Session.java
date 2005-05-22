@@ -358,7 +358,7 @@ public class Session implements SessionInterface {
      */
     void checkDDLWrite() throws HsqlException {
 
-        if (database.isFilesReadOnly()) {
+        if (database.isFilesReadOnly() &&!user.isSys()) {
             throw Trace.error(Trace.DATABASE_IS_READONLY);
         }
     }

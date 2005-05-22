@@ -417,7 +417,8 @@ public class HsqlDatabaseProperties extends HsqlProperties {
                 String propertyName = (String) e.nextElement();
 
                 if (isBoolean(propertyName) || isIntegral(propertyName)
-                        || isString(propertyName)) {
+                        || isString(propertyName)
+                        || db_readonly.equals(propertyName)) {
                     setProperty(propertyName,
                                 props.getProperty(propertyName));
                 }
