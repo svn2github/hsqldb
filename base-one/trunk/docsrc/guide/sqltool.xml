@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.84 2005/05/17 19:50:06 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.85 2005/05/22 02:20:59 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.84 $</edition>
-        <pubdate>$Date: 2005/05/17 19:50:06 $</pubdate>
+        <edition>$Revision: 1.85 $</edition>
+        <pubdate>$Date: 2005/05/22 02:20:59 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -651,8 +651,9 @@ java org.hsqldb.util.SqlTool urlid</screen>
                 PL commands are for setting and using scripting variables
                 and conditional and flow control statements like
                 <literal>* if</literal> and <literal>* while</literal>.
-                Using variables as command PL aliases (aka macros) can be a 
-                real convenience for nearly all users, so this feature will be
+                A few PL features (such as PL aliases and updating and
+                selecing data directly from/to files) can be a real 
+                convenience for nearly all users, so these features will be
                 discussed briefly in this section.
                 More detailed explanation of PL variables and the other 
                 PL features, with examples, are covered in the
@@ -1013,7 +1014,7 @@ java org.hsqldb.util.SqlTool urlid</screen>
     *q WHERE mass > 200;</screen>
                 </example>
                 <important>The PL alias <literal>*q</literal> usage as shown
-                    will probably be changed to <literal>*{q}</literal> with 
+                    will probably be changed to <literal>/q</literal> with 
                     the very next SqlTool release.
                     This is to remove the idiosyncratic requirement that * 
                     be followed by a space for all PL commands.
@@ -1699,12 +1700,7 @@ java -Dsqlfile.charset=UTF-8 -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sq
                 Unless users object, this behavior will be changed in the
                 next SqlTool release.
                 From then on, for all PL commands, no space will be required
-                after the "*";
-                and PL aliases will need to be invoked just like any other
-                PL variable dereference:  like <literal>*{varname}</literal>
-                instead of <literal>*varname</literal>.
-                Email the author immediately if you would like SqlTool to
-                retain the existing behavior.
+                after the "*".
             </important>
         </para> <simpara>
             The command "*" is an exception to this rule.
@@ -1719,22 +1715,7 @@ java -Dsqlfile.charset=UTF-8 -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sq
             <literal>x</literal> has not been set and will generate an error.
             (If x had been set here will be no issue because setting a
             variable automatically turns on PL variable expansion).
-        </simpara> <para>
-            PL aliasing may only be used for SQL statements.
-            You can define variables for everything in a Special or PL Command,
-            except for the very first character ("\" or "*").
-            Therefore, you can use variables but not aliasing in Special and
-            PL Commands.
-            Here is a hyperbolically impractical example to show the extent to
-            which PL variables can be used in Special commands even though you
-            can not use them as PL aliases.
-            <programlisting>
-        sql> * qq = p Hello Butch
-        sql> \*{qq} done now
-        Hello Butch done now</programlisting>
-            (Note that the \* here is not the special command "\*", but is
-            the special command "\p" because "*{qq}" resolves to "p").
-        </para>
+        </simpara>
         <simpara>
             PL is also used to upload and download column values to/from
             local ASCII files, analogously to the special \b commands
@@ -1768,22 +1749,14 @@ java -Dsqlfile.charset=UTF-8 -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sq
                     Variables written like <literal>*VARNAME</literal> are
                     expanded if they <emphasis>begin</emphasis> an SQL
                     Statement.
+                    This usage is called <emphasis>PL Aliasing</emphasis>.
+                    See the 
+                <link linkend='pl_alias-section' endterm='pl_alias-title'/>
+                    section below.
                     <important>This behavior will probably be changed shortly.
-                    After the change, variables will need to be used like
-                    <literal>*{VARNAME}</literal>, even if it is the first
-                    thing in an SQL command.</important>
-                    (They must also be followed by whitespace or terminate the
-                    Statement).
-                    We refer to this use of PL variables as
-                    <emphasis>PL aliasing</emphasis>.
-                    (Note that PL aliases are a very different thing from
-                    SQL aliases or HSQLDB aliases, which are features of
-                    databases, not SqlFile.)
-                    If the value of a variable is an entire SQL command, you
-                    generally do not want to include the terminating ";" in
-                    the value.
-                    There is an example of this 
-                    <link linkend='alias-example'>above</link>.
+                    See the warning in the
+                <link linkend='pl_alias-section' endterm='pl_alias-title'/>
+                    section below.</important>
                 </para></listitem> <listitem><simpara>
                     Variables are normally written like 
                     <literal>*VARNAME</literal> in logical expressions to
@@ -1800,6 +1773,56 @@ java -Dsqlfile.charset=UTF-8 -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sq
                     <literal>i</literal> will be a growing line of dots.
                 </para></listitem>
             </itemizedlist>
+        </section>
+        <section id='pl_alias-section'>
+            <title id='pl_alias-title'>PL Aliases</title>
+            <simpara>
+                PL Aliasing just means the use of a PL variable as the first
+                thing in an SQL statement, with the shortcut notation
+                <literal>*VARNAME</literal>.
+            </simpara> <simpara>
+                <literal>*VARNAME</literal> must be followed by whitespace
+                or terminate the Statement, in order for SqlFile to tell
+                where the variable name ends.
+            </simpara> <note><simpara>
+                Note that PL aliases are a very different thing from
+                SQL aliases or HSQLDB aliases, which are features of
+                databases, not SqlFile.
+            </simpara></note><simpara>
+                If the value of a variable is an entire SQL command, you
+                generally do not want to include the terminating ";" in
+                the value.
+                There is an example of this 
+                <link linkend='alias-example'>above</link>.
+            </simpara>
+            <para>
+            PL aliasing may only be used for SQL statements.
+            You can define variables for everything in a Special or PL Command,
+            except for the very first character ("\" or "*").
+            Therefore, you can use variables but not aliasing in Special and
+            PL Commands.
+            Here is a hyperbolically impractical example to show the extent to
+            which PL variables can be used in Special commands even though you
+            can not use them as PL aliases.
+            <programlisting>
+        sql> * qq = p Hello Butch
+        sql> \*{qq} done now
+        Hello Butch done now</programlisting>
+            (Note that the \* here is not the special command "\*", but is
+            the special command "\p" because "*{qq}" resolves to "p").
+        </para>
+            <important>
+                Unless users object, this behavior will be changed in the
+                next SqlTool release.
+                From then on, for all PL commands, no space will be required
+                after the "*";
+                and PL aliases will be used like <literal>/varname</literal>
+                (or just like for all other PL variable de-references, like
+                <literal>*{varname}</literal>).
+                Email the author immediately if you would like SqlTool to
+                retain the existing behavior.
+            </important>
+        </section>
             <simpara>
                 Here is a short SQL file that gives the specified user write
                 permissions on some application tables.
@@ -1837,7 +1860,6 @@ java -Dsqlfile.charset=UTF-8 -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sq
                 other variable, were set, but we don't want to depend upon 
                 that).
             </simpara>
-        </section>
         <section>
             <title>Logical Expressions</title>
             <simpara>
