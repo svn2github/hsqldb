@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.85 2005/05/22 02:20:59 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.86 2005/05/22 02:58:04 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.85 $</edition>
-        <pubdate>$Date: 2005/05/22 02:20:59 $</pubdate>
+        <edition>$Revision: 1.86 $</edition>
+        <pubdate>$Date: 2005/05/22 02:58:04 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -1771,7 +1771,10 @@ java -Dsqlfile.charset=UTF-8 -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sq
     * while (*i &lt; ${x})
         * i = *{i}.</programlisting>
                     <literal>i</literal> will be a growing line of dots.
-                </para></listitem>
+                </para></listitem> <listitem><para>
+                Variable names must not contain white space, or
+                the characters "}" or "=".
+                </simpara></listitem>
             </itemizedlist>
         </section>
         <section id='pl_alias-section'>
