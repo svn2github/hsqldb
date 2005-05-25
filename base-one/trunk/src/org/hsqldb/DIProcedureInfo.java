@@ -337,8 +337,6 @@ final class DIProcedureInfo {
 
     void setNameSpace(DINameSpace ns) throws HsqlException {
 
-        Trace.doAssert(ns != null, "null ns");
-
         nameSpace = ns;
 
         Class   c;

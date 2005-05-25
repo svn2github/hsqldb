@@ -113,8 +113,12 @@ public class User {
              || name.equals(UserManager.SYSTEM_AUTHORIZATION_NAME)
              || name.equals(UserManager.PUBLIC_USER_NAME));
 
-        Trace.doAssert(granteeOk,
-                       Trace.getMessage(Trace.MISSING_GRANTEE) + ": " + name);
+        if (!granteeOk) {
+            Trace.doAssert(false,
+                           Trace.getMessage(Trace.MISSING_GRANTEE) + ": "
+                           + name);
+        }
+
         setPassword(password);
 
         isSys    = name.equals(UserManager.SYSTEM_AUTHORIZATION_NAME);
@@ -227,8 +231,11 @@ public class User {
      */
     void setGrantee(Grantee inGrantee) throws HsqlException {
 
-        Trace.doAssert(grantee == null,
-                       Trace.getMessage(Trace.CHANGE_GRANTEE) + ": " + sName);
+        if (grantee != null) {
+            Trace.doAssert(false,
+                           Trace.getMessage(Trace.CHANGE_GRANTEE) + ": "
+                           + sName);
+        }
 
         grantee = inGrantee;
     }

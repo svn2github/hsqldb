@@ -3299,7 +3299,9 @@ public class Expression {
                 return Boolean.FALSE;
 
             case NOT :
-                Trace.doAssert(eArg2 == null, "Expression.test");
+                if (eArg2 != null) {
+                    Trace.doAssert(false, "Expression.test");
+                }
 
                 Boolean result = eArg.test(session);
 

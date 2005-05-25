@@ -201,9 +201,6 @@ class DatabaseInformationMain extends DatabaseInformation {
 
         super(db);
 
-        Trace.doAssert(db != null, "db != null");
-        Trace.doAssert(db.getUserManager() != null,
-                       "db.getUserManager() != null");
         init();
     }
 
@@ -524,9 +521,6 @@ class DatabaseInformationMain extends DatabaseInformation {
 
         Table t;
         int   tableIndex;
-
-        Trace.doAssert(name != null, "name is null");
-        Trace.doAssert(session != null, "session is null");
 
         // must come first...many methods depend on this being set properly
         this.session = session;

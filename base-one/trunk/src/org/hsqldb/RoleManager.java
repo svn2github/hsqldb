@@ -103,18 +103,23 @@ class RoleManager implements GrantConstants {
          * "GRANT username TO...".  That's why this check is only in
          * this RoleManager class.
          */
-        Trace.doAssert(name != null, Trace.getMessage(Trace.NULL_NAME));
+        if (name == null) {
+            Trace.doAssert(false, Trace.getMessage(Trace.NULL_NAME));
+        }
 
         Grantee g = null;
 
-        Trace.check(!GranteeManager.validRightString(name),
-                    Trace.ILLEGAL_ROLE_NAME, name);
+        if (GranteeManager.validRightString(name)) {
+            throw Trace.error(Trace.ILLEGAL_ROLE_NAME, name);
+        }
 
         g = granteeManager.addGrantee(name, false);
 
-        Trace.doAssert(roleMap.add(name, g),
-                       Trace.getMessage(Trace.ROLE_ALREADY_EXISTS) + ": "
-                       + name);
+        boolean result = roleMap.add(name, g);
+
+        if (!result) {
+            throw Trace.error(Trace.ROLE_ALREADY_EXISTS, name);
+        }
 
         // I don't think can get this trace since every roleMap element
         // will have a Grantee element which was already verified
@@ -143,14 +148,23 @@ class RoleManager implements GrantConstants {
      */
     void dropRole(String name) throws HsqlException {
 
-        Trace.check(!name.equals(ADMIN_ROLE_NAME), Trace.ACCESS_IS_DENIED);
+        if (name.equals(ADMIN_ROLE_NAME)) {
+            throw Trace.error(Trace.ACCESS_IS_DENIED);
+        }
+
         granteeManager.removeRoleFromMembers(name);
-        Trace.check(granteeManager.removeGrantee(name), Trace.NO_SUCH_ROLE,
-                    name);
+
+        boolean result = granteeManager.removeGrantee(name);
+
+        if (!result) {
+            throw Trace.error(Trace.NO_SUCH_ROLE, name);
+        }
 
         Grantee g = (Grantee) roleMap.remove(name);
 
-        Trace.check(g != null, Trace.NO_SUCH_GRANTEE, name);
+        if (g == null) {
+            throw Trace.error(Trace.NO_SUCH_GRANTEE, name);
+        }
     }
 
     public Set getRoleNames() {
@@ -162,12 +176,15 @@ class RoleManager implements GrantConstants {
      */
     Grantee getGrantee(String name) throws HsqlException {
 
-        Trace.doAssert(exists(name), "No role '" + name + "'");
+        if (!exists(name)) {
+            Trace.doAssert(false, "No role '" + name + "'");
+        }
 
         Grantee g = (Grantee) roleMap.get(name);
 
-        Trace.doAssert(g != null,
-                       Trace.getMessage(Trace.MISSING_GRANTEE) + ": " + name);
+        if (g == null) {
+            throw Trace.error(Trace.MISSING_GRANTEE, name);
+        }
 
         return g;
     }

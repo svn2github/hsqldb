@@ -297,7 +297,9 @@ public class DataFileCache {
 
         try {
             if (cacheReadonly) {
-                dataFile.close();
+                if (dataFile != null) {
+                    dataFile.close();
+                }
 
                 return;
             }
@@ -365,7 +367,7 @@ public class DataFileCache {
         try {
             if (keep) {
                 database.getProperties().setProperty(
-                    "hsqldb.cache_version",
+                    HsqlDatabaseProperties.hsqldb_cache_version,
                     HsqlDatabaseProperties.VERSION_STRING_1_7_0);
                 database.getProperties().save();
 
@@ -432,7 +434,7 @@ public class DataFileCache {
             fa.renameElement(fileName + ".new", fileName);
             backup();
             database.getProperties().setProperty(
-                "hsqldb.cache_version",
+                HsqlDatabaseProperties.hsqldb_cache_version,
                 HsqlDatabaseProperties.VERSION_STRING_1_7_0);
             database.getProperties().save();
             initParams();

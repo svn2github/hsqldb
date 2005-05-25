@@ -71,7 +71,6 @@ import java.lang.reflect.Constructor;
 import org.hsqldb.lib.FileAccess;
 import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.HashMap;
-import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.persist.HsqlDatabaseProperties;
 import org.hsqldb.persist.HsqlProperties;
 import org.hsqldb.persist.Logger;
@@ -124,7 +123,7 @@ public class Database {
 // loosecannon1@users 1.7.2 patch properties on the JDBC URL
     private HsqlProperties urlProperties;
     private String         sPath;
-    DatabaseInformation    dInfo;
+    DatabaseInformation    dbInfo;
     ClassLoader            classLoader;
 
     /** indicates the state of the database */
@@ -301,7 +300,7 @@ public class Database {
                     HsqlDatabaseProperties.sql_tx_no_multi_write));
 
             collation = new Collation();
-            dInfo     = DatabaseInformation.newDatabaseInformation(this);
+            dbInfo    = DatabaseInformation.newDatabaseInformation(this);
 
             if (sType != DatabaseManager.S_MEM) {
                 logger.openLog(this);
@@ -314,7 +313,7 @@ public class Database {
                 logger.synchLogForce();
             }
 
-            dInfo.setWithContent(true);
+            dbInfo.setWithContent(true);
         } catch (Throwable e) {
             logger.closeLog(Database.CLOSEMODE_IMMEDIATELY);
             logger.releaseLock();
@@ -347,7 +346,7 @@ public class Database {
         nameManager    = null;
         schemaManager  = null;
         sessionManager = null;
-        dInfo          = null;
+        dbInfo         = null;
     }
 
     /**
@@ -607,8 +606,8 @@ public class Database {
      */
     public void setMetaDirty(boolean resetPrepared) {
 
-        if (dInfo != null) {
-            dInfo.setDirty();
+        if (dbInfo != null) {
+            dbInfo.setDirty();
         }
 
         if (resetPrepared) {

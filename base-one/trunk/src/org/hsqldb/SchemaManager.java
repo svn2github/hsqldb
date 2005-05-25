@@ -39,6 +39,13 @@ import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.WrapperIterator;
 import org.hsqldb.persist.Logger;
 
+/**
+ * Manages all SCHEMA related database objects
+ *
+ * @author fredt@users
+ * @version  1.8.0
+ * @since 1.8.0
+ */
 public class SchemaManager {
 
     static final String SYSTEM_SCHEMA      = "SYSTEM_SCHEMA";
@@ -350,7 +357,9 @@ public class SchemaManager {
                 }
             }
 
-            t = database.dInfo.getSystemTable(session, name);
+            if (database.dbInfo != null) {
+                t = database.dbInfo.getSystemTable(session, name);
+            }
         }
 
         if (t == null) {

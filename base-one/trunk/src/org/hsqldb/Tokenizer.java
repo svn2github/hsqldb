@@ -180,7 +180,7 @@ public class Tokenizer {
     void back() throws HsqlException {
 
         if (bWait) {
-            Trace.doAssert(!bWait, "Querying state when in Wait mode");
+            Trace.doAssert(false, "Querying state when in Wait mode");
         }
 
         nextTokenIndex = iIndex;
@@ -211,7 +211,7 @@ public class Tokenizer {
     void matchThis(String match) throws HsqlException {
 
         if (bWait) {
-            Trace.doAssert(!bWait, "Querying state when in Wait mode");
+            Trace.doAssert(false, "Querying state when in Wait mode");
         }
 
         if (!sToken.equals(match) || iType == QUOTED_IDENTIFIER
@@ -260,7 +260,7 @@ public class Tokenizer {
     boolean wasValue() throws HsqlException {
 
         if (bWait) {
-            Trace.doAssert(!bWait, "Querying state when in Wait mode");
+            Trace.doAssert(false, "Querying state when in Wait mode");
         }
 
         switch (iType) {
@@ -282,7 +282,7 @@ public class Tokenizer {
     boolean wasQuotedIdentifier() throws HsqlException {
 
         if (bWait) {
-            Trace.doAssert(!bWait, "Querying state when in Wait mode");
+            Trace.doAssert(false, "Querying state when in Wait mode");
         }
 
         return lastTokenQuotedID;
@@ -294,7 +294,7 @@ public class Tokenizer {
     boolean wasFirstQuotedIdentifier() throws HsqlException {
 
         if (bWait) {
-            Trace.doAssert(!bWait, "Querying state when in Wait mode");
+            Trace.doAssert(false, "Querying state when in Wait mode");
         }
 
         return (typeLongNameFirst == QUOTED_IDENTIFIER);
@@ -309,7 +309,7 @@ public class Tokenizer {
     boolean wasLongName() throws HsqlException {
 
         if (bWait) {
-            Trace.doAssert(!bWait, "Querying state when in Wait mode");
+            Trace.doAssert(false, "Querying state when in Wait mode");
         }
 
         return iType == LONG_NAME;
@@ -324,7 +324,7 @@ public class Tokenizer {
     boolean wasSimpleName() throws HsqlException {
 
         if (bWait) {
-            Trace.doAssert(!bWait, "Querying state when in Wait mode");
+            Trace.doAssert(false, "Querying state when in Wait mode");
         }
 
         if (iType == QUOTED_IDENTIFIER && sToken.length() != 0) {
@@ -350,7 +350,7 @@ public class Tokenizer {
     boolean wasName() throws HsqlException {
 
         if (bWait) {
-            Trace.doAssert(!bWait, "Querying state when in Wait mode");
+            Trace.doAssert(false, "Querying state when in Wait mode");
         }
 
         if (iType == QUOTED_IDENTIFIER) {
@@ -373,7 +373,7 @@ public class Tokenizer {
     String getLongNameFirst() throws HsqlException {
 
         if (bWait) {
-            Trace.doAssert(!bWait, "Querying state when in Wait mode");
+            Trace.doAssert(false, "Querying state when in Wait mode");
         }
 
         return sLongNameFirst;
@@ -388,7 +388,7 @@ public class Tokenizer {
     int getLongNameFirstType() throws HsqlException {
 
         if (bWait) {
-            Trace.doAssert(!bWait, "Querying state when in Wait mode");
+            Trace.doAssert(false, "Querying state when in Wait mode");
         }
 
         return typeLongNameFirst;
@@ -551,7 +551,7 @@ public class Tokenizer {
     public int getType() throws HsqlException {
 
         if (bWait) {
-            Trace.doAssert(!bWait, "Querying state when in Wait mode");
+            Trace.doAssert(false, "Querying state when in Wait mode");
         }
 
         // todo: make sure it's used only for Values!

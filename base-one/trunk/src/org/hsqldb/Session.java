@@ -550,7 +550,9 @@ public class Session implements SessionInterface {
      */
     void beginNestedTransaction() throws HsqlException {
 
-        Trace.doAssert(!isNestedTransaction, "beginNestedTransaction");
+        if (isNestedTransaction) {
+            Trace.doAssert(false, "beginNestedTransaction");
+        }
 
         nestedOldTransIndex = transactionList.size();
         isNestedTransaction = true;
@@ -564,7 +566,9 @@ public class Session implements SessionInterface {
      */
     void endNestedTransaction(boolean rollback) throws HsqlException {
 
-        Trace.doAssert(isNestedTransaction, "endNestedTransaction");
+        if (!isNestedTransaction) {
+            Trace.doAssert(false, "endNestedTransaction");
+        }
 
         if (rollback) {
             database.txManager.rollbackTransactions(this,

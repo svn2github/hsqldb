@@ -35,6 +35,13 @@ import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.LongKeyIntValueHashMap;
 
+/**
+ * Manages rows involved in transactions
+ *
+ * @author fredt@users
+ * @version  1.8.0
+ * @since 1.8.0
+ */
 class TransactionManager {
 
     LongKeyIntValueHashMap rowSessionMap;

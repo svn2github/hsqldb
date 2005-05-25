@@ -80,8 +80,10 @@ class GranteeManager implements GrantConstants {
 
         roleManager = database.getRoleManager();
 
-        Trace.doAssert(roleManager != null,
-                       Trace.getMessage(Trace.MISSING_ROLEMANAGER));
+        if (roleManager == null) {
+            Trace.doAssert(false,
+                           Trace.getMessage(Trace.MISSING_ROLEMANAGER));
+        }
     }
 
     /**
@@ -156,7 +158,7 @@ class GranteeManager implements GrantConstants {
         Trace.check(!role.equals(name), Trace.CIRCULAR_GRANT,
                     name + " = " + role);
 
-        // boucherb@users 20050515 
+        // boucherb@users 20050515
         // SQL 2003 Foundation, 4.34.3
         // No cycles of role grants are allowed.
         Trace.check(!r.hasRole(name), Trace.CIRCULAR_GRANT,

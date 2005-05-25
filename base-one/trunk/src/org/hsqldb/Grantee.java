@@ -143,7 +143,11 @@ public class Grantee {
      * Revoke a direct role
      */
     public void revoke(String role) throws HsqlException {
-        Trace.check(hasRoleDirect(role), Trace.DONT_HAVE_ROLE, role);
+
+        if (!hasRoleDirect(role)) {
+            throw Trace.error(Trace.DONT_HAVE_ROLE, role);
+        }
+
         roles.remove(role);
     }
 
@@ -331,7 +335,10 @@ public class Grantee {
      * contained in the rights argument. Otherwise, it throws.
      */
     void check(Object dbobject, int rights) throws HsqlException {
-        Trace.check(isAccessible(dbobject, rights), Trace.ACCESS_IS_DENIED);
+
+        if (!isAccessible(dbobject, rights)) {
+            throw Trace.error(Trace.ACCESS_IS_DENIED);
+        }
     }
 
     /**
@@ -422,7 +429,10 @@ public class Grantee {
      * database administrator role. Otherwise it throws.
      */
     void checkAdmin() throws HsqlException {
-        Trace.check(isAdmin(), Trace.ACCESS_IS_DENIED);
+
+        if (!isAdmin()) {
+            throw Trace.error(Trace.ACCESS_IS_DENIED);
+        }
     }
 
     /**

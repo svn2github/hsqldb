@@ -154,8 +154,9 @@ class UserManager implements GrantConstants {
      */
     User createUser(String name, String password) throws HsqlException {
 
-        // boucherb@users 20020815 - patch assert nn name
-        Trace.doAssert(name != null, Trace.getMessage(Trace.NULL_NAME));
+        if (name == null) {
+            Trace.doAssert(false, Trace.getMessage(Trace.NULL_NAME));
+        }
 
         // TODO:
         // checkComplexity(password);
@@ -360,9 +361,11 @@ class UserManager implements GrantConstants {
      */
     User getSysUser() throws HsqlException {
 
-        Trace.doAssert(sysUser != null,
-                       Trace.getMessage(Trace.MISSING_SYSAUTH) + ": "
-                       + SYSTEM_AUTHORIZATION_NAME);
+        if (sysUser == null) {
+            Trace.doAssert(false,
+                           Trace.getMessage(Trace.MISSING_SYSAUTH) + ": "
+                           + SYSTEM_AUTHORIZATION_NAME);
+        }
 
         return sysUser;
     }

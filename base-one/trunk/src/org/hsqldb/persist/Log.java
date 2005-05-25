@@ -245,10 +245,10 @@ public class Log {
             database.logger.appLog.logContext(e);
         }
 
-        properties.setProperty("version",
+        properties.setProperty(HsqlDatabaseProperties.db_version,
                                HsqlDatabaseProperties.THIS_VERSION);
         properties.setProperty(
-            "hsqldb.compatible_version",
+            HsqlDatabaseProperties.hsqldb_compatible_version,
             HsqlDatabaseProperties.FIRST_COMPATIBLE_VERSION);
 
         // set this one last to save the props

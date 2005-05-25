@@ -76,7 +76,7 @@ public class HsqlDatabaseProperties extends HsqlProperties {
                                REVISION                 = 0;
 
     //
-    private static final String db_version  = "version";
+    public static final String  db_version  = "version";
     private static final String db_readonly = "readonly";
     private static final String db_modified = "modified";
 
@@ -90,7 +90,7 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         "hsqldb.cache_size_scale";
     public static final String  hsqldb_cache_version = "hsqldb.cache_version";
     private static final String hsqldb_catalogs      = "hsqldb.catalogs";
-    private static final String hsqldb_compatible_version =
+    public static final String hsqldb_compatible_version =
         "hsqldb.compatible_version";
     public static final String hsqldb_default_table_type =
         "hsqldb.default_table_type";

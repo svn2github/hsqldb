@@ -522,7 +522,10 @@ public class Table extends BaseTable {
             identityColumn = columnCount;
         }
 
-        Trace.doAssert(primaryKeyCols == null, "Table.addColumn");
+        if (primaryKeyCols != null) {
+            Trace.doAssert(false, "Table.addColumn");
+        }
+
         columnList.add(column.columnName.name, column);
 
         columnCount++;
@@ -1390,8 +1393,9 @@ public class Table extends BaseTable {
     void createPrimaryKey(HsqlName pkName, int[] columns,
                           boolean columnsNotNull) throws HsqlException {
 
-        Trace.doAssert(primaryKeyCols == null,
-                       "Table.createPrimaryKey(column)");
+        if (primaryKeyCols != null) {
+            Trace.doAssert(false, "Table.createPrimaryKey(column)");
+        }
 
         if (columns == null) {
             columns = new int[0];
@@ -1572,7 +1576,9 @@ public class Table extends BaseTable {
                                   boolean unique, boolean constraint,
                                   boolean forward) throws HsqlException {
 
-        Trace.doAssert(primaryKeyCols != null, "createIndex");
+        if (primaryKeyCols == null) {
+            Trace.doAssert(false, "createIndex");
+        }
 
         int   s    = column.length;
         int[] col  = new int[s];
