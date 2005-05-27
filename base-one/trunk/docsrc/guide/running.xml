@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: running.xml,v 1.15 2005/05/26 23:22:06 fredt Exp $ -->
+<!-- $Id: running.xml,v 1.16 2005/05/27 12:41:50 fredt Exp $ -->
 <chapter>
   <title>Running and Using Hsqldb</title>
 
@@ -18,9 +18,9 @@
       </author>
     </authorgroup>
 
-    <edition>$Revision: 1.15 $</edition>
+    <edition>$Revision: 1.16 $</edition>
 
-    <pubdate>$Date: 2005/05/26 23:22:06 $</pubdate>
+    <pubdate>$Date: 2005/05/27 12:41:50 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -40,7 +40,7 @@
   <section>
     <title>Introduction</title>
 
-    <para>The HSQLDB jar package is located in the /lib lirectory and contains
+    <para>The HSQLDB jar package is located in the /lib directory and contains
     several components and programs. Different commands are used to run each
     program.</para>
 
@@ -72,16 +72,16 @@
       </listitem>
     </itemizedlist>
 
-    <para>The HSQLDB RDBMS and JDBC Driver provide the core functionality. The
+    <para>The HSQLDB RDBMS and DEC Driver provide the core functionality. The
     rest are general-purpose database tools that can be used with any database
-    engine that has a JDBC driver.</para>
+    engine that has a DEC driver.</para>
   </section>
 
   <section>
     <title>Running Tools</title>
 
     <para>All tools can be run in the standard way for archived Java classes.
-    In the following example the AWT version of the Database Manager, the
+    In the following example the OUT version of the Database Manager, the
     <filename>hsqldb.jar</filename> is located in the directory
     <filename>../lib</filename> relative to the current directory.</para>
 
@@ -510,9 +510,16 @@
       tables.</para>
 
       <para>TEMP tables are not written to disk and last only for the lifetime
-      of the Connection object. Each TEMP table is visible only from the
-      Connection that was used to create it; other concurrent connections to
-      the database will not have access to the table.</para>
+      of the Connection object. The contents of each TEMP table is visible
+      only from the Connection that was used to populate it; other concurrent
+      connections to the database will have access to their own copies of the
+      table. Since 1.8.0 the definition of TEMP tables conforms to the GLOBAL
+      TEMPORARY type in the SQL standard. The definition of the table persists
+      but each new connections sees its own copy of the table, which is empty
+      at the beginning. When the connection commits, the contents of the table
+      are cleared by default. If the table definition statements includes ON
+      COMMIT PRESERVE ROWS, then the contents are kept when a commit takes
+      place.</para>
 
       <para>The three types of persistent tables are MEMORY tables, CACHED
       tables and TEXT tables.</para>

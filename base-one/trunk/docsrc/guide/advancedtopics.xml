@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: advancedtopics.xml,v 1.24 2005/05/26 23:22:06 fredt Exp $ -->
+<!-- $Id: advancedtopics.xml,v 1.25 2005/05/27 12:41:49 fredt Exp $ -->
 <chapter id="advanced-chapter">
   <title id="advanced-title">Advanced Topics</title>
 
@@ -18,9 +18,9 @@
       </author>
     </authorgroup>
 
-    <edition>$Revision: 1.24 $</edition>
+    <edition>$Revision: 1.25 $</edition>
 
-    <pubdate>$Date: 2005/05/26 23:22:06 $</pubdate>
+    <pubdate>$Date: 2005/05/27 12:41:49 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -392,7 +392,7 @@
 
     <para>HSQLDB relies on a set of properties files for different settings.
     Since 1.7.0 property naming has been streamlined and a number of new
-    properties have been intoduced.</para>
+    properties have been introduced.</para>
 
     <para>In all properties files, values are case-sensitive. All values apart
     from names of files or pages are required in lowercase (e.g.
@@ -861,14 +861,17 @@
 
             <row>
               <entry nameend="c3" namest="c1">
-                <para>Conforms to SQL standards. When true, all CHARACTER and
-                VARCHAR, NUMERIC and DECIMAL values that are in a row affected
-                by an INSERT INTO or UPDATE statement are checked against the
-                size specified in the SQL table definition. An exception is
-                thrown if the value is too long. Also all CHARACTER values
-                that are shorter than the specified size are padded with
-                spaces. When false (default), stores the exact string that is
-                inserted. <literal> (SET PROPERTY)</literal></para>
+                <para>Conforms to SQL standards for size and precision of data
+                types. When true, all CHARACTER, VARCHAR, NUMERIC and DECIMAL
+                values that are in a row affected by an INSERT INTO or UPDATE
+                statement are checked against the size specified in the SQL
+                table definition. An exception is thrown if the value is too
+                long. Also all CHARACTER values that are shorter than the
+                specified size are padded with spaces. TIMESTAMP(0) and
+                TIMESTAMP(6) are also allowed in order to specify the
+                subsecond resolution of the values. When false (default),
+                stores the exact string that is inserted. <literal> (SET
+                PROPERTY)</literal></para>
               </entry>
             </row>
 
@@ -1062,6 +1065,27 @@
 
             <row>
               <entry>
+                <property>hsqldb.applog</property>
+              </entry>
+
+              <entry>
+                <literal>0</literal>
+              </entry>
+
+              <entry>application logging level</entry>
+            </row>
+
+            <row>
+              <entry nameend="c3" namest="c1">
+                <para>The default level 0 indicates no logging. Level 1
+                results in events related to persistence to be logged,
+                including any failures. The events are logged in a file ending
+                with .app.log</para>
+              </entry>
+            </row>
+
+            <row>
+              <entry>
                 <property>textdb.*</property>
               </entry>
 
@@ -1113,7 +1137,7 @@
 
       <simpara>hsqldb.default_table_type=cached hsqldb.cache_scale=13
       hsqldb.log_size=10; hsqldb.nio_data_file=false
-      sql.enforce_strict_size=true </simpara>
+      sql.enforce_strict_size=true</simpara>
     </section>
   </section>
 
@@ -1140,12 +1164,12 @@
               <para>The default is TRUE and indicates that the changes to the
               database that have been logged are synched to the file system
               once every 20 seconds. FALSE indicates there is no delay and at
-              each commit a file synch operation is performed. Numeric valuse
+              each commit a file synch operation is performed. Numeric values
               from 0 can also be specified for the synch delay.</para>
 
               <para>This setting should be specified on the basis of the
               reliability of the hardware used for running the database
-              engine, the type of disk system used, the possiblity of power
+              engine, the type of disk system used, the possibility of power
               failure etc. Also the nature of the data stored should be
               considered.</para>
 
@@ -1170,7 +1194,7 @@
               <para>The engine writes out a log of all the changes to the
               database as they occur. This log is synched to the disk based on
               the WRITE_DELAY property above. The log is never reused unless
-              there ia an abnormal termination, i.e. the database process is
+              there is an abnormal termination, i.e. the database process is
               terminated without SHUTDOWN, or it was terminated using SHUTDOWN
               IMMEDIATELY.</para>
 
@@ -1196,7 +1220,7 @@
               dropped or their structure is modified.</para>
 
               <para>A CHECKPOINT operation does not normally reclaim the empty
-              spaces, whereas CHECKPOINT DEFRAG always does. </para>
+              spaces, whereas CHECKPOINT DEFRAG always does.</para>
 
               <para>This property determines when a normal CHECKPOINT, whether
               initiated by an administrator or when the size of the log
@@ -1282,8 +1306,8 @@
     open, otherwise the database would have been closed and further attempts
     to create connections could fail. This is not necessary since 1.7.2, which
     does not automatically close an in-process database that is opened by
-    establishing a connection. An explicit SHTDOWN command, with or without an
-    argument, is required to close the database.</para>
+    establishing a connection. An explicit SHUTDOWN command, with or without
+    an argument, is required to close the database.</para>
 
     <para>When using a server database (and to some extent, an in-process
     database), care must be taken to avoid creating and dropping JDBC

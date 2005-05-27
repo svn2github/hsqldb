@@ -340,8 +340,9 @@ class Parser {
     /**
      *  Constructs and returns a Select object.
      *
-     * @param hasOrder whether the SELECT being parsed is the first
-     * select statement and can have LIMIT and ORDER BY clauses
+     * @param canHaveOrder whether the SELECT being parsed can have an ORDER BY
+     * @param canHaveLimit whether LIMIT without ORDER BY is allowed
+     * @param limitWithOrder whether LIMIT is allowed only with ORDER BY
      * @param isMain whether the SELECT being parsed is the first
      * select statement in the set
      * @return a new Select object
@@ -564,18 +565,18 @@ class Parser {
             limitWithOrder = false;
         }
 
-        if (!canHaveOrder &&!limitWithOrder && select.iOrderLen != 0) {
+        boolean hasOrder = select.iOrderLen != 0;
+        boolean hasLimit = select.limitCondition != null;
+
+        if (hasOrder &&!canHaveOrder &&!limitWithOrder) {
             throw Trace.error(Trace.INVALID_ORDER_BY);
         }
 
-        if (!canHaveLimit &&!limitWithOrder
-                && select.limitCondition != null) {
+        if (hasLimit &&!canHaveLimit &&!limitWithOrder) {
             throw Trace.error(Trace.INVALID_LIMIT);
         }
 
-        if (limitWithOrder
-                && ((select.limitCondition == null)
-                    ^ (select.iOrderLen == 0))) {
+        if (limitWithOrder && (hasLimit ^ hasOrder)) {
             throw Trace.error(Trace.ORDER_LIMIT_REQUIRED);
         }
 
@@ -593,7 +594,7 @@ class Parser {
 
             tokenizer.getThis(Token.T_SELECT);
 
-            // accept ORDRY BY with LIMIT
+            // accept ORDRY BY with LIMIT when in brackets
             select.unionSelect = parseSelect(brackets, false, false,
                                              openbracket, false);
             token = tokenizer.getString();

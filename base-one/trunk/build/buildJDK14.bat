@@ -7,7 +7,7 @@ del /s classes\*.class
 cd src
 javac -O -nowarn -d ../classes -classpath "%classpath%;../classes;../lib/servlet.jar;." ./*.java org/hsqldb/*.java org/hsqldb/lib/*.java org/hsqldb/util/*.java
 cd ..\classes
-copy ..\src\org\hsqldb\util\hsqldb.gif org\hsqldb\util
+copy ..\src\org\hsqldb\util\*.gif org\hsqldb\util
 jar -cf ../lib/hsqldb.jar *.class org/hsqldb/*.class org/hsqldb/lib/*.class org/hsqldb/util/*.class org/hsqldb/util/*.gif
 cd ..\build
 pause

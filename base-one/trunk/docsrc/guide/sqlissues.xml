@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: sqlissues.xml,v 1.17 2004/12/05 18:38:46 fredt Exp $ -->
+<!-- $Id: sqlissues.xml,v 1.18 2005/05/26 23:22:06 fredt Exp $ -->
 <chapter id="sql_issues-chapter">
   <title id="sql_issues-title">SQL Issues</title>
 
@@ -18,9 +18,9 @@
       </author>
     </authorgroup>
 
-    <edition>$Revision: 1.17 $</edition>
+    <edition>$Revision: 1.18 $</edition>
 
-    <pubdate>$Date: 2004/12/05 18:38:46 $</pubdate>
+    <pubdate>$Date: 2005/05/26 23:22:06 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -375,7 +375,7 @@
     <section>
       <title>Integral Types</title>
 
-      <para>TINYINT, SMALLINT, INTEGER, BIGINT, NUMBER and DECIMAL (without a
+      <para>TINYINT, SMALLINT, INTEGER, BIGINT, NUMERIC and DECIMAL (without a
       decimal point) are fully interchangeable internally, and no data
       narrowing takes place. Depending on the types of the operands, the
       result of the operations is returned in a JDBC
@@ -384,10 +384,10 @@
       <classname>BigDecimal</classname>. The
       <literal>ResultSet.getXXXX()</literal> methods can be used to retrieve
       the values so long as the returned value can be represented by the
-      resulting type. This type is determinstically based on the query, not on
-      the actual rows returned. The type does not change when the same query
-      that returned one row, returns many rows as a result of adding more data
-      to the tables.</para>
+      resulting type. This type is deterministically based on the query, not
+      on the actual rows returned. The type does not change when the same
+      query that returned one row, returns many rows as a result of adding
+      more data to the tables.</para>
 
       <para>If the SELECT statement refers to a simple column or function,
       then the return type is the type corresponding to the column or the
@@ -525,12 +525,12 @@
       size, precision or scale qualifier were accepted and ignored.</para>
 
       <para>In 1.8.0, such qualifiers must conform to the SQL standards. For
-      example INTEGER(8) is no longer acceptable. Tthe qualifiers are still
+      example INTEGER(8) is no longer acceptable. The qualifiers are still
       ignored unless you set a database property. <literal>SET PROPERTY
       "sql.enforce_strict_size" TRUE </literal>will enforce sizes for
       CHARACTER or VARCHAR columns and pad any strings when inserting or
       updating a CHARACTER column. The precision and scale qualifiers are also
-      enforced forr DECIMAL and NUMERIC types. TIMESTAMP can be used with a
+      enforced for DECIMAL and NUMERIC types. TIMESTAMP can be used with a
       precision of 0 or 6 only.</para>
 
       <para>Casting a value to a qualified CHARACTER type will result in
@@ -545,7 +545,7 @@
     <title>Sequences and Identity</title>
 
     <para>The SEQUENCE keyword was introduced in 1.7.2 with a subset of the
-    SQL 200n standard sysntax. Corresponding SQL 200n syntax for IDENTITY
+    SQL 200n standard syntax. Corresponding SQL 200n syntax for IDENTITY
     columns has also been introduced.</para>
 
     <section>
@@ -589,7 +589,7 @@
       by many existing database engines. Sequences are created with the
       <literal>CREATE SEQUENCE</literal> command and their current value can
       be modified at any time with <literal>ALTER SEQUENCE</literal>. The next
-      value for a sequence is retreived with the <literal>NEXT VALUE FOR
+      value for a sequence is retrieved with the <literal>NEXT VALUE FOR
       &lt;name&gt;</literal> expression. This expression can be used for
       inserting and updating table rows. You can also use it in select
       statements. For example, if you want to number the returned rows of a

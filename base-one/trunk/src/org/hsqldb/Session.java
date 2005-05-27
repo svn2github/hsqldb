@@ -112,23 +112,25 @@ public class Session implements SessionInterface {
     int                      isolation;
 
     //
-    Database               database;
-    private User           user;
-    HsqlArrayList          transactionList;
-    private boolean        isNestedTransaction;
-    private int            nestedOldTransIndex;
-    private int            currentMaxRows;
-    private int            sessionMaxRows;
-    private Number         lastIdentity = ValuePool.getInt(0);
-    private final int      sessionId;
-    HashMappedList         savepoints;
-    private boolean        script;
-    private jdbcConnection intConnection;
-    private Tokenizer      tokenizer;
-    private Parser         parser;
-    private long           sessionSCN;
+    Database          database;
+    private User      user;
+    HsqlArrayList     transactionList;
+    private boolean   isNestedTransaction;
+    private int       nestedOldTransIndex;
+    private int       currentMaxRows;
+    private int       sessionMaxRows;
+    private Number    lastIdentity = ValuePool.getInt(0);
+    private final int sessionId;
+    HashMappedList    savepoints;
+    private boolean   script;
+    private Tokenizer tokenizer;
+    private Parser    parser;
+    private long      sessionSCN;
     static final Result emptyUpdateCount =
         new Result(ResultConstants.UPDATECOUNT);
+
+    //
+    private jdbcConnection intConnection;
 
     // schema
     public HsqlName  currentSchema;
@@ -1248,11 +1250,11 @@ public class Session implements SessionInterface {
     }
 
 // session DATETIME functions
-    long          currentDateTimeSCN;
-    long          currentMillis;
-    java.sql.Date currentDate;
-    Time          currentTime;
-    Timestamp     currentTimestamp;
+    long      currentDateTimeSCN;
+    long      currentMillis;
+    Date      currentDate;
+    Time      currentTime;
+    Timestamp currentTimestamp;
 
     /**
      * Returns the current date, unchanged for the duration of the current

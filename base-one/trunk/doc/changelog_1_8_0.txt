@@ -116,8 +116,9 @@ SIZE ENFORCEMENT
 
 The database property sql.enforce_strict_size=true has now a wider effect.
 
-Previously CHAR /VARCHAR lengths could be checked and padding performed only when inserting / updating rows. Added support for CHAR(n), VARCHAR(n), NUMERIC(p,s) and DECIMAL(p,s) including SQL standard cast and convert semantics. CHAR and VARCHAR declarations now require a size parameter. A CHAR declaration without a size parameter is interpreted as CHAR(1).
-Explicit CAST(c AS VARCHAR(2)) will always truncate the string. Explicit CAST(n AS NUMERIC(p,s)) will always perform the conversion or throw if n is out of bounds. All other implicit and explicit conversions to CHAR(n) and VARCHAR(n) are subject to SQL standard rules.
+Previously CHAR /VARCHAR lengths could be checked and padding performed only when inserting / updating rows. Added support for CHAR(n), VARCHAR(n), NUMERIC(p,s) and DECIMAL(p,s) including SQL standard cast and convert semantics. CHAR and VARCHAR declarations now require a size parameter. A CHAR declaration without a size parameter is interpreted as CHAR(1). TIMESTAMP(0) and TIMESTAMP(6) are also supported, with the precision representing the sub-second resolution.
+
+Explicit CAST(c AS VARCHAR(2)) will always truncate the string. Explicit CAST(n AS NUMERIC(p)) will always perform the conversion or throw if n is out of bounds. All other implicit and explicit conversions to CHAR(n) and VARCHAR(n) are subject to SQL standard rules.
 
 ----------------
 
