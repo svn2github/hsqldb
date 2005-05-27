@@ -141,6 +141,11 @@ class GranteeManager implements GrantConstants {
 
         Trace.check(g != null, Trace.NO_SUCH_GRANTEE, name);
         get(name).grant(dbobject, rights);
+        get(name).invalidateFrm();
+        if (database.getRoleManager().exists(name)) {
+            // If grantee is a role, then also invalidate members
+            invalidateGranteeCache(name, false);
+        }
     }
 
     /**
@@ -170,6 +175,12 @@ class GranteeManager implements GrantConstants {
         Trace.check(!g.getDirectRoles().contains(role),
                     Trace.ALREADY_HAVE_ROLE, role);
         g.grant(role);
+        get(name).invalidateFrm();
+        get(name).invalidateAdmin();
+        if (database.getRoleManager().exists(name)) {
+            // If grantee is a role also, then also invalidate members
+            invalidateGranteeCache(name, true);
+        }
     }
 
     /**
@@ -181,6 +192,12 @@ class GranteeManager implements GrantConstants {
 
         Trace.check(g != null, Trace.NO_SUCH_GRANTEE, name);
         g.revoke(role);
+        get(name).invalidateFrm();
+        get(name).invalidateAdmin();
+        if (database.getRoleManager().exists(name)) {
+            // If grantee is a role also, then also invalidate members
+            invalidateGranteeCache(name, true);
+        }
     }
 
     /**
@@ -193,6 +210,11 @@ class GranteeManager implements GrantConstants {
     void revoke(String name, Object dbobject,
                 int rights) throws HsqlException {
         get(name).revoke(dbobject, rights);
+        get(name).invalidateFrm();
+        if (database.getRoleManager().exists(name)) {
+            // If grantee is a role, then also invalidate members
+            invalidateGranteeCache(name, false);
+        }
     }
 
     /**
@@ -234,6 +256,38 @@ class GranteeManager implements GrantConstants {
         }
     }
 
+    /**
+     * Invalidate cached Rights map for all Grantees or Grantees members 
+     * of given role.
+     *
+     * @roleName  If null, then all Grantees in system.  Otherwise, all
+     *            grantee members of the given role.
+     * @adminCacheToo Clear the admin cache value also.
+     */
+    public void invalidateGranteeCache(String roleName, boolean clearAdmin)
+    throws HsqlException {
+
+        Iterator it = map.values().iterator();
+        Grantee  g;
+
+        for (; it.hasNext(); ) {
+            g = (Grantee) it.next();
+
+            if (roleName == null || g.hasRole(roleName)) {
+                if (clearAdmin) {
+                    g.invalidateAdmin();
+                } else {
+                    g.invalidateFrm();
+                }
+            }
+        }
+    }
+
+    /**
+     * For roles, this method should only be called by a RoleManager
+     * (because dependencies with other Grantees must be taken care of
+     * before we can remove a role from the list here).
+     */
     public boolean removeGrantee(String name) {
 
         /*
