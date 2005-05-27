@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: advancedtopics.xml,v 1.23 2005/05/10 19:54:20 unsaved Exp $ -->
+<!-- $Id: advancedtopics.xml,v 1.24 2005/05/26 23:22:06 fredt Exp $ -->
 <chapter id="advanced-chapter">
   <title id="advanced-title">Advanced Topics</title>
 
@@ -18,9 +18,9 @@
       </author>
     </authorgroup>
 
-    <edition>$Revision: 1.23 $</edition>
+    <edition>$Revision: 1.24 $</edition>
 
-    <pubdate>$Date: 2005/05/10 19:54:20 $</pubdate>
+    <pubdate>$Date: 2005/05/26 23:22:06 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -307,10 +307,6 @@
 
           <colspec colname="c3" />
 
-          <thead>
-            <row />
-          </thead>
-
           <tbody valign="top">
             <row>
               <entry>
@@ -335,11 +331,9 @@
                 <literal>ResultSet.getColumnLabel(int column)</literal>
                 Example below:</para>
 
-                <informalexample>
-                  <programlisting>
+                <programlisting>
     jdbc:hsqldb:hsql://localhost/enrollments;get_column_name=false
                     </programlisting>
-                </informalexample>
 
                 <para>When a ResultSet is used inside a user-defined stored
                 procedure, the default, true, is always used for this
@@ -374,10 +368,8 @@
                 troubleshooting as no database is created if the URL is
                 malformed. Example below:</para>
 
-                <informalexample>
-                  <programlisting>
+                <programlisting>
     jdbc:hsqldb:file:enrollments;ifexists=true</programlisting>
-                </informalexample>
               </entry>
             </row>
           </tbody>
@@ -388,9 +380,10 @@
       new database, or opens an existing database (i.e. it is the first
       connection made to the database by the application), all the
       user-defined database properties can be specified as URL properties.
-      This is used to specify properties to enforce more strict SQL adherence,
-      or to change cache_scale or similar properties before the database files
-      are created.</para>
+      This can be used to specify properties to enforce more strict SQL
+      adherence, or to change cache_scale or similar properties before the
+      database files are created. However, for new databases, it is
+      recommended to use the SET PROPERTY command for such settings.</para>
     </section>
   </section>
 
@@ -781,7 +774,8 @@
                 setting, the database should be closed with the
                 <literal>SHUTDOWN COMPACT</literal> command to ensure
                 consistency and compactness of the data. <literal>(PROPERTIES
-                FILE ONLY)</literal></para>
+                FILE ONLY) but can be used as a connection property to open a
+                normal database as readonly.</literal></para>
               </entry>
             </row>
 
@@ -828,8 +822,9 @@
                 then the property=value line below should be added to the
                 .properties file before reopening the database. The property
                 can be set with the SQL command (as opposed to changing the
-                value in the properties file) when the database has no tables
-                (new database). <literal>(SET PROPERTY)</literal></para>
+                value in the properties file) when the database has no CACHED
+                tables (e.g. a new database). <literal>(SET
+                PROPERTY)</literal></para>
               </entry>
             </row>
 
@@ -874,6 +869,28 @@
                 that are shorter than the specified size are padded with
                 spaces. When false (default), stores the exact string that is
                 inserted. <literal> (SET PROPERTY)</literal></para>
+              </entry>
+            </row>
+
+            <row>
+              <entry>
+                <property>sql.tx_no_multi_rewrite</property>
+              </entry>
+
+              <entry>
+                <literal>false</literal>
+              </entry>
+
+              <entry>transaction management</entry>
+            </row>
+
+            <row>
+              <entry nameend="c3" namest="c1">
+                <para>In the default READ_UNCOMMITED mode, a transaction can
+                write over rows inserted or updated by another uncommitted
+                transaction.<literal> Setting this property to true will raise
+                an exception when such a write is attempted (SET
+                PROPERTY)</literal></para>
               </entry>
             </row>
 
@@ -1021,6 +1038,30 @@
 
             <row>
               <entry>
+                <property>hsqldb.default_table_type</property>
+              </entry>
+
+              <entry>
+                <literal>memory</literal>
+              </entry>
+
+              <entry>type of table created with unqualified CREATE
+              TABLE</entry>
+            </row>
+
+            <row>
+              <entry nameend="c3" namest="c1">
+                <para>The CREATE TABLE command results in a MEMORY table by
+                default. Setting the value "cached" for this property will
+                result in a cached table by default. The qualified forms such
+                as CREATE MEMORY TABLE or CREATE CACHED TABLE are not affected
+                at all by this property. <literal>(SET
+                PROPERTY)</literal></para>
+              </entry>
+            </row>
+
+            <row>
+              <entry>
                 <property>textdb.*</property>
               </entry>
 
@@ -1066,31 +1107,130 @@
       the collation for the current default. See the <link
       endterm="collation-title" linkend="collation-section" />
       command.</simpara>
+
+      <simpara>When HSQLDB is used in OpenOffice.org, some property values
+      will have a different default. The properties and values are:</simpara>
+
+      <simpara>hsqldb.default_table_type=cached hsqldb.cache_scale=13
+      hsqldb.log_size=10; hsqldb.nio_data_file=false
+      sql.enforce_strict_size=true </simpara>
     </section>
   </section>
 
   <section>
-    <title>JDBC Stream Based Methods</title>
+    <title>SQL Commands for Database Properties</title>
 
-    <para>The JDBC interface has been significantly improved since 1.7.2.
-    There is almost full support for JDBC2. Under JDK 1.4, there is also some
-    support for JDBC3 methods. ResultSetMetaData methods are now fully
-    supported, as are ParameterMetaData and Savepoint (JDBC3). When upgrading
-    from previous versions, certain issues may arise as several JDBC methods
-    that previously returned incorrect values or were not supported now return
-    correct values. All changes have been documented in the Javadoc for the
-    jdbcXXX classes.</para>
+    <para>There are some database properties that are set with dedicated SQL
+    commands beginning with SET.</para>
 
-    <para>Since 1.7.0, the <classname>ResultSet</classname> interface methods,
-    <literal>getAsciiStream()</literal>, <literal>getUnicodeStream()</literal>
-    and <literal>getCharacterStream()</literal> are supported to return byte
-    or char values from CHARACTER columns and its variants. Complementary
-    methods in <classname>PreparedStatement</classname>,
-    <literal>setAsciiStream()</literal>, <literal>setUnicodeStream()</literal>
-    and <literal>setCharacterStream()</literal> are also supported. Unlike
-    most other databases, the <literal>getString()</literal> methods can be
-    used to retrieve very long character strings and is faster than the stream
-    based methods.</para>
+    <table frame="all" pgwide="1" tocentry="1">
+      <title>SQL command properties</title>
+
+      <tgroup align="left" cols="1">
+        <tbody valign="top">
+          <row>
+            <entry>
+              <property>SET WRITE_DELAY {{TRUE | FALSE} | &lt;numeric
+              value&gt;</property>
+            </entry>
+          </row>
+
+          <row>
+            <entry>
+              <para>The default is TRUE and indicates that the changes to the
+              database that have been logged are synched to the file system
+              once every 20 seconds. FALSE indicates there is no delay and at
+              each commit a file synch operation is performed. Numeric valuse
+              from 0 can also be specified for the synch delay.</para>
+
+              <para>This setting should be specified on the basis of the
+              reliability of the hardware used for running the database
+              engine, the type of disk system used, the possiblity of power
+              failure etc. Also the nature of the data stored should be
+              considered.</para>
+
+              <para>In general, when the system is very reliable, the setting
+              can be left to the default. If it is not very reliable, or the
+              data is critical a setting of 1 or 2 seconds would suffice. Only
+              in the worst case scenario or with the most critical data should
+              a setting of 0 or FALSE be specified as this will slow the
+              engine down to the speed at which the file synch operation can
+              be performed by the disk subsystem.</para>
+            </entry>
+          </row>
+
+          <row>
+            <entry>
+              <property>SET LOG_SIZE &lt;numeric value&gt;</property>
+            </entry>
+          </row>
+
+          <row>
+            <entry>
+              <para>The engine writes out a log of all the changes to the
+              database as they occur. This log is synched to the disk based on
+              the WRITE_DELAY property above. The log is never reused unless
+              there ia an abnormal termination, i.e. the database process is
+              terminated without SHUTDOWN, or it was terminated using SHUTDOWN
+              IMMEDIATELY.</para>
+
+              <para>The default maximum size of the .log file is 200 MB. When
+              the maximum size is reached, a CHECKPOINT operation is
+              performed. This operation will save the other database files in
+              a consistent state and delete the old log. A value of 0
+              indicates no limit for the .log file.</para>
+            </entry>
+          </row>
+
+          <row>
+            <entry>
+              <property>SET CHECKPOINT DEFRAG &lt;numeric value&gt;</property>
+            </entry>
+          </row>
+
+          <row>
+            <entry>
+              <para>When rows in CACHED tables are updated or deleted, the
+              spaces are mostly reused. However, in time, some unused spaces
+              are left in the .data file, especially when large tables are
+              dropped or their structure is modified.</para>
+
+              <para>A CHECKPOINT operation does not normally reclaim the empty
+              spaces, whereas CHECKPOINT DEFRAG always does. </para>
+
+              <para>This property determines when a normal CHECKPOINT, whether
+              initiated by an administrator or when the size of the log
+              exceeds its limit.</para>
+
+              <para>The numeric value is the number of megabytes of recorded
+              empty spaces in the .data file that would force a DEFRAG
+              operation. Low values result in more frequent DEFRAG operations.
+              A value of 0 indicates no automatic DEFRAG is performed. The
+              default is 200 megabytes of lost space.</para>
+            </entry>
+          </row>
+
+          <row>
+            <entry>
+              <property>SET REFERENTIAL INTEGRITY {TRUE | FALSE}</property>
+            </entry>
+          </row>
+
+          <row>
+            <entry>
+              <property>This is TRUE by default. If bulk data needs to be
+              loaded into the database, this property can be set FALSE for the
+              duration of bulk load operation. This allows loading data for
+              related tables in any order. The property should be set TRUE
+              after bulk load. If the loaded data is not guaranteed to conform
+              to the referential integrity constraints, SQL queries should be
+              run after loading to identify and modify any non-conforming
+              rows.</property>
+            </entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </table>
   </section>
 
   <section>
@@ -1257,8 +1397,8 @@
     <para>Once a database is upgraded to 1.8.0, it can no longer be used with
     Hypersonic or previous versions of HSQLDB.</para>
 
-    <para>There may be some potential problems in the upgrade which should be
-    resolved by editing the .script file:</para>
+    <para>There may be some potential legacy issues in the upgrade which
+    should be resolved by editing the .script file:</para>
 
     <itemizedlist>
       <listitem>
@@ -1284,6 +1424,11 @@
       <para>To upgrading from 1.7.2 or 1.7.3 to 1.8.0. Simply issue the
       SHUTDOWN SCRIPT command with the old version, then open with the new
       version of the engine. The upgrade is then complete.</para>
+
+      <para>To upgrade from older version database files that do not contain
+      CACHED tables, simple SHUTDOWN with the older version and open with the
+      new version. If there is any error in the .script file, try again after
+      editing the .script file.</para>
 
       <para>To upgrade from older version, use the SCRIPT procedure. In all
       versions of HSQLDB and Hypersonic 1.43, the <literal>SCRIPT

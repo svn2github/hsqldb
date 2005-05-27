@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: running.xml,v 1.14 2005/04/14 21:52:34 unsaved Exp $ -->
+<!-- $Id: running.xml,v 1.15 2005/05/26 23:22:06 fredt Exp $ -->
 <chapter>
   <title>Running and Using Hsqldb</title>
 
@@ -18,9 +18,9 @@
       </author>
     </authorgroup>
 
-    <edition>$Revision: 1.14 $</edition>
+    <edition>$Revision: 1.15 $</edition>
 
-    <pubdate>$Date: 2005/04/14 21:52:34 $</pubdate>
+    <pubdate>$Date: 2005/05/26 23:22:06 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -424,18 +424,18 @@
       <title>Closing the Database</title>
 
       <para>All databases running in different modes can be closed with the
-      SHUTDOWN command, issued as an SQL query. In 1.7.2, in-process databases
-      are no longer closed when the last connection to the database is
-      explicitly closed via JDBC, a SHUTDOWN is required. When SHUTDOWN is
+      SHUTDOWN command, issued as an SQL query. From version 1.7.2, in-process
+      databases are no longer closed when the last connection to the database
+      is explicitly closed via JDBC, a SHUTDOWN is required. When SHUTDOWN is
       issued, all active transactions are rolled back. A special form of
       closing the database is via the SHUTDOWN COMPACT command. This command
       rewrites the <literal>.data</literal> file that contains the information
       stored in CACHED tables and compacts it to size. This command should be
       issued periodically, especially when lots of inserts, updates or deletes
-      are performed on the cached tables. Changes to the structure of the
-      database, such as dropping or modifying tables or indexes also create
-      large amounts of unused space that can be reclaimed using this
-      command.</para>
+      have been performed on the cached tables. Changes to the structure of
+      the database, such as dropping or modifying populated CACHED tables or
+      indexes also create large amounts of unused file space that can be
+      reclaimed using this command.</para>
     </section>
 
     <section>
