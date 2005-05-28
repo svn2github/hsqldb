@@ -56,7 +56,7 @@ import org.hsqldb.lib.HashMap;
  * We use the word "Admin" (e.g., in private variable "admin" and method
  * "isAdmin()) to mean this Grantee has admin priv by any means.
  * We use the word "adminDirect" (e.g., in private variable "adminDirect"
- * and method "isAdminDirect()) to mean this Grantee has admin priv 
+ * and method "isAdminDirect()) to mean this Grantee has admin priv
  * directly.
  *
  * @author boucherb@users
@@ -70,30 +70,34 @@ public class Grantee {
 
     /* All recursion is isolated into the addGranteeAndRoles() method.  */
 
-    /** true if this grantee has database administrator priv directly
-     *  (ie., not by membership in any role) */
+    /**
+     * true if this grantee has database administrator priv directly
+     *  (ie., not by membership in any role)
+     */
     private boolean adminDirect = false;
 
     /** true if this grantee has database administrator priv by any means. */
     private boolean admin = false;
+
     /** Whether admin cache needs to be rechecked */
     private boolean doRecheckAdmin = true;
 
     /** cached Flat Rights Map */
-    private IntValueHashMap frm = new IntValueHashMap();
+    private IntValueHashMap fullRightsMap = new IntValueHashMap();
+
     /** Whether frm needs to be rebuilt */
     private boolean doRegenFrm = true;
 
     void invalidateFrm() {
         doRegenFrm = true;
     }
+
     void invalidateAdmin() {
         doRecheckAdmin = true;
     }
 
     /**
      * Grantee name.
-     * This is redundant, since User and Role already store name.
      */
     private String sName;
 
@@ -349,8 +353,8 @@ public class Grantee {
         roles.clear();
         rightsMap.clear();
 
-        adminDirect = false;
-        doRegenFrm = true;
+        adminDirect    = false;
+        doRegenFrm     = true;
         doRecheckAdmin = true;
     }
 
@@ -381,6 +385,7 @@ public class Grantee {
      * Only does one level of recursion into isDirectlyAccessible.
      */
     boolean isAccessible(Object dbobject, int rights) throws HsqlException {
+
         if (dbobject instanceof String) {
             if (((String) dbobject).startsWith("org.hsqldb.Library")
                     || ((String) dbobject).startsWith("java.lang.Math")) {
@@ -397,7 +402,7 @@ public class Grantee {
         }
 
         /* Check cached Frm */
-        int n = frm.get(dbobject, 0);
+        int n = fullRightsMap.get(dbobject, 0);
 
         if (n != 0) {
             return (n & rights) != 0;
@@ -407,39 +412,42 @@ public class Grantee {
     }
 
     private void regenFrm() throws HsqlException {
+
         Iterator rightsIt;
-        Object key;
-        int granteeRights;
+        Object   key;
+        int      granteeRights;
 
         /*
          * The deep recusion is all done in getAllRoles().  This method
          * only recurses one level into isDirectlyAccessible().
          */
-
-        frm.clear();
-        frm.putAll(rightsMap);
+        fullRightsMap.clear();
+        fullRightsMap.putAll(rightsMap);
 
         if (pubGrantee != null) {
             rightsIt = pubGrantee.rightsMap.keySet().iterator();
+
             while (rightsIt.hasNext()) {
                 key = rightsIt.next();
-                frm.put(key, pubGrantee.rightsMap.get(key, 0)
-                        | frm.get(key, 0));
+
+                fullRightsMap.put(key,
+                        pubGrantee.rightsMap.get(key, 0) | fullRightsMap.get(key, 0));
             }
         }
 
-        RoleManager rm = getRoleManager();
-        Iterator roleIt = getAllRoles().iterator();
-        Grantee otherGrantee;
+        RoleManager rm     = getRoleManager();
+        Iterator    roleIt = getAllRoles().iterator();
+        Grantee     otherGrantee;
 
         while (roleIt.hasNext()) {
-            otherGrantee = (Grantee) rm.getGrantee(
-                    (String) roleIt.next());
-            rightsIt = otherGrantee.rightsMap.keySet().iterator();
+            otherGrantee = (Grantee) rm.getGrantee((String) roleIt.next());
+            rightsIt     = otherGrantee.rightsMap.keySet().iterator();
+
             while (rightsIt.hasNext()) {
                 key = rightsIt.next();
-                frm.put(key, otherGrantee.rightsMap.get(key, 0)
-                        | frm.get(key, 0));
+
+                fullRightsMap.put(key,
+                        otherGrantee.rightsMap.get(key, 0) | fullRightsMap.get(key, 0));
             }
         }
     }
@@ -457,7 +465,7 @@ public class Grantee {
      * available Class object.
      */
     protected boolean isDirectlyAccessible(Object dbobject,
-                                 int rights) throws HsqlException {
+                                           int rights) throws HsqlException {
 
         int n = rightsMap.get(dbobject, 0);
 
@@ -492,9 +500,11 @@ public class Grantee {
      * or indirectly.
      */
     boolean isAdmin() {
+
         if (doRecheckAdmin) {
             admin = recheckAdmin();
         }
+
         return admin;
     }
 
@@ -502,8 +512,9 @@ public class Grantee {
      * Returns true if this Grantee has administrative privs either directly
      * or indirectly.
      * Recurses through nested roles.
-     */ 
+     */
     boolean recheckAdmin() {
+
         if (adminDirect) {
             return true;
         }
@@ -653,7 +664,7 @@ public class Grantee {
 
     /**
      * Violates naming convention (for backward compatibility).
-     * Should be "setAdminDirect(boolean"). 
+     * Should be "setAdminDirect(boolean").
      */
     void setAdmin(boolean b) {
         adminDirect = b;

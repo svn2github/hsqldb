@@ -478,8 +478,7 @@ public class DataFileCache {
     /**
      * Allocates file space for the row. <p>
      *
-     * A Row is added by walking the list of CacheFree objects to see if
-     * there is available space to store it, reusing space if it exists.
+     * Free space is requested from the block manager if it exists.
      * Otherwise the file is grown to accommodate it.
      */
     private int setFilePos(CachedObject r) throws IOException {
@@ -569,26 +568,26 @@ public class DataFileCache {
         }
 
         try {
-            CachedObject value = cache.get(i);
+            CachedObject object = cache.get(i);
 
-            if (value == null) {
-                boolean result = readObject(i);
+            if (object == null) {
+                RowInputInterface rowInput = readObject(i);
 
-                if (!result) {
+                if (rowInput == null) {
                     return null;
                 }
 
-                value = store.get(rowIn);
+                object = store.get(rowInput);
 
-                value.setPos(i);
-                cache.put(i, value);
+                object.setPos(i);
+                cache.put(i, object);
             }
 
             if (keep) {
-                value.keepInMemory(true);
+                object.keepInMemory(true);
             }
 
-            return value;
+            return object;
         } catch (IOException e) {
             database.logger.appLog.logContext("" + cache + " pos: " + i);
             database.logger.appLog.logContext(e);
@@ -602,10 +601,7 @@ public class DataFileCache {
 
     RowInputInterface getRaw(int i) throws IOException {
 
-        boolean result = readObject(i);
-
-        return result ? rowIn
-                      : null;
+        return readObject(i);
     }
 
     protected int readSize(int pos) throws IOException {
@@ -615,7 +611,7 @@ public class DataFileCache {
         return dataFile.readInt();
     }
 
-    protected boolean readObject(int pos) throws IOException {
+    protected RowInputInterface readObject(int pos) throws IOException {
 
         dataFile.seek((long) pos * cacheFileScale);
 
@@ -624,7 +620,7 @@ public class DataFileCache {
         rowIn.resetRow(pos, size);
         dataFile.read(rowIn.getBuffer(), 4, size - 4);
 
-        return true;
+        return rowIn;
     }
 
     public CachedObject release(int i) {

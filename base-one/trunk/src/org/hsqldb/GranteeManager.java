@@ -142,7 +142,9 @@ class GranteeManager implements GrantConstants {
         Trace.check(g != null, Trace.NO_SUCH_GRANTEE, name);
         get(name).grant(dbobject, rights);
         get(name).invalidateFrm();
+
         if (database.getRoleManager().exists(name)) {
+
             // If grantee is a role, then also invalidate members
             invalidateGranteeCache(name, false);
         }
@@ -177,7 +179,9 @@ class GranteeManager implements GrantConstants {
         g.grant(role);
         get(name).invalidateFrm();
         get(name).invalidateAdmin();
+
         if (database.getRoleManager().exists(name)) {
+
             // If grantee is a role also, then also invalidate members
             invalidateGranteeCache(name, true);
         }
@@ -194,7 +198,9 @@ class GranteeManager implements GrantConstants {
         g.revoke(role);
         get(name).invalidateFrm();
         get(name).invalidateAdmin();
+
         if (database.getRoleManager().exists(name)) {
+
             // If grantee is a role also, then also invalidate members
             invalidateGranteeCache(name, true);
         }
@@ -209,9 +215,12 @@ class GranteeManager implements GrantConstants {
      */
     void revoke(String name, Object dbobject,
                 int rights) throws HsqlException {
+
         get(name).revoke(dbobject, rights);
         get(name).invalidateFrm();
+
         if (database.getRoleManager().exists(name)) {
+
             // If grantee is a role, then also invalidate members
             invalidateGranteeCache(name, false);
         }
@@ -257,15 +266,16 @@ class GranteeManager implements GrantConstants {
     }
 
     /**
-     * Invalidate cached Rights map for all Grantees or Grantees members 
+     * Invalidate cached Rights map for all Grantees or Grantees members
      * of given role.
      *
      * @roleName  If null, then all Grantees in system.  Otherwise, all
      *            grantee members of the given role.
      * @adminCacheToo Clear the admin cache value also.
      */
-    public void invalidateGranteeCache(String roleName, boolean clearAdmin)
-    throws HsqlException {
+    public void invalidateGranteeCache(String roleName,
+                                       boolean clearAdmin)
+                                       throws HsqlException {
 
         Iterator it = map.values().iterator();
         Grantee  g;

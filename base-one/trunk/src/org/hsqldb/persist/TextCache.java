@@ -39,6 +39,7 @@ import org.hsqldb.Table;
 import org.hsqldb.Trace;
 import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.HsqlByteArrayOutputStream;
+import org.hsqldb.rowio.RowInputInterface;
 import org.hsqldb.rowio.RowInputText;
 import org.hsqldb.rowio.RowInputTextQuoted;
 import org.hsqldb.rowio.RowOutputText;
@@ -394,7 +395,7 @@ public class TextCache extends DataFileCache {
     }
 
     // sqlbob -- Allow line breaks in quoted fields.
-    protected boolean readObject(int pos) throws IOException {
+    protected RowInputInterface readObject(int pos) throws IOException {
 
         ByteArray    buffer    = new ByteArray(80);
         boolean      blank     = true;
@@ -493,10 +494,10 @@ public class TextCache extends DataFileCache {
 
             ((RowInputText) rowIn).setSource(buffer.toString(), pos, length);
 
-            return true;
+            return rowIn;
         }
 
-        return false;
+        return null;
     }
 
     public String getHeader() {
