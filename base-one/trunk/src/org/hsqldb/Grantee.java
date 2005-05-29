@@ -90,7 +90,7 @@ public class Grantee {
     private IntValueHashMap rightsMap;
 
     /** These are the DIRECT roles.  Each of these may contain nested roles */
-    private HashSet roles = new HashSet();
+    HashSet roles = new HashSet();
 
     /**
      * The special PUBLIC Grantee object. <p>
@@ -327,7 +327,7 @@ public class Grantee {
      */
     void revokeDbObject(Object dbobject) {
         rightsMap.remove(dbobject);
-        updateAllRights(null);
+        fullRightsMap.remove(dbobject);
     }
 
     /**
@@ -585,13 +585,13 @@ public class Grantee {
      * modified no extra initial action is necessary.
      * The existing Grantee will b the parameter.
      *
-     * If an existing ROLE is REVOKEed from a ROLE. It should first be removed
+     * If an existing ROLE is REVOKEed from a ROLE, it should first be removed
      * from the set of ROLE Grantee objects in the containing ROLE.
-     * The containing ROLE will be the parameter with drop parameter false.
+     * The containing ROLE will be the parameter.
      *
-     * If an existing ROLE is DROPped. It should first be removed
-     * from the set of ROLE Grantee objects in RoleManager.
-     * The DROPped ROLE will be the parameter with drop parameter true.
+     * If an existing ROLE is DROPped, all its privileges should be cleared
+     * first. The ROLE will be the parameter. After calling this method on
+     * all other roles, the DROPped role should be removed from all grantees.
      *
      * After the initial modification, this method should be called iteratively
      * on all the ROLE Grantee objects contained in RoleManager.
@@ -599,14 +599,12 @@ public class Grantee {
      * The updateAllRights() method is then called iteratively on all the
      * USER Grantee objects contained in UserManager.
      * @param role a modified, revoked or dropped role.
-     * @drop role is dropped
      * @return true if this Grantee has possibly changed as a result
      */
-    boolean updateNestedRoles(String role, boolean drop) {
+    boolean updateNestedRoles(String role) {
 
         boolean hasNested = false;
         boolean isSelf    = role.equals(granteeName);
-        boolean dropped   = false;
 
         if (!isSelf) {
             Iterator it = roles.iterator();
@@ -614,24 +612,16 @@ public class Grantee {
             while (it.hasNext()) {
                 String roleName = (String) it.next();
 
-                if (drop && roleName.equals(role)) {
-                    it.remove();
-
-                    hasNested = true;
-
-                    continue;
-                }
-
                 try {
                     Grantee currentRole = granteeManager.getRole(roleName);
 
-                    hasNested |= currentRole.updateNestedRoles(role, drop);
+                    hasNested |= currentRole.updateNestedRoles(role);
                 } catch (HsqlException e) {}
             }
         }
 
         if (hasNested) {
-            updateAllRights(null);
+            updateAllRights();
         }
 
         return hasNested || isSelf;
@@ -642,15 +632,11 @@ public class Grantee {
      * according to those inherited form ROLE Grantee objects and those
      * granted to the object itself.
      */
-    void updateAllRights(String droppedRole) {
+    void updateAllRights() {
 
         fullRightsMap.clear();
 
         admin = adminDirect;
-
-        if (droppedRole != null) {
-            roles.remove(droppedRole);
-        }
 
         Iterator it = roles.iterator();
 

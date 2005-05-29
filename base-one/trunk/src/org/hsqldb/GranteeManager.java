@@ -169,10 +169,10 @@ class GranteeManager implements GrantConstants {
         }
 
         g.grant(dbobject, rights);
-        g.updateAllRights(null);
+        g.updateAllRights();
 
         if (g.isRole) {
-            updateAllRights(g, false);
+            updateAllRights(g);
         }
     }
 
@@ -218,10 +218,10 @@ class GranteeManager implements GrantConstants {
         }
 
         g.grant(role);
-        g.updateAllRights(null);
+        g.updateAllRights();
 
         if (g.isRole) {
-            updateAllRights(g, false);
+            updateAllRights(g);
         }
     }
 
@@ -237,10 +237,10 @@ class GranteeManager implements GrantConstants {
         }
 
         g.revoke(role);
-        g.updateAllRights(null);
+        g.updateAllRights();
 
         if (g.isRole) {
-            updateAllRights(g, false);
+            updateAllRights(g);
         }
     }
 
@@ -257,48 +257,25 @@ class GranteeManager implements GrantConstants {
         Grantee g = get(name);
 
         g.revoke(dbobject, rights);
-        g.updateAllRights(null);
+        g.updateAllRights();
 
         if (g.isRole) {
-            updateAllRights(g, false);
+            updateAllRights(g);
         }
     }
 
     /**
-     * First updates all ROLE Grantee objects. Then updates all USER Grantee
-     * Objects.
-     *
-     * parameter drop indicates the ROLE is being dropped
+     * Removes a role without any privileges from all grantees
      */
-    void updateAllRights(Grantee role, boolean drop) {
+    void removeEmptyRole(Grantee role) {
 
         String name = role.getName();
 
         for (int i = 0; i < map.size(); i++) {
             Grantee grantee = (Grantee) map.get(i);
 
-            if (grantee.isRole) {
-                grantee.updateNestedRoles(name, drop);
-            }
+            grantee.roles.remove(name);
         }
-
-        for (int i = 0; i < map.size(); i++) {
-            Grantee grantee = (Grantee) map.get(i);
-
-            if (!grantee.isRole) {
-                grantee.updateAllRights(drop ? name
-                                             : null);
-            }
-        }
-    }
-
-    /**
-     * Returns true if named Grantee object exists.
-     * This will return true for reserved Grantees
-     * SYSTEM_AUTHORIZATION_NAME, ADMIN_ROLE_NAME, PUBLIC_USER_NAME.
-     */
-    boolean isGrantee(String name) {
-        return (map.containsKey(name));
     }
 
     /**
@@ -312,14 +289,36 @@ class GranteeManager implements GrantConstants {
 
             g.revokeDbObject(dbobject);
         }
-
-        /** @todo - update all grantees - some memory leak otherwise */
     }
 
     /**
-     * For roles, this method should only be called by a RoleManager
-     * (because dependencies with other Grantees must be taken care of
-     * before we can remove a role from the list here).
+     * First updates all ROLE Grantee objects. Then updates all USER Grantee
+     * Objects.
+     *
+     * parameter drop indicates the ROLE is being dropped
+     */
+    void updateAllRights(Grantee role) {
+
+        String name = role.getName();
+
+        for (int i = 0; i < map.size(); i++) {
+            Grantee grantee = (Grantee) map.get(i);
+
+            if (grantee.isRole) {
+                grantee.updateNestedRoles(name);
+            }
+        }
+
+        for (int i = 0; i < map.size(); i++) {
+            Grantee grantee = (Grantee) map.get(i);
+
+            if (!grantee.isRole) {
+                grantee.updateAllRights();
+            }
+        }
+    }
+
+    /**
      */
     public boolean removeGrantee(String name) {
 
@@ -337,10 +336,11 @@ class GranteeManager implements GrantConstants {
         }
 
         g.clearPrivileges();
+        updateAllRights(g);
 
         if (g.isRole) {
             roleMap.remove(name);
-            updateAllRights(g, true);
+            removeEmptyRole(g);
         }
 
         return true;
@@ -375,6 +375,15 @@ class GranteeManager implements GrantConstants {
         map.put(name, g);
 
         return g;
+    }
+
+    /**
+     * Returns true if named Grantee object exists.
+     * This will return true for reserved Grantees
+     * SYSTEM_AUTHORIZATION_NAME, ADMIN_ROLE_NAME, PUBLIC_USER_NAME.
+     */
+    boolean isGrantee(String name) {
+        return (map.containsKey(name));
     }
 
     static int getCheckRight(String right) throws HsqlException {
