@@ -142,8 +142,9 @@ class GranteeManager implements GrantConstants {
         Trace.check(g != null, Trace.NO_SUCH_GRANTEE, name);
         get(name).grant(dbobject, rights);
         get(name).invalidateFrm();
-
-        if (database.getRoleManager().exists(name)) {
+        if (name.equals(UserManager.PUBLIC_USER_NAME)) {
+            invalidateGranteeCache(null, false);
+        } else if (database.getRoleManager().exists(name)) {
 
             // If grantee is a role, then also invalidate members
             invalidateGranteeCache(name, false);
@@ -179,8 +180,9 @@ class GranteeManager implements GrantConstants {
         g.grant(role);
         get(name).invalidateFrm();
         get(name).invalidateAdmin();
-
-        if (database.getRoleManager().exists(name)) {
+        if (name.equals(UserManager.PUBLIC_USER_NAME)) {
+            invalidateGranteeCache(null, true);
+        } else if (database.getRoleManager().exists(name)) {
 
             // If grantee is a role also, then also invalidate members
             invalidateGranteeCache(name, true);
@@ -198,9 +200,9 @@ class GranteeManager implements GrantConstants {
         g.revoke(role);
         get(name).invalidateFrm();
         get(name).invalidateAdmin();
-
-        if (database.getRoleManager().exists(name)) {
-
+        if (name.equals(UserManager.PUBLIC_USER_NAME)) {
+            invalidateGranteeCache(null, true);
+        } else if (database.getRoleManager().exists(name)) {
             // If grantee is a role also, then also invalidate members
             invalidateGranteeCache(name, true);
         }
@@ -218,8 +220,9 @@ class GranteeManager implements GrantConstants {
 
         get(name).revoke(dbobject, rights);
         get(name).invalidateFrm();
-
-        if (database.getRoleManager().exists(name)) {
+        if (name.equals(UserManager.PUBLIC_USER_NAME)) {
+            invalidateGranteeCache(null, false);
+        } else  if (database.getRoleManager().exists(name)) {
 
             // If grantee is a role, then also invalidate members
             invalidateGranteeCache(name, false);
@@ -259,6 +262,9 @@ class GranteeManager implements GrantConstants {
         for (; it.hasNext(); ) {
             g = (Grantee) it.next();
 
+            if (g.hasRole(name)) {
+                invalidateGranteeCache(name, true);
+            }
             if (g.hasRoleDirect(name)) {
                 g.revoke(name);
             }
@@ -284,10 +290,9 @@ class GranteeManager implements GrantConstants {
             g = (Grantee) it.next();
 
             if (roleName == null || g.hasRole(roleName)) {
+                g.invalidateFrm();
                 if (clearAdmin) {
                     g.invalidateAdmin();
-                } else {
-                    g.invalidateFrm();
                 }
             }
         }

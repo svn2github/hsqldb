@@ -413,6 +413,7 @@ public class Grantee {
 
     private void regenFrm() throws HsqlException {
 
+        //System.err.println("Regenning for " + sName);
         Iterator rightsIt;
         Object   key;
         int      granteeRights;
@@ -450,6 +451,7 @@ public class Grantee {
                         otherGrantee.rightsMap.get(key, 0) | fullRightsMap.get(key, 0));
             }
         }
+        doRegenFrm = false;
     }
 
     /**
@@ -515,6 +517,8 @@ public class Grantee {
      */
     boolean recheckAdmin() {
 
+        //System.err.println("Re-adminning for " + sName);
+        doRecheckAdmin = false;
         if (adminDirect) {
             return true;
         }
