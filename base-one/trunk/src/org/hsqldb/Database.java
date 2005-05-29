@@ -151,7 +151,6 @@ public class Database {
     private HashMap        hAlias;
     private UserManager    userManager;
     private GranteeManager granteeManager;
-    private RoleManager    roleManager;
     HsqlNameManager        nameManager;
 
     // session related objects
@@ -280,20 +279,14 @@ public class Database {
             compiledStatementManager.reset();
 
             granteeManager        = new GranteeManager(this);
-            roleManager           = new RoleManager(this);
             userManager           = new UserManager(this);
             hAlias                = Library.getAliasMap();
             nameManager           = new HsqlNameManager();
             schemaManager         = new SchemaManager(this);
             bReferentialIntegrity = true;
             sysUser               = userManager.getSysUser();
-
-            // Couldn't do this in GranteeManager constructor, since it
-            // has to be constructed before the RoleManager.
-            granteeManager.linkRoleManager();
-
-            sessionManager = new SessionManager(this, sysUser);
-            txManager      = new TransactionManager();
+            sessionManager        = new SessionManager(this, sysUser);
+            txManager             = new TransactionManager();
 
             txManager.setReWriteProtection(
                 databaseProperties.isPropertyTrue(
@@ -438,13 +431,6 @@ public class Database {
      */
     public boolean isFilesInJar() {
         return filesInJar;
-    }
-
-    /**
-     *  Returns the Role Manager for this Database.
-     */
-    RoleManager getRoleManager() {
-        return roleManager;
     }
 
     /**

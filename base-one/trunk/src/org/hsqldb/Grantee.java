@@ -36,7 +36,6 @@ import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.Set;
-import org.hsqldb.lib.HashMap;
 
 /**
  * A Grantee Object holds the name, access and administrative rights for a
@@ -68,7 +67,7 @@ import org.hsqldb.lib.HashMap;
  */
 public class Grantee {
 
-    /* All recursion is isolated into the addGranteeAndRoles() method.  */
+    boolean isRole;
 
     /**
      * true if this grantee has database administrator priv directly
@@ -79,30 +78,19 @@ public class Grantee {
     /** true if this grantee has database administrator priv by any means. */
     private boolean admin = false;
 
-    /** Whether admin cache needs to be rechecked */
-    private boolean doRecheckAdmin = true;
-
-    /** cached Flat Rights Map */
+    /** contains righs granted direct, or via roles, expept those of PUBLIC */
     private IntValueHashMap fullRightsMap = new IntValueHashMap();
-
-    /** Whether frm needs to be rebuilt */
-    private boolean doRegenFrm = true;
-
-    void invalidateFrm() {
-        doRegenFrm = true;
-    }
-
-    void invalidateAdmin() {
-        doRecheckAdmin = true;
-    }
 
     /**
      * Grantee name.
      */
-    private String sName;
+    private String granteeName;
 
     /** map with database object identifier keys and access privileges values */
     private IntValueHashMap rightsMap;
+
+    /** These are the DIRECT roles.  Each of these may contain nested roles */
+    private HashSet roles = new HashSet();
 
     /**
      * The special PUBLIC Grantee object. <p>
@@ -126,13 +114,13 @@ public class Grantee {
             GranteeManager man) throws HsqlException {
 
         rightsMap      = new IntValueHashMap();
-        sName          = name;
+        granteeName    = name;
         granteeManager = man;
         pubGrantee     = inGrantee;
     }
 
     String getName() {
-        return sName;
+        return granteeName;
     }
 
     /**
@@ -159,9 +147,6 @@ public class Grantee {
         return rightsMap;
     }
 
-    /** These are the DIRECT roles.  Each of these may contain nested roles */
-    private HashSet roles = new HashSet();
-
     /**
      * Grant a role
      */
@@ -170,7 +155,7 @@ public class Grantee {
     }
 
     /**
-     * Revoke a direct role
+     * Revoke a direct role only
      */
     public void revoke(String role) throws HsqlException {
 
@@ -224,7 +209,7 @@ public class Grantee {
         addGranteeAndRoles(newSet);
 
         // Since we added "Grantee" in addition to Roles, need to remove self.
-        newSet.remove(sName);
+        newSet.remove(granteeName);
 
         return newSet;
     }
@@ -236,10 +221,9 @@ public class Grantee {
      */
     private HashSet addGranteeAndRoles(HashSet set) {
 
-        RoleManager rm = getRoleManager();
-        String      candidateRole;
+        String candidateRole;
 
-        set.add(sName);
+        set.add(granteeName);
 
         Iterator it = roles.iterator();
 
@@ -248,7 +232,8 @@ public class Grantee {
 
             if (!set.contains(candidateRole)) {
                 try {
-                    rm.getGrantee(candidateRole).addGranteeAndRoles(set);
+                    granteeManager.getRole(candidateRole).addGranteeAndRoles(
+                        set);
                 } catch (HsqlException he) {
                     throw new RuntimeException(he.getMessage());
                 }
@@ -342,6 +327,7 @@ public class Grantee {
      */
     void revokeDbObject(Object dbobject) {
         rightsMap.remove(dbobject);
+        updateAllRights(null);
     }
 
     /**
@@ -352,10 +338,9 @@ public class Grantee {
 
         roles.clear();
         rightsMap.clear();
+        fullRightsMap.clear();
 
-        adminDirect    = false;
-        doRegenFrm     = true;
-        doRecheckAdmin = true;
+        adminDirect = false;
     }
 
     /**
@@ -382,27 +367,26 @@ public class Grantee {
      * from the dbobject argument for at least one of the rights
      * contained in the rights argument.
      *
-     * Only does one level of recursion into isDirectlyAccessible.
+     * Only does one level of recursion to check the PUBLIC role.
      */
-    boolean isAccessible(Object dbobject, int rights) throws HsqlException {
+    boolean isAccessible(Object dbObject, int rights) throws HsqlException {
 
-        if (dbobject instanceof String) {
-            if (((String) dbobject).startsWith("org.hsqldb.Library")
-                    || ((String) dbobject).startsWith("java.lang.Math")) {
+        if (dbObject instanceof String) {
+            if (((String) dbObject).startsWith("org.hsqldb.Library")
+                    || ((String) dbObject).startsWith("java.lang.Math")) {
                 return true;
             }
         }
 
-        if (isAdmin()) {
+        if (admin) {
             return true;
         }
 
-        if (doRegenFrm) {
-            regenFrm();
+        if (pubGrantee != null && pubGrantee.isAccessible(dbObject, rights)) {
+            return true;
         }
 
-        /* Check cached Frm */
-        int n = fullRightsMap.get(dbobject, 0);
+        int n = fullRightsMap.get(dbObject, 0);
 
         if (n != 0) {
             return (n & rights) != 0;
@@ -411,65 +395,22 @@ public class Grantee {
         return false;
     }
 
-    private void regenFrm() throws HsqlException {
-
-        //System.err.println("Regenning for " + sName);
-        Iterator rightsIt;
-        Object   key;
-        int      granteeRights;
-
-        /*
-         * The deep recusion is all done in getAllRoles().  This method
-         * only recurses one level into isDirectlyAccessible().
-         */
-        fullRightsMap.clear();
-        fullRightsMap.putAll(rightsMap);
-
-        if (pubGrantee != null) {
-            rightsIt = pubGrantee.rightsMap.keySet().iterator();
-
-            while (rightsIt.hasNext()) {
-                key = rightsIt.next();
-
-                fullRightsMap.put(key,
-                        pubGrantee.rightsMap.get(key, 0) | fullRightsMap.get(key, 0));
-            }
-        }
-
-        RoleManager rm     = getRoleManager();
-        Iterator    roleIt = getAllRoles().iterator();
-        Grantee     otherGrantee;
-
-        while (roleIt.hasNext()) {
-            otherGrantee = (Grantee) rm.getGrantee((String) roleIt.next());
-            rightsIt     = otherGrantee.rightsMap.keySet().iterator();
-
-            while (rightsIt.hasNext()) {
-                key = rightsIt.next();
-
-                fullRightsMap.put(key,
-                        otherGrantee.rightsMap.get(key, 0) | fullRightsMap.get(key, 0));
-            }
-        }
-        doRegenFrm = false;
-    }
-
     /**
      * Returns true if any of the rights represented by the
      * rights argument has been granted on the database object identified
-     * by the dbobject argument. <p>
+     * by the dbObject argument. <p>
      *
      * This is done by checking that a mapping exists in the rights map
-     * from the dbobject argument for at least one of the rights
+     * from the dbObject argument for at least one of the rights
      * contained in the rights argument.
      *
      * Considers none of pubGranee, nested roles, admin privs, globally
      * available Class object.
      */
-    protected boolean isDirectlyAccessible(Object dbobject,
+    protected boolean isDirectlyAccessible(Object dbObject,
                                            int rights) throws HsqlException {
 
-        int n = rightsMap.get(dbobject, 0);
+        int n = rightsMap.get(dbObject, 0);
 
         if (n != 0) {
             return (n & rights) != 0;
@@ -480,10 +421,10 @@ public class Grantee {
 
     /**
      * Returns true if any right at all has been granted to this User object
-     * on the database object identified by the dbobject argument.
+     * on the database object identified by the dbObject argument.
      */
-    boolean isAccessible(Object dbobject) throws HsqlException {
-        return isAccessible(dbobject, GranteeManager.ALL);
+    boolean isAccessible(Object dbObject) throws HsqlException {
+        return isAccessible(dbObject, GranteeManager.ALL);
     }
 
     /**
@@ -502,43 +443,7 @@ public class Grantee {
      * or indirectly.
      */
     boolean isAdmin() {
-
-        if (doRecheckAdmin) {
-            admin = recheckAdmin();
-        }
-
         return admin;
-    }
-
-    /**
-     * Returns true if this Grantee has administrative privs either directly
-     * or indirectly.
-     * Recurses through nested roles.
-     */
-    boolean recheckAdmin() {
-
-        //System.err.println("Re-adminning for " + sName);
-        doRecheckAdmin = false;
-        if (adminDirect) {
-            return true;
-        }
-
-        RoleManager rm = getRoleManager();
-        Iterator    it = getAllRoles().iterator();
-
-        while (it.hasNext()) {
-            try {
-                if (((Grantee) rm.getGrantee(
-                        (String) it.next())).isAdminDirect()) {
-                    return true;
-                }
-            } catch (HsqlException he) {
-                throw Trace.runtimeError(Trace.RETRIEVE_NEST_ROLE_FAIL,
-                                         he.getMessage());
-            }
-        }
-
-        return false;
     }
 
     /**
@@ -594,13 +499,11 @@ public class Grantee {
             }
         }
 
-        Grantee     g;
-        RoleManager rm = getRoleManager();
-        Iterator    it = getAllRoles().iterator();
+        Iterator it = getAllRoles().iterator();
 
         while (it.hasNext()) {
             out.addAll(
-                ((Grantee) rm.getGrantee(
+                ((Grantee) granteeManager.getRole(
                     (String) it.next())).getGrantedClassNamesDirect());
         }
 
@@ -662,15 +565,107 @@ public class Grantee {
         return GranteeManager.getRightsArray(rightsMap.get(name, 0));
     }
 
-    private RoleManager getRoleManager() {
-        return granteeManager.getRoleManager();
-    }
-
     /**
      * Violates naming convention (for backward compatibility).
      * Should be "setAdminDirect(boolean").
      */
-    void setAdmin(boolean b) {
-        adminDirect = b;
+    void setAdminDirect() {
+        admin = adminDirect = true;
+    }
+
+    /**
+     * Recursive method used with ROLE Grantee objects to set the fullRightsMap
+     * and admin flag for all the roles.
+     *
+     * If a new ROLE is granted to a ROLE Grantee object, the ROLE should first
+     * be added to the Set of ROLE Grantee objects (roles) for the grantee.
+     * The grantee will be the parameter.
+     *
+     * If the direct permissions granted to an existing ROLE Grentee is
+     * modified no extra initial action is necessary.
+     * The existing Grantee will b the parameter.
+     *
+     * If an existing ROLE is REVOKEed from a ROLE. It should first be removed
+     * from the set of ROLE Grantee objects in the containing ROLE.
+     * The containing ROLE will be the parameter with drop parameter false.
+     *
+     * If an existing ROLE is DROPped. It should first be removed
+     * from the set of ROLE Grantee objects in RoleManager.
+     * The DROPped ROLE will be the parameter with drop parameter true.
+     *
+     * After the initial modification, this method should be called iteratively
+     * on all the ROLE Grantee objects contained in RoleManager.
+     *
+     * The updateAllRights() method is then called iteratively on all the
+     * USER Grantee objects contained in UserManager.
+     * @param role a modified, revoked or dropped role.
+     * @drop role is dropped
+     * @return true if this Grantee has possibly changed as a result
+     */
+    boolean updateNestedRoles(String role, boolean drop) {
+
+        boolean hasNested = false;
+        boolean isSelf    = role.equals(granteeName);
+        boolean dropped   = false;
+
+        if (!isSelf) {
+            Iterator it = roles.iterator();
+
+            while (it.hasNext()) {
+                String roleName = (String) it.next();
+
+                if (drop && roleName.equals(role)) {
+                    it.remove();
+
+                    hasNested = true;
+
+                    continue;
+                }
+
+                try {
+                    Grantee currentRole = granteeManager.getRole(roleName);
+
+                    hasNested |= currentRole.updateNestedRoles(role, drop);
+                } catch (HsqlException e) {}
+            }
+        }
+
+        if (hasNested) {
+            updateAllRights(null);
+        }
+
+        return hasNested || isSelf;
+    }
+
+    /**
+     * Method used with all Grantee objects to set the full set of rights
+     * according to those inherited form ROLE Grantee objects and those
+     * granted to the object itself.
+     */
+    void updateAllRights(String droppedRole) {
+
+        fullRightsMap.clear();
+
+        admin = adminDirect;
+
+        if (droppedRole != null) {
+            roles.remove(droppedRole);
+        }
+
+        Iterator it = roles.iterator();
+
+        while (it.hasNext()) {
+            String roleName = (String) it.next();
+
+            try {
+                Grantee currentRole = granteeManager.getRole(roleName);
+
+                fullRightsMap.putAll(currentRole.fullRightsMap);
+
+                admin |= currentRole.isAdmin();
+            } catch (HsqlException e) {}
+        }
+
+        fullRightsMap.putAll(rightsMap);
     }
 }

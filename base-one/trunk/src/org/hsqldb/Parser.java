@@ -66,6 +66,8 @@
 
 package org.hsqldb;
 
+import java.util.Locale;
+
 import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HashMap;
@@ -2202,7 +2204,7 @@ class Parser {
                 break;
             }
             case Expression.VALUE : {
-                String name     = sToken.toUpperCase();
+                String name     = sToken.toUpperCase(Locale.ENGLISH);
                 String javaName = (String) simpleFunctions.get(name);
 
                 if (Types.isDatetimeType(dataType) && javaName != null) {

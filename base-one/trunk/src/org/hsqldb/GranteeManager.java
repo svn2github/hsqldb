@@ -39,11 +39,16 @@ import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.StringUtil;
 import org.hsqldb.lib.Collection;
+import org.hsqldb.lib.Set;
 
 /**
  * Contains a set of Grantee objects, and supports operations for creating,
  * finding, modifying and deleting Grantee objects for a Database; plus
  * Administrative privileges.
+ *
+ * @author boucherb@users
+ * @author fredt@usrs
+ * @author unsaved@users
  *
  * @version 1.8.0
  * @since 1.8.0
@@ -51,40 +56,62 @@ import org.hsqldb.lib.Collection;
  */
 class GranteeManager implements GrantConstants {
 
+    /**
+     * The role name reserved for authorization of INFORMATION_SCHEMA and
+     * system objects.
+     */
+    static final String SYSTEM_AUTHORIZATION_NAME = "_SYSTEM";
+
+    /** The role name reserved for ADMIN users. */
+    static final String ADMIN_ROLE_NAME = "DBA";
+
+    /** The role name reserved for the special PUBLIC pseudo-user. */
+    static final String PUBLIC_USER_NAME = "PUBLIC";
+
+    /**
+     * An empty list that is returned from
+     * {@link #listTablePrivileges listTablePrivileges} when
+     * it is detected that neither this <code>User</code> object or
+     * its <code>PUBLIC</code> <code>User</code> object attribute have been
+     * granted any rights on the <code>Table</code> object identified by
+     * the specified <code>HsqlName</code> object.
+     *
+     */
+    static final String[] emptyRightsList = new String[0];
+
+    /**
+     * MAP:  int => HsqlArrayList. <p>
+     *
+     * This map caches the lists of <code>String</code> objects naming the rights
+     * corresponding to each valid set of rights flags, as returned by
+     * {@link #listRightNames listRightNames}
+     *
+     */
+    static final IntKeyHashMap hRightsLists = new IntKeyHashMap();
+
+    /**
+     * Used to provide access to the RoleManager for Grantee.isAccessible()
+     * lookups
+     */
     /*
-     * Our map here has the same keys as the UserManager + RoleManager maps
-     * EXCEPT that we include the SYSTEM_AUTHORIZATION_NAME because we need
-     * to keep track of those permissions, but not his identity.
+     * Our map here has the same keys as the UserManager map
+     * EXCEPT that we include all roles, including the SYSTEM_AUTHORIZATION_NAME
+     * because we need o keep track of those permissions, but not his identity.
      * I.e., our list here is all-inclusive, whether the User or Role is
      * visible to database users or not.
      */
 
-    /** Only needed to link to the RoleManager later on. */
-    private Database database;
+    /**
+     * Map of String-to-Grantee-objects.<p>
+     * Primary object maintained by this class
+     */
+    private HashMappedList map = new HashMappedList();
 
     /**
-     * Used to provide access to the RoleManager for Grantee.isAccessible()
-     * lookups
+     * This object's set of Role objects. <p>
+     * role-Strings-to-Grantee-object
      */
-    private RoleManager roleManager = null;
-
-    /**
-     * Used to provide access to the RoleManager for Grantee.isAccessible()
-     * lookups
-     */
-    RoleManager getRoleManager() {
-        return roleManager;
-    }
-
-    void linkRoleManager() throws HsqlException {
-
-        roleManager = database.getRoleManager();
-
-        if (roleManager == null) {
-            Trace.doAssert(false,
-                           Trace.getMessage(Trace.MISSING_ROLEMANAGER));
-        }
-    }
+    private HashMappedList roleMap = new HashMappedList();
 
     /**
      * Construct the GranteeManager for a Database.
@@ -97,16 +124,10 @@ class GranteeManager implements GrantConstants {
      * @param inDatabase Only needed to link to the RoleManager later on.
      */
     public GranteeManager(Database inDatabase) throws HsqlException {
-        database = inDatabase;
+        createRole(GranteeManager.ADMIN_ROLE_NAME);
+        getRole(GranteeManager.ADMIN_ROLE_NAME).setAdminDirect();
     }
 
-    /**
-     * Map of String-to-Grantee-objects.<p>
-     * Primary object maintained by this class
-     */
-    private HashMappedList map = new HashMappedList();
-
-    //
     static final IntValueHashMap rightsStringLookup = new IntValueHashMap(7);
 
     static {
@@ -139,15 +160,19 @@ class GranteeManager implements GrantConstants {
 
         Grantee g = get(name);
 
-        Trace.check(g != null, Trace.NO_SUCH_GRANTEE, name);
-        get(name).grant(dbobject, rights);
-        get(name).invalidateFrm();
-        if (name.equals(UserManager.PUBLIC_USER_NAME)) {
-            invalidateGranteeCache(null, false);
-        } else if (database.getRoleManager().exists(name)) {
+        if (g == null) {
+            throw Trace.error(Trace.NO_SUCH_GRANTEE, name);
+        }
 
-            // If grantee is a role, then also invalidate members
-            invalidateGranteeCache(name, false);
+        if (isMutable(name)) {
+            throw Trace.error(Trace.NONMOD_GRANTEE, name);
+        }
+
+        g.grant(dbobject, rights);
+        g.updateAllRights(null);
+
+        if (g.isRole) {
+            updateAllRights(g, false);
         }
     }
 
@@ -158,53 +183,64 @@ class GranteeManager implements GrantConstants {
 
         Grantee g = get(name);
 
-        Trace.check(g != null, Trace.NO_SUCH_GRANTEE, name);
+        if (g == null) {
+            throw Trace.error(Trace.NO_SUCH_GRANTEE, name);
+        }
+
+        if (isMutable(name)) {
+            throw Trace.error(Trace.NONMOD_GRANTEE, name);
+        }
 
         Grantee r = get(role);
 
-        Trace.check(r != null, Trace.NO_SUCH_ROLE, role);
-        Trace.check(!role.equals(name), Trace.CIRCULAR_GRANT,
-                    name + " = " + role);
+        if (r == null) {
+            throw Trace.error(Trace.NO_SUCH_ROLE, role);
+        }
+
+        if (role.equals(name)) {
+            throw Trace.error(Trace.CIRCULAR_GRANT, name);
+        }
 
         // boucherb@users 20050515
         // SQL 2003 Foundation, 4.34.3
         // No cycles of role grants are allowed.
-        Trace.check(!r.hasRole(name), Trace.CIRCULAR_GRANT,
-                    Trace.getMessage(Trace.ALREADY_HAVE_ROLE),
+        if (r.hasRole(name)) {
 
-        // boucherb@users
-        // TODO: Correct reporting of actual grant path
-        " GRANT " + name + " TO " + role);
-        Trace.check(!g.getDirectRoles().contains(role),
-                    Trace.ALREADY_HAVE_ROLE, role);
+            // boucherb@users
+            // TODO: Correct reporting of actual grant path
+            throw Trace.error(Trace.CIRCULAR_GRANT,
+                              Trace.getMessage(Trace.ALREADY_HAVE_ROLE)
+                              + " GRANT " + name + " TO " + role);
+        }
+
+        if (g.getDirectRoles().contains(role)) {
+            throw Trace.error(Trace.ALREADY_HAVE_ROLE, role);
+        }
+
         g.grant(role);
-        get(name).invalidateFrm();
-        get(name).invalidateAdmin();
-        if (name.equals(UserManager.PUBLIC_USER_NAME)) {
-            invalidateGranteeCache(null, true);
-        } else if (database.getRoleManager().exists(name)) {
+        g.updateAllRights(null);
 
-            // If grantee is a role also, then also invalidate members
-            invalidateGranteeCache(name, true);
+        if (g.isRole) {
+            updateAllRights(g, false);
         }
     }
 
     /**
-     * Revoke a role from this Grantee
+     * Revoke a role from a Grantee
      */
     void revoke(String name, String role) throws HsqlException {
 
         Grantee g = get(name);
 
-        Trace.check(g != null, Trace.NO_SUCH_GRANTEE, name);
+        if (g == null) {
+            throw Trace.error(Trace.NO_SUCH_GRANTEE, name);
+        }
+
         g.revoke(role);
-        get(name).invalidateFrm();
-        get(name).invalidateAdmin();
-        if (name.equals(UserManager.PUBLIC_USER_NAME)) {
-            invalidateGranteeCache(null, true);
-        } else if (database.getRoleManager().exists(name)) {
-            // If grantee is a role also, then also invalidate members
-            invalidateGranteeCache(name, true);
+        g.updateAllRights(null);
+
+        if (g.isRole) {
+            updateAllRights(g, false);
         }
     }
 
@@ -218,14 +254,41 @@ class GranteeManager implements GrantConstants {
     void revoke(String name, Object dbobject,
                 int rights) throws HsqlException {
 
-        get(name).revoke(dbobject, rights);
-        get(name).invalidateFrm();
-        if (name.equals(UserManager.PUBLIC_USER_NAME)) {
-            invalidateGranteeCache(null, false);
-        } else  if (database.getRoleManager().exists(name)) {
+        Grantee g = get(name);
 
-            // If grantee is a role, then also invalidate members
-            invalidateGranteeCache(name, false);
+        g.revoke(dbobject, rights);
+        g.updateAllRights(null);
+
+        if (g.isRole) {
+            updateAllRights(g, false);
+        }
+    }
+
+    /**
+     * First updates all ROLE Grantee objects. Then updates all USER Grantee
+     * Objects.
+     *
+     * parameter drop indicates the ROLE is being dropped
+     */
+    void updateAllRights(Grantee role, boolean drop) {
+
+        String name = role.getName();
+
+        for (int i = 0; i < map.size(); i++) {
+            Grantee grantee = (Grantee) map.get(i);
+
+            if (grantee.isRole) {
+                grantee.updateNestedRoles(name, drop);
+            }
+        }
+
+        for (int i = 0; i < map.size(); i++) {
+            Grantee grantee = (Grantee) map.get(i);
+
+            if (!grantee.isRole) {
+                grantee.updateAllRights(drop ? name
+                                             : null);
+            }
         }
     }
 
@@ -244,58 +307,13 @@ class GranteeManager implements GrantConstants {
      */
     void removeDbObject(Object dbobject) {
 
-        Iterator it = map.values().iterator();
+        for (int i = 0; i < map.size(); i++) {
+            Grantee g = (Grantee) map.get(i);
 
-        for (; it.hasNext(); ) {
-            ((Grantee) it.next()).revokeDbObject(dbobject);
+            g.revokeDbObject(dbobject);
         }
-    }
 
-    /**
-     * Removes a role from all members
-     */
-    public void removeRoleFromMembers(String name) throws HsqlException {
-
-        Iterator it = map.values().iterator();
-        Grantee  g;
-
-        for (; it.hasNext(); ) {
-            g = (Grantee) it.next();
-
-            if (g.hasRole(name)) {
-                invalidateGranteeCache(name, true);
-            }
-            if (g.hasRoleDirect(name)) {
-                g.revoke(name);
-            }
-        }
-    }
-
-    /**
-     * Invalidate cached Rights map for all Grantees or Grantees members
-     * of given role.
-     *
-     * @roleName  If null, then all Grantees in system.  Otherwise, all
-     *            grantee members of the given role.
-     * @adminCacheToo Clear the admin cache value also.
-     */
-    public void invalidateGranteeCache(String roleName,
-                                       boolean clearAdmin)
-                                       throws HsqlException {
-
-        Iterator it = map.values().iterator();
-        Grantee  g;
-
-        for (; it.hasNext(); ) {
-            g = (Grantee) it.next();
-
-            if (roleName == null || g.hasRole(roleName)) {
-                g.invalidateFrm();
-                if (clearAdmin) {
-                    g.invalidateAdmin();
-                }
-            }
-        }
+        /** @todo - update all grantees - some memory leak otherwise */
     }
 
     /**
@@ -306,16 +324,9 @@ class GranteeManager implements GrantConstants {
     public boolean removeGrantee(String name) {
 
         /*
-         * Explicitly can't remove PUBLIC_USER_NAME.  Other reserveds are
-         * taken care of by verifyNotReserved().
+         * Explicitly can't remove PUBLIC_USER_NAME and system grantees.
          */
-        if (name.equals(UserManager.PUBLIC_USER_NAME)) {
-            return false;
-        }
-
-        try {
-            verifyNotReserved(name);
-        } catch (HsqlException he) {
+        if (isReserved(name)) {
             return false;
         }
 
@@ -327,6 +338,11 @@ class GranteeManager implements GrantConstants {
 
         g.clearPrivileges();
 
+        if (g.isRole) {
+            roleMap.remove(name);
+            updateAllRights(g, true);
+        }
+
         return true;
     }
 
@@ -337,19 +353,21 @@ class GranteeManager implements GrantConstants {
      * after that, it will fail because the account will already exist.
      * (We do prevent them from being removed, elsewhere!)
      */
-    public Grantee addGrantee(String name,
-                              boolean nestPublic) throws HsqlException {
+    public Grantee addGrantee(String name) throws HsqlException {
 
-        Trace.check(!map.containsKey(name), Trace.GRANTEE_ALREADY_EXISTS,
-                    name);
+        if (map.containsKey(name)) {
+            throw Trace.error(Trace.GRANTEE_ALREADY_EXISTS, name);
+        }
 
         Grantee pubGrantee = null;
 
-        if (nestPublic) {
-            pubGrantee = get(UserManager.PUBLIC_USER_NAME);
+        if (!isReserved(name)) {
+            pubGrantee = get(PUBLIC_USER_NAME);
 
-            Trace.doAssert(pubGrantee != null,
-                           Trace.getMessage(Trace.MISSING_PUBLIC_GRANTEE));
+            if (pubGrantee == null) {
+                Trace.doAssert(
+                    false, Trace.getMessage(Trace.MISSING_PUBLIC_GRANTEE));
+            }
         }
 
         Grantee g = new Grantee(name, pubGrantee, this);
@@ -454,27 +472,6 @@ class GranteeManager implements GrantConstants {
     }
 
     /**
-     * An empty list that is returned from
-     * {@link #listTablePrivileges listTablePrivileges} when
-     * it is detected that neither this <code>User</code> object or
-     * its <code>PUBLIC</code> <code>User</code> object attribute have been
-     * granted any rights on the <code>Table</code> object identified by
-     * the specified <code>HsqlName</code> object.
-     *
-     */
-    static final String[] emptyRightsList = new String[0];
-
-    /**
-     * MAP:  int => HsqlArrayList. <p>
-     *
-     * This map caches the lists of <code>String</code> objects naming the rights
-     * corresponding to each valid set of rights flags, as returned by
-     * {@link #listRightNames listRightNames}
-     *
-     */
-    static final IntKeyHashMap hRightsLists = new IntKeyHashMap();
-
-    /**
      * Retrieves the set of distinct, fully qualified Java <code>Class</code>
      * names upon which any grants currently exist to elements in
      * this collection. <p>
@@ -522,13 +519,126 @@ class GranteeManager implements GrantConstants {
         return getRight(rightString) != 0;
     }
 
-    static public void verifyNotReserved(String name) throws HsqlException {
+    static public boolean isMutable(String name) {
+        return name.equals(SYSTEM_AUTHORIZATION_NAME)
+               || name.equals(ADMIN_ROLE_NAME);
+    }
 
-        boolean reservedUser =
-            name.equals(UserManager.SYSTEM_AUTHORIZATION_NAME)
-            || name.equals(RoleManager.ADMIN_ROLE_NAME);
+    static public boolean isReserved(String name) {
 
-        // Check for the 2 items which we prohibit grants/revokes to/from.
-        Trace.check(!reservedUser, Trace.NONMOD_GRANTEE, name);
+        return name.equals(SYSTEM_AUTHORIZATION_NAME)
+               || name.equals(ADMIN_ROLE_NAME)
+               || name.equals(PUBLIC_USER_NAME);
+    }
+
+    /**
+     * Creates a new Role object under management of this object. <p>
+     *
+     *  A set of constraints regarding user creation is imposed: <p>
+     *
+     *  <OL>
+     *    <LI>Can't create a role with name same as any right.
+     *
+     *    <LI>If the specified name is null, then an
+     *        ASSERTION_FAILED exception is thrown stating that
+     *        the name is null.
+     *
+     *    <LI>If this object's collection already contains an element whose
+     *        name attribute equals the name argument, then
+     *        a GRANTEE_ALREADY_EXISTS or ROLE_ALREADY_EXISTS Trace
+     *        is thrown.
+     *        (This will catch attempts to create Reserved grantee names).
+     *  </OL>
+     */
+    String createRole(String name) throws HsqlException {
+
+        /*
+         * Role names can't be right names because that would cause
+         * conflicts with "GRANT name TO...".  This doesn't apply to
+         * User names or Grantee names in general, since you can't
+         * "GRANT username TO...".  That's why this check is only here.
+         */
+        if (name == null) {
+            Trace.doAssert(false, Trace.getMessage(Trace.NULL_NAME));
+        }
+
+        Grantee g = null;
+
+        if (GranteeManager.validRightString(name)) {
+            throw Trace.error(Trace.ILLEGAL_ROLE_NAME, name);
+        }
+
+        g        = addGrantee(name);
+        g.isRole = true;
+
+        boolean result = roleMap.add(name, g);
+
+        if (!result) {
+            throw Trace.error(Trace.ROLE_ALREADY_EXISTS, name);
+        }
+
+        // I don't think can get this trace since every roleMap element
+        // will have a Grantee element which was already verified
+        // above.  Easier to leave this check here than research it.
+        return name;
+    }
+
+    /**
+     * Attempts to drop a Role with the specified name
+     *  from this object's set. <p>
+     *
+     *  A successful drop action consists of: <p>
+     *
+     *  <UL>
+     *
+     *    <LI>removing the Grantee object with the specified name
+     *        from the set.
+     *
+     *    <LI>revoking all rights from the removed object<br>
+     *        (this ensures that in case there are still references to the
+     *        just dropped Grantee object, those references
+     *        cannot be used to erronously access database objects).
+     *
+     *  </UL> <p>
+     *
+     */
+    void dropRole(String name) throws HsqlException {
+
+        if (name.equals(GranteeManager.ADMIN_ROLE_NAME)) {
+            throw Trace.error(Trace.ACCESS_IS_DENIED);
+        }
+
+        if (!isRole(name)) {
+            throw Trace.error(Trace.NO_SUCH_ROLE, name);
+        }
+
+        removeGrantee(name);
+        roleMap.remove(name);
+    }
+
+    public Set getRoleNames() {
+        return roleMap.keySet();
+    }
+
+    /**
+     * Returns Grantee for the named Role
+     */
+    Grantee getRole(String name) throws HsqlException {
+
+        if (!isRole(name)) {
+            Trace.doAssert(false, "No role '" + name + "'");
+        }
+
+        Grantee g = (Grantee) roleMap.get(name);
+
+        if (g == null) {
+            throw Trace.error(Trace.MISSING_GRANTEE, name);
+        }
+
+        return g;
+    }
+
+    boolean isRole(String name) throws HsqlException {
+        return roleMap.containsKey(name);
     }
 }

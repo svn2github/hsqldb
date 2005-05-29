@@ -550,7 +550,7 @@ extends org.hsqldb.DatabaseInformationMain {
         final int iis_grntbl = 6;
 
         // Initialization
-        grantorName = RoleManager.ADMIN_ROLE_NAME;
+        grantorName = GranteeManager.ADMIN_ROLE_NAME;
         um          = database.getUserManager();
         users       = um.listVisibleUsers(session, true);
 
@@ -2166,14 +2166,14 @@ extends org.hsqldb.DatabaseInformationMain {
         Result rs;
 
         rs = session.sqlExecuteDirectNoPreChecks(
-            "SELECT '" + UserManager.SYSTEM_AUTHORIZATION_NAME
+            "SELECT '" + GranteeManager.SYSTEM_AUTHORIZATION_NAME
             + "', 'PUBLIC', SEQUENCE_CATALOG, SEQUENCE_SCHEMA, "
             + "SEQUENCE_NAME, 'SEQUENCE', 'FALSE' FROM  INFORMATION_SCHEMA.SYSTEM_SEQUENCES");
 
         t.insertSys(rs);
 
         rs = session.sqlExecuteDirectNoPreChecks(
-            "SELECT '" + UserManager.SYSTEM_AUTHORIZATION_NAME
+            "SELECT '" + GranteeManager.SYSTEM_AUTHORIZATION_NAME
             + "', 'PUBLIC', COLLATION_CATALOG, COLLATION_SCHEMA, "
             + "COLLATION_NAME, 'COLLATION', 'FALSE' FROM  INFORMATION_SCHEMA.SYSTEM_COLLATIONS");
 
@@ -3488,7 +3488,7 @@ extends org.hsqldb.DatabaseInformationMain {
             t.insertSys(row);
         }
 
-        roles = database.getRoleManager().getRoleNames().iterator();
+        roles = database.getGranteeManager().getRoleNames().iterator();
 
         while (roles.hasNext()) {
             row    = t.getEmptyRowData();
@@ -3763,7 +3763,7 @@ extends org.hsqldb.DatabaseInformationMain {
         }
 
         // Intermediate holders
-        String    grantorName = UserManager.SYSTEM_AUTHORIZATION_NAME;
+        String    grantorName = GranteeManager.SYSTEM_AUTHORIZATION_NAME;
         Iterator  grantees;
         Grantee   grantee;
         String    granteeName;
@@ -3788,7 +3788,7 @@ extends org.hsqldb.DatabaseInformationMain {
             while (roles.hasNext()) {
                 row      = t.getEmptyRowData();
                 roleName = (String) roles.next();
-                isGrantable = grantee.hasRole(RoleManager.ADMIN_ROLE_NAME)
+                isGrantable = grantee.hasRole(GranteeManager.ADMIN_ROLE_NAME)
                               ? "YES"
                               : "NO";
                 row[irole]      = roleName;
@@ -3900,7 +3900,7 @@ extends org.hsqldb.DatabaseInformationMain {
 
         Iterator  schemas;
         String    schema;
-        String    schemaOwner = RoleManager.ADMIN_ROLE_NAME;
+        String    schemaOwner = GranteeManager.ADMIN_ROLE_NAME;
         String    dcsSchema   = SchemaManager.INFORMATION_SCHEMA;
         String    dcsName     = ValuePool.getString("UTF16");
         String    sqlPath     = null;

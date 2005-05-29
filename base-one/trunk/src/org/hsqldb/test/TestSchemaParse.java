@@ -353,6 +353,7 @@ implements org.hsqldb.Trigger {
         execSQL("DROP TABLE bigtbl", 0);
         execSQL("DROP SEQUENCE tstseq", 0);
         execSQL("SET LOGSIZE 5", 0);
+
         // Following syntax is now obsolete.
         execSQL("SET PROPERTY \"hsqldb.first_identity\" 4", SQL_ABORT);
         execSQL("UPDATE tsttbl SET vc = 'eleven' WHERE i = 1", 1);

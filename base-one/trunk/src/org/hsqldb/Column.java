@@ -563,7 +563,9 @@ public class Column {
                 int ai = ((Number) a).intValue();
                 int bi = ((Number) b).intValue();
 
-                Trace.check(bi != 0, Trace.DIVISION_BY_ZERO);
+                if (bi == 0) {
+                    throw Trace.error(Trace.DIVISION_BY_ZERO);
+                }
 
                 return ValuePool.getInt(ai / bi);
             }
@@ -691,8 +693,8 @@ public class Column {
                                          Library.rtrim((String) b));
 
             case Types.VARCHAR_IGNORECASE :
-                return collation.compare(((String) a).toUpperCase(),
-                                         ((String) b).toUpperCase());
+                return collation.compareIgnoreCase(((String) a),
+                                                   ((String) b));
 
             case Types.TINYINT :
             case Types.SMALLINT :

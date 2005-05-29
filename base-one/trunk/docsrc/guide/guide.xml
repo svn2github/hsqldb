@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<!-- $Id: guide.xml,v 1.36 2005/05/27 23:48:38 unsaved Exp $ -->
+<!-- $Id: guide.xml,v 1.37 2005/05/28 11:08:15 fredt Exp $ -->
 
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN"
 "http://www.oasis-open.org/docbook/xml/4.2CR1/docbookx.dtd" [
-    <!ENTITY revision "$Revision: 1.36 $">
-    <!ENTITY date "$Date: 2005/05/27 23:48:38 $">
+    <!ENTITY revision "$Revision: 1.37 $">
+    <!ENTITY date "$Date: 2005/05/28 11:08:15 $">
     <!ENTITY alts SYSTEM "../formats-section.xml">
     <!ENTITY docbasename "doc/guide">
     <!ENTITY baseurl "http://hsqldb.sourceforge.net/&docbasename;">
@@ -95,6 +95,7 @@
     &sqlissues-chapter.xml;
     &unix-chapter.xml;
     &advancedtopics-chapter.xml;
+    &deployment-chapter.xml;
     &texttables-chapter.xml;
     &tls-chapter.xml;
     &sqltool-chapter.xml;
@@ -118,8 +119,7 @@
     &testutility-appendix.xml;
     &dbmanager-appendix.xml;
     &transfertool-appendix.xml;
-    &deployment-appendix.xml;
-
+    
     <!--
           I'm not spending the time on adding indexentry elements, since
           the Java Xslt processor isn't doing making the links for HTML

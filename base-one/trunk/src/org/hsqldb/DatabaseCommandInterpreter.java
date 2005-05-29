@@ -529,7 +529,7 @@ class DatabaseCommandInterpreter {
                 break;
 
             case Token.ROLE :
-                database.getRoleManager().createRole(getUserIdentifier());
+                database.getGranteeManager().createRole(getUserIdentifier());
                 break;
 
             case Token.VIEW :
@@ -1970,7 +1970,8 @@ class DatabaseCommandInterpreter {
                 break;
             }
             case Token.ROLE : {
-                database.getRoleManager().dropRole(tokenizer.getSimpleName());
+                database.getGranteeManager().dropRole(
+                    tokenizer.getSimpleName());
 
                 break;
             }
@@ -2047,8 +2048,6 @@ class DatabaseCommandInterpreter {
                                 : Token.T_FROM);
 
         token = getUserIdentifier();
-
-        GranteeManager.verifyNotReserved(token);
 
         GranteeManager gm = database.getGranteeManager();
 
@@ -2848,7 +2847,7 @@ class DatabaseCommandInterpreter {
         }
 
         tokenizer.getThis(Token.T_AUTHORIZATION);
-        tokenizer.getThis(database.getRoleManager().ADMIN_ROLE_NAME);
+        tokenizer.getThis(GranteeManager.ADMIN_ROLE_NAME);
 
         if (database.schemaManager.schemaExists(name)) {
             if (!session.isProcessingScript) {
@@ -2879,8 +2878,8 @@ class DatabaseCommandInterpreter {
         database.getUserManager().createUser(name, password);
 
         if (admin) {
-            database.getGranteeManager().grant(name,
-                                               RoleManager.ADMIN_ROLE_NAME);
+            database.getGranteeManager().grant(
+                name, GranteeManager.ADMIN_ROLE_NAME);
         }
     }
 
@@ -3323,15 +3322,15 @@ class DatabaseCommandInterpreter {
     private void processRoleGrantOrRevoke(boolean grant)
     throws HsqlException {
 
-        String        token;
-        HsqlArrayList list = new HsqlArrayList();
-        String        role;
-        RoleManager   roleManager = database.getRoleManager();
+        String         token;
+        HsqlArrayList  list = new HsqlArrayList();
+        String         role;
+        GranteeManager granteeManager = database.getGranteeManager();
 
         do {
             role = tokenizer.getSimpleToken();
 
-            Trace.check(roleManager.exists(role),
+            Trace.check(granteeManager.isRole(role),
                         (grant ? Trace.NO_SUCH_ROLE_GRANT
                                : Trace.NO_SUCH_ROLE_REVOKE));
             list.add(role);
@@ -3341,8 +3340,6 @@ class DatabaseCommandInterpreter {
                                 : Token.T_FROM);
 
         token = getUserIdentifier();
-
-        GranteeManager.verifyNotReserved(token);
 
         GranteeManager gm = database.getGranteeManager();
 

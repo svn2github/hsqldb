@@ -101,11 +101,11 @@ class Like {
      * @param s
      * @param ignorecase
      */
-    void setParams(String s, boolean ignorecase) {
+    void setParams(Session session, String s, boolean ignorecase) {
 
         isIgnoreCase = ignorecase;
 
-        normalize(s, true);
+        normalize(session, s);
 
         optimised = true;
     }
@@ -113,8 +113,8 @@ class Like {
     /**
      * Resets the search pattern;
      */
-    void resetPattern(String s) {
-        normalize(s, true);
+    void resetPattern(Session session, String s) {
+        normalize(session, s);
     }
 
     private String getStartsWith() {
@@ -154,7 +154,7 @@ class Like {
         String s = o.toString();
 
         if (isIgnoreCase) {
-            s = s.toUpperCase();
+            s = session.database.collation.toUpperCase(s);
         }
 
         return compareAt(s, 0, 0, s.length()) ? Boolean.TRUE
@@ -221,12 +221,12 @@ class Like {
      * @param pattern
      * @param b
      */
-    private void normalize(String pattern, boolean b) {
+    private void normalize(Session session, String pattern) {
 
         isNull = pattern == null;
 
         if (!isNull && isIgnoreCase) {
-            pattern = pattern.toUpperCase();
+            pattern = session.database.collation.toUpperCase(pattern);
         }
 
         iLen           = 0;
@@ -245,8 +245,7 @@ class Like {
             char c = pattern.charAt(i);
 
             if (bEscaping == false) {
-                if (b && (escapeChar != null
-                          && escapeChar.charValue() == c)) {
+                if (escapeChar != null && escapeChar.charValue() == c) {
                     bEscaping = true;
 
                     continue;

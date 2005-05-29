@@ -47,6 +47,8 @@ import java.sql.Savepoint;
 import java.util.Map;
 
 //#endif JAVA2
+import java.util.Locale;
+
 import org.hsqldb.DatabaseManager;
 import org.hsqldb.HSQLClientConnection;
 import org.hsqldb.HTTPClientConnection;
@@ -2416,8 +2418,8 @@ public class jdbcConnection implements Connection {
             password = "";
         }
 
-        user     = user.toUpperCase();
-        password = password.toUpperCase();
+        user     = user.toUpperCase(Locale.ENGLISH);
+        password = password.toUpperCase(Locale.ENGLISH);
 
         try {
             if (connType == DatabaseManager.S_FILE

@@ -600,7 +600,6 @@ public class DataFileCache {
     }
 
     RowInputInterface getRaw(int i) throws IOException {
-
         return readObject(i);
     }
 

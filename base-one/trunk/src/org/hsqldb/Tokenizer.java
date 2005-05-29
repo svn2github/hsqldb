@@ -244,8 +244,9 @@ public class Tokenizer {
 
         getToken();
 
-        if (sToken.equals(match)) {
-            return iType != QUOTED_IDENTIFIER && iType != LONG_NAME;
+        if (sToken.equals(match) && iType != QUOTED_IDENTIFIER
+                && iType != LONG_NAME) {
+            return true;
         } else {
             back();
 

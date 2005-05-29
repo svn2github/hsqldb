@@ -1157,7 +1157,7 @@ public class Library {
             return s;
         }
 
-        s = s.toUpperCase();
+        s = s.toUpperCase(Locale.ENGLISH);
 
         int    len       = s.length();
         char[] b         = new char[] {

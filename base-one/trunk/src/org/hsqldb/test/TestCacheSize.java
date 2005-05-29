@@ -96,7 +96,7 @@ public class TestCacheSize {
     int     writeDelay    = 60;
     boolean indexZip      = false;
     boolean indexLastName = false;
-    boolean addForeignKey = true;
+    boolean addForeignKey = false;
     boolean refIntegrity  = true;
 
     // may speed up inserts when tableType=="CACHED"

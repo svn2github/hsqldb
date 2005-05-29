@@ -1242,14 +1242,14 @@
 
           <row>
             <entry>
-              <property>This is TRUE by default. If bulk data needs to be
-              loaded into the database, this property can be set FALSE for the
+              <para>This is TRUE by default. If bulk data needs to be loaded
+              into the database, this property can be set FALSE for the
               duration of bulk load operation. This allows loading data for
               related tables in any order. The property should be set TRUE
               after bulk load. If the loaded data is not guaranteed to conform
               to the referential integrity constraints, SQL queries should be
               run after loading to identify and modify any non-conforming
-              rows.</property>
+              rows.</para>
             </entry>
           </row>
         </tbody>
@@ -1445,22 +1445,22 @@
       <title id="upgrade_via_script-title">Upgrading Using the SCRIPT
       Command</title>
 
-      <para>To upgrading from 1.7.2 or 1.7.3 to 1.8.0. Simply issue the
-      SHUTDOWN SCRIPT command with the old version, then open with the new
-      version of the engine. The upgrade is then complete.</para>
+      <para>To upgrade from 1.7.2 or 1.7.3 to 1.8.0, simply issue the SHUTDOWN
+      SCRIPT command with the old version, then open with the new version of
+      the engine. The upgrade is then complete.</para>
 
       <para>To upgrade from older version database files that do not contain
       CACHED tables, simple SHUTDOWN with the older version and open with the
       new version. If there is any error in the .script file, try again after
       editing the .script file.</para>
 
-      <para>To upgrade from older version, use the SCRIPT procedure. In all
-      versions of HSQLDB and Hypersonic 1.43, the <literal>SCRIPT
-      'filename'</literal> command (used as an SQL query) allows you to save a
-      full record of your database, including database object definitions and
-      data, to a file of your choice. You can export a script file using the
-      old version of the database engine and open the script as a database
-      with 1.8.0.</para>
+      <para>To upgrade from older version database files that contain CACHED
+      tables, use the SCRIPT procedure. In all versions of HSQLDB and
+      Hypersonic 1.43, the <literal>SCRIPT 'filename'</literal> command (used
+      as an SQL query) allows you to save a full record of your database,
+      including database object definitions and data, to a file of your
+      choice. You can export a script file using the old version of the
+      database engine and open the script as a database with 1.8.0.</para>
 
       <procedure>
         <title>Upgrade Using SCRIPT procedure</title>

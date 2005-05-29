@@ -73,6 +73,7 @@ import org.hsqldb.lib.HsqlArrayList;
 // fredt@users 20020320 - doc 1.7.0 - update
 // fredt@users 20021103 - patch 1.7.2 - allow for drop table, etc.
 // fredt@users 20030613 - patch 1.7.2 - simplified data structures and reporting
+// unsaved@users - patch 1.8.0 moved right managament to new classes
 
 /**
  *
@@ -95,15 +96,6 @@ class UserManager implements GrantConstants {
     User sysUser = null;
 
     /**
-     * The role name reserved for authorization of INFORMATION_SCHEMA and
-     * system objects.
-     */
-    static final String SYSTEM_AUTHORIZATION_NAME = "_SYSTEM";
-
-    /** The role name reserved for the special PUBLIC pseudo-user. */
-    static final String PUBLIC_USER_NAME = "PUBLIC";
-
-    /**
      * This object's set of User objects. <p>
      *
      * Note: The special _SYSTEM  role
@@ -124,14 +116,14 @@ class UserManager implements GrantConstants {
         granteeManager = database.getGranteeManager();
         uUser          = new HashMappedList();
 
-        createUser(PUBLIC_USER_NAME, null);
+        createUser(GranteeManager.PUBLIC_USER_NAME, null);
 
-        sysUser = createUser(SYSTEM_AUTHORIZATION_NAME, null);
+        sysUser = createUser(GranteeManager.SYSTEM_AUTHORIZATION_NAME, null);
 
         // Don't know whether to grant ADMIN to SYS directly, or to grant
         // role DBA.  The former seems safer as it doesn't depend on any role.
         //granteeManager.grant(SYSTEM_AUTHORIZATION_NAME, RoleManager.ADMIN_ROLE_NAME);
-        sysUser.getGrantee().setAdmin(true);
+        sysUser.getGrantee().setAdminDirect();
     }
 
     private GranteeManager granteeManager;
@@ -165,14 +157,11 @@ class UserManager implements GrantConstants {
         // -------------------------------------------------------
         // This will throw an appropriate Trace if grantee already exists,
         // regardless of whether the name is in any User, Role, etc. list.
-        Grantee g = granteeManager.addGrantee(
-            name,
-            ((!SYSTEM_AUTHORIZATION_NAME.equals(name))
-             && (!PUBLIC_USER_NAME.equals(name))));
-        User u = new User(name, password, g);
+        Grantee g = granteeManager.addGrantee(name);
+        User    u = new User(name, password, g);
 
         // ONLY!! SYSTEM_AUTHORIZATION_NAME is not stored in our User list.
-        if (SYSTEM_AUTHORIZATION_NAME.equals(name)) {
+        if (GranteeManager.SYSTEM_AUTHORIZATION_NAME.equals(name)) {
             return u;
         }
 
@@ -202,15 +191,13 @@ class UserManager implements GrantConstants {
      */
     void dropUser(String name) throws HsqlException {
 
-        // dropUser of SYSTEM_AUTHORIZATION_NAME could never succeed fully,
-        // since the uUser.remove will fail, but we still need to prevent
-        // removing grants before user.remove() fails.
-        boolean reservedUser = name.equals(PUBLIC_USER_NAME)
-                               || name.equals(SYSTEM_AUTHORIZATION_NAME);
+        boolean reservedUser = GranteeManager.isReserved(name);
 
         Trace.check(!reservedUser, Trace.NONMOD_ACCOUNT, name);
-        Trace.check(granteeManager.removeGrantee(name),
-                    Trace.NO_SUCH_GRANTEE, name);
+
+        boolean result = granteeManager.removeGrantee(name);
+
+        Trace.check(result, Trace.NO_SUCH_GRANTEE, name);
 
         User u = (User) uUser.remove(name);
 
@@ -233,7 +220,9 @@ class UserManager implements GrantConstants {
 
         // Don't have to worry about SYSTEM_AUTHORIZATION_NAME, since get()
         // will fail below (because it's not in the list).
-        Trace.check(!name.equals(PUBLIC_USER_NAME), Trace.ACCESS_IS_DENIED);
+        if (name.equals(GranteeManager.PUBLIC_USER_NAME)) {
+            throw Trace.error(Trace.ACCESS_IS_DENIED);
+        }
 
         name     = name.toUpperCase();
         password = password.toUpperCase();
@@ -320,7 +309,7 @@ class UserManager implements GrantConstants {
 
             userName = user.getName();
 
-            if (PUBLIC_USER_NAME.equals(userName)) {
+            if (GranteeManager.PUBLIC_USER_NAME.equals(userName)) {
                 if (andPublicUser) {
                     list.add(user);
                 }
@@ -364,7 +353,7 @@ class UserManager implements GrantConstants {
         if (sysUser == null) {
             Trace.doAssert(false,
                            Trace.getMessage(Trace.MISSING_SYSAUTH) + ": "
-                           + SYSTEM_AUTHORIZATION_NAME);
+                           + GranteeManager.SYSTEM_AUTHORIZATION_NAME);
         }
 
         return sysUser;

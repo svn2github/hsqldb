@@ -76,6 +76,7 @@ import org.hsqldb.lib.IntValueHashMap;
 // permissions held in User objects.
 // boucherb@users 200208-200212 - doc 1.7.2 - update
 // boucherb@users 200208-200212 - patch 1.7.2 - metadata
+// unsaved@users - patch 1.8.0 moved right managament to new classes
 
 /**
  * A User Object holds the name, password for a
@@ -108,10 +109,8 @@ public class User {
         sName   = name;
         grantee = inGrantee;
 
-        boolean granteeOk =
-            (grantee != null
-             || name.equals(UserManager.SYSTEM_AUTHORIZATION_NAME)
-             || name.equals(UserManager.PUBLIC_USER_NAME));
+        boolean granteeOk = grantee != null
+                            || GranteeManager.isReserved(name);
 
         if (!granteeOk) {
             Trace.doAssert(false,
@@ -121,8 +120,8 @@ public class User {
 
         setPassword(password);
 
-        isSys    = name.equals(UserManager.SYSTEM_AUTHORIZATION_NAME);
-        isPublic = name.equals(UserManager.PUBLIC_USER_NAME);
+        isSys    = name.equals(GranteeManager.SYSTEM_AUTHORIZATION_NAME);
+        isPublic = name.equals(GranteeManager.PUBLIC_USER_NAME);
     }
 
     String getName() {

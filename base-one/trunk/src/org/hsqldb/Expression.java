@@ -2401,7 +2401,7 @@ public class Expression {
         boolean ignoreCase = eArg.dataType == Types.VARCHAR_IGNORECASE
                              || eArg2.dataType == Types.VARCHAR_IGNORECASE;
 
-        likeObject.setParams(likeStr, ignoreCase);
+        likeObject.setParams(session, likeStr, ignoreCase);
 
         if (!isRightArgFixedConstant) {
 
@@ -3009,7 +3009,7 @@ public class Expression {
                     Types.VARCHAR);
 
                 if (eArg2.isParam || eArg2.exprType != VALUE) {
-                    likeObject.resetPattern(s);
+                    likeObject.resetPattern(session, s);
                 }
 
                 String c = (String) Column.convertObject(leftValue,
@@ -3344,7 +3344,7 @@ public class Expression {
                 String s = (String) eArg2.getValue(session, Types.VARCHAR);
 
                 if (eArg2.isParam || eArg2.exprType != VALUE) {
-                    likeObject.resetPattern(s);
+                    likeObject.resetPattern(session, s);
                 }
 
                 String c = (String) eArg.getValue(session, Types.VARCHAR);

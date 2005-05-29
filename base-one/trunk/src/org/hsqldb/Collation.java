@@ -140,6 +140,11 @@ public class Collation {
 
     String   name;
     Collator collator;
+    Locale   locale;
+
+    public Collation() {
+        locale = Locale.ENGLISH;
+    }
 
     public org.hsqldb.lib.Iterator getCollationsIterator() {
         return nameToJavaName.keySet().iterator();
@@ -173,9 +178,9 @@ public class Collation {
         String   language = parts[0];
         String   country  = parts.length == 2 ? parts[1]
                                               : "";
-        Locale   l        = new Locale(language, country);
 
-        collator = Collator.getInstance(l);
+        locale   = new Locale(language, country);
+        collator = Collator.getInstance(locale);
     }
 
     /**
@@ -194,5 +199,24 @@ public class Collation {
         return (i == 0) ? 0
                         : (i < 0 ? -1
                                  : 1);
+    }
+
+    int compareIgnoreCase(String a, String b) {
+
+        int i;
+
+        if (collator == null) {
+            i = a.compareToIgnoreCase(b);
+        } else {
+            i = collator.compare(toUpperCase(a), toUpperCase(b));
+        }
+
+        return (i == 0) ? 0
+                        : (i < 0 ? -1
+                                 : 1);
+    }
+
+    String toUpperCase(String s) {
+        return s.toUpperCase(locale);
     }
 }
