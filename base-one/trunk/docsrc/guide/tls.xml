@@ -1,4 +1,4 @@
-<!-- $Id: tls.xml,v 1.12 2004/06/08 13:04:25 unsaved Exp $ -->
+<!-- $Id: tls.xml,v 1.13 2005/05/12 21:40:16 unsaved Exp $ -->
 
 <chapter id='tls-chapter'>
     <title id='tls-title'>TLS</title>
@@ -13,8 +13,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.12 $</edition>
-        <pubdate>$Date: 2004/06/08 13:04:25 $</pubdate>
+        <edition>$Revision: 1.13 $</edition>
+        <pubdate>$Date: 2005/05/12 21:40:16 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>TLS</keyword>
@@ -232,7 +232,7 @@
             <ulink url="http://java.sun.com/products/jsse/index-103.html"/>.
             If you agree to the terms and meet the requirements, download the 
             domestic or global JSSE software.
-            All you from the software is the three jar files.
+            All you need from the software distro is the three jar files.
             If you have a JDK installation, then move the 3 jar files into the 
             directory <filename>$JAVA_HOME/jre/lib/ext</filename>.
             If you have a JRE installation, then move the 3 jar files into the 
