@@ -1,4 +1,4 @@
-<!-- $Id: unix.xml,v 1.27 2004/07/16 05:08:48 unsaved Exp $ -->
+<!-- $Id: unix.xml,v 1.28 2004/07/16 13:13:07 unsaved Exp $ -->
 
 <chapter id='unix-chapter'>
     <title id='unix-title'>UNIX Quick Start</title>
@@ -13,8 +13,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.27 $</edition>
-        <pubdate>$Date: 2004/07/16 05:08:48 $</pubdate>
+        <edition>$Revision: 1.28 $</edition>
+        <pubdate>$Date: 2004/07/16 13:13:07 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>UNIX</keyword>
@@ -26,7 +26,7 @@
         <title>Purpose</title>
         <simpara>
             This chapter explains how to quickly install, run, and
-            use HSQLDB version 1.7.2 on UNIX.
+            use HSQLDB on UNIX.
         </simpara><simpara>
             HSQLDB has lots of great optional features.
             I intend to cover very few of them.
@@ -34,7 +34,7 @@
             To run a multi-user database with permament data persistence.
             (By the latter I mean that data is stored to disk so that the
             data will persist across database shutdowns and startups).
-            I also cover how to run Hsqldb as a system daemon.
+            I also cover how to run HSQLDB as a system daemon.
         </simpara>
     </section>
 
@@ -43,33 +43,24 @@
         <simpara>
             Go to <ulink url="http://sourceforge.net/projects/hsqldb"/>
             and click on the "files" link.
-            Look for "hsqldb_1_7_2" under lower-case "hsqldb".
-            Click on "show only this release" link right after "hsqldb_1_7_2".
+            You want the current version.  This will be the highest
+            numbered version under the plain black "hsqldb" heading.
+            See if there's a distribution for the current HSQLDB version in
+            the format that you want.
         </simpara> <simpara>
-            Click the "hsqldb_1_7_2" link to find out what version of Java
-            this binary HSQLDB distribution was built with.
-            Don't hold me to it, but if you get your distro from us at
-            SourceForge, it will probably be built with Java 1.4.
-            Choose a binary package format that will work with your UNIX
-            variant and which supports your Java version.
-            Otherwise choose the hsqldb_1_7_2.zip file.
-            Click the filename to download it.
-            (If you have an older version of Java and there's nothing 
-            preventing you from upgrading it, you'll probably be happier in
-            the end if you upgrade Java rather than downgrading HSQLDB).
-        </simpara> <simpara>
-            If you want an rpm, then click "hsqldb" in the "free section" of
-            <ulink url='http://www.jpackage.org/'/>.
+            If you want an rpm, you should still find out the current
+            version of HSQLDB as described in the previous paragraph.
+            Then click "hsqldb" in the "free section" of
+            <ulink url='http://www.jpackage.org/'/> and see if they have
+            the current HSQLDB version built yet.
             Hopefully, the JPackage folk will document what JVM versions their
             rpm will support (currently they document this neither on their
             site nor within the package itself).
-            Download the package you want, making sure that you get version
-            1.7.2 of HSQLDB.
             (I really can't document how to download from a site that is
             totally beyond my control).
         </simpara> <note><simpara>
             It could very well happen that some of the file formats which I
-            discuss here are not in fact offered.
+            discuss below are not in fact offered.
             If so, then we have not gotten around to building them.
         </simpara></note> <simpara>
             Binary installation depends on the package format that you 
@@ -88,7 +79,7 @@
             </informalexample>
                 Run pkgadd as root to install.
             </para><informalexample><screen>
-    pkgadd filename.pkg</screen>
+    pkgadd -d filename.pkg</screen>
         </informalexample></listitem></varlistentry>
         <varlistentry><term>Installing from a .rpm file</term><listitem><para>
             This is a Linux rpm package.
@@ -101,6 +92,9 @@
     rpm -Uvh /path/to/file.rpm</screen>
                 </informalexample>
                 as root.
+                Suse users may want to keep Yast aware of installed packages by
+                running rpm through Yast:
+                <literal>yast2 -i /path/to/file.rpm</literal>.
             </para>
         </listitem></varlistentry>
         <varlistentry><term>Installing from a .zip file</term><listitem><simpara>
@@ -194,7 +188,7 @@
                 search path.
                 Run the following command.
                 <informalexample><screen>
-    ant jar</screen>
+    ant hsqldb</screen>
                 </informalexample>
                 This will build a new
 <emphasis role='bold'>HSQLDB_HOME</emphasis><filename>/lib/hsqldb.jar</filename>.
@@ -360,28 +354,30 @@
             HSQLDB accounts are database-instance-specific, not 
             <classname>Server</classname>-specific.
         </simpara> <simpara>
-            There are two classes of database accounts, Admin accounts and
-            non-Admin accounts.
-            Admins have privileges to do anything, non-Admins may be granted 
-            some privileges, but may never create or own database objects.
+            For the current version of HSQLDB, only users with Role of
+            <literal>DBA</literal> may create or own database objects.
+            DBA members have privileges to do anything.  Non-DBAs may be 
+            granted some privileges, but may never create or own database 
+            objects.
+            (Before long, non-DBAs will be able to create objects if they
+            have permission to do so in the target schema).
             When you first create a hsqldb database, it has only one database 
-            user-- SA, an Admin account, with no password set.
+            user-- SA, a DBA account, with an empty string password.
             You should set a password (as described above).
-            You can create as many additional Admin users as you wish.
-            Each Admin user has a unique user name (and optional password), but 
-            these accounts are otherwise indistinguishable.
-            These accounts are created by appending the keyword "ADMIN" to the 
-            <link linkend='create_user-section'>CREATE USER</link> command.
+            You can create as many additional users as you wish.
+            To make a user a DBA, you can use the "ADMIN" option to the 
+            <link linkend='create_user-section'>CREATE USER</link> command,
+            or GRANT the DBA Role to the account after creating it.
         </simpara> <simpara>
-            If you create a user without the ADMIN tag, it will be a Non-Admin 
-            account.
-            These users can not create or own objects, and, by default, they 
-            can't use any database objects.
-            The user will then be able to perform operations which have been 
-            granted to the pseudo-user PUBLIC.
-            To give the user additional privileges (even the privilege to read 
-            data), an Admin user must grant those rights to the user (or to 
-            PUBLIC).
+            If you create a user without the ADMIN tag (and without granting
+            the DBA role to them) this user will be able to read the data
+            dictionary tables, but will be able unable to create or own his
+            own objects.
+            He will have only the rights which the pseudo-user PUBLIC has.
+            To give him more permissions, even rights to read objects,
+            you can GRANT permissions for specific objects, grant Roles
+            (which encompass a set of permissions), or grant the DBA Role
+            itself.
         </simpara> <simpara>
             Since only people with a database account may do anything at all 
             with the database, it is often useful to permit other database 
@@ -402,7 +398,7 @@
             You need to connect up as SA or some other Admin user, of course.
             With SqlTool, you can run
         <informalexample><screen>
-    java -jar path/to/hsqldb.jar --noinput --sql 'shutdown;' localhost-sa</screen>
+    java -jar path/to/hsqldb.jar --noinput --sql shutdown localhost-sa</screen>
     </informalexample>
         You don't have to worry about stopping the
         <classname>Server</classname> because it shuts down automatically when 
@@ -459,6 +455,14 @@
         </section>
         <section>
             <title>Init script Setup Procedure</title>
+            <simpara>
+                The strategy taken here is to get the init script to run your
+                single Server or WebServer first (as specified by TARGET_CLASS).
+                After that's working, you can customize the JVM that is run
+                by running additional Servers in it, running your own
+                application in it (embedding), or even overriding HSQLDB
+                behavior with your own overriding classes.
+            </simpara>
             <procedure>
             <step><simpara>
                 Copy the init script <filename>hsqldb</filename> from
@@ -583,6 +587,12 @@
                 down your Mac.
             </para></step>
             </procedure>
+            <simpara>
+                Follow the examples in the config file to add additional
+                classes to the server JVM's classpath and to execute
+                additional classes in your JVM.
+                (See the SERVER_ADDL_CLASSPATH and INVOC_ADDL_ARGS items).
+            </simpara>
         </section>
         <section id='initscriptTrouble-section'>
             <title id='initscriptTrouble-section-title'>
