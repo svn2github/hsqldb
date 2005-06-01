@@ -41,7 +41,7 @@ import java.lang.reflect.InvocationTargetException;
  *
  * @author   Blaine Simpson, unsaved@users.sourceforge.net
  * @since    HSQLDB 1.8.0
- * @version  $Revision$
+ * @version  $Revision: 1.1 $
  */
 public class MainInvoker {
     /*
@@ -61,6 +61,13 @@ public class MainInvoker {
      * Invokes the static main(String[]) method from each specified class.
      * This method <b>will System.exit()</b> if any invocation fails.
      *
+     * Note that multiple class invocations are delimited by empty-string
+     * parameters.  How the user supplies these empty strings is determined
+     * entirely by the caller's environment.  From Windows this can 
+     * generally be accomplished with double-quotes like "".  From all
+     * popular UNIX shells, this can be accomplished with single or 
+     * double-quotes:  '' or "".
+     *
      * @param sa Run java org.hsqldb.util.MainInvoker --help for syntax help
      */
     static public void main(String[] sa) {
@@ -74,7 +81,7 @@ public class MainInvoker {
 
         try {
             while (++curInArg < sa.length) {
-                if (sa[curInArg].equals("--")) {
+                if (sa[curInArg].length() < 1) {
                     if (outList.size() < 1) {
                         syntaxFailure();
                     }
@@ -98,11 +105,11 @@ public class MainInvoker {
 
     static private final String SYNTAX_MSG =
         "    java org.hsqldb.util.MainInvoker "
-        + "[package1.Class1 [arg1a arg1b... --]]... \\\n"
+        + "[package1.Class1 [arg1a arg1b...] \"\"]... \\\n"
         + "    packageX.ClassX [argXa argXb...]\nOR\n"
         + "    java org.hsqldb.util.MainInvoker --help\n\n"
-        + "Note that you CAN NOT pass parameter \"--\" to any class,\n"
-        + "and you can only invoke classes in 'named' (non-default) packages.";
+        + "Note that you can only invoke classes in 'named' (non-default) "
+        + "packages.  Delimit multiple classes with empty strings.";
 
     /**
      * Invokes the static main(String[]) method from each specified class.
