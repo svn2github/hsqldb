@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: sqlsyntax.xml,v 1.28 2005/05/26 06:48:09 fredt Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.29 2005/05/26 15:01:26 fredt Exp $ -->
 <chapter id="sqlsyntax-chapter">
   <title id="sqlsyntax-title">SQL Syntax</title>
 
@@ -54,9 +54,9 @@
       </editor>
     </authorgroup>
 
-    <edition>$Revision: 1.28 $</edition>
+    <edition>$Revision: 1.29 $</edition>
 
-    <pubdate>$Date: 2005/05/26 06:48:09 $</pubdate>
+    <pubdate>$Date: 2005/05/26 15:01:26 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -184,7 +184,7 @@ ALTER SCHEMA &lt;schemaname&gt; RENAME TO &lt;newname&gt;;</programlisting>
 
       <para>This form of ALTER TABLE ALTER COLUMN accepts a <link
       endterm="columnDef-title" linkend="columnDef-entry" /> as in a CREATE
-      TABLE command, with the following restrictions. </para>
+      TABLE command, with the following restrictions.</para>
 
       <itemizedlist>
         <title>Restrictions</title>
@@ -260,7 +260,8 @@ ALTER SCHEMA &lt;schemaname&gt; RENAME TO &lt;newname&gt;;</programlisting>
 
       <programlisting>ALTER USER &lt;username&gt; SET PASSWORD &lt;password&gt;;</programlisting>
 
-      <para>Changes the password for an existing user.</para>
+      <para>Changes the password for an existing user. Password must be double
+      quoted. Use "" for an empty password.</para>
 
       <para>Only an administrator can do this.</para>
     </section>
@@ -314,8 +315,8 @@ ALTER SCHEMA &lt;schemaname&gt; RENAME TO &lt;newname&gt;;</programlisting>
 
       <programlisting>CONNECT USER &lt;username&gt; PASSWORD &lt;password&gt;;</programlisting>
 
-      <para>Connects to the database as a different user. Use "" for an empty
-      password.</para>
+      <para>Connects to the database as a different user. Password should be
+      double quoted. Use "" for an empty password.</para>
 
       <para>See also: <link endterm="grant-title" linkend="grant-section" />,
       <link endterm="revoke-title" linkend="revoke-section" />.</para>
@@ -630,12 +631,12 @@ ALTER SCHEMA &lt;schemaname&gt; RENAME TO &lt;newname&gt;;</programlisting>
     <section id="create_user-section">
       <title id="create_user-title">CREATE USER</title>
 
-      <programlisting>CREATE USER username PASSWORD password [ADMIN];</programlisting>
+      <programlisting>CREATE USER &lt;username&gt; PASSWORD &lt;password&gt; [ADMIN];</programlisting>
 
-      <para>Creates a new user or new administrator in this database. Empty
-      password can be made using "". You can change a password afterward using
-      an <link endterm="alter_user-title" linkend="alter_user-section" />
-      command.</para>
+      <para>Creates a new user or new administrator in this database. Password
+      must be double quoted. Empty password can be made using "". You can
+      change a password afterwards using a <link endterm="alter_user-title"
+      linkend="alter_user-section" /> command.</para>
 
       <para>Only an administrator can do this.</para>
 
@@ -652,7 +653,7 @@ ALTER SCHEMA &lt;schemaname&gt; RENAME TO &lt;newname&gt;;</programlisting>
 
       <programlisting>CREATE VIEW &lt;viewname&gt;[(&lt;viewcolumn&gt;,..) AS SELECT ... FROM ... [WHERE Expression];
 [ORDER BY orderExpression [, ...]]
-[LIMIT l [OFFSET 0]];</programlisting>
+[LIMIT &lt;limit&gt; [OFFSET &lt;offset&gt;]];</programlisting>
 
       <para>A view can be thought of as either a virtual table or a stored
       query. The data accessible through a view is not stored in the database
@@ -988,9 +989,9 @@ ON { table | CLASS "package.class" } FROM &lt;grantee&gt;;</programlisting>
       <title id="select-title">SELECT<footnoteref
       linkend="posthyper" /></title>
 
-      <programlisting>SELECT [{LIMIT n m | TOP m}<footnoteref
+      <programlisting>SELECT [{LIMIT &lt;offset&gt; &lt;limit&gt; | TOP &lt;limit&gt;}<footnoteref
           linkend="posthyper" />][ALL | DISTINCT]
-{ selectExpression | table.* | * } [, ...]
+{ &lt;selectExpression&gt; | table.* | * } [, ...]
 [INTO [CACHED | TEMP  | TEXT]<footnoteref linkend="posthyper" /> newTable]
 FROM tableList
 [WHERE <link linkend="expression-section">Expression</link>]
@@ -998,7 +999,7 @@ FROM tableList
 [HAVING Expression]
 [{ UNION [ALL | DISTINCT] | {MINUS [DISTINCT] | EXCEPT [DISTINCT] } | INTERSECT [DISTINCT] } selectStatement]
 [ORDER BY orderExpression [, ...]]
-[LIMIT m [OFFSET n]];</programlisting>
+[LIMIT &lt;limit&gt; [OFFSET &lt;offset&gt;]];</programlisting>
 
       <para>Retrieves information from one or more tables in the
       database.</para>
@@ -1131,14 +1132,14 @@ FROM tableList
       command has been issued, the database can be opened in any JVM and will
       retain its collation.</para>
 
-      <para> Once this command has been issued, the database can be opened in
+      <para>Once this command has been issued, the database can be opened in
       any JVM and will retain its collation.</para>
     </section>
 
     <section>
       <title>SET CHECKPOINT DEFRAG<footnoteref linkend="posthyper" /></title>
 
-      <programlisting>SET CHECKPOINT DEFRAG size;</programlisting>
+      <programlisting>SET CHECKPOINT DEFRAG &lt;size&gt;;</programlisting>
 
       <para>The parameter <literal>size</literal> is the megabytes of
       abandoned space in the .data file. When a CHECKPOINT is performed either
@@ -1169,7 +1170,7 @@ FROM tableList
     <section id="set_logsize-section">
       <title id="set_logsize-title">SET LOGSIZE</title>
 
-      <programlisting>SET LOGSIZE size;</programlisting>
+      <programlisting>SET LOGSIZE &lt;size&gt;;</programlisting>
 
       <para>Sets the maximum size in MB of the .log file. Default is 200 MB.
       The database will be closed and opened (just like using CHECKPOINT) if
@@ -1183,10 +1184,10 @@ FROM tableList
     <section id="set_password-section">
       <title id="set_password-title">SET PASSWORD</title>
 
-      <programlisting>SET PASSWORD password;</programlisting>
+      <programlisting>SET PASSWORD &lt;password&gt;;</programlisting>
 
-      <para>Changes the password of the currently connected user. Empty
-      password can be set using "".</para>
+      <para>Changes the password of the currently connected user. Password
+      must be double quotedEmpty password can be set using "".</para>
     </section>
 
     <section id="set_property-section">
@@ -2594,7 +2595,8 @@ FROM tableList
         <listitem>
           <programlisting> 
   { value [|| value]
-  | value { = | &lt; | &lt;= | &gt; | &gt;= | &lt;&gt; | != | IS [NOT] } value
+  | value { = | &lt; | &lt;= | &gt; | &gt;= | &lt;&gt; | != } value
+  | value IS [NOT] NULL
   | EXISTS(selectStatement)
   | value BETWEEN value AND value
   | value [NOT] IN ( {value [, ...] | selectStatement } )
@@ -2611,7 +2613,7 @@ FROM tableList
   | ( condition )
   | function ( [parameter] [,...] )
   | selectStatement giving one value
-  | {ANY|ALL} (selectStatement)</programlisting>
+  | {ANY|ALL} (selectStatement giving single column)</programlisting>
         </listitem>
       </varlistentry>
 
@@ -2733,6 +2735,16 @@ FROM tableList
           <para>Please also note that the JDBC getXXX(String columnName)
           methods interpret the columnName as case-independent. This is a
           general feature of JDBC and not specific to HSQLDB.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>password</term>
+
+        <listitem>
+          <para>Passwords must be double quoted and used consistently.
+          Passwords are case insensitive only for backward compatibility. This
+          may change in future versions.</para>
         </listitem>
       </varlistentry>
 
