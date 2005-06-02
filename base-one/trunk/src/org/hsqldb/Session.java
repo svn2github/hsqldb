@@ -101,7 +101,7 @@ import org.hsqldb.store.ValuePool;
  *  set to null. But the session id and scripting mode may still be used for
  *  scripting
  *
- * @version  1.7.2
+ * @version  1.8.0
  */
 public class Session implements SessionInterface {
 
@@ -141,7 +141,7 @@ public class Session implements SessionInterface {
     boolean isProcessingScript;
     boolean isProcessingLog;
 
-    // temp tables
+    // two types of temp tables
     private IntKeyHashMap indexArrayMap;
     private IntKeyHashMap indexArrayKeepMap;
 
@@ -581,7 +581,7 @@ public class Session implements SessionInterface {
         isNestedTransaction = false;
 
         if (isAutoCommit == true) {
-            transactionList.clear();
+            database.txManager.commit(this);
         }
     }
 
@@ -1478,17 +1478,21 @@ public class Session implements SessionInterface {
     /**
      * get the root for a temp table index
      */
-    Node getIndexRoot(HsqlName index) {
+    Node getIndexRoot(HsqlName index, boolean preserve) {
 
         if (indexArrayMap == null) {
             return null;
         }
 
-        Node node = (Node) indexArrayMap.get(index.hashCode());
+        Node node = preserve ? (Node) indexArrayKeepMap.get(index.hashCode())
+                             : (Node) indexArrayMap.get(index.hashCode());
 
         return node;
     }
 
+    /**
+     * set the root for a temp table index
+     */
     void setIndexRoot(HsqlName index, boolean preserve, Node root) {
 
         if (preserve) {
@@ -1526,7 +1530,7 @@ public class Session implements SessionInterface {
     }
 
     /**
-     *
+     * clear default temp table contents for this session
      */
     void clearIndexRoots() {
 
@@ -1535,6 +1539,9 @@ public class Session implements SessionInterface {
         }
     }
 
+    /**
+     * clear ON COMMIT PRESERVE temp table contents for this session
+     */
     void clearIndexRootsKeep() {
 
         if (indexArrayKeepMap != null) {

@@ -460,11 +460,8 @@ public class DataFileCache {
 
     /**
      * Used when a row is deleted as a result of some DML or DDL command.
+     * Removes the row from the cache data structures.
      * Adds the file space for the row to the list of free positions.
-     * If there exists more than MAX_FREE_COUNT free positions,
-     * then they are probably all too small, so we start a new list. <p>
-     * todo: This is wrong when deleting lots of records <p>
-     * Then remove the row from the cache data structures.
      */
     public void remove(int i, PersistentStore store) throws HsqlException {
 

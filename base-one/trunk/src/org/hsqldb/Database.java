@@ -287,13 +287,10 @@ public class Database {
             sysUser               = userManager.getSysUser();
             sessionManager        = new SessionManager(this, sysUser);
             txManager             = new TransactionManager();
+            collation             = new Collation();
+            dbInfo = DatabaseInformation.newDatabaseInformation(this);
 
-            txManager.setReWriteProtection(
-                databaseProperties.isPropertyTrue(
-                    HsqlDatabaseProperties.sql_tx_no_multi_write));
-
-            collation = new Collation();
-            dbInfo    = DatabaseInformation.newDatabaseInformation(this);
+            databaseProperties.setDatabaseVariables();
 
             if (sType != DatabaseManager.S_MEM) {
                 logger.openLog(this);

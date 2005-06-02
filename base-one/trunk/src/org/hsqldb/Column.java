@@ -1627,16 +1627,21 @@ public class Column {
      */
     static Double convertToDouble(Object o) throws HsqlException {
 
-        double val = ((Number) o).doubleValue();
+        double val;
 
         if (o instanceof BigDecimal) {
-            BigDecimal bd     = (BigDecimal) o;
+            BigDecimal bd = (BigDecimal) o;
+
+            val = bd.doubleValue();
+
             int        signum = bd.signum();
             BigDecimal bo     = new BigDecimal(val + signum);
 
             if (bo.compareTo(bd) != signum) {
                 throw Trace.error(Trace.NUMERIC_VALUE_OUT_OF_RANGE);
             }
+        } else {
+            val = ((Number) o).doubleValue();
         }
 
         return ValuePool.getDouble(Double.doubleToLongBits(val));

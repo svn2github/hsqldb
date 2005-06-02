@@ -2143,6 +2143,7 @@ class DatabaseCommandInterpreter {
                 }
 
                 p.setProperty(token, value.toString().toLowerCase());
+                p.setDatabaseVariables();
 
                 break;
             }

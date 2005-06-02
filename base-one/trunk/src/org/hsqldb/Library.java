@@ -1316,7 +1316,7 @@ public class Library {
      *
      * @return a date value representing the current date
      */
-    public static java.sql.Date curdate(Connection c) {
+    public static Date curdate(Connection c) {
         return null;
     }
 

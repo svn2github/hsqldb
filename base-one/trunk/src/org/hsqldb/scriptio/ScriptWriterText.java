@@ -274,4 +274,8 @@ public class ScriptWriterText extends ScriptWriterBase {
             sync();
         }
     }
+
+    protected void finalize() {
+        sync();
+    }
 }

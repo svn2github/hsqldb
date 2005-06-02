@@ -42,7 +42,7 @@ import org.hsqldb.lib.LongKeyIntValueHashMap;
  * @version  1.8.0
  * @since 1.8.0
  */
-class TransactionManager {
+public class TransactionManager {
 
     LongKeyIntValueHashMap rowSessionMap;
     boolean                reWriteProtect;
@@ -51,7 +51,7 @@ class TransactionManager {
         rowSessionMap = new LongKeyIntValueHashMap();
     }
 
-    void setReWriteProtection(boolean value) {
+    public void setReWriteProtection(boolean value) {
         reWriteProtect = value;
     }
 

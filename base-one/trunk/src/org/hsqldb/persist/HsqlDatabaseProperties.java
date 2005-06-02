@@ -289,19 +289,6 @@ public class HsqlDatabaseProperties extends HsqlProperties {
             setProperty(sql_enforce_strict_size, true);
             setProperty(hsqldb_nio_data_file, false);
         }
-
-        setSystemVariables();
-        setDatabaseVariables();
-    }
-
-    private void setSystemVariables() {
-
-        if (isPropertyTrue(sql_compare_in_locale)) {
-            stringProps.remove(sql_compare_in_locale);
-            database.collation.setCollationAsLocale();
-        }
-
-        Record.gcFrequency = getIntegerProperty(runtime_gc_interval, 0);
     }
 
     /**
@@ -344,17 +331,16 @@ public class HsqlDatabaseProperties extends HsqlProperties {
             setProperty(hsqldb_cache_version, "1.6.0");
         }
 
-        setSystemVariables();
-        setDatabaseVariables();
+        Record.gcFrequency = getIntegerProperty(runtime_gc_interval, 0);
 
         return true;
     }
 
     /**
-     * Sets the database member variables after creating the properties object
-     * of openning a properties file
+     * Sets the database member variables after creating the properties object,
+     * openning a properties file, or changing a property with a command
      */
-    private void setDatabaseVariables() {
+    public void setDatabaseVariables() {
 
         if (isPropertyTrue(db_readonly)) {
             database.setReadOnly();
@@ -367,6 +353,13 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         database.sqlEnforceStrictSize =
             isPropertyTrue(sql_enforce_strict_size);
 
+        if (isPropertyTrue(sql_compare_in_locale)) {
+            stringProps.remove(sql_compare_in_locale);
+            database.collation.setCollationAsLocale();
+        }
+
+        database.txManager.setReWriteProtection(
+            isPropertyTrue(sql_tx_no_multi_write));
         database.setMetaDirty(false);
     }
 
@@ -458,8 +451,6 @@ public class HsqlDatabaseProperties extends HsqlProperties {
     public String setProperty(String key, String value) {
 
         value = super.setProperty(key, value);
-
-        setDatabaseVariables();
 
         return value;
     }
