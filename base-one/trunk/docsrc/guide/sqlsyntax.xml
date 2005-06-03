@@ -369,14 +369,23 @@ ALTER SCHEMA &lt;schemaname&gt; RENAME TO &lt;newname&gt;;</programlisting>
     <section>
       <title>CREATE SCHEMA<footnoteref linkend="posthyper" /></title>
 
-      <programlisting>CREATE SCHEMA &lt;schemaname&gt; AUTHORIZATION DBA [&lt;createStatement&gt; [&lt;grantStatement&lt;] [...]</programlisting>
+      <programlisting>CREATE SCHEMA &lt;schemaname&gt; AUTHORIZATION DBA [&lt;createStatement&gt; [&lt;grantStatement&lt;] [...];</programlisting>
 
       <para>Creates the named schema.</para>
 
       <para>Optional (nested) CREATE and GRANT statements can be given only
-      for new objects in this new schema. Only the last nested statement can
-      be terminated with a semicolon, because the first semicolon encountered
-      after "CREATE SCHEMA" will end the CREATE SCHEMA command.</para>
+      for new objects in this new schema. Only the last nested statement
+      should be terminated with a semicolon, because the first semicolon
+      encountered after "CREATE SCHEMA" will end the CREATE SCHEMA
+      command.<informalexample>
+          <programlisting>    CREATE SCHEMA ACCOUNTS AUTHORIZATION DBA
+    CREATE TABLE AB(A INTEGER, ...)
+    CREATE TABLE CD(C CHAHR, ...)
+    CREATE VIEW VI AS SELECT ...
+    GRANT SELECT TO PUBLIC ON AB
+    GRANT SEELECT TO JOE ON CD;
+</programlisting>
+        </informalexample></para>
 
       <simpara>Requires Administrative privileges.</simpara>
     </section>
@@ -1214,7 +1223,8 @@ FROM tableList
       <warning>
         <para>Note that when referential integrity is switched back on, no
         check is made that the changes to the data are consistent with the
-        existing referential integrity constraints.</para>
+        existing referential integrity constraints. You can verify consistency
+        using SQL queries and take appropriate actions. </para>
       </warning>
 
       <para>Only an administrator may do this.</para>
@@ -1293,6 +1303,88 @@ FROM tableList
       <informalexample>
         <programlisting>    SET TABLE mytable SOURCE "myfile;fs=|;vs=.;lvs=~"</programlisting>
       </informalexample>
+
+      <variablelist>
+        <title>Supported Properties</title>
+
+        <varlistentry>
+          <term>quoted = { true | false }</term>
+
+          <listitem>
+            <para>default is true. If false, treats double quotes as normal
+            characters</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>all_quoted = { true | false }</term>
+
+          <listitem>
+            <para>default is false. If true, adds double quotes around all
+            fields.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>encoding = &lt;encoding name&gt;</term>
+
+          <listitem>
+            <para>character encoding for text and character fields, for
+            example, encoding=UTF-8</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>ignore_first = { true | false }</term>
+
+          <listitem>
+            <para>default is false. If true ignores the first line of the
+            file</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>cache_scale= &lt;numeric value&gt;</term>
+
+          <listitem>
+            <para>exponent to calculate rows of the text file in cache.
+            Default is 8, equivalent to nearly 800 rows</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>cache_size_scale = &lt;numeric value&gt;r</term>
+
+          <listitem>
+            <para>exponent to calculate average size of each row in cache.
+            Default is 8, equivalent to 256 bytes per row.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>fs = &lt;unquoted character&gt;</term>
+
+          <listitem>
+            <para>field separator</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>vs = &lt;unquoted character&gt;</term>
+
+          <listitem>
+            <para>varchar separator</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>lvs = &lt;unquoted character&gt;</term>
+
+          <listitem>
+            <para>long varchar separator</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
 
       <variablelist>
         <title>Special indicators for Hsqldb Text Table separators</title>
@@ -1380,12 +1472,15 @@ FROM tableList
 
       <programlisting>SET WRITE_DELAY {{ TRUE | FALSE } | &lt;seconds&gt;};</programlisting>
 
-      <para>This controls the frequency of file synch for the log file. When
-      WRITE_DELAY is set to FALSE or 0, the synch takes place immediately.
-      WRITE_DELAY TRUE performs the synch once 20 seconds (which is the
-      default). A numeric value can be specified instead.</para>
+      <para>This controls the frequency of file sync for the log file. When
+      WRITE_DELAY is set to FALSE or 0, the sync takes place immediately at
+      each COMMIT. WRITE_DELAY TRUE performs the sync once every 20 seconds
+      (which is the default). A numeric value can be specified instead.</para>
 
-      <para>Each time a SET WRITE_DELAY is issued with any value, a synch is
+      <para>A write delay of 0 impacts performance in high load situation, as
+      the engine has to wait for the file system to catch up.</para>
+
+      <para>Each time a SET WRITE_DELAY is issued with any value, a sync is
       immediately performed.</para>
 
       <para>Only an administrator may do this.</para>
@@ -1712,9 +1807,8 @@ FROM tableList
     scale qualifiers only for certain types: CHAR(n), VARCHAR(n), DOUBLE(n),
     DECIMAL(p,s) and TIMESTAMP(p).</para>
 
-    <para>TIMESTAMP(p) can optinally take only 0 or 6 as precision. Zero
-    indicates no subsecond part. Without the precision, the default is
-    6.</para>
+    <para>TIMESTAMP(p) can take only 0 or 6 as precision. Zero indicates no
+    subsecond part. Without the precision, the default is 6.</para>
 
     <para>By default specified precision and scale for the column is simply
     ignored by the engine. Instead, the values for the corresponding Java
@@ -1730,7 +1824,8 @@ FROM tableList
     <para>This will enforce the specified size and pad CHAR fields with spaces
     to fill the size. This complies with SQL standards by throwing an
     exception if an attempt is made to insert a string longer than the maximum
-    size.</para>
+    size. It also results in all DECIMAL values conforming to the specified
+    precision and scale.</para>
 
     <para>CHAR and VARCHAR and LONGVARCHAR columns are by default compared and
     sorted according to POSIX standards. See the <link
@@ -2475,7 +2570,7 @@ FROM tableList
       </varlistentry>
 
       <varlistentry>
-        <term>CAST(term AS type)</term>
+        <term>CAST(term AS type)<footnoteref linkend="posthyper" /></term>
 
         <listitem>
           <para>converts exp to another data type</para>
@@ -2539,7 +2634,7 @@ FROM tableList
       </varlistentry>
 
       <varlistentry>
-        <term>POSITION ... IN<footnoteref linkend="posthyper" /></term>
+        <term>POSITION (... IN ..)<footnoteref linkend="posthyper" /></term>
 
         <listitem>
           <para>
@@ -2554,7 +2649,8 @@ FROM tableList
       </varlistentry>
 
       <varlistentry>
-        <term>SUBSTRING... FROM<footnoteref linkend="posthyper" /></term>
+        <term>SUBSTRING(... FROM ... FOR ...)<footnoteref
+        linkend="posthyper" /></term>
 
         <listitem>
           <para>
@@ -2565,7 +2661,8 @@ FROM tableList
       </varlistentry>
 
       <varlistentry>
-        <term>TRIM... FROM<footnoteref linkend="posthyper" /></term>
+        <term>TRIM( LEDING ... FROM ...)<footnoteref
+        linkend="posthyper" /></term>
 
         <listitem>
           <para>
