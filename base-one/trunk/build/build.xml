@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<!-- author fredt@users.sourceforge.net 2001 - 2004 -->
-<!-- additional targets by unsaved@users.sourceforge.net 2004 -->
+<!-- author fredt@users.sourceforge.net 2001 - 2005 -->
+<!-- additional targets by unsaved@users.sourceforge.net 2004 - 2005 -->
 <!-- additional ImageIcons by weconsultants@users.sourceforge.net 20041109 -->
 
 <project name="hsqldb" default="help" basedir="../">
@@ -15,7 +15,17 @@
         Do not address questions about property file(s) to the
         hsqldb community. -->
    <property file='build/build.properties'/>
+   <property name="hsqldb.version" value="1.8.0RC10"/>
 
+   <tstamp>
+       <format property="_tmpstamp" pattern="yyyy/MM/dd-hh:mm:ss"
+               locale="en"/>
+   </tstamp>
+
+   <property name="build.label" value="private-${_tmpstamp}"/>
+   <property name="build.vendor" value="${user.name}"/>
+   <property name="hsqldb.title" value="HSQLDB"/>
+   <property name="hsqldb.vendor" value="The HSQLDB Development Group"/>
    <property name="src" value="${basedir}/src"/>
    <property name="build.debug" value="off"/>
 
@@ -372,6 +382,15 @@ examples:
         <jar jarfile="lib/hsqldbz.jar"
              basedir="classes"
          >
+         <manifest>
+             <attribute name='Specification-Title' value='${hsqldb.title}'/>
+             <attribute name='Specification-Version' value='${hsqldb.version}'/>
+             <attribute name='Specification-Vendor' value='${hsqldb.vendor}'/>
+             <attribute name='Implementation-Title'
+                        value='Zaurus runtime'/>
+             <attribute name='Implementation-Version' value='${build.label}'/>
+             <attribute name='Implementation-Vendor' value='${build.vendor}'/>
+         </manifest>
          <exclude name="org/hsqldb/jmx/**"/>
          <exclude name="org/hsqldb/util/*Transfer*.*"/>
          <exclude name="org/hsqldb/util/*Swing*.*"/>
@@ -410,6 +429,15 @@ examples:
         <jar jarfile="lib/hsqldbtest.jar"
              basedir="classes"
          >
+         <manifest>
+             <attribute name='Specification-Title' value='${hsqldb.title}'/>
+             <attribute name='Specification-Version' value='${hsqldb.version}'/>
+             <attribute name='Specification-Vendor' value='${hsqldb.vendor}'/>
+             <attribute name='Implementation-Title'
+                        value='Test runtime'/>
+             <attribute name='Implementation-Version' value='${build.label}'/>
+             <attribute name='Implementation-Vendor' value='${build.vendor}'/>
+         </manifest>
          <exclude name="org/hsqldb/jmx/**"/>
          <exclude name="org/hsqldb/sample/*.*"/>
          <exclude name="org/hsqldb/jdbc/jdbcStubs.class"/>
@@ -426,6 +454,15 @@ examples:
         <jar jarfile="lib/hsqldbmain.jar"
              basedir="classes"
          >
+         <manifest>
+             <attribute name='Specification-Title' value='${hsqldb.title}'/>
+             <attribute name='Specification-Version' value='${hsqldb.version}'/>
+             <attribute name='Specification-Vendor' value='${hsqldb.vendor}'/>
+             <attribute name='Implementation-Title'
+                        value='Runtime without utilities'/>
+             <attribute name='Implementation-Version' value='${build.label}'/>
+             <attribute name='Implementation-Vendor' value='${build.vendor}'/>
+         </manifest>
          <exclude name="org/hsqldb/jmx/**"/>
          <exclude name="org/hsqldb/util/*.*"/>
          <exclude name="org/hsqldb/test/*.*"/>
@@ -444,6 +481,15 @@ examples:
         <jar jarfile="lib/hsqldbmin.jar"
              basedir="classes"
          >
+         <manifest>
+             <attribute name='Specification-Title' value='${hsqldb.title}'/>
+             <attribute name='Specification-Version' value='${hsqldb.version}'/>
+             <attribute name='Specification-Vendor' value='${hsqldb.vendor}'/>
+             <attribute name='Implementation-Title'
+                 value='Runtime without utilities and servers'/>
+             <attribute name='Implementation-Version' value='${build.label}'/>
+             <attribute name='Implementation-Vendor' value='${build.vendor}'/>
+         </manifest>
          <exclude name="org/hsqldb/jmx/**"/>
          <exclude name="org/hsqldb/util/*.*"/>
          <exclude name="org/hsqldb/test/*.*"/>
@@ -487,6 +533,13 @@ examples:
              compress="true"
          >
          <manifest>
+             <attribute name='Specification-Title' value='${hsqldb.title}'/>
+             <attribute name='Specification-Version' value='${hsqldb.version}'/>
+             <attribute name='Specification-Vendor' value='${hsqldb.vendor}'/>
+             <attribute name='Implementation-Title'
+                        value='Standard runtime'/>
+             <attribute name='Implementation-Version' value='${build.label}'/>
+             <attribute name='Implementation-Vendor' value='${build.vendor}'/>
              <!-- This attribute is completely ignored unless the user
                   uses the jar like "java -jar .../hsqldb.jar" -->
              <attribute name='Main-Class' value='org.hsqldb.util.SqlTool'/>
@@ -511,6 +564,15 @@ examples:
     <target name="hsqljdbc" depends="classes14"
              description="Build the hsqljdbc.jar">
         <jar jarfile="lib/hsqljdbc.jar">
+         <manifest>
+             <attribute name='Specification-Title' value='${hsqldb.title}'/>
+             <attribute name='Specification-Version' value='${hsqldb.version}'/>
+             <attribute name='Specification-Vendor' value='${hsqldb.vendor}'/>
+             <attribute name='Implementation-Title'
+                        value='JDBC client runtime'/>
+             <attribute name='Implementation-Version' value='${build.label}'/>
+             <attribute name='Implementation-Vendor' value='${build.vendor}'/>
+         </manifest>
             <!-- including 'org/hsqldb/jdbc*' just to be safe -->
             <fileset dir='classes'
                 includes='org/hsqldb/jdbc/jdbc*,
@@ -537,6 +599,7 @@ examples:
                           org/hsqldb/lib/ObjectComparator*,
                           org/hsqldb/lib/IntKeyHashMap*,
                           org/hsqldb/lib/Collection*,
+                          org/hsqldb/lib/*List*,
                           org/hsqldb/lib/Set*,
                           org/hsqldb/lib/Hash*,
                           org/hsqldb/lib/HsqlTimer*,
@@ -559,7 +622,8 @@ examples:
                           org/hsqldb/Result$*,
                           org/hsqldb/Row*,
                           org/hsqldb/SessionInterface*,
-                          org/hsqldb/Trace*
+                          org/hsqldb/Trace*,
+                          org/hsqldb/resources/*
                           '/>
         </jar>
     </target>
@@ -567,6 +631,13 @@ examples:
             description="Build the hsqltool.jar">
         <jar jarfile="lib/hsqltool.jar">
             <manifest>
+                <attribute name='Specification-Title' value='${hsqldb.title}'/>
+                <attribute name='Specification-Version' value='${hsqldb.version}'/>
+                <attribute name='Specification-Vendor' value='${hsqldb.vendor}'/>
+                <attribute name='Implementation-Title'
+                           value='SqlTool runtime, with JDBC driver'/>
+                <attribute name='Implementation-Version' value='${build.label}'/>
+                <attribute name='Implementation-Vendor' value='${build.vendor}'/>
                 <attribute name='Main-Class' value='org.hsqldb.util.SqlTool'/>
             </manifest>
             <!-- including 'org/hsqldb/jdbc*' just to be safe -->
@@ -595,6 +666,7 @@ examples:
                           org/hsqldb/lib/ObjectComparator*,
                           org/hsqldb/lib/IntKeyHashMap*,
                           org/hsqldb/lib/Collection*,
+                          org/hsqldb/lib/*List*,
                           org/hsqldb/lib/Set*,
                           org/hsqldb/lib/Hash*,
                           org/hsqldb/lib/HsqlTimer*,
@@ -617,11 +689,12 @@ examples:
                           org/hsqldb/Result$*,
                           org/hsqldb/Row*,
                           org/hsqldb/SessionInterface*,
-                          org/hsqldb/Trace*
-                          org/hsqldb/Types*
-                          org/hsqldb/util/SqlTool*
-                          org/hsqldb/util/RCData*
-                          org/hsqldb/util/SqlFile*
+                          org/hsqldb/Trace*,
+                          org/hsqldb/Types*,
+                          org/hsqldb/util/SqlTool*,
+                          org/hsqldb/util/RCData*,
+                          org/hsqldb/util/SqlFile*,
+                          org/hsqldb/resources/*
                           '/>
         </jar>
     </target>
@@ -633,14 +706,23 @@ examples:
              compress="true"
          >
          <manifest>
-             <!-- This attribute is completely ignored unless the user
-                  uses the jar like "java -jar .../hsqldb.jar" -->
-             <attribute name='Main-Class' value='org.hsqldb.util.DatabaseManager'/>
+             <attribute name='Specification-Title' value='${hsqldb.title}'/>
+             <attribute name='Specification-Version' value='${hsqldb.version}'/>
+             <attribute name='Specification-Vendor' value='${hsqldb.vendor}'/>
+             <attribute name='Implementation-Title'
+                        value='Utilities runtime, without JDBC driver'/>
+             <attribute name='Implementation-Version' value='${build.label}'/>
+             <attribute name='Implementation-Vendor' value='${build.vendor}'/>
+             <!-- N.b. Blaine removed the Main-Class because this jar is
+                  useless without a JDBC driver in the classpath, and you
+                  can't add to classpath if invoked with "-jar" -->
          </manifest>
          <include name="org/hsqldb/util/*.class"/>
          <include name="org/hsqldb/util/*.gif"/>
          <include name="org/hsqldb/util/*.png"/>
          <include name="org/hsqldb/lib/java/*.class"/>
+         <include name="org/hsqldb/lib/*List*.class"/>
+         <include name="org/hsqldb/resources/*"/>
          <exclude name="org/hsqldb/util/Files.class"/>
          <exclude name="org/hsqldb/util/ShutdownServer.class"/>
          <exclude name="org/hsqldb/jmx/**"/>
@@ -675,9 +757,9 @@ examples:
            use="true"
            public="true"
            stylesheetfile="${basedir}/doc/src/hsqldbstylesheet.css"
-           windowtitle="HSQLDB 1.7.2 API"
-           doctitle="HSQLDB 1.7.2"
-           bottom="&lt;i&gt;Copyright &#169; 2001 - 2004 HSQL Development Group. All Rights Reserved.&lt;/i&gt;">
+           windowtitle="${hsqldb.title} ${hsqldb.version} API"
+           doctitle="${hsqldb.title} ${hsqldb.version}"
+           bottom="&lt;i&gt;Copyright &#169; 2001 - 2005 HSQL Development Group. All Rights Reserved.&lt;/i&gt;">
 
      </javadoc>
    </target>
@@ -693,9 +775,9 @@ examples:
            use="true"
            public="true"
            stylesheetfile="${basedir}/doc/src/hsqldbstylesheet.css"
-           windowtitle="HSQLDB 1.7.2 API"
-           doctitle="HSQLDB 1.7.2"
-           bottom="&lt;i&gt;Copyright &#169; 2001 - 2004 HSQL Development Group. All Rights Reserved.&lt;/i&gt;">
+           windowtitle="${hsqldb.title} ${hsqldb.version} API"
+           doctitle="${hsqldb.title} ${hsqldb.version}"
+           bottom="&lt;i&gt;Copyright &#169; 2001 - 2005 HSQL Development Group. All Rights Reserved.&lt;/i&gt;">
      </javadoc>
    </target>
 
