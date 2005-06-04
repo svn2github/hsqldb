@@ -424,8 +424,8 @@ class TriggerDef extends Thread {
 
     static class DefaultTrigger implements org.hsqldb.Trigger {
 
-        public void fire(int i, String name, String table, Object row1[],
-                         Object row2[]) {
+        public void fire(int i, String name, String table, Object[] row1,
+                         Object[] row2) {
             throw new RuntimeException("Missing Trigger class!");
         }
     }

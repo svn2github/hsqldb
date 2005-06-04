@@ -70,5 +70,5 @@ public interface FileAccess {
         void sync() throws java.io.IOException;
     }
 
-    public FileSync getFileSync(OutputStream os) throws java.io.IOException;
+    FileSync getFileSync(OutputStream os) throws java.io.IOException;
 }

@@ -261,14 +261,14 @@ implements ActionListener, WindowListener, KeyListener {
         new JRadioButtonMenuItem("Motif Look & Feel");
     JLabel                      jStatusLine;
     static String               READY_STATUS         = "Ready";
-    static private final String AUTOCOMMIT_BOX_TEXT  = "Autocommit mode";
-    static private final String LOGGING_BOX_TEXT     = "Logging mode";
-    static private final String SHOWSCHEMAS_BOX_TEXT = "Show schemas";
-    static private final String AUTOREFRESH_BOX_TEXT = "Auto-refresh tree";
-    static private final String SHOWTIPS_BOX_TEXT    = "Show Tooltips";
-    static private final String ROWCOUNTS_BOX_TEXT   = "Show row counts";
-    static private final String SHOWSYS_BOX_TEXT     = "Show system tables";
-    static private final String GRID_BOX_TEXT =
+    private static final String AUTOCOMMIT_BOX_TEXT  = "Autocommit mode";
+    private static final String LOGGING_BOX_TEXT     = "Logging mode";
+    private static final String SHOWSCHEMAS_BOX_TEXT = "Show schemas";
+    private static final String AUTOREFRESH_BOX_TEXT = "Auto-refresh tree";
+    private static final String SHOWTIPS_BOX_TEXT    = "Show Tooltips";
+    private static final String ROWCOUNTS_BOX_TEXT   = "Show row counts";
+    private static final String SHOWSYS_BOX_TEXT     = "Show system tables";
+    private static final String GRID_BOX_TEXT =
         "Show results in Grid (a.o.t. Text)";
 
     // variables to hold the default cursors for these top level swing objects
@@ -1634,13 +1634,13 @@ implements ActionListener, WindowListener, KeyListener {
         return node;
     }
 
-    static private final String[] usertables     = {
+    private static final String[] usertables     = {
         "TABLE", "GLOBAL TEMPORARY", "VIEW", "SYSTEM TABLE"
     };
-    static private final String[] nonSystables   = {
+    private static final String[] nonSystables   = {
         "TABLE", "GLOBAL TEMPORARY", "VIEW"
     };
-    static private final HashSet  oracleSysUsers = new HashSet();
+    private static final HashSet  oracleSysUsers = new HashSet();
 
     static {
         oracleSysUsers.add("SYS");

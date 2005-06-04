@@ -42,7 +42,7 @@ implements org.hsqldb.Trigger {
 
     Connection                  con = null;
     Statement                   statement;
-    static private final String ipref = "INFORMATION_SCHEMA.";
+    private static final String ipref = "INFORMATION_SCHEMA.";
 
     protected void setUp() throws Exception {
 
@@ -931,9 +931,9 @@ implements org.hsqldb.Trigger {
     }
 
 /** @todo fredt - need to define additional identifiers to use for all cases of expect */
-    static private final int SQL_ABORT   = -1234;
-    static private final int SQL_INITIAL = -1233;
-    static private final int SQL_FAIL    = -1;
+    private static final int SQL_ABORT   = -1234;
+    private static final int SQL_INITIAL = -1233;
+    private static final int SQL_FAIL    = -1;
 
     private void execSQL(String s, boolean ignoreError) throws SQLException {
 
@@ -1027,7 +1027,7 @@ implements org.hsqldb.Trigger {
         super(s);
     }
 
-    static public void main(String[] sa) {
+    public static void main(String[] sa) {
 
         if (sa.length > 0 && sa[0].startsWith("-g")) {
             junit.swingui.TestRunner.run(TestSchemaParse.class);
@@ -1042,7 +1042,7 @@ implements org.hsqldb.Trigger {
         }
     }
 
-    static public junit.framework.Test suite() {
+    public static junit.framework.Test suite() {
 
         junit.framework.TestSuite newSuite = new junit.framework.TestSuite();
 
@@ -1063,8 +1063,8 @@ implements org.hsqldb.Trigger {
     }
     ;
 
-    public void fire(int i, String name, String table, Object row1[],
-                     Object row2[]) {}
+    public void fire(int i, String name, String table, Object[] row1,
+                     Object[] row2) {}
 
     public static String capitalize(String inString) {
         return inString.toUpperCase();

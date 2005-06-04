@@ -524,16 +524,16 @@ class GranteeManager implements GrantConstants {
         return map.values();
     }
 
-    static public boolean validRightString(String rightString) {
+    public static boolean validRightString(String rightString) {
         return getRight(rightString) != 0;
     }
 
-    static public boolean isMutable(String name) {
+    public static boolean isMutable(String name) {
         return name.equals(SYSTEM_AUTHORIZATION_NAME)
                || name.equals(ADMIN_ROLE_NAME);
     }
 
-    static public boolean isReserved(String name) {
+    public static boolean isReserved(String name) {
 
         return name.equals(SYSTEM_AUTHORIZATION_NAME)
                || name.equals(ADMIN_ROLE_NAME)

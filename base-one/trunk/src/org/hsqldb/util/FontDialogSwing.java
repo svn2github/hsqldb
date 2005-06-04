@@ -67,8 +67,8 @@ public class FontDialogSwing extends JDialog {
     private static JComboBox    fontsComboBox;
 
     //  weconsultants@users 20050215 - Added for Compatbilty fix for JDK 1.3
-    private static JComboBox    fontSizesComboBox;
-    final private static String fontSizes[] = {
+    private static JComboBox      fontSizesComboBox;
+    private static final String[] fontSizes = {
         "8", "9", "10", "11", "12", "13", "14", "16", "18", "24", "36"
     };
 

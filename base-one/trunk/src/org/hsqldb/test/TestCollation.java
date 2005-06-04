@@ -120,7 +120,7 @@ public class TestCollation extends TestBase {
         // whether it is really feasible. The doc states "returns a list of all installed Locales".
         // The "installed" puzzles me - maybe this is really different per installation, and not only
         // per JDK version?
-        java.util.Locale availableLocales[] =
+        java.util.Locale[] availableLocales =
             java.util.Locale.getAvailableLocales();
         org.hsqldb.lib.Set existenceCheck = new org.hsqldb.lib.HashSet();
 

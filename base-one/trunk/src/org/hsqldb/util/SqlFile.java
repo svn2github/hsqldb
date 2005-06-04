@@ -57,7 +57,7 @@ import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.sql.DatabaseMetaData;
 
-/* $Id: SqlFile.java,v 1.111 2005/05/14 12:39:22 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.112 2005/05/16 16:50:40 fredt Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -93,7 +93,7 @@ import java.sql.DatabaseMetaData;
  * Most of the Special Commands and Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.111 $
+ * @version $Revision: 1.112 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -143,8 +143,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.111 $".substring("$Revision: ".length(),
-                "$Revision: 1.111 $".length() - 2);
+        revnum = "$Revision: 1.112 $".substring("$Revision: ".length(),
+                "$Revision: 1.112 $".length() - 2);
     }
 
     private static String BANNER =
@@ -579,7 +579,7 @@ public class SqlFile {
 
                     if (trimmedInput.length() == 0) {
 
-                        // Blank lines delimit commands ONLY IN INTERACTIVE 
+                        // Blank lines delimit commands ONLY IN INTERACTIVE
                         // MODE!
                         if (interactive &&!inComment) {
                             setBuf(stringBuffer.toString());
@@ -884,9 +884,9 @@ public class SqlFile {
             case 'S' :
 
                 // Sat Apr 23 14:14:57 EDT 2005.  Changing history behavior.
-                // It's very inconvenient to lose all modified SQL 
+                // It's very inconvenient to lose all modified SQL
                 // commands from history just because _some_ may be modified
-                // because they are bad or obsolete. 
+                // because they are bad or obsolete.
                 boolean modeIC      = false;
                 boolean modeGlobal  = false;
                 boolean modeExecute = false;
@@ -2139,7 +2139,7 @@ public class SqlFile {
                     if (dbProductName.indexOf("HSQL") > -1) {
 
                         //  HSQLDB does not consider Sequences as "tables",
-                        //  hence we do not list them in 
+                        //  hence we do not list them in
                         //  DatabaseMetaData.getTables().
                         if (filter != null
                                 && filter.charAt(filter.length() - 1)
@@ -2536,7 +2536,7 @@ public class SqlFile {
 
                     for (int i = 1; i <= cols; i++) {
 
-                        // This is the only case where we can save a data 
+                        // This is the only case where we can save a data
                         // read by recognizing we don't need this datum early.
                         if (incCols != null) {
                             skip = true;
@@ -2566,7 +2566,7 @@ public class SqlFile {
                         if (!binary) {
                             val = r.getString(i);
 
-                            // If we tried to get a String but it failed, 
+                            // If we tried to get a String but it failed,
                             // try getting it with a String Stream
                             if (val == null) {
                                 try {

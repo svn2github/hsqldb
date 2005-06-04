@@ -36,25 +36,25 @@ import org.hsqldb.store.ValuePool;
 public interface GrantConstants {
 
     /** Flag required to SELECT from a table. */
-    static final int SELECT = 1 << 0;
+    int SELECT = 1 << 0;
 
     /** Flag required to DELETE from a table. */
-    static final int DELETE = 1 << 1;
+    int DELETE = 1 << 1;
 
     /** flag required to INSERT into a table. */
-    static final int INSERT = 1 << 2;
+    int INSERT = 1 << 2;
 
     /** Flag required to UPDATE a table. */
-    static final int UPDATE = 1 << 3;
+    int UPDATE = 1 << 3;
 
     /** Combined flag permitting any action. */
-    static final int     ALL         = SELECT | DELETE | INSERT | UPDATE;
-    static final Integer INTEGER_ALL = ValuePool.getInt(ALL);
+    int     ALL         = SELECT | DELETE | INSERT | UPDATE;
+    Integer INTEGER_ALL = ValuePool.getInt(ALL);
 
     //
-    static final String S_R_ALL    = "ALL";
-    static final String S_R_SELECT = "SELECT";
-    static final String S_R_UPDATE = "UPDATE";
-    static final String S_R_DELETE = "DELETE";
-    static final String S_R_INSERT = "INSERT";
+    String S_R_ALL    = "ALL";
+    String S_R_SELECT = "SELECT";
+    String S_R_UPDATE = "UPDATE";
+    String S_R_DELETE = "DELETE";
+    String S_R_INSERT = "INSERT";
 }

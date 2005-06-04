@@ -28,6 +28,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+
 package org.hsqldb.util;
 
 import java.util.ArrayList;
@@ -41,18 +42,18 @@ import java.lang.reflect.InvocationTargetException;
  *
  * @author   Blaine Simpson, unsaved@users.sourceforge.net
  * @since    HSQLDB 1.8.0
- * @version  $Revision: 1.1 $
+ * @version  $Revision: 1.2 $
  */
 public class MainInvoker {
+
     /*
      * This class currently consists of just a static utility.
      * It may or may not make sense to make this into a class with real
      * instances that can keep track of status of stuff invoked by it.
      */
-
     private static String[] emptyStringArray = new String[0];
 
-    static private void syntaxFailure() {
+    private static void syntaxFailure() {
         System.err.println(SYNTAX_MSG);
         System.exit(2);
     }
@@ -63,21 +64,22 @@ public class MainInvoker {
      *
      * Note that multiple class invocations are delimited by empty-string
      * parameters.  How the user supplies these empty strings is determined
-     * entirely by the caller's environment.  From Windows this can 
+     * entirely by the caller's environment.  From Windows this can
      * generally be accomplished with double-quotes like "".  From all
-     * popular UNIX shells, this can be accomplished with single or 
+     * popular UNIX shells, this can be accomplished with single or
      * double-quotes:  '' or "".
      *
      * @param sa Run java org.hsqldb.util.MainInvoker --help for syntax help
      */
-    static public void main(String[] sa) {
+    public static void main(String[] sa) {
+
         if (sa.length > 0 && sa[0].equals("--help")) {
             System.err.println(SYNTAX_MSG);
             System.exit(0);
         }
 
-        ArrayList outList = new ArrayList();
-        int curInArg = -1;
+        ArrayList outList  = new ArrayList();
+        int       curInArg = -1;
 
         try {
             while (++curInArg < sa.length) {
@@ -85,25 +87,28 @@ public class MainInvoker {
                     if (outList.size() < 1) {
                         syntaxFailure();
                     }
+
                     invoke((String) outList.remove(0),
-                            (String[]) outList.toArray(emptyStringArray));
+                           (String[]) outList.toArray(emptyStringArray));
                     outList.clear();
                 } else {
                     outList.add(sa[curInArg]);
                 }
             }
+
             if (outList.size() < 1) {
                 syntaxFailure();
             }
+
             invoke((String) outList.remove(0),
-                    (String[]) outList.toArray(emptyStringArray));
+                   (String[]) outList.toArray(emptyStringArray));
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);
         }
     }
 
-    static private final String SYNTAX_MSG =
+    private static final String SYNTAX_MSG =
         "    java org.hsqldb.util.MainInvoker "
         + "[package1.Class1 [arg1a arg1b...] \"\"]... \\\n"
         + "    packageX.ClassX [argXa argXb...]\nOR\n"
@@ -114,19 +119,24 @@ public class MainInvoker {
     /**
      * Invokes the static main(String[]) method from each specified class.
      */
-    static public void invoke(String className, String[] args) 
-    throws ClassNotFoundException, NoSuchMethodException,
-    IllegalAccessException, InvocationTargetException {
-        Class c;
-        Method method;
-        Class[] stringArrayCA = { emptyStringArray.getClass() };
-        Object[] objectArray = {
-                (args == null) ? emptyStringArray : args
-        };
+    public static void invoke(String className,
+                              String[] args)
+                              throws ClassNotFoundException,
+                                     NoSuchMethodException,
+                                     IllegalAccessException,
+                                     InvocationTargetException {
 
-        c = Class.forName(className);
+        Class    c;
+        Method   method;
+        Class[]  stringArrayCA = { emptyStringArray.getClass() };
+        Object[] objectArray   = { (args == null) ? emptyStringArray
+                                                  : args };
+
+        c      = Class.forName(className);
         method = c.getMethod("main", stringArrayCA);
+
         method.invoke(null, objectArray);
+
         //System.err.println(c.getName() + ".main() invoked");
     }
 }
