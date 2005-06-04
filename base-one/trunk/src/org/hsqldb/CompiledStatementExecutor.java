@@ -175,6 +175,9 @@ final class CompiledStatementExecutor {
         return r;
     }
 
+// fredt - currently deletes that fail due to referential constraints are caught prior to
+// actual delete operation, so no nested transaction is required
+
     /**
      * Executes a DELETE statement.  It is assumed that the argument is
      * of the correct type.

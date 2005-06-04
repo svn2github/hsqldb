@@ -244,14 +244,14 @@ public class Tokenizer {
 
         getToken();
 
-        if (sToken.equals(match) && iType != QUOTED_IDENTIFIER
-                && iType != LONG_NAME) {
+        if (iType != QUOTED_IDENTIFIER && iType != LONG_NAME
+                && sToken.equals(match)) {
             return true;
-        } else {
-            back();
-
-            return false;
         }
+
+        back();
+
+        return false;
     }
 
     /**
@@ -643,10 +643,16 @@ public class Tokenizer {
 
             case FLOAT :
 
-                // jdk 1.1 compat
-                // double d = Double.parseDouble(sToken);
+//#ifdef JAVA1TARGET
+/*
                 double d = new Double(sToken).doubleValue();
-                long   l = Double.doubleToLongBits(d);
+*/
+
+//#else
+                double d = Double.parseDouble(sToken);
+
+//#endif JAVA1TARGET
+                long l = Double.doubleToLongBits(d);
 
                 return ValuePool.getDouble(l);
 

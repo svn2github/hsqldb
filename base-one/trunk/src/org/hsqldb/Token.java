@@ -109,7 +109,7 @@ public class Token {
     static final String        T_CORRESPONDING                   =
         "CORRESPONDING";                                                          //reserved
     static final String        T_CREATE                          = "CREATE";      //reserved
-    static final String        T_CROSS                           = "CONCAT";      //reserved
+    static final String        T_CROSS                           = "CROSS";       //reserved
     static final String        T_CUBE                            = "CUBE";        //reserved
     static final String        T_CURRENT                         = "CURRENT";     //reserved
     static final String        T_CURRENT_DATE                    =

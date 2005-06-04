@@ -104,7 +104,7 @@ class TextTable extends org.hsqldb.Table {
                         break;
                     }
 
-                    nextpos += row.getStorageSize();
+                    nextpos = row.getPos() + row.getStorageSize();
 
                     row.setNewNodes();
                     insertFromTextSource(row);

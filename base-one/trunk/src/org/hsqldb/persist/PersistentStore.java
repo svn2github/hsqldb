@@ -57,4 +57,6 @@ public interface PersistentStore {
     void remove(int i);
 
     void release(int i);
+
+    void commit(CachedObject object) throws IOException;
 }

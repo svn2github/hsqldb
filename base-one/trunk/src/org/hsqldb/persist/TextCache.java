@@ -45,9 +45,12 @@ import org.hsqldb.rowio.RowInputTextQuoted;
 import org.hsqldb.rowio.RowOutputText;
 import org.hsqldb.rowio.RowOutputTextQuoted;
 import org.hsqldb.scriptio.ScriptWriterText;
+import org.hsqldb.store.ObjectCacheHashMap;
 
 // Ito Kazumitsu 20030328 - patch 1.7.2 - character encoding support
 // Dimitri Maziuk - patch for NL in string support
+// sqlbob@users - updated for 1.8.0 to allow new-lines in fields
+// fredt@users - updated for 1.8.0 to allow correct behaviour with transactions
 
 /**
  * Acts as a buffer manager for a single TEXT table with respect its Row data.
@@ -73,6 +76,7 @@ public class TextCache extends DataFileCache {
     public boolean             ignoreFirst;
     protected String           header;
     protected Table            table;
+    private ObjectCacheHashMap uncommittedCache;
 
     //
 
@@ -93,9 +97,9 @@ public class TextCache extends DataFileCache {
 
     protected void initParams() throws HsqlException {
 
-        // fredt - write rows as soon as they are inserted
-        storeOnInsert = true;
-
+        // fredt - this used to write rows as soon as they are inserted
+        // but now this is subject to session autoCommit / or commit
+        // storeOnInsert = true;
         HsqlProperties tableprops =
             HsqlProperties.delimitedArgPairsToProps(fileName, "=", ";", null);
 
@@ -345,6 +349,8 @@ public class TextCache extends DataFileCache {
      */
     void purge() throws HsqlException {
 
+        uncommittedCache.clear();
+
         try {
             if (cacheReadonly) {
                 close(false);
@@ -371,24 +377,28 @@ public class TextCache extends DataFileCache {
      */
     public void remove(int pos, PersistentStore store) throws HsqlException {
 
-        CachedObject r = get(pos, store, false);
+        CachedObject r = (CachedObject) uncommittedCache.remove(pos);
 
-        if (storeOnInsert) {
-            int length = r.getStorageSize()
-                         - ScriptWriterText.BYTES_LINE_SEP.length;
+        if (r != null) {
+            return;
+        }
 
-            rowOut.reset();
+        r = get(pos, store, false);
 
-            HsqlByteArrayOutputStream out = rowOut.getOutputStream();
+        int length = r.getStorageSize()
+                     - ScriptWriterText.BYTES_LINE_SEP.length;
 
-            try {
-                out.fill(' ', length);
-                out.write(ScriptWriterText.BYTES_LINE_SEP);
-                dataFile.seek(pos);
-                dataFile.write(out.getBuffer(), 0, out.size());
-            } catch (IOException e) {
-                throw (Trace.error(Trace.FILE_IO_ERROR, e.toString()));
-            }
+        rowOut.reset();
+
+        HsqlByteArrayOutputStream out = rowOut.getOutputStream();
+
+        try {
+            out.fill(' ', length);
+            out.write(ScriptWriterText.BYTES_LINE_SEP);
+            dataFile.seek(pos);
+            dataFile.write(out.getBuffer(), 0, out.size());
+        } catch (IOException e) {
+            throw (Trace.error(Trace.FILE_IO_ERROR, e.toString()));
         }
 
         release(r.getPos());
@@ -401,21 +411,27 @@ public class TextCache extends DataFileCache {
         boolean      blank     = true;
         boolean      complete  = false;
         int          termCount = 0;
+        int          firstPos  = pos;
         RowInputText textIn    = (RowInputText) rowIn;
 
         try {
             int c;
-            int next;
             int quoteCount = 0;
+
+            pos = findNextUsedLinePos(pos);
+
+            if (pos == -1) {
+                return null;
+            }
 
             dataFile.seek(pos);
 
             //-- The following should work for DOS, MAC, and Unix line
             //-- separators regardless of host OS.
             while (true) {
-                next = dataFile.read();
+                c = dataFile.read();
 
-                if (next == -1) {
+                if (c == -1) {
 
                     // sqlbob -- Allow last line to not have NL.
                     if (buffer.length() > 0) {
@@ -430,8 +446,6 @@ public class TextCache extends DataFileCache {
 
                     break;
                 }
-
-                c = next;
 
                 if ((termCount == 0) && (c == '\"')
                         && (isQuoted || isAllQuoted)) {
@@ -490,7 +504,7 @@ public class TextCache extends DataFileCache {
         }
 
         if (complete) {
-            int length = buffer.length() + termCount;
+            int length = (int) dataFile.getFilePointer() - firstPos;
 
             ((RowInputText) rowIn).setSource(buffer.toString(), pos, length);
 
@@ -498,6 +512,96 @@ public class TextCache extends DataFileCache {
         }
 
         return null;
+    }
+
+    // fredt - new method
+
+    /**
+     * Searches from file pointer, pos, and finds the beginning of the first
+     * line that contains any non-space character. Increments the row counter
+     * when a blank line is skipped.
+     *
+     * If none found, return -1;
+     */
+    int findNextUsedLinePos(int pos) throws IOException {
+
+        int     firstPos   = pos;
+        int     currentPos = pos;
+        boolean cr         = false;
+
+        dataFile.seek(pos);
+
+        while (true) {
+            int next = dataFile.read();
+
+            currentPos++;
+
+            switch (next) {
+
+                case -1 :
+                    return firstPos == pos ? -1
+                                           : firstPos;
+
+                case '\r' :
+                    cr = true;
+                    break;
+
+                case '\n' :
+                    cr = false;
+
+                    ((RowInputText) rowIn).skippedLine();
+
+                    firstPos = currentPos;
+                    break;
+
+                case ' ' :
+                    if (cr) {
+                        cr = false;
+
+                        ((RowInputText) rowIn).skippedLine();
+                    }
+
+                    continue;
+                default :
+                    return firstPos;
+            }
+        }
+    }
+
+    /**
+     * This is called internally when old rows need to be removed from the
+     * cache. Text table rows that have not been saved are those that have not
+     * been committed yet. So we don't save them but add them to the
+     * uncommitted cache until such time that they are committed or rolled
+     * back- fredt
+     */
+    protected void saveRows(CachedObject[] rows, int offset,
+                            int count) throws IOException {
+
+        if (count == 0) {
+            return;
+        }
+
+        if (uncommittedCache == null) {
+            uncommittedCache = new ObjectCacheHashMap(10);
+        }
+
+        for (int i = offset; i < offset + count; i++) {
+            CachedObject r = rows[i];
+
+            uncommittedCache.put(r.getPos(), r);
+
+            rows[i] = null;
+        }
+    }
+
+    /**
+     * In case the row has been moved to the uncommittedCache, removes it.
+     * Then saves the row as normal.
+     */
+    public void saveRow(CachedObject row) throws IOException {
+        uncommittedCache.remove(row.getPos());
+        super.saveRow(row);
     }
 
     public String getHeader() {

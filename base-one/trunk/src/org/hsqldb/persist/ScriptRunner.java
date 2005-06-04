@@ -210,7 +210,10 @@ public class ScriptRunner {
             database.logger.appLog.logContext(message);
             Trace.printSystemOut(message);
         } finally {
-            scr.close();
+            if (scr != null) {
+                scr.close();
+            }
+
             database.getSessionManager().closeAllSessions();
             database.setReferentialIntegrity(true);
         }

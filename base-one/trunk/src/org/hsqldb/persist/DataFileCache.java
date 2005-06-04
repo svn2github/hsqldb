@@ -515,7 +515,7 @@ public class DataFileCache {
 
         cache.put(i, object);
 
-        // for text tables
+        // was previously used for text tables
         if (storeOnInsert) {
             saveRow(object);
         }
@@ -531,7 +531,7 @@ public class DataFileCache {
 
         cache.put(i, object);
 
-        // for text tables
+        // was previously used for text tables
         if (storeOnInsert) {
             saveRow(object);
         }
@@ -576,7 +576,10 @@ public class DataFileCache {
 
                 object = store.get(rowInput);
 
-                object.setPos(i);
+                // for text tables with empty rows at the beginning,
+                // pos may move forward in readObject
+                i = object.getPos();
+
                 cache.put(i, object);
             }
 
@@ -623,6 +626,10 @@ public class DataFileCache {
         return cache.release(i);
     }
 
+    /**
+     * This is called internally when old rows need to be removed from the
+     * cache.
+     */
     protected void saveRows(CachedObject[] rows, int offset,
                             int count) throws IOException {
 
@@ -639,7 +646,7 @@ public class DataFileCache {
      * Writes out the specified Row. Will write only the Nodes or both Nodes
      * and table row data depending on what is not already persisted to disk.
      */
-    private void saveRow(CachedObject row) throws IOException {
+    public void saveRow(CachedObject row) throws IOException {
 
         setFileModified();
         rowOut.reset();

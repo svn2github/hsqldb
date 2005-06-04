@@ -121,6 +121,8 @@ class Transaction {
         try {
             if (isDelete) {
                 tTable.removeRowFromStore(row);
+            } else {
+                tTable.commitRowToStore(row);
             }
         } catch (Exception e) {
 

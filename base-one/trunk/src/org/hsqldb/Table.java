@@ -2803,12 +2803,6 @@ public class Table extends BaseTable {
 
         if (session != null) {
             boolean tx = session.addTransactionDelete(this, row);
-
-            if (tx) {
-                releaseRowFromStore(row);
-            } else {
-                removeRowFromStore(row);
-            }
         }
 
         if (log && isLogged) {
@@ -2890,13 +2884,7 @@ public class Table extends BaseTable {
         row.delete();
 
         if (session != null) {
-            boolean tx = session.addTransactionDelete(this, row);
-
-            if (tx) {
-                releaseRowFromStore(row);
-            } else {
-                removeRowFromStore(row);
-            }
+            session.addTransactionDelete(this, row);
         }
     }
 
@@ -3270,6 +3258,15 @@ public class Table extends BaseTable {
         }
     }
 
+    void commitRowToStore(Row row) throws HsqlException {
+
+        if (isCached && cache != null) {
+            try {
+                rowStore.commit(row);
+            } catch (IOException e) {}
+        }
+    }
+
     void indexRow(Session session, Row row) throws HsqlException {
 
         int i = 0;
@@ -3501,6 +3498,13 @@ public class Table extends BaseTable {
 
         public void release(int i) {
             cache.release(i);
+        }
+
+        public void commit(CachedObject row) throws IOException {
+
+            if (Table.this.isText) {
+                cache.saveRow(row);
+            }
         }
     }
 }

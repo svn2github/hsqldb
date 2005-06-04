@@ -975,10 +975,16 @@ public class Column {
                     if (o instanceof java.lang.String) {
                         o = Library.trim((String) o, " ", true, true);
 
-                        // jdk 1.1 compat
-                        // double d = Double.parseDouble((String) o);
+//#ifdef JAVA1TARGET
+/*
                         double d = new Double((String) o).doubleValue();
-                        long   l = Double.doubleToLongBits(d);
+*/
+
+//#else
+                        double d = Double.parseDouble((String) o);
+
+//#endif JAVA1TARGET
+                        long l = Double.doubleToLongBits(d);
 
                         return ValuePool.getDouble(l);
                     }
@@ -1216,10 +1222,16 @@ public class Column {
             case Types.FLOAT :
             case Types.DOUBLE :
 
-                // jdk 1.1 compat
-                // double d = Double.parseDouble((s);
+//#ifdef JAVA1TARGET
+/*
                 double d = new Double(s).doubleValue();
-                long   l = Double.doubleToLongBits(d);
+*/
+
+//#else
+                double d = Double.parseDouble(s);
+
+//#endif JAVA1TARGET
+                long l = Double.doubleToLongBits(d);
 
                 return ValuePool.getDouble(l);
 
@@ -1535,6 +1547,10 @@ public class Column {
                             boolean check) throws HsqlException {
 
         int slen = s.length();
+
+        if (slen == len) {
+            return s;
+        }
 
         if (slen > len) {
             if (check) {

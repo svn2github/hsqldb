@@ -182,43 +182,6 @@ public class BaseHashMap {
         }
     }
 
-/*
-    // this code was moved to relevant subclasses
-
-    protected Object getObject(int key) {
-
-        int lookup = getLookup(key);
-
-        if (lookup != -1) {
-            return objectValueTable[lookup];
-        }
-
-        return null;
-    }
-
-    protected Object getObject(long key) {
-
-        int lookup = getLookup(key);
-
-        if (lookup != -1) {
-            return objectValueTable[lookup];
-        }
-
-        return null;
-    }
-
-    protected Object getObject(Object key) {
-
-        int hash   = key.hashCode();
-        int lookup = getLookup(key, hash);
-
-        if (lookup != -1) {
-            return objectValueTable[lookup];
-        }
-
-        return null;
-    }
-*/
     protected int getLookup(Object key, int hash) {
 
         int    lookup = hashIndex.getLookup(hash);

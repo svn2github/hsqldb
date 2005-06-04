@@ -381,6 +381,8 @@ public class Session implements SessionInterface {
             database.txManager.addTransaction(this, t);
 
             return true;
+        } else {
+            table.removeRowFromStore(row);
         }
 
         return false;
@@ -402,6 +404,8 @@ public class Session implements SessionInterface {
             database.txManager.addTransaction(this, t);
 
             return true;
+        } else {
+            table.commitRowToStore(row);
         }
 
         return false;

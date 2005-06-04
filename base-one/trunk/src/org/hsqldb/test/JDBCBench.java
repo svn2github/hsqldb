@@ -73,6 +73,7 @@ class JDBCBench {
     static String           tableExtension      = "";
     static String           createExtension     = "";
     static String           ShutdownCommand     = "";
+    static String           startupCommand      = "";
     static PrintStream      TabFile             = null;
     static boolean          verbose             = false;
     MemoryWatcherThread     MemoryWatcher;
@@ -118,6 +119,7 @@ class JDBCBench {
                     if (DriverName.equals("org.hsqldb.jdbcDriver")) {
                         tableExtension  = "CREATE CACHED TABLE ";
                         ShutdownCommand = "SHUTDOWN";
+                        startupCommand  = "";
                     }
                 }
             } else if (Args[i].equals("-url")) {
@@ -225,6 +227,13 @@ class JDBCBench {
                 System.out.println("done.\n");
                 System.out.println("Complete: "
                                    + (new java.util.Date()).toString());
+            }
+
+            if (startupCommand.length() != 0) {
+                Statement statement = guardian.createStatement();
+
+                statement.execute(startupCommand);
+                statement.close();
             }
 
             System.out.println("* Starting Benchmark Run *");

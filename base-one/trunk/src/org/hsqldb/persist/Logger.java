@@ -258,9 +258,6 @@ public class Logger {
                            String statement) throws HsqlException {
 
         if (logStatements) {
-            int id = (session == null) ? 0
-                                       : session.getId();
-
             log.writeStatement(session, statement);
         }
     }
@@ -269,9 +266,6 @@ public class Logger {
                                      Object[] row) throws HsqlException {
 
         if (logStatements) {
-            int id = (session == null) ? 0
-                                       : session.getId();
-
             log.writeInsertStatement(session, table, row);
         }
     }
@@ -280,9 +274,6 @@ public class Logger {
                                      Object[] row) throws HsqlException {
 
         if (logStatements) {
-            int id = (session == null) ? 0
-                                       : session.getId();
-
             log.writeDeleteStatement(session, t, row);
         }
     }
@@ -292,9 +283,6 @@ public class Logger {
                                        throws HsqlException {
 
         if (logStatements) {
-            int id = (session == null) ? 0
-                                       : session.getId();
-
             log.writeSequenceStatement(session, s);
         }
     }
@@ -302,9 +290,6 @@ public class Logger {
     public void writeCommitStatement(Session session) throws HsqlException {
 
         if (logStatements) {
-            int id = (session == null) ? 0
-                                       : session.getId();
-
             log.writeCommitStatement(session);
             synchLog();
         }
