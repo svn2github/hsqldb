@@ -57,7 +57,7 @@ import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.sql.DatabaseMetaData;
 
-/* $Id: SqlFile.java,v 1.112 2005/05/16 16:50:40 fredt Exp $ */
+/* $Id: SqlFile.java,v 1.113 2005/06/04 12:26:26 fredt Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -93,7 +93,7 @@ import java.sql.DatabaseMetaData;
  * Most of the Special Commands and Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.112 $
+ * @version $Revision: 1.113 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -143,8 +143,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.112 $".substring("$Revision: ".length(),
-                "$Revision: 1.112 $".length() - 2);
+        revnum = "$Revision: 1.113 $".substring("$Revision: ".length(),
+                "$Revision: 1.113 $".length() - 2);
     }
 
     private static String BANNER =
@@ -153,7 +153,7 @@ public class SqlFile {
         + "(c) 2004 Blaine Simpson and the HSQLDB Development Group.\n\n"
         + "    \\q    to Quit.\n" + "    \\?    lists Special Commands.\n"
         + "    :?    lists Buffer/Editing commands.\n"
-        + "    * ?   lists PL commands (including alias commands).\n\n"
+        + "    *?    lists PL commands (including alias commands).\n\n"
         + "SPECIAL Commands begin with '\\' and execute when you hit ENTER.\n"
         + "BUFFER Commands begin with ':' and execute when you hit ENTER.\n"
         + "COMMENTS begin with '/*' and end with the very next '*/'.\n"
@@ -161,7 +161,8 @@ public class SqlFile {
         + "All other lines comprise SQL Statements.\n"
         + "  SQL Statements are terminated by either a blank line (which moves the\n"
         + "  statement into the buffer without executing) or a line ending with ';'\n"
-        + "  (which executes the statement).\n";
+        + "  (which executes the statement).\n"
+        + "  SQL Statements may begin with '/PLVARNAME' and/or contain *{PLVARNAME}s.\n";
     private static final String BUFFER_HELP_TEXT =
         "BUFFER Commands (only \":;\" is available for non-interactive use).\n"
         + "    :?                Help\n"
@@ -212,12 +213,12 @@ public class SqlFile {
         + "    \\q [abort message]   Quit (or end input like Ctrl-Z or Ctrl-D)\n"
     ;
     private static final String PL_HELP_TEXT =
-        "PROCEDURAL LANGUAGE Commands.  MUST have white space after '*'.\n"
-        + "    * ?                           Help\n"
+        "PROCEDURAL LANGUAGE Commands.\n"
+        + "    *?                            Help\n"
         + "    *                             Expand PL variables from now on.\n"
         + "                                  (this is also implied by all the following).\n"
-        + "    * VARNAME = Variable value    Set variable value (note spaces around =)\n"
-        + "    * VARNAME =                   Unset variable (note space before =)\n"
+        + "    * VARNAME = Variable value    Set variable value\n"
+        + "    * VARNAME =                   Unset variable\n"
         + "    * VARNAME ~                   Set variable value to the value of the very\n"
         + "                                  next SQL statement executed (see details\n"
         + "                                  at the bottom of this listing).\n"
@@ -235,10 +236,11 @@ public class SqlFile {
         + "    * break [foreach|if|while|file] Exits a PL block or file early\n"
         + "    * continue [foreach|while]    Exits a PL block iteration early\n\n"
         + "Use PL variables (which you have set) like: *{VARNAME}.\n"
-        + "You may omit the {}'s iff *VARNAME is the first word of a SQL command.\n"
+        + "You may use /VARNAME instead iff /VARNAME is the first word of a SQL command.\n"
         + "Use PL variables in logical expressions like: *VARNAME.\n\n"
-        + "* VARNAME ~ sets the variable value according to the very next SQL statement:\n"
-        + "    Query:  The value of the first field of the first row returned (~ or _).\n"
+        + "'* VARNAME ~' or '* VARNAME _' sets the variable value according to the very\n"
+        + "next SQL statement (~ will echo the value, _ will do it silently):\n"
+        + "    Query:  The value of the first field of the first row returned.\n"
         + "    other:  Return status of the command (for updates this will be\n"
         + "            the number of rows updated).\n"
     ;
@@ -263,7 +265,8 @@ public class SqlFile {
 
         try {
             statementHistory =
-                new String[interactive ? Integer.parseInt(System.getProperty("sqltool.historyLength"))
+                new String[interactive ? Integer.parseInt(
+                        System.getProperty("sqltool.historyLength"))
                                        : 1];
         } catch (Throwable t) {
             statementHistory = null;
@@ -490,13 +493,12 @@ public class SqlFile {
                             continue;
                         }
 
-                        if (trimmedInput.startsWith("* ")
-                                || trimmedInput.equals("*")) {
+                        if (trimmedInput.charAt(0) == '*'
+                                && (trimmedInput.length() < 2
+                                        || trimmedInput.charAt(1) != '{')) {
                             try {
                                 processPL((trimmedInput.length() == 1) ? ""
-                                                                       : trimmedInput
-                                                                       .substring(
-                                                                           2));
+                                        : trimmedInput.substring(1).trim());
                             } catch (BadSpecial bs) {
                                 errprintln("Error at '"
                                            + ((file == null) ? "stdin"
@@ -1389,6 +1391,31 @@ public class SqlFile {
         throw new BadSpecial("Unknown Special Command");
     }
 
+    static private final char[] nonVarChars = {
+        ' ', '\t', '=', '}', '\n', '\r'
+    };
+
+    /**
+     * Returns index specifying 1 past end of a variable name.
+     *
+     * @param inString String containing a variable name
+     * @param startIndex Index within inString where the variable name begins
+     * @returns Index within inString, 1 past end of the variable name
+     */ 
+    static int pastName(String inString, int startIndex) {
+        String       workString = inString.substring(startIndex);
+        int          e = inString.length(); // Index 1 past end of var name.
+        int          nonVarIndex;
+
+        for (int i = 0; i < nonVarChars.length; i++) { 
+            nonVarIndex = workString.indexOf(nonVarChars[i]);
+            if (nonVarIndex > -1 && nonVarIndex < e) {
+                e = nonVarIndex;
+            }
+        }
+        return startIndex + e;
+    }
+
     /**
      * Deference PL variables.
      *
@@ -1400,28 +1427,20 @@ public class SqlFile {
 
         String       varName, varValue;
         StringBuffer expandBuffer = new StringBuffer(inString);
-        int          b, e;    // begin and end
+        int          b, e; // begin and end of name.  end really 1 PAST name
+        int          nonVarIndex;
 
-        if (permitAlias && inString.charAt(0) == '*') {
-            Iterator it = userVars.keySet().iterator();
-
-            while (it.hasNext()) {
-                varName = (String) it.next();
-
-                if (inString.equals("*" + varName)) {
-                    return (String) userVars.get(varName);
-                }
-
-                if (inString.startsWith("*" + varName + ' ')
-                        || inString.startsWith("*" + varName + '\t')) {
-                    expandBuffer.replace(0, varName.length() + 1,
-                                         (String) userVars.get(varName));
-
-                    return expandBuffer.toString();
-                }
+        if (permitAlias && inString.charAt(0) == '/') {
+            e = pastName(inString.substring(1), 1);
+            if (e < 2) {
+                throw new SQLException("Malformed PL alias use");
             }
-
-            return inString;
+            varName = inString.substring(1, e);
+            varValue = (String) userVars.get(varName);
+            if (varValue == null) {
+                throw new SQLException("Undefined PL variable:  " + varName);
+            }
+            expandBuffer.replace(0, e, (String) userVars.get(varName));
         }
 
         String s;
@@ -1429,15 +1448,23 @@ public class SqlFile {
         while (true) {
             s = expandBuffer.toString();
 
-            if ((b = s.indexOf("*{")) < 0
-                    || ((e = s.indexOf('}', b + 2)) < 0)) {
+            b = s.indexOf("*{");
+            if (b < 0) {
+                // No more unexpanded variable uses
                 break;
+            }
+            e = s.indexOf('}', b + 2);
+            if (e == b + 2) {
+                throw new SQLException("Empty PL variable name");
+            }
+            if (e < 0) {
+                throw new SQLException("Unterminated PL variable name");
             }
 
             varName = s.substring(b + 2, e);
 
             if (!userVars.containsKey(varName)) {
-                throw new SQLException("Use of unset PL variable: "
+                throw new SQLException("Use of undefined PL variable: "
                                        + varName);
             }
 
@@ -1541,13 +1568,20 @@ public class SqlFile {
                 stdprint(formatNicely(userVars, doValues));
             } else {
                 tokenArray = getTokenArray(toker.nextToken(""));
+                if (doValues) {
+                    stdprintln("The outermost parentheses are not part of "
+                            + "the values.");
+                } else {
+                    stdprintln("Showing variable names and length of values "
+                            + "(use 'listvalue' to see values).");
+                }
 
                 for (int i = 0; i < tokenArray.length; i++) {
                     s = (String) userVars.get(tokenArray[i]);
 
-                    stdprintln("    " + tokenArray[i] + ": (" + (doValues ? s
-                                                                          : Integer.toString(
-                                                                          s.length())) + ')');
+                    stdprintln("    " + tokenArray[i] + ": "
+                            + (doValues ? ("(" + s + ')')
+                                    : Integer.toString(s.length())));
                 }
             }
 
@@ -1804,37 +1838,51 @@ public class SqlFile {
             return;
         }
 
-        if (toker.countTokens() < 1) {
-            throw new BadSpecial("Unknown PL command (1)");
+        /* Since we don't want to permit both "* VARNAME = X" and
+         * "* VARNAME=X" (i.e., whitespace is OPTIONAL in both positions),
+         * we can't use the Tokenzier.  Therefore, start over again with 
+         * the inString. */
+
+        toker = null;
+        int index = pastName(inString, 0);
+        int inLength = inString.length();
+        String varName = inString.substring(0, index);
+        while (index + 1 < inLength && (inString.charAt(index) == ' '
+                || inString.charAt(index) == '\t')) {
+            index++;
         }
-
-        String operator = toker.nextToken();
-
-        if (operator.length() != 1) {
-            throw new BadSpecial("Unknown PL command (2)");
+        // index now set to the next non-whitespace AFTER the var name.
+        if (index + 1 > inLength) {
+            throw new BadSpecial("Unterminated PL variable definition");
         }
+        char operator = inString.charAt(index);
+        String remainder = inString.substring(index + 1);
 
-        switch (operator.charAt(0)) {
+        switch (inString.charAt(index)) {
 
             case '_' :
                 silentFetch = true;
             case '~' :
-                if (toker.countTokens() > 0) {
+                if (remainder.length() > 0) {
                     throw new BadSpecial(
-                        "PL ~ set command takes no other args");
+                        "PL ~/_ set commands take no other args");
                 }
 
-                userVars.remove(arg1);
+                userVars.remove(varName);
 
-                fetchingVar = arg1;
+                fetchingVar = varName;
 
                 return;
 
             case '=' :
-                if (toker.countTokens() == 0) {
-                    userVars.remove(arg1);
+                if (fetchingVar != null && fetchingVar.equals(varName)) {
+                    fetchingVar = null;
+                }
+                if (remainder.length() > 0) {
+                    userVars.put(varName,
+                            inString.substring(index + 1).trim());
                 } else {
-                    userVars.put(arg1, toker.nextToken("").trim());
+                    userVars.remove(varName);
                 }
 
                 return;
@@ -2065,8 +2113,32 @@ public class SqlFile {
             2, 3
         },    // Oracle
     };
-    String[]                     oracleSysSchemas = {
-        "SYS", "SYSTEM", "WKSYS"
+    /**
+     * SYS and SYSTEM are the only base system accounts in Oracle, however,
+     * from an empirical perspective, all of these other accounts are 
+     * system accounts because <UL>
+     * <LI> they are hidden from the casual user
+     * <LI> they are created by the installer at installation-time
+     * <LI> they are used automatically by the Oracle engine when the
+     *      specific Oracle sub-product is used
+     * <LI> the accounts should not be <I>messed with</I> by database users
+     * <LI> the accounts should certainly not be used if the specific
+     *      Oracle sub-product is going to be used.
+     * </UL>
+     *
+     * General advice:  If you aren't going to use an Oracle sub-product,
+     * then <B>don't install it!</B>
+     * Don't blindly accept default when running OUI. 
+     *
+     * If users also see accounts that they didn't create with names like
+     * SCOTT, ADAMS, JONES, CLARK, BLAKE, OE, PM, SH, QS, QS_*, these 
+     * contain sample data and the schemas can safely be removed.
+     */
+    private static final String[] oracleSysSchemas = {
+        "SYS", "SYSTEM", "OUTLN", "DBSNMP", "OUTLN", "MDSYS", "ORDSYS",
+        "ORDPLUGINS", "CTXSYS", "DSSYS", "PERFSTAT", "WKPROXY", "WKSYS",
+        "WMSYS", "XDB", "ANONYMOUS", "ODM", "ODM_MTR", "OLAPSYS",
+        "TRACESVR", "REPADMIN"
     };
 
     /**
@@ -2123,9 +2195,9 @@ public class SqlFile {
                 case 'S' :
                     if (dbProductName.indexOf("Oracle") > -1) {
                         System.err.println(
-                            "*** WARNING:\n*** Listing tables in the "
-                            + "SYSTEM, SYS, WKSYS schemas since Oracle "
-                            + "doesn't\n*** return a JDBC system table list.");
+                            "*** WARNING:\n*** Listing tables in the SYSTEM, "
+                            + "SYS + product-maint. schemas since\n*** Oracle"
+                            + "(TM) doesn't return a JDBC system table list.");
 
                         types[0]          = "TABLE";
                         schema            = "SYS";
@@ -2313,16 +2385,26 @@ public class SqlFile {
 
             if (additionalSchemas != null) {
                 for (int i = 1; i < additionalSchemas.length; i++) {
-                    rs = md.getTables(null, additionalSchemas[i], null,
-                                      types);
+                    /*
+                     * Inefficient, but we have to do each successful query
+                     * twice in order to prevent calling displayResultSet
+                     * for empty/non-existent schemas
+                     */
+                    rs = md.getTables(null, additionalSchemas[i], null, types);
 
                     if (rs == null) {
                         throw new BadSpecial(
                             "Failed to get metadata from database for '"
                             + additionalSchemas[i] + "'");
                     }
+                    if (!rs.next()) {
+                        continue;
+                    }
 
-                    displayResultSet(null, rs, listSet, filter);
+                    displayResultSet(null,
+                            md.getTables(null, additionalSchemas[i], null,
+                                         types),
+                            listSet, filter);
                 }
             }
         } catch (SQLException se) {
@@ -2443,8 +2525,9 @@ public class SqlFile {
 
         if (excludeSysSchemas) {
             stdprintln(
-                "*** WARNING:  Omitting tables from SYS, SYSTEM, WKSYS schemas\n"
-                + "*** (because Oracle (TM) doesn't differentiate them to JDBC).");
+                "*** WARNING:\n*** Omitting tables from the SYSTEM, "
+                + "SYS + product-maint. schemas\n*** (because Oracle(TM) "
+                + "doesn't differentiate them to JDBC).");
         }
 
         switch (updateCount) {
@@ -2564,7 +2647,17 @@ public class SqlFile {
                         val = null;
 
                         if (!binary) {
-                            val = r.getString(i);
+                            // The special formatting for Timestamps is 
+                            // because the most popular current databases
+                            // are VERY inconsistent about the format
+                            // returned by getString() for a Timestamp field.
+                            // In many cases, the output is very user-
+                            // unfriendly.  However, getTimestamp().toString()
+                            // is consistent and convenient.
+                            val = (
+                                (dataType[insi] == java.sql.Types.TIMESTAMP)
+                                ? r.getTimestamp(i).toString()
+                                : r.getString(i));
 
                             // If we tried to get a String but it failed,
                             // try getting it with a String Stream
@@ -2589,8 +2682,9 @@ public class SqlFile {
 
                             stdprintln("Read " + binBuffer.length
                                        + " bytes from field '"
-                                       + headerArray[insi]
-                                       + "' into binary buffer");
+                                       + headerArray[insi] + "' (type "
+                                       + sqlTypeToString(dataType[insi])
+                                       + ") into binary buffer");
 
                             return;
                         }
@@ -3161,14 +3255,21 @@ public class SqlFile {
         StringBuffer sb = new StringBuffer();
         Iterator     it = (new TreeMap(map)).keySet().iterator();
 
+        if (withValues) {
+            sb.append("The outermost parentheses are not part of "
+                    + "the values.\n");
+        } else {
+            sb.append("Showing variable names and length of values "
+                    + "(use 'listvalue' to see values).\n");
+        }
         while (it.hasNext()) {
             key = (String) it.next();
 
             String s = (String) map.get(key);
 
-            sb.append("    " + key + ": (" + (withValues ? s
-                                                         : Integer.toString(
-                                                         s.length())) + ")\n");
+            sb.append("    " + key + ": "
+                    + (withValues ? ("(" + s + ')')
+                            : Integer.toString(s.length())) + '\n');
         }
 
         return sb.toString();
@@ -3305,21 +3406,109 @@ public class SqlFile {
                    + " bytes into Binary buffer");
     }
 
+    /**
+     * This method is used to tell SqlFile whether this Sql Type must
+     * ALWAYS be loaded to the binary buffer without displaying.
+     *
+     * N.b.:  If this returns "true" for a type, then the user can never
+     * "see" values for these columns.
+     * Therefore, if a type may-or-may-not-be displayable, better to return
+     * false here and let the user choose.
+     * In general, if there is a toString() operator for this Sql Type
+     * then return false, since the JDBC driver should know how to make the
+     * value displayable.
+     *
+     * The table on this page lists the most common SqlTypes, all of which
+     * must implement toString():
+     *     http://java.sun.com/docs/books/tutorial/jdbc/basics/retrieving.html
+     *
+     * @see java.sql.Types
+     */ 
     public static boolean canDisplayType(int i) {
+        /* I don't now about some of the more obscure types, like REF and 
+         * DATALINK */
 
         switch (i) {
 
-            case java.sql.Types.BINARY :
+            //case java.sql.Types.BINARY :
             case java.sql.Types.BLOB :
             case java.sql.Types.JAVA_OBJECT :
-            case java.sql.Types.LONGVARBINARY :
-            case java.sql.Types.LONGVARCHAR :
+            //case java.sql.Types.LONGVARBINARY :
+            //case java.sql.Types.LONGVARCHAR :
             case java.sql.Types.OTHER :
             case java.sql.Types.STRUCT :
-            case java.sql.Types.VARBINARY :
+            //case java.sql.Types.VARBINARY :
                 return false;
         }
 
         return true;
+    }
+
+    public static String sqlTypeToString(int i) {
+        switch (i) {
+
+            case java.sql.Types.ARRAY :
+                return "ARRAY";
+            case java.sql.Types.BIGINT :
+                return "BIGINT";
+            case java.sql.Types.BINARY :
+                return "BINARY";
+            case java.sql.Types.BIT :
+                return "BIT";
+            case java.sql.Types.BLOB :
+                return "BLOB";
+            case java.sql.Types.BOOLEAN :
+                return "BOOLEAN";
+            case java.sql.Types.CHAR :
+                return "CHAR";
+            case java.sql.Types.CLOB :
+                return "CLOB";
+            case java.sql.Types.DATALINK :
+                return "DATALINK";
+            case java.sql.Types.DATE :
+                return "DATE";
+            case java.sql.Types.DECIMAL :
+                return "DECIMAL";
+            case java.sql.Types.DISTINCT :
+                return "DISTANCT";
+            case java.sql.Types.DOUBLE :
+                return "DOUBLE";
+            case java.sql.Types.FLOAT :
+                return "FLOAT";
+            case java.sql.Types.INTEGER :
+                return "INTEGER";
+            case java.sql.Types.JAVA_OBJECT :
+                return "JAVA_OBJECT";
+            case java.sql.Types.LONGVARBINARY :
+                return "LONGVARBINARY";
+            case java.sql.Types.LONGVARCHAR :
+                return "LONGVARCHAR";
+            case java.sql.Types.NULL :
+                return "NULL";
+            case java.sql.Types.NUMERIC :
+                return "NUMERIC";
+            case java.sql.Types.OTHER :
+                return "OTHER";
+            case java.sql.Types.REAL :
+                return "REAL";
+            case java.sql.Types.REF :
+                return "REF";
+            case java.sql.Types.SMALLINT :
+                return "SMALLINT";
+            case java.sql.Types.STRUCT :
+                return "STRUCT";
+            case java.sql.Types.TIME :
+                return "TIME";
+            case java.sql.Types.TIMESTAMP :
+                return "TIMESTAMP";
+            case java.sql.Types.TINYINT :
+                return  "TINYINT";
+            case java.sql.Types.VARBINARY :
+                return "VARBINARY";
+            case java.sql.Types.VARCHAR :
+                return "VARCHAR";
+        }
+
+        return "Unknown type " + i;
     }
 }
