@@ -92,7 +92,8 @@ public class TextCache extends DataFileCache {
 
         super(table.database, name, null);
 
-        this.table = table;
+        this.table       = table;
+        uncommittedCache = new ObjectCacheHashMap(5);
     }
 
     protected void initParams() throws HsqlException {
@@ -580,10 +581,6 @@ public class TextCache extends DataFileCache {
 
         if (count == 0) {
             return;
-        }
-
-        if (uncommittedCache == null) {
-            uncommittedCache = new ObjectCacheHashMap(10);
         }
 
         for (int i = offset; i < offset + count; i++) {
