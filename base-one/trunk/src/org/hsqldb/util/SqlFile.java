@@ -57,7 +57,7 @@ import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.sql.DatabaseMetaData;
 
-/* $Id: SqlFile.java,v 1.113 2005/06/04 12:26:26 fredt Exp $ */
+/* $Id: SqlFile.java,v 1.114 2005/06/04 15:52:50 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -93,7 +93,7 @@ import java.sql.DatabaseMetaData;
  * Most of the Special Commands and Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.113 $
+ * @version $Revision: 1.114 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -143,8 +143,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.113 $".substring("$Revision: ".length(),
-                "$Revision: 1.113 $".length() - 2);
+        revnum = "$Revision: 1.114 $".substring("$Revision: ".length(),
+                "$Revision: 1.114 $".length() - 2);
     }
 
     private static String BANNER =
@@ -1430,17 +1430,20 @@ public class SqlFile {
         int          b, e; // begin and end of name.  end really 1 PAST name
         int          nonVarIndex;
 
-        if (permitAlias && inString.charAt(0) == '/') {
-            e = pastName(inString.substring(1), 1);
-            if (e < 2) {
+        if (permitAlias && inString.trim().charAt(0) == '/') {
+            int slashIndex = inString.indexOf('/');
+            e = pastName(inString.substring(slashIndex + 1), 0);
+            // In this case, e is the exact length of the var name.
+            if (e < 1) {
                 throw new SQLException("Malformed PL alias use");
             }
-            varName = inString.substring(1, e);
+            varName = inString.substring(slashIndex + 1, slashIndex + 1 + e);
             varValue = (String) userVars.get(varName);
             if (varValue == null) {
                 throw new SQLException("Undefined PL variable:  " + varName);
             }
-            expandBuffer.replace(0, e, (String) userVars.get(varName));
+            expandBuffer.replace(slashIndex, slashIndex + 1 + e,
+                    (String) userVars.get(varName));
         }
 
         String s;
