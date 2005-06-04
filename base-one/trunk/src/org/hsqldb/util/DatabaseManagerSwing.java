@@ -93,6 +93,12 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.util.Properties;
+import java.io.FileOutputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
@@ -182,9 +188,9 @@ implements ActionListener, WindowListener, KeyListener {
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.sourceforge.net.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.47 $";
+        + "problem reports or help requests:  $Revision: 1.49 $";
     private static final String ABOUT_TEXT =
-        "$Revision: 1.47 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.49 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2001-2005, The HSQL Development Group.\n"
         + "http://hsqldb.sourceforge.net\n\n\n"
@@ -224,6 +230,7 @@ implements ActionListener, WindowListener, KeyListener {
     String                 ifHuge = "";
     JToolBar               jtoolbar;
     private boolean        showSchemas = true;
+    private boolean        showTooltips = true;
     private boolean        autoRefresh = true;
     private boolean        gridFormat  = true;
 
@@ -520,13 +527,30 @@ implements ActionListener, WindowListener, KeyListener {
         this.bMustExit = b;
     }
 
+    private DBMPrefs prefs = null;
+
     public void main() {
 
         fMain = new JFrame("HSQL Database Manager");
+        try {
+            prefs = new DBMPrefs();
+        } catch (Exception e) {
+            // Just don't user persisted preferences.
+            prefs = null;
+        }
+        if (prefs == null) {
+            setLF(CommonSwing.Native);
+        } else {
+            autoRefresh = prefs.autoRefresh;
+            displayRowCounts = prefs.showRowCounts;
+            showSys = prefs.showSysTables;
+            showSchemas = prefs.showSchemas;
+            gridFormat = prefs.resultGrid;
+            showTooltips = prefs.showTooltips;
+            setLF(prefs.laf);
+        }
 
-        setLF(CommonSwing.Native);
-
-        // (ulrivo): An actual icon.
+        // (ulrivo): An actual icon.  N.b., this adds some tips to the tip map
         fMain.getContentPane().add(createToolBar(), "North");
         fMain.setIconImage(CommonSwing.getIcon("Frame"));
         fMain.addWindowListener(this);
@@ -569,9 +593,12 @@ implements ActionListener, WindowListener, KeyListener {
         lfGroup.add(rbMotifLF);
         boxShowSchemas.setSelected(showSchemas);
         boxShowGrid.setSelected(gridFormat);
+        boxTooltips.setSelected(showTooltips);
         boxShowGrid.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G,
                 Event.CTRL_MASK));
         boxAutoRefresh.setSelected(autoRefresh);
+        boxRowCounts.setSelected(displayRowCounts);
+        boxShowSys.setSelected(showSys);
         rbNativeLF.setActionCommand("LFMODE:" + CommonSwing.Native);
         rbJavaLF.setActionCommand("LFMODE:" + CommonSwing.Java);
         rbMotifLF.setActionCommand("LFMODE:" + CommonSwing.Motif);
@@ -668,13 +695,12 @@ implements ActionListener, WindowListener, KeyListener {
         boxTooltips.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent actionevent) {
-                setTooltips(boxTooltips.isSelected());
+                showTooltips = boxTooltips.isSelected();
+                resetTooltips();
             }
         });
         bar.add(mnuHelp);
         fMain.setJMenuBar(bar);
-        setTooltips(true);
-        boxTooltips.setSelected(true);
         initGUI();
 
         sRecent = new String[iMaxRecent];
@@ -706,6 +732,8 @@ implements ActionListener, WindowListener, KeyListener {
             }
         }
 
+        // This must be done AFTER all tip texts are put into the map
+        resetTooltips();
         txtCommand.requestFocus();
     }
 
@@ -1066,7 +1094,19 @@ implements ActionListener, WindowListener, KeyListener {
     public void windowClosing(WindowEvent ev) {
 
         try {
-            cConn.close();
+            if (cConn != null) {
+                cConn.close();
+            }
+            if (prefs != null) {
+                prefs.autoRefresh = autoRefresh;
+                prefs.showRowCounts = displayRowCounts;
+                prefs.showSysTables = showSys;
+                prefs.showSchemas = showSchemas;
+                prefs.resultGrid = gridFormat;
+                prefs.showTooltips = showTooltips;
+                prefs.laf = currentLAF;
+                prefs.store();
+            }
         } catch (Exception e) {
 
             //  Added: (weconsultants@users)
@@ -1642,10 +1682,16 @@ implements ActionListener, WindowListener, KeyListener {
     };
     private static final HashSet  oracleSysUsers = new HashSet();
 
+    private static final String[] oracleSysSchemas = {
+        "SYS", "SYSTEM", "OUTLN", "DBSNMP", "OUTLN", "MDSYS", "ORDSYS",
+        "ORDPLUGINS", "CTXSYS", "DSSYS", "PERFSTAT", "WKPROXY", "WKSYS",
+        "WMSYS", "XDB", "ANONYMOUS", "ODM", "ODM_MTR", "OLAPSYS",
+        "TRACESVR", "REPADMIN"
+    };
     static {
-        oracleSysUsers.add("SYS");
-        oracleSysUsers.add("SYSTEM");
-        oracleSysUsers.add("WKSYS");
+        for (int i = 0; i < oracleSysSchemas.length; i++) {
+            oracleSysUsers.add(oracleSysSchemas[i]);
+        }
     }
 
     /**
@@ -1977,7 +2023,7 @@ implements ActionListener, WindowListener, KeyListener {
 
     private void setLF(String newLAF) {
 
-        if (currentLAF != null && currentLAF == newLAF) {
+        if (currentLAF != null && currentLAF == newLAF) { // No change
             return;
         }
 
@@ -2002,7 +2048,7 @@ implements ActionListener, WindowListener, KeyListener {
         }
     }
 
-    void setTooltips(boolean show) {
+    void resetTooltips() {
 
         Iterator   it = tipMap.keySet().iterator();
         JComponent component;
@@ -2010,8 +2056,9 @@ implements ActionListener, WindowListener, KeyListener {
         while (it.hasNext()) {
             component = (JComponent) it.next();
 
-            component.setToolTipText(show ? ((String) tipMap.get(component))
-                                          : (String) null);
+            component.setToolTipText(showTooltips
+                    ? ((String) tipMap.get(component))
+                    : (String) null);
         }
     }
 
@@ -2074,4 +2121,141 @@ implements ActionListener, WindowListener, KeyListener {
             refreshTree();
         }
     });
+
+    /**
+     * Persisted User Preferences for DatabaseManagerSwing.
+     *
+     * These are settings for items in the View and Options pulldown menus,
+     * plus Help/Show Tooltips.
+     */
+    public static class DBMPrefs {
+        private File prefsFile = null;
+
+        // Set defaults from Data
+        boolean autoRefresh = true;
+        boolean showRowCounts = false;
+        boolean showSysTables = false;
+        boolean showSchemas = true;
+        boolean resultGrid = true;
+        String laf = CommonSwing.Native;
+        // Somebody with more time can store the font settings.  IMO, that
+        // menu item shouldn'tString even be there if the settings aren't persisted.
+        boolean showTooltips = true;
+
+        public DBMPrefs() throws NoSuchMethodException, ClassNotFoundException,
+        InstantiationException, IllegalAccessException,
+        InvocationTargetException {
+            String homedir = null;
+
+            // May be running under a security manager
+            try {
+                Class c =
+                    Class.forName("sun.security.action.GetPropertyAction");
+                Constructor constructor = c.getConstructor(new Class[]{
+                    String.class });
+                java.security.PrivilegedAction a =
+                    (java.security.PrivilegedAction) constructor.newInstance(
+                        new Object[]{ "user.home" });
+
+                homedir = (String) java.security.AccessController.doPrivileged(a);
+                prefsFile = new File(homedir, "dbmprefs.properties");
+            } catch (NoSuchMethodException e) {
+                System.err.println("Failed to get home directory.\n"
+                        + "Therefore not retrieving/storing user preferences.\n("
+                        + e.getMessage() + ')');
+                throw e;
+            } catch (ClassNotFoundException e) {
+                System.err.println("Failed to get home directory.\n"
+                        + "Therefore not retrieving/storing user preferences.\n("
+                        + e.getMessage() + ')');
+                throw e;
+            } catch (InstantiationException e) {
+                System.err.println("Failed to get home directory.\n"
+                        + "Therefore not retrieving/storing user preferences.\n("
+                        + e.getMessage() + ')');
+                throw e;
+            } catch (IllegalAccessException e) {
+                System.err.println("Failed to get home directory.\n"
+                        + "Therefore not retrieving/storing user preferences.\n("
+                        + e.getMessage() + ')');
+                throw e;
+            } catch (InvocationTargetException e) {
+                System.err.println("Failed to get home directory.\n"
+                        + "Therefore not retrieving/storing user preferences.\n("
+                        + e.getMessage() + ')');
+                throw e;
+            }
+            load();
+        }
+
+        private static final String tString = Boolean.TRUE.toString();
+        private static final String fString = Boolean.FALSE.toString();
+
+        public void load() {
+            Properties props = new Properties();
+            if (!prefsFile.exists()) {
+                return;
+            }
+            try {
+                FileInputStream fis = new FileInputStream(prefsFile);
+                props.load(fis);
+                fis.close();
+            } catch (IOException ioe) {
+                throw new RuntimeException("Failed to read preferences file '"
+                        + prefsFile + "':  " + ioe.getMessage());
+            }
+            String tmpString;
+            tmpString = props.getProperty("autoRefresh");
+            if (tmpString != null) {
+                autoRefresh = Boolean.valueOf(tmpString).booleanValue();
+            }
+            tmpString = props.getProperty("showRowCounts");
+            if (tmpString != null) {
+                showRowCounts = Boolean.valueOf(tmpString).booleanValue();
+            }
+            tmpString = props.getProperty("showSysTables");
+            if (tmpString != null) {
+                showSysTables = Boolean.valueOf(tmpString).booleanValue();
+            }
+            tmpString = props.getProperty("showSchemas");
+            if (tmpString != null) {
+                showSchemas = Boolean.valueOf(tmpString).booleanValue();
+            }
+            tmpString = props.getProperty("resultGrid");
+            if (tmpString != null) {
+                resultGrid = Boolean.valueOf(tmpString).booleanValue();
+            }
+            tmpString = props.getProperty("laf");
+            laf = ((tmpString == null) ? CommonSwing.Native : tmpString);
+            tmpString = props.getProperty("showTooltips");
+            if (tmpString != null) {
+                showTooltips = Boolean.valueOf(tmpString).booleanValue();
+            }
+        }
+
+        public void store() {
+            Properties props = new Properties();
+
+            // Boolean.toString(boolean) was new with Java 1.4, so don't use that.
+            props.setProperty("autoRefresh", (autoRefresh ? tString : fString));
+            props.setProperty("showRowCounts",
+                    (showRowCounts ? tString : fString));
+            props.setProperty("showSysTables",
+                    (showSysTables ? tString : fString));
+            props.setProperty("showSchemas", (showSchemas ? tString : fString));
+            props.setProperty("resultGrid", (resultGrid ? tString : fString));
+            props.setProperty("laf", laf);
+            props.setProperty("showTooltips", (showTooltips ? tString : fString));
+
+            try {
+                FileOutputStream fos = new FileOutputStream(prefsFile);
+                props.store(fos, "DatabaseManagerSwing user preferences");
+                fos.flush();
+                fos.close();
+            } catch (IOException ioe) {
+                throw new RuntimeException("Failed to prepare preferences file '"
+                        + prefsFile + "':  " + ioe.getMessage());
+            }
+        }
+    }
 }
