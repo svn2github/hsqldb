@@ -565,6 +565,14 @@ public class Session implements SessionInterface {
     }
 
     /**
+     * @todo -- fredt 20050604 - if this method is called after an out of memory
+     * error during update, the next block might throw out of memory too and as
+     * a result inNestedTransaction remains true and no further update
+     * is possible. The session must be closed at that point by the user
+     * application.
+     */
+
+    /**
      * Ends a nested transaction.
      *
      * @param  rollback true to roll back or false to commit the nested transaction

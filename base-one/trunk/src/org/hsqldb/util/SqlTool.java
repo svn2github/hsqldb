@@ -31,18 +31,15 @@
 
 package org.hsqldb.util;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.StringTokenizer;
 
-/* $Id: SqlTool.java,v 1.39 2004/09/19 03:44:46 fredt Exp $ */
+/* $Id: SqlTool.java,v 1.46 2005/05/11 14:03:22 fredt Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -53,7 +50,7 @@ import java.util.StringTokenizer;
  * See JavaDocs for the main method for syntax of how to run.
  *
  * @see @main()
- * @version $Revision: 1.39 $
+ * @version $Revision: 1.46 $
  * @author Blaine Simpson
  */
 public class SqlTool {
@@ -67,8 +64,8 @@ public class SqlTool {
     private static String  revnum = null;
 
     static {
-        revnum = "$Revision: 1.45 $".substring("$Revision: ".length(),
-                                               "$Revision: 1.45 $".length()
+        revnum = "$Revision: 1.46 $".substring("$Revision: ".length(),
+                                               "$Revision: 1.46 $".length()
                                                - 2);
     }
 
