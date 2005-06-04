@@ -43,15 +43,10 @@ import java.util.HashMap;
 import java.util.StringTokenizer;
 import java.util.Properties;
 
-/* $Id: RCData.java,v 1.3 2005/05/18 15:49:19 unsaved Exp $ */
+/* $Id: RCData.java,v 1.4 2005/05/18 19:49:00 fredt Exp $ */
 
 /**
  * All the info we need to connect up to a database.
- * If it is anticipated that SqlTool.execute() will be executed
- * from other code directly rather than from SqlTool.main(), then
- * make this a global-level class.
- * I expect other Java code to invoke SqlFile.execute(), but not
- * anything in this class.
  */
 public class RCData {
 
