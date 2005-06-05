@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: sqlsyntax.xml,v 1.29 2005/05/26 15:01:26 fredt Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.31 2005/06/03 12:32:14 fredt Exp $ -->
 <chapter id="sqlsyntax-chapter">
   <title id="sqlsyntax-title">SQL Syntax</title>
 
@@ -54,9 +54,9 @@
       </editor>
     </authorgroup>
 
-    <edition>$Revision: 1.29 $</edition>
+    <edition>$Revision: 1.31 $</edition>
 
-    <pubdate>$Date: 2005/05/26 15:01:26 $</pubdate>
+    <pubdate>$Date: 2005/06/03 12:32:14 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -100,8 +100,7 @@
           April 2001</para>
         </footnote></title>
 
-      <programlisting>
-ALTER INDEX &lt;indexname&gt; RENAME TO &lt;newname&gt;;</programlisting>
+      <programlisting>ALTER INDEX &lt;indexname&gt; RENAME TO &lt;newname&gt;;</programlisting>
 
       <para>Index names can be changed so long as they do not conflict with
       other user-defined or sytem-defined names.</para>
@@ -122,8 +121,7 @@ ALTER INDEX &lt;indexname&gt; RENAME TO &lt;newname&gt;;</programlisting>
       <title id="alter_sequence-title">ALTER SEQUENCE<footnoteref
       linkend="posthyper" /></title>
 
-      <programlisting>
-ALTER SEQUENCE &lt;sequencename&gt; RESTART WITH &lt;value&gt;;</programlisting>
+      <programlisting>ALTER SEQUENCE &lt;sequencename&gt; RESTART WITH &lt;value&gt;;</programlisting>
 
       <para>Resets the next value to be returned from the sequence.</para>
     </section>
@@ -131,8 +129,7 @@ ALTER SEQUENCE &lt;sequencename&gt; RESTART WITH &lt;value&gt;;</programlisting>
     <section>
       <title>ALTER SCHEMA<footnoteref linkend="posthyper" /></title>
 
-      <programlisting>
-ALTER SCHEMA &lt;schemaname&gt; RENAME TO &lt;newname&gt;;</programlisting>
+      <programlisting>ALTER SCHEMA &lt;schemaname&gt; RENAME TO &lt;newname&gt;;</programlisting>
 
       <para>Renames schema as specified. All objects of the schema will
       hereafter be accessible only with the new schema name.</para>
@@ -376,14 +373,16 @@ ALTER SCHEMA &lt;schemaname&gt; RENAME TO &lt;newname&gt;;</programlisting>
       <para>Optional (nested) CREATE and GRANT statements can be given only
       for new objects in this new schema. Only the last nested statement
       should be terminated with a semicolon, because the first semicolon
-      encountered after "CREATE SCHEMA" will end the CREATE SCHEMA
-      command.<informalexample>
+      encountered after "CREATE SCHEMA" will end the CREATE SCHEMA command. In
+      the example below, a new schema, ACCOUNTS, is created, then two tables
+      and a view are added to this schma and some rights on these objects are
+      granted.<informalexample>
           <programlisting>    CREATE SCHEMA ACCOUNTS AUTHORIZATION DBA
     CREATE TABLE AB(A INTEGER, ...)
     CREATE TABLE CD(C CHAHR, ...)
     CREATE VIEW VI AS SELECT ...
     GRANT SELECT TO PUBLIC ON AB
-    GRANT SEELECT TO JOE ON CD;
+    GRANT SELECT TO JOE ON CD;
 </programlisting>
         </informalexample></para>
 
@@ -566,9 +565,8 @@ ALTER SCHEMA &lt;schemaname&gt; RENAME TO &lt;newname&gt;;</programlisting>
       arguments:</para>
 
       <informalexample>
-        <programlisting>
-    fire (String name, String table, Object row1[], Object row2[])
-	</programlisting>
+        <programlisting>    fire (String name, String table, Object row1[], Object row2[])
+</programlisting>
       </informalexample>
 
       <para>where 'row1' and 'row2' represent the 'before' and 'after' states
@@ -1020,8 +1018,7 @@ FROM tableList
           <term>tableList</term>
 
           <listitem>
-            <programlisting>
-    table [{ INNER | LEFT OUTER } JOIN table ON Expression] [, ...]</programlisting>
+            <programlisting>    table [{ INNER | LEFT OUTER } JOIN table ON Expression] [, ...]</programlisting>
           </listitem>
         </varlistentry>
 
@@ -1029,8 +1026,7 @@ FROM tableList
           <term>table</term>
 
           <listitem>
-            <programlisting>
-    { (selectStatement) [AS] label | tableName}</programlisting>
+            <programlisting>    { (selectStatement) [AS] label | tableName}</programlisting>
           </listitem>
         </varlistentry>
 
@@ -1038,8 +1034,7 @@ FROM tableList
           <term>selectExpression</term>
 
           <listitem>
-            <programlisting>
-    { Expression | COUNT(*) | {COUNT | MIN | MAX | SUM | AVG | SOME | EVERY | VAR_POP | VAR_SAMP | STDDEV_POP | STDDEV_SAMP} ([ALL | DISTINCT]<footnoteref
+            <programlisting>    { Expression | COUNT(*) | {COUNT | MIN | MAX | SUM | AVG | SOME | EVERY | VAR_POP | VAR_SAMP | STDDEV_POP | STDDEV_SAMP} ([ALL | DISTINCT]<footnoteref
                 linkend="posthyper" />] Expression) } [[AS] label]</programlisting>
 
             <para>If DISTINCT is specified, only one instance of several
@@ -1059,8 +1054,7 @@ FROM tableList
           <term>orderExpression</term>
 
           <listitem>
-            <programlisting>
-    { columnNr | columnAlias | selectExpression } [ASC | DESC]</programlisting>
+            <programlisting>    { columnNr | columnAlias | selectExpression } [ASC | DESC]</programlisting>
           </listitem>
         </varlistentry>
 
@@ -1224,7 +1218,7 @@ FROM tableList
         <para>Note that when referential integrity is switched back on, no
         check is made that the changes to the data are consistent with the
         existing referential integrity constraints. You can verify consistency
-        using SQL queries and take appropriate actions. </para>
+        using SQL queries and take appropriate actions.</para>
       </warning>
 
       <para>Only an administrator may do this.</para>
@@ -1804,8 +1798,8 @@ FROM tableList
     This type is not portable.</para>
 
     <para>In table definition statements, HSQLDB accepts size, precision and
-    scale qualifiers only for certain types: CHAR(n), VARCHAR(n), DOUBLE(n),
-    DECIMAL(p,s) and TIMESTAMP(p).</para>
+    scale qualifiers only for certain types: CHAR(s), VARCHAR(s), DOUBLE(p),
+    NUMERIC(p), DECIMAL(p,s) and TIMESTAMP(p).</para>
 
     <para>TIMESTAMP(p) can take only 0 or 6 as precision. Zero indicates no
     subsecond part. Without the precision, the default is 6.</para>
@@ -1818,8 +1812,7 @@ FROM tableList
     database (before adding data), you can add a database property value to
     enforce the sizes:</para>
 
-    <programlisting>
-    SET PROPERTY "sql.enforce_strict_size" true</programlisting>
+    <programlisting>    SET PROPERTY "sql.enforce_strict_size" true</programlisting>
 
     <para>This will enforce the specified size and pad CHAR fields with spaces
     to fill the size. This complies with SQL standards by throwing an
@@ -1869,8 +1862,7 @@ FROM tableList
     using the alias) requires that the Java class can be reached by the
     database (server). The syntax is:</para>
 
-    <programlisting>
-    "java.lang.Math.sqrt"(2.0)</programlisting>
+    <programlisting>    "java.lang.Math.sqrt"(2.0)</programlisting>
 
     <para>This means the package must be provided, and the name must be
     written as one word, and inside " because otherwise it is converted to
@@ -1878,14 +1870,12 @@ FROM tableList
 
     <para>An alias can be created using the command CREATE ALIAS:</para>
 
-    <programlisting>
-    CREATE ALIAS SQRT FOR "java.lang.Math.sqrt";</programlisting>
+    <programlisting>    CREATE ALIAS SQRT FOR "java.lang.Math.sqrt";</programlisting>
 
     <para>When an alias is defined, then the function can be called
     additionally using this alias:</para>
 
-    <programlisting>
-    SELECT SQRT(A) , B FROM MYTABLE;</programlisting>
+    <programlisting>    SELECT SQRT(A) , B FROM MYTABLE;</programlisting>
 
     <para>Only static java methods can be used as stored procedures. If,
     within the same class, there are overloaded methods with the same number
@@ -2690,8 +2680,7 @@ FROM tableList
         <term>condition</term>
 
         <listitem>
-          <programlisting> 
-  { value [|| value]
+          <programlisting>   { value [|| value]
   | value { = | &lt; | &lt;= | &gt; | &gt;= | &lt;&gt; | != } value
   | value IS [NOT] NULL
   | EXISTS(selectStatement)
@@ -2705,8 +2694,7 @@ FROM tableList
         <term>value</term>
 
         <listitem>
-          <programlisting> 
-  [+ | -] { term [{ + | - | * | / | || } term]
+          <programlisting>   [+ | -] { term [{ + | - | * | / | || } term]
   | ( condition )
   | function ( [parameter] [,...] )
   | selectStatement giving one value
@@ -2718,8 +2706,7 @@ FROM tableList
         <term>term</term>
 
         <listitem>
-          <programlisting> 
-  { 'string' | number | floatingpoint
+          <programlisting>   { 'string' | number | floatingpoint
   | [table.]column | TRUE | FALSE | NULL }</programlisting>
         </listitem>
       </varlistentry>
@@ -2728,8 +2715,7 @@ FROM tableList
         <term>sequence</term>
 
         <listitem>
-          <programlisting> 
-  NEXT VALUE FOR &lt;sequence&gt;</programlisting>
+          <programlisting>   NEXT VALUE FOR &lt;sequence&gt;</programlisting>
 
           <para>HSQLDB does not currently enforce the SQL 200n proposed rules
           on where sequence generated values are allowed to be used. In
@@ -2787,8 +2773,7 @@ FROM tableList
           names. Example:</para>
 
           <informalexample>
-            <programlisting>
-    CREATE TABLE "Address" ("Nr" INTEGER,"Name" VARCHAR); SELECT "Nr", "Name" FROM "Address";</programlisting>
+            <programlisting>    CREATE TABLE "Address" ("Nr" INTEGER,"Name" VARCHAR); SELECT "Nr", "Name" FROM "Address";</programlisting>
           </informalexample>
 
           <para>The equivalent quoted identifier can be used for an unquoted
@@ -2802,8 +2787,7 @@ FROM tableList
           functions when there is an ambiguity. For example:</para>
 
           <informalexample>
-            <programlisting>
-    SELECT COUNT(*) "COUNT" FROM MYTABLE;
+            <programlisting>    SELECT COUNT(*) "COUNT" FROM MYTABLE;
     SELECT "LEFT"(COL1, 2) FROM MYTABLE;</programlisting>
           </informalexample>
 
@@ -2877,8 +2861,7 @@ FROM tableList
           The data and time variants CURRENT_* are SQL standard versions and
           should be used in preference to others. Example:</para>
 
-          <programlisting>
-    CREATE TABLE T(D DATE DEFAULT CURRENT_DATE);
+          <programlisting>    CREATE TABLE T(D DATE DEFAULT CURRENT_DATE);
     CREATE TABLE T1(TS TIMESTAMP DEFAULT CURRENT_TIMESTAMP);</programlisting>
 
           <para>Binary data starts and ends with ' (singlequote), the format

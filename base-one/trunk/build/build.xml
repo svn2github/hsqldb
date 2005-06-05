@@ -1,7 +1,6 @@
 <?xml version="1.0"?>
 <!-- author fredt@users.sourceforge.net 2001 - 2005 -->
 <!-- additional targets by unsaved@users.sourceforge.net 2004 - 2005 -->
-<!-- additional ImageIcons by weconsultants@users.sourceforge.net 20041109 -->
 
 <project name="hsqldb" default="help" basedir="../">
    <!-- This loads properties in the same exact way as if you ran
@@ -15,7 +14,7 @@
         Do not address questions about property file(s) to the
         hsqldb community. -->
    <property file='build/build.properties'/>
-   <property name="hsqldb.version" value="1.8.0RC10"/>
+   <property name="hsqldb.version" value="1.8.0"/>
 
    <tstamp>
        <format property="_tmpstamp" pattern="yyyy/MM/dd-hh:mm:ss"
@@ -1139,9 +1138,7 @@ includes='**/*.css, **/*.java, **/*.sql, **/*.txt, **/*.properties, **/*.cfg'/>
 
     <target name='clean-doc' description='Remove derived documentation files'
             depends='clean-docwork'>
-        <!-- The target files here are hard-coded.
-             If there are no objections, I'd like to move all CVS-controlled
-             files to the docsrc directory.
+        <!-- All CVS-controlled are in docsrc directory.
              At that point, doc will contain only derived files, and this
              target can just wipe out the docwork and doc directories. -->
         <delete quiet='true' includeEmptyDirs='true'>
