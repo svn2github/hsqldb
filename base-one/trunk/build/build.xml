@@ -746,7 +746,6 @@ examples:
                         ${src}/org/hsqldb/Trigger.java,
 		   				${src}/org/hsqldb/Server.java,
 		   				${src}/org/hsqldb/WebServer.java,
-		   				${src}/org/hsqldb/jdbc/*.java,
 		   				${src}/org/hsqldb/sample/TriggerSample.java,
 		   				${src}/org/hsqldb/util/RCData.java,
 		   				${src}/org/hsqldb/util/SqlTool.java"
@@ -760,6 +759,9 @@ examples:
            windowtitle="${hsqldb.title} ${hsqldb.version} API"
            doctitle="${hsqldb.title} ${hsqldb.version}"
            bottom="&lt;i&gt;Copyright &#169; 2001 - 2005 HSQL Development Group. All Rights Reserved.&lt;/i&gt;">
+           <packageset dir='${src}'>
+               <include name='org/hsqldb/jdbc'/>
+           </packageset>
 
      </javadoc>
    </target>
