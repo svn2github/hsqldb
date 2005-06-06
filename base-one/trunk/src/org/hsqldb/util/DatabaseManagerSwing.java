@@ -190,9 +190,9 @@ implements ActionListener, WindowListener, KeyListener {
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.sourceforge.net.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.50 $";
+        + "problem reports or help requests:  $Revision: 1.51 $";
     private static final String ABOUT_TEXT =
-        "$Revision: 1.50 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.51 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2001-2005, The HSQL Development Group.\n"
         + "http://hsqldb.sourceforge.net\n\n\n"
@@ -543,17 +543,13 @@ implements ActionListener, WindowListener, KeyListener {
             prefs = null;
         }
 
-        if (prefs == null) {
-            setLF(CommonSwing.Native);
-        } else {
+        if (prefs != null) {
             autoRefresh      = prefs.autoRefresh;
             displayRowCounts = prefs.showRowCounts;
             showSys          = prefs.showSysTables;
             showSchemas      = prefs.showSchemas;
             gridFormat       = prefs.resultGrid;
             showTooltips     = prefs.showTooltips;
-
-            setLF(prefs.laf);
         }
 
         // (ulrivo): An actual icon.  N.b., this adds some tips to the tip map
@@ -709,7 +705,11 @@ implements ActionListener, WindowListener, KeyListener {
         });
         bar.add(mnuHelp);
         fMain.setJMenuBar(bar);
+        // N.b., we don't pack until L&F set, result pane added, etc.,
+        // so everything will get sized correctly.
         initGUI();
+        setLF((prefs == null) ? CommonSwing.Native : prefs.laf);
+        fMain.pack();
 
         sRecent = new String[iMaxRecent];
 
@@ -868,7 +868,7 @@ implements ActionListener, WindowListener, KeyListener {
         } else if (s.equals(GRID_BOX_TEXT)) {
             gridFormat = boxShowGrid.isSelected();
 
-            displayResults();
+            initResultPane();
         } else if (s.equals("Open Script...")) {
             JFileChooser f = new JFileChooser(".");
 
@@ -1045,16 +1045,16 @@ implements ActionListener, WindowListener, KeyListener {
         }
     }
 
-    private void displayResults() {
+    private void initResultPane() {
 
         if (gridFormat) {
-            setResultsInGrid();
+            initGridResultPane();
         } else {
-            setResultsInText();
+            initTextResultPane();
         }
     }
 
-    private void setResultsInGrid() {
+    private void initGridResultPane() {
 
         pResult.removeAll();
         pResult.add(gScrollPane, BorderLayout.CENTER);
@@ -1063,7 +1063,7 @@ implements ActionListener, WindowListener, KeyListener {
         pResult.repaint();
     }
 
-    private void setResultsInText() {
+    private void initTextResultPane() {
 
         pResult.removeAll();
         pResult.add(txtResultScroll, BorderLayout.CENTER);
@@ -1667,7 +1667,6 @@ implements ActionListener, WindowListener, KeyListener {
         pStatus.add(jStatusLine, BorderLayout.CENTER);
         fMain.getContentPane().add(pStatus, "South");
         doLayout();
-        fMain.pack();
     }
 
     /* Simple tree node factory method - set's parent and user object.
@@ -2043,9 +2042,7 @@ implements ActionListener, WindowListener, KeyListener {
 
         CommonSwing.setSwingLAF(fMain, newLAF);
 
-        if (pResult != null && gridFormat) {
-            setResultsInGrid();
-        }
+        initResultPane();
 
         currentLAF = newLAF;
 
