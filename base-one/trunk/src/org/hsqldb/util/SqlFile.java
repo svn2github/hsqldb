@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.115 2005/06/04 17:23:55 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.116 2005/06/04 19:13:38 fredt Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -93,7 +93,7 @@ import java.util.TreeMap;
  * Most of the Special Commands and Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.115 $
+ * @version $Revision: 1.116 $
  * @author Blaine Simpson
  */
 public class SqlFile {
@@ -143,8 +143,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.115 $".substring("$Revision: ".length(),
-                "$Revision: 1.115 $".length() - 2);
+        revnum = "$Revision: 1.116 $".substring("$Revision: ".length(),
+                "$Revision: 1.116 $".length() - 2);
     }
 
     private static String BANNER =
@@ -194,8 +194,8 @@ public class SqlFile {
         + "    \\p [line to print]   Print string to stdout\n"
         + "    \\w file/path.sql     Append current buffer to file\n"
         + "    \\i file/path.sql     Include/execute commands from external file\n"
-        + "    \\d{tvsiSanu*} [substr]  List objects of specified type:\n"
-        + "             Tbls/Views/Seqs/Indexes/SysTbls/Aliases/schemaNames/Users/all\n"
+        + "    \\d{tvsiSVanu*} [substr]  List objects of specified type:\n"
+        + "       Tbls/Views/Seqs/Indexes/SysTbls/sysVws/Aliases/schemaNames/Users/all\n"
         + "    \\d OBJECTNAME [subs] Describe table or view columns\n"
         + "    \\o [file/path.html]  Tee (or stop teeing) query output to specified file\n"
         + "    \\H                   Toggle HTML output mode\n"
@@ -2229,6 +2229,21 @@ public class SqlFile {
                     }
                     break;
 
+                case 'V' :
+                    types[0]          = "VIEW";
+                    if (dbProductName.indexOf("Oracle") > -1) {
+                        System.err.println(
+                            "*** WARNING:\n*** Listing view in the SYSTEM, "
+                            + "SYS + product-maint. schemas since\n*** Oracle"
+                            + "(TM) doesn't return a JDBC system table list.");
+
+                        schema            = "SYS";
+                        additionalSchemas = oracleSysSchemas;
+                    } else {
+                        schema   = "INFORMATION_SCHEMA";
+                    }
+                    break;
+
                 case 's' :
                     if (dbProductName.indexOf("HSQL") > -1) {
 
@@ -2388,10 +2403,11 @@ public class SqlFile {
                     listSet = listMDTableCols[DEFAULT_ELEMENT];
                 }
 
-                if (schema == null && filter != null
+                if (filter != null
                         && filter.charAt(filter.length() - 1) == '.') {
                     schema = filter.substring(0, filter.length() - 1);
                     filter = null;
+                    additionalSchemas = null;
                 }
             }
 
