@@ -107,14 +107,14 @@ public interface Trigger {
     /**
      * The method invoked upon each triggered action. <p>
      *
-     * When UPDATE triggers are fired, row1 contains the
-     * existing values of the table row and row2 contains the
+     * When UPDATE triggers are fired, oldRow contains the
+     * existing values of the table row and newRow contains the
      * new values.<p>
      *
-     * For INSERT triggers, row1 is null and row2 contains the
+     * For INSERT triggers, oldRow is null and newRow contains the
      * table row to be inserted.
      *
-     * For DELETE triggers, row2 is null and row1 contains the
+     * For DELETE triggers, newRow is null and oldRow contains the
      * table row to be deleted.
      *
      * type contains the integer index id for trigger type, e.g.
@@ -123,9 +123,9 @@ public interface Trigger {
      * @param trigName the name of the trigger
      * @param tabName the name of the table upon which the
      *      triggered action is occuring
-     * @param row1 the old row
-     * @param row2 the new row
+     * @param oldRow the old row
+     * @param newRow the new row
      */
-    void fire(int type, String trigName, String tabName, Object[] row1,
-              Object[] row2);
+    void fire(int type, String trigName, String tabName, Object[] oldRow,
+              Object[] newRow);
 }

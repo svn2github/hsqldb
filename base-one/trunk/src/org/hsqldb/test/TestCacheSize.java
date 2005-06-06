@@ -799,9 +799,9 @@ public class TestCacheSize {
         long time = sw.elapsedTime();
         long rate = (i * 1000) / (time + 1);
 
-        storeResult("update with random id", i, time, rate);
-        System.out.println("update time with random id " + i + " rows  -- "
-                           + time + " ms -- " + rate + " tps");
+        storeResult("update with sequential id", i, time, rate);
+        System.out.println("update time with sequential id " + i
+                           + " rows  -- " + time + " ms -- " + rate + " tps");
     }
 
     void deleteTest() {

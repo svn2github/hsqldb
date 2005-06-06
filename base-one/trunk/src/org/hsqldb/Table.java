@@ -2004,9 +2004,10 @@ public class Table extends BaseTable {
     public void insertData(Session session,
                            Object[] data) throws HsqlException {
 
-        Row r = newRow(data);
+        Row row = newRow(data);
 
-        indexRow(session, r);
+        indexRow(session, row);
+        commitRowToStore(row);
     }
 
     /**
@@ -2014,9 +2015,9 @@ public class Table extends BaseTable {
      */
     public void insertSys(Object[] data) throws HsqlException {
 
-        Row r = newRow(data);
+        Row row = newRow(data);
 
-        indexRow(null, r);
+        indexRow(null, row);
     }
 
     /**
@@ -3263,7 +3264,11 @@ public class Table extends BaseTable {
         if (isCached && cache != null) {
             try {
                 rowStore.commit(row);
-            } catch (IOException e) {}
+            } catch (IOException e) {
+                throw new HsqlException(
+                    e, Trace.getMessage(Trace.GENERAL_IO_ERROR),
+                    Trace.GENERAL_IO_ERROR);
+            }
         }
     }
 

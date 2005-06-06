@@ -42,6 +42,15 @@ package org.hsqldb;
  */
 public interface SessionInterface {
 
+    // fredt@users - marked as used
+    int INFO_DATABASE            = 0;
+    int INFO_USER                = 1;
+    int INFO_SESSION_ID          = 2;
+    int INFO_ISOLATION           = 3;
+    int INFO_AUTOCOMMIT          = 4;    // used
+    int INFO_DATABASE_READONLY   = 5;
+    int INFO_CONNECTION_READONLY = 6;    // used
+
     Result execute(Result r) throws HsqlException;
 
     void close();

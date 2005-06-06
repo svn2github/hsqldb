@@ -592,7 +592,7 @@ class Constraint {
                                     int[] rowColArray,
                                     Index mainIndex) throws HsqlException {
 
-        RowIterator it = table.rowIterator(null);
+        RowIterator it = table.getPrimaryIndex().firstRow(session);
 
         while (true) {
             Row row = it.next();

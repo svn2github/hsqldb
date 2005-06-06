@@ -505,7 +505,7 @@ public class TextCache extends DataFileCache {
         }
 
         if (complete) {
-            int length = (int) dataFile.getFilePointer() - firstPos;
+            int length = (int) dataFile.getFilePointer() - pos;
 
             ((RowInputText) rowIn).setSource(buffer.toString(), pos, length);
 

@@ -73,10 +73,10 @@ import org.hsqldb.index.RowIterator;
 import org.hsqldb.lib.ArrayUtil;
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users - corrections
-// fredt@users 20020225 - patch 1.7.0 - cascading deletes
-// a number of changes to support this feature
+// fredt@users 20020225 - patch 1.7.0 - changes to support cascading deletes
 // tony_lai@users 20020820 - patch 595052 - better error message
 // fredt@users 20021205 - patch 1.7.2 - changes to method signature
+// fredt@users - patch 1.80 - reworking the interface and comparison methods
 
 /**
  * Implementation of an AVL tree with parent pointers in nodes. Subclasses

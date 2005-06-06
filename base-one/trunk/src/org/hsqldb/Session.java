@@ -1338,15 +1338,6 @@ public class Session implements SessionInterface {
         return currentTimestamp;
     }
 
-// fredt@users - only INFO_AUTOCOMMIT and INFO_CONNECTION_READONLY are used
-    static final int INFO_DATABASE            = 0;
-    static final int INFO_USER                = 1;
-    static final int INFO_SESSION_ID          = 2;
-    static final int INFO_ISOLATION           = 3;
-    static final int INFO_AUTOCOMMIT          = 4;
-    static final int INFO_DATABASE_READONLY   = 5;
-    static final int INFO_CONNECTION_READONLY = 6;
-
     Result getAttributes() {
 
         Result   r   = Result.newSessionAttributesResult();
