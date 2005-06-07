@@ -50,6 +50,7 @@ import java.util.Map;
 import java.util.Locale;
 
 import org.hsqldb.DatabaseManager;
+import org.hsqldb.DatabaseURL;
 import org.hsqldb.HSQLClientConnection;
 import org.hsqldb.HTTPClientConnection;
 import org.hsqldb.HsqlException;
@@ -2407,8 +2408,8 @@ public class jdbcConnection implements Connection {
         int    port     = props.getIntegerProperty("port", 0);
         String path     = props.getProperty("path");
         String database = props.getProperty("database");
-        boolean isTLS = (connType == DatabaseManager.S_HSQLS
-                         || connType == DatabaseManager.S_HTTPS);
+        boolean isTLS = (connType == DatabaseURL.S_HSQLS
+                         || connType == DatabaseURL.S_HTTPS);
 
         if (user == null) {
             user = "SA";
@@ -2422,9 +2423,9 @@ public class jdbcConnection implements Connection {
         password = password.toUpperCase(Locale.ENGLISH);
 
         try {
-            if (connType == DatabaseManager.S_FILE
-                    || connType == DatabaseManager.S_MEM
-                    || connType == DatabaseManager.S_RES) {
+            if (connType == DatabaseURL.S_FILE
+                    || connType == DatabaseURL.S_MEM
+                    || connType == DatabaseURL.S_RES) {
 
 // loosecannon1@users 1.7.2 patch properties on the JDBC URL
 
@@ -2432,13 +2433,13 @@ public class jdbcConnection implements Connection {
                      *  the jdbc package - we may make it dynamic */
                 sessionProxy = DatabaseManager.newSession(connType, database,
                         user, password, props);
-            } else if (connType == DatabaseManager.S_HSQL
-                       || connType == DatabaseManager.S_HSQLS) {
+            } else if (connType == DatabaseURL.S_HSQL
+                       || connType == DatabaseURL.S_HSQLS) {
                 sessionProxy = new HSQLClientConnection(host, port, path,
                         database, isTLS, user, password);
                 isNetConn = true;
-            } else if (connType == DatabaseManager.S_HTTP
-                       || connType == DatabaseManager.S_HTTPS) {
+            } else if (connType == DatabaseURL.S_HTTP
+                       || connType == DatabaseURL.S_HTTPS) {
                 sessionProxy = new HTTPClientConnection(host, port, path,
                         database, isTLS, user, password);
                 isNetConn = true;

@@ -171,7 +171,7 @@ public class jdbcDriver implements Driver {
                                            Properties info)
                                            throws SQLException {
 
-        HsqlProperties props = DatabaseManager.parseURL(url, true);
+        HsqlProperties props = DatabaseURL.parseURL(url, true);
 
         if (props == null) {
 
@@ -202,8 +202,8 @@ public class jdbcDriver implements Driver {
     public boolean acceptsURL(String url) {
 
         return url != null
-               && url.regionMatches(true, 0, DatabaseManager.S_URL_PREFIX, 0,
-                                    DatabaseManager.S_URL_PREFIX.length());
+               && url.regionMatches(true, 0, DatabaseURL.S_URL_PREFIX, 0,
+                                    DatabaseURL.S_URL_PREFIX.length());
     }
 
     /**

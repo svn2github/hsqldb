@@ -110,7 +110,11 @@ import org.hsqldb.store.ValuePool;
  *  Holds the data structures and methods for creation of a database table.
  *
  *
+ * Extensively rewritten and extended in successive versions of HSQLDB.
+ *
+ * @author Thomas Mueller (Hypersonic SQL Group)
  * @version 1.8.0
+ * @since Hypersonic SQL
  */
 public class Table extends BaseTable {
 
@@ -196,7 +200,7 @@ public class Table extends BaseTable {
                 break;
 
             case CACHED_TABLE :
-                if (!db.getType().equals(DatabaseManager.S_MEM)) {
+                if (!db.getType().equals(DatabaseURL.S_MEM)) {
                     cache     = db.logger.getCache();
                     isCached  = true;
                     isLogged  = !database.isFilesReadOnly();
@@ -216,7 +220,7 @@ public class Table extends BaseTable {
                 break;
 
             case TEMP_TEXT_TABLE :
-                if (db.getType().equals(DatabaseManager.S_MEM)) {
+                if (db.getType().equals(DatabaseURL.S_MEM)) {
                     throw Trace.error(Trace.DATABASE_IS_MEMORY_ONLY);
                 }
 
@@ -229,7 +233,7 @@ public class Table extends BaseTable {
                 break;
 
             case TEXT_TABLE :
-                if (db.getType().equals(DatabaseManager.S_MEM)) {
+                if (db.getType().equals(DatabaseURL.S_MEM)) {
                     throw Trace.error(Trace.DATABASE_IS_MEMORY_ONLY);
                 }
 

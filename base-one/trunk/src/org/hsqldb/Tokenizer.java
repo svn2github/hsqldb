@@ -86,12 +86,14 @@ import org.hsqldb.store.ValuePool;
 // rewrite of the majority of multiple if(){}else{} chains with switch(){}
 // fredt@users 20030610 - patch 1.7.2 - no StringBuffers
 
-/** @todo fredt - move error and assert string literals to Trace */
-
 /**
  * Provides the ability to tokenize SQL character sequences.
  *
- * @version 1.7.2
+ * Extensively rewritten and extended in successive versions of HSQLDB.
+ *
+ * @author Thomas Mueller (Hypersonic SQL Group)
+ * @version 1.8.0
+ * @since Hypersonic SQL
  */
 public class Tokenizer {
 

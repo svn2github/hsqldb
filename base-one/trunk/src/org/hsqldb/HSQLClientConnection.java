@@ -222,14 +222,14 @@ public class HSQLClientConnection implements SessionInterface {
 
     public boolean isAutoCommit() throws HsqlException {
 
-        Object info = getAttribute(Session.INFO_AUTOCOMMIT);
+        Object info = getAttribute(SessionInterface.INFO_AUTOCOMMIT);
 
         return ((Boolean) info).booleanValue();
     }
 
     public void setAutoCommit(boolean mode) throws HsqlException {
         setAttribute(mode ? Boolean.TRUE
-                          : Boolean.FALSE, Session.INFO_AUTOCOMMIT);
+                          : Boolean.FALSE, SessionInterface.INFO_AUTOCOMMIT);
     }
 
     public void setIsolation(int level) throws HsqlException {}

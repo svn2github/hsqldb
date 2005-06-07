@@ -110,7 +110,9 @@ import org.hsqldb.lib.Sort;
  *  <code>TestSelfModify.txt</code> and <code>TestSelfVerify.txt</code>.
  *  (fredt@users)
  *
- * @version 1.7.2
+ * @author Thomas Mueller (Hypersonic SQL Group)
+  * @version 1.7.2
+  * @since Hypersonic SQL
  */
 class TestSelf extends TestUtil {
 

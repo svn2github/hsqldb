@@ -71,7 +71,10 @@ import java.io.Serializable;
 /**
  * container for set of SQL statements
  *
- * @version 1.7.0
+ * New class based on Hypersonic SQL code.
+ *
+ * @version 1.7.1
+ * @since 1.7.1
  */
 class SQLStatements implements Serializable {
 

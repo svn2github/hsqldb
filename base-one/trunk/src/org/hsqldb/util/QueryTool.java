@@ -97,10 +97,12 @@ import java.awt.event.WindowListener;
 import org.hsqldb.lib.java.JavaSystem;
 
 /**
- * Class declaration
+ * Simple demonstration applet
  *
  *
+ * @author Thomas Mueller (Hypersonic SQL Group)
  * @version 1.7.0
+ * @since Hypersonic SQL
  */
 public class QueryTool extends Applet
 implements WindowListener, ActionListener {

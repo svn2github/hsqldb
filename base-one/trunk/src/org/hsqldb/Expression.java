@@ -90,9 +90,14 @@ import org.hsqldb.store.ValuePool;
 //                                         statement compilation
 
 /**
- * Expression class declaration
+ * Expression class.
  *
- * @version    1.7.2
+ * The core functionality of this class was inherited from HypersonicSQL and
+ * extensively rewritten and extended in successive versions of HSQLDB.
+ *
+ * @author Thomas Mueller (Hypersonic SQL Group)
+ * @version    1.8.0
+ * @since Hypersonic SQL
  */
 public class Expression {
 

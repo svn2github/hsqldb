@@ -51,7 +51,7 @@ import java.util.StringTokenizer;
  *
  * @see @main()
  * @version $Revision: 1.46 $
- * @author Blaine Simpson
+ * @author Blaine Simpson unsaved@users
  */
 public class SqlTool {
 

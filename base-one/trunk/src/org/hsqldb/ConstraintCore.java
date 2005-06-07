@@ -77,6 +77,9 @@ import org.hsqldb.HsqlNameManager.HsqlName;
  * other table that shares a foreign key constraint with the modified
  * table.
  *
+ * New class based on Hypersonic original
+ *
+ * @author Thomas Mueller (Hypersonic SQL Group)
  * @version 1.7.1
  * @since 1.7.1
  */

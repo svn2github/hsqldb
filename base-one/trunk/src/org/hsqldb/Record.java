@@ -67,9 +67,11 @@
 package org.hsqldb;
 
 /**
- * Record class declaration
+ * A node in a Result linked list.
  *
+ * @author Thomas Mueller (Hypersonic SQL Group)
  * @version 1.7.0
+ * @since Hypersonic SQL
  */
 public class Record {
 

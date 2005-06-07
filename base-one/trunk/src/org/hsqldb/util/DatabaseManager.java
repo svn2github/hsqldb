@@ -90,7 +90,10 @@ import org.hsqldb.lib.java.JavaSystem;
  * "-switch" usage is ambiguous as used here.  Single switches should
  * be reserved for single-letter switches which can be mixed like
  * "-u -r -l" = "-url".  -blaine
- * @version 1.7.0
+ *
+ * @author Thomas Mueller (Hypersonic SQL Group)
+ * @version 1.8.0
+ * @since Hypersonic SQL
  */
 public class DatabaseManager extends Applet
 implements ActionListener, WindowListener, KeyListener {

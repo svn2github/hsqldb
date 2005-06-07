@@ -79,7 +79,9 @@ import org.hsqldb.lib.Iterator;
  * Implementation of a table constraint with references to the indexes used
  * by the constraint.<p>
  *
- * @version    1.8.0
+ * @author Thomas Mueller (Hypersonic SQL Group)
+ * @version 1.8.0
+ * @since Hypersonic SQL
  */
 class Constraint {
 

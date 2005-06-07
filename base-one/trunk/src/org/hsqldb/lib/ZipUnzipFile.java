@@ -74,6 +74,15 @@ import java.util.zip.DeflaterOutputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
+/**
+ *
+ * New Class based on original Hypersonic code.
+ *
+* @author Thomas Mueller (Hypersonic SQL Group)
+* @version 1.7.2
+* @since Hypersonic SQL
+*/
+
 // oj@openoffice.org - use FileAccess
 public class ZipUnzipFile {
 

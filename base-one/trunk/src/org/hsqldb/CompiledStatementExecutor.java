@@ -81,7 +81,7 @@ final class CompiledStatementExecutor {
 
         Result result = null;
 
-        DatabaseManager.gc();
+        DatabaseURL.gc();
 
         try {
             cs.materializeSubQueries(session);

@@ -123,7 +123,9 @@ import org.hsqldb.rowio.RowOutputBinary;
  *
  *  (fredt@users)
  *
+ * @author Thomas Mueller (Hypersonic SQL Group)
  * @version 1.7.2
+ * @since Hypersonic SQL
  */
 public class Servlet extends javax.servlet.http.HttpServlet {
 
@@ -167,7 +169,7 @@ public class Servlet extends javax.servlet.http.HttpServlet {
         }
 
 // end WEB-INF patch
-        HsqlProperties dbURL = DatabaseManager.parseURL(dbStr, false);
+        HsqlProperties dbURL = DatabaseURL.parseURL(dbStr, false);
 
         log("Database filename = " + dbStr);
 

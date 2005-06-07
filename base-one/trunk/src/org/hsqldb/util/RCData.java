@@ -36,17 +36,17 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.StringTokenizer;
 import java.util.Properties;
+import java.util.StringTokenizer;
 
 /* $Id: RCData.java,v 1.4 2005/05/18 19:49:00 fredt Exp $ */
 
 /**
  * All the info we need to connect up to a database.
+ *
+ * @author Blaine Simpson unsaved@users
  */
 public class RCData {
 

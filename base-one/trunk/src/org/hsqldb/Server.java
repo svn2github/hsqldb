@@ -232,7 +232,11 @@ import org.hsqldb.resources.BundleHandler;
  * a typically unwanted JVM exit on Server shutdown when a Server intance
  * is started as part of a larger framework. <p>
  *
- * @version 1.7.2
+ * Extensively rewritten and extended in successive versions of HSQLDB.
+ *
+ * @author Thomas Mueller (Hypersonic SQL Group)
+ * @version 1.8.0
+ * @since Hypersonic SQL
  *
  * @jmx.mbean
  *    description="HSQLDB Server"
@@ -1774,7 +1778,7 @@ public class Server implements HsqlSocketRequestHandler {
                 continue;
             }
 
-            HsqlProperties dbURL = DatabaseManager.parseURL(path, false);
+            HsqlProperties dbURL = DatabaseURL.parseURL(path, false);
 
             if (dbURL == null) {
                 dbAlias[i] = null;

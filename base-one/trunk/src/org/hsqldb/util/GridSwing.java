@@ -81,7 +81,11 @@ import javax.swing.table.TableModel;
 
 /** Simple table model to represent a grid of tuples.
  *
+ * New class based on Hypersonic SQL original
+ *
+ * @author dmarshall@users
  * @version 1.7.2
+ * @since 1.7.0
  */
 class GridSwing extends AbstractTableModel {
 

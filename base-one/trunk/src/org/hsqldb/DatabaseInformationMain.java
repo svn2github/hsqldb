@@ -110,7 +110,7 @@ import org.hsqldb.store.ValuePool;
  *
  * (fredt@users) <p>
  * @author boucherb@users
- * @version 1.7.2
+ * @version 1.8.0
  * @since HSQLDB 1.7.2
  */
 class DatabaseInformationMain extends DatabaseInformation {

@@ -77,7 +77,10 @@ import java.util.Vector;
 
 /**
  * Common code in Swing and AWT versions of Tranfer
- * @version 1.7.0
+ * New class based on Hypersonic code
+ * @author Thomas Mueller (Hypersonic SQL Group)
+ * @version 1.7.2
+ * @since Hypersonic SQL
  */
 class TransferCommon {
 

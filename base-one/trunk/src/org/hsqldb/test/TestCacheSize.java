@@ -89,7 +89,7 @@ public class TestCacheSize {
     String  tableType      = "TEXT";
     int     cacheScale     = 12;
     int     cacheSizeScale = 10;
-    boolean nioMode        = true;
+    boolean nioMode        = false;
 
     // script format {TEXT | BINARY | COMPRESSED}
     String  logType       = "TEXT";
@@ -103,7 +103,7 @@ public class TestCacheSize {
     boolean createTempTable = false;
 
     // introduces fragmentation to the .data file during insert
-    boolean deleteWhileInsert         = false;
+    boolean deleteWhileInsert         = true;
     int     deleteWhileInsertInterval = 10000;
 
     // size of the tables used in test
@@ -133,6 +133,7 @@ public class TestCacheSize {
 
     private void checkUpdates() {
 
+        updateIDLinear();
         updateID();
         countTestID();
         deleteTest();
@@ -168,9 +169,9 @@ public class TestCacheSize {
                 sStatement = cConnection.createStatement();
 
                 sStatement.execute("SET WRITE_DELAY " + 10);
-                sStatement.execute("SET CHECKPOINT DEFRAG " + 5);
+                sStatement.execute("SET CHECKPOINT DEFRAG " + 1);
                 sStatement.execute("SET SCRIPTFORMAT " + logType);
-                sStatement.execute("SET LOGSIZE " + 10);
+                sStatement.execute("SET LOGSIZE " + 6);
                 sStatement.execute("SET PROPERTY \"hsqldb.cache_scale\" "
                                    + cacheScale);
                 sStatement.execute("SET PROPERTY \"hsqldb.cache_size_scale\" "

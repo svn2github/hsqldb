@@ -47,7 +47,7 @@ import org.hsqldb.lib.Set;
  * Administrative privileges.
  *
  * @author boucherb@users
- * @author fredt@usrs
+ * @author fredt@users
  * @author unsaved@users
  *
  * @version 1.8.0

@@ -85,8 +85,11 @@ import org.hsqldb.rowio.RowOutputInterface;
  *  This fields can be eliminated in the future, by changing the
  *  method signatures to take a Index parameter from Index.java (fredt@users)
  *
+ *  New class derived from the Hypersonic code
  *
+ * @author Thomas Mueller (Hypersonic SQL Group)
  * @version    1.7.2
+ * @since Hypersonic SQL
  */
 class DiskNode extends Node {
 

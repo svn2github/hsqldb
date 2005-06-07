@@ -85,7 +85,10 @@ import org.hsqldb.rowio.RowOutputInterface;
  *  table row. It is used solely by Row to locate the node belonging to a
  *  particular index.
  *
+ *
+ * @author Thomas Mueller (Hypersonic SQL Group)
  * @version 1.7.2
+ * @since Hypersonic SQL
  */
 abstract class Node {
 

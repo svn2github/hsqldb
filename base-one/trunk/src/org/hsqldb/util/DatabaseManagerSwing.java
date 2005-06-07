@@ -170,7 +170,11 @@ import org.hsqldb.lib.java.JavaSystem;
  * Note that the sys-table switch will not work for Oracle, because Oracle
  * does not categorize their system tables correctly in the JDBC Metadata.
  *
+ * New class based on Hypersonic SQL original
+ *
+ * @author dmarshall@users
  * @version 1.8.0
+ * @since 1.7.0
  */
 public class DatabaseManagerSwing extends JApplet
 implements ActionListener, WindowListener, KeyListener {
@@ -190,9 +194,9 @@ implements ActionListener, WindowListener, KeyListener {
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.sourceforge.net.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.51 $";
+        + "problem reports or help requests:  $Revision: 1.50 $";
     private static final String ABOUT_TEXT =
-        "$Revision: 1.51 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.50 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2001-2005, The HSQL Development Group.\n"
         + "http://hsqldb.sourceforge.net\n\n\n"
@@ -543,13 +547,17 @@ implements ActionListener, WindowListener, KeyListener {
             prefs = null;
         }
 
-        if (prefs != null) {
+        if (prefs == null) {
+            setLF(CommonSwing.Native);
+        } else {
             autoRefresh      = prefs.autoRefresh;
             displayRowCounts = prefs.showRowCounts;
             showSys          = prefs.showSysTables;
             showSchemas      = prefs.showSchemas;
             gridFormat       = prefs.resultGrid;
             showTooltips     = prefs.showTooltips;
+
+            setLF(prefs.laf);
         }
 
         // (ulrivo): An actual icon.  N.b., this adds some tips to the tip map
@@ -705,11 +713,7 @@ implements ActionListener, WindowListener, KeyListener {
         });
         bar.add(mnuHelp);
         fMain.setJMenuBar(bar);
-        // N.b., we don't pack until L&F set, result pane added, etc.,
-        // so everything will get sized correctly.
         initGUI();
-        setLF((prefs == null) ? CommonSwing.Native : prefs.laf);
-        fMain.pack();
 
         sRecent = new String[iMaxRecent];
 
@@ -868,7 +872,7 @@ implements ActionListener, WindowListener, KeyListener {
         } else if (s.equals(GRID_BOX_TEXT)) {
             gridFormat = boxShowGrid.isSelected();
 
-            initResultPane();
+            displayResults();
         } else if (s.equals("Open Script...")) {
             JFileChooser f = new JFileChooser(".");
 
@@ -1045,16 +1049,16 @@ implements ActionListener, WindowListener, KeyListener {
         }
     }
 
-    private void initResultPane() {
+    private void displayResults() {
 
         if (gridFormat) {
-            initGridResultPane();
+            setResultsInGrid();
         } else {
-            initTextResultPane();
+            setResultsInText();
         }
     }
 
-    private void initGridResultPane() {
+    private void setResultsInGrid() {
 
         pResult.removeAll();
         pResult.add(gScrollPane, BorderLayout.CENTER);
@@ -1063,7 +1067,7 @@ implements ActionListener, WindowListener, KeyListener {
         pResult.repaint();
     }
 
-    private void initTextResultPane() {
+    private void setResultsInText() {
 
         pResult.removeAll();
         pResult.add(txtResultScroll, BorderLayout.CENTER);
@@ -1667,6 +1671,7 @@ implements ActionListener, WindowListener, KeyListener {
         pStatus.add(jStatusLine, BorderLayout.CENTER);
         fMain.getContentPane().add(pStatus, "South");
         doLayout();
+        fMain.pack();
     }
 
     /* Simple tree node factory method - set's parent and user object.
@@ -2042,7 +2047,9 @@ implements ActionListener, WindowListener, KeyListener {
 
         CommonSwing.setSwingLAF(fMain, newLAF);
 
-        initResultPane();
+        if (pResult != null && gridFormat) {
+            setResultsInGrid();
+        }
 
         currentLAF = newLAF;
 

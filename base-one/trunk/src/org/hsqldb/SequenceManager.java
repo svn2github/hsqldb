@@ -38,7 +38,7 @@ import org.hsqldb.persist.Logger;
 /**
  * Manages SEQUENCE objects for a Database instance. <p>
  *
- * @author fredt@user
+ * @author fredt@users
  * @version 1.7.2
  * @since 1.7.2
  */

@@ -38,9 +38,9 @@ import org.hsqldb.lib.Iterator;
  * Container that maintains a map of session id's to Session objects.
  * Responsible for managing opening and closing of sessions.
  *
- * @author fredt@usrs
- * @since 1.7.2
+ * @author fredt@users
  * @version 1.8.0
+ * @since 1.7.2
  */
 public class SessionManager {
 

@@ -78,7 +78,11 @@ import org.hsqldb.lib.ArrayUtil;
  * This class iterates over table rows to select the rows that fulfil join
  * or other conditions. It uses indexes if they are availabe.
  *
- * @version 1.7.2
+ * Extended in successive versions of HSQLDB.
+ *
+ * @author Thomas Mueller (Hypersonic SQL Group)
+ * @version 1.8.0
+ * @since Hypersonic SQL
  */
 final class TableFilter {
 

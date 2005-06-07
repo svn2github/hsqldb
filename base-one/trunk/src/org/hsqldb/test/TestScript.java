@@ -43,7 +43,8 @@ public class TestScript extends TestBase {
 //      String path = "TestSelfIssues.txt";
 //    String path = "TestSelfLeftJoin.txt";
 //    String path = "TestSelfNameResolution.txt";
-    String path = "TestSelfInPredicateReferencing.txt";
+//    String path = "TestSelfInPredicateReferencing.txt";
+    String path = "TestSelfRoleNesting.txt";
 
 //    String path = "TestSelfQueries.txt";
 //    String path = "TestSelfSchemaPersistB1.txt";

@@ -84,8 +84,12 @@ import org.hsqldb.scriptio.ScriptWriterText;
  * Provides SQL Interpreter services relative to a Session and
  * its Database.
  *
- * @version 1.7.2
- * @since HSQLDB 1.7.2
+ * The core functionality of this class was inherited from Hypersonic and
+ * extensively rewritten and extended in successive versions of HSQLDB.
+ *
+ * @author Thomas Mueller (Hypersonic SQL Group)
+ * @version 1.8.0
+ * @since 1.7.2
  */
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP) - various corrections
@@ -103,7 +107,7 @@ import org.hsqldb.scriptio.ScriptWriterText;
 // fredt@users 20030609 - support for ALTER COLUMN SET/DROP DEFAULT / RENAME TO
 // wondersonic@users 20031205 - IF EXISTS support for DROP INDEX
 // fredt@users 20031224 - support for CREATE SEQUENCE ...
-// tytar@users 20041209 - provide to set default table type
+// fredt@users 20041209 - patch by tytar@users to set default table type
 class DatabaseCommandInterpreter {
 
     private Tokenizer tokenizer = new Tokenizer();
@@ -153,7 +157,7 @@ class DatabaseCommandInterpreter {
         String token;
         int    cmd;
 
-        DatabaseManager.gc();
+        DatabaseURL.gc();
 
         result = null;
         cmd    = Token.UNKNOWNTOKEN;

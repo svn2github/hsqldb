@@ -116,7 +116,11 @@ import org.hsqldb.scriptio.ScriptWriterBase;
  *  the contents of these files into its database file. The script format is
  *  always TEXT in this case.
  *
+ * Extensively rewritten and extended in successive versions of HSQLDB.
+ *
+ * @author Thomas Mueller (Hypersonic SQL Group)
  * @version 1.8.0
+ * @since Hypersonic SQL
  */
 public class Log {
 

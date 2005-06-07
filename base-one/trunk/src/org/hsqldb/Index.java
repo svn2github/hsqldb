@@ -76,7 +76,7 @@ import org.hsqldb.lib.ArrayUtil;
 // fredt@users 20020225 - patch 1.7.0 - changes to support cascading deletes
 // tony_lai@users 20020820 - patch 595052 - better error message
 // fredt@users 20021205 - patch 1.7.2 - changes to method signature
-// fredt@users - patch 1.80 - reworking the interface and comparison methods
+// fredt@users - patch 1.80 - reworked the interface and comparison methods
 
 /**
  * Implementation of an AVL tree with parent pointers in nodes. Subclasses
@@ -86,7 +86,9 @@ import org.hsqldb.lib.ArrayUtil;
  * An Index object also holds information on table columns (in the form of int
  * indexes) that are covered by it.(fredt@users)
  *
+ * @author Thomas Mueller (Hypersonic SQL Group)
  * @version 1.8.0
+ * @since Hypersonic SQL
  */
 public class Index {
 

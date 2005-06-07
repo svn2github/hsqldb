@@ -315,6 +315,12 @@ import org.hsqldb.types.JavaObject;
  * @see <a href=
  * "http://java.sun.com/j2se/1.4/docs/api/java/sql/ResultSetMetaData.html">
  * <code>ResultSetMetaData</code></a>
+ *
+ * Extensively rewritten and extended in successive versions of HSQLDB.
+ *
+ * @author Thomas Mueller (Hypersonic SQL Group)
+ * @version 1.8.0
+ * @since Hypersonic SQL
  */
 public class jdbcResultSet implements ResultSet {
 

@@ -71,7 +71,11 @@ package org.hsqldb;
 /**
  *  Memory table node implementation.
  *
- * @version    1.7.1
+ * New class by fredt@users based on original Hypersonic code.
+ *
+ * @author Thomas Mueller (Hypersonic SQL Group)
+ * @version 1.7.1
+ * @since 1.7.1
  */
 class MemoryNode extends BaseMemoryNode {
 

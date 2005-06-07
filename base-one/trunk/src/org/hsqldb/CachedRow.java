@@ -87,7 +87,11 @@ import org.hsqldb.rowio.RowOutputInterface;
  *  unlinked from this list when it is freed from the Cache to make way for
  *  other rows.
  *
- * @version 1.7.2
+ *  New class from the Hypersonic Original
+ *
+ * @author Thomas Mueller (Hypersonic SQL Group)
+ * @version    1.7.2
+ * @since Hypersonic SQL
  */
 public class CachedRow extends Row {
 

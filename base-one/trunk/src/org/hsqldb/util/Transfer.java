@@ -111,7 +111,9 @@ import java.awt.image.MemoryImageSource;
  *  Utility program (or applet) for transferring tables between different
  *  databases via JDBC. Understands HSQLDB database particularly well.
  *
- * @version 1.7.0
+ * @author Thomas Mueller (Hypersonic SQL Group)
+  * @version 1.7.2
+  * @since Hypersonic SQL
  */
 public class Transfer extends Applet
 implements WindowListener, ActionListener, ItemListener, Traceable {

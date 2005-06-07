@@ -81,7 +81,9 @@ import java.util.Hashtable;
 /**
  * Transfers data from one database to another
  *
+ * @author Thomas Mueller (Hypersonic SQL Group)
  * @version 1.7.2
+ * @since Hypersonic SQL
  */
 class TransferTable implements Serializable {
 

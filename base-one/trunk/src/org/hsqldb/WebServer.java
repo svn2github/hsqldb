@@ -146,7 +146,9 @@ import org.hsqldb.resources.BundleHandler;
  *   <li>File extensions for mime types must be lowercase and start with '.'
  * </ul>
  *
+ * @author Thomas Mueller (Hypersonic SQL Group)
  * @version 1.7.2
+ * @since Hypersonic SQL
  */
 public class WebServer extends Server {
 

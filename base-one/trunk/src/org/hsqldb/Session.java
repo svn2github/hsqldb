@@ -101,7 +101,12 @@ import org.hsqldb.store.ValuePool;
  *  set to null. But the session id and scripting mode may still be used for
  *  scripting
  *
- * @version  1.8.0
+ * New class based based on original Hypersonic code.
+ * Extensively rewritten and extended in successive versions of HSQLDB.
+ *
+ * @author Thomas Mueller (Hypersonic SQL Group)
+ * @version 1.8.0
+ * @since 1.7.0
  */
 public class Session implements SessionInterface {
 
@@ -828,7 +833,7 @@ public class Session implements SessionInterface {
             // we simply get the next system change number - no matter what type of query
             sessionSCN = database.nextDMLSCN();
 
-            DatabaseManager.gc();
+            DatabaseURL.gc();
 
             switch (type) {
 
@@ -1367,12 +1372,12 @@ public class Session implements SessionInterface {
             try {
                 switch (i) {
 
-                    case INFO_AUTOCOMMIT : {
+                    case SessionInterface.INFO_AUTOCOMMIT : {
                         this.setAutoCommit(((Boolean) value).booleanValue());
 
                         break;
                     }
-                    case INFO_CONNECTION_READONLY :
+                    case SessionInterface.INFO_CONNECTION_READONLY :
                         this.setReadOnly(((Boolean) value).booleanValue());
                         break;
                 }
@@ -1387,7 +1392,7 @@ public class Session implements SessionInterface {
     // DatabaseMetaData.getURL should work as specified for
     // internal connections too.
     public String getInternalConnectionURL() {
-        return DatabaseManager.S_URL_PREFIX + database.getURI();
+        return DatabaseURL.S_URL_PREFIX + database.getURI();
     }
 
     boolean isProcessingScript() {

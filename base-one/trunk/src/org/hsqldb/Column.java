@@ -111,7 +111,11 @@ import org.hsqldb.types.JavaObject;
  *  Implementation of SQL table columns as defined in DDL statements with
  *  static methods to process their values.
  *
+ *  Enhanced type checking and conversion by fredt@users
+ *
+ * @author Thomas Mueller (Hypersonic SQL Group)
  * @version    1.8.0
+ * @since Hypersonic SQL
  */
 public class Column {
 

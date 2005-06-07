@@ -107,12 +107,14 @@ import org.hsqldb.persist.Logger;
 /**
  *  Database is the root class for HSQL Database Engine database. <p>
  *
- *  Although it either directly or indirectly provides all or most of the
- *  services required for DBMS functionality, this class should not be used
- *  directly by an application. Instead, to achieve portability and
- *  generality, the JDBC interface classes should be used.
+ *  It holds the data structure that form an HSQLDB database instance.
  *
- * @version  1.7.2
+ * Modified significantly from the Hypersonic original in successive
+ * HSQLDB versions.
+ *
+ * @author Thomas Mueller (Hypersonic SQL Group)
+ * @version 1.8.0
+ * @since Hypersonic SQL
  */
 public class Database {
 
@@ -193,7 +195,7 @@ public class Database {
         sType = type;
         sPath = path;
 
-        if (sType == DatabaseManager.S_RES) {
+        if (sType == DatabaseURL.S_RES) {
             filesInJar    = true;
             filesReadOnly = true;
         }
@@ -267,7 +269,7 @@ public class Database {
             User sysUser;
 
             databaseProperties = new HsqlDatabaseProperties(this);
-            isNew = sType == DatabaseManager.S_MEM
+            isNew = sType == DatabaseURL.S_MEM
                     ||!databaseProperties.checkFileExists();
 
             if (isNew && urlProperties.isPropertyTrue("ifexists")) {
@@ -292,7 +294,7 @@ public class Database {
 
             databaseProperties.setDatabaseVariables();
 
-            if (sType != DatabaseManager.S_MEM) {
+            if (sType != DatabaseURL.S_MEM) {
                 logger.openLog(this);
             }
 

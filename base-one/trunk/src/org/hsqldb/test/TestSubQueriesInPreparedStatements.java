@@ -45,7 +45,7 @@ import java.sql.Statement;
 
 /**
  *
- * @author  campbell
+ * @author boucherb@users
  */
 public class TestSubQueriesInPreparedStatements {
 

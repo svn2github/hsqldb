@@ -83,7 +83,9 @@ import java.awt.SystemColor;
 
 /**
  *
- * @version 1.7.0
+ * @author Thomas Mueller (Hypersonic SQL Group)
+ * @version 1.8.0
+ * @since Hypersonic SQL
  */
 class Grid extends Panel {
 

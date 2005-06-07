@@ -81,7 +81,11 @@ import org.hsqldb.lib.IntValueHashMap;
 /**
  * A User Object holds the name, password for a
  * particular database user.<p>
+ *
+ *
+ * @author Thomas Mueller (Hypersonic SQL Group)
  * @version 1.8.0
+ * @since Hypersonic SQL
  */
 public class User {
 

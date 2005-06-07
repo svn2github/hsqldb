@@ -103,7 +103,9 @@ import java.util.Vector;
  * Removes test code from the code
  * </pre>
  *
+ * @author Thomas Mueller (Hypersonic SQL Group)
  * @version 1.7.0
+ * @since Hypersonic SQL
  */
 public class CodeSwitcher {
 

@@ -78,7 +78,11 @@ package org.hsqldb;
  *  This differs from MemoryNode by maintaining an integral pointer for the
  *  Row data instead of a Java reference.
  *
- * @version    1.7.2
+ * New class based on Hypersonic SQL code.
+ *
+ * @author fredt@users
+ * @version 1.8.0
+ * @since 1.7.1
  */
 class PointerNode extends BaseMemoryNode {
 

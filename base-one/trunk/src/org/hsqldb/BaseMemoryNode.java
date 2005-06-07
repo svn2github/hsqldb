@@ -70,15 +70,16 @@ import java.io.IOException;
 
 import org.hsqldb.rowio.RowOutputInterface;
 
-// fredt@users 20021205 - path 1.7.2 - enhancements
-// fredt@users 20021215 - doc 1.7.2 - javadoc comments
-
 /**
  *  Common MEMORY and TEXT table node implementation. Nodes are always in
  *  memory so an Object reference is used to access the other Nodes in the
  *  AVL tree.
  *
+ *  New class derived from the Hypersonic code
+ *
+ * @author Thomas Mueller (Hypersonic SQL Group)
  * @version    1.7.2
+ * @since Hypersonic SQL
  */
 abstract class BaseMemoryNode extends Node {
 

@@ -74,7 +74,11 @@ import org.hsqldb.resources.BundleHandler;
 /**
  * handles creation and reporting of error messages and throwing HsqlException
  *
+ * Rewritten and extended in successive versions of HSQLDB.
+ *
+ * @author Thomas Mueller (Hypersonic SQL Group)
  * @version 1.8.0
+ * @since Hypersonic SQL
  */
 
 // fredt@users 20020221 - patch 513005 by sqlbob@users (RMP) - error reporting

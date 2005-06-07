@@ -41,8 +41,8 @@ import org.hsqldb.store.ValuePool;
  * columns/indices. <p>
  *
  * @author boucherb@users
- * @version 1.7.2
- * @since HSQLDB 1.7.2
+ * @version 1.8.0
+ * @since 1.7.2
  */
 final class DITableInfo {
 

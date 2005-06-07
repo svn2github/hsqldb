@@ -34,7 +34,7 @@ package org.hsqldb.persist;
 import java.util.Enumeration;
 
 import org.hsqldb.Database;
-import org.hsqldb.DatabaseManager;
+import org.hsqldb.DatabaseURL;
 import org.hsqldb.HsqlException;
 import org.hsqldb.Record;
 import org.hsqldb.Trace;
@@ -299,7 +299,7 @@ public class HsqlDatabaseProperties extends HsqlProperties {
 
         boolean exists;
 
-        if (database.getType().equals(DatabaseManager.S_MEM)) {
+        if (database.getType().equals(DatabaseURL.S_MEM)) {
             return true;
         }
 
@@ -365,7 +365,7 @@ public class HsqlDatabaseProperties extends HsqlProperties {
 
     public void save() throws HsqlException {
 
-        if (database.getType().equals(DatabaseManager.S_MEM)
+        if (database.getType().equals(DatabaseURL.S_MEM)
                 || database.isFilesReadOnly() || database.isFilesInJar()) {
             return;
         }

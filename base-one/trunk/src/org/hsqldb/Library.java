@@ -87,7 +87,7 @@ import org.hsqldb.store.ValuePool;
 // boucherb@user 20020918 - doc 1.7.2 - added JavaDoc  and code comments
 // fredt@user 20021021 - doc 1.7.2 - modified JavaDoc
 // boucherb@users 20030201 - patch 1.7.2 - direct calls for org.hsqldb.Library
-//
+// fredt@users - patch 1.8.0 - new functions added
 
 /**
  * fredt - todo - since the introduction of SQL built-in functions and
@@ -104,7 +104,11 @@ import org.hsqldb.store.ValuePool;
  * not be called from user supplied Java procedure or trigger code. Use real
  * SQL functions should be called instead in these instances.
  *
- * @version 1.7.2
+ * Extensively rewritten and extended in successive versions of HSQLDB.
+ *
+ * @author Thomas Mueller (Hypersonic SQL Group)
+ * @version 1.8.0
+ * @since Hypersonic SQL
  */
 public class Library {
 

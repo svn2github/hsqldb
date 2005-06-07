@@ -91,7 +91,11 @@ import org.hsqldb.lib.Iterator;
 /**
  * The compiled representation of an SQL SELECT.
  *
- * @version 1.7.2
+ * Extensively rewritten and extended in successive versions of HSQLDB.
+ *
+ * @author Thomas Mueller (Hypersonic SQL Group)
+ * @version 1.8.0
+ * @since Hypersonic SQL
  */
 class Select {
 

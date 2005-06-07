@@ -81,7 +81,9 @@ import java.awt.Toolkit;
 
 /**
  *
+ * @author Thomas Mueller (Hypersonic SQL Group)
  * @version 1.7.0
+ * @since Hypersonic SQL
  */
 class Tree extends Panel {
 

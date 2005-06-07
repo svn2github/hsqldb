@@ -69,7 +69,9 @@ package org.hsqldb;
 /**
  * Represents a single row table operation.
  *
- * @version 1.7.0
+ * @author Thomas Mueller (Hypersonic SQL Group)
+ * @version 1.8.0
+ * @since Hypersonic SQL
  */
 class Transaction {
 

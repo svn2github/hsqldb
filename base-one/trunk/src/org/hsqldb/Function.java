@@ -88,7 +88,11 @@ import org.hsqldb.types.JavaObject;
  * Provides services to evaluate SQL function and stored procedure calls,
  * by invoking Java methods.
  *
- * @version 1.7.2
+ * Extended in successive versions of HSQLDB.
+ *
+ * @author Thomas Mueller (Hypersonic SQL Group)
+ * @version 1.8.0
+ * @since Hypersonic SQL
  */
 class Function {
 

@@ -92,7 +92,11 @@ import org.hsqldb.rowio.RowOutputBinary;
  *  result set metadata). It also implements the HSQL wire protocol for
  *  comunicating all such requests and responses across the network.
  *
- * @version    1.7.2
+ * Extensively rewritten and extended in successive versions of HSQLDB.
+ *
+ * @author Thomas Mueller (Hypersonic SQL Group)
+ * @version 1.8.0
+ * @since Hypersonic SQL
  */
 public class Result {
 
