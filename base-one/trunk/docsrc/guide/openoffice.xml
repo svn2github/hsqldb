@@ -1,4 +1,4 @@
-<!-- $Id: openoffice.xml,v 1.4 2004/04/22 09:25:28 dedmike Exp $ -->
+<!-- $Id: openoffice.xml,v 1.5 2005/06/08 01:05:00 unsaved Exp $ -->
 
 <!--  TODO.
       This should really be rewritten with DocBook procedure elements.
@@ -8,7 +8,7 @@
   -->
 
 <appendix>
-    <title>Running Hsqldb with OpenOffice.org</title>
+    <title>Running Hsqldb with OpenOffice.org 1.1.x</title>
     <appendixinfo>
         <author>
             <firstname>Hermann</firstname><surname>Kienlein</surname>
@@ -17,8 +17,8 @@
                 <orgname>EDV - Systeme Kienlein</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.4 $</edition>
-        <pubdate>$Date: 2004/04/22 09:25:28 $</pubdate>
+        <edition>$Revision: 1.5 $</edition>
+        <pubdate>$Date: 2005/06/08 01:05:00 $</pubdate>
         <keywordset>
             <keyword>HSQLDB</keyword>
             <keyword>OpenOffice</keyword>
@@ -45,6 +45,10 @@
             will not write them here again.
             If you need a real DB-System with user-management and different 
             rights for different users, read the other documents.
+        </para> <para>
+            HSQLDB is included with OpenOffice.org 2.0 and is used by default.
+            Please refer to standard OpenOffice.org 2.0 documentation on how 
+            to use HSQLDB with this version.
         </para>
     </section>
 
@@ -53,7 +57,7 @@
         <para>
             I assume you have a running OpenOffice.org (OOo) and a
             JavaRuntimeEnvironment.
-            So place the hsqldb-*.zip file where you want on your disk 
+            So place the hsqldb_*.zip file where you want on your disk 
             and unpack it (I assume you have done this already).
         </para>
     </section>

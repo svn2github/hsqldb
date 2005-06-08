@@ -194,12 +194,12 @@ implements ActionListener, WindowListener, KeyListener {
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.sourceforge.net.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.50 $";
+        + "problem reports or help requests:  $Revision: 1.53 $";
     private static final String ABOUT_TEXT =
-        "$Revision: 1.50 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.53 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2001-2005, The HSQL Development Group.\n"
-        + "http://hsqldb.sourceforge.net\n\n\n"
+        + "http://hsqldb.org\n\n\n"
         + "You may use and redistribute according to the HSQLDB\n"
         + "license documented in the source code and at the web\n"
         + "site above.";

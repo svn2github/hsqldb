@@ -48,7 +48,7 @@ import org.hsqldb.rowio.RowOutputBinary;
  * protocol.
  *
  * @author fredt@users
- * @version 1.7.2
+ * @version 1.8.0
  * @since 1.7.2
  */
 public class HSQLClientConnection implements SessionInterface {
@@ -64,7 +64,11 @@ public class HSQLClientConnection implements SessionInterface {
     private Result            resultOut;
     private int               sessionID;
 
-//
+    //
+    private boolean isReadOnly   = false;
+    private boolean isAutoCommit = true;
+
+    //
     String  host;
     int     port;
     String  path;
@@ -212,24 +216,40 @@ public class HSQLClientConnection implements SessionInterface {
 
         Object info = getAttribute(Session.INFO_CONNECTION_READONLY);
 
-        return ((Boolean) info).booleanValue();
+        isReadOnly = ((Boolean) info).booleanValue();
+
+        return isReadOnly;
     }
 
     public void setReadOnly(boolean mode) throws HsqlException {
-        setAttribute(mode ? Boolean.TRUE
-                          : Boolean.FALSE, Session.INFO_CONNECTION_READONLY);
+
+        if (mode != isReadOnly) {
+            setAttribute(mode ? Boolean.TRUE
+                              : Boolean.FALSE, Session
+                                  .INFO_CONNECTION_READONLY);
+
+            isReadOnly = mode;
+        }
     }
 
     public boolean isAutoCommit() throws HsqlException {
 
         Object info = getAttribute(SessionInterface.INFO_AUTOCOMMIT);
 
-        return ((Boolean) info).booleanValue();
+        isAutoCommit = ((Boolean) info).booleanValue();
+
+        return isAutoCommit;
     }
 
     public void setAutoCommit(boolean mode) throws HsqlException {
-        setAttribute(mode ? Boolean.TRUE
-                          : Boolean.FALSE, SessionInterface.INFO_AUTOCOMMIT);
+
+        if (mode != isAutoCommit) {
+            setAttribute(mode ? Boolean.TRUE
+                              : Boolean.FALSE, SessionInterface
+                                  .INFO_AUTOCOMMIT);
+
+            isAutoCommit = mode;
+        }
     }
 
     public void setIsolation(int level) throws HsqlException {}
