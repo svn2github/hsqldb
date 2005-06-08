@@ -45,7 +45,7 @@ import org.hsqldb.lib.StopWatch;
  * A quick test of the new CompiledStatement and batch execution facilities.
  *
  * @author boucherb@users
- * @since HSQLDB 1.7.2
+ * @since 1.7.2
  * @version 1.7.2
  */
 

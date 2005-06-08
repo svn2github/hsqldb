@@ -77,10 +77,11 @@ import org.hsqldb.lib.StringConverter;
 /**
  * Script generation.
  *
- * The core functionality of this class was inherited from HypersonicSQL and
- * extensively rewritten and extended in successive versions of HSQLDB.
+ * The core functionality of this class was inherited from Hypersonic and
+ * extensively rewritten and extended in successive versions of HSQLDB.<p>
  *
  * @author Thomas Mueller (Hypersonic SQL Group)
+ * @author fredt@users
  * @version 1.8.0
  * @since 1.7.0
  */

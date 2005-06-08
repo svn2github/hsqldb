@@ -38,6 +38,7 @@ import java.lang.reflect.Array;
  *
  * @author fredt@users
  * @version 1.7.2
+ * @since 1.7.2
  */
 public class ArrayUtil {
 

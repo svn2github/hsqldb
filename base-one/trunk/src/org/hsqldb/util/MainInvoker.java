@@ -40,7 +40,7 @@ import java.lang.reflect.InvocationTargetException;
  *
  * This class <b>will System.exit()</b> if any invocation fails.
  *
- * @author   Blaine Simpson, unsaved@users.sourceforge.net
+ * @author   Blaine Simpson, unsaved@users
  * @since    HSQLDB 1.8.0
  * @version  $Revision: 1.2 $
  */

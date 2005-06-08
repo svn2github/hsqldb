@@ -56,7 +56,7 @@ import org.hsqldb.lib.WrapperIterator;
  *
  * @author  boucherb@users
  * @version 1.8.0
- * @since HSQLDB 1.7.2
+ * @since 1.7.2
  */
 final class DINameSpace {
 

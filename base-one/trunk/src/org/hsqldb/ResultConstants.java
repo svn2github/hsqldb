@@ -39,7 +39,7 @@ package org.hsqldb;
  * and forth.
  *
  * @author boucherb@users
- * @since HSQLDB 1.7.2
+ * @since 1.7.2
  * @version 1.7.2
  */
 // fredt@users - the constants from the SQL standards are used freely where a

@@ -556,6 +556,8 @@ public class Library {
      * @param j the second value
      * @return the bit-wise logical <em>xor</em> of
      *      <code>i</code> and <code>j</code>
+     *
+     * @since 1.8.0
      */
     public static int bitxor(int i, int j) {
         return i ^ j;
@@ -830,7 +832,7 @@ public class Library {
      *
      * @param s the <code>String</code> for which to determine the octet length
      * @return the octet length of <code>s</code>, including trailing blanks
-     * @since HSQLDB 1.7.2
+     * @since 1.7.2
      */
     public static Integer octetLength(String s) {
         return s == null ? null
@@ -843,7 +845,7 @@ public class Library {
      *
      * @param s the <code>String</code> for which to determine the bit length
      * @return the bit length of <code>s</code>, including trailing blanks
-     * @since HSQLDB 1.7.2
+     * @since 1.7.2
      */
     public static Integer bitLength(String s) {
         return s == null ? null
@@ -1101,7 +1103,7 @@ public class Library {
      * @param trailing if true, remove trailing occurences
      * @return s, with the leading, trailing or both the leading and trailing
      *      occurences of the first character of <code>trimstr</code> removed
-     * @since HSQLDB 1.7.2
+     * @since 1.7.2
      */
     public static String trim(String s, String trimstr, boolean leading,
                               boolean trailing) {
@@ -1570,6 +1572,9 @@ public class Library {
                 Calendar.YEAR));
     }
 
+    /**
+     * @since 1.8.0
+     */
     public static String to_char(java.util.Date d, String format) {
 
         if (d == null || format == null) {
@@ -1597,6 +1602,8 @@ public class Library {
      * @param d2 The ending datetime for the interval. d1 is subtracted
      *           from this value to return the number of date-parts
      *           between the two arguments.
+     *
+     * since 1.7.3
      */
     public static Long datediff(String datepart, Timestamp d1,
                                 Timestamp d2) throws HsqlException {
@@ -1768,7 +1775,7 @@ public class Library {
      * @param conn the <code>Connection</code> object for which to retrieve
      *      the current autocommit status
      * @return a boolean value representing the connection's autocommit status
-     * @since HSQLDB 1.7.0
+     * @since 1.7.0
      */
     public static boolean getAutoCommit(Connection conn) {
         return false;
@@ -1778,7 +1785,7 @@ public class Library {
      * Retrieves the name of this database product. <p>
      *
      * @return database product name as a <code>String</code> object
-     * @since HSQLDB 1.7.2
+     * @since 1.7.2
      */
     public static String getDatabaseProductName() {
         return HsqlDatabaseProperties.PRODUCT_NAME;
@@ -1788,7 +1795,7 @@ public class Library {
      * Retrieves the version number of this database product. <p>
      *
      * @return database version number as a <code>String</code> object
-     * @since HSQLDB 1.7.2
+     * @since 1.7.2
      */
     public static String getDatabaseProductVersion() {
         return HsqlDatabaseProperties.THIS_VERSION;
@@ -1798,7 +1805,7 @@ public class Library {
      * Retrieves the major version number of this database. <p>
      *
      * @return the database's major version as an <code>int</code> value
-     * @since HSQLDB 1.7.2
+     * @since 1.7.2
      */
     public static int getDatabaseMajorVersion() {
         return HsqlDatabaseProperties.MAJOR;
@@ -1808,7 +1815,7 @@ public class Library {
      * Retrieves the major version number of this database. <p>
      *
      * @return the database's major version as an <code>int</code> value
-     * @since HSQLDB 1.7.2
+     * @since 1.7.2
      */
     public static int getDatabaseMinorVersion() {
         return HsqlDatabaseProperties.MINOR;
@@ -1823,7 +1830,7 @@ public class Library {
      *      the current read-only status
      * @return  <code>true</code> if connection is read-only and
      *      <code>false</code> otherwise
-     * @since HSQLDB 1.7.2
+     * @since 1.7.2
      */
     public static boolean isReadOnlyConnection(Connection conn) {
         return false;
@@ -1835,7 +1842,7 @@ public class Library {
      * @param c the <code>Connection</code> object for which to retrieve
      *      the current database read-only status
      * @return <code>true</code> if so; <code>false</code> otherwise
-     * @since HSQLDB 1.7.2
+     * @since 1.7.2
      */
     public static boolean isReadOnlyDatabase(Connection c) {
         return false;
@@ -1849,7 +1856,7 @@ public class Library {
      * @param c the <code>Connection</code> object for which to retrieve
      *      the current database files read-only status
      * @return <code>true</code> if so; <code>false</code> otherwise
-     * @since HSQLDB 1.7.2
+     * @since 1.7.2
      */
     public static boolean isReadOnlyDatabaseFiles(Connection c) {
         return false;

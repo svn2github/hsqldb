@@ -109,11 +109,12 @@ import org.hsqldb.types.JavaObject;
 
 /**
  *  Implementation of SQL table columns as defined in DDL statements with
- *  static methods to process their values.
+ *  static methods to process their values.<p>
  *
  *  Enhanced type checking and conversion by fredt@users
  *
  * @author Thomas Mueller (Hypersonic SQL Group)
+ * @author fredt@users
  * @version    1.8.0
  * @since Hypersonic SQL
  */
@@ -1028,23 +1029,25 @@ public class Column {
                     if (o instanceof java.lang.String) {
                         o = Library.trim((String) o, " ", true, true);
 
-                        return org.hsqldb.lib.BooleanConverter.getBoolean(
-                            (String) o);
+                        return ((String) o).equalsIgnoreCase("TRUE")
+                               ? Boolean.TRUE
+                               : Boolean.FALSE;
                     }
 
                     if (o instanceof Integer) {
-                        return org.hsqldb.lib.BooleanConverter.getBoolean(
-                            (Integer) o);
+                        return ((Integer) o).intValue() == 0 ? Boolean.FALSE
+                                                             : Boolean.TRUE;
                     }
 
                     if (o instanceof Long) {
-                        return org.hsqldb.lib.BooleanConverter.getBoolean(
-                            (Long) o);
+                        return ((Long) o).longValue() == 0L ? Boolean.FALSE
+                                                            : Boolean.TRUE;
                     }
 
                     if (o instanceof java.lang.Double) {
-                        return org.hsqldb.lib.BooleanConverter.getBoolean(
-                            (Double) o);
+                        return ((Double) o).doubleValue() == 0.0
+                               ? Boolean.FALSE
+                               : Boolean.TRUE;
                     }
 
                     if (o instanceof BigDecimal) {
@@ -1261,7 +1264,8 @@ public class Column {
                 return new BigDecimal(s);
 
             case Types.BOOLEAN :
-                return org.hsqldb.lib.BooleanConverter.getBoolean(s);
+                return s.equalsIgnoreCase("TRUE") ? Boolean.TRUE
+                                                  : Boolean.FALSE;
 
             case Types.BINARY :
             case Types.VARBINARY :

@@ -43,6 +43,7 @@ import java.io.UnsupportedEncodingException;
  *
  * @author fredt@users
  * @version 1.7.2
+ * @since 1.7.0
  */
 public class HsqlByteArrayOutputStream extends java.io.OutputStream
 implements DataOutput {

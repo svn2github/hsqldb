@@ -36,9 +36,12 @@ import java.io.FileWriter;
 import java.io.PrintWriter;
 
 /**
- * Class for debugging OOo file access issues
+ * Simple log for recording abnormal events in persistence<p>
+ * Log levels, 0 and 1 are currently supported.
  *
  * @author fredt@users
+ * @version 1.8.0
+ * @since 1.8.0
  */
 public class SimpleLog {
 

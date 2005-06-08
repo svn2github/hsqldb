@@ -64,10 +64,12 @@ import org.hsqldb.rowio.RowOutputBinary;
  *  The initial login establishes a persistent Session and returns its handle
  *  to the client. Subsequent calls are executed in the context of this
  *  session.<p>
- *
  *  (fredt@users)
  *
+ * Rewritten in version HSQLDB 1.7.2, based on original Hypersonic code.
+ *
  * @author Thomas Mueller (Hypersonic SQL Group)
+ * @author fredt@users
  * @version 1.7.2
  * @since Hypersonic SQL
  */

@@ -40,7 +40,7 @@ import org.hsqldb.lib.IntValueHashMap;
  *
  * @author  Nitin Chauhan
  * @author  fredt@users
- * @since HSQLDB 1.7.2
+ * @since 1.7.2
  * @version 1.7.2
  */
 public class Token {

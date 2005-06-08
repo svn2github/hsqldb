@@ -38,7 +38,8 @@ import org.hsqldb.lib.Iterator;
 /**
  * Transitional container for object names that are unique across the
  * DB instance but are owned by different DB objects. Currently names for
- * Index and Trigger objects.
+ * Index and Trigger objects.<p>
+ *
  * @author fredt@users
  * @version 1.7.2
  * @since 1.7.2

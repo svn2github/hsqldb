@@ -58,10 +58,10 @@ import org.hsqldb.lib.Iterator;
  * max(id)-min(id)" support.
  *
  * @author  Tony Lai
- * @see     Expression
- * @see     Select
  * @version   1.7.2
  * @since   1.7.2
+ * @see     Expression
+ * @see     Select
  */
 
 // fredt@users - patch 1.7.2 - mods to use new HashSet class and to separate addRow and getRow operations

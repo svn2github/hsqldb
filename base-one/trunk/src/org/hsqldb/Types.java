@@ -43,7 +43,7 @@ import org.hsqldb.lib.IntValueHashMap;
  *
  * @author  boucherb@users
  * @version 1.7.2
- * @since HSQLDB 1.7.2
+ * @since 1.7.2
  */
 public class Types {
 

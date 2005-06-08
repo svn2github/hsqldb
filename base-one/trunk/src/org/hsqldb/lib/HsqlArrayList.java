@@ -39,6 +39,7 @@ import java.lang.reflect.Array;
  *
  * @author dnordahl@users
  * @version 1.7.2
+ * @since 1.7.0
  */
 public class HsqlArrayList extends BaseList implements HsqlList {
 

@@ -86,7 +86,9 @@ import org.hsqldb.lib.HsqlArrayList;
  *
  * @author boucherb@users
  * @author fredt@users
+ *
  * @version  1.8.0
+ * @since  1.7.2
  * @see  User
  */
 class UserManager implements GrantConstants {

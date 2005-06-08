@@ -53,6 +53,8 @@ import org.hsqldb.lib.HsqlTimer;
 import org.hsqldb.lib.Iterator;
 
 //import org.hsqldb.lib.StopWatch;
+// todo - can lock the database engine as readonly in a wrapper for this when
+// used at checkpoint
 
 /**
  * Handles all logging to file operations. A log consists of three blocks:<p>
@@ -77,11 +79,9 @@ import org.hsqldb.lib.Iterator;
  * DatabaseScriptReader and its subclasses read back the data at startup time.
  *
  * @author fredt@users
- * @version 1.7.2
+ * @version 1.8.0
  * @since 1.7.2
  */
-// todo - can lock the database engine as readonly in a wrapper for this when
-// used at checkpoint
 public abstract class ScriptWriterBase implements Runnable {
 
     Database            database;

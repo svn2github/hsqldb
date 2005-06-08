@@ -110,7 +110,7 @@ import org.hsqldb.store.ValuePool;
  */
 
 /**
- *  Responsible for parsing non-DDL statements.
+ * Responsible for parsing non-DDL statements.
  *
  * Extensively rewritten and extended in successive versions of HSQLDB.
  *

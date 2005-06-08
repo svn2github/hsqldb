@@ -33,15 +33,6 @@ package org.hsqldb.store;
 
 import java.sql.Date;
 
-/**
- * Subclass of BaseHashMap for maintaining a pool of objects. Supports a
- * range of java.lang.* objects.
- *
- * @author fredt@users
- * @version 1.8.0
- * @since 1.7.2
- *
- */
 /*
  * implementation notes:
  *
@@ -53,6 +44,16 @@ import java.sql.Date;
  * superclass is used as an Object Set
  * getOrAddXxxx methods are implemented directly for speed
  * the superclass infrastructure is otherwise used
+ */
+
+/**
+ * Subclass of BaseHashMap for maintaining a pool of objects. Supports a
+ * range of java.lang.* objects.
+ *
+ * @author fredt@users
+ * @version 1.8.0
+ * @since 1.7.2
+ *
  */
 public class ValuePoolHashMap extends BaseHashMap {
 

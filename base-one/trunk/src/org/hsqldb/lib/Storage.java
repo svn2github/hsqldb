@@ -36,7 +36,7 @@ import java.io.IOException;
 /**
  * An interface that supports the commonly used methods of java.io.RandomAccessFile.
  *
- * @author  Ocke Janssen oj@openoffice.org
+ * @author Ocke Janssen oj@openoffice.org
  * @version 1.8.0
  * @since 1.80
  */

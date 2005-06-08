@@ -35,6 +35,13 @@ import java.io.IOException;
 
 import org.hsqldb.rowio.RowInputInterface;
 
+/**
+ * Interface for a store for CachedObject object.
+ *
+ * @author fredt@users
+ * @version 1.8.0
+ * @since 1.8.0
+ */
 public interface PersistentStore {
 
     int INT_STORE_SIZE  = 4;

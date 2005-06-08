@@ -37,6 +37,14 @@ import java.util.Locale;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.StringUtil;
 
+/**
+ * Implementation of collation support for all CHAR and VARCHAR data.
+ *
+ * @author frank.schoenheit@sun.com
+ * @author fredt@users
+ * @version 1.8.0
+ * @since 1.8.0
+ */
 public class Collation {
 
     static final HashMap nameToJavaName = new HashMap(101);

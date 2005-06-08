@@ -116,12 +116,10 @@ import org.hsqldb.rowio.RowOutputBinary;
  * in the JDBC sense. The JDBC Connection that is established can support
  * transactions spanning several Statement calls and real PreparedStatement
  * calls are supported. This class has been rewritten to support the new
- * features.
+ * features.<p>
+ * (fredt@users)<p>
  *
- *
- *
- *
- *  (fredt@users)
+ * Extensively rewritten for HSQLDB.
  *
  * @author Thomas Mueller (Hypersonic SQL Group)
  * @version 1.7.2

@@ -74,11 +74,12 @@ import java.io.UTFDataFormatException;
 
 /**
  * Collection of static methods for converting strings between different
- * formats and to and from byte arrays
+ * formats and to and from byte arrays.<p>
  *
- * New class based on original Hypersonic code.
+ * New class, with extensively enhanced and rewritten Hypersonic code.
  *
  * @author Thomas Mueller (Hypersonic SQL Group)
+ * @author fredt@users
  * @version 1.8.0
  * @since 1.7.2
  */

@@ -60,7 +60,7 @@ import org.hsqldb.store.ValuePool;
  *
  * @author boucherb@users
  * @version 1.8.0
- * @since HSQLDB 1.7.2
+ * @since 1.7.2
  */
 final class DatabaseInformationFull
 extends org.hsqldb.DatabaseInformationMain {

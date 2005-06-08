@@ -51,13 +51,7 @@ import org.hsqldb.persist.HsqlProperties;
 /**
  * The following comments are from the http://ldbc.sourceforge.net project.
  * These are the issues with HSQLDB JDBC implementation that are currently
- * not resolved. Other issues stated there have been resolved in 1.7.2.
- *
- * ResultSet.getString() on a DECIMAL data type should return the value
- * formatted for example for DECIMAL(10,2) the returned value should be 0.00
- * and not 0
- *
- * ResultSetMetaData precision and scale are not returned - always 0.
+ * not resolved. Other issues stated there have been resolved in 1.8.0.
  *
  * Time format error: the following statement should work, but throws an exception:
  * CREATE TABLE Test ( ID INT , Current DATETIME )

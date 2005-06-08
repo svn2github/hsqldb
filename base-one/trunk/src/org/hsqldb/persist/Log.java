@@ -119,6 +119,7 @@ import org.hsqldb.scriptio.ScriptWriterBase;
  * Extensively rewritten and extended in successive versions of HSQLDB.
  *
  * @author Thomas Mueller (Hypersonic SQL Group)
+ * @author fredt@users.
  * @version 1.8.0
  * @since Hypersonic SQL
  */

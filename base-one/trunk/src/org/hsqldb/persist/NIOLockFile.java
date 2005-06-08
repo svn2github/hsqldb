@@ -40,7 +40,7 @@ import java.nio.channels.FileLock;
  *
  * @author boucherb@users
  * @version 1.7.2
- * @since HSQLDB 1.7.2
+ * @since 1.7.2
  *
  */
 final class NIOLockFile extends LockFile {

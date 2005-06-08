@@ -60,7 +60,7 @@ import org.hsqldb.rowio.RowOutputTextLog;
  *
  *
  * @author fredt@users
- * @version 1.7.2
+ * @version 1.8.0
  * @since 1.7.2
  */
 public class ScriptWriterText extends ScriptWriterBase {

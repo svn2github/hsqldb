@@ -37,7 +37,7 @@ package org.hsqldb.lib;
  * default simply produces new, vanilla thread objects constructed with
  * the supplied runnable object.
  *
- * @author boucherb@users.sourceforge.net
+ * @author boucherb@users
  * @version 1.7.2
  * @since 1.7.2
  */

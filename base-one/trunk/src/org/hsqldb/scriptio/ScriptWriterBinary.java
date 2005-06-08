@@ -43,7 +43,7 @@ import org.hsqldb.rowio.RowOutputBinary;
 
 /**
  *  @author fredt@users
- *  @since 1.7.2
+ *  @since 1.8.0
  *  @version 1.7.2
  */
 class ScriptWriterBinary extends ScriptWriterBase {

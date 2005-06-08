@@ -43,9 +43,7 @@ import org.hsqldb.lib.SimpleLog;
 // boucherb@users 20030510 - patch 1.7.2 - added cooperative file locking
 
 /**
- *  Transitional interface for log and cache management. In the future,
- *  this will form the basis for the public interface of logging and cache
- *  classes.<p>
+ *  The public interface of logging and cache classes.<p>
  *
  *  Implements a storage manager wrapper that provides a consistent,
  *  always available interface to storage management for the Database

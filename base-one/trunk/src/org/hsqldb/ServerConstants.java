@@ -35,7 +35,7 @@ package org.hsqldb;
  * An enumeration of the property keys and default property values used by
  * HSQLDB servers
  *
- * @author  boucherb@users.sourceforge.net
+ * @author  boucherb@users
  * @version 1.7.2
  * @since 1.7.2
  */

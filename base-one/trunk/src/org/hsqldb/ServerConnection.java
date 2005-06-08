@@ -92,9 +92,10 @@ import org.hsqldb.rowio.RowOutputBinary;
  *  the client.
  *  (fredt@users)<p>
  *
- * Extensively rewritten and extended in successive versions of HSQLDB.
+ * Rewritten in version HSQLDB 1.7.2, based on original Hypersonic code.
  *
  * @author Thomas Mueller (Hypersonic SQL Group)
+ * @author fredt@users
  * @version 1.8.0
  * @since Hypersonic SQL
  */

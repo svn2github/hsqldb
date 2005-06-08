@@ -41,7 +41,7 @@ import junit.framework.TestCase;
 /**
  * HSQLDB TestBugBase Junit test case. <p>
  *
- * @author  boucherb@users.sourceforge.net
+ * @author  boucherb@users
  * @version 1.7.2
  * @since 1.7.2
  */

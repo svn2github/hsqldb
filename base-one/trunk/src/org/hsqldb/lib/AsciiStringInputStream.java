@@ -38,6 +38,7 @@ import java.io.IOException;
  *
  * @author fredt@users
  * @version 1.7.0
+ * @since 1.7 0
  */
 public class AsciiStringInputStream extends StringInputStream {
 

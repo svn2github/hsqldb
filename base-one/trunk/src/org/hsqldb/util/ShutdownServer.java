@@ -41,7 +41,7 @@ import org.hsqldb.persist.HsqlProperties;
 /*
  *  Shutdown class for Server, used by hsqldbserver to shutdown the server
  *
- *  Send any questions to fchoong@user.sourceforge.net
+ *  Send any questions to fchoong@user
  */
 public class ShutdownServer {
 

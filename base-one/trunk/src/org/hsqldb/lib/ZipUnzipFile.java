@@ -74,16 +74,16 @@ import java.util.zip.DeflaterOutputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
+// oj@openoffice.org - patch 1.8.0 - use FileAccess
+
 /**
  *
  * New Class based on original Hypersonic code.
  *
-* @author Thomas Mueller (Hypersonic SQL Group)
-* @version 1.7.2
-* @since Hypersonic SQL
-*/
-
-// oj@openoffice.org - use FileAccess
+ * @author Thomas Mueller (Hypersonic SQL Group)
+ * @version 1.7.2
+ * @since Hypersonic SQL
+ */
 public class ZipUnzipFile {
 
     private static final int COPY_BLOCK_SIZE = 1 << 16;

@@ -39,6 +39,13 @@ import org.hsqldb.NumberSequence;
 import org.hsqldb.Session;
 import org.hsqldb.Table;
 
+/**
+ * Base class for all script readers.
+ *
+ * @author fredt@users
+ * @version 1.7.2
+ * @since 1.7.2
+ */
 public abstract class ScriptReaderBase {
 
     public static ScriptReaderBase newScriptReader(Database db, String file,

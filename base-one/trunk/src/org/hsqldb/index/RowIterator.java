@@ -33,6 +33,12 @@ package org.hsqldb.index;
 
 import org.hsqldb.Row;
 
+/**
+ *
+ * @author fredt@users
+ * @version 1.7.2
+ * @since 1.7.2
+ */
 public interface RowIterator {
 
     Row next();

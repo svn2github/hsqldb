@@ -58,9 +58,9 @@ import org.hsqldb.rowio.RowOutputBinary;
  *  A second pass over the primary index writes each row to the new disk
  *  image after translating the old pointers to the new.
  *
+ * @author     fredt@users
  * @version    1.8.0
  * @since      1.7.2
- * @author     fredt@users
  */
 final class DataFileDefrag {
 

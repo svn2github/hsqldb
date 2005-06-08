@@ -41,11 +41,12 @@ import java.util.Random;
 import org.hsqldb.lib.java.JavaSystem;
 
 /**
- * A collection of static file management methods.
+ * A collection of static file management methods.<p>
+ * Also implements the default FileAccess method
  *
  * @author fredt@users
  * @author boucherb@users
- * @author  Ocke Janssen oj@openoffice.org
+ * @author Ocke Janssen oj@openoffice.org
  * @version 1.8.0
  * @since 1.7.2
  */

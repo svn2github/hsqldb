@@ -51,7 +51,7 @@ import org.hsqldb.lib.StringUtil;
  *  Development of the trigger implementation sponsored by Logicscope
  *  Realisations Ltd
  *
- * @author  Logicscope Realisations Ltd
+ * @author Peter Hudson - Logicscope Realisations Ltd
  * @version  1.7.0 (1.0.0.3)
  *      Revision History: 1.0.0.1 First release in hsqldb 1.61
  *      1.0.0.2 'nowait' support to prevent deadlock 1.0.0.3 multiple row

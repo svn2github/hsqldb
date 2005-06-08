@@ -82,6 +82,7 @@ import org.hsqldb.lib.IntValueHashMap;
  * A User Object holds the name, password for a
  * particular database user.<p>
  *
+ * Enhanced in successive versions of HSQLDB.
  *
  * @author Thomas Mueller (Hypersonic SQL Group)
  * @version 1.8.0
@@ -262,7 +263,6 @@ public class User {
      *        <code>User</code> object on the <code>Table</code> object
      *        identified by the <code>name</code> argument.
      * @param name a <code>Table</code> object identifier
-     * @since HSQLDB 1.7.2
      *
      */
     String[] listGrantedTablePrivileges(HsqlName name) {
@@ -280,7 +280,6 @@ public class User {
      * @return the distinct set of Java Class FQNs for which this
      *        this <code>User</code> object has been granted
      *        <code>ALL</code>.
-     * @since HSQLDB 1.7.2
      *
      */
     HashSet getGrantedClassNames(boolean andToPublic) throws HsqlException {

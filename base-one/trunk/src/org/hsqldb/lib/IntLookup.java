@@ -33,6 +33,12 @@ package org.hsqldb.lib;
 
 import java.util.NoSuchElementException;
 
+/**
+ *
+ * @author fredt@users
+ * @version 1.8.0
+ * @since 1.8.0
+ */
 public interface IntLookup {
 
     boolean add(int key, int value);

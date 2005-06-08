@@ -57,7 +57,7 @@ import org.hsqldb.lib.StringConverter;
  * @author unsaved@users
  * @author boucherb@users
  * @version 1.7.2
- * @since HSQLDB 1.7.2
+ * @since 1.7.2
  */
 public final class HsqlSocketFactorySecure extends HsqlSocketFactory
 implements HandshakeCompletedListener {

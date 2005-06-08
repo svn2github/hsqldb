@@ -35,23 +35,18 @@ import java.math.BigDecimal;
 import java.sql.Date;
 
 /**
- * Supports pooling of Integer, Long, Double, BigDecimal, String and Date
- * Java Objects. Leads to reduction in memory use when an Object is used more
- * then twice in the database.
- *
- * getXXX methods are used for retrival of values. If a value is not in
- * the pool, it is added to the pool and returned. When the pool gets
- * full, half the contents that have been accessed less recently are purged.
- *
- *
- * @author fredt@users
- * @version 1.8.0
- * @since 1.7.2
- */
-
-/**
- *
- */
+  * Supports pooling of Integer, Long, Double, BigDecimal, String and Date
+  * Java Objects. Leads to reduction in memory use when an Object is used more
+  * then twice in the database.
+  *
+  * getXXX methods are used for retrival of values. If a value is not in
+  * the pool, it is added to the pool and returned. When the pool gets
+  * full, half the contents that have been accessed less recently are purged.
+  *
+  * @author fredt@users
+  * @version 1.8.0
+  * @since 1.7.2
+  */
 public class ValuePool {
 
     //

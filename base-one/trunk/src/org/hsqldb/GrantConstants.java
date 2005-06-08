@@ -33,6 +33,13 @@ package org.hsqldb;
 
 import org.hsqldb.store.ValuePool;
 
+/**
+ * The constants for grants.
+ *
+ * @author boucherb@users
+ * @version 1.7.2
+ * @since 1.7.2
+ */
 public interface GrantConstants {
 
     /** Flag required to SELECT from a table. */

@@ -53,15 +53,15 @@ import org.hsqldb.store.ObjectCacheHashMap;
 // fredt@users - updated for 1.8.0 to allow correct behaviour with transactions
 
 /**
- * Acts as a buffer manager for a single TEXT table with respect its Row data.
+ * Acts as a buffer manager for a single TEXT table with respect its Row data.<p>
  *
  * Handles read/write operations on the table's text format data file using a
  * compatible pair of org.hsqldb.rowio input/output class instances.
  *
- * Updated for 1.8.0.
  *
  * @author sqlbob@users (RMP)
  * @version 1.8.0
+ * @since 1.7.0
  */
 public class TextCache extends DataFileCache {
 

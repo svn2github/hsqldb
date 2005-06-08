@@ -42,7 +42,6 @@ import org.hsqldb.HsqlDateTime;
 import org.hsqldb.HsqlException;
 import org.hsqldb.Trace;
 import org.hsqldb.Types;
-import org.hsqldb.lib.BooleanConverter;
 import org.hsqldb.types.Binary;
 import org.hsqldb.types.JavaObject;
 
@@ -379,7 +378,8 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
             return null;
         }
 
-        return BooleanConverter.getBoolean(s);
+        return s.equalsIgnoreCase("TRUE") ? Boolean.TRUE
+                                          : Boolean.FALSE;
     }
 
     protected Object readOther() throws IOException, HsqlException {

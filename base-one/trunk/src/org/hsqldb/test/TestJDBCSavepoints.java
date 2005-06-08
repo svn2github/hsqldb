@@ -47,9 +47,9 @@ import junit.framework.TestResult;
  * Tests JDBC java.sql.Savepoint support in context of new engine SQL-savepoint
  * support and new HSQL protocol extensions for savepoint support. <p>
  *
- * @author boucher@users.sourceforget.net
+ * @author boucher@users
  * @version 1.7.2
- * @since HSQLDB 1.7.2
+ * @since 1.7.2
  */
 public class TestJDBCSavepoints extends TestCase {
 

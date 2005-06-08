@@ -50,8 +50,6 @@ import org.hsqldb.lib.java.JavaSystem;
  * Wrapper for java.util.Properties to limit values to Specific types and
  * allow saving and loading.<p>
  *
- * Is public because it is used in the org.hsqldb.test package.
- *
  * @author fredt@users
  * @version 1.7.2
  * @since 1.7.0

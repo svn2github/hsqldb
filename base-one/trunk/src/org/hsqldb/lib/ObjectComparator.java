@@ -31,6 +31,12 @@
 
 package org.hsqldb.lib;
 
+/**
+ *
+ * @author fredt@users
+ * @version 1.7.2
+ * @since 1.7.2
+ */
 public interface ObjectComparator {
     int compare(Object a, Object b);
 }

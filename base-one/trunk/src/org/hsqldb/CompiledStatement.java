@@ -39,7 +39,7 @@ import org.hsqldb.HsqlNameManager.HsqlName;
  *
  * @author  boucherb@users
  * @version 1.7.2
- * @since HSQLDB 1.7.2
+ * @since 1.7.2
  */
 
 // fredt@users 20040404 - patch 1.7.2 - fixed type resolution for parameters

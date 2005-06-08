@@ -662,7 +662,8 @@ public class Tokenizer {
                 return new BigDecimal(sToken);
 
             case BOOLEAN :
-                return org.hsqldb.lib.BooleanConverter.getBoolean(sToken);
+                return sToken.equalsIgnoreCase("TRUE") ? Boolean.TRUE
+                                                       : Boolean.FALSE;
 
             case DATE :
                 return HsqlDateTime.dateValue(sToken);
