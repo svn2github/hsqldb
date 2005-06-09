@@ -51,14 +51,23 @@ import java.text.Collator;
  * Handles the differences between JDK 1.1.x and 1.2.x and above
  *
  * @author fredt@users
- * @version 1.7.2
+ * @version 1.8.0
  */
 public class JavaSystem {
 
-//#ifdef USECOLLATOR
-    private static Collator i18nCollator = Collator.getInstance();
+    // variables to track rough count on object creation, to use in gc
+    public static int gcFrequency;
+    public static int memoryRecords;
 
-//#endif
+    // Garbage Collection
+    public static void gc() {
+
+        if ((gcFrequency > 0) && (memoryRecords > gcFrequency)) {
+            memoryRecords = 0;
+
+            System.gc();
+        }
+    }
 
     /**
      * Arguments are never null.
@@ -72,22 +81,6 @@ public class JavaSystem {
 
 //#else
         return a.compareToIgnoreCase(b);
-
-//#endif
-    }
-
-    /**
-     * Arguments are never null.
-     */
-    public static int CompareInLocale(String a, String b) {
-
-//#ifdef USECOLLATOR
-        return i18nCollator.compare((String) a, (String) b);
-
-//#else
-/*
-        return a.compareTo(b);
-*/
 
 //#endif
     }

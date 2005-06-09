@@ -219,7 +219,6 @@ public class DatabaseURL {
 
         return props;
     }
-
 /*
     public static void main(String[] argv) {
 
@@ -234,15 +233,4 @@ public class DatabaseURL {
         parseURL("JDBC:hsqldb:hsql://myhost", true);
     }
 */
-
-    // Garbage Collection
-    static void gc() {
-
-        if ((Record.gcFrequency > 0)
-                && (Record.memoryRecords > Record.gcFrequency)) {
-            Record.memoryRecords = 0;
-
-            System.gc();
-        }
-    }
 }

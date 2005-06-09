@@ -69,6 +69,7 @@ package org.hsqldb;
 import java.io.IOException;
 
 import org.hsqldb.lib.IntLookup;
+import org.hsqldb.lib.java.JavaSystem;
 import org.hsqldb.rowio.RowInputInterface;
 import org.hsqldb.rowio.RowOutputInterface;
 
@@ -187,7 +188,7 @@ public class CachedRow extends Row {
      */
     public void delete() throws HsqlException {
 
-        Record.memoryRecords++;
+        JavaSystem.memoryRecords++;
 
         hasNodesChanged = hasDataChanged = false;
 

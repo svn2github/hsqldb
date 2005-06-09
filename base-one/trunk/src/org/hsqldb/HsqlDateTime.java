@@ -233,54 +233,9 @@ public class HsqlDateTime {
     private static final String sdfdPattern     = "yyyy-MM-dd";
     private static final String sdftsPattern    = "yyyy-MM-dd HH:mm:ss.";
     private static final String sdftsSysPattern = "yyyy-MM-dd HH:mm:ss.SSS";
-
-    static Date getDate(String dateString, Calendar cal) throws Exception {
-
-        synchronized (sdfd) {
-            sdfd.setCalendar(cal);
-
-            java.util.Date d = sdfd.parse(dateString);
-
-            return new Date(d.getTime());
-        }
-    }
-
-    static Time getTime(String timeString, Calendar cal) throws Exception {
-
-        synchronized (sdft) {
-            sdft.setCalendar(cal);
-
-            java.util.Date d = sdft.parse(timeString);
-
-            return new Time(d.getTime());
-        }
-    }
-
-    static Timestamp getTimestamp(String dateString,
-                                  Calendar cal) throws Exception {
-
-        synchronized (sdfts) {
-            sdfts.setCalendar(cal);
-
-            dateString = dateString
-                         + zerodatetime.substring(dateString.length());
-
-            java.util.Date d = sdfts.parse(dateString.substring(0,
-                sdftsPattern.length()));
-            String nanostring = dateString.substring(sdftsPattern.length(),
-                dateString.length());
-            int       n  = Integer.parseInt(nanostring);
-            Timestamp ts = new Timestamp(d.getTime());
-
-            ts.setNanos(n);
-
-            return ts;
-        }
-    }
-
-    static SimpleDateFormat sdfd     = new SimpleDateFormat(sdfdPattern);
-    static SimpleDateFormat sdft     = new SimpleDateFormat(sdftPattern);
-    static SimpleDateFormat sdfts    = new SimpleDateFormat(sdftsPattern);
+    static SimpleDateFormat     sdfd = new SimpleDateFormat(sdfdPattern);
+    static SimpleDateFormat     sdft = new SimpleDateFormat(sdftPattern);
+    static SimpleDateFormat     sdfts = new SimpleDateFormat(sdftsPattern);
     static SimpleDateFormat sdftsSys = new SimpleDateFormat(sdftsSysPattern);
 
     /**
@@ -418,7 +373,7 @@ public class HsqlDateTime {
 //#else
 /*
         // Have to go indirect
-        synchronized(tempDate){
+        synchronized (tempDate) {
             tempDate.setTime(millis);
             cal.setTime(tempDate);
         }

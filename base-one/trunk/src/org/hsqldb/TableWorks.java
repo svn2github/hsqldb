@@ -206,6 +206,7 @@ class TableWorks {
             table = tn;
         }
 
+        table.database.schemaManager.clearTempTables(session, table);
         table.database.schemaManager.registerIndexName(
             newindex.getName().name, table.getName());
         table.database.schemaManager.recompileViews(table);

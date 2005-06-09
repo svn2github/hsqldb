@@ -66,6 +66,7 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.java.JavaSystem;
 /**
  * A node in a Result linked list.
  *
@@ -75,15 +76,11 @@ package org.hsqldb;
  */
 public class Record {
 
-    // variables to track rough count on object creation, to use in gc
-    public static int gcFrequency;
-    public static int memoryRecords;
-
     // structure member
     public Object[] data;
     public Record   next;
 
     Record() {
-        memoryRecords++;
+        JavaSystem.memoryRecords++;
     }
 }

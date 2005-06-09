@@ -40,6 +40,7 @@ import org.hsqldb.Record;
 import org.hsqldb.Trace;
 import org.hsqldb.lib.Set;
 import org.hsqldb.lib.HashSet;
+import org.hsqldb.lib.java.JavaSystem;
 
 // loosecannon1@users 1.7.2 patch properties on the JDBC URL
 // tytar@users 20041209 - provide to set default table type
@@ -331,7 +332,7 @@ public class HsqlDatabaseProperties extends HsqlProperties {
             setProperty(hsqldb_cache_version, "1.6.0");
         }
 
-        Record.gcFrequency = getIntegerProperty(runtime_gc_interval, 0);
+        JavaSystem.gcFrequency = getIntegerProperty(runtime_gc_interval, 0);
 
         return true;
     }

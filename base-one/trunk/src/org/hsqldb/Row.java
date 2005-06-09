@@ -67,6 +67,7 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.IntLookup;
+import org.hsqldb.lib.java.JavaSystem;
 import org.hsqldb.persist.CachedObject;
 import org.hsqldb.rowio.RowOutputInterface;
 
@@ -175,7 +176,7 @@ public class Row implements CachedObject {
      */
     void delete() throws HsqlException {
 
-        Record.memoryRecords++;
+        JavaSystem.memoryRecords++;
 
         nPrimaryNode = null;
     }

@@ -76,6 +76,7 @@ import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.lib.IntKeyHashMap;
 import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.java.JavaSystem;
 import org.hsqldb.store.ValuePool;
 
 // fredt@users 20020320 - doc 1.7.0 - update
@@ -833,7 +834,7 @@ public class Session implements SessionInterface {
             // we simply get the next system change number - no matter what type of query
             sessionSCN = database.nextDMLSCN();
 
-            DatabaseURL.gc();
+            JavaSystem.gc();
 
             switch (type) {
 

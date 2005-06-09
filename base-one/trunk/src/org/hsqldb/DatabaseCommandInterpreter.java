@@ -76,6 +76,7 @@ import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.StringUtil;
+import org.hsqldb.lib.java.JavaSystem;
 import org.hsqldb.persist.HsqlDatabaseProperties;
 import org.hsqldb.scriptio.ScriptWriterBase;
 import org.hsqldb.scriptio.ScriptWriterText;
@@ -157,7 +158,7 @@ class DatabaseCommandInterpreter {
         String token;
         int    cmd;
 
-        DatabaseURL.gc();
+        JavaSystem.gc();
 
         result = null;
         cmd    = Token.UNKNOWNTOKEN;

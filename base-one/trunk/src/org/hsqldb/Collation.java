@@ -36,6 +36,7 @@ import java.util.Locale;
 
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.StringUtil;
+import org.hsqldb.lib.java.JavaSystem;
 
 /**
  * Implementation of collation support for all CHAR and VARCHAR data.
@@ -214,7 +215,7 @@ public class Collation {
         int i;
 
         if (collator == null) {
-            i = a.compareToIgnoreCase(b);
+            i = JavaSystem.CompareIngnoreCase(a, b);
         } else {
             i = collator.compare(toUpperCase(a), toUpperCase(b));
         }
