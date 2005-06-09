@@ -3089,7 +3089,7 @@ class DatabaseCommandInterpreter {
                 return result;
         }
 
-        lnr = new LineNumberReader(new StringReader(cs.toString()));
+        lnr = new LineNumberReader(new StringReader(cs.describe(session)));
 
         while (null != (line = lnr.readLine())) {
             result.add(new Object[]{ line });

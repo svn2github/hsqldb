@@ -67,6 +67,7 @@
 package org.hsqldb;
 
 import org.hsqldb.lib.java.JavaSystem;
+
 /**
  * A node in a Result linked list.
  *

@@ -695,7 +695,7 @@ class Function {
     /**
      * Returns a String representation of this object. <p>
      */
-    public String toString() {
+    public String describe(Session session) {
 
         StringBuffer sb = new StringBuffer();
 
@@ -703,7 +703,7 @@ class Function {
         sb.append(sFunction).append("(");
 
         for (int i = iSqlArgStart; i < eArg.length; i++) {
-            sb.append("[").append(eArg[i]).append("]");
+            sb.append("[").append(eArg[i].describe(session)).append("]");
         }
 
         sb.append(") returns ").append(Types.getTypeString(getReturnType()));

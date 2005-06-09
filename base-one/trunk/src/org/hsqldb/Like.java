@@ -149,13 +149,11 @@ class Like {
      *
      * @return
      */
-    Boolean compare(Session session, Object o) {
+    Boolean compare(Session session, String s) {
 
-        if (o == null) {
+        if (s == null) {
             return null;
         }
-
-        String s = o.toString();
 
         if (isIgnoreCase) {
             s = session.database.collation.toUpperCase(s);
@@ -340,7 +338,7 @@ class Like {
                          : s.concat("\uffff");
     }
 
-    public String toString() {
+    public String describe(Session session) {
 
         StringBuffer sb = new StringBuffer();
 

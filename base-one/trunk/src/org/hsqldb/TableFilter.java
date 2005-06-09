@@ -680,9 +680,10 @@ final class TableFilter {
      *
      * @return a String representation of this object
      */
-    public String toString() {
+    public String describe(Session session) {
 
         StringBuffer sb;
+        String       temp;
         Index        index;
         Index        primaryIndex;
         int[]        primaryKey;
@@ -718,9 +719,21 @@ final class TableFilter {
         sb.append(hidden ? "[HIDDEN]]\n"
                          : "]\n");
         sb.append("isOuterJoin=[").append(isOuterJoin).append("]\n");
-        sb.append("eStart=[").append(eStart).append("]\n");
-        sb.append("eEnd=[").append(eEnd).append("]\n");
-        sb.append("eAnd=[").append(eAnd).append("]");
+
+        temp = eStart == null ? "null"
+                              : eStart.describe(session);
+
+        sb.append("eStart=[").append(temp).append("]\n");
+
+        temp = eEnd == null ? "null"
+                            : eEnd.describe(session);
+
+        sb.append("eEnd=[").append(temp).append("]\n");
+
+        temp = eAnd == null ? "null"
+                            : eAnd.describe(session);
+
+        sb.append("eAnd=[").append(temp).append("]");
 
         return sb.toString();
     }

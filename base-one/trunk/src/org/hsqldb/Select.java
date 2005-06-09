@@ -1065,16 +1065,19 @@ class Select {
         return isResolved;
     }
 
-    public String toString() {
+    public String describe(Session session) {
 
         StringBuffer sb;
+        String       temp;
 
         // temporary :  it is currently unclear whether this may affect
         // later attempts to retrieve an actual result (calls getResult(1)
         // in preProcess mode).  Thus, toString() probably should not be called
         // on Select objects that will actually be used to retrieve results,
         // only on Select objects used by EXPLAIN PLAN FOR
-        preProcess();
+        try {
+            getResult(session, 1);
+        } catch (HsqlException e) {}
 
         sb = new StringBuffer();
 
@@ -1085,10 +1088,10 @@ class Select {
         }
 
         if (limitCondition != null) {
-            sb.append("start=[").append(limitCondition.getArg()).append(
-                "]\n");
-            sb.append("limit=[").append(limitCondition.getArg2()).append(
-                "]\n");
+            sb.append("offset=[").append(
+                limitCondition.getArg().describe(session)).append("]\n");
+            sb.append("limit=[").append(
+                limitCondition.getArg2().describe(session)).append("]\n");
         }
 
         sb.append("isDistinctSelect=[").append(isDistinctSelect).append(
@@ -1100,7 +1103,7 @@ class Select {
         int columns = exprColumns.length - iOrderLen;
 
         for (int i = 0; i < columns; i++) {
-            sb.append(exprColumns[i]);
+            sb.append(exprColumns[i].describe(session));
         }
 
         sb.append("\n]\n");
@@ -1108,13 +1111,21 @@ class Select {
 
         for (int i = 0; i < tFilter.length; i++) {
             sb.append("[\n");
-            sb.append(tFilter[i]);
+            sb.append(tFilter[i].describe(session));
             sb.append("\n]");
         }
 
         sb.append("]\n");
-        sb.append("eCondition=[").append(queryCondition).append("]\n");
-        sb.append("havingCondition=[").append(havingCondition).append("]\n");
+
+        temp = queryCondition == null ? "null"
+                                      : queryCondition.describe(session);
+
+        sb.append("eCondition=[").append(temp).append("]\n");
+
+        temp = havingCondition == null ? "null"
+                                       : havingCondition.describe(session);
+
+        sb.append("havingCondition=[").append(temp).append("]\n");
         sb.append("groupColumns=[").append(groupColumnNames).append("]\n");
 
         if (unionSelect != null) {
@@ -1140,18 +1151,11 @@ class Select {
                     sb.append(" UNKNOWN SET OPERATION ");
             }
 
-            sb.append("[\n").append(unionSelect).append("]\n");
+            sb.append("[\n").append(unionSelect.describe(session)).append(
+                "]\n");
         }
 
         return sb.toString();
-    }
-
-    // Used only by toString()
-    private void preProcess() {
-
-        try {
-            getResult(null, 1);
-        } catch (HsqlException e) {}
     }
 
     Result describeResult() {

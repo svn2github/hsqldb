@@ -44,6 +44,7 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 
 // fredt@users 20040404 - patch 1.7.2 - fixed type resolution for parameters
 // boucherb@users 200404xx - patch 1.7.2 - changed parameter naming scheme for SQLCI client usability/support
+// fredt@users 20050609 - 1.8.0 - fixed EXPLAIN PLAN by implementing describe(Session)
 final class CompiledStatement {
 
     static final String PCOL_PREFIX        = "@p";
@@ -534,10 +535,10 @@ final class CompiledStatement {
      *
      * @return  the String representation of this object
      */
-    public String toString() {
+    public String describe(Session session) {
 
         try {
-            return toStringImpl();
+            return describeImpl(session);
         } catch (Exception e) {
             e.printStackTrace();
 
@@ -551,7 +552,7 @@ final class CompiledStatement {
      * @throws Exception if a database access or io error occurs
      * @return the String representation of this object
      */
-    private String toStringImpl() throws Exception {
+    private String describeImpl(Session session) throws Exception {
 
         StringBuffer sb;
 
@@ -560,7 +561,7 @@ final class CompiledStatement {
         switch (type) {
 
             case SELECT : {
-                sb.append(select.toString());
+                sb.append(select.describe(session));
                 appendParms(sb).append('\n');
                 appendSubqueries(sb);
 
@@ -581,7 +582,7 @@ final class CompiledStatement {
                 sb.append('[').append('\n');
                 appendColumns(sb).append('\n');
                 appendTable(sb).append('\n');
-                sb.append(select).append('\n');
+                sb.append(select.describe(session)).append('\n');
                 appendParms(sb).append('\n');
                 appendSubqueries(sb).append(']');
 
@@ -592,8 +593,8 @@ final class CompiledStatement {
                 sb.append('[').append('\n');
                 appendColumns(sb).append('\n');
                 appendTable(sb).append('\n');
-                appendCondition(sb);
-                sb.append(targetFilter).append('\n');
+                appendCondition(session, sb);
+                sb.append(targetFilter.describe(session)).append('\n');
                 appendParms(sb).append('\n');
                 appendSubqueries(sb).append(']');
 
@@ -603,8 +604,8 @@ final class CompiledStatement {
                 sb.append("DELETE");
                 sb.append('[').append('\n');
                 appendTable(sb).append('\n');
-                appendCondition(sb);
-                sb.append(targetFilter).append('\n');
+                appendCondition(session, sb);
+                sb.append(targetFilter.describe(session)).append('\n');
                 appendParms(sb).append('\n');
                 appendSubqueries(sb).append(']');
 
@@ -613,7 +614,7 @@ final class CompiledStatement {
             case CALL : {
                 sb.append("CALL");
                 sb.append('[');
-                sb.append(expression).append('\n');
+                sb.append(expression.describe(session)).append('\n');
                 appendParms(sb).append('\n');
                 appendSubqueries(sb).append(']');
 
@@ -680,10 +681,11 @@ final class CompiledStatement {
         return sb;
     }
 
-    private StringBuffer appendCondition(StringBuffer sb) {
+    private StringBuffer appendCondition(Session session, StringBuffer sb) {
 
         return condition == null ? sb.append("CONDITION[]\n")
                                  : sb.append("CONDITION[").append(
-                                     condition).append("]\n");
+                                     condition.describe(session)).append(
+                                     "]\n");
     }
 }

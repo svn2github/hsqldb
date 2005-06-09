@@ -503,8 +503,8 @@ public class Expression {
         }
     }
 
-    public String toString() {
-        return toString(0);
+    public String describe(Session session) {
+        return describe(session, 0);
     }
 
     static String getContextDDL(Expression expression) throws HsqlException {
@@ -823,7 +823,7 @@ public class Expression {
         throw Trace.error(Trace.EXPRESSION_NOT_SUPPORTED);
     }
 
-    private String toString(int blanks) {
+    private String describe(Session session, int blanks) {
 
         int          lIType;
         StringBuffer buf = new StringBuffer(64);
@@ -845,7 +845,7 @@ public class Expression {
 
             case FUNCTION :
                 buf.append("FUNCTION ");
-                buf.append(function);
+                buf.append(function.describe(session));
 
                 return buf.toString();
 
@@ -873,7 +873,7 @@ public class Expression {
 
             case QUERY :
                 buf.append("QUERY ");
-                buf.append(subQuery.select);
+                buf.append(subQuery.select.describe(session));
 
                 return buf.toString();
 
@@ -891,7 +891,8 @@ public class Expression {
 
                 if (valueList != null) {
                     for (int i = 0; i < valueList.length; i++) {
-                        buf.append(valueList[i].toString(blanks + blanks));
+                        buf.append(valueList[i].describe(session,
+                                                         blanks + blanks));
                         buf.append(' ');
                     }
                 }
@@ -955,6 +956,7 @@ public class Expression {
 
             case LIKE :
                 buf.append("LIKE ");
+                buf.append(likeObject.describe(session));
                 break;
 
             case AND :
@@ -1046,13 +1048,13 @@ public class Expression {
 
         if (eArg != null) {
             buf.append(" arg1=[");
-            buf.append(eArg.toString(blanks + 1));
+            buf.append(eArg.describe(session, blanks + 1));
             buf.append(']');
         }
 
         if (eArg2 != null) {
             buf.append(" arg2=[");
-            buf.append(eArg2.toString(blanks + 1));
+            buf.append(eArg2.describe(session, blanks + 1));
             buf.append(']');
         }
 
@@ -3100,7 +3102,8 @@ public class Expression {
                 return Column.concat(leftValue, rightValue);
 
             default :
-                throw Trace.error(Trace.NEED_AGGREGATE, this.toString());
+                throw Trace.error(Trace.NEED_AGGREGATE,
+                                  this.describe(session));
         }
     }
 
