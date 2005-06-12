@@ -457,8 +457,8 @@ public class HsqlDatabaseProperties extends HsqlProperties {
     }
 
     public int getDefaultWriteDelay() {
-        return database.isStoredFileAccess() ? 2
-                                             : 20;
+        return database.isStoredFileAccess() ? 2000
+                                             : 20000;
     }
 
     public void setDBModified(int mode) throws HsqlException {

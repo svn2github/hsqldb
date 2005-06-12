@@ -101,6 +101,7 @@ public abstract class ScriptWriterBase implements Runnable {
     volatile boolean needsSync;
     volatile boolean forceSync;
     volatile boolean busyWriting;
+    private int      syncCount;
     static final int INSERT             = 0;
     static final int INSERT_WITH_SCHEMA = 1;
 
@@ -167,8 +168,6 @@ public abstract class ScriptWriterBase implements Runnable {
     }
 
     protected abstract void initBuffers();
-
-    private int syncCount;
 
     /**
      *  Called internally or externally in write delay intervals.
@@ -372,18 +371,15 @@ public abstract class ScriptWriterBase implements Runnable {
 
     //
     private Object timerTask;
-    private int    ticks;
 
-    // long write delay for scripts
-    protected volatile int writeDelay = 60;
+    // long write delay for scripts : 60s
+    protected volatile int writeDelay = 60000;
 
     public void run() {
 
         try {
-            if (writeDelay != 0 && ++ticks >= writeDelay) {
+            if (writeDelay != 0) {
                 sync();
-
-                ticks = 0;
             }
 
             // todo: try to do Cache.cleanUp() here, too
@@ -398,12 +394,22 @@ public abstract class ScriptWriterBase implements Runnable {
     }
 
     public void setWriteDelay(int delay) {
+
         writeDelay = delay;
+
+        int period = writeDelay == 0 ? 1000
+                                     : writeDelay;
+
+        HsqlTimer.setPeriod(timerTask, period);
     }
 
     public void start() {
+
+        int period = writeDelay == 0 ? 1000
+                                     : writeDelay;
+
         timerTask = DatabaseManager.getTimer().schedulePeriodicallyAfter(0,
-                1000, this, false);
+                period, this, false);
     }
 
     public void stop() {

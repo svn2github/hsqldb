@@ -223,6 +223,8 @@ public class HsqlTimer implements ObjectComparator {
 
         if (task != null) {
             ((Task) task).cancel();
+
+//            Trace.printSystemOut("HsqlTimer now() calls: " + nowCount);
         }
     }
 
@@ -310,6 +312,25 @@ public class HsqlTimer implements ObjectComparator {
 
         return last == 0 ? null
                          : new Date(last);
+    }
+
+    /**
+     * Resets the period for a task.
+     *
+     * @param task a task reference
+     * @param period new period
+     * @exception ClassCastException if the task argument cannot be cast
+     *      to the type of reference returned by a scheduleXXX method
+     *      invocation.
+     */
+    public static void setPeriod(Object task,
+                                 long period) throws ClassCastException {
+
+        if (task == null) {
+            return;
+        }
+
+        ((Task) task).setPeriod(period);
     }
 
     /**
@@ -423,6 +444,8 @@ public class HsqlTimer implements ObjectComparator {
         return null;
     }
 
+    static int nowCount = 0;
+
     /**
      * Convenience method replacing the longer incantation:
      * System.currentTimeMillis()
@@ -430,6 +453,9 @@ public class HsqlTimer implements ObjectComparator {
      * @return System.currentTimeMillis()
      */
     private static long now() {
+
+        nowCount++;
+
         return System.currentTimeMillis();
     }
 
@@ -475,7 +501,7 @@ public class HsqlTimer implements ObjectComparator {
         final Runnable runnable;
 
         /** The periodic interval, or 0 if one-shot */
-        final long period;
+        long period;
 
         /** The time this task was last executed, or 0 if never */
         private long last;
@@ -584,6 +610,15 @@ public class HsqlTimer implements ObjectComparator {
          */
         synchronized void setNextScheduled(long n) {
             next = n;
+        }
+
+        /**
+         * Sets the period to wait.
+         *
+         * @param n the new period
+         */
+        synchronized void setPeriod(long n) {
+            period = n;
         }
     }
 

@@ -1,6 +1,6 @@
 Readme File
 
-May 2005
+June 2005
 
 This package contains HSQLDB 1.8.0
 

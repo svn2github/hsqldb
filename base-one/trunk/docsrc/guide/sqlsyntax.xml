@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: sqlsyntax.xml,v 1.31 2005/06/03 12:32:14 fredt Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.32 2005/06/05 11:50:12 fredt Exp $ -->
 <chapter id="sqlsyntax-chapter">
   <title id="sqlsyntax-title">SQL Syntax</title>
 
@@ -54,9 +54,9 @@
       </editor>
     </authorgroup>
 
-    <edition>$Revision: 1.31 $</edition>
+    <edition>$Revision: 1.32 $</edition>
 
-    <pubdate>$Date: 2005/06/03 12:32:14 $</pubdate>
+    <pubdate>$Date: 2005/06/05 11:50:12 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -1464,15 +1464,26 @@ FROM tableList
       <title id="set_write_delay-title">SET WRITE DELAY<footnoteref
       linkend="posthyper" /></title>
 
-      <programlisting>SET WRITE_DELAY {{ TRUE | FALSE } | &lt;seconds&gt;};</programlisting>
+      <programlisting>SET WRITE_DELAY {{ TRUE | FALSE } | &lt;seconds&gt; | &lt;milliseconds&gt; MILLIS};</programlisting>
 
       <para>This controls the frequency of file sync for the log file. When
       WRITE_DELAY is set to FALSE or 0, the sync takes place immediately at
       each COMMIT. WRITE_DELAY TRUE performs the sync once every 20 seconds
       (which is the default). A numeric value can be specified instead.</para>
 
-      <para>A write delay of 0 impacts performance in high load situation, as
+      <para>The purpose of this command is to control the amount of data loss
+      in case of a total system crash. A delay of 1 second means at most the
+      data written to disk during the last second before the crash is lost.
+      All data written prior to this has been synced and should be
+      recoverable.</para>
+
+      <para>A write delay of 0 impacts performance in high load situations, as
       the engine has to wait for the file system to catch up.</para>
+
+      <para>To avoid this, you can set write delay down to 10 milliseconds. In
+      practice, a write delay of 100 milliseconds provides better than
+      99.9999% reliability with an average one system crash per day, or
+      99.99999% with an average one system crash per 6 days.</para>
 
       <para>Each time a SET WRITE_DELAY is issued with any value, a sync is
       immediately performed.</para>

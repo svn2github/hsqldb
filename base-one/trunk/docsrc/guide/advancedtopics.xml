@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: advancedtopics.xml,v 1.25 2005/05/27 12:41:49 fredt Exp $ -->
+<!-- $Id: advancedtopics.xml,v 1.27 2005/05/29 09:43:15 fredt Exp $ -->
 <chapter id="advanced-chapter">
   <title id="advanced-title">Advanced Topics</title>
 
@@ -18,9 +18,9 @@
       </author>
     </authorgroup>
 
-    <edition>$Revision: 1.25 $</edition>
+    <edition>$Revision: 1.27 $</edition>
 
-    <pubdate>$Date: 2005/05/27 12:41:49 $</pubdate>
+    <pubdate>$Date: 2005/05/29 09:43:15 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -1154,8 +1154,8 @@
         <tbody valign="top">
           <row>
             <entry>
-              <property>SET WRITE_DELAY {{TRUE | FALSE} | &lt;numeric
-              value&gt;</property>
+              <property>SET WRITE_DELAY {{TRUE | FALSE} | &lt;seconds&gt; |
+              &lt;milliseconds&gt; MILLIS</property>
             </entry>
           </row>
 
@@ -1166,6 +1166,12 @@
               once every 20 seconds. FALSE indicates there is no delay and at
               each commit a file synch operation is performed. Numeric values
               from 0 can also be specified for the synch delay.</para>
+
+              <para>The purpose of this command is to control the amount of
+              data loss in case of a total system crash. A delay of 1 second
+              means at most the data written to disk during the last second
+              before the crash is lost. All data written prior to this has
+              been synced and should be recoverable</para>
 
               <para>This setting should be specified on the basis of the
               reliability of the hardware used for running the database
@@ -1180,6 +1186,11 @@
               a setting of 0 or FALSE be specified as this will slow the
               engine down to the speed at which the file synch operation can
               be performed by the disk subsystem.</para>
+
+              <para>Values down to 10 millisconds can be specified by adding
+              MILLIS to the command, but in practice a delay of 100
+              milliseconds provides 99.99999% reliability with an average one
+              system crash per 6 days.</para>
             </entry>
           </row>
 

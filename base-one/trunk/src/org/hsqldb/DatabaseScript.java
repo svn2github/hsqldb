@@ -157,8 +157,20 @@ public class DatabaseScript {
         addRightsStatements(database, r);
 
         if (database.logger.hasLog()) {
-            int    delay     = database.logger.getWriteDelay();
-            String statement = "SET WRITE_DELAY " + delay;
+            int     delay  = database.logger.getWriteDelay();
+            boolean millis = delay < 1000;
+
+            if (millis) {
+                if (delay != 0 && delay < 20) {
+                    delay = 20;
+                }
+            } else {
+                delay /= 1000;
+            }
+
+            String statement = "SET WRITE_DELAY " + delay
+                               + (millis ? " MILLIS"
+                                         : "");
 
             addRow(r, statement);
         }

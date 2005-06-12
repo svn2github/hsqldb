@@ -1701,6 +1701,8 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsSchemasInDataManipulation() throws SQLException {
+
+        // false for OOo client server compatibility
         return false;
     }
 
@@ -1740,7 +1742,7 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsSchemasInTableDefinitions() throws SQLException {
-        return true;
+        return !useSchemaDefault;
     }
 
     /**
@@ -1760,7 +1762,7 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      */
     public boolean supportsSchemasInIndexDefinitions() throws SQLException {
-        return true;
+        return !useSchemaDefault;
     }
 
     /**
@@ -1781,7 +1783,7 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
      */
     public boolean supportsSchemasInPrivilegeDefinitions()
     throws SQLException {
-        return true;
+        return !useSchemaDefault;
     }
 
     /**
@@ -2753,8 +2755,9 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
      * <!-- start release-specific documentation -->
      * <div class="ReleaseSpecificDocumentation">
      * <h3>HSQLDB-Specific Information</h3>
-     * HSQLDB supports <code>TRANSACTION_READ_UNCOMMITED</code> and
-     * <code>TRANSACTION_READ_COMMITED</code>.
+     * HSQLDB supports <code>TRANSACTION_READ_UNCOMMITED</code> in all cases
+     * and the rest of the isolation levels where there is only one connection
+     * to the database.
      * </div>
      * <!-- end release-specific documentation -->
      *

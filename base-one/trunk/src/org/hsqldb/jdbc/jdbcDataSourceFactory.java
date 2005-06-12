@@ -51,7 +51,10 @@ public class jdbcDataSourceFactory implements ObjectFactory {
 
     /**
      * Creates a jdbcDatasource object using the location or reference
-     * information specified.
+     * information specified.<p>
+     *
+     * The Reference object should support the properties, database, user,
+     * password.
      *
      * @param obj The reference information used in creating a
      *      jdbcDatasource object.

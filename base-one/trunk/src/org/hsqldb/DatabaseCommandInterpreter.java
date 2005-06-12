@@ -2328,6 +2328,10 @@ class DatabaseCommandInterpreter {
                     throw Trace.error(Trace.UNEXPECTED_TOKEN);
                 }
 
+                if (!tokenizer.isGetThis("MILLIS")) {
+                    delay *= 1000;
+                }
+
                 database.logger.setWriteDelay(delay);
 
                 break;

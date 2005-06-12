@@ -169,7 +169,7 @@ public class ScriptWriterText extends ScriptWriterBase {
         fileStreamOut.write(rowOut.getBuffer(), 0, rowOut.size());
 
         byteCount   += rowOut.size();
-        needsSync   = true;
+        needsSync   = session.isAutoCommit();
         busyWriting = false;
 
         if (forceSync) {
@@ -222,7 +222,7 @@ public class ScriptWriterText extends ScriptWriterBase {
         fileStreamOut.write(rowOut.getBuffer(), 0, rowOut.size());
 
         byteCount   += rowOut.size();
-        needsSync   = true;
+        needsSync   = session.isAutoCommit();
         busyWriting = false;
 
         if (forceSync) {

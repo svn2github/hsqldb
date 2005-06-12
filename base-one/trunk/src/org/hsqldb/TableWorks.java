@@ -374,7 +374,7 @@ class TableWorks {
      */
     void retypeColumn(Column column, int colindex) throws HsqlException {
 
-        if (table.isText()) {
+        if (table.isText() && !table.isEmpty(session)) {
             throw Trace.error(Trace.OPERATION_NOT_SUPPORTED);
         }
 
@@ -408,7 +408,7 @@ class TableWorks {
         HsqlName pkNameRemove    = null;
         HsqlName constNameRemove = null;
 
-        if (table.isText()) {
+        if (table.isText() && !table.isEmpty(session)) {
             throw Trace.error(Trace.OPERATION_NOT_SUPPORTED);
         }
 
@@ -481,7 +481,7 @@ class TableWorks {
 
         HsqlName pkNameAdd = null;
 
-        if (table.isText()) {
+        if (table.isText() && !table.isEmpty(session)) {
             throw Trace.error(Trace.OPERATION_NOT_SUPPORTED);
         }
 

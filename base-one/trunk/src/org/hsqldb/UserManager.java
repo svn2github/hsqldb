@@ -84,6 +84,9 @@ import org.hsqldb.lib.HsqlArrayList;
  * (PUBLIC_USER_NAME is kept in the list because it's needed by MetaData
  * routines via "listVisibleUsers(x, true)").
  *
+ * Partly based on Hypersonic code.
+ *
+ * @author Thomas Mueller (Hypersonic SQL Group)
  * @author boucherb@users
  * @author fredt@users
  *
