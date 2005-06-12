@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.115 2005/06/04 17:23:55 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.119 2005/06/08 19:52:37 fredt Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -93,7 +93,7 @@ import java.util.TreeMap;
  * Most of the Special Commands and Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.115 $
+ * @version $Revision: 1.119 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlFile {
@@ -143,8 +143,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.115 $".substring("$Revision: ".length(),
-                "$Revision: 1.115 $".length() - 2);
+        revnum = "$Revision: 1.119 $".substring("$Revision: ".length(),
+                "$Revision: 1.119 $".length() - 2);
     }
 
     private static String BANNER =
@@ -3471,6 +3471,10 @@ public class SqlFile {
         return true;
     }
 
+    // won't compile with JDK 1.3 without these
+    private static final int JDBC3_BOOLEAN  = 16;
+    private static final int JDBC3_DATALINK = 70;
+
     public static String sqlTypeToString(int i) {
 
         switch (i) {
@@ -3490,7 +3494,7 @@ public class SqlFile {
             case java.sql.Types.BLOB :
                 return "BLOB";
 
-            case java.sql.Types.BOOLEAN :
+            case JDBC3_BOOLEAN :
                 return "BOOLEAN";
 
             case java.sql.Types.CHAR :
@@ -3499,7 +3503,7 @@ public class SqlFile {
             case java.sql.Types.CLOB :
                 return "CLOB";
 
-            case java.sql.Types.DATALINK :
+            case JDBC3_DATALINK :
                 return "DATALINK";
 
             case java.sql.Types.DATE :
