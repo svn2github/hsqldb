@@ -31,6 +31,7 @@
 
 package org.hsqldb;
 
+import java.lang.Math;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
@@ -75,6 +76,11 @@ public class SetFunction {
         if (isDistinct) {
             this.isDistinct = true;
             distinctValues  = new HashSet();
+        }
+
+        if (setType == Expression.VAR_SAMP
+                || setType == Expression.STDDEV_SAMP) {
+            this.sample = true;
         }
     }
 
@@ -399,9 +405,9 @@ public class SetFunction {
     // this section was orginally an independent class
     private double  sk;
     private double  vk;
-    private double  v;
     private long    n;
     private boolean initialized;
+    private boolean sample;
 
     private void addDataPoint(Number x) {
 
@@ -417,7 +423,6 @@ public class SetFunction {
             n           = 1;
             sk          = xi;
             vk          = 0.0;
-            v           = 0.0;
             initialized = true;
 
             return;
@@ -428,17 +433,29 @@ public class SetFunction {
         vk += (Math.pow((sk - (double) (n - 1) * xi), 2.0) / (double) n)
               / (double) (n - 1);
         sk += xi;
-        v  = vk / (double) (n);
     }
 
     private Number getVariance() {
-        return initialized ? new Double(v)
-                           : null;
+
+        if (!initialized) {
+            return null;
+        }
+
+        return sample ? (n == 1) ? null    // NULL (not NaN) is correct in this case
+                                 : new Double(vk / (double) (n - 1))
+                      : new Double(vk / (double) (n));
     }
 
     private Number getStdDev() {
-        return initialized ? new Double(java.lang.Math.sqrt(v))
-                           : null;
+
+        if (!initialized) {
+            return null;
+        }
+
+        return sample ? (n == 1) ? null    // NULL (not NaN) is correct in this case
+                                 : new Double(Math.sqrt(vk
+                                 / (double) (n - 1)))
+                      : new Double(Math.sqrt(vk / (double) (n)));
     }
 
     // end statistics support

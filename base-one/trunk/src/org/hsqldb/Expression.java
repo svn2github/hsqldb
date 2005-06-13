@@ -2894,48 +2894,41 @@ public class Expression {
             return currValue;
         }
 
-        // handles results of aggregates plus NEGATE and CONVERT
-        switch (exprType) {
-
-            case COUNT :
-                if (currValue == null) {
-                    return INTEGER_0;
-                }
-
-                return ((SetFunction) currValue).getValue();
-
-            case MAX :
-            case MIN :
-            case SUM :
-            case AVG :
-            case EVERY :
-            case SOME :
-            case STDDEV_POP :
-            case STDDEV_SAMP :
-            case VAR_POP :
-            case VAR_SAMP :
-                if (currValue == null) {
-                    return null;
-                }
-
-                return ((SetFunction) currValue).getValue();
-
-            case NEGATE :
-                return Column.negate(
-                    eArg.getAggregatedValue(session, currValue), dataType);
-
-            case CONVERT :
-                return Column.convertObject(
-                    session, eArg.getAggregatedValue(session, currValue),
-                    dataType, precision, scale);
-        }
-
         // handle expressions
         Object leftValue  = null,
                rightValue = null;
 
         switch (aggregateSpec) {
 
+            case AGGREGATE_SELF : {
+
+                // handles results of aggregates plus NEGATE and CONVERT
+                switch (exprType) {
+
+                    case COUNT :
+                        if (currValue == null) {
+                            return INTEGER_0;
+                        }
+
+                        return ((SetFunction) currValue).getValue();
+
+                    case MAX :
+                    case MIN :
+                    case SUM :
+                    case AVG :
+                    case EVERY :
+                    case SOME :
+                    case STDDEV_POP :
+                    case STDDEV_SAMP :
+                    case VAR_POP :
+                    case VAR_SAMP :
+                        if (currValue == null) {
+                            return null;
+                        }
+
+                        return ((SetFunction) currValue).getValue();
+                }
+            }
             case AGGREGATE_LEFT :
                 if (currValue == null) {
                     currValue = new Object[2];
@@ -2974,6 +2967,13 @@ public class Expression {
 
         // handle other operations
         switch (exprType) {
+
+            case NEGATE :
+                return Column.negate(leftValue, dataType);
+
+            case CONVERT :
+                return Column.convertObject(session, leftValue, dataType,
+                                            precision, scale);
 
             case TRUE :
                 return Boolean.TRUE;
