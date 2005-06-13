@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: sqlsyntax.xml,v 1.32 2005/06/05 11:50:12 fredt Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.33 2005/06/12 20:38:04 fredt Exp $ -->
 <chapter id="sqlsyntax-chapter">
   <title id="sqlsyntax-title">SQL Syntax</title>
 
@@ -54,9 +54,9 @@
       </editor>
     </authorgroup>
 
-    <edition>$Revision: 1.32 $</edition>
+    <edition>$Revision: 1.33 $</edition>
 
-    <pubdate>$Date: 2005/06/05 11:50:12 $</pubdate>
+    <pubdate>$Date: 2005/06/12 20:38:04 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -882,6 +882,18 @@
 
       <para>See also: <link endterm="create_view-title"
       linkend="create_view-section" />.</para>
+    </section>
+
+    <section id="grant-section">
+      <title id="grant-title">EXPLAIN PLAN</title>
+
+      <programlisting>EXPLAIN PLAN FOR { SELECT ... | DELETE ... | INSERT ... | UPDATE ..};</programlisting>
+
+      <para>EXPLAIN PLAN FOR can be used with any query to get a detailed list
+      of the elements in the execution plan.</para>
+
+      <para>This list includes the indexes used for performing the query and
+      can be used to optimise the query or to add indexes to tables.</para>
     </section>
 
     <section id="grant-section">
