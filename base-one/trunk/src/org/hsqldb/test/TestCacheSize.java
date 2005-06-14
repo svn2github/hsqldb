@@ -86,7 +86,7 @@ public class TestCacheSize {
     boolean reportProgress = false;
 
     // type of the big table {MEMORY | CACHED | TEXT | ""}
-    String  tableType      = "TEXT";
+    String  tableType      = "CACHED";
     int     cacheScale     = 12;
     int     cacheSizeScale = 10;
     boolean nioMode        = false;
@@ -103,7 +103,7 @@ public class TestCacheSize {
     boolean createTempTable = false;
 
     // introduces fragmentation to the .data file during insert
-    boolean deleteWhileInsert         = true;
+    boolean deleteWhileInsert         = false;
     int     deleteWhileInsertInterval = 10000;
 
     // size of the tables used in test
@@ -169,7 +169,7 @@ public class TestCacheSize {
                 sStatement = cConnection.createStatement();
 
                 sStatement.execute("SET WRITE_DELAY " + 10);
-                sStatement.execute("SET CHECKPOINT DEFRAG " + 1);
+                sStatement.execute("SET CHECKPOINT DEFRAG " + 10);
                 sStatement.execute("SET SCRIPTFORMAT " + logType);
                 sStatement.execute("SET LOGSIZE " + 6);
                 sStatement.execute("SET PROPERTY \"hsqldb.cache_scale\" "
@@ -319,9 +319,10 @@ public class TestCacheSize {
         StopWatch sw = new StopWatch();
         int       i;
         PreparedStatement ps =
-            cConnection.prepareStatement("INSERT INTO zip VALUES(null)");
+            cConnection.prepareStatement("INSERT INTO zip VALUES(?)");
 
         for (i = 0; i <= smallrows; i++) {
+            ps.setInt(1, i);
             ps.execute();
         }
 
