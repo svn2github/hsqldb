@@ -126,26 +126,6 @@ class DatabaseCommandInterpreter {
     }
 
     /**
-     * Obtain default table types from database properties
-     */
-    private int getDefaultTableType() {
-
-        int dtt = Table.MEMORY_TABLE;
-        String dttName = database.getProperties().getProperty(
-            HsqlDatabaseProperties.hsqldb_default_table_type);
-
-        if (dttName != null) {
-            if (dttName.equalsIgnoreCase(Token.T_CACHED)) {
-                dtt = Table.CACHED_TABLE;
-            } else if (dttName.equalsIgnoreCase(Token.T_MEMORY)) {
-                dtt = Table.MEMORY_TABLE;
-            }
-        }
-
-        return dtt;
-    }
-
-    /**
      * Executes the SQL String. This method is always called from a block
      * synchronized on the database object.
      *
@@ -478,7 +458,7 @@ class DatabaseCommandInterpreter {
                 tokenizer.getThis(Token.T_TABLE);
             case Token.TABLE :
                 tableType = isTempTable ? Table.TEMP_TABLE
-                                        : getDefaultTableType();
+                                        : database.getDefaultTableType();
 
                 processCreateTable(tableType);
 

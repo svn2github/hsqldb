@@ -424,7 +424,7 @@ class Parser {
                         break;
 
                     default :
-                        select.intoType = Table.MEMORY_TABLE;
+                        select.intoType = database.getDefaultTableType();
                         getname         = false;
                         break;
                 }

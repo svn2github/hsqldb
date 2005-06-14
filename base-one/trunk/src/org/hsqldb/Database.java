@@ -498,6 +498,18 @@ public class Database {
     }
 
     /**
+     * Obtain default table types from database properties
+     */
+    int getDefaultTableType() {
+
+        String dttName = getProperties().getProperty(
+            HsqlDatabaseProperties.hsqldb_default_table_type);
+
+        return Token.T_CACHED.equalsIgnoreCase(dttName) ? Table.CACHED_TABLE
+                                                        : Table.MEMORY_TABLE;
+    }
+
+    /**
      *  Called by the garbage collector on this Databases object when garbage
      *  collection determines that there are no more references to it.
      */

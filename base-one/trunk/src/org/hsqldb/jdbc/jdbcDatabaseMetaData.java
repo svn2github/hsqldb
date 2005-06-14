@@ -1703,6 +1703,7 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
     public boolean supportsSchemasInDataManipulation() throws SQLException {
 
         // false for OOo client server compatibility
+        // otherwise schema name is used by OOo in column references
         return false;
     }
 
@@ -5425,7 +5426,7 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
         useSchemaDefault = c.connProperties.isPropertyTrue("default_schema");
 
         // OOo temporary workaround
-        useSchemaDefault = true;
+//        useSchemaDefault = true;
     }
 
     /**
@@ -5629,7 +5630,7 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
     /**
      * For compatibility, when the connection property "default_schame=true"
      * is present, any DatabaseMetaData call with an empty string as the
-     * schema parameter will use the default schema (noramlly "PUBLIC2).
+     * schema parameter will use the default schema (noramlly "PUBLIC").
      */
     private String translateSchema(String schemaName) throws SQLException {
 
