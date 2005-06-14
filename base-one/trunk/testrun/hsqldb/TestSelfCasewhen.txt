@@ -12,3 +12,4 @@ insert into testCase values(200,'yyyy',null);
 SELECT CASE data WHEN 'xxxx' THEN 'X' ELSE (CASE data WHEN 'yyyy' THEN 'Y' ELSE (CASE data WHEN 'zzzz' THEN 'Z' ELSE 'NOTFOUND' END) END) END FROM testCase;
 SELECT CASE data WHEN 'xxxx' THEN 'X' WHEN 'yyyy' THEN 'Y' WHEN 'zzzz' THEN 'Z' ELSE 'NOTFOUND' END FROM testCase;
 /*rALLNULL*/SELECT COALESCE (filler, data, 'ALLNULL') FROM testCase WHERE id = 300;
+SELECT CAST (SUM(ID) AS DOUBLE) FROM TESTCASE;
