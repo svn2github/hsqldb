@@ -1812,12 +1812,14 @@ class Parser {
      */
     private Expression readCastExpression() throws HsqlException {
 
+        boolean isConvert = iToken == Expression.CONVERT;
+
         read();
         readThis(Expression.OPEN);
 
         Expression r = readOr();
 
-        if (iToken == Expression.CONVERT) {
+        if (isConvert) {
             readThis(Expression.COMMA);
         } else {
             readThis(Expression.AS);

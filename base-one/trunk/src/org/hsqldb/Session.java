@@ -218,6 +218,8 @@ public class Session implements SessionInterface {
             clearIndexRootsKeep();
             compiledStatementManager.removeSession(sessionId);
 
+            database.closeIfLast();
+
             database                  = null;
             user                      = null;
             transactionList           = null;

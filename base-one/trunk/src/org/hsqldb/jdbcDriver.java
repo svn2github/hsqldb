@@ -256,6 +256,11 @@ public class jdbcDriver implements Driver {
         p.required = false;
         p.choices  = choices;
         pinfo[4]   = p;
+        p          = new DriverPropertyInfo("shutdown", null);
+        p.value    = info.getProperty("shutdown");
+        p.required = false;
+        p.choices  = choices;
+        pinfo[5]   = p;
 
         return pinfo;
     }

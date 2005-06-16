@@ -148,6 +148,7 @@ public class Database {
     private boolean                bIgnoreCase;
     private boolean                bReferentialIntegrity;
     private HsqlDatabaseProperties databaseProperties;
+    private boolean                shutdownOnNoConnection;
 
     // schema invarient objects
     private HashMap        hAlias;
@@ -238,6 +239,8 @@ public class Database {
             fileaccess = new FileUtil();
         }
 
+        shutdownOnNoConnection = urlProperties.getProperty("shutdown",
+                "false").equals("true");
         logger                   = new Logger();
         compiledStatementManager = new CompiledStatementManager(this);
     }
@@ -525,12 +528,21 @@ public class Database {
         }
     }
 
+    void closeIfLast() {
+
+        if (shutdownOnNoConnection && sessionManager.isEmpty()) {
+            try {
+                close(CLOSEMODE_NORMAL);
+            } catch (HsqlException e) {}
+        }
+    }
+
     /**
      *  Closes this Database using the specified mode. <p>
      *
      * <ol>
      *  <LI> closemode -1 performs SHUTDOWN IMMEDIATELY, equivalent
-     *       to  a poweroff or crash.
+     *       to a poweroff or crash.
      *
      *  <LI> closemode 0 performs a normal SHUTDOWN that
      *      checkpoints the database normally.

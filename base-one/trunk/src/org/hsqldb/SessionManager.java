@@ -160,6 +160,13 @@ public class SessionManager {
     }
 
     /**
+     * Returns true if no session exists beyond the sys session.
+     */
+    boolean isEmpty() {
+        return sessionMap.isEmpty();
+    }
+
+    /**
      * Retrieves a list of the Sessions in this container that
      * are visible to the specified Session, given the access rights of
      * the Session User.

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: advancedtopics.xml,v 1.28 2005/06/12 20:38:03 fredt Exp $ -->
+<!-- $Id: advancedtopics.xml,v 1.29 2005/06/14 17:59:48 fredt Exp $ -->
 <chapter id="advanced-chapter">
   <title id="advanced-title">Advanced Topics</title>
 
@@ -18,9 +18,9 @@
       </author>
     </authorgroup>
 
-    <edition>$Revision: 1.28 $</edition>
+    <edition>$Revision: 1.29 $</edition>
 
-    <pubdate>$Date: 2005/06/12 20:38:03 $</pubdate>
+    <pubdate>$Date: 2005/06/14 17:59:48 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -370,6 +370,38 @@
 
                 <programlisting>
     jdbc:hsqldb:file:enrollments;ifexists=true</programlisting>
+              </entry>
+            </row>
+
+            <row>
+              <entry>
+                <property>shutdown</property>
+              </entry>
+
+              <entry>
+                <literal>false</literal>
+              </entry>
+
+              <entry>shut down the database when the last connection is
+              closed</entry>
+            </row>
+
+            <row>
+              <entry nameend="c3" namest="c1">
+                <para>This mimics the behaviour of 1.7.1 and older versions.
+                When the last connection to a database is closed, the database
+                is automatically shut down. The property takes effect only
+                when the first connection is made to the database. This means
+                the connection that opens the database. It has no effect if
+                used with subsequent, simultaneous connections.</para>
+
+                <para>This command has two uses. One is for test suites, where
+                connections to the database are made from one JVM context,
+                immediately followed by another context. The other use is for
+                applications where it is not easy to configure the environment
+                to shutdown the database. Examples reported by users include
+                web application servers, where the closing of the last
+                connection conisides with the web app being shut down.</para>
               </entry>
             </row>
           </tbody>
@@ -1464,7 +1496,7 @@
       <para>To upgrade from 1.7.2 or 1.7.3 to 1.8.0, simply issue the SET
       SCRIPTFORMAT TEXT and SHUTDOWN SCRIPT commands with the old version,
       then open with the new version of the engine. The upgrade is then
-      complete. </para>
+      complete.</para>
 
       <para>To upgrade from older version database files (1.7.1 and older)
       that do not contain CACHED tables, simple SHUTDOWN with the older

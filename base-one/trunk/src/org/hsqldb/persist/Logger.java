@@ -255,7 +255,7 @@ public class Logger {
     public void writeToLog(Session session,
                            String statement) throws HsqlException {
 
-        if (logStatements) {
+        if (logStatements && log != null) {
             log.writeStatement(session, statement);
         }
     }
