@@ -43,8 +43,6 @@ import org.hsqldb.persist.HsqlProperties;
 import org.hsqldb.store.ValuePool;
 
 /**
- * Multifunction class with all static methods.<p>
- *
  * Handles initial attempts to connect to HSQLDB databases within the JVM
  * (or a classloader within the JVM). Opens the database if it is not open
  * or connects to it if it is already open. This allows the same database to
@@ -56,7 +54,7 @@ import org.hsqldb.store.ValuePool;
  * Maintains a reference to the timer used for file locks and logging.<p>
  *
  * @author fredt@users
- * @version 1.7.2
+ * @version 1.8.0
  * @since 1.7.2
  */
 public class DatabaseManager {

@@ -2302,7 +2302,11 @@ public class Table extends BaseTable {
             RowIterator refiterator = c.findFkRef(session, row.getData(),
                                                   delete);
 
-            if (refiterator.hasNext()) {
+            if (!refiterator.hasNext()) {
+                continue;
+            }
+
+            try {
                 if (c.core.deleteAction == Constraint.NO_ACTION) {
                     if (c.core.mainTable == c.core.refTable) {
                         Row refrow = refiterator.next();
@@ -2323,119 +2327,118 @@ public class Table extends BaseTable {
                         c.core.fkName.name, c.core.refTable.getName().name
                     });
                 }
-            } else {
 
-                // no referencing row found
-                continue;
-            }
+                Table reftable = c.getRef();
 
-            Table reftable = c.getRef();
+                // shortcut when deltable has no imported constraint
+                boolean hasref =
+                    reftable.getNextConstraintIndex(0, Constraint.MAIN) != -1;
 
-            // shortcut when deltable has no imported constraint
-            boolean hasref =
-                reftable.getNextConstraintIndex(0, Constraint.MAIN) != -1;
-
-            // if (reftable == this) we don't need to go further and can return ??
-            if (delete == false && hasref == false) {
-                continue;
-            }
-
-            Index    refindex  = c.getRefIndex();
-            int[]    m_columns = c.getMainColumns();
-            int[]    r_columns = c.getRefColumns();
-            Object[] mdata     = row.getData();
-            boolean isUpdate = c.getDeleteAction() == Constraint.SET_NULL
-                               || c.getDeleteAction()
-                                  == Constraint.SET_DEFAULT;
-
-            // -- list for records to be inserted if this is
-            // -- a 'ON DELETE SET [NULL|DEFAULT]' constraint
-            HashMappedList rowSet = null;
-
-            if (isUpdate) {
-                rowSet = (HashMappedList) tableUpdateLists.get(reftable);
-
-                if (rowSet == null) {
-                    rowSet = new HashMappedList();
-
-                    tableUpdateLists.add(reftable, rowSet);
-                }
-            }
-
-            // walk the index for all the nodes that reference delnode
-            for (;;) {
-                Row refrow = refiterator.next();
-
-                if (refrow == null || refrow.isDeleted()
-                        || refindex.compareRowNonUnique(
-                            session, mdata, m_columns,
-                            refrow.getData()) != 0) {
-                    break;
+                // if (reftable == this) we don't need to go further and can return ??
+                if (delete == false && hasref == false) {
+                    continue;
                 }
 
-                // -- if the constraint is a 'SET [DEFAULT|NULL]' constraint we have to keep
-                // -- a new record to be inserted after deleting the current. We also have to
-                // -- switch over to the 'checkCascadeUpdate' method below this level
+                Index    refindex  = c.getRefIndex();
+                int[]    m_columns = c.getMainColumns();
+                int[]    r_columns = c.getRefColumns();
+                Object[] mdata     = row.getData();
+                boolean isUpdate = c.getDeleteAction() == Constraint.SET_NULL
+                                   || c.getDeleteAction()
+                                      == Constraint.SET_DEFAULT;
+
+                // -- list for records to be inserted if this is
+                // -- a 'ON DELETE SET [NULL|DEFAULT]' constraint
+                HashMappedList rowSet = null;
+
                 if (isUpdate) {
-                    Object[] rnd = reftable.getEmptyRowData();
+                    rowSet = (HashMappedList) tableUpdateLists.get(reftable);
 
-                    System.arraycopy(refrow.getData(), 0, rnd, 0, rnd.length);
+                    if (rowSet == null) {
+                        rowSet = new HashMappedList();
 
-                    if (c.getDeleteAction() == Constraint.SET_NULL) {
-                        for (int j = 0; j < r_columns.length; j++) {
-                            rnd[r_columns[j]] = null;
-                        }
-                    } else {
-                        for (int j = 0; j < r_columns.length; j++) {
-                            Column col = reftable.getColumn(r_columns[j]);
+                        tableUpdateLists.add(reftable, rowSet);
+                    }
+                }
 
-                            rnd[r_columns[j]] = col.getDefaultValue(session);
-                        }
+                // walk the index for all the nodes that reference delnode
+                for (;;) {
+                    Row refrow = refiterator.next();
+
+                    if (refrow == null || refrow.isDeleted()
+                            || refindex.compareRowNonUnique(
+                                session, mdata, m_columns,
+                                refrow.getData()) != 0) {
+                        break;
                     }
 
-                    if (hasref && path.add(c)) {
+                    // -- if the constraint is a 'SET [DEFAULT|NULL]' constraint we have to keep
+                    // -- a new record to be inserted after deleting the current. We also have to
+                    // -- switch over to the 'checkCascadeUpdate' method below this level
+                    if (isUpdate) {
+                        Object[] rnd = reftable.getEmptyRowData();
 
-                        // fredt - avoid infinite recursion on circular references
-                        // these can be rings of two or more mutually dependent tables
-                        // so only one visit per constraint is allowed
-                        checkCascadeUpdate(session, reftable, null, refrow,
-                                           rnd, r_columns, null, path);
-                        path.remove(c);
-                    }
+                        System.arraycopy(refrow.getData(), 0, rnd, 0,
+                                         rnd.length);
 
-                    if (delete) {
+                        if (c.getDeleteAction() == Constraint.SET_NULL) {
+                            for (int j = 0; j < r_columns.length; j++) {
+                                rnd[r_columns[j]] = null;
+                            }
+                        } else {
+                            for (int j = 0; j < r_columns.length; j++) {
+                                Column col = reftable.getColumn(r_columns[j]);
 
-                        //  foreign key referencing own table - do not update the row to be deleted
-                        if (reftable != table ||!refrow.equals(row)) {
-                            mergeUpdate(rowSet, refrow, rnd, r_columns);
+                                rnd[r_columns[j]] =
+                                    col.getDefaultValue(session);
+                            }
                         }
-                    }
-                } else if (hasref) {
-                    if (reftable != table) {
-                        if (path.add(c)) {
-                            checkCascadeDelete(session, reftable,
-                                               tableUpdateLists, refrow,
-                                               delete, path);
+
+                        if (hasref && path.add(c)) {
+
+                            // fredt - avoid infinite recursion on circular references
+                            // these can be rings of two or more mutually dependent tables
+                            // so only one visit per constraint is allowed
+                            checkCascadeUpdate(session, reftable, null,
+                                               refrow, rnd, r_columns, null,
+                                               path);
                             path.remove(c);
                         }
-                    } else {
 
-                        // fredt - we avoid infinite recursion on the fk's referencing the same table
-                        // but chained rows can result in very deep recursion and StackOverflowError
-                        if (refrow != row) {
-                            checkCascadeDelete(session, reftable,
-                                               tableUpdateLists, refrow,
-                                               delete, path);
+                        if (delete) {
+
+                            //  foreign key referencing own table - do not update the row to be deleted
+                            if (reftable != table ||!refrow.equals(row)) {
+                                mergeUpdate(rowSet, refrow, rnd, r_columns);
+                            }
+                        }
+                    } else if (hasref) {
+                        if (reftable != table) {
+                            if (path.add(c)) {
+                                checkCascadeDelete(session, reftable,
+                                                   tableUpdateLists, refrow,
+                                                   delete, path);
+                                path.remove(c);
+                            }
+                        } else {
+
+                            // fredt - we avoid infinite recursion on the fk's referencing the same table
+                            // but chained rows can result in very deep recursion and StackOverflowError
+                            if (refrow != row) {
+                                checkCascadeDelete(session, reftable,
+                                                   tableUpdateLists, refrow,
+                                                   delete, path);
+                            }
                         }
                     }
-                }
 
-                if (delete &&!isUpdate &&!refrow.isDeleted()) {
-                    reftable.deleteNoRefCheck(session, refrow);
+                    if (delete &&!isUpdate &&!refrow.isDeleted()) {
+                        reftable.deleteNoRefCheck(session, refrow);
+                    }
                 }
+            } finally {
+                refiterator.release();
             }
-
-            refiterator.release();
         }
     }
 
@@ -3254,6 +3257,8 @@ public class Table extends BaseTable {
         if (isCached && cache != null) {
             rowStore.remove(row.getPos());
         }
+
+        row.oData = null;
     }
 
     void releaseRowFromStore(Row row) throws HsqlException {

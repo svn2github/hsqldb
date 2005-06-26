@@ -33,12 +33,14 @@ package org.hsqldb.lib;
 
 import java.lang.reflect.Array;
 
+// fredt@users - 1.8.0 - enhancements
+
 /**
  * Intended as an asynchronous alternative to Vector.  Use HsqlLinkedList
  * instead if its better suited.
  *
  * @author dnordahl@users
- * @version 1.7.2
+ * @version 1.8.0
  * @since 1.7.0
  */
 public class HsqlArrayList extends BaseList implements HsqlList {
@@ -70,12 +72,24 @@ public class HsqlArrayList extends BaseList implements HsqlList {
     private static final int   DEFAULT_INITIAL_CAPACITY = 10;
     private static final float DEFAULT_RESIZE_FACTOR    = 2.0f;
     private Object[]           elementData;
+    private boolean            minimizeOnClear;
 
     /** Creates a new instance of HsqlArrayList */
     public HsqlArrayList() {
 
 //        reporter.initCounter++;
         elementData = new Object[DEFAULT_INITIAL_CAPACITY];
+    }
+
+    /**
+     * Creates a new instance of HsqlArrayList that minimizes the size when
+     * empty
+     */
+    public HsqlArrayList(boolean minimize) {
+
+//        reporter.initCounter++;
+        elementData     = new Object[DEFAULT_INITIAL_CAPACITY];
+        minimizeOnClear = minimize;
     }
 
     /** Creates a new instance with the given initial capacity */
@@ -92,8 +106,6 @@ public class HsqlArrayList extends BaseList implements HsqlList {
         } else {
             elementData = new Object[initialCapacity];
         }
-
-        elementCount = 0;
     }
 
     /** Inserts an element at the given index */
@@ -191,6 +203,10 @@ public class HsqlArrayList extends BaseList implements HsqlList {
 
         elementData[elementCount] = null;
 
+        if (minimizeOnClear && elementCount == 0) {
+            elementData = new Object[DEFAULT_INITIAL_CAPACITY];
+        }
+
         return removedObj;
     }
 
@@ -266,13 +282,8 @@ public class HsqlArrayList extends BaseList implements HsqlList {
     /** Trims the array to be the same size as the number of elements. */
     public void trim() {
 
-        Object[] newArray = null;
-
-        if (elementCount == 0) {
-            newArray = new Object[1];
-        } else {
-            newArray = new Object[elementCount];
-        }
+        // 0 size array is possible
+        Object[] newArray = new Object[elementCount];
 
         System.arraycopy(elementData, 0, newArray, 0, elementCount);
 
@@ -280,8 +291,16 @@ public class HsqlArrayList extends BaseList implements HsqlList {
         newArray    = null;
     }
 
-    // fredt@users - no tests etc.
+    // fredt@users
     public void clear() {
+
+        if (minimizeOnClear
+                && elementData.length > DEFAULT_INITIAL_CAPACITY) {
+            elementData  = new Object[DEFAULT_INITIAL_CAPACITY];
+            elementCount = 0;
+
+            return;
+        }
 
         for (int i = 0; i < elementCount; i++) {
             elementData[i] = null;
@@ -293,6 +312,14 @@ public class HsqlArrayList extends BaseList implements HsqlList {
     public void setSize(int newSize) {
 
         if (newSize < elementCount) {
+            if (minimizeOnClear && newSize == 0
+                    && elementData.length > DEFAULT_INITIAL_CAPACITY) {
+                elementData  = new Object[DEFAULT_INITIAL_CAPACITY];
+                elementCount = 0;
+
+                return;
+            }
+
             for (int i = newSize; i < elementCount; i++) {
                 elementData[i] = null;
             }

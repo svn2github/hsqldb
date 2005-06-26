@@ -574,16 +574,18 @@ class Parser {
         boolean hasOrder = select.iOrderLen != 0;
         boolean hasLimit = select.limitCondition != null;
 
-        if (hasOrder &&!canHaveOrder &&!limitWithOrder) {
-            throw Trace.error(Trace.INVALID_ORDER_BY);
-        }
+        if (limitWithOrder) {
+            if (hasLimit &&!hasOrder) {
+                throw Trace.error(Trace.ORDER_LIMIT_REQUIRED);
+            }
+        } else {
+            if (hasOrder &&!canHaveOrder) {
+                throw Trace.error(Trace.INVALID_ORDER_BY);
+            }
 
-        if (hasLimit &&!canHaveLimit &&!limitWithOrder) {
-            throw Trace.error(Trace.INVALID_LIMIT);
-        }
-
-        if (limitWithOrder && (hasLimit ^ hasOrder)) {
-            throw Trace.error(Trace.ORDER_LIMIT_REQUIRED);
+            if (hasLimit &&!canHaveLimit) {
+                throw Trace.error(Trace.INVALID_LIMIT);
+            }
         }
 
         int unionType = parseUnion(token);

@@ -6,6 +6,16 @@ hsqldb 1.8.0 in reverse chronological order.
 Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
+2005.06.16 1.8.0.RC12
+
+Introduced new connection property shutdown, which, if true on the first 
+connection, will cause the engine to perform a SHUTDOWN on the database when
+the last connection is closed.
+
+Enhancements to TEXT table implementation to maintain the commit status of rows 
+during recovery from an abrupt shutdown. Uncommitted rows will not appear in
+TEXT tables.
+
 2005.05.17 1.8.0.RC10
 
 SCHEMAS

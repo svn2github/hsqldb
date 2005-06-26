@@ -162,9 +162,7 @@ public class Row implements CachedObject {
     }
 
     /**
-     * Returns the array of fields in the database row. If the table has no
-     * primary index, an extra internal field is included in the last
-     * position of this array.
+     * Returns the array of fields in the database row.
      */
     public Object[] getData() {
         return oData;
@@ -177,6 +175,22 @@ public class Row implements CachedObject {
     void delete() throws HsqlException {
 
         JavaSystem.memoryRecords++;
+
+        nPrimaryNode = null;
+    }
+
+    void clearNodeLinks() {
+
+        Node last;
+        Node temp;
+
+        last = nPrimaryNode;
+
+        while (last.nNext != null) {
+            temp       = last.nNext;
+            last.nNext = null;
+            last       = temp;
+        }
 
         nPrimaryNode = null;
     }

@@ -100,6 +100,7 @@ examples:
    <target name="-javaversion4">
       <available classname="java.nio.Buffer" property="ant.java.iscjava14"/>
       <available classname="java.nio.Buffer" property="ant.java.iscjavamodern"/>
+      <available classname="com.jamonapi.MonitorFactory" property="jamon"/>
    </target>
 
    <target name="javaversion2" depends="-javaversion4"
@@ -132,7 +133,6 @@ examples:
             description="uses +-JDBC2 +-JDBC2 +-JAVA2">
       <javac destdir="classes">
          <src path="${src}"/>
-         <include name="org/hsqldb/util/CodeSwitcher.java"/>
        </javac>
     </target>
 
@@ -185,7 +185,25 @@ examples:
        </java>
     </target>
 
-    <target name="switchtojdk11" depends="codeswitcher"
+    <target name="switch1" depends="codeswitcher"
+            description="self explanatory" if="jamon">
+      <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes">
+         <arg line="${src}/org/hsqldb/monitor/DBMonFactory.java +JAMON"/>
+       </java>
+    </target>
+
+    <target name="switch2" depends="switch1"
+            description="self explanatory" unless="jamon">
+      <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes">
+         <arg line="${src}/org/hsqldb/monitor/DBMonFactory.java -JAMON"/>
+       </java>
+    </target>
+
+    <target name="switches" depends="switch2"
+            description="self explanatory">
+    </target>
+
+    <target name="switchtojdk11" depends="switches"
             description="self explanatory" unless="ant.java.iscjavamodern">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes" >
          <arg line="${src}/org/hsqldb/jdbc/jdbcStubs.java
@@ -202,7 +220,7 @@ examples:
        <available classname="java.util.Vector" property="noswing"/>
     </target>
 
-    <target name="switchtojdk12" depends="codeswitcher"
+    <target name="switchtojdk12" depends="switches"
             description="self explanatory" if="ant.java.iscjava12">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes" >
          <arg line="${src}/org/hsqldb/jdbc/jdbcStubs.java
@@ -218,7 +236,7 @@ examples:
        </java>
     </target>
 
-    <target name="switchtojdk14" depends="codeswitcher"
+    <target name="switchtojdk14" depends="switches"
             description="self explanatory" if="ant.java.iscjava14">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath= "classes" >
          <arg line="${src}/org/hsqldb/jdbc/jdbcStubs.java

@@ -227,6 +227,8 @@ public class Log {
      * Close all the database files. If script argument is true, no .data
      * or .backup file will remain and the .script file will contain all the
      * data of the cached tables as well as memory tables.
+     *
+     * This is not used for filesReadOnly databases which use shutdown.
      */
     void close(boolean script) throws HsqlException {
 

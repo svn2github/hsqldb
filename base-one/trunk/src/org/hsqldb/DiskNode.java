@@ -140,6 +140,7 @@ class DiskNode extends Node {
     }
 
     void delete() {
+        rData = null;
         iBalance = -2;
     }
 

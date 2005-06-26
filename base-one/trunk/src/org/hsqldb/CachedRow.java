@@ -188,13 +188,10 @@ public class CachedRow extends Row {
      */
     public void delete() throws HsqlException {
 
-        JavaSystem.memoryRecords++;
+        super.delete();
 
         hasNodesChanged = hasDataChanged = false;
-
-//        tTable.removeRow(this);
-        tTable       = null;
-        nPrimaryNode = null;
+        tTable          = null;
     }
 
     public int getStorageSize() {

@@ -2112,12 +2112,15 @@ class DatabaseCommandInterpreter {
 
                 boolean isboolean  = p.isBoolean(token);
                 boolean isintegral = p.isIntegral(token);
+                boolean isstring   = p.isString(token);
 
-                Trace.check(isboolean || isintegral, Trace.ACCESS_IS_DENIED,
-                            token);
+                Trace.check(isboolean || isintegral || isstring,
+                            Trace.ACCESS_IS_DENIED, token);
 
-                Object value = tokenizer.getInType(isboolean ? Types.BOOLEAN
-                                                             : Types.INTEGER);
+                int    type  = isboolean ? Types.BOOLEAN
+                                         : isintegral ? Types.INTEGER
+                                                      : Types.VARCHAR;
+                Object value = tokenizer.getInType(type);
 
                 if (HsqlDatabaseProperties.hsqldb_cache_file_scale.equals(
                         token)) {

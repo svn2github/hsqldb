@@ -148,7 +148,7 @@ public class Index {
 
         ArrayUtil.intIndexesToBooleanArray(colIndex, colCheck);
 
-        updatableIterators = Index.emptyIterator;
+        updatableIterators = new IndexRowIterator(null, null, null);
         updatableIterators.next = updatableIterators.last =
             updatableIterators;
         collation        = database.collation;
@@ -239,11 +239,13 @@ public class Index {
         setRoot(session, null);
 
         depth = 0;
+        updatableIterators.next = updatableIterators.last =
+            updatableIterators;
+    }
 
-        for (IndexRowIterator it = updatableIterators.next;
-                it != updatableIterators; it = it.next) {
-            it.release();
-        }
+    void clearIterators() {
+        updatableIterators.next = updatableIterators.last =
+            updatableIterators;
     }
 
     void setRoot(Session session, Node node) {

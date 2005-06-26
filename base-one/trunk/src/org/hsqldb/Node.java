@@ -130,9 +130,10 @@ abstract class Node {
     }
 
     /**
-     *  This method unlinks the Node from the other Nodes in the same Index.
+     *  This method unlinks the Node from the other Nodes in the same Index
+     *  and from the Row.
+     *
      *  It must keep the links between the Nodes in different Indexes.
-     *  It should also keep the link to the Row
      */
     abstract void delete();
 

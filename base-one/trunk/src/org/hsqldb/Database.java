@@ -562,12 +562,16 @@ public class Database {
         sessionManager.closeAllSessions();
         sessionManager.clearAll();
 
+        if (filesReadOnly) {
+            closemode = CLOSEMODE_IMMEDIATELY;
+        }
+
         // fredt - impact of possible error conditions in closing the log
         // should be investigated for the CLOSEMODE_COMPACT mode
         logger.closeLog(closemode);
 
         try {
-            if (closemode == CLOSEMODE_COMPACT &&!filesReadOnly) {
+            if (closemode == CLOSEMODE_COMPACT) {
                 clearStructures();
                 reopen();
                 setState(DATABASE_CLOSING);
@@ -620,7 +624,7 @@ public class Database {
         }
 
         if (resetPrepared) {
-            this.compiledStatementManager.resetStatements();
+            compiledStatementManager.resetStatements();
         }
     }
 

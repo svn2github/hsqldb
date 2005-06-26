@@ -230,6 +230,16 @@ public class Cache {
             sortTimer.elapsedTimeToMessage("Cache.sort() total time"));
     }
 
+    /**
+     * clears out the memory cache
+     */
+    void clear() {
+
+        cacheMap.clear();
+
+        cacheBytesLength = 0;
+    }
+
     static class CachedObjectComparator implements ObjectComparator {
 
         static final int COMPARE_LAST_ACCESS = 0;

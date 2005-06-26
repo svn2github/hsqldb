@@ -49,6 +49,13 @@ public class LongKeyIntValueHashMap extends BaseHashMap {
         this(16, 0.75f);
     }
 
+    public LongKeyIntValueHashMap(boolean minimize) {
+
+        this(16, 0.75f);
+
+        minimizeOnEmpty = minimize;
+    }
+
     public LongKeyIntValueHashMap(int initialCapacity)
     throws IllegalArgumentException {
         this(initialCapacity, 0.75f);

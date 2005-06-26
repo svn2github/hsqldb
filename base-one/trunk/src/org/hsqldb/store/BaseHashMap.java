@@ -106,10 +106,12 @@ public class BaseHashMap {
     int[] accessTable;
 
     //
-    float         loadFactor;
-    int           threshold;
-    int           maxCapacity;
-    protected int purgePolicy = NO_PURGE;
+    final float       loadFactor;
+    final int         initialCapacity;
+    int               threshold;
+    int               maxCapacity;
+    protected int     purgePolicy = NO_PURGE;
+    protected boolean minimizeOnEmpty;
 
     //
     boolean hasZeroKey;
@@ -136,8 +138,9 @@ public class BaseHashMap {
             throw new IllegalArgumentException();
         }
 
-        this.loadFactor = loadFactor;
-        threshold       = initialCapacity;
+        this.loadFactor      = loadFactor;
+        this.initialCapacity = initialCapacity;
+        threshold            = initialCapacity;
 
         if (threshold < 3) {
             threshold = 3;
@@ -302,6 +305,10 @@ public class BaseHashMap {
                     accessTable[lookup] = 0;
                 }
 
+                if (minimizeOnEmpty && hashIndex.elementCount == 0) {
+                    rehash(initialCapacity);
+                }
+
                 return returnValue;
             }
 
@@ -323,7 +330,7 @@ public class BaseHashMap {
 
         // not found
         if (remove) {
-            return returnValue;
+            return null;
         }
 
         if (hashIndex.elementCount >= threshold) {
@@ -845,6 +852,10 @@ public class BaseHashMap {
 
         clearElementArrays(0, hashIndex.linkTable.length);
         hashIndex.clear();
+
+        if (minimizeOnEmpty) {
+            rehash(initialCapacity);
+        }
     }
 
     /**

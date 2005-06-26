@@ -43,37 +43,72 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import junit.framework.TestCase;
+
 /**
  * Test case to demonstrate catastrophic bug in cascade delete code.
  *
  * @version 1.0
  * @author  David Kopp
  */
-public class TestCascade {
+public class TestCascade extends TestCase {
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String[] args) {
+    Connection con;
+
+    public TestCascade(String name) {
+        super(name);
+    }
+
+    protected void setUp() {
 
         try {
             Class.forName("org.hsqldb.jdbcDriver");
             createDatabase();
 
-            Connection con = DriverManager.getConnection("jdbc:hsqldb:testdb",
-                "sa", "");
+            con = DriverManager.getConnection("jdbc:hsqldb:testdb", "sa", "");
 
-            insertData(con);
-            System.out.println("should print 12");
-            printNumberOfCARecords(con);
-            deleteXBRecord(con);
-            System.out.println("should print 9");
-            printNumberOfCARecords(con);
-            con.close();
         } catch (Exception e) {
             e.printStackTrace();
+            System.out.println(this + ".setUp() error: " + e.getMessage());
         }
-    }    // main
+    }
+
+    protected void tearDown() {
+
+        try {
+            con.close();
+        } catch (SQLException e) {}
+    }
+
+    public void testDelete() {
+
+        try {
+            insertData(con);
+
+            Statement stmt = con.createStatement();
+            ResultSet rs =
+                stmt.executeQuery("SELECT COUNT(EIACODXA) FROM CA");
+
+            rs.next();
+
+            int origCount = rs.getInt(1);
+
+            rs.close();
+            deleteXBRecord(con);
+
+            rs = stmt.executeQuery("SELECT COUNT(EIACODXA) FROM CA");
+
+            rs.next();
+
+            int newCount = rs.getInt(1);
+
+            rs.close();
+            stmt.close();
+            assertEquals(9, newCount);
+        } catch (SQLException e) {
+            this.assertTrue("SQLException thrown", false);
+        }
+    }
 
     private static void createDatabase() throws SQLException {
 
@@ -142,17 +177,4 @@ public class TestCascade {
             stmt.executeUpdate(saData[index]);
         }
     }    // insertData
-
-    private static void printNumberOfCARecords(Connection con)
-    throws SQLException {
-
-        Statement stmt = con.createStatement();
-        ResultSet rs   = stmt.executeQuery("SELECT COUNT(EIACODXA) FROM CA");
-
-        rs.next();
-        System.out.println(rs.getInt(1));
-        System.out.flush();
-        stmt.close();
-    }    // printNumberOfCARecords
-}    // CascadeDeleteBug
-
+}

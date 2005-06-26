@@ -204,6 +204,8 @@ public abstract class ScriptWriterBase implements Runnable {
             if (fileStreamOut != null) {
                 fileStreamOut.flush();
                 fileStreamOut.close();
+
+                fileStreamOut = null;
             }
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR);

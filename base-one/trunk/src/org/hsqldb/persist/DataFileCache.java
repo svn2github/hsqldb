@@ -404,6 +404,7 @@ public class DataFileCache {
             database.getProperties().save();
             initParams();
 
+            cache.clear();
             cache = new Cache(this);
 
             open(cacheReadonly);

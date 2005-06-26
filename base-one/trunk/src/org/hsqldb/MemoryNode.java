@@ -106,4 +106,11 @@ class MemoryNode extends BaseMemoryNode {
 
         return rData.getData();
     }
+
+    void delete() {
+
+        super.delete();
+
+        rData = null;
+    }
 }

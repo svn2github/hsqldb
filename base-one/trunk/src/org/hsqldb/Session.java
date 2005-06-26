@@ -171,7 +171,7 @@ public class Session implements SessionInterface {
         sessionId                 = id;
         database                  = db;
         this.user                 = user;
-        transactionList           = new HsqlArrayList();
+        transactionList           = new HsqlArrayList(true);
         savepoints                = new HashMappedList(4);
         isAutoCommit              = autocommit;
         isReadOnly                = readonly;
@@ -820,8 +820,10 @@ public class Session implements SessionInterface {
     public Result execute(Result cmd) {
 
         try {
-            Trace.check(!isClosed, Trace.ACCESS_IS_DENIED,
-                        Trace.getMessage(Trace.Session_execute));
+            if (isClosed){
+                Trace.check(false, Trace.ACCESS_IS_DENIED,
+                            Trace.getMessage(Trace.Session_execute));
+            }
         } catch (Throwable t) {
             return new Result(t, null);
         }

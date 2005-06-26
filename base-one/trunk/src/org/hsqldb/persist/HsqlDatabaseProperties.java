@@ -433,7 +433,7 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         return integralProperties.contains(property);
     }
 
-    boolean isString(String property) {
+    public boolean isString(String property) {
         return stringProperties.contains(property);
     }
 

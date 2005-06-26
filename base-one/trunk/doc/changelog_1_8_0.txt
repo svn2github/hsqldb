@@ -8,7 +8,7 @@ The development of 1.8.0 began in mid 2004 with a plan to release the new versio
 I would like to thank all developers, testers and users who have contributed to this effort.
 
 
-May 2005
+June 2005
 
 Fred Toussi
 
@@ -176,7 +176,6 @@ Since 1.7.3, the evaluation of BOOLEAN expressions has changed to conform to SQL
 
 Optional changed behaviour of transactions in the default READ UNCOMMITTED mode. When a database property, sql.tx_no_multi_write=true has been set, a transaction is no longer allowed to delete or update a row that has already been updated or added by another uncommitted transaction.
 
-
 Support for correct casting of TIME into TIMESTAMP, using CURRENT_DATE 
 
 
@@ -196,6 +195,8 @@ Malformed query: MY. "SELECT" ID FROM 'CUSTOMER' IF.WHERE ID=0;
 Actual query: SELECT ID FROM CUSTOMER WHERE ID=0;
 
 Fixed issue with illegal user names
+
+Fixed TEXT table implementation to maintain the commit status of rows during recovery from an abrupt shutdown. Uncommitted changes will not appear in TEXT tables.
 
 ----------------
 

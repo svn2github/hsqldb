@@ -48,7 +48,7 @@ public class TransactionManager {
     boolean                reWriteProtect;
 
     TransactionManager() {
-        rowSessionMap = new LongKeyIntValueHashMap();
+        rowSessionMap = new LongKeyIntValueHashMap(true);
     }
 
     public void setReWriteProtection(boolean value) {
