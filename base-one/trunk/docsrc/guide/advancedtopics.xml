@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: advancedtopics.xml,v 1.29 2005/06/14 17:59:48 fredt Exp $ -->
+<!-- $Id: advancedtopics.xml,v 1.30 2005/06/16 19:46:38 fredt Exp $ -->
 <chapter id="advanced-chapter">
   <title id="advanced-title">Advanced Topics</title>
 
@@ -18,9 +18,9 @@
       </author>
     </authorgroup>
 
-    <edition>$Revision: 1.29 $</edition>
+    <edition>$Revision: 1.30 $</edition>
 
-    <pubdate>$Date: 2005/06/14 17:59:48 $</pubdate>
+    <pubdate>$Date: 2005/06/16 19:46:38 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -285,7 +285,7 @@
 
       <para>Each new JDBC Connection to a database can specify connection
       properties. The properties <property>user</property> and
-      <property>password</property> are always required. In 1.7.2 the
+      <property>password</property> are always required. In 1.8.0 the
       following optional properties can also be used.</para>
 
       <para>Connection properties are specified either by establishing the
@@ -852,11 +852,13 @@
                 of the .data file from 2GB to 8GB. To apply the change to an
                 existing database, SHUTDOWN SCRIPT should be performed first,
                 then the property=value line below should be added to the
-                .properties file before reopening the database. The property
-                can be set with the SQL command (as opposed to changing the
-                value in the properties file) when the database has no CACHED
-                tables (e.g. a new database). <literal>(SET
-                PROPERTY)</literal></para>
+                .properties file before reopening the database.
+                <programlisting>hsqldb.cache_file_scale=8</programlisting></para>
+
+                <para>The property can be set with the SQL command (as opposed
+                to changing the value in the properties file) when the
+                database has no CACHED tables (e.g. a new database).
+                <literal>(SET PROPERTY)</literal></para>
               </entry>
             </row>
 

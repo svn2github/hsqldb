@@ -325,7 +325,13 @@ public class Log {
             }
 
             if (defrag) {
-                cache.defrag();
+                try {
+                    cache.defrag();
+                } catch (Exception e) {
+                    cache.close(true);
+                    cache.postClose(true);
+                    cache.open(false);
+                }
             } else {
                 cache.close(true);
                 cache.postClose(true);

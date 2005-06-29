@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: running.xml,v 1.16 2005/05/27 12:41:50 fredt Exp $ -->
+<!-- $Id: running.xml,v 1.17 2005/05/27 15:37:31 fredt Exp $ -->
 <chapter>
   <title>Running and Using Hsqldb</title>
 
@@ -18,9 +18,9 @@
       </author>
     </authorgroup>
 
-    <edition>$Revision: 1.16 $</edition>
+    <edition>$Revision: 1.17 $</edition>
 
-    <pubdate>$Date: 2005/05/27 12:41:50 $</pubdate>
+    <pubdate>$Date: 2005/05/27 15:37:31 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -215,8 +215,8 @@
     computer or other computers on the network. Several different programs can
     connect to the server and retrieve or update information. Applications
     programs (clients) connect to the server using the HSQLDB JDBC driver. In
-    most server modes, the server serves up to 10 databases that are specified
-    at the time of running the server.</para>
+    most server modes, the server can serve up to 10 databases that are
+    specified at the time of running the server.</para>
 
     <para>Server modes can use preset properties or command line arguments as
     detailed in the <link endterm="advanced-title"
@@ -338,10 +338,11 @@
         TCP filtering or firewall programs, or standalone firewalls. If the
         traffic will cross an unprotected network (such as the Internet), the
         stream should be encrypted (for example by VPN, ssh tunneling, or
-        <link endterm="tls-title" linkend="tls-chapter" />). Only secure
-        passwords should be used-- most importantly, the password for the
-        default system user should be changed from the default empty string.
-        If you are purposefully providing data to the public, then the
+        <link endterm="tls-title" linkend="tls-chapter" /> using the SSL
+        enabled HSQLS and HTTPS variants of the server and web server modes).
+        Only secure passwords should be used-- most importantly, the password
+        for the default system user should be changed from the default empty
+        string. If you are purposefully providing data to the public, then the
         wide-open public network connection should be used exclusively to
         access the public data via read-only accounts. (I.e., neither secure
         data nor privileged accounts should use this connection). These
@@ -354,7 +355,7 @@
       <title>In-Process (Standalone) Mode</title>
 
       <para>This mode runs the database engine as part of your application
-      program in the same Java Virtual Machine. For some applications this
+      program in the same Java Virtual Machine. For most applications this
       mode can be faster, as the data is not converted and sent over the
       network. The main drawback is that it is not possible by default to
       connect to the database from outside your application. As a result you
@@ -426,23 +427,27 @@
       <para>All databases running in different modes can be closed with the
       SHUTDOWN command, issued as an SQL query. From version 1.7.2, in-process
       databases are no longer closed when the last connection to the database
-      is explicitly closed via JDBC, a SHUTDOWN is required. When SHUTDOWN is
-      issued, all active transactions are rolled back. A special form of
-      closing the database is via the SHUTDOWN COMPACT command. This command
-      rewrites the <literal>.data</literal> file that contains the information
-      stored in CACHED tables and compacts it to size. This command should be
-      issued periodically, especially when lots of inserts, updates or deletes
-      have been performed on the cached tables. Changes to the structure of
-      the database, such as dropping or modifying populated CACHED tables or
-      indexes also create large amounts of unused file space that can be
-      reclaimed using this command.</para>
+      is explicitly closed via JDBC, a SHUTDOWN is required. In 1.8.0, a
+      connection property, shutdown=true, can be specified on the first
+      connection to the database (the connection that opens the database) to
+      force a shutdown when the last connection closes.</para>
+
+      <para>When SHUTDOWN is issued, all active transactions are rolled back.
+      A special form of closing the database is via the SHUTDOWN COMPACT
+      command. This command rewrites the <literal>.data</literal> file that
+      contains the information stored in CACHED tables and compacts it to
+      size. This command should be issued periodically, especially when lots
+      of inserts, updates or deletes have been performed on the cached tables.
+      Changes to the structure of the database, such as dropping or modifying
+      populated CACHED tables or indexes also create large amounts of unused
+      file space that can be reclaimed using this command.</para>
     </section>
 
     <section>
       <title>Using Multiple Databases in One JVM</title>
 
       <para>In the above examples each server serves only one database and
-      only one in-memory database can be created. However, from version 1.8.0,
+      only one in-memory database can be created. However, from version 1.7.2,
       HSQLDB can serve several databases in multiple server modes and allow
       simultaneous access to multiple in-process and memory-only databases.
       These capabilities are covered in the <link endterm="advanced-title"
@@ -542,7 +547,7 @@
       an application with some small tables and some large ones, it is better
       to use the default, MEMORY mode for the small tables.</para>
 
-      <para>TEXT tables are new to version 1.7.0 and use a CSV (Comma
+      <para>TEXT tables are supported since version 1.7.0 and use a CSV (Comma
       Separated Value) or other delimited text file as the source of their
       data. You can specify an existing CSV file, such as a dump from another
       database or program, as the source of a TEXT table. Alternatively, you
@@ -580,14 +585,14 @@
       <para>Indexes are crucial for adequate query speed. When queries joining
       multiple tables are used, there must be an index on each joined column
       of each table. When range or equality conditions are used e.g.
-      <literal>SELECT ... WHERE a &gt;10 AND b = 0</literal>, an indexes is
-      required on column used in the condition. Indexes have no effect on
-      ORDER BY clauses or some LIKE conditions.</para>
+      <literal>SELECT ... WHERE acol &gt;10 AND bcol = 0</literal>, an indexe
+      is required on the acol column used in the condition. Indexes have no
+      effect on ORDER BY clauses or some LIKE conditions.</para>
 
-      <para>As a rule of thumb, HSQLDB is capable of processing queries and
-      returning over 100,000 rows per second. Any query that runs into several
-      seconds should be checked and indexes should be added to the relevant
-      columns of the tables if necessary.</para>
+      <para>As a rule of thumb, HSQLDB is capable of internal processing of
+      queries at over 100,000 rows per second. Any query that runs into
+      several seconds should be checked and indexes should be added to the
+      relevant columns of the tables if necessary.</para>
     </section>
 
     <section>

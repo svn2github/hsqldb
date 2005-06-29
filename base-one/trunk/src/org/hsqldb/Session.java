@@ -208,16 +208,16 @@ public class Session implements SessionInterface {
                 return;
             }
 
+            database.sessionManager.removeSession(this);
+            rollback();
+
             try {
                 database.logger.writeToLog(this, Token.T_DISCONNECT);
             } catch (HsqlException e) {}
 
-            database.sessionManager.removeSession(this);
-            rollback();
             clearIndexRoots();
             clearIndexRootsKeep();
             compiledStatementManager.removeSession(sessionId);
-
             database.closeIfLast();
 
             database                  = null;
@@ -820,7 +820,7 @@ public class Session implements SessionInterface {
     public Result execute(Result cmd) {
 
         try {
-            if (isClosed){
+            if (isClosed) {
                 Trace.check(false, Trace.ACCESS_IS_DENIED,
                             Trace.getMessage(Trace.Session_execute));
             }

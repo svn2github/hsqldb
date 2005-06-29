@@ -174,10 +174,10 @@ public class TextCache extends DataFileCache {
         cachedRowPadding = 1;
         cacheFileScale   = 1;
 
-        resetBuffers();
+        initBuffers();
     }
 
-    protected void resetBuffers() {
+    protected void initBuffers() {
 
         if (isQuoted || isAllQuoted) {
             rowIn = new RowInputTextQuoted(fs, vs, lvs, isAllQuoted);

@@ -233,7 +233,7 @@ public class DataFileCache {
                 fileFreePosition = INITIAL_FREE_POS;
             }
 
-            resetBuffers();
+            initBuffers();
 
             fileModified = false;
             freeBlocks = new DataFileBlockManager(FREE_BLOCKS_COUNT,
@@ -350,9 +350,17 @@ public class DataFileCache {
         }
     }
 
-    protected void resetBuffers() {
-        rowOut = new RowOutputBinary();
-        rowIn  = new RowInputBinary();
+    protected void initBuffers() {
+
+        if (rowOut == null
+                || ((RowOutputBinary) rowOut).getBuffer().length > 256) {
+            rowOut = new RowOutputBinary(256);
+        }
+
+        if (rowIn == null
+                || ((RowInputBinary) rowIn).getBuffer().length > 256) {
+            rowIn = new RowInputBinary(new byte[256]);
+        }
     }
 
     /**
@@ -403,24 +411,19 @@ public class DataFileCache {
                 HsqlDatabaseProperties.VERSION_STRING_1_7_0);
             database.getProperties().save();
             initParams();
-
             cache.clear();
+
             cache = new Cache(this);
 
             open(cacheReadonly);
             dfd.updateTableIndexRoots();
             Trace.printSystemOut("opened cache");
-        } catch (Exception e) {
+        } catch (Throwable e) {
             database.logger.appLog.logContext(e);
 
             throw new HsqlException(
                 e, Trace.getMessage(Trace.GENERAL_IO_ERROR),
                 Trace.GENERAL_IO_ERROR);
-            /*
-            Trace.error(Trace.FILE_IO_ERROR, Trace.DataFileCache_defrag, new Object[] {
-                e, fileName
-            });
-            */
         }
     }
 
@@ -606,6 +609,8 @@ public class DataFileCache {
 
             rows[i] = null;
         }
+
+        initBuffers();
     }
 
     /**

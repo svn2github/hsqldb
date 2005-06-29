@@ -530,7 +530,8 @@ public class Database {
 
     void closeIfLast() {
 
-        if (shutdownOnNoConnection && sessionManager.isEmpty()) {
+        if (shutdownOnNoConnection && sessionManager.isEmpty()
+                && dbState != DATABASE_CLOSING) {
             try {
                 close(CLOSEMODE_NORMAL);
             } catch (HsqlException e) {}

@@ -122,18 +122,18 @@ public class SimpleLog {
             return;
         }
 
+        String info = t.getClass().getName();
+
 //#ifdef JDBC3
         StackTraceElement[] elements = t.getStackTrace();
-        String info = elements[0].getClassName() + "."
-                      + elements[0].getMethodName();
 
-        writer.println(info + " " + t.getMessage());
-
-//#else
-/*
-*/
+        if (elements.length > 0) {
+            info = elements[0].getClassName() + "."
+                   + elements[0].getMethodName();
+        }
 
 //#endif
+        writer.println(info + " " + t.getMessage());
     }
 
     public void close() {

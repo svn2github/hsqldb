@@ -133,6 +133,7 @@ examples:
             description="uses +-JDBC2 +-JDBC2 +-JAVA2">
       <javac destdir="classes">
          <src path="${src}"/>
+         <include name="org/hsqldb/util/CodeSwitcher.java"/>
        </javac>
     </target>
 

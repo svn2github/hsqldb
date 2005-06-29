@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: texttables.xml,v 1.10 2005/05/26 23:22:06 fredt Exp $ -->
+<!-- $Id: texttables.xml,v 1.11 2005/06/02 06:38:55 fredt Exp $ -->
 <chapter id="texttables-chapter">
   <title id="texttables-title">Text Tables</title>
 
@@ -15,8 +15,6 @@
         <affiliation>
           <orgname>HSQLDB Development Group</orgname>
         </affiliation>
-
-        <!-- <email></email> -->
       </author>
 
       <author>
@@ -32,9 +30,9 @@
       </author>
     </authorgroup>
 
-    <edition>$Revision: 1.10 $</edition>
+    <edition>$Revision: 1.11 $</edition>
 
-    <pubdate>$Date: 2005/05/26 23:22:06 $</pubdate>
+    <pubdate>$Date: 2005/06/02 06:38:55 $</pubdate>
 
     <keywordset>
       <keyword>Text</keyword>
