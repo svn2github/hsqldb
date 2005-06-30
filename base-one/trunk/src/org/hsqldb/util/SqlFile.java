@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.119 2005/06/08 19:52:37 fredt Exp $ */
+/* $Id: SqlFile.java,v 1.120 2005/06/12 22:57:00 fredt Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -93,7 +93,7 @@ import java.util.TreeMap;
  * Most of the Special Commands and Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.119 $
+ * @version $Revision: 1.120 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlFile {
@@ -143,8 +143,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.119 $".substring("$Revision: ".length(),
-                "$Revision: 1.119 $".length() - 2);
+        revnum = "$Revision: 1.120 $".substring("$Revision: ".length(),
+                "$Revision: 1.120 $".length() - 2);
     }
 
     private static String BANNER =
@@ -2217,8 +2217,8 @@ public class SqlFile {
                 case 'S' :
                     if (dbProductName.indexOf("Oracle") > -1) {
                         System.err.println(
-                            "*** WARNING:\n*** Listing tables in the SYSTEM, "
-                            + "SYS + product-maint. schemas since\n*** Oracle"
+                            "*** WARNING:\n*** Listing tables in "
+                            + "system-supplied schemas since\n*** Oracle"
                             + "(TM) doesn't return a JDBC system table list.");
 
                         types[0]          = "TABLE";
@@ -2549,8 +2549,8 @@ public class SqlFile {
 
         if (excludeSysSchemas) {
             stdprintln(
-                "*** WARNING:\n*** Omitting tables from the SYSTEM, "
-                + "SYS + product-maint. schemas\n*** (because Oracle(TM) "
+                "*** WARNING:\n*** Omitting tables from system-supplied "
+                + "schemas\n*** (because Oracle(TM) "
                 + "doesn't differentiate them to JDBC).");
         }
 
