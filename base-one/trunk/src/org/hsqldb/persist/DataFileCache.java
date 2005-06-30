@@ -238,7 +238,7 @@ public class DataFileCache {
             fileModified = false;
             freeBlocks = new DataFileBlockManager(FREE_BLOCKS_COUNT,
                                                   cacheFileScale, freesize);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             database.logger.appLog.logContext(e);
             close(false);
 
@@ -313,7 +313,7 @@ public class DataFileCache {
                 fa.removeElement(fileName);
                 fa.removeElement(backupFileName);
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             database.logger.appLog.logContext(e);
 
             throw Trace.error(Trace.FILE_IO_ERROR, Trace.DataFileCache_close,

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: sqlsyntax.xml,v 1.33 2005/06/12 20:38:04 fredt Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.34 2005/06/13 01:00:18 fredt Exp $ -->
 <chapter id="sqlsyntax-chapter">
   <title id="sqlsyntax-title">SQL Syntax</title>
 
@@ -54,9 +54,9 @@
       </editor>
     </authorgroup>
 
-    <edition>$Revision: 1.33 $</edition>
+    <edition>$Revision: 1.34 $</edition>
 
-    <pubdate>$Date: 2005/06/12 20:38:04 $</pubdate>
+    <pubdate>$Date: 2005/06/13 01:00:18 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -884,8 +884,8 @@
       linkend="create_view-section" />.</para>
     </section>
 
-    <section id="grant-section">
-      <title id="grant-title">EXPLAIN PLAN</title>
+    <section id="explain-section">
+      <title id="explain-title">EXPLAIN PLAN</title>
 
       <programlisting>EXPLAIN PLAN FOR { SELECT ... | DELETE ... | INSERT ... | UPDATE ..};</programlisting>
 
