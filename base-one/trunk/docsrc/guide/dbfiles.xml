@@ -1,11 +1,11 @@
-<!-- $Id: dbfiles.xml,v 1.2 2004/04/20 18:35:56 unsaved Exp $ -->
+<!-- $Id: dbfiles.xml,v 1.3 2005/04/14 21:52:34 unsaved Exp $ -->
 
 <appendix>
 
 <title>Hsqldb Database Files and Recovery</title>
 <appendixinfo>
-    <edition>$Revision: 1.2 $</edition>
-    <pubdate>$Date: 2004/04/20 18:35:56 $</pubdate>
+    <edition>$Revision: 1.3 $</edition>
+    <pubdate>$Date: 2005/04/14 21:52:34 $</pubdate>
     <keywordset>
         <keyword>HSQLDB</keyword>
         <keyword>Data</keyword>
@@ -13,7 +13,7 @@
     </keywordset>
     <legalnotice><para>
         This text is based on HypersonicSQL documentation, updated to reflect 
-        the latest version 1.7.2 of HSQLDB.
+        the latest version 1.8.0 of HSQLDB.
     </para></legalnotice>
 </appendixinfo>
 

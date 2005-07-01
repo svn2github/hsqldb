@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: sqlissues.xml,v 1.18 2005/05/26 23:22:06 fredt Exp $ -->
+<!-- $Id: sqlissues.xml,v 1.19 2005/05/27 15:37:31 fredt Exp $ -->
 <chapter id="sql_issues-chapter">
   <title id="sql_issues-title">SQL Issues</title>
 
@@ -18,9 +18,9 @@
       </author>
     </authorgroup>
 
-    <edition>$Revision: 1.18 $</edition>
+    <edition>$Revision: 1.19 $</edition>
 
-    <pubdate>$Date: 2005/05/26 23:22:06 $</pubdate>
+    <pubdate>$Date: 2005/05/27 15:37:31 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -657,8 +657,9 @@
 
     <para>In recent versions leading to 1.8.0 many enhancements were made for
     better SQL support. These are listed in the <link
-    endterm="sqlsyntax-title" linkend="sqlsyntax-chapter" /> chapter and in
-    <ulink url="../changelog_1_7_2.txt" />. Functions and expressions such as
+    endterm="sqlsyntax-title" linkend="sqlsyntax-chapter" /> chapter, in
+    <ulink url="../changelog_1_8_0.txt" /> and <ulink url="../changelog_1_7_2.txt" />.
+ Functions and expressions such as
     POSITION(), SUBSTRING(), NULLIF(), COALESCE(), CASE ... WHEN .. ELSE, ANY,
     ALL etc. are among them. Other enhancements may not be very obvious in the
     documentation but can result in changes of behaviour from previous

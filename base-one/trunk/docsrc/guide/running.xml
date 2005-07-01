@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: running.xml,v 1.17 2005/05/27 15:37:31 fredt Exp $ -->
+<!-- $Id: running.xml,v 1.18 2005/06/29 23:15:12 fredt Exp $ -->
 <chapter>
   <title>Running and Using Hsqldb</title>
 
@@ -18,9 +18,9 @@
       </author>
     </authorgroup>
 
-    <edition>$Revision: 1.17 $</edition>
+    <edition>$Revision: 1.18 $</edition>
 
-    <pubdate>$Date: 2005/05/27 15:37:31 $</pubdate>
+    <pubdate>$Date: 2005/06/29 23:15:12 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -638,7 +638,7 @@
       <para>Since 1.7.2, support for JDBC2 has been significantly extended and
       some features of JDBC3 are also supported. The relevant classes are
       thoroughly documented. See the JavaDoc for <ulink
-      url="../src/">org.hsqldb.jdbcXXXX </ulink> classes.</para>
+      url="../src/index.html">org.hsqldb.jdbcXXXX </ulink> classes.</para>
     </section>
   </section>
 </chapter>
