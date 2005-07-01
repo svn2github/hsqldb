@@ -101,19 +101,19 @@ public class SimpleLog {
             return;
         }
 
+        String info = "";
+
 //#ifdef JDBC3
         Throwable           t        = new Throwable();
         StackTraceElement[] elements = t.getStackTrace();
-        String info = elements[1].getClassName() + "."
-                      + elements[1].getMethodName();
 
-        writer.println(info + " " + message);
-
-//#else
-/*
-*/
+        if (elements.length > 1) {
+            info = elements[1].getClassName() + "."
+                   + elements[1].getMethodName();
+        }
 
 //#endif
+        writer.println(info + " " + message);
     }
 
     public synchronized void logContext(Throwable t) {

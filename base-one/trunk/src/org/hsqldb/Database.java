@@ -531,7 +531,7 @@ public class Database {
     void closeIfLast() {
 
         if (shutdownOnNoConnection && sessionManager.isEmpty()
-                && dbState != DATABASE_CLOSING) {
+                && dbState == this.DATABASE_ONLINE) {
             try {
                 close(CLOSEMODE_NORMAL);
             } catch (HsqlException e) {}
