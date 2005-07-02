@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: running.xml,v 1.18 2005/06/29 23:15:12 fredt Exp $ -->
+<!-- $Id: running.xml,v 1.19 2005/07/01 17:06:32 fredt Exp $ -->
 <chapter>
   <title>Running and Using Hsqldb</title>
 
@@ -18,9 +18,9 @@
       </author>
     </authorgroup>
 
-    <edition>$Revision: 1.18 $</edition>
+    <edition>$Revision: 1.19 $</edition>
 
-    <pubdate>$Date: 2005/06/29 23:15:12 $</pubdate>
+    <pubdate>$Date: 2005/07/01 17:06:32 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -60,10 +60,6 @@
       </listitem>
 
       <listitem>
-        <para>Transfer Tool (AWT version)</para>
-      </listitem>
-
-      <listitem>
         <para>Query Tool (AWT)</para>
       </listitem>
 
@@ -72,16 +68,16 @@
       </listitem>
     </itemizedlist>
 
-    <para>The HSQLDB RDBMS and DEC Driver provide the core functionality. The
+    <para>The HSQLDB RDBMS and JDBC Driver provide the core functionality. The
     rest are general-purpose database tools that can be used with any database
-    engine that has a DEC driver.</para>
+    engine that has a JDBC driver.</para>
   </section>
 
   <section>
     <title>Running Tools</title>
 
     <para>All tools can be run in the standard way for archived Java classes.
-    In the following example the OUT version of the Database Manager, the
+    In the following example the AWT version of the Database Manager, the
     <filename>hsqldb.jar</filename> is located in the directory
     <filename>../lib</filename> relative to the current directory.</para>
 
@@ -131,7 +127,7 @@
     <para>Some tools, such as the Database Manager or SQL Tool, can use
     command line arguments or entirely rely on them. You can add the command
     line argument -? to get a list of available arguments for these tools.
-    Database Manager and Transfer Tool feature a graphical user interface and
+    Database Manager features a graphical user interface and
     can be explored interactively.</para>
   </section>
 

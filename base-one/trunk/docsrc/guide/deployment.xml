@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: deployment.xml,v 1.1 2005/05/29 11:33:03 fredt Exp $ -->
+<!-- $Id: deployment.xml,v 1.2 2005/06/30 22:39:11 fredt Exp $ -->
 <chapter>
   <title>Deployment Issues</title>
 
@@ -18,9 +18,9 @@
       </author>
     </authorgroup>
 
-    <edition>$Revision: 1.1 $</edition>
+    <edition>$Revision: 1.2 $</edition>
 
-    <pubdate>$Date: 2005/06/30 11:33:03 $</pubdate>
+    <pubdate>$Date: 2005/06/30 22:39:11 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -48,7 +48,7 @@
   </section>
 
   <section>
-    <title>Modes of Operations and Tables</title>
+    <title>Mode of Operation and Tables</title>
 
     <para>HSQLDB has many modes of operation and features that allow it to be
     used in very different scenarios. Levels of memory usage, speed and

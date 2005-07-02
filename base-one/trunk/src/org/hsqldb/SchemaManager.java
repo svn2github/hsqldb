@@ -349,12 +349,8 @@ public class SchemaManager {
         Table t = findUserTable(session, name, schema);
 
         if (t == null) {
-
-/** @todo temporary code to allow OOo to work */
-            if (!database.isStoredFileAccess()) {
-                if (!"INFORMATION_SCHEMA".equals(schema)) {
-                    throw Trace.error(Trace.TABLE_NOT_FOUND);
-                }
+            if (!"INFORMATION_SCHEMA".equals(schema)) {
+                throw Trace.error(Trace.TABLE_NOT_FOUND);
             }
 
             if (database.dbInfo != null) {

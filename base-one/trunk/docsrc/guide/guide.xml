@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<!-- $Id: guide.xml,v 1.37 2005/05/28 11:08:15 fredt Exp $ -->
+<!-- $Id: guide.xml,v 1.38 2005/05/29 09:43:15 fredt Exp $ -->
 
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN"
 "http://www.oasis-open.org/docbook/xml/4.2CR1/docbookx.dtd" [
-    <!ENTITY revision "$Revision: 1.37 $">
-    <!ENTITY date "$Date: 2005/05/28 11:08:15 $">
+    <!ENTITY revision "$Revision: 1.38 $">
+    <!ENTITY date "$Date: 2005/05/29 09:43:15 $">
     <!ENTITY alts SYSTEM "../formats-section.xml">
     <!ENTITY docbasename "doc/guide">
-    <!ENTITY baseurl "http://hsqldb.sourceforge.net/&docbasename;">
+    <!ENTITY baseurl "http://hsqldb.org/&docbasename;">
     <!ENTITY blaineaddr "blaine.simpson@admc.com">
     <!ENTITY fredaddr "ft@cluedup.com">
 
@@ -73,7 +73,7 @@
             <keyword>Java</keyword>
         </keywordset>
         <legalnotice><para>
-            Copyright 2002-2004 HSQLDB Development Group.
+            Copyright 2002-2005 HSQLDB Development Group.
             Permission is granted to distribute this document without any 
             alteration under the terms of the HSQLDB license.
         </para></legalnotice>
@@ -85,7 +85,7 @@
             author listed at the beginning of the chapter.
             If you have problems with the procedures themselves, please
             use the HSQLDB support facilities which are listed at
-   <ulink url='http://sourceforge.net/support/getsupport.php?group_id=23316'/>.
+   <ulink url='http://hsqldb.org/web/hsqlSupport.html'/>.
         </para>
         &alts;
     </preface>
