@@ -5424,9 +5424,6 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
         // PRE: is non-null and not closed
         connection       = c;
         useSchemaDefault = c.connProperties.isPropertyTrue("default_schema");
-
-        // OOo temporary workaround
-//        useSchemaDefault = true;
     }
 
     /**

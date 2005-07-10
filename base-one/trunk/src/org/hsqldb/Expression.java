@@ -1922,7 +1922,7 @@ public class Expression {
                 // we now (1_7_2_ALPHA_R) resolve independently first, then
                 // resolve in the enclosing context
                 if (subQuery != null) {
-                    subQuery.select.resolveTables(f);
+                    subQuery.select.resolveTablesUnion(f);
                 }
                 break;
 

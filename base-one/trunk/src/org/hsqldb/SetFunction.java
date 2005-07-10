@@ -63,6 +63,8 @@ public class SetFunction {
 
     //
     private boolean    hasNull;
+    private boolean    every = true;
+    private boolean    some  = false;
     private long       currentLong;
     private double     currentDouble;
     private BigDecimal currentBigDecimal;
@@ -172,13 +174,31 @@ public class SetFunction {
                 return;
             }
             case Expression.EVERY :
+                if (!(item instanceof Boolean)) {
+                    throw Trace.error(Trace.WRONG_DATA_TYPE);
+                }
+
+                every &= ((Boolean) item).booleanValue();
+
+                return;
+
             case Expression.SOME :
+                if (!(item instanceof Boolean)) {
+                    throw Trace.error(Trace.WRONG_DATA_TYPE);
+                }
+
+                some |= ((Boolean) item).booleanValue();
+
                 return;
 
             case Expression.STDDEV_POP :
             case Expression.STDDEV_SAMP :
             case Expression.VAR_POP :
             case Expression.VAR_SAMP :
+                if (!(item instanceof Number)) {
+                    throw Trace.error(Trace.WRONG_DATA_TYPE);
+                }
+
                 addDataPoint((Number) item);
 
                 return;
@@ -255,12 +275,12 @@ public class SetFunction {
                 return currentValue;
 
             case Expression.EVERY :
-                return hasNull ? Boolean.FALSE
-                               : Boolean.TRUE;
+                return every ? Boolean.TRUE
+                             : Boolean.FALSE;
 
             case Expression.SOME :
-                return count == 0 ? Boolean.FALSE
-                                  : Boolean.TRUE;
+                return some ? Boolean.TRUE
+                            : Boolean.FALSE;
 
             case Expression.STDDEV_POP :
             case Expression.STDDEV_SAMP :
@@ -409,9 +429,11 @@ public class SetFunction {
     private boolean initialized;
     private boolean sample;
 
-    private void addDataPoint(Number x) {
+    private void addDataPoint(Number x) {    // optimized
 
         double xi;
+        double xsi;
+        long   nm1;
 
         if (x == null) {
             return;
@@ -430,9 +452,10 @@ public class SetFunction {
 
         n++;
 
-        vk += (Math.pow((sk - (double) (n - 1) * xi), 2.0) / (double) n)
-              / (double) (n - 1);
-        sk += xi;
+        nm1 = (n - 1);
+        xsi = (sk - (xi * nm1));
+        vk  += ((xsi * xsi) / n) / nm1;
+        sk  += xi;
     }
 
     private Number getVariance() {

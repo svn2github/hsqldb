@@ -145,10 +145,6 @@ public class RowInputTextQuoted extends RowInputText {
             }
 
             s = ret.toString();
-
-            if (s.length() == 0) {
-                s = null;
-            }
         } catch (Exception e) {
             throw new IOException(
                 Trace.getMessage(

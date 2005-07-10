@@ -398,16 +398,13 @@ final class TableFilter {
         }
 
         if (conditionType == CONDITION_UNORDERED) {
-            if (!isOuterJoin) {
-                addAndCondition(e);
-            }
+            addAndCondition(e);
 
             return;
         }
 
         if (conditionType == CONDITION_OUTER) {
             addAndCondition(e);
-            e.setTrue();
 
             return;
         }

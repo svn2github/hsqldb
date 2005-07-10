@@ -6,6 +6,21 @@ hsqldb 1.8.0 in reverse chronological order.
 Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
+2005.07.11 1.8.0.1
+
+Bug fixes and enhancements:
+
+Correlated subqueries with UNION (and other set operators) are allowed.
+LEFT OUTER JOIN join statement can contain NOT expressions.
+Set functions, SOME() and EVERY() implementation corrected.
+Quoted empty strings in TEXT table sources are no-longer interpreted as null.
+CHECKPOINT DEFRAG issued while there are uncommitted transactions works correctly.
+  
+
+2005.07.01 1.8.0.0
+
+First release.
+
 2005.06.16 1.8.0.RC12
 
 Introduced new connection property shutdown, which, if true on the first 

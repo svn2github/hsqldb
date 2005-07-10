@@ -149,10 +149,20 @@ INSERT INTO STUDENT_TEACHER VALUES (1, 100);
 create table BASE (ID integer)
 create table CHILD(ID integer, BASE_ID integer)
 insert into BASE values (1)
+insert into BASE values (2)
 insert into CHILD values (1,1)
-/*c1*/select BASE.ID,CHILD.ID from BASE left join CHILD on CHILD.BASE_ID=BASE.ID
-/*c1*/select BASE.ID,CHILD.ID from BASE left join CHILD on CHILD.BASE_ID=BASE.ID and CHILD.ID>1
-/*rISNULL,1*/select COALESCE(CAST(CHILD.ID AS VARCHAR),'ISNULL'),BASE.ID from BASE left join CHILD on CHILD.BASE_ID=BASE.ID and CHILD.ID>1
+/*r
+ 1,1
+ 2,NULL
+*/select BASE.ID,CHILD.ID from BASE left join CHILD on CHILD.BASE_ID=BASE.ID
+/*r
+ 1,NULL
+ 2,NULL
+*/select BASE.ID,CHILD.ID from BASE left join CHILD on CHILD.BASE_ID=BASE.ID and CHILD.ID>1
+/*r
+ 1,NULL
+ 2,NULL
+*/select BASE.ID,CHILD.ID from BASE left join CHILD on CHILD.BASE_ID=BASE.ID and CHILD.ID<>1
 
 --bug #736327
 create table emp(company_id varchar(10),id varchar(20),supervisor_id varchar(20), primary key (company_id,id));

@@ -173,8 +173,6 @@ public class TextCache extends DataFileCache {
         maxDataFileSize  = Integer.MAX_VALUE;
         cachedRowPadding = 1;
         cacheFileScale   = 1;
-
-        initBuffers();
     }
 
     protected void initBuffers() {
@@ -298,6 +296,8 @@ public class TextCache extends DataFileCache {
             if (fileFreePosition > Integer.MAX_VALUE) {
                 throw new IOException();
             }
+
+            initBuffers();
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR,
                               Trace.TextCache_openning_file_error,

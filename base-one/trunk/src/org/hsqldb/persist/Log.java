@@ -616,7 +616,7 @@ public class Log {
                         true));
                 scr.close();
             }
-        } catch (IOException e) {
+        } catch (Throwable e) {
             if (scr != null) {
                 scr.close();
 
@@ -629,7 +629,15 @@ public class Log {
 
             database.logger.appLog.logContext(e);
 
-            throw Trace.error(Trace.FILE_IO_ERROR, e.getMessage());
+            if (e instanceof HsqlException) {
+                throw (HsqlException) e;
+            } else if (e instanceof IOException) {
+                throw Trace.error(Trace.FILE_IO_ERROR, e.getMessage());
+            } else if (e instanceof OutOfMemoryError) {
+                throw Trace.error(Trace.OUT_OF_MEMORY);
+            } else {
+                throw Trace.error(Trace.GENERAL_ERROR, e.getMessage());
+            }
         }
     }
 

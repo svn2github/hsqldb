@@ -31,6 +31,7 @@
 
 package org.hsqldb;
 
+import org.hsqldb.lib.DoubleIntIndex;
 import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.LongKeyIntValueHashMap;
@@ -234,6 +235,51 @@ public class TransactionManager {
             }
         }
 
-        return null;
+        return transactions;
     }
+
+    /**
+     * Return a lookup of all transactions ids for cached tables.
+     */
+    public DoubleIntIndex getTransactionIDList(Session[] sessions) {
+
+        DoubleIntIndex lookup = new DoubleIntIndex(10, false);
+        lookup.setKeysSearchTarget();
+
+        for (int i = 0; i < sessions.length; i++) {
+            HsqlArrayList tlist = sessions[i].transactionList;
+
+            for (int j = 0, size = tlist.size(); j < size; j++) {
+                Transaction tx = (Transaction) tlist.get(j);
+
+                if (tx.tTable.getTableType() == Table.CACHED_TABLE) {
+                    lookup.addUnique(tx.row.getPos(), 0);
+                }
+            }
+        }
+
+        return lookup;
+    }
+
+    /**
+     * Convert row ID's for cached table rows in transactions
+     */
+    public void convertTransactionIDs(Session[] sessions, DoubleIntIndex lookup) {
+
+        for (int i = 0; i < sessions.length; i++) {
+            HsqlArrayList tlist = sessions[i].transactionList;
+
+            for (int j = 0, size = tlist.size(); j < size; j++) {
+                Transaction tx = (Transaction) tlist.get(j);
+
+                if (tx.tTable.getTableType() == Table.CACHED_TABLE) {
+                    int pos = lookup.lookupFirstEqual(tx.row.getPos());
+                    tx.row.setPos(pos);
+                }
+            }
+        }
+
+
+    }
+
 }

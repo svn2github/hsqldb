@@ -44,6 +44,7 @@ import org.hsqldb.lib.DoubleIntIndex;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.lib.Storage;
+import org.hsqldb.rowio.RowInputInterface;
 import org.hsqldb.rowio.RowOutputBinary;
 
 // oj@openoffice.org - changed to file access api
@@ -65,13 +66,14 @@ import org.hsqldb.rowio.RowOutputBinary;
 final class DataFileDefrag {
 
     BufferedOutputStream fileStreamOut;
-    long                 filePos;
+    long                 fileOffset;
     StopWatch            stopw = new StopWatch();
     String               filename;
     int[][]              rootsList;
     Database             database;
     DataFileCache        cache;
     int                  scale;
+    DoubleIntIndex       transactionRowLookup;
 
     DataFileDefrag(Database db, DataFileCache cache, String filename) {
 
@@ -83,7 +85,12 @@ final class DataFileDefrag {
 
     void process() throws HsqlException, IOException {
 
+        boolean complete = false;
+
         Trace.printSystemOut("Defrag Transfer begins");
+
+        transactionRowLookup = database.txManager.getTransactionIDList(
+            database.sessionManager.getAllSessions());
 
         HsqlArrayList allTables = database.schemaManager.getAllTables();
 
@@ -102,7 +109,7 @@ final class DataFileDefrag {
                 fileStreamOut.write(0);
             }
 
-            filePos = DataFileCache.INITIAL_FREE_POS;
+            fileOffset = DataFileCache.INITIAL_FREE_POS;
 
             for (int i = 0, tSize = allTables.size(); i < tSize; i++) {
                 Table t = (Table) allTables.get(i);
@@ -118,7 +125,10 @@ final class DataFileDefrag {
                 Trace.printSystemOut(t.getName().name + " complete");
             }
 
+            writeTransactionRows();
             fileStreamOut.close();
+
+            fileStreamOut = null;
 
             // write out the end of file position
             dest = ScaledRAFile.newScaledRAFile(
@@ -129,7 +139,10 @@ final class DataFileDefrag {
                             .getProperty("storage_key"));
 
             dest.seek(DataFileCache.LONG_FREE_POS_POS);
-            dest.writeLong(filePos);
+            dest.writeLong(fileOffset);
+            dest.close();
+
+            dest = null;
 
             for (int i = 0, size = rootsList.length; i < size; i++) {
                 int[] roots = rootsList[i];
@@ -139,8 +152,12 @@ final class DataFileDefrag {
                         org.hsqldb.lib.StringUtil.getList(roots, ",", ""));
                 }
             }
+
+            complete = true;
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR, filename + ".new");
+        } catch (OutOfMemoryError e) {
+            throw Trace.error(Trace.OUT_OF_MEMORY);
         } finally {
             if (fileStreamOut != null) {
                 fileStreamOut.close();
@@ -148,6 +165,10 @@ final class DataFileDefrag {
 
             if (dest != null) {
                 dest.close();
+            }
+
+            if (!complete) {
+                database.getFileAccess().removeElement(filename + ".new");
             }
         }
 
@@ -172,6 +193,14 @@ final class DataFileDefrag {
         }
     }
 
+    /**
+     * called from outside after the complete end of defrag
+     */
+    void updateTransactionRowIDs() throws HsqlException {
+        database.txManager.convertTransactionIDs(
+            database.sessionManager.getAllSessions(), transactionRowLookup);
+    }
+
     int[] writeTableToDataFile(Table table)
     throws IOException, HsqlException {
 
@@ -179,7 +208,7 @@ final class DataFileDefrag {
         DoubleIntIndex pointerLookup =
             new DoubleIntIndex(table.getPrimaryIndex().sizeEstimate(), false);
         int[] rootsArray = table.getIndexRootsArray();
-        long  pos        = filePos;
+        long  pos        = fileOffset;
         int   count      = 0;
 
         pointerLookup.setKeysSearchTarget();
@@ -214,7 +243,7 @@ final class DataFileDefrag {
             fileStreamOut.write(rowOut.getOutputStream().getBuffer(), 0,
                                 rowOut.size());
 
-            filePos += row.getStorageSize();
+            fileOffset += row.getStorageSize();
 
             if ((count) % 50000 == 0) {
                 Trace.printSystemOut(count + " rows " + stopw.elapsedTime());
@@ -236,8 +265,43 @@ final class DataFileDefrag {
             rootsArray[i] = pointerLookup.getValue(lookupIndex);
         }
 
+        setTransactionRowLookups(pointerLookup);
         Trace.printSystemOut(table.getName().name + " : table converted");
 
         return rootsArray;
+    }
+
+    void setTransactionRowLookups(DoubleIntIndex pointerLookup) {
+
+        for (int i = 0, size = transactionRowLookup.size(); i < size; i++) {
+            int key         = transactionRowLookup.getKey(i);
+            int lookupIndex = pointerLookup.findFirstEqualKeyIndex(key);
+
+            if (lookupIndex != -1) {
+                transactionRowLookup.setValue(
+                    i, pointerLookup.getValue(lookupIndex));
+            }
+        }
+    }
+
+    void writeTransactionRows() {
+
+        for (int i = 0, size = transactionRowLookup.size(); i < size; i++) {
+            if (transactionRowLookup.getValue(i) != 0) {
+                continue;
+            }
+
+            int key = transactionRowLookup.getKey(i);
+
+            try {
+                transactionRowLookup.setValue(i, (int) (fileOffset / scale));
+
+                RowInputInterface rowIn = cache.readObject(key);
+
+                fileStreamOut.write(rowIn.getBuffer(), 0, rowIn.getSize());
+
+                fileOffset += rowIn.getSize();
+            } catch (IOException e) {}
+        }
     }
 }

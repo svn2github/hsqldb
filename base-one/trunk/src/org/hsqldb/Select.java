@@ -171,7 +171,7 @@ class Select {
      *
      * @throws HsqlException
      */
-    void resolveTables() throws HsqlException {
+    private void resolveTables() throws HsqlException {
 
         // replace the aliases with expressions
         for (int i = iResultLen; i < exprColumns.length; i++) {
@@ -212,6 +212,17 @@ class Select {
 
         if (queryCondition != null) {
             queryCondition.resolveTypes(session);
+        }
+    }
+
+    void resolveTablesUnion(TableFilter f) throws HsqlException {
+
+        if (unionArray == null) {
+            resolveTables(f);
+        } else {
+            for (int i = 0; i < unionArray.length; i++) {
+                unionArray[i].resolveTables(f);
+            }
         }
     }
 
@@ -301,7 +312,7 @@ class Select {
 */
 
     /**
-     * Retruns a single value result or throws if the result has more than
+     * Returns a single value result or throws if the result has more than
      * one row with one value.
      *
      * @param type data type
@@ -338,8 +349,7 @@ class Select {
     }
 
     /**
-     * Prepares rResult having structure compatible with
-     * internally building the set of rows returned from getResult().
+     * Resolves expressions and pepares thre metadata for the result.
      */
     void prepareResult(Session session) throws HsqlException {
 
@@ -464,7 +474,7 @@ class Select {
 
         Result r;
 
-        if (unionType == NOUNION) {
+        if (unionArray == null) {
             r = getSingleResult(session, maxrows);
         } else {
             r = getResultMain(session);

@@ -17,6 +17,12 @@ insert into flimit values('one', 'two', 99999999.11111);
  one ,two,99999999.11
 */select * from flimit;
 /*r
+ one ,two,99999999.11
+*/select * from flimit where charf1 in('one','two');
+/*r
+ one ,two,99999999.11
+*/select * from flimit where charf1 in('one   ','two');
+/*r
  99999999
 */select cast(decf1 as numeric(8)) from flimit;
 /*r
