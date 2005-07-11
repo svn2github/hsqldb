@@ -89,8 +89,7 @@ final class DataFileDefrag {
 
         Trace.printSystemOut("Defrag Transfer begins");
 
-        transactionRowLookup = database.txManager.getTransactionIDList(
-            database.sessionManager.getAllSessions());
+        transactionRowLookup = database.txManager.getTransactionIDList();
 
         HsqlArrayList allTables = database.schemaManager.getAllTables();
 
@@ -197,8 +196,7 @@ final class DataFileDefrag {
      * called from outside after the complete end of defrag
      */
     void updateTransactionRowIDs() throws HsqlException {
-        database.txManager.convertTransactionIDs(
-            database.sessionManager.getAllSessions(), transactionRowLookup);
+        database.txManager.convertTransactionIDs(transactionRowLookup);
     }
 
     int[] writeTableToDataFile(Table table)

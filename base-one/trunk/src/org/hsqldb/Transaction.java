@@ -131,4 +131,30 @@ class Transaction {
 //            System.out.println("rollback error: isDelete " + isDelete);
         }
     }
+
+    void logRollback(Session session) {
+
+        try {
+            if (isDelete) {
+                tTable.database.logger.writeInsertStatement(session, tTable,
+                        row.getData());
+            } else {
+                tTable.database.logger.writeDeleteStatement(session, tTable,
+                        row.getData());
+            }
+        } catch (Exception e) {}
+    }
+
+    void logAction(Session session) {
+
+        try {
+            if (isDelete) {
+                tTable.database.logger.writeDeleteStatement(session, tTable,
+                        row.getData());
+            } else {
+                tTable.database.logger.writeInsertStatement(session, tTable,
+                        row.getData());
+            }
+        } catch (Exception e) {}
+    }
 }

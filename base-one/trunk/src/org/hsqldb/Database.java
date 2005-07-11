@@ -291,7 +291,7 @@ public class Database {
             bReferentialIntegrity = true;
             sysUser               = userManager.getSysUser();
             sessionManager        = new SessionManager(this, sysUser);
-            txManager             = new TransactionManager();
+            txManager             = new TransactionManager(this);
             collation             = new Collation();
             dbInfo = DatabaseInformation.newDatabaseInformation(this);
 

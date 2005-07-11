@@ -266,8 +266,6 @@ public class DataFileCache {
                     dataFile.close();
                 }
 
-                cache.clear();
-
                 return;
             }
 
@@ -315,8 +313,6 @@ public class DataFileCache {
                 fa.removeElement(fileName);
                 fa.removeElement(backupFileName);
             }
-
-            cache.clear();
         } catch (Throwable e) {
             database.logger.appLog.logContext(e);
 

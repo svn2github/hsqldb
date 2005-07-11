@@ -47,8 +47,10 @@ public class TransactionManager {
 
     LongKeyIntValueHashMap rowSessionMap;
     boolean                reWriteProtect;
+    Database               database;
 
-    TransactionManager() {
+    TransactionManager(Database db) {
+        database      = db;
         rowSessionMap = new LongKeyIntValueHashMap(true);
     }
 
@@ -170,9 +172,10 @@ public class TransactionManager {
     /**
      * Return an array of all transactions sorted by System Change No.
      */
-    Transaction[] getTransactionList(Session[] sessions) {
+    Transaction[] getTransactionList() {
 
-        int[]         tIndex = new int[sessions.length];
+        Session[]     sessions = database.sessionManager.getAllSessions();
+        int[]         tIndex   = new int[sessions.length];
         Transaction[] transactions;
         int           transactionCount = 0;
 
@@ -241,9 +244,11 @@ public class TransactionManager {
     /**
      * Return a lookup of all transactions ids for cached tables.
      */
-    public DoubleIntIndex getTransactionIDList(Session[] sessions) {
+    public DoubleIntIndex getTransactionIDList() {
 
-        DoubleIntIndex lookup = new DoubleIntIndex(10, false);
+        Session[]      sessions = database.sessionManager.getAllSessions();
+        DoubleIntIndex lookup   = new DoubleIntIndex(10, false);
+
         lookup.setKeysSearchTarget();
 
         for (int i = 0; i < sessions.length; i++) {
@@ -264,7 +269,9 @@ public class TransactionManager {
     /**
      * Convert row ID's for cached table rows in transactions
      */
-    public void convertTransactionIDs(Session[] sessions, DoubleIntIndex lookup) {
+    public void convertTransactionIDs(DoubleIntIndex lookup) {
+
+        Session[] sessions = database.sessionManager.getAllSessions();
 
         for (int i = 0; i < sessions.length; i++) {
             HsqlArrayList tlist = sessions[i].transactionList;
@@ -274,12 +281,10 @@ public class TransactionManager {
 
                 if (tx.tTable.getTableType() == Table.CACHED_TABLE) {
                     int pos = lookup.lookupFirstEqual(tx.row.getPos());
+
                     tx.row.setPos(pos);
                 }
             }
         }
-
-
     }
-
 }
