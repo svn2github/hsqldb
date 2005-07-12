@@ -36,7 +36,6 @@ import java.util.Enumeration;
 import org.hsqldb.Database;
 import org.hsqldb.DatabaseURL;
 import org.hsqldb.HsqlException;
-import org.hsqldb.Record;
 import org.hsqldb.Trace;
 import org.hsqldb.lib.Set;
 import org.hsqldb.lib.HashSet;
@@ -82,9 +81,9 @@ public class HsqlDatabaseProperties extends HsqlProperties {
     private static final String db_modified = "modified";
 
     //
-    private static final String runtime_gc_interval  = "runtime.gc_interval";
-    private static final String hsqldb_max_nio_scale = "hsqldb.max_nio_scale";
-    public static final String  hsqldb_cache_scale   = "hsqldb.cache_scale";
+    private static final String runtime_gc_interval = "runtime.gc_interval";
+    public static final String  hsqldb_applog       = "hsqldb.applog";
+    public static final String  hsqldb_cache_scale  = "hsqldb.cache_scale";
     public static final String hsqldb_cache_file_scale =
         "hsqldb.cache_file_scale";
     public static final String hsqldb_cache_size_scale =
@@ -98,8 +97,9 @@ public class HsqlDatabaseProperties extends HsqlProperties {
     public static final String hsqldb_defrag_limit = "hsqldb.defrag_limit";
     private static final String hsqldb_files_readonly =
         "hsqldb.files_readonly";
-    public static final String hsqldb_log_size      = "hsqldb.log_size";
-    public static final String hsqldb_nio_data_file = "hsqldb.nio_data_file";
+    public static final String  hsqldb_log_size      = "hsqldb.log_size";
+    public static final String  hsqldb_nio_data_file = "hsqldb.nio_data_file";
+    private static final String hsqldb_max_nio_scale = "hsqldb.max_nio_scale";
     private static final String hsqldb_original_version =
         "hsqldb.original_version";
     public static final String hsqldb_script_format = "hsqldb.script_format";
@@ -156,7 +156,7 @@ public class HsqlDatabaseProperties extends HsqlProperties {
 
         // user defined integral properties
         String[] integralPropertiesNames = {
-            runtime_gc_interval, hsqldb_max_nio_scale,
+            runtime_gc_interval, hsqldb_applog, hsqldb_max_nio_scale,
             hsqldb_cache_file_scale, hsqldb_cache_scale,
             hsqldb_cache_size_scale, hsqldb_log_size, textdb_cache_scale,
             textdb_cache_size_scale

@@ -92,8 +92,8 @@ public class Logger {
     public void openLog(Database db) throws HsqlException {
 
         String path = db.getPath();
-        int loglevel =
-            db.getURLProperties().getIntegerProperty("hsqldb.applog", 0);
+        int loglevel = db.getProperties().getIntegerProperty(
+            HsqlDatabaseProperties.hsqldb_applog, 0);
 
         appLog = new SimpleLog(path + ".app.log", loglevel,
                                !db.isFilesReadOnly());
