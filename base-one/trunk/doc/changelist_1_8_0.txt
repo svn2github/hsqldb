@@ -15,7 +15,7 @@ LEFT OUTER JOIN join statement can contain NOT expressions.
 Set functions, SOME() and EVERY() implementation corrected.
 Quoted empty strings in TEXT table sources are no-longer interpreted as null.
 CHECKPOINT DEFRAG issued while there are uncommitted transactions works correctly.
-  
+build.xml updated to fix issue with JDK 1.3 build  
 
 2005.07.01 1.8.0.0
 

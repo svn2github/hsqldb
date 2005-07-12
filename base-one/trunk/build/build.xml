@@ -296,9 +296,13 @@ examples:
          <include name="org/hsqldb/scriptio/*.java"/>
          <include name="org/hsqldb/types/*.java"/>
          <exclude name="org/hsqldb/HsqlSocketFactorySecure.java" unless="ant.java.hasjsse"/>
-         <!-- DEVELOPERS:  Do not 'exclude' subsets of items which were not
-              otherwise included above.  If Javac needs anything outside of
-              the includes above, it will get them regardless of excludes. -->
+         <exclude name="org/hsqldb/jdbc/jdbcBlob.java"/>
+         <exclude name="org/hsqldb/jdbc/jdbcClob.java"/>
+         <exclude name="org/hsqldb/jdbc/jdbcDataSource*.java"/>
+         <exclude name="org/hsqldb/jdbc/jdbcParameterMetaData.java"/>
+         <exclude name="org/hsqldb/jdbc/jdbcSavepoint.java"/>
+         <exclude name="org/hsqldb/persist/NIOLockFile.java"/>
+         <exclude name="org/hsqldb/persist/NIOScaledRAFile.java"/>
       </javac>
       <copy todir="${basedir}/classes/org/hsqldb/resources">
          <fileset dir="${src}/org/hsqldb/resources" includes="*.properties"/>
