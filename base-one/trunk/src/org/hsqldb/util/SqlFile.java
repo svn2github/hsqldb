@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.120 2005/06/12 22:57:00 fredt Exp $ */
+/* $Id: SqlFile.java,v 1.121 2005/06/30 15:18:26 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -93,7 +93,7 @@ import java.util.TreeMap;
  * Most of the Special Commands and Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.120 $
+ * @version $Revision: 1.121 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlFile {
@@ -143,8 +143,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.120 $".substring("$Revision: ".length(),
-                "$Revision: 1.120 $".length() - 2);
+        revnum = "$Revision: 1.121 $".substring("$Revision: ".length(),
+                "$Revision: 1.121 $".length() - 2);
     }
 
     private static String BANNER =
@@ -1916,11 +1916,11 @@ public class SqlFile {
      * Read a PL block into a new temp file.
      *
      * WARNING!!! foreach blocks are not yet smart about comments
-     * and strings.  We just look for a line beginning with "* end"
-     * without worrying about comments or quotes (for now).
+     * and strings.  We just look for a line beginning with a PL "end"
+     * command without worrying about comments or quotes (for now).
      *
      * WARNING!!! This is very rudimentary.
-     * Users give up all editing and feedback capabilities for while
+     * Users give up all editing and feedback capabilities while
      * in the foreach loop.
      * A better solution would be to pass current input stream to a
      * new SqlFile.execute() with a mode whereby commands are written
@@ -1963,9 +1963,8 @@ public class SqlFile {
 
             curLinenum++;
 
-            toker = new StringTokenizer(s);
-
-            if (toker.countTokens() > 1 && toker.nextToken().equals("*")) {
+            if (s.trim().length() > 1 && s.charAt(0) == '*') {
+                toker = new StringTokenizer(s.trim().substring(1));
                 curPlCommand = toker.nextToken();
 
                 // PL COMMAND of some sort.
