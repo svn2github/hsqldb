@@ -236,7 +236,7 @@ class CommonSwing {
 //        d.put("List.selectionBackground", hsqlBlue);
 //    }
     // (weconsultants@users: Callable setSwingLAF method for changing LAF
-    static void setSwingLAF(JFrame frame, String targetTheme) {
+    static void setSwingLAF(java.awt.Component comp, String targetTheme) {
 
         try {
             if (targetTheme.equalsIgnoreCase(Native)) {
@@ -257,8 +257,10 @@ class CommonSwing {
 //            if (targetTheme.equalsIgnoreCase(GTK)){
 //                UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
 //            }
-            SwingUtilities.updateComponentTreeUI(frame);
-            frame.pack();
+            SwingUtilities.updateComponentTreeUI(comp);
+            if (comp instanceof java.awt.Frame) {
+                ((java.awt.Frame) comp).pack();
+            }
         } catch (Exception e) {
             errorMessage(e);
         }
