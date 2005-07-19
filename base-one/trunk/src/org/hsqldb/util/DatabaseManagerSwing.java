@@ -99,6 +99,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.awt.Component;
+import java.awt.Container;
 
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
@@ -127,6 +129,8 @@ import javax.swing.table.TableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
+import javax.swing.RootPaneContainer;
+import java.security.AccessControlException;
 
 import org.hsqldb.lib.java.JavaSystem;
 
@@ -188,15 +192,64 @@ implements ActionListener, WindowListener, KeyListener {
      * be reserved for single-letter switches which can be mixed like
      * "-u -r -l" = "-url".  -blaine
      */
-    private static final String DEFAULT_RCFILE =
-        System.getProperty("user.home") + "/dbmanager.rc";
+    static private String homedir = null;
+    static {
+        try {
+            Class c =
+                Class.forName("sun.security.action.GetPropertyAction");
+            Constructor constructor = c.getConstructor(new Class[]{
+                String.class });
+            java.security.PrivilegedAction a =
+                (java.security.PrivilegedAction) constructor.newInstance(
+                    new Object[]{ "user.home" });
+            homedir =
+                (String) java.security.AccessController.doPrivileged(a);
+        } catch (IllegalAccessException e) {
+            System.err.println(
+                "Failed to get home directory.\n"
+                + "Therefore not retrieving/storing user preferences.\n("
+                + e.getMessage() + ')');
+        } catch (NoSuchMethodException e) {
+            System.err.println(
+                "Failed to get home directory.\n"
+                + "Therefore not retrieving/storing user preferences.\n("
+                + e.getMessage() + ')');
+
+        } catch (ClassNotFoundException e) {
+            System.err.println(
+                "Failed to get home directory.\n"
+                + "Therefore not retrieving/storing user preferences.\n("
+                + e.getMessage() + ')');
+
+        } catch (InstantiationException e) {
+            System.err.println(
+                "Failed to get home directory.\n"
+                + "Therefore not retrieving/storing user preferences.\n("
+                + e.getMessage() + ')');
+
+        } catch (InvocationTargetException e) {
+            System.err.println(
+                "Failed to get home directory.\n"
+                + "Therefore not retrieving/storing user preferences.\n("
+                + e.getMessage() + ')');
+        } catch (AccessControlException e) {
+            System.err.println(
+                "Failed to get home directory.\n"
+                + "Therefore not retrieving/storing user preferences.\n("
+                + e.getMessage() + ')');
+        }
+    }
+
+    private JFrame jframe = null;
+
+    private static final String DEFAULT_RCFILE = homedir + "/dbmanager.rc";
     private static final String HELP_TEXT =
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.org.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.56 $";
+        + "problem reports or help requests:  $Revision: 1.57 $";
     private static final String ABOUT_TEXT =
-        "$Revision: 1.56 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.57 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2001-2005, The HSQL Development Group.\n"
         + "http://hsqldb.org\n\n\n"
@@ -224,6 +277,13 @@ implements ActionListener, WindowListener, KeyListener {
     JPanel                 pResult;
     long                   lTime;
     GridSwing              gResult;
+    /** I think this is used to store model info whether we're using Grid
+     *  output or not (this object is queried for data to display for
+     *  text output mode).
+     *  If so, the presentation-independent model part should be moved
+     *  to an appropriately-named class instead of storing pure data in
+     *  a Swing-specific class.
+     */ 
     JTable                 gResultTable;
     JScrollPane            gScrollPane;
     JTextArea              txtResult;
@@ -231,7 +291,7 @@ implements ActionListener, WindowListener, KeyListener {
     JSplitPane             nsSplitPane;    // Contains query over results
     JSplitPane             ewSplitPane;    // Contains tree beside nsSplitPane
     boolean                bHelp;
-    JFrame                 fMain;
+    RootPaneContainer      fMain;
     static boolean         bMustExit;
     String                 ifHuge = "";
     JToolBar               jtoolbar;
@@ -310,27 +370,61 @@ implements ActionListener, WindowListener, KeyListener {
     static String  defDirectory;
     private String schemaFilter = null;
 
+    public DatabaseManagerSwing() {
+        jframe = new JFrame("dummy");
+    };
+    public DatabaseManagerSwing(JFrame frameIn) {
+        jframe = frameIn;
+        fMain = jframe;
+    };
+
     public void init() {
 
-        DatabaseManagerSwing m = new DatabaseManagerSwing();
+        fMain = this;
 
-        m.main();
+        main();
+        Connection c = null;
+        boolean auto = false;
+        if (getParameter("jdbcDriver") != null) {
+            auto = true;
+            defDriver = getParameter("jdbcDriver");
+        }
+        if (getParameter("jdbcUrl") != null) {
+            auto = true;
+            defURL = getParameter("jdbcUrl");
+        }
+        if (getParameter("jdbcUser") != null) {
+            auto = true;
+            defUser = getParameter("jdbcUser");
+        }
+        if (getParameter("jdbcPassword") != null) {
+            auto = true;
+            defPassword = getParameter("jdbcPassword");
+        }
 
         try {
 
-            // The connection dialog will be used before the
-            // DatabaseManager window is drawn.
-            connect(ConnectionDialogSwing.createConnection(defDriver, defURL,
-                    defUser, defPassword));
-            m.setWaiting("Initializing");
-            m.insertTestData();
-            m.updateAutoCommitBox();
+            setWaiting("Initializing");
+            //insertTestData();
+            //updateAutoCommitBox();
+            c = (auto
+                    ?  ConnectionDialogSwing.createConnection(
+                                defDriver, defURL, defUser, defPassword)
+                    : ConnectionDialogSwing.createConnection(jframe, "Connect")
+            );
         } catch (Exception e) {
 
             //  Added: (weconsultants@users)
             CommonSwing.errorMessage(e);
         } finally {
             setWaiting(null);
+        }
+        if (getParameter("loadSampleData") != null
+                && getParameter("loadSampleData").equals("true")) {
+            insertTestData();
+        }
+        if (getParameter("schemaFilter") != null) {
+            schemaFilter = getParameter("schemaFilter");
         }
     }
 
@@ -389,7 +483,8 @@ implements ActionListener, WindowListener, KeyListener {
             }
         }
 
-        DatabaseManagerSwing m = new DatabaseManagerSwing();
+        DatabaseManagerSwing m = new DatabaseManagerSwing(
+                new JFrame("HSQL Database Manager"));
 
         // Added: (weconsultants@users): Need databaseManagerSwing for later Reference
         refForFontDialogSwing = m;
@@ -425,7 +520,7 @@ implements ActionListener, WindowListener, KeyListener {
                     null, System.getProperty("sqlfile.charset"),
                     System.getProperty("javax.net.ssl.trustStore"));
             } else {
-                c = ConnectionDialogSwing.createConnection(m.fMain,
+                c = ConnectionDialogSwing.createConnection(m.jframe,
                         "Connect");
             }
         } catch (Exception e) {
@@ -484,6 +579,14 @@ implements ActionListener, WindowListener, KeyListener {
                 (dMeta.getDatabaseProductName().indexOf("Oracle") < 0);
 
             refreshTree();
+            clearResultPanel();
+            if (fMain instanceof JApplet) {
+                getAppletContext().showStatus(
+                        "JDBC Connection established to a "
+                        + dMeta.getDatabaseProductName() + " v. "
+                        + dMeta.getDatabaseProductVersion()
+                        + " database as '" + dMeta.getUserName() + "'.");
+            }
         } catch (SQLException e) {
 
             //  Added: (weconsultants@users)
@@ -528,7 +631,6 @@ implements ActionListener, WindowListener, KeyListener {
         }
     }
 
-    // Comment: (weconsultants@users) this boolean does not get referenced..?
     public void setMustExit(boolean b) {
         this.bMustExit = b;
     }
@@ -537,14 +639,11 @@ implements ActionListener, WindowListener, KeyListener {
 
     public void main() {
 
-        fMain = new JFrame("HSQL Database Manager");
-
         try {
-            prefs = new DBMPrefs();
+            prefs = new DBMPrefs(fMain instanceof JApplet);
         } catch (Exception e) {
-
-            // Just don't user persisted preferences.
-            prefs = null;
+            System.err.println(
+                    "Failed to load preferences.  Proceeding with defaults:\n");
         }
 
         if (prefs == null) {
@@ -562,8 +661,12 @@ implements ActionListener, WindowListener, KeyListener {
 
         // (ulrivo): An actual icon.  N.b., this adds some tips to the tip map
         fMain.getContentPane().add(createToolBar(), "North");
-        fMain.setIconImage(CommonSwing.getIcon("Frame"));
-        fMain.addWindowListener(this);
+        if (fMain instanceof java.awt.Frame) {
+            ((java.awt.Frame) fMain).setIconImage(CommonSwing.getIcon("Frame"));
+        }
+        if (fMain instanceof java.awt.Window) {
+            ((java.awt.Window) fMain).addWindowListener(this);
+        }
 
         JMenuBar bar = new JMenuBar();
 
@@ -712,16 +815,22 @@ implements ActionListener, WindowListener, KeyListener {
             }
         });
         bar.add(mnuHelp);
-        fMain.setJMenuBar(bar);
+        if (fMain instanceof JApplet) {
+            ((JApplet) fMain).setJMenuBar(bar);
+        } else if (fMain instanceof JFrame) {
+            ((JFrame) fMain).setJMenuBar(bar);
+        }
         initGUI();
 
         sRecent = new String[iMaxRecent];
 
         // Modified: (weconsultants@users)Mode code to CommonSwing for general use
-        CommonSwing.setFramePositon(fMain);
+        if (!(fMain instanceof JApplet)) {
+            CommonSwing.setFramePositon((JFrame) fMain);
+        }
 
         // Modified: (weconsultants@users) Changed from deprecated show()
-        fMain.setVisible(true);
+        ((Component) fMain).setVisible(true);
 
         // (ulrivo): load query from command line
         if (defScript != null) {
@@ -862,7 +971,7 @@ implements ActionListener, WindowListener, KeyListener {
             try {
                 setWaiting("Connecting");
 
-                newCon = ConnectionDialogSwing.createConnection(fMain,
+                newCon = ConnectionDialogSwing.createConnection(jframe,
                         "Connect");
             } finally {
                 setWaiting(null);
@@ -883,7 +992,7 @@ implements ActionListener, WindowListener, KeyListener {
                 f.setCurrentDirectory(new File(defDirectory));
             }
 
-            int option = f.showOpenDialog(fMain);
+            int option = f.showOpenDialog((Component) fMain);
 
             if (option == JFileChooser.APPROVE_OPTION) {
                 File file = f.getSelectedFile();
@@ -913,7 +1022,7 @@ implements ActionListener, WindowListener, KeyListener {
                 f.setCurrentDirectory(new File(defDirectory));
             }
 
-            int option = f.showSaveDialog(fMain);
+            int option = f.showSaveDialog((Component) fMain);
 
             if (option == JFileChooser.APPROVE_OPTION) {
                 File file = f.getSelectedFile();
@@ -933,7 +1042,7 @@ implements ActionListener, WindowListener, KeyListener {
                 f.setCurrentDirectory(new File(defDirectory));
             }
 
-            int option = f.showSaveDialog(fMain);
+            int option = f.showSaveDialog((Component) fMain);
 
             if (option == JFileChooser.APPROVE_OPTION) {
                 File file = f.getSelectedFile();
@@ -1127,7 +1236,9 @@ implements ActionListener, WindowListener, KeyListener {
             CommonSwing.errorMessage(e);
         }
 
-        fMain.dispose();
+        if (fMain instanceof java.awt.Window) {
+            ((java.awt.Window) fMain).dispose();
+        }
 
         if (bMustExit) {
             System.exit(0);
@@ -1157,6 +1268,16 @@ implements ActionListener, WindowListener, KeyListener {
         SwingUtilities.invokeLater(r);
     }
 
+    private void clearResultPanel() {
+        gResult.setHead(new Object[0]);
+        gResult.clear();
+        if (gridFormat) {
+            gResult.fireTableChanged(null);
+        } else {
+            showResultInText();
+        }
+    }
+
     public void setWaiting(String description) {
 
         busyText = description;
@@ -1164,7 +1285,11 @@ implements ActionListener, WindowListener, KeyListener {
         if (busyText == null) {
 
             // restore the cursors we saved
-            fMain.setCursor(fMainCursor);
+            if (fMain instanceof java.awt.Frame) {
+                ((java.awt.Frame) fMain).setCursor(fMainCursor);
+            } else {
+                ((Component) fMain).setCursor(fMainCursor);
+            }
             txtCommand.setCursor(txtCommandCursor);
             txtResult.setCursor(txtResultCursor);
 
@@ -1173,20 +1298,28 @@ implements ActionListener, WindowListener, KeyListener {
 
             // save the old cursors
             if (fMainCursor == null) {
-                fMainCursor      = fMain.getCursor();
+                fMainCursor      = ((fMain instanceof java.awt.Frame)
+                        ? (((java.awt.Frame) fMain).getCursor())
+                        : (((Component) fMain).getCursor())
+                );
                 txtCommandCursor = txtCommand.getCursor();
                 txtResultCursor  = txtResult.getCursor();
             }
 
             // set the cursors to the wait cursor
-            fMain.setCursor(waitCursor);
+            if (fMain instanceof java.awt.Frame) {
+                ((java.awt.Frame) fMain).setCursor(waitCursor);
+            } else {
+                ((Component) fMain).setCursor(waitCursor);
+            }
             txtCommand.setCursor(waitCursor);
             txtResult.setCursor(waitCursor);
 
             //TODO:  Disable actionButtons
         }
 
-        setStatusLine(busyText);
+        setStatusLine(busyText,
+                ((busyText == null) ? gResult.getRowCount() : 0));
     }
 
     private Runnable treeRefreshRunnable = new Runnable() {
@@ -1237,10 +1370,7 @@ implements ActionListener, WindowListener, KeyListener {
                 }
 
                 updateResult();
-
-                if (gridFormat) {
-                    gResult.fireTableChanged(null);
-                }
+                displayResults();
 
                 updateAutoCommitBox();
                 System.gc();
@@ -1306,7 +1436,7 @@ implements ActionListener, WindowListener, KeyListener {
 
             // We're already running in a "busy" thread.  Just update the
             // status text.
-            setStatusLine("Refreshing object tree");
+            setStatusLine("Refreshing object tree", 0);
 
             String upper = sql.toUpperCase(Locale.ENGLISH);
 
@@ -1320,6 +1450,12 @@ implements ActionListener, WindowListener, KeyListener {
         }
     }
 
+    /**
+     * Could somebody explain what the purpose of this method is?
+     * Contrary to the method name, it looks like it displays 
+     * results only if gridFormat is off (seems like it  does
+     * nothing otherwise, except for clearing help text and moving focus).
+     */
     private void updateResult() {
 
         if (gridFormat) {
@@ -1346,7 +1482,7 @@ implements ActionListener, WindowListener, KeyListener {
      * We let Swing handle displaying nulls (which it generally does by
      * printing nothing for them), except for the case of database
      * VARCHARs, because this is the only class where there is any
-     * ambiguity about where there is a null stored or not.
+     * ambiguity about whether there is a null stored or not.
      */
     private void formatResultSet(ResultSet r) {
 
@@ -1551,7 +1687,12 @@ implements ActionListener, WindowListener, KeyListener {
             b.append(NL);
         }
 
-        b.append(NL + height + " row(s) in " + lTime + " ms");
+        // b.append(NL + height + " row(s) in " + lTime + " ms");
+        // There is no reason why this report should be text-output-specific. 
+        // Moving it to bottom of the setWaiting method (where the report
+        // gets written to the status line).
+        // I'm only doing the rowcount now.  Add the time report there if 
+        // you are so inclined. 
         txtResult.setText(b.toString());
     }
 
@@ -1611,13 +1752,7 @@ implements ActionListener, WindowListener, KeyListener {
 
         txtCommand.setFont(fFont);
         txtResult.setFont(new Font("Courier", Font.PLAIN, 12));
-/*
-// button replaced by toolbar
-        butExecute = new JButton("Execute");
 
-        butExecute.addActionListener(this);
-        pCommand.add(butExecute, BorderLayout.EAST);
-*/
         pCommand.add(txtCommandScroll, BorderLayout.CENTER);
 
         gResult = new GridSwing();
@@ -1671,7 +1806,11 @@ implements ActionListener, WindowListener, KeyListener {
         pStatus.add(jStatusLine, BorderLayout.CENTER);
         fMain.getContentPane().add(pStatus, "South");
         doLayout();
-        fMain.pack();
+        if (fMain instanceof java.awt.Window) {
+            ((java.awt.Window) fMain).pack();
+        } else {
+            ((Container) fMain).validate();
+        }
     }
 
     /* Simple tree node factory method - set's parent and user object.
@@ -1808,7 +1947,7 @@ implements ActionListener, WindowListener, KeyListener {
                 }
 
                 String rowcount = displayRowCounts
-                                  ? (", " + DECFMT.format(rowCounts[i]))
+                                  ? (" " + DECFMT.format(rowCounts[i]))
                                   : "";
                 String displayedName = schemaname + name + rowcount;
 
@@ -1922,7 +2061,7 @@ implements ActionListener, WindowListener, KeyListener {
     }
 
     // Added: (weconsultants@users) Sets up\changes the running status icon
-    void setStatusLine(String busyBaseString) {
+    void setStatusLine(String busyBaseString, int rowCount) {
 
         iReadyStatus.setSelected(busyBaseString != null);
 
@@ -1932,6 +2071,10 @@ implements ActionListener, WindowListener, KeyListener {
             if (schemaFilter != null) {
                 additionalMsg = " /  Tree showing objects in schema '"
                                 + schemaFilter + "'";
+            }
+            
+            if (rowCount > 1) {
+                additionalMsg += " / " + rowCount + " rows retrieved";
             }
 
             jStatusLine.setText("  " + READY_STATUS + additionalMsg);
@@ -1965,9 +2108,8 @@ implements ActionListener, WindowListener, KeyListener {
                                                     : (schemaPart + '.');
                     name       = schemaPart + (String) inTable.elementAt(i);
 
-                    String displayRowCounts = rowCountSelect + name;
-                    ResultSet resultSet =
-                        select.executeQuery(displayRowCounts);
+                    ResultSet resultSet = select.executeQuery(
+                            rowCountSelect + name);
 
                     while (resultSet.next()) {
                         counts[i] = resultSet.getInt(1);
@@ -2053,7 +2195,7 @@ implements ActionListener, WindowListener, KeyListener {
             pResult.removeAll();
         }
 
-        CommonSwing.setSwingLAF(fMain, newLAF);
+        CommonSwing.setSwingLAF((Component) fMain, newLAF);
 
         if (pResult != null && gridFormat) {
             setResultsInGrid();
@@ -2150,9 +2292,10 @@ implements ActionListener, WindowListener, KeyListener {
      * These are settings for items in the View and Options pulldown menus,
      * plus Help/Show Tooltips.
      */
-    public static class DBMPrefs {
-
-        private File prefsFile = null;
+    public class DBMPrefs {
+        public File prefsFile = null;
+        /** The constructor guarantees that this will be null for Applet,
+         *  non-null if using a local preferences file */
 
         // Set defaults from Data
         boolean autoRefresh   = true;
@@ -2163,134 +2306,131 @@ implements ActionListener, WindowListener, KeyListener {
         String  laf           = CommonSwing.Native;
 
         // Somebody with more time can store the font settings.  IMO, that
-        // menu item shouldn'tString even be there if the settings aren't persisted.
+        // menu item shouldn't even be there if the settings aren't persisted.
         boolean showTooltips = true;
 
-        public DBMPrefs()
-        throws NoSuchMethodException, ClassNotFoundException,
-               InstantiationException, IllegalAccessException,
-               InvocationTargetException {
+        public DBMPrefs(boolean isApplet) throws IOException {
+            if (isApplet) {
+            } else {
+                if (homedir == null) {
+                    throw new IOException(
+                            "Skipping preferences since do not know home dir");
+                }
 
-            String homedir = null;
-
-            // May be running under a security manager
-            try {
-                Class c =
-                    Class.forName("sun.security.action.GetPropertyAction");
-                Constructor constructor = c.getConstructor(new Class[]{
-                    String.class });
-                java.security.PrivilegedAction a =
-                    (java.security.PrivilegedAction) constructor.newInstance(
-                        new Object[]{ "user.home" });
-
-                homedir =
-                    (String) java.security.AccessController.doPrivileged(a);
                 prefsFile = new File(homedir, "dbmprefs.properties");
-            } catch (NoSuchMethodException e) {
-                System.err.println(
-                    "Failed to get home directory.\n"
-                    + "Therefore not retrieving/storing user preferences.\n("
-                    + e.getMessage() + ')');
-
-                throw e;
-            } catch (ClassNotFoundException e) {
-                System.err.println(
-                    "Failed to get home directory.\n"
-                    + "Therefore not retrieving/storing user preferences.\n("
-                    + e.getMessage() + ')');
-
-                throw e;
-            } catch (InstantiationException e) {
-                System.err.println(
-                    "Failed to get home directory.\n"
-                    + "Therefore not retrieving/storing user preferences.\n("
-                    + e.getMessage() + ')');
-
-                throw e;
-            } catch (IllegalAccessException e) {
-                System.err.println(
-                    "Failed to get home directory.\n"
-                    + "Therefore not retrieving/storing user preferences.\n("
-                    + e.getMessage() + ')');
-
-                throw e;
-            } catch (InvocationTargetException e) {
-                System.err.println(
-                    "Failed to get home directory.\n"
-                    + "Therefore not retrieving/storing user preferences.\n("
-                    + e.getMessage() + ')');
-
-                throw e;
             }
-
             load();
         }
 
-        private static final String tString = Boolean.TRUE.toString();
-        private static final String fString = Boolean.FALSE.toString();
-
-        public void load() {
-
-            Properties props = new Properties();
-
-            if (!prefsFile.exists()) {
-                return;
-            }
-
-            try {
-                FileInputStream fis = new FileInputStream(prefsFile);
-
-                props.load(fis);
-                fis.close();
-            } catch (IOException ioe) {
-                throw new RuntimeException("Failed to read preferences file '"
-                                           + prefsFile + "':  "
-                                           + ioe.getMessage());
-            }
-
+        public void load() throws IOException {
             String tmpString;
 
-            tmpString = props.getProperty("autoRefresh");
+            if (prefsFile == null) {
+                // LOAD PREFERENCES FROM APPLET PARAMS
+                tmpString = getParameter("autoRefresh");
 
-            if (tmpString != null) {
-                autoRefresh = Boolean.valueOf(tmpString).booleanValue();
-            }
+                if (tmpString != null) {
+                    autoRefresh = Boolean.valueOf(tmpString).booleanValue();
+                }
 
-            tmpString = props.getProperty("showRowCounts");
+                tmpString = getParameter("showRowCounts");
 
-            if (tmpString != null) {
-                showRowCounts = Boolean.valueOf(tmpString).booleanValue();
-            }
+                if (tmpString != null) {
+                    showRowCounts = Boolean.valueOf(tmpString).booleanValue();
+                }
 
-            tmpString = props.getProperty("showSysTables");
+                tmpString = getParameter("showSysTables");
 
-            if (tmpString != null) {
-                showSysTables = Boolean.valueOf(tmpString).booleanValue();
-            }
+                if (tmpString != null) {
+                    showSysTables = Boolean.valueOf(tmpString).booleanValue();
+                }
 
-            tmpString = props.getProperty("showSchemas");
+                tmpString = getParameter("showSchemas");
 
-            if (tmpString != null) {
-                showSchemas = Boolean.valueOf(tmpString).booleanValue();
-            }
+                if (tmpString != null) {
+                    showSchemas = Boolean.valueOf(tmpString).booleanValue();
+                }
 
-            tmpString = props.getProperty("resultGrid");
+                tmpString = getParameter("resultGrid");
 
-            if (tmpString != null) {
-                resultGrid = Boolean.valueOf(tmpString).booleanValue();
-            }
+                if (tmpString != null) {
+                    resultGrid = Boolean.valueOf(tmpString).booleanValue();
+                }
 
-            tmpString = props.getProperty("laf");
-            laf       = ((tmpString == null) ? CommonSwing.Native
-                                             : tmpString);
-            tmpString = props.getProperty("showTooltips");
+                tmpString = getParameter("laf");
+                laf       = ((tmpString == null) ? CommonSwing.Native
+                                                 : tmpString);
+                tmpString = getParameter("showTooltips");
 
-            if (tmpString != null) {
-                showTooltips = Boolean.valueOf(tmpString).booleanValue();
+                if (tmpString != null) {
+                    showTooltips = Boolean.valueOf(tmpString).booleanValue();
+                }
+            } else {
+                // LOAD PREFERENCES FROM LOCAL PREFERENCES FILE
+
+                if (!prefsFile.exists()) {
+                    throw new IOException("No such file: " + prefsFile);
+                }
+
+                Properties props = new Properties();
+
+                try {
+                    FileInputStream fis = new FileInputStream(prefsFile);
+
+                    props.load(fis);
+                    fis.close();
+                } catch (IOException ioe) {
+                    throw new IOException("Failed to read preferences file '"
+                                               + prefsFile + "':  "
+                                               + ioe.getMessage());
+                }
+
+                tmpString = props.getProperty("autoRefresh");
+
+                if (tmpString != null) {
+                    autoRefresh = Boolean.valueOf(tmpString).booleanValue();
+                }
+
+                tmpString = props.getProperty("showRowCounts");
+
+                if (tmpString != null) {
+                    showRowCounts = Boolean.valueOf(tmpString).booleanValue();
+                }
+
+                tmpString = props.getProperty("showSysTables");
+
+                if (tmpString != null) {
+                    showSysTables = Boolean.valueOf(tmpString).booleanValue();
+                }
+
+                tmpString = props.getProperty("showSchemas");
+
+                if (tmpString != null) {
+                    showSchemas = Boolean.valueOf(tmpString).booleanValue();
+                }
+
+                tmpString = props.getProperty("resultGrid");
+
+                if (tmpString != null) {
+                    resultGrid = Boolean.valueOf(tmpString).booleanValue();
+                }
+
+                tmpString = props.getProperty("laf");
+                laf       = ((tmpString == null) ? CommonSwing.Native
+                                                 : tmpString);
+                tmpString = props.getProperty("showTooltips");
+
+                if (tmpString != null) {
+                    showTooltips = Boolean.valueOf(tmpString).booleanValue();
+                }
             }
         }
 
         public void store() {
+            if (prefsFile == null) {
+                // Can't persist Applet settings.
+                return;
+            }
 
             Properties props = new Properties();
 
@@ -2322,4 +2462,7 @@ implements ActionListener, WindowListener, KeyListener {
             }
         }
     }
+
+    private static final String tString = Boolean.TRUE.toString();
+    private static final String fString = Boolean.FALSE.toString();
 }
