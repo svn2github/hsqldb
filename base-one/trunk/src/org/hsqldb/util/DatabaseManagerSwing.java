@@ -247,9 +247,9 @@ implements ActionListener, WindowListener, KeyListener {
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.org.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.58 $";
+        + "problem reports or help requests:  $Revision: 1.59 $";
     private static final String ABOUT_TEXT =
-        "$Revision: 1.58 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.59 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2001-2005, The HSQL Development Group.\n"
         + "http://hsqldb.org\n\n\n"
@@ -419,6 +419,9 @@ implements ActionListener, WindowListener, KeyListener {
         } finally {
             setWaiting(null);
         }
+        if (c != null) {
+            connect(c);
+        }
         if (getParameter("loadSampleData") != null
                 && getParameter("loadSampleData").equals("true")) {
             insertTestData();
@@ -531,13 +534,12 @@ implements ActionListener, WindowListener, KeyListener {
             m.setWaiting(null);
         }
 
-        if (c == null) {
-            return;
+        if (c != null) {
+            m.connect(c);
         }
 
         // Added: (weconsultants@users): For preloadng FontDialogSwing
         FontDialogSwing.CreatFontDialog(refForFontDialogSwing);
-        m.connect(c);
     }
 
     /**
