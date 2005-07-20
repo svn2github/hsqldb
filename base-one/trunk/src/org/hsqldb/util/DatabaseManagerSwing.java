@@ -247,9 +247,9 @@ implements ActionListener, WindowListener, KeyListener {
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.org.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.59 $";
+        + "problem reports or help requests:  $Revision: 1.60 $";
     private static final String ABOUT_TEXT =
-        "$Revision: 1.59 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.60 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2001-2005, The HSQL Development Group.\n"
         + "http://hsqldb.org\n\n\n"
@@ -425,6 +425,10 @@ implements ActionListener, WindowListener, KeyListener {
         if (getParameter("loadSampleData") != null
                 && getParameter("loadSampleData").equals("true")) {
             insertTestData();
+            try { Thread.sleep(1000); } catch (InterruptedException ie) {};
+            // I don't know why, but the tree refresh below sometimes
+            // doesn't show all tables unless I put this delay here.
+            refreshTree();
         }
         if (getParameter("schemaFilter") != null) {
             schemaFilter = getParameter("schemaFilter");
