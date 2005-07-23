@@ -33,7 +33,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.32 2005/06/01 02:25:19 unsaved Exp $
+# $Id: hsqldb,v 1.33 2005/07/23 21:48:55 unsaved Exp $
 
 # UNIX init script for HSQLDB.
 
@@ -250,6 +250,29 @@ esac
 # "chown" lives here on some UNIXes.
 PATH="$PATH:/usr/sbin"
 
+# Make a good effort (but not bullet-proof) check on permissions of the
+# auth file.  Unfortunately, if auth-file is not specified, this depends
+# upon both (a) $HOME being set; and (b) SqlToolSprayer and SqlTool defaults.
+# On the other hand, it works great if AUTH_FILE is set explicitly by user.
+if [ -z "$AUTH_FILE" ] && [ -z "$HOME" ]; then
+    : # Lousy init environment didn't set $HOME, so can't find dflt cfg file.
+else
+    _AUTH_TEST_PATH="$AUTH_FILE"
+    [ -n "${_AUTH_TEST_PATH}" ] || _AUTH_TEST_PATH="$HOME/sqltool.rc"
+    [ -f "$_AUTH_TEST_PATH" ] || {
+        echo "No auth file found at '$_AUTH_TEST_PATH'" 1>&2
+        exit 2
+    }
+    [ -r "$_AUTH_TEST_PATH" ] || {
+        echo "Auth file '$_AUTH_TEST_PATH' not readable" 1>&2
+        exit 2
+    }
+    ls -ld "$_AUTH_TEST_PATH" | grep '^-..------' > /dev/null 2>&1 || {
+        echo "Fix permissions on '$_AUTH_TEST_PATH' like 'chmod 600 $_AUTH_TEST_PATH'" 1>&2
+        exit 2
+    }
+fi
+
 # Set HSQLDB_PID according to pid file.
 HSQLDB_PID=
 [ -r "$PIDFILE" ]  && {
@@ -265,7 +288,10 @@ HSQLDB_PID=
         echo "Failed to read pid file '$PIDFILE'" 1>&2
         exit 6
     }
-    case "$HSQLDB_PID" in *[a-zA-Z/!@#$%^*+=_~]*) HSQLDB_PID=;; esac
+    case "$HSQLDB_PID" in
+        *[a-zA-Z/!@#$%*+=_~]*) HSQLDB_PID=;;
+        *'^'*) HSQLDB_PID=;;
+    esac
     [ -n "$HSQLDB_PID" ] || {
         echo "Pid file '$PIDFILE' does not contain a valid process identifier" 1>&2
         exit 6
