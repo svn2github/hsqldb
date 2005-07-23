@@ -240,6 +240,8 @@ implements ActionListener, WindowListener, KeyListener {
         }
     }
 
+    ArrayList localActionList = new ArrayList();
+
     private JFrame jframe = null;
 
     private static final String DEFAULT_RCFILE = homedir + "/dbmanager.rc";
@@ -247,9 +249,9 @@ implements ActionListener, WindowListener, KeyListener {
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.org.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.60 $";
+        + "problem reports or help requests:  $Revision: 1.61 $";
     private static final String ABOUT_TEXT =
-        "$Revision: 1.60 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.61 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2001-2005, The HSQL Development Group.\n"
         + "http://hsqldb.org\n\n\n"
@@ -293,7 +295,8 @@ implements ActionListener, WindowListener, KeyListener {
     boolean                bHelp;
     RootPaneContainer      fMain;
     static boolean         bMustExit;
-    String                 ifHuge = "";
+    /** Value of this variable only retained if huge input script read in. */
+    String                 sqlScriptBuffer = null;
     JToolBar               jtoolbar;
     private boolean        showSchemas  = true;
     private boolean        showTooltips = true;
@@ -379,10 +382,16 @@ implements ActionListener, WindowListener, KeyListener {
     };
 
     public void init() {
+        javax.swing.AbstractButton btn;
 
         fMain = this;
 
         main();
+        for (int i = 0; i < localActionList.size(); i++) {
+            btn = (javax.swing.AbstractButton) localActionList.get(i);
+            btn.setEnabled(false);
+        }
+
         Connection c = null;
         boolean auto = false;
         if (getParameter("jdbcDriver") != null) {
@@ -544,6 +553,7 @@ implements ActionListener, WindowListener, KeyListener {
 
         // Added: (weconsultants@users): For preloadng FontDialogSwing
         FontDialogSwing.CreatFontDialog(refForFontDialogSwing);
+        m.start();
     }
 
     /**
@@ -644,6 +654,8 @@ implements ActionListener, WindowListener, KeyListener {
     private DBMPrefs prefs = null;
 
     public void main() {
+        JMenu jmenu;
+        JMenuItem mitem;
 
         try {
             prefs = new DBMPrefs(fMain instanceof JApplet);
@@ -682,7 +694,14 @@ implements ActionListener, WindowListener, KeyListener {
             "-Save Result...", "--", "-Exit"
         };
 
-        addMenu(bar, "File", fitems);
+        jmenu = addMenu(bar, "File", fitems);
+        // All actions after Connect and the divider are local.
+        for (int i = 2; i < jmenu.getItemCount(); i++) {
+            mitem = jmenu.getItem(i);
+            if (mitem != null) {
+                localActionList.add(mitem);
+            }
+        }
 
         Object[] vitems = {
             "RRefresh Tree", boxAutoRefresh, "--", boxRowCounts, boxShowSys,
@@ -774,7 +793,15 @@ implements ActionListener, WindowListener, KeyListener {
             "-Dump", "-Restore", "-Transfer"
         };
 
-        addMenu(bar, "Tools", stools);
+
+        jmenu = addMenu(bar, "Tools", stools);
+        localActionList.add(jmenu);
+        for (int i = 0; i < jmenu.getItemCount(); i++) {
+            mitem = jmenu.getItem(i);
+            if (mitem != null) {
+                localActionList.add(mitem);
+            }
+        }
         mnuSchemas.setMnemonic(KeyEvent.VK_S);
         bar.add(mnuSchemas);
 
@@ -846,16 +873,35 @@ implements ActionListener, WindowListener, KeyListener {
 
             // if insert stmet is thousands of records...skip showing it
             // as text.  Too huge.
-            StringBuffer buf = new StringBuffer();
+            sqlScriptBuffer = DatabaseManagerCommon.readFile(defScript);
 
-            ifHuge = DatabaseManagerCommon.readFile(defScript);
-
-            if (4096 <= ifHuge.length()) {
-                buf.append(
-                    "This huge file cannot be edited. Please execute\n");
-                txtCommand.setText(buf.toString());
+            if (4096 <= sqlScriptBuffer.length()) {
+                int eoThirdLine = sqlScriptBuffer.indexOf('\n');
+                if (eoThirdLine > 0) {
+                    eoThirdLine =
+                            sqlScriptBuffer.indexOf('\n', eoThirdLine + 1);
+                }
+                if (eoThirdLine > 0) {
+                    eoThirdLine =
+                            sqlScriptBuffer.indexOf('\n', eoThirdLine + 1);
+                }
+                if (eoThirdLine < 1) {
+                    eoThirdLine = 100;
+                }
+                txtCommand.setText("............... Script File loaded: "
+                        + defScript + " ..................... \n"
+                        + "............... Click Execute or Clear "
+                        + "...................\n" 
+                        + sqlScriptBuffer.substring(0, eoThirdLine + 1)
+                        + "..........................................."
+                        + "..............................\n"
+                        + "............................................."
+                        + "............................\n");
+                txtCommand.setEnabled(false);
             } else {
-                txtCommand.setText(ifHuge);
+                txtCommand.setText(sqlScriptBuffer);
+                sqlScriptBuffer = null;
+                txtCommand.setEnabled(true);
             }
         }
 
@@ -864,13 +910,14 @@ implements ActionListener, WindowListener, KeyListener {
         txtCommand.requestFocus();
     }
 
-    private void addMenu(JMenuBar b, String name, Object[] items) {
+    private JMenu addMenu(JMenuBar b, String name, Object[] items) {
 
         JMenu menu = new JMenu(name);
 
         menu.setMnemonic(name.charAt(0));
         addMenuItems(menu, items);
         b.add(menu);
+        return menu;
     }
 
     private void addMenuItems(JMenu f, Object[] m) {
@@ -1004,17 +1051,37 @@ implements ActionListener, WindowListener, KeyListener {
                 File file = f.getSelectedFile();
 
                 if (file != null) {
-                    StringBuffer buf = new StringBuffer();
-
-                    ifHuge = DatabaseManagerCommon.readFile(
+                    sqlScriptBuffer = DatabaseManagerCommon.readFile(
                         file.getAbsolutePath());
 
-                    if (4096 <= ifHuge.length()) {
-                        buf.append(
-                            "This huge file cannot be edited. Please execute\n");
-                        txtCommand.setText(buf.toString());
+                    if (4096 <= sqlScriptBuffer.length()) {
+                        int eoThirdLine = sqlScriptBuffer.indexOf('\n');
+                        if (eoThirdLine > 0) {
+                            eoThirdLine = sqlScriptBuffer.indexOf(
+                                    '\n', eoThirdLine + 1);
+                        }
+                        if (eoThirdLine > 0) {
+                            eoThirdLine = sqlScriptBuffer.indexOf(
+                                    '\n', eoThirdLine + 1);
+                        }
+                        if (eoThirdLine < 1) {
+                            eoThirdLine = 100;
+                        }
+                        txtCommand.setText(
+                                "............... Script File loaded: "
+                                + file + " ..................... \n"
+                                + "............... Click Execute or Clear "
+                                + "...................\n" 
+                                + sqlScriptBuffer.substring(0, eoThirdLine + 1)
+                                + "........................................."
+                                + "................................\n"
+                                + "..........................................."
+                                + "..............................\n");
+                        txtCommand.setEnabled(false);
                     } else {
-                        txtCommand.setText(ifHuge);
+                        txtCommand.setText(sqlScriptBuffer);
+                        sqlScriptBuffer = null;
+                        txtCommand.setEnabled(true);
                     }
                 }
             }
@@ -1220,6 +1287,7 @@ implements ActionListener, WindowListener, KeyListener {
 
     public void windowClosing(WindowEvent ev) {
 
+        stop();
         try {
             if (cConn != null) {
                 cConn.close();
@@ -1253,9 +1321,10 @@ implements ActionListener, WindowListener, KeyListener {
 
     private void clear() {
 
-        ifHuge = "";
+        sqlScriptBuffer = null;
 
-        txtCommand.setText(ifHuge);
+        txtCommand.setText("");
+        txtCommand.setEnabled(true);
     }
 
     private String busyText = null;
@@ -1328,6 +1397,59 @@ implements ActionListener, WindowListener, KeyListener {
                 ((busyText == null) ? gResult.getRowCount() : 0));
     }
 
+    private Runnable enableButtonRunnable = new Runnable() {
+        public void run() {
+            jbuttonClear.setEnabled(true);
+            jbuttonExecute.setEnabled(true);
+        }
+    };
+    private Runnable disableButtonRunnable = new Runnable() {
+        public void run() {
+            jbuttonClear.setEnabled(false);
+            jbuttonExecute.setEnabled(false);
+        }
+    };
+
+    private Thread buttonUpdaterThread = null;
+
+    private static final int BUTTON_CHECK_PERIOD = 500;
+
+    private Runnable buttonUpdater = new Runnable() {
+
+        public void run() {
+            boolean havesql;
+            while (true) {
+                try {
+                    Thread.sleep(BUTTON_CHECK_PERIOD);
+                } catch (InterruptedException ie) {
+                }
+                if (buttonUpdaterThread == null) { // Pointer to me
+                    return;
+                }
+                havesql = (txtCommand.getText().length() > 0);
+                if (jbuttonClear.isEnabled() != havesql) {
+                    SwingUtilities.invokeLater(
+                        havesql ? enableButtonRunnable : disableButtonRunnable
+                    );
+                }
+            }
+        }
+    };
+
+    private JButton jbuttonClear;
+    private JButton jbuttonExecute;
+
+    public void start() {
+        if (buttonUpdaterThread == null) {
+            buttonUpdaterThread = new Thread(buttonUpdater);
+        }
+        buttonUpdaterThread.start();
+    }
+    public void stop() {
+System.err.println("Stopping");
+        buttonUpdaterThread = null;
+    }
+
     private Runnable treeRefreshRunnable = new Runnable() {
 
         public void run() {
@@ -1348,31 +1470,24 @@ implements ActionListener, WindowListener, KeyListener {
      * Schedules to run in a Gui-safe thread
      */
     protected void executeCurrentSQL() {
+        if (txtCommand.getText().length() < 1) {
+            CommonSwing.errorMessage("No SQL to execute");
+            return;
+        }
         backgroundIt(new StatementExecRunnable(), "Executing SQL");
     }
 
     protected class StatementExecRunnable implements Runnable {
-
-        private String sCmd;
-
-        protected StatementExecRunnable() {
-
-            if (4096 <= ifHuge.length()) {
-                sCmd = ifHuge;
-            } else {
-                sCmd = txtCommand.getText();
-            }
-        }
 
         public void run() {
 
             gResult.clear();
 
             try {
-                if (sCmd.startsWith("-->>>TEST<<<--")) {
+                if (txtCommand.getText().startsWith("-->>>TEST<<<--")) {
                     testPerformance();
                 } else {
-                    executeSQL(sCmd);
+                    executeSQL();
                 }
 
                 updateResult();
@@ -1391,13 +1506,17 @@ implements ActionListener, WindowListener, KeyListener {
     }
     ;
 
-    private void executeSQL(String sql) {
+    private void executeSQL() {
 
         String[] g   = new String[1];
+        String sql = null;
 
         try {
             lTime = System.currentTimeMillis();
 
+            sql = ((sqlScriptBuffer == null 
+                    ? txtCommand.getText() 
+                    : sqlScriptBuffer));
             sStatement.execute(sql);
 
             int r = sStatement.getUpdateCount();
@@ -1416,7 +1535,12 @@ implements ActionListener, WindowListener, KeyListener {
 
             lTime = System.currentTimeMillis() - lTime;
 
-            addToRecent(sql);
+            if (sqlScriptBuffer == null) {
+                addToRecent(sql);
+                txtCommand.setEnabled(true); // clear() does this otherwise
+            } else {
+                clear();
+            }
         } catch (SQLException e) {
             lTime = System.currentTimeMillis() - lTime;
             g[0]  = "SQL Error";
@@ -2143,8 +2267,7 @@ implements ActionListener, WindowListener, KeyListener {
         // I'm dropping "Statement" from  "Execute SQL Statement", etc.,
         // because it may or may not be "one statement", but it is SQL.
         // Build jbuttonClear Buttons - blaine
-        JButton jbuttonClear =
-            new JButton("Clear SQL",
+        jbuttonClear = new JButton("Clear SQL",
                         new ImageIcon(CommonSwing.getIcon("Clear")));
 
         jbuttonClear.putClientProperty("is3DEnabled", Boolean.TRUE);
@@ -2152,11 +2275,16 @@ implements ActionListener, WindowListener, KeyListener {
         jbuttonClear.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent actionevent) {
+                if (sqlScriptBuffer == null
+                        && txtCommand.getText().length() < 1) {
+                    CommonSwing.errorMessage("No SQL to clear");
+                    return;
+                }
                 clear();
             }
         });
 
-        JButton jbuttonExecute =
+        jbuttonExecute =
             new JButton("Execute SQL",
                         new ImageIcon(CommonSwing.getIcon("Execute")));
 
