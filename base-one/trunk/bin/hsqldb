@@ -33,7 +33,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.31 2005/05/18 11:10:34 unsaved Exp $
+# $Id: hsqldb,v 1.32 2005/06/01 02:25:19 unsaved Exp $
 
 # UNIX init script for HSQLDB.
 
@@ -142,7 +142,7 @@ case "`uname`" in
         PIDFILE=/var/run/hsqldb.pid
     ;;
     SunOS)
-        CFGFILE=/etc/hsqldb.cfg
+        CFGFILE=/etc/hsqldb.conf
         LOGFILE=/var/log/hsqldb.log
         PIDFILE=/etc/hsqldb.pid
     ;;
