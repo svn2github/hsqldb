@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.121 2005/06/30 15:18:26 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.122 2005/07/18 17:30:34 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -93,7 +93,7 @@ import java.util.TreeMap;
  * Most of the Special Commands and Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.121 $
+ * @version $Revision: 1.122 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlFile {
@@ -143,8 +143,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.121 $".substring("$Revision: ".length(),
-                "$Revision: 1.121 $".length() - 2);
+        revnum = "$Revision: 1.122 $".substring("$Revision: ".length(),
+                "$Revision: 1.122 $".length() - 2);
     }
 
     private static String BANNER =
@@ -1963,7 +1963,7 @@ public class SqlFile {
 
             curLinenum++;
 
-            if (s.trim().length() > 1 && s.charAt(0) == '*') {
+            if (s.trim().length() > 1 && s.trim().charAt(0) == '*') {
                 toker = new StringTokenizer(s.trim().substring(1));
                 curPlCommand = toker.nextToken();
 
