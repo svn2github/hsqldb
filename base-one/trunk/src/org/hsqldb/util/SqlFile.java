@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.122 2005/07/18 17:30:34 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.123 2005/07/23 02:08:30 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -93,7 +93,7 @@ import java.util.TreeMap;
  * Most of the Special Commands and Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.122 $
+ * @version $Revision: 1.123 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlFile {
@@ -143,8 +143,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.122 $".substring("$Revision: ".length(),
-                "$Revision: 1.122 $".length() - 2);
+        revnum = "$Revision: 1.123 $".substring("$Revision: ".length(),
+                "$Revision: 1.123 $".length() - 2);
     }
 
     private static String BANNER =
@@ -2537,6 +2537,8 @@ public class SqlFile {
                                   int[] incCols,
                                   String filter) throws SQLException {
 
+        java.sql.Timestamp ts;
+
         int     updateCount = (statement == null) ? -1
                                                   : statement
                                                       .getUpdateCount();
@@ -2678,16 +2680,19 @@ public class SqlFile {
                             // In many cases, the output is very user-
                             // unfriendly.  However, getTimestamp().toString()
                             // is consistent and convenient.
-                            val = ((dataType[insi] == java.sql.Types.TIMESTAMP)
-                                   ? r.getTimestamp(i).toString()
-                                   : r.getString(i));
+                            if (dataType[insi] == java.sql.Types.TIMESTAMP) {
+                                ts = r.getTimestamp(i);
+                                val = ((ts == null) ? null : ts.toString());
+                            } else {
+                                val = r.getString(i);
 
-                            // If we tried to get a String but it failed,
-                            // try getting it with a String Stream
-                            if (val == null) {
-                                try {
+                                // If we tried to get a String but it failed,
+                                // try getting it with a String Stream
+                                if (val == null) {
+                                    try {
                                     val = streamToString(r.getAsciiStream(i));
-                                } catch (Exception e) {}
+                                    } catch (Exception e) {}
+                                }
                             }
                         }
 
