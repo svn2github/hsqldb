@@ -1,6 +1,6 @@
 UPGRADING FROM HSQLDBhsqldb v. 1.7.1
 
-$Id$
+$Id: upgrading.txt,v 1.1 2005/07/25 00:14:51 unsaved Exp $
 
 Remove the old package
 
@@ -66,3 +66,12 @@ III.Update your web/server.properties file.
     .../data/db1 directory (which will no longer be used); and
     (b) to make sure that the path to .../data/db1 is correct.  If
     the filepath is relative, it is relative to SERVER_HOME.
+
+IV. Merge any customizations which you may have made from 
+    /etc/hsqldb.conf.20050724 into /etc/hsqldb.conf.  You will see
+    that the way several settings are made have changed, but the
+    variable names and comments should make it clear how to make
+    new settings which are equivalent to your old settings.  As
+    an example, version 1.7.1 had settings for HSQLDB_HOME and
+    JAVA_HOME.  The new version has the more specific settings 
+    HSQLDB_JAR_PATH and JAVA_EXECUTABLE instead.
