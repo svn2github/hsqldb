@@ -33,7 +33,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.34 2005/07/23 23:08:19 unsaved Exp $
+# $Id: hsqldb,v 1.35 2005/07/25 21:23:55 unsaved Exp $
 
 # UNIX init script for HSQLDB.
 
@@ -78,6 +78,14 @@
 # Server/WebServer invocation, and can start as many other classes as you
 # wish by using the INVOC_ADDL_ARGS setting (this includes running
 # multiple HSQLDB Servers of various types).
+
+# Recommended locations for configuration file:
+    Darwin, SunOS, Solaris:  /etc/hsqldb.conf
+               (However, Sunfreeware.com builds use /usr/local/etc).
+    Linux:  /etc/sysconfig
+    FreeBSD:  /usr/local/etc/hsqldb.cfg
+# You can put it at any of these locations and it will be used.  For
+# your sanity, only put a file at one of these locations.
 
 #  -- blaine.simpson@admc.com
 
