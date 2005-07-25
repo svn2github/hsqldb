@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<!-- $Id: guide.xml,v 1.39 2005/07/02 09:11:39 fredt Exp $ -->
+<!-- $Id: guide.xml,v 1.40 2005/07/25 21:03:58 unsaved Exp $ -->
 
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN"
 "http://www.oasis-open.org/docbook/xml/4.2CR1/docbookx.dtd" [
-    <!ENTITY revision "$Revision: 1.39 $">
-    <!ENTITY date "$Date: 2005/07/02 09:11:39 $">
+    <!ENTITY revision "$Revision: 1.40 $">
+    <!ENTITY date "$Date: 2005/07/25 21:03:58 $">
     <!ENTITY alts SYSTEM "../formats-section.xml">
-    <!ENTITY docbasename "doc/guide">
-    <!ENTITY baseurl "http://hsqldb.org/&docbasename;">
+    <!ENTITY docbasename "guide">
+    <!ENTITY baseurl "http://hsqldb.org/doc/&docbasename;">
     <!ENTITY blaineaddr "blaine.simpson@admc.com">
     <!ENTITY fredaddr "ft@cluedup.com">
 

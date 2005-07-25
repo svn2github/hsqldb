@@ -1,4 +1,4 @@
-<!-- $Id: formats-section.xml,v 1.1 2004/04/11 04:42:02 unsaved Exp $ -->
+<!-- $Id: formats-section.xml,v 1.2 2004/04/23 17:04:41 unsaved Exp $ -->
 
 <!-- This file is included into docbook source files.
     (At this time, this is accomplished with an external general XML entity)
@@ -18,7 +18,7 @@
         If you want a different format of the same <emphasis>version</emphasis>
         of the document you are reading now, then you should try your
         current distro.
-        If you want the latest productoin version, you should try &baseurl;.
+        If you want the latest production version, you should try &baseurl;.
     </para>
     <para>
         Sometimes, distributions other than &baseurl; do not host all
