@@ -33,7 +33,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.33 2005/07/23 21:48:55 unsaved Exp $
+# $Id: hsqldb,v 1.34 2005/07/23 23:08:19 unsaved Exp $
 
 # UNIX init script for HSQLDB.
 
@@ -127,34 +127,41 @@ SERVER_ADDL_CLASSPATH=
 INVOC_ADDL_ARGS=
 case "`uname`" in
     Darwin)     # I.e. Mac OS X.  I don't know about older Mac OSes.
-        CFGFILE=/etc/hsqldb.conf
         LOGFILE=/var/log/hsqldb.log
         PIDFILE=/var/run/hsqldb.pid
     ;;
     Linux)
-        CFGFILE=/etc/sysconfig/hsqldb
         LOGFILE=/var/log/hsqldb.log
         PIDFILE=/var/run/hsqldb.pid
     ;;
     FreeBSD)
-        CFGFILE=/usr/local/etc/hsqldb.cfg
         LOGFILE=/var/log/hsqldb.log
         PIDFILE=/var/run/hsqldb.pid
     ;;
     SunOS)
-        CFGFILE=/etc/hsqldb.conf
         LOGFILE=/var/log/hsqldb.log
         PIDFILE=/etc/hsqldb.pid
     ;;
     *)
-        CFGFILE=/etc/hsqldb.cfg
         LOGFILE=/var/log/hsqldb.log
         PIDFILE=/etc/hsqldb.pid
     ;;
 esac
 
+for candidate in /etc/sysconfig/hsqldb /etc/hsqldb.conf /etc/hsqldb.cfg  \
+    /usr/local/etc/hsqldb.cfg; do
+    [ -f $candidate ] && {
+        CFGFILE=$candidate
+        break
+    }
+done
+[ -n "$CFGFILE" ] || {
+    echo "No global config file found in any of allowed locations" 1>&2
+    exit 11
+}
+
 # Sanity check
-[ -n "$CFGFILE" ] && [ -n "$LOGFILE" ] && [ -n "$PIDFILE" ] || {
+[ -n "$LOGFILE" ] && [ -n "$PIDFILE" ] || {
     echo "Internal problem in init script" 1>&2
     exit 11
 }
