@@ -1,7 +1,7 @@
 How to build Hsqldb documentation from DocBook source
 -----------------------------------------------------
 
-$Id: readmedocbook.txt,v 1.5 2004/10/22 20:48:17 thomasm Exp $
+$Id: readmedocbook.txt,v 1.6 2005/07/25 03:37:41 unsaved Exp $
 
 1.  OBTAIN REQUIRED LIBRARIES AND STYLE SHEETS
 
@@ -32,6 +32,10 @@ specific reason to use something else.
     ant-contrib*.jar from ant-contrib-*-bin.*, available from 
     http://sourceforge.net/project/showfiles.php?group_id=36177
     Place this jar into the lib subdirectory of your Ant installation.
+    [Some distros spread the Ant files all over the place, and the
+    lib directory isn't referenced at all.  In that case, just add
+    the jar file to your classpath (exporting if needed by your shell)
+    before running ant.
 
     The docbook-xsl package from 
   http://sourceforge.net/project/showfiles.php?group_id=21935&package_id=16608
