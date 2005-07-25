@@ -1,7 +1,7 @@
 How to build Hsqldb documentation from DocBook source
 -----------------------------------------------------
 
-$Id: readmedocbook.txt,v 1.4 2004/05/17 12:50:20 fredt Exp $
+$Id: readmedocbook.txt,v 1.5 2004/10/22 20:48:17 thomasm Exp $
 
 1.  OBTAIN REQUIRED LIBRARIES AND STYLE SHEETS
 
@@ -51,7 +51,7 @@ PDF or postscript, then you also need the following.
     Just pull the JimiProClasses.zip file out and rename it to 
     jimi-1.0.jar in the lib subdirectory of your FOP installation.
     (If this seems weird to you, read about it in the FOP docs.
-    Note that we use JIMI insnstead of JAI because JAI is non-portable).
+    Note that we use JIMI instead of JAI because JAI is non-portable).
 
 
 2.  MAKE A build.properties TO TELL Ant WHERE TO FIND THE LIBRARIES AND
