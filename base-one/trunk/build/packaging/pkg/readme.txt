@@ -1,6 +1,6 @@
 README FOR THE SOLARIS HSQLDB PACKAGE
 
-$Id: readme.txt,v 1.11 2002/11/10 23:02:50 unsaved Exp $
+$Id: readme.txt,v 1.12 2005/07/23 23:54:17 unsaved Exp $
 
 
 JAVA SUPPORT
@@ -92,7 +92,7 @@ SOLARIS
     To install the Solaris package
 
 	uncompress HSQLDBhsqldb-1_8_1-solaris.pkg.Z
-	pkgadd -n HSQLDBhsqldb-1_8_1-solaris.pkg HSQLhsqldb
+	pkgadd -d HSQLDBhsqldb-1_8_1-solaris.pkg HSQLDBhsqldb
 
     (The version number will vary, of course).
 
@@ -101,7 +101,7 @@ SOLARIS
     "basedir" whatever you want, then specify the Admin file to
     pkgadd with -a.
 
-	pkgadd -na file.admin HSQLDBhsqldb-1_7_1-solaris.pkg HSQLhsqldb
+	pkgadd -a file.admin -d HSQLDBhsqldb-1_7_1-solaris.pkg HSQLDBhsqldb
 
 
     MULTIPLE INSTANCES
@@ -128,12 +128,9 @@ properly in some future version.
 To build a Solaris package, you need to do a cvs checkout of the
 hsqldb-dev module (HEAD or a static tag, depending on what you
 want).  For suggestions of the checkout command, click the CVS tab at
-http://sourceforge.net/projects/hsqldb.  [POSTNOTE:  In most cases, it
-will make sense to do a cvs export instead of a cvs checkout).]
-[POSTNOTE:  I don't know if the following note still applies.  I need
-to update this after I tweak the build process.] You MUST!! put the
-hsqldb*.jar files into place before running pkgbuild, or your resultant
-package will not contain any hsqldb*.jar files.
+http://sourceforge.net/projects/hsqldb.
+Make sure to build documentation and hsqldb.jar before building this
+package!
 
 .../build/packaging/pkg/pkgbuild is the main script to build a Solaris 
 package.  Give the -p switch to rebuild the prototype file 

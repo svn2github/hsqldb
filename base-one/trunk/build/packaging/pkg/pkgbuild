@@ -1,10 +1,14 @@
 #!/bin/sh
 
-# $Id: pkgbuild,v 1.7 2002/11/10 22:44:29 unsaved Exp $
+# $Id: pkgbuild,v 1.8 2002/11/10 22:50:51 unsaved Exp $
 
 # TODO:  Perhaps use RCS keywords to generate versions and write them
 #        into the install scripts, the info file, and to use in the
 #        stream package file name.
+
+# Makes the very large assumption that files here are owned by
+# user $USER and group $USER, and therefore fixes ownerships from
+# "$USER $USER$" to "root bin".
 
 set +u
 
@@ -112,17 +116,19 @@ SRCBASE=`dirname $PWD`
 SRCBASE=`dirname $SRCBASE`
 SRCBASE=`dirname $SRCBASE`
 
-for jarfile in $SRCBASE/lib/hsqldb_jre*.jar; do
-    [ -f "$jarfile" ] ||
-     Failout "Looks like your hsqldb_jre*.jar files are not built"
-done
+[ -f "$SRCBASE/lib/hsqldb.jar" ] ||
+Failout "Looks like your hsqldb.jar file is not built"
 
 PROTOFILE="`echo cfg/H*.proto`"
 [ -f "$PROTOFILE" ] ||
  Failout "You need to fix cfg/H*.proto, or fix the wildcard in this script
 Even if you're generating it, you have to start with an old version."
 
+[ -f cfg/HSQLhsqldb.copyright ] ||
+cp -p ../../../doc/hsqldb_lic.txt cfg/HSQLhsqldb.copyright
 
+[ -z "$USER" ] && USER=LOGNAME
+export USER
 [ -n "$GENPROTO" ] && {
     perl -v > /dev/null 2>&1 ||
      Failout 'You need perl in your search path to generate the proto file'
@@ -134,15 +140,13 @@ Even if you're generating it, you have to start with an old version."
 	next if m:^\s*\S\s+none\s+\$VERDIR/classes:;
 	#next if m:^\s*\S\s+none\s+\$VERDIR/src:; Keep SOURCE!
 	next if m:^[^#=]*build/packaging:;
-    	next if m:^[^#]*[/ ]CVS:;
-	next if m:/lib/hsqldb\.jar\b:;
-	s/ 0644 root other$// unless /^\!default\s/;
+    next if m:^[^#]*[/ ]CVS:;
+	s/ $ENV{USER} $ENV{USER}$/ root bin/;
+	s/ 0644 root bin$// unless /^\!default\s/;
+	s/ 0664 root bin$// unless /^\!default\s/;
+	s/ 0775 root bin$/ 0755 root bin/;
 	print;
     ' $PROTOFILE
-    grep '^d none $VERDIR/data 0755 root other' $PROTOFILE ||
-     echo 'd none $VERDIR/data 0755 root other' >> $PROTOFILE
-    grep '^d none $VERDIR/data/db1 0755 hsqldb hsqldb' $PROTOFILE ||
-     echo 'd none $VERDIR/data/db1 0755 hsqldb hsqldb' >> $PROTOFILE
 }
 
 # Be careful if you edit this
