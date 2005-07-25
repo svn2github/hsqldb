@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: dbmanager.xml,v 1.10 2005/05/26 23:22:06 fredt Exp $ -->
+<!-- $Id: dbmanager.xml,v 1.11 2005/06/04 23:46:41 unsaved Exp $ -->
 <appendix>
   <title>Database Manager</title>
 
@@ -30,9 +30,9 @@
       </author>
     </authorgroup>
 
-    <edition>$Revision: 1.10 $</edition>
+    <edition>$Revision: 1.11 $</edition>
 
-    <pubdate>$Date: 2005/05/26 23:22:06 $</pubdate>
+    <pubdate>$Date: 2005/06/04 23:46:41 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -222,5 +222,72 @@ CLASSPATH=/path/to/hsqldbutil.jar:/home/bob/myapp/classes:/usr/local/lib/pg.jdbc
 export CLASSPATH
 java org.hsqldb.util.DatabaseManagerSwing --urlid urlid</screen>
       </informalexample></para>
+  </section>
+
+  <section>
+      <title>DatabaseManagerSwing as an Applet</title>
+      <simpara>
+          DatabaseManagerSwing is also an applet.
+          You can use it in HTML, JSPs, etc.
+          Be aware that in Applet mode, actions to load or save local files
+          will be disabled, and attempts to access any server other than 
+          the HTML-serving-host will be fail.
+      </simpara>
+      <para>
+          Since the Applet can not store or load locally saved preferences,
+          the only way to have persistent preference settings is by using
+          Applet parameters.
+          <variablelist><title>DatabaseManagerSwing Applet Parameters</title>
+              <varlistentry><term>jdbcUrl</term><listitem><simpara>
+                  URL of a data source to auto-connect to.  String value.
+              </simpara></listitem></varlistentry>
+              <varlistentry><term>jdbcDriver</term><listitem><simpara>
+                  URL of a data source to auto-connect to.  String value.
+                  Defaults to <literal>org.hsqldb.jdbcDriver</literal>.
+              </simpara></listitem></varlistentry>
+              <varlistentry><term>jdbcUser</term><listitem><simpara>
+                  User name for data source to auto-connect to.  String value.
+              </simpara></listitem></varlistentry>
+              <varlistentry><term>jdbcPassword</term><listitem><simpara>
+                  Password for data source to auto-connect to.  String value.
+                  Defaults to zero-length string.
+              </simpara></listitem></varlistentry>
+              <varlistentry><term>schemaFilter</term><listitem><simpara>
+                  Display only object from this schema in the object navigator.
+                  String value.
+              </simpara></listitem></varlistentry>
+              <varlistentry><term>laf</term><listitem><simpara>
+                  Look-and-feel.  String value.
+              </simpara></listitem></varlistentry>
+              <varlistentry><term>loadSampleData</term><listitem><simpara>
+                  Auto-load sample data.  Boolean value.
+                  Defaults to false.
+              </simpara></listitem></varlistentry>
+              <varlistentry><term>autoRefresh</term><listitem><simpara>
+                  Auto-refresh the object navigator when DDL modifications
+                  detected in user SQL commands.  Boolean value.
+                  Defaults to true.
+              </simpara></listitem></varlistentry>
+              <varlistentry><term>showRowCounts</term><listitem><simpara>
+                  Show number of rows in each table in the object navigator.
+                  Boolean value.  Defaults to false.
+              </simpara></listitem></varlistentry>
+              <varlistentry><term>showSysTables</term><listitem><simpara>
+                  Show system tables in the object navigator.  Boolean value.
+                  Defaults to false.
+              </simpara></listitem></varlistentry>
+              <varlistentry><term>showSchemas</term><listitem><simpara>
+                  Show object names like schema.name in object navigator.
+                  Boolean value.  Defaults to true.
+              </simpara></listitem></varlistentry>
+              <varlistentry><term>resultGrid</term><listitem><simpara>
+                  Show query results in Gui grid (as opposed to in plain text).
+                  Boolean value.  Defaults to true.
+              </simpara></listitem></varlistentry>
+              <varlistentry><term>showToolTips</term><listitem><simpara>
+                  Show help hover-text.  Boolean value.  Defaults to true.
+              </simpara></listitem></varlistentry>
+          </variablelist>
+      </para>
   </section>
 </appendix>
