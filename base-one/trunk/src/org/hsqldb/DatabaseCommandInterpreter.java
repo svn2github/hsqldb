@@ -1907,7 +1907,7 @@ class DatabaseCommandInterpreter {
     private void processAlterSchema() throws HsqlException {
 
         // only the one supported operation, so far
-        processAlterSequenceRename();
+        processAlterSchemaRename();
     }
 
     /**
@@ -2639,11 +2639,11 @@ class DatabaseCommandInterpreter {
     }
 
     /**
-     * Handles ALTER SEQUENCE ... RENAME TO .
+     * Handles ALTER SCHEMA ... RENAME TO .
      *
      * @throws HsqlException
      */
-    private void processAlterSequenceRename() throws HsqlException {
+    private void processAlterSchemaRename() throws HsqlException {
 
         String name = tokenizer.getSimpleName();
 
