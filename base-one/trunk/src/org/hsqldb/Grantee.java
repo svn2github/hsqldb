@@ -263,7 +263,7 @@ public class Grantee {
         StringBuffer sb = new StringBuffer();
 
         while (it.hasNext()) {
-            if (sb.length() > 1) {
+            if (sb.length() > 0) {
                 sb.append(',');
             }
 
