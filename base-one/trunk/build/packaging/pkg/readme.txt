@@ -1,6 +1,6 @@
 README FOR THE SOLARIS HSQLDB PACKAGE
 
-$Id: readme.txt,v 1.12 2005/07/23 23:54:17 unsaved Exp $
+$Id: readme.txt,v 1.13 2005/07/25 02:42:10 unsaved Exp $
 
 
 JAVA SUPPORT
@@ -9,16 +9,27 @@ The delivered hsqldb.conf uses /usr/bin/java (which on Solaris
 is equivalent to /bin/java since /bin is just a sym-link to /usr/bin).
 To use some other JRE, set JAVA_EXECUTABLE in /etc/hsqldb.conf.
 
-The hsqldb.jar file was built with Sun Java 1.4.2.  It works with
-Sun JRE's 2.x, 3.x, 4.x, 5.x... pretty much everything other than
-1.x.  If you want to run Java 1.x on Solaris (why!!!?), read the
+The hsqldb.jar file was built with Sun Java 1.5.0.  It works with
+Sun JRE's 4.x and 5.x...  You can certainly use this package with
+earlier versions of Java, but you will have to build a hsqldb.jar
+file for your Java version.  All you need to do so is a HSQLDB
+distribution (this package will do, but you could also build it
+on another computer, even with a different operating system).
+a recent version of Ant, and a Java 1.3 JDK.  It's pretty easy.
+Follow the instructions in the Building chapter of the HSQLDB User
+Guide at the bottom of the Building With Ant subsection.
+If you are going to run Java 1.x on Solaris (why!!!?), read the
 next paragraph.  If you use this package with an IBM or open source
 JRE, please let me know how it works.  If I get another job where I
 need to run a non-Sun JRE on Solaris, I'll make whatever changes
-are necessary.
+are necessary.  You can run multiple HSQLDB versions under different
+JRE's, or toggle back and forth, by renaming your hsqldb.jar's to
+indicate the JRE target version (like "hsqldb-jre23.jar" and
+"hsqldb-jre45.jar"), and changing the settings
+JAVA_EXECUTABLE and HSQLDB_JAR_PATH in /etc/hsqldb.conf as needed.
 
-Sun JRE 1.x USERS.  You will have to recompile hsqldb.jar for JRE
-1.x.  See the building chapters of the HSQLDB User Guide for that.
+Sun JRE 1.x USERS.  (Do read the previous paragraph about
+rebuilding hsqldb.jar).
 Sym-links don't work right for at least some Java 1.x builds.  
 Make sure that every element of your JAVA_EXECUTABLE path is a 
 real directory (as opposed to a sym link).
@@ -28,9 +39,9 @@ a long wait before shutdown with TERM signal succeeds.  If this
 bothers you, then upgrade your java, don't run as root, or set a 
 short timeout in the hsqldb config file.
 
-runUtil.sh script:  Don't use it.  It's there for backwards
-compatibility only.  Run "man java" to learn how to execute the
-HSQLDB classes.
+runUtil.sh and demo scripts:  Don't use them.  They are there for 
+backwards compatibility only.  Run "man java" to learn how to 
+execute the HSQLDB classes.
 
 
 
