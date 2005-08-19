@@ -6,6 +6,34 @@ hsqldb 1.8.0 in reverse chronological order.
 Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
+2005.08.18 1.8.0.2
+
+Bug fixes and enhancements:
+
+Fixed bugs with GLOBAL TEMPORARY tables with PRESERVE ROWS or 
+DELETE ROWS options.
+Fixed bug with DESC ignored in ORDER BY when a correlation name was used to 
+specify the column.
+Fixed ResultSet.getTimestamp() and PreparedStatement.setTimestam() bug with null
+timestamp parameters.
+Enhancement to allow string contatenation in LIKE predicates.
+Fixed two JDK 1.1.x incompatibilities.
+Fixed issue with some SET TABLE <name> SOURCE <source> command.
+Fixed issue with DDL not being logged immediatedly with WRITE_DELAY set to 0.
+Fixed issue with the combination of CASE WHEN (or COALESCE, etc.) with
+aggregate functions when the table contains no rows and the aggregate function
+returns null.
+Fixed issue with ALTER SCHEMA <name> RENAME TO <name>
+
+New features
+
+Support for RIGHT OUTER JOIN in select statements 
+
+ALTER TABLE <name> ALTER COLUMN <name> SET [NOT] NULL
+
+Added DAY_OF_WEEK as an alternative for EXTRACT(XXX FROM <date time>)
+ 
+
 2005.07.11 1.8.0.1
 
 Bug fixes and enhancements:

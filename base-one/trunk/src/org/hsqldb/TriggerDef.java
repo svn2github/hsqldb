@@ -162,8 +162,8 @@ class TriggerDef extends Thread {
             // dynamically instantiate it
             trigger = (Trigger) cl.newInstance();
         } catch (Exception e) {
-            throw Trace.error(Trace.UNEXPECTED_TOKEN,
-                              Trace.CREATE_TRIGGER_COMMAND_1);
+            valid = false;
+            cl    = DefaultTrigger.class;
         }
     }
 

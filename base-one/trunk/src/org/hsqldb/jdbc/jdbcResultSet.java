@@ -4456,7 +4456,7 @@ public class jdbcResultSet implements ResultSet {
 
         Timestamp ts = getTimestamp(columnIndex);
 
-        if (cal != null) {
+        if (cal != null && ts != null) {
             ts.setTime(HsqlDateTime.getTimeInMillis(ts, null, cal));
         }
 

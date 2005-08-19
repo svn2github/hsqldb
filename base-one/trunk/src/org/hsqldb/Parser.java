@@ -479,6 +479,39 @@ class Parser {
 
                 condition = addJoinCondition(condition, newcondition, tf,
                                              true);
+
+                // MarcH HuugO RIGHT JOIN SUPPORT
+            } else if (token.equals(Token.T_RIGHT)
+                       &&!tokenizer.wasQuotedIdentifier()) {
+                tokenizer.isGetThis(Token.T_OUTER);
+                tokenizer.getThis(Token.T_JOIN);
+
+                // this object is not an outerjoin, the next object is an outerjoin
+                TableFilter tf = parseTableFilter(false);
+
+                // insert new condition as first element in a new vfilter (nvfilter), copy the content of vfilter and rename nvfilter back to vfilter.
+                HsqlArrayList nvfilter = new HsqlArrayList();
+
+                nvfilter.add(tf);
+
+                for (int i = 0; i < vfilter.size(); i++) {
+                    nvfilter.add(vfilter.get(i));
+                }
+
+                vfilter = nvfilter;
+
+                // set isOuterJoin correct
+                ((TableFilter) vfilter.get(1)).isOuterJoin = true;
+
+                tokenizer.getThis(Token.T_ON);
+
+                Expression newcondition = parseExpression();
+
+                newcondition.checkTables(vfilter);
+
+                condition = addJoinCondition(condition, newcondition,
+                                             ((TableFilter) vfilter.get(1)),
+                                             true);
             } else if (tokenizer.wasThis(Token.T_JOIN)) {
                 vfilter.add(parseTableFilter(false));
                 tokenizer.getThis(Token.T_ON);
@@ -1029,7 +1062,8 @@ class Parser {
             tokenizer.throwUnexpected();
         }
 
-        if (token.equals(Token.T_LEFT) &&!tokenizer.wasQuotedIdentifier()) {
+        if ((token.equals(Token.T_LEFT) || token.equals(Token.T_RIGHT))
+                &&!tokenizer.wasQuotedIdentifier()) {
             tokenizer.back();
         } else if (token.equals(Token.T_AS)
                    &&!tokenizer.wasQuotedIdentifier()) {
@@ -1313,7 +1347,7 @@ class Parser {
 
         read();
 
-        Expression b      = readTerm();
+        Expression b      = readConcat();
         Character  escape = null;
 
         if (sToken.equals(Token.T_ESCAPE)) {

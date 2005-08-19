@@ -230,7 +230,7 @@ public class jdbcDriver implements Driver {
         String[]             choices = new String[] {
             "true", "false"
         };
-        DriverPropertyInfo[] pinfo   = new DriverPropertyInfo[4];
+        DriverPropertyInfo[] pinfo   = new DriverPropertyInfo[6];
         DriverPropertyInfo   p;
 
         p          = new DriverPropertyInfo("user", null);

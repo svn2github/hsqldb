@@ -623,6 +623,31 @@ public class TestSql extends TestBase {
         }
     }
 
+    /**
+     * In 1.8.0.2, this fails in client / server due to column type of the
+     * second select for b1 being boolean, while the first select is interpreted
+     * as varchar. The rowOutputBase class attempts to cast the Java Boolean
+     * into String.
+     */
+    public void testUnionColumnTypes() throws Exception {
+
+        try {
+            Connection conn = newConnection();
+            Statement  stmt = conn.createStatement();
+
+            stmt.execute("CREATE TABLE test1 (id int, b1 boolean)");
+            stmt.execute("CREATE TABLE test2 (id int)");
+            stmt.execute("INSERT INTO test1 VALUES(1,true)");
+            stmt.execute("INSERT INTO test2 VALUES(2)");
+            stmt.executeQuery(
+                "select id,null as b1 from test2 union select id, b1 from test1");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("TestSql.testUnionColumnType() error: "
+                               + e.getMessage());
+        }
+    }
+
     protected void tearDown() {
 
         try {

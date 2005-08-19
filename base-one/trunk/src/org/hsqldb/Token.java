@@ -141,6 +141,7 @@ public class Token {
     static final String        T_DISTINCT        = "DISTINCT";                    //reserved
     static final String        T_DO              = "DO";                          //reserved
     static final String        T_DOUBLE          = "DOUBLE";                      //reserved
+    static final String        T_DOW             = "DAYOFWEEK";                   //reserved
     static final String        T_DROP            = "DROP";                        //reserved
     static final String        T_DYNAMIC         = "DYNAMIC";                     //reserved
     static final String        T_EACH            = "EACH";                        //reserved
@@ -700,6 +701,7 @@ public class Token {
     static final int DATABASE    = 337;
     static final int SCHEMA      = 338;
     static final int ROLE        = 339;
+    static final int DOW         = 340;
 
     //
     static {

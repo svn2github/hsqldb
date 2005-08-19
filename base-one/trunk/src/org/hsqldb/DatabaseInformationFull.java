@@ -854,7 +854,7 @@ extends org.hsqldb.DatabaseInformationMain {
             t.insertSys(row);
         }
 
-        // integral properties
+        // string properties
         it = props.getStringPropertyNames().iterator();
 
         while (it.hasNext()) {
@@ -917,22 +917,6 @@ extends org.hsqldb.DatabaseInformationMain {
 
         t.insertSys(row);
 
-        // debug
-        // oj@openoffice.org
-        int appLogLevel = 0;
-
-        if (database.logger.appLog != null) {
-            appLogLevel = database.logger.appLog.getLevel();
-        }
-
-        row         = t.getEmptyRowData();
-        row[iscope] = scope;
-        row[ins]    = nameSpace;
-        row[iname]  = "hsqldb.applog";
-        row[ivalue] = String.valueOf(appLogLevel);
-        row[iclass] = "int";
-
-        t.insertSys(row);
         t.setDataReadOnly(true);
 
         return t;

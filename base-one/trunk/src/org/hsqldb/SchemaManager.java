@@ -440,7 +440,7 @@ public class SchemaManager {
     }
 
     /**
-     * Returns the table in that has an index with the given name and schema.
+     * Returns the table that has an index with the given name and schema.
      */
     Table findUserTableForIndex(Session session, String name,
                                 String schemaName) {

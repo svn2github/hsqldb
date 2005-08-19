@@ -47,6 +47,7 @@ import org.hsqldb.scriptio.ScriptReaderBase;
 import org.hsqldb.store.ValuePool;
 import org.hsqldb.types.Binary;
 import org.hsqldb.types.JavaObject;
+import org.hsqldb.lib.java.JavaSystem;
 
 /**
  *  Class for reading the data for a database row from the script file.
@@ -261,28 +262,14 @@ implements RowInputInterface {
             return null;
         }
 
-//#ifdef JAVA1TARGET
-/*
-        double i = new Double(s).doubleValue();
+        double i = JavaSystem.parseDouble(s);
 
-*/
-
-//#else
-        double i = Double.parseDouble(s);
-
-//#endif JAVA1TARGET
         if (tokenizer.isGetThis(Token.T_DIVIDE)) {
             s = tokenizer.getString();
 
-//#ifdef JAVA1TARGET
-/*
-        double ii = new Double(s).doubleValue();
-*/
+            // parse simply to ensure it's a number
+            double ii = JavaSystem.parseDouble(s);
 
-//#else
-            double ii = Double.parseDouble(s);
-
-//#endif JAVA1TARGET
             if (i == 0E0) {
                 i = Double.NaN;
             } else if (i == -1E0) {

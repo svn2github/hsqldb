@@ -958,8 +958,10 @@ public class Session implements SessionInterface {
                 database.schemaManager.logSequences(this, database.logger);
 
                 if (isAutoCommit) {
-                    database.logger.synchLog();
+                    clearIndexRoots();
                 }
+
+                database.logger.synchLog();
             }
 
             return r;
@@ -1493,12 +1495,21 @@ public class Session implements SessionInterface {
      */
     Node getIndexRoot(HsqlName index, boolean preserve) {
 
-        if (indexArrayMap == null) {
-            return null;
-        }
+        Node node;
 
-        Node node = preserve ? (Node) indexArrayKeepMap.get(index.hashCode())
-                             : (Node) indexArrayMap.get(index.hashCode());
+        if (preserve) {
+            if (indexArrayKeepMap == null) {
+                return null;
+            }
+
+            node = (Node) indexArrayKeepMap.get(index.hashCode());
+        } else {
+            if (indexArrayMap == null) {
+                return null;
+            }
+
+            node = (Node) indexArrayMap.get(index.hashCode());
+        }
 
         return node;
     }
@@ -1513,9 +1524,11 @@ public class Session implements SessionInterface {
                 if (root == null) {
                     return;
                 }
+
+                indexArrayKeepMap = new IntKeyHashMap();
             }
 
-            indexArrayKeepMap = new IntKeyHashMap();
+            indexArrayKeepMap.put(index.hashCode(), root);
         } else {
             if (indexArrayMap == null) {
                 if (root == null) {

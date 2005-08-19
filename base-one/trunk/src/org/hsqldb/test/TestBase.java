@@ -53,7 +53,7 @@ public abstract class TestBase extends TestCase {
     String  user     = "sa";
     String  password = "";
     Server  server;
-    boolean isNetwork = false;
+    boolean isNetwork = true;
 
     public TestBase(String name) {
         super(name);
@@ -62,11 +62,10 @@ public abstract class TestBase extends TestCase {
     protected void setUp() {
 
         if (isNetwork) {
-            serverProps = "database.0=mem:test;sql.enforce_strict_size=true";
-            url         = "jdbc:hsqldb:hsql://localhost";
+            url         = "jdbc:hsqldb:hsql://localhost/test";
             server      = new Server();
-
-            server.putPropertiesFromString(serverProps);
+            server.setDatabaseName(0,"test");
+            server.setDatabasePath(0,"mem:test;sql.enforce_strict_size=true");
             server.setLogWriter(null);
             server.setErrWriter(null);
             server.start();

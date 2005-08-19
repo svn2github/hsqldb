@@ -607,7 +607,9 @@ public class HsqlDateTime {
             pattern.append(ch);
         }
 
-        return pattern.substring(0, pattern.length() - 1);
+        pattern.setLength(pattern.length() - 1);
+
+        return pattern.toString();
     }
 
     /**

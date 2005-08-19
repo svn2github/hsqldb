@@ -202,7 +202,8 @@ public class Expression {
                          MINUTE                  = 132,
                          SECOND                  = 133,
                          TIMEZONE_HOUR           = 134,
-                         T_TIMEZONE_MINUTE       = 135;
+                         T_TIMEZONE_MINUTE       = 135,
+                         DOW                     = 136;
     static final HashSet SQL_EXTRACT_FIELD_NAMES = new HashSet();
     static final HashSet SQL_TRIM_SPECIFICATION  = new HashSet();
 
@@ -210,7 +211,7 @@ public class Expression {
         SQL_EXTRACT_FIELD_NAMES.addAll(new Object[] {
             Token.T_YEAR, Token.T_MONTH, Token.T_DAY, Token.T_HOUR,
             Token.T_MINUTE, Token.T_SECOND, Token.T_TIMEZONE_HOUR,
-            Token.T_TIMEZONE_MINUTE
+            Token.T_TIMEZONE_MINUTE, Token.T_DOW
         });
         SQL_TRIM_SPECIFICATION.addAll(new Object[] {
             Token.T_LEADING, Token.T_TRAILING, Token.T_BOTH
@@ -1391,6 +1392,8 @@ public class Expression {
         if (!(isConstant() || isSelfAggregate())) {
             if (isColumn()) {
                 colExps.add(this);
+            } else if (exprType == CASEWHEN) {
+                eArg2.collectInGroupByExpressions(colExps);
             } else {
                 if (eArg != null) {
                     eArg.collectInGroupByExpressions(colExps);
@@ -2930,25 +2933,30 @@ public class Expression {
                 }
             }
             case AGGREGATE_LEFT :
-                if (currValue == null) {
-                    currValue = new Object[2];
-                }
+                leftValue = eArg.getAggregatedValue(session,
+                                                    currValue == null ? null
+                                                                      : ((Object[]) currValue)[0]);
 
-                leftValue =
-                    eArg.getAggregatedValue(session,
-                                            ((Object[]) currValue)[0]);
-                rightValue = ((Object[]) currValue)[1];
+                if (currValue == null) {
+                    rightValue = eArg2 == null ? null
+                                               : eArg2.getValue(session);
+                } else {
+                    rightValue = ((Object[]) currValue)[1];
+                }
                 break;
 
             case AGGREGATE_RIGHT :
                 if (currValue == null) {
-                    currValue = new Object[2];
+                    leftValue = eArg == null ? null
+                                             : eArg.getValue(session);
+                } else {
+                    leftValue = ((Object[]) currValue)[0];
                 }
 
-                leftValue = ((Object[]) currValue)[0];
-                rightValue =
-                    eArg2.getAggregatedValue(session,
-                                             ((Object[]) currValue)[1]);
+                rightValue = currValue == null ? null
+                                               : eArg2.getAggregatedValue(
+                                                   session,
+                                                   ((Object[]) currValue)[1]);
                 break;
 
             case AGGREGATE_BOTH :

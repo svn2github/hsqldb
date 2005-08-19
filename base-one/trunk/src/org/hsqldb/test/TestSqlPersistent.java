@@ -52,7 +52,8 @@ import junit.framework.TestResult;
 public class TestSqlPersistent extends TestCase {
 
     // change the url to reflect your preferred db location and name
-    // String url = "jdbc:hsqldb:hsql://localhost/yourtest";
+//    String url = "jdbc:hsqldb:hsql://localhost/mytest";
+
     String     url = "jdbc:hsqldb:/hsql/test/testpersistent";
     String     user;
     String     password;
@@ -385,6 +386,45 @@ public class TestSqlPersistent extends TestCase {
                               (Double[]) arrayValueResult);
 
         assertEquals(true, success);
+
+        try {
+            String            sqlString = "drop table objects if exists";
+            PreparedStatement ps = cConnection.prepareStatement(sqlString);
+
+            ps.execute();
+
+            sqlString =
+                "create cached table objects (object_id INTEGER IDENTITY,"
+                + "object_name VARCHAR(128) NOT NULL,role_name VARCHAR(128) NOT NULL,"
+                + "value LONGVARBINARY NOT NULL,description LONGVARCHAR)";
+            ps = cConnection.prepareStatement(sqlString);
+
+            ps.execute();
+
+            sqlString =
+                "INSERT INTO objects VALUES(1, 'name','role',?,'description')";
+            ps = cConnection.prepareStatement(sqlString);
+
+            ps.setBytes(1, new byte[] {
+                1, 2, 3, 4, 5
+            });
+            ps.executeUpdate();
+
+            sqlString =
+                "UPDATE objects SET value = ? AND description = ? WHERE "
+                + "object_name = ? AND role_name = ?";
+            ps = cConnection.prepareStatement(sqlString);
+
+            ps.setBytes(1, new byte[] {
+                1, 2, 3, 4, 5
+            });
+            ps.setString(2, "desc");
+            ps.setString(3, "new");
+            ps.setString(4, "role");
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
     }
 
     protected void tearDown() {

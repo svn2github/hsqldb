@@ -1258,10 +1258,16 @@ class DatabaseCommandInterpreter {
         }
 
         if (tokenizer.isGetThis(Token.T_ON)) {
+            if (!t.isTemp) {
+                throw Trace.error(Trace.UNEXPECTED_TOKEN, Token.T_ON);
+            }
+
             tokenizer.getThis(Token.T_COMMIT);
 
-            if (tokenizer.isGetThis(Token.T_DELETE)) {}
-            else if (tokenizer.isGetThis(Token.T_PRESERVE)) {
+            token = tokenizer.getSimpleToken();
+
+            if (token.equals(Token.T_DELETE)) {}
+            else if (token.equals(Token.T_PRESERVE)) {
                 t.onCommitPreserve = true;
             } else {
                 throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
@@ -1829,15 +1835,33 @@ class DatabaseCommandInterpreter {
                 return;
             }
             case Token.SET : {
-                tokenizer.getThis(Token.T_DEFAULT);
 
-                int type   = column.getType();
-                int length = column.getSize();
-                int scale  = column.getScale();
+//4-8-2005 MarcH and HuugO ALTER TABLE <tablename> ALTER COLUMN <column name> SET [NOT] NULL support added
+                token = tokenizer.getSimpleToken();
 
-                t.setDefaultExpression(columnIndex,
-                                       processCreateDefaultExpression(type,
-                                           length, scale));
+                if (token.equals(Token.T_NOT)) {
+                    tokenizer.getThis(Token.T_NULL);
+
+                    TableWorks tw = new TableWorks(session, t);
+
+                    tw.setColNullability(column, false);
+                } else if (token.equals(Token.T_NULL)) {
+                    TableWorks tw = new TableWorks(session, t);
+
+                    tw.setColNullability(column, true);
+                } else if (token.equals(Token.T_DEFAULT)) {
+
+                    //alter table alter column set default
+                    int type   = column.getType();
+                    int length = column.getSize();
+                    int scale  = column.getScale();
+
+                    t.setDefaultExpression(
+                        columnIndex,
+                        processCreateDefaultExpression(type, length, scale));
+                } else {
+                    throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+                }
 
                 return;
             }
@@ -2226,7 +2250,7 @@ class DatabaseCommandInterpreter {
                         session.checkAdmin();
 
                         if (tokenizer.isGetThis(Token.T_HEADER)) {
-                            token = tokenizer.getSimpleName();
+                            token = tokenizer.getString();
 
                             if (!tokenizer.wasQuotedIdentifier()) {
                                 throw Trace.error(Trace.TEXT_TABLE_SOURCE);
@@ -2237,7 +2261,7 @@ class DatabaseCommandInterpreter {
                             break;
                         }
 
-                        token = tokenizer.getSimpleName();
+                        token = tokenizer.getString();
 
                         if (!tokenizer.wasQuotedIdentifier()) {
                             throw Trace.error(Trace.TEXT_TABLE_SOURCE);

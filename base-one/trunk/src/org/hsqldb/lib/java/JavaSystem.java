@@ -85,6 +85,19 @@ public class JavaSystem {
 //#endif
     }
 
+    public static double parseDouble(String s) {
+
+//#ifdef JAVA1TARGET
+/*
+        return new Double(s).doubleValue();
+*/
+
+//#else
+        return Double.parseDouble(s);
+
+//#endif JAVA1TARGET
+    }
+
     public static BigInteger getUnscaledValue(BigDecimal o) {
 
 //#ifdef JAVA1TARGET

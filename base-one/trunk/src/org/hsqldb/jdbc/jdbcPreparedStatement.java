@@ -1656,7 +1656,7 @@ implements PreparedStatement {
 
         checkSetParameterIndex(parameterIndex);
 
-        if (cal != null) {
+        if (cal != null && x != null) {
             int ns = x.getNanos();
 
             x = new Timestamp(HsqlDateTime.getTimeInMillis(x, cal, null));
@@ -1963,6 +1963,8 @@ implements PreparedStatement {
                     break;
 
                 case Types.BINARY :
+                case Types.VARBINARY :
+                case Types.LONGVARBINARY :
                     if (!(o instanceof byte[])) {
                         throw Util.sqlException(
                             Trace.error(Trace.INVALID_CONVERSION));

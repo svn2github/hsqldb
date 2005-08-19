@@ -713,4 +713,33 @@ class TableWorks {
                                  newCol.getSize(), newCol.getScale());
         }
     }
+
+    /**
+     * performs the work for changing the nullability of a column
+     */
+    void setColNullability(Column col,
+                           boolean nullable) throws HsqlException {
+
+        int colindex = table.getColumnNr(col.columnName.name);
+
+        if (nullable) {
+            if (col.isPrimaryKey()) {
+                throw Trace.error(Trace.TRY_TO_INSERT_NULL);
+            }
+        } else {
+            RowIterator it = table.rowIterator(null);
+
+            while (it.hasNext()) {
+                Row    row = it.next();
+                Object o   = row.getData()[colindex];
+
+                if (o == null) {
+                    throw Trace.error(Trace.TRY_TO_INSERT_NULL);
+                }
+            }
+        }
+
+        col.setNullable(nullable);
+        table.setColumnTypeVars(colindex);
+    }
 }

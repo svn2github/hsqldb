@@ -177,9 +177,15 @@ class Select {
         for (int i = iResultLen; i < exprColumns.length; i++) {
             if (exprColumns[i].exprType == Expression.COLUMN) {
                 if (exprColumns[i].joinedTableColumnIndex == -1) {
+                    boolean descending = exprColumns[i].isDescending();
+
                     exprColumns[i] =
                         exprColumns[i].getExpressionForAlias(exprColumns,
                             iResultLen);
+
+                    if (descending) {
+                        exprColumns[i].setDescending();
+                    }
                 }
             } else {
                 exprColumns[i].replaceAliases(exprColumns, iResultLen);
@@ -360,7 +366,12 @@ class Select {
             groupColumnNames = new HashSet();
 
             for (int i = iResultLen; i < iResultLen + iGroupLen; i++) {
-                exprColumns[i].collectColumnName(groupColumnNames);
+
+//              MarcH: this is wrong for a CASE WHEN statement in a SELECT CASE WHEN ...,<something aggregate> statement
+//              collectColumnName collects no columns if exprColumns[i]'s expressiontype is Expression.CASEWHEN
+//              collectAllColumnNames collects all columns used in the CASE WHEN statement
+//              exprColumns[i].collectColumnName(groupColumnNames);
+                exprColumns[i].collectAllColumnNames(groupColumnNames);
             }
         }
 

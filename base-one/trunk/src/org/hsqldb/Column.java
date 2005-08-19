@@ -79,6 +79,7 @@ import org.hsqldb.lib.StringConverter;
 import org.hsqldb.store.ValuePool;
 import org.hsqldb.types.Binary;
 import org.hsqldb.types.JavaObject;
+import org.hsqldb.lib.java.JavaSystem;
 
 // fredt@users 20020130 - patch 491987 by jimbag@users
 // fredt@users 20020320 - doc 1.7.0 - update
@@ -980,16 +981,8 @@ public class Column {
                     if (o instanceof java.lang.String) {
                         o = Library.trim((String) o, " ", true, true);
 
-//#ifdef JAVA1TARGET
-/*
-                        double d = new Double((String) o).doubleValue();
-*/
-
-//#else
-                        double d = Double.parseDouble((String) o);
-
-//#endif JAVA1TARGET
-                        long l = Double.doubleToLongBits(d);
+                        double d = JavaSystem.parseDouble((String) o);
+                        long   l = Double.doubleToLongBits(d);
 
                         return ValuePool.getDouble(l);
                     }
@@ -1228,17 +1221,8 @@ public class Column {
             case Types.REAL :
             case Types.FLOAT :
             case Types.DOUBLE :
-
-//#ifdef JAVA1TARGET
-/*
-                double d = new Double(s).doubleValue();
-*/
-
-//#else
-                double d = Double.parseDouble(s);
-
-//#endif JAVA1TARGET
-                long l = Double.doubleToLongBits(d);
+                double d = JavaSystem.parseDouble(s);
+                long   l = Double.doubleToLongBits(d);
 
                 return ValuePool.getDouble(l);
 
@@ -1490,7 +1474,7 @@ public class Column {
 
                 dec = dec.setScale(scale, BigDecimal.ROUND_HALF_DOWN);
 
-                BigInteger big  = dec.unscaledValue();
+                BigInteger big  = JavaSystem.getUnscaledValue(dec);
                 int        sign = big.signum() == -1 ? 1
                                                      : 0;
 
