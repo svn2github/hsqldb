@@ -423,6 +423,17 @@ class Function {
         return values;
     }
 
+    void collectInGroupByExpressions(HsqlArrayList colExps) {
+
+        for (int i = 0; i < iArgCount; i++) {
+            Expression e = eArg[i];
+
+            if (e != null) {
+                e.collectInGroupByExpressions(colExps);
+            }
+        }
+    }
+
     Object getAggregatedValue(Session session,
                               Object currValue) throws HsqlException {
 

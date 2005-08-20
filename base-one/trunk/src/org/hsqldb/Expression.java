@@ -171,22 +171,21 @@ public class Expression {
                      SEQUENCE    = 71;
 
     // temporary used during parsing
-    static final int PLUS         = 100,
-                     OPEN         = 101,
-                     CLOSE        = 102,
-                     SELECT       = 103,
-                     COMMA        = 104,
-                     STRINGCONCAT = 105,
-                     BETWEEN      = 106,
-                     CAST         = 107,
-                     END          = 108,
-                     IS           = 109,
-                     WHEN         = 110,
-                     THEN         = 111,
-                     ELSE         = 112,
-                     ENDWHEN      = 113,
-                     DISTINCT     = 114,
-                     VIEW         = 115;
+    static final int PLUS     = 100,
+                     OPEN     = 101,
+                     CLOSE    = 102,
+                     SELECT   = 103,
+                     COMMA    = 104,
+                     BETWEEN  = 106,
+                     CAST     = 107,
+                     END      = 108,
+                     IS       = 109,
+                     WHEN     = 110,
+                     THEN     = 111,
+                     ELSE     = 112,
+                     ENDWHEN  = 113,
+                     DISTINCT = 114,
+                     VIEW     = 115;
 
     // used inside brackets for system functions
     static final int     AS                      = 122,
@@ -1392,6 +1391,8 @@ public class Expression {
         if (!(isConstant() || isSelfAggregate())) {
             if (isColumn()) {
                 colExps.add(this);
+            } else if (exprType == FUNCTION) {
+                function.collectInGroupByExpressions(colExps);
             } else if (exprType == CASEWHEN) {
                 eArg2.collectInGroupByExpressions(colExps);
             } else {

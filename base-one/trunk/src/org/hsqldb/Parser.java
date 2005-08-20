@@ -208,7 +208,8 @@ class Parser {
      * @param full if true, generate a list of HsqlNames, else a list of
      *  String objects
      */
-    static HsqlArrayList getColumnNames(Database db, Tokenizer t,
+    static HsqlArrayList getColumnNames(Database db, Table table,
+                                        Tokenizer t,
                                         boolean full) throws HsqlException {
 
         HsqlArrayList columns = new HsqlArrayList();
@@ -221,7 +222,14 @@ class Parser {
 
                 columns.add(name);
             } else {
-                columns.add(t.getSimpleName());
+                columns.add(t.getName());
+
+                if (t.wasLongName()
+                        &&!t.getLongNameFirst().equals(
+                            table.getName().name)) {
+                    throw (Trace.error(Trace.TABLE_NOT_FOUND,
+                                       t.getLongNameFirst()));
+                }
             }
 
             String token = t.getSimpleToken();
@@ -457,10 +465,17 @@ class Parser {
         while (true) {
             token = tokenizer.getString();
 
+            boolean cross = false;
+
             if (tokenizer.wasThis(Token.T_INNER)) {
                 tokenizer.getThis(Token.T_JOIN);
 
                 token = Token.T_JOIN;
+            } else if (tokenizer.wasThis(Token.T_CROSS)) {
+                tokenizer.getThis(Token.T_JOIN);
+
+                token = Token.T_JOIN;
+                cross = true;
             }
 
             if (token.equals(Token.T_LEFT)
@@ -493,10 +508,7 @@ class Parser {
                 HsqlArrayList nvfilter = new HsqlArrayList();
 
                 nvfilter.add(tf);
-
-                for (int i = 0; i < vfilter.size(); i++) {
-                    nvfilter.add(vfilter.get(i));
-                }
+                nvfilter.addAll(vfilter);
 
                 vfilter = nvfilter;
 
@@ -514,14 +526,17 @@ class Parser {
                                              true);
             } else if (tokenizer.wasThis(Token.T_JOIN)) {
                 vfilter.add(parseTableFilter(false));
-                tokenizer.getThis(Token.T_ON);
 
-                Expression newcondition = parseExpression();
+                if (!cross) {
+                    tokenizer.getThis(Token.T_ON);
 
-                newcondition.checkTables(vfilter);
+                    Expression newcondition = parseExpression();
 
-                condition = addJoinCondition(condition, newcondition, null,
-                                             false);
+                    newcondition.checkTables(vfilter);
+
+                    condition = addJoinCondition(condition, newcondition,
+                                                 null, false);
+                }
             } else if (tokenizer.wasThis(Token.T_COMMA)) {
                 vfilter.add(parseTableFilter(false));
             } else {
@@ -1520,7 +1535,7 @@ class Parser {
 
         Expression r = readSum();
 
-        while (iToken == Expression.STRINGCONCAT) {
+        while (iToken == Expression.CONCAT) {
             int        type = Expression.CONCAT;
             Expression a    = r;
 
@@ -1697,9 +1712,6 @@ class Parser {
 
                 break;
             }
-            case Expression.CONCAT :
-                return readConcatExpression();
-
             case Expression.CASEWHEN :
                 return readCaseWhenExpression();
 
@@ -2317,7 +2329,7 @@ class Parser {
                 case Expression.PLUS :
                 case Expression.NEGATE :
                 case Expression.DIVIDE :
-                case Expression.STRINGCONCAT :
+                case Expression.CONCAT :
                 case Expression.OPEN :
                 case Expression.CLOSE :
                 case Expression.SELECT :
@@ -2345,7 +2357,6 @@ class Parser {
                 case Expression.ELSE :
                 case Expression.ENDWHEN :
                 case Expression.CASEWHEN :
-                case Expression.CONCAT :
                 case Expression.EXTRACT :
                 case Expression.POSITION :
                 case Expression.SUBSTRING :
@@ -2406,7 +2417,7 @@ class Parser {
         tokenSet.put("-", Expression.NEGATE);
         tokenSet.put(Token.T_MULTIPLY, Expression.MULTIPLY);
         tokenSet.put("/", Expression.DIVIDE);
-        tokenSet.put("||", Expression.STRINGCONCAT);
+        tokenSet.put("||", Expression.CONCAT);
         tokenSet.put(Token.T_OPENBRACKET, Expression.OPEN);
         tokenSet.put(Token.T_CLOSEBRACKET, Expression.CLOSE);
         tokenSet.put(Token.T_SELECT, Expression.SELECT);
@@ -2434,7 +2445,6 @@ class Parser {
         tokenSet.put(Token.T_ELSE, Expression.ELSE);
         tokenSet.put(Token.T_END, Expression.ENDWHEN);
         tokenSet.put(Token.T_CASEWHEN, Expression.CASEWHEN);
-        tokenSet.put(Token.T_CONCAT, Expression.CONCAT);
         tokenSet.put(Token.T_COALESCE, Expression.COALESCE);
         tokenSet.put(Token.T_EXTRACT, Expression.EXTRACT);
         tokenSet.put(Token.T_POSITION, Expression.POSITION);
@@ -2625,7 +2635,7 @@ class Parser {
 
             tokenizer.back();
 
-            columnNames = getColumnNames(database, tokenizer, false);
+            columnNames = getColumnNames(database, table, tokenizer, false);
 
             if (columnNames.size() > len) {
                 throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);

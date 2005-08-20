@@ -20,3 +20,19 @@ create table testcase2(id integer, data varchar(10), filler varchar(10));
 /*rNULL*/select cast (sum(id) as double) from testcase2;
 /*r0*/select coalesce(sum(id), 0) from testcase2;
 /*r0.0*/select abs(coalesce(sum(id), 0)) from testcase2;
+drop table test if exists;
+create table test (sel int, name1 varchar(3), name2 varchar(3));
+insert into test (sel, name1, name2) values (0, 'foo', 'bar')
+insert into test (sel, name1, name2) values (1, 'baz', 'foo')
+insert into test (sel, name1, name2) values (1, 'foo', 'qux')
+select coalesce(a.name1, a.name2) as name,count(a.sel) as counter from test a
+ group by coalesce(a.name1, a.name2)
+select case when a.sel=1 then a.name2 else a.name1 end as name,
+ count(a.name1) as counter from test a group by case when a.sel=1
+ then a.name2 else a.name1 end
+ -- nested expressions
+create table single (c char);
+select case c when 'X' then 1 else 2 end from single;
+insert into single values('X');
+select case c when 'X' then 1 else 2 end from single;
+

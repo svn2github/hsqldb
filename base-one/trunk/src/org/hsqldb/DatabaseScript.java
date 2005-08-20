@@ -351,23 +351,12 @@ public class DatabaseScript {
 
             // RESTART WITH <value> statements
             for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
-                Table t       = (Table) tTable.get(i);
-                int   idindex = t.getIdentityColumn();
+                Table t = (Table) tTable.get(i);
 
-                if (!t.isIndexCached() && idindex != -1) {
-                    String tablename = t.getName().statementName;
-                    String colname =
-                        t.getColumn(idindex).columnName.statementName;
-                    long         idval = t.identitySequence.peek();
-                    StringBuffer a     = new StringBuffer(128);
+                if (!t.isCached()) {
+                    String ddl = getIdentityUpdateDDL(t);
 
-                    a.append(Token.T_ALTER).append(' ').append(
-                        Token.T_TABLE).append(' ').append(tablename).append(
-                        ' ').append(Token.T_ALTER).append(' ').append(
-                        Token.T_COLUMN).append(' ').append(colname).append(
-                        ' ').append(Token.T_RESTART).append(' ').append(
-                        Token.T_WITH).append(' ').append(idval);
-                    addRow(r, a.toString());
+                    addRow(r, ddl);
                 }
             }
 
@@ -399,6 +388,28 @@ public class DatabaseScript {
                     addRow(r, a.toString());
                 }
             }
+        }
+    }
+
+    static String getIdentityUpdateDDL(Table t) {
+
+        if (t.identityColumn == -1) {
+            return "";
+        } else {
+            String tablename = t.getName().statementName;
+            String colname =
+                t.getColumn(t.identityColumn).columnName.statementName;
+            long         idval = t.identitySequence.peek();
+            StringBuffer a     = new StringBuffer(128);
+
+            a.append(Token.T_ALTER).append(' ').append(Token.T_TABLE).append(
+                ' ').append(tablename).append(' ').append(
+                Token.T_ALTER).append(' ').append(Token.T_COLUMN).append(
+                ' ').append(colname).append(' ').append(
+                Token.T_RESTART).append(' ').append(Token.T_WITH).append(
+                ' ').append(idval);
+
+            return a.toString();
         }
     }
 
@@ -713,6 +724,10 @@ public class DatabaseScript {
      * Adds a script line to the result.
      */
     private static void addRow(Result r, String sql) {
+
+        if (sql == null || sql.length() == 0) {
+            return;
+        }
 
         String[] s = new String[1];
 

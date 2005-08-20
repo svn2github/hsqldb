@@ -959,9 +959,8 @@ public class Session implements SessionInterface {
 
                 if (isAutoCommit) {
                     clearIndexRoots();
+                    database.logger.synchLog();
                 }
-
-                database.logger.synchLog();
             }
 
             return r;

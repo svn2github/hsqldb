@@ -1514,8 +1514,8 @@ class DatabaseCommandInterpreter {
         HsqlName[] colList = null;
 
         if (tokenizer.isGetThis(Token.T_OPENBRACKET)) {
-            HsqlArrayList list = Parser.getColumnNames(database, tokenizer,
-                true);
+            HsqlArrayList list = Parser.getColumnNames(database, null,
+                tokenizer, true);
 
             colList = new HsqlName[list.size()];
             colList = (HsqlName[]) list.toArray(colList);

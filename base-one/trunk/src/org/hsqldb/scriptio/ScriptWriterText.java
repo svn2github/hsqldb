@@ -147,7 +147,7 @@ public class ScriptWriterText extends ScriptWriterBase {
         needsSync   = true;
         busyWriting = false;
 
-        if (forceSync) {
+        if (forceSync || writeDelay == 0) {
             sync();
         }
     }
@@ -169,7 +169,7 @@ public class ScriptWriterText extends ScriptWriterBase {
         fileStreamOut.write(rowOut.getBuffer(), 0, rowOut.size());
 
         byteCount   += rowOut.size();
-        needsSync   = session.isAutoCommit();
+        needsSync   |= session.isAutoCommit();
         busyWriting = false;
 
         if (forceSync) {
@@ -222,7 +222,7 @@ public class ScriptWriterText extends ScriptWriterBase {
         fileStreamOut.write(rowOut.getBuffer(), 0, rowOut.size());
 
         byteCount   += rowOut.size();
-        needsSync   = session.isAutoCommit();
+        needsSync   |= session.isAutoCommit();
         busyWriting = false;
 
         if (forceSync) {

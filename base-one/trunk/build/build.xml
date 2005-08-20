@@ -512,11 +512,20 @@ examples:
              <attribute name='Implementation-Version' value='${build.label}'/>
              <attribute name='Implementation-Vendor' value='${build.vendor}'/>
          </manifest>
+         <exclude name="org/hsqldb/jdbc/jdbcStubs.class"/>
+         <exclude name="org/hsqldb/jdbc/Array.class"/>
+         <exclude name="org/hsqldb/jdbc/Blob.class"/>
+         <exclude name="org/hsqldb/jdbc/Clob.class"/>
+         <exclude name="org/hsqldb/jdbc/Ref.class"/>
+         <exclude name="org/hsqldb/jdbc/Map.class"/>
+         <exclude name="org/hsqldb/jdbc/jdbcDataSource.class"/>
+         <exclude name="org/hsqldb/jdbc/jdbcDataSourceFactory.class"/>
          <exclude name="org/hsqldb/jmx/**"/>
          <exclude name="org/hsqldb/util/*.*"/>
          <exclude name="org/hsqldb/test/*.*"/>
          <exclude name="org/hsqldb/sample/*.*"/>
          <exclude name="org/hsqldb/resources/*.properties"/>
+         <include name="org/hsqldb/resources/sql-error-messages.properties"/>
          <exclude name="hsqlServlet.class"/>
          <exclude name="org/hsqldb/Servlet.class"/>
          <exclude name="org/hsqldb/HsqlSocketFactory.class"/>
@@ -529,14 +538,6 @@ examples:
          <exclude name="org/hsqldb/ServerConnection.class"/>
          <exclude name="org/hsqldb/WebServer.class"/>
          <exclude name="org/hsqldb/WebServerConnection.class"/>
-         <exclude name="org/hsqldb/jdbc/jdbcStubs.class"/>
-         <exclude name="org/hsqldb/jdbc/Array.class"/>
-         <exclude name="org/hsqldb/jdbc/Blob.class"/>
-         <exclude name="org/hsqldb/jdbc/Clob.class"/>
-         <exclude name="org/hsqldb/jdbc/Ref.class"/>
-         <exclude name="org/hsqldb/jdbc/Map.class"/>
-         <exclude name="org/hsqldb/jdbc/jdbcDataSource.class"/>
-         <exclude name="org/hsqldb/jdbc/jdbcDataSourceFactory.class"/>
          <exclude name="org/hsqldb/DatabaseInformationFull.class"/>
          <exclude name="org/hsqldb/rowio/RowInputLegacy.class"/>
          <exclude name="org/hsqldb/rowio/RowOutputLegacy.class"/>
@@ -604,6 +605,7 @@ examples:
                   org/hsqldb/lib/HsqlTimer*,
                   org/hsqldb/lib/StringConverter*,
                   org/hsqldb/lib/StringInputStream*,
+                  org/hsqldb/lib/java/JavaSystem*,
                   org/hsqldb/jdbc/jdbc*,
                   org/hsqldb/jdbc/Util*,
                   org/hsqldb/rowio/RowOutputBase*,
@@ -623,6 +625,7 @@ examples:
                   org/hsqldb/HSQLClient*,
                   org/hsqldb/HsqlDateTime*,
                   org/hsqldb/HsqlException*,
+                  org/hsqldb/HsqlSocketFactory*,
                   org/hsqldb/HTTPClientConnection*,
                   org/hsqldb/jdbcDriver*,
                   org/hsqldb/Library*,

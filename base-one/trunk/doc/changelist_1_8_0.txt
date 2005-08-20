@@ -27,7 +27,7 @@ Fixed issue with ALTER SCHEMA <name> RENAME TO <name>
 
 New features
 
-Support for RIGHT OUTER JOIN in select statements 
+Support for RIGHT OUTER JOIN and CROSS JOIN in select statements 
 
 ALTER TABLE <name> ALTER COLUMN <name> SET [NOT] NULL
 
