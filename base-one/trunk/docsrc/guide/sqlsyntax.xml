@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: sqlsyntax.xml,v 1.34 2005/06/13 01:00:18 fredt Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.35 2005/06/30 22:39:11 fredt Exp $ -->
 <chapter id="sqlsyntax-chapter">
   <title id="sqlsyntax-title">SQL Syntax</title>
 
@@ -54,9 +54,9 @@
       </editor>
     </authorgroup>
 
-    <edition>$Revision: 1.34 $</edition>
+    <edition>$Revision: 1.35 $</edition>
 
-    <pubdate>$Date: 2005/06/13 01:00:18 $</pubdate>
+    <pubdate>$Date: 2005/06/30 22:39:11 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -172,10 +172,18 @@
 
       <para>It will also fail if an SQL view includes the column.</para>
 
-      <programlisting>ALTER TABLE &lt;tablename&gt; ALTER COLUMN &lt;columnname&gt; {RENAME TO &lt;newname&gt; | SET DEFAULT &lt;defaultvalue&gt;};</programlisting>
+      <programlisting>ALTER TABLE &lt;tablename&gt; ALTER COLUMN &lt;columnname&gt; RENAME TO &lt;newname&gt; </programlisting>
 
-      <para>This form of ALTER TABLE ALTER COLUMN changes a column name, or
-      adds the specified default value.</para>
+      <para>Changes a column name.</para>
+
+      <programlisting>ALTER TABLE &lt;tablename&gt; ALTER COLUMN &lt;columnname&gt; SET DEFAULT &lt;defaultvalue&gt;};</programlisting>
+
+      <para>Adds the specified default value to the column. Use NULL to remove
+      a default.</para>
+
+      <programlisting>ALTER TABLE &lt;tablename&gt; ALTER COLUMN &lt;columnname&gt; SET [NOT] NULL</programlisting>
+
+      <para>Sets or removes a NOT NULL constraint for the column.</para>
 
       <programlisting>ALTER TABLE &lt;tablename&gt; ALTER COLUMN &lt;columnDefinition&gt;;</programlisting>
 
@@ -1010,7 +1018,7 @@ ON { table | CLASS "package.class" } FROM &lt;grantee&gt;;</programlisting>
 
       <programlisting>SELECT [{LIMIT &lt;offset&gt; &lt;limit&gt; | TOP &lt;limit&gt;}<footnoteref
           linkend="posthyper" />][ALL | DISTINCT]
-{ &lt;selectExpression&gt; | table.* | * } [, ...]
+{ selectExpression | table.* | * } [, ...]
 [INTO [CACHED | TEMP  | TEXT]<footnoteref linkend="posthyper" /> newTable]
 FROM tableList
 [WHERE <link linkend="expression-section">Expression</link>]
@@ -1030,7 +1038,7 @@ FROM tableList
           <term>tableList</term>
 
           <listitem>
-            <programlisting>    table [{ INNER | LEFT OUTER } JOIN table ON Expression] [, ...]</programlisting>
+            <programlisting>    table [{CROSS | INNER | LEFT OUTER | RIGHT OUTER} JOIN table ON Expression] [, ...]</programlisting>
           </listitem>
         </varlistentry>
 
@@ -1059,6 +1067,9 @@ FROM tableList
             STDDEV_POP and STDDEV_SAMP statistical functions, the type is
             always DOUBLE. These statistical functions do not allow ALL or
             DISTINCT qualifiers.</para>
+
+            <para>If CROSS JOIN is specified no ON expression is allowed for
+            the join.</para>
           </listitem>
         </varlistentry>
 
@@ -1246,7 +1257,7 @@ FROM tableList
 
       <para>Sets the current JDBC session's schema. The sole purpose for the
       session schema is to provide a default schema name for schema objects
-      which do not have the schema name specified explicitly in the SQL
+      that do not have the schema name specified explicitly in the SQL
       command, or by association with another object of known schema. For
       example, if you run <literal>SELECT * FROM atbl;</literal>, HSQLDB will
       look for the table or view named <literal>atbl</literal> in the
