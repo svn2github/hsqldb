@@ -1,4 +1,4 @@
-<!-- $Id: tls.xml,v 1.13 2005/05/12 21:40:16 unsaved Exp $ -->
+<!-- $Id: tls.xml,v 1.14 2005/05/31 20:59:13 unsaved Exp $ -->
 
 <chapter id='tls-chapter'>
     <title id='tls-title'>TLS</title>
@@ -13,8 +13,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.13 $</edition>
-        <pubdate>$Date: 2005/05/12 21:40:16 $</pubdate>
+        <edition>$Revision: 1.14 $</edition>
+        <pubdate>$Date: 2005/05/31 20:59:13 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>TLS</keyword>
@@ -111,7 +111,7 @@
                 <para>
                     You may already have an X509 cert for your server.
                     If you have a server keystore, then you can generate a
-                    X590 cert like this.
+                    X509 cert like this.
                 <example>
                 <title>Exporting certificate from the server's keystore</title>
                 <screen>
