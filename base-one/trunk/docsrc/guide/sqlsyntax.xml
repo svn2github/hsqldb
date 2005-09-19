@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: sqlsyntax.xml,v 1.35 2005/06/30 22:39:11 fredt Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.36 2005/08/20 18:08:58 fredt Exp $ -->
 <chapter id="sqlsyntax-chapter">
   <title id="sqlsyntax-title">SQL Syntax</title>
 
@@ -54,9 +54,9 @@
       </editor>
     </authorgroup>
 
-    <edition>$Revision: 1.35 $</edition>
+    <edition>$Revision: 1.36 $</edition>
 
-    <pubdate>$Date: 2005/06/30 22:39:11 $</pubdate>
+    <pubdate>$Date: 2005/08/20 18:08:58 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -268,7 +268,15 @@
       <para>Changes the password for an existing user. Password must be double
       quoted. Use "" for an empty password.</para>
 
-      <para>Only an administrator can do this.</para>
+      <para>Beginning with SQL version 1.8.1, DBA's may change users' 
+      base default schema name with the comand
+      <programlisting>ALTER USER &lt;username&gt; SET INITIAL SCHEMA &lt;schemaname&gt;;</programlisting>
+      This is the schema which database object names will resolve to for this
+      user, unless overridden as explained in
+      <link endterm="schemanaming-title" linkend="schemanaming-section"/>.
+  </para>
+
+      <para>Only an administrator may use these commands.</para>
     </section>
 
     <section id="call-section">
@@ -374,9 +382,11 @@
     <section>
       <title>CREATE SCHEMA<footnoteref linkend="posthyper" /></title>
 
-      <programlisting>CREATE SCHEMA &lt;schemaname&gt; AUTHORIZATION DBA [&lt;createStatement&gt; [&lt;grantStatement&lt;] [...];</programlisting>
+      <programlisting>CREATE SCHEMA &lt;schemaname&gt; AUTHORIZATION &lt;grantee&gt; [&lt;createStatement&gt; [&lt;grantStatement&lt;] [...];</programlisting>
 
-      <para>Creates the named schema.</para>
+      <para>Creates the named schema, with ownership of the specified
+          <emphasis>authorization</emphasis>.
+      The authorization grantee may be a database user or a role.</para>
 
       <para>Optional (nested) CREATE and GRANT statements can be given only
       for new objects in this new schema. Only the last nested statement
@@ -1193,6 +1203,18 @@ FROM tableList
       <para>Only an administrator may do this.</para>
     </section>
 
+    <section id="set_initialschema-section">
+      <title id="set_initialschema-title">SET INITIAL SCHEMA</title>
+      <para>Beginning with SQL version 1.8.1, users may change their
+      base default schema name with the comand
+      <programlisting>ALTER USER &lt;username&gt; SET INITIAL SCHEMA &lt;schemaname&gt;;</programlisting>
+      This is the schema which database object names will resolve to for the
+      current user, unless overridden as explained in
+      <link endterm="schemanaming-title" linkend="schemanaming-section"/>.
+  </para>
+  </section>
+
+
     <section id="set_logsize-section">
       <title id="set_logsize-title">SET LOGSIZE</title>
 
@@ -1595,6 +1617,70 @@ FROM tableList
       linkend="insert-section" />, <link endterm="delete-title"
       linkend="delete-section" />.</para>
     </section>
+  </section>
+
+  <section id="schemanaming-section">
+    <title id="schemanaming-title">Schema object naming</title>
+      <simpara>
+        <emphasis>Schema</emphasis> objects are database objects which
+        are always scoped to a specific schema.
+        There may be multiple schema objects of the same basename,
+        each in the namespace of a different schema.
+        A particular schema object may always be uniquely identified using the
+        notation <literal>schemaname.baseobjectname</literal>.
+        The following database object types are schema objects for the current
+        version of HSQLDB.
+        </simpara>
+        <simplelist>
+            <title>Schema-specific Object Types</title>
+            <member><simpara>Table</simpara></member>
+            <member><simpara>View</simpara></member>
+            <member><simpara>Index</simpara></member>
+        </simplelist>
+        <simpara>
+            With version 1.9 of HSQLDB, Sequences will also be schema objects.
+        </simpara><simpara>
+            Most of the time, you do not need to specify the schema for
+            the desired schema object, because the implicit (aka default)
+            schema is usually the one desired.
+            When creating indexes and views, the target schema will default
+            to that of the table which is the target of the index or view.
+            Similarly for ALTER TABLE commands.
+            If the implicit scope is not determined by a related object,
+            then the default comes from your JDBC session's current
+            schema setting.
+            The session schema value will be your login user's
+            <emphasis>initial schema</emphasis>, or whatever you last set it
+            to with SET SCHEMA in your <emphasis>current</emphasis>
+            JDBC session.
+            (Your initial schema is always PUBLIC now.  With HSQLDB
+            version 1.8.1, it will be configurable with the 
+            SET INITIAL SCHEMA command).
+        </simpara><simpara>
+            In addition to namespace scoping, there are permission 
+            aspects to the schema of a database object.
+            The <emphasis>authorization</emphasis> of a schema is basically
+            the <emphasis>owner</emphasis> of the schema.
+            Only a DBA or the owner of a schema may create objects, or
+            modify the DDL of objects, in the namespace of that schema.
+            In this way, a schema authorization is said to "own" the
+            objects of that schema.
+            A schema authorization/owner can be a role or a user (even a
+            role with no members).
+            The two schemas automatically created when a database is
+            initialized are both owned by the group <emphasis>DBA</emphasis>.
+        </simpara><simpara>
+            An important implication to database objects being 
+            <emphasis>owned</emphasis> by the schema owner is, if a non-DBA
+            database user is to have permission to create any database
+            object, they must have ownership of a schema.
+            To allow a user to create objects in their own personal
+            schema, you would create a new schema with that user as
+            the authorization.
+            To allow a user to share create privileges in some schema,
+            you would make create this schema with a role as the 
+            authorization, then add all of the desired users to this role.
+        </simpara>
   </section>
 
   <section id="datatypes-section">
