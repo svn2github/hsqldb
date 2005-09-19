@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.123 2005/07/23 02:08:30 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.124 2005/07/23 13:19:16 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -93,7 +93,7 @@ import java.util.TreeMap;
  * Most of the Special Commands and Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.123 $
+ * @version $Revision: 1.124 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlFile {
@@ -143,8 +143,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.123 $".substring("$Revision: ".length(),
-                "$Revision: 1.123 $".length() - 2);
+        revnum = "$Revision: 1.124 $".substring("$Revision: ".length(),
+                "$Revision: 1.124 $".length() - 2);
     }
 
     private static String BANNER =
@@ -157,7 +157,7 @@ public class SqlFile {
         + "SPECIAL Commands begin with '\\' and execute when you hit ENTER.\n"
         + "BUFFER Commands begin with ':' and execute when you hit ENTER.\n"
         + "COMMENTS begin with '/*' and end with the very next '*/'.\n"
-        + "PROCEDURAL LANGUAGE commands begin with '* ' and end when you hit ENTER.\n"
+        + "PROCEDURAL LANGUAGE commands begin with '*' and end when you hit ENTER.\n"
         + "All other lines comprise SQL Statements.\n"
         + "  SQL Statements are terminated by either a blank line (which moves the\n"
         + "  statement into the buffer without executing) or a line ending with ';'\n"
