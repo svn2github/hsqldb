@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: running.xml,v 1.19 2005/07/01 17:06:32 fredt Exp $ -->
+<!-- $Id: running.xml,v 1.20 2005/07/02 09:11:39 fredt Exp $ -->
 <chapter>
   <title>Running and Using Hsqldb</title>
 
@@ -18,9 +18,9 @@
       </author>
     </authorgroup>
 
-    <edition>$Revision: 1.19 $</edition>
+    <edition>$Revision: 1.20 $</edition>
 
-    <pubdate>$Date: 2005/07/01 17:06:32 $</pubdate>
+    <pubdate>$Date: 2005/07/02 09:11:39 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -232,7 +232,7 @@
 
       <informalexample>
         <screen>
-    java -cp ../lib/hsqldb.jar org.hsqldb.Server -database.0 mydb -dbname.0 xdb</screen>
+    java -cp ../lib/hsqldb.jar org.hsqldb.Server -database.0 file:mydb -dbname.0 xdb</screen>
       </informalexample>
 
       <para>The command line argument <literal>-?</literal> can be used to get
