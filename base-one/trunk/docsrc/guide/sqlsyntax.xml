@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: sqlsyntax.xml,v 1.38 2005/09/19 14:47:51 unsaved Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.39 2005/09/19 17:50:04 fredt Exp $ -->
 <chapter id="sqlsyntax-chapter">
   <title id="sqlsyntax-title">SQL Syntax</title>
 
@@ -54,9 +54,9 @@
       </editor>
     </authorgroup>
 
-    <edition>$Revision: 1.38 $</edition>
+    <edition>$Revision: 1.39 $</edition>
 
-    <pubdate>$Date: 2005/09/19 14:47:51 $</pubdate>
+    <pubdate>$Date: 2005/09/19 17:50:04 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -1210,7 +1210,7 @@ FROM tableList
       linkend="posthyper" /></title>
 
       <para>Users may change their base default schema name with the comand
-      <programlisting>ALTER USER &lt;username&gt; SET INITIAL SCHEMA &lt;schemaname&gt;;</programlisting>
+      <programlisting>SET INITIAL SCHEMA &lt;schemaname&gt;;</programlisting>
       This is the schema which database object names will resolve to for the
       current user, unless overridden as explained in <link
       endterm="schemanaming-title" linkend="schemanaming-section" />. For
