@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: sqlsyntax.xml,v 1.39 2005/09/19 17:50:04 fredt Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.40 2005/09/19 18:14:24 unsaved Exp $ -->
 <chapter id="sqlsyntax-chapter">
   <title id="sqlsyntax-title">SQL Syntax</title>
 
@@ -54,9 +54,9 @@
       </editor>
     </authorgroup>
 
-    <edition>$Revision: 1.39 $</edition>
+    <edition>$Revision: 1.40 $</edition>
 
-    <pubdate>$Date: 2005/09/19 17:50:04 $</pubdate>
+    <pubdate>$Date: 2005/09/19 18:14:24 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -1166,9 +1166,8 @@ FROM tableList
       <programlisting>SET DATABASE COLLATION &lt;double quoted collation name&gt;;</programlisting>
 
       <para>Each database can have its own collation. Sets the collation from
-      the set of collations in the source for org.hsqldb.Collation. Once this
-      command has been issued, the database can be opened in any JVM and will
-      retain its collation.</para>
+      the set of collations in the source for org.hsqldb.Collation.
+      </para>
 
       <para>Once this command has been issued, the database can be opened in
       any JVM and will retain its collation.</para>
