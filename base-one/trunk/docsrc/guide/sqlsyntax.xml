@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: sqlsyntax.xml,v 1.41 2005/09/23 21:15:54 unsaved Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.42 2005/09/24 15:50:14 unsaved Exp $ -->
 <chapter id="sqlsyntax-chapter">
   <title id="sqlsyntax-title">SQL Syntax</title>
 
@@ -54,9 +54,9 @@
       </editor>
     </authorgroup>
 
-    <edition>$Revision: 1.41 $</edition>
+    <edition>$Revision: 1.42 $</edition>
 
-    <pubdate>$Date: 2005/09/23 21:15:54 $</pubdate>
+    <pubdate>$Date: 2005/09/24 15:50:14 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -342,12 +342,20 @@
 
       <programlisting>CREATE ALIAS &lt;function&gt; FOR &lt;javaFunction&gt;;</programlisting>
 
-      <para>Creates an alias for a Java function. The function must be
-      accessible from the JVM in which the database runs. Example:</para>
+      <para>Creates an alias for a static Java function to be used as a
+          <link endterm="stored-title">Stored Procedure</link>.
+          The function must be accessible from the JVM in which the database 
+          runs. Example:</para>
 
       <informalexample>
         <programlisting>    CREATE ALIAS ABS FOR "java.lang.Math.abs";</programlisting>
       </informalexample>
+      <note><simpara>
+          The CREATE ALIAS command just defines the alias.
+          It does not validate existence of the target method or its 
+          containing class.
+          To validate the alias, use it.
+      </simpara></note>
 
       <para>See also: <link endterm="call-title" linkend="call-section" />,
       <link endterm="stored-title" linkend="stored-section" />.</para>
@@ -930,16 +938,22 @@ ON { table | CLASS "package.class" } TO &lt;grantee&gt;;</programlisting>
       users</emphasis>.</para>
 
       <para>The first form of the GRANT command assigns privileges to a
-      grantee for a table or for a class. To allow a user to call a function
-      from a class, the right ALL must be used. Examples: <informalexample>
+      grantee for a table or for a class. To allow a user to call a 
+      <link linkend="stored-section">Store Procedure</link> static
+      function, the right ALL must be used. Examples: <informalexample>
           <programlisting>    GRANT SELECT ON Test TO GUEST;
-    GRANT ALL ON CLASS "java.lang.String" TO PUBLIC;</programlisting>
+    GRANT ALL ON CLASS "java.lang.Math.abs" TO PUBLIC;</programlisting>
         </informalexample></para>
+      <warning><simpara>
+          Even though the command is GRANT ALL ON CLASS, you must
+          specify a static <emphasis>method name</emphasis>.  You are actually
+          granting access to a static method, not to a class.
+      </simpara></warning>
 
       <para>The second form of the GRANT command gives the specified
       &lt;grantee&gt; membership in the specified role.</para>
 
-      <simpara>Require Administrative privileges.</simpara>
+      <simpara>Requires Administrative privileges.</simpara>
 
       <simpara>See also: <link endterm="revoke-title"
       linkend="revoke-section" />, <link endterm="create_user-title"
@@ -1645,6 +1659,14 @@ FROM tableList
       <member>
         <simpara>Roles</simpara>
       </member>
+
+      <member>
+        <simpara>Store Procedure Java Classes</simpara>
+      </member>
+
+      <member>
+        <simpara>HSQL Aliases</simpara>
+      </member>
     </simplelist>
 
     <simpara>Our current Java-class-based Triggers are not fully schema
@@ -1999,7 +2021,8 @@ FROM tableList
   <section id="stored-section">
     <title id="stored-title">Stored Procedures / Functions</title>
 
-    <para>Stored procedures are Java functions that are called directly from
+    <para>Stored procedures are static Java functions that are called 
+    directly from
     the SQL language or using an alias. Calling Java functions (directly or
     using the alias) requires that the Java class can be reached by the
     database (server). The syntax is:</para>
