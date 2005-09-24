@@ -249,9 +249,9 @@ implements ActionListener, WindowListener, KeyListener {
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.org.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.61 $";
+        + "problem reports or help requests:  $Revision: 1.62 $";
     private static final String ABOUT_TEXT =
-        "$Revision: 1.61 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.62 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2001-2005, The HSQL Development Group.\n"
         + "http://hsqldb.org\n\n\n"
@@ -991,8 +991,6 @@ implements ActionListener, WindowListener, KeyListener {
 
         if (s == null) {
             if (ev.getSource() instanceof JMenuItem) {
-                JMenuItem i;
-
                 s = ((JMenuItem) ev.getSource()).getText();
             }
         }
@@ -1128,24 +1126,10 @@ implements ActionListener, WindowListener, KeyListener {
             }
         } else if (s.equals(SHOWSYS_BOX_TEXT)) {
             showSys = boxShowSys.isSelected();
-
-            try {
-                refreshTree();
-            } catch (Exception e) {
-
-                //  Added: (weconsultants@users)
-                CommonSwing.errorMessage(e);
-            }
+            refreshTree();
         } else if (s.equals(ROWCOUNTS_BOX_TEXT)) {
             displayRowCounts = boxRowCounts.isSelected();
-
-            try {
-                refreshTree();
-            } catch (Exception e) {
-
-                //  Added: (weconsultants@users)
-                CommonSwing.errorMessage(e);
-            }
+            refreshTree();
         } else if (s.startsWith("LFMODE:")) {
             setLF(s.substring("LFMODE:".length()));
         } else if (s.equals("Set Fonts")) {
@@ -2188,7 +2172,7 @@ System.err.println("Stopping");
         // We want the Schema List to always be in sync with the displayed tree
         updateSchemaList();
     }
-
+    
     // Added: (weconsultants@users) Sets up\changes the running status icon
     void setStatusLine(String busyBaseString, int rowCount) {
 
