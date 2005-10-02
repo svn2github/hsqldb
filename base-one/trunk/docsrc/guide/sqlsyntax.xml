@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: sqlsyntax.xml,v 1.43 2005/09/24 22:19:56 unsaved Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.44 2005/10/02 23:32:21 unsaved Exp $ -->
 <chapter id="sqlsyntax-chapter">
   <title id="sqlsyntax-title">SQL Syntax</title>
 
@@ -54,9 +54,9 @@
       </editor>
     </authorgroup>
 
-    <edition>$Revision: 1.43 $</edition>
+    <edition>$Revision: 1.44 $</edition>
 
-    <pubdate>$Date: 2005/09/24 22:19:56 $</pubdate>
+    <pubdate>$Date: 2005/10/02 23:32:21 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -1674,11 +1674,12 @@ FROM tableList
     triggers which will encompass our Java-class-based triggers. When this
     work is completed, HSQLDB triggers will be schema objects.</simpara>
 
-    <simpara>Sequences are schema objects, but authorization/ownership do not
-    work according to normal schema authorization yet (see below about 
-    authorization/ownership).
-    Sequence permission/ownership will work the same as any other schema
-    object in a future version of HSQLDB.</simpara>
+<simpara>Sequences are schema objects with creation and removal permission
+    governed by schema authorization (as described hereafter), but GRANT
+    and REVOKE command do not work yet for sequences.
+    In a future version of HSQLDB, sequence GRANTs and REVOKEs will work 
+    similarly to the current GRANT and REVOKE commands for table access.
+    </simpara>
 
     <simpara>Most of the time, you do not need to specify the schema for the
     desired schema object, because the implicit schema is usually the only one
