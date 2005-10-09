@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.124 2005/07/23 13:19:16 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.125 2005/09/19 18:51:33 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -93,7 +93,14 @@ import java.util.TreeMap;
  * Most of the Special Commands and Editing Commands are for
  * interactive use only.
  *
- * @version $Revision: 1.124 $
+ * \d commands are very poorly supported for Mysql because
+ * (a) Mysql lacks most of the most basic JDBC support elements, and
+ * the most basic role and schema features, and
+ * (b) to access the Mysql data dictionay, one must change the database
+ * instance (to do that would require work to restore the original state
+ * and could have disastrous effects upon transactions).
+ *
+ * @version $Revision: 1.125 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlFile {
@@ -143,8 +150,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.124 $".substring("$Revision: ".length(),
-                "$Revision: 1.124 $".length() - 2);
+        revnum = "$Revision: 1.125 $".substring("$Revision: ".length(),
+                "$Revision: 1.125 $".length() - 2);
     }
 
     private static String BANNER =
@@ -194,8 +201,8 @@ public class SqlFile {
         + "    \\p [line to print]   Print string to stdout\n"
         + "    \\w file/path.sql     Append current buffer to file\n"
         + "    \\i file/path.sql     Include/execute commands from external file\n"
-        + "    \\d{tvsiSanu*} [substr]  List objects of specified type:\n"
-        + "             Tbls/Views/Seqs/Indexes/SysTbls/Aliases/schemaNames/Users/all\n"
+        + "    \\d{tvsiSanur*} [substr]  List objects of specified type:\n"
+        + "  (Tbls/Views/Seqs/Indexes/SysTbls/Aliases/schemaNames/Users/Roles/table-like)\n"
         + "    \\d OBJECTNAME [subs] Describe table or view columns\n"
         + "    \\o [file/path.html]  Tee (or stop teeing) query output to specified file\n"
         + "    \\H                   Toggle HTML output mode\n"
@@ -2255,6 +2262,32 @@ public class SqlFile {
                     }
                     break;
 
+                case 'r' :
+                    if (dbProductName.indexOf("HSQL") > -1) {
+                        statement = curConn.createStatement();
+
+                        statement.execute(
+                            "SELECT authorization_name FROM "
+                            + "information_schema.system_authorizations\n"
+                            + "WHERE authorization_type = 'ROLE'\n"
+                            + "ORDER BY authorization_name");
+                    } else if (dbProductName.indexOf(
+                                "Adaptive Server Enterprise") > -1) {
+                        // This is the basic Sybase server.  Sybase also has
+                        // their "Anywhere", ASA (for embedded), and replication
+                        // databases, but I don't know the Metadata strings for
+                        // those.
+                        statement = curConn.createStatement();
+
+                        statement.execute(
+                            "SELECT name FROM syssrvroles ORDER BY name");
+                    } else {
+                        throw new BadSpecial(
+                            "SqlFile does not yet support "
+                            + "\\dr for your database vendor");
+                    }
+                    break;
+
                 case 'u' :
                     if (dbProductName.indexOf("HSQL") > -1) {
                         statement = curConn.createStatement();
@@ -2275,6 +2308,17 @@ public class SqlFile {
                         statement.execute(
                             "SELECT usename, usesuper FROM pg_catalog.pg_user "
                             + "ORDER BY usename");
+                    } else if (dbProductName.indexOf(
+                                "Adaptive Server Enterprise") > -1) {
+                        // This is the basic Sybase server.  Sybase also has
+                        // their "Anywhere", ASA (for embedded), and replication
+                        // databases, but I don't know the Metadata strings for
+                        // those.
+                        statement = curConn.createStatement();
+
+                        statement.execute(
+                            "SELECT name, accdate, fullname FROM syslogins "
+                            + "ORDER BY name");
                     } else {
                         throw new BadSpecial(
                             "SqlFile does not yet support "
