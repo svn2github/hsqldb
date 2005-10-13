@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.125 2005/09/19 18:51:33 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.126 2005/10/09 01:40:58 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -100,7 +100,12 @@ import java.util.TreeMap;
  * instance (to do that would require work to restore the original state
  * and could have disastrous effects upon transactions).
  *
- * @version $Revision: 1.125 $
+ * To make changes to this class less destructive to external callers,
+ * the input parameters should be moved to setters (probably JavaBean
+ * setters would be best) instead of constructor args and System 
+ * Properties.
+ *
+ * @version $Revision: 1.126 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlFile {
@@ -116,6 +121,7 @@ public class SqlFile {
     private HashMap          userVars         = null;
     private String[]         statementHistory = null;
     private boolean          chunking         = false;
+    private String           csvNullRep       = null;
 
     /**
      * Private class to "share" a variable among a family of SqlFile
@@ -150,8 +156,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.125 $".substring("$Revision: ".length(),
-                "$Revision: 1.125 $".length() - 2);
+        revnum = "$Revision: 1.126 $".substring("$Revision: ".length(),
+                "$Revision: 1.126 $".length() - 2);
     }
 
     private static String BANNER =
@@ -215,8 +221,8 @@ public class SqlFile {
         + "    \\bp                  Use ? in next SQL statement to upload Bin. buffer\n"
         + "    \\.                   Enter raw SQL.  End with line containing only \".\"\n"
         + "    \\s                   * Show previous commands (i.e. SQL command history)\n"
-        + "    \\-[3]                * reload a command to buffer (for : commands)\n"
-        + "    \\-[3];               * reload command and execute (via \":;\")\n"
+        + "    \\-[3][;]             * reload a command to buffer (opt. exec. w/ \":;\"))\n"
+        + "    \\x {TABLE|SELECT...} EXport table or query to CSV text file\n"
         + "    \\q [abort message]   Quit (or end input like Ctrl-Z or Ctrl-D)\n"
     ;
     private static final String PL_HELP_TEXT = "PROCEDURAL LANGUAGE Commands.\n"
@@ -327,6 +333,7 @@ public class SqlFile {
     private PrintStream psStd        = null;
     private PrintStream psErr        = null;
     private PrintWriter pwQuery      = null;
+    private PrintWriter pwCsv        = null;
     StringBuffer        stringBuffer = new StringBuffer();
     /*
      * This is reset upon each execute() invocation (to true if interactive,
@@ -749,7 +756,11 @@ public class SqlFile {
      * Utility nested Exception class for internal use.
      */
     private class BadSpecial extends Exception {
+        // Special-purpose constructor
+        private BadSpecial() {
+        }
 
+        // Normal use constructor
         private BadSpecial(String s) {
             super(s);
         }
@@ -1055,6 +1066,12 @@ public class SqlFile {
 
     private boolean doPrepare  = false;
     private String  prepareVar = null;
+    private String csvColDelim = null;
+    private String csvRowDelim = null;
+
+    private static final String CSV_SYNTAX_MSG =
+            "Export syntax:  x table_or_view_anme "
+            + "[column_delimiter [record_delimiter]]";
 
     /**
      * Process a Special Command.
@@ -1101,6 +1118,68 @@ public class SqlFile {
 
                 stdprintln("HTML Mode is now set to: " + htmlMode);
 
+                return;
+
+            case 'x' :
+                try {
+                    if (arg1.length() != 1 || other == null) {
+                        throw new BadSpecial();
+                    }
+                    String tableName = ((other.indexOf(' ') > 0)
+                            ? null : other);
+                    csvColDelim = convertEscapes(
+                            (String) userVars.get("*CSV_COL_DELIM"));
+                    csvRowDelim = convertEscapes(
+                            (String) userVars.get("*CSV_ROW_DELIM"));
+                    csvNullRep  = (String) userVars.get("*CSV_NULL_REP");
+                    String csvFilepath = (String) userVars.get("*CSV_FILEPATH");
+                    if (csvFilepath == null && tableName == null) {
+                        throw new BadSpecial(
+                                "You must set PL variable '*CSV_FILEPATH' in "
+                                + "order to use the query variant of \\x");
+                    }
+                    File csvFile = new File(
+                            (csvFilepath == null) ?  (tableName + ".csv")
+                                                  : csvFilepath);
+                    if (csvColDelim == null) {
+                        csvColDelim = DEFAULT_COL_DELIM;
+                    }
+                    if (csvRowDelim == null) {
+                        csvRowDelim = DEFAULT_ROW_DELIM;
+                    }
+                    if (csvNullRep == null) {
+                        csvNullRep = DEFAULT_NULL_REP;
+                    }
+                    pwCsv = new PrintWriter(new OutputStreamWriter(
+                                new FileOutputStream(csvFile), charset));
+                    displayResultSet(null,
+                            curConn.createStatement().executeQuery(
+                                (tableName == null) ? other :
+                                ("SELECT * FROM " + tableName)),
+                            null, null);
+                    pwCsv.flush();
+                    stdprintln("Wrote " + csvFile.length()
+                            + " characters to file '" + csvFile + "'");
+                } catch (Exception e) {
+                    if (e instanceof BadSpecial) {
+                        // Not sure this test is right.  Maybe .length() == 0?
+                        if (e.getMessage() == null) {
+                            throw new BadSpecial(CSV_SYNTAX_MSG);
+                        } else {
+                            throw (BadSpecial) e;
+                        }
+                    }
+                    throw new BadSpecial("Failed to write to file '" + other
+                                         + "':  " + e);
+                } finally {
+                    // Reset all state changes
+                    if (pwCsv != null) {
+                        pwCsv.close();
+                    }
+                    pwCsv = null;
+                    csvColDelim = null;
+                    csvRowDelim = null;
+                }
                 return;
 
             case 'd' :
@@ -2117,6 +2196,11 @@ public class SqlFile {
         }
     }
 
+    private static final String DEFAULT_NULL_REP = "{null}";
+    private static final String DEFAULT_ROW_DELIM = System.getProperty(
+            "line.separator");
+    private static final String DEFAULT_COL_DELIM = "|";
+            
     private static final int DEFAULT_ELEMENT = 0,
                              HSQLDB_ELEMENT  = 1,
                              ORACLE_ELEMENT  = 2
@@ -2570,7 +2654,8 @@ public class SqlFile {
      * that can not be done with a where clause (like in metadata queries).
      *
      * @param statement The SQL Statement that the result set is for.
-     *                  (I think that this is just for reporting purposes.
+     *                  (This is so we can get the statement's update count.
+     *                  Can be null for non-update queries.)
      * @param r         The ResultSet to display.
      * @param incCols   Optional list of which columns to include (i.e., if
      *                  given, then other columns will be skipped).
@@ -2740,7 +2825,14 @@ public class SqlFile {
                             }
                         }
 
-                        if (binary || (val == null &&!r.wasNull())) {
+                        if (binary || (val == null && !r.wasNull())) {
+                            if (pwCsv != null) {
+                                // TODO:  Should throw something other than
+                                // a SQLException
+                                throw new SQLException(
+                                        "Table has a binary column.  CSV files "
+                                        + "are text, not binary, files");
+                            }
 
                             // DB has a value but we either explicitly want
                             // it as binary, or we failed to get it as String.
@@ -2793,7 +2885,7 @@ public class SqlFile {
 
                         ///////////////////////////////
                         // A little tricky here.  fieldArray[] MUST get set.
-                        if (val == null) {
+                        if (val == null && pwCsv == null) {
                             if (dataType[insi] == java.sql.Types.VARCHAR) {
                                 fieldArray[insi] = (htmlMode ? "<I>null</I>"
                                                              : "[null]");
@@ -2805,7 +2897,7 @@ public class SqlFile {
                         }
 
                         ///////////////////////////////
-                        if (htmlMode) {
+                        if (htmlMode || pwCsv != null) {
                             continue;
                         }
 
@@ -2819,7 +2911,9 @@ public class SqlFile {
                     }
                 }
 
-                // STEP 2: DISPLAY DATA
+                // STEP 2: DISPLAY DATA  (= 2a OR 2b)
+                // STEP 2a (Non-CSV)
+                if (pwCsv == null) {
                 condlPrintln("<TABLE border='1'>", true);
 
                 if (incCount > 1) {
@@ -2877,6 +2971,33 @@ public class SqlFile {
                 }
 
                 condlPrintln("<HR>", true);
+                break;
+                }
+                // STEP 2b (CSV)
+                if (incCount > 0) {
+                    for (int i = 0; i < headerArray.length; i++) {
+                        csvSafe(headerArray[i]);
+                        pwCsv.print(headerArray[i]);
+                        if (i < headerArray.length - 1) {
+                            pwCsv.print(csvColDelim);
+                        }
+                    }
+                    pwCsv.print(csvRowDelim);
+                }
+
+                for (int i = 0; i < rows.size(); i++) {
+                    fieldArray = (String[]) rows.get(i);
+
+                    for (int j = 0; j < fieldArray.length; j++) {
+                        csvSafe(fieldArray[j]);
+                        pwCsv.print((fieldArray[j] == null)
+                                ? csvNullRep : fieldArray[j]);
+                        if (j < fieldArray.length - 1) {
+                            pwCsv.print(csvColDelim);
+                        }
+                    }
+                    pwCsv.print(csvRowDelim);
+                }
                 break;
 
             default :
@@ -3619,5 +3740,64 @@ public class SqlFile {
         }
 
         return "Unknown type " + i;
+    }
+
+    /**
+     * Validate that String is safe to display in a CSV file?
+     *
+     * @throws SQLException (should throw something else, since this is
+     * not an SQL problem.  Fix the caller!
+     */
+    public void csvSafe(String s) throws SQLException {
+        if (pwCsv == null || csvColDelim == null || csvRowDelim == null
+                || csvNullRep == null) {
+            throw new RuntimeException("Assertion failed.  \n"
+                    + "csvSafe called when CSV settings are incomplete");
+        }
+        if (s == null) {
+            return;
+        }
+        if (s.indexOf(csvColDelim) > 0) {
+            throw new SQLException(
+                    "Table data contains our column delimiter '"
+                    + csvColDelim + "'");
+        }
+        if (s.indexOf(csvRowDelim) > 0) {
+            throw new SQLException(
+                    "Table data contains our row delimiter '"
+                    + csvRowDelim + "'");
+        }
+        if (s.indexOf(csvNullRep) > 0) {
+            throw new SQLException(
+                    "Table data contains our null representation '"
+                    + csvNullRep + "'");
+        }
+    }
+
+    public static String convertEscapes (String inString) {
+        if (inString == null) {
+            return null;
+        }
+        String workString = new String(inString);
+        int i;
+        i = 0;
+        while ((i = workString.indexOf("\\n", i)) > -1
+                && i < workString.length() - 1) {
+            workString = workString.substring(0, i) + '\n'
+                + workString.substring(i + 2);
+        }
+        i = 0;
+        while ((i = workString.indexOf("\\r", i)) > -1
+                && i < workString.length() - 1) {
+            workString = workString.substring(0, i) + '\r'
+                + workString.substring(i + 2);
+        }
+        i = 0;
+        while ((i = workString.indexOf("\\t", i)) > -1
+                && i < workString.length() - 1) {
+            workString = workString.substring(0, i) + '\t'
+                + workString.substring(i + 2);
+        }
+        return workString;
     }
 }
