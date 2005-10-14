@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.126 2005/10/09 01:40:58 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.127 2005/10/13 20:56:08 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -105,7 +105,7 @@ import java.util.TreeMap;
  * setters would be best) instead of constructor args and System 
  * Properties.
  *
- * @version $Revision: 1.126 $
+ * @version $Revision: 1.127 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlFile {
@@ -156,8 +156,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.126 $".substring("$Revision: ".length(),
-                "$Revision: 1.126 $".length() - 2);
+        revnum = "$Revision: 1.127 $".substring("$Revision: ".length(),
+                "$Revision: 1.127 $".length() - 2);
     }
 
     private static String BANNER =
@@ -222,7 +222,8 @@ public class SqlFile {
         + "    \\.                   Enter raw SQL.  End with line containing only \".\"\n"
         + "    \\s                   * Show previous commands (i.e. SQL command history)\n"
         + "    \\-[3][;]             * reload a command to buffer (opt. exec. w/ \":;\"))\n"
-        + "    \\x {TABLE|SELECT...} EXport table or query to CSV text file\n"
+        + "    \\x {TABLE|SELECT...} eXport table or query to CSV text file\n"
+        + "    \\m file/path.csv     iMport CSV text file records into a table\n"
         + "    \\q [abort message]   Quit (or end input like Ctrl-Z or Ctrl-D)\n"
     ;
     private static final String PL_HELP_TEXT = "PROCEDURAL LANGUAGE Commands.\n"
@@ -1118,6 +1119,31 @@ public class SqlFile {
 
                 stdprintln("HTML Mode is now set to: " + htmlMode);
 
+                return;
+
+            case 'm' :
+                if (arg1.length() != 1 || other == null) {
+                    throw new BadSpecial();
+                }
+                csvColDelim = convertEscapes(
+                        (String) userVars.get("*CSV_COL_DELIM"));
+                csvRowDelim = convertEscapes(
+                        (String) userVars.get("*CSV_ROW_DELIM"));
+                csvNullRep  = (String) userVars.get("*CSV_NULL_REP");
+                if (csvColDelim == null) {
+                    csvColDelim = DEFAULT_COL_DELIM;
+                }
+                if (csvRowDelim == null) {
+                    csvRowDelim = DEFAULT_ROW_DELIM;
+                }
+                if (csvNullRep == null) {
+                    csvNullRep = DEFAULT_NULL_REP;
+                }
+                try {
+                    importCsv(other);
+                } catch (IOException ioe) {
+                    System.err.println("Failed to read in CSV file:  " + ioe);
+                }
                 return;
 
             case 'x' :
@@ -2196,7 +2222,10 @@ public class SqlFile {
         }
     }
 
-    private static final String DEFAULT_NULL_REP = "{null}";
+    // Just because users may be used to seeing "[null]" in normal
+    // SqlFile output, we use the same default value for null in CSV
+    // files, but this CSV null representation can be changed to anything.
+    private static final String DEFAULT_NULL_REP = "[null]";
     private static final String DEFAULT_ROW_DELIM = System.getProperty(
             "line.separator");
     private static final String DEFAULT_COL_DELIM = "|";
@@ -2998,6 +3027,8 @@ public class SqlFile {
                     }
                     pwCsv.print(csvRowDelim);
                 }
+                stdprintln(Integer.toString(rows.size())
+                        + " rows read from DB");
                 break;
 
             default :
@@ -3799,5 +3830,163 @@ public class SqlFile {
                 + workString.substring(i + 2);
         }
         return workString;
+    }
+
+    /**
+     * Name is self-explanatory.
+     *
+     * If there is user demand, open file in random access mode so don't
+     * need to load 2 copies of the entire file into memory.
+     * This will be difficult because can't use standard Java language
+     * features to search through a character array for multi-character
+     * substrings.
+     */
+    public void importCsv(String filePath)
+    throws IOException, BadSpecial {
+        char[]       bfr   = null;
+        File         file = new File(filePath);
+        if (!file.canRead()) {
+            throw new IOException("Can't read file '" + file + "'");
+        }
+        int fileLength = (int) (file.length());
+        try {
+            bfr = new char[fileLength];
+        } catch (RuntimeException re) {
+            throw new IOException(
+        "SqlFile can only read in your CSV file in one chunk at this time.\n"
+            + "Please run the program with more RAM (try Java -Xm* switches).");
+        }
+        InputStreamReader isr =
+            new InputStreamReader(new FileInputStream(file), charset);
+        int retval = isr.read(bfr, 0, bfr.length);
+        isr.close();
+        if (retval != bfr.length) {
+            throw new IOException("Didn't read all characters.  Read in "
+                + retval + " characters");
+        }
+        String string = null;
+        try {
+            string = new String(bfr);
+        } catch (RuntimeException re) {
+            throw new IOException(
+            "SqlFile converts your entire CSV file to a String at this time.\n"
+            + "Please run the program with more RAM (try Java -Xm* switches).");
+        }
+        ArrayList headerList = new ArrayList();
+        String recordString;
+        // N.b.  ENDs are the index of 1 PAST the current item
+        int recEnd;
+        int colStart;
+        int colEnd;
+
+        // First read header line
+        int recStart = 0;
+        recEnd = string.indexOf(csvRowDelim, recStart);
+        if (recEnd < 0) {
+            // File consists of only a header line
+            recEnd = string.length();
+        }
+        colStart = recStart;
+        colEnd = -1;
+        while (true) {
+            if (colEnd == recEnd) {
+                // We processed final column last time through loop
+                break;
+            }
+            colEnd = string.indexOf(csvColDelim, colStart);
+            if (colEnd < 0 || colEnd > recEnd) {
+                colEnd = recEnd;
+            }
+            if (colEnd - colStart < 1) {
+                throw new IOException("No column header for column "
+                        + (headerList.size()+1));
+            }
+            headerList.add(string.substring(colStart, colEnd));
+            colStart = colEnd + csvColDelim.length();
+        }
+        String[] headers = (String[]) headerList.toArray(new String[0]);
+        String tableName = (String) userVars.get("*CSV_TABLENAME");
+        if (tableName == null) {
+            tableName = file.getName();
+            int i = tableName.indexOf('.');
+            if (i > 0) {
+                tableName = tableName.substring(0, i);
+            }
+        }
+        StringBuffer sb = new StringBuffer("INSERT INTO "
+                + tableName + " (");
+        for (int i = 0; i < headers.length; i++) {
+            if (i > 0) sb.append(", ");
+            sb.append(headers[i]);
+        }
+        sb.append(") VALUES (");
+        for (int i = 0; i < headers.length; i++) {
+            if (i > 0) sb.append(", ");
+            sb.append('?');
+        }
+        //System.out.println("INSERTION: (" + sb + ')');
+
+        try {
+            PreparedStatement ps = curConn.prepareStatement(sb.toString()
+                    + ')');
+
+            // First and insert data rows 1-row-at-a-time
+            String[] dataVals = new String[headers.length];
+            int recCount = 0;
+            int colCount;
+            while (true) {
+                recStart = recEnd + csvRowDelim.length();
+                if (recStart >= string.length()) {
+                    break;
+                }
+                recEnd = string.indexOf(csvRowDelim, recStart);
+                if (recEnd < 0) {
+                    // Last record
+                    recEnd = string.length();
+                }
+                colStart = recStart;
+                colEnd = -1;
+                colCount = 0;
+                recCount++;
+                while (true) {
+                    if (colEnd == recEnd) {
+                        // We processed final column last time through loop
+                        break;
+                    }
+                    colEnd = string.indexOf(csvColDelim, colStart);
+                    if (colEnd < 0 || colEnd > recEnd) {
+                        colEnd = recEnd;
+                    }
+                    dataVals[colCount++] = string.substring(colStart, colEnd);
+                    colStart = colEnd + csvColDelim.length();
+                }
+                if (colCount != dataVals.length) {
+                    throw new IOException("Header has " + headers.length
+                            + " columns.  CSV record " + recCount
+                            + " has " + colCount + " column values.");
+                }
+                for (int i = 0; i < dataVals.length; i++) {
+                    //System.err.println("ps.setString(" + i + ", "
+                    //      + dataVals[i] + ')');
+                    ps.setString(i+1, (dataVals[i].equals(csvNullRep)
+                            ? null : dataVals[i]));
+                }
+                retval = ps.executeUpdate();
+                if (retval != 1) {
+                    curConn.rollback();
+                    throw new BadSpecial("Insert of row " + recCount
+                            + " failed.  " +  retval + " rows modified");
+                }
+                possiblyUncommitteds.set(true);
+            }
+            stdprintln("Successfully inserted " + recCount
+                    + " rows into table '" + tableName + "'");
+        } catch (SQLException se) {
+            try {
+                curConn.rollback();
+            } catch (SQLException se2) {}
+            throw new BadSpecial(
+                    "SQL error encountered when inserting CSV data: " + se);
+        }
     }
 }
