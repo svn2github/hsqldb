@@ -322,7 +322,6 @@ final class TableFilter {
         if (ArrayUtil.containsAllTrueElements(check, filterIndex.colCheck)) {
             isMultiFindFirst     = true;
             findFirstExpressions = expr;
-            currentJoinData      = filterTable.getEmptyRowData();
         }
     }
 
@@ -486,6 +485,8 @@ final class TableFilter {
         if (isMultiFindFirst) {
             boolean convertible = true;
             int[]   types       = filterTable.getColumnTypes();
+
+            currentJoinData = filterTable.getEmptyRowData();
 
             for (int i = 0; i < findFirstExpressions.length; i++) {
                 Expression e = findFirstExpressions[i];

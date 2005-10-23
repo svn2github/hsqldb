@@ -356,6 +356,7 @@ public class Token {
     static final String        T_IMMEDIATELY    = "IMMEDIATELY";
     static final String        T_INCREMENT      = "INCREMENT";
     static final String        T_INDEX          = "INDEX";
+    static final String        T_INITIAL        = "INITIAL";
     static final String        T_KEY            = "KEY";
     static final String        T_LIMIT          = "LIMIT";
     static final String        T_LOGSIZE        = "LOGSIZE";
@@ -374,6 +375,7 @@ public class Token {
     public static final String T_SCHEMA         = "SCHEMA";
     static final String        T_PLAN           = "PLAN";
     static final String        T_PRESERVE       = "PRESERVE";
+    static final String        T_PRIVILEGES     = "PRIVILEGES";
     static final String        T_POSITION       = "POSITION";
     static final String        T_PROPERTY       = "PROPERTY";
     static final String        T_PUBLIC         = "PUBLIC";
@@ -701,6 +703,7 @@ public class Token {
     static final int SCHEMA      = 338;
     static final int ROLE        = 339;
     static final int DOW         = 340;
+    static final int INITIAL     = 341;
 
     //
     static {
@@ -744,6 +747,7 @@ public class Token {
         commandSet.put(T_IGNORECASE, IGNORECASE);
         commandSet.put(T_INCREMENT, INCREMENT);
         commandSet.put(T_INDEX, INDEX);
+        commandSet.put(T_INITIAL, INITIAL);
         commandSet.put(T_INSERT, INSERT);
         commandSet.put(T_INTERSECT, INTERSECT);
         commandSet.put(T_LOGSIZE, LOGSIZE);

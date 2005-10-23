@@ -488,7 +488,7 @@ public class jdbcResultSet implements ResultSet {
             iCurrentRow = 1;
         } else {
 
-            // The resultset has been traversed, if afterLast, retrun false
+            // The resultset has been traversed, if afterLast, return false
             if (nCurrent == null) {
                 return false;
             }

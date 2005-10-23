@@ -66,7 +66,6 @@ public class TestCascade extends TestCase {
             createDatabase();
 
             con = DriverManager.getConnection("jdbc:hsqldb:testdb", "sa", "");
-
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println(this + ".setUp() error: " + e.getMessage());

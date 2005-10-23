@@ -191,9 +191,7 @@ implements DataOutput {
 
         ensureRoom(1);
 
-        buf[count] = (byte) b;
-
-        count++;
+        buf[count++] = (byte) b;
     }
 
     public void write(byte[] b) {
@@ -258,8 +256,8 @@ implements DataOutput {
         int newcount = count + extra;
 
         if (newcount > buf.length) {
-            byte[] newbuf =
-                new byte[(newcount + newcount / 2 + 256) & 0xffffff00];
+            int    newsize = (newcount + 256) & 0xffffff00;
+            byte[] newbuf  = new byte[newsize];
 
             System.arraycopy(buf, 0, newbuf, 0, count);
 

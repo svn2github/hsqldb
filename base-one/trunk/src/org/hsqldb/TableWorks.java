@@ -346,7 +346,7 @@ class TableWorks {
     void dropIndex(String indexname) throws HsqlException {
 
         if (table.isIndexingMutable()) {
-            table.dropIndex(indexname);
+            table.dropIndex(session, indexname);
         } else {
             int[] removeIndex = new int[]{ table.getIndexIndex(indexname) };
             Table tn = table.moveDefinition(removeIndex, null, -1, 0);
@@ -703,7 +703,7 @@ class TableWorks {
                                  Column newCol) throws HsqlException {
 
         int         colindex = table.getColumnNr(oldCol.columnName.name);
-        RowIterator it       = table.rowIterator(null);
+        RowIterator it       = table.getPrimaryIndex().firstRow(session);
 
         while (it.hasNext()) {
             Row    row = it.next();
@@ -727,7 +727,7 @@ class TableWorks {
                 throw Trace.error(Trace.TRY_TO_INSERT_NULL);
             }
         } else {
-            RowIterator it = table.rowIterator(null);
+            RowIterator it = table.getPrimaryIndex().firstRow(session);
 
             while (it.hasNext()) {
                 Row    row = it.next();

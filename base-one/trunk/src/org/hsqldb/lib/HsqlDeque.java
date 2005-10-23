@@ -88,10 +88,6 @@ public class HsqlDeque extends BaseList implements HsqlList {
         return list[index];
     }
 
-    public Object remove(int i) {
-        throw new java.lang.RuntimeException();
-    }
-
     public void add(int i, Object o) throws IndexOutOfBoundsException {
         throw new java.lang.RuntimeException();
     }
@@ -208,6 +204,42 @@ public class HsqlDeque extends BaseList implements HsqlList {
         for (int i = 0; i < list.length; i++) {
             list[i] = null;
         }
+    }
+
+    public Object remove(int index) {
+
+        int    target = getInternalIndex(index);
+        Object value  = list[target];
+
+        if (target >= firstindex) {
+            System.arraycopy(list, firstindex, list, firstindex + 1,
+                             target - firstindex);
+
+            list[firstindex] = null;
+
+            firstindex++;
+
+            if (firstindex == list.length) {
+                firstindex = 0;
+            }
+        } else {
+            System.arraycopy(list, target + 1, list, target,
+                             endindex - target - 1);
+
+            list[endindex] = null;
+
+            endindex--;
+
+            if (endindex == 0) {
+                endindex = list.length;
+            }
+        }
+
+        if (elementCount == 0) {
+            firstindex = endindex = 0;
+        }
+
+        return value;
     }
 
     private int getInternalIndex(int i) throws IndexOutOfBoundsException {

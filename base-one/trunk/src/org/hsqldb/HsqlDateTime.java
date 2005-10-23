@@ -87,6 +87,7 @@ public class HsqlDateTime {
     }
 
     static final String zerodatetime = "1970-01-01 00:00:00.000000000";
+    static final String zeronanos    = "000000000";
 
     /**
      *  Converts a string in JDBC timestamp escape format to a
@@ -247,7 +248,9 @@ public class HsqlDateTime {
         synchronized (sdfts) {
             sdfts.setCalendar(tempCalDefault);
 
-            return sdfts.format(x) + x.getNanos();
+            String n = String.valueOf(x.getNanos());
+
+            return sdfts.format(x) + zeronanos.substring(n.length()) + n;
         }
     }
 
@@ -260,9 +263,9 @@ public class HsqlDateTime {
             sdfts.setCalendar(cal == null ? tempCalDefault
                                           : cal);
 
-            String s = sdfts.format(x) + x.getNanos();
+            String n = String.valueOf(x.getNanos());
 
-            return s + zerodatetime.substring(s.length());
+            return sdfts.format(x) + zeronanos.substring(n.length()) + n;
         }
     }
 
@@ -515,7 +518,7 @@ public class HsqlDateTime {
         }
     }
 
-    private final static char[][] dateTokens     = {
+    private static final char[][] dateTokens     = {
         {
             'R', 'R', 'R', 'R'
         }, {
@@ -564,7 +567,7 @@ public class HsqlDateTime {
             'P', '.', 'M', '.'
         }
     };
-    private final static String[] javaDateTokens = {
+    private static final String[] javaDateTokens = {
         "yyyy", "yyyy", "yyyy", "yy", "yy", "G", "G", "G", "G", "MMM",
         "MMMMM", "E", "w", "dd", "D", "k", "K", "K", "mm", "ss", "aaa", "aaa",
         "aaa", "aaa"

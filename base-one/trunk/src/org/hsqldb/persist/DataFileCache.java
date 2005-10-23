@@ -377,6 +377,8 @@ public class DataFileCache {
         }
 
         try {
+            cache.saveAll();
+
             boolean        wasNio = dataFile.wasNio();
             DataFileDefrag dfd = new DataFileDefrag(database, this, fileName);
 
@@ -433,7 +435,9 @@ public class DataFileCache {
      * Removes the row from the cache data structures.
      * Adds the file space for the row to the list of free positions.
      */
-    public void remove(int i, PersistentStore store) throws HsqlException {
+    public synchronized void remove(int i,
+                                    PersistentStore store)
+                                    throws IOException {
 
         CachedObject r    = release(i);
         int          size = r == null ? getStorageSize(i)
@@ -441,6 +445,9 @@ public class DataFileCache {
 
         freeBlocks.add(i, size);
     }
+
+    public synchronized void removePersistence(int i,
+            PersistentStore store) throws IOException {}
 
     /**
      * Allocates file space for the row. <p>
@@ -472,7 +479,7 @@ public class DataFileCache {
         return i;
     }
 
-    public void add(CachedObject object) throws IOException {
+    public synchronized void add(CachedObject object) throws IOException {
 
         int size = object.getRealSize(rowOut);
 
@@ -495,7 +502,7 @@ public class DataFileCache {
      * For a CacheObject that had been previously released from the cache.
      * A new version is introduced, using the preallocated space for the object.
      */
-    public void restore(CachedObject object) throws IOException {
+    public synchronized void restore(CachedObject object) throws IOException {
 
         int i = object.getPos();
 
@@ -507,24 +514,15 @@ public class DataFileCache {
         }
     }
 
-    public synchronized int getStorageSize(int i) throws HsqlException {
+    public synchronized int getStorageSize(int i) throws IOException {
 
-        try {
-            CachedObject value = cache.get(i);
+        CachedObject value = cache.get(i);
 
-            if (value != null) {
-                return value.getStorageSize();
-            }
-
-            return readSize(i);
-        } catch (IOException e) {
-            database.logger.appLog.logContext(e);
-
-            throw Trace.error(Trace.DATA_FILE_ERROR,
-                              Trace.DataFileCache_makeRow, new Object[] {
-                e, fileName
-            });
+        if (value != null) {
+            return value.getStorageSize();
         }
+
+        return readSize(i);
     }
 
     public synchronized CachedObject get(int i, PersistentStore store,
@@ -569,18 +567,19 @@ public class DataFileCache {
         }
     }
 
-    RowInputInterface getRaw(int i) throws IOException {
+    synchronized RowInputInterface getRaw(int i) throws IOException {
         return readObject(i);
     }
 
-    protected int readSize(int pos) throws IOException {
+    protected synchronized int readSize(int pos) throws IOException {
 
         dataFile.seek((long) pos * cacheFileScale);
 
         return dataFile.readInt();
     }
 
-    protected RowInputInterface readObject(int pos) throws IOException {
+    protected synchronized RowInputInterface readObject(int pos)
+    throws IOException {
 
         dataFile.seek((long) pos * cacheFileScale);
 
@@ -592,7 +591,7 @@ public class DataFileCache {
         return rowIn;
     }
 
-    public CachedObject release(int i) {
+    public synchronized CachedObject release(int i) {
         return cache.release(i);
     }
 
@@ -600,8 +599,8 @@ public class DataFileCache {
      * This is called internally when old rows need to be removed from the
      * cache.
      */
-    protected void saveRows(CachedObject[] rows, int offset,
-                            int count) throws IOException {
+    protected synchronized void saveRows(CachedObject[] rows, int offset,
+                                         int count) throws IOException {
 
         for (int i = offset; i < offset + count; i++) {
             CachedObject r = rows[i];
@@ -618,7 +617,7 @@ public class DataFileCache {
      * Writes out the specified Row. Will write only the Nodes or both Nodes
      * and table row data depending on what is not already persisted to disk.
      */
-    public void saveRow(CachedObject row) throws IOException {
+    public synchronized void saveRow(CachedObject row) throws IOException {
 
         setFileModified();
         rowOut.reset();
@@ -746,7 +745,7 @@ public class DataFileCache {
         return fileModified;
     }
 
-    protected void setFileModified() throws IOException {
+    protected synchronized void setFileModified() throws IOException {
 
         if (!fileModified) {
 

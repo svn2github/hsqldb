@@ -353,7 +353,7 @@ public class DatabaseScript {
             for (int i = 0, tSize = tTable.size(); i < tSize; i++) {
                 Table t = (Table) tTable.get(i);
 
-                if (!t.isCached()) {
+                if (!t.isTemp()) {
                     String ddl = getIdentityUpdateDDL(t);
 
                     addRow(r, ddl);

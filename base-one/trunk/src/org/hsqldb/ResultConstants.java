@@ -110,10 +110,16 @@ public interface ResultConstants {
     int BATCHEXECUTE = HSQL_API_BASE + 9;
 
     /**
-     * Indicates that the Result object encapsulates a batch of prepared
-     * statement parameter values
+     * Indicates that the Result object encapsulates a request to start a new
+     * internal session for the connection
      */
     int HSQLRESETSESSION = HSQL_API_BASE + 10;
+
+    /**
+     * Indicates that the Result object encapsulates a request to prepare
+     * to commit as the first phase of a two-phase commit
+     */
+    int HSQLPREPARECOMMIT = HSQL_API_BASE + 11;
 
     /** The offset at which the standard SQL API Result mode values start. */
     int SQL_API_BASE = 0x00010000;

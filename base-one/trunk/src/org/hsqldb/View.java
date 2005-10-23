@@ -48,7 +48,6 @@ import org.hsqldb.lib.Iterator;
  */
 class View extends Table {
 
-    Table              workingTable;
     Select             viewSelect;
     SubQuery           viewSubQuery;
     private String     statement;
@@ -124,16 +123,9 @@ class View extends Table {
     void compile(Session session) throws HsqlException {
 
         // create the working table
-        Tokenizer tokenizer = new Tokenizer(statement);
-        int       brackets  = 0;
-
-        if (tokenizer.isGetThis(Token.T_OPENBRACKET)) {
-            brackets += Parser.parseOpenBrackets(tokenizer) + 1;
-        }
-
-        tokenizer.getThis(Token.T_SELECT);
-
-        Parser p = new Parser(session, this.database, tokenizer);
+        Parser p = new Parser(session, this.database,
+                              new Tokenizer(statement));
+        int brackets = p.parseOpenBracketsSelect();
 
         viewSubQuery = p.parseSubquery(brackets, colList, true,
                                        Expression.VIEW);
@@ -141,7 +133,6 @@ class View extends Table {
         p.setAsView(this);
 
         viewSubqueries = p.getSortedSubqueries();
-        workingTable   = viewSubQuery.table;
         viewSelect     = viewSubQuery.select;
 
         viewSelect.prepareResult(session);

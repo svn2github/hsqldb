@@ -2692,4 +2692,18 @@ public class jdbcConnection implements Connection {
             }
         }
     }
+
+    /**
+     * Resets this connection so it can be used again. Used when connections are
+     * returned to a connection pool.
+     */
+    public void reset() throws SQLException {
+
+        try {
+            this.sessionProxy.resetSession();
+        } catch (HsqlException e) {
+            throw new SQLException("Error resetting connection: "
+                                   + e.getMessage());
+        }
+    }
 }

@@ -269,8 +269,6 @@ public class Database {
         setState(DATABASE_OPENING);
 
         try {
-            User sysUser;
-
             databaseProperties = new HsqlDatabaseProperties(this);
             isNew = sType == DatabaseURL.S_MEM
                     ||!databaseProperties.checkFileExists();
@@ -283,14 +281,13 @@ public class Database {
             databaseProperties.setURLProperties(urlProperties);
             compiledStatementManager.reset();
 
+            nameManager           = new HsqlNameManager();
             granteeManager        = new GranteeManager(this);
             userManager           = new UserManager(this);
             hAlias                = Library.getAliasMap();
-            nameManager           = new HsqlNameManager();
             schemaManager         = new SchemaManager(this);
             bReferentialIntegrity = true;
-            sysUser               = userManager.getSysUser();
-            sessionManager        = new SessionManager(this, sysUser);
+            sessionManager        = new SessionManager(this);
             txManager             = new TransactionManager(this);
             collation             = new Collation();
             dbInfo = DatabaseInformation.newDatabaseInformation(this);
@@ -627,44 +624,6 @@ public class Database {
         if (resetPrepared) {
             compiledStatementManager.resetStatements();
         }
-    }
-
-// boucherb@users - patch 1.7.2 - system change number support
-// fredt@users - system change numbers utilised
-
-    /** last statement level change number - not externally settable */
-    private long dbSCN = 0;
-
-    /** last statement level change number for DDL statements - unused */
-    private long ddlSCN = 0;
-
-    /** last statement level change number for DML statements - used for all statements */
-    private long dmlSCN = 0;
-
-    synchronized long getSCN() {
-        return dbSCN;
-    }
-
-    private synchronized void setSCN(long l) {
-        dbSCN = l;
-    }
-
-    private synchronized long nextSCN() {
-
-        dbSCN++;
-
-        return dbSCN;
-    }
-
-    synchronized long getDMLSCN() {
-        return dmlSCN;
-    }
-
-    synchronized long nextDMLSCN() {
-
-        dmlSCN = nextSCN();
-
-        return dmlSCN;
     }
 
     private synchronized void setState(int state) {

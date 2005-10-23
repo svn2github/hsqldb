@@ -529,10 +529,11 @@ final class DITableInfo {
 
             case Table.MEMORY_TABLE :
             case Table.TEMP_TABLE :
-            case Table.CACHED_TABLE :
             case Table.SYSTEM_TABLE :
-                return table.isCached() ? "CACHED"
-                                        : "MEMORY";
+                return "MEMORY";
+
+            case Table.CACHED_TABLE :
+                return "CACHED";
 
             case Table.TEMP_TEXT_TABLE :
             case Table.TEXT_TABLE :

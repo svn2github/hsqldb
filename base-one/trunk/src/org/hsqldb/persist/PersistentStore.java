@@ -47,23 +47,33 @@ public interface PersistentStore {
     int INT_STORE_SIZE  = 4;
     int LONG_STORE_SIZE = 8;
 
+    /** get object */
     CachedObject get(int key);
 
+    /** get object, ensuring future gets will return the same instance of the object */
     CachedObject getKeep(int key);
 
     int getStorageSize(int key);
 
+    /** add new object */
     void add(CachedObject object) throws IOException;
 
+    /** add object previously removed from persistnce */
     void restore(CachedObject object) throws IOException;
 
     CachedObject get(RowInputInterface in) throws IOException;
 
     CachedObject getNewInstance(int size) throws IOException;
 
+    /** remove the persisted image but not the cached copy */
+    void removePersistence(int i);
+
+    /** remove both persisted and cached copies */
     void remove(int i);
 
+    /** remove the cached copies */
     void release(int i);
 
-    void commit(CachedObject object) throws IOException;
+    /** commit persisted image */
+    void commit(CachedObject object);
 }

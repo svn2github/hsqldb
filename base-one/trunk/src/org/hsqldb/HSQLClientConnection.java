@@ -41,6 +41,7 @@ import java.net.Socket;
 import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.rowio.RowInputBinary;
 import org.hsqldb.rowio.RowOutputBinary;
+import org.hsqldb.store.ValuePool;
 
 /**
  * Base remote session proxy implementation. Uses instances of Result to
@@ -252,7 +253,10 @@ public class HSQLClientConnection implements SessionInterface {
         }
     }
 
-    public void setIsolation(int level) throws HsqlException {}
+    public void setIsolation(int level) throws HsqlException {
+        setAttribute(ValuePool.getInt(level),
+                     SessionInterface.INFO_ISOLATION);
+    }
 
     public int getIsolation() throws HsqlException {
 
@@ -267,6 +271,18 @@ public class HSQLClientConnection implements SessionInterface {
 
     public Session getSession() {
         return null;
+    }
+
+    public void startPhasedTransaction() throws HsqlException {}
+
+    public void prepareCommit() throws HsqlException {
+
+        resultOut.setResultType(ResultConstants.SQLENDTRAN);
+
+        resultOut.updateCount = ResultConstants.HSQLPREPARECOMMIT;
+
+        resultOut.setMainString("");
+        execute(resultOut);
     }
 
     public void commit() throws HsqlException {

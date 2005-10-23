@@ -164,6 +164,7 @@ final class CompiledStatement {
      */
     CompiledStatement(Session session, Database database, HsqlName schema,
                       TableFilter targetFilter, Expression deleteCondition,
+                      SubQuery[] subqueries,
                       Expression[] params) throws HsqlException {
 
         schemaHsqlName    = schema;
@@ -179,6 +180,7 @@ final class CompiledStatement {
         }
 
         setParameters(params);
+        setSubqueries(subqueries);
 
         type = DELETE;
     }
@@ -195,6 +197,7 @@ final class CompiledStatement {
     CompiledStatement(Session session, Database database, HsqlName schema,
                       TableFilter targetFilter, int[] columnMap,
                       Expression[] columnValues, Expression updateCondition,
+                      SubQuery[] subqueries,
                       Expression[] params) throws HsqlException {
 
         schemaHsqlName    = schema;
@@ -223,6 +226,7 @@ final class CompiledStatement {
         }
 
         setParameters(params);
+        setSubqueries(subqueries);
 
         type = UPDATE;
     }
@@ -238,6 +242,7 @@ final class CompiledStatement {
      */
     CompiledStatement(HsqlName schema, Table targetTable, int[] columnMap,
                       Expression[] columnValues, boolean[] checkColumns,
+                      SubQuery[] subqueries,
                       Expression[] params) throws HsqlException {
 
         schemaHsqlName    = schema;
@@ -257,6 +262,7 @@ final class CompiledStatement {
         }
 
         setParameters(params);
+        setSubqueries(subqueries);
 
         type = INSERT_VALUES;
     }
@@ -273,6 +279,7 @@ final class CompiledStatement {
     CompiledStatement(Session session, Database database, HsqlName schema,
                       Table targetTable, int[] columnMap,
                       boolean[] checkColumns, Select select,
+                      SubQuery[] subqueries,
                       Expression[] params) throws HsqlException {
 
         schemaHsqlName    = schema;
@@ -287,6 +294,7 @@ final class CompiledStatement {
         // set select result metadata etc.
         select.prepareResult(session);
         setParameters(params);
+        setSubqueries(subqueries);
 
         type = INSERT_SELECT;
     }
@@ -298,7 +306,7 @@ final class CompiledStatement {
      * @param params
      */
     CompiledStatement(Session session, Database database, HsqlName schema,
-                      Select select,
+                      Select select, SubQuery[] subqueries,
                       Expression[] params) throws HsqlException {
 
         schemaHsqlName = schema;
@@ -316,6 +324,7 @@ final class CompiledStatement {
         // set select result metadata etc.
         select.prepareResult(session);
         setParameters(params);
+        setSubqueries(subqueries);
 
         type = SELECT;
     }
@@ -327,7 +336,7 @@ final class CompiledStatement {
      * @param params
      */
     CompiledStatement(Session session, Database database, HsqlName schema,
-                      Expression expression,
+                      Expression expression, SubQuery[] subqueries,
                       Expression[] params) throws HsqlException {
 
         schemaHsqlName  = schema;
@@ -338,6 +347,7 @@ final class CompiledStatement {
         expression.paramMode = Expression.PARAM_OUT;
 
         setParameters(params);
+        setSubqueries(subqueries);
 
         type = CALL;
     }
@@ -369,6 +379,10 @@ final class CompiledStatement {
         }
 
         this.paramTypes = types;
+    }
+
+    private void setSubqueries(SubQuery[] subqueries) {
+        this.subqueries = subqueries;
     }
 
     void materializeSubQueries(Session session) throws HsqlException {

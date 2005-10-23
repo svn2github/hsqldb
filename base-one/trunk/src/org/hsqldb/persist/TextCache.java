@@ -376,37 +376,54 @@ public class TextCache extends DataFileCache {
     /**
      *
      */
-    public void remove(int pos, PersistentStore store) throws HsqlException {
+    public synchronized void remove(int pos,
+                                    PersistentStore store)
+                                    throws IOException {
 
-        CachedObject r = (CachedObject) uncommittedCache.remove(pos);
+        CachedObject row = (CachedObject) uncommittedCache.remove(pos);
 
-        if (r != null) {
+        if (row != null) {
             return;
         }
 
-        r = get(pos, store, false);
+        row = cache.release(pos);
 
-        int length = r.getStorageSize()
+        clearRowImage(row);
+        release(pos);
+    }
+
+    private void clearRowImage(CachedObject row) throws IOException {
+
+        int length = row.getStorageSize()
                      - ScriptWriterText.BYTES_LINE_SEP.length;
 
         rowOut.reset();
 
         HsqlByteArrayOutputStream out = rowOut.getOutputStream();
 
-        try {
-            out.fill(' ', length);
-            out.write(ScriptWriterText.BYTES_LINE_SEP);
-            dataFile.seek(pos);
-            dataFile.write(out.getBuffer(), 0, out.size());
-        } catch (IOException e) {
-            throw (Trace.error(Trace.FILE_IO_ERROR, e.toString()));
+        out.fill(' ', length);
+        out.write(ScriptWriterText.BYTES_LINE_SEP);
+        dataFile.seek(row.getPos());
+        dataFile.write(out.getBuffer(), 0, out.size());
+    }
+
+    public synchronized void removePersistence(int pos,
+            PersistentStore store) throws IOException {
+
+        CachedObject row = (CachedObject) uncommittedCache.get(pos);
+
+        if (row != null) {
+            return;
         }
 
-        release(r.getPos());
+        row = cache.get(pos);
+
+        clearRowImage(row);
     }
 
     // sqlbob -- Allow line breaks in quoted fields.
-    protected RowInputInterface readObject(int pos) throws IOException {
+    protected synchronized RowInputInterface readObject(int pos)
+    throws IOException {
 
         ByteArray    buffer    = new ByteArray(80);
         boolean      blank     = true;
@@ -569,6 +586,31 @@ public class TextCache extends DataFileCache {
         }
     }
 
+    public synchronized void add(CachedObject object) throws IOException {
+        super.add(object);
+        clearRowImage(object);
+    }
+
+    public synchronized CachedObject get(int i, PersistentStore store,
+                                         boolean keep) throws HsqlException {
+
+        if (i < 0) {
+            return null;
+        }
+
+        CachedObject o = (CachedObject) uncommittedCache.get(i);
+
+        if (o == null) {
+            o = super.get(i, store, keep);
+        }
+
+        if (o == null) {
+            o = super.get(i, store, keep);
+        }
+
+        return o;
+    }
+
     /**
      * This is called internally when old rows need to be removed from the
      * cache. Text table rows that have not been saved are those that have not
@@ -576,8 +618,8 @@ public class TextCache extends DataFileCache {
      * uncommitted cache until such time that they are committed or rolled
      * back- fredt
      */
-    protected void saveRows(CachedObject[] rows, int offset,
-                            int count) throws IOException {
+    protected synchronized void saveRows(CachedObject[] rows, int offset,
+                                         int count) throws IOException {
 
         if (count == 0) {
             return;
@@ -596,7 +638,7 @@ public class TextCache extends DataFileCache {
      * In case the row has been moved to the uncommittedCache, removes it.
      * Then saves the row as normal.
      */
-    public void saveRow(CachedObject row) throws IOException {
+    public synchronized void saveRow(CachedObject row) throws IOException {
         uncommittedCache.remove(row.getPos());
         super.saveRow(row);
     }

@@ -289,7 +289,7 @@ public class Index {
                 break;
             }
 
-            compare = compareRowUnique(session, row, n.getRow());
+            compare = compareRowForInsert(session, row, n.getRow());
 
             if (compare == 0) {
                 throw Trace.error(Trace.VIOLATION_OF_UNIQUE_INDEX,
@@ -1040,7 +1040,7 @@ public class Index {
         Node     x = getRoot(session);
 
         while (x != null) {
-            int c = compareRowUnique(session, row, x.getRow());
+            int c = compareRowForInsert(session, row, x.getRow());
 
             if (c == 0) {
                 return x;
@@ -1129,11 +1129,11 @@ public class Index {
      *
      * @throws HsqlException
      */
-    private int compareRowUnique(Session session, Row left,
-                                 Row right) throws HsqlException {
+    private int compareRowForInsert(Session session, Row newRow,
+                                    Row existingRow) throws HsqlException {
 
-        Object[] a       = left.getData();
-        Object[] b       = right.getData();
+        Object[] a       = newRow.getData();
+        Object[] b       = existingRow.getData();
         int      j       = 0;
         boolean  hasNull = false;
 
@@ -1166,7 +1166,7 @@ public class Index {
         }
 
         if (useRowId) {
-            int difference = left.getPos() - right.getPos();
+            int difference = newRow.getPos() - existingRow.getPos();
 
             if (difference < 0) {
                 difference = -1;
@@ -1254,11 +1254,20 @@ public class Index {
             }
         }
 
+        void updateForDelete(Node node) {
+
+            try {
+                if (node.equals(nextnode)) {
+                    nextnode = index.next(node);
+                }
+            } catch (Exception e) {}
+        }
+
         void link(IndexRowIterator other) {
 
             other.next = next;
-            next.last  = other;
             other.last = this;
+            next.last  = other;
             next       = other;
         }
 
@@ -1271,15 +1280,6 @@ public class Index {
             if (next != null) {
                 next.last = last;
             }
-        }
-
-        void updateForDelete(Node node) {
-
-            try {
-                if (node.equals(nextnode)) {
-                    nextnode = index.next(node);
-                }
-            } catch (Exception e) {}
         }
     }
 }

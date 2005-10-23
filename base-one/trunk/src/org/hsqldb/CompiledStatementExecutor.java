@@ -56,7 +56,14 @@ final class CompiledStatementExecutor {
 
     private Session session;
     private Result  updateResult;
-    private Result  emptyResult;
+    private static Result emptyZeroResult =
+        new Result(ResultConstants.UPDATECOUNT);
+    private static Result updateOneResult =
+        new Result(ResultConstants.UPDATECOUNT);
+
+    static {
+        updateOneResult.updateCount = 1;
+    }
 
     /**
      * Creates a new instance of CompiledStatementExecutor.
@@ -64,10 +71,8 @@ final class CompiledStatementExecutor {
      * @param session the context in which to perform the execution
      */
     CompiledStatementExecutor(Session session) {
-
         this.session = session;
         updateResult = new Result(ResultConstants.UPDATECOUNT);
-        emptyResult  = new Result(ResultConstants.UPDATECOUNT);
     }
 
     /**
@@ -78,11 +83,15 @@ final class CompiledStatementExecutor {
      * @return the result of executing the statement
      * @param cs any valid CompiledStatement
      */
-    Result execute(CompiledStatement cs) {
+    Result execute(CompiledStatement cs, Object[] paramValues) {
 
         Result result = null;
 
         JavaSystem.gc();
+
+        for (int i = 0; i < cs.parameters.length; i++) {
+            cs.parameters[i].bind(paramValues[i]);
+        }
 
         try {
             cs.materializeSubQueries(session);
@@ -96,7 +105,7 @@ final class CompiledStatementExecutor {
         cs.dematerializeSubQueries(session);
 
         if (result == null) {
-            result = emptyResult;
+            result = emptyZeroResult;
         }
 
         return result;
@@ -296,9 +305,7 @@ final class CompiledStatementExecutor {
 
         t.insert(session, row);
 
-        updateResult.updateCount = 1;
-
-        return updateResult;
+        return updateOneResult;
     }
 
     /**

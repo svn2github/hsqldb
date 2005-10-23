@@ -39,7 +39,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.StringTokenizer;
 
-/* $Id: SqlTool.java,v 1.46 2005/05/11 14:03:22 fredt Exp $ */
+/* $Id: SqlTool.java,v 1.49 2005/06/08 19:52:38 fredt Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -50,7 +50,7 @@ import java.util.StringTokenizer;
  * See JavaDocs for the main method for syntax of how to run.
  *
  * @see @main()
- * @version $Revision: 1.46 $
+ * @version $Revision: 1.49 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlTool {
@@ -64,8 +64,8 @@ public class SqlTool {
     private static String  revnum = null;
 
     static {
-        revnum = "$Revision: 1.46 $".substring("$Revision: ".length(),
-                                               "$Revision: 1.46 $".length()
+        revnum = "$Revision: 1.49 $".substring("$Revision: ".length(),
+                                               "$Revision: 1.49 $".length()
                                                - 2);
     }
 

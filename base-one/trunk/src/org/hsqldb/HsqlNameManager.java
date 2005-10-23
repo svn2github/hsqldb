@@ -36,7 +36,7 @@ import org.hsqldb.lib.StringConverter;
 /**
  * Provides Name Management for SQL objects. <p>
  *
- * This class now includes the HsqlName class inroduced in 1.7.1 and improves
+ * This class now includes the HsqlName class introduced in 1.7.1 and improves
  * auto-naming with multiple databases in the engine.<p>
  *
  * Methods check user defined names and issue system generated names

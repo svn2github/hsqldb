@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.127 2005/10/13 20:56:08 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.128 2005/10/14 00:00:54 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -102,10 +102,10 @@ import java.util.TreeMap;
  *
  * To make changes to this class less destructive to external callers,
  * the input parameters should be moved to setters (probably JavaBean
- * setters would be best) instead of constructor args and System 
+ * setters would be best) instead of constructor args and System
  * Properties.
  *
- * @version $Revision: 1.127 $
+ * @version $Revision: 1.128 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlFile {
@@ -156,8 +156,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.127 $".substring("$Revision: ".length(),
-                "$Revision: 1.127 $".length() - 2);
+        revnum = "$Revision: 1.128 $".substring("$Revision: ".length(),
+                "$Revision: 1.128 $".length() - 2);
     }
 
     private static String BANNER =
@@ -757,9 +757,9 @@ public class SqlFile {
      * Utility nested Exception class for internal use.
      */
     private class BadSpecial extends Exception {
+
         // Special-purpose constructor
-        private BadSpecial() {
-        }
+        private BadSpecial() {}
 
         // Normal use constructor
         private BadSpecial(String s) {
@@ -1065,14 +1065,13 @@ public class SqlFile {
         throw new BadSpecial("Unknown Buffer Command");
     }
 
-    private boolean doPrepare  = false;
-    private String  prepareVar = null;
-    private String csvColDelim = null;
-    private String csvRowDelim = null;
-
+    private boolean doPrepare   = false;
+    private String  prepareVar  = null;
+    private String  csvColDelim = null;
+    private String  csvRowDelim = null;
     private static final String CSV_SYNTAX_MSG =
-            "Export syntax:  x table_or_view_anme "
-            + "[column_delimiter [record_delimiter]]";
+        "Export syntax:  x table_or_view_anme "
+        + "[column_delimiter [record_delimiter]]";
 
     /**
      * Process a Special Command.
@@ -1125,25 +1124,31 @@ public class SqlFile {
                 if (arg1.length() != 1 || other == null) {
                     throw new BadSpecial();
                 }
-                csvColDelim = convertEscapes(
-                        (String) userVars.get("*CSV_COL_DELIM"));
-                csvRowDelim = convertEscapes(
-                        (String) userVars.get("*CSV_ROW_DELIM"));
-                csvNullRep  = (String) userVars.get("*CSV_NULL_REP");
+
+                csvColDelim =
+                    convertEscapes((String) userVars.get("*CSV_COL_DELIM"));
+                csvRowDelim =
+                    convertEscapes((String) userVars.get("*CSV_ROW_DELIM"));
+                csvNullRep = (String) userVars.get("*CSV_NULL_REP");
+
                 if (csvColDelim == null) {
                     csvColDelim = DEFAULT_COL_DELIM;
                 }
+
                 if (csvRowDelim == null) {
                     csvRowDelim = DEFAULT_ROW_DELIM;
                 }
+
                 if (csvNullRep == null) {
                     csvNullRep = DEFAULT_NULL_REP;
                 }
+
                 try {
                     importCsv(other);
                 } catch (IOException ioe) {
                     System.err.println("Failed to read in CSV file:  " + ioe);
                 }
+
                 return;
 
             case 'x' :
@@ -1151,43 +1156,57 @@ public class SqlFile {
                     if (arg1.length() != 1 || other == null) {
                         throw new BadSpecial();
                     }
-                    String tableName = ((other.indexOf(' ') > 0)
-                            ? null : other);
+
+                    String tableName = ((other.indexOf(' ') > 0) ? null
+                                                                 : other);
+
                     csvColDelim = convertEscapes(
-                            (String) userVars.get("*CSV_COL_DELIM"));
+                        (String) userVars.get("*CSV_COL_DELIM"));
                     csvRowDelim = convertEscapes(
-                            (String) userVars.get("*CSV_ROW_DELIM"));
-                    csvNullRep  = (String) userVars.get("*CSV_NULL_REP");
-                    String csvFilepath = (String) userVars.get("*CSV_FILEPATH");
+                        (String) userVars.get("*CSV_ROW_DELIM"));
+                    csvNullRep = (String) userVars.get("*CSV_NULL_REP");
+
+                    String csvFilepath =
+                        (String) userVars.get("*CSV_FILEPATH");
+
                     if (csvFilepath == null && tableName == null) {
                         throw new BadSpecial(
-                                "You must set PL variable '*CSV_FILEPATH' in "
-                                + "order to use the query variant of \\x");
+                            "You must set PL variable '*CSV_FILEPATH' in "
+                            + "order to use the query variant of \\x");
                     }
-                    File csvFile = new File(
-                            (csvFilepath == null) ?  (tableName + ".csv")
-                                                  : csvFilepath);
+
+                    File csvFile = new File((csvFilepath == null)
+                                            ? (tableName + ".csv")
+                                            : csvFilepath);
+
                     if (csvColDelim == null) {
                         csvColDelim = DEFAULT_COL_DELIM;
                     }
+
                     if (csvRowDelim == null) {
                         csvRowDelim = DEFAULT_ROW_DELIM;
                     }
+
                     if (csvNullRep == null) {
                         csvNullRep = DEFAULT_NULL_REP;
                     }
-                    pwCsv = new PrintWriter(new OutputStreamWriter(
-                                new FileOutputStream(csvFile), charset));
-                    displayResultSet(null,
-                            curConn.createStatement().executeQuery(
-                                (tableName == null) ? other :
-                                ("SELECT * FROM " + tableName)),
-                            null, null);
+
+                    pwCsv = new PrintWriter(
+                        new OutputStreamWriter(
+                            new FileOutputStream(csvFile), charset));
+
+                    displayResultSet(
+                        null,
+                        curConn.createStatement().executeQuery(
+                            (tableName == null) ? other
+                                                : ("SELECT * FROM "
+                                                   + tableName)), null, null);
                     pwCsv.flush();
                     stdprintln("Wrote " + csvFile.length()
-                            + " characters to file '" + csvFile + "'");
+                               + " characters to file '" + csvFile + "'");
                 } catch (Exception e) {
                     if (e instanceof BadSpecial) {
+
                         // Not sure this test is right.  Maybe .length() == 0?
                         if (e.getMessage() == null) {
                             throw new BadSpecial(CSV_SYNTAX_MSG);
@@ -1195,17 +1214,21 @@ public class SqlFile {
                             throw (BadSpecial) e;
                         }
                     }
+
                     throw new BadSpecial("Failed to write to file '" + other
                                          + "':  " + e);
                 } finally {
+
                     // Reset all state changes
                     if (pwCsv != null) {
                         pwCsv.close();
                     }
-                    pwCsv = null;
+
+                    pwCsv       = null;
                     csvColDelim = null;
                     csvRowDelim = null;
                 }
+
                 return;
 
             case 'd' :
@@ -1503,7 +1526,7 @@ public class SqlFile {
         throw new BadSpecial("Unknown Special Command");
     }
 
-    static private final char[] nonVarChars = {
+    private static final char[] nonVarChars = {
         ' ', '\t', '=', '}', '\n', '\r'
     };
 
@@ -2076,7 +2099,7 @@ public class SqlFile {
             curLinenum++;
 
             if (s.trim().length() > 1 && s.trim().charAt(0) == '*') {
-                toker = new StringTokenizer(s.trim().substring(1));
+                toker        = new StringTokenizer(s.trim().substring(1));
                 curPlCommand = toker.nextToken();
 
                 // PL COMMAND of some sort.
@@ -2226,13 +2249,12 @@ public class SqlFile {
     // SqlFile output, we use the same default value for null in CSV
     // files, but this CSV null representation can be changed to anything.
     private static final String DEFAULT_NULL_REP = "[null]";
-    private static final String DEFAULT_ROW_DELIM = System.getProperty(
-            "line.separator");
+    private static final String DEFAULT_ROW_DELIM =
+        System.getProperty("line.separator");
     private static final String DEFAULT_COL_DELIM = "|";
-            
-    private static final int DEFAULT_ELEMENT = 0,
-                             HSQLDB_ELEMENT  = 1,
-                             ORACLE_ELEMENT  = 2
+    private static final int    DEFAULT_ELEMENT   = 0,
+                                HSQLDB_ELEMENT    = 1,
+                                ORACLE_ELEMENT    = 2
     ;
 
     // These do not specify order listed, just inclusion.
@@ -2385,7 +2407,8 @@ public class SqlFile {
                             + "WHERE authorization_type = 'ROLE'\n"
                             + "ORDER BY authorization_name");
                     } else if (dbProductName.indexOf(
-                                "Adaptive Server Enterprise") > -1) {
+                            "Adaptive Server Enterprise") > -1) {
+
                         // This is the basic Sybase server.  Sybase also has
                         // their "Anywhere", ASA (for embedded), and replication
                         // databases, but I don't know the Metadata strings for
@@ -2422,7 +2445,8 @@ public class SqlFile {
                             "SELECT usename, usesuper FROM pg_catalog.pg_user "
                             + "ORDER BY usename");
                     } else if (dbProductName.indexOf(
-                                "Adaptive Server Enterprise") > -1) {
+                            "Adaptive Server Enterprise") > -1) {
+
                         // This is the basic Sybase server.  Sybase also has
                         // their "Anywhere", ASA (for embedded), and replication
                         // databases, but I don't know the Metadata strings for
@@ -2696,12 +2720,11 @@ public class SqlFile {
                                   String filter) throws SQLException {
 
         java.sql.Timestamp ts;
-
-        int     updateCount = (statement == null) ? -1
-                                                  : statement
-                                                      .getUpdateCount();
-        boolean silent      = silentFetch;
-        boolean binary      = fetchBinary;
+        int                updateCount = (statement == null) ? -1
+                                                             : statement
+                                                                 .getUpdateCount();
+        boolean            silent      = silentFetch;
+        boolean            binary      = fetchBinary;
 
         silentFetch = false;
         fetchBinary = false;
@@ -2839,8 +2862,9 @@ public class SqlFile {
                             // unfriendly.  However, getTimestamp().toString()
                             // is consistent and convenient.
                             if (dataType[insi] == java.sql.Types.TIMESTAMP) {
-                                ts = r.getTimestamp(i);
-                                val = ((ts == null) ? null : ts.toString());
+                                ts  = r.getTimestamp(i);
+                                val = ((ts == null) ? null
+                                                    : ts.toString());
                             } else {
                                 val = r.getString(i);
 
@@ -2848,19 +2872,21 @@ public class SqlFile {
                                 // try getting it with a String Stream
                                 if (val == null) {
                                     try {
-                                    val = streamToString(r.getAsciiStream(i));
+                                        val = streamToString(
+                                            r.getAsciiStream(i));
                                     } catch (Exception e) {}
                                 }
                             }
                         }
 
-                        if (binary || (val == null && !r.wasNull())) {
+                        if (binary || (val == null &&!r.wasNull())) {
                             if (pwCsv != null) {
+
                                 // TODO:  Should throw something other than
                                 // a SQLException
                                 throw new SQLException(
-                                        "Table has a binary column.  CSV files "
-                                        + "are text, not binary, files");
+                                    "Table has a binary column.  CSV files "
+                                    + "are text, not binary, files");
                             }
 
                             // DB has a value but we either explicitly want
@@ -2943,74 +2969,82 @@ public class SqlFile {
                 // STEP 2: DISPLAY DATA  (= 2a OR 2b)
                 // STEP 2a (Non-CSV)
                 if (pwCsv == null) {
-                condlPrintln("<TABLE border='1'>", true);
+                    condlPrintln("<TABLE border='1'>", true);
 
-                if (incCount > 1) {
-                    condlPrint(htmlRow(COL_HEAD) + '\n' + PRE_TD, true);
+                    if (incCount > 1) {
+                        condlPrint(htmlRow(COL_HEAD) + '\n' + PRE_TD, true);
 
-                    for (int i = 0; i < headerArray.length; i++) {
-                        condlPrint("<TD>" + headerArray[i] + "</TD>", true);
-                        condlPrint(((i > 0) ? spaces(2)
-                                            : "") + pad(
-                                                headerArray[i], maxWidth[i],
-                                                rightJust[i],
-                                                (i < headerArray.length - 1
-                                                 || rightJust[i])), false);
-                    }
-
-                    condlPrintln("\n" + PRE_TR + "</TR>", true);
-                    condlPrintln("", false);
-
-                    if (!htmlMode) {
                         for (int i = 0; i < headerArray.length; i++) {
+                            condlPrint("<TD>" + headerArray[i] + "</TD>",
+                                       true);
                             condlPrint(((i > 0) ? spaces(2)
-                                                : "") + divider(
-                                                    maxWidth[i]), false);
+                                                : "") + pad(
+                                                    headerArray[i],
+                                                    maxWidth[i],
+                                                    rightJust[i],
+                                                    (i < headerArray.length
+                                                     - 1 || rightJust[i])), false);
                         }
 
+                        condlPrintln("\n" + PRE_TR + "</TR>", true);
+                        condlPrintln("", false);
+
+                        if (!htmlMode) {
+                            for (int i = 0; i < headerArray.length; i++) {
+                                condlPrint(((i > 0) ? spaces(2)
+                                                    : "") + divider(
+                                                        maxWidth[i]), false);
+                            }
+
+                            condlPrintln("", false);
+                        }
+                    }
+
+                    for (int i = 0; i < rows.size(); i++) {
+                        condlPrint(htmlRow(((i % 2) == 0) ? COL_EVEN
+                                                          : COL_ODD) + '\n'
+                                                          + PRE_TD, true);
+
+                        fieldArray = (String[]) rows.get(i);
+
+                        for (int j = 0; j < fieldArray.length; j++) {
+                            condlPrint("<TD>" + fieldArray[j] + "</TD>",
+                                       true);
+                            condlPrint(((j > 0) ? spaces(2)
+                                                : "") + pad(
+                                                    fieldArray[j],
+                                                    maxWidth[j],
+                                                    rightJust[j],
+                                                    (j < fieldArray.length
+                                                     - 1 || rightJust[j])), false);
+                        }
+
+                        condlPrintln("\n" + PRE_TR + "</TR>", true);
                         condlPrintln("", false);
                     }
-                }
 
-                for (int i = 0; i < rows.size(); i++) {
-                    condlPrint(htmlRow(((i % 2) == 0) ? COL_EVEN
-                                                      : COL_ODD) + '\n'
-                                                      + PRE_TD, true);
+                    condlPrintln("</TABLE>", true);
 
-                    fieldArray = (String[]) rows.get(i);
-
-                    for (int j = 0; j < fieldArray.length; j++) {
-                        condlPrint("<TD>" + fieldArray[j] + "</TD>", true);
-                        condlPrint(((j > 0) ? spaces(2)
-                                            : "") + pad(
-                                                fieldArray[j], maxWidth[j],
-                                                rightJust[j],
-                                                (j < fieldArray.length - 1
-                                                 || rightJust[j])), false);
+                    if (rows.size() != 1) {
+                        stdprintln("\n" + rows.size() + " rows", true);
                     }
 
-                    condlPrintln("\n" + PRE_TR + "</TR>", true);
-                    condlPrintln("", false);
+                    condlPrintln("<HR>", true);
+
+                    break;
                 }
 
-                condlPrintln("</TABLE>", true);
-
-                if (rows.size() != 1) {
-                    stdprintln("\n" + rows.size() + " rows", true);
-                }
-
-                condlPrintln("<HR>", true);
-                break;
-                }
                 // STEP 2b (CSV)
                 if (incCount > 0) {
                     for (int i = 0; i < headerArray.length; i++) {
                         csvSafe(headerArray[i]);
                         pwCsv.print(headerArray[i]);
+
                         if (i < headerArray.length - 1) {
                             pwCsv.print(csvColDelim);
                         }
                     }
+
                     pwCsv.print(csvRowDelim);
                 }
 
@@ -3019,16 +3053,19 @@ public class SqlFile {
 
                     for (int j = 0; j < fieldArray.length; j++) {
                         csvSafe(fieldArray[j]);
-                        pwCsv.print((fieldArray[j] == null)
-                                ? csvNullRep : fieldArray[j]);
+                        pwCsv.print((fieldArray[j] == null) ? csvNullRep
+                                                            : fieldArray[j]);
+
                         if (j < fieldArray.length - 1) {
                             pwCsv.print(csvColDelim);
                         }
                     }
+
                     pwCsv.print(csvRowDelim);
                 }
+
                 stdprintln(Integer.toString(rows.size())
-                        + " rows read from DB");
+                           + " rows read from DB");
                 break;
 
             default :
@@ -3780,55 +3817,69 @@ public class SqlFile {
      * not an SQL problem.  Fix the caller!
      */
     public void csvSafe(String s) throws SQLException {
+
         if (pwCsv == null || csvColDelim == null || csvRowDelim == null
                 || csvNullRep == null) {
-            throw new RuntimeException("Assertion failed.  \n"
-                    + "csvSafe called when CSV settings are incomplete");
+            throw new RuntimeException(
+                "Assertion failed.  \n"
+                + "csvSafe called when CSV settings are incomplete");
         }
+
         if (s == null) {
             return;
         }
+
         if (s.indexOf(csvColDelim) > 0) {
             throw new SQLException(
-                    "Table data contains our column delimiter '"
-                    + csvColDelim + "'");
+                "Table data contains our column delimiter '" + csvColDelim
+                + "'");
         }
+
         if (s.indexOf(csvRowDelim) > 0) {
-            throw new SQLException(
-                    "Table data contains our row delimiter '"
-                    + csvRowDelim + "'");
+            throw new SQLException("Table data contains our row delimiter '"
+                                   + csvRowDelim + "'");
         }
+
         if (s.indexOf(csvNullRep) > 0) {
             throw new SQLException(
-                    "Table data contains our null representation '"
-                    + csvNullRep + "'");
+                "Table data contains our null representation '" + csvNullRep
+                + "'");
         }
     }
 
-    public static String convertEscapes (String inString) {
+    public static String convertEscapes(String inString) {
+
         if (inString == null) {
             return null;
         }
+
         String workString = new String(inString);
-        int i;
+        int    i;
+
         i = 0;
+
         while ((i = workString.indexOf("\\n", i)) > -1
                 && i < workString.length() - 1) {
             workString = workString.substring(0, i) + '\n'
-                + workString.substring(i + 2);
+                         + workString.substring(i + 2);
         }
+
         i = 0;
+
         while ((i = workString.indexOf("\\r", i)) > -1
                 && i < workString.length() - 1) {
             workString = workString.substring(0, i) + '\r'
-                + workString.substring(i + 2);
+                         + workString.substring(i + 2);
         }
+
         i = 0;
+
         while ((i = workString.indexOf("\\t", i)) > -1
                 && i < workString.length() - 1) {
             workString = workString.substring(0, i) + '\t'
-                + workString.substring(i + 2);
+                         + workString.substring(i + 2);
         }
+
         return workString;
     }
 
@@ -3841,39 +3892,49 @@ public class SqlFile {
      * features to search through a character array for multi-character
      * substrings.
      */
-    public void importCsv(String filePath)
-    throws IOException, BadSpecial {
-        char[]       bfr   = null;
-        File         file = new File(filePath);
+    public void importCsv(String filePath) throws IOException, BadSpecial {
+
+        char[] bfr  = null;
+        File   file = new File(filePath);
+
         if (!file.canRead()) {
             throw new IOException("Can't read file '" + file + "'");
         }
+
         int fileLength = (int) (file.length());
+
         try {
             bfr = new char[fileLength];
         } catch (RuntimeException re) {
             throw new IOException(
-        "SqlFile can only read in your CSV file in one chunk at this time.\n"
-            + "Please run the program with more RAM (try Java -Xm* switches).");
+                "SqlFile can only read in your CSV file in one chunk at this time.\n"
+                + "Please run the program with more RAM (try Java -Xm* switches).");
         }
+
         InputStreamReader isr =
             new InputStreamReader(new FileInputStream(file), charset);
         int retval = isr.read(bfr, 0, bfr.length);
+
         isr.close();
+
         if (retval != bfr.length) {
             throw new IOException("Didn't read all characters.  Read in "
-                + retval + " characters");
+                                  + retval + " characters");
         }
+
         String string = null;
+
         try {
             string = new String(bfr);
         } catch (RuntimeException re) {
             throw new IOException(
-            "SqlFile converts your entire CSV file to a String at this time.\n"
-            + "Please run the program with more RAM (try Java -Xm* switches).");
+                "SqlFile converts your entire CSV file to a String at this time.\n"
+                + "Please run the program with more RAM (try Java -Xm* switches).");
         }
+
         ArrayList headerList = new ArrayList();
-        String recordString;
+        String    recordString;
+
         // N.b.  ENDs are the index of 1 PAST the current item
         int recEnd;
         int colStart;
@@ -3881,112 +3942,159 @@ public class SqlFile {
 
         // First read header line
         int recStart = 0;
+
         recEnd = string.indexOf(csvRowDelim, recStart);
+
         if (recEnd < 0) {
+
             // File consists of only a header line
             recEnd = string.length();
         }
+
         colStart = recStart;
-        colEnd = -1;
+        colEnd   = -1;
+
         while (true) {
             if (colEnd == recEnd) {
+
                 // We processed final column last time through loop
                 break;
             }
+
             colEnd = string.indexOf(csvColDelim, colStart);
+
             if (colEnd < 0 || colEnd > recEnd) {
                 colEnd = recEnd;
             }
+
             if (colEnd - colStart < 1) {
                 throw new IOException("No column header for column "
-                        + (headerList.size()+1));
+                                      + (headerList.size() + 1));
             }
+
             headerList.add(string.substring(colStart, colEnd));
+
             colStart = colEnd + csvColDelim.length();
         }
-        String[] headers = (String[]) headerList.toArray(new String[0]);
-        String tableName = (String) userVars.get("*CSV_TABLENAME");
+
+        String[] headers   = (String[]) headerList.toArray(new String[0]);
+        String   tableName = (String) userVars.get("*CSV_TABLENAME");
+
         if (tableName == null) {
             tableName = file.getName();
+
             int i = tableName.indexOf('.');
+
             if (i > 0) {
                 tableName = tableName.substring(0, i);
             }
         }
-        StringBuffer sb = new StringBuffer("INSERT INTO "
-                + tableName + " (");
+
+        StringBuffer sb = new StringBuffer("INSERT INTO " + tableName + " (");
+
         for (int i = 0; i < headers.length; i++) {
-            if (i > 0) sb.append(", ");
+            if (i > 0) {
+                sb.append(", ");
+            }
+
             sb.append(headers[i]);
         }
+
         sb.append(") VALUES (");
+
         for (int i = 0; i < headers.length; i++) {
-            if (i > 0) sb.append(", ");
+            if (i > 0) {
+                sb.append(", ");
+            }
+
             sb.append('?');
         }
-        //System.out.println("INSERTION: (" + sb + ')');
 
+        //System.out.println("INSERTION: (" + sb + ')');
         try {
             PreparedStatement ps = curConn.prepareStatement(sb.toString()
-                    + ')');
+                + ')');
 
             // First and insert data rows 1-row-at-a-time
             String[] dataVals = new String[headers.length];
-            int recCount = 0;
-            int colCount;
+            int      recCount = 0;
+            int      colCount;
+
             while (true) {
                 recStart = recEnd + csvRowDelim.length();
+
                 if (recStart >= string.length()) {
                     break;
                 }
+
                 recEnd = string.indexOf(csvRowDelim, recStart);
+
                 if (recEnd < 0) {
+
                     // Last record
                     recEnd = string.length();
                 }
+
                 colStart = recStart;
-                colEnd = -1;
+                colEnd   = -1;
                 colCount = 0;
+
                 recCount++;
+
                 while (true) {
                     if (colEnd == recEnd) {
+
                         // We processed final column last time through loop
                         break;
                     }
+
                     colEnd = string.indexOf(csvColDelim, colStart);
+
                     if (colEnd < 0 || colEnd > recEnd) {
                         colEnd = recEnd;
                     }
+
                     dataVals[colCount++] = string.substring(colStart, colEnd);
-                    colStart = colEnd + csvColDelim.length();
+                    colStart             = colEnd + csvColDelim.length();
                 }
+
                 if (colCount != dataVals.length) {
                     throw new IOException("Header has " + headers.length
-                            + " columns.  CSV record " + recCount
-                            + " has " + colCount + " column values.");
+                                          + " columns.  CSV record "
+                                          + recCount + " has " + colCount
+                                          + " column values.");
                 }
+
                 for (int i = 0; i < dataVals.length; i++) {
+
                     //System.err.println("ps.setString(" + i + ", "
                     //      + dataVals[i] + ')');
-                    ps.setString(i+1, (dataVals[i].equals(csvNullRep)
-                            ? null : dataVals[i]));
+                    ps.setString(i + 1, (dataVals[i].equals(csvNullRep) ? null
+                                                                        : dataVals[i]));
                 }
+
                 retval = ps.executeUpdate();
+
                 if (retval != 1) {
                     curConn.rollback();
+
                     throw new BadSpecial("Insert of row " + recCount
-                            + " failed.  " +  retval + " rows modified");
+                                         + " failed.  " + retval
+                                         + " rows modified");
                 }
+
                 possiblyUncommitteds.set(true);
             }
+
             stdprintln("Successfully inserted " + recCount
-                    + " rows into table '" + tableName + "'");
+                       + " rows into table '" + tableName + "'");
         } catch (SQLException se) {
             try {
                 curConn.rollback();
             } catch (SQLException se2) {}
+
             throw new BadSpecial(
-                    "SQL error encountered when inserting CSV data: " + se);
+                "SQL error encountered when inserting CSV data: " + se);
         }
     }
 }

@@ -430,8 +430,13 @@ class Select {
             }
         }
 
+        // selected columns
         checkAggregateOrGroupByColumns(0, iResultLen);
+
+        // having columns
         checkAggregateOrGroupByColumns(groupByEnd, orderByStart);
+
+        // order by columns
         checkAggregateOrGroupByColumns(orderByStart, orderByEnd);
         prepareSort();
 
@@ -492,7 +497,8 @@ class Select {
 
             if (sortUnion) {
                 sortResult(session, r);
-                r.trimResult(getLimitStart(), getLimitCount(maxrows));
+                r.trimResult(getLimitStart(session),
+                             getLimitCount(session, maxrows));
             }
         }
 
@@ -581,10 +587,11 @@ class Select {
         }
     }
 
-    int getLimitStart() throws HsqlException {
+    int getLimitStart(Session session) throws HsqlException {
 
         if (limitCondition != null) {
-            Integer limit = (Integer) limitCondition.getArg().getValue(null);
+            Integer limit =
+                (Integer) limitCondition.getArg().getValue(session);
 
             if (limit != null) {
                 return limit.intValue();
@@ -599,12 +606,13 @@ class Select {
      * finds cases where the result does not have to be fully built and
      * returns an adjusted rowCount with LIMIT params.
      */
-    int getLimitCount(int rowCount) throws HsqlException {
+    int getLimitCount(Session session, int rowCount) throws HsqlException {
 
         int limitCount = 0;
 
         if (limitCondition != null) {
-            Integer limit = (Integer) limitCondition.getArg2().getValue(null);
+            Integer limit =
+                (Integer) limitCondition.getArg2().getValue(session);
 
             if (limit != null) {
                 limitCount = limit.intValue();
@@ -622,10 +630,10 @@ class Select {
      * translate the rowCount into total number of rows needed from query,
      * including any rows skipped at the beginning
      */
-    int getMaxRowCount(int rowCount) throws HsqlException {
+    int getMaxRowCount(Session session, int rowCount) throws HsqlException {
 
-        int limitStart = getLimitStart();
-        int limitCount = getLimitCount(rowCount);
+        int limitStart = getLimitStart(session);
+        int limitCount = getLimitCount(session, rowCount);
 
         if (!simpleLimit) {
             rowCount = Integer.MAX_VALUE;
@@ -651,7 +659,7 @@ class Select {
             prepareResult(session);
         }
 
-        Result r = buildResult(session, getMaxRowCount(rowCount));
+        Result r = buildResult(session, getMaxRowCount(session, rowCount));
 
         // the result is perhaps wider (due to group and order by)
         // so use the visible columns to remove duplicates
@@ -661,7 +669,8 @@ class Select {
 
         if (!sortUnion) {
             sortResult(session, r);
-            r.trimResult(getLimitStart(), getLimitCount(rowCount));
+            r.trimResult(getLimitStart(session),
+                         getLimitCount(session, rowCount));
         }
 
         return r;
@@ -1057,9 +1066,12 @@ class Select {
 
     boolean isResolved = false;
 
+    /**
+     * @todo - post 1.8.0 - review resolve and check resolve -
+     * determine if isResolved is specific to main query or the full set including UNION
+     *
+     */
     boolean resolveAll(Session session, boolean check) throws HsqlException {
-
-        boolean result = true;
 
         if (isResolved) {
             return true;
@@ -1067,19 +1079,28 @@ class Select {
 
         resolve(session);
 
-        result = result && checkResolved(check);
+        isResolved = checkResolved(check);
 
         if (unionSelect != null) {
             if (unionSelect.iResultLen != iResultLen) {
                 throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
             }
 
-            unionSelect.resolveAll(session, check);
+            for (int i = 0; i < iResultLen; i++) {
+                Expression e = exprColumns[i];
+
+                if (!e.isTypeEqual(unionSelect.exprColumns[i])) {
+                    unionSelect.exprColumns[i] =
+                        new Expression(unionSelect.exprColumns[i],
+                                       e.getDataType(), e.getColumnSize(),
+                                       e.getColumnScale());
+                }
+            }
+
+            isResolved &= unionSelect.resolveAll(session, check);
         }
 
-        isResolved = result;
-
-        return result;
+        return isResolved;
     }
 
     boolean isResolved() {

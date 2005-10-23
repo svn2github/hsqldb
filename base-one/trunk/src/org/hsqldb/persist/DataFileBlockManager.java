@@ -72,6 +72,12 @@ public class DataFileBlockManager {
      */
     void add(int pos, int rowSize) {
 
+        if (capacity == 0) {
+            lostFreeBlockSize += rowSize;
+
+            return;
+        }
+
         releaseCount++;
 
         //

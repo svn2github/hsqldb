@@ -51,6 +51,12 @@ public interface SessionInterface {
     int INFO_DATABASE_READONLY   = 5;
     int INFO_CONNECTION_READONLY = 6;    // used
 
+    //
+    int TX_READ_UNCOMMITTED = 1;
+    int TX_READ_COMMITTED   = 2;
+    int TX_REPEATABLE_READ  = 4;
+    int TX_SERIALIZABLE     = 8;
+
     Result execute(Result r) throws HsqlException;
 
     void close();
@@ -68,6 +74,10 @@ public interface SessionInterface {
     void setIsolation(int level) throws HsqlException;
 
     int getIsolation() throws HsqlException;
+
+    void startPhasedTransaction() throws HsqlException;
+
+    void prepareCommit() throws HsqlException;
 
     void commit() throws HsqlException;
 

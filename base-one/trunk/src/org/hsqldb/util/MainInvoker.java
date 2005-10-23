@@ -42,7 +42,7 @@ import java.lang.reflect.InvocationTargetException;
  *
  * @author   Blaine Simpson, unsaved@users
  * @since    HSQLDB 1.8.0
- * @version  $Revision: 1.2 $
+ * @version  $Revision: 1.5 $
  */
 public class MainInvoker {
 

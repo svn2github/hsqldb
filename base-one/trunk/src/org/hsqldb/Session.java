@@ -115,7 +115,6 @@ public class Session implements SessionInterface {
     private volatile boolean isAutoCommit;
     private volatile boolean isReadOnly;
     private volatile boolean isClosed;
-    int                      isolation;
 
     //
     Database          database;
@@ -123,6 +122,9 @@ public class Session implements SessionInterface {
     HsqlArrayList     transactionList;
     private boolean   isNestedTransaction;
     private int       nestedOldTransIndex;
+    int               isolationMode = SessionInterface.TX_READ_COMMITTED;
+    long              actionTimestamp;
+    long              transactionTimestamp;
     private int       currentMaxRows;
     private int       sessionMaxRows;
     private Number    lastIdentity = ValuePool.getInt(0);
@@ -131,7 +133,6 @@ public class Session implements SessionInterface {
     private boolean   script;
     private Tokenizer tokenizer;
     private Parser    parser;
-    private long      sessionSCN;
     static final Result emptyUpdateCount =
         new Result(ResultConstants.UPDATECOUNT);
 
@@ -243,11 +244,11 @@ public class Session implements SessionInterface {
     }
 
     public void setIsolation(int level) throws HsqlException {
-        isolation = level;
+        isolationMode = level;
     }
 
     public int getIsolation() throws HsqlException {
-        return isolation;
+        return isolationMode;
     }
 
     /**
@@ -383,7 +384,8 @@ public class Session implements SessionInterface {
     boolean addTransactionDelete(Table table, Row row) throws HsqlException {
 
         if (!isAutoCommit || isNestedTransaction) {
-            Transaction t = new Transaction(true, table, row, sessionSCN);
+            Transaction t = new Transaction(true, table, row,
+                                            actionTimestamp);
 
             transactionList.add(t);
             database.txManager.addTransaction(this, t);
@@ -406,7 +408,8 @@ public class Session implements SessionInterface {
     boolean addTransactionInsert(Table table, Row row) throws HsqlException {
 
         if (!isAutoCommit || isNestedTransaction) {
-            Transaction t = new Transaction(false, table, row, sessionSCN);
+            Transaction t = new Transaction(false, table, row,
+                                            actionTimestamp);
 
             transactionList.add(t);
             database.txManager.addTransaction(this, t);
@@ -444,6 +447,10 @@ public class Session implements SessionInterface {
             }
         }
     }
+
+    public void startPhasedTransaction() throws HsqlException {}
+
+    public void prepareCommit() throws HsqlException {}
 
     /**
      * Commits any uncommited transaction this Session may have open
@@ -751,9 +758,7 @@ public class Session implements SessionInterface {
         switch (cmd) {
 
             case Token.OPENBRACKET : {
-                brackets = Parser.parseOpenBrackets(tokenizer) + 1;
-
-                tokenizer.getThis(Token.T_SELECT);
+                brackets = parser.parseOpenBracketsSelect() + 1;
             }
             case Token.SELECT : {
                 cs = parser.compileSelectStatement(brackets);
@@ -836,7 +841,7 @@ public class Session implements SessionInterface {
             }
 
             // we simply get the next system change number - no matter what type of query
-            sessionSCN = database.nextDMLSCN();
+            actionTimestamp = database.txManager.nextActionTimestamp();
 
             JavaSystem.gc();
 
@@ -976,8 +981,9 @@ public class Session implements SessionInterface {
         }
     }
 
-    Result sqlExecuteCompiledNoPreChecks(CompiledStatement cs) {
-        return compiledStatementExecutor.execute(cs);
+    Result sqlExecuteCompiledNoPreChecks(CompiledStatement cs,
+                                         Object[] pvals) {
+        return compiledStatementExecutor.execute(cs, pvals);
     }
 
     /**
@@ -1006,11 +1012,13 @@ public class Session implements SessionInterface {
      */
     private Result sqlPrepare(String sql) {
 
-        int csid = compiledStatementManager.getStatementID(currentSchema,
-            sql);
-        CompiledStatement cs = compiledStatementManager.getStatement(csid);
-        Result            rmd;
-        Result            pmd;
+        int csid =
+            database.compiledStatementManager.getStatementID(currentSchema,
+                sql);
+        CompiledStatement cs =
+            database.compiledStatementManager.getStatement(csid);
+        Result rmd;
+        Result pmd;
 
         if (cs == null) {
 
@@ -1025,7 +1033,8 @@ public class Session implements SessionInterface {
                 return new Result(t, sql);
             }
 
-            csid = compiledStatementManager.registerStatement(csid, cs);
+            csid = database.compiledStatementManager.registerStatement(csid,
+                    cs);
         } else if (!cs.isValid) {
 
             // revalidate with the original contexts schema
@@ -1035,12 +1044,14 @@ public class Session implements SessionInterface {
 
                 cs = sys.sqlCompileStatement(sql);
             } catch (Throwable t) {
-                compiledStatementManager.freeStatement(csid, sessionId);
+                database.compiledStatementManager.freeStatement(csid,
+                        sessionId);
 
                 return new Result(t, sql);
             }
 
-            csid = compiledStatementManager.registerStatement(csid, cs);
+            csid = database.compiledStatementManager.registerStatement(csid,
+                    cs);
         }
 
         compiledStatementManager.linkSession(csid, sessionId);
@@ -1062,7 +1073,7 @@ public class Session implements SessionInterface {
         int               count;
 
         csid = cmd.getStatementID();
-        cs   = compiledStatementManager.getStatement(csid);
+        cs   = database.compiledStatementManager.getStatement(csid);
 
         if (cs == null ||!cs.isValid) {
             cs = recompileStatement(cs, csid);
@@ -1085,24 +1096,7 @@ public class Session implements SessionInterface {
             Result   in;
             Object[] pvals = record.data;
 
-            try {
-                for (int i = 0; i < parameters.length; i++) {
-                    parameters[i].bind(pvals[i]);
-                }
-
-                in = compiledStatementExecutor.execute(cs);
-            } catch (Throwable t) {
-                in = new Result(ResultConstants.ERROR);
-
-                // t.printStackTrace();
-                // Trace.printSystemOut(t.toString());
-                // if (t instanceof OutOfMemoryError) {
-                // System.gc();
-                // }
-                // "in" alread equals "err"
-                // maybe test for OOME and do a gc() ?
-                // t.printStackTrace();
-            }
+            in = sqlExecuteCompiledNoPreChecks(cs, pvals);
 
             // On the client side, iterate over the vals and throw
             // a BatchUpdateException if a batch status value of
@@ -1194,10 +1188,8 @@ public class Session implements SessionInterface {
      */
     private Result sqlExecute(Result cmd) {
 
-        int               csid  = cmd.getStatementID();
-        Object[]          pvals = cmd.getParameterData();
-        CompiledStatement cs    = compiledStatementManager.getStatement(csid);
-        Expression[]      parameters;
+        int               csid = cmd.getStatementID();
+        CompiledStatement cs   = compiledStatementManager.getStatement(csid);
 
         if (cs == null ||!cs.isValid) {
             cs = recompileStatement(cs, csid);
@@ -1211,21 +1203,13 @@ public class Session implements SessionInterface {
             }
         }
 
-        parameters = cs.parameters;
+        Object[] pvals = cmd.getParameterData();
 
-        // Don't bother with array length or type checks...trust the client
-        // to send pvals with length at least as long
-        // as parameters array and with each pval already converted to the
-        // correct internal representation corresponding to the type
-        try {
-            for (int i = 0; i < parameters.length; i++) {
-                parameters[i].bind(pvals[i]);
-            }
-        } catch (Throwable t) {
-            return new Result(t, cs.sql);
-        }
+        return sqlExecute(cs, pvals);
+    }
 
-        return compiledStatementExecutor.execute(cs);
+    private Result sqlExecute(CompiledStatement cs, Object[] pvals) {
+        return sqlExecuteCompiledNoPreChecks(cs, pvals);
     }
 
     /**
@@ -1234,7 +1218,7 @@ public class Session implements SessionInterface {
     private CompiledStatement recompileStatement(CompiledStatement cs,
             int csid) {
 
-        String sql = compiledStatementManager.getSql(csid);
+        String sql = database.compiledStatementManager.getSql(csid);
 
         if (sql == null) {
 
@@ -1247,12 +1231,12 @@ public class Session implements SessionInterface {
         if (r.mode == ResultConstants.ERROR) {
 
             // sql is invalid due to DDL changes
-            compiledStatementManager.freeStatement(csid, sessionId);
+            database.compiledStatementManager.freeStatement(csid, sessionId);
 
             return null;
         }
 
-        return compiledStatementManager.getStatement(csid);
+        return database.compiledStatementManager.getStatement(csid);
     }
 
     /**
@@ -1264,7 +1248,7 @@ public class Session implements SessionInterface {
 
         Result result;
 
-        compiledStatementManager.freeStatement(csid, sessionId);
+        database.compiledStatementManager.freeStatement(csid, sessionId);
 
         result             = new Result(ResultConstants.UPDATECOUNT);
         result.updateCount = 1;
@@ -1296,8 +1280,8 @@ public class Session implements SessionInterface {
      */
     Date getCurrentDate() {
 
-        if (currentDateTimeSCN != sessionSCN) {
-            currentDateTimeSCN = sessionSCN;
+        if (currentDateTimeSCN != actionTimestamp) {
+            currentDateTimeSCN = actionTimestamp;
             currentMillis      = System.currentTimeMillis();
             currentDate        = HsqlDateTime.getCurrentDate(currentMillis);
             currentTime        = null;
@@ -1315,8 +1299,8 @@ public class Session implements SessionInterface {
      */
     Time getCurrentTime() {
 
-        if (currentDateTimeSCN != sessionSCN) {
-            currentDateTimeSCN = sessionSCN;
+        if (currentDateTimeSCN != actionTimestamp) {
+            currentDateTimeSCN = actionTimestamp;
             currentMillis      = System.currentTimeMillis();
             currentDate        = null;
             currentTime =
@@ -1336,8 +1320,8 @@ public class Session implements SessionInterface {
      */
     Timestamp getCurrentTimestamp() {
 
-        if (currentDateTimeSCN != sessionSCN) {
-            currentDateTimeSCN = sessionSCN;
+        if (currentDateTimeSCN != actionTimestamp) {
+            currentDateTimeSCN = actionTimestamp;
             currentMillis      = System.currentTimeMillis();
             currentDate        = null;
             currentTime        = null;
@@ -1354,7 +1338,8 @@ public class Session implements SessionInterface {
         Result   r   = Result.newSessionAttributesResult();
         Object[] row = new Object[] {
             database.getURI(), getUsername(), ValuePool.getInt(sessionId),
-            ValuePool.getInt(isolation), ValuePool.getBoolean(isAutoCommit),
+            ValuePool.getInt(isolationMode),
+            ValuePool.getBoolean(isAutoCommit),
             ValuePool.getBoolean(database.databaseReadOnly),
             ValuePool.getBoolean(isReadOnly)
         };
@@ -1494,23 +1479,19 @@ public class Session implements SessionInterface {
      */
     Node getIndexRoot(HsqlName index, boolean preserve) {
 
-        Node node;
-
         if (preserve) {
             if (indexArrayKeepMap == null) {
                 return null;
             }
 
-            node = (Node) indexArrayKeepMap.get(index.hashCode());
+            return (Node) indexArrayKeepMap.get(index.hashCode());
         } else {
             if (indexArrayMap == null) {
                 return null;
             }
 
-            node = (Node) indexArrayMap.get(index.hashCode());
+            return (Node) indexArrayMap.get(index.hashCode());
         }
-
-        return node;
     }
 
     /**

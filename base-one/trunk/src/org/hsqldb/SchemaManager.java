@@ -338,7 +338,7 @@ public class SchemaManager {
     }
 
     /**
-     *  Retruns the specified user-defined table or view visible within the
+     *  Returns the specified user-defined table or view visible within the
      *  context of the specified Session, or any system table of the given
      *  name. It excludes any temp tables created in other Sessions.
      *  Throws if the table does not exist in the context.
@@ -366,7 +366,7 @@ public class SchemaManager {
     }
 
     /**
-     *  Retruns the specified user-defined table or view visible within the
+     *  Returns the specified user-defined table or view visible within the
      *  context of the specified Session. It excludes system tables and
      *  any temp tables created in different Sessions.
      *  Throws if the table does not exist in the context.
@@ -384,7 +384,7 @@ public class SchemaManager {
     }
 
     /**
-     *  Retruns the specified user-defined table or view visible within the
+     *  Returns the specified user-defined table or view visible within the
      *  context of the specified schema. It excludes system tables.
      *  Returns null if the table does not exist in the context.
      */
@@ -429,6 +429,10 @@ public class SchemaManager {
         return sequence;
     }
 
+    /**
+     *  Returns the specified Sequence visible within the
+     *  context of the specified Session.
+     */
     public NumberSequence findSequence(String name,
                                        String schemaName)
                                        throws HsqlException {
@@ -720,9 +724,11 @@ public class SchemaManager {
 
         session.checkAdmin();
         session.checkDDLWrite();
+
+// ft - concurrent
+        session.commit();
         dropTable(table, cascade);
         session.setScripting(!table.isTemp());
-        session.commit();
     }
 
     void dropTable(Table table, boolean cascade) throws HsqlException {
@@ -754,6 +760,16 @@ public class SchemaManager {
         Schema schema = (Schema) schemaMap.get(table.getSchemaName());
 
         schema.tableList.set(index, table.getName().name, table);
+    }
+
+    void renameTable(Session session, Table table, String newName,
+                     boolean isQuoted) throws HsqlException {
+
+        Schema schema = (Schema) schemaMap.get(table.tableName.schema.name);
+        int    i      = schema.tableList.getIndex(table.tableName.name);
+
+        table.rename(session, newName, isQuoted);
+        schema.tableList.setKey(i, newName);
     }
 
     /**

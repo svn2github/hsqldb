@@ -195,7 +195,7 @@ public class Row implements CachedObject {
         nPrimaryNode = null;
     }
 
-    boolean isDeleted() {
+    boolean isCascadeDeleted() {
         return nPrimaryNode == null;
     }
 
@@ -212,7 +212,11 @@ public class Row implements CachedObject {
     }
 
     public long getId() {
-        return ((long) tableId << 32) + (((long) iPos) & 0xffffffffL);
+        return ((long) tableId << 32) + ((long) iPos);
+    }
+
+    public static long getId(Table table, int pos) {
+        return ((long) table.getId() << 32) + ((long) pos);
     }
 
     public int getPos() {

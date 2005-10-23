@@ -325,7 +325,7 @@ class Function {
                 return session.getCurrentTimestamp();
 
             case Library.user :
-                return session.getUser().getName();
+                return session.getUsername();
         }
 
         Object[] oArg = getArguments(session);

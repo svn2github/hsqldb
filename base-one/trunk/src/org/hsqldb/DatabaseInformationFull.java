@@ -436,7 +436,7 @@ extends org.hsqldb.DatabaseInformationMain {
         while (tables.hasNext()) {
             table = (Table) tables.next();
 
-            if (table.isCached() && isAccessibleTable(table)) {
+            if (table.isFileBased() && isAccessibleTable(table)) {
                 cache = table.getCache();
 
                 if (cache != null) {
@@ -916,7 +916,6 @@ extends org.hsqldb.DatabaseInformationMain {
         row[iclass] = "boolean";
 
         t.insertSys(row);
-
         t.setDataReadOnly(true);
 
         return t;
@@ -1275,6 +1274,13 @@ extends org.hsqldb.DatabaseInformationMain {
         // - used appends to make class file constant pool smaller
         // - saves ~ 100 bytes jar space
         rs = session.sqlExecuteDirectNoPreChecks(
+            "select a.TRIGGER_CAT,a.TRIGGER_SCHEM,a.TRIGGER_NAME, "
+            + "a.TABLE_CAT,a.TABLE_SCHEM,a.TABLE_NAME,b.COLUMN_NAME,'Y',"
+            + "'IN' from INFORMATION_SCHEMA.SYSTEM_TRIGGERS a, "
+            + "INFORMATION_SCHEMA.SYSTEM_COLUMNS b where "
+            + "a.TABLE_NAME=b.TABLE_NAME and a.TABLE_SCHEMA=b.TABLE_SCHEMA");
+
+/*
             (new StringBuffer(185)).append("SELECT").append(' ').append(
                 "a.").append("TRIGGER_CAT").append(',').append("a.").append(
                 "TRIGGER_SCHEM").append(',').append("a.").append(
@@ -1289,8 +1295,8 @@ extends org.hsqldb.DatabaseInformationMain {
                 "INFORMATION_SCHEMA").append('.').append(
                 "SYSTEM_COLUMNS").append(" b ").append("where").append(
                 ' ').append("a.").append("TABLE_NAME").append('=').append(
-                "b.").append("TABLE_NAME").toString());
-
+                "b.").append("TABLE_NAME").toString();
+*/
         t.insertSys(rs);
         t.setDataReadOnly(true);
 

@@ -56,10 +56,13 @@ public class SessionManager {
 // SessionManager
 
     /**
-     * Constructs an new SessionManager handling the specified Database using
-     * the specified SYS User
+     * Constructs an new SessionManager handling the specified Database.
+     * Creates a SYS User.
      */
-    public SessionManager(Database db, User sysUser) {
+    public SessionManager(Database db) {
+
+        User sysUser = db.getUserManager().getSysUser();
+
         sysSession = new Session(db, sysUser, false, false, 0);
     }
 
@@ -87,8 +90,8 @@ public class SessionManager {
      * @param user the initial Session User
      * @param readonly the initial ReadOnly attribute for the new Session
      */
-    public Session newSession(Database db, User user, boolean readonly,
-                              boolean forlog) {
+    public synchronized Session newSession(Database db, User user,
+                                           boolean readonly, boolean forlog) {
 
         Session s = new Session(db, user, true, readonly, sessionIdCount);
 
@@ -130,16 +133,13 @@ public class SessionManager {
     /**
      * Closes all Sessions registered with this SessionManager.
      */
-    public void closeAllSessions() {
+    public synchronized void closeAllSessions() {
 
         // don't disconnect system user; need it to save database
-        Iterator it = sessionMap.values().iterator();
+        Session[] sessions = getAllSessions();
 
-        for (; it.hasNext(); ) {
-            Session s = (Session) it.next();
-
-            it.remove();
-            s.close();
+        for (int i = 0; i < sessions.length; i++) {
+            sessions[i].close();
         }
     }
 
@@ -148,21 +148,21 @@ public class SessionManager {
      *
      * @param  session to disconnect
      */
-    void removeSession(Session session) {
+    synchronized void removeSession(Session session) {
         sessionMap.remove(session.getId());
     }
 
     /**
      * Removes all Sessions registered with this SessionManager.
      */
-    void clearAll() {
+    synchronized void clearAll() {
         sessionMap.clear();
     }
 
     /**
      * Returns true if no session exists beyond the sys session.
      */
-    boolean isEmpty() {
+    synchronized boolean isEmpty() {
         return sessionMap.isEmpty();
     }
 
@@ -174,7 +174,7 @@ public class SessionManager {
      * @param session The Session determining visibility
      * @return the Sessions visible to the specified Session
      */
-    Session[] getVisibleSessions(Session session) {
+    synchronized Session[] getVisibleSessions(Session session) {
         return session.isAdmin() ? getAllSessions()
                                  : new Session[]{ session };
     }
@@ -183,11 +183,11 @@ public class SessionManager {
      * Retrieves the Session with the specified Session identifier or null
      * if no such Session is registered with this SessionManager.
      */
-    Session getSession(int id) {
+    synchronized Session getSession(int id) {
         return (Session) sessionMap.get(id);
     }
 
-    public Session[] getAllSessions() {
+    public synchronized Session[] getAllSessions() {
 
         Session[] sessions = new Session[sessionMap.size()];
         Iterator  it       = sessionMap.values().iterator();

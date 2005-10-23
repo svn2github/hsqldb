@@ -41,7 +41,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 
-// $Id: ExecHarness.java,v 1.2 2004/06/16 07:40:30 unsaved Exp $
+// $Id: ExecHarness.java,v 1.9 2005/05/11 14:03:19 fredt Exp $
 
 /**
  * Utilities that test classes can call to execute a specified command and to

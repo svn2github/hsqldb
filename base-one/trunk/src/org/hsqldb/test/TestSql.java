@@ -635,13 +635,15 @@ public class TestSql extends TestBase {
             Connection conn = newConnection();
             Statement  stmt = conn.createStatement();
 
+            stmt.execute("DROP TABLE test1 IF EXISTS");
+            stmt.execute("DROP TABLE test2 IF EXISTS");
             stmt.execute("CREATE TABLE test1 (id int, b1 boolean)");
             stmt.execute("CREATE TABLE test2 (id int)");
             stmt.execute("INSERT INTO test1 VALUES(1,true)");
             stmt.execute("INSERT INTO test2 VALUES(2)");
             stmt.executeQuery(
                 "select id,null as b1 from test2 union select id, b1 from test1");
-        } catch (SQLException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
             System.out.println("TestSql.testUnionColumnType() error: "
                                + e.getMessage());

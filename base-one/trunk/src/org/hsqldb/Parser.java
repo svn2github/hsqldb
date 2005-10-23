@@ -270,7 +270,8 @@ class Parser {
                                  || predicateType == Expression.QUERY
                                  || predicateType == Expression.IN
                                  || predicateType == Expression.ALL
-                                 || predicateType == Expression.ANY;
+                                 || predicateType == Expression.ANY
+                                 || predicateType == Expression.SELECT;
         Select s = parseSelect(brackets, canHaveOrder, false, limitWithOrder,
                                true);
 
@@ -607,9 +608,8 @@ class Parser {
 
         if (brackets > 0 && token.equals(Token.T_CLOSEBRACKET)) {
             closebrackets = true;
-            brackets -= Parser.parseCloseBrackets(tokenizer, brackets - 1)
-                        + 1;
-            token = tokenizer.getString();
+            brackets      -= parseCloseBrackets(brackets - 1) + 1;
+            token         = tokenizer.getString();
         }
 
         select.unionDepth = brackets;
@@ -645,7 +645,7 @@ class Parser {
 
             if (tokenizer.isGetThis(Token.T_OPENBRACKET)) {
                 openbracket = true;
-                brackets    += Parser.parseOpenBrackets(tokenizer) + 1;
+                brackets    += parseOpenBrackets() + 1;
             }
 
             tokenizer.getThis(Token.T_SELECT);
@@ -1041,7 +1041,7 @@ class Parser {
         String      sAlias = null;
 
         if (tokenizer.isGetThis(Token.T_OPENBRACKET)) {
-            int brackets = Parser.parseOpenBrackets(tokenizer);
+            int brackets = parseOpenBrackets();
 
             tokenizer.getThis(Token.T_SELECT);
 
@@ -1261,7 +1261,7 @@ class Parser {
                 int brackets = 0;
 
                 if (iToken == Expression.OPEN) {
-                    brackets += Parser.parseOpenBrackets(tokenizer) + 1;
+                    brackets += parseOpenBrackets() + 1;
 
                     read();
                 }
@@ -1433,7 +1433,7 @@ class Parser {
         int        brackets = 0;
 
         if (iToken == Expression.OPEN) {
-            brackets += Parser.parseOpenBrackets(tokenizer) + 1;
+            brackets += parseOpenBrackets() + 1;
 
             read();
         }
@@ -1491,7 +1491,7 @@ class Parser {
         int        brackets = 0;
 
         if (iToken == Expression.OPEN) {
-            brackets += Parser.parseOpenBrackets(tokenizer) + 1;
+            brackets += parseOpenBrackets() + 1;
 
             read();
         }
@@ -1683,7 +1683,7 @@ class Parser {
                 break;
             }
             case Expression.SELECT : {
-
+/*
                 // accept ORDRY BY with LIMIT
                 Select select = parseSelect(0, false, false, true, true);
 
@@ -1692,7 +1692,11 @@ class Parser {
                 SubQuery sq = new SubQuery();
 
                 sq.select = select;
-                r         = new Expression(sq);
+ */
+                SubQuery sq = parseSubquery(0, null, false,
+                                            Expression.SELECT);
+
+                r = new Expression(sq);
 
                 read();
 
@@ -1907,7 +1911,7 @@ class Parser {
             r.setDataType(typeNr);
         }
 
-        r = new Expression(Expression.CONVERT, r, typeNr, length, scale);
+        r = new Expression(r, typeNr, length, scale);
 
         read();
         readThis(Expression.CLOSE);
@@ -2526,9 +2530,8 @@ class Parser {
 
         Expression expression = parseExpression();
         CompiledStatement cs = new CompiledStatement(session, database,
-            session.currentSchema, expression, getParameters());
-
-        cs.subqueries = getSortedSubqueries();
+            session.currentSchema, expression, getSortedSubqueries(),
+            getParameters());
 
         return cs;
     }
@@ -2555,9 +2558,8 @@ class Parser {
         }
 
         CompiledStatement cs = new CompiledStatement(session, database,
-            session.currentSchema, tableFilter, condition, getParameters());
-
-        cs.subqueries = getSortedSubqueries();
+            session.currentSchema, tableFilter, condition,
+            getSortedSubqueries(), getParameters());
 
         return cs;
     }
@@ -2626,7 +2628,7 @@ class Parser {
         columnMap       = table.getColumnMap();
         len             = table.getColumnCount();
 
-        int brackets = Parser.parseOpenBrackets(tokenizer);
+        int brackets = parseOpenBrackets();
 
         token = tokenizer.getString();
 
@@ -2669,14 +2671,13 @@ class Parser {
                 CompiledStatement cs =
                     new CompiledStatement(session.currentSchema, table,
                                           columnMap, acve, columnCheckList,
+                                          getSortedSubqueries(),
                                           getParameters());
-
-                cs.subqueries = getSortedSubqueries();
 
                 return cs;
             }
             case Token.OPENBRACKET : {
-                brackets = Parser.parseOpenBrackets(tokenizer) + 1;
+                brackets = parseOpenBrackets() + 1;
 
                 tokenizer.getThis(Token.T_SELECT);
             }
@@ -2692,9 +2693,8 @@ class Parser {
 
                 CompiledStatement cs = new CompiledStatement(session,
                     database, session.currentSchema, table, columnMap,
-                    columnCheckList, select, getParameters());
-
-                cs.subqueries = getSortedSubqueries();
+                    columnCheckList, select, getSortedSubqueries(),
+                    getParameters());
 
                 return cs;
             }
@@ -2725,9 +2725,8 @@ class Parser {
         }
 
         CompiledStatement cs = new CompiledStatement(session, database,
-            session.currentSchema, select, getParameters());
-
-        cs.subqueries = getSortedSubqueries();
+            session.currentSchema, select, getSortedSubqueries(),
+            getParameters());
 
         return cs;
     }
@@ -2797,30 +2796,36 @@ class Parser {
 
         CompiledStatement cs = new CompiledStatement(session, database,
             session.currentSchema, tableFilter, colList, exprList, condition,
-            getParameters());
-
-        cs.subqueries = getSortedSubqueries();
+            getSortedSubqueries(), getParameters());
 
         return cs;
     }
 
-    static int parseOpenBrackets(Tokenizer t) throws HsqlException {
+    int parseOpenBracketsSelect() throws HsqlException {
+
+        int count = parseOpenBrackets();
+
+        tokenizer.getThis(Token.T_SELECT);
+
+        return count;
+    }
+
+    int parseOpenBrackets() throws HsqlException {
 
         int count = 0;
 
-        while (t.isGetThis(Token.T_OPENBRACKET)) {
+        while (tokenizer.isGetThis(Token.T_OPENBRACKET)) {
             count++;
         }
 
         return count;
     }
 
-    static int parseCloseBrackets(Tokenizer t,
-                                  int limit) throws HsqlException {
+    int parseCloseBrackets(int limit) throws HsqlException {
 
         int count = 0;
 
-        while (count < limit && t.isGetThis(Token.T_CLOSEBRACKET)) {
+        while (count < limit && tokenizer.isGetThis(Token.T_CLOSEBRACKET)) {
             count++;
         }
 

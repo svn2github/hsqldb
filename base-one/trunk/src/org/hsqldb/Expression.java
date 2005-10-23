@@ -269,10 +269,7 @@ public class Expression {
     //
     private boolean isDescending;                   // if it is a column in a order by
     int             joinedTableColumnIndex = -1;    // >= 0 when it is used for order by
-
-// rougier@users 20020522 - patch 552830 - COUNT(DISTINCT)
-    // {COUNT|SUM|MIN|MAX|AVG}(distinct ...)
-    boolean isDistinctAggregate;
+    boolean         isDistinctAggregate;
 
     // PARAM
     private boolean isParam;
@@ -375,11 +372,10 @@ public class Expression {
     /**
      * creates a CONVERT expression
      */
-    Expression(int type, Expression e, int dataType, int precision,
-               int scale) {
+    Expression(Expression e, int dataType, int precision, int scale) {
 
-        exprType       = type;
-        eArg           = e;
+        this.exprType  = CONVERT;
+        this.eArg      = e;
         this.dataType  = dataType;
         this.precision = precision;
         this.scale     = scale;
@@ -486,6 +482,11 @@ public class Expression {
         }
     }
 
+    boolean isTypeEqual(Expression other) {
+        return dataType == other.dataType && precision == other.precision
+               && scale == other.scale;
+    }
+
     private void checkAggregate() {
 
         if (isAggregate(exprType)) {
@@ -565,7 +566,9 @@ public class Expression {
 
             case VALUE :
                 try {
-                    return Column.createSQLString(valueData, dataType);
+                    return isParam ? Token.T_QUESTION
+                                   : Column.createSQLString(valueData,
+                                   dataType);
                 } catch (HsqlException e) {}
 
                 return buf.toString();
@@ -1089,6 +1092,7 @@ public class Expression {
 
     void setNull() {
 
+        isParam   = false;
         exprType  = VALUE;
         dataType  = Types.NULL;
         valueData = null;
@@ -1392,7 +1396,8 @@ public class Expression {
             if (isColumn()) {
                 colExps.add(this);
             } else if (exprType == FUNCTION) {
-                function.collectInGroupByExpressions(colExps);
+
+//                function.collectInGroupByExpressions(colExps);
             } else if (exprType == CASEWHEN) {
                 eArg2.collectInGroupByExpressions(colExps);
             } else {
@@ -3372,10 +3377,7 @@ public class Expression {
                 return eArg2.testInCondition(session, eArg.getValue(session));
 
             case EXISTS :
-                Result r = eArg.subQuery.select.getResult(session, 1);    // 1 is already enough
-
-                return r.rRoot == null ? Boolean.FALSE
-                                       : Boolean.TRUE;
+                return eArg.testExistsCondition(session);
 
             case FUNCTION :
                 Object value =
@@ -3552,6 +3554,20 @@ public class Expression {
         }
 
         throw Trace.error(Trace.WRONG_DATA_TYPE);
+    }
+
+    private Boolean testExistsCondition(Session session)
+    throws HsqlException {
+
+        if (subQuery.isResolved) {
+            return subQuery.table.isEmpty(session) ? Boolean.FALSE
+                                                   : Boolean.TRUE;
+        } else {
+            Result r = subQuery.select.getResult(session, 1);    // 1 is already enough
+
+            return r.rRoot == null ? Boolean.FALSE
+                                   : Boolean.TRUE;
+        }
     }
 
     private Boolean testAnyAllCondition(Session session,
@@ -3857,7 +3873,7 @@ public class Expression {
     }
 
 // boucherb@users 20030417 - patch 1.7.2 - compiled statement support
-    void bind(Object o) throws HsqlException {
+    void bind(Object o) {
         valueData = o;
     }
 

@@ -42,7 +42,7 @@ import org.hsqldb.HsqlNameManager.HsqlName;
  */
 public class NumberSequence {
 
-    private HsqlName name;
+    HsqlName name;
 
     // original start value - used in CREATE and ALTER commands
     private long startValue;
@@ -70,7 +70,7 @@ public class NumberSequence {
     /**
      * principal getter for the next sequence value
      */
-    long getValue() {
+    synchronized long getValue() {
 
         long value = currValue;
 
@@ -82,7 +82,7 @@ public class NumberSequence {
     /**
      * getter for a given value
      */
-    long getValue(long value) {
+    synchronized long getValue(long value) {
 
         if (value >= currValue) {
             currValue = value;

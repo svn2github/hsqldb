@@ -238,8 +238,10 @@ public class HsqlArrayList extends BaseList implements HsqlList {
 
     private void increaseCapacity() {
 
+        int baseSize = elementData.length == 0 ? 1
+                                               : elementData.length;
         Object[] newArray =
-            new Object[(int) (elementData.length * DEFAULT_RESIZE_FACTOR)];
+            new Object[(int) (baseSize * DEFAULT_RESIZE_FACTOR)];
 
         System.arraycopy(elementData, 0, newArray, 0, elementData.length);
 
@@ -338,6 +340,15 @@ public class HsqlArrayList extends BaseList implements HsqlList {
         Object[] a = new Object[elementCount];
 
         System.arraycopy(elementData, 0, a, 0, elementCount);
+
+        return a;
+    }
+
+    public Object[] toArray(int start, int limit) {
+
+        Object[] a = new Object[elementCount - limit];
+
+        System.arraycopy(elementData, start, a, 0, elementCount - limit);
 
         return a;
     }

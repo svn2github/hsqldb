@@ -77,7 +77,7 @@ import org.hsqldb.lib.HsqlArrayList;
 
 /**
  *
- * Note:  Manages the User objects for a Database instance.
+ * Manages the User objects for a Database instance.
  * The special users PUBLIC_USER_NAME and SYSTEM_AUTHORIZATION_NAME
  * are created and managed here.  SYSTEM_AUTHORIZATION_NAME is also
  * special in that the name is not kept in the user "list"
@@ -110,7 +110,8 @@ class UserManager implements GrantConstants {
      * User object is kept in the list because it's needed by MetaData
      * routines via "listVisibleUsers(x, true)".
      */
-    private HashMappedList uUser;
+    private HashMappedList userList;
+    private GranteeManager granteeManager;
 
     /**
      * Construction happens once for each Database object.
@@ -121,7 +122,7 @@ class UserManager implements GrantConstants {
     UserManager(Database database) throws HsqlException {
 
         granteeManager = database.getGranteeManager();
-        uUser          = new HashMappedList();
+        userList       = new HashMappedList();
 
         createUser(GranteeManager.PUBLIC_USER_NAME, null);
 
@@ -132,8 +133,6 @@ class UserManager implements GrantConstants {
         //granteeManager.grant(SYSTEM_AUTHORIZATION_NAME, RoleManager.ADMIN_ROLE_NAME);
         sysUser.getGrantee().setAdminDirect();
     }
-
-    private GranteeManager granteeManager;
 
     /**
      * Creates a new User object under management of this object. <p>
@@ -172,7 +171,11 @@ class UserManager implements GrantConstants {
             return u;
         }
 
-        Trace.check(uUser.add(name, u), Trace.USER_ALREADY_EXISTS, name);
+        boolean success = userList.add(name, u);
+
+        if (!success) {
+            throw Trace.error(Trace.USER_ALREADY_EXISTS, name);
+        }
 
         return u;
     }
@@ -206,7 +209,7 @@ class UserManager implements GrantConstants {
 
         Trace.check(result, Trace.NO_SUCH_GRANTEE, name);
 
-        User u = (User) uUser.remove(name);
+        User u = (User) userList.remove(name);
 
         Trace.check(u != null, Trace.USER_NOT_FOUND, name);
     }
@@ -246,12 +249,12 @@ class UserManager implements GrantConstants {
      *  an HsqlArrayList. <p>
      */
     HashMappedList getUsers() {
-        return uUser;
+        return userList;
     }
 
     boolean exists(String name) {
-        return uUser.get(name) == null ? false
-                                       : true;
+        return userList.get(name) == null ? false
+                                          : true;
     }
 
     /**
@@ -260,7 +263,7 @@ class UserManager implements GrantConstants {
      */
     User get(String name) throws HsqlException {
 
-        User u = (User) uUser.get(name);
+        User u = (User) userList.get(name);
 
         if (u == null) {
             throw Trace.error(Trace.USER_NOT_FOUND, name);
@@ -303,12 +306,12 @@ class UserManager implements GrantConstants {
         isAdmin  = session.isAdmin();
         sessName = session.getUsername();
 
-        if (uUser == null || uUser.size() == 0) {
+        if (userList == null || userList.size() == 0) {
             return list;
         }
 
-        for (int i = 0; i < uUser.size(); i++) {
-            user = (User) uUser.get(i);
+        for (int i = 0; i < userList.size(); i++) {
+            user = (User) userList.get(i);
 
             if (user == null) {
                 continue;
@@ -355,14 +358,7 @@ class UserManager implements GrantConstants {
      *          <code>User</code> object
      *
      */
-    User getSysUser() throws HsqlException {
-
-        if (sysUser == null) {
-            Trace.doAssert(false,
-                           Trace.getMessage(Trace.MISSING_SYSAUTH) + ": "
-                           + GranteeManager.SYSTEM_AUTHORIZATION_NAME);
-        }
-
+    User getSysUser() {
         return sysUser;
     }
 }

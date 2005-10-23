@@ -173,9 +173,9 @@ public class TestDatabaseMetaData extends TestBase {
             assertTrue("expected table t_1 count of 1", i == 1);
 
             // test various methods
-            dbmd.getPrimaryKeys(null,null, "T_1");
-            dbmd.getImportedKeys(null,null, "T_1");
-            dbmd.getCrossReference(null,null,"T_1",null,null, "T_1");
+            dbmd.getPrimaryKeys(null, null, "T_1");
+            dbmd.getImportedKeys(null, null, "T_1");
+            dbmd.getCrossReference(null, null, "T_1", null, null, "T_1");
 
             // test ResultSetMetaData
             pstmt = conn.prepareStatement(

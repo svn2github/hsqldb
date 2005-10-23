@@ -140,7 +140,7 @@ class DiskNode extends Node {
     }
 
     void delete() {
-        rData = null;
+        rData    = null;
         iBalance = -2;
     }
 
@@ -165,7 +165,7 @@ class DiskNode extends Node {
     private Node findNode(int pos) throws HsqlException {
 
         Node ret = null;
-        Row  r   = ((CachedRow) rData).getTable().getRow(pos, null);
+        Row  r   = ((CachedRow) rData).getTable().getRow(pos);
 
         if (r != null) {
             ret = r.getNode(iId);

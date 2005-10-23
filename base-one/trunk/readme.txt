@@ -10,6 +10,6 @@ The file index.html in this directory contains the list of directories with thei
 
 Documentation and license information can be found in the /doc directory.
 
-Project home page: http://hsqldb.sourceforge.net
+Project home page: http://hsqldb.org
 
 Please check the site periodically for updated versions.

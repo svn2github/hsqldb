@@ -446,6 +446,7 @@ public class Result {
                 case ResultConstants.GETSESSIONATTR :
                 case ResultConstants.SQLDISCONNECT :
                 case ResultConstants.SQLSTARTTRAN :
+                case ResultConstants.HSQLRESETSESSION :
                     break;
 
                 case ResultConstants.SQLPREPARE :
@@ -489,8 +490,6 @@ public class Result {
                         case ResultConstants.SAVEPOINT_NAME_RELEASE :
                         case ResultConstants.SAVEPOINT_NAME_ROLLBACK :
                             mainString = in.readString();    // savepoint name
-
-                        //  default: throw - case never happens
                     }
 
                     break;
@@ -1167,6 +1166,7 @@ public class Result {
             case ResultConstants.GETSESSIONATTR :
             case ResultConstants.SQLDISCONNECT :
             case ResultConstants.SQLSTARTTRAN :
+            case ResultConstants.HSQLRESETSESSION :
                 break;
 
             case ResultConstants.SQLPREPARE :
@@ -1378,7 +1378,16 @@ public class Result {
             }
 
             statementID = he.getErrorCode();
-        } else if (t instanceof Exception) {
+        } else if (t instanceof OutOfMemoryError) {
+
+            // At this point, we've nothing to lose by doing this
+            System.gc();
+            t.printStackTrace();
+
+            subString   = "S1000";
+            mainString  = "out of memory";
+            statementID = Trace.OUT_OF_MEMORY;
+        } else {
             t.printStackTrace();
 
             subString  = "S1000";
@@ -1389,15 +1398,6 @@ public class Result {
             }
 
             statementID = Trace.GENERAL_ERROR;
-        } else if (t instanceof OutOfMemoryError) {
-
-            // At this point, we've nothing to lose by doing this
-            System.gc();
-            t.printStackTrace();
-
-            subString   = "S1000";
-            mainString  = "out of memory";
-            statementID = Trace.OUT_OF_MEMORY;
         }
 
         subSubString = "";

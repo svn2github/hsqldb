@@ -764,15 +764,15 @@ class JDBCBench {
         switch (type) {
 
             case TELLER :
-                max = ntellers * tps;
+                max = ntellers * tps - 1;
                 break;
 
             case BRANCH :
-                max = nbranches * tps;
+                max = nbranches * tps - 1;
                 break;
 
             case ACCOUNT :
-                max = naccounts * tps;
+                max = naccounts * tps - 1;
                 break;
         }
 

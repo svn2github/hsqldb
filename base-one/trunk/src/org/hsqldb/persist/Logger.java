@@ -236,7 +236,8 @@ public class Logger {
      * @throws  HsqlException if there is a problem recording the Log
      *      entry
      */
-    public void logConnectUser(Session session) throws HsqlException {
+    public synchronized void logConnectUser(Session session)
+    throws HsqlException {
 
         if (logStatements) {
             writeToLog(session, session.getUser().getConnectStatement());
@@ -252,40 +253,41 @@ public class Logger {
      * @param  statement the SQL statement to Log
      * @throws  HsqlException if there is a problem recording the entry
      */
-    public void writeToLog(Session session,
-                           String statement) throws HsqlException {
+    public synchronized void writeToLog(Session session,
+                                        String statement)
+                                        throws HsqlException {
 
         if (logStatements && log != null) {
             log.writeStatement(session, statement);
         }
     }
 
-    public void writeInsertStatement(Session session, Table table,
-                                     Object[] row) throws HsqlException {
+    public synchronized void writeInsertStatement(Session session,
+            Table table, Object[] row) throws HsqlException {
 
         if (logStatements) {
             log.writeInsertStatement(session, table, row);
         }
     }
 
-    public void writeDeleteStatement(Session session, Table t,
-                                     Object[] row) throws HsqlException {
+    public synchronized void writeDeleteStatement(Session session, Table t,
+            Object[] row) throws HsqlException {
 
         if (logStatements) {
             log.writeDeleteStatement(session, t, row);
         }
     }
 
-    public void writeSequenceStatement(Session session,
-                                       NumberSequence s)
-                                       throws HsqlException {
+    public synchronized void writeSequenceStatement(Session session,
+            NumberSequence s) throws HsqlException {
 
         if (logStatements) {
             log.writeSequenceStatement(session, s);
         }
     }
 
-    public void writeCommitStatement(Session session) throws HsqlException {
+    public synchronized void writeCommitStatement(Session session)
+    throws HsqlException {
 
         if (logStatements) {
             log.writeCommitStatement(session);
@@ -296,14 +298,14 @@ public class Logger {
     /**
      * Called after commits or after each statement when autocommit is on
      */
-    public void synchLog() {
+    public synchronized void synchLog() {
 
         if (logStatements && syncFile) {
             log.synchLog();
         }
     }
 
-    public void synchLogForce() {
+    public synchronized void synchLogForce() {
 
         if (logStatements) {
             log.synchLog();
@@ -324,7 +326,7 @@ public class Logger {
      * @throws  HsqlException if there is a problem checkpointing the
      *      database
      */
-    public void checkpoint(boolean mode) throws HsqlException {
+    public synchronized void checkpoint(boolean mode) throws HsqlException {
 
         if (logStatements) {
             log.checkpoint(mode);
@@ -337,7 +339,7 @@ public class Logger {
      *
      * @param  megas size in MB
      */
-    public void setLogSize(int megas) {
+    public synchronized void setLogSize(int megas) {
 
         if (log != null) {
             log.setLogSize(megas);
@@ -350,7 +352,7 @@ public class Logger {
      *
      * @param  i The type
      */
-    public void setScriptType(int i) throws HsqlException {
+    public synchronized void setScriptType(int i) throws HsqlException {
 
         if (log != null) {
             log.setScriptType(i);
@@ -370,7 +372,7 @@ public class Logger {
      *
      * @param  delay in seconds
      */
-    public void setWriteDelay(int delay) {
+    public synchronized void setWriteDelay(int delay) {
 
         if (log != null) {
             syncFile = (delay == 0);

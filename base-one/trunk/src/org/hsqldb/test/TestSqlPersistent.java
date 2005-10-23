@@ -53,7 +53,6 @@ public class TestSqlPersistent extends TestCase {
 
     // change the url to reflect your preferred db location and name
 //    String url = "jdbc:hsqldb:hsql://localhost/mytest";
-
     String     url = "jdbc:hsqldb:/hsql/test/testpersistent";
     String     user;
     String     password;

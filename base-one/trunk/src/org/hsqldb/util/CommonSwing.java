@@ -258,6 +258,7 @@ class CommonSwing {
 //                UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
 //            }
             SwingUtilities.updateComponentTreeUI(comp);
+
             if (comp instanceof java.awt.Frame) {
                 ((java.awt.Frame) comp).pack();
             }

@@ -169,6 +169,18 @@ public class TransactionManager {
         }
     }
 
+    private long globalActionTimestamp = 0;
+
+    /**
+     * gets the next timestamp for an action
+     */
+    long nextActionTimestamp() {
+
+        globalActionTimestamp++;
+
+        return globalActionTimestamp;
+    }
+
     /**
      * Return an array of all transactions sorted by System Change No.
      */

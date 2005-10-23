@@ -130,6 +130,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.RootPaneContainer;
+
 import java.security.AccessControlException;
 
 import org.hsqldb.lib.java.JavaSystem;
@@ -192,18 +193,18 @@ implements ActionListener, WindowListener, KeyListener {
      * be reserved for single-letter switches which can be mixed like
      * "-u -r -l" = "-url".  -blaine
      */
-    static private String homedir = null;
+    private static String homedir = null;
+
     static {
         try {
-            Class c =
-                Class.forName("sun.security.action.GetPropertyAction");
+            Class c = Class.forName("sun.security.action.GetPropertyAction");
             Constructor constructor = c.getConstructor(new Class[]{
                 String.class });
             java.security.PrivilegedAction a =
                 (java.security.PrivilegedAction) constructor.newInstance(
                     new Object[]{ "user.home" });
-            homedir =
-                (String) java.security.AccessController.doPrivileged(a);
+
+            homedir = (String) java.security.AccessController.doPrivileged(a);
         } catch (IllegalAccessException e) {
             System.err.println(
                 "Failed to get home directory.\n"
@@ -214,19 +215,16 @@ implements ActionListener, WindowListener, KeyListener {
                 "Failed to get home directory.\n"
                 + "Therefore not retrieving/storing user preferences.\n("
                 + e.getMessage() + ')');
-
         } catch (ClassNotFoundException e) {
             System.err.println(
                 "Failed to get home directory.\n"
                 + "Therefore not retrieving/storing user preferences.\n("
                 + e.getMessage() + ')');
-
         } catch (InstantiationException e) {
             System.err.println(
                 "Failed to get home directory.\n"
                 + "Therefore not retrieving/storing user preferences.\n("
                 + e.getMessage() + ')');
-
         } catch (InvocationTargetException e) {
             System.err.println(
                 "Failed to get home directory.\n"
@@ -240,18 +238,16 @@ implements ActionListener, WindowListener, KeyListener {
         }
     }
 
-    ArrayList localActionList = new ArrayList();
-
-    private JFrame jframe = null;
-
-    private static final String DEFAULT_RCFILE = homedir + "/dbmanager.rc";
+    ArrayList                   localActionList = new ArrayList();
+    private JFrame              jframe          = null;
+    private static final String DEFAULT_RCFILE  = homedir + "/dbmanager.rc";
     private static final String HELP_TEXT =
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.org.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.62 $";
+        + "problem reports or help requests:  $Revision: 1.63 $";
     private static final String ABOUT_TEXT =
-        "$Revision: 1.62 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.63 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2001-2005, The HSQL Development Group.\n"
         + "http://hsqldb.org\n\n\n"
@@ -262,7 +258,7 @@ implements ActionListener, WindowListener, KeyListener {
     static final String    NULL_STR   = "[null]";
     static int             iMaxRecent = 24;
     Connection             cConn;
-    Connection             rowConn;        // holds the connetion for getting table row counts
+    Connection             rowConn;    // holds the connetion for getting table row counts
     DatabaseMetaData       dMeta;
     Statement              sStatement;
     JMenu                  mRecent;
@@ -279,29 +275,32 @@ implements ActionListener, WindowListener, KeyListener {
     JPanel                 pResult;
     long                   lTime;
     GridSwing              gResult;
-    /** I think this is used to store model info whether we're using Grid
+
+    /**
+     * I think this is used to store model info whether we're using Grid
      *  output or not (this object is queried for data to display for
      *  text output mode).
      *  If so, the presentation-independent model part should be moved
      *  to an appropriately-named class instead of storing pure data in
      *  a Swing-specific class.
-     */ 
-    JTable                 gResultTable;
-    JScrollPane            gScrollPane;
-    JTextArea              txtResult;
-    JScrollPane            txtResultScroll;
-    JSplitPane             nsSplitPane;    // Contains query over results
-    JSplitPane             ewSplitPane;    // Contains tree beside nsSplitPane
-    boolean                bHelp;
-    RootPaneContainer      fMain;
-    static boolean         bMustExit;
+     */
+    JTable            gResultTable;
+    JScrollPane       gScrollPane;
+    JTextArea         txtResult;
+    JScrollPane       txtResultScroll;
+    JSplitPane        nsSplitPane;     // Contains query over results
+    JSplitPane        ewSplitPane;     // Contains tree beside nsSplitPane
+    boolean           bHelp;
+    RootPaneContainer fMain;
+    static boolean    bMustExit;
+
     /** Value of this variable only retained if huge input script read in. */
-    String                 sqlScriptBuffer = null;
-    JToolBar               jtoolbar;
-    private boolean        showSchemas  = true;
-    private boolean        showTooltips = true;
-    private boolean        autoRefresh  = true;
-    private boolean        gridFormat   = true;
+    String          sqlScriptBuffer = null;
+    JToolBar        jtoolbar;
+    private boolean showSchemas  = true;
+    private boolean showTooltips = true;
+    private boolean autoRefresh  = true;
+    private boolean gridFormat   = true;
 
     // Added: (weconsultants@users)
     static DatabaseManagerSwing refForFontDialogSwing;
@@ -375,52 +374,61 @@ implements ActionListener, WindowListener, KeyListener {
 
     public DatabaseManagerSwing() {
         jframe = new JFrame("dummy");
-    };
+    }
+    ;
+
     public DatabaseManagerSwing(JFrame frameIn) {
         jframe = frameIn;
-        fMain = jframe;
-    };
+        fMain  = jframe;
+    }
+    ;
 
     public void init() {
+
         javax.swing.AbstractButton btn;
 
         fMain = this;
 
         main();
+
         for (int i = 0; i < localActionList.size(); i++) {
             btn = (javax.swing.AbstractButton) localActionList.get(i);
+
             btn.setEnabled(false);
         }
 
-        Connection c = null;
-        boolean auto = false;
+        Connection c    = null;
+        boolean    auto = false;
+
         if (getParameter("jdbcDriver") != null) {
-            auto = true;
+            auto      = true;
             defDriver = getParameter("jdbcDriver");
         }
+
         if (getParameter("jdbcUrl") != null) {
-            auto = true;
+            auto   = true;
             defURL = getParameter("jdbcUrl");
         }
+
         if (getParameter("jdbcUser") != null) {
-            auto = true;
+            auto    = true;
             defUser = getParameter("jdbcUser");
         }
+
         if (getParameter("jdbcPassword") != null) {
-            auto = true;
+            auto        = true;
             defPassword = getParameter("jdbcPassword");
         }
 
         try {
-
             setWaiting("Initializing");
+
             //insertTestData();
             //updateAutoCommitBox();
             c = (auto
-                    ?  ConnectionDialogSwing.createConnection(
-                                defDriver, defURL, defUser, defPassword)
-                    : ConnectionDialogSwing.createConnection(jframe, "Connect")
-            );
+                 ? ConnectionDialogSwing.createConnection(defDriver, defURL,
+                     defUser, defPassword)
+                 : ConnectionDialogSwing.createConnection(jframe, "Connect"));
         } catch (Exception e) {
 
             //  Added: (weconsultants@users)
@@ -428,17 +436,25 @@ implements ActionListener, WindowListener, KeyListener {
         } finally {
             setWaiting(null);
         }
+
         if (c != null) {
             connect(c);
         }
+
         if (getParameter("loadSampleData") != null
                 && getParameter("loadSampleData").equals("true")) {
             insertTestData();
-            try { Thread.sleep(1000); } catch (InterruptedException ie) {};
+
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ie) {}
+            ;
+
             // I don't know why, but the tree refresh below sometimes
             // doesn't show all tables unless I put this delay here.
             refreshTree();
         }
+
         if (getParameter("schemaFilter") != null) {
             schemaFilter = getParameter("schemaFilter");
         }
@@ -499,8 +515,8 @@ implements ActionListener, WindowListener, KeyListener {
             }
         }
 
-        DatabaseManagerSwing m = new DatabaseManagerSwing(
-                new JFrame("HSQL Database Manager"));
+        DatabaseManagerSwing m =
+            new DatabaseManagerSwing(new JFrame("HSQL Database Manager"));
 
         // Added: (weconsultants@users): Need databaseManagerSwing for later Reference
         refForFontDialogSwing = m;
@@ -596,12 +612,13 @@ implements ActionListener, WindowListener, KeyListener {
 
             refreshTree();
             clearResultPanel();
+
             if (fMain instanceof JApplet) {
                 getAppletContext().showStatus(
-                        "JDBC Connection established to a "
-                        + dMeta.getDatabaseProductName() + " v. "
-                        + dMeta.getDatabaseProductVersion()
-                        + " database as '" + dMeta.getUserName() + "'.");
+                    "JDBC Connection established to a "
+                    + dMeta.getDatabaseProductName() + " v. "
+                    + dMeta.getDatabaseProductVersion() + " database as '"
+                    + dMeta.getUserName() + "'.");
             }
         } catch (SQLException e) {
 
@@ -654,14 +671,15 @@ implements ActionListener, WindowListener, KeyListener {
     private DBMPrefs prefs = null;
 
     public void main() {
-        JMenu jmenu;
+
+        JMenu     jmenu;
         JMenuItem mitem;
 
         try {
             prefs = new DBMPrefs(fMain instanceof JApplet);
         } catch (Exception e) {
             System.err.println(
-                    "Failed to load preferences.  Proceeding with defaults:\n");
+                "Failed to load preferences.  Proceeding with defaults:\n");
         }
 
         if (prefs == null) {
@@ -679,9 +697,12 @@ implements ActionListener, WindowListener, KeyListener {
 
         // (ulrivo): An actual icon.  N.b., this adds some tips to the tip map
         fMain.getContentPane().add(createToolBar(), "North");
+
         if (fMain instanceof java.awt.Frame) {
-            ((java.awt.Frame) fMain).setIconImage(CommonSwing.getIcon("Frame"));
+            ((java.awt.Frame) fMain).setIconImage(
+                CommonSwing.getIcon("Frame"));
         }
+
         if (fMain instanceof java.awt.Window) {
             ((java.awt.Window) fMain).addWindowListener(this);
         }
@@ -695,9 +716,11 @@ implements ActionListener, WindowListener, KeyListener {
         };
 
         jmenu = addMenu(bar, "File", fitems);
+
         // All actions after Connect and the divider are local.
         for (int i = 2; i < jmenu.getItemCount(); i++) {
             mitem = jmenu.getItem(i);
+
             if (mitem != null) {
                 localActionList.add(mitem);
             }
@@ -793,15 +816,18 @@ implements ActionListener, WindowListener, KeyListener {
             "-Dump", "-Restore", "-Transfer"
         };
 
-
         jmenu = addMenu(bar, "Tools", stools);
+
         localActionList.add(jmenu);
+
         for (int i = 0; i < jmenu.getItemCount(); i++) {
             mitem = jmenu.getItem(i);
+
             if (mitem != null) {
                 localActionList.add(mitem);
             }
         }
+
         mnuSchemas.setMnemonic(KeyEvent.VK_S);
         bar.add(mnuSchemas);
 
@@ -848,11 +874,13 @@ implements ActionListener, WindowListener, KeyListener {
             }
         });
         bar.add(mnuHelp);
+
         if (fMain instanceof JApplet) {
             ((JApplet) fMain).setJMenuBar(bar);
         } else if (fMain instanceof JFrame) {
             ((JFrame) fMain).setJMenuBar(bar);
         }
+
         initGUI();
 
         sRecent = new String[iMaxRecent];
@@ -877,30 +905,37 @@ implements ActionListener, WindowListener, KeyListener {
 
             if (4096 <= sqlScriptBuffer.length()) {
                 int eoThirdLine = sqlScriptBuffer.indexOf('\n');
+
                 if (eoThirdLine > 0) {
-                    eoThirdLine =
-                            sqlScriptBuffer.indexOf('\n', eoThirdLine + 1);
+                    eoThirdLine = sqlScriptBuffer.indexOf('\n',
+                                                          eoThirdLine + 1);
                 }
+
                 if (eoThirdLine > 0) {
-                    eoThirdLine =
-                            sqlScriptBuffer.indexOf('\n', eoThirdLine + 1);
+                    eoThirdLine = sqlScriptBuffer.indexOf('\n',
+                                                          eoThirdLine + 1);
                 }
+
                 if (eoThirdLine < 1) {
                     eoThirdLine = 100;
                 }
-                txtCommand.setText("............... Script File loaded: "
-                        + defScript + " ..................... \n"
-                        + "............... Click Execute or Clear "
-                        + "...................\n" 
-                        + sqlScriptBuffer.substring(0, eoThirdLine + 1)
-                        + "..........................................."
-                        + "..............................\n"
-                        + "............................................."
-                        + "............................\n");
+
+                txtCommand.setText(
+                    "............... Script File loaded: " + defScript
+                    + " ..................... \n"
+                    + "............... Click Execute or Clear "
+                    + "...................\n"
+                    + sqlScriptBuffer.substring(0, eoThirdLine + 1)
+                    + "..........................................."
+                    + "..............................\n"
+                    + "............................................."
+                    + "............................\n");
                 txtCommand.setEnabled(false);
             } else {
                 txtCommand.setText(sqlScriptBuffer);
+
                 sqlScriptBuffer = null;
+
                 txtCommand.setEnabled(true);
             }
         }
@@ -917,6 +952,7 @@ implements ActionListener, WindowListener, KeyListener {
         menu.setMnemonic(name.charAt(0));
         addMenuItems(menu, items);
         b.add(menu);
+
         return menu;
     }
 
@@ -1054,31 +1090,39 @@ implements ActionListener, WindowListener, KeyListener {
 
                     if (4096 <= sqlScriptBuffer.length()) {
                         int eoThirdLine = sqlScriptBuffer.indexOf('\n');
+
                         if (eoThirdLine > 0) {
-                            eoThirdLine = sqlScriptBuffer.indexOf(
-                                    '\n', eoThirdLine + 1);
+                            eoThirdLine = sqlScriptBuffer.indexOf('\n',
+                                                                  eoThirdLine
+                                                                  + 1);
                         }
+
                         if (eoThirdLine > 0) {
-                            eoThirdLine = sqlScriptBuffer.indexOf(
-                                    '\n', eoThirdLine + 1);
+                            eoThirdLine = sqlScriptBuffer.indexOf('\n',
+                                                                  eoThirdLine
+                                                                  + 1);
                         }
+
                         if (eoThirdLine < 1) {
                             eoThirdLine = 100;
                         }
+
                         txtCommand.setText(
-                                "............... Script File loaded: "
-                                + file + " ..................... \n"
-                                + "............... Click Execute or Clear "
-                                + "...................\n" 
-                                + sqlScriptBuffer.substring(0, eoThirdLine + 1)
-                                + "........................................."
-                                + "................................\n"
-                                + "..........................................."
-                                + "..............................\n");
+                            "............... Script File loaded: " + file
+                            + " ..................... \n"
+                            + "............... Click Execute or Clear "
+                            + "...................\n"
+                            + sqlScriptBuffer.substring(0, eoThirdLine + 1)
+                            + "........................................."
+                            + "................................\n"
+                            + "..........................................."
+                            + "..............................\n");
                         txtCommand.setEnabled(false);
                     } else {
                         txtCommand.setText(sqlScriptBuffer);
+
                         sqlScriptBuffer = null;
+
                         txtCommand.setEnabled(true);
                     }
                 }
@@ -1126,9 +1170,11 @@ implements ActionListener, WindowListener, KeyListener {
             }
         } else if (s.equals(SHOWSYS_BOX_TEXT)) {
             showSys = boxShowSys.isSelected();
+
             refreshTree();
         } else if (s.equals(ROWCOUNTS_BOX_TEXT)) {
             displayRowCounts = boxRowCounts.isSelected();
+
             refreshTree();
         } else if (s.startsWith("LFMODE:")) {
             setLF(s.substring("LFMODE:".length()));
@@ -1272,6 +1318,7 @@ implements ActionListener, WindowListener, KeyListener {
     public void windowClosing(WindowEvent ev) {
 
         stop();
+
         try {
             if (cConn != null) {
                 cConn.close();
@@ -1328,8 +1375,10 @@ implements ActionListener, WindowListener, KeyListener {
     }
 
     private void clearResultPanel() {
+
         gResult.setHead(new Object[0]);
         gResult.clear();
+
         if (gridFormat) {
             gResult.fireTableChanged(null);
         } else {
@@ -1349,6 +1398,7 @@ implements ActionListener, WindowListener, KeyListener {
             } else {
                 ((Component) fMain).setCursor(fMainCursor);
             }
+
             txtCommand.setCursor(txtCommandCursor);
             txtResult.setCursor(txtResultCursor);
 
@@ -1357,10 +1407,9 @@ implements ActionListener, WindowListener, KeyListener {
 
             // save the old cursors
             if (fMainCursor == null) {
-                fMainCursor      = ((fMain instanceof java.awt.Frame)
-                        ? (((java.awt.Frame) fMain).getCursor())
-                        : (((Component) fMain).getCursor())
-                );
+                fMainCursor = ((fMain instanceof java.awt.Frame)
+                               ? (((java.awt.Frame) fMain).getCursor())
+                               : (((Component) fMain).getCursor()));
                 txtCommandCursor = txtCommand.getCursor();
                 txtResultCursor  = txtResult.getCursor();
             }
@@ -1371,66 +1420,73 @@ implements ActionListener, WindowListener, KeyListener {
             } else {
                 ((Component) fMain).setCursor(waitCursor);
             }
+
             txtCommand.setCursor(waitCursor);
             txtResult.setCursor(waitCursor);
 
             //TODO:  Disable actionButtons
         }
 
-        setStatusLine(busyText,
-                ((busyText == null) ? gResult.getRowCount() : 0));
+        setStatusLine(busyText, ((busyText == null) ? gResult.getRowCount()
+                                                    : 0));
     }
 
     private Runnable enableButtonRunnable = new Runnable() {
+
         public void run() {
             jbuttonClear.setEnabled(true);
             jbuttonExecute.setEnabled(true);
         }
     };
     private Runnable disableButtonRunnable = new Runnable() {
+
         public void run() {
             jbuttonClear.setEnabled(false);
             jbuttonExecute.setEnabled(false);
         }
     };
-
-    private Thread buttonUpdaterThread = null;
-
+    private Thread           buttonUpdaterThread = null;
     private static final int BUTTON_CHECK_PERIOD = 500;
-
-    private Runnable buttonUpdater = new Runnable() {
+    private Runnable         buttonUpdater       = new Runnable() {
 
         public void run() {
+
             boolean havesql;
+
             while (true) {
                 try {
                     Thread.sleep(BUTTON_CHECK_PERIOD);
-                } catch (InterruptedException ie) {
-                }
-                if (buttonUpdaterThread == null) { // Pointer to me
+                } catch (InterruptedException ie) {}
+
+                if (buttonUpdaterThread == null) {    // Pointer to me
                     return;
                 }
+
                 havesql = (txtCommand.getText().length() > 0);
+
                 if (jbuttonClear.isEnabled() != havesql) {
-                    SwingUtilities.invokeLater(
-                        havesql ? enableButtonRunnable : disableButtonRunnable
-                    );
+                    SwingUtilities.invokeLater(havesql ? enableButtonRunnable
+                                                       : disableButtonRunnable);
                 }
             }
         }
     };
-
     private JButton jbuttonClear;
     private JButton jbuttonExecute;
 
     public void start() {
+
         if (buttonUpdaterThread == null) {
             buttonUpdaterThread = new Thread(buttonUpdater);
         }
+
         buttonUpdaterThread.start();
     }
+
     public void stop() {
-System.err.println("Stopping");
+
+        System.err.println("Stopping");
+
         buttonUpdaterThread = null;
     }
 
@@ -1454,10 +1510,13 @@ System.err.println("Stopping");
      * Schedules to run in a Gui-safe thread
      */
     protected void executeCurrentSQL() {
+
         if (txtCommand.getText().length() < 1) {
             CommonSwing.errorMessage("No SQL to execute");
+
             return;
         }
+
         backgroundIt(new StatementExecRunnable(), "Executing SQL");
     }
 
@@ -1476,7 +1535,6 @@ System.err.println("Stopping");
 
                 updateResult();
                 displayResults();
-
                 updateAutoCommitBox();
                 System.gc();
             } catch (RuntimeException re) {
@@ -1493,14 +1551,13 @@ System.err.println("Stopping");
     private void executeSQL() {
 
         String[] g   = new String[1];
-        String sql = null;
+        String   sql = null;
 
         try {
             lTime = System.currentTimeMillis();
+            sql   = ((sqlScriptBuffer == null ? txtCommand.getText()
+                                              : sqlScriptBuffer));
 
-            sql = ((sqlScriptBuffer == null 
-                    ? txtCommand.getText() 
-                    : sqlScriptBuffer));
             sStatement.execute(sql);
 
             int r = sStatement.getUpdateCount();
@@ -1521,7 +1578,7 @@ System.err.println("Stopping");
 
             if (sqlScriptBuffer == null) {
                 addToRecent(sql);
-                txtCommand.setEnabled(true); // clear() does this otherwise
+                txtCommand.setEnabled(true);    // clear() does this otherwise
             } else {
                 clear();
             }
@@ -1565,7 +1622,7 @@ System.err.println("Stopping");
 
     /**
      * Could somebody explain what the purpose of this method is?
-     * Contrary to the method name, it looks like it displays 
+     * Contrary to the method name, it looks like it displays
      * results only if gridFormat is off (seems like it  does
      * nothing otherwise, except for clearing help text and moving focus).
      */
@@ -1801,11 +1858,11 @@ System.err.println("Stopping");
         }
 
         // b.append(NL + height + " row(s) in " + lTime + " ms");
-        // There is no reason why this report should be text-output-specific. 
+        // There is no reason why this report should be text-output-specific.
         // Moving it to bottom of the setWaiting method (where the report
         // gets written to the status line).
-        // I'm only doing the rowcount now.  Add the time report there if 
-        // you are so inclined. 
+        // I'm only doing the rowcount now.  Add the time report there if
+        // you are so inclined.
         txtResult.setText(b.toString());
     }
 
@@ -1865,7 +1922,6 @@ System.err.println("Stopping");
 
         txtCommand.setFont(fFont);
         txtResult.setFont(new Font("Courier", Font.PLAIN, 12));
-
         pCommand.add(txtCommandScroll, BorderLayout.CENTER);
 
         gResult = new GridSwing();
@@ -1919,6 +1975,7 @@ System.err.println("Stopping");
         pStatus.add(jStatusLine, BorderLayout.CENTER);
         fMain.getContentPane().add(pStatus, "South");
         doLayout();
+
         if (fMain instanceof java.awt.Window) {
             ((java.awt.Window) fMain).pack();
         } else {
@@ -2172,7 +2229,7 @@ System.err.println("Stopping");
         // We want the Schema List to always be in sync with the displayed tree
         updateSchemaList();
     }
-    
+
     // Added: (weconsultants@users) Sets up\changes the running status icon
     void setStatusLine(String busyBaseString, int rowCount) {
 
@@ -2185,7 +2242,7 @@ System.err.println("Stopping");
                 additionalMsg = " /  Tree showing objects in schema '"
                                 + schemaFilter + "'";
             }
-            
+
             if (rowCount > 1) {
                 additionalMsg += " / " + rowCount + " rows retrieved";
             }
@@ -2221,8 +2278,8 @@ System.err.println("Stopping");
                                                     : (schemaPart + '.');
                     name       = schemaPart + (String) inTable.elementAt(i);
 
-                    ResultSet resultSet = select.executeQuery(
-                            rowCountSelect + name);
+                    ResultSet resultSet = select.executeQuery(rowCountSelect
+                        + name);
 
                     while (resultSet.next()) {
                         counts[i] = resultSet.getInt(1);
@@ -2251,7 +2308,8 @@ System.err.println("Stopping");
         // I'm dropping "Statement" from  "Execute SQL Statement", etc.,
         // because it may or may not be "one statement", but it is SQL.
         // Build jbuttonClear Buttons - blaine
-        jbuttonClear = new JButton("Clear SQL",
+        jbuttonClear =
+            new JButton("Clear SQL",
                         new ImageIcon(CommonSwing.getIcon("Clear")));
 
         jbuttonClear.putClientProperty("is3DEnabled", Boolean.TRUE);
@@ -2259,11 +2317,14 @@ System.err.println("Stopping");
         jbuttonClear.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent actionevent) {
+
                 if (sqlScriptBuffer == null
                         && txtCommand.getText().length() < 1) {
                     CommonSwing.errorMessage("No SQL to clear");
+
                     return;
                 }
+
                 clear();
             }
         });
@@ -2410,9 +2471,13 @@ System.err.println("Stopping");
      * plus Help/Show Tooltips.
      */
     public class DBMPrefs {
+
         public File prefsFile = null;
-        /** The constructor guarantees that this will be null for Applet,
-         *  non-null if using a local preferences file */
+
+        /**
+         * The constructor guarantees that this will be null for Applet,
+         *  non-null if using a local preferences file 
+         */
 
         // Set defaults from Data
         boolean autoRefresh   = true;
@@ -2427,22 +2492,26 @@ System.err.println("Stopping");
         boolean showTooltips = true;
 
         public DBMPrefs(boolean isApplet) throws IOException {
-            if (isApplet) {
-            } else {
+
+            if (isApplet) {}
+            else {
                 if (homedir == null) {
                     throw new IOException(
-                            "Skipping preferences since do not know home dir");
+                        "Skipping preferences since do not know home dir");
                 }
 
                 prefsFile = new File(homedir, "dbmprefs.properties");
             }
+
             load();
         }
 
         public void load() throws IOException {
+
             String tmpString;
 
             if (prefsFile == null) {
+
                 // LOAD PREFERENCES FROM APPLET PARAMS
                 tmpString = getParameter("autoRefresh");
 
@@ -2483,8 +2552,8 @@ System.err.println("Stopping");
                     showTooltips = Boolean.valueOf(tmpString).booleanValue();
                 }
             } else {
-                // LOAD PREFERENCES FROM LOCAL PREFERENCES FILE
 
+                // LOAD PREFERENCES FROM LOCAL PREFERENCES FILE
                 if (!prefsFile.exists()) {
                     throw new IOException("No such file: " + prefsFile);
                 }
@@ -2498,8 +2567,8 @@ System.err.println("Stopping");
                     fis.close();
                 } catch (IOException ioe) {
                     throw new IOException("Failed to read preferences file '"
-                                               + prefsFile + "':  "
-                                               + ioe.getMessage());
+                                          + prefsFile + "':  "
+                                          + ioe.getMessage());
                 }
 
                 tmpString = props.getProperty("autoRefresh");
@@ -2544,7 +2613,9 @@ System.err.println("Stopping");
         }
 
         public void store() {
+
             if (prefsFile == null) {
+
                 // Can't persist Applet settings.
                 return;
             }

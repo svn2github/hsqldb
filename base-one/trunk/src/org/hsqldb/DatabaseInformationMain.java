@@ -944,11 +944,13 @@ class DatabaseInformationMain extends DatabaseInformation {
 
         Result rs;
 
-        // - saves ~ 100 bytes jar space
         rs = session.sqlExecuteDirectNoPreChecks(
             "select a.TABLE_CAT, a.TABLE_SCHEM, a.TABLE_NAME, b.COLUMN_NAME, "
             + "a.GRANTOR, a.GRANTEE, a.PRIVILEGE, a.IS_GRANTABLE "
-            + "from  INFORMATION_SCHEMA.SYSTEM_TABLEPRIVILEGES a, INFORMATION_SCHEMA.SYSTEM_COLUMNS b where a.TABLE_NAME = b.TABLE_NAME;");
+            + "from  INFORMATION_SCHEMA.SYSTEM_TABLEPRIVILEGES a, "
+            + "INFORMATION_SCHEMA.SYSTEM_COLUMNS b "
+            + "where a.TABLE_NAME = b.TABLE_NAME and "
+            + "a.TABLE_SCHEM = b.TABLE_SCHEM;");
 
         t.insertSys(rs);
         t.setDataReadOnly(true);
@@ -1859,8 +1861,6 @@ class DatabaseInformationMain extends DatabaseInformation {
      * GRANTOR      VARCHAR   grantor of access
      * GRANTEE      VARCHAR   grantee of access
      * PRIVILEGE    VARCHAR   { "SELECT" | "INSERT" | "UPDATE" | "DELETE" }
-     *                        "TRIGGER" and "REFERENCES" privileges
-     *                        not yet implemented at engine level
      * IS_GRANTABLE VARCHAR   { "YES" | "NO" |  NULL (unknown) }
      * </pre>
      *

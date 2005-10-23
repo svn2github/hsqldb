@@ -100,14 +100,15 @@ public class Cache {
     /**
      * Returns a row if in memory cache.
      */
-    public CachedObject get(int pos) {
+    public synchronized CachedObject get(int pos) {
         return (CachedObject) cacheMap.get(pos);
     }
 
     /**
      * Adds a row to the cache.
      */
-    public void put(int key, CachedObject row) throws IOException {
+    public synchronized void put(int key,
+                                 CachedObject row) throws IOException {
 
         int storageSize = row.getStorageSize();
 
@@ -124,7 +125,7 @@ public class Cache {
     /**
      * Removes an object from memory cache. Does not release the file storage.
      */
-    public CachedObject release(int i) {
+    public synchronized CachedObject release(int i) {
 
         CachedObject r = (CachedObject) cacheMap.remove(i);
 
@@ -147,7 +148,7 @@ public class Cache {
      * in the cache.
      *
      */
-    private void cleanUp() throws IOException {
+    private synchronized void cleanUp() throws IOException {
 
         int removeCount = cacheMap.size() / 2;
         int accessTarget = cacheMap.getAccessCountCeiling(removeCount,
@@ -175,7 +176,7 @@ public class Cache {
         saveRows(savecount);
     }
 
-    void saveRows(int count) throws IOException {
+    synchronized void saveRows(int count) throws IOException {
 
         if (count == 0) {
             return;
@@ -202,7 +203,7 @@ public class Cache {
     /**
      * Writes out all modified cached Rows.
      */
-    public void saveAll() throws IOException {
+    public synchronized void saveAll() throws IOException {
 
         Iterator it        = cacheMap.iterator();
         int      savecount = 0;
@@ -233,7 +234,7 @@ public class Cache {
     /**
      * clears out the memory cache
      */
-    void clear() {
+    synchronized void clear() {
 
         cacheMap.clear();
 

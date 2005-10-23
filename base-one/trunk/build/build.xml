@@ -105,8 +105,8 @@ examples:
 
    <target name="javaversion2" depends="-javaversion4"
            unless="ant.java.iscjava14">
-      <available classname="java.util.Set" property="ant.java.iscjava12"/>
-      <available classname="java.util.Set" property="ant.java.iscjavamodern"/>
+      <available classname="java.lang.ref.Reference" property="ant.java.iscjava12"/>
+      <available classname="java.lang.ref.Reference" property="ant.java.iscjavamodern"/>
    </target>
 
    <target name="-prepare" depends="init,javaversion2">

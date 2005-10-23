@@ -6,6 +6,14 @@ hsqldb 1.8.0 in reverse chronological order.
 Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
+
+Bug fixes
+
+Fixed bug in generation of some system tables with multi schema databases
+Fixed bug with access to network result set data when UNION with different column
+types is used
+Fixed bug with scripting of some TIMESTAMP values
+
 2005.08.18 1.8.0.2
 
 Bug fixes and enhancements:

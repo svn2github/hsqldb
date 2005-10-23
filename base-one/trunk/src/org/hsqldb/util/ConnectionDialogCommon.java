@@ -334,7 +334,7 @@ class ConnectionDialogCommon {
                     (String) java.security.AccessController.doPrivileged(a);
             } catch (Exception e) {
                 System.err.println(
-                        "No access to home directory.  Continuing without...");
+                    "No access to home directory.  Continuing without...");
             }
         }
 

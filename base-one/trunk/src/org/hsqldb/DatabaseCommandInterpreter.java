@@ -218,9 +218,9 @@ class DatabaseCommandInterpreter {
         switch (cmd) {
 
             case Token.OPENBRACKET : {
-                brackets = Parser.parseOpenBrackets(tokenizer) + 1;
+                Parser parser = new Parser(session, database, tokenizer);
 
-                tokenizer.getThis(Token.T_SELECT);
+                brackets = parser.parseOpenBracketsSelect() + 1;
             }
             case Token.SELECT : {
                 Parser parser = new Parser(session, database, tokenizer);
@@ -234,7 +234,8 @@ class DatabaseCommandInterpreter {
                             Trace.ASSERT_DIRECT_EXEC_WITH_PARAM));
                 }
 
-                result = session.sqlExecuteCompiledNoPreChecks(cStatement);
+                result = session.sqlExecuteCompiledNoPreChecks(cStatement,
+                        null);
 
                 break;
             }
@@ -250,7 +251,8 @@ class DatabaseCommandInterpreter {
                             Trace.ASSERT_DIRECT_EXEC_WITH_PARAM));
                 }
 
-                result = session.sqlExecuteCompiledNoPreChecks(cStatement);
+                result = session.sqlExecuteCompiledNoPreChecks(cStatement,
+                        null);
 
                 break;
             }
@@ -266,7 +268,8 @@ class DatabaseCommandInterpreter {
                             Trace.ASSERT_DIRECT_EXEC_WITH_PARAM));
                 }
 
-                result = session.sqlExecuteCompiledNoPreChecks(cStatement);
+                result = session.sqlExecuteCompiledNoPreChecks(cStatement,
+                        null);
 
                 break;
             }
@@ -282,7 +285,8 @@ class DatabaseCommandInterpreter {
                             Trace.ASSERT_DIRECT_EXEC_WITH_PARAM));
                 }
 
-                result = session.sqlExecuteCompiledNoPreChecks(cStatement);
+                result = session.sqlExecuteCompiledNoPreChecks(cStatement,
+                        null);
 
                 break;
             }
@@ -297,7 +301,8 @@ class DatabaseCommandInterpreter {
                             Trace.ASSERT_DIRECT_EXEC_WITH_PARAM));
                 }
 
-                result = session.sqlExecuteCompiledNoPreChecks(cStatement);
+                result = session.sqlExecuteCompiledNoPreChecks(cStatement,
+                        null);
 
                 break;
             }
@@ -315,6 +320,10 @@ class DatabaseCommandInterpreter {
 
             case Token.SAVEPOINT :
                 processSavepoint();
+                break;
+
+            case Token.RELEASE :
+                processReleaseSavepoint();
                 break;
 
             case Token.CREATE :
@@ -367,10 +376,6 @@ class DatabaseCommandInterpreter {
 
             case Token.EXPLAIN :
                 result = processExplainPlan();
-                break;
-
-            case Token.RELEASE :
-                processReleaseSavepoint();
                 break;
 
             default :
@@ -547,7 +552,9 @@ class DatabaseCommandInterpreter {
      * @return  column index map
      * @throws  HsqlException if a column is not found or is duplicate
      */
-    private int[] processColumnList(Table t) throws HsqlException {
+    private int[] processColumnList(Table t,
+                                    boolean acceptAscDesc)
+                                    throws HsqlException {
 
         HsqlArrayList list;
         HashSet       set;
@@ -573,7 +580,9 @@ class DatabaseCommandInterpreter {
 
             token = tokenizer.getSimpleToken();
 
-            if (token.equals(Token.T_DESC) || token.equals(Token.T_ASC)) {
+            if (acceptAscDesc
+                    && (token.equals(Token.T_DESC)
+                        || token.equals(Token.T_ASC))) {
                 token = tokenizer.getSimpleToken();    // OJ: eat it up
             }
 
@@ -596,48 +605,6 @@ class DatabaseCommandInterpreter {
         }
 
         return col;
-    }
-
-    /**
-     *  Responsible for tail end of CREATE INDEX DDL. <p>
-     *
-     *  Indexes defined in DDL scripts are handled by this method. If the
-     *  name of an existing index begins with "SYS_", the name is changed to
-     *  begin with "USER_". The name should be unique within the database.
-     *  For compatibility with old database, non-unique names are modified
-     *  and assigned a new name. <p>
-     *
-     *  In 1.7.2 no new index is created if an equivalent already exists. <p>
-     *
-     *  (fredt@users) <p>
-     *
-     * @param  t table
-     * @param  indexName index
-     *
-     * @param  indexNameQuoted is quoted
-     * @param  unique is unique
-     * @throws  HsqlException
-     */
-    private void addIndexOn(Table t, String indexName,
-                            boolean indexNameQuoted,
-                            boolean unique) throws HsqlException {
-
-        HsqlName indexHsqlName;
-        int[]    indexColumns;
-
-        database.schemaManager.checkIndexExists(indexName, t.getSchemaName(),
-                false);
-
-        indexHsqlName = newIndexHsqlName(indexName, indexNameQuoted);
-        indexColumns  = processColumnList(t);
-
-        session.commit();
-        session.setScripting(true);
-
-        TableWorks tableWorks = new TableWorks(session, t);
-
-        tableWorks.createIndex(indexColumns, indexHsqlName, unique, false,
-                               false);
     }
 
     /**
@@ -1078,7 +1045,7 @@ class DatabaseCommandInterpreter {
                     // tony_lai@users 20020820 - patch 595099
                     pkHsqlName = cname;
 
-                    int[]      col = processColumnList(t);
+                    int[]      col = processColumnList(t, false);
                     Constraint mainConst;
 
                     mainConst = (Constraint) tcList.get(0);
@@ -1096,7 +1063,7 @@ class DatabaseCommandInterpreter {
                     break;
                 }
                 case Token.UNIQUE : {
-                    int[] col = processColumnList(t);
+                    int[] col = processColumnList(t, false);
 
                     if (cname == null) {
                         cname = database.nameManager.newAutoName("CT");
@@ -1363,7 +1330,7 @@ class DatabaseCommandInterpreter {
         Table  expTable;
         String token;
 
-        localcol = processColumnList(t);
+        localcol = processColumnList(t, false);
 
         tokenizer.getThis(Token.T_REFERENCES);
 
@@ -1394,7 +1361,7 @@ class DatabaseCommandInterpreter {
         tokenizer.back();
 
         if (token.equals(Token.T_OPENBRACKET)) {
-            expcol = processColumnList(expTable);
+            expcol = processColumnList(expTable, false);
         } else {
             if (expTable.getPrimaryKey() == null) {
 
@@ -1525,14 +1492,7 @@ class DatabaseCommandInterpreter {
         tokenizer.setPartMarker();
 
         Parser parser   = new Parser(session, database, tokenizer);
-        int    brackets = 0;
-
-        if (tokenizer.isGetThis(Token.T_OPENBRACKET)) {
-            brackets += Parser.parseOpenBrackets(tokenizer) + 1;
-        }
-
-        tokenizer.getThis(Token.T_SELECT);
-
+        int    brackets = parser.parseOpenBracketsSelect();
         Select select;
 
         // accept ORDER BY or ORDRY BY with LIMIT - accept unions
@@ -1559,16 +1519,16 @@ class DatabaseCommandInterpreter {
      */
     private void processAlterTableRename(Table t) throws HsqlException {
 
-        String  name   = t.getName().name;
         String  schema = t.getSchemaName();
         String  newName;
         boolean isquoted;
 
         // ensures that if temp table, it also belongs to this session
+/*
         if (!t.equals(session, name)) {
             throw Trace.error(Trace.TABLE_NOT_FOUND);
         }
-
+*/
         tokenizer.getThis(Token.T_TO);
 
         newName = tokenizer.getName();
@@ -1588,7 +1548,7 @@ class DatabaseCommandInterpreter {
                 schema);
         session.commit();
         session.setScripting(true);
-        t.rename(session, newName, isquoted);
+        database.schemaManager.renameTable(session, t, newName, isquoted);
     }
 
     /**
@@ -2775,9 +2735,9 @@ class DatabaseCommandInterpreter {
     private void processCreateIndex(boolean unique) throws HsqlException {
 
         Table   t;
-        String  name     = tokenizer.getName();
-        String  schema   = tokenizer.getLongNameFirst();
-        boolean isQuoted = tokenizer.wasQuotedIdentifier();
+        String  indexName       = tokenizer.getName();
+        String  schema          = tokenizer.getLongNameFirst();
+        boolean indexNameQuoted = tokenizer.wasQuotedIdentifier();
 
         tokenizer.getThis(Token.T_ON);
 
@@ -2791,13 +2751,24 @@ class DatabaseCommandInterpreter {
 
         t = database.schemaManager.getTable(session, tablename, tableschema);
 
-        addIndexOn(t, name, isQuoted, unique);
+        database.schemaManager.checkIndexExists(indexName, t.getSchemaName(),
+                false);
 
-        String extra = tokenizer.getSimpleToken();
+        HsqlName indexHsqlName = newIndexHsqlName(indexName, indexNameQuoted);
+        int[]    indexColumns  = processColumnList(t, true);
+        String   extra         = tokenizer.getSimpleToken();
 
         if (!Token.T_DESC.equals(extra) &&!Token.T_ASC.equals(extra)) {
             tokenizer.back();
         }
+
+        session.commit();
+        session.setScripting(true);
+
+        TableWorks tableWorks = new TableWorks(session, t);
+
+        tableWorks.createIndex(indexColumns, indexHsqlName, unique, false,
+                               false);
     }
 
     /**
@@ -3066,11 +3037,8 @@ class DatabaseCommandInterpreter {
 
         switch (cmd) {
 
-            case Token.OPENBRACKET : {
-                brackets = Parser.parseOpenBrackets(tokenizer) + 1;
-
-                tokenizer.getThis(Token.T_SELECT);
-            }
+            case Token.OPENBRACKET :
+                brackets = parser.parseOpenBracketsSelect() + 1;
             case Token.SELECT :
                 cs = parser.compileSelectStatement(brackets);
                 break;
@@ -3213,7 +3181,7 @@ class DatabaseCommandInterpreter {
 
         int[] col;
 
-        col = processColumnList(t);
+        col = processColumnList(t, false);
 
         if (n == null) {
             n = database.nameManager.newAutoName("CT");
@@ -3274,7 +3242,7 @@ class DatabaseCommandInterpreter {
 
         int[] col;
 
-        col = processColumnList(t);
+        col = processColumnList(t, false);
 
         session.commit();
 

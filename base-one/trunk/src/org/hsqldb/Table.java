@@ -155,9 +155,7 @@ public class Table extends BaseTable {
     private Expression[] colDefaults;                 // fredt - expressions of DEFAULT values
     private int[]        defaultColumnMap;            // fred - holding 0,1,2,3,...
     private boolean      hasDefaultValues;            //fredt - shortcut for above
-    private boolean      isText;
-    private boolean      isView;
-    boolean              sqlEnforceSize;              // inherited for the database -
+    boolean              sqlEnforceSize;              // inherited from the database -
 
     // properties for subclasses
     protected int           columnCount;              // inclusive the hidden primary key
@@ -168,6 +166,9 @@ public class Table extends BaseTable {
     protected boolean       isReadOnly;
     protected boolean       isTemp;
     protected boolean       isCached;
+    protected boolean       isText;
+    protected boolean       isMemory;
+    private boolean         isView;
     protected boolean       isLogged;
     protected int           indexType;                // fredt - type of index used
     protected boolean       onCommitPreserve;         // for temp tables
@@ -195,8 +196,10 @@ public class Table extends BaseTable {
         switch (type) {
 
             case SYSTEM_SUBQUERY :
-                isTemp = true;
+                isTemp   = true;
+                isMemory = true;
             case SYSTEM_TABLE :
+                isMemory = true;
                 break;
 
             case CACHED_TABLE :
@@ -212,11 +215,13 @@ public class Table extends BaseTable {
 
                 type = MEMORY_TABLE;
             case MEMORY_TABLE :
+                isMemory = true;
                 isLogged = !database.isFilesReadOnly();
                 break;
 
             case TEMP_TABLE :
-                isTemp = true;
+                isMemory = true;
+                isTemp   = true;
                 break;
 
             case TEMP_TEXT_TABLE :
@@ -227,7 +232,6 @@ public class Table extends BaseTable {
                 isTemp     = true;
                 isText     = true;
                 isReadOnly = true;
-                isCached   = true;
                 indexType  = Index.POINTER_INDEX;
                 rowStore   = new RowStore();
                 break;
@@ -238,7 +242,6 @@ public class Table extends BaseTable {
                 }
 
                 isText    = true;
-                isCached  = true;
                 indexType = Index.POINTER_INDEX;
                 rowStore  = new RowStore();
                 break;
@@ -263,7 +266,7 @@ public class Table extends BaseTable {
 // ----------------------------------------------------------------------------
 // akede@users - 1.7.2 patch Files readonly
         // Changing the mode of the table if necessary
-        if (db.isFilesReadOnly() && isTableFileBased()) {
+        if (db.isFilesReadOnly() && isFileBased()) {
             this.isReadOnly = true;
         }
 
@@ -333,7 +336,7 @@ public class Table extends BaseTable {
 
         // Changing the Read-Only mode for the table is only allowed if the
         // the database can realize it.
-        if (!value && database.isFilesReadOnly() && isTableFileBased()) {
+        if (!value && database.isFilesReadOnly() && isFileBased()) {
             throw Trace.error(Trace.DATA_IS_READONLY);
         }
 
@@ -343,7 +346,7 @@ public class Table extends BaseTable {
     /**
      * Text or Cached Tables are normally file based
      */
-    boolean isTableFileBased() {
+    boolean isFileBased() {
         return isCached || isText;
     }
 
@@ -1356,7 +1359,7 @@ public class Table extends BaseTable {
     void setIndexRoots(String s) throws HsqlException {
 
         // the user may try to set this; this is not only internal problem
-        Trace.check(isCached &&!isText, Trace.TABLE_NOT_FOUND);
+        Trace.check(isCached, Trace.TABLE_NOT_FOUND);
 
         Tokenizer t     = new Tokenizer(s);
         int[]     roots = new int[getIndexCount()];
@@ -1740,7 +1743,7 @@ public class Table extends BaseTable {
      *  to remove a given index from a MEMORY or TEXT table. Not for PK index.
      *
      */
-    void dropIndex(String indexname) throws HsqlException {
+    void dropIndex(Session session, String indexname) throws HsqlException {
 
         // find the array index for indexname and remove
         int todrop = getIndexIndex(indexname);
@@ -1749,12 +1752,12 @@ public class Table extends BaseTable {
                 todrop, -1);
 
         setBestRowIdentifiers();
-        dropIndexFromRows(todrop);
+        dropIndexFromRows(session, todrop);
     }
 
-    void dropIndexFromRows(int index) throws HsqlException {
+    void dropIndexFromRows(Session session, int index) throws HsqlException {
 
-        RowIterator it = rowIterator(null);
+        RowIterator it = getPrimaryIndex().firstRow(session);
 
         while (it.hasNext()) {
             Row  row      = it.next();
@@ -1785,8 +1788,7 @@ public class Table extends BaseTable {
             colvalue = column.getDefaultValue(session);
         }
 
-        // do not use session
-        RowIterator it = from.rowIterator(null);
+        RowIterator it = from.getPrimaryIndex().firstRow(session);
 
         while (it.hasNext()) {
             Row      row  = it.next();
@@ -1899,23 +1901,21 @@ public class Table extends BaseTable {
      *  UNIQUE or PRIMARY constraints are enforced by attempting to
      *  add the row to the indexes.
      */
-    private Row insertNoCheck(Session session,
-                              Object[] data) throws HsqlException {
+    private void insertNoCheck(Session session,
+                               Object[] data) throws HsqlException {
 
-        Row r = newRow(data);
+        Row row = newRow(data);
 
         // this handles the UNIQUE constraints
-        indexRow(session, r);
+        indexRow(session, row);
 
         if (session != null) {
-            session.addTransactionInsert(this, r);
+            session.addTransactionInsert(this, row);
         }
 
         if (isLogged) {
             database.logger.writeInsertStatement(session, this, data);
         }
-
-        return r;
     }
 
     /**
@@ -2365,7 +2365,7 @@ public class Table extends BaseTable {
                 for (;;) {
                     Row refrow = refiterator.next();
 
-                    if (refrow == null || refrow.isDeleted()
+                    if (refrow == null || refrow.isCascadeDeleted()
                             || refindex.compareRowNonUnique(
                                 session, mdata, m_columns,
                                 refrow.getData()) != 0) {
@@ -2432,7 +2432,7 @@ public class Table extends BaseTable {
                         }
                     }
 
-                    if (delete &&!isUpdate &&!refrow.isDeleted()) {
+                    if (delete &&!isUpdate &&!refrow.isCascadeDeleted()) {
                         reftable.deleteNoRefCheck(session, refrow);
                     }
                 }
@@ -2748,7 +2748,7 @@ public class Table extends BaseTable {
         for (int i = 0; i < deleteList.size(); i++) {
             Row row = (Row) deleteList.get(i);
 
-            if (!row.isDeleted()) {
+            if (!row.isCascadeDeleted()) {
                 deleteNoRefCheck(session, row);
             }
         }
@@ -2793,7 +2793,7 @@ public class Table extends BaseTable {
     private void deleteNoCheck(Session session, Row row,
                                boolean log) throws HsqlException {
 
-        if (row.isDeleted()) {
+        if (row.isCascadeDeleted()) {
             return;
         }
 
@@ -2832,7 +2832,7 @@ public class Table extends BaseTable {
 
             row = it.next();
         } else if (bestIndex == null) {
-            RowIterator it = rowIterator(session);
+            RowIterator it = getPrimaryIndex().firstRow(session);
 
             while (true) {
                 row = it.next();
@@ -3036,7 +3036,7 @@ public class Table extends BaseTable {
             Row      row  = (Row) rowSet.getKey(i);
             Object[] data = (Object[]) rowSet.get(i);
 
-            if (row.isDeleted()) {
+            if (row.isCascadeDeleted()) {
                 if (nodelete) {
                     throw Trace.error(Trace.TRIGGERED_DATA_CHANGE);
                 } else {
@@ -3120,7 +3120,7 @@ public class Table extends BaseTable {
      *  Returns true if table is CACHED
      */
     boolean isIndexCached() {
-        return isCached &&!isText;
+        return isCached;
     }
 
     /**
@@ -3247,14 +3247,38 @@ public class Table extends BaseTable {
         return null;
     }
 
+    /**
+     * As above, only for CACHED tables
+     */
+    CachedRow getRow(int pos) {
+        return (CachedRow) rowStore.get(pos);
+    }
+
+    /**
+     * As above, only for CACHED tables
+     */
+    CachedRow getRow(long id) {
+        return (CachedRow) rowStore.get((int) id);
+    }
+
     void registerRow(CachedRow row) {}
+
+    /**
+     * called in autocommit mode or by transaction manager when a a delete is committed
+     */
+    void removeRowFromPersistence(Row row) {
+
+        if (isText && cache != null) {
+            rowStore.removePersistence(row.getPos());
+        }
+    }
 
     /**
      * called in autocommit mode or by transaction manager when a a delete is committed
      */
     void removeRowFromStore(Row row) throws HsqlException {
 
-        if (isCached && cache != null) {
+        if (isCached || isText && cache != null) {
             rowStore.remove(row.getPos());
         }
 
@@ -3263,21 +3287,15 @@ public class Table extends BaseTable {
 
     void releaseRowFromStore(Row row) throws HsqlException {
 
-        if (isCached && cache != null) {
+        if (isCached || isText && cache != null) {
             rowStore.release(row.getPos());
         }
     }
 
-    void commitRowToStore(Row row) throws HsqlException {
+    void commitRowToStore(Row row) {
 
-        if (isCached && cache != null) {
-            try {
-                rowStore.commit(row);
-            } catch (IOException e) {
-                throw new HsqlException(
-                    e, Trace.getMessage(Trace.GENERAL_IO_ERROR),
-                    Trace.GENERAL_IO_ERROR);
-            }
+        if (isText && cache != null) {
+            rowStore.commit(row);
         }
     }
 
@@ -3364,15 +3382,15 @@ public class Table extends BaseTable {
      * Necessary when over Integer.MAX_VALUE Row objects have been generated
      * for a memory table.
      */
-    public void resetRowId() throws HsqlException {
+    public void resetRowId(Session session) throws HsqlException {
 
-        if (isCached &&!isText) {
+        if (isCached) {
             return;
         }
 
         rowIdSequence = new NumberSequence(null, 0, 1, Types.BIGINT);
 
-        RowIterator it = rowIterator(null);
+        RowIterator it = getPrimaryIndex().firstRow(session);;
 
         while (it.hasNext()) {
             Row row = it.next();
@@ -3507,17 +3525,32 @@ public class Table extends BaseTable {
 
             try {
                 cache.remove(i, this);
-            } catch (HsqlException e) {}
+            } catch (IOException e) {}
+        }
+
+        public void removePersistence(int i) {
+
+            try {
+                cache.removePersistence(i, this);
+            } catch (IOException e) {
+
+                //
+            }
         }
 
         public void release(int i) {
             cache.release(i);
         }
 
-        public void commit(CachedObject row) throws IOException {
+        public void commit(CachedObject row) {
 
-            if (Table.this.isText) {
-                cache.saveRow(row);
+            try {
+                if (Table.this.isText) {
+                    cache.saveRow(row);
+                }
+            } catch (IOException e1) {
+
+                //
             }
         }
     }

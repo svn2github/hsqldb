@@ -39,7 +39,7 @@ import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-// $Id: SqlToolHarness.java,v 1.5 2004/06/16 17:38:01 unsaved Exp $
+// $Id: SqlToolHarness.java,v 1.12 2005/05/11 14:03:19 fredt Exp $
 
 /**
  * Runs SqlTool tests based upon metacommands embedded in comments in SQL
