@@ -9,6 +9,7 @@ Maintainer, HSQLDB Project
 
 Bug fixes
 
+Fixed bug with scripting of some VIEW definitions with quoted column names
 Fixed bug in generation of some system tables with multi schema databases
 Fixed bug with access to network result set data when UNION with different column
 types is used

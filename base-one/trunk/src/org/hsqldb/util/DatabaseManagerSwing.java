@@ -245,9 +245,9 @@ implements ActionListener, WindowListener, KeyListener {
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.org.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.63 $";
+        + "problem reports or help requests:  $Revision: 1.64 $";
     private static final String ABOUT_TEXT =
-        "$Revision: 1.63 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.64 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2001-2005, The HSQL Development Group.\n"
         + "http://hsqldb.org\n\n\n"
@@ -2476,7 +2476,7 @@ implements ActionListener, WindowListener, KeyListener {
 
         /**
          * The constructor guarantees that this will be null for Applet,
-         *  non-null if using a local preferences file 
+         *  non-null if using a local preferences file
          */
 
         // Set defaults from Data

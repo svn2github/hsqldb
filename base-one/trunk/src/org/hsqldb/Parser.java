@@ -125,6 +125,7 @@ class Parser {
     private Session   session;
     private String    sTable;
     private String    sToken;
+    private boolean   wasQuoted;
     private Object    oData;
     private int       iType;
     private int       iToken;
@@ -1925,7 +1926,7 @@ class Parser {
     private Expression readColumnExpression() throws HsqlException {
 
         String     name = sToken;
-        Expression r    = new Expression(sTable, name);
+        Expression r    = new Expression(sTable, name, wasQuoted);
 
         read();
 
@@ -2287,7 +2288,8 @@ class Parser {
      */
     private void read() throws HsqlException {
 
-        sToken = tokenizer.getString();
+        sToken    = tokenizer.getString();
+        wasQuoted = tokenizer.wasQuotedIdentifier();
 
         if (tokenizer.wasValue()) {
             iToken = Expression.VALUE;

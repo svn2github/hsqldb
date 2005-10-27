@@ -1959,6 +1959,21 @@ public class Expression {
         }
     }
 
+    /**
+     * For CASE WHEN and its special cases section 9.3 of the SQL standard
+     * on type aggregation should be implemented.
+     */
+    int getCaseWhenType(Session session) throws HsqlException {
+
+        /*
+            find data type in condition
+            int type = eArg.eArg.getDataType();
+            then recurse on eArg2
+
+        */
+        return eArg2.dataType;
+    }
+
     void resolveTypes(Session session) throws HsqlException {
 
         if (isParam || exprType == Expression.VALUE) {
@@ -2307,7 +2322,7 @@ public class Expression {
                     eArg.dataType = Types.BOOLEAN;
                 }
 
-                dataType = eArg2.dataType;
+                dataType = getCaseWhenType(session);
                 break;
 
             case ALTERNATIVE : {

@@ -621,6 +621,18 @@ public class TestSql extends TestBase {
         } catch (SQLException e) {
             assertEquals(0, 1);
         }
+
+        try {
+            connection.setAutoCommit(false);
+
+            java.sql.Savepoint savepoint =
+                connection.setSavepoint("savepoint");
+
+            connection.createStatement().executeQuery("CALL true;");
+            connection.rollback(savepoint);
+        } catch (SQLException e) {
+            assertEquals(0, 1);
+        }
     }
 
     /**

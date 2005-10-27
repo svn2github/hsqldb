@@ -127,7 +127,7 @@ public class TransactionManager {
 
         int index = session.savepoints.getIndex(name);
 
-        if (index < 1) {
+        if (index < 0) {
             throw Trace.error(Trace.SAVEPOINT_NOT_FOUND, name);
         }
 

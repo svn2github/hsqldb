@@ -121,6 +121,18 @@ update file set name = 'newdir' where id = '14';
 create TEMPORARY TABLE TTEMP(C CHAR) ON COMMIT PRESERVE ROWS;
 create TEMPORARY TABLE TTEMP2(C CHAR) ON COMMIT DELETE ROWS;
 
+--test VIEW persistence with quoted column names
+
+create table "TView" ("First Column" int, "Second Column" bigint);
+
+create view "View" ("Id", "The Name", "The Description")
+  as select ID,NAME,DESCRIPTION FROM FILE;
+
+create view "View2"
+  as select ID,NAME "The Name",DESCRIPTION "The Description" FROM FILE;
+
+create view "View3" as select "First Column", "Second Column" from "TView";
+
 -- SHUTDOWN is necessary for test1
 
 SHUTDOWN;

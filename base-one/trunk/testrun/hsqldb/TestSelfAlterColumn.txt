@@ -115,6 +115,7 @@ alter table "testacc" add primary key ("c")
 */select * from "testacc";
 /*e*/insert into "testacc" values (9,9,'aa9000000');
 alter table "testacc" alter column "c" varchar(10) not null;
+alter table "testacc" alter column "c" varchar(10) not null;
 insert into "testacc" values (9,9,'aa9000000');
 /*e/insert into "testacc" values (10,10,null);
 /*e/alter table "testacc" alter column "c" set null;

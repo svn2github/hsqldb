@@ -394,16 +394,20 @@ DROP TABLE PRODUCT
 
 -- ResultSet with sizes and padded/truncated values
 -- Should be modified and run with sql.enforce_size=true in .properties file
-/*r0*/ create table test(nr integer,name char(5), other varchar(10));select count(*) from test
-/*r1*/ insert into test values(1,null,null);select nr from test group by nr
+create table test(nr integer,name char(5), other varchar(10));
+/*r0*/ select count(*) from test;
+insert into test values(1,null,null);
+/*r1*/ select nr from test group by nr;
 -- this should be truncated
-/*r1234567*/ insert into test values(2,'1234567',''); select name from test where nr=2;
+insert into test values(2,'1234567','');
+/*r1234567*/ select name from test where nr=2;
 -- this should be padded
 /*r123*/insert into test values(3,'123',''); select name from test where nr=3;
 -- thi should be truncated
 /*r123456789012345*/ insert into test values(4,'','123456789012345'); select other from test where nr=4;
--- This should be as is. Is this correct behavior?
-/*r123*/ insert into test values(5,'','123'); select other from test where nr=5;
+-- This should be as is
+insert into test values(5,'','123');
+/*r123*/ select other from test where nr=5;
 drop table test;
 
 DROP TABLE POS IF EXISTS

@@ -1,3 +1,4 @@
+drop table t0 if exists;
 create table t0(c varchar(20), i integer);
 insert into t0 values ('first', 1);
 insert into t0 values ('second', 2);

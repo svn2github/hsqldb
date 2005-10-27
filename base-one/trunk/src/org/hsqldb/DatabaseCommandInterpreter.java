@@ -1499,7 +1499,7 @@ class DatabaseCommandInterpreter {
         select = parser.parseSelect(brackets, true, false, true, true);
 
         if (select.sIntoTable != null) {
-            throw (Trace.error(Trace.TABLE_NOT_FOUND));
+            throw (Trace.error(Trace.INVALID_IDENTIFIER, Token.INTO));
         }
 
         select.prepareResult(session);

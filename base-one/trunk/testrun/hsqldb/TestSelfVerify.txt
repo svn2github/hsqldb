@@ -32,5 +32,18 @@ INSERT INTO APP2 (VALUE) VALUES(14);
 /*c2*/SELECT * FROM NEWAPP WHERE APP_NAME = 'Shelly';
 /*c4*/SELECT * FROM NEWAPP;
 
+--test correct persistent of view defined in TestSelfCreate.txt
+/*r
+  14,newdir,NULL
+*/select * from "View"
+
+/*r
+  14,newdir,NULL
+*/select * from "View2"
+
+--test INSERT .. INTO and indexes
+select * into cached bewerb_copy from bewerb;
+create index idx_bewerb_copy on bewerb_copy(VCODE,ID);
+
 /*u0*/SHUTDOWN;
 
