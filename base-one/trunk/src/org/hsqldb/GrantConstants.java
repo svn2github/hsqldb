@@ -54,14 +54,22 @@ public interface GrantConstants {
     /** Flag required to UPDATE a table. */
     int UPDATE = 1 << 3;
 
+    /** Flag required to use a sequence. */
+    int USAGE = 1 << 4;
+
+    /** Flag required to execute a routine. */
+    int EXECUTE = 1 << 5;
+
     /** Combined flag permitting any action. */
     int     ALL         = SELECT | DELETE | INSERT | UPDATE;
     Integer INTEGER_ALL = ValuePool.getInt(ALL);
 
     //
-    String S_R_ALL    = "ALL";
-    String S_R_SELECT = "SELECT";
-    String S_R_UPDATE = "UPDATE";
-    String S_R_DELETE = "DELETE";
-    String S_R_INSERT = "INSERT";
+    String S_R_ALL     = "ALL";
+    String S_R_SELECT  = "SELECT";
+    String S_R_UPDATE  = "UPDATE";
+    String S_R_DELETE  = "DELETE";
+    String S_R_INSERT  = "INSERT";
+    String S_R_USAGE   = "USAGE";
+    String S_R_EXECUTE = "EXECUTE";
 }

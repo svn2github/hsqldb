@@ -744,6 +744,31 @@ public class ArrayUtil {
     }
 
     /**
+     * Returns the given array if newsize is the same as existing.
+     * Returns a new array of given size, containing as many elements of
+     * the original array as it can hold.
+     */
+    public static Object resizeArrayIfDifferent(Object source, int newsize) {
+
+        int oldsize = Array.getLength(source);
+
+        if (oldsize == newsize) {
+            return source;
+        }
+
+        Object newarray =
+            Array.newInstance(source.getClass().getComponentType(), newsize);
+
+        if (oldsize < newsize) {
+            newsize = oldsize;
+        }
+
+        System.arraycopy(source, 0, newarray, 0, newsize);
+
+        return newarray;
+    }
+
+    /**
      * Returns a new array of given size, containing as many elements of
      * the original array as it can hold. N.B. Always returns a new array
      * even if newsize parameter is the same as the old size.

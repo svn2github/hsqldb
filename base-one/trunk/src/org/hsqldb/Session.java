@@ -181,7 +181,12 @@ public class Session implements SessionInterface {
         compiledStatementManager  = db.compiledStatementManager;
         tokenizer                 = new Tokenizer();
         parser                    = new Parser(this, database, tokenizer);
-        currentSchema = database.schemaManager.getDefaultSchemaHsqlName();
+
+        HsqlName initialSchema = user.getInitialSchema();
+
+        currentSchema = ((initialSchema == null)
+                         ? database.schemaManager.getDefaultSchemaHsqlName()
+                         : initialSchema);
     }
 
     /**

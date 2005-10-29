@@ -102,6 +102,9 @@ public class User {
     /** password. */
     private String sPassword;
 
+    /** default schema when new Sessions started (defaults to PUBLIC schema) */
+    private HsqlName initialSchema = null;
+
     /** grantee object. */
     private Grantee grantee;
 
@@ -155,6 +158,13 @@ public class User {
      */
     boolean isSys() {
         return isSys;
+    }
+
+    /**
+     * Returns the initial schema for the user
+     */
+    HsqlName getInitialSchema() {
+        return initialSchema;
     }
 
     /**

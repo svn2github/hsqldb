@@ -1982,7 +1982,11 @@ public class Table extends BaseTable {
         int    count = 0;
 
         while (ni != null) {
-            insertData(session, ni.data);
+            Object[] newData =
+                (Object[]) ArrayUtil.resizeArrayIfDifferent(ni.data,
+                    columnCount);
+
+            insertData(session, newData);
 
             ni = ni.next;
 
