@@ -550,7 +550,7 @@ extends org.hsqldb.DatabaseInformationMain {
         final int iis_grntbl = 6;
 
         // Initialization
-        grantorName = GranteeManager.ADMIN_ROLE_NAME;
+        grantorName = GranteeManager.DBA_ADMIN_ROLE_NAME;
         um          = database.getUserManager();
         users       = um.listVisibleUsers(session, true);
 
@@ -3778,9 +3778,10 @@ extends org.hsqldb.DatabaseInformationMain {
             while (roles.hasNext()) {
                 row      = t.getEmptyRowData();
                 roleName = (String) roles.next();
-                isGrantable = grantee.hasRole(GranteeManager.ADMIN_ROLE_NAME)
-                              ? "YES"
-                              : "NO";
+                isGrantable =
+                    grantee.hasRole(GranteeManager.DBA_ADMIN_ROLE_NAME)
+                    ? "YES"
+                    : "NO";
                 row[irole]      = roleName;
                 row[igrantee]   = granteeName;
                 row[igrantor]   = grantorName;
@@ -3890,7 +3891,7 @@ extends org.hsqldb.DatabaseInformationMain {
 
         Iterator  schemas;
         String    schema;
-        String    schemaOwner = GranteeManager.ADMIN_ROLE_NAME;
+        String    schemaOwner = GranteeManager.DBA_ADMIN_ROLE_NAME;
         String    dcsSchema   = SchemaManager.INFORMATION_SCHEMA;
         String    dcsName     = ValuePool.getString("UTF16");
         String    sqlPath     = null;

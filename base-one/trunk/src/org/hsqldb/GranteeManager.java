@@ -63,10 +63,10 @@ class GranteeManager implements GrantConstants {
     static final String SYSTEM_AUTHORIZATION_NAME = "_SYSTEM";
 
     /** The role name reserved for ADMIN users. */
-    static final String ADMIN_ROLE_NAME = "DBA";
+    static final String DBA_ADMIN_ROLE_NAME = "DBA";
 
     /** The role name reserved for the special PUBLIC pseudo-user. */
-    static final String PUBLIC_USER_NAME = "PUBLIC";
+    static final String PUBLIC_ROLE_NAME = "PUBLIC";
 
     /**
      * An empty list that is returned from
@@ -124,8 +124,8 @@ class GranteeManager implements GrantConstants {
      * @param inDatabase Only needed to link to the RoleManager later on.
      */
     public GranteeManager(Database inDatabase) throws HsqlException {
-        createRole(GranteeManager.ADMIN_ROLE_NAME);
-        getRole(GranteeManager.ADMIN_ROLE_NAME).setAdminDirect();
+        addRole(GranteeManager.DBA_ADMIN_ROLE_NAME);
+        getRole(GranteeManager.DBA_ADMIN_ROLE_NAME).setAdminDirect();
     }
 
     static final IntValueHashMap rightsStringLookup = new IntValueHashMap(7);
@@ -145,7 +145,7 @@ class GranteeManager implements GrantConstants {
      *
      *  Note: For the dbobject argument, Java Class objects are identified
      *  using a String object whose value is the fully qualified name
-     *  of the Class, while Table objects are
+     *  of the Class, while Table and other objects are
      *  identified by an HsqlName object.  A Table
      *  object identifier must be precisely the one obtained by calling
      *  table.getName(); if a different HsqlName
@@ -164,7 +164,7 @@ class GranteeManager implements GrantConstants {
             throw Trace.error(Trace.NO_SUCH_GRANTEE, name);
         }
 
-        if (isMutable(name)) {
+        if (isImmutable(name)) {
             throw Trace.error(Trace.NONMOD_GRANTEE, name);
         }
 
@@ -181,13 +181,13 @@ class GranteeManager implements GrantConstants {
      */
     void grant(String name, String role) throws HsqlException {
 
-        Grantee g = get(name);
+        Grantee grantee = get(name);
 
-        if (g == null) {
+        if (grantee == null) {
             throw Trace.error(Trace.NO_SUCH_GRANTEE, name);
         }
 
-        if (isMutable(name)) {
+        if (isImmutable(name)) {
             throw Trace.error(Trace.NONMOD_GRANTEE, name);
         }
 
@@ -213,15 +213,15 @@ class GranteeManager implements GrantConstants {
                               + " GRANT " + name + " TO " + role);
         }
 
-        if (g.getDirectRoles().contains(role)) {
+        if (grantee.getDirectRoles().contains(role)) {
             throw Trace.error(Trace.ALREADY_HAVE_ROLE, role);
         }
 
-        g.grant(role);
-        g.updateAllRights();
+        grantee.grant(role);
+        grantee.updateAllRights();
 
-        if (g.isRole) {
-            updateAllRights(g);
+        if (grantee.isRole) {
+            updateAllRights(grantee);
         }
     }
 
@@ -294,8 +294,6 @@ class GranteeManager implements GrantConstants {
     /**
      * First updates all ROLE Grantee objects. Then updates all USER Grantee
      * Objects.
-     *
-     * parameter drop indicates the ROLE is being dropped
      */
     void updateAllRights(Grantee role) {
 
@@ -362,7 +360,7 @@ class GranteeManager implements GrantConstants {
         Grantee pubGrantee = null;
 
         if (!isReserved(name)) {
-            pubGrantee = get(PUBLIC_USER_NAME);
+            pubGrantee = get(PUBLIC_ROLE_NAME);
 
             if (pubGrantee == null) {
                 Trace.doAssert(
@@ -528,16 +526,16 @@ class GranteeManager implements GrantConstants {
         return getRight(rightString) != 0;
     }
 
-    public static boolean isMutable(String name) {
+    public static boolean isImmutable(String name) {
         return name.equals(SYSTEM_AUTHORIZATION_NAME)
-               || name.equals(ADMIN_ROLE_NAME);
+               || name.equals(DBA_ADMIN_ROLE_NAME);
     }
 
     public static boolean isReserved(String name) {
 
         return name.equals(SYSTEM_AUTHORIZATION_NAME)
-               || name.equals(ADMIN_ROLE_NAME)
-               || name.equals(PUBLIC_USER_NAME);
+               || name.equals(DBA_ADMIN_ROLE_NAME)
+               || name.equals(PUBLIC_ROLE_NAME);
     }
 
     /**
@@ -559,7 +557,7 @@ class GranteeManager implements GrantConstants {
      *        (This will catch attempts to create Reserved grantee names).
      *  </OL>
      */
-    String createRole(String name) throws HsqlException {
+    String addRole(String name) throws HsqlException {
 
         /*
          * Role names can't be right names because that would cause
@@ -613,7 +611,7 @@ class GranteeManager implements GrantConstants {
      */
     void dropRole(String name) throws HsqlException {
 
-        if (name.equals(GranteeManager.ADMIN_ROLE_NAME)) {
+        if (name.equals(GranteeManager.DBA_ADMIN_ROLE_NAME)) {
             throw Trace.error(Trace.ACCESS_IS_DENIED);
         }
 

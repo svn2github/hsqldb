@@ -470,7 +470,7 @@ class DatabaseInformationMain extends DatabaseInformation {
 
         for (int i = 0; i < sysTableHsqlNames.length; i++) {
             if (sysTables[i] != null) {
-                gm.grant(GranteeManager.PUBLIC_USER_NAME,
+                gm.grant(GranteeManager.PUBLIC_ROLE_NAME,
                          sysTableHsqlNames[i], UserManager.SELECT);
             }
         }
@@ -1925,7 +1925,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         final int iis_grantable = 6;
 
         // Initialization
-        grantorName = GranteeManager.ADMIN_ROLE_NAME;
+        grantorName = GranteeManager.DBA_ADMIN_ROLE_NAME;
         users = database.getUserManager().listVisibleUsers(session, true);
         tables      = allTables();
 

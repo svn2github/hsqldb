@@ -73,10 +73,10 @@ public class Grantee {
      * true if this grantee has database administrator priv directly
      *  (ie., not by membership in any role)
      */
-    private boolean adminDirect = false;
+    private boolean isAdminDirect = false;
 
     /** true if this grantee has database administrator priv by any means. */
-    private boolean admin = false;
+    private boolean isAdmin = false;
 
     /** contains righs granted direct, or via roles, expept those of PUBLIC */
     private IntValueHashMap fullRightsMap = new IntValueHashMap();
@@ -340,7 +340,7 @@ public class Grantee {
         rightsMap.clear();
         fullRightsMap.clear();
 
-        adminDirect = false;
+        isAdminDirect = false;
     }
 
     /**
@@ -378,7 +378,7 @@ public class Grantee {
             }
         }
 
-        if (admin) {
+        if (isAdmin) {
             return true;
         }
 
@@ -443,17 +443,17 @@ public class Grantee {
      * or indirectly.
      */
     boolean isAdmin() {
-        return admin;
+        return isAdmin;
     }
 
     /**
-     * Returns true if this User object is for a user with Direct
+     * Returns true if this grantee object is for a user with Direct
      * database administrator privileges.
      * I.e., if this User/Role has Admin priv. directly, not via a
      * nested Role.
      */
     boolean isAdminDirect() {
-        return adminDirect;
+        return isAdminDirect;
     }
 
     /**
@@ -566,7 +566,7 @@ public class Grantee {
      * Should be "setAdminDirect(boolean").
      */
     void setAdminDirect() {
-        admin = adminDirect = true;
+        isAdmin = isAdminDirect = true;
     }
 
     /**
@@ -632,7 +632,7 @@ public class Grantee {
 
         fullRightsMap.clear();
 
-        admin = adminDirect;
+        isAdmin = isAdminDirect;
 
         Iterator it = roles.iterator();
 
@@ -644,7 +644,7 @@ public class Grantee {
 
                 fullRightsMap.putAll(currentRole.fullRightsMap);
 
-                admin |= currentRole.isAdmin();
+                isAdmin |= currentRole.isAdmin();
             } catch (HsqlException e) {}
         }
 

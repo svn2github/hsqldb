@@ -120,7 +120,7 @@ public class DatabaseScript {
             role = (String) it.next();
 
             // ADMIN_ROLE_NAME is not persisted
-            if (!GranteeManager.ADMIN_ROLE_NAME.equals(role)) {
+            if (!GranteeManager.DBA_ADMIN_ROLE_NAME.equals(role)) {
                 addRow(r, "CREATE ROLE " + role);
             }
         }
@@ -197,7 +197,7 @@ public class DatabaseScript {
             ab.append(Token.T_SCHEMA).append(' ');
             ab.append(schema.statementName).append(' ');
             ab.append(Token.T_AUTHORIZATION).append(' ');
-            ab.append(GranteeManager.ADMIN_ROLE_NAME);
+            ab.append(GranteeManager.DBA_ADMIN_ROLE_NAME);
             addRow(r, ab.toString());
 
             // sequences

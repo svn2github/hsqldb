@@ -519,7 +519,7 @@ class DatabaseCommandInterpreter {
                 break;
 
             case Token.ROLE :
-                database.getGranteeManager().createRole(getUserIdentifier());
+                database.getGranteeManager().addRole(getUserIdentifier());
                 break;
 
             case Token.VIEW :
@@ -2835,7 +2835,7 @@ class DatabaseCommandInterpreter {
         }
 
         tokenizer.getThis(Token.T_AUTHORIZATION);
-        tokenizer.getThis(GranteeManager.ADMIN_ROLE_NAME);
+        tokenizer.getThis(GranteeManager.DBA_ADMIN_ROLE_NAME);
 
         if (database.schemaManager.schemaExists(name)) {
             if (!session.isProcessingScript) {
@@ -2867,7 +2867,7 @@ class DatabaseCommandInterpreter {
 
         if (admin) {
             database.getGranteeManager().grant(
-                name, GranteeManager.ADMIN_ROLE_NAME);
+                name, GranteeManager.DBA_ADMIN_ROLE_NAME);
         }
     }
 

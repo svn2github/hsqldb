@@ -124,7 +124,7 @@ class UserManager implements GrantConstants {
         granteeManager = database.getGranteeManager();
         userList       = new HashMappedList();
 
-        createUser(GranteeManager.PUBLIC_USER_NAME, null);
+        createUser(GranteeManager.PUBLIC_ROLE_NAME, null);
 
         sysUser = createUser(GranteeManager.SYSTEM_AUTHORIZATION_NAME, null);
 
@@ -230,7 +230,7 @@ class UserManager implements GrantConstants {
 
         // Don't have to worry about SYSTEM_AUTHORIZATION_NAME, since get()
         // will fail below (because it's not in the list).
-        if (name.equals(GranteeManager.PUBLIC_USER_NAME)) {
+        if (name.equals(GranteeManager.PUBLIC_ROLE_NAME)) {
             throw Trace.error(Trace.ACCESS_IS_DENIED);
         }
 
@@ -319,7 +319,7 @@ class UserManager implements GrantConstants {
 
             userName = user.getName();
 
-            if (GranteeManager.PUBLIC_USER_NAME.equals(userName)) {
+            if (GranteeManager.PUBLIC_ROLE_NAME.equals(userName)) {
                 if (andPublicUser) {
                     list.add(user);
                 }

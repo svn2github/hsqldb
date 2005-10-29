@@ -129,7 +129,7 @@ public class User {
         setPassword(password);
 
         isSys    = name.equals(GranteeManager.SYSTEM_AUTHORIZATION_NAME);
-        isPublic = name.equals(GranteeManager.PUBLIC_USER_NAME);
+        isPublic = name.equals(GranteeManager.PUBLIC_ROLE_NAME);
     }
 
     String getName() {
