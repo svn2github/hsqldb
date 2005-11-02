@@ -108,7 +108,7 @@ public class Expression {
                      TRUE      = 4,
                      FALSE     = -4,    // arbitrary
                      VALUELIST = 5,
-                     ASTERIX   = 6,
+                     ASTERISK  = 6,
                      FUNCTION  = 7,
                      LIMIT     = 8,
                      ROW       = 9;
@@ -402,16 +402,17 @@ public class Expression {
     }
 
     /**
-     * Creates a new ASTERIX or COLUMN expression
+     * Creates a new ASTERISK or COLUMN expression
      * @param table table
      * @param column column
      */
-    Expression(String table, String column) {
+    Expression(String schema, String table, String column) {
 
+        schema    = schema;
         tableName = table;
 
         if (column == null) {
-            exprType = ASTERIX;
+            exprType = ASTERISK;
         } else {
             exprType   = COLUMN;
             columnName = column;
@@ -429,7 +430,7 @@ public class Expression {
         tableName = table;
 
         if (column == null) {
-            exprType = ASTERIX;
+            exprType = ASTERISK;
         } else {
             exprType     = COLUMN;
             columnName   = column;
@@ -437,12 +438,13 @@ public class Expression {
         }
     }
 
-    Expression(String table, Column column) {
+    Expression(TableFilter filter, Column column) {
 
-        tableName = table;
+        schema    = filter.filterTable.tableName.schema.name;
+        tableName = filter.getName();
 
         if (column == null) {
-            exprType = ASTERIX;
+            exprType = ASTERISK;
         } else {
             exprType     = COLUMN;
             columnName   = column.columnName.name;
@@ -605,7 +607,7 @@ public class Expression {
 
                 return buf.toString();
 
-            case ASTERIX :
+            case ASTERISK :
                 buf.append('*');
 
                 return buf.toString();
@@ -901,7 +903,7 @@ public class Expression {
                 }
                 break;
 
-            case ASTERIX :
+            case ASTERISK :
                 buf.append("* ");
                 break;
 
@@ -1504,16 +1506,7 @@ public class Expression {
             return columnQuoted;
         }
 
-        if (eArg != null) {
-            String name = eArg.getColumnName();
-
-            if (name.length() > 0) {
-                return eArg.columnQuoted;
-            }
-        }
-
-        return eArg2 == null ? false
-                             : eArg2.columnQuoted;
+        return false;
     }
 
     /**
@@ -1877,6 +1870,25 @@ public class Expression {
                 }
             }
         }
+    }
+
+    /**
+     * Find a table filter with the given table alias
+     */
+    TableFilter findTableFilter(TableFilter[] list) {
+
+        for (int t = 0; t < list.length; t++) {
+            TableFilter f = list[t];
+
+            if (schema == null
+                    || f.filterTable.getSchemaName().equals(schema)) {
+                if (f.getName().equals(tableName)) {
+                    return f;
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -2699,7 +2711,7 @@ public class Expression {
      */
     String getTableName() {
 
-        if (exprType == ASTERIX) {
+        if (exprType == ASTERISK) {
             return tableName;
         }
 
@@ -2821,7 +2833,7 @@ public class Expression {
      */
     void setDistinctAggregate(boolean distinct) {
 
-        isDistinctAggregate = distinct && (eArg.exprType != ASTERIX);
+        isDistinctAggregate = distinct && (eArg.exprType != ASTERISK);
 
         if (exprType == COUNT) {
             dataType = distinct ? dataType
@@ -3156,9 +3168,9 @@ public class Expression {
                                                 isDistinctAggregate);
                 }
 
-                Object newValue = eArg.exprType == ASTERIX ? INTEGER_1
-                                                           : eArg.getValue(
-                                                               session);
+                Object newValue = eArg.exprType == ASTERISK ? INTEGER_1
+                                                            : eArg.getValue(
+                                                                session);
 
                 ((SetFunction) currValue).add(session, newValue);
 
@@ -3854,7 +3866,7 @@ public class Expression {
         s.exprColumns    = new Expression[1];
         s.exprColumns[0] = new Expression(VALUE, Boolean.TRUE);
         s.tFilter        = new TableFilter[1];
-        s.tFilter[0]     = new TableFilter(t, null, false);
+        s.tFilter[0]     = new TableFilter(t, null, null, false);
 
         Expression condition = new Expression(NOT, e, null);
 

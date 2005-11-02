@@ -55,7 +55,7 @@ CONNECT USER peon3 PASSWORD password;
 /*c1*/SELECT * FROM t2;
 /*e*/SELECT * FROM t3;
 /*e*/SELECT * FROM t4;
-CONNECT USER sa PASSWORD '';
+CONNECT USER sa PASSWORD "";
 /*u0*/GRANT r2 TO peon1;
 /*u0*/GRANT r3 TO r12;  -- r12 held by peon3.  Nest r3 into it too.
 /*u0*/GRANT SELECT ON t1 TO peon2;
@@ -76,8 +76,8 @@ CONNECT USER peon3 PASSWORD password;
 /*e*/SELECT * FROM t4;
 
 -- Access to t3 has been granted only through r3, either directly or
--- indirectly (the latter through nesting t3 in another role).
-CONNECT USER sa PASSWORD '';
+-- indirectly (the latter through nesting r3 in another role).
+CONNECT USER sa PASSWORD "";
 DROP ROLE r3;
 CONNECT USER peon1 PASSWORD password;
 /*c1*/SELECT * FROM t1;

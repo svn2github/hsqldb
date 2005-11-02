@@ -73,7 +73,7 @@ import java.util.Locale;
 
 import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.ArrayUtil;
-import org.hsqldb.lib.HashSet;
+import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.StringUtil;
 import org.hsqldb.lib.java.JavaSystem;
@@ -556,52 +556,13 @@ class DatabaseCommandInterpreter {
                                     boolean acceptAscDesc)
                                     throws HsqlException {
 
-        HsqlArrayList list;
-        HashSet       set;
-        String        token;
-        int[]         col;
-        int           size;
-
-        list = new HsqlArrayList();
-        set  = new HashSet();
-
-        tokenizer.getThis(Token.T_OPENBRACKET);
-
-        while (true) {
-            token = tokenizer.getSimpleName();
-
-            list.add(token);
-            set.add(token);
-
-            if (list.size() != set.size()) {
-                throw Trace.error(Trace.COLUMN_ALREADY_EXISTS,
-                                  Trace.ERROR_IN_CONSTRAINT_COLUMN_LIST);
-            }
-
-            token = tokenizer.getSimpleToken();
-
-            if (acceptAscDesc
-                    && (token.equals(Token.T_DESC)
-                        || token.equals(Token.T_ASC))) {
-                token = tokenizer.getSimpleToken();    // OJ: eat it up
-            }
-
-            if (token.equals(Token.T_COMMA)) {
-                continue;
-            }
-
-            if (token.equals(Token.T_CLOSEBRACKET)) {
-                break;
-            }
-
-            throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
-        }
-
-        size = list.size();
-        col  = new int[size];
+        HashMappedList list = Parser.processColumnList(tokenizer,
+            acceptAscDesc);
+        int   size = list.size();
+        int[] col  = new int[size];
 
         for (int i = 0; i < size; i++) {
-            col[i] = t.getColumnNr((String) list.get(i));
+            col[i] = t.getColumnNr((String) list.getKey(i));
         }
 
         return col;

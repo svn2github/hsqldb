@@ -71,9 +71,11 @@ import java.util.Locale;
 import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.IntValueHashMap;
 import org.hsqldb.store.ValuePool;
+import org.hsqldb.lib.HashSet;
 
 // fredt@users 20020130 - patch 497872 by Nitin Chauhan - reordering for speed
 // fredt@users 20020215 - patch 1.7.0 by fredt - support GROUP BY with more than one column
@@ -123,6 +125,7 @@ class Parser {
     private Database  database;
     private Tokenizer tokenizer;
     private Session   session;
+    private String    sSchema;
     private String    sTable;
     private String    sToken;
     private boolean   wasQuoted;
@@ -857,71 +860,77 @@ class Parser {
                                           HsqlArrayList vfilter)
                                           throws HsqlException {
 
-        int           len     = vfilter.size();
-        TableFilter[] filters = new TableFilter[len];
+        int           colcount;
+        TableFilter[] filters = new TableFilter[vfilter.size()];
 
         vfilter.toArray(filters);
 
         select.tFilter = filters;
 
         // expand [table.]* columns
-        len = vcolumn.size();
+        colcount = vcolumn.size();
 
-        for (int i = 0; i < len; i++) {
-            Expression e = (Expression) (vcolumn.get(i));
+        for (int pos = 0; pos < colcount; ) {
+            Expression e = (Expression) (vcolumn.get(pos));
 
-            if (e.getType() == Expression.ASTERIX) {
-                int    current = i;
-                Table  table   = null;
-                String n       = e.getTableName();
+            if (e.getType() == Expression.ASTERISK) {
+                vcolumn.remove(pos);
 
-                for (int t = 0; t < filters.length; t++) {
-                    TableFilter f = filters[t];
+                colcount = vcolumn.size();
 
-//                    e.resolve(f);
-                    e.resolveTables(f);
+                String tablename = e.getTableName();
 
-                    if (n != null &&!n.equals(f.getName())) {
-                        continue;
+                if (tablename == null) {
+                    for (int i = 0; i < filters.length; i++) {
+                        pos      = addFilterColumns(filters[i], vcolumn, pos);
+                        colcount = vcolumn.size();
+                    }
+                } else {
+                    TableFilter f = e.findTableFilter(filters);
+
+                    if (f == null) {
+                        throw Trace.error(Trace.TABLE_NOT_FOUND, tablename);
                     }
 
-                    table = f.getTable();
-
-                    int col = table.getColumnCount();
-
-                    for (int c = 0; c < col; c++) {
-                        Expression ins = new Expression(f.getName(),
-                                                        table.getColumn(c));
-
-                        vcolumn.add(current++, ins);
-
-                        // now there is one element more to parse
-                        len++;
-                    }
+                    pos      = addFilterColumns(f, vcolumn, pos);
+                    colcount = vcolumn.size();
                 }
-
-                Trace.check(table != null, Trace.TABLE_NOT_FOUND, n);
-
-                // minus the asterix element
-                len--;
-
-                vcolumn.remove(current);
-            } else /* if (e.getType() == Expression.COLUMN) */ {
+            } else {
                 if (e.getFilter() == null) {
-                    for (int f = 0; f < filters.length; f++) {
-                        e.resolveTables(filters[f]);
+                    for (int i = 0; i < filters.length; i++) {
+                        e.resolveTables(filters[i]);
                     }
                 }
+
+                pos++;
             }
         }
 
-        for (int i = 0; i < len; i++) {
+        for (int i = 0; i < colcount; i++) {
             Expression e = (Expression) (vcolumn.get(i));
 
             e.resolveTypes(session);
         }
 
-        select.iResultLen = len;
+        select.iResultLen = colcount;
+    }
+
+    /**
+     * Add all columns of a table filter to list of columns
+     */
+    static int addFilterColumns(TableFilter filter, HsqlArrayList columnList,
+                                int position) {
+
+        Table table = filter.getTable();
+        int   count = table.getColumnCount();
+
+        for (int i = 0; i < count; i++) {
+            Expression e = new Expression(filter, table.getColumn(i));
+
+            columnList.add(position++, e);
+        }
+
+        return position;
     }
 
     /**
@@ -1022,7 +1031,7 @@ class Parser {
             tokenizer.back();
         }
 
-        return new TableFilter(table, alias, false);
+        return new TableFilter(table, alias, null, false);
     }
 
     /**
@@ -1036,10 +1045,10 @@ class Parser {
     private TableFilter parseTableFilter(boolean outerjoin)
     throws HsqlException {
 
-        Table       t = null;
-        SubQuery    sq;
-        TableFilter tf;
-        String      sAlias = null;
+        Table          t          = null;
+        SubQuery       sq         = null;
+        String         sAlias     = null;
+        HashMappedList columnList = null;
 
         if (tokenizer.isGetThis(Token.T_OPENBRACKET)) {
             int brackets = parseOpenBrackets();
@@ -1084,15 +1093,29 @@ class Parser {
         } else if (token.equals(Token.T_AS)
                    &&!tokenizer.wasQuotedIdentifier()) {
             sAlias = tokenizer.getSimpleName();
+
+            if (tokenizer.isGetThis(Token.T_OPENBRACKET)) {
+                tokenizer.back();
+
+                columnList = parseColumnList();
+            }
         } else if (tokenizer.wasSimpleName()) {
             sAlias = token;
+
+            if (tokenizer.isGetThis(Token.T_OPENBRACKET)) {
+                tokenizer.back();
+
+                columnList = parseColumnList();
+            }
         } else {
             tokenizer.back();
         }
 
-        tf = new TableFilter(t, sAlias, outerjoin);
+        if (columnList != null && t.getColumnCount() != columnList.size()) {
+            throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
+        }
 
-        return tf;
+        return new TableFilter(t, sAlias, columnList, outerjoin);
     }
 
     /**
@@ -1711,7 +1734,7 @@ class Parser {
                 break;
             }
             case Expression.MULTIPLY : {
-                r = new Expression(sTable, (String) null);
+                r = new Expression(sSchema, sTable, (String) null);
 
                 read();
 
@@ -2299,7 +2322,8 @@ class Parser {
             iToken = Expression.COLUMN;
             sTable = null;
         } else if (tokenizer.wasLongName()) {
-            sTable = tokenizer.getLongNameFirst();
+            sSchema = tokenizer.getLongNamePre();
+            sTable  = tokenizer.getLongNameFirst();
 
             if (sToken.equals(Token.T_MULTIPLY)) {
                 iToken = Expression.MULTIPLY;
@@ -2832,5 +2856,50 @@ class Parser {
         }
 
         return count;
+    }
+
+    HashMappedList parseColumnList() throws HsqlException {
+        return processColumnList(tokenizer, false);
+    }
+
+    static HashMappedList processColumnList(Tokenizer tokenizer,
+            boolean acceptAscDesc) throws HsqlException {
+
+        HashMappedList list;
+        String         token;
+
+        list = new HashMappedList();
+
+        tokenizer.getThis(Token.T_OPENBRACKET);
+
+        while (true) {
+            token = tokenizer.getSimpleName();
+
+            boolean result = list.add(token, null);
+
+            if (!result) {
+                throw Trace.error(Trace.COLUMN_ALREADY_EXISTS, token);
+            }
+
+            token = tokenizer.getSimpleToken();
+
+            if (acceptAscDesc
+                    && (token.equals(Token.T_DESC)
+                        || token.equals(Token.T_ASC))) {
+                token = tokenizer.getSimpleToken();    // OJ: eat it up
+            }
+
+            if (token.equals(Token.T_COMMA)) {
+                continue;
+            }
+
+            if (token.equals(Token.T_CLOSEBRACKET)) {
+                break;
+            }
+
+            throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
+        }
+
+        return list;
     }
 }

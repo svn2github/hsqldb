@@ -20,15 +20,15 @@ CREATE TABLE public.t2 (i int);
 INSERT INTO public.t2 VALUES (1);
 CONNECT USER us3 PASSWORD us3;
 /*e*/SELECT * FROM t2;
-CONNECT USER sa PASSWORD '';
+CONNECT USER sa PASSWORD "";
 GRANT SELECT ON t2 TO public;
 CONNECT USER us3 PASSWORD us3;
 /*c1*/SELECT * FROM t2;
-CONNECT USER sa PASSWORD '';
+CONNECT USER sa PASSWORD "";
 REVOKE SELECT ON t2 FROM public;
 CONNECT USER us3 PASSWORD us3;
 /*e*/SELECT * FROM t2;
-CONNECT USER sa PASSWORD '';
+CONNECT USER sa PASSWORD "";
 
 -- Prohibit adding/dropping reserved Roles and Users
 -- _SYSTEM role?
@@ -88,7 +88,7 @@ CONNECT USER blaine PASSWORD blaine;
 /*u1*/INSERT INTO public.t1 VALUES(1);
 /*u0*/CREATE USER user1 password user1;
 /*u0*/GRANT dba TO debbie;
-CONNECT USER sa PASSWORD '';
+CONNECT USER sa PASSWORD "";
 /*u0*/REVOKE dba FROM blaine;
 CONNECT USER blaine PASSWORD blaine;
 /*e*/SET TABLE public.t1 READONLY true;
@@ -96,7 +96,7 @@ CONNECT USER blaine PASSWORD blaine;
 /*e*/REVOKE dba FROM debbie;
 
 -- Test using non-existent roles and re-creating existing roles.
-CONNECT USER sa PASSWORD '';
+CONNECT USER sa PASSWORD "";
 CREATE USER us1 PASSWORD us1;
 CREATE USER us2 PASSWORD us2;
 /*e*/DROP ROLE r1;
@@ -117,56 +117,56 @@ CONNECT USER blaineadm PASSWORD blaineadm;
 CONNECT USER us1 PASSWORD us1;
 /*e*/SELECT * FROM public.t1;
 /*e*/CREATE TABLE us1t1 (i int);
-CONNECT USER sa PASSWORD '';
+CONNECT USER sa PASSWORD "";
 GRANT r1 TO us1;
 -- us1: no privs
 CONNECT USER us1 PASSWORD us1;
 /*e*/SELECT * FROM public.t1;
 /*e*/CREATE TABLE us1t1 (i int);
-CONNECT USER sa PASSWORD '';
+CONNECT USER sa PASSWORD "";
 GRANT SELECT ON t1 TO r1;
 -- us1: t1 rights via role r1
 CONNECT USER us1 PASSWORD us1;
 /*c2*/SELECT * FROM public.t1;
 /*e*/CREATE TABLE us1t1 (i int);
-CONNECT USER sa PASSWORD '';
+CONNECT USER sa PASSWORD "";
 GRANT dba TO us1;
 -- us1: DBA + t1 rights via role r1
 CONNECT USER us1 PASSWORD us1;
 /*c2*/SELECT * FROM public.t1;
 /*u0*/CREATE TABLE us1t1 (i int);
 /*u0*/DROP TABLE us1t1;
-CONNECT USER sa PASSWORD '';
+CONNECT USER sa PASSWORD "";
 /*u0*/REVOKE dba FROM us1;
 -- us1: t1 rights via role r1
 CONNECT USER us1 PASSWORD us1;
 /*c2*/SELECT * FROM public.t1;
 /*e*/CREATE TABLE us1t1 (i int);
-CONNECT USER sa PASSWORD '';
+CONNECT USER sa PASSWORD "";
 /*u0*/REVOKE r1 FROM us1;
 -- us1: no privs
 CONNECT USER us1 PASSWORD us1;
 /*e*/SELECT * FROM public.t1;
 /*e*/CREATE TABLE us1t1 (i int);
-CONNECT USER sa PASSWORD '';
+CONNECT USER sa PASSWORD "";
 /*u0*/GRANT r1 TO us1;
 -- us1: t1 rights via role r1
 CONNECT USER us1 PASSWORD us1;
 /*c2*/SELECT * FROM public.t1;
 /*e*/CREATE TABLE us1t1 (i int);
-CONNECT USER sa PASSWORD '';
+CONNECT USER sa PASSWORD "";
 /*u0*/REVOKE ALL ON t1 FROM r1;
 -- us1: no privs
 CONNECT USER us1 PASSWORD us1;
 /*e*/SELECT * FROM public.t1;
 /*e*/CREATE TABLE us1t1 (i int);
-CONNECT USER sa PASSWORD '';
+CONNECT USER sa PASSWORD "";
 /*u0*/GRANT ALL ON t1 TO r1;
 -- us1: t1 rights via role r1
 CONNECT USER us1 PASSWORD us1;
 /*c2*/SELECT * FROM public.t1;
 /*e*/CREATE TABLE us1t1 (i int);
-CONNECT USER sa PASSWORD '';
+CONNECT USER sa PASSWORD "";
 /*u0*/DROP ROLE r1;
 -- us1: no privs
 CONNECT USER us1 PASSWORD us1;
@@ -178,21 +178,21 @@ CONNECT USER sa PASSWORD '';
 CONNECT USER us1 PASSWORD us1;
 /*c2*/SELECT * FROM public.t1;
 /*e*/CREATE TABLE us1t1 (i int);
-CONNECT USER sa PASSWORD '';
+CONNECT USER sa PASSWORD "";
 /*u0*/REVOKE ALL ON t1 FROM us1;
 
 -- Role nesting
 CREATE ROLE r1;
 CONNECT USER us1 PASSWORD us1;
 /*e*/CREATE TABLE us1t1 (i int);
-CONNECT USER sa PASSWORD '';
+CONNECT USER sa PASSWORD "";
 GRANT r1 TO us1;
 CONNECT USER us1 PASSWORD us1;
 /*e*/CREATE TABLE us1t1 (i int);
-CONNECT USER sa PASSWORD '';
+CONNECT USER sa PASSWORD "";
 GRANT dba TO r1;
 CONNECT USER us1 PASSWORD us1;
 /*u0*/CREATE TABLE us1t1 (i int);
 /*u0*/DROP TABLE us1t1;
-CONNECT USER sa PASSWORD '';
+CONNECT USER sa PASSWORD "";
 REVOKE dba FROM r1;

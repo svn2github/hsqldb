@@ -368,6 +368,10 @@ public class Tokenizer {
         return !Token.isKeyword(sToken);
     }
 
+    String getLongNamePre() throws HsqlException {
+        return null;
+    }
+
     /**
      * Return first part of long name
      *
@@ -381,21 +385,6 @@ public class Tokenizer {
         }
 
         return sLongNameFirst;
-    }
-
-    /**
-     * Return first part of long name
-     *
-     *
-     * @return
-     */
-    int getLongNameFirstType() throws HsqlException {
-
-        if (bWait) {
-            Trace.doAssert(false, "Querying state when in Wait mode");
-        }
-
-        return typeLongNameFirst;
     }
 
     boolean wasSimpleToken() throws HsqlException {

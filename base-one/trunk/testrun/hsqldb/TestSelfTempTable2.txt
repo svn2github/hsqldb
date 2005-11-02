@@ -19,5 +19,5 @@ COMMIT;
 /*u1*/INSERT INTO tmptbl2 VALUES(2);
 /*c2*/SELECT * FROM tmptbl2;
 
-CONNECT USER SA password '';
+CONNECT USER SA password "";
 SHUTDOWN;

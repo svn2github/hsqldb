@@ -68,6 +68,7 @@ package org.hsqldb;
 
 import org.hsqldb.index.RowIterator;
 import org.hsqldb.lib.ArrayUtil;
+import org.hsqldb.lib.HashMappedList;
 
 // fredt@users 20030813 - patch 1.7.2 - fix for column comparison within same table bugs #572075 and 722443
 // fredt@users 20031012 - patch 1.7.2 - better OUTER JOIN implementation
@@ -94,6 +95,7 @@ final class TableFilter {
     static final int   CONDITION_OUTER     = 4;    // add to this
     Table              filterTable;
     private String     tableAlias;
+    HashMappedList     columnAliases;
     Index              filterIndex;
     private Object[]   emptyData;
     boolean[]          usedColumns;
@@ -131,14 +133,16 @@ final class TableFilter {
      * @param alias
      * @param outerjoin
      */
-    TableFilter(Table t, String alias, boolean outerjoin) {
+    TableFilter(Table t, String alias, HashMappedList columnList,
+                boolean outerjoin) {
 
-        filterTable = t;
-        tableAlias  = alias == null ? t.getName().name
-                                    : alias;
-        isOuterJoin = outerjoin;
-        emptyData   = filterTable.getEmptyRowData();
-        usedColumns = filterTable.getNewColumnCheckList();
+        filterTable   = t;
+        tableAlias    = alias == null ? t.getName().name
+                                      : alias;
+        columnAliases = columnList;
+        isOuterJoin   = outerjoin;
+        emptyData     = filterTable.getEmptyRowData();
+        usedColumns   = filterTable.getNewColumnCheckList();
     }
 
     /**
