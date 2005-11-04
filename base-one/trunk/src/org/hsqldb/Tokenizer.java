@@ -320,8 +320,8 @@ public class Tokenizer {
     }
 
     /**
-     * Name means all quoted and unquoted identifiers plus any word not in the
-     * hKeyword list.
+     * Simple Name means a quoted or unquoted identifier without
+     * qualifiers provided it is not in the hKeyword list.
      *
      * @return
      */
@@ -346,10 +346,7 @@ public class Tokenizer {
      * Name means all quoted and unquoted identifiers plus any word not in the
      * hKeyword list.
      *
-     * "Aname" is more broad than "Name" in that it includes FULL_NAMEs
-     * (i.e., 2-part names).
-     *
-     * @return true if it's AName
+     * @return true if it's a name
      */
     boolean wasName() throws HsqlException {
 

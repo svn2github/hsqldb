@@ -891,8 +891,11 @@ class DatabaseCommandInterpreter {
 
         expr.resolveTypes(session);
 
-        if (expr.getType() == Expression.VALUE
-                || (expr.getType() == Expression.FUNCTION
+        int newType = expr.getType();
+
+        if (newType == Expression.VALUE || newType == Expression.TRUE
+                || newType == Expression.FALSE
+                || (newType == Expression.FUNCTION
                     && expr.function.isSimple)) {
             Object defValTemp;
 
@@ -1006,19 +1009,19 @@ class DatabaseCommandInterpreter {
                     // tony_lai@users 20020820 - patch 595099
                     pkHsqlName = cname;
 
-                    int[]      col = processColumnList(t, false);
+                    int[]      cols = processColumnList(t, false);
                     Constraint mainConst;
 
                     mainConst = (Constraint) tcList.get(0);
 
                     if (mainConst.core.mainColArray != null) {
                         if (!ArrayUtil.areEqual(mainConst.core.mainColArray,
-                                                col, col.length, true)) {
+                                                cols, cols.length, true)) {
                             throw Trace.error(Trace.SECOND_PRIMARY_KEY);
                         }
                     }
 
-                    mainConst.core.mainColArray = col;
+                    mainConst.core.mainColArray = cols;
                     mainConst.constName         = pkHsqlName;
 
                     break;
@@ -1070,7 +1073,9 @@ class DatabaseCommandInterpreter {
                     }
 
                     tempConst = new Constraint(cname, null, null, null,
-                                               Constraint.CHECK, 0, 0);
+                                               Constraint.CHECK,
+                                               Constraint.NO_ACTION,
+                                               Constraint.NO_ACTION);
 
                     processCreateCheckConstraintCondition(tempConst);
                     tcList.add(tempConst);
@@ -3187,8 +3192,8 @@ class DatabaseCommandInterpreter {
             name = database.nameManager.newAutoName("CT");
         }
 
-        check = new Constraint(name, null, null, null, Constraint.CHECK, 0,
-                               0);
+        check = new Constraint(name, null, null, null, Constraint.CHECK,
+                               Constraint.NO_ACTION, Constraint.NO_ACTION);
 
         processCreateCheckConstraintCondition(check);
         session.commit();

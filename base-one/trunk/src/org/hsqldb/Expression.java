@@ -99,6 +99,11 @@ import org.hsqldb.store.ValuePool;
  * @version    1.8.0
  * @since Hypersonic SQL
  */
+
+/** @todo - fredt - constant TRUE and FALSE type expressions have valueData of
+  * type BOOLEAN, while computed expressions have no valueData; this should be
+  * normalised in future
+  */
 public class Expression {
 
     // leaf types
@@ -1988,7 +1993,7 @@ public class Expression {
 
     void resolveTypes(Session session) throws HsqlException {
 
-        if (isParam || exprType == Expression.VALUE) {
+        if (isParam) {
             return;
         }
 
@@ -2001,6 +2006,14 @@ public class Expression {
         }
 
         switch (exprType) {
+
+            case VALUE :
+                if (dataType == Types.BOOLEAN && valueData != null) {
+                    dataType = 0;
+                    exprType = ((Boolean) valueData).booleanValue() ? TRUE
+                                                                    : FALSE;
+                }
+                break;
 
             case COLUMN :
                 break;

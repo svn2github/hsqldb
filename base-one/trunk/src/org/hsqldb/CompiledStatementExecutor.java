@@ -146,8 +146,9 @@ final class CompiledStatementExecutor {
                 return executeDDLStatement(cs);
 
             default :
-                throw Trace.error(
-                    Trace.INTERNAL_unknown_internal_statement_type);
+                throw Trace.runtimeError(
+                    Trace.INTERNAL_UNSUPPORTED_OPERATION,
+                    "CompiledStatementExecutor.executeImpl()");
         }
     }
 

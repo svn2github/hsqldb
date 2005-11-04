@@ -238,5 +238,29 @@ public class HsqlNameManager {
         public int compareTo(Object o) {
             return hashCode - o.hashCode();
         }
+
+        /**
+         * Returns true if the identifier consists of all uppercase letters
+         * digits and underscore, beginning with a letter and is not in the
+         * keyword list.
+         */
+        static boolean isRegularIdentifier(String name) {
+
+            for (int i = 0, length = name.length(); i < length; i++) {
+                int c = name.charAt(i);
+
+                if (c >= 'A' && c <= 'Z') {
+                    continue;
+                } else if (c == '_' && i > 0) {
+                    continue;
+                } else if (c >= '0' && c <= '9') {
+                    continue;
+                }
+
+                return false;
+            }
+
+            return !Token.isKeyword(name);
+        }
     }
 }

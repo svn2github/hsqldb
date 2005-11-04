@@ -284,8 +284,12 @@ public class DatabaseManager {
             key         = filePathToKey(path);
         } else if (type == DatabaseURL.S_RES) {
             databaseMap = resDatabaseMap;
-        } else {
+        } else if (type == DatabaseURL.S_MEM) {
             databaseMap = memDatabaseMap;
+        } else {
+            throw (Trace.runtimeError(
+                Trace.INTERNAL_UNSUPPORTED_OPERATION,
+                "DatabaseManager.lookupDatabaseObject()"));
         }
 
         return (Database) databaseMap.get(key);

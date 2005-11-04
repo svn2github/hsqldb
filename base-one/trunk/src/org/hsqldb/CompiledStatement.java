@@ -482,8 +482,8 @@ final class CompiledStatement {
             default :
                 return new Result(
                     Trace.runtimeError(
-                        Trace.INTERNAL_unknown_internal_statement_type,
-                        null), null);
+                        Trace.INTERNAL_UNSUPPORTED_OPERATION,
+                        "CompiledStatement.describeResult()"), null);
         }
     }
 

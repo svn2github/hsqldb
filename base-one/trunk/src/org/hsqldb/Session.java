@@ -954,8 +954,8 @@ public class Session implements SessionInterface {
                 default : {
                     return new Result(
                         Trace.runtimeError(
-                            Trace.INTERNAL_session_operation_not_supported,
-                            null), null);
+                            Trace.INTERNAL_UNSUPPORTED_OPERATION,
+                            "Session.execute()"), null);
                 }
             }
         }
