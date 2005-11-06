@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.88 2005/05/26 15:01:26 fredt Exp $ -->
+<!-- $Id: sqltool.xml,v 1.89 2005/06/04 17:43:30 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.88 $</edition>
-        <pubdate>$Date: 2005/05/26 15:01:26 $</pubdate>
+        <edition>$Revision: 1.89 $</edition>
+        <pubdate>$Date: 2005/06/04 17:43:30 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -40,83 +40,55 @@
             SqlTool is still a very useful tool even if you have no quoting
             capability at all.
         </simpara><simpara>
-            This document is now updated for version 1.46 of SqlTool and
-            1.114 of SqlFile (the latter is the class which does most of the
+            If you are using SqlTool from a HSQDLB distribution before
+            version 1.8.0.0 final, you should use the documentation with that
+            distribution
+            (because, for brevity, I do not here indicate changes made to
+            behavior before 1.8.0.0 final).
+            This document is now updated for the current versions of SqlTool
+            and SqlFile at the time I am writing this (versions 1.50 and
+            1.129 correspondingly, SqlFile is the class which does most of the
             work for SqlTool).
+            Therefore, if you are using a version of SqlTool or SqlFile that
+            is more than a couple revisions greater, you should find a newer
+            version of this document.
+            (The imprecision is due to content-independent revision increments
+            at build time, and the likelihood of one or two 
+            behavior-independent bug fixes after public releases).
             The startup banner will report both versions when you run SqlTool
             interactively.
-            I expect this version of this document to accurately describe 
-            SqlTool for some unknown number of versions into the future.
         </simpara>
         <section><title>Recent changes</title>
             <simpara>This section lists changes to SqlTool since the last
                 major release of HSQLDB.
-                For this version of this document, that means, changes since
-                HSQLDB versions 1.7.x.
+                For this revision of this document, this list consists of
+                significant changes made to SqlTool AFTER the final 1.8.0.0
+                HSQLDB release.
             </simpara>
             <itemizedlist>
                 <listitem><simpara>
-                    Slight adjustments to command-line switch behavior to make
-                    them more convenient for the most common forms of usage.
+                    Fixed bug where PL "end" command was still requiring old 
+                    syntax (wrt white space).
+                    Fixed for HSQLDB v. 1.8.0.2.
                 </simpara></listitem><listitem><simpara>
-                    Changed PL alias prefix from * to / (in order to allow for
-                    the following improvement).
+                    Fixed NPE sometimes encountered when fetching null 
+                    Timestamp values.
+                    Fixed for HSQLDB v. 1.8.0.2.
                 </simpara></listitem><listitem><simpara>
-                    Removed the funny whitespace requirements for PL commands.
+                    Implemented new \dr command for HSQLDB and Sybase servers.
+                    Implemented \du for Sybase.
+                    Added for HSQLDB v. 1.8.0.3.
                 </simpara></listitem><listitem><simpara>
-                    Uppercase/lowercase requirements for special commands are
-                    relegated to the database.
-                    Therefore, in special commands only, you are safest to key 
-                    in object names in the case exactly as the real object name
-                    in your database.
-                    This is the only way for me to remove ambiguity from 
-                    case-specific object names without having to code different
-                    rules for every database.
-                    (Because, for example, Postgresql defaults object names to
-                    lowercase and Oracle defaults them to uppercase).
-                </simpara></listitem><listitem><simpara>
-                    Added special command \dn.
-                </simpara></listitem><listitem><simpara>
-                    Added special command \ds (old \ds command is now \dS).
-                </simpara></listitem><listitem><simpara>
-                    Added special command \di.
-                </simpara></listitem><listitem><simpara>
-                    Renamed special command \* to \c.  (\* still supported
-                    for backward compatibility).
-                </simpara></listitem><listitem><simpara>
-                    Not so stingy about saving commands in history.
-                </simpara></listitem><listitem><simpara>
-                    Allow optional filter substring for many more \d commands,
-                    including for "\d TABLENAME".
-                </simpara></listitem><listitem><simpara>
-                    Implemented special use of substrings ending with dot.
-                    These do not just filter on the string, but mean to
-                    filter to only objects with this exact schema.
-                </simpara></listitem><listitem><simpara>
-                    \da and \ds commands now work for HSQLDB servers, even 
-                    though HSQLDB Aliases and Sequences are not listed in the
-                    JDBC Metadata.
-                </simpara></listitem><listitem><simpara>
-                    Improved exception handling.
-                </simpara></listitem><listitem><simpara>
-                    Implemented Raw SQL mode, and ability for users to enter
-                    PL/SQL.
-                </simpara></listitem><listitem><simpara>
-                    Fixed open Statement bug (HSQLDB bug #1191524).
-                </simpara></listitem><listitem><simpara>
-                    Improved Oracle idiosyncracy work-arounds.
-                </simpara></listitem><listitem><simpara>
-                    Added support for all non-text type fields, including BLOBs.
-                </simpara></listitem><listitem><simpara>
-                    Can download and upload both ASCII and binary column
-                    values to/from local files.
-                </simpara></listitem><listitem><simpara>
-                    Better display of null values occurring in result sets.
-                </simpara></listitem><listitem><simpara>
-                    RC file functionality isolated into separate class, RCData.
-                    Other programs can now use RC files by using this class.
+                    Implemented CSV eXport and iMport commands \x and \m.
+                    Added for HSQLDB v. 1.8.0.3.
                 </simpara></listitem>
             </itemizedlist>
+            <simpara>
+                When recently changed or added features (i.e, those items
+                in the preceding list) are described in the main document 
+                below, there is a <emphasis>Note</emphasis> at that point
+                indicating when the feature was added or changed.
+            </simpara>
         </section>
     </section>
 
@@ -670,11 +642,6 @@ java org.hsqldb.util.SqlTool urlid</screen>
                 More detailed explanation of PL variables and the other 
                 PL features, with examples, are covered in the
                 <link linkend='pl-section' endterm='pl-title'/> section.
-                <note>
-                    The requirement for a space after the asterisk has been
-                    removed with this version of SqlFile.
-                    It is up to you whether to put a space after the *.
-                </note>
             </para></listitem></varlistentry>
             <varlistentry><term>Raw Mode</term><listitem><simpara>
                 The descriptions of command-types above do not apply to
@@ -757,15 +724,9 @@ java org.hsqldb.util.SqlTool urlid</screen>
                     SqlTool.
                     You can use spaces and other special characters in
                     the string.
-                </simpara>
-                    Note that this is a change in behavior from SqlFile
-                    before about version 1.100, where substring tests
-                    were case-insensitive.
-                <simpara>
                 </simpara></important>
                 <tip><simpara>
-                    Beginning with the current version of SqlFile, filter
-                    substrings ending with "." are special.
+                    Filter substrings ending with "." are special.
                     If a substring ends with ".", then this means to narrow
                     the search by the exact, case-sensitive schema name
                     given.
@@ -783,23 +744,18 @@ java org.hsqldb.util.SqlTool urlid</screen>
                     functionality which cannot (portably) be reproduced by 
                     SqlTool.
                 </simpara></tip>
-                <note><simpara>
-                Several new \dX commands have been added with the current
-                of SqlFile.
-                Be aware that the meaning of the \s command has changed!
-                </simpara></note>
                 <important><simpara>
-                Indexes may not be searched for by 
-                <emphasis>substring</emphasis>, only by
-                exact target table name.
-                So if <literal>I1</literal> is an index on table
-                <literal>T1</literal>, then you list this index by running
-                "\di T1".
-                In addition, many database vendors will report on indexes 
-                only if a target table is identified.
-                Therefore, "\di" with no argument will fail if your database
-                vendor does not support it.
-            </simpara></important>
+                    Indexes may not be searched for by 
+                    <emphasis>substring</emphasis>, only by
+                    exact target table name.
+                    So if <literal>I1</literal> is an index on table
+                    <literal>T1</literal>, then you list this index by running
+                    "\di T1".
+                    In addition, many database vendors will report on indexes 
+                    only if a target table is identified.
+                    Therefore, "\di" with no argument will fail if your database
+                    vendor does not support it.
+                </simpara></important>
             </listitem></varlistentry>
             <varlistentry><term>\d objectname [filter]</term><listitem><simpara>
                 Lists names of columns in the specified table or view.
@@ -1190,25 +1146,16 @@ java -Dsqltool.historyLength=40 -jar $HSQLDB_HOME/lib/hsqldb.jar urlid</screen>
     java -jar $HSQLDB_HOME/lib/hsqldb.jar --sql 'SQL statement' urlid</screen>
             </informalexample>
             <note><simpara>
-                With the current version of SqlTool, we have changed the default
-                behavior of the <literal>--sql</literal> switch.
                 The <literal>--sql</literal> automatically implies
                 <literal>--noinput</literal>, so if you want to execute the
                 specified SQL before <emphasis>and in addition to</emphasis> an
                 interactive session (or stdin piping), then you must also give
-                the (new) <emphasis>--stdinput</emphasis> switch.
-                This was changed because it turns out that this is the desired
-                behavior well over 90% of the time that you would want to use
-                the <literal>--sql</literal> switch.
+                the <emphasis>--stdinput</emphasis> switch.
             </simpara></note> <note><simpara>
-                Beginning with the current version of SqlTool, SqlTool will
-                automatically add a trailing semicolon to your
+                SqlTool will automatically add a trailing semicolon to your
                 <literal>--sql</literal> SQL.  You may still give the trailing
                 semicolon if you wish to, and you must still delimit multiple
                 SQL commands with a simicolon, of course.
-                This was changed because in the very few sitations where you
-                do not want to execute your SQL by a terminating semicolon, you
-                would be better off using an SQL file.
             </simpara></note>
             </para><para>
                 Since SqlTool transmits SQL statements to the database engine
@@ -1531,16 +1478,6 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sql... > /tmp/log.html 2>&
                         Only you know whether errors in your SQL files can
                         safely be ignored.
                     </simpara></important>
-                    <note><simpara>
-                        In previous versions of SqlTool, this special command
-                        was "\*".  This usage is still supported, but is
-                        deprecated.  It was changed because "\*" is a very
-                        poor mnemonic.
-                        Even the author of the program had to constantly 
-                        look up whether "\* true" meant to Continue on
-                        error or to Abort upon error.
-                        Now, the "c" signifies <emphasis>Continue</emphasis>.
-                    </simpara></note>
                 </listitem></varlistentry>
             </variablelist>
         </section>
@@ -1695,11 +1632,7 @@ java -Dsqlfile.charset=UTF-8 -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sq
             variable expansion.
             People who don't use PL don't have to worry about strings getting
             accidentally expanded.
-        </simpara> <para> <note>
-                Users of previous versions of SqlFile should notice that
-                whitespace is no longer required after the *
-                (though you may use whitespace there if you wish).
-        </note> </para> <simpara>
+        </simpara> <simpara>
             All other PL commands imply the "*" command, so you only need to 
             use the "*" statement if your script uses PL variables
             and it is possible that no variables may be set before-hand (and
@@ -2205,6 +2138,45 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar mem $HSQLDB_HOME/src/org/hsqldb/sample/pl.
     </section>
 
     <section>
+        <title>Character-Separated-Value Imports and Exports</title>
+        <note><simpara>
+            These features were added for version 1.8.0.3 of HSQLDB.
+        </simpara></note>
+        <note><simpara>
+            This feature is independent of HSQLDB 
+            <link linkend='texttables-chapter' endterm='texttables-title'/>,
+            a server-side feature of HSQLDB.
+            It makes no difference to SqlTool whether the source or target
+            table of your export/import is a memory, cache, or text table.
+        </simpara></note>
+        <simpara>
+            Because of common usage, I call this feature
+            <emphasis>CSV</emphasis> imports and exports, even though the
+            delimiters are not constratained to single characters, but
+            may be any String.
+            Use the <literal>\dx</literal> command to eXport a table to a
+            CSV file, and the <literal>\dm</literal> command to iMport a
+            CSV file into a pre-existing table.
+        </simpara><simpara>
+            Note that the import command will not create a new table.
+            This is because of the impossibility of guessing appropriate
+            types and constraints based only on column names and a data
+            sampling (which is all that a CSV-importer has access to).
+            Therefore, if you wish to populate a new table, create the
+            table before running the import.
+            The import does not need to import into all columns of a table.
+            The only required columns are those required by non-null and
+            FK constraints.
+        </simpara>
+        <remark><simpara>
+            TODO:  Add paragraphs or subsections about:
+                CSV file format;
+                Specifying source/target tables, incl. schema;
+                Specifying input/output delimiters.
+        </simpara></remark>
+    </section>
+    <!--  The unit tests need to be updated!
+    <section>
         <title>Unit Testing SqlTool</title>
         <simpara>
             A unit testing framework is in place.
@@ -2228,4 +2200,5 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar mem $HSQLDB_HOME/src/org/hsqldb/sample/pl.
             (The SqlTool unit tests require java 1.4).
         </simpara>
     </section>
+    -->
 </chapter>
