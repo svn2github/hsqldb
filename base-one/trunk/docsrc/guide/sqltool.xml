@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.91 2005/11/06 18:28:33 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.92 2005/11/06 21:59:47 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.91 $</edition>
-        <pubdate>$Date: 2005/11/06 18:28:33 $</pubdate>
+        <edition>$Revision: 1.92 $</edition>
+        <pubdate>$Date: 2005/11/06 21:59:47 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -49,7 +49,7 @@
             behavior before 1.8.0.0 final).
             This document is now updated for the current versions of SqlTool
             and SqlFile at the time I am writing this (versions 1.50 and
-            1.129 correspondingly, SqlFile is the class which does most of the
+            1.130 correspondingly, SqlFile is the class which does most of the
             work for SqlTool).
             Therefore, if you are using a version of SqlTool or SqlFile that
             is more than a couple revisions greater, you should find a newer
