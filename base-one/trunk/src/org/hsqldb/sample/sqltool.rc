@@ -1,4 +1,4 @@
-# $Id: sqltool.rc,v 1.15 2005/09/18 23:59:37 unsaved Exp $
+# $Id: sqltool.rc,v 1.16 2005/09/19 19:30:47 unsaved Exp $
 
 # This is a sample RC configuration file used by SqlTool, DatabaseManager,
 # and any other program that uses the org.hsqldb.util.RCData class.
@@ -70,13 +70,16 @@ password
 #password losung1
 #driver org.postgresql.Driver
 
-# Template for a MySQL database
+# Template for a MySQL database.  MySQL has poor JDBC support.
 #urlid mysql-testdb
-#url jdbc:mysql:///test
+#url jdbc:mysql://hostname:3306/dbname
 #username root
 #username blaine
 #password hiddenpwd
 #driver com.mysql.jdbc.Driver
+
+# Note that "databases" in SQL Server and Sybase are traditionally used for
+# the same purpose as "schemas" with more SQL-compliant databases.
 
 # Template for a Microsoft SQL Server database
 url jdbc:microsoft:sqlserver://hostname;DatabaseName=DbName;SelectMethod=Cursor
@@ -91,7 +94,7 @@ password hiddenpwd
 
 # Template for a Sybase database
 urlid sybase
-url jdbc:sybase:Tds:hostname:4100
+url jdbc:sybase:Tds:hostname:4100/dbname
 username blaine
 password hiddenpwd
 # This is for the jConnect driver (requires jconn3.jar).
