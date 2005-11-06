@@ -179,7 +179,8 @@ public class Database {
      *  Constructs a new Database object.
      *
      * @param type is the type of the database: "mem", "file", "res"
-     * @param path is the canonical path to the database files
+     * @param path is the fiven path to the database files
+     * @param name is the combination of type and canonical path
      * @param props property overrides placed on the connect URL
      * @exception  HsqlException if the specified name and path
      *      combination is illegal or unavailable, or the database files the
@@ -270,11 +271,11 @@ public class Database {
 
         try {
             databaseProperties = new HsqlDatabaseProperties(this);
-            isNew = sType == DatabaseURL.S_MEM
+            isNew = !DatabaseURL.isFileBasedDatabaseType(sType)
                     ||!databaseProperties.checkFileExists();
 
             if (isNew && urlProperties.isPropertyTrue("ifexists")) {
-                throw Trace.error(Trace.DATABASE_NOT_EXISTS, sType + sPath);
+                throw Trace.error(Trace.DATABASE_NOT_EXISTS, sName);
             }
 
             databaseProperties.load();
@@ -294,7 +295,7 @@ public class Database {
 
             databaseProperties.setDatabaseVariables();
 
-            if (sType != DatabaseURL.S_MEM) {
+            if (DatabaseURL.isFileBasedDatabaseType(sType)) {
                 logger.openLog(this);
             }
 

@@ -203,7 +203,7 @@ public class Table extends BaseTable {
                 break;
 
             case CACHED_TABLE :
-                if (!db.getType().equals(DatabaseURL.S_MEM)) {
+                if (DatabaseURL.isFileBasedDatabaseType(db.getType())) {
                     cache     = db.logger.getCache();
                     isCached  = true;
                     isLogged  = !database.isFilesReadOnly();
@@ -225,7 +225,7 @@ public class Table extends BaseTable {
                 break;
 
             case TEMP_TEXT_TABLE :
-                if (db.getType().equals(DatabaseURL.S_MEM)) {
+                if (!DatabaseURL.isFileBasedDatabaseType(db.getType())) {
                     throw Trace.error(Trace.DATABASE_IS_MEMORY_ONLY);
                 }
 
@@ -237,7 +237,7 @@ public class Table extends BaseTable {
                 break;
 
             case TEXT_TABLE :
-                if (db.getType().equals(DatabaseURL.S_MEM)) {
+                if (!DatabaseURL.isFileBasedDatabaseType(db.getType())) {
                     throw Trace.error(Trace.DATABASE_IS_MEMORY_ONLY);
                 }
 

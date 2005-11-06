@@ -2423,11 +2423,7 @@ public class jdbcConnection implements Connection {
         password = password.toUpperCase(Locale.ENGLISH);
 
         try {
-            if (connType == DatabaseURL.S_FILE
-                    || connType == DatabaseURL.S_MEM
-                    || connType == DatabaseURL.S_RES) {
-
-// loosecannon1@users 1.7.2 patch properties on the JDBC URL
+            if (DatabaseURL.isInProcessDatabaseType(connType)) {
 
 /** @todo fredt - this should be the only static reference to a core class in
                      *  the jdbc package - we may make it dynamic */

@@ -53,7 +53,30 @@ public class DatabaseURL {
     public static final String S_HTTPS      = "https://";
     public static final String S_URL_PREFIX = "jdbc:hsqldb:";
 
-    // URL parsing
+    /**
+     * Returns true if type represents an in-process connection to a file backed
+     * database.
+     */
+    public static boolean isFileBasedDatabaseType(String url) {
+
+        if (url == S_FILE || url == S_RES) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns true if type represents an in-process connection to database.
+     */
+    public static boolean isInProcessDatabaseType(String url) {
+
+        if (url == S_FILE || url == S_RES || url == S_MEM) {
+            return true;
+        }
+
+        return false;
+    }
 
     /**
      * Parses the url into components that are returned in a properties
@@ -88,13 +111,16 @@ public class DatabaseURL {
 
         String         urlImage = url.toLowerCase();
         HsqlProperties props    = new HsqlProperties();
+        int            pos      = 0;
 
-        if (hasPrefix &&!urlImage.startsWith(S_URL_PREFIX)) {
-            return props;
+        if (hasPrefix) {
+            if (urlImage.startsWith(S_URL_PREFIX)) {
+                pos = S_URL_PREFIX.length();
+            } else {
+                return props;
+            }
         }
 
-        int     pos  = hasPrefix ? S_URL_PREFIX.length()
-                                 : 0;
         String  type = null;
         String  host;
         int     port = 0;

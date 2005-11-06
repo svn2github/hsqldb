@@ -1446,12 +1446,38 @@ class DatabaseCommandInterpreter {
 
         HsqlName[] colList = null;
 
+        // fredt - a bug in 1.8.0.0 and previous versions causes view
+        // definitions to script without double quotes around column names
+        // in certain cases; the workaround here discards such scripted column
+        // lists when used in OOo
         if (tokenizer.isGetThis(Token.T_OPENBRACKET)) {
-            HsqlArrayList list = Parser.getColumnNames(database, null,
-                tokenizer, true);
+            try {    // added line
+                HsqlArrayList list = Parser.getColumnNames(database, null,
+                    tokenizer, true);
 
-            colList = new HsqlName[list.size()];
-            colList = (HsqlName[]) list.toArray(colList);
+                colList = new HsqlName[list.size()];
+                colList = (HsqlName[]) list.toArray(colList);
+
+                //added lines to make sure all columns are quoted
+                if (database.isStoredFileAccess()) {
+                    for (int i = 0; i < colList.length; i++) {
+                        if (!colList[i].isNameQuoted) {
+                            throw (Trace.error(Trace.INVALID_IDENTIFIER));
+                        }
+                    }
+                }
+            } catch (HsqlException e) {
+
+                //added lines to catch unquoted column names with spaces
+                if (database.isStoredFileAccess()) {
+                    colList = null;
+
+                    while (!tokenizer.getString().equals(
+                            Token.T_CLOSEBRACKET)) {}
+                } else {
+                    throw e;
+                }
+            }
         }
 
         tokenizer.getThis(Token.T_AS);
@@ -3061,6 +3087,9 @@ class DatabaseCommandInterpreter {
         return fqn;
     }
 
+    /**
+     * Processes a SELECT INTO for a new table.
+     */
     Result processSelectInto(Result result, HsqlName intoHsqlName,
                              int intoType) throws HsqlException {
 

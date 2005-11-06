@@ -249,8 +249,11 @@ public class DatabaseManager {
             key         = filePathToKey(path);
         } else if (type == DatabaseURL.S_RES) {
             databaseMap = resDatabaseMap;
-        } else {
+        } else if (type == DatabaseURL.S_MEM) {
             databaseMap = memDatabaseMap;
+        } else {
+            throw Trace.runtimeError(Trace.INTERNAL_UNSUPPORTED_OPERATION,
+                                     "DatabaseManager.getDatabaseObject");
         }
 
         db = (Database) databaseMap.get(key);
@@ -310,8 +313,11 @@ public class DatabaseManager {
             key         = filePathToKey(path);
         } else if (type == DatabaseURL.S_RES) {
             databaseMap = resDatabaseMap;
-        } else {
+        } else if (type == DatabaseURL.S_MEM) {
             databaseMap = memDatabaseMap;
+        } else {
+            throw Trace.runtimeError(Trace.INTERNAL_UNSUPPORTED_OPERATION,
+                                     "DatabaseManager.lookupDatabaseObject");
         }
 
         databaseIDMap.put(db.databaseID, db);
@@ -472,7 +478,7 @@ public class DatabaseManager {
     }
 
     // converts file path to database lookup key, converting any
-    // any thrown exception to an HsqlException in the process
+    // thrown exception to an HsqlException in the process
     private static Object filePathToKey(String path) throws HsqlException {
 
         try {
