@@ -1,4 +1,4 @@
-<!-- $Id: tls.xml,v 1.14 2005/05/31 20:59:13 unsaved Exp $ -->
+<!-- $Id: tls.xml,v 1.15 2005/09/19 00:02:51 unsaved Exp $ -->
 
 <chapter id='tls-chapter'>
     <title id='tls-title'>TLS</title>
@@ -13,8 +13,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.14 $</edition>
-        <pubdate>$Date: 2005/05/31 20:59:13 $</pubdate>
+        <edition>$Revision: 1.15 $</edition>
+        <pubdate>$Date: 2005/09/19 00:02:51 $</pubdate>
         <keywordset>
             <keyword>Hsqldb</keyword>
             <keyword>TLS</keyword>
@@ -132,7 +132,7 @@
             </para><example>
                 <title>Adding a certificate to the client keystore</title>
                 <screen>
-    keytool -import -trustcacerts -keystore trust.store -alias new_alias -file server.cer</screen>
+keytool -import -trustcacerts -keystore trust.store -alias new_alias -file server.cer</screen>
             </example>
             <para>
                 If you are making a new keystore, you probably want to start
@@ -197,7 +197,8 @@
             <example>
                 <title>Running an Hsqldb server with TLS encryption</title>
                 <screen>
-    java -Djavax.net.ssl.keyStorePassword=secret -Djavax.net.ssl.keyStore=/usr/hsqldb/db/db3/server.store  \
+    java -Djavax.net.ssl.keyStorePassword=secret  \
+        -Djavax.net.ssl.keyStore=/usr/hsqldb/db/db3/server.store  \
         -cp /path/to/hsqldb.jar org.hsqldb.Server</screen>
             </example>
             <para>
@@ -269,11 +270,11 @@
             </para><example>
             <title>Getting a pem-style private key into a JKS keystore</title>
                 <screen>
-    openssl pkcs8 -topk8 -outform DER -in Xpvk.pem -inform PEM -out Xpvk.pk8 -nocrypt
+openssl pkcs8 -topk8 -outform DER -in Xpvk.pem -inform PEM -out Xpvk.pk8 -nocrypt
 
-    openssl x509 -in Xcert.pem -out Xcert.der -outform DER
+openssl x509 -in Xcert.pem -out Xcert.der -outform DER
 
-    java DERImport new.keystore NEWALIAS Xpvk.pk8 Xcert.der</screen>
+java DERImport new.keystore NEWALIAS Xpvk.pk8 Xcert.der</screen>
             </example>
             <important><para>
                 Make sure to set the password of the key exactly the same as 
