@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: sqlsyntax.xml,v 1.44 2005/10/02 23:32:21 unsaved Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.45 2005/10/02 23:49:38 unsaved Exp $ -->
 <chapter id="sqlsyntax-chapter">
   <title id="sqlsyntax-title">SQL Syntax</title>
 
@@ -54,9 +54,9 @@
       </editor>
     </authorgroup>
 
-    <edition>$Revision: 1.44 $</edition>
+    <edition>$Revision: 1.45 $</edition>
 
-    <pubdate>$Date: 2005/10/02 23:32:21 $</pubdate>
+    <pubdate>$Date: 2005/10/02 23:49:38 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -343,7 +343,7 @@
       <programlisting>CREATE ALIAS &lt;function&gt; FOR &lt;javaFunction&gt;;</programlisting>
 
       <para>Creates an alias for a static Java function to be used as a
-          <link endterm="stored-title">Stored Procedure</link>.
+          <link linkend="stored-section">Stored Procedure</link>.
           The function must be accessible from the JVM in which the database 
           runs. Example:</para>
 
@@ -392,7 +392,7 @@
     <section>
       <title>CREATE SCHEMA<footnoteref linkend="posthyper" /></title>
 
-      <programlisting>CREATE SCHEMA &lt;schemaname&gt; AUTHORIZATION &lt;grantee&gt; [&lt;createStatement&gt; [&lt;grantStatement&lt;] [...];</programlisting>
+      <programlisting>CREATE SCHEMA &lt;schemaname&gt; AUTHORIZATION &lt;grantee&gt; [&lt;createStatement&gt; [&lt;grantStatement&gt;] [...];</programlisting>
 
       <para>Creates the named schema, with ownership of the specified
       <emphasis>authorization</emphasis>. The authorization grantee may be a
@@ -406,13 +406,16 @@
       and a view are added to this schma and some rights on these objects are
       granted.<informalexample>
           <programlisting>    CREATE SCHEMA ACCOUNTS AUTHORIZATION DBA
-    CREATE TABLE AB(A INTEGER, ...)
-    CREATE TABLE CD(C CHAHR, ...)
-    CREATE VIEW VI AS SELECT ...
-    GRANT SELECT TO PUBLIC ON AB
-    GRANT SELECT TO JOE ON CD;
+        CREATE TABLE AB(A INTEGER, ...)
+        CREATE TABLE CD(C CHAHR, ...)
+        CREATE VIEW VI AS SELECT ...
+        GRANT SELECT TO PUBLIC ON AB
+        GRANT SELECT TO JOE ON CD;
 </programlisting>
-        </informalexample></para>
+        </informalexample>
+        Note that this example consists of one CREATE SCHEMA statement which
+        is terminated by a semicolon.
+    </para>
 
       <simpara>Requires Administrative privileges.</simpara>
     </section>
