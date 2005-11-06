@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.90 2005/11/06 17:51:33 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.91 2005/11/06 18:28:33 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.90 $</edition>
-        <pubdate>$Date: 2005/11/06 17:51:33 $</pubdate>
+        <edition>$Revision: 1.91 $</edition>
+        <pubdate>$Date: 2005/11/06 18:28:33 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -2154,15 +2154,35 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar mem $HSQLDB_HOME/src/org/hsqldb/sample/pl.
             a server-side feature of HSQLDB.
             It makes no difference to SqlTool whether the source or target
             table of your export/import is a memory, cache, or text table.
+            Indeed, like all features of SqlTool, it works fine with other
+            JDBC databases.
+            It works great, for example to migrate data from a table
+            of one type to a table of another type, or to another schema,
+            or to another database instance, or to another database system.
         </simpara></note>
         <simpara>
-            Because of common usage, I call this feature
+            Because of common usage of the term, I call this feature
             <emphasis>CSV</emphasis> imports and exports, even though the
-            delimiters are not constratained to single characters, but
+            delimiters are not constrained to single characters, but
             may be any String.
-            Use the <literal>\dx</literal> command to eXport a table to a
-            CSV file, and the <literal>\dm</literal> command to iMport a
+            Use the <literal>\x</literal> command to eXport a table to a
+            CSV file, and the <literal>\m</literal> command to iMport a
             CSV file into a pre-existing table.
+        </simpara><simpara>
+            Just as the delimiter capability is more general than traditional
+            CSV delimiters, the export function is also more general than
+            just a table data exporter.
+            Besides the trivial generalization that you may specify a
+            view or other virtual table name in place of a table name,
+            you can alternatively export the output of any query which 
+            produces normal text output.
+            A benefit to this approach is that it allows you to export only
+            some columns of a table, and to specify a WHERE clause to narrow 
+            down the rows to be exported (or perform any other SQL 
+            transformation, mapping, join, etc.).
+            One specific use for this would be to exclude columns of
+            binary data (which can be exported by other means, such as
+            a PL loop to store binary values to files with the \bd command).
         </simpara><simpara>
             Note that the import command will not create a new table.
             This is because of the impossibility of guessing appropriate
@@ -2170,16 +2190,135 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar mem $HSQLDB_HOME/src/org/hsqldb/sample/pl.
             sampling (which is all that a CSV-importer has access to).
             Therefore, if you wish to populate a new table, create the
             table before running the import.
-            The import does not need to import into all columns of a table.
+            The import file does not need to have data for all columns of a
+            table.
             The only required columns are those required by non-null and
             FK constraints.
+            One specific reason to omit columns is if you want values of
+            some columns to be created automatically by column DEFAULT
+            settings, triggers, HSQLDB identity sequences, etc.
+            Another reason would be to skip binary columns.
         </simpara>
-        <remark><simpara>
-            TODO:  Add paragraphs or subsections about:
-                CSV file format;
-                Specifying source/target tables, incl. schema;
-                Specifying input/output delimiters.
-        </simpara></remark>
+        <section>
+            <title>Simple CSV exports and imports using default settings</title>
+            <simpara>
+                Even if you need to change delimiters, table names, or file
+                names from the defaults, I suggest that you run one export
+                and import with default settings as a practice run.
+                A memory-only HSQLDB instance is ideal for test runs like this.
+            </simpara> <para>
+                This command exports the table <literal>icf.projects</literal>
+                to the file <filename>projects.csv</filename> in the current
+                directory (where you invoked SqlTool from).
+                By default, the output file name will be the specified source
+                table name plus the extension <literal>.csv</literal>.
+                <example><title>CSV Export Example</title>
+                    <screen>    SET SCHEMA icf;
+    \x projects;
+</screen>
+                </example>
+                We could also have run <literal>\x icf.projects</literal>
+                (which would have created a file named 
+                <filename>icf.projects.csv</filename>)
+                instead of changing the session schema.
+                In this example we have chosen to make the export file name
+                independent of the schema to facilitate importing it into
+                a different schema.
+            </para> <simpara>
+                Take a look at the output file.
+                Notice that the first line consists of column names, not
+                data.
+                This line is present because it will be needed if the file is
+                to used for a CSV import.
+                Notice the following characterstics about the export data.
+                The column delimiter is the pipe character "|".
+                The record delimiter is the default line delimiter character(s)
+                for your operating system.
+                The string used to represent database <literal>NULL</literal>s
+                is <literal>[null]</literal>.
+                See the next section for how to change these from their default
+                values.
+            </simpara> <para>
+                This command imports the data from the file
+                <filename>projects.csv</filename> in the current
+                directory (where you invoked SqlTool from) into the table
+                <literal>newschema.projects</literal>.
+                By default, the output table name will be the input filename
+                after removing optional leading directory and trailing final
+                extension.
+                <example><title>CSV Import Example</title>
+                    <screen>    SET SCHEMA newschema;
+    \m projects.csv;
+</screen>
+                </example>
+                If the CSV file was named with the target schema, you would
+                have skipped the <literal>SET SCHEMA</literal> command, like
+                <literal>\m newschema.projects.csv</literal>.
+            </para>
+        </section>
+        <section>
+            <title>Specifying queries, delimiters, file names, table names,
+                columns</title>
+            <simpara>
+                The header line in the CSV file is required at this time.
+                (If there is user demand, it can be made optional for
+                exporting, but it will remain required for importing).
+            </simpara><simpara>
+                Your export will fail if the column or record delimiter, or
+                the null representation value occurs in the data being
+                exported.
+                You change these values by setting the PL variables
+                <literal>*CSV_COL_DELIM</literal>,
+                <literal>*CSV_ROW_DELIM</literal>,
+                <literal>*CSV_NULL_REP</literal>.
+                Notice that the asterisk is part of the variable names, to
+                indicate that these variables are used by SqlTool internally.
+                You can use the escape sequences \n, \r, and \t in the
+                usual manner.
+                For example, to change the column delimiter to the tab character,
+                you would give the command
+                <informalexample><screen>
+    * *CSV_COL_DELIM = \t</screen>
+                </informalexample>
+            </simpara><simpara>
+                For imports, you must always specify the source CSV file path.
+                If you want to <emphasis>export</emphasis> to a different file 
+                than one in the current directory named according to the source
+                table, set the PL variable <literal>*CSV_FILEPATH</literal>,
+                like
+                <informalexample><screen>
+    * *CSV_FILEPATH = /tmp/dtbl.csv</screen>
+                </informalexample>
+            </simpara><simpara>
+                For exports, you must always specify the source table name
+                or query.
+                If you want to <emphasis>import</emphasis> to a table other 
+                than that derived from
+                the input CSV file name, set the PL variable
+                <literal>*CSV_TABLENAME</literal>.
+                The table name may contain a schema name prefix.
+            </simpara><simpara>
+                At this time, you must import all columns that have data in
+                the CSV file.
+                If there is demand to specify an optional list of columns to
+                import, I'll gladly add that feature.
+            </simpara><para>
+                You can specify a query instead of a tablename with the
+                \x command in order to filter or transform data from a table
+                or view, or to export the output of a join, etc.
+                You must set the PL variable <literal>*CSV_FILEPATH</literal>,
+                as explained above (since there is no table name from which to
+                automatically map a file name).
+                <example>
+                    <title>CSV Export of an Arbitrary SELECT Statement</title>
+                    <screen>    * *CSV_FILEPATH = outfile.txt
+    \x SELECT entrydate, 2 * aval "Double aval", modtime from bs.dtbl;</screen>
+                </example>
+                Note that I specified the column label alias "Double aval"
+                so that the label for that column in the CSV file header will 
+                not be blank.
+            </para>
+        </section>
     </section>
     <!--  The unit tests need to be updated!
     <section>
