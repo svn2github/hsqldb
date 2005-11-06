@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.89 2005/06/04 17:43:30 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.90 2005/11/06 17:51:33 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.89 $</edition>
-        <pubdate>$Date: 2005/06/04 17:43:30 $</pubdate>
+        <edition>$Revision: 1.90 $</edition>
+        <pubdate>$Date: 2005/11/06 17:51:33 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -33,7 +33,9 @@
             control and error handling).
         </simpara><simpara>
             Some of the examples below use quoting which works exactly
-            as-is for any normal UNIX shell.
+            as-is for any Bourne-compatible UNIX shell.
+            (Only line-continuation would need to be changed for C-compatible
+            UNIX shells).
             I have not yet tested these commands on Windows, and I doubt
             whether the quoting will work just like this (though it is
             possible).
@@ -495,7 +497,7 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
             with their older HSQLDB database, as well as with Postgresql
             and a local application.
             <informalexample><screen>
-CLASSPATH=/path/to/hsqldbutil.jar:/home/bob/myapp/classes:/usr/local/lib/pg.jdbc3.jar
+CLASSPATH=/path/to/hsqldbutil.jar:/home/bob/classes:/usr/local/lib/pg.jdbc3.jar
 export CLASSPATH
 java org.hsqldb.util.SqlTool urlid</screen>
             </informalexample>
@@ -1182,7 +1184,9 @@ java -Dsqltool.historyLength=40 -jar $HSQLDB_HOME/lib/hsqldb.jar urlid</screen>
                 this.
             <informalexample><programlisting>
     # A shell script
-    USERCOUNT=`java -jar $HSQLDB_HOME/lib/hsqldb.jar --sql 'select count(*) from usertbl' urlid` || {
+    USERCOUNT=`java -jar $HSQLDB_HOME/lib/hsqldb.jar --sql '
+        select count(*) from usertbl
+    ' urlid` || {
         # Handle the SqlTool error
     }
     echo "There are $USERCOUNT users registered in the database."
@@ -1242,7 +1246,9 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar sql... > /tmp/log.sql 2>&amp;1</screen>
                 You can execute this SQL file with a Memory Only database with 
                 a command like
             <informalexample><programlisting>
-    java -jar $HSQLDB_HOME/lib/hsqldb.jar  --sql "create user 'tomcat' password 'x'" mem path/to/hsqldb/src/org/hsqldb/sample/sample.sql</programlisting>
+    java -jar $HSQLDB_HOME/lib/hsqldb.jar  --sql '
+        create user tomcat password "x"
+    ' mem path/to/hsqldb/src/org/hsqldb/sample/sample.sql</programlisting>
             </informalexample>
             </para><simpara>
                 (The <literal>--sql "create..."</literal> arguments create an
@@ -1526,7 +1532,7 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar urlid &gt; /tmp/log.html 2&gt;&amp;1</scre
                 You can use another character set by setting the system 
                 property <property>sqlfile.charset</property>, like
             <informalexample><screen>
-java -Dsqlfile.charset=UTF-8 -jar $HSQLDB_HOME/lib/hsqldb.jar urlid filepath1.sql...</screen>
+java -Dsqlfile.charset=UTF-8 -jar $HSQLDB_HOME/lib/hsqldb.jar urlid file.sql...</screen>
             </informalexample></para><simpara>
                 You can also set this per urlid in the SqlTool configuration 
                 file.
