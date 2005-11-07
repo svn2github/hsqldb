@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.92 2005/11/06 21:59:47 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.93 2005/11/06 22:14:22 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.92 $</edition>
-        <pubdate>$Date: 2005/11/06 21:59:47 $</pubdate>
+        <edition>$Revision: 1.93 $</edition>
+        <pubdate>$Date: 2005/11/06 22:14:22 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -2214,7 +2214,7 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar mem $HSQLDB_HOME/src/org/hsqldb/sample/pl.
                 table name plus the extension <literal>.csv</literal>.
                 <example><title>CSV Export Example</title>
                     <screen>    SET SCHEMA icf;
-    \x projects;
+    \x projects
 </screen>
                 </example>
                 We could also have run <literal>\x icf.projects</literal>
@@ -2248,7 +2248,7 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar mem $HSQLDB_HOME/src/org/hsqldb/sample/pl.
                 extension.
                 <example><title>CSV Import Example</title>
                     <screen>    SET SCHEMA newschema;
-    \m projects.csv;
+    \m projects.csv
 </screen>
                 </example>
                 If the CSV file was named with the target schema, you would
