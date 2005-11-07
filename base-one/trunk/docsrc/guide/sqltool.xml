@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.93 2005/11/06 22:14:22 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.94 2005/11/07 20:32:28 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -11,8 +11,8 @@
                 <orgname>HSQLDB Development Group</orgname>
             </affiliation>
         </author>
-        <edition>$Revision: 1.93 $</edition>
-        <pubdate>$Date: 2005/11/06 22:14:22 $</pubdate>
+        <edition>$Revision: 1.94 $</edition>
+        <pubdate>$Date: 2005/11/07 20:32:28 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -2312,7 +2312,7 @@ java -jar $HSQLDB_HOME/lib/hsqldb.jar mem $HSQLDB_HOME/src/org/hsqldb/sample/pl.
                 <example>
                     <title>CSV Export of an Arbitrary SELECT Statement</title>
                     <screen>    * *CSV_FILEPATH = outfile.txt
-    \x SELECT entrydate, 2 * aval "Double aval", modtime from bs.dtbl;</screen>
+    \x SELECT entrydate, 2 * aval "Double aval", modtime from bs.dtbl</screen>
                 </example>
                 Note that I specified the column label alias "Double aval"
                 so that the label for that column in the CSV file header will 
