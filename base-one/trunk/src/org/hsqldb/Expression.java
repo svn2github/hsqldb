@@ -413,8 +413,8 @@ public class Expression {
      */
     Expression(String schema, String table, String column) {
 
-        schema    = schema;
-        tableName = table;
+        this.schema = schema;
+        tableName   = table;
 
         if (column == null) {
             exprType = ASTERISK;

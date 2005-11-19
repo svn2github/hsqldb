@@ -241,7 +241,7 @@ public class DatabaseManager {
             String path, HsqlProperties props) throws HsqlException {
 
         Database db;
-        Object   key = path;
+        String   key = path;
         HashMap  databaseMap;
 
         if (type == DatabaseURL.S_FILE) {
@@ -317,7 +317,7 @@ public class DatabaseManager {
             databaseMap = memDatabaseMap;
         } else {
             throw Trace.runtimeError(Trace.INTERNAL_UNSUPPORTED_OPERATION,
-                                     "DatabaseManager.lookupDatabaseObject");
+                                     "DatabaseManager.addDatabaseObject()");
         }
 
         databaseIDMap.put(db.databaseID, db);
@@ -479,10 +479,10 @@ public class DatabaseManager {
 
     // converts file path to database lookup key, converting any
     // thrown exception to an HsqlException in the process
-    private static Object filePathToKey(String path) throws HsqlException {
+    private static String filePathToKey(String path) throws HsqlException {
 
         try {
-            return FileUtil.canonicalFile(path);
+            return FileUtil.canonicalPath(path);
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR, e.toString());
         }

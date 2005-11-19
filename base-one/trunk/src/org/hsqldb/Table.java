@@ -1910,7 +1910,7 @@ public class Table extends BaseTable {
         indexRow(session, row);
 
         if (session != null) {
-            session.addTransactionInsert(this, row);
+            session.addInsertAction(this, row);
         }
 
         if (isLogged) {
@@ -1930,7 +1930,7 @@ public class Table extends BaseTable {
         indexRow(session, r);
 
         if (session != null) {
-            session.addTransactionInsert(this, r);
+            session.addInsertAction(this, r);
         }
     }
 
@@ -2814,7 +2814,7 @@ public class Table extends BaseTable {
         row.delete();
 
         if (session != null) {
-            boolean tx = session.addTransactionDelete(this, row);
+            boolean tx = session.addDeleteAction(this, row);
         }
 
         if (log && isLogged) {
@@ -2896,7 +2896,7 @@ public class Table extends BaseTable {
         row.delete();
 
         if (session != null) {
-            session.addTransactionDelete(this, row);
+            session.addDeleteAction(this, row);
         }
     }
 

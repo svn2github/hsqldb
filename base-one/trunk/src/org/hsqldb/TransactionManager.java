@@ -102,8 +102,8 @@ public class TransactionManager {
 
     void commit(Session session) {
 
-        Object[] list = session.transactionList.getArray();
-        int      size = session.transactionList.size();
+        Object[] list = session.rowActionList.getArray();
+        int      size = session.rowActionList.size();
 
         for (int i = 0; i < size; i++) {
             Transaction tx    = (Transaction) list[i];
@@ -113,7 +113,7 @@ public class TransactionManager {
             rowSessionMap.remove(rowid);
         }
 
-        session.transactionList.clear();
+        session.rowActionList.clear();
         session.savepoints.clear();
     }
 
@@ -143,13 +143,13 @@ public class TransactionManager {
 
     void rollbackTransactions(Session session, int limit, boolean log) {
 
-        Object[] list = session.transactionList.getArray();
-        int      size = session.transactionList.size();
+        Object[] list = session.rowActionList.getArray();
+        int      size = session.rowActionList.size();
 
         for (int i = size - 1; i >= limit; i--) {
             Transaction tx = (Transaction) list[i];
 
-            tx.rollback(session, false);
+            tx.rollback(session, log);
         }
 
         for (int i = limit; i < size; i++) {
@@ -159,7 +159,7 @@ public class TransactionManager {
             rowSessionMap.remove(rowid);
         }
 
-        session.transactionList.setSize(limit);
+        session.rowActionList.setSize(limit);
     }
 
     void addTransaction(Session session, Transaction transaction) {
@@ -212,7 +212,7 @@ public class TransactionManager {
 
                 if (tIndex[i] < tSize) {
                     Transaction current =
-                        (Transaction) sessions[i].transactionList.get(
+                        (Transaction) sessions[i].rowActionList.get(
                             tIndex[i]);
 
                     if (current.SCN < minChangeNo) {
@@ -228,8 +228,7 @@ public class TransactionManager {
                 break;
             }
 
-            HsqlArrayList currentList =
-                sessions[sessionIndex].transactionList;
+            HsqlArrayList currentList = sessions[sessionIndex].rowActionList;
 
             for (; tIndex[sessionIndex] < currentList.size(); ) {
                 Transaction current =
@@ -264,7 +263,7 @@ public class TransactionManager {
         lookup.setKeysSearchTarget();
 
         for (int i = 0; i < sessions.length; i++) {
-            HsqlArrayList tlist = sessions[i].transactionList;
+            HsqlArrayList tlist = sessions[i].rowActionList;
 
             for (int j = 0, size = tlist.size(); j < size; j++) {
                 Transaction tx = (Transaction) tlist.get(j);
@@ -286,7 +285,7 @@ public class TransactionManager {
         Session[] sessions = database.sessionManager.getAllSessions();
 
         for (int i = 0; i < sessions.length; i++) {
-            HsqlArrayList tlist = sessions[i].transactionList;
+            HsqlArrayList tlist = sessions[i].rowActionList;
 
             for (int j = 0, size = tlist.size(); j < size; j++) {
                 Transaction tx = (Transaction) tlist.get(j);

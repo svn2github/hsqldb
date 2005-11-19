@@ -562,7 +562,10 @@ public class Index {
         }
     }
 
-    public Row findRow(Session session, Row row) throws HsqlException {
+    /**
+     * Finds an existing row
+     */
+    Row findRow(Session session, Row row) throws HsqlException {
 
         Node node = search(session, row);
 
@@ -1034,7 +1037,7 @@ public class Index {
      *
      * @throws HsqlException
      */
-    Node search(Session session, Row row) throws HsqlException {
+    private Node search(Session session, Row row) throws HsqlException {
 
         Object[] d = row.getData();
         Node     x = getRoot(session);
@@ -1208,6 +1211,17 @@ public class Index {
                                         : 1;
         } else {
             return 2;
+        }
+    }
+
+    private RowIterator getIterator(Session session, Node x) {
+
+        if (x == null) {
+            return emptyIterator;
+        } else {
+            IndexRowIterator it = new IndexRowIterator(session, this, x);
+
+            return it;
         }
     }
 

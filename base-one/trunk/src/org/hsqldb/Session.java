@@ -119,7 +119,7 @@ public class Session implements SessionInterface {
     //
     Database          database;
     private User      user;
-    HsqlArrayList     transactionList;
+    HsqlArrayList     rowActionList;
     private boolean   isNestedTransaction;
     private int       nestedOldTransIndex;
     int               isolationMode = SessionInterface.TX_READ_COMMITTED;
@@ -172,7 +172,7 @@ public class Session implements SessionInterface {
         sessionId                 = id;
         database                  = db;
         this.user                 = user;
-        transactionList           = new HsqlArrayList(true);
+        rowActionList             = new HsqlArrayList(true);
         savepoints                = new HashMappedList(4);
         isAutoCommit              = autocommit;
         isReadOnly                = readonly;
@@ -228,7 +228,7 @@ public class Session implements SessionInterface {
 
             database                  = null;
             user                      = null;
-            transactionList           = null;
+            rowActionList             = null;
             savepoints                = null;
             intConnection             = null;
             compiledStatementExecutor = null;
@@ -386,13 +386,13 @@ public class Session implements SessionInterface {
      * @param  row the deleted row
      * @throws  HsqlException
      */
-    boolean addTransactionDelete(Table table, Row row) throws HsqlException {
+    boolean addDeleteAction(Table table, Row row) throws HsqlException {
 
         if (!isAutoCommit || isNestedTransaction) {
             Transaction t = new Transaction(true, table, row,
                                             actionTimestamp);
 
-            transactionList.add(t);
+            rowActionList.add(t);
             database.txManager.addTransaction(this, t);
 
             return true;
@@ -410,13 +410,13 @@ public class Session implements SessionInterface {
      * @param  row the inserted row
      * @throws  HsqlException
      */
-    boolean addTransactionInsert(Table table, Row row) throws HsqlException {
+    boolean addInsertAction(Table table, Row row) throws HsqlException {
 
         if (!isAutoCommit || isNestedTransaction) {
             Transaction t = new Transaction(false, table, row,
                                             actionTimestamp);
 
-            transactionList.add(t);
+            rowActionList.add(t);
             database.txManager.addTransaction(this, t);
 
             return true;
@@ -469,7 +469,7 @@ public class Session implements SessionInterface {
         }
 
         synchronized (database) {
-            if (!transactionList.isEmpty()) {
+            if (!rowActionList.isEmpty()) {
                 try {
                     database.logger.writeCommitStatement(this);
                 } catch (HsqlException e) {}
@@ -492,7 +492,7 @@ public class Session implements SessionInterface {
         }
 
         synchronized (database) {
-            if (transactionList.size() != 0) {
+            if (rowActionList.size() != 0) {
                 try {
                     database.logger.writeToLog(this, Token.T_ROLLBACK);
                 } catch (HsqlException e) {}
@@ -520,7 +520,7 @@ public class Session implements SessionInterface {
     void savepoint(String name) throws HsqlException {
 
         savepoints.remove(name);
-        savepoints.add(name, ValuePool.getInt(transactionList.size()));
+        savepoints.add(name, ValuePool.getInt(rowActionList.size()));
 
         try {
             database.logger.writeToLog(this, Token.T_SAVEPOINT + " " + name);
@@ -580,7 +580,7 @@ public class Session implements SessionInterface {
             Trace.doAssert(false, "beginNestedTransaction");
         }
 
-        nestedOldTransIndex = transactionList.size();
+        nestedOldTransIndex = rowActionList.size();
         isNestedTransaction = true;
     }
 
@@ -731,7 +731,7 @@ public class Session implements SessionInterface {
      * @return the current value
      */
     int getTransactionSize() {
-        return transactionList.size();
+        return rowActionList.size();
     }
 
     /**

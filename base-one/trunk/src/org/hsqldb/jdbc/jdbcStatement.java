@@ -46,6 +46,8 @@ import org.hsqldb.Result;
 import org.hsqldb.ResultConstants;
 import org.hsqldb.Trace;
 import org.hsqldb.Types;
+import org.hsqldb.monitor.DBMon;
+import org.hsqldb.monitor.DBMonFactory;
 
 // fredt@users 20020320 - patch 1.7.0 - JDBC 2 support and error trapping
 // JDBC 2 methods can now be called from jdk 1.1.x - see javadoc comments
@@ -194,12 +196,20 @@ public class jdbcStatement implements Statement {
      */
     public ResultSet executeQuery(String sql) throws SQLException {
 
-        checkClosed();
-        connection.clearWarningsNoCheck();
-        fetchResult(sql);
+        DBMon mon = DBMonFactory.start(
+            "org.hsqldb.jdbc.jdbcStatement.executeQuery(sql)");
 
-        return new jdbcResultSet(this, resultIn, connection.connProperties,
-                                 connection.isNetConn);
+        try {
+            checkClosed();
+            connection.clearWarningsNoCheck();
+            fetchResult(sql);
+
+            return new jdbcResultSet(this, resultIn,
+                                     connection.connProperties,
+                                     connection.isNetConn);
+        } finally {
+            mon.stop();
+        }
     }
 
     /**
@@ -219,23 +229,30 @@ public class jdbcStatement implements Statement {
      */
     public int executeUpdate(String sql) throws SQLException {
 
-        checkClosed();
-        connection.clearWarningsNoCheck();
-        fetchResult(sql);
+        DBMon mon = DBMonFactory.start(
+            "org.hsqldb.jdbc.jdbcStatement.executeUpdate(sql)");
 
-        if (resultIn == null || resultIn.mode == ResultConstants.DATA) {
+        try {
+            checkClosed();
+            connection.clearWarningsNoCheck();
+            fetchResult(sql);
 
-            /**
-             * @todo: - fredt@users - check for type of statement _must_ be done
-             * in the engine and error returned _without_ executing
-             */
-            throw new SQLException(
-                Trace.getMessage(Trace.jdbcStatement_executeUpdate));
-        } else if (resultIn.mode == ResultConstants.ERROR) {
-            Util.throwError(resultIn);
+            if (resultIn == null || resultIn.mode == ResultConstants.DATA) {
+
+                /**
+                 * @todo: - fredt@users - check for type of statement _must_ be done
+                 * in the engine and error returned _without_ executing
+                 */
+                throw new SQLException(
+                    Trace.getMessage(Trace.jdbcStatement_executeUpdate));
+            } else if (resultIn.mode == ResultConstants.ERROR) {
+                Util.throwError(resultIn);
+            }
+
+            return resultIn.getUpdateCount();
+        } finally {
+            mon.stop();
         }
-
-        return resultIn.getUpdateCount();
     }
 
     /**
@@ -260,15 +277,22 @@ public class jdbcStatement implements Statement {
      */
     public synchronized void close() throws SQLException {
 
-        if (isClosed) {
-            return;
-        }
+        DBMon mon =
+            DBMonFactory.start("org.hsqldb.jdbc.jdbcStatement.close()");
 
-        batchResultOut = null;
-        connection     = null;
-        resultIn       = null;
-        resultOut      = null;
-        isClosed       = true;
+        try {
+            if (isClosed) {
+                return;
+            }
+
+            batchResultOut = null;
+            connection     = null;
+            resultIn       = null;
+            resultOut      = null;
+            isClosed       = true;
+        } finally {
+            mon.stop();
+        }
     }
 
     //----------------------------------------------------------------------
@@ -625,11 +649,18 @@ public class jdbcStatement implements Statement {
      */
     public boolean execute(String sql) throws SQLException {
 
-        checkClosed();
-        connection.clearWarningsNoCheck();
-        fetchResult(sql);
+        DBMon mon =
+            DBMonFactory.start("org.hsqldb.jdbc.jdbcStatement.execute(sql)");
 
-        return resultIn.mode == ResultConstants.DATA;
+        try {
+            checkClosed();
+            connection.clearWarningsNoCheck();
+            fetchResult(sql);
+
+            return resultIn.mode == ResultConstants.DATA;
+        } finally {
+            mon.stop();
+        }
     }
 
     /**
@@ -1067,43 +1098,50 @@ public class jdbcStatement implements Statement {
      */
     public int[] executeBatch() throws SQLException {
 
-        int[]         updateCounts;
-        int           batchCount;
-        HsqlException he;
-
-        checkClosed();
-        connection.clearWarningsNoCheck();
-
-        if (batchResultOut == null) {
-            batchResultOut = new Result(ResultConstants.BATCHEXECDIRECT,
-                                        new int[]{ Types.VARCHAR }, 0);
-        }
-
-        batchCount = batchResultOut.getSize();
+        DBMon mon = DBMonFactory.start(
+            "org.hsqldb.jdbc.jdbcStatement.executeBatch()");
 
         try {
-            resultIn = connection.sessionProxy.execute(batchResultOut);
-        } catch (HsqlException e) {
+            int[]         updateCounts;
+            int           batchCount;
+            HsqlException he;
+
+            checkClosed();
+            connection.clearWarningsNoCheck();
+
+            if (batchResultOut == null) {
+                batchResultOut = new Result(ResultConstants.BATCHEXECDIRECT,
+                                            new int[]{ Types.VARCHAR }, 0);
+            }
+
+            batchCount = batchResultOut.getSize();
+
+            try {
+                resultIn = connection.sessionProxy.execute(batchResultOut);
+            } catch (HsqlException e) {
+                batchResultOut.clear();
+
+                throw Util.sqlException(e);
+            }
+
             batchResultOut.clear();
 
-            throw Util.sqlException(e);
-        }
+            if (resultIn.mode == ResultConstants.ERROR) {
+                Util.throwError(resultIn);
+            }
 
-        batchResultOut.clear();
-
-        if (resultIn.mode == ResultConstants.ERROR) {
-            Util.throwError(resultIn);
-        }
-
-        updateCounts = resultIn.getUpdateCounts();
+            updateCounts = resultIn.getUpdateCounts();
 
 //#ifdef JAVA2
-        if (updateCounts.length != batchCount) {
-            throw new BatchUpdateException("failed batch", updateCounts);
-        }
+            if (updateCounts.length != batchCount) {
+                throw new BatchUpdateException("failed batch", updateCounts);
+            }
 
 //#endif JAVA2
-        return updateCounts;
+            return updateCounts;
+        } finally {
+            mon.stop();
+        }
     }
 
     /**

@@ -2466,7 +2466,6 @@ class DatabaseCommandInterpreter {
     private Table newTable(int type, String name, boolean quoted,
                            HsqlName schema) throws HsqlException {
 
-        int sid = session.getId();
         HsqlName tableHsqlName = database.nameManager.newHsqlName(name,
             quoted);
 

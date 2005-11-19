@@ -118,9 +118,9 @@ import org.hsqldb.persist.Logger;
  */
 public class Database {
 
-    int            databaseID;
-    private String sType;
-    private String sName;
+    int    databaseID;
+    String sType;
+    String sName;
 
 // loosecannon1@users 1.7.2 patch properties on the JDBC URL
     private HsqlProperties urlProperties;
