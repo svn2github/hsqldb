@@ -98,9 +98,9 @@ public class Logger {
         appLog = new SimpleLog(path + ".app.log", loglevel,
                                !db.isFilesReadOnly());
 
-        appLog.sendLine("Database (re)opened: "
-                        + db.getFileAccess().getClass().getName() + " "
-                        + HsqlDateTime.getSytemTimeString());
+        appLog.sendLine(SimpleLog.LOG_ERROR,
+                        "Database (re)opened: "
+                        + db.getFileAccess().getClass().getName());
 
         logStatements = false;
 
@@ -142,8 +142,7 @@ public class Logger {
 
         if (log == null) {
             if (appLog != null) {
-                appLog.sendLine("Database closed: "
-                                + HsqlDateTime.getSytemTimeString());
+                appLog.sendLine(SimpleLog.LOG_ERROR, "Database closed");
                 appLog.close();
             }
 
@@ -168,8 +167,7 @@ public class Logger {
             }
         } catch (Throwable e) {
             if (appLog != null) {
-                appLog.sendLine("Database closed: "
-                                + HsqlDateTime.getSytemTimeString());
+                appLog.sendLine(SimpleLog.LOG_NORMAL, "Database closed");
                 appLog.close();
             }
 
@@ -179,8 +177,7 @@ public class Logger {
         }
 
         if (appLog != null) {
-            appLog.sendLine("Database closed: "
-                            + HsqlDateTime.getSytemTimeString());
+            appLog.sendLine(SimpleLog.LOG_ERROR, "Database closed");
             appLog.close();
         }
 

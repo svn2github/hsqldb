@@ -120,6 +120,7 @@ public class RowInputTextQuoted extends RowInputText {
                         } else {
 
                             //-- End of field.
+                            // todo - bug here as it throws when there are line terminators after the last field
                             if (((next + 1) != qtext.length)
                                     && (text.indexOf(sep, next) != next)) {
                                 throw Trace

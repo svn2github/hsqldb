@@ -728,7 +728,7 @@ public class SchemaManager {
 // ft - concurrent
         session.commit();
         dropTable(table, cascade);
-        session.setScripting(!table.isTemp());
+        session.setScripting(true);
     }
 
     void dropTable(Table table, boolean cascade) throws HsqlException {

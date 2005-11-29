@@ -51,7 +51,8 @@ public class DataFileBlockManager {
     private long           requestSize;
 
     // reporting vars
-    long lostFreeBlockSize;
+    long    lostFreeBlockSize;
+    boolean isModified;
 
     /**
      *
@@ -71,6 +72,8 @@ public class DataFileBlockManager {
     /**
      */
     void add(int pos, int rowSize) {
+
+        isModified = true;
 
         if (capacity == 0) {
             lostFreeBlockSize += rowSize;
@@ -131,6 +134,10 @@ public class DataFileBlockManager {
 
     long getLostBlocksSize() {
         return lostFreeBlockSize;
+    }
+
+    boolean isModified() {
+        return isModified;
     }
 
     private void resetList() {

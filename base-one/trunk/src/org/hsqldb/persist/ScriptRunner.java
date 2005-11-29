@@ -38,6 +38,7 @@ import org.hsqldb.ResultConstants;
 import org.hsqldb.Session;
 import org.hsqldb.Trace;
 import org.hsqldb.lib.IntKeyHashMap;
+import org.hsqldb.lib.SimpleLog;
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.scriptio.ScriptReaderBase;
 import org.hsqldb.scriptio.ScriptWriterBase;
@@ -164,7 +165,8 @@ public class ScriptRunner {
                 message = "out of memory processing " + logFilename
                           + " line: " + scr.getLineNumber();
 
-                database.logger.appLog.logContext(message);
+                database.logger.appLog.logContext(SimpleLog.LOG_ERROR,
+                                                  message);
 
                 throw Trace.error(Trace.OUT_OF_MEMORY);
             }
@@ -173,7 +175,7 @@ public class ScriptRunner {
             message = logFilename + " line: " + scr.getLineNumber() + " "
                       + e.getMessage();
 
-            database.logger.appLog.logContext(message);
+            database.logger.appLog.logContext(SimpleLog.LOG_ERROR, message);
             Trace.printSystemOut(message);
         } finally {
             if (scr != null) {

@@ -35,9 +35,15 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 
+import org.hsqldb.HsqlDateTime;
+
 /**
  * Simple log for recording abnormal events in persistence<p>
- * Log levels, 0 and 1 are currently supported.
+ * Log levels, LOG_NONE, LOG_ERROR, and LOG_NORMAL are currently supported.<p>
+ * LOG_ERROR corresponds to property value 1 and logs main database events plus
+ * any major errors encountered in operation.
+ * LOG_NORMAL corresponds to property value 2 and logs additional normal events
+ * and minor errors.
  *
  * @author fredt@users
  * @version 1.8.0
@@ -45,6 +51,9 @@ import java.io.PrintWriter;
  */
 public class SimpleLog {
 
+    public static int   LOG_NONE   = 0;
+    public static int   LOG_ERROR  = 1;
+    public static int   LOG_NORMAL = 2;
     private PrintWriter writer;
     private int         level;
 
@@ -52,7 +61,7 @@ public class SimpleLog {
 
         this.level = level;
 
-        if (level != 0) {
+        if (level != LOG_NONE) {
             if (useFile) {
                 File file = new File(path);
 
@@ -88,28 +97,28 @@ public class SimpleLog {
         return writer;
     }
 
-    public synchronized void sendLine(String message) {
+    public synchronized void sendLine(int atLevel, String message) {
 
-        if (level != 0) {
-            writer.println(message);
+        if (level >= atLevel) {
+            writer.println(HsqlDateTime.getSytemTimeString() + " " + message);
         }
     }
 
-    public synchronized void logContext(String message) {
+    public synchronized void logContext(int atLevel, String message) {
 
-        if (level == 0) {
+        if (level < atLevel) {
             return;
         }
 
-        String info = "";
+        String info = HsqlDateTime.getSytemTimeString();
 
 //#ifdef JDBC3
         Throwable           t        = new Throwable();
         StackTraceElement[] elements = t.getStackTrace();
 
         if (elements.length > 1) {
-            info = elements[1].getClassName() + "."
-                   + elements[1].getMethodName();
+            info += " " + elements[1].getClassName() + "."
+                    + elements[1].getMethodName();
         }
 
 //#endif
@@ -118,18 +127,18 @@ public class SimpleLog {
 
     public synchronized void logContext(Throwable t) {
 
-        if (level == 0) {
+        if (level == LOG_NONE) {
             return;
         }
 
-        String info = t.getClass().getName();
+        String info = HsqlDateTime.getSytemTimeString();
 
 //#ifdef JDBC3
         StackTraceElement[] elements = t.getStackTrace();
 
         if (elements.length > 0) {
-            info = elements[0].getClassName() + "."
-                   + elements[0].getMethodName();
+            info += " " + elements[0].getClassName() + "."
+                    + elements[0].getMethodName();
         }
 
 //#endif

@@ -1451,27 +1451,27 @@ class DatabaseCommandInterpreter {
         // in certain cases; the workaround here discards such scripted column
         // lists when used in OOo
         if (tokenizer.isGetThis(Token.T_OPENBRACKET)) {
-            try {    // added line
+            try {
                 HsqlArrayList list = Parser.getColumnNames(database, null,
                     tokenizer, true);
 
                 colList = new HsqlName[list.size()];
                 colList = (HsqlName[]) list.toArray(colList);
 
-                //added lines to make sure all columns are quoted
+                //added lines to make sure all valid columns are quoted
                 if (database.isStoredFileAccess()) {
                     for (int i = 0; i < colList.length; i++) {
                         if (!colList[i].isNameQuoted) {
-                            throw (Trace.error(Trace.INVALID_IDENTIFIER));
+                            colList = null;
+
+                            break;
                         }
                     }
                 }
             } catch (HsqlException e) {
 
-                //added lines to catch unquoted column names with spaces
+                //added lines to catch unquoted names with spaces
                 if (database.isStoredFileAccess()) {
-                    colList = null;
-
                     while (!tokenizer.getString().equals(
                             Token.T_CLOSEBRACKET)) {}
                 } else {

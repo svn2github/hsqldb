@@ -234,14 +234,14 @@ public class Expression {
     private int aggregateSpec = AGGREGATE_NONE;
 
     // nodes
-    private Expression eArg, eArg2;
+    Expression eArg, eArg2;
 
-    // VALUE, VALUELIST
-    Object          valueData;
-    private HashSet hList;
-    private int     dataType;
+    // VALUE
+    Object      valueData;
+    private int dataType;
 
     // VALUE LIST NEW
+    HashSet         hList;
     Expression[]    valueList;
     private boolean isFixedConstantValueList;
 
@@ -263,7 +263,7 @@ public class Expression {
     private TableFilter tableFilter;                // null if not yet resolved
     TableFilter         outerFilter;                // defined if this is part of an OUTER JOIN condition tree
 
-    //
+    // COLUMN
     private int     columnIndex;
     private boolean columnQuoted;
     private int     precision;

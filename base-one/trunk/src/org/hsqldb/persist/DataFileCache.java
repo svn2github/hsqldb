@@ -39,6 +39,7 @@ import org.hsqldb.HsqlException;
 import org.hsqldb.Trace;
 import org.hsqldb.lib.FileAccess;
 import org.hsqldb.lib.FileUtil;
+import org.hsqldb.lib.SimpleLog;
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.lib.Storage;
 import org.hsqldb.lib.ZipUnzipFile;
@@ -557,7 +558,8 @@ public class DataFileCache {
 
             return object;
         } catch (IOException e) {
-            database.logger.appLog.logContext("" + cache + " pos: " + i);
+            database.logger.appLog.logContext(SimpleLog.LOG_ERROR,
+                                              "" + cache + " pos: " + i);
             database.logger.appLog.logContext(e);
 
             throw Trace.error(Trace.DATA_FILE_ERROR,
