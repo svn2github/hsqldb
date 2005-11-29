@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.129 2005/10/23 19:25:14 fredt Exp $ */
+/* $Id: SqlFile.java,v 1.130 2005/11/06 20:51:53 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -105,7 +105,7 @@ import java.util.TreeMap;
  * setters would be best) instead of constructor args and System
  * Properties.
  *
- * @version $Revision: 1.129 $
+ * @version $Revision: 1.130 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlFile {
@@ -156,8 +156,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.129 $".substring("$Revision: ".length(),
-                "$Revision: 1.129 $".length() - 2);
+        revnum = "$Revision: 1.130 $".substring("$Revision: ".length(),
+                "$Revision: 1.130 $".length() - 2);
     }
 
     private static String BANNER =
@@ -4054,6 +4054,12 @@ public class SqlFile {
                         colEnd = recEnd;
                     }
 
+                    if (colCount == dataVals.length) {
+                        throw new IOException("Header has " + headers.length
+                                              + " columns.  CSV record "
+                                              + recCount
+                                              + " has too many column values.");
+                    }
                     dataVals[colCount++] = string.substring(colStart, colEnd);
                     colStart             = colEnd + csvColDelim.length();
                 }
