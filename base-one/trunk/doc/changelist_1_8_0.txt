@@ -11,6 +11,8 @@ Maintainer, HSQLDB Project
 Fixed bug where ON DELETE SET DEFAULT was accepted without a matching DEFAULT value
 Fixed bug where column renaming was allowed in tables accessed in views
 Fixed bug where TRUE or FALSE is used as search condition as WHERE .. AND FALSE
+Fixed bug where dropping TEMPORARY tables was not logged
+Fixed bug where negative values for IDENTITY columns were treated as positive
 
 
 2005.11.02 1.8.0.3
