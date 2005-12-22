@@ -449,9 +449,8 @@ extends org.hsqldb.DatabaseInformationMain {
 
         // Do it.
         while (caches.hasNext()) {
-            cache      = (DataFileCache) caches.next();
-            row        = t.getEmptyRowData();
-            iFreeBytes = 0;
+            cache = (DataFileCache) caches.next();
+            row   = t.getEmptyRowData();
             row[icache_file] =
                 FileUtil.canonicalOrAbsolutePath(cache.getFileName());
             row[imax_cache_sz]    = ValuePool.getInt(cache.capacity());

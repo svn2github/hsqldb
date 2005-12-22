@@ -1572,7 +1572,7 @@ public class Expression {
             result = result && eArg2.checkResolved(check);
         }
 
-        if (subQuery != null) {
+        if (subQuery != null && subQuery.select != null) {
             result = result && subQuery.select.checkResolved(check);
         }
 

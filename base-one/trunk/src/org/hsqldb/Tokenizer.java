@@ -485,7 +485,7 @@ public class Tokenizer {
 
         getToken();
 
-        if (sToken.equals(Token.T_MINUS)) {
+        if (sToken.equals("-")) {
             minus = true;
 
             getToken();

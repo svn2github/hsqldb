@@ -1097,7 +1097,7 @@ public class Table extends BaseTable {
      * the first non-unique index. NULL if there is no user-defined index.
      *
      */
-    private void setBestRowIdentifiers() {
+    void setBestRowIdentifiers() {
 
         int[]   briCols      = null;
         int     briColsCount = 0;
@@ -1709,7 +1709,7 @@ public class Table extends BaseTable {
     /**
      * Returns empty Object array for a new row.
      */
-    Object[] getEmptyRowData() {
+    public Object[] getEmptyRowData() {
         return new Object[columnCount];
     }
 
@@ -2814,7 +2814,7 @@ public class Table extends BaseTable {
         row.delete();
 
         if (session != null) {
-            boolean tx = session.addDeleteAction(this, row);
+            session.addDeleteAction(this, row);
         }
 
         if (log && isLogged) {

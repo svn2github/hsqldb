@@ -276,28 +276,35 @@ public class DataFileCache {
                 cache.saveAll();
                 Trace.printSystemOut("saveAll: " + sw.elapsedTime());
 
-                // set empty
-                dataFile.seek(LONG_EMPTY_SIZE);
-                dataFile.writeLong(freeBlocks.getLostBlocksSize());
+                if (fileModified || freeBlocks.isModified()) {
 
-                // set end
-                dataFile.seek(LONG_FREE_POS_POS);
-                dataFile.writeLong(fileFreePosition);
+                    // set empty
+                    dataFile.seek(LONG_EMPTY_SIZE);
+                    dataFile.writeLong(freeBlocks.getLostBlocksSize());
 
-                // set saved flag;
-                dataFile.seek(FLAGS_POS);
+                    // set end
+                    dataFile.seek(LONG_FREE_POS_POS);
+                    dataFile.writeLong(fileFreePosition);
 
-                int flag = BitMap.set(0, FLAG_ISSAVED);
+                    // set saved flag;
+                    dataFile.seek(FLAGS_POS);
 
-                if (hasRowInfo) {
-                    flag = BitMap.set(flag, FLAG_ROWINFO);
+                    int flag = BitMap.set(0, FLAG_ISSAVED);
+
+                    if (hasRowInfo) {
+                        flag = BitMap.set(flag, FLAG_ROWINFO);
+                    }
+
+                    dataFile.writeInt(flag);
+
+                    //
+                    if (dataFile.length() != fileFreePosition) {
+                        dataFile.seek(fileFreePosition);
+                    }
+
+                    Trace.printSystemOut("pos and flags: "
+                                         + sw.elapsedTime());
                 }
-
-                dataFile.writeInt(flag);
-
-                //
-                dataFile.seek(fileFreePosition);
-                Trace.printSystemOut("pos and flags: " + sw.elapsedTime());
             }
 
             if (dataFile != null) {

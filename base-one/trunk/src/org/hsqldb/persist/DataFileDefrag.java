@@ -37,6 +37,7 @@ import java.io.OutputStream;
 
 import org.hsqldb.Database;
 import org.hsqldb.HsqlException;
+import org.hsqldb.Session;
 import org.hsqldb.Table;
 import org.hsqldb.Trace;
 import org.hsqldb.index.RowIterator;
@@ -202,6 +203,7 @@ final class DataFileDefrag {
     int[] writeTableToDataFile(Table table)
     throws IOException, HsqlException {
 
+        Session session        = database.getSessionManager().getSysSession();
         RowOutputBinary rowOut = new RowOutputBinary();
         DoubleIntIndex pointerLookup =
             new DoubleIntIndex(table.getPrimaryIndex().sizeEstimate(), false);
@@ -212,7 +214,7 @@ final class DataFileDefrag {
         pointerLookup.setKeysSearchTarget();
         Trace.printSystemOut("lookup begins: " + stopw.elapsedTime());
 
-        RowIterator it = table.rowIterator(null);
+        RowIterator it = table.rowIterator(session);
 
         for (; it.hasNext(); count++) {
             CachedObject row = (CachedObject) it.next();
@@ -231,7 +233,7 @@ final class DataFileDefrag {
                              stopw.elapsedTime());
 
         count = 0;
-        it    = table.rowIterator(null);
+        it    = table.rowIterator(session);
 
         for (; it.hasNext(); count++) {
             CachedObject row = it.next();

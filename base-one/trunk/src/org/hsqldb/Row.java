@@ -95,7 +95,7 @@ public class Row implements CachedObject {
     /**
      *  Default constructor used only in subclasses.
      */
-    Row() {}
+    protected Row() {}
 
     /**
      *  Constructor for MEMORY table Row. The result is a Row with Nodes that

@@ -53,9 +53,10 @@ import org.hsqldb.lib.Storage;
  */
 class ScaledRAFile implements Storage {
 
-    static final int         DATA_FILE_RAF = 0;
-    static final int         DATA_FILE_NIO = 1;
-    static final int         DATA_FILE_JAR = 2;
+    static final int         DATA_FILE_RAF  = 0;
+    static final int         DATA_FILE_NIO  = 1;
+    static final int         DATA_FILE_JAR  = 2;
+    static final long        MAX_NIO_LENGTH = (1L << 28);
     final RandomAccessFile   file;
     private final boolean    readOnly;
     final String             fileName;
@@ -107,6 +108,15 @@ class ScaledRAFile implements Storage {
         } else if (type == DATA_FILE_RAF) {
             return new ScaledRAFile(name, readonly);
         } else {
+            RandomAccessFile file = new RandomAccessFile(name, readonly ? "r"
+                                                                        : "rw");
+
+            if (file.length() > MAX_NIO_LENGTH) {
+                return new ScaledRAFile(name, file, readonly);
+            } else {
+                file.close();
+            }
+
             try {
                 Class.forName("java.nio.MappedByteBuffer");
 
@@ -122,6 +132,14 @@ class ScaledRAFile implements Storage {
                 return new ScaledRAFile(name, readonly);
             }
         }
+    }
+
+    ScaledRAFile(String name, RandomAccessFile file,
+                 boolean readonly) throws FileNotFoundException, IOException {
+
+        this.readOnly = readonly;
+        fileName      = name;
+        this.file     = file;
     }
 
     ScaledRAFile(String name,

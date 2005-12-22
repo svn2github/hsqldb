@@ -1351,7 +1351,7 @@ class DatabaseInformationMain extends DatabaseInformation {
      * COLUMN_NAME      VARCHAR   simple column name
      * ASC_OR_DESC      VARCHAR   col. sort sequence: {"A" (Asc) | "D" (Desc)}
      * CARDINALITY      INTEGER   # of unique values in index (not implemented)
-     * PAGES            INTEGER   index page use (not implemented)
+     * ROW_CARDINALITY  INTEGER   # of rows in index (not implemented)
      * FILTER_CONDITION VARCHAR   filter condition, if any (not implemented)
      * </pre> <p>
      *
@@ -1378,7 +1378,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             addColumn(t, "COLUMN_NAME", Types.VARCHAR);
             addColumn(t, "ASC_OR_DESC", Types.VARCHAR, 1, true);
             addColumn(t, "CARDINALITY", Types.INTEGER);
-            addColumn(t, "PAGES", Types.INTEGER);
+            addColumn(t, "ROW_CARDINALITY", Types.INTEGER);
             addColumn(t, "FILTER_CONDITION", Types.VARCHAR);
 
             // order: NON_UNIQUE, TYPE, INDEX_NAME, and ORDINAL_POSITION.
@@ -1404,7 +1404,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         //String  columnName;
         //String  ascOrDesc;
         Integer cardinality;
-        Integer pages;
+        Integer rowCardinality;
         String  filterCondition;
 
         // Intermediate holders
@@ -1430,7 +1430,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         final int icolumn_name      = 8;
         final int iasc_or_desc      = 9;
         final int icardinality      = 10;
-        final int ipages            = 11;
+        final int irowcardinality   = 11;
         final int ifilter_condition = 12;
 
         // Initialization
@@ -1469,12 +1469,12 @@ class DatabaseInformationMain extends DatabaseInformation {
                     continue;
                 }
 
-                indexName   = ti.getIndexName(i);
-                nonUnique   = ti.isIndexNonUnique(i);
-                cardinality = ti.getIndexCardinality(i);
-                pages       = ti.getIndexPages(i);
-                cols        = ti.getIndexColumns(i);
-                indexType   = ti.getIndexType(i);
+                indexName      = ti.getIndexName(i);
+                nonUnique      = ti.isIndexNonUnique(i);
+                cardinality    = ti.getIndexCardinality(i);
+                rowCardinality = ti.getIndexRowCardinality(i);
+                cols           = ti.getIndexColumns(i);
+                indexType      = ti.getIndexType(i);
 
                 for (int k = 0; k < colCount; k++) {
                     col                    = cols[k];
@@ -1490,7 +1490,7 @@ class DatabaseInformationMain extends DatabaseInformation {
                     row[icolumn_name]      = ti.getColName(col);
                     row[iasc_or_desc]      = ti.getIndexColDirection(i, col);
                     row[icardinality]      = cardinality;
-                    row[ipages]            = pages;
+                    row[irowcardinality]   = rowCardinality;
                     row[ifilter_condition] = filterCondition;
 
                     t.insertSys(row);

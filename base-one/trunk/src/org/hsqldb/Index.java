@@ -259,7 +259,7 @@ public class Index {
 
     Node getRoot(Session session) {
 
-        if (isTemp) {
+        if (isTemp && session != null) {
             return session.getIndexRoot(indexName, onCommitPreserve);
         } else {
             return root;

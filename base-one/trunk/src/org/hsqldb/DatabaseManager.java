@@ -375,8 +375,12 @@ public class DatabaseManager {
             }
         } else if (type == DatabaseURL.S_RES) {
             databaseMap = resDatabaseMap;
-        } else {
+        } else if (type == DatabaseURL.S_MEM) {
             databaseMap = memDatabaseMap;
+        } else {
+            throw (Trace.runtimeError(
+                Trace.INTERNAL_UNSUPPORTED_OPERATION,
+                "DatabaseManager.lookupDatabaseObject()"));
         }
 
         databaseIDMap.remove(dbID);

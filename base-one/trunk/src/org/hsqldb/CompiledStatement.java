@@ -647,10 +647,14 @@ final class CompiledStatement {
         for (int i = 0; i < subqueries.length; i++) {
             sb.append("\n[level=").append(subqueries[i].level).append(
                 '\n').append("hasParams=").append(
-                subqueries[i].hasParams).append('\n').append(
-                "org.hsqldb.Select@").append(
-                Integer.toHexString(subqueries[i].select.hashCode())).append(
-                "]");
+                subqueries[i].hasParams).append('\n');
+
+            if (subqueries[i].select != null) {
+                sb.append("org.hsqldb.Select@").append(
+                    Integer.toHexString(subqueries[i].select.hashCode()));
+            }
+
+            sb.append("]");
         }
 
         sb.append(']');

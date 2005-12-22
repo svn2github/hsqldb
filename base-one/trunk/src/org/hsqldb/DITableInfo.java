@@ -552,17 +552,6 @@ final class DITableInfo {
      * @return null (not implemented)
      */
     Integer getIndexCardinality(int i) {
-
-        // TODO:     - implement cardinality for all table and index types
-        // REQUIRES: - checkpoint of cardinality for CACHED tables
-        //           - maybe extend SET TABLE <table-name> INDEX ... DDL to
-        //           include index cardinality as well as index roots?
-        // REQUIRES: completion of TODOs in Index for non-unique indices
-        // REQUIRES: setIndexInfoDirty() for DatabaseInformation and related
-        //           support  code.  That is global setDirty on every update
-        //           DML ruins DatabaseInforamation system table caching
-        //           effect
-//      return ValuePool.getInt(index.getCardinality());
         return null;
     }
 
@@ -611,9 +600,7 @@ final class DITableInfo {
      * @param i zero-based index specifier
      * @return null (not implemented)
      */
-    Integer getIndexPages(int i) {
-
-        // not supported yet: hsqldb does not even know what a "page" is
+    Integer getIndexRowCardinality(int i) {
         return null;
     }
 

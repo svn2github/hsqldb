@@ -53,12 +53,11 @@ import org.hsqldb.Trace;
  */
 class NIOScaledRAFile extends ScaledRAFile {
 
-    MappedByteBuffer  buffer;
-    FileChannel       channel;
-    long              bufferLength;
-    private boolean   wasNio;
-    private boolean   bufferModified;
-    static final long MAX_NIO_LENGTH = (1L << 28);
+    MappedByteBuffer buffer;
+    FileChannel      channel;
+    long             bufferLength;
+    private boolean  wasNio;
+    private boolean  bufferModified;
 
     /**
      * Public constructor for access by reflection

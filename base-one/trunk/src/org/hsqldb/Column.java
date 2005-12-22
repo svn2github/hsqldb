@@ -932,6 +932,10 @@ public class Column {
                         return ValuePool.getInt(((Number) o).intValue());
                     }
 
+                    if (o instanceof Byte || o instanceof Short) {
+                        return ValuePool.getInt(((Number) o).intValue());
+                    }
+
                     if (o instanceof java.lang.Number) {
                         return convertToInt(o);
                     }
@@ -958,6 +962,10 @@ public class Column {
 
                     if (o instanceof java.lang.Integer) {
                         return ValuePool.getLong(((Integer) o).longValue());
+                    }
+
+                    if (o instanceof Byte || o instanceof Short) {
+                        return ValuePool.getLong(((Number) o).intValue());
                     }
 
                     if (o instanceof java.lang.Number) {

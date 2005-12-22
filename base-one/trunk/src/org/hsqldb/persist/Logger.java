@@ -98,9 +98,7 @@ public class Logger {
         appLog = new SimpleLog(path + ".app.log", loglevel,
                                !db.isFilesReadOnly());
 
-        appLog.sendLine(SimpleLog.LOG_ERROR,
-                        "Database (re)opened: "
-                        + db.getFileAccess().getClass().getName());
+        appLog.sendLine(SimpleLog.LOG_ERROR, "Database (re)opened");
 
         logStatements = false;
 

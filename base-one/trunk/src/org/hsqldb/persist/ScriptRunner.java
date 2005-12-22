@@ -104,7 +104,6 @@ public class ScriptRunner {
                     continue;
                 }
 
-                String schema = current.currentSchema.name;
                 Result result = null;
 
                 switch (scr.getStatementType()) {

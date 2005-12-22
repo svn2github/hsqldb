@@ -1864,6 +1864,8 @@ class DatabaseCommandInterpreter {
             throw Trace.error(Trace.COLUMN_ALREADY_EXISTS, newName);
         }
 
+        t.database.schemaManager.checkColumnIsInView(t,
+                column.columnName.name);
         session.commit();
         session.setScripting(true);
         t.renameColumn(column, newName, isquoted);
@@ -2535,8 +2537,7 @@ class DatabaseCommandInterpreter {
                 if (defExpr == null) {
                     String columnName = column.columnName.name;
 
-                    throw Trace.error(Trace.COLUMN_TYPE_MISMATCH,
-                                      Trace.NO_DEFAULT_VALUE_FOR_COLUMN,
+                    throw Trace.error(Trace.NO_DEFAULT_VALUE_FOR_COLUMN,
                                       new Object[]{ columnName });
                 }
             }
@@ -2709,18 +2710,32 @@ class DatabaseCommandInterpreter {
         return;
     }
 
+    /**
+     * If an invalid alias is encountered while processing an old script,
+     * simply discard it.
+     */
     private void processCreateAlias() throws HsqlException {
 
         String alias;
         String methodFQN;
 
-        alias = tokenizer.getSimpleName();
+        try {
+            alias = tokenizer.getSimpleName();
+        } catch (HsqlException e) {
+            if (session.isProcessingScript()) {
+                alias = null;
+            } else {
+                throw e;
+            }
+        }
 
         tokenizer.getThis(Token.T_FOR);
 
         methodFQN = upgradeMethodFQN(tokenizer.getSimpleName());
 
-        database.getAliasMap().put(alias, methodFQN);
+        if (alias != null) {
+            database.getAliasMap().put(alias, methodFQN);
+        }
     }
 
     private void processCreateIndex(boolean unique) throws HsqlException {
@@ -3199,6 +3214,7 @@ class DatabaseCommandInterpreter {
 
         tc = processCreateFK(t, n);
 
+        checkFKColumnDefaults(t, tc);
         t.checkColumnsMatch(tc.core.mainColArray, tc.core.refTable,
                             tc.core.refColArray);
         session.commit();
