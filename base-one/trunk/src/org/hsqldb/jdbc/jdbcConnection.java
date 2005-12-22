@@ -61,8 +61,6 @@ import org.hsqldb.Session;
 import org.hsqldb.SessionInterface;
 import org.hsqldb.Trace;
 import org.hsqldb.lib.StringUtil;
-import org.hsqldb.monitor.DBMon;
-import org.hsqldb.monitor.DBMonFactory;
 
 // fredt@users 20020320 - patch 1.7.0 - JDBC 2 support and error trapping
 // JDBC 2 methods can now be called from jdk 1.1.x - see javadoc comments
@@ -498,19 +496,12 @@ public class jdbcConnection implements Connection {
      */
     public synchronized Statement createStatement() throws SQLException {
 
-        DBMon mon = DBMonFactory.start(
-            "org.hsqldb.jdbc.jdbcConnection.createStatement()");
+        checkClosed();
 
-        try {
-            checkClosed();
+        Statement stmt = new jdbcStatement(this,
+                                           jdbcResultSet.TYPE_FORWARD_ONLY);
 
-            Statement stmt =
-                new jdbcStatement(this, jdbcResultSet.TYPE_FORWARD_ONLY);
-
-            return stmt;
-        } finally {
-            mon.stop();
-        }
+        return stmt;
     }
 
     /**
@@ -564,24 +555,17 @@ public class jdbcConnection implements Connection {
     public synchronized PreparedStatement prepareStatement(String sql)
     throws SQLException {
 
-        DBMon mon = DBMonFactory.start(
-            "org.hsqldb.jdbc.jdbcConnection.prepareStatement(String)");
+        PreparedStatement stmt;
+
+        checkClosed();
 
         try {
-            PreparedStatement stmt;
+            stmt = new jdbcPreparedStatement(this, sql,
+                                             jdbcResultSet.TYPE_FORWARD_ONLY);
 
-            checkClosed();
-
-            try {
-                stmt = new jdbcPreparedStatement(
-                    this, sql, jdbcResultSet.TYPE_FORWARD_ONLY);
-
-                return stmt;
-            } catch (HsqlException e) {
-                throw Util.sqlException(e);
-            }
-        } finally {
-            mon.stop();
+            return stmt;
+        } catch (HsqlException e) {
+            throw Util.sqlException(e);
         }
     }
 
@@ -630,24 +614,17 @@ public class jdbcConnection implements Connection {
     public synchronized CallableStatement prepareCall(String sql)
     throws SQLException {
 
-        DBMon mon = DBMonFactory.start(
-            "org.hsqldb.jdbc.jdbcConnection.prepareCall(String)");
+        CallableStatement stmt;
+
+        checkClosed();
 
         try {
-            CallableStatement stmt;
+            stmt = new jdbcCallableStatement(this, sql,
+                                             jdbcResultSet.TYPE_FORWARD_ONLY);
 
-            checkClosed();
-
-            try {
-                stmt = new jdbcCallableStatement(
-                    this, sql, jdbcResultSet.TYPE_FORWARD_ONLY);
-
-                return stmt;
-            } catch (HsqlException e) {
-                throw Util.sqlException(e);
-            }
-        } finally {
-            mon.stop();
+            return stmt;
+        } catch (HsqlException e) {
+            throw Util.sqlException(e);
         }
     }
 
@@ -1002,19 +979,12 @@ public class jdbcConnection implements Connection {
      */
     public synchronized void commit() throws SQLException {
 
-        DBMon mon =
-            DBMonFactory.start("org.hsqldb.jdbc.jdbcConnection.commit()");
+        checkClosed();
 
         try {
-            checkClosed();
-
-            try {
-                sessionProxy.commit();
-            } catch (HsqlException e) {
-                throw Util.sqlException(e);
-            }
-        } finally {
-            mon.stop();
+            sessionProxy.commit();
+        } catch (HsqlException e) {
+            throw Util.sqlException(e);
         }
     }
 
@@ -1049,19 +1019,12 @@ public class jdbcConnection implements Connection {
      */
     public synchronized void rollback() throws SQLException {
 
-        DBMon mon =
-            DBMonFactory.start("org.hsqldb.jdbc.jdbcConnection.rollback()");
+        checkClosed();
 
         try {
-            checkClosed();
-
-            try {
-                sessionProxy.rollback();
-            } catch (HsqlException e) {
-                throw Util.sqlException(e);
-            }
-        } finally {
-            mon.stop();
+            sessionProxy.rollback();
+        } catch (HsqlException e) {
+            throw Util.sqlException(e);
         }
     }
 
@@ -1092,29 +1055,21 @@ public class jdbcConnection implements Connection {
      */
     public synchronized void close() throws SQLException {
 
-        DBMon mon =
-            DBMonFactory.start("org.hsqldb.jdbc.jdbcConnection.close()");
-
-        try {
-
-            // Changed to synchronized above because
-            // we would not want a sessionProxy.close()
-            // operation to occur concurrently with a
-            // statementXXX.executeXXX operation.
-            if (isInternal || isClosed) {
-                return;
-            }
-
-            isClosed = true;
-
-            sessionProxy.close();
-
-            sessionProxy   = null;
-            rootWarning    = null;
-            connProperties = null;
-        } finally {
-            mon.stop();
+        // Changed to synchronized above because
+        // we would not want a sessionProxy.close()
+        // operation to occur concurrently with a
+        // statementXXX.executeXXX operation.
+        if (isInternal || isClosed) {
+            return;
         }
+
+        isClosed = true;
+
+        sessionProxy.close();
+
+        sessionProxy   = null;
+        rootWarning    = null;
+        connProperties = null;
     }
 
     /**
@@ -1519,19 +1474,12 @@ public class jdbcConnection implements Connection {
     public synchronized Statement createStatement(int type,
             int concurrency) throws SQLException {
 
-        DBMon mon = DBMonFactory.start(
-            "org.hsqldb.jdbc.jdbcConnection.createStatement(int,int)");
+        checkClosed();
 
-        try {
-            checkClosed();
+        type        = xlateRSType(type);
+        concurrency = xlateRSConcurrency(concurrency);
 
-            type        = xlateRSType(type);
-            concurrency = xlateRSConcurrency(concurrency);
-
-            return new jdbcStatement(this, type);
-        } finally {
-            mon.stop();
-        }
+        return new jdbcStatement(this, type);
     }
 
     /**
@@ -1584,22 +1532,15 @@ public class jdbcConnection implements Connection {
     public synchronized PreparedStatement prepareStatement(String sql,
             int type, int concurrency) throws SQLException {
 
-        DBMon mon = DBMonFactory.start(
-            "org.hsqldb.jdbc.jdbcConnection.prepareStatement(String,int,int)");
+        checkClosed();
+
+        type        = xlateRSType(type);
+        concurrency = xlateRSConcurrency(concurrency);
 
         try {
-            checkClosed();
-
-            type        = xlateRSType(type);
-            concurrency = xlateRSConcurrency(concurrency);
-
-            try {
-                return new jdbcPreparedStatement(this, sql, type);
-            } catch (HsqlException e) {
-                throw Util.sqlException(e);
-            }
-        } finally {
-            mon.stop();
+            return new jdbcPreparedStatement(this, sql, type);
+        } catch (HsqlException e) {
+            throw Util.sqlException(e);
         }
     }
 
@@ -1650,22 +1591,15 @@ public class jdbcConnection implements Connection {
     public synchronized CallableStatement prepareCall(String sql,
             int resultSetType, int resultSetConcurrency) throws SQLException {
 
-        DBMon mon = DBMonFactory.start(
-            "org.hsqldb.jdbc.jdbcConnection.prepareCall(String,int,int)");
+        checkClosed();
+
+        resultSetType        = xlateRSType(resultSetType);
+        resultSetConcurrency = xlateRSConcurrency(resultSetConcurrency);
 
         try {
-            checkClosed();
-
-            resultSetType        = xlateRSType(resultSetType);
-            resultSetConcurrency = xlateRSConcurrency(resultSetConcurrency);
-
-            try {
-                return new jdbcCallableStatement(this, sql, resultSetType);
-            } catch (HsqlException e) {
-                throw Util.sqlException(e);
-            }
-        } finally {
-            mon.stop();
+            return new jdbcCallableStatement(this, sql, resultSetType);
+        } catch (HsqlException e) {
+            throw Util.sqlException(e);
         }
     }
 
@@ -1926,58 +1860,51 @@ public class jdbcConnection implements Connection {
     public synchronized void rollback(Savepoint savepoint)
     throws SQLException {
 
-        DBMon mon = DBMonFactory.start(
-            "org.hsqldb.jdbc.jdbcConnection.rollback(Savepoint)");
+        String        msg;
+        jdbcSavepoint sp;
+        Result        req;
+
+        checkClosed();
+
+        if (savepoint == null) {
+            msg = "savepoint is null";
+
+            throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+        }
 
         try {
-            String        msg;
-            jdbcSavepoint sp;
-            Result        req;
-
-            checkClosed();
-
-            if (savepoint == null) {
-                msg = "savepoint is null";
+            if (sessionProxy.isAutoCommit()) {
+                msg = "connection is autocommit";
 
                 throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
             }
-
-            try {
-                if (sessionProxy.isAutoCommit()) {
-                    msg = "connection is autocommit";
-
-                    throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
-                }
-            } catch (HsqlException e) {
-                throw Util.sqlException(e);
-            }
+        } catch (HsqlException e) {
+            throw Util.sqlException(e);
+        }
 
 // fredt - might someone call this with a Savepoint from a different driver???
-            if (!(savepoint instanceof jdbcSavepoint)) {
-                throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT);
+        if (!(savepoint instanceof jdbcSavepoint)) {
+            throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT);
+        }
+
+        sp = (jdbcSavepoint) savepoint;
+
+        if (this != sp.connection) {
+            msg = savepoint + " was not issued on this connection";
+
+            throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+        }
+
+        req = Result.newRollbackToSavepointRequest(sp.name);
+
+        try {
+            Result result = sessionProxy.execute(req);
+
+            if (result.mode == ResultConstants.ERROR) {
+                Util.throwError(result);
             }
-
-            sp = (jdbcSavepoint) savepoint;
-
-            if (this != sp.connection) {
-                msg = savepoint + " was not issued on this connection";
-
-                throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
-            }
-
-            req = Result.newRollbackToSavepointRequest(sp.name);
-
-            try {
-                Result result = sessionProxy.execute(req);
-
-                if (result.mode == ResultConstants.ERROR) {
-                    Util.throwError(result);
-                }
-            } catch (HsqlException e) {
-                Util.throwError(e);
-            }
-        } finally {
-            mon.stop();
+        } catch (HsqlException e) {
+            Util.throwError(e);
         }
     }
 
@@ -2096,20 +2023,13 @@ public class jdbcConnection implements Connection {
             int resultSetConcurrency,
             int resultSetHoldability) throws SQLException {
 
-        DBMon mon = DBMonFactory.start(
-            "org.hsqldb.jdbc.jdbcConnection.createStatement(int,int,int)");
+        checkClosed();
 
-        try {
-            checkClosed();
+        resultSetType        = xlateRSType(resultSetType);
+        resultSetConcurrency = xlateRSConcurrency(resultSetConcurrency);
+        resultSetHoldability = xlateRSHoldability(resultSetHoldability);
 
-            resultSetType        = xlateRSType(resultSetType);
-            resultSetConcurrency = xlateRSConcurrency(resultSetConcurrency);
-            resultSetHoldability = xlateRSHoldability(resultSetHoldability);
-
-            return new jdbcStatement(this, resultSetType);
-        } finally {
-            mon.stop();
-        }
+        return new jdbcStatement(this, resultSetType);
     }
 
 //#endif JDBC3
@@ -2173,23 +2093,16 @@ public class jdbcConnection implements Connection {
             int resultSetType, int resultSetConcurrency,
             int resultSetHoldability) throws SQLException {
 
-        DBMon mon = DBMonFactory.start(
-            "org.hsqldb.jdbc.jdbcConnection.prepareStatement(String,int,int,int)");
+        checkClosed();
+
+        resultSetType        = xlateRSType(resultSetType);
+        resultSetConcurrency = xlateRSConcurrency(resultSetConcurrency);
+        resultSetHoldability = xlateRSHoldability(resultSetHoldability);
 
         try {
-            checkClosed();
-
-            resultSetType        = xlateRSType(resultSetType);
-            resultSetConcurrency = xlateRSConcurrency(resultSetConcurrency);
-            resultSetHoldability = xlateRSHoldability(resultSetHoldability);
-
-            try {
-                return new jdbcPreparedStatement(this, sql, resultSetType);
-            } catch (HsqlException e) {
-                throw Util.sqlException(e);
-            }
-        } finally {
-            mon.stop();
+            return new jdbcPreparedStatement(this, sql, resultSetType);
+        } catch (HsqlException e) {
+            throw Util.sqlException(e);
         }
     }
 
@@ -2253,23 +2166,16 @@ public class jdbcConnection implements Connection {
             int resultSetType, int resultSetConcurrency,
             int resultSetHoldability) throws SQLException {
 
-        DBMon mon = DBMonFactory.start(
-            "org.hsqldb.jdbc.jdbcConnection.prepareCall(sql,type,concurrency,holdability)");
+        checkClosed();
+
+        resultSetType        = xlateRSType(resultSetType);
+        resultSetConcurrency = xlateRSConcurrency(resultSetConcurrency);
+        resultSetHoldability = xlateRSHoldability(resultSetHoldability);
 
         try {
-            checkClosed();
-
-            resultSetType        = xlateRSType(resultSetType);
-            resultSetConcurrency = xlateRSConcurrency(resultSetConcurrency);
-            resultSetHoldability = xlateRSHoldability(resultSetHoldability);
-
-            try {
-                return new jdbcCallableStatement(this, sql, resultSetType);
-            } catch (HsqlException e) {
-                throw Util.sqlException(e);
-            }
-        } finally {
-            mon.stop();
+            return new jdbcCallableStatement(this, sql, resultSetType);
+        } catch (HsqlException e) {
+            throw Util.sqlException(e);
         }
     }
 
@@ -2520,8 +2426,7 @@ public class jdbcConnection implements Connection {
             if (DatabaseURL.isInProcessDatabaseType(connType)) {
 
 /** @todo fredt - this should be the only static reference to a core class in
-  *  the jdbc package - we may make it dynamic
-  */
+                     *  the jdbc package - we may make it dynamic */
                 sessionProxy = DatabaseManager.newSession(connType, database,
                         user, password, props);
             } else if (connType == DatabaseURL.S_HSQL

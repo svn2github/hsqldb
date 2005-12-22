@@ -38,9 +38,6 @@ import javax.naming.Name;
 import javax.naming.Reference;
 import javax.naming.spi.ObjectFactory;
 
-import org.hsqldb.monitor.DBMon;
-import org.hsqldb.monitor.DBMonFactory;
-
 // boucherb@users 20040411 - doc 1.7.2 - javadoc updates toward 1.7.2 final
 
 /**
@@ -71,26 +68,19 @@ public class jdbcDataSourceFactory implements ObjectFactory {
     public Object getObjectInstance(Object obj, Name name, Context nameCtx,
                                     Hashtable environment) throws Exception {
 
-        DBMon mon = DBMonFactory.start(
-            "org.hsqldb.jdbc.jdbcDataSourceFactory.getObjectInstance(Object,Name,Context,Hashtable)");
+        String    dsClass = "org.hsqldb.jdbc.jdbcDataSource";
+        Reference ref     = (Reference) obj;
 
-        try {
-            String    dsClass = "org.hsqldb.jdbc.jdbcDataSource";
-            Reference ref     = (Reference) obj;
+        if (ref.getClassName().equals(dsClass)) {
+            jdbcDataSource ds = new jdbcDataSource();
 
-            if (ref.getClassName().equals(dsClass)) {
-                jdbcDataSource ds = new jdbcDataSource();
+            ds.setDatabase((String) ref.get("database").getContent());
+            ds.setUser((String) ref.get("user").getContent());
+            ds.setPassword((String) ref.get("password").getContent());
 
-                ds.setDatabase((String) ref.get("database").getContent());
-                ds.setUser((String) ref.get("user").getContent());
-                ds.setPassword((String) ref.get("password").getContent());
-
-                return ds;
-            } else {
-                return null;
-            }
-        } finally {
-            mon.stop();
+            return ds;
+        } else {
+            return null;
         }
     }
 }

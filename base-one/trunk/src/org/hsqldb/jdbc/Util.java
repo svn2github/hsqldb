@@ -36,47 +36,28 @@ import java.sql.SQLException;
 import org.hsqldb.HsqlException;
 import org.hsqldb.Result;
 import org.hsqldb.Trace;
-import org.hsqldb.monitor.DBMon;
-import org.hsqldb.monitor.DBMonFactory;
 
 /**
  * Provides driver constants and a gateway from internal HsqlExceptions to
  * external SQLExceptions.
  *
  * @author fredt@users
- * @version 1.8.0
+ * @version 1.7.2
  * @since 1.7.2
  */
 public class Util {
 
-    /**
-     * Note it is probably not feasable to have the entire Exeption message
-     * show up in the Monitor report as this could generate a fair ammount of
-     * data not easily displayed in a report. However, it might be worth adding
-     * the unchanged portion of the Exception. For example:  in the following
-     * 'Unexpected Token' could be displayed and not the actual syntax error.
-     * Unexpected token: SEDLECT in statement [SEdLECT * FROM mytable]
-     */
     static final void throwError(HsqlException e) throws SQLException {
-
-        monitorException(e.getSQLState(), e.getErrorCode());
-
         throw new SQLException(e.getMessage(), e.getSQLState(),
                                e.getErrorCode());
     }
 
     static final void throwError(Result r) throws SQLException {
-
-        monitorException(r.getSubString(), r.getStatementID());
-
         throw new SQLException(r.getMainString(), r.getSubString(),
                                r.getStatementID());
     }
 
     public static final SQLException sqlException(HsqlException e) {
-
-        monitorException(e.getSQLState(), e.getErrorCode());
-
         return new SQLException(e.getMessage(), e.getSQLState(),
                                 e.getErrorCode());
     }
@@ -95,14 +76,4 @@ public class Util {
 
     static final SQLException notSupported =
         sqlException(Trace.error(Trace.FUNCTION_NOT_SUPPORTED));
-
-    /**
-     * More interested in these stats for their counts than their performance
-     * as throwing an Exception is not a performance issue. So simply start and
-     * stop the monitor.  This simplifies the code above a bit.
-     */
-    private static void monitorException(String state, int error) {
-        DBMonFactory.start("org.hsqldb.jdbc.Util.SQLException.state=" + state
-                           + ",error=" + error).stop();
-    }
 }

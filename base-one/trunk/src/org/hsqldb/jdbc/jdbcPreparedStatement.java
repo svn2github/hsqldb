@@ -65,8 +65,6 @@ import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HsqlByteArrayOutputStream;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.StringConverter;
-import org.hsqldb.monitor.DBMon;
-import org.hsqldb.monitor.DBMonFactory;
 import org.hsqldb.types.Binary;
 import org.hsqldb.types.JavaObject;
 
@@ -331,33 +329,26 @@ implements PreparedStatement {
      */
     public boolean execute() throws SQLException {
 
-        DBMon mon = DBMonFactory.start(
-            "org.hsqldb.jdbc.jdbcPreparedStatement.execute()");
+        checkClosed();
+        connection.clearWarningsNoCheck();
+
+        resultIn = null;
 
         try {
-            checkClosed();
-            connection.clearWarningsNoCheck();
+            resultOut.setMaxRows(maxRows);
+            resultOut.setParameterData(parameterValues);
 
-            resultIn = null;
-
-            try {
-                resultOut.setMaxRows(maxRows);
-                resultOut.setParameterData(parameterValues);
-
-                resultIn = connection.sessionProxy.execute(resultOut);
-            } catch (HsqlException e) {
-                throw Util.sqlException(e);
-            }
-
-            if (resultIn.mode == ResultConstants.ERROR) {
-                Util.throwError(resultIn);
-            }
-
-            return resultIn.mode == ResultConstants.DATA ? true
-                                                         : false;
-        } finally {
-            mon.stop();
+            resultIn = connection.sessionProxy.execute(resultOut);
+        } catch (HsqlException e) {
+            throw Util.sqlException(e);
         }
+
+        if (resultIn.mode == ResultConstants.ERROR) {
+            Util.throwError(resultIn);
+        }
+
+        return resultIn.mode == ResultConstants.DATA ? true
+                                                     : false;
     }
 
     /**
@@ -373,39 +364,31 @@ implements PreparedStatement {
      */
     public ResultSet executeQuery() throws SQLException {
 
-        DBMon mon = DBMonFactory.start(
-            "org.hsqldb.jdbc.jdbcPreparedStatement.executeQuery()");
+        checkClosed();
+        connection.clearWarningsNoCheck();
+        checkIsRowCount(false);
+
+        resultIn = null;
 
         try {
-            checkClosed();
-            connection.clearWarningsNoCheck();
-            checkIsRowCount(false);
+            resultOut.setMaxRows(maxRows);
+            resultOut.setParameterData(parameterValues);
 
-            resultIn = null;
-
-            try {
-                resultOut.setMaxRows(maxRows);
-                resultOut.setParameterData(parameterValues);
-
-                resultIn = connection.sessionProxy.execute(resultOut);
-            } catch (HsqlException e) {
-                throw Util.sqlException(e);
-            }
-
-            if (resultIn.mode == ResultConstants.ERROR) {
-                Util.throwError(resultIn);
-            } else if (resultIn.mode != ResultConstants.DATA) {
-                String msg = "Expected but did not recieve a result set";
-
-                throw Util.sqlException(Trace.UNEXPECTED_EXCEPTION, msg);
-            }
-
-            return new jdbcResultSet(this, resultIn,
-                                     connection.connProperties,
-                                     connection.isNetConn);
-        } finally {
-            mon.stop();
+            resultIn = connection.sessionProxy.execute(resultOut);
+        } catch (HsqlException e) {
+            throw Util.sqlException(e);
         }
+
+        if (resultIn.mode == ResultConstants.ERROR) {
+            Util.throwError(resultIn);
+        } else if (resultIn.mode != ResultConstants.DATA) {
+            String msg = "Expected but did not recieve a result set";
+
+            throw Util.sqlException(Trace.UNEXPECTED_EXCEPTION, msg);
+        }
+
+        return new jdbcResultSet(this, resultIn, connection.connProperties,
+                                 connection.isNetConn);
     }
 
     /**
@@ -425,39 +408,29 @@ implements PreparedStatement {
      */
     public int executeUpdate() throws SQLException {
 
-        DBMon mon = DBMonFactory.start(
-            "org.hsqldb.jdbc.jdbcPreparedStatement.executeUpdate()");
+        checkClosed();
+        connection.clearWarningsNoCheck();
+        checkIsRowCount(true);
+
+        resultIn = null;
 
         try {
-            checkClosed();
-            connection.clearWarningsNoCheck();
-            checkIsRowCount(true);
+            resultOut.setParameterData(parameterValues);
 
-            resultIn = null;
-
-            try {
-                resultOut.setParameterData(parameterValues);
-
-                resultIn = connection.sessionProxy.execute(resultOut);
-            } catch (HsqlException e) {
-                throw Util.sqlException(e);
-            }
-
-            if (resultIn.mode == ResultConstants.ERROR) {
-                Util.throwError(resultIn);
-            } else if (resultIn.mode != ResultConstants.UPDATECOUNT) {
-
-                // todo -  move message to Trace
-                String msg =
-                    "Expected but did not recieve a row update count";
-
-                throw Util.sqlException(Trace.UNEXPECTED_EXCEPTION, msg);
-            }
-
-            return resultIn.getUpdateCount();
-        } finally {
-            mon.stop();
+            resultIn = connection.sessionProxy.execute(resultOut);
+        } catch (HsqlException e) {
+            throw Util.sqlException(e);
         }
+
+        if (resultIn.mode == ResultConstants.ERROR) {
+            Util.throwError(resultIn);
+        } else if (resultIn.mode != ResultConstants.UPDATECOUNT) {
+            String msg = "Expected but did not recieve a row update count";
+
+            throw Util.sqlException(Trace.UNEXPECTED_EXCEPTION, msg);
+        }
+
+        return resultIn.getUpdateCount();
     }
 
     /**
@@ -533,19 +506,12 @@ implements PreparedStatement {
      */
     public int[] executeBatch() throws SQLException {
 
-        DBMon mon = DBMonFactory.start(
-            "org.hsqldb.jdbc.jdbcPreparedStatement.executeBatch()");
-
-        try {
-            if (batchResultOut == null) {
-                batchResultOut = new Result(ResultConstants.BATCHEXECUTE,
-                                            parameterTypes, statementID);
-            }
-
-            return super.executeBatch();
-        } finally {
-            mon.stop();
+        if (batchResultOut == null) {
+            batchResultOut = new Result(ResultConstants.BATCHEXECUTE,
+                                        parameterTypes, statementID);
         }
+
+        return super.executeBatch();
     }
 
     /**
@@ -2166,44 +2132,37 @@ implements PreparedStatement {
      */
     public synchronized void close() throws SQLException {
 
-        DBMon mon = DBMonFactory.start(
-            "org.hsqldb.jdbc.jdbcPreparedStatement.close()");
+        if (isClosed()) {
+            return;
+        }
+
+        HsqlException he = null;
 
         try {
-            if (isClosed()) {
-                return;
+
+            // fredt - if this is called by Connection.close() then there's no
+            // need to free the prepared statements on the server - it is done
+            // by Connection.close()
+            if (!connection.isClosed) {
+                connection.sessionProxy.execute(
+                    Result.newFreeStmtRequest(statementID));
             }
+        } catch (HsqlException e) {
+            he = e;
+        }
 
-            HsqlException he = null;
+        parameterValues = null;
+        parameterTypes  = null;
+        parameterModes  = null;
+        rsmdDescriptor  = null;
+        pmdDescriptor   = null;
+        rsmd            = null;
+        pmd             = null;
 
-            try {
+        super.close();
 
-                // fredt - if this is called by Connection.close() then there's no
-                // need to free the prepared statements on the server - it is done
-                // by Connection.close()
-                if (!connection.isClosed) {
-                    connection.sessionProxy.execute(
-                        Result.newFreeStmtRequest(statementID));
-                }
-            } catch (HsqlException e) {
-                he = e;
-            }
-
-            parameterValues = null;
-            parameterTypes  = null;
-            parameterModes  = null;
-            rsmdDescriptor  = null;
-            pmdDescriptor   = null;
-            rsmd            = null;
-            pmd             = null;
-
-            super.close();
-
-            if (he != null) {
-                throw Util.sqlException(he);
-            }
-        } finally {
-            mon.stop();
+        if (he != null) {
+            throw Util.sqlException(he);
         }
     }
 

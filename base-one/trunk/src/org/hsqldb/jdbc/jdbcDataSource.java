@@ -44,8 +44,6 @@ import javax.naming.StringRefAddr;
 import javax.sql.DataSource;
 
 import org.hsqldb.jdbcDriver;
-import org.hsqldb.monitor.DBMon;
-import org.hsqldb.monitor.DBMonFactory;
 
 // boucherb@users 20040411 - doc 1.7.2 - javadoc updates toward 1.7.2 final
 
@@ -150,24 +148,17 @@ implements Serializable, Referenceable, DataSource {
     public Connection getConnection(String username,
                                     String password) throws SQLException {
 
-        DBMon mon = DBMonFactory.start(
-            "org.hsqldb.jdbc.jdbcDataSource.getConnection(String,String)");
+        Properties props = new Properties();
 
-        try {
-            Properties props = new Properties();
-
-            if (username != null) {
-                props.put("user", username);
-            }
-
-            if (password != null) {
-                props.put("password", password);
-            }
-
-            return jdbcDriver.getConnection(database, props);
-        } finally {
-            mon.stop();
+        if (username != null) {
+            props.put("user", username);
         }
+
+        if (password != null) {
+            props.put("password", password);
+        }
+
+        return jdbcDriver.getConnection(database, props);
     }
 
     /**

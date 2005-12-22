@@ -97,8 +97,6 @@ import org.hsqldb.Trace;
 import org.hsqldb.Types;
 import org.hsqldb.lib.AsciiStringInputStream;
 import org.hsqldb.lib.StringInputStream;
-import org.hsqldb.monitor.DBMon;
-import org.hsqldb.monitor.DBMonFactory;
 import org.hsqldb.persist.HsqlProperties;
 import org.hsqldb.types.Binary;
 import org.hsqldb.types.JavaObject;
@@ -534,18 +532,11 @@ public class jdbcResultSet implements ResultSet {
      */
     public void close() throws SQLException {
 
-        DBMon mon =
-            DBMonFactory.start("org.hsqldb.jdbc.jdbcResultSet.close()");
+        iUpdateCount = -1;
+        rResult      = null;
 
-        try {
-            iUpdateCount = -1;
-            rResult      = null;
-
-            if (autoClose) {
-                sqlStatement.close();
-            }
-        } finally {
-            mon.stop();
+        if (autoClose) {
+            sqlStatement.close();
         }
     }
 
@@ -4959,7 +4950,7 @@ public class jdbcResultSet implements ResultSet {
         }
 
         if (t != type) {
-            if (o instanceof Binary) {
+            if (o instanceof Binary && type != Types.CHAR) {
                 throw Util.sqlException(Trace.WRONG_DATA_TYPE);
             }
 
