@@ -175,7 +175,7 @@ class Select {
 
         // replace the aliases with expressions
         for (int i = iResultLen; i < exprColumns.length; i++) {
-            if (exprColumns[i].exprType == Expression.COLUMN) {
+            if (exprColumns[i].getType() == Expression.COLUMN) {
                 if (exprColumns[i].joinedTableColumnIndex == -1) {
                     boolean descending = exprColumns[i].isDescending();
 

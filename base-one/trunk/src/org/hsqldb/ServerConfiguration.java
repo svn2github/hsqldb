@@ -188,8 +188,6 @@ public final class ServerConfiguration implements ServerConstants {
         p.setProperty(SC_KEY_AUTORESTART_SERVER,
                       SC_DEFAULT_SERVER_AUTORESTART);
         p.setProperty(SC_KEY_ADDRESS, SC_DEFAULT_ADDRESS);
-        p.setProperty(SC_KEY_DATABASE + "." + 0, SC_DEFAULT_DATABASE);
-        p.setProperty(SC_KEY_DBNAME + "." + 0, "");
         p.setProperty(SC_KEY_NO_SYSTEM_EXIT, SC_DEFAULT_NO_SYSTEM_EXIT);
 
         boolean isTls = SC_DEFAULT_TLS;
@@ -244,6 +242,12 @@ public final class ServerConfiguration implements ServerConstants {
 
         if (defaultdb != null) {
             p.setProperty(SC_KEY_DATABASE + ".0", defaultdb);
+        }
+
+        if (!p.isPropertyTrue(SC_KEY_REMOTE_OPEN_DB)
+                && p.getProperty(SC_KEY_DATABASE + "." + 0) == null) {
+            p.setProperty(SC_KEY_DATABASE + "." + 0, SC_DEFAULT_DATABASE);
+            p.setProperty(SC_KEY_DBNAME + "." + 0, "");
         }
     }
 

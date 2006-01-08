@@ -62,6 +62,7 @@ import org.hsqldb.resources.BundleHandler;
 // fredt@users 20030916 - 1.7.2 - review, simplification and multiple DB's
 // fredt@users 20040320 - 1.7.2 - review and correction
 // fredt@users 20050225 - 1.8.0 - minor corrections
+// fredt@users 20051231 - 1.8.1 - support for remote opening of databases
 
 /**
  * The HSQLDB HSQL protocol network database server. <p>
@@ -107,6 +108,7 @@ import org.hsqldb.resources.BundleHandler;
  * | -trace         | true|false  | false    | display JDBC trace messages  |
  * | -tls           | true|false  | false    | TLS/SSL (secure) sockets     |
  * | -no_system_exit| true|false  | false    | do not issue System.exit()   |
+ * | -remote_open   | true|false  | false    | can open databases remotely  |
  * +----------------+-------------+----------+------------------------------+
  * </pre>
  *
@@ -222,11 +224,11 @@ public class Server implements HsqlSocketRequestHandler {
     HashSet serverConnSet;
 
 //
-    public String[]  dbAlias;
-    String[]         dbType;
-    String[]         dbPath;
-    HsqlProperties[] dbProps;
-    int[]            dbID;
+    private String[]         dbAlias;
+    private String[]         dbType;
+    private String[]         dbPath;
+    private HsqlProperties[] dbProps;
+    private int[]            dbID;
 
 //  Currently unused
     private int maxConnections;
@@ -243,6 +245,7 @@ public class Server implements HsqlSocketRequestHandler {
     private Throwable        serverError;
     private volatile int     serverState;
     private volatile boolean isSilent;
+    private volatile boolean isRemoteOpen;
     private PrintWriter      logWriter;
     private PrintWriter      errWriter;
 
@@ -1197,6 +1200,8 @@ public class Server implements HsqlSocketRequestHandler {
 
         isSilent =
             serverProperties.isPropertyTrue(ServerConstants.SC_KEY_SILENT);
+        isRemoteOpen = serverProperties.isPropertyTrue(
+            ServerConstants.SC_KEY_REMOTE_OPEN_DB);
     }
 
     /**
@@ -1344,26 +1349,30 @@ public class Server implements HsqlSocketRequestHandler {
             }
         }
 
-        if (shutdown) {
+        if (!isRemoteOpen && shutdown) {
             stop();
         }
     }
 
     /**
-     * This releases the resources used for a database
+     * This releases the resources used for a database.
+     * Is called with id 0 multiple times for non-existent databases
      */
     final synchronized void releaseDatabase(int id) {
 
         Iterator it;
+        boolean  found = false;
 
         printWithThread("releaseDatabase(" + id + ") entered");
 
+        // check all slots as a database may be opened by multiple aliases
         for (int i = 0; i < dbID.length; i++) {
-            if (dbID[i] == id) {
+            if (dbID[i] == id && dbAlias[i] != null) {
                 dbID[i]    = 0;
                 dbAlias[i] = null;
                 dbPath[i]  = null;
                 dbType[i]  = null;
+                dbProps[i] = null;
             }
         }
 
@@ -1653,6 +1662,114 @@ public class Server implements HsqlSocketRequestHandler {
     }
 
     /**
+     * return database ID
+     */
+    synchronized final int getDBID(String aliasPath) throws HsqlException {
+
+        int    semipos  = aliasPath.indexOf(';');
+        String alias    = aliasPath;
+        String filepath = null;
+
+        if (semipos != -1) {
+            alias    = aliasPath.substring(0, semipos);
+            filepath = aliasPath.substring(semipos + 1);
+        }
+
+        int dbIndex = ArrayUtil.find(dbAlias, alias);
+
+        if (dbIndex == -1) {
+            if (filepath == null) {
+                RuntimeException e =
+                    new RuntimeException("database alias does not exist");
+
+                printError("database alias=" + alias + " does not exist");
+                setServerError(e);
+
+                throw e;
+            } else {
+                return openDatabase(alias, filepath);
+            }
+        } else {
+            return dbID[dbIndex];
+        }
+    }
+
+    /**
+     * Open and return database ID
+     */
+    final int openDatabase(String alias,
+                           String filepath) throws HsqlException {
+
+        if (!isRemoteOpen) {
+            RuntimeException e =
+                new RuntimeException("remote open not allowed");
+
+            printError("Remote database open not allowed");
+            setServerError(e);
+
+            throw e;
+        }
+
+        int i = getFirstEmptyDatabaseIndex();
+
+        if (i < -1) {
+            RuntimeException e =
+                new RuntimeException("limit of open databases reached");
+
+            printError("limit of open databases reached");
+            setServerError(e);
+
+            throw e;
+        }
+
+        HsqlProperties newprops = DatabaseURL.parseURL(filepath, false);
+
+        if (newprops == null) {
+            RuntimeException e =
+                new RuntimeException("invalid database path");
+
+            printError("invalid database path");
+            setServerError(e);
+
+            throw e;
+        }
+
+        String path = newprops.getProperty("database");
+        String type = newprops.getProperty("connection_type");
+
+        try {
+            int dbid = DatabaseManager.getDatabase(type, path, this,
+                                                   newprops);
+
+            dbID[i]    = dbid;
+            dbAlias[i] = alias;
+            dbPath[i]  = path;
+            dbType[i]  = type;
+            dbProps[i] = newprops;
+
+            return dbid;
+        } catch (HsqlException e) {
+            printError("Database [index=" + i + "db=" + dbType[i] + dbPath[i]
+                       + ", alias=" + dbAlias[i] + "] did not open: "
+                       + e.toString());
+            setServerError(e);
+
+            throw e;
+        }
+    }
+
+    final int getFirstEmptyDatabaseIndex() {
+
+        for (int i = 0; i < dbAlias.length; i++) {
+            if (dbAlias[i] == null) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    /**
      * Opens this server's database instances. This method returns true If
      * at least one database goes online, otherwise it returns false.
      *
@@ -1709,6 +1826,10 @@ public class Server implements HsqlSocketRequestHandler {
         }
 
         printWithThread("openDatabases() exiting");
+
+        if (isRemoteOpen) {
+            success = true;
+        }
 
         if (!success && getServerError() == null) {
 
@@ -1793,7 +1914,7 @@ public class Server implements HsqlSocketRequestHandler {
             printWithThread("dblist: " + e2.toString());
         }
 
-        return (String[]) ArrayUtil.resizeArray(dblist, maxindex + 1);
+        return dblist;
     }
 
     /**
@@ -2050,7 +2171,7 @@ public class Server implements HsqlSocketRequestHandler {
 
         if (dbPath != null) {
             for (int i = 0; i < dbPath.length; i++) {
-                releaseDatabase(i);
+                releaseDatabase(dbID[i]);
             }
         }
 

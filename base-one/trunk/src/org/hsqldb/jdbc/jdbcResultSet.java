@@ -1458,7 +1458,7 @@ public class jdbcResultSet implements ResultSet {
      * @exception SQLException if a database access error occurs
      */
     public String getCursorName() throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -2309,7 +2309,7 @@ public class jdbcResultSet implements ResultSet {
         checkClosed();
 
         if (rsType == TYPE_FORWARD_ONLY && direction != FETCH_FORWARD) {
-            throw Util.notSupported;
+            throw Util.notSupported();
         }
     }
 
@@ -2593,7 +2593,7 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.2
      */
     public void updateNull(int columnIndex) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -2623,7 +2623,7 @@ public class jdbcResultSet implements ResultSet {
      */
     public void updateBoolean(int columnIndex,
                               boolean x) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -2653,7 +2653,7 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public void updateByte(int columnIndex, byte x) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -2683,7 +2683,7 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public void updateShort(int columnIndex, short x) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -2713,7 +2713,7 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public void updateInt(int columnIndex, int x) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -2743,7 +2743,7 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public void updateLong(int columnIndex, long x) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -2773,7 +2773,7 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public void updateFloat(int columnIndex, float x) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -2803,7 +2803,7 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public void updateDouble(int columnIndex, double x) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -2835,7 +2835,7 @@ public class jdbcResultSet implements ResultSet {
      */
     public void updateBigDecimal(int columnIndex,
                                  BigDecimal x) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -2865,7 +2865,7 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public void updateString(int columnIndex, String x) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -2895,7 +2895,7 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public void updateBytes(int columnIndex, byte[] x) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -2925,7 +2925,7 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public void updateDate(int columnIndex, Date x) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -2955,7 +2955,7 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public void updateTime(int columnIndex, Time x) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -2987,7 +2987,7 @@ public class jdbcResultSet implements ResultSet {
      */
     public void updateTimestamp(int columnIndex,
                                 Timestamp x) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -3018,7 +3018,7 @@ public class jdbcResultSet implements ResultSet {
      */
     public void updateAsciiStream(int columnIndex, java.io.InputStream x,
                                   int length) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -3050,7 +3050,7 @@ public class jdbcResultSet implements ResultSet {
      */
     public void updateBinaryStream(int columnIndex, java.io.InputStream x,
                                    int length) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -3082,7 +3082,7 @@ public class jdbcResultSet implements ResultSet {
      */
     public void updateCharacterStream(int columnIndex, java.io.Reader x,
                                       int length) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -3117,7 +3117,7 @@ public class jdbcResultSet implements ResultSet {
      */
     public void updateObject(int columnIndex, Object x,
                              int scale) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -3147,7 +3147,7 @@ public class jdbcResultSet implements ResultSet {
      *  jdbcResultSet)
      */
     public void updateObject(int columnIndex, Object x) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -3767,7 +3767,7 @@ public class jdbcResultSet implements ResultSet {
      *   jdbcResultSet)
      */
     public void insertRow() throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -3794,7 +3794,7 @@ public class jdbcResultSet implements ResultSet {
      *   jdbcResultSet)
      */
     public void updateRow() throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -3821,7 +3821,7 @@ public class jdbcResultSet implements ResultSet {
      *   jdbcResultSet)
      */
     public void deleteRow() throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -3864,7 +3864,7 @@ public class jdbcResultSet implements ResultSet {
      *    jdbcResultSet)
      */
     public void refreshRow() throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -3897,7 +3897,7 @@ public class jdbcResultSet implements ResultSet {
      *   jdbcResultSet)
      */
     public void cancelRowUpdates() throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -3936,7 +3936,7 @@ public class jdbcResultSet implements ResultSet {
      *   jdbcResultSet)
      */
     public void moveToInsertRow() throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -4016,7 +4016,7 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public Object getObject(int i, Map map) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -4045,7 +4045,7 @@ public class jdbcResultSet implements ResultSet {
      * jdbcResultSet)
      */
     public Ref getRef(int i) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -4139,7 +4139,7 @@ public class jdbcResultSet implements ResultSet {
      *  jdbcResultSet)
      */
     public Array getArray(int i) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -4521,7 +4521,7 @@ public class jdbcResultSet implements ResultSet {
      */
 //#ifdef JDBC3
     public java.net.URL getURL(int columnIndex) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
 //#endif JDBC3
@@ -4554,7 +4554,7 @@ public class jdbcResultSet implements ResultSet {
      */
 //#ifdef JDBC3
     public java.net.URL getURL(String columnName) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
 //#endif JDBC3
@@ -4587,7 +4587,7 @@ public class jdbcResultSet implements ResultSet {
 //#ifdef JDBC3
     public void updateRef(int columnIndex,
                           java.sql.Ref x) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
 //#endif JDBC3
@@ -4620,7 +4620,7 @@ public class jdbcResultSet implements ResultSet {
 //#ifdef JDBC3
     public void updateRef(String columnName,
                           java.sql.Ref x) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
 //#endif JDBC3
@@ -4653,7 +4653,7 @@ public class jdbcResultSet implements ResultSet {
 //#ifdef JDBC3
     public void updateBlob(int columnIndex,
                            java.sql.Blob x) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
 //#endif JDBC3
@@ -4686,7 +4686,7 @@ public class jdbcResultSet implements ResultSet {
 //#ifdef JDBC3
     public void updateBlob(String columnName,
                            java.sql.Blob x) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
 //#endif JDBC3
@@ -4719,7 +4719,7 @@ public class jdbcResultSet implements ResultSet {
 //#ifdef JDBC3
     public void updateClob(int columnIndex,
                            java.sql.Clob x) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
 //#endif JDBC3
@@ -4752,7 +4752,7 @@ public class jdbcResultSet implements ResultSet {
 //#ifdef JDBC3
     public void updateClob(String columnName,
                            java.sql.Clob x) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
 //#endif JDBC3
@@ -4785,7 +4785,7 @@ public class jdbcResultSet implements ResultSet {
 //#ifdef JDBC3
     public void updateArray(int columnIndex,
                             java.sql.Array x) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
 //#endif JDBC3
@@ -4818,7 +4818,7 @@ public class jdbcResultSet implements ResultSet {
 //#ifdef JDBC3
     public void updateArray(String columnName,
                             java.sql.Array x) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
 //#endif JDBC3

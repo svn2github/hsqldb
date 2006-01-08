@@ -1290,7 +1290,7 @@ public class jdbcConnection implements Connection {
                      || level == Connection.TRANSACTION_SERIALIZABLE;
 
         if (!ok) {
-            throw Util.notSupported;
+            throw Util.notSupported();
         }
 
         try {
@@ -1631,7 +1631,7 @@ public class jdbcConnection implements Connection {
 
         checkClosed();
 
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -1666,7 +1666,7 @@ public class jdbcConnection implements Connection {
 
         checkClosed();
 
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
 // boucherb@users 20020409 - javadocs for all JDBC 3 methods
@@ -1786,7 +1786,7 @@ public class jdbcConnection implements Connection {
 
         checkClosed();
 
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
 //#endif JDBC3
@@ -2239,7 +2239,7 @@ public class jdbcConnection implements Connection {
 
         checkClosed();
 
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
 //#endif JDBC3
@@ -2304,7 +2304,7 @@ public class jdbcConnection implements Connection {
 
         checkClosed();
 
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
 //#endif JDBC3
@@ -2369,7 +2369,7 @@ public class jdbcConnection implements Connection {
 
         checkClosed();
 
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
 //#endif JDBC3

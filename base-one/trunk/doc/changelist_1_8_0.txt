@@ -6,6 +6,10 @@ hsqldb 1.8.0 in reverse chronological order.
 Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
+2006.01.08
+
+Fixed bug in WebServer
+
 2005.12.22
 
 Fixed bug where ON DELETE SET DEFAULT was accepted without a matching DEFAULT value

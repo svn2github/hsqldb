@@ -222,12 +222,13 @@ public class RowOutputText extends RowOutputBase {
     }
 
     public void writeIntData(int i, int position) {
-        throw new java.lang.RuntimeException(
-            Trace.getMessage(Trace.TextDatabaseRowOutput_writeIntData));
+        throw Trace.runtimeError(Trace.UNSUPPORTED_INTERNAL_OPERATION,
+                                 "RowInputText");
     }
 
     public void writeLongData(long i) {
-        throw new RuntimeException();
+        throw Trace.runtimeError(Trace.UNSUPPORTED_INTERNAL_OPERATION,
+                                 "RowInputText");
     }
 
 // fredt@users - comment - methods used for writing each SQL type

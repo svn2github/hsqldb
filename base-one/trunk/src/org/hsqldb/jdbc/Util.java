@@ -74,6 +74,7 @@ public class Util {
         return sqlException(Trace.error(id, subId, add));
     }
 
-    static final SQLException notSupported =
-        sqlException(Trace.error(Trace.FUNCTION_NOT_SUPPORTED));
+    static final SQLException notSupported() {
+        return sqlException(Trace.error(Trace.FUNCTION_NOT_SUPPORTED));
+    }
 }

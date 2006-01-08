@@ -193,10 +193,7 @@ class ServerConnection implements Runnable {
             Result resultOut;
 
             try {
-                int dbIndex = ArrayUtil.find(server.dbAlias,
-                                             resultIn.subSubString);
-
-                dbID     = server.dbID[dbIndex];
+                dbID     = server.getDBID(resultIn.subSubString);
                 user     = resultIn.getMainString();
                 password = resultIn.getSubString();
 
@@ -215,10 +212,9 @@ class ServerConnection implements Runnable {
             } catch (HsqlException e) {
                 session   = null;
                 resultOut = new Result(e, null);
-            } catch (ArrayIndexOutOfBoundsException e) {
-                session = null;
-                resultOut = new Result(Trace.error(Trace.DATABASE_NOT_EXISTS),
-                                       resultIn.subSubString);
+            } catch (RuntimeException e) {
+                session   = null;
+                resultOut = new Result(e, null);
             }
 
             Result.write(resultOut, rowOut, dataOutput);

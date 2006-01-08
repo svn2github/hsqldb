@@ -57,7 +57,8 @@ final class CompiledStatement {
     static final int UPDATE        = 3;
     static final int DELETE        = 4;
     static final int SELECT        = 5;
-    static final int CALL          = 6;
+    static final int SELECT_INTO   = 6;
+    static final int CALL          = 7;
 
     // enumeration of catagories
     static final int DML = 7;
@@ -482,7 +483,7 @@ final class CompiledStatement {
             default :
                 return new Result(
                     Trace.runtimeError(
-                        Trace.INTERNAL_UNSUPPORTED_OPERATION,
+                        Trace.UNSUPPORTED_INTERNAL_OPERATION,
                         "CompiledStatement.describeResult()"), null);
         }
     }

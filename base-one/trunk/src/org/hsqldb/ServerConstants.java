@@ -67,6 +67,7 @@ public interface ServerConstants {
     boolean SC_DEFAULT_SILENT             = true;
     boolean SC_DEFAULT_TLS                = false;
     boolean SC_DEFAULT_TRACE              = false;
+    boolean SC_DEFAULT_REMOTE_OPEN_DB     = false;
 
     // type of server
     int SC_PROTOCOL_HTTP = 0;
@@ -87,6 +88,7 @@ public interface ServerConstants {
     String SC_KEY_WEB_DEFAULT_PAGE   = SC_KEY_PREFIX + ".default_page";
     String SC_KEY_WEB_ROOT           = SC_KEY_PREFIX + ".root";
     String SC_KEY_MAX_CONNECTIONS    = SC_KEY_PREFIX + ".maxconnections";
+    String SC_KEY_REMOTE_OPEN_DB     = SC_KEY_PREFIX + ".remote_open";
 
     // web server page defaults
     String SC_DEFAULT_WEB_MIME = "text/html";

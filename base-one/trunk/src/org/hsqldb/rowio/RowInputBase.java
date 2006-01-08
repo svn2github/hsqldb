@@ -219,8 +219,9 @@ public abstract class RowInputBase extends HsqlByteArrayInputStream {
                     break;
 
                 default :
-                    throw Trace.error(Trace.FUNCTION_NOT_SUPPORTED,
-                                      Types.getTypeString(type));
+                    throw Trace.runtimeError(
+                        Trace.UNSUPPORTED_INTERNAL_OPERATION,
+                        "RowInputBase " + Types.getTypeString(type));
             }
 
             data[i] = o;
@@ -258,12 +259,12 @@ public abstract class RowInputBase extends HsqlByteArrayInputStream {
     }
 
     public int skipBytes(int n) throws IOException {
-        throw new java.lang.RuntimeException(
-            Trace.getMessage(Trace.DatabaseRowInput_skipBytes));
+        throw Trace.runtimeError(Trace.UNSUPPORTED_INTERNAL_OPERATION,
+                                 "RowInputBase");
     }
 
     public String readLine() throws IOException {
-        throw new java.lang.RuntimeException(
-            Trace.getMessage(Trace.DatabaseRowInput_readLine));
+        throw Trace.runtimeError(Trace.UNSUPPORTED_INTERNAL_OPERATION,
+                                 "RowInputBase");
     }
 }

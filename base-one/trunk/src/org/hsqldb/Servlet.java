@@ -291,8 +291,10 @@ public class Servlet extends javax.servlet.http.HttpServlet {
                         resultOut = new Result(e, null);
                     }
                 } else {
-                    Session session = DatabaseManager.getSession(dbType,
-                        dbPath, resultIn.sessionID);
+                    int dbId      = resultIn.databaseID;
+                    int sessionId = resultIn.sessionID;
+                    Session session = DatabaseManager.getSession(dbId,
+                        sessionId);
 
                     resultOut = session.execute(resultIn);
                 }

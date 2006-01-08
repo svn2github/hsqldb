@@ -1296,7 +1296,7 @@ implements PreparedStatement {
      * jdbcPreparedStatement)
      */
     public void setRef(int i, Ref x) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -1496,7 +1496,7 @@ implements PreparedStatement {
      *   jdbcPreparedStatement)
      */
     public void setArray(int i, Array x) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -1736,7 +1736,7 @@ implements PreparedStatement {
 //#ifdef JDBC3
     public void setURL(int parameterIndex,
                        java.net.URL x) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
 //#endif JDBC3
@@ -2085,7 +2085,7 @@ implements PreparedStatement {
      * @throws SQLException always
      */
     public void addBatch(String sql) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -2097,7 +2097,7 @@ implements PreparedStatement {
      * @return nothing
      */
     public ResultSet executeQuery(String sql) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -2109,7 +2109,7 @@ implements PreparedStatement {
      * @return nothing
      */
     public boolean execute(String sql) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -2121,7 +2121,7 @@ implements PreparedStatement {
      * @return nothing
      */
     public int executeUpdate(String sql) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**

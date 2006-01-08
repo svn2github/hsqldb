@@ -122,7 +122,8 @@ public class DatabaseManager {
 
         Database db = (Database) databaseIDMap.get(dbID);
 
-        return db.connect(user, password);
+        return db == null ? null
+                          : db.connect(user, password);
     }
 
     /**
@@ -137,23 +138,20 @@ public class DatabaseManager {
 
         Database db = getDatabase(type, path, props);
 
-        return db.connect(user, password);
+        return db == null ? null
+                          : db.connect(user, password);
     }
 
     /**
-     * This returns an existing session. Used with repeat HTTP connections
+     * Returns an existing session. Used with repeat HTTP connections
      * belonging to the same JDBC Conenction / HSQL Session pair.
      */
-    static Session getSession(String type, String path,
-                              int sessionId) throws HsqlException {
+    static Session getSession(int dbId, int sessionId) {
 
-        if (path == null) {
-            return null;
-        }
+        Database db = (Database) databaseIDMap.get(dbId);
 
-        Database db = lookupDatabaseObject(type, path);
-
-        return db.sessionManager.getSession(sessionId);
+        return db == null ? null
+                          : db.sessionManager.getSession(sessionId);
     }
 
     /**
@@ -252,7 +250,7 @@ public class DatabaseManager {
         } else if (type == DatabaseURL.S_MEM) {
             databaseMap = memDatabaseMap;
         } else {
-            throw Trace.runtimeError(Trace.INTERNAL_UNSUPPORTED_OPERATION,
+            throw Trace.runtimeError(Trace.UNSUPPORTED_INTERNAL_OPERATION,
                                      "DatabaseManager.getDatabaseObject");
         }
 
@@ -291,7 +289,7 @@ public class DatabaseManager {
             databaseMap = memDatabaseMap;
         } else {
             throw (Trace.runtimeError(
-                Trace.INTERNAL_UNSUPPORTED_OPERATION,
+                Trace.UNSUPPORTED_INTERNAL_OPERATION,
                 "DatabaseManager.lookupDatabaseObject()"));
         }
 
@@ -316,7 +314,7 @@ public class DatabaseManager {
         } else if (type == DatabaseURL.S_MEM) {
             databaseMap = memDatabaseMap;
         } else {
-            throw Trace.runtimeError(Trace.INTERNAL_UNSUPPORTED_OPERATION,
+            throw Trace.runtimeError(Trace.UNSUPPORTED_INTERNAL_OPERATION,
                                      "DatabaseManager.addDatabaseObject()");
         }
 
@@ -379,7 +377,7 @@ public class DatabaseManager {
             databaseMap = memDatabaseMap;
         } else {
             throw (Trace.runtimeError(
-                Trace.INTERNAL_UNSUPPORTED_OPERATION,
+                Trace.UNSUPPORTED_INTERNAL_OPERATION,
                 "DatabaseManager.lookupDatabaseObject()"));
         }
 

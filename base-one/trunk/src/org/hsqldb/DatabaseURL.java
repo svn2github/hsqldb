@@ -31,6 +31,8 @@
 
 package org.hsqldb;
 
+import java.util.Locale;
+
 import org.hsqldb.persist.HsqlProperties;
 
 /*
@@ -109,9 +111,11 @@ public class DatabaseURL {
      */
     public static HsqlProperties parseURL(String url, boolean hasPrefix) {
 
-        String         urlImage = url.toLowerCase();
-        HsqlProperties props    = new HsqlProperties();
-        int            pos      = 0;
+        String         urlImage   = url.toLowerCase(Locale.ENGLISH);
+        HsqlProperties props      = new HsqlProperties();
+        HsqlProperties extraProps = null;
+        String         arguments  = null;
+        int            pos        = 0;
 
         if (hasPrefix) {
             if (urlImage.startsWith(S_URL_PREFIX)) {
@@ -135,11 +139,9 @@ public class DatabaseURL {
         if (semicolpos < 0) {
             semicolpos = url.length();
         } else {
-            String arguments = urlImage.substring(semicolpos + 1,
-                                                  urlImage.length());
-            HsqlProperties extraProps =
-                HsqlProperties.delimitedArgPairsToProps(arguments, "=", ";",
-                    null);
+            arguments = urlImage.substring(semicolpos + 1, urlImage.length());
+            extraProps = HsqlProperties.delimitedArgPairsToProps(arguments,
+                    "=", ";", null);
 
             //todo - check if properties have valid names / values
             props.addProperties(extraProps);
@@ -223,6 +225,14 @@ public class DatabaseURL {
             props.setProperty("port", port);
             props.setProperty("host", host);
             props.setProperty("path", path);
+
+            if (extraProps != null) {
+                String filePath = extraProps.getProperty("filepath");
+
+                if (filePath != null && database.length() != 0) {
+                    database += ";" + filePath;
+                }
+            }
         } else {
             if (type == S_MEM || type == S_RES) {
                 database = urlImage.substring(pos, semicolpos).toLowerCase();
@@ -248,6 +258,9 @@ public class DatabaseURL {
 /*
     public static void main(String[] argv) {
 
+        parseURL(
+            "JDBC:hsqldb:hsql://myhost:1777/mydb;filepath=c:/myfile/database/db",
+            true);
         parseURL("JDBC:hsqldb:../data/mydb.db", true);
         parseURL("JDBC:hsqldb:../data/mydb.db;ifexists=true", true);
         parseURL("JDBC:hsqldb:HSQL://localhost:9000/mydb", true);

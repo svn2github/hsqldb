@@ -480,7 +480,7 @@ implements CallableStatement {
      */
     public void registerOutParameter(int parameterIndex,
                                      int sqlType) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -545,7 +545,7 @@ implements CallableStatement {
      * @exception SQLException if a database access error occurs
      */
     public boolean wasNull() throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -580,7 +580,7 @@ implements CallableStatement {
      * @see #setString
      */
     public String getString(int parameterIndex) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -607,7 +607,7 @@ implements CallableStatement {
      * @see #setBoolean
      */
     public boolean getBoolean(int parameterIndex) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -634,7 +634,7 @@ implements CallableStatement {
      * @see #setByte
      */
     public byte getByte(int parameterIndex) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -661,7 +661,7 @@ implements CallableStatement {
      * @see #setShort
      */
     public short getShort(int parameterIndex) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -688,7 +688,7 @@ implements CallableStatement {
      * @see #setInt
      */
     public int getInt(int parameterIndex) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -715,7 +715,7 @@ implements CallableStatement {
      * @see #setLong
      */
     public long getLong(int parameterIndex) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -742,7 +742,7 @@ implements CallableStatement {
      * @see #setFloat
      */
     public float getFloat(int parameterIndex) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -769,7 +769,7 @@ implements CallableStatement {
      * @see #setDouble
      */
     public double getDouble(int parameterIndex) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -803,7 +803,7 @@ implements CallableStatement {
 //#ifdef DEPRECATEDJDBC
     public BigDecimal getBigDecimal(int parameterIndex,
                                     int scale) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
 //#endif
@@ -832,7 +832,7 @@ implements CallableStatement {
      * @see #setBytes
      */
     public byte[] getBytes(int parameterIndex) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -858,7 +858,7 @@ implements CallableStatement {
      * @see #setDate
      */
     public Date getDate(int parameterIndex) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -885,7 +885,7 @@ implements CallableStatement {
      * @see #setTime
      */
     public Time getTime(int parameterIndex) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -912,7 +912,7 @@ implements CallableStatement {
      * @see #setTimestamp
      */
     public Timestamp getTimestamp(int parameterIndex) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -945,7 +945,7 @@ implements CallableStatement {
      * @see #setObject
      */
     public Object getObject(int parameterIndex) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
 // ----------------------------------- JDBC 2 ----------------------------------
@@ -977,7 +977,7 @@ implements CallableStatement {
      *  jdbcPreparedStatement)
      */
     public BigDecimal getBigDecimal(int parameterIndex) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -1012,7 +1012,7 @@ implements CallableStatement {
      *   jdbcPreparedStatement)
      */
     public Object getObject(int i, Map map) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -1042,7 +1042,7 @@ implements CallableStatement {
      * jdbcPreparedStatement)
      */
     public Ref getRef(int i) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -1072,7 +1072,7 @@ implements CallableStatement {
      *  jdbcPreparedStatement)
      */
     public Blob getBlob(int i) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -1102,7 +1102,7 @@ implements CallableStatement {
      *  jdbcPreparedStatement)
      */
     public Clob getClob(int i) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -1132,7 +1132,7 @@ implements CallableStatement {
      *  jdbcPreparedStatement)
      */
     public Array getArray(int i) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -1171,7 +1171,7 @@ implements CallableStatement {
     public Date getDate(int parameterIndex,
                         Calendar cal) throws SQLException {
 
-        throw Util.notSupported;
+        throw Util.notSupported();
 
 //        try {
 //            return HsqlDateTime.getDate(getString(parameterIndex), cal);
@@ -1217,7 +1217,7 @@ implements CallableStatement {
     public Time getTime(int parameterIndex,
                         Calendar cal) throws SQLException {
 
-        throw Util.notSupported;
+        throw Util.notSupported();
 
 //        try {
 //            return HsqlDateTime.getTime(getString(parameterIndex), cal);
@@ -1263,7 +1263,7 @@ implements CallableStatement {
     public Timestamp getTimestamp(int parameterIndex,
                                   Calendar cal) throws SQLException {
 
-        throw Util.notSupported;
+        throw Util.notSupported();
 
 //        try {
 //            return HsqlDateTime.getTimestamp(getString(parameterIndex), cal);
@@ -1497,7 +1497,7 @@ implements CallableStatement {
      */
 //#ifdef JDBC3
     public java.net.URL getURL(int parameterIndex) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
 //#endif JDBC3

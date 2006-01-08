@@ -352,7 +352,7 @@ public class jdbcBlob implements Blob {
      * @since JDK 1.4, HSQLDB 1.7.2
      */
     public int setBytes(long pos, byte[] bytes) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -389,7 +389,7 @@ public class jdbcBlob implements Blob {
      */
     public int setBytes(long pos, byte[] bytes, int offset,
                         int len) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -418,7 +418,7 @@ public class jdbcBlob implements Blob {
      * @since JDK 1.4, HSQLDB 1.7.2
      */
     public OutputStream setBinaryStream(long pos) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**

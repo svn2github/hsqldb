@@ -198,7 +198,8 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
     }
 
     public long readLongData() throws IOException {
-        throw new RuntimeException();
+        throw Trace.runtimeError(Trace.UNSUPPORTED_INTERNAL_OPERATION,
+                                 "RowInputText");
     }
 
     public int readType() throws IOException {

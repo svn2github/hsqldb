@@ -329,7 +329,7 @@ public final class jdbcClob implements Clob {
      * @since JDK 1.4, HSQLDB 1.7.2
      */
     public int setString(long pos, String str) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -362,7 +362,7 @@ public final class jdbcClob implements Clob {
      */
     public int setString(long pos, String str, int offset,
                          int len) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -390,7 +390,7 @@ public final class jdbcClob implements Clob {
      * @since JDK 1.4, HSQLDB 1.7.2
      */
     public java.io.OutputStream setAsciiStream(long pos) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
@@ -419,7 +419,7 @@ public final class jdbcClob implements Clob {
      * @since JDK 1.4, HSQLDB 1.7.2
      */
     public java.io.Writer setCharacterStream(long pos) throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**

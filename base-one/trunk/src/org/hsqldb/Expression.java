@@ -3438,7 +3438,7 @@ public class Expression {
                 }
             }
 
-            throw Trace.error(Trace.NULL_VALUE_AS_BOOLEAN);
+            throw Trace.error(Trace.NOT_A_CONDITION);
         }
 
         if (eArg2.exprType == Expression.ANY

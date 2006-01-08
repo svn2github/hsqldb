@@ -91,7 +91,7 @@ public class jdbcSavepoint implements Savepoint {
      * @since 1.4
      */
     public int getSavepointId() throws SQLException {
-        throw Util.notSupported;
+        throw Util.notSupported();
     }
 
     /**
