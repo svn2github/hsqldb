@@ -92,6 +92,11 @@ implements ActionListener, ItemListener {
     private JComboBox mSettingName =
         new JComboBox(loadRecentConnectionSettings());
 
+    private static ConnectionSetting currentConnectionSetting = null;
+    
+    public static void setConnectionSetting(ConnectionSetting connectionSetting) {
+    	currentConnectionSetting = connectionSetting;
+    }
     public static Connection createConnection(String driver, String url,
             String user, String password) throws Exception {
 
@@ -240,6 +245,14 @@ implements ActionListener, ItemListener {
         Dimension d    = Toolkit.getDefaultToolkit().getScreenSize();
         Dimension size = getSize();
 
+        
+        if (currentConnectionSetting != null) {
+        	mName.setText(currentConnectionSetting.getName());
+        	mDriver.setText(currentConnectionSetting.getDriver());
+        	mURL.setText(currentConnectionSetting.getUrl());
+        	mUser.setText(currentConnectionSetting.getUser());
+        	mPassword.setText(currentConnectionSetting.getPassword());
+        }
         // (ulrivo): full size on screen with less than 640 width
         if (d.width >= 640) {
             setLocation((d.width - size.width) / 2,

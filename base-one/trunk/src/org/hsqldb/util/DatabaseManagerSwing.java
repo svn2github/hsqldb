@@ -74,6 +74,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.Driver;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -82,6 +84,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Properties;
@@ -134,6 +137,7 @@ import javax.swing.RootPaneContainer;
 import java.security.AccessControlException;
 
 import org.hsqldb.lib.java.JavaSystem;
+
 
 //dmarshall@users - 20020101 - original swing port of DatabaseManager
 //sqlbob@users 20020401 - patch 537501 by ulrivo - commandline arguments
@@ -245,9 +249,9 @@ implements ActionListener, WindowListener, KeyListener {
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.org.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.64 $";
+        + "problem reports or help requests:  $Revision: 1.65 $";
     private static final String ABOUT_TEXT =
-        "$Revision: 1.64 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.65 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2001-2005, The HSQL Development Group.\n"
         + "http://hsqldb.org\n\n\n"
@@ -373,7 +377,8 @@ implements ActionListener, WindowListener, KeyListener {
     private String schemaFilter = null;
 
     public DatabaseManagerSwing() {
-        jframe = new JFrame("dummy");
+        jframe = new JFrame("HSQLDB DatabaseManager");
+        fMain  = jframe;
     }
     ;
 
@@ -610,6 +615,18 @@ implements ActionListener, WindowListener, KeyListener {
             showIndexDetails =
                 (dMeta.getDatabaseProductName().indexOf("Oracle") < 0);
 
+            Driver driver = DriverManager.getDriver(dMeta.getURL());
+            ConnectionSetting newSetting = new ConnectionSetting(
+            		dMeta.getDatabaseProductName(),
+            		driver.getClass().getName(),
+					dMeta.getURL(),
+					dMeta.getUserName().replaceAll("@localhost", ""),
+					"");
+            
+			Hashtable settings = ConnectionDialogCommon.loadRecentConnectionSettings();
+			ConnectionDialogCommon.addToRecentConnectionSettings(settings, newSetting);
+            ConnectionDialogSwing.setConnectionSetting(newSetting);
+            
             refreshTree();
             clearResultPanel();
 
@@ -624,6 +641,12 @@ implements ActionListener, WindowListener, KeyListener {
 
             //  Added: (weconsultants@users)
             CommonSwing.errorMessage(e);
+        } catch (IOException e) {
+
+            //  Added: (weconsultants@users)
+            CommonSwing.errorMessage(e);
+        } catch (Exception e) {
+        	CommonSwing.errorMessage(e);
         }
     }
 
