@@ -31,15 +31,18 @@
 
 package org.hsqldb.util;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.StringTokenizer;
 
-/* $Id: SqlTool.java,v 1.49 2005/06/08 19:52:38 fredt Exp $ */
+/* $Id: SqlTool.java,v 1.50 2005/10/23 19:25:14 fredt Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -50,7 +53,7 @@ import java.util.StringTokenizer;
  * See JavaDocs for the main method for syntax of how to run.
  *
  * @see @main()
- * @version $Revision: 1.49 $
+ * @version $Revision: 1.50 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlTool {
@@ -63,9 +66,15 @@ public class SqlTool {
     private static boolean noexit;    // Whether System.exit() may be called.
     private static String  revnum = null;
 
+    /**
+     * The configuration identifier to use when connection parameters are 
+     * specified on the command line
+     */
+    private static String CMDLINE_ID = "cmdline";
+    
     static {
-        revnum = "$Revision: 1.49 $".substring("$Revision: ".length(),
-                                               "$Revision: 1.49 $".length()
+        revnum = "$Revision: 1.50 $".substring("$Revision: ".length(),
+                                               "$Revision: 1.50 $".length()
                                                - 2);
     }
 
@@ -74,20 +83,22 @@ public class SqlTool {
         + "    [--optname [optval...]] urlid [file1.sql...]\n"
         + "where arguments are:\n"
         + "    --help                   Displays this message\n"
-        + "    --list                   List urlids in the rcfile\n"
-        + "    --noinput                Do not read stdin (default if sql file given\n"
+        + "    --list                   List urlids in the rc file\n"
+        + "    --noInput                Do not read stdin (default if sql file given\n"
         + "                             or --sql switch used).\n"
-        + "    --stdinput               Read stdin IN ADDITION to sql files/--sql input\n"
+        + "    --stdInput               Read stdin IN ADDITION to sql files/--sql input\n"
+        + "    --inlineRc URL=val1,USER=val2[,DRIVER=val3][,CHARSET=val4][,TRUST=val5]\n"
+        + "                             Inline RC file variables\n"
         + "    --debug                  Print Debug info to stderr\n"
         + "    --noAutoFile             Do not execute auto.sql from home dir\n"
         + "    --autoCommit             Auto-commit JDBC DML commands\n"
         + "    --sql \"SQL; Statements\"  Execute given SQL instead of stdin (before\n"
         + "                             SQL files if any are specified) where \"SQL\"\n"
         + "                             consists of SQL command(s).  See the Guide.\n"
-        + "    --rcfile /file/path.rc   Connect Info File [$HOME/sqltool.rc]\n"
+        + "    --rcFile /file/path.rc   Connect Info File [$HOME/sqltool.rc]\n"
         + "    --abortOnErr             Abort on Error (overrides defaults)\n"
         + "    --continueOnErr          Continue on Error (overrides defaults)\n"
-        + "    --setvar NAME1=val1[,NAME2=val2...]   PL variables\n"
+        + "    --setVar NAME1=val1[,NAME2=val2...]   PL variables\n"
         + "    --driver a.b.c.Driver    JDBC driver class ["
         + RCData.DEFAULT_JDBC_DRIVER + "]\n"
         + "    urlid                    ID of url/userame/password in rcfile\n"
@@ -154,6 +165,90 @@ public class SqlTool {
     }
 
     /**
+     * Prompt the user for a password.
+     * 
+     * @param username The user the password is for
+     * @return The password the user entered
+     */
+    private static String promptForPassword(String username) throws SqlToolException {
+        BufferedReader console;
+        String         password;
+        
+        password = null;
+        
+        try {
+            console = new BufferedReader(new InputStreamReader(System.in));
+        
+            // Prompt for password
+            System.out.print(username + "'s password: ");
+            
+            // Read the password from the command line
+            password = console.readLine();
+            
+            if (password == null) {
+                password = "";
+            } else {
+                password = password.trim();
+            }
+            
+        } catch (IOException e) {
+            exitMain(30, "Error while reading password from console: "
+                    + e.getMessage());
+        }
+        
+        return password;
+    }
+
+    /**
+     * Parses a comma delimited string of name value pairs into a
+     * <code>Map</code> object.
+     * 
+     * @param varString The string to parse
+     * @param varMap The map to save the pared values into
+     * @param lowerCaseKeys Set to <code>true</code> if the map keys should be
+     *        converted to lower case
+     */
+    private static void varParser(String varString, Map varMap, boolean lowerCaseKeys) throws SqlToolException {
+        int             equals;
+        String          curSetting;
+        String          var;
+        String          val;
+        StringTokenizer allvars;
+
+        if ((varMap == null) || (varString == null)) {
+            return;
+        }
+        
+        allvars = new StringTokenizer(varString, ",");
+        
+        while (allvars.hasMoreTokens()) {
+            curSetting = allvars.nextToken().trim();
+            equals     = curSetting.indexOf('=');
+
+            if (equals < 1) {
+                exitMain(24, "Var settings not of format NAME=var[,...]");
+
+                return;
+            }
+
+            var = curSetting.substring(0, equals).trim();
+            val = curSetting.substring(equals + 1).trim();
+
+            if (var.length() < 1 || val.length() < 1) {
+                exitMain(24, "Var settings not of format NAME=var[,...]");
+
+                return;
+            }
+
+            if (lowerCaseKeys) {
+                var = var.toLowerCase();
+            }
+            
+            varMap.put(var, val);
+        }
+    }
+    
+    /**
      * Connect to a JDBC Database and execute the commands given on
      * stdin or in SQL file(s).
      * Like most main methods, this is not intended to be thread-safe.
@@ -185,6 +280,17 @@ public class SqlTool {
         boolean autoCommit       = false;
         Boolean coeOverride      = null;
         Boolean stdinputOverride = null;
+        
+        String   rcParams        = null;
+        String   rcUrl           = null;
+        String   rcUsername      = null;
+        String   rcPassword      = null;
+        String   rcDriver        = null;
+        String   rcCharset       = null;
+        String   rcTruststore    = null;
+        Map      rcFields        = null;
+        
+        String parameter;
 
         noexit = System.getProperty("sqltool.noexit") != null;
 
@@ -196,13 +302,14 @@ public class SqlTool {
                     break;             // "--"
                 }
 
-                if (arg[i].substring(2).equals("help")) {
+                parameter = arg[i].substring(2).toLowerCase();
+                
+                if (parameter.equals("help")) {
                     exitMain(0, SYNTAX_MESSAGE);
-
+                    
                     return;
-                }
-
-                if (arg[i].substring(2).equals("abortOnErr")) {
+                    
+                } else if (parameter.equals("abortonerr")) {
                     if (coeOverride != null) {
                         exitMain(
                             0, "Switches '--abortOnErr' and "
@@ -212,11 +319,8 @@ public class SqlTool {
                     }
 
                     coeOverride = Boolean.FALSE;
-
-                    continue;
-                }
-
-                if (arg[i].substring(2).equals("continueOnErr")) {
+                    
+                } else if (parameter.equals("continueonerr")) {
                     if (coeOverride != null) {
                         exitMain(
                             0, "Switches '--abortOnErr' and "
@@ -226,37 +330,25 @@ public class SqlTool {
                     }
 
                     coeOverride = Boolean.TRUE;
-
-                    continue;
-                }
-
-                if (arg[i].substring(2).equals("list")) {
+                    
+                } else if (parameter.equals("list")) {
                     listMode = true;
-
-                    continue;
-                }
-
-                if (arg[i].substring(2).equals("rcfile")) {
+                    
+                } else if (parameter.equals("rcfile")) {
                     if (++i == arg.length) {
                         throw bcl;
                     }
 
                     rcFile = arg[i];
-
-                    continue;
-                }
-
-                if (arg[i].substring(2).equals("setvar")) {
+                    
+                } else if (parameter.equals("setvar")) {
                     if (++i == arg.length) {
                         throw bcl;
                     }
 
                     varSettings = arg[i];
-
-                    continue;
-                }
-
-                if (arg[i].substring(2).equals("sql")) {
+                    
+                } else if (parameter.equals("sql")) {
                     noinput = true;    // but turn back on if file "-" specd.
 
                     if (++i == arg.length) {
@@ -268,61 +360,52 @@ public class SqlTool {
                     if (sqlText.charAt(sqlText.length() - 1) != ';') {
                         sqlText += ";";
                     }
-
-                    continue;
-                }
-
-                if (arg[i].substring(2).equals("debug")) {
+                    
+                } else if (parameter.equals("debug")) {
                     debug = true;
-
-                    continue;
-                }
-
-                if (arg[i].substring(2).equals("noAutoFile")) {
+                    
+                } else if (parameter.equals("noautofile")) {
                     noautoFile = true;
-
-                    continue;
-                }
-
-                if (arg[i].substring(2).equals("autoCommit")) {
+                    
+                } else if (parameter.equals("autocommit")) {
                     autoCommit = true;
-
-                    continue;
-                }
-
-                if (arg[i].substring(2).equals("stdinput")) {
+                    
+                } else if (parameter.equals("stdinput")) {
                     noinput          = false;
                     stdinputOverride = Boolean.TRUE;
-
-                    continue;
-                }
-
-                if (arg[i].substring(2).equals("noinput")) {
+                    
+                } else if (parameter.equals("noinput")) {
                     noinput          = true;
                     stdinputOverride = Boolean.FALSE;
-
-                    continue;
-                }
-
-                if (arg[i].substring(2).equals("driver")) {
+                    
+                } else if (parameter.equals("driver")) {
                     if (++i == arg.length) {
                         throw bcl;
                     }
 
                     driver = arg[i];
+                    
+                } else if (parameter.equals("inlinerc")) {
+                    if (++i == arg.length) {
+                        throw bcl;
+                    }
 
-                    continue;
-                }
-
-                throw bcl;
-            }
-
-            if (!listMode) {
-                if (++i == arg.length) {
+                    rcParams = arg[i];
+                    
+                } else {
                     throw bcl;
                 }
+            }
+            
+            if (!listMode) {
+                // If an inline RC file was specified, don't worry about the targetDb
+                if (rcParams == null) {
+                    if (++i == arg.length) {
+                        throw bcl;
+                    }
 
-                targetDb = arg[i];
+                    targetDb = arg[i];
+                }
             }
 
             int scriptIndex = 0;
@@ -384,20 +467,50 @@ public class SqlTool {
             exitMain(2, SYNTAX_MESSAGE);
 
             return;
-        }
+        }        
 
         RCData conData = null;
-
-        try {
-            conData = new RCData(new File((rcFile == null) ? DEFAULT_RCFILE
-                                                           : rcFile), targetDb);
-        } catch (Exception e) {
-            exitMain(1, "Failed to retrieve connection info for database '"
-                     + targetDb + "': " + e.getMessage());
-
-            return;
+        
+        // Use the inline RC file if it was specified        
+        if (rcParams != null) {
+            try {
+                rcFields = new HashMap();
+                
+                varParser(rcParams, rcFields, true);
+                
+                rcUrl        = (String) rcFields.get("url");
+                rcUsername   = (String) rcFields.get("user");
+                rcDriver     = (String) rcFields.get("driver");
+                rcCharset    = (String) rcFields.get("charset");
+                rcTruststore = (String) rcFields.get("truststore");
+                
+                rcPassword = promptForPassword(rcUsername);
+                
+                conData = new RCData(CMDLINE_ID, rcUrl, rcUsername,
+                        rcPassword, rcDriver, rcCharset, rcTruststore);
+                
+            } catch (SqlToolException e) {
+                throw e;
+                
+            } catch (Exception e) {
+                exitMain(1, "Invalid inline RC file specified: " + e.getMessage());
+                
+                return;
+            }
+            
+        } else {
+            try {
+                conData = new RCData(new File((rcFile == null) ? DEFAULT_RCFILE
+                                                               : rcFile), targetDb);
+                
+            } catch (Exception e) {
+                exitMain(1, "Failed to retrieve connection info for database '"
+                         + targetDb + "': " + e.getMessage());
+    
+                return;
+            }
         }
-
+        
         if (listMode) {
             exitMain(0);
 
@@ -470,31 +583,7 @@ public class SqlTool {
         HashMap   userVars = new HashMap();
 
         if (varSettings != null) {
-            int             equals;
-            String          curSetting, var, val;
-            StringTokenizer allvars = new StringTokenizer(varSettings, ",");
-
-            while (allvars.hasMoreTokens()) {
-                curSetting = allvars.nextToken().trim();
-                equals     = curSetting.indexOf('=');
-
-                if (equals < 1) {
-                    exitMain(24, "Var settings not of format NAME=var[,...]");
-
-                    return;
-                }
-
-                var = curSetting.substring(0, equals).trim();
-                val = curSetting.substring(equals + 1).trim();
-
-                if (var.length() < 1 || val.length() < 1) {
-                    exitMain(24, "Var settings not of format NAME=var[,...]");
-
-                    return;
-                }
-
-                userVars.put(var, val);
-            }
+            varParser(varSettings, userVars, false);
         }
 
         // We print version before execing this one.
