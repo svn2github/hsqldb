@@ -41,7 +41,7 @@ import java.sql.SQLException;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
-/* $Id: RCData.java,v 1.7 2005/06/08 19:52:37 fredt Exp $ */
+/* $Id: RCData.java,v 1.8 2005/10/23 19:25:14 fredt Exp $ */
 
 /**
  * All the info we need to connect up to a database.
@@ -184,6 +184,38 @@ public class RCData {
         }
     }
 
+    /**
+     * <p>Creates a new <code>RCData</code> object.
+     *
+     * <p>The parameters driver, charset, and truststore are optional. Setting
+     * these parameters to <code>NULL</code> will set them to their default
+     * values.
+     *
+     * @param id The identifier for these connection settings
+     * @param url The URL of the database to connect to
+     * @param username The username to log in as
+     * @param password The password of the username
+     * @param driver The JDBC driver to use
+     * @param charset The character set to use
+     * @param truststore The trust store to use
+     * @throws Exception if the a non-optional parameter is set to <code>NULL</code>
+     */
+    public RCData(String id, String url, String username, String password,
+            String driver, String charset, String truststore) throws Exception {
+        
+        this.id         = id;
+        this.url        = url;
+        this.username   = username;
+        this.password   = password;
+        this.driver     = driver;
+        this.charset    = charset;
+        this.truststore = truststore;
+        
+        if (id == null || url == null || username == null || password == null) {
+            throw new Exception("id, url, username, or password was not set");
+        }
+    }
+    
     String id         = null;
     String url        = null;
     String username   = null;
