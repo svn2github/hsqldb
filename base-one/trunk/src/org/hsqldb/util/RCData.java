@@ -41,7 +41,7 @@ import java.sql.SQLException;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
-/* $Id: RCData.java,v 1.8 2005/10/23 19:25:14 fredt Exp $ */
+/* $Id: RCData.java,v 1.9 2006/02/10 21:33:36 unsaved Exp $ */
 
 /**
  * All the info we need to connect up to a database.
@@ -64,8 +64,8 @@ public class RCData {
      * Creates a RCDataObject by looking up the given key in the
      * given authentication file.
      *
-     * @param String dbKey Key to look up in the file.
-     * @param inFile File containing the authentication information.
+     * @param dbKey Key to look up in the file.
+     * @param file File containing the authentication information.
      */
     public RCData(File file, String dbKey) throws Exception {
 
