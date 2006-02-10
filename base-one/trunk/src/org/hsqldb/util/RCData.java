@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2005, The HSQL Development Group
+/* Copyright (c) 2001-2006, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,7 @@ import java.sql.SQLException;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
-/* $Id: RCData.java,v 1.9 2006/02/10 21:33:36 unsaved Exp $ */
+/* $Id: RCData.java,v 1.10 2006/02/10 22:04:03 unsaved Exp $ */
 
 /**
  * All the info we need to connect up to a database.
