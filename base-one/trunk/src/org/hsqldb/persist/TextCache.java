@@ -46,6 +46,7 @@ import org.hsqldb.rowio.RowOutputText;
 import org.hsqldb.rowio.RowOutputTextQuoted;
 import org.hsqldb.scriptio.ScriptWriterText;
 import org.hsqldb.store.ObjectCacheHashMap;
+import org.hsqldb.Database;
 
 // Ito Kazumitsu 20030328 - patch 1.7.2 - character encoding support
 // Dimitri Maziuk - patch for NL in string support
@@ -79,6 +80,10 @@ public class TextCache extends DataFileCache {
     private ObjectCacheHashMap uncommittedCache;
 
     //
+    final static char DOUBLE_QUOTE_CHAR = '\"';
+    final static char BACKSLASH_CHAR    = '\\';
+    final static char LF_CHAR           = '\n';
+    final static char CR_CHAR           = '\r';
 
     /**
      *  The source string for a cached table is evaluated and the parameters
@@ -87,20 +92,28 @@ public class TextCache extends DataFileCache {
      *  Settings are used in this order: (1) settings specified in the
      *  source string for the table (2) global database settings in
      *  *.properties file (3) program defaults
+     *
+     *  fredt - this used to write rows as soon as they are inserted
+     *  but now this is subject to session autoCommit / or commit
+     *  storeOnInsert = true;
      */
     TextCache(Table table, String name) throws HsqlException {
 
-        super(table.database, name, null);
+        super(table.database, name);
 
         this.table       = table;
         uncommittedCache = new ObjectCacheHashMap(5);
     }
 
-    protected void initParams() throws HsqlException {
+    protected void initParams(Database database,
+                              String baseFileName) throws HsqlException {
 
-        // fredt - this used to write rows as soon as they are inserted
-        // but now this is subject to session autoCommit / or commit
-        // storeOnInsert = true;
+        fileName      = baseFileName;
+        this.database = database;
+        fa            = database.isStoredFileAccess() ? new FileUtil()
+                                                      : database
+                                                      .getFileAccess();
+
         HsqlProperties tableprops =
             HsqlProperties.delimitedArgPairsToProps(fileName, "=", ";", null);
 
@@ -203,7 +216,7 @@ public class TextCache extends DataFileCache {
 
         int next = 0;
 
-        if ((next = sep.indexOf('\\')) != -1) {
+        if ((next = sep.indexOf(BACKSLASH_CHAR)) != -1) {
             int          start    = 0;
             char[]       sepArray = sep.toCharArray();
             char         ch       = 0;
@@ -216,7 +229,7 @@ public class TextCache extends DataFileCache {
                 start = ++next;
 
                 if (next >= len) {
-                    realSep.append('\\');
+                    realSep.append(BACKSLASH_CHAR);
 
                     break;
                 }
@@ -226,19 +239,19 @@ public class TextCache extends DataFileCache {
                 }
 
                 if (ch == 'n') {
-                    realSep.append('\n');
+                    realSep.append(LF_CHAR);
 
                     start++;
                 } else if (ch == 'r') {
-                    realSep.append('\r');
+                    realSep.append(CR_CHAR);
 
                     start++;
                 } else if (ch == 't') {
                     realSep.append('\t');
 
                     start++;
-                } else if (ch == '\\') {
-                    realSep.append('\\');
+                } else if (ch == BACKSLASH_CHAR) {
+                    realSep.append(BACKSLASH_CHAR);
 
                     start++;
                 } else if (ch == 'u') {
@@ -258,7 +271,7 @@ public class TextCache extends DataFileCache {
 
                     start += 5;
                 } else if (sep.startsWith("quote", next)) {
-                    realSep.append('\"');
+                    realSep.append(DOUBLE_QUOTE_CHAR);
 
                     start += 5;
                 } else if (sep.startsWith("apos", next)) {
@@ -266,12 +279,12 @@ public class TextCache extends DataFileCache {
 
                     start += 4;
                 } else {
-                    realSep.append('\\');
+                    realSep.append(BACKSLASH_CHAR);
                     realSep.append(sepArray[next]);
 
                     start++;
                 }
-            } while ((next = sep.indexOf('\\', start)) != -1);
+            } while ((next = sep.indexOf(BACKSLASH_CHAR, start)) != -1);
 
             realSep.append(sepArray, start, len - start);
 
@@ -421,108 +434,79 @@ public class TextCache extends DataFileCache {
         clearRowImage(row);
     }
 
-    // sqlbob -- Allow line breaks in quoted fields.
     protected synchronized RowInputInterface readObject(int pos)
     throws IOException {
 
-        ByteArray    buffer    = new ByteArray(80);
-        boolean      blank     = true;
-        boolean      complete  = false;
-        int          termCount = 0;
-        int          firstPos  = pos;
-        RowInputText textIn    = (RowInputText) rowIn;
+        ByteArray buffer   = new ByteArray(80);
+        boolean   complete = false;
+        boolean   wasCR    = false;
+        int       c;
+        boolean   hasQuote  = false;
+        boolean   wasNormal = false;
 
-        try {
-            int c;
-            int quoteCount = 0;
+        pos = findNextUsedLinePos(pos);
 
-            pos = findNextUsedLinePos(pos);
+        if (pos == -1) {
+            return null;
+        }
 
-            if (pos == -1) {
-                return null;
-            }
+        dataFile.seek(pos);
 
-            dataFile.seek(pos);
+        while (!complete) {
+            wasNormal = false;
+            c         = dataFile.read();
 
-            //-- The following should work for DOS, MAC, and Unix line
-            //-- separators regardless of host OS.
-            while (true) {
-                c = dataFile.read();
+            if (c == -1) {
+                if (buffer.length() == 0) {
+                    return null;
+                }
 
-                if (c == -1) {
+                complete = true;
 
-                    // sqlbob -- Allow last line to not have NL.
-                    if (buffer.length() > 0) {
-                        complete = !blank;
-
-                        if (!cacheReadonly) {
-                            dataFile.write(
-                                ScriptWriterText.BYTES_LINE_SEP, 0,
-                                ScriptWriterText.BYTES_LINE_SEP.length);
-                        }
-                    }
-
+                if (wasCR) {
                     break;
                 }
 
-                if ((termCount == 0) && (c == '\"')
-                        && (isQuoted || isAllQuoted)) {
-                    quoteCount++;
+                if (!cacheReadonly) {
+                    dataFile.write(ScriptWriterText.BYTES_LINE_SEP, 0,
+                                   ScriptWriterText.BYTES_LINE_SEP.length);
                 }
 
-                if ((quoteCount % 2) == 0) {
-
-                    //-- Ensure line is complete.
-                    if ((termCount == 1) || (c == '\n')) {
-
-                        //-- Store first line.
-                        if (ignoreFirst && pos == 0) {
-                            header = buffer.toString();
-                            blank  = true;
-                        }
-
-                        if (c == '\n') {
-                            termCount++;
-                        }
-
-                        //-- Ignore blanks
-                        if (blank) {
-                            pos += buffer.length() + termCount;
-
-                            buffer.setLength(0);
-                            textIn.skippedLine();
-
-                            continue;
-                        } else {
-                            complete = true;
-
-                            break;
-                        }
-                    }
-                } else if (termCount == 1) {
-                    buffer.append('\r');
-                }
-
-                termCount = 0;
-
-                if (c == '\r') {
-                    termCount = 1;
-
-                    continue;
-                }
-
-                if (c != ' ') {
-                    blank = false;
-                }
-
-                buffer.append(c);
+                break;
             }
-        } catch (Exception e) {
-            complete = false;
+
+            switch (c) {
+
+                case DOUBLE_QUOTE_CHAR :
+                    wasNormal = true;
+                    complete  = wasCR;
+                    wasCR     = false;
+                    hasQuote  = !hasQuote;
+                    break;
+
+                case CR_CHAR :
+                    wasCR = !hasQuote;
+                    break;
+
+                case LF_CHAR :
+                    complete = !hasQuote;
+                    break;
+
+                default :
+                    wasNormal = true;
+                    complete  = wasCR;
+                    wasCR     = false;
+            }
+
+            buffer.append(c);
         }
 
         if (complete) {
             int length = (int) dataFile.getFilePointer() - pos;
+
+            if (wasNormal) {
+                length--;
+            }
 
             ((RowInputText) rowIn).setSource(buffer.toString(), pos, length);
 
@@ -532,6 +516,74 @@ public class TextCache extends DataFileCache {
         return null;
     }
 
+    public int readHeaderLine() throws HsqlException {
+
+        boolean   complete  = false;
+        boolean   wasCR     = false;
+        boolean   wasNormal = false;
+        ByteArray buffer    = new ByteArray(80);
+
+        while (!complete) {
+            wasNormal = false;
+
+            int c;
+
+            try {
+                c = dataFile.read();
+
+                if (c == -1) {
+                    if (buffer.length() == 0) {
+                        return 0;
+                    }
+
+                    complete = true;
+
+                    if (!cacheReadonly) {
+                        dataFile.write(
+                            ScriptWriterText.BYTES_LINE_SEP, 0,
+                            ScriptWriterText.BYTES_LINE_SEP.length);
+                    }
+
+                    break;
+                }
+            } catch (IOException e) {
+                throw Trace.error(Trace.TEXT_FILE);
+            }
+
+            switch (c) {
+
+                case CR_CHAR :
+                    wasCR = true;
+                    break;
+
+                case LF_CHAR :
+                    complete = true;
+                    break;
+
+                default :
+                    wasNormal = true;
+                    complete  = wasCR;
+                    wasCR     = false;
+            }
+
+            buffer.append(c);
+        }
+
+        header = buffer.toString();
+
+        try {
+            int length = (int) dataFile.getFilePointer();
+
+            if (wasNormal) {
+                length--;
+            }
+
+            return length;
+        } catch (IOException e) {
+            throw Trace.error(Trace.TEXT_FILE);
+        }
+    }
+
     // fredt - new method
 
     /**
@@ -539,33 +591,29 @@ public class TextCache extends DataFileCache {
      * line that contains any non-space character. Increments the row counter
      * when a blank line is skipped.
      *
-     * If none found, return -1;
+     * If none found return -1
      */
     int findNextUsedLinePos(int pos) throws IOException {
 
         int     firstPos   = pos;
         int     currentPos = pos;
-        boolean cr         = false;
+        boolean wasCR      = false;
 
         dataFile.seek(pos);
 
         while (true) {
-            int next = dataFile.read();
+            int c = dataFile.read();
 
             currentPos++;
 
-            switch (next) {
+            switch (c) {
 
-                case -1 :
-                    return firstPos == pos ? -1
-                                           : firstPos;
-
-                case '\r' :
-                    cr = true;
+                case CR_CHAR :
+                    wasCR = true;
                     break;
 
-                case '\n' :
-                    cr = false;
+                case LF_CHAR :
+                    wasCR = false;
 
                     ((RowInputText) rowIn).skippedLine();
 
@@ -573,13 +621,16 @@ public class TextCache extends DataFileCache {
                     break;
 
                 case ' ' :
-                    if (cr) {
-                        cr = false;
+                    if (wasCR) {
+                        wasCR = false;
 
                         ((RowInputText) rowIn).skippedLine();
                     }
+                    break;
 
-                    continue;
+                case -1 :
+                    return -1;
+
                 default :
                     return firstPos;
             }
@@ -604,10 +655,11 @@ public class TextCache extends DataFileCache {
             o = super.get(i, store, keep);
         }
 
+/*
         if (o == null) {
             o = super.get(i, store, keep);
         }
-
+*/
         return o;
     }
 
@@ -679,7 +731,7 @@ public class TextCache extends DataFileCache {
 
         dataFile.write(buf, 0, buf.length);
 
-        fileFreePosition = firstLine.length();
+        fileFreePosition = buf.length;
     }
 
     private class ByteArray {

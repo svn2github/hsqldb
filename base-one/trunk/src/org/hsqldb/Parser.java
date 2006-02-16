@@ -1957,7 +1957,7 @@ class Parser {
             String   javaName = database.getJavaName(name);
             Function f        = new Function(name, javaName, false);
 
-            session.check(javaName, UserManager.ALL);
+            session.check(javaName);
 
             int len = f.getArgCount();
             int i   = 0;
@@ -2054,6 +2054,14 @@ class Parser {
 
         while (true) {
             Expression current = readOr();
+
+            if (iToken == Expression.CLOSE) {
+                readThis(Expression.CLOSE);
+                leaf.setLeftExpression(current);
+
+                break;
+            }
+
             Expression condition = new Expression(Expression.IS_NULL,
                                                   current, null);
             Expression alternatives = new Expression(Expression.ALTERNATIVE,
@@ -2068,12 +2076,6 @@ class Parser {
             }
 
             leaf = alternatives;
-
-            if (iToken == Expression.CLOSE) {
-                readThis(Expression.CLOSE);
-
-                break;
-            }
 
             readThis(Expression.COMMA);
         }

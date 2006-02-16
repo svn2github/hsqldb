@@ -618,8 +618,6 @@ public class ArrayUtil {
     public static boolean containsAllTrueElements(boolean[] arra,
             boolean[] arrb) {
 
-        int k = 0;
-
         for (int i = 0; i < arra.length; i++) {
             if (arrb[i] &&!arra[i]) {
                 return false;

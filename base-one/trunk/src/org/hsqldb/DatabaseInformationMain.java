@@ -1351,8 +1351,10 @@ class DatabaseInformationMain extends DatabaseInformation {
      * COLUMN_NAME      VARCHAR   simple column name
      * ASC_OR_DESC      VARCHAR   col. sort sequence: {"A" (Asc) | "D" (Desc)}
      * CARDINALITY      INTEGER   # of unique values in index (not implemented)
-     * ROW_CARDINALITY  INTEGER   # of rows in index (not implemented)
+     * PAGES            INTEGER   index page use (not implemented)
      * FILTER_CONDITION VARCHAR   filter condition, if any (not implemented)
+     * // HSQLDB-extension
+     * ROW_CARDINALITY  INTEGER   total # of rows in index (not implemented)
      * </pre> <p>
      *
      * @return a <code>Table</code> object describing the visible
@@ -1367,6 +1369,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         if (t == null) {
             t = createBlankTable(sysTableHsqlNames[SYSTEM_INDEXINFO]);
 
+            // JDBC
             addColumn(t, "TABLE_CAT", Types.VARCHAR);
             addColumn(t, "TABLE_SCHEM", Types.VARCHAR);
             addColumn(t, "TABLE_NAME", Types.VARCHAR, false);           // NOT NULL
@@ -1378,8 +1381,11 @@ class DatabaseInformationMain extends DatabaseInformation {
             addColumn(t, "COLUMN_NAME", Types.VARCHAR);
             addColumn(t, "ASC_OR_DESC", Types.VARCHAR, 1, true);
             addColumn(t, "CARDINALITY", Types.INTEGER);
-            addColumn(t, "ROW_CARDINALITY", Types.INTEGER);
+            addColumn(t, "PAGES", Types.INTEGER);
             addColumn(t, "FILTER_CONDITION", Types.VARCHAR);
+
+            // HSQLDB extension
+            addColumn(t, "ROW_CARDINALITY", Types.INTEGER);
 
             // order: NON_UNIQUE, TYPE, INDEX_NAME, and ORDINAL_POSITION.
             // added for unique: INDEX_QUALIFIER, TABLE_NAME
@@ -1404,8 +1410,9 @@ class DatabaseInformationMain extends DatabaseInformation {
         //String  columnName;
         //String  ascOrDesc;
         Integer cardinality;
-        Integer rowCardinality;
+        Integer pages;
         String  filterCondition;
+        Integer rowCardinality;
 
         // Intermediate holders
         Iterator       tables;
@@ -1430,8 +1437,9 @@ class DatabaseInformationMain extends DatabaseInformation {
         final int icolumn_name      = 8;
         final int iasc_or_desc      = 9;
         final int icardinality      = 10;
-        final int irowcardinality   = 11;
+        final int ipages            = 11;
         final int ifilter_condition = 12;
+        final int irow_cardinality  = 13;
 
         // Initialization
         ti = new DITableInfo();
@@ -1472,6 +1480,7 @@ class DatabaseInformationMain extends DatabaseInformation {
                 indexName      = ti.getIndexName(i);
                 nonUnique      = ti.isIndexNonUnique(i);
                 cardinality    = ti.getIndexCardinality(i);
+                pages          = ValuePool.getInt(0);
                 rowCardinality = ti.getIndexRowCardinality(i);
                 cols           = ti.getIndexColumns(i);
                 indexType      = ti.getIndexType(i);
@@ -1490,7 +1499,8 @@ class DatabaseInformationMain extends DatabaseInformation {
                     row[icolumn_name]      = ti.getColName(col);
                     row[iasc_or_desc]      = ti.getIndexColDirection(i, col);
                     row[icardinality]      = cardinality;
-                    row[irowcardinality]   = rowCardinality;
+                    row[ipages]            = pages;
+                    row[irow_cardinality]  = rowCardinality;
                     row[ifilter_condition] = filterCondition;
 
                     t.insertSys(row);

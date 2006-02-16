@@ -61,7 +61,7 @@ import org.hsqldb.lib.AsciiStringInputStream;
  * <div class="ReleaseSpecificDocumentation">
  * <h3>HSQLDB-Specific Information:</h3> <p>
  *
- * Including 1.7.2, the HSQLDB driver does not implement Clob using an SQL
+ * Including 1.8.x, the HSQLDB driver does not implement Clob using an SQL
  * locator(CLOB).  That is, an HSQLDB Clob object does not contain a logical
  * pointer to SQL CLOB data; rather it directly contains an immutable
  * representation of the data (a String object). As a result, an HSQLDB

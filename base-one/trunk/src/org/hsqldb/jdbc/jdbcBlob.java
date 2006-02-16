@@ -57,7 +57,7 @@ import org.hsqldb.Trace;
  * <div class="ReleaseSpecificDocumentation">
  * <h3>HSQLDB-Specific Information:</h3> <p>
  *
- * Including 1.7.2, the HSQLDB driver does not implement Blob using an SQL
+ * Including 1.8.x, the HSQLDB driver does not implement Blob using an SQL
  * locator(BLOB).  That is, an HSQLDB Blob object does not contain a logical
  * pointer to SQL BLOB data; rather it directly contains a representation of
  * the data (a byte array). As a result, an HSQLDB Blob object is itself

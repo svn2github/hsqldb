@@ -454,9 +454,14 @@ public class DatabaseScript {
         a.append(t.getName().statementName);
         a.append('(');
 
-        int   columns = t.getColumnCount();
-        Index pki     = t.getIndex(0);
-        int[] pk      = pki.getColumns();
+        int        columns = t.getColumnCount();
+        int[]      pk      = t.getPrimaryKey();
+        HsqlName   pkName  = null;
+        Constraint pkConst = t.getPrimaryConstraint();
+
+        if (pkConst != null &&!pkConst.getName().isReservedIndexName()) {
+            pkName = pkConst.getName();
+        }
 
         for (int j = 0; j < columns; j++) {
             Column column  = t.getColumn(j);
@@ -517,8 +522,7 @@ public class DatabaseScript {
                     Token.T_NULL);
             }
 
-            if ((pk.length == 1) && (j == pk[0])
-                    && pki.getName().isReservedIndexName()) {
+            if ((pk.length == 1) && (j == pk[0]) && pkName == null) {
                 a.append(' ').append(Token.T_PRIMARY).append(' ').append(
                     Token.T_KEY);
             }
@@ -528,13 +532,12 @@ public class DatabaseScript {
             }
         }
 
-        if (pk.length > 1
-                || (pk.length == 1 &&!pki.getName().isReservedIndexName())) {
+        if (pk.length > 1 || (pk.length == 1 && pkName != null)) {
             a.append(',');
 
-            if (!pki.getName().isReservedIndexName()) {
+            if (pkName != null) {
                 a.append(Token.T_CONSTRAINT).append(' ');
-                a.append(pki.getName().statementName).append(' ');
+                a.append(pkName.statementName).append(' ');
             }
 
             a.append(Token.T_PRIMARY).append(' ').append(Token.T_KEY);

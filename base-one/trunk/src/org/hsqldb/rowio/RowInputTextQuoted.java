@@ -119,15 +119,6 @@ public class RowInputTextQuoted extends RowInputText {
                             state = NEED_END_QUOTE;
                         } else {
 
-                            //-- End of field.
-                            // todo - bug here as it throws when there are line terminators after the last field
-                            if (((next + 1) != qtext.length)
-                                    && (text.indexOf(sep, next) != next)) {
-                                throw Trace
-                                    .error(Trace
-                                        .QuotedTextDatabaseRowInput_getField);
-                            }
-
                             next  += sepLen - 1;
                             state = NORMAL_FIELD;
 

@@ -204,6 +204,30 @@ class Select {
     }
 
     /**
+     * Converts the types of the columns in set operations to those in the first
+     * Select.
+     */
+    void resolveUnionColumnTypes() throws HsqlException {
+
+        if (unionSelect != null) {
+            if (unionSelect.iResultLen != iResultLen) {
+                throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
+            }
+
+            for (int i = 0; i < iResultLen; i++) {
+                Expression e = exprColumns[i];
+
+                if (!e.isTypeEqual(unionSelect.exprColumns[i])) {
+                    unionSelect.exprColumns[i] =
+                        new Expression(unionSelect.exprColumns[i],
+                                       e.getDataType(), e.getColumnSize(),
+                                       e.getColumnScale());
+                }
+            }
+        }
+    }
+
+    /**
      * Sets the types of all the expressions that have so far resolved.
      *
      * @throws HsqlException

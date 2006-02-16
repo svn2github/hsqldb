@@ -1592,6 +1592,10 @@ public class Library {
 
     /**
      * Returns the number of units elapsed between two dates.<p>
+     * The datapart parameter indicates the part to be used for computing the
+     * difference. Supported types include: 'year', 'yy', 'month', 'mm'
+     * 'day', 'dd', 'hour', 'hh', 'minute', 'mi', 'second', 'ss', 'millisecond',
+     * 'ms'.
      *
      * Contributed by Michael Landon<p>
      *
@@ -1782,6 +1786,16 @@ public class Library {
     }
 
     /**
+     * Retrieves the full version number of this database product. <p>
+     *
+     * @return database version number as a <code>String</code> object
+     * @since 1.8.0.4
+     */
+    public static String getDatabaseFullProductVersion() {
+        return HsqlDatabaseProperties.THIS_FULL_VERSION;
+    }
+
+    /**
      * Retrieves the name of this database product. <p>
      *
      * @return database product name as a <code>String</code> object
@@ -1862,72 +1876,73 @@ public class Library {
         return false;
     }
 
-    static final int abs                       = 0;
-    static final int ascii                     = 1;
-    static final int bitand                    = 2;
-    static final int bitLength                 = 3;
-    static final int bitor                     = 4;
-    static final int bitxor                    = 64;
-    static final int character                 = 5;
-    static final int concat                    = 6;
-    static final int cot                       = 7;
-    static final int curdate                   = 8;
-    static final int curtime                   = 9;
-    static final int database                  = 10;
-    static final int datediff                  = 63;
-    static final int day                       = 11;
-    static final int dayname                   = 12;
-    static final int dayofmonth                = 13;
-    static final int dayofweek                 = 14;
-    static final int dayofyear                 = 15;
-    static final int difference                = 16;
-    static final int getAutoCommit             = 17;
-    static final int getDatabaseMajorVersion   = 18;
-    static final int getDatabaseMinorVersion   = 19;
-    static final int getDatabaseProductName    = 20;
-    static final int getDatabaseProductVersion = 21;
-    static final int hexToRaw                  = 22;
-    static final int hour                      = 23;
-    static final int identity                  = 24;
-    static final int insert                    = 25;
-    static final int isReadOnlyConnection      = 26;
-    static final int isReadOnlyDatabase        = 27;
-    static final int isReadOnlyDatabaseFiles   = 28;
-    static final int lcase                     = 29;
-    static final int left                      = 30;
-    static final int length                    = 31;
-    static final int locate                    = 32;
-    static final int log10                     = 33;
-    static final int ltrim                     = 34;
-    static final int minute                    = 35;
-    static final int mod                       = 36;
-    static final int month                     = 37;
-    static final int monthname                 = 38;
-    static final int now                       = 39;
-    static final int octetLength               = 40;
-    static final int pi                        = 41;
-    static final int position                  = 42;
-    static final int quarter                   = 43;
-    static final int rand                      = 44;
-    static final int rawToHex                  = 45;
-    static final int repeat                    = 46;
-    static final int replace                   = 47;
-    static final int right                     = 48;
-    static final int round                     = 49;
-    static final int roundMagic                = 50;
-    static final int rtrim                     = 51;
-    static final int second                    = 52;
-    static final int sign                      = 53;
-    static final int soundex                   = 54;
-    static final int space                     = 55;
-    static final int substring                 = 56;
-    static final int to_char                   = 65;
-    static final int trim                      = 57;
-    static final int truncate                  = 58;
-    static final int ucase                     = 59;
-    static final int user                      = 60;
-    static final int week                      = 61;
-    static final int year                      = 62;
+    static final int abs                           = 0;
+    static final int ascii                         = 1;
+    static final int bitand                        = 2;
+    static final int bitLength                     = 3;
+    static final int bitor                         = 4;
+    static final int bitxor                        = 5;
+    static final int character                     = 6;
+    static final int concat                        = 7;
+    static final int cot                           = 8;
+    static final int curdate                       = 9;
+    static final int curtime                       = 10;
+    static final int database                      = 11;
+    static final int datediff                      = 12;
+    static final int day                           = 13;
+    static final int dayname                       = 14;
+    static final int dayofmonth                    = 15;
+    static final int dayofweek                     = 16;
+    static final int dayofyear                     = 17;
+    static final int difference                    = 18;
+    static final int getAutoCommit                 = 19;
+    static final int getDatabaseFullProductVersion = 20;
+    static final int getDatabaseMajorVersion       = 21;
+    static final int getDatabaseMinorVersion       = 22;
+    static final int getDatabaseProductName        = 23;
+    static final int getDatabaseProductVersion     = 24;
+    static final int hexToRaw                      = 25;
+    static final int hour                          = 26;
+    static final int identity                      = 27;
+    static final int insert                        = 28;
+    static final int isReadOnlyConnection          = 29;
+    static final int isReadOnlyDatabase            = 30;
+    static final int isReadOnlyDatabaseFiles       = 31;
+    static final int lcase                         = 32;
+    static final int left                          = 33;
+    static final int length                        = 34;
+    static final int locate                        = 35;
+    static final int log10                         = 36;
+    static final int ltrim                         = 37;
+    static final int minute                        = 38;
+    static final int mod                           = 39;
+    static final int month                         = 40;
+    static final int monthname                     = 41;
+    static final int now                           = 42;
+    static final int octetLength                   = 43;
+    static final int pi                            = 44;
+    static final int position                      = 45;
+    static final int quarter                       = 46;
+    static final int rand                          = 47;
+    static final int rawToHex                      = 48;
+    static final int repeat                        = 49;
+    static final int replace                       = 50;
+    static final int right                         = 51;
+    static final int round                         = 52;
+    static final int roundMagic                    = 53;
+    static final int rtrim                         = 54;
+    static final int second                        = 55;
+    static final int sign                          = 56;
+    static final int soundex                       = 57;
+    static final int space                         = 58;
+    static final int substring                     = 59;
+    static final int to_char                       = 60;
+    static final int trim                          = 61;
+    static final int truncate                      = 62;
+    static final int ucase                         = 63;
+    static final int user                          = 64;
+    static final int week                          = 65;
+    static final int year                          = 66;
 
 /** @todo  see bitxor and datediff numbering */
 
@@ -1957,6 +1972,8 @@ public class Library {
         functionMap.put("dayofyear", dayofyear);
         functionMap.put("difference", difference);
         functionMap.put("getAutoCommit", getAutoCommit);
+        functionMap.put("getDatabaseFullProductVersion",
+                        getDatabaseFullProductVersion);
         functionMap.put("getDatabaseMajorVersion", getDatabaseMajorVersion);
         functionMap.put("getDatabaseMinorVersion", getDatabaseMinorVersion);
         functionMap.put("getDatabaseProductName", getDatabaseProductName);
@@ -2079,6 +2096,9 @@ public class Library {
                 }
                 case getAutoCommit : {
                     return null;
+                }
+                case getDatabaseFullProductVersion : {
+                    return getDatabaseFullProductVersion();
                 }
                 case getDatabaseMajorVersion : {
                     return ValuePool.getInt(getDatabaseMajorVersion());

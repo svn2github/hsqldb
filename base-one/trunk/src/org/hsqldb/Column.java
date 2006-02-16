@@ -1474,6 +1474,7 @@ public class Column {
                 return checkChar((String) obj, size, check);
 
             case Types.VARCHAR :
+            case Types.VARCHAR_IGNORECASE :
                 return checkVarchar((String) obj, size, check);
 
             case Types.NUMERIC :

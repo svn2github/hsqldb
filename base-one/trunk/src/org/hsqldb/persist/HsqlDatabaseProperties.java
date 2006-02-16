@@ -38,6 +38,7 @@ import org.hsqldb.DatabaseURL;
 import org.hsqldb.HsqlException;
 import org.hsqldb.Trace;
 import org.hsqldb.lib.Set;
+import org.hsqldb.lib.SimpleLog;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.java.JavaSystem;
 
@@ -70,6 +71,7 @@ public class HsqlDatabaseProperties extends HsqlProperties {
     public static final String VERSION_STRING_1_8_0     = "1.8.0";
     public static final String FIRST_COMPATIBLE_VERSION = "1.8.0";
     public static final String THIS_VERSION             = "1.8.0";
+    public static final String THIS_FULL_VERSION        = "1.8.0.4";
     public static final String PRODUCT_NAME = "HSQL Database Engine";
     public static final int    MAJOR                    = 1,
                                MINOR                    = 8,
@@ -177,9 +179,7 @@ public class HsqlDatabaseProperties extends HsqlProperties {
 
     public HsqlDatabaseProperties(Database db) {
 
-        super(db.getPath(), db.isStoredFileAccess() ? db.getFileAccess()
-                                                    : null, db
-                                                    .isFilesInJar());
+        super(db.getPath(), db.getFileAccess(), db.isFilesInJar());
 
         database = db;
 
@@ -372,8 +372,13 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         }
 
         try {
-            super.save();
+            super.save(fileName + ".properties" + ".new");
+            fa.renameElement(fileName + ".properties" + ".new",
+                             fileName + ".properties");
         } catch (Exception e) {
+            database.logger.appLog.logContext(SimpleLog.LOG_ERROR,
+                                              "save properties");
+
             throw Trace.error(Trace.FILE_IO_ERROR,
                               Trace.LOAD_SAVE_PROPERTIES, new Object[] {
                 fileName, e

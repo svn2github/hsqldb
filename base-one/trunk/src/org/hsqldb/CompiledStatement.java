@@ -65,6 +65,9 @@ final class CompiledStatement {
     static final int DQL = 8;
     static final int DDL = 9;
 
+
+    /** id in CompiledStatementManager */
+    int id;
     /** false when cleared */
     boolean isValid = true;
 
@@ -432,6 +435,52 @@ final class CompiledStatement {
         paramTypes   = null;
         subqueries   = null;
     }
+
+    boolean canExecute(Session session) throws HsqlException {
+
+        switch (type){
+            case CALL : {
+            }
+            case SELECT :
+                for (int i = 0; i < select.tFilter.length; i++){
+                    HsqlName name = select.tFilter[i].filterTable.getName();
+                    session.check(name, UserManager.SELECT);
+                }
+                break;
+            case INSERT_SELECT :
+                break;
+            case DELETE :
+                session.check(targetTable.getName(), UserManager.DELETE);
+                break;
+            case INSERT_VALUES :
+                session.check(targetTable.getName(), UserManager.INSERT);
+                break;
+            case UPDATE :
+                session.check(targetTable.getName(), UserManager.UPDATE);
+                break;
+            case DDL :
+
+
+        }
+
+        return true;
+    }
+
+
+    void checkTableWriteAccess(Session session, Table table) throws HsqlException {
+
+        // session level user rights
+        session.checkReadWrite();
+
+        // object type
+        if (table.isView()) {
+            throw Trace.error(Trace.NOT_A_TABLE, table.getName().name);
+        }
+
+        // object readonly
+        table.checkDataReadOnly();
+    }
+
 
     private static final Result updateCountResult =
         new Result(ResultConstants.UPDATECOUNT);

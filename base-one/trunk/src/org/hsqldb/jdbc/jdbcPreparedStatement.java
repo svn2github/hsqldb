@@ -82,6 +82,7 @@ import org.hsqldb.types.JavaObject;
 // boucherb@users 20030801 - patch 1.7.2 - updated some setXXX methods
 // boucherb@users 200403/4xx - doc 1.7.2 - javadoc updates toward 1.7.2 final
 // boucherb@users 200403/4xx - patch 1.7.2 - eliminate eager buffer allocation from setXXXStream/Blob/Clob
+// fredt@users 20060215 - patch 1.8.0 - check for unset parameters
 
 /**
  * <!-- start generic documentation -->
@@ -121,14 +122,10 @@ import org.hsqldb.types.JavaObject;
  * preference to a jdbcStatement object, if a short-running SQL statement is
  * to be executed more than a small number of times. <p>
  *
- * Please note, however, that 1.7.2 does not yet provide a sophisticated
- * internal statement pooling facility.  For this reason, the observation
- * above is guaranteed to apply only under certain use patterns. <p>
- *
- * Specifically, when it can be otherwise avoided, it is to be considered poor
+ * When it can be otherwise avoided, it is to be considered poor
  * practice to fully prepare (construct), parameterize, execute, fetch and
  * close a jdbcPreparedStatement object for each execution cycle. Indeed, under
- * HSQLDB 1.7.2, this practice is likely to be noticably <em>less</em>
+ * HSQLDB 1.8.0, this practice is likely to be noticably <em>less</em>
  * performant for short-running statements than the equivalent process using
  * jdbcStatement objects, albeit far more convenient, less error prone and
  * certainly much less resource-intensive, especially when large binary and
@@ -199,7 +196,7 @@ import org.hsqldb.types.JavaObject;
  *
  * @author boucherb@users
  * @author fredt@users
- * @version 1.7.2
+ * @version 1.8.0
  * @see jdbcConnection#prepareStatement
  * @see jdbcResultSet
  */
@@ -208,6 +205,12 @@ implements PreparedStatement {
 
     /** The parameter values for the next non-batch execution. */
     protected Object[] parameterValues;
+
+    /** Flags for bound variables. */
+    protected boolean[] parameterSet;
+
+    /** Flags for bound stream variables. */
+    protected boolean[] parameterStream;
 
     /** The SQL types of the parameters. */
     protected int[] parameterTypes;
@@ -310,10 +313,10 @@ implements PreparedStatement {
      * <div class="ReleaseSpecificDocumentation">
      * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * Including 1.7.2, prepared statements do not generate
+     * Including 1.8.0, prepared statements do not generate
      * multiple fetchable results. <p>
      *
-     * Following 1.7.2, it will be possible that statements
+     * In future versions, it will be possible that statements
      * generate multiple fetchable results under certain conditions.
      * </div>
      *
@@ -367,6 +370,7 @@ implements PreparedStatement {
         checkClosed();
         connection.clearWarningsNoCheck();
         checkIsRowCount(false);
+        checkParametersSet();
 
         resultIn = null;
 
@@ -411,6 +415,7 @@ implements PreparedStatement {
         checkClosed();
         connection.clearWarningsNoCheck();
         checkIsRowCount(true);
+        checkParametersSet();
 
         resultIn = null;
 
@@ -835,7 +840,7 @@ implements PreparedStatement {
     public void setAsciiStream(int parameterIndex, java.io.InputStream x,
                                int length) throws SQLException {
 
-        checkSetParameterIndex(parameterIndex);
+        checkSetParameterIndex(parameterIndex, true);
 
         String s;
 
@@ -894,7 +899,7 @@ implements PreparedStatement {
     public void setUnicodeStream(int parameterIndex, java.io.InputStream x,
                                  int length) throws SQLException {
 
-        checkSetParameterIndex(parameterIndex);
+        checkSetParameterIndex(parameterIndex, true);
 
         String msg = null;
 
@@ -969,7 +974,7 @@ implements PreparedStatement {
     public void setBinaryStream(int parameterIndex, java.io.InputStream x,
                                 int length) throws SQLException {
 
-        checkSetParameterIndex(parameterIndex);
+        checkSetParameterIndex(parameterIndex, true);
 
         if (x == null) {
             throw Util.sqlException(Trace.error(Trace.INVALID_JDBC_ARGUMENT,
@@ -1023,8 +1028,16 @@ implements PreparedStatement {
      * @exception SQLException if a database access error occurs
      */
     public void clearParameters() throws SQLException {
+
         checkClosed();
         ArrayUtil.fillArray(parameterValues, null);
+        ArrayUtil.clearArray(ArrayUtil.CLASS_CODE_BOOLEAN, parameterSet, 0,
+                             parameterSet.length);
+
+        if (parameterStream != null) {
+            ArrayUtil.clearArray(ArrayUtil.CLASS_CODE_BOOLEAN,
+                                 parameterStream, 0, parameterStream.length);
+        }
     }
 
     //----------------------------------------------------------------------
@@ -1191,6 +1204,7 @@ implements PreparedStatement {
         int      len      = parameterValues.length;
         Object[] bpValues = new Object[len];
 
+        checkParametersSet();
         System.arraycopy(parameterValues, 0, bpValues, 0, len);
 
         if (batchResultOut == null) {
@@ -1240,7 +1254,7 @@ implements PreparedStatement {
     public void setCharacterStream(int parameterIndex, java.io.Reader reader,
                                    int length) throws SQLException {
 
-        checkSetParameterIndex(parameterIndex);
+        checkSetParameterIndex(parameterIndex, true);
 
         if (reader == null) {
             String msg = "reader is null";
@@ -1344,7 +1358,7 @@ implements PreparedStatement {
             return;
         }
 
-        checkSetParameterIndex(i);
+        checkSetParameterIndex(i, false);
 
         final long length = x.length();
 
@@ -1434,7 +1448,7 @@ implements PreparedStatement {
             return;
         }
 
-        checkSetParameterIndex(i);
+        checkSetParameterIndex(i, false);
 
         final long length = x.length();
 
@@ -1654,7 +1668,7 @@ implements PreparedStatement {
     public void setTimestamp(int parameterIndex, Timestamp x,
                              Calendar cal) throws SQLException {
 
-        checkSetParameterIndex(parameterIndex);
+        checkSetParameterIndex(parameterIndex, false);
 
         if (cal != null && x != null) {
             int ns = x.getNanos();
@@ -1864,6 +1878,7 @@ implements PreparedStatement {
             pmdDescriptor   = (Result) row[0];
             parameterTypes  = pmdDescriptor.metaData.getParameterTypes();
             parameterValues = new Object[parameterTypes.length];
+            parameterSet    = new boolean[parameterTypes.length];
             parameterModes  = pmdDescriptor.metaData.paramMode;
         } catch (Exception e) {
             throw Trace.error(Trace.GENERAL_ERROR, e.toString());
@@ -1902,7 +1917,9 @@ implements PreparedStatement {
      * @param i The parameter index to check
      * @throws SQLException if the specified parameter index is invalid
      */
-    protected void checkSetParameterIndex(int i) throws SQLException {
+    protected void checkSetParameterIndex(int i,
+                                          boolean isStream)
+                                          throws SQLException {
 
         int    mode;
         String msg;
@@ -1913,6 +1930,17 @@ implements PreparedStatement {
             msg = "parameter index out of range: " + i;
 
             throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT, msg);
+        }
+
+        if (isStream) {
+            if (parameterStream == null) {
+                parameterStream = new boolean[parameterTypes.length];
+            } 
+
+            parameterStream[i - 1] = true;
+            parameterSet[i - 1] = false;
+        } else {
+            parameterSet[i - 1] = true;
         }
 /*
         mode = parameterModes[i - 1];
@@ -1932,6 +1960,34 @@ implements PreparedStatement {
     }
 
     /**
+     * Called just before execution or adding to batch, this ensures all the
+     * parameters have been set.<p>
+     *
+     * If a parameter has been set using a stream method, it should be set
+     * again for the next reuse. When set using other methods, the parameter
+     * setting is retained for the next use.
+     */
+    private void checkParametersSet() throws SQLException {
+
+        if (parameterStream == null) {
+            for (int i = 0; i < parameterSet.length; i++) {
+                if (!parameterSet[i]) {
+                    throw Util.sqlException(Trace.JDBC_PARAMETER_NOT_SET);
+                }
+            }
+        } else {
+            for (int i = 0; i < parameterSet.length; i++) {
+                if (!parameterSet[i] &&!parameterStream[i]) {
+                    throw Util.sqlException(Trace.JDBC_PARAMETER_NOT_SET);
+                }
+            }
+
+            ArrayUtil.clearArray(ArrayUtil.CLASS_CODE_BOOLEAN,
+                                 parameterStream, 0, parameterStream.length);
+        }
+    }
+
+    /**
      * The internal parameter value setter always converts the parameter to
      * the Java type required for data transmission. Target BINARY and OTHER
      * types are converted directly. All other target types are converted
@@ -1943,7 +1999,7 @@ implements PreparedStatement {
      */
     private void setParameter(int i, Object o) throws SQLException {
 
-        checkSetParameterIndex(i);
+        checkSetParameterIndex(i, false);
 
         i--;
 
@@ -2027,7 +2083,7 @@ implements PreparedStatement {
      */
     private void setIntParameter(int i, int value) throws SQLException {
 
-        checkSetParameterIndex(i);
+        checkSetParameterIndex(i, false);
 
         int outType = parameterTypes[i - 1];
 
@@ -2056,7 +2112,7 @@ implements PreparedStatement {
      */
     private void setLongParameter(int i, long value) throws SQLException {
 
-        checkSetParameterIndex(i);
+        checkSetParameterIndex(i, false);
 
         int outType = parameterTypes[i - 1];
 
@@ -2152,6 +2208,8 @@ implements PreparedStatement {
         }
 
         parameterValues = null;
+        parameterSet    = null;
+        parameterStream = null;
         parameterTypes  = null;
         parameterModes  = null;
         rsmdDescriptor  = null;

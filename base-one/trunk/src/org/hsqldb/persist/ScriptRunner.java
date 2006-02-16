@@ -67,8 +67,7 @@ public class ScriptRunner {
                                  int logType) throws HsqlException {
 
         IntKeyHashMap sessionMap = new IntKeyHashMap();
-        Session sysSession = database.getSessionManager().getSysSession(null,
-            false);
+        Session sysSession = database.getSessionManager().getSysSession();
         Session current   = sysSession;
         int     currentId = 0;
 

@@ -9,6 +9,7 @@ Maintainer, HSQLDB Project
 2006.01.08
 
 Fixed bug in WebServer
+Added support for remote startup of databases in Server and WebServer
 
 2005.12.22
 

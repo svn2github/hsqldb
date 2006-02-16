@@ -397,10 +397,26 @@ public class Table extends BaseTable {
     }
 
     /**
+     *  Adds a constraint.
+     */
+    void addPKConstraint(Constraint c) {
+        constraintList =
+            (Constraint[]) ArrayUtil.toAdjustedArray(constraintList, c, 0, 1);
+    }
+
+    /**
      *  Returns the list of constraints.
      */
     Constraint[] getConstraints() {
         return constraintList;
+    }
+
+    /**
+     *  Returns the list of constraints.
+     */
+    Constraint getPrimaryConstraint() {
+        return primaryKeyCols.length == 0 ? null
+                                          : constraintList[0];
     }
 
 /** @todo fredt - this can be improved to ignore order of columns in
@@ -827,7 +843,7 @@ public class Table extends BaseTable {
     /**
      * cols == null means drop
      */
-    Table moveDefinitionPK(HsqlName name, int[] pkCols,
+    Table moveDefinitionPK(int[] pkCols,
                            boolean withIdentity) throws HsqlException {
 
         // some checks
@@ -842,7 +858,7 @@ public class Table extends BaseTable {
             tn.addColumn(getColumn(i).duplicate(withIdentity));
         }
 
-        tn.createPrimaryKey(name, pkCols, true);
+        tn.createPrimaryKey(getIndex(0).getName(), pkCols, true);
 
         tn.constraintList = constraintList;
 
@@ -932,10 +948,9 @@ public class Table extends BaseTable {
     /**
      * Used for retype column. Checks whether column is in an FK or is
      * referenced by a FK
+     * @param colIndex index
      */
-    void checkColumnInFKConstraint(String colname) throws HsqlException {
-
-        int colIndex = getColumnNr(colname);
+    void checkColumnInFKConstraint(int colIndex) throws HsqlException {
 
         for (int i = 0, size = constraintList.length; i < size; i++) {
             Constraint c = constraintList[i];
@@ -943,7 +958,29 @@ public class Table extends BaseTable {
             if (c.hasColumn(colIndex)
                     && (c.getType() == Constraint.MAIN
                         || c.getType() == Constraint.FOREIGN_KEY)) {
-                throw Trace.error(Trace.COLUMN_IS_REFERENCED, c.getName());
+                throw Trace.error(Trace.COLUMN_IS_REFERENCED, c.getName().name);
+            }
+        }
+    }
+
+    /**
+     * Used for column defaults and nullability. Checks whether column is in an FK.
+     * @param colIndex index of column
+     * @param refOnly only check FK columns, not referenced columns
+     */
+    void checkColumnInFKConstraint(int colIndex,
+                                   int actionType) throws HsqlException {
+
+        for (int i = 0, size = constraintList.length; i < size; i++) {
+            Constraint c = constraintList[i];
+
+            if (c.hasColumn(colIndex)) {
+                if (c.getType() == Constraint.FOREIGN_KEY
+                        && (actionType == c.getUpdateAction()
+                            || actionType == c.getDeleteAction())) {
+                    throw Trace.error(Trace.COLUMN_IS_REFERENCED,
+                                      c.getName().name);
+                }
             }
         }
     }
@@ -1397,7 +1434,7 @@ public class Table extends BaseTable {
      */
 
 // tony_lai@users 20020820 - patch 595099
-    void createPrimaryKey(HsqlName pkName, int[] columns,
+    void createPrimaryKey(HsqlName indexName, int[] columns,
                           boolean columnsNotNull) throws HsqlException {
 
         if (primaryKeyCols != null) {
@@ -1438,8 +1475,9 @@ public class Table extends BaseTable {
         resetDefaultsFlag();
 
         // tony_lai@users 20020820 - patch 595099
-        HsqlName name = pkName != null ? pkName
-                                       : makeSysPKName();
+        HsqlName name = indexName != null ? indexName
+                                          : database.nameManager.newAutoName(
+                                              "IDX");
 
         createPrimaryIndex(columns, name);
         setBestRowIdentifiers();
@@ -3327,7 +3365,7 @@ public class Table extends BaseTable {
 
             if (isconstraint) {
                 Constraint c    = getUniqueConstraintForIndex(index);
-                String     name = c == null ? ""
+                String     name = c == null ? index.getName().name
                                             : c.getName().name;
 
                 throw Trace.error(Trace.VIOLATION_OF_UNIQUE_CONSTRAINT, name);

@@ -155,7 +155,7 @@ public class TestDatabaseMetaData extends TestBase {
 
             pstmt = conn.prepareStatement(
                 "CREATE TABLE t_1 (cha CHARACTER(10), dec DECIMAL(10,2), doub DOUBLE, lon BIGINT, \"IN\" INTEGER, sma SMALLINT, tin TINYINT, "
-                + "dat DATE DEFAULT CURRENT_DATE, tim TIME DEFAULT CURRENT_TIME, timest TIMESTAMP DEFAULT CURRENT_TIMESTAMP );");
+                + "dat DATE DEFAULT CURRENT_DATE, tim TIME DEFAULT CURRENT_TIME, timest TIMESTAMP DEFAULT CURRENT_TIMESTAMP, bool BOOLEAN );");
             updateCount = pstmt.executeUpdate();
 
             assertTrue("expected update count of zero", updateCount == 0);
@@ -199,6 +199,13 @@ public class TestDatabaseMetaData extends TestBase {
                                  && e.equals("java.sql.Timestamp");
 
             assertTrue("wrong result metadata", testresult);
+            e  = md.getColumnClassName(11);
+            testresult = e.equals("java.lang.Boolean");
+            assertTrue("wrong result metadata", testresult);
+
+
+
+
             pstmt.close();
             conn.close();
         } catch (Exception e) {

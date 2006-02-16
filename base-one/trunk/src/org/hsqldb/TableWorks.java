@@ -216,28 +216,22 @@ class TableWorks {
 
     void addPrimaryKey(int[] cols, HsqlName name) throws HsqlException {
 
-        boolean keepname = false;
-
         if (name == null) {
             name = table.makeSysPKName();
         }
 
-        if (table.indexList[0].getName().name.equals(name.name)) {
-            keepname = true;
-        } else {
-            table.database.schemaManager.checkConstraintExists(name.name,
-                    table.getSchemaName(), false);
-        }
+        table.database.schemaManager.checkConstraintExists(name.name,
+                table.getSchemaName(), false);
+        addOrDropPrimaryKey(cols, false);
 
-        addOrDropPrimaryKey(cols, name, false);
+        Constraint newconstraint = new Constraint(name, cols);
 
-        if (!keepname) {
-            table.database.schemaManager.registerConstraintName(name.name,
-                    table.getName());
-        }
+        table.addConstraint(newconstraint);
+        table.database.schemaManager.registerConstraintName(name.name,
+                table.getName());
     }
 
-    void addOrDropPrimaryKey(int[] cols, HsqlName name,
+    void addOrDropPrimaryKey(int[] cols,
                              boolean identity) throws HsqlException {
 
         if (cols == null) {
@@ -245,7 +239,7 @@ class TableWorks {
                                  true);
         }
 
-        Table tn = table.moveDefinitionPK(name, cols, identity);
+        Table tn = table.moveDefinitionPK(cols, identity);
 
         tn.moveData(session, table, -1, 0);
         tn.updateConstraintsTables(session, table, -1, 0);
@@ -400,12 +394,11 @@ class TableWorks {
 
     /**
      *
-     * @param  colindex
+     * @param  colIndex
      * @throws  HsqlException
      */
-    void dropColumn(int colindex) throws HsqlException {
+    void dropColumn(int colIndex) throws HsqlException {
 
-        HsqlName pkNameRemove    = null;
         HsqlName constNameRemove = null;
 
         if (table.isText() &&!table.isEmpty(session)) {
@@ -413,27 +406,27 @@ class TableWorks {
         }
 
         table.database.schemaManager.checkColumnIsInView(table,
-                table.getColumn(colindex).columnName.name);
+                table.getColumn(colIndex).columnName.name);
         table.checkColumnInCheckConstraint(
-            table.getColumn(colindex).columnName.name);
+            table.getColumn(colIndex).columnName.name);
 
         Table  tn          = table;
         int[]  dropIndexes = null;
-        String colName     = tn.getColumn(colindex).columnName.name;
+        String colName     = tn.getColumn(colIndex).columnName.name;
 
-        tn.checkColumnInFKConstraint(colName);
+        tn.checkColumnInFKConstraint(colIndex);
 
         if (table.getPrimaryKey().length == 1
-                && table.getPrimaryKey()[0] == colindex) {
+                && table.getPrimaryKey()[0] == colIndex) {
             table.checkDropIndex(table.getIndex(0).getName().name, null,
                                  true);
 
-            pkNameRemove = table.getIndex(0).getName();
-            tn           = table.moveDefinitionPK(null, null, false);
+            constNameRemove = table.constraintList[0].getName();
+            tn              = table.moveDefinitionPK(null, false);
         }
 
         Constraint c = tn.getUniqueConstraintForColumns(new int[]{
-            colindex });
+            colIndex });
 
         if (c != null) {
             Index idx = c.getMainIndex();
@@ -442,15 +435,10 @@ class TableWorks {
             constNameRemove = c.getName();
         }
 
-        tn = tn.moveDefinition(dropIndexes, null, colindex, -1);
+        tn = tn.moveDefinition(dropIndexes, null, colIndex, -1);
 
-        tn.moveData(session, table, colindex, -1);
-
-        if (constNameRemove != null) {
-            tn.removeConstraint(constNameRemove.name);
-        }
-
-        tn.updateConstraintsTables(session, table, colindex, -1);
+        tn.moveData(session, table, colIndex, -1);
+        tn.updateConstraintsTables(session, table, colIndex, -1);
 
         int i = table.database.schemaManager.getTableIndex(table);
 
@@ -460,12 +448,8 @@ class TableWorks {
 
         table.database.schemaManager.recompileViews(table);
 
-        if (pkNameRemove != null) {
-            table.database.schemaManager.removeConstraintName(
-                pkNameRemove.name, table.getName());
-        }
-
         if (constNameRemove != null) {
+            table.removeConstraint(constNameRemove.name);
             table.database.schemaManager.removeConstraintName(
                 constNameRemove.name, table.getName());
         }
@@ -474,12 +458,10 @@ class TableWorks {
     /**
      *
      * @param  column
-     * @param  colindex
+     * @param  colIndex
      * @throws  HsqlException
      */
-    void addColumn(Column column, int colindex) throws HsqlException {
-
-        HsqlName pkNameAdd = null;
+    void addColumn(Column column, int colIndex) throws HsqlException {
 
         if (table.isText() &&!table.isEmpty(session)) {
             throw Trace.error(Trace.OPERATION_NOT_SUPPORTED);
@@ -487,15 +469,14 @@ class TableWorks {
 
         Table tn = table;
 
-        tn = tn.moveDefinition(null, column, colindex, 1);
+        tn = tn.moveDefinition(null, column, colIndex, 1);
 
         if (column.isPrimaryKey()) {
-            pkNameAdd = tn.makeSysPKName();
-            tn = tn.moveDefinitionPK(pkNameAdd, new int[]{ colindex }, true);
+            tn = tn.moveDefinitionPK(new int[]{ colIndex }, true);
         }
 
-        tn.moveData(session, table, colindex, 1);
-        tn.updateConstraintsTables(session, table, colindex, 1);
+        tn.moveData(session, table, colIndex, 1);
+        tn.updateConstraintsTables(session, table, colIndex, 1);
 
         int i = table.database.schemaManager.getTableIndex(table);
 
@@ -505,7 +486,12 @@ class TableWorks {
 
         table.database.schemaManager.recompileViews(table);
 
-        if (pkNameAdd != null) {
+        if (column.isPrimaryKey()) {
+            HsqlName pkNameAdd = tn.makeSysPKName();
+            Constraint newconstraint = new Constraint(pkNameAdd,
+                new int[]{ colIndex });
+
+            table.addConstraint(newconstraint);
             table.database.schemaManager.registerConstraintName(
                 pkNameAdd.name, table.getName());
         }
@@ -520,23 +506,22 @@ class TableWorks {
         Constraint c = table.getConstraint(name);
         int        ctype;
 
-        if (name.equals(table.getIndexes()[0].getName().name)) {
-            ctype = Constraint.PRIMARY_KEY;
-        } else if (c == null) {
+        if (c == null) {
             throw Trace.error(Trace.CONSTRAINT_NOT_FOUND,
                               Trace.TableWorks_dropConstraint, new Object[] {
                 name, table.getName().name
             });
-        } else {
-            ctype = c.getType();
         }
+
+        ctype = c.getType();
 
         if (ctype == Constraint.MAIN) {
             throw Trace.error(Trace.DROP_SYSTEM_CONSTRAINT);
         }
 
         if (ctype == Constraint.PRIMARY_KEY) {
-            addOrDropPrimaryKey(null, null, false);
+            addOrDropPrimaryKey(null, false);
+            table.removeConstraint(name);
         } else if (ctype == Constraint.FOREIGN_KEY) {
             dropFKConstraint(c);
         } else if (ctype == Constraint.UNIQUE) {
@@ -567,7 +552,6 @@ class TableWorks {
         // all is well if dropIndex throws for lack of resources
         dropIndex(constIndex.getName().name);
 
-        int   refIndex  = table.getConstraintIndex(c.getFkName());
         Table mainTable = c.getMain();
 
         // MAIN constraint was created after REF, so delete first
@@ -644,7 +628,7 @@ class TableWorks {
             throw Trace.error(Trace.INVALID_CONVERSION);
         }
 
-        int colindex = table.getColumnNr(oldCol.columnName.name);
+        int colIndex = table.getColumnNr(oldCol.columnName.name);
 
         if (table.getPrimaryKey().length > 1) {
 
@@ -655,7 +639,7 @@ class TableWorks {
 
             newCol.setPrimaryKey(oldCol.isPrimaryKey());
 
-            if (ArrayUtil.find(table.getPrimaryKey(), colindex) != -1) {
+            if (ArrayUtil.find(table.getPrimaryKey(), colIndex) != -1) {
                 newCol.setNullable(false);
             }
         } else if (table.hasPrimaryKey()) {
@@ -684,54 +668,58 @@ class TableWorks {
             // default expressions can change
             oldCol.setType(newCol);
             oldCol.setDefaultExpression(newCol.getDefaultExpression());
-            table.setColumnTypeVars(colindex);
+            table.setColumnTypeVars(colIndex);
             table.resetDefaultsFlag();
 
             return;
         }
 
         table.database.schemaManager.checkColumnIsInView(table,
-                table.getColumn(colindex).columnName.name);
+                table.getColumn(colIndex).columnName.name);
         table.checkColumnInCheckConstraint(
-            table.getColumn(colindex).columnName.name);
-        table.checkColumnInFKConstraint(oldCol.columnName.name);
+            table.getColumn(colIndex).columnName.name);
+        table.checkColumnInFKConstraint(colIndex);
         checkConvertColDataType(oldCol, newCol);
-        retypeColumn(newCol, colindex);
+        retypeColumn(newCol, colIndex);
     }
 
     void checkConvertColDataType(Column oldCol,
                                  Column newCol) throws HsqlException {
 
-        int         colindex = table.getColumnNr(oldCol.columnName.name);
+        int         colIndex = table.getColumnNr(oldCol.columnName.name);
         RowIterator it       = table.getPrimaryIndex().firstRow(session);
 
         while (it.hasNext()) {
             Row    row = it.next();
-            Object o   = row.getData()[colindex];
+            Object o   = row.getData()[colIndex];
 
             Column.convertObject(session, o, newCol.getType(),
                                  newCol.getSize(), newCol.getScale());
         }
     }
 
+    // fredt - todo cross check with FK's with SET NULL and SET DEFAULT
+
     /**
      * performs the work for changing the nullability of a column
      */
-    void setColNullability(Column col,
+    void setColNullability(Column column,
                            boolean nullable) throws HsqlException {
 
-        int colindex = table.getColumnNr(col.columnName.name);
+        int colIndex = table.getColumnNr(column.columnName.name);
 
         if (nullable) {
-            if (col.isPrimaryKey()) {
+            if (column.isPrimaryKey()) {
                 throw Trace.error(Trace.TRY_TO_INSERT_NULL);
             }
+
+            table.checkColumnInFKConstraint(colIndex, Constraint.SET_NULL);
         } else {
             RowIterator it = table.getPrimaryIndex().firstRow(session);
 
             while (it.hasNext()) {
                 Row    row = it.next();
-                Object o   = row.getData()[colindex];
+                Object o   = row.getData()[colIndex];
 
                 if (o == null) {
                     throw Trace.error(Trace.TRY_TO_INSERT_NULL);
@@ -739,7 +727,18 @@ class TableWorks {
             }
         }
 
-        col.setNullable(nullable);
-        table.setColumnTypeVars(colindex);
+        column.setNullable(nullable);
+        table.setColumnTypeVars(colIndex);
+    }
+
+    /**
+     * performs the work for changing the default value of a column
+     */
+    void setColDefaultExpression(int colIndex,
+                                 Expression def) throws HsqlException {
+        if (def == null){
+            table.checkColumnInFKConstraint(colIndex, Constraint.SET_DEFAULT);
+        }
+        table.setDefaultExpression(colIndex, def);
     }
 }

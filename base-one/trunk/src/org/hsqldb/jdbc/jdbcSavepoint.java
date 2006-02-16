@@ -53,12 +53,13 @@ import org.hsqldb.Trace;
  * <div class="ReleaseSpecificDocumentation">
  * <h3>HSQLDB-Specific Information:</h3> <p>
  *
- * As SQL draft standards do not provide for unnamed savepoints,
- * this feature is not supported in 1.7.2.<p>
+ * As the SQL 2003 standard does not provide for unnamed savepoints,
+ * this feature is not supported.<p>
  *
- * Named Savepoints can be set if the Connection is autoCommit. Such Savepoints
- * will be cleared when the next statement is issued unless autoCommit is set
- * to false prior to executing any statement.
+ * If the connection is autoCommit, setting savepoints has no effect as any
+ * such savepoint is cleared upon the execution of the first transactional 
+ * statement. <p>
+
  * </div>
  * <!-- end release-specific documentation -->
  *

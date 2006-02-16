@@ -59,7 +59,7 @@ import org.hsqldb.lib.IntValueHashMap;
 //       being "@p1" => 1, "@p2" => 2, etc.  Problems: return value is "@p0"
 //       and there is no support for registering the return value as an out
 //       parameter.
-// TODO: 1.7.3
+// TODO: 1.8.x
 //       engine and client-side mechanisms for adding, retrieving,
 //       navigating (and perhaps controlling holdability of) multiple
 //       results generated from a single execution.
@@ -355,7 +355,7 @@ implements CallableStatement {
         int index = parameterNameMap.get(parameterName, -1);
 
         if (index >= 0) {
-            return index;
+            return index + 1;
         }
 
         throw Util.sqlException(Trace.COLUMN_NOT_FOUND, parameterName);
@@ -556,7 +556,7 @@ implements CallableStatement {
      * <p>
      * For the fixed-length type JDBC <code>CHAR</code>,
      * the <code>String</code> object
-     * returned has exactly the same value the JDBC
+     * returned has exactly the same value the (JDBC4 clarification:) SQL
      * <code>CHAR</code> value had in the
      * database, including any padding added by the database. <p>
      * <!-- end generic documentation -->
@@ -983,7 +983,7 @@ implements CallableStatement {
     /**
      * <!-- start generic documentation -->
      * Returns an object representing the value of OUT parameter
-     * <code>i</code> and uses <code>map</code> for the custom
+     * <code>parameterIndex</code> and uses <code>map</code> for the custom
      * mapping of the parameter value.
      * <p>
      * This method returns a Java object whose type corresponds to the
@@ -1003,7 +1003,7 @@ implements CallableStatement {
      * </div>
      * <!-- end release-specific documentation -->
      *
-     * @param i the first parameter is 1, the second is 2, and so on
+     * @param parameterIndex the first parameter is 1, the second is 2, and so on
      * @param map the mapping from SQL type names to Java classes
      * @return a <code>java.lang.Object</code> holding the OUT parameter value
      * @exception SQLException if a database access error occurs
@@ -1011,7 +1011,7 @@ implements CallableStatement {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *   jdbcPreparedStatement)
      */
-    public Object getObject(int i, Map map) throws SQLException {
+    public Object getObject(int parameterIndex, Map map) throws SQLException {
         throw Util.notSupported();
     }
 
@@ -1032,7 +1032,7 @@ implements CallableStatement {
      * </div>
      * <!-- end release-specific documentation -->
      *
-     * @param i the first parameter is 1, the second is 2,
+     * @param parameterIndex the first parameter is 1, the second is 2,
      * and so on
      * @return the parameter value as a <code>Ref</code> object in the
      * Java programming language.  If the value was SQL <code>NULL</code>,
@@ -1041,7 +1041,7 @@ implements CallableStatement {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      * jdbcPreparedStatement)
      */
-    public Ref getRef(int i) throws SQLException {
+    public Ref getRef(int parameterIndex) throws SQLException {
         throw Util.notSupported();
     }
 
@@ -1062,7 +1062,7 @@ implements CallableStatement {
      * </div>
      * <!-- end release-specific documentation -->
      *
-     * @param i the first parameter is 1, the second is 2,
+     * @param parameterIndex the first parameter is 1, the second is 2,
      * and so on
      * @return the parameter value as a <code>Blob</code> object in the
      * Java programming language.  If the value was SQL <code>NULL</code>,
@@ -1071,44 +1071,14 @@ implements CallableStatement {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *  jdbcPreparedStatement)
      */
-    public Blob getBlob(int i) throws SQLException {
+    public Blob getBlob(int parameterIndex) throws SQLException {
         throw Util.notSupported();
     }
 
     /**
      * <!-- start generic documentation -->
      * Retrieves the value of the designated JDBC <code>CLOB</code>
-     * parameter as a <code>Clob</code> object in the Java programming l
-     * anguage. <p>
-     * <!-- end generic documentation -->
-     *
-     * <!-- start release-specific documentation -->
-     * <div class="ReleaseSpecificDocumentation">
-     * <h3>HSQLDB-Specific Information:</h3> <p>
-     *
-     * HSQLDB 1.7.2 does not support this feature. <p>
-     *
-     * Calling this method always throws an <code>SQLException</code>.
-     * </div>
-     * <!-- end release-specific documentation -->
-     *
-     * @param i the first parameter is 1, the second is 2, and
-     * so on
-     * @return the parameter value as a <code>Clob</code> object in the
-     * Java programming language.  If the value was SQL <code>NULL</code>, the
-     * value <code>null</code> is returned.
-     * @exception SQLException if a database access error occurs
-     * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
-     *  jdbcPreparedStatement)
-     */
-    public Clob getClob(int i) throws SQLException {
-        throw Util.notSupported();
-    }
-
-    /**
-     * <!-- start generic documentation -->
-     * Retrieves the value of the designated JDBC <code>ARRAY</code>
-     * parameter as an {@link Array} object in the Java programming
+     * parameter as a {@link java.sql.Clob} object in the Java programming
      * language. <p>
      * <!-- end generic documentation -->
      *
@@ -1122,7 +1092,37 @@ implements CallableStatement {
      * </div>
      * <!-- end release-specific documentation -->
      *
-     * @param i the first parameter is 1, the second is 2, and
+     * @param parameterIndex the first parameter is 1, the second is 2, and
+     * so on
+     * @return the parameter value as a <code>Clob</code> object in the
+     * Java programming language.  If the value was SQL <code>NULL</code>, the
+     * value <code>null</code> is returned.
+     * @exception SQLException if a database access error occurs
+     * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
+     *  jdbcPreparedStatement)
+     */
+    public Clob getClob(int parameterIndex) throws SQLException {
+        throw Util.notSupported();
+    }
+
+    /**
+     * <!-- start generic documentation -->
+     * Retrieves the value of the designated JDBC <code>ARRAY</code>
+     * parameter as an {@link java.sql.Array} object in the Java programming
+     * language. <p>
+     * <!-- end generic documentation -->
+     *
+     * <!-- start release-specific documentation -->
+     * <div class="ReleaseSpecificDocumentation">
+     * <h3>HSQLDB-Specific Information:</h3> <p>
+     *
+     * HSQLDB 1.7.2 does not support this feature. <p>
+     *
+     * Calling this method always throws an <code>SQLException</code>.
+     * </div>
+     * <!-- end release-specific documentation -->
+     *
+     * @param parameterIndex the first parameter is 1, the second is 2, and
      * so on
      * @return the parameter value as an <code>Array</code> object in
      * the Java programming language.  If the value was SQL <code>NULL</code>,
@@ -1131,7 +1131,7 @@ implements CallableStatement {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *  jdbcPreparedStatement)
      */
-    public Array getArray(int i) throws SQLException {
+    public Array getArray(int parameterIndex) throws SQLException {
         throw Util.notSupported();
     }
 
@@ -1280,11 +1280,10 @@ implements CallableStatement {
      * should be used for a user-defined or <code>REF</code> output parameter.
      * Examples of user-defined types include: <code>STRUCT</code>,
      * <code>DISTINCT</code>, <code>JAVA_OBJECT</code>, and named array types.
-     *
-     * Before executing a stored procedure call, you must explicitly
-     * call <code>registerOutParameter</code> to register the type from
-     * <code>java.sql.Types</code> for each
-     * OUT parameter.  For a user-defined parameter, the fully-qualified SQL
+     * <p>
+     * (JDBC4 claraification:) All OUT parameters must be registered
+     * before a stored procedure is executed.
+     * <p> For a user-defined parameter, the fully-qualified SQL
      * type name of the parameter should also be given, while a
      * <code>REF</code> parameter requires that the fully-qualified type name
      * of the referenced type be given.  A JDBC driver that does not need the
@@ -1312,7 +1311,7 @@ implements CallableStatement {
      * </div>
      * <!-- end release-specific documentation -->
      *
-     * @param paramIndex the first parameter is 1, the second is 2,...
+     * @param parameterIndex the first parameter is 1, the second is 2,...
      * @param sqlType a value from {@link java.sql.Types}
      * @param typeName the fully-qualified name of an SQL structured type
      * @exception SQLException if a database access error occurs
@@ -1321,9 +1320,9 @@ implements CallableStatement {
      *  jdbcPreparedStatement)
      *
      */
-    public void registerOutParameter(int paramIndex, int sqlType,
+    public void registerOutParameter(int parameterIndex, int sqlType,
                                      String typeName) throws SQLException {
-        registerOutParameter(paramIndex, sqlType);
+        registerOutParameter(parameterIndex, sqlType);
     }
 
 // ----------------------------------- JDBC 3 ----------------------------------
@@ -1377,7 +1376,7 @@ implements CallableStatement {
      * <!-- start generic documentation -->
      * Registers the parameter named
      * <code>parameterName</code> to be of JDBC type
-     * <code>sqlType</code>.  This method must be called
+     * <code>sqlType</code>.  (JDBC4 clarification:) All OUT parameters must be registered
      * before a stored procedure is executed.
      * <p>
      * The JDBC type specified by <code>sqlType</code> for an OUT
@@ -1421,12 +1420,12 @@ implements CallableStatement {
      * the method <code>registerOutParameter</code>
      * should be used for a user-named or REF output parameter.  Examples
      * of user-named types include: STRUCT, DISTINCT, JAVA_OBJECT, and
-     * named array types.
+     * named array types. <p>
      *
-     * Before executing a stored procedure call, you must explicitly
-     * call <code>registerOutParameter</code> to register the type from
-     * <code>java.sql.Types</code> for each
-     * OUT parameter.  For a user-named parameter the fully-qualified SQL
+     * (JDBC4 clarification:) All OUT parameters must be registered
+     * before a stored procedure is executed.
+     * <p>
+     * For a user-named parameter the fully-qualified SQL
      * type name of the parameter should also be given, while a REF
      * parameter requires that the fully-qualified type name of the
      * referenced type be given.  A JDBC driver that does not need the
@@ -1524,7 +1523,7 @@ implements CallableStatement {
      * @exception SQLException if a database access error occurs,
      *      or if a URL is malformed
      * @see #getURL
-     * @since JDK 1.4, HSQL 1.7.0
+     * @since JDK 1.4, HSQLDB 1.7.0
      */
 //#ifdef JDBC3
     public void setURL(String parameterName,
@@ -1564,9 +1563,10 @@ implements CallableStatement {
 
     /**
      * <!-- start generic documentation -->
-     * Sets the designated parameter to the given Java <code>boolean</code>
-     * value. The driver converts this to an SQL <code>BIT</code> value when
-     * it sends it to the database. <p>
+     * Sets the designated parameter to the given Java <code>boolean</code> value.
+     * (JDBC4 clarification:) The driver converts this
+     * to an SQL <code>BIT</code> or <code>BOOLEAN</code> value when it sends
+     * it to the database. <p>
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
@@ -1853,8 +1853,9 @@ implements CallableStatement {
 
     /**
      * <!-- start generic documentation -->
-     * Sets the designated parameter to the given <code>java.sql.Date</code>
-     * value.  The driver converts this to an SQL <code>DATE</code> value
+     * (JDBC4 clarification:) Sets the designated parameter to the given <code>java.sql.Date</code> value
+     * using the default time zone of the virtual machine that is running
+     * the application.  The driver converts this to an SQL <code>DATE</code> value
      * when it sends it to the database. <p>
      * <!-- end generic documentation -->
      *
@@ -2349,7 +2350,7 @@ implements CallableStatement {
      * <p>
      * For the fixed-length type JDBC <code>CHAR</code>,
      * the <code>String</code> object
-     * returned has exactly the same value the JDBC
+     * returned has exactly the same value the (JDBC4 clarification:) SQL
      * <code>CHAR</code> value had in the
      * database, including any padding added by the database. <p>
      * <!-- end generic documentation -->
@@ -2380,7 +2381,8 @@ implements CallableStatement {
 
     /**
      * <!-- start generic documentation -->
-     * Retrieves the value of a JDBC <code>BIT</code> parameter as a
+     * (JDBC4 modified:) Retrieves the value of a JDBC <code>BIT</code> or <code>BOOLEAN</code>
+     * parameter as a
      * <code>boolean</code> in the Java programming language. <p>
      * <!-- end generic documentation -->
      *
@@ -2781,7 +2783,7 @@ implements CallableStatement {
     /**
      * <!-- start generic documentation -->
      * Returns an object representing the value of OUT parameter
-     * <code>i</code> and uses <code>map</code> for the custom
+     * <code>parameterName</code> and uses <code>map</code> for the custom
      * mapping of the parameter value.
      * <p>
      * This method returns a Java object whose type corresponds to the
@@ -2849,7 +2851,7 @@ implements CallableStatement {
     /**
      * <!-- start generic documentation -->
      * Retrieves the value of a JDBC <code>BLOB</code> parameter as a
-     * {@link Blob} object in the Java programming language. <p>
+     * {@link java.sql.Blob} object in the Java programming language. <p>
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->
@@ -2879,7 +2881,7 @@ implements CallableStatement {
     /**
      * <!-- start generic documentation -->
      * Retrieves the value of a JDBC <code>CLOB</code> parameter as a
-     * <code>Clob</code> object in the Java programming language. <p>
+     * {@link java.sql.Clob} object in the Java programming language. <p>
      * <!-- end generic documentation -->
      *
      * <!-- start release-specific documentation -->

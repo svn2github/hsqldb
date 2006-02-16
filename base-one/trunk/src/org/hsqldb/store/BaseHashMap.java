@@ -798,7 +798,7 @@ public class BaseHashMap {
      * find the next lookup in the key/value tables with an entry
      * uses current limits and zero integer key state
      */
-    int nextLookup(int lookup) {
+    protected int nextLookup(int lookup) {
 
         for (++lookup; lookup < hashIndex.newNodePointer; lookup++) {
             if (isObjectKey) {

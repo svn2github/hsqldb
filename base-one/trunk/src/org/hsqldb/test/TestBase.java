@@ -37,6 +37,7 @@ import java.sql.DriverManager;
 import org.hsqldb.Server;
 
 import junit.framework.TestCase;
+import java.sql.SQLException;
 
 /**
  * HSQLDB TestBugBase Junit test case. <p>
@@ -59,10 +60,21 @@ public abstract class TestBase extends TestCase {
         super(name);
     }
 
+    public TestBase(String name, String url, boolean network) {
+
+        super(name);
+
+        this.isNetwork = isNetwork;
+        this.url       = url;
+    }
+
     protected void setUp() {
 
         if (isNetwork) {
-            url    = "jdbc:hsqldb:hsql://localhost/test";
+            if (url == null) {
+                url = "jdbc:hsqldb:hsql://localhost/test";
+            }
+
             server = new Server();
 
             server.setDatabaseName(0, "test");
@@ -72,7 +84,9 @@ public abstract class TestBase extends TestCase {
             server.setErrWriter(null);
             server.start();
         } else {
-            url = "jdbc:hsqldb:file:test;sql.enforce_strict_size=true";
+            if (url == null) {
+                url = "jdbc:hsqldb:file:test;sql.enforce_strict_size=true";
+            }
         }
 
         try {
@@ -92,7 +106,7 @@ public abstract class TestBase extends TestCase {
         }
     }
 
-    Connection newConnection() throws Exception {
+    Connection newConnection() throws SQLException {
         return DriverManager.getConnection(url, user, password);
     }
 }

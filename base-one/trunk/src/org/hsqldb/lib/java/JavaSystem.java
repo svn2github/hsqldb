@@ -147,19 +147,6 @@ public class JavaSystem {
     }
 
     public static void saveProperties(Properties props, String name,
-                                      File file)
-                                      throws FileNotFoundException,
-                                          IOException {
-
-        FileOutputStream fos = null;
-
-        fos = new FileOutputStream(file);
-
-        saveProperties(props, name, fos);
-        fos.close();
-    }
-
-    public static void saveProperties(Properties props, String name,
                                       OutputStream os) throws IOException {
 
 //#ifdef JAVA1TARGET

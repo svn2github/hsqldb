@@ -328,7 +328,7 @@ class DatabaseCommandInterpreter {
 
             case Token.CREATE :
                 processCreate();
-                database.setMetaDirty(true);
+                database.setMetaDirty(false);
                 break;
 
             case Token.ALTER :
@@ -1190,6 +1190,9 @@ class DatabaseCommandInterpreter {
             throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
         }
 
+        HsqlArrayList tempConstraints = processCreateConstraints(t,
+            constraint, pkCols);
+
         if (tokenizer.isGetThis(Token.T_ON)) {
             if (!t.isTemp) {
                 throw Trace.error(Trace.UNEXPECTED_TOKEN, Token.T_ON);
@@ -1209,24 +1212,26 @@ class DatabaseCommandInterpreter {
             tokenizer.getThis(Token.T_ROWS);
         }
 
-        HsqlArrayList tempConstraints = processCreateConstraints(t,
-            constraint, pkCols);
-
         try {
             session.commit();
 
             Constraint primaryConst = (Constraint) tempConstraints.get(0);
 
-            if (primaryConst.constName == null) {
-                primaryConst.constName = t.makeSysPKName();
-            }
+            t.createPrimaryKey(null, primaryConst.core.mainColArray, true);
 
-            database.schemaManager.registerIndexName(
-                primaryConst.constName.name, t.getName());
-            database.schemaManager.registerConstraintName(
-                primaryConst.constName.name, t.getName());
-            t.createPrimaryKey(primaryConst.constName,
-                               primaryConst.core.mainColArray, true);
+            if (primaryConst.core.mainColArray != null) {
+                if (primaryConst.constName == null) {
+                    primaryConst.constName = t.makeSysPKName();
+                }
+
+                Constraint newconstraint =
+                    new Constraint(primaryConst.constName,
+                                   primaryConst.core.mainColArray);
+
+                t.addConstraint(newconstraint);
+                database.schemaManager.registerConstraintName(
+                    primaryConst.constName.name, t.getName());
+            }
 
             for (int i = 1; i < tempConstraints.size(); i++) {
                 Constraint tempConst = (Constraint) tempConstraints.get(i);
@@ -1723,7 +1728,7 @@ class DatabaseCommandInterpreter {
 
                         if (t.hasPrimaryKey()) {
                             processAlterTableDropConstraint(
-                                t, t.getIndexes()[0].getName().name);
+                                t, t.getPrimaryConstraint().getName().name);
                         } else {
                             throw Trace.error(Trace.CONSTRAINT_NOT_FOUND,
                                               Trace.TABLE_HAS_NO_PRIMARY_KEY,
@@ -1782,7 +1787,10 @@ class DatabaseCommandInterpreter {
             }
             case Token.DROP : {
                 tokenizer.getThis(Token.T_DEFAULT);
-                t.setDefaultExpression(columnIndex, null);
+
+                TableWorks tw = new TableWorks(session, t);
+
+                tw.setColDefaultExpression(columnIndex, null);
 
                 return;
             }
@@ -1804,13 +1812,14 @@ class DatabaseCommandInterpreter {
                 } else if (token.equals(Token.T_DEFAULT)) {
 
                     //alter table alter column set default
-                    int type   = column.getType();
-                    int length = column.getSize();
-                    int scale  = column.getScale();
+                    TableWorks tw     = new TableWorks(session, t);
+                    int        type   = column.getType();
+                    int        length = column.getSize();
+                    int        scale  = column.getScale();
+                    Expression expr = processCreateDefaultExpression(type,
+                        length, scale);
 
-                    t.setDefaultExpression(
-                        columnIndex,
-                        processCreateDefaultExpression(type, length, scale));
+                    tw.setColDefaultExpression(columnIndex, expr);
                 } else {
                     throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
                 }

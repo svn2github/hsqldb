@@ -353,8 +353,18 @@ public class Session implements SessionInterface {
      * @param  right the rights to check for
      * @throws  HsqlException if the Session User does not have such rights
      */
-    void check(Object object, int right) throws HsqlException {
+    void check(HsqlName object, int right) throws HsqlException {
         user.check(object, right);
+    }
+
+    /**
+     * Checks the rights on a function
+     *
+     * @param  object the function
+     * @throws  HsqlException if the Session User does not have such rights
+     */
+    void check(String object) throws HsqlException {
+        user.check(object);
     }
 
     /**
@@ -404,7 +414,7 @@ public class Session implements SessionInterface {
     }
 
     /**
-     *  Adds a single-row inssertion step to the transaction UNDO buffer.
+     *  Adds a single-row insertion step to the transaction UNDO buffer.
      *
      * @param  table the table into which the row was inserted
      * @param  row the inserted row
@@ -740,7 +750,11 @@ public class Session implements SessionInterface {
      *
      * @return true if so, else false
      */
-    boolean isAccessible(Object dbobject) throws HsqlException {
+    boolean isAccessible(String dbobject) throws HsqlException {
+        return user.isAccessible(dbobject);
+    }
+
+    boolean isAccessible(HsqlName dbobject) throws HsqlException {
         return user.isAccessible(dbobject);
     }
 
@@ -750,8 +764,7 @@ public class Session implements SessionInterface {
     CompiledStatementExecutor  compiledStatementExecutor;
     CompiledStatementManager   compiledStatementManager;
 
-    private CompiledStatement sqlCompileStatement(String sql)
-    throws HsqlException {
+    CompiledStatement sqlCompileStatement(String sql) throws HsqlException {
 
         parser.reset(sql);
 
@@ -882,10 +895,25 @@ public class Session implements SessionInterface {
                     return resultout;
                 }
                 case ResultConstants.SQLPREPARE : {
-                    return sqlPrepare(cmd.getMainString());
+                    CompiledStatement cs;
+
+                    try {
+                        cs = compiledStatementManager.compile(
+                            this, cmd.getMainString());
+                    } catch (Throwable t) {
+                        return new Result(t, cmd.getMainString());
+                    }
+
+                    Result rmd = cs.describeResult();
+                    Result pmd = cs.describeParameters();
+
+                    return Result.newPrepareResponse(cs.id, rmd, pmd);
                 }
                 case ResultConstants.SQLFREESTMT : {
-                    return sqlFreeStatement(cmd.getStatementID());
+                    compiledStatementManager.freeStatement(
+                        cmd.getStatementID(), sessionId, false);
+
+                    return emptyUpdateCount;
                 }
                 case ResultConstants.GETSESSIONATTR : {
                     return getAttributes();
@@ -923,8 +951,8 @@ public class Session implements SessionInterface {
                             break;
 
                         // not yet
-                        //                        case ResultConstants.COMMIT_AND_CHAIN :
-                        //                        case ResultConstants.ROLLBACK_AND_CHAIN :
+                        // case ResultConstants.COMMIT_AND_CHAIN :
+                        // case ResultConstants.ROLLBACK_AND_CHAIN :
                     }
 
                     return emptyUpdateCount;
@@ -991,82 +1019,6 @@ public class Session implements SessionInterface {
         return compiledStatementExecutor.execute(cs, pvals);
     }
 
-    /**
-     * Retrieves a MULTI Result describing three aspects of the
-     * CompiledStatement prepared from the SQL argument for execution
-     * in this session context. <p>
-     *
-     * <ol>
-     * <li>A PREPARE_ACK mode Result describing id of the statement
-     *     prepared by this request.  This is used by the JDBC implementation
-     *     to later identify to the engine which prepared statement to execute.
-     *
-     * <li>A DATA mode result describing the statement's result set metadata.
-     *     This is used to generate the JDBC ResultSetMetaData object returned
-     *     by PreparedStatement.getMetaData and CallableStatement.getMetaData.
-     *
-     * <li>A DATA mode result describing the statement's parameter metdata.
-     *     This is used to by the JDBC implementation to determine
-     *     how to send parameters back to the engine when executing the
-     *     statement.  It is also used to construct the JDBC ParameterMetaData
-     *     object for PreparedStatements and CallableStatements.
-     *
-     * @param sql a string describing the desired statement object
-     * @throws HsqlException is a database access error occurs
-     * @return a MULTI Result describing the compiled statement.
-     */
-    private Result sqlPrepare(String sql) {
-
-        int csid =
-            database.compiledStatementManager.getStatementID(currentSchema,
-                sql);
-        CompiledStatement cs =
-            database.compiledStatementManager.getStatement(csid);
-        Result rmd;
-        Result pmd;
-
-        if (cs == null) {
-
-            // compile
-            try {
-                Session sys =
-                    database.sessionManager.getSysSession(currentSchema.name,
-                        false);
-
-                cs = sys.sqlCompileStatement(sql);
-            } catch (Throwable t) {
-                return new Result(t, sql);
-            }
-
-            csid = database.compiledStatementManager.registerStatement(csid,
-                    cs);
-        } else if (!cs.isValid) {
-
-            // revalidate with the original contexts schema
-            try {
-                Session sys = database.sessionManager.getSysSession(
-                    cs.schemaHsqlName.name, false);
-
-                cs = sys.sqlCompileStatement(sql);
-            } catch (Throwable t) {
-                database.compiledStatementManager.freeStatement(csid,
-                        sessionId);
-
-                return new Result(t, sql);
-            }
-
-            csid = database.compiledStatementManager.registerStatement(csid,
-                    cs);
-        }
-
-        compiledStatementManager.linkSession(csid, sessionId);
-
-        rmd = cs.describeResult();
-        pmd = cs.describeParameters();
-
-        return Result.newPrepareResponse(csid, rmd, pmd);
-    }
-
     private Result sqlExecuteBatch(Result cmd) {
 
         int               csid;
@@ -1078,18 +1030,14 @@ public class Session implements SessionInterface {
         int               count;
 
         csid = cmd.getStatementID();
-        cs   = database.compiledStatementManager.getStatement(csid);
+        cs   = database.compiledStatementManager.getStatement(this, csid);
 
-        if (cs == null ||!cs.isValid) {
-            cs = recompileStatement(cs, csid);
+        if (cs == null) {
 
-            if (cs == null) {
-
-                // invalid sql has been removed already
-                return new Result(
-                    Trace.runtimeError(
-                        Trace.INVALID_PREPARED_STATEMENT, null), null);
-            }
+            // invalid sql has been removed already
+            return new Result(
+                Trace.runtimeError(Trace.INVALID_PREPARED_STATEMENT, null),
+                null);
         }
 
         parameters   = cs.parameters;
@@ -1193,19 +1141,16 @@ public class Session implements SessionInterface {
      */
     private Result sqlExecute(Result cmd) {
 
-        int               csid = cmd.getStatementID();
-        CompiledStatement cs   = compiledStatementManager.getStatement(csid);
+        int csid = cmd.getStatementID();
+        CompiledStatement cs = compiledStatementManager.getStatement(this,
+            csid);
 
-        if (cs == null ||!cs.isValid) {
-            cs = recompileStatement(cs, csid);
+        if (cs == null) {
 
-            if (cs == null) {
-
-                // invalid sql has been removed already
-                return new Result(
-                    Trace.runtimeError(
-                        Trace.INVALID_PREPARED_STATEMENT, null), null);
-            }
+            // invalid sql has been removed already
+            return new Result(
+                Trace.runtimeError(Trace.INVALID_PREPARED_STATEMENT, null),
+                null);
         }
 
         Object[] pvals = cmd.getParameterData();
@@ -1215,50 +1160,6 @@ public class Session implements SessionInterface {
 
     private Result sqlExecute(CompiledStatement cs, Object[] pvals) {
         return sqlExecuteCompiledNoPreChecks(cs, pvals);
-    }
-
-    /**
-     * Recompile a prepard statement or free it if no longer valid
-     */
-    private CompiledStatement recompileStatement(CompiledStatement cs,
-            int csid) {
-
-        String sql = database.compiledStatementManager.getSql(csid);
-
-        if (sql == null) {
-
-            // invalid sql has been removed already
-            return null;
-        }
-
-        Result r = sqlPrepare(sql);
-
-        if (r.mode == ResultConstants.ERROR) {
-
-            // sql is invalid due to DDL changes
-            database.compiledStatementManager.freeStatement(csid, sessionId);
-
-            return null;
-        }
-
-        return database.compiledStatementManager.getStatement(csid);
-    }
-
-    /**
-     * Retrieves the result of freeing the statement with the given id.
-     *
-     * @param csid the numeric identifier of the statement
-     */
-    private Result sqlFreeStatement(int csid) {
-
-        Result result;
-
-        database.compiledStatementManager.freeStatement(csid, sessionId);
-
-        result             = new Result(ResultConstants.UPDATECOUNT);
-        result.updateCount = 1;
-
-        return result;
     }
 
 // session DATETIME functions

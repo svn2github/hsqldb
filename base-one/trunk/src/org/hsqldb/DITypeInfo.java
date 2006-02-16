@@ -159,6 +159,11 @@ final class DITypeInfo {
                 names = "PRECISION,SCALE";
                 break;
 
+            case Types.FLOAT :
+            case Types.TIMESTAMP :
+                names = "PRECISION";
+                break;
+
             default :
                 names = null;
                 break;
@@ -436,10 +441,14 @@ final class DITypeInfo {
 
             case Types.BIGINT :
             case Types.DATE :
+            case Types.TIME :
             case Types.INTEGER :
             case Types.SMALLINT :
             case Types.TINYINT :
                 return ValuePool.getInt(0);
+
+            case Types.TIMESTAMP :
+                return ValuePool.getInt(6);
 
             case Types.DECIMAL :
             case Types.NUMERIC :
@@ -490,6 +499,8 @@ final class DITypeInfo {
             case Types.DATE :
             case Types.INTEGER :
             case Types.SMALLINT :
+            case Types.TIME :
+            case Types.TIMESTAMP :
             case Types.TINYINT :
             case Types.DECIMAL :
             case Types.NUMERIC :
@@ -540,13 +551,15 @@ final class DITypeInfo {
             case Types.BIGINT :
             case Types.DECIMAL :
             case Types.DOUBLE :
-            case Types.FLOAT :
             case Types.INTEGER :
             case Types.NUMERIC :
             case Types.REAL :
             case Types.SMALLINT :
             case Types.TINYINT :
                 return ValuePool.getInt(10);
+
+            case Types.FLOAT :
+                return ValuePool.getInt(2);
 
             default :
                 return null;
@@ -825,14 +838,13 @@ final class DITypeInfo {
             case Types.XML :    // ???
                 return "java.lang.Object";
 
-            case Types.FLOAT :
             case Types.REAL :
+                return "float";
+
+            case Types.FLOAT :
             case Types.DOUBLE :
                 return "double";
 
-//            case Types.FLOAT :
-//            case Types.REAL :
-//                return "float";
             case Types.INTEGER :
                 return "int";
 
@@ -932,7 +944,7 @@ final class DITypeInfo {
      */
     Boolean isCaseSensitive() {
 
-        return typeSub == Types.TYPE_SUB_IGNORECASE ? Boolean.TRUE
+        return typeSub == Types.TYPE_SUB_IGNORECASE ? Boolean.FALSE
                                                     : Types.isCaseSensitive(
                                                     type);
     }

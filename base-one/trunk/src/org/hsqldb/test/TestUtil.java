@@ -183,9 +183,12 @@ public class TestUtil {
         if (pSection == null) {    //it was not possible to sucessfully parse the section
             print("The section starting at line " + line
                   + " could not be parsed, " + "and so was not processed.\n");
-        } else if (pSection.getClass().getName().equals(
-                "org.hsqldb.test.IgnoreParsedSection")) {
+        } else if (pSection instanceof IgnoreParsedSection) {
             print("Line " + line + ": " + pSection.getResultString());
+        } else if (pSection instanceof DisplaySection) {
+
+            // May or may not want to report line number for 'd' sections.  ?
+            print(pSection.getResultString());
         } else if (!pSection.test(stat)) {
             print("section starting at line " + line);
             print("returned an unexpected result:");
@@ -266,6 +269,9 @@ public class TestUtil {
             case 'c' :
                 return new CountParsedSection(rows);
 
+            case 'd' :
+                return new DisplaySection(rows);
+
             case 'e' :
                 return new ExceptionParsedSection(rows);
 
@@ -305,6 +311,12 @@ abstract class ParsedSection {
 
     /** SQL query to be submitted to the database. */
     protected String sqlString = null;
+
+    /**
+     * Constructor when the section's input lines do not need to be parsed
+     * into SQL.
+     */
+    protected ParsedSection() {}
 
     /**
      * Common constructor functions for this family.
@@ -449,6 +461,7 @@ abstract class ParsedSection {
          * 'e' ('E') - exception
          * 'r' ('R') - results
          * 's' ('S') - silent
+         * 'd'       - display   (No reason to use upper-case).
          * ' ' - not a test
          */
         char testChar = Character.toLowerCase(aCode);
@@ -461,6 +474,7 @@ abstract class ParsedSection {
             case 'c' :
             case 'u' :
             case 's' :
+            case 'd' :
                 return true;
         }
 
@@ -805,14 +819,51 @@ class BlankParsedSection extends ParsedSection {
 /** Represents a ParsedSection that is to be ignored */
 class IgnoreParsedSection extends ParsedSection {
 
-    protected IgnoreParsedSection(String[] lines, char aType) {
+    protected IgnoreParsedSection(String[] inLines, char aType) {
 
-        super(lines);
+        /* Extremely ambiguous to use input parameter of same exact
+         * variable name as the superclass member "lines".
+         * Therefore, renaming to inLines. */
+
+        // Inefficient to parse this into SQL when we aren't going to use
+        // it as SQL.  Should probably just be removed to use the 
+        // super() constructor.
+        super(inLines);
 
         type = aType;
     }
 
     protected String getResultString() {
         return "This section, of type '" + getType() + "' was ignored";
+    }
+}
+
+/** Represents a Section to be Displayed, not executed */
+class DisplaySection extends ParsedSection {
+
+    protected DisplaySection(String[] inLines) {
+
+        /* Can't user the super constructor, since it does funny things when
+         * constructing the SQL Buffer, which we don't need. */
+        lines = inLines;
+
+        int firstSlash = lines[0].indexOf('/');
+
+        lines[0] = lines[0].substring(firstSlash + 1);
+    }
+
+    protected String getResultString() {
+
+        StringBuffer sb = new StringBuffer();
+
+        for (int i = 0; i < lines.length; i++) {
+            if (i > 0) {
+                sb.append('\n');
+            }
+
+            sb.append("+ " + lines[i]);
+        }
+
+        return sb.toString();
     }
 }

@@ -131,8 +131,6 @@ public class Log {
     private FileAccess             fa;
     private ScriptWriterBase       dbLogWriter;
     private String                 scriptFileName;
-    private String                 cacheFileName;
-    private String                 backupFileName;
     private String                 logFileName;
     private boolean                filesReadOnly;
     private long                   maxLogSize;
@@ -170,8 +168,6 @@ public class Log {
         filesReadOnly  = database.isFilesReadOnly();
         scriptFileName = fileName + ".script";
         logFileName    = fileName + ".log";
-        cacheFileName  = fileName + ".data";
-        backupFileName = fileName + ".backup";
 
         int state = properties.getDBModified();
 
@@ -192,6 +188,10 @@ public class Log {
                 reopenAllTextCaches();
                 break;
 
+            case HsqlDatabaseProperties.FILES_NEW :
+                processNewFiles();
+
+            // continue as non-modified files
             case HsqlDatabaseProperties.FILES_NOT_MODIFIED :
 
                 /**
@@ -210,9 +210,6 @@ public class Log {
 
                     reopenAllTextCaches();
                 }
-                break;
-
-            case HsqlDatabaseProperties.FILES_NEW :
                 break;
         }
 
@@ -241,6 +238,19 @@ public class Log {
 
         if (cache != null) {
             cache.close(!script);
+        }
+
+        properties.setProperty(HsqlDatabaseProperties.db_version,
+                               HsqlDatabaseProperties.THIS_VERSION);
+        properties.setProperty(
+            HsqlDatabaseProperties.hsqldb_compatible_version,
+            HsqlDatabaseProperties.FIRST_COMPATIBLE_VERSION);
+
+        // set this one last to save the props
+        properties.setDBModified(HsqlDatabaseProperties.FILES_NEW);
+
+
+        if (cache != null){
             cache.postClose(!script);
         }
 
@@ -252,14 +262,27 @@ public class Log {
             database.logger.appLog.logContext(e);
         }
 
-        properties.setProperty(HsqlDatabaseProperties.db_version,
-                               HsqlDatabaseProperties.THIS_VERSION);
-        properties.setProperty(
-            HsqlDatabaseProperties.hsqldb_compatible_version,
-            HsqlDatabaseProperties.FIRST_COMPATIBLE_VERSION);
-
-        // set this one last to save the props
         properties.setDBModified(HsqlDatabaseProperties.FILES_NOT_MODIFIED);
+    }
+
+    void processNewFiles() throws HsqlException {
+
+        try {
+            if (fa.isStreamElement(fileName + ".data")) {
+                ZipUnzipFile.compressFile(fileName + ".data",
+                                          fileName + ".backup",
+                                          database.getFileAccess());
+            } else {
+                fa.removeElement(fileName + ".backup");
+            }
+
+            fa.renameElement(scriptFileName + ".new", scriptFileName);
+            fa.removeElement(logFileName);
+            properties.setDBModified(
+                HsqlDatabaseProperties.FILES_NOT_MODIFIED);
+        } catch (IOException e) {
+            database.logger.appLog.logContext(e);
+        }
     }
 
     /**
@@ -284,9 +307,9 @@ public class Log {
     void deleteNewAndOldFiles() {
 
         try {
-            fa.removeElement(cacheFileName + ".old");
-            fa.removeElement(cacheFileName + ".new");
-            fa.removeElement(backupFileName + ".new");
+            fa.removeElement(fileName + ".data" + ".old");
+            fa.removeElement(fileName + ".data" + ".new");
+            fa.removeElement(fileName + ".backup" + ".new");
             fa.removeElement(scriptFileName + ".new");
         } catch (IOException e) {
             database.logger.appLog.logContext(e);
@@ -402,8 +425,7 @@ public class Log {
         }
 */
         if (cache == null) {
-            cache = new DataFileCache(database, cacheFileName,
-                                      backupFileName);
+            cache = new DataFileCache(database, fileName);
 
             cache.open(filesReadOnly);
         }
@@ -677,15 +699,16 @@ public class Log {
     private void restoreBackup() throws HsqlException {
 
         // in case data file cannot be deleted, reset it
-        DataFileCache.deleteOrResetFreePos(database, cacheFileName);
+        DataFileCache.deleteOrResetFreePos(database, fileName + ".data");
 
         try {
-            ZipUnzipFile.decompressFile(backupFileName, cacheFileName,
+            ZipUnzipFile.decompressFile(fileName + ".backup",
+                                        fileName + ".data",
                                         database.getFileAccess());
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR, Trace.Message_Pair,
                               new Object[] {
-                backupFileName, e.getMessage()
+                fileName + ".backup", e.getMessage()
             });
         }
     }

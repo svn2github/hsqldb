@@ -70,8 +70,10 @@ public class HsqlProperties {
     }
 
     public HsqlProperties(String name) {
+
         stringProps = new Properties();
         fileName    = name;
+        fa          = new FileUtil();
     }
 
     public HsqlProperties(String name, FileAccess accessor, boolean b) {
@@ -203,11 +205,7 @@ public class HsqlProperties {
 
         String propFilename = fileName + ".properties";
 
-        if (fa != null) {
-            return fa.isStreamElement(propFilename);
-        }
-
-        return FileUtil.exists(propFilename, resource, getClass());
+        return fa.isStreamElement(propFilename);
     }
 
     public boolean load() throws Exception {
@@ -226,12 +224,8 @@ public class HsqlProperties {
 
 // oj@openoffice.org
         try {
-            if (fa == null) {
-                fis = resource ? getClass().getResourceAsStream(propsFilename)
-                               : new FileInputStream(new File(propsFilename));
-            } else {
-                fis = fa.openInputStreamElement(propsFilename);
-            }
+            fis = resource ? getClass().getResourceAsStream(propsFilename)
+                           : fa.openInputStreamElement(propsFilename);
 
             stringProps.load(fis);
         } finally {
@@ -244,7 +238,7 @@ public class HsqlProperties {
     }
 
     /**
-     *  Saves the properties using JDK2 method if present, otherwise JDK1.
+     *  Saves the properties.
      */
     public void save() throws Exception {
 
@@ -255,23 +249,24 @@ public class HsqlProperties {
 
         String filestring = fileName + ".properties";
 
+        save(filestring);
+    }
+
+    /**
+     *  Saves the properties using JDK2 method if present, otherwise JDK1.
+     */
+    public void save(String fileString) throws Exception {
+
 // oj@openoffice.org
-        if (fa != null) {
-            fa.createParentDirs(filestring);
+        fa.createParentDirs(fileString);
 
-            OutputStream fos = fa.openOutputStreamElement(filestring);
+        OutputStream fos = fa.openOutputStreamElement(fileString);
 
-            JavaSystem.saveProperties(stringProps, "HSQL database", fos);
-            fos.close();
-
-            return;
-        }
-
-        File f = new File(filestring);
-
-        FileUtil.makeParentDirectories(f);
         JavaSystem.saveProperties(stringProps,
-                                  HsqlDatabaseProperties.PRODUCT_NAME, f);
+                                  HsqlDatabaseProperties.PRODUCT_NAME, fos);
+        fos.close();
+
+        return;
     }
 
     /**

@@ -265,7 +265,7 @@ public class Trace {
     Server_openServerSocket2                = 149,
     TEXT_TABLE_HEADER                       = 150,
     NOT_USED_151                            = 151,
-    NOT_USED_152                            = 152,
+    JDBC_PARAMETER_NOT_SET                  = 152,
     INVALID_LIMIT                           = 153,
     JDBC_STATEMENT_NOT_ROW_COUNT            = 154,
     JDBC_STATEMENT_NOT_RESULTSET            = 155,

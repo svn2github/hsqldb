@@ -641,7 +641,7 @@ public class TestSql extends TestBase {
      * as varchar. The rowOutputBase class attempts to cast the Java Boolean
      * into String.
      */
-    public void testUnionColumnTypes() throws Exception {
+    public void testUnionColumnTypes() {
 
         try {
             Connection conn = newConnection();
@@ -653,9 +653,27 @@ public class TestSql extends TestBase {
             stmt.execute("CREATE TABLE test2 (id int)");
             stmt.execute("INSERT INTO test1 VALUES(1,true)");
             stmt.execute("INSERT INTO test2 VALUES(2)");
-            stmt.executeQuery(
+
+            ResultSet rs = stmt.executeQuery(
                 "select id,null as b1 from test2 union select id, b1 from test1");
-        } catch (Throwable e) {
+            Boolean[] array = new Boolean[2];
+
+            for (int i = 0; rs.next(); i++) {
+                boolean boole = rs.getBoolean(2);
+
+                array[i] = Boolean.valueOf(boole);
+
+                if (rs.wasNull()) {
+                    array[i] = null;
+                }
+            }
+
+            boolean result = (array[0] == null && array[1] == Boolean.TRUE)
+                             || (array[0] == Boolean.TRUE
+                                 && array[1] == null);
+
+            assertTrue(result);
+        } catch (SQLException e) {
             e.printStackTrace();
             System.out.println("TestSql.testUnionColumnType() error: "
                                + e.getMessage());

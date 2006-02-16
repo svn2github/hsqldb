@@ -238,9 +238,8 @@ import org.hsqldb.persist.HsqlDatabaseProperties;
  * all JDBC 2 methods can be called while executing under the version 1.1.x
  * <em>Java Runtime Environment</em><sup><font size="-2">TM</font></sup>.
  * However, some of these method calls require <code>int</code> values that
- * are defined only in the JDBC 2 or greater version of
- * <a href="http://java.sun.com/j2se/1.4/docs/api/java/sql/ResultSet.html">
- * <code>ResultSet</code></a> interface.  For this reason, when the
+ * are defined only in the JDBC 2 or greater version of the
+ * {@link java.sql.ResultSet ResultSet} interface.  For this reason, when the
  * product is compiled under JDK 1.1.x, these values are defined in
  * {@link jdbcResultSet jdbcResultSet}.<p>
  *
@@ -2005,8 +2004,8 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
     }
 
     /**
-     * Retrieves whether this database supports subqueries in
-     * <code>IN</code> statements. <p>
+     * JDBC4 correction: Retrieves whether this database supports subqueries in
+     * <code>IN</code> expressions. <p>
      *
      * <!-- start release-specific documentation -->
      * <div class="ReleaseSpecificDocumentation">
@@ -5491,7 +5490,7 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
         //   construct something like:
         //   select ... where ... like 'xxx\_yyy' escape '\'
         //   which will try to match 'xxx_yyy', not 'xxx\_yyy'
-        //   Testing indicates that indeed, higher quiality popular JDBC
+        //   Testing indicates that indeed, higher quality popular JDBC
         //   database browsers do the escapes "properly."
         if (val == null) {
             return "";
@@ -5536,7 +5535,7 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
      * The main SQL statement executor.  All SQL destined for execution
      * ultimately goes through this method. <p>
      *
-     * The sqlStatement field for the result is set null to comply with
+     * The sqlStatement field for the result is set autoClose to comply with
      * ResultSet.getStatement() semantics for result sets that are not from
      * a user supplied Statement object. (fredt) <p>
      *

@@ -117,13 +117,42 @@ public class SessionManager {
         sysSession.isProcessingScript = forScript;
         sysSession.isProcessingLog    = false;
 
+        sysSession.setUser(sysSession.database.getUserManager().getSysUser());
+
         return sysSession;
     }
 
+    /**
+     * Retrieves the special SYS Session.
+     *
+     * @return the special SYS Session
+     */
     public Session getSysSession() {
 
         sysSession.currentSchema =
             sysSession.database.schemaManager.defaultSchemaHsqlName;
+        sysSession.isProcessingScript = false;
+        sysSession.isProcessingLog    = false;
+
+        sysSession.setUser(sysSession.database.getUserManager().getSysUser());
+
+        return sysSession;
+    }
+
+    /**
+     * Retrieves the special SYS Session.
+     *
+     * @return the special SYS Session
+     */
+    public Session getSysSession(String schema,
+                                 User user) throws HsqlException {
+
+        sysSession.currentSchema =
+            sysSession.database.schemaManager.getSchemaHsqlName(schema);
+        sysSession.isProcessingScript = false;
+        sysSession.isProcessingLog    = false;
+
+        sysSession.setUser(user);
 
         return sysSession;
     }

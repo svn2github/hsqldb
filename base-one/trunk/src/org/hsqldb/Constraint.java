@@ -142,53 +142,66 @@ class Constraint {
      *  Constructor for foreign key constraints.
      *
      * @param  pkname name in the main (referenced) table, used internally
-     * @param  fkname name in the referencing table, public name of the constraint
-     * @param  main referenced table
-     * @param  ref referencing talbe
-     * @param  colmain array of column indexes in main table
-     * @param  colref array of column indexes in referencing table
-     * @param  imain index on the main table
-     * @param  iref index on the referencing table
+     * @param  name name in the referencing table, public name of the constraint
+     * @param  mainTable referenced table
+     * @param  refTable referencing talbe
+     * @param  mainCols array of column indexes in main table
+     * @param  refCols array of column indexes in referencing table
+     * @param  mainIndex index on the main table
+     * @param  refIndex index on the referencing table
      * @param  deleteAction triggered action on delete
      * @param  updateAction triggered action on update
      * @exception  HsqlException
      */
-    Constraint(HsqlName pkname, HsqlName fkname, Table main, Table ref,
-               int[] colmain, int[] colref, Index imain, Index iref,
-               int deleteAction, int updateAction) throws HsqlException {
+    Constraint(HsqlName pkname, HsqlName name, Table mainTable,
+               Table refTable, int[] mainCols, int[] refCols,
+               Index mainIndex, Index refIndex, int deleteAction,
+               int updateAction) throws HsqlException {
 
         core           = new ConstraintCore();
         core.pkName    = pkname;
-        core.fkName    = fkname;
-        constName      = fkname;
+        core.fkName    = name;
+        constName      = name;
         constType      = FOREIGN_KEY;
-        core.mainTable = main;
-        core.refTable  = ref;
+        core.mainTable = mainTable;
+        core.refTable  = refTable;
         /* fredt - in FK constraints column lists for iColMain and iColRef have
            identical sets to visible columns of iMain and iRef respectively
            but the order of columns can be different and must be preserved
          */
-        core.mainColArray = colmain;
+        core.mainColArray = mainCols;
         core.colLen       = core.mainColArray.length;
-        core.refColArray  = colref;
-        core.mainIndex    = imain;
-        core.refIndex     = iref;
+        core.refColArray  = refCols;
+        core.mainIndex    = mainIndex;
+        core.refIndex     = refIndex;
         core.deleteAction = deleteAction;
         core.updateAction = updateAction;
     }
 
     /**
+     * PK constraint constructor
+     */
+    Constraint(HsqlName name, int[] cols) {
+
+        core              = new ConstraintCore();
+        constName         = name;
+        constType         = PRIMARY_KEY;
+        core.mainColArray = cols;
+    }
+
+
+    /**
      * temp constraint constructor
      */
-    Constraint(HsqlName name, int[] mainCol, Table refTable, int[] refCol,
+    Constraint(HsqlName name, int[] mainCols, Table refTable, int[] refCols,
                int type, int deleteAction, int updateAction) {
 
         core              = new ConstraintCore();
         constName         = name;
         constType         = type;
-        core.mainColArray = mainCol;
+        core.mainColArray = mainCols;
         core.refTable     = refTable;
-        core.refColArray  = refCol;
+        core.refColArray  = refCols;
         core.deleteAction = deleteAction;
         core.updateAction = updateAction;
     }
@@ -351,7 +364,7 @@ class Constraint {
         if (constType == MAIN) {
             return ArrayUtil.find(core.mainColArray, colIndex) != -1;
         } else if (constType == FOREIGN_KEY) {
-            return ArrayUtil.find(core.mainColArray, colIndex) != -1;
+            return ArrayUtil.find(core.refColArray, colIndex) != -1;
         }
 
         return false;
@@ -441,7 +454,8 @@ class Constraint {
      */
     void checkInsert(Session session, Object[] row) throws HsqlException {
 
-        if (constType == Constraint.MAIN || constType == Constraint.UNIQUE) {
+        if (constType == Constraint.MAIN || constType == Constraint.UNIQUE ||
+            constType == Constraint.PRIMARY_KEY) {
 
             // inserts in the main table are never a problem
             // unique constraints are checked by the unique index

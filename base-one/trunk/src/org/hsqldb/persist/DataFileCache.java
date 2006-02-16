@@ -63,7 +63,7 @@ import org.hsqldb.store.BitMap;
  */
 public class DataFileCache {
 
-    private FileAccess fa;
+    protected FileAccess fa;
 
     // flags
     public static final int FLAG_ISSAVED = 2;
@@ -112,15 +112,10 @@ public class DataFileCache {
     protected long    maxCacheBytes;            // number of bytes
     protected Cache   cache;
 
-    public DataFileCache(Database db, String fileName,
-                         String backupName) throws HsqlException {
+    public DataFileCache(Database db,
+                         String baseFileName) throws HsqlException {
 
-        this.fileName       = fileName;
-        this.backupFileName = backupName;
-        database            = db;
-        fa                  = database.getFileAccess();
-
-        initParams();
+        initParams(db, baseFileName);
 
         cache = new Cache(this);
     }
@@ -128,7 +123,13 @@ public class DataFileCache {
     /**
      * initial external parameters are set here.
      */
-    protected void initParams() throws HsqlException {
+    protected void initParams(Database database,
+                              String baseFileName) throws HsqlException {
+
+        fileName       = baseFileName + ".data";
+        backupFileName = baseFileName + ".backup";
+        this.database  = database;
+        fa             = database.getFileAccess();
 
         int cacheScale = database.getProperties().getIntegerProperty(
             HsqlDatabaseProperties.hsqldb_cache_scale, 14, 8, 18);
@@ -413,14 +414,13 @@ public class DataFileCache {
                 }
             }
 
-// oj@openofice.org - change to file access api
+            // oj@openofice.org - change to file access api
             fa.renameElement(fileName + ".new", fileName);
             backup();
             database.getProperties().setProperty(
                 HsqlDatabaseProperties.hsqldb_cache_version,
                 HsqlDatabaseProperties.VERSION_STRING_1_7_0);
             database.getProperties().save();
-            initParams();
             cache.clear();
 
             cache = new Cache(this);
@@ -566,7 +566,7 @@ public class DataFileCache {
             return object;
         } catch (IOException e) {
             database.logger.appLog.logContext(SimpleLog.LOG_ERROR,
-                                              "" + cache + " pos: " + i);
+                                              fileName + " get pos: " + i);
             database.logger.appLog.logContext(e);
 
             throw Trace.error(Trace.DATA_FILE_ERROR,

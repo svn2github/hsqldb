@@ -525,6 +525,8 @@ public interface ResultConstants {
     int ROLLBACK                = 1;
     int SAVEPOINT_NAME_ROLLBACK = 2;
     int SAVEPOINT_NAME_RELEASE  = 4;
+    int COMMIT_AND_CHAIN        = 6;
+    int ROLLBACK_AND_CHAIN      = 7;
 
 /* Environment attributes */
 

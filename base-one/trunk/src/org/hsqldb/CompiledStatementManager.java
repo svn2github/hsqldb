@@ -66,14 +66,13 @@ import org.hsqldb.lib.Iterator;
  * Modified by fredt@users from the original by boucherb@users to simplify,
  * support multiple identical prepared statements per session, and avoid
  * keeping references to CompiledStatement objects after DDL changes which
- * could result in memory leaks. <p>
- *
+ * could result in memory leaks. Modified further to support schemas.<p>
  *
  * @author boucherb@users
  * @author fredt@users
  *
  * @since 1.7.2
- * @version 1.7.2
+ * @version 1.8.0
  */
 final class CompiledStatementManager {
 
@@ -83,7 +82,7 @@ final class CompiledStatementManager {
      */
     private Database database;
 
-    /** Map:  SQL String => Compiled Statement id (int) */
+    /** Map: Schema id (int) => {Map: SQL String => Compiled Statement id (int)} */
     private IntKeyHashMap schemaMap;
 
     /** Map: Compiled Statement id (int) => SQL String */
@@ -92,10 +91,10 @@ final class CompiledStatementManager {
     /** Map: Compiled statment id (int) => CompiledStatement object. */
     private IntKeyHashMap csidMap;
 
-    /** Map: Session id (int) => Map: compiled statement id (int) => use count in session; */
-    private IntKeyHashMap sessionMap;
+    /** Map: Session id (int) => {Map: compiled statement id (int) => use count in session} */
+    private IntKeyHashMap sessionUseMap;
 
-    /** Map: Compiled statment id (int) => total use count (all sessions) */
+    /** Map: Compiled statment id (int) => number of sessions that use the statement */
     private IntKeyIntValueHashMap useMap;
 
     /**
@@ -116,7 +115,7 @@ final class CompiledStatementManager {
         schemaMap     = new IntKeyHashMap();
         sqlLookup     = new IntKeyHashMap();
         csidMap       = new IntKeyHashMap();
-        sessionMap    = new IntKeyHashMap();
+        sessionUseMap    = new IntKeyHashMap();
         useMap        = new IntKeyIntValueHashMap();
         next_cs_id    = 0;
     }
@@ -129,7 +128,7 @@ final class CompiledStatementManager {
         schemaMap.clear();
         sqlLookup.clear();
         csidMap.clear();
-        sessionMap.clear();
+        sessionUseMap.clear();
         useMap.clear();
 
         next_cs_id = 0;
@@ -168,11 +167,12 @@ final class CompiledStatementManager {
      * the specified SQL String, or a value less than zero, if no such
      * statement has been registered.
      *
+     * @param schema the schema id
      * @param sql the SQL String
      * @return the compiled statement identifier associated with the
      *      specified SQL String
      */
-    synchronized int getStatementID(HsqlName schema, String sql) {
+    private int getStatementID(HsqlName schema, String sql) {
 
         IntValueHashMap sqlMap =
             (IntValueHashMap) schemaMap.get(schema.hashCode());
@@ -185,25 +185,39 @@ final class CompiledStatementManager {
     }
 
     /**
-     * Retrieves the CompiledStatement object having the specified compiled
-     * statement identifier, or null if the CompiledStatement object
-     * has been invalidated.
+     * Returns an existing CompiledStatement object with the given
+     * statement identifier. Returns null if the CompiledStatement object
+     * has been invalidated and cannot be recompiled
      *
+     * @param session the session
      * @param csid the identifier of the requested CompiledStatement object
      * @return the requested CompiledStatement object
      */
-    synchronized CompiledStatement getStatement(int csid) {
-        return (CompiledStatement) csidMap.get(csid);
-    }
+    synchronized CompiledStatement getStatement(Session session, int csid) {
 
-    /**
-     * Retrieves the sql statement for a registered compiled statement.
-     *
-     * @param csid the compiled statement identifier
-     * @return sql string
-     */
-    synchronized String getSql(int csid) {
-        return (String) sqlLookup.get(csid);
+        CompiledStatement cs = (CompiledStatement) csidMap.get(csid);
+
+        if (cs == null) {
+            return null;
+        }
+
+        if (!cs.isValid) {
+            String sql = (String) sqlLookup.get(csid);
+
+            // revalidate with the original schema
+            try {
+                cs = compileSql(session, sql, cs.schemaHsqlName.name);
+
+                cs.id = csid;
+                csidMap.put(csid, cs);
+            } catch (Throwable t) {
+                freeStatement(csid, session.getId(), true);
+
+                return null;
+            }
+        }
+
+        return cs;
     }
 
     /**
@@ -215,16 +229,16 @@ final class CompiledStatementManager {
      * @param csid the compiled statement identifier
      * @param sid the session identifier
      */
-    synchronized void linkSession(int csid, int sid) {
+    private void linkSession(int csid, int sid) {
 
         IntKeyIntValueHashMap scsMap;
 
-        scsMap = (IntKeyIntValueHashMap) sessionMap.get(sid);
+        scsMap = (IntKeyIntValueHashMap) sessionUseMap.get(sid);
 
         if (scsMap == null) {
             scsMap = new IntKeyIntValueHashMap();
 
-            sessionMap.put(sid, scsMap);
+            sessionUseMap.put(sid, scsMap);
         }
 
         int count = scsMap.get(csid, 0);
@@ -248,7 +262,7 @@ final class CompiledStatementManager {
      * @return The compiled statement id assigned to the CompiledStatement
      *  object
      */
-    synchronized int registerStatement(int csid, CompiledStatement cs) {
+    private int registerStatement(int csid, CompiledStatement cs) {
 
         if (csid < 0) {
             csid = nextID();
@@ -267,34 +281,53 @@ final class CompiledStatementManager {
             sqlLookup.put(csid, cs.sql);
         }
 
+        cs.id = csid;
         csidMap.put(csid, cs);
 
         return csid;
     }
 
     /**
-     * Removes the link between a session and a compiled statement.
+     * Removes one (or all) of the links between a session and a compiled statement.
      *
      * If the statement is not linked with any other session, it is removed
      * from management.
      *
      * @param csid the compiled statment identifier
      * @param sid the session identifier
+     * @param freeAll if true, remove all links to the session
      */
-    synchronized void freeStatement(int csid, int sid) {
+    void freeStatement(int csid, int sid, boolean freeAll) {
+
+        if (csid == -1) {
+
+            // statement was never added
+            return;
+        }
 
         IntKeyIntValueHashMap scsMap =
-            (IntKeyIntValueHashMap) sessionMap.get(sid);
-        int count = scsMap.get(csid) - 1;
+            (IntKeyIntValueHashMap) sessionUseMap.get(sid);
 
-        if (count != 0) {
-            scsMap.put(csid, count);
-        } else {
+        if (scsMap == null) {
+
+            // statement already removed due to invalidation
+            return;
+        }
+
+        int sessionUseCount = scsMap.get(csid, 0);
+
+        if (sessionUseCount == 0) {
+
+            // statement already removed due to invalidation
+        } else if (sessionUseCount == 1 || freeAll) {
             scsMap.remove(csid);
 
-            int usecount = useMap.get(csid, 1) - 1;
+            int usecount = useMap.get(csid, 0);
 
             if (usecount == 0) {
+
+                // statement already removed due to invalidation
+            } else if (usecount == 1) {
                 CompiledStatement cs =
                     (CompiledStatement) csidMap.remove(csid);
 
@@ -309,8 +342,10 @@ final class CompiledStatementManager {
 
                 useMap.remove(csid);
             } else {
-                useMap.put(csid, usecount);
+                useMap.put(csid, usecount - 1);
             }
+        } else {
+            scsMap.put(csid, sessionUseCount - 1);
         }
     }
 
@@ -329,7 +364,7 @@ final class CompiledStatementManager {
         int                   csid;
         Iterator              i;
 
-        scsMap = (IntKeyIntValueHashMap) sessionMap.remove(sid);
+        scsMap = (IntKeyIntValueHashMap) sessionUseMap.remove(sid);
 
         if (scsMap == null) {
             return;
@@ -360,5 +395,53 @@ final class CompiledStatementManager {
                 useMap.put(csid, usecount);
             }
         }
+    }
+
+    /**
+     * Retrieves a MULTI Result describing three aspects of the
+     * CompiledStatement prepared from the SQL argument for execution
+     * in this session context. <p>
+     *
+     * <ol>
+     * <li>A PREPARE_ACK mode Result describing id of the statement
+     *     prepared by this request.  This is used by the JDBC implementation
+     *     to later identify to the engine which prepared statement to execute.
+     *
+     * <li>A DATA mode result describing the statement's result set metadata.
+     *     This is used to generate the JDBC ResultSetMetaData object returned
+     *     by PreparedStatement.getMetaData and CallableStatement.getMetaData.
+     *
+     * <li>A DATA mode result describing the statement's parameter metdata.
+     *     This is used to by the JDBC implementation to determine
+     *     how to send parameters back to the engine when executing the
+     *     statement.  It is also used to construct the JDBC ParameterMetaData
+     *     object for PreparedStatements and CallableStatements.
+     *
+     * @param session the session
+     * @param sql a string describing the desired statement object
+     * @return a MULTI Result describing the compiled statement.
+     */
+    synchronized CompiledStatement compile(Session session, String sql) throws Throwable {
+
+        int               csid = getStatementID(session.currentSchema, sql);
+        CompiledStatement cs   = (CompiledStatement) csidMap.get(csid);
+
+        if (cs == null || !cs.isValid || !session.isAdmin()) {
+                cs = compileSql(session, sql, session.currentSchema.name);
+
+            csid = registerStatement(csid, cs);
+        }
+
+        linkSession(csid, session.getId());
+        return cs;
+    }
+
+    private CompiledStatement compileSql(Session session, String sql,
+                                         String schemaName) throws Throwable {
+
+        Session sys = database.sessionManager.getSysSession(schemaName,
+            session.getUser());
+
+        return sys.sqlCompileStatement(sql);
     }
 }

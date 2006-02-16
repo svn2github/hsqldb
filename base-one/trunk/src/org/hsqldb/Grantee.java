@@ -351,13 +351,19 @@ public class Grantee {
      * from the dbobject argument for at least one of the rights
      * contained in the rights argument. Otherwise, it throws.
      */
-    void check(Object dbobject, int rights) throws HsqlException {
+    void check(HsqlName dbobject, int rights) throws HsqlException {
 
         if (!isAccessible(dbobject, rights)) {
             throw Trace.error(Trace.ACCESS_IS_DENIED);
         }
     }
 
+    void check(String dbobject) throws HsqlException {
+
+        if (!isAccessible(dbobject)) {
+            throw Trace.error(Trace.ACCESS_IS_DENIED);
+        }
+    }
     /**
      * Returns true if any of the rights represented by the
      * rights argument has been granted on the database object identified
@@ -369,14 +375,7 @@ public class Grantee {
      *
      * Only does one level of recursion to check the PUBLIC role.
      */
-    boolean isAccessible(Object dbObject, int rights) throws HsqlException {
-
-        if (dbObject instanceof String) {
-            if (((String) dbObject).startsWith("org.hsqldb.Library")
-                    || ((String) dbObject).startsWith("java.lang.Math")) {
-                return true;
-            }
-        }
+    boolean isAccessible(HsqlName dbObject, int rights) throws HsqlException {
 
         if (isAdmin) {
             return true;
@@ -395,6 +394,31 @@ public class Grantee {
         return false;
     }
 
+    /**
+     * Returns true if any right at all has been granted to this User object
+     * on the database object identified by the dbObject argument.
+     */
+
+    boolean isAccessible(String functionName) throws HsqlException {
+
+            if (functionName.startsWith("org.hsqldb.Library")
+                    || functionName.startsWith("java.lang.Math")) {
+                return true;
+            }
+
+            if (isAdmin) {
+                return true;
+            }
+
+            if (pubGrantee != null && pubGrantee.isAccessible(functionName)) {
+                return true;
+            }
+
+            int n = fullRightsMap.get(functionName, 0);
+
+            return n != 0;
+
+    }
     /**
      * Returns true if any of the rights represented by the
      * rights argument has been granted on the database object identified
@@ -423,7 +447,7 @@ public class Grantee {
      * Returns true if any right at all has been granted to this User object
      * on the database object identified by the dbObject argument.
      */
-    boolean isAccessible(Object dbObject) throws HsqlException {
+    boolean isAccessible(HsqlName dbObject) throws HsqlException {
         return isAccessible(dbObject, GranteeManager.ALL);
     }
 

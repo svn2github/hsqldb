@@ -334,10 +334,13 @@ public class User {
      * from the dbobject argument for at least one of the rights
      * contained in the rights argument. Otherwise, it throws.
      */
-    void check(Object dbobject, int rights) throws HsqlException {
+    void check(HsqlName dbobject, int rights) throws HsqlException {
         grantee.check(dbobject, rights);
     }
 
+    void check(String dbobject) throws HsqlException {
+        grantee.check(dbobject);
+    }
     /**
      * Returns true if any of the rights represented by the
      * rights argument has been granted on the database object identified
@@ -347,7 +350,7 @@ public class User {
      * from the dbobject argument for at least one of the rights
      * contained in the rights argument.
      */
-    boolean isAccessible(Object dbobject, int rights) throws HsqlException {
+    boolean isAccessible(HsqlName dbobject, int rights) throws HsqlException {
         return grantee.isAccessible(dbobject, rights);
     }
 
@@ -355,7 +358,11 @@ public class User {
      * Returns true if any right at all has been granted to this User object
      * on the database object identified by the dbobject argument.
      */
-    boolean isAccessible(Object dbobject) throws HsqlException {
+    boolean isAccessible(String dbobject) throws HsqlException {
+        return grantee.isAccessible(dbobject);
+    }
+
+    boolean isAccessible(HsqlName dbobject) throws HsqlException {
         return grantee.isAccessible(dbobject);
     }
 }

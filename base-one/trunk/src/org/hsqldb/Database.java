@@ -300,8 +300,7 @@ public class Database {
             }
 
             if (isNew) {
-                sessionManager.getSysSession(
-                    null, false).sqlExecuteDirectNoPreChecks(
+                sessionManager.getSysSession().sqlExecuteDirectNoPreChecks(
                     "CREATE USER SA PASSWORD \"\" ADMIN");
                 logger.synchLogForce();
             }

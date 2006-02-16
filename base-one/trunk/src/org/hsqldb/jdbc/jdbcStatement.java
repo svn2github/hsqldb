@@ -89,10 +89,8 @@ import org.hsqldb.Types;
  * However, in addition to this technique requiring explicit casts to the
  * org.hsqldb.jdbcXXX classes, some of these method calls require
  * <code>int</code> values that are defined only in the JDBC 2 or greater
- * version of the
- * <a href="http://java.sun.com/j2se/1.4/docs/api/java/sql/ResultSet.html">
- * <code>ResultSet</code></a> interface.  For this reason these values are
- * defined in {@link jdbcResultSet jdbcResultSet}.<p>
+ * version of the {@link java.sql.ResultSet ResultSet} interface.  For this
+ * reason these values are defined in {@link jdbcResultSet jdbcResultSet}.<p>
  *
  * In a JRE 1.1.x environment, calling JDBC 2 methods that take or return the
  * JDBC2-only <code>ResultSet</code> values can be achieved by referring

@@ -200,7 +200,7 @@ public class SchemaManager {
             return defaultSchemaHsqlName;
         }
 
-        if (name.equals(INFORMATION_SCHEMA)) {
+        if (INFORMATION_SCHEMA.equals(name)) {
             return INFORMATION_SCHEMA_HSQLNAME;
         }
 
@@ -349,7 +349,7 @@ public class SchemaManager {
         Table t = findUserTable(session, name, schema);
 
         if (t == null) {
-            if (!"INFORMATION_SCHEMA".equals(schema)) {
+            if (!INFORMATION_SCHEMA.equals(schema)) {
                 throw Trace.error(Trace.TABLE_NOT_FOUND);
             }
 

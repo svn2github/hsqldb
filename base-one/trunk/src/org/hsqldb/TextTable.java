@@ -97,6 +97,10 @@ class TextTable extends org.hsqldb.Table {
                 CachedRow row     = null;
                 int       nextpos = 0;
 
+                if (((TextCache) cache).ignoreFirst) {
+                    nextpos += ((TextCache) cache).readHeaderLine();
+                }
+
                 while (true) {
                     row = (CachedRow) rowStore.get(nextpos);
 
