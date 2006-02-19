@@ -419,6 +419,7 @@ public class Grantee {
             return n != 0;
 
     }
+
     /**
      * Returns true if any of the rights represented by the
      * rights argument has been granted on the database object identified

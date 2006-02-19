@@ -102,7 +102,7 @@ class WebServerConnection implements Runnable {
 
     // default mime type mappings
     private static final int hnd_content_types =
-        BundleHandler.getBundleHandle("content_types", null);
+        BundleHandler.getBundleHandle("content-types", null);
 
     /**
      * Creates a new WebServerConnection to the specified WebServer on the
@@ -119,10 +119,10 @@ class WebServerConnection implements Runnable {
     }
 
     /**
-     * Retrieves a best-guess mime-type string using the file extention
+     * Retrieves a best-guess mime-type string using the file extension
      * of the name argument.
      *
-     * @return a best-guess mime-type string using the file extention
+     * @return a best-guess mime-type string using the file extension
      *      of the name argument.
      */
     private String getMimeTypeString(String name) {

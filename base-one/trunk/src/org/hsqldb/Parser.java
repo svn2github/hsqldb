@@ -2055,7 +2055,7 @@ class Parser {
         while (true) {
             Expression current = readOr();
 
-            if (iToken == Expression.CLOSE) {
+            if (leaf != null && iToken == Expression.CLOSE) {
                 readThis(Expression.CLOSE);
                 leaf.setLeftExpression(current);
 
