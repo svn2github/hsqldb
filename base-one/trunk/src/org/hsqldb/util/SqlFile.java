@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.130 2005/11/06 20:51:53 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.131 2005/11/29 18:06:18 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -83,7 +83,7 @@ import java.util.TreeMap;
  * Also, to keep the code simpler, we're sticking to only single-char
  * special commands until we really need more.
  *
- * Buffer commands are uniqueue to SQLFile.  The ":" commands allow
+ * Buffer commands are unique to SQLFile.  The ":" commands allow
  * you to edit the buffer and to execute the buffer.
  *
  * The command history consists only of SQL Statements (i.e., special
@@ -105,7 +105,7 @@ import java.util.TreeMap;
  * setters would be best) instead of constructor args and System
  * Properties.
  *
- * @version $Revision: 1.130 $
+ * @version $Revision: 1.131 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlFile {
@@ -156,8 +156,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.130 $".substring("$Revision: ".length(),
-                "$Revision: 1.130 $".length() - 2);
+        revnum = "$Revision: 1.131 $".substring("$Revision: ".length(),
+                "$Revision: 1.131 $".length() - 2);
     }
 
     private static String BANNER =
@@ -3750,7 +3750,7 @@ public class SqlFile {
                 return "DECIMAL";
 
             case java.sql.Types.DISTINCT :
-                return "DISTANCT";
+                return "DISTINCT";
 
             case java.sql.Types.DOUBLE :
                 return "DOUBLE";
@@ -3977,7 +3977,8 @@ public class SqlFile {
             colStart = colEnd + csvColDelim.length();
         }
 
-        String[] headers   = (String[]) headerList.toArray(new String[0]);
+        String[] headers = (String[]) headerList.toArray(new String[0]);
+        boolean[] autonulls = new boolean[headers.length];
         String   tableName = (String) userVars.get("*CSV_TABLENAME");
 
         if (tableName == null) {
@@ -3990,17 +3991,39 @@ public class SqlFile {
             }
         }
 
-        StringBuffer sb = new StringBuffer("INSERT INTO " + tableName + " (");
+        StringBuffer tmpSb = new StringBuffer();
 
         for (int i = 0; i < headers.length; i++) {
             if (i > 0) {
-                sb.append(", ");
+                tmpSb.append(", ");
             }
 
-            sb.append(headers[i]);
+            tmpSb.append(headers[i]);
         }
 
-        sb.append(") VALUES (");
+        StringBuffer sb = new StringBuffer("INSERT INTO " + tableName + " ("
+                + tmpSb + ") VALUES (");
+        StringBuffer typeQuerySb = new StringBuffer("SELECT " + tmpSb 
+                + " FROM " + tableName + " WHERE 1 = 2");
+
+        try {
+            int ctype;
+            ResultSetMetaData rsmd = curConn.createStatement().executeQuery(
+                    typeQuerySb.toString()).getMetaData();
+            if (rsmd.getColumnCount() != autonulls.length) {
+                throw new BadSpecial("Metadata mismatch for columns");
+            }
+            for (int i = 0; i < autonulls.length; i++) {
+                ctype = rsmd.getColumnType(i + 1);
+                // I.e., for VAR* column types, "" in CSV file means
+                // to insert "".  Otherwise, we'll insert null for "".
+                autonulls[i] = (ctype != java.sql.Types.VARBINARY
+                        && ctype != java.sql.Types.VARCHAR);
+            }
+        } catch(SQLException se) {
+            throw new BadSpecial("Failed to get metadata for query: "
+                + se.getMessage());
+        }
 
         for (int i = 0; i < headers.length; i++) {
             if (i > 0) {
@@ -4015,11 +4038,11 @@ public class SqlFile {
             PreparedStatement ps = curConn.prepareStatement(sb.toString()
                 + ')');
 
-            // First and insert data rows 1-row-at-a-time
             String[] dataVals = new String[headers.length];
             int      recCount = 0;
             int      colCount;
 
+            // Insert data rows 1-row-at-a-time
             while (true) {
                 recStart = recEnd + csvRowDelim.length();
 
@@ -4075,8 +4098,10 @@ public class SqlFile {
 
                     //System.err.println("ps.setString(" + i + ", "
                     //      + dataVals[i] + ')');
-                    ps.setString(i + 1, (dataVals[i].equals(csvNullRep) ? null
-                                                                        : dataVals[i]));
+                    ps.setString(i + 1,
+                            (((dataVals[i].length() < 1 && autonulls[i])
+                             || dataVals[i].equals(csvNullRep))
+                             ? null : dataVals[i]));
                 }
 
                 retval = ps.executeUpdate();
