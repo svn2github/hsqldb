@@ -1066,7 +1066,7 @@ includes='**/*.css, **/*.java, **/*.sql, **/*.txt, **/*.properties, **/*.cfg'/>
              that this jar is located at path-to-ant-bin/../lib -->
         <available property='_contrib_there'
                    classname='net.sf.antcontrib.logic.For'/>
-        <fail unless='_contrib_there' message="You must put a recent cut of ant-contrib-X.jar into 'path-to-ant-bin/../lib/'"/>
+        <fail unless='_contrib_there' message="You must put a recent cut of ant-contrib-X.jar into 'path-to-ant-bin/../lib/' (or just put the jar into your CLASSPATH before running ant)"/>
         <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
         <property name='_contrib_initted' value='true'/>
     </target>
