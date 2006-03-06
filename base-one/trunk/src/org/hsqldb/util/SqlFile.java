@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.131 2005/11/29 18:06:18 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.8 2006/03/06 21:01:32 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -105,7 +105,7 @@ import java.util.TreeMap;
  * setters would be best) instead of constructor args and System
  * Properties.
  *
- * @version $Revision: 1.131 $
+ * @version $Revision: 1.8 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlFile {
@@ -156,8 +156,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.131 $".substring("$Revision: ".length(),
-                "$Revision: 1.131 $".length() - 2);
+        revnum = "$Revision: 1.8 $".substring("$Revision: ".length(),
+                "$Revision: 1.8 $".length() - 2);
     }
 
     private static String BANNER =
@@ -2768,6 +2768,7 @@ public class SqlFile {
 
                 boolean[] rightJust = new boolean[incCount];
                 int[]     dataType  = new int[incCount];
+                boolean[] autonulls = new boolean[incCount];
 
                 insi        = -1;
                 headerArray = new String[incCount];
@@ -2790,6 +2791,7 @@ public class SqlFile {
                     headerArray[++insi] = m.getColumnLabel(i);
                     dataType[insi]      = m.getColumnType(i);
                     rightJust[insi]     = false;
+                    autonulls[insi]     = true;
 
                     switch (dataType[insi]) {
 
@@ -2804,6 +2806,11 @@ public class SqlFile {
                         case java.sql.Types.SMALLINT :
                         case java.sql.Types.TINYINT :
                             rightJust[insi] = true;
+                            break;
+                        case java.sql.Types.VARBINARY:
+                        case java.sql.Types.VARCHAR:
+                            autonulls[insi] = false;
+                            break;
                     }
 
                     if (htmlMode) {
@@ -3053,8 +3060,9 @@ public class SqlFile {
 
                     for (int j = 0; j < fieldArray.length; j++) {
                         csvSafe(fieldArray[j]);
-                        pwCsv.print((fieldArray[j] == null) ? csvNullRep
-                                                            : fieldArray[j]);
+                        pwCsv.print((fieldArray[j] == null)
+                                ? (autonulls[j] ? "" : csvNullRep)
+                                : fieldArray[j]);
 
                         if (j < fieldArray.length - 1) {
                             pwCsv.print(csvColDelim);
@@ -3811,10 +3819,10 @@ public class SqlFile {
     }
 
     /**
-     * Validate that String is safe to display in a CSV file?
+     * Validate that String is safe to display in a CSV file.
      *
      * @throws SQLException (should throw something else, since this is
-     * not an SQL problem.  Fix the caller!
+     * not an SQL problem.  Fix the caller!)
      */
     public void csvSafe(String s) throws SQLException {
 
