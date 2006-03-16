@@ -1,18 +1,30 @@
-<!-- $Id: sqltool.xml,v 1.94 2005/11/07 20:32:28 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.95 2005/11/07 20:34:16 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
     <subtitle>SqlTool Manual</subtitle>
     <chapterinfo>
-        <author>
-            <firstname>Blaine</firstname><surname>Simpson</surname>
-            <email>blaine.simpson@admc.com</email>
-            <affiliation>
-                <orgname>HSQLDB Development Group</orgname>
-            </affiliation>
-        </author>
-        <edition>$Revision: 1.94 $</edition>
-        <pubdate>$Date: 2005/11/07 20:32:28 $</pubdate>
+        <authorgroup>
+            <author>
+                <firstname>Blaine</firstname>
+                <surname>Simpson</surname>
+                <email>blaine.simpson@admc.com</email>
+                <affiliation>
+                    <orgname>HSQLDB Development Group</orgname>
+                </affiliation>
+            </author>
+
+            <author>
+                <firstname>Dan</firstname>
+                <surname>Shinton</surname>
+                <email>dan@shinton.net</email>
+                <affiliation>
+                    <orgname>HSQLDB Development Group</orgname>
+                </affiliation>
+            </author>
+        </authorgroup>
+        <edition>$Revision: 1.95 $</edition>
+        <pubdate>$Date: 2005/11/07 20:34:16 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -83,7 +95,12 @@
                 </simpara></listitem><listitem><simpara>
                     Implemented CSV eXport and iMport commands \x and \m.
                     Added for HSQLDB v. 1.8.0.3.
+                </simpara></listitem><listitem><simpara>
+                    Implemented method for specifying RC file parameters as a
+                    command-line switch. Modified SqlTool to now accepts case
+                    insensitive command-line switches. Added for HSQLDB v. 1.8.1.
                 </simpara></listitem>
+                
             </itemizedlist>
             <simpara>
                 When recently changed or added features (i.e, those items
@@ -134,7 +151,15 @@
                     Edit the file if you need to change the target Server URL, 
                     username, password, character set, JDBC driver, or TLS 
                     trust store as documented in the 
-                    <link linkend='auth-section' endterm='auth-title'/> section.
+                    <link linkend='auth-section' endterm='auth-title'/>
+                    section.</simpara>
+                    
+                    <simpara><emphasis role='bold'>OR</emphasis></simpara>
+                    
+                    <simpara>Use the <literal>--inlineRc</literal> command-line
+                    switch to specify your connection parameters as documented
+                    in the <link linkend='ilauth-section' endterm='ilauth-title'/>
+                    section.
                 </simpara></step><step><simpara>
                     Find out where your hsqldb.jar file resides.
                     It typically resides at
@@ -349,8 +374,8 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
     <section id='auth-section'>
         <title id='auth-title'>RC File Authentication Setup</title>
         <simpara>
-            Authentication setup is accomplished by creating a text RC
-            configuration file.
+            RC file authentication setup is accomplished by creating a text
+            RC configuration file.
             In this section, when I say <emphasis>configuration</emphasis>
             or <emphasis>config</emphasis> file, I mean an RC configuration 
             file.
@@ -449,7 +474,46 @@ java org.hsqldb.util.SqlTool --driver oracle.jdbc.OracleDriver urlid</screen>
             in the configuration file.
         </simpara>
     </section>
-
+    
+    <section id='ilauth-section'>
+        <title id='ilauth-title'>Using Inline RC Authentication</title>
+        <simpara>
+            Inline RC authentication setup is accomplished by using the
+            <literal>--inlineRc</literal> command-line switch on SqlTool.
+            The <literal>--inlineRc</literal> command-line switch takes 
+            two required (URL and USER) and three optional arguments
+            seperated by commas.
+        </simpara>
+        <variablelist>
+            <varlistentry><term><literal>URL</literal></term><listitem><simpara>
+                The JDBC URL of the database you wish to connect to.
+            </simpara></listitem></varlistentry>
+            <varlistentry><term><literal>USER</literal></term><listitem><simpara>
+                The username to connect to the database as.
+            </simpara></listitem></varlistentry>
+            <varlistentry><term><literal>DRIVER</literal></term><listitem><simpara>
+                The JDBC driver class name. Defaults to
+                <emphasis>org.hsqldb.jdbcDriver</emphasis>.
+            </simpara></listitem></varlistentry>
+            <varlistentry><term><literal>CHARSET</literal></term><listitem><simpara>
+                Sets the character encoding. Defaults to <literal>US-ASCII</literal>.
+            </simpara></listitem></varlistentry>
+            <varlistentry><term><literal>TRUST</literal></term><listitem><simpara>
+                The TLS trust keystore file path as documented in the TLS chapter.
+            </simpara></listitem></varlistentry>
+        </variablelist>
+        <para>
+            Here is an example of invoking SqlTool to connect to a standalone database.
+            <informalexample><screen>
+    java -jar $HSQLDB_HOME/lib/hsqldb.jar
+         --inlineRc URL=jdbc:hsqldb:file:/home/dan/dandb,USER=dan</screen></informalexample>
+        </para>
+        <simpara>
+            For security reasons, you cannot specify the password as an argument. You
+            will be prompted for a password as part of the login process.
+        </simpara>
+    </section>
+    
     <section>
         <title>
             Using the current version of SqlTool with an older HSQLDB
