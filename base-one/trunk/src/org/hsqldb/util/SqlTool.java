@@ -42,7 +42,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-/* $Id: SqlTool.java,v 1.51 2006/02/10 21:22:43 unsaved Exp $ */
+/* $Id: SqlTool.java,v 1.52 2006/02/10 22:05:51 unsaved Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -53,7 +53,7 @@ import java.util.StringTokenizer;
  * See JavaDocs for the main method for syntax of how to run.
  *
  * @see #main()
- * @version $Revision: 1.51 $
+ * @version $Revision: 1.52 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlTool {
@@ -73,8 +73,8 @@ public class SqlTool {
     private static String CMDLINE_ID = "cmdline";
     
     static {
-        revnum = "$Revision: 1.51 $".substring("$Revision: ".length(),
-                                               "$Revision: 1.51 $".length()
+        revnum = "$Revision: 1.52 $".substring("$Revision: ".length(),
+                                               "$Revision: 1.52 $".length()
                                                - 2);
     }
 
@@ -226,18 +226,14 @@ public class SqlTool {
             equals     = curSetting.indexOf('=');
 
             if (equals < 1) {
-                exitMain(24, "Var settings not of format NAME=var[,...]");
-
-                return;
+                throw new SqlToolException("Var settings not of format NAME=var[,...]");
             }
 
             var = curSetting.substring(0, equals).trim();
             val = curSetting.substring(equals + 1).trim();
 
             if (var.length() < 1 || val.length() < 1) {
-                exitMain(24, "Var settings not of format NAME=var[,...]");
-
-                return;
+                throw new SqlToolException("Var settings not of format NAME=var[,...]");
             }
 
             if (lowerCaseKeys) {
@@ -473,11 +469,16 @@ public class SqlTool {
         
         // Use the inline RC file if it was specified        
         if (rcParams != null) {
+            rcFields = new HashMap();
+            
             try {
-                rcFields = new HashMap();
-                
                 varParser(rcParams, rcFields, true);
                 
+            } catch (SqlToolException e) {
+                exitMain(24, e.getMessage());
+            }
+            
+            try {
                 rcUrl        = (String) rcFields.get("url");
                 rcUsername   = (String) rcFields.get("user");
                 rcDriver     = (String) rcFields.get("driver");
