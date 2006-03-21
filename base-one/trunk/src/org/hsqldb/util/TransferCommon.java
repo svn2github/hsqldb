@@ -27,13 +27,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * This software consists of voluntary contributions made by many individuals 
+ * This software consists of voluntary contributions made by many individuals
  * on behalf of the Hypersonic SQL Group.
  *
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2005, The HSQL Development Group
+ * Copyright (c) 2001-2006, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -120,10 +120,11 @@ class TransferCommon {
 
         TransferTable t;
         Vector        tTable = null;
+        ObjectInputStream ois = null;
 
         try {
             FileInputStream   fis = new FileInputStream(f);
-            ObjectInputStream ois = new ObjectInputStream(fis);
+            ois = new ObjectInputStream(fis);
 
             tTable = (Vector) ois.readObject();
 
@@ -143,6 +144,12 @@ class TransferCommon {
                                + e.toString());
 
             tTable = new Vector();
+        } finally {
+            if (ois != null) {
+                try {
+                    ois.close();
+                } catch (IOException ioe) {}
+            }
         }
 
         return (tTable);

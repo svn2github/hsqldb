@@ -27,13 +27,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * This software consists of voluntary contributions made by many individuals 
+ * This software consists of voluntary contributions made by many individuals
  * on behalf of the Hypersonic SQL Group.
  *
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2005, The HSQL Development Group
+ * Copyright (c) 2001-2006, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -137,7 +137,6 @@ import javax.swing.RootPaneContainer;
 import java.security.AccessControlException;
 
 import org.hsqldb.lib.java.JavaSystem;
-
 
 //dmarshall@users - 20020101 - original swing port of DatabaseManager
 //sqlbob@users 20020401 - patch 537501 by ulrivo - commandline arguments
@@ -249,9 +248,9 @@ implements ActionListener, WindowListener, KeyListener {
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.org.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.65 $";
+        + "problem reports or help requests:  $Revision: 1.8 $";
     private static final String ABOUT_TEXT =
-        "$Revision: 1.65 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.8 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2001-2005, The HSQL Development Group.\n"
         + "http://hsqldb.org\n\n\n"
@@ -617,16 +616,15 @@ implements ActionListener, WindowListener, KeyListener {
 
             Driver driver = DriverManager.getDriver(dMeta.getURL());
             ConnectionSetting newSetting = new ConnectionSetting(
-            		dMeta.getDatabaseProductName(),
-            		driver.getClass().getName(),
-					dMeta.getURL(),
-					dMeta.getUserName().replaceAll("@localhost", ""),
-					"");
-            
-			Hashtable settings = ConnectionDialogCommon.loadRecentConnectionSettings();
-			ConnectionDialogCommon.addToRecentConnectionSettings(settings, newSetting);
+                dMeta.getDatabaseProductName(), driver.getClass().getName(),
+                dMeta.getURL(),
+                dMeta.getUserName().replaceAll("@localhost", ""), "");
+            Hashtable settings =
+                ConnectionDialogCommon.loadRecentConnectionSettings();
+
+            ConnectionDialogCommon.addToRecentConnectionSettings(settings,
+                    newSetting);
             ConnectionDialogSwing.setConnectionSetting(newSetting);
-            
             refreshTree();
             clearResultPanel();
 
@@ -646,7 +644,7 @@ implements ActionListener, WindowListener, KeyListener {
             //  Added: (weconsultants@users)
             CommonSwing.errorMessage(e);
         } catch (Exception e) {
-        	CommonSwing.errorMessage(e);
+            CommonSwing.errorMessage(e);
         }
     }
 
@@ -2075,6 +2073,7 @@ implements ActionListener, WindowListener, KeyListener {
         treeModel.nodeStructureChanged(rootNode);
         treeModel.reload();
         tScrollPane.repaint();
+        ResultSet result = null;
 
         // Now rebuild the tree below its root
         try {
@@ -2083,7 +2082,7 @@ implements ActionListener, WindowListener, KeyListener {
             rootNode.setUserObject(dMeta.getURL());
 
             // get metadata about user tables by building a vector of table names
-            ResultSet result = dMeta.getTables(null, null, null,
+            result = dMeta.getTables(null, null, null,
                                                (showSys ? usertables
                                                         : nonSystables));
             Vector tables  = new Vector();
@@ -2112,6 +2111,7 @@ implements ActionListener, WindowListener, KeyListener {
             }
 
             result.close();
+            result = null;
 
             // Added: (weconsultants@users)
             // Sort not to go into production. Have to sync with 'remarks Vector' for DBMS that has it
@@ -2127,62 +2127,71 @@ implements ActionListener, WindowListener, KeyListener {
                 CommonSwing.errorMessage(e);
             }
 
+            ResultSet col;
             // For each table, build a tree node with interesting info
             for (int i = 0; i < tables.size(); i++) {
-                String name = (String) tables.elementAt(i);
+                col = null;
+                String name;
+                try {
+                    name = (String) tables.elementAt(i);
 
-                schema = (String) schemas.elementAt(i);
+                    schema = (String) schemas.elementAt(i);
 
-                String schemaname = "";
+                    String schemaname = "";
 
-                if (schema != null && showSchemas) {
-                    schemaname = schema + '.';
+                    if (schema != null && showSchemas) {
+                        schemaname = schema + '.';
+                    }
+
+                    String rowcount = displayRowCounts
+                                      ? (" " + DECFMT.format(rowCounts[i]))
+                                      : "";
+                    String displayedName = schemaname + name + rowcount;
+
+                    // weconsul@ptd.net Add rowCounts if needed.
+                    tableNode = makeNode(displayedName, rootNode);
+
+                    col = dMeta.getColumns(null, schema, name, null);
+
+                    if ((schema != null) &&!schema.trim().equals("")) {
+                        makeNode(schema, tableNode);
+                    }
+
+                    // sqlbob@users Added remarks.
+                    String remark = (String) remarks.elementAt(i);
+
+                    if ((remark != null) &&!remark.trim().equals("")) {
+                        makeNode(remark, tableNode);
+                    }
+
+                    // This block is very slow for some Oracle tables.
+                    // With a child for each column containing pertinent attributes
+                    while (col.next()) {
+                        String c = col.getString(4);
+                        DefaultMutableTreeNode columnNode = makeNode(c,
+                            tableNode);
+                        String type = col.getString(6);
+
+                        makeNode("Type: " + type, columnNode);
+
+                        boolean nullable = col.getInt(11)
+                                           != DatabaseMetaData.columnNoNulls;
+
+                        makeNode("Nullable: " + nullable, columnNode);
+                    }
+                } finally {
+                    if (col != null) {
+                        try {
+                            col.close();
+                        } catch (SQLException se) {}
+                    }
                 }
-
-                String rowcount = displayRowCounts
-                                  ? (" " + DECFMT.format(rowCounts[i]))
-                                  : "";
-                String displayedName = schemaname + name + rowcount;
-
-                // weconsul@ptd.net Add rowCounts if needed.
-                tableNode = makeNode(displayedName, rootNode);
-
-                ResultSet col = dMeta.getColumns(null, schema, name, null);
-
-                if ((schema != null) &&!schema.trim().equals("")) {
-                    makeNode(schema, tableNode);
-                }
-
-                // sqlbob@users Added remarks.
-                String remark = (String) remarks.elementAt(i);
-
-                if ((remark != null) &&!remark.trim().equals("")) {
-                    makeNode(remark, tableNode);
-                }
-
-                // This block is very slow for some Oracle tables.
-                // With a child for each column containing pertinent attributes
-                while (col.next()) {
-                    String c = col.getString(4);
-                    DefaultMutableTreeNode columnNode = makeNode(c,
-                        tableNode);
-                    String type = col.getString(6);
-
-                    makeNode("Type: " + type, columnNode);
-
-                    boolean nullable = col.getInt(11)
-                                       != DatabaseMetaData.columnNoNulls;
-
-                    makeNode("Nullable: " + nullable, columnNode);
-                }
-
-                col.close();
 
                 DefaultMutableTreeNode indexesNode = makeNode("Indices",
                     tableNode);
-                ResultSet ind = null;
 
                 if (showIndexDetails) {
+                    ResultSet ind = null;
                     try {
                         ind = dMeta.getIndexInfo(null, schema, name, false,
                                                  false);
@@ -2243,6 +2252,12 @@ implements ActionListener, WindowListener, KeyListener {
             makeNode(se.getMessage(), propertiesNode);
             makeNode(se.getSQLState(), propertiesNode);
             CommonSwing.errorMessage(se);
+        } finally {
+            if (result != null) {
+                try {
+                    result.close();
+                } catch (SQLException se) {}
+            }
         }
 
         treeModel.nodeStructureChanged(rootNode);
@@ -2431,9 +2446,10 @@ implements ActionListener, WindowListener, KeyListener {
 
         ButtonGroup group = new ButtonGroup();
         ArrayList   list  = new ArrayList();
+        ResultSet result = null;
 
         try {
-            ResultSet result = dMeta.getSchemas();
+            result = dMeta.getSchemas();
 
             if (result == null) {
                 throw new SQLException(
@@ -2444,9 +2460,15 @@ implements ActionListener, WindowListener, KeyListener {
                 list.add(result.getString(1));
             }
 
-            result = null;
         } catch (SQLException se) {
             CommonSwing.errorMessage(se);
+        } finally {
+            if (result != null) {
+                try {
+                    result.close();
+                } catch (SQLException se) {}
+            }
+
         }
 
         mnuSchemas.removeAll();

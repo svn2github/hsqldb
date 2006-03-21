@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2005, The HSQL Development Group
+/* Copyright (c) 2001-2006, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1254,7 +1254,6 @@ implements ActionListener, WindowListener, KeyListener {
             String[]  usertables = {
                 "TABLE", "GLOBAL TEMPORARY", "VIEW"
             };
-            ResultSet result = dMeta.getTables(null, null, null, usertables);
 
             // fredt@users Schema support
             Vector schemas = new Vector();
@@ -1262,14 +1261,18 @@ implements ActionListener, WindowListener, KeyListener {
 
             // sqlbob@users Added remarks.
             Vector remarks = new Vector();
+            ResultSet result = dMeta.getTables(null, null, null, usertables);
+            try {
 
-            while (result.next()) {
-                schemas.addElement(result.getString(2));
-                tables.addElement(result.getString(3));
-                remarks.addElement(result.getString(5));
+                while (result.next()) {
+                    schemas.addElement(result.getString(2));
+                    tables.addElement(result.getString(3));
+                    remarks.addElement(result.getString(5));
+                }
+
+            } finally {
+                result.close();
             }
-
-            result.close();
 
             for (int i = 0; i < tables.size(); i++) {
                 String name   = (String) tables.elementAt(i);
@@ -1291,47 +1294,54 @@ implements ActionListener, WindowListener, KeyListener {
 
                 ResultSet col = dMeta.getColumns(null, schema, name, null);
 
-                while (col.next()) {
-                    String c  = col.getString(4);
-                    String k1 = key + "col-" + c + "-";
+                try {
 
-                    tTree.addRow(k1, c, "+", color_column);
+                    while (col.next()) {
+                        String c  = col.getString(4);
+                        String k1 = key + "col-" + c + "-";
 
-                    String type = col.getString(6);
+                        tTree.addRow(k1, c, "+", color_column);
 
-                    tTree.addRow(k1 + "t", "Type: " + type);
+                        String type = col.getString(6);
 
-                    boolean nullable = col.getInt(11)
-                                       != DatabaseMetaData.columnNoNulls;
+                        tTree.addRow(k1 + "t", "Type: " + type);
 
-                    tTree.addRow(k1 + "n", "Nullable: " + nullable);
+                        boolean nullable = col.getInt(11)
+                                           != DatabaseMetaData.columnNoNulls;
+
+                        tTree.addRow(k1 + "n", "Nullable: " + nullable);
+                    }
+                } finally {
+                    col.close();
                 }
 
-                col.close();
                 tTree.addRow(key + "ind", "Indices", "+", 0);
 
                 ResultSet ind = dMeta.getIndexInfo(null, schema, name, false,
                                                    false);
                 String oldiname = null;
 
-                while (ind.next()) {
-                    boolean nonunique = ind.getBoolean(4);
-                    String  iname     = ind.getString(6);
-                    String  k2        = key + "ind-" + iname + "-";
+                try {
+                    while (ind.next()) {
+                        boolean nonunique = ind.getBoolean(4);
+                        String  iname     = ind.getString(6);
+                        String  k2        = key + "ind-" + iname + "-";
 
-                    if ((oldiname == null ||!oldiname.equals(iname))) {
-                        tTree.addRow(k2, iname, "+", color_index);
-                        tTree.addRow(k2 + "u", "Unique: " + !nonunique);
+                        if ((oldiname == null ||!oldiname.equals(iname))) {
+                            tTree.addRow(k2, iname, "+", color_index);
+                            tTree.addRow(k2 + "u", "Unique: " + !nonunique);
 
-                        oldiname = iname;
+                            oldiname = iname;
+                        }
+
+                        String c = ind.getString(9);
+
+                        tTree.addRow(k2 + "c-" + c + "-", c);
                     }
 
-                    String c = ind.getString(9);
-
-                    tTree.addRow(k2 + "c-" + c + "-", c);
+                } finally {
+                    ind.close();
                 }
-
-                ind.close();
             }
 
             tTree.addRow("p", "Properties", "+", 0);

@@ -27,13 +27,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * This software consists of voluntary contributions made by many individuals 
+ * This software consists of voluntary contributions made by many individuals
  * on behalf of the Hypersonic SQL Group.
  *
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2005, The HSQL Development Group
+ * Copyright (c) 2001-2006, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -353,8 +353,9 @@ implements WindowListener, ActionListener {
      */
     String getScript() {
 
+        ResultSet    rResult = null;
         try {
-            ResultSet    rResult = sStatement.executeQuery("SCRIPT");
+            rResult = sStatement.executeQuery("SCRIPT");
             StringBuffer a       = new StringBuffer();
 
             while (rResult.next()) {
@@ -367,6 +368,10 @@ implements WindowListener, ActionListener {
             return a.toString();
         } catch (SQLException e) {
             return "";
+        } finally {
+            if (rResult != null) {
+                try { rResult.close(); } catch (Exception e) { }
+            }
         }
     }
 
