@@ -103,15 +103,32 @@ insert into credits values(4,2,200);
  left outer join accounts ac on own.id = ac.ownerid and cred.accountid = 1
  left outer join credits cred on cred.accountid = ac.id
 
---ERROR - join like above but using a functions
-/*e*/select ac.accountname,ac.accountnr, cred.amount from accounts ac
+--from 1.8.1 functions and different conditions are accepted in outer joins
+/*R
+ Bank,5101,NULL
+ Cash,5202,200.0
+ Giro,5303,NULL
+ Invoice,7505,NULL
+*/select ac.accountname,ac.accountnr, cred.amount from accounts ac
  left outer join credits cred on cred.accountid=ac.id and abs(amount) = 200
+
+/*R
+ Bank,5101,NULL
+ Cash,5202,100.0
+ Cash,5202,200.0
+ Giro,5303,NULL
+ Invoice,7505,NULL
+*/select ac.accountname,ac.accountnr, cred.amount from accounts ac
+ left outer join credits cred on cred.accountid=ac.id and abs(amount) in( 200, 100)
 
 
 --MULTIPLE OUTER
 --STUDENTS contains id's for students
 --TEACHERS contains id's for teachers
 --STUDENT_TEACHER links a teacher to a student
+DROP TABLE STUDENT IF EXISTS;
+DROP TABLE TEACHER IF EXISTS;
+DROP TABLE STUDENT_TEACHER IF EXISTS;
 CREATE TABLE STUDENT(STUDENT_ID BIGINT NOT NULL PRIMARY KEY);
 CREATE TABLE TEACHER(TEACHER_ID BIGINT NOT NULL PRIMARY KEY);
 CREATE TABLE STUDENT_TEACHER(STUDENT_ID BIGINT NOT NULL, TEACHER_ID BIGINT NOT NULL);
@@ -180,7 +197,7 @@ CREATE TABLE T_EMPLOYEE (FIRST VARCHAR(10),LAST VARCHAR(10));
 INSERT INTO T_BOSS VALUES ('Ludovic','ANCIAUX');
 INSERT INTO T_EMPLOYEE VALUES ('Ludovic','ANCIAUX');
 INSERT INTO T_EMPLOYEE VALUES ('Bill','GATES');
-/*c1*/SELECT * FROM T_EMPLOYEE LEFT JOIN T_BOSS
+/*rBill,GATES,NULL,NULL*/SELECT * FROM T_EMPLOYEE LEFT JOIN T_BOSS
  ON T_EMPLOYEE.FIRST = T_BOSS.FIRST WHERE T_BOSS.FIRST IS Null;
 --
 --bug #674025
@@ -359,3 +376,18 @@ create index idxa on a(a2);
  a,22,a,14
  b,32,NULL,NULL
 */select * from b right outer join a on a.a1=b.b1 order by a1
+---
+CREATE TABLE names (name VARCHAR(20) PRIMARY KEY);
+CREATE TABLE params (name VARCHAR(20) PRIMARY KEY, value VARCHAR(20) NULL);
+INSERT INTO names VALUES ('name1');
+INSERT INTO names VALUES ('name2');
+INSERT INTO params (name, value) VALUES ('name1', 'value1');
+/*r
+ name1,NULL
+ name2,NULL
+*/SELECT n.name, p.value FROM names n LEFT OUTER JOIN params p ON n.name = p.name AND p.value <> 'value1';
+/*r
+ name1,NULL
+ name2,NULL
+*/SELECT n.name, p.value FROM names n LEFT JOIN params p ON n.name = p.name AND p.value = 'value3';
+

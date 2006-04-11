@@ -7,6 +7,7 @@ Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
 2006.04.11
+
 General improvements to all utilities, including SQLTool, DatabaseManager, etc.
 General improvements to build.xml
 Improvement to fail-safe persistence by saving the .properties file first as a new file, before renaming.

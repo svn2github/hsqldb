@@ -69,18 +69,18 @@ create index it9 on t9(nr,x);
 drop table t1;drop table t2;drop table "T3";
 DROP TABLE T4;Drop Table T5; drop table T6
 drop table t7; drop table t8; drop table t9
-create user 'test' password 'test-p'
+create user "test" password "test-p"
 create table test (id integer)
-revoke all on test from 'test'
+revoke all on test from "test"
 select * from test order by test.id
-grant all on test to 'test'
-grant select on test to 'test'
-revoke select,insert,update,delete on test from 'test'
-connect user 'test' password 'test-p'
-set password 'test-p2'
-connect user 'sa' password ''
-connect user 'test' password 'test-p2'
-connect user 'sa' password ''
+grant all on test to "test"
+grant select on test to "test"
+revoke select,insert,update,delete on test from "test"
+connect user "test" password "test-p"
+set password "test-p2"
+connect user sa password ""
+connect user "test" password "test-p2"
+connect user sa password ""
 set autocommit false
 insert into test values (1)
 update test set id = 3
@@ -91,7 +91,7 @@ rollback
 commit
 script
 drop table test
-drop user 'test'
+drop user "test"
 script
 set autocommit true
 create memory table test (id integer)
@@ -269,6 +269,12 @@ insert into test_maxrows values(0);
 insert into test_maxrows select id+1 from test_maxrows;
 insert into test_maxrows select id+2 from test_maxrows;
 insert into test_maxrows select id+4 from test_maxrows;
+/*R
+ 7
+ 6
+ 5
+ 4
+*/select id from test_maxrows limit 4
 /*r
  4
  3

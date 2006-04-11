@@ -52,4 +52,24 @@ INSERT INTO "Artist" VALUES(123,'Annie Lennox');
 INSERT INTO "Album" VALUES(172,123,'Medusa',NULL,21);
 INSERT INTO "Song" VALUES(2669,172,'waiting in vain',9,'00:05:39',NULL);
 
+-- issue with aliases - bug 1344316
+create table test1 (idtest int,test varchar(100),primary key(idtest));
+create table test2 (idtest2 int,idtest int,test varchar(100),primary key(idtest2),foreign key (idtest) REFERENCES test1(idtest));
+INSERT INTO test1 (idtest, test) VALUES (1,'hello');
+INSERT INTO test2 (idtest2,idtest, test) VALUES(2,1,'world');
+select t1.test, t2.idtest2 as idtest  from test1 t1 join test2 t2 on (t1.idtest=t2.idtest)
+select t1.test, t1.test as idtest  from test1 t1 JOIN test2 t2 on (t1.idtest=t2.idtest)
+
+-----
+drop table tablea if exists;
+drop table tableb if exists;
+create table tablea (cola int, colb int, colc int);
+create table tableb (cola int, colb int, colc int);
+SELECT T1.colA, T1.colB FROM tableA T1 WHERE T1.colC = (
+ SELECT MAX(T2.colC) FROM tableA T2 WHERE T1.colB = T2.colB);
+SELECT T1.colA, T1.colB FROM tableA T1 WHERE T1.colC IN (
+ SELECT MAX(T2.colC) FROM tableA T2 WHERE T1.colB = T2.colB);
+
+
+
 

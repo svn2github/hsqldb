@@ -5,8 +5,8 @@ create table testcase(id integer, data varchar(10), filler varchar(10));
 insert into testcase values(100,'xxxx',null);
 insert into testcase values(200,'yyyy',null);
 /*u1*/insert into testcase values(300,null,null);
-/*r300*/select id from testcase where data is null;
 /*c2*/select id from testcase where data is not null;
+/*r300*/select id from testcase where data is null;
 /*rNULLVALUE*/select ifnull(data,'NULLVALUE') from testcase where data is null;
 /*rNULLVALUE*/select case data when 'xxxx' then 'X' else 'NULLVALUE' end from testcase where data is null;
 SELECT CASE data WHEN 'xxxx' THEN 'X' ELSE (CASE data WHEN 'yyyy' THEN 'Y' ELSE (CASE data WHEN 'zzzz' THEN 'Z' ELSE 'NOTFOUND' END) END) END FROM testcase;
@@ -36,4 +36,17 @@ create table single (c char);
 select case c when 'X' then 1 else 2 end from single;
 insert into single values('X');
 select case c when 'X' then 1 else 2 end from single;
+insert into single values(null);
+/*r
+ X
+ Y
+*/select ifnull(c,'Y') from single
+/*r
+ X
+ Y
+*/select coalesce(c,'Y') from single
+/*e*/select coalesce() from single
+/*e*/select coalesce(c) from single
+/*e*/select ifnull() from single
+/*e*/select ifnull(c) from single
 

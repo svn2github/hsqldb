@@ -216,3 +216,11 @@ CONNECT USER sa PASSWORD "";
 CONNECT USER peon1 PASSWORD password;
 /*e*/SELECT * FROM t1;
 
+CONNECT USER sa PASSWORD "";
+/*s*/DROP ROLE r1 CASCADE;
+/*s*/DROP ROLE r2 CASCADE;
+/*s*/DROP ROLE r3 CASCADE;
+/*U0*/ Workaround for bug where DDL will not Commit
+/*s*/CREATE TABLE bug_workaround (i int);
+/*s*/INSERT INTO bug_workaround VALUES(1);
+/*u0*/SHUTDOWN;

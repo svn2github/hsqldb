@@ -126,3 +126,12 @@ insert into testC values(1);
 /*c1*/select * from testA
 /*c1*/select * from testB
 /*c1*/select * from testC
+
+-- INVALID SET DEFAULT
+/*e*/create cached table testE(id integer, foreign key (id) references testA(id) on delete set default);
+/*e*/create cached table testE(id integer primary key, idref integer, foreign key (idref) references teste(id) on delete set default);
+create cached table testE(id integer primary key, idref integer);
+/*e*/alter table testE add foreign key(idref) references testE(id) on delete set default;
+alter table testE alter column idref set default 10;
+alter table testE add foreign key(idref) references testE(id) on delete set default;
+/*e*/alter table testE alter column idref drop default;

@@ -46,3 +46,27 @@ INSERT INTO T VALUES(100);
 
 /*c0*/SELECT * FROM T WHERE A IN
  (7223955391172290801,8124225344737252039,8112873400132257948,100.2E0,'MONDAY') AND FALSE;
+
+-- demonstration of contatenation from Blaine
+CREATE TABLE tsttbl(
+    id IDENTITY,
+    FirstName VARCHAR(10),
+    MiddleName VARCHAR(10),
+    LastName VARCHAR(10),
+    CommonLink VARCHAR(20)
+ );
+INSERT INTO tsttbl(firstname, middlename, lastname, commonlink)
+ VALUES ('John', 'Paul', 'Jones', 'http://cnn.com');
+INSERT INTO tsttbl(firstname, middlename, lastname, commonlink)
+ VALUES ('Bridget', 'Paula', 'Murphy', 'http://cnn.com');
+--  Raw SELECT using ||:
+SELECT FirstName || MiddleName || LastName, CommonLink
+ FROM tsttbl;
+--  Creating View using ||:
+CREATE VIEW tstview AS SELECT
+    FirstName || MiddleName || LastName, CommonLink FROM tsttbl;
+-- Executing View Query:
+SELECT * FROM tstview;
+--  Raw SELECT using +:
+SELECT FirstName + ' ' + MiddleName + ' ' + LastName, CommonLink
+ FROM tsttbl;
