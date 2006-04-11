@@ -6,6 +6,25 @@ hsqldb 1.8.0 in reverse chronological order.
 Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
+2006.04.11
+General improvements to all utilities, including SQLTool, DatabaseManager, etc.
+General improvements to build.xml
+Improvement to fail-safe persistence by saving the .properties file first as a new file, before renaming.
+Fixed bug which prevented dropping a column before an indexed column
+Fixed bug where DISTINCT was not allowed with SQL functions (BT 1400344)
+Fixed bug where PreparedStatement calls were allowed with some unbound variable(BT 1399324) but commented out to allow compatibility with earlier versions (see org.hsqldb.jdbc.jdbcPreparedStatement).
+VARCHAR_IGNORECASE size specification is now enforeced.
+Fixed bugs where ORDER BY did not work in some cases (BT 1383218, BT 1344895)
+Fixed bug where IFNULL was used with a function (BT 1315834)
+Fixed bug where creation of a new table was not allowed if the old table with the same name had been renamed.
+Fixed bug where SYSTEM_INDEXINFO could not be read.
+Fixed bug to allow running with JDK 1.1 when compiled for this target.
+Fixed bug with COALESCE, et containing an aggregate function (BT 1242448).
+
+Fixed bug with ResultSet.getTimestamp(int, Clandar)
+Fixed bug with access non-admin access to tables was allowed when using PreparedStatement objects.
+Added org.hsqldb.Library function, getDatabaseFullProductVersion to return the full version string, including the 4th digit (e.g 1.8.0.4)
+
 2006.01.08
 
 Fixed bug in WebServer
