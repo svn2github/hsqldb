@@ -2931,7 +2931,16 @@ class DatabaseCommandInterpreter {
 
         session.checkAdmin();
         session.checkDDLWrite();
-        database.getUserManager().dropUser(getPassword());
+
+        String userName = getPassword();
+
+        if (database.getSessionManager().isUserActive(userName)) {
+
+            // todo - new error message "cannot drop a user that is currently connected."    // NOI18N
+            throw Trace.error(Trace.ACCESS_IS_DENIED);
+        }
+
+        database.getUserManager().dropUser(userName);
     }
 
     private void processDropSequence() throws HsqlException {

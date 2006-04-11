@@ -1251,7 +1251,7 @@ implements ActionListener, WindowListener, KeyListener {
 
             tTree.addRow("", dMeta.getURL(), "-", 0);
 
-            String[]  usertables = {
+            String[] usertables = {
                 "TABLE", "GLOBAL TEMPORARY", "VIEW"
             };
 
@@ -1260,16 +1260,15 @@ implements ActionListener, WindowListener, KeyListener {
             Vector tables  = new Vector();
 
             // sqlbob@users Added remarks.
-            Vector remarks = new Vector();
-            ResultSet result = dMeta.getTables(null, null, null, usertables);
-            try {
+            Vector    remarks = new Vector();
+            ResultSet result  = dMeta.getTables(null, null, null, usertables);
 
+            try {
                 while (result.next()) {
                     schemas.addElement(result.getString(2));
                     tables.addElement(result.getString(3));
                     remarks.addElement(result.getString(5));
                 }
-
             } finally {
                 result.close();
             }
@@ -1295,7 +1294,6 @@ implements ActionListener, WindowListener, KeyListener {
                 ResultSet col = dMeta.getColumns(null, schema, name, null);
 
                 try {
-
                     while (col.next()) {
                         String c  = col.getString(4);
                         String k1 = key + "col-" + c + "-";
@@ -1338,7 +1336,6 @@ implements ActionListener, WindowListener, KeyListener {
 
                         tTree.addRow(k2 + "c-" + c + "-", c);
                     }
-
                 } finally {
                     ind.close();
                 }

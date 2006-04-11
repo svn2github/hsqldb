@@ -353,10 +353,12 @@ implements WindowListener, ActionListener {
      */
     String getScript() {
 
-        ResultSet    rResult = null;
+        ResultSet rResult = null;
+
         try {
             rResult = sStatement.executeQuery("SCRIPT");
-            StringBuffer a       = new StringBuffer();
+
+            StringBuffer a = new StringBuffer();
 
             while (rResult.next()) {
                 a.append(rResult.getString(1));
@@ -370,7 +372,9 @@ implements WindowListener, ActionListener {
             return "";
         } finally {
             if (rResult != null) {
-                try { rResult.close(); } catch (Exception e) { }
+                try {
+                    rResult.close();
+                } catch (Exception e) {}
             }
         }
     }

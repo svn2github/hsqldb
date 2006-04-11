@@ -199,13 +199,11 @@ public class TestDatabaseMetaData extends TestBase {
                                  && e.equals("java.sql.Timestamp");
 
             assertTrue("wrong result metadata", testresult);
-            e  = md.getColumnClassName(11);
+
+            e          = md.getColumnClassName(11);
             testresult = e.equals("java.lang.Boolean");
+
             assertTrue("wrong result metadata", testresult);
-
-
-
-
             pstmt.close();
             conn.close();
         } catch (Exception e) {

@@ -115,7 +115,7 @@ final class CompiledStatementManager {
         schemaMap     = new IntKeyHashMap();
         sqlLookup     = new IntKeyHashMap();
         csidMap       = new IntKeyHashMap();
-        sessionUseMap    = new IntKeyHashMap();
+        sessionUseMap = new IntKeyHashMap();
         useMap        = new IntKeyIntValueHashMap();
         next_cs_id    = 0;
     }
@@ -206,9 +206,9 @@ final class CompiledStatementManager {
 
             // revalidate with the original schema
             try {
-                cs = compileSql(session, sql, cs.schemaHsqlName.name);
-
+                cs    = compileSql(session, sql, cs.schemaHsqlName.name);
                 cs.id = csid;
+
                 csidMap.put(csid, cs);
             } catch (Throwable t) {
                 freeStatement(csid, session.getId(), true);
@@ -282,6 +282,7 @@ final class CompiledStatementManager {
         }
 
         cs.id = csid;
+
         csidMap.put(csid, cs);
 
         return csid;
@@ -421,18 +422,19 @@ final class CompiledStatementManager {
      * @param sql a string describing the desired statement object
      * @return a MULTI Result describing the compiled statement.
      */
-    synchronized CompiledStatement compile(Session session, String sql) throws Throwable {
+    synchronized CompiledStatement compile(Session session,
+                                           String sql) throws Throwable {
 
         int               csid = getStatementID(session.currentSchema, sql);
         CompiledStatement cs   = (CompiledStatement) csidMap.get(csid);
 
-        if (cs == null || !cs.isValid || !session.isAdmin()) {
-                cs = compileSql(session, sql, session.currentSchema.name);
-
+        if (cs == null ||!cs.isValid ||!session.isAdmin()) {
+            cs   = compileSql(session, sql, session.currentSchema.name);
             csid = registerStatement(csid, cs);
         }
 
         linkSession(csid, session.getId());
+
         return cs;
     }
 

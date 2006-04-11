@@ -262,6 +262,8 @@ public class DataFileCache {
      */
     public void close(boolean write) throws HsqlException {
 
+        SimpleLog appLog = database.logger.appLog;
+
         try {
             if (cacheReadonly) {
                 if (dataFile != null) {
@@ -323,7 +325,7 @@ public class DataFileCache {
                 fa.removeElement(backupFileName);
             }
         } catch (Throwable e) {
-            database.logger.appLog.logContext(e);
+            appLog.logContext(e);
 
             throw Trace.error(Trace.FILE_IO_ERROR, Trace.DataFileCache_close,
                               new Object[] {
@@ -333,6 +335,8 @@ public class DataFileCache {
     }
 
     void postClose(boolean keep) throws HsqlException {
+
+        SimpleLog appLog = database.logger.appLog;
 
         if (cacheReadonly) {
             return;

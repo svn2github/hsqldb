@@ -249,8 +249,7 @@ public class Log {
         // set this one last to save the props
         properties.setDBModified(HsqlDatabaseProperties.FILES_NEW);
 
-
-        if (cache != null){
+        if (cache != null) {
             cache.postClose(!script);
         }
 

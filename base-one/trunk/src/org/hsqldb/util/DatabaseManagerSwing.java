@@ -248,9 +248,9 @@ implements ActionListener, WindowListener, KeyListener {
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.org.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.8 $";
+        + "problem reports or help requests:  $Revision: 1.67 $";
     private static final String ABOUT_TEXT =
-        "$Revision: 1.8 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.67 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2001-2005, The HSQL Development Group.\n"
         + "http://hsqldb.org\n\n\n"
@@ -2073,6 +2073,7 @@ implements ActionListener, WindowListener, KeyListener {
         treeModel.nodeStructureChanged(rootNode);
         treeModel.reload();
         tScrollPane.repaint();
+
         ResultSet result = null;
 
         // Now rebuild the tree below its root
@@ -2082,9 +2083,9 @@ implements ActionListener, WindowListener, KeyListener {
             rootNode.setUserObject(dMeta.getURL());
 
             // get metadata about user tables by building a vector of table names
-            result = dMeta.getTables(null, null, null,
-                                               (showSys ? usertables
-                                                        : nonSystables));
+            result = dMeta.getTables(null, null, null, (showSys ? usertables
+                                                                : nonSystables));
+
             Vector tables  = new Vector();
             Vector schemas = new Vector();
 
@@ -2111,6 +2112,7 @@ implements ActionListener, WindowListener, KeyListener {
             }
 
             result.close();
+
             result = null;
 
             // Added: (weconsultants@users)
@@ -2128,13 +2130,15 @@ implements ActionListener, WindowListener, KeyListener {
             }
 
             ResultSet col;
+
             // For each table, build a tree node with interesting info
             for (int i = 0; i < tables.size(); i++) {
                 col = null;
-                String name;
-                try {
-                    name = (String) tables.elementAt(i);
 
+                String name;
+
+                try {
+                    name   = (String) tables.elementAt(i);
                     schema = (String) schemas.elementAt(i);
 
                     String schemaname = "";
@@ -2150,8 +2154,7 @@ implements ActionListener, WindowListener, KeyListener {
 
                     // weconsul@ptd.net Add rowCounts if needed.
                     tableNode = makeNode(displayedName, rootNode);
-
-                    col = dMeta.getColumns(null, schema, name, null);
+                    col       = dMeta.getColumns(null, schema, name, null);
 
                     if ((schema != null) &&!schema.trim().equals("")) {
                         makeNode(schema, tableNode);
@@ -2192,6 +2195,7 @@ implements ActionListener, WindowListener, KeyListener {
 
                 if (showIndexDetails) {
                     ResultSet ind = null;
+
                     try {
                         ind = dMeta.getIndexInfo(null, schema, name, false,
                                                  false);
@@ -2444,9 +2448,9 @@ implements ActionListener, WindowListener, KeyListener {
 
     private void updateSchemaList() {
 
-        ButtonGroup group = new ButtonGroup();
-        ArrayList   list  = new ArrayList();
-        ResultSet result = null;
+        ButtonGroup group  = new ButtonGroup();
+        ArrayList   list   = new ArrayList();
+        ResultSet   result = null;
 
         try {
             result = dMeta.getSchemas();
@@ -2459,7 +2463,6 @@ implements ActionListener, WindowListener, KeyListener {
             while (result.next()) {
                 list.add(result.getString(1));
             }
-
         } catch (SQLException se) {
             CommonSwing.errorMessage(se);
         } finally {
@@ -2468,7 +2471,6 @@ implements ActionListener, WindowListener, KeyListener {
                     result.close();
                 } catch (SQLException se) {}
             }
-
         }
 
         mnuSchemas.removeAll();

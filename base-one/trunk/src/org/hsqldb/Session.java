@@ -182,6 +182,11 @@ public class Session implements SessionInterface {
         tokenizer                 = new Tokenizer();
         parser                    = new Parser(this, database, tokenizer);
 
+        resetSchema();
+    }
+
+    void resetSchema() {
+
         HsqlName initialSchema = user.getInitialSchema();
 
         currentSchema = ((initialSchema == null)

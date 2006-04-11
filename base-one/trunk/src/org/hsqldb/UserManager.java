@@ -68,6 +68,8 @@ package org.hsqldb;
 
 import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.HsqlNameManager.HsqlName;
+import org.hsqldb.SchemaManager.Schema;
 
 // fredt@users 20020130 - patch 497872 by Nitin Chauhan - loop optimisation
 // fredt@users 20020320 - doc 1.7.0 - update
@@ -360,5 +362,16 @@ class UserManager implements GrantConstants {
      */
     User getSysUser() {
         return sysUser;
+    }
+
+    public synchronized void removeSchemaReference(Schema schema) {
+
+        for (int i = 0; i < userList.size(); i++) {
+            User user = (User) userList.get(i);
+
+            if (user.getInitialSchema() == schema.name) {
+                user.setInitialSchema(null);
+            }
+        }
     }
 }

@@ -52,8 +52,19 @@ import org.hsqldb.lib.java.JavaSystem;
  */
 public class FileUtil implements FileAccess {
 
+    private static FileUtil fileUtil;
+
     /** Creates a new instance of FileUtil */
-    public FileUtil() {}
+    FileUtil() {}
+
+    public static FileUtil getDefaultInstance() {
+
+        if (fileUtil == null) {
+            fileUtil = new FileUtil();
+        }
+
+        return fileUtil;
+    }
 
     public boolean isStreamElement(java.lang.String elementName) {
         return (new File(elementName)).exists();

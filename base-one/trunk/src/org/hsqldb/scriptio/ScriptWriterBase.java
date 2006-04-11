@@ -236,7 +236,7 @@ public abstract class ScriptWriterBase implements Runnable {
     protected void openFile() throws HsqlException {
 
         try {
-            FileAccess   fa  = isDump ? new FileUtil()
+            FileAccess   fa  = isDump ? FileUtil.getDefaultInstance()
                                       : database.getFileAccess();
             OutputStream fos = fa.openOutputStreamElement(outFile);
 

@@ -723,7 +723,11 @@ public class Table extends BaseTable {
 
         tn.constraintList = constraintList;
 
-        Index idx = getIndex(removeIndex, colIndex);
+        Index idx = null;
+
+        if (removeIndex != null) {
+            idx = getIndex(removeIndex, colIndex);
+        }
 
         if (idx != null) {
             if (idx.isConstraint()) {
@@ -764,23 +768,6 @@ public class Table extends BaseTable {
         return null;
     }
 
-    private Table newDuplicate() throws HsqlException {
-
-        Table tn = duplicate();
-
-        for (int i = 0; i < columnCount; i++) {
-            Column column = (Column) columnList.get(i);
-
-            column = column.duplicate(false);
-
-            tn.columnList.add(column.columnName.name, column);
-        }
-
-        tn.triggerLists = triggerLists;
-
-        return tn;
-    }
-
     private void copyIndexes(Table tn, int removeIndex, int colIndex,
                              int adjust) throws HsqlException {
 
@@ -799,45 +786,6 @@ public class Table extends BaseTable {
                 throw Trace.error(Trace.COLUMN_IS_IN_INDEX);
             }
         }
-    }
-
-    Table moveDefinitionNew(int[] primaryKey, int removeIndex,
-                            Column newColumn, int colIndex,
-                            int adjust) throws HsqlException {
-
-        Table tn = newDuplicate();
-
-        if (adjust == 0) {
-            if (newColumn != null) {
-                tn.columnList.set(colIndex, newColumn.columnName.name,
-                                  newColumn);
-            }
-        } else if (adjust > 0) {
-            tn.columnList.insert(colIndex, newColumn.columnName.name,
-                                 newColumn);
-        } else if (adjust < 0) {
-            tn.columnList.remove(colIndex);
-        }
-
-        int[] primarykey = hasPrimaryKey() ? primaryKeyCols
-                                           : null;
-
-        if (primarykey == null) {
-            if (newColumn.isPrimaryKey()) {
-                primarykey = new int[colIndex];
-            }
-        } else {
-            primarykey = ArrayUtil.toAdjustedColumnArray(primarykey,
-                    colIndex, adjust);
-        }
-
-        tn.createPrimaryKey(getIndex(0).getName(), primarykey, false);
-        copyIndexes(tn, removeIndex, colIndex, adjust);
-
-        tn.constraintList = constraintList;
-        tn.triggerLists   = triggerLists;
-
-        return tn;
     }
 
     /**
@@ -958,7 +906,8 @@ public class Table extends BaseTable {
             if (c.hasColumn(colIndex)
                     && (c.getType() == Constraint.MAIN
                         || c.getType() == Constraint.FOREIGN_KEY)) {
-                throw Trace.error(Trace.COLUMN_IS_REFERENCED, c.getName().name);
+                throw Trace.error(Trace.COLUMN_IS_REFERENCED,
+                                  c.getName().name);
             }
         }
     }

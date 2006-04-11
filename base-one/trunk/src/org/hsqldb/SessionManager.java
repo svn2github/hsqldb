@@ -33,6 +33,7 @@ package org.hsqldb;
 
 import org.hsqldb.lib.IntKeyHashMap;
 import org.hsqldb.lib.Iterator;
+import org.hsqldb.SchemaManager.Schema;
 
 /**
  * Container that maintains a map of session id's to Session objects.
@@ -226,5 +227,33 @@ public class SessionManager {
         }
 
         return sessions;
+    }
+
+    public synchronized boolean isUserActive(String userName) {
+
+        Iterator it = sessionMap.values().iterator();
+
+        for (int i = 0; it.hasNext(); i++) {
+            Session session = (Session) it.next();
+
+            if (userName.equals(session.getUser().getName())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public synchronized void removeSchemaReference(Schema schema) {
+
+        Iterator it = sessionMap.values().iterator();
+
+        for (int i = 0; it.hasNext(); i++) {
+            Session session = (Session) it.next();
+
+            if (session.currentSchema == schema.name) {
+                session.resetSchema();
+            }
+        }
     }
 }

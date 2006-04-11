@@ -68,8 +68,8 @@ public class ScriptRunner {
 
         IntKeyHashMap sessionMap = new IntKeyHashMap();
         Session sysSession = database.getSessionManager().getSysSession();
-        Session current   = sysSession;
-        int     currentId = 0;
+        Session       current    = sysSession;
+        int           currentId  = 0;
 
         database.setReferentialIntegrity(false);
 

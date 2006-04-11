@@ -152,9 +152,9 @@ public class Database {
 
     // schema invarient objects
     private HashMap        hAlias;
-    private UserManager    userManager;
-    private GranteeManager granteeManager;
-    HsqlNameManager        nameManager;
+    public UserManager     userManager;
+    public GranteeManager  granteeManager;
+    public HsqlNameManager nameManager;
 
     // session related objects
     public SessionManager     sessionManager;
@@ -237,7 +237,7 @@ public class Database {
                 System.out.println("Exception");
             }
         } else {
-            fileaccess = new FileUtil();
+            fileaccess = FileUtil.getDefaultInstance();
         }
 
         shutdownOnNoConnection = urlProperties.getProperty("shutdown",

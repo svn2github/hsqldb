@@ -41,7 +41,7 @@ import java.sql.SQLException;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
-/* $Id: RCData.java,v 1.10 2006/02/10 22:04:03 unsaved Exp $ */
+/* $Id: RCData.java,v 1.11 2006/02/10 22:04:58 unsaved Exp $ */
 
 /**
  * All the info we need to connect up to a database.
@@ -201,8 +201,9 @@ public class RCData {
      * @throws Exception if the a non-optional parameter is set to <code>NULL</code>
      */
     public RCData(String id, String url, String username, String password,
-            String driver, String charset, String truststore) throws Exception {
-        
+                  String driver, String charset,
+                  String truststore) throws Exception {
+
         this.id         = id;
         this.url        = url;
         this.username   = username;
@@ -210,12 +211,13 @@ public class RCData {
         this.driver     = driver;
         this.charset    = charset;
         this.truststore = truststore;
-        
-        if (id == null || url == null || username == null || password == null) {
+
+        if (id == null || url == null || username == null
+                || password == null) {
             throw new Exception("id, url, username, or password was not set");
         }
     }
-    
+
     String id         = null;
     String url        = null;
     String username   = null;

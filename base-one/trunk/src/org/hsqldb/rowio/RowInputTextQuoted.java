@@ -118,7 +118,6 @@ public class RowInputTextQuoted extends RowInputText {
 
                             state = NEED_END_QUOTE;
                         } else {
-
                             next  += sepLen - 1;
                             state = NORMAL_FIELD;
 

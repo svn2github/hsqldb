@@ -364,6 +364,7 @@ public class Grantee {
             throw Trace.error(Trace.ACCESS_IS_DENIED);
         }
     }
+
     /**
      * Returns true if any of the rights represented by the
      * rights argument has been granted on the database object identified
@@ -398,26 +399,24 @@ public class Grantee {
      * Returns true if any right at all has been granted to this User object
      * on the database object identified by the dbObject argument.
      */
-
     boolean isAccessible(String functionName) throws HsqlException {
 
-            if (functionName.startsWith("org.hsqldb.Library")
-                    || functionName.startsWith("java.lang.Math")) {
-                return true;
-            }
+        if (functionName.startsWith("org.hsqldb.Library")
+                || functionName.startsWith("java.lang.Math")) {
+            return true;
+        }
 
-            if (isAdmin) {
-                return true;
-            }
+        if (isAdmin) {
+            return true;
+        }
 
-            if (pubGrantee != null && pubGrantee.isAccessible(functionName)) {
-                return true;
-            }
+        if (pubGrantee != null && pubGrantee.isAccessible(functionName)) {
+            return true;
+        }
 
-            int n = fullRightsMap.get(functionName, 0);
+        int n = fullRightsMap.get(functionName, 0);
 
-            return n != 0;
-
+        return n != 0;
     }
 
     /**

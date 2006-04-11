@@ -73,7 +73,7 @@ public class HsqlProperties {
 
         stringProps = new Properties();
         fileName    = name;
-        fa          = new FileUtil();
+        fa          = FileUtil.getDefaultInstance();
     }
 
     public HsqlProperties(String name, FileAccess accessor, boolean b) {

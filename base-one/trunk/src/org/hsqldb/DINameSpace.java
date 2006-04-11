@@ -505,7 +505,8 @@ final class DINameSpace {
                         if (triggerDef == null ||!triggerDef.valid
                                 || triggerDef.trigger == null
                                 ||!user.isAccessible(
-                                    table.getName(), TriggerDef.indexToRight(k))) {
+                                    table.getName(),
+                                    TriggerDef.indexToRight(k))) {
                             continue;
                         }
 

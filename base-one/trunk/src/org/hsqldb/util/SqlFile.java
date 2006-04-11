@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.8 2006/03/06 21:01:32 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.133 2006/03/06 21:38:08 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -105,7 +105,7 @@ import java.util.TreeMap;
  * setters would be best) instead of constructor args and System
  * Properties.
  *
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.133 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlFile {
@@ -156,8 +156,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.8 $".substring("$Revision: ".length(),
-                "$Revision: 1.8 $".length() - 2);
+        revnum = "$Revision: 1.133 $".substring("$Revision: ".length(),
+                "$Revision: 1.133 $".length() - 2);
     }
 
     private static String BANNER =
@@ -2807,8 +2807,9 @@ public class SqlFile {
                         case java.sql.Types.TINYINT :
                             rightJust[insi] = true;
                             break;
-                        case java.sql.Types.VARBINARY:
-                        case java.sql.Types.VARCHAR:
+
+                        case java.sql.Types.VARBINARY :
+                        case java.sql.Types.VARCHAR :
                             autonulls[insi] = false;
                             break;
                     }
@@ -3061,8 +3062,9 @@ public class SqlFile {
                     for (int j = 0; j < fieldArray.length; j++) {
                         csvSafe(fieldArray[j]);
                         pwCsv.print((fieldArray[j] == null)
-                                ? (autonulls[j] ? "" : csvNullRep)
-                                : fieldArray[j]);
+                                    ? (autonulls[j] ? ""
+                                                    : csvNullRep)
+                                    : fieldArray[j]);
 
                         if (j < fieldArray.length - 1) {
                             pwCsv.print(csvColDelim);
@@ -3985,9 +3987,9 @@ public class SqlFile {
             colStart = colEnd + csvColDelim.length();
         }
 
-        String[] headers = (String[]) headerList.toArray(new String[0]);
+        String[]  headers   = (String[]) headerList.toArray(new String[0]);
         boolean[] autonulls = new boolean[headers.length];
-        String   tableName = (String) userVars.get("*CSV_TABLENAME");
+        String    tableName = (String) userVars.get("*CSV_TABLENAME");
 
         if (tableName == null) {
             tableName = file.getName();
@@ -4010,27 +4012,30 @@ public class SqlFile {
         }
 
         StringBuffer sb = new StringBuffer("INSERT INTO " + tableName + " ("
-                + tmpSb + ") VALUES (");
-        StringBuffer typeQuerySb = new StringBuffer("SELECT " + tmpSb 
-                + " FROM " + tableName + " WHERE 1 = 2");
+                                           + tmpSb + ") VALUES (");
+        StringBuffer typeQuerySb = new StringBuffer("SELECT " + tmpSb
+            + " FROM " + tableName + " WHERE 1 = 2");
 
         try {
             int ctype;
             ResultSetMetaData rsmd = curConn.createStatement().executeQuery(
-                    typeQuerySb.toString()).getMetaData();
+                typeQuerySb.toString()).getMetaData();
+
             if (rsmd.getColumnCount() != autonulls.length) {
                 throw new BadSpecial("Metadata mismatch for columns");
             }
+
             for (int i = 0; i < autonulls.length; i++) {
                 ctype = rsmd.getColumnType(i + 1);
+
                 // I.e., for VAR* column types, "" in CSV file means
                 // to insert "".  Otherwise, we'll insert null for "".
                 autonulls[i] = (ctype != java.sql.Types.VARBINARY
-                        && ctype != java.sql.Types.VARCHAR);
+                                && ctype != java.sql.Types.VARCHAR);
             }
-        } catch(SQLException se) {
+        } catch (SQLException se) {
             throw new BadSpecial("Failed to get metadata for query: "
-                + se.getMessage());
+                                 + se.getMessage());
         }
 
         for (int i = 0; i < headers.length; i++) {
@@ -4045,7 +4050,6 @@ public class SqlFile {
         try {
             PreparedStatement ps = curConn.prepareStatement(sb.toString()
                 + ')');
-
             String[] dataVals = new String[headers.length];
             int      recCount = 0;
             int      colCount;
@@ -4086,11 +4090,12 @@ public class SqlFile {
                     }
 
                     if (colCount == dataVals.length) {
-                        throw new IOException("Header has " + headers.length
-                                              + " columns.  CSV record "
-                                              + recCount
-                                              + " has too many column values.");
+                        throw new IOException(
+                            "Header has " + headers.length
+                            + " columns.  CSV record " + recCount
+                            + " has too many column values.");
                     }
+
                     dataVals[colCount++] = string.substring(colStart, colEnd);
                     colStart             = colEnd + csvColDelim.length();
                 }
@@ -4106,10 +4111,11 @@ public class SqlFile {
 
                     //System.err.println("ps.setString(" + i + ", "
                     //      + dataVals[i] + ')');
-                    ps.setString(i + 1,
-                            (((dataVals[i].length() < 1 && autonulls[i])
-                             || dataVals[i].equals(csvNullRep))
-                             ? null : dataVals[i]));
+                    ps.setString(
+                        i + 1,
+                        (((dataVals[i].length() < 1 && autonulls[i]) || dataVals[i].equals(csvNullRep))
+                         ? null
+                         : dataVals[i]));
                 }
 
                 retval = ps.executeUpdate();

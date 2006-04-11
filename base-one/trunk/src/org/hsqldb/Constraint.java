@@ -189,7 +189,6 @@ class Constraint {
         core.mainColArray = cols;
     }
 
-
     /**
      * temp constraint constructor
      */
@@ -454,8 +453,8 @@ class Constraint {
      */
     void checkInsert(Session session, Object[] row) throws HsqlException {
 
-        if (constType == Constraint.MAIN || constType == Constraint.UNIQUE ||
-            constType == Constraint.PRIMARY_KEY) {
+        if (constType == Constraint.MAIN || constType == Constraint.UNIQUE
+                || constType == Constraint.PRIMARY_KEY) {
 
             // inserts in the main table are never a problem
             // unique constraints are checked by the unique index

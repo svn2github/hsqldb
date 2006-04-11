@@ -57,7 +57,7 @@ import org.hsqldb.Trace;
  * this feature is not supported.<p>
  *
  * If the connection is autoCommit, setting savepoints has no effect as any
- * such savepoint is cleared upon the execution of the first transactional 
+ * such savepoint is cleared upon the execution of the first transactional
  * statement. <p>
 
  * </div>

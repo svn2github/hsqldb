@@ -127,6 +127,10 @@ public class SchemaManager {
 
             schemaMap.put(defaultSchemaHsqlName.name, schema);
         }
+
+        // these are called last and in this particular order
+        database.getUserManager().removeSchemaReference(schema);
+        database.getSessionManager().removeSchemaReference(schema);
     }
 
     void renameSchema(String name, String newName,

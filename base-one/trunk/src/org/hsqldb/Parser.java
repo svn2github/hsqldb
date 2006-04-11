@@ -2595,42 +2595,34 @@ class Parser {
     private void getInsertColumnValueExpressions(Table t, Expression[] acve,
             int len) throws HsqlException {
 
-        boolean    enclosed;
-        String     token;
-        Expression cve;
-        int        i;
-
-        enclosed = false;
-        i        = 0;
-
         tokenizer.getThis(Token.T_OPENBRACKET);
 
-        for (; i < len; i++) {
-            cve = parseExpression();
+        for (int i = 0; i < len; i++) {
+            Expression columnValExpression = parseExpression();
 
-//            cve.resolve(null);
-            cve.resolveTables(null);
-            cve.resolveTypes(session);
+            columnValExpression.resolveTables(null);
+            columnValExpression.resolveTypes(session);
 
-            acve[i] = cve;
-            token   = tokenizer.getSimpleToken();
+            acve[i] = columnValExpression;
+
+            String token = tokenizer.getSimpleToken();
 
             if (token.equals(Token.T_COMMA)) {
                 continue;
             }
 
             if (token.equals(Token.T_CLOSEBRACKET)) {
-                enclosed = true;
-
-                break;
+                if (i == len - 1) {
+                    return;
+                } else {
+                    break;
+                }
             }
 
             tokenizer.throwUnexpected();
         }
 
-        if (!enclosed || i != len - 1) {
-            throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
-        }
+        throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
     }
 
     /**

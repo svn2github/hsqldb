@@ -63,12 +63,16 @@ public class TestSqlPersistent extends TestCase {
         super(name);
     }
 
-    protected void setUp() {
+    protected void setUp() throws Exception {
+
+        super.setUp();
 
         user        = "sa";
         password    = "";
         sStatement  = null;
         cConnection = null;
+
+        TestSelf.deleteDatabase("/hsql/test/testpersistent");
 
         try {
             Class.forName("org.hsqldb.jdbcDriver");
@@ -77,7 +81,8 @@ public class TestSqlPersistent extends TestCase {
             sStatement  = cConnection.createStatement();
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("TestSql.setUp() error: " + e.getMessage());
+            System.out.println("TestSqlPersistence.setUp() error: "
+                               + e.getMessage());
         }
     }
 

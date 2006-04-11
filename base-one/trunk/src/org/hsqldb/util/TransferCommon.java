@@ -118,14 +118,14 @@ class TransferCommon {
     static Vector loadPrefs(String f, DataAccessPoint sourceDb,
                             DataAccessPoint targetDb, Traceable tracer) {
 
-        TransferTable t;
-        Vector        tTable = null;
-        ObjectInputStream ois = null;
+        TransferTable     t;
+        Vector            tTable = null;
+        ObjectInputStream ois    = null;
 
         try {
-            FileInputStream   fis = new FileInputStream(f);
-            ois = new ObjectInputStream(fis);
+            FileInputStream fis = new FileInputStream(f);
 
+            ois    = new ObjectInputStream(fis);
             tTable = (Vector) ois.readObject();
 
             for (int i = 0; i < tTable.size(); i++) {

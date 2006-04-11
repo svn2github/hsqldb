@@ -37,6 +37,7 @@ import java.sql.DriverManager;
 import org.hsqldb.Server;
 
 import junit.framework.TestCase;
+
 import java.sql.SQLException;
 
 /**

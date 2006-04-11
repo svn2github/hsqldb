@@ -168,6 +168,17 @@ public class User {
     }
 
     /**
+     * This class does not have access to the SchemaManager, therefore
+     * caller should verify that the given schemaName exists.
+     *
+     * @param schemaName Name of an existing schema.  Null value allowed,
+     *                   which means use the DB default session schema.
+     */
+    void setInitialSchema(HsqlName schema) {
+        initialSchema = schema;
+    }
+
+    /**
      * Returns true if this User object represents the PUBLIC user
      */
     boolean isPublic() {
@@ -341,6 +352,7 @@ public class User {
     void check(String dbobject) throws HsqlException {
         grantee.check(dbobject);
     }
+
     /**
      * Returns true if any of the rights represented by the
      * rights argument has been granted on the database object identified

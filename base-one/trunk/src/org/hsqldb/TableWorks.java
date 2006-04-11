@@ -698,8 +698,6 @@ class TableWorks {
         }
     }
 
-    // fredt - todo cross check with FK's with SET NULL and SET DEFAULT
-
     /**
      * performs the work for changing the nullability of a column
      */
@@ -736,9 +734,11 @@ class TableWorks {
      */
     void setColDefaultExpression(int colIndex,
                                  Expression def) throws HsqlException {
-        if (def == null){
+
+        if (def == null) {
             table.checkColumnInFKConstraint(colIndex, Constraint.SET_DEFAULT);
         }
+
         table.setDefaultExpression(colIndex, def);
     }
 }

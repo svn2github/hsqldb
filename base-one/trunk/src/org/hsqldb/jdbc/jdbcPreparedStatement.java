@@ -1935,10 +1935,10 @@ implements PreparedStatement {
         if (isStream) {
             if (parameterStream == null) {
                 parameterStream = new boolean[parameterTypes.length];
-            } 
+            }
 
             parameterStream[i - 1] = true;
-            parameterSet[i - 1] = false;
+            parameterSet[i - 1]    = false;
         } else {
             parameterSet[i - 1] = true;
         }
@@ -1968,6 +1968,12 @@ implements PreparedStatement {
      * setting is retained for the next use.
      */
     private void checkParametersSet() throws SQLException {
+        ;
+    }
+
+/*
+    // do not check for compatibility with 1.8.0.x
+    private void checkParametersSet() throws SQLException {
 
         if (parameterStream == null) {
             for (int i = 0; i < parameterSet.length; i++) {
@@ -1986,6 +1992,7 @@ implements PreparedStatement {
                                  parameterStream, 0, parameterStream.length);
         }
     }
+*/
 
     /**
      * The internal parameter value setter always converts the parameter to

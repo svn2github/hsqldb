@@ -1277,7 +1277,7 @@ extends org.hsqldb.DatabaseInformationMain {
             + "a.TABLE_CAT,a.TABLE_SCHEM,a.TABLE_NAME,b.COLUMN_NAME,'Y',"
             + "'IN' from INFORMATION_SCHEMA.SYSTEM_TRIGGERS a, "
             + "INFORMATION_SCHEMA.SYSTEM_COLUMNS b where "
-            + "a.TABLE_NAME=b.TABLE_NAME and a.TABLE_SCHEMA=b.TABLE_SCHEMA");
+            + "a.TABLE_NAME=b.TABLE_NAME and a.TABLE_SCHEM=b.TABLE_SCHEM");
 
 /*
             (new StringBuffer(185)).append("SELECT").append(' ').append(
