@@ -1978,7 +1978,6 @@ class Parser {
 
             readThis(Expression.CLOSE);
 
-            // TODO: Maybe allow AS <alias> here
             r = new Expression(f);
         } else {
             String javaName = (String) simpleFunctions.get(name);
@@ -2332,6 +2331,8 @@ class Parser {
             } else {
                 iToken = Expression.COLUMN;
             }
+        } else if (tokenizer.wasParameter()) {
+            iToken = Expression.PARAM;
         } else if (sToken.length() == 0) {
             iToken = Expression.END;
         } else {

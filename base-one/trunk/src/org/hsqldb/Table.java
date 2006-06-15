@@ -1285,10 +1285,7 @@ public class Table extends BaseTable {
         int[] roots = new int[getIndexCount()];
 
         for (int i = 0; i < getIndexCount(); i++) {
-            Node f = indexList[i].getRoot(null);
-
-            roots[i] = (f != null) ? f.getKey()
-                                   : -1;
+            roots[i] = indexList[i].getRoot();
         }
 
         return roots;
@@ -3272,8 +3269,6 @@ public class Table extends BaseTable {
         if (isCached || isText && cache != null) {
             rowStore.remove(row.getPos());
         }
-
-        row.oData = null;
     }
 
     void releaseRowFromStore(Row row) throws HsqlException {
@@ -3399,20 +3394,16 @@ public class Table extends BaseTable {
         Row row;
 
         try {
-            if (isText) {
-                row = new CachedDataRow(this, o);
-
-                rowStore.add(row);
-            } else if (isCached) {
-                row = new CachedRow(this, o);
-
-                rowStore.add(row);
-            } else {
+            if (isMemory) {
                 row = new Row(this, o);
 
                 int pos = (int) rowIdSequence.getValue();
 
                 row.setPos(pos);
+            } else {
+                row = CachedRow.newCachedRow(this, o);
+
+                rowStore.add(row);
             }
         } catch (IOException e) {
             throw new HsqlException(
@@ -3428,22 +3419,16 @@ public class Table extends BaseTable {
         Row row;
 
         try {
-            if (isText) {
-                row = new CachedDataRow(this, oldrow.oData);
-
-                row.setStorageSize(oldrow.getStorageSize());
-                row.setPos(oldrow.getPos());
-                rowStore.restore(row);
-            } else if (isCached) {
-                row = new CachedRow(this, oldrow.oData);
-
-                row.setStorageSize(oldrow.getStorageSize());
-                row.setPos(oldrow.getPos());
-                rowStore.restore(row);
-            } else {
+            if (isMemory) {
                 row = new Row(this, oldrow.oData);
 
                 row.setPos(oldrow.getPos());
+            } else {
+                row = CachedRow.newCachedRow(this, oldrow.oData);
+
+                row.setStorageSize(oldrow.getStorageSize());
+                row.setPos(oldrow.getPos());
+                rowStore.restore(row);
             }
         } catch (IOException e) {
             throw new HsqlException(

@@ -755,40 +755,7 @@ public class jdbcConnection implements Connection {
                     } else if (c == '"') {
                         state = outside_escape_inside_double_quotes;
                     } else if (c == '{') {
-                        sb.setCharAt(i++, ' ');
-
-                        i = StringUtil.skipSpaces(sql, i);
-
-                        if (sql.regionMatches(true, i, "fn ", 0, 3)
-                                || sql.regionMatches(true, i, "oj ", 0, 3)
-                                || sql.regionMatches(true, i, "ts ", 0, 3)) {
-                            sb.setCharAt(i++, ' ');
-                            sb.setCharAt(i++, ' ');
-                        } else if (sql.regionMatches(true, i, "d ", 0, 2)
-                                   || sql.regionMatches(true, i, "t ", 0,
-                                                        2)) {
-                            sb.setCharAt(i++, ' ');
-                        } else if (sql.regionMatches(true, i, "call ", 0,
-                                                     5)) {
-                            i += 4;
-                        } else if (sql.regionMatches(true, i, "?= call ", 0,
-                                                     8)) {
-                            sb.setCharAt(i++, ' ');
-                            sb.setCharAt(i++, ' ');
-
-                            i += 5;
-                        } else if (sql.regionMatches(true, i, "escape ", 0,
-                                                     7)) {
-                            i += 6;
-                        } else {
-                            i--;
-
-                            throw new SQLException(Trace
-                                .getMessage(Trace
-                                    .jdbcConnection_nativeSQL, true, new Object[]{ sql
-                                        .substring(i) }), "S0010", Trace
-                                            .INVALID_JDBC_ARGUMENT);
-                        }
+                        i = onStartEscapeSequence(sql, sb, i);
 
                         // changed = true;
                         nest++;
@@ -825,38 +792,7 @@ public class jdbcConnection implements Connection {
                         state = (nest == 0) ? outside_all
                                             : inside_escape;
                     } else if (c == '{') {
-                        sb.setCharAt(i++, ' ');
-
-                        if (sql.regionMatches(true, i, "fn ", 0, 3)
-                                || sql.regionMatches(true, i, "oj ", 0, 3)
-                                || sql.regionMatches(true, i, "ts ", 0, 3)) {
-                            sb.setCharAt(i++, ' ');
-                            sb.setCharAt(i++, ' ');
-                        } else if (sql.regionMatches(true, i, "d ", 0, 2)
-                                   || sql.regionMatches(true, i, "t ", 0,
-                                                        2)) {
-                            sb.setCharAt(i++, ' ');
-                        } else if (sql.regionMatches(true, i, "call ", 0,
-                                                     5)) {
-                            i += 4;
-                        } else if (sql.regionMatches(true, i, "?= call ", 0,
-                                                     8)) {
-                            sb.setCharAt(i++, ' ');
-                            sb.setCharAt(i++, ' ');
-
-                            i += 5;
-                        } else if (sql.regionMatches(true, i, "escape ", 0,
-                                                     7)) {
-                            i += 6;
-                        } else {
-                            i--;
-
-                            throw new SQLException(Trace
-                                .getMessage(Trace
-                                    .jdbcConnection_nativeSQL, true, new Object[]{ sql
-                                        .substring(i) }), "S0010", Trace
-                                            .INVALID_JDBC_ARGUMENT);
-                        }
+                        i = onStartEscapeSequence(sql, sb, i);
 
                         // changed = true;
                         nest++;
@@ -2701,5 +2637,45 @@ public class jdbcConnection implements Connection {
             throw new SQLException("Error resetting connection: "
                                    + e.getMessage());
         }
+    }
+
+    /**
+     * is called from within nativeSQL when the start of an JDBC escape sequence is encountered
+     */
+    private int onStartEscapeSequence(String sql, StringBuffer sb,
+                                      int i) throws SQLException {
+
+        sb.setCharAt(i++, ' ');
+
+        i = StringUtil.skipSpaces(sql, i);
+
+        if (sql.regionMatches(true, i, "fn ", 0, 3)
+                || sql.regionMatches(true, i, "oj ", 0, 3)
+                || sql.regionMatches(true, i, "ts ", 0, 3)) {
+            sb.setCharAt(i++, ' ');
+            sb.setCharAt(i++, ' ');
+        } else if (sql.regionMatches(true, i, "d ", 0, 2)
+                   || sql.regionMatches(true, i, "t ", 0, 2)) {
+            sb.setCharAt(i++, ' ');
+        } else if (sql.regionMatches(true, i, "call ", 0, 5)) {
+            i += 4;
+        } else if (sql.regionMatches(true, i, "?= call ", 0, 8)) {
+            sb.setCharAt(i++, ' ');
+            sb.setCharAt(i++, ' ');
+
+            i += 5;
+        } else if (sql.regionMatches(true, i, "escape ", 0, 7)) {
+            i += 6;
+        } else {
+            i--;
+
+            throw new SQLException(
+                Trace.getMessage(
+                    Trace.jdbcConnection_nativeSQL, true, new Object[]{
+                        sql.substring(i) }), "S0010",
+                                             Trace.INVALID_JDBC_ARGUMENT);
+        }
+
+        return i;
     }
 }

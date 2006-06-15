@@ -2511,16 +2511,11 @@ class DatabaseCommandInterpreter {
             canAdd = false;
         }
 
-        if (c.isIdentity()) {
-
-//            canAdd = false;
-        }
-
         if (c.isPrimaryKey() && t.hasPrimaryKey()) {
             canAdd = false;
         }
 
-        if (!t.isEmpty(session)) {
+        if (canAdd && !t.isEmpty(session)) {
             canAdd = c.isNullable() || c.getDefaultExpression() != null;
         }
 

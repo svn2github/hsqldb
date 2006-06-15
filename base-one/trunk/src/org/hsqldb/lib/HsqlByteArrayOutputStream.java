@@ -254,10 +254,14 @@ implements DataOutput {
     protected void ensureRoom(int extra) {
 
         int newcount = count + extra;
+        int newsize  = buf.length;
 
-        if (newcount > buf.length) {
-            int    newsize = (newcount + 256) & 0xffffff00;
-            byte[] newbuf  = new byte[newsize];
+        if (newcount > newsize) {
+            while (newcount > newsize) {
+                newsize *= 2;
+            }
+
+            byte[] newbuf = new byte[newsize];
 
             System.arraycopy(buf, 0, newbuf, 0, count);
 

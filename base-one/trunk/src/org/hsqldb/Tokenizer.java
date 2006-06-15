@@ -98,25 +98,26 @@ import org.hsqldb.lib.java.JavaSystem;
  */
 public class Tokenizer {
 
-    private static final int NO_TYPE   = 0,
-                             NAME      = 1,
-                             LONG_NAME = 2,
-                             SPECIAL   = 3,
-                             NUMBER    = 4,
-                             FLOAT     = 5,
-                             STRING    = 6,
-                             LONG      = 7,
-                             DECIMAL   = 8,
-                             BOOLEAN   = 9,
-                             DATE      = 10,
-                             TIME      = 11,
-                             TIMESTAMP = 12,
-                             NULL      = 13;
+    private static final int NO_TYPE     = 0,
+                             NAME        = 1,
+                             LONG_NAME   = 2,
+                             SPECIAL     = 3,
+                             NUMBER      = 4,
+                             FLOAT       = 5,
+                             STRING      = 6,
+                             LONG        = 7,
+                             DECIMAL     = 8,
+                             BOOLEAN     = 9,
+                             DATE        = 10,
+                             TIME        = 11,
+                             TIMESTAMP   = 12,
+                             NULL        = 13,
+                             NAMED_PARAM = 14;
 
     // used only internally
-    private static final int QUOTED_IDENTIFIER = 14,
-                             REMARK_LINE       = 15,
-                             REMARK            = 16;
+    private static final int QUOTED_IDENTIFIER = 15,
+                             REMARK_LINE       = 16,
+                             REMARK            = 17;
     private String           sCommand;
     private int              iLength;
     private int              iIndex;
@@ -343,6 +344,18 @@ public class Tokenizer {
     }
 
     /**
+     * checks whether the previously obtained token was a (named) parameter
+     *
+     * @return true if the previously obtained token was a (named) parameter
+     */
+    boolean wasParameter() throws HsqlException {
+
+        Trace.doAssert(!bWait, "Querying state when in Wait mode");
+
+        return (iType == NAMED_PARAM);
+    }
+
+    /**
      * Name means all quoted and unquoted identifiers plus any word not in the
      * hKeyword list.
      *
@@ -386,15 +399,14 @@ public class Tokenizer {
 
     boolean wasSimpleToken() throws HsqlException {
         return iType != QUOTED_IDENTIFIER && iType != LONG_NAME
-               && iType != STRING;
+               && iType != STRING && iType != NAMED_PARAM;
     }
 
     String getSimpleToken() throws HsqlException {
 
         getToken();
 
-        if (iType == QUOTED_IDENTIFIER || iType == LONG_NAME
-                || iType == STRING) {
+        if (!wasSimpleToken()) {
             String token = iType == LONG_NAME ? sLongNameFirst
                                               : sToken;
 
@@ -479,6 +491,9 @@ public class Tokenizer {
         return (int) v;
     }
 
+    static BigDecimal LONG_MAX_VALUE_INCREMENT =
+        BigDecimal.valueOf(Long.MAX_VALUE).add(BigDecimal.valueOf(1));
+
     long getBigint() throws HsqlException {
 
         boolean minus = false;
@@ -494,22 +509,21 @@ public class Tokenizer {
         Object o = getAsValue();
         int    t = getType();
 
-        if (t != Types.INTEGER && t != Types.BIGINT && t != Types.DECIMAL) {
-            throw Trace.error(Trace.WRONG_DATA_TYPE, Types.getTypeString(t));
-        }
+        switch (t) {
 
-        if (t == Types.DECIMAL) {
+            case Types.INTEGER :
+            case Types.BIGINT :
+                break;
 
-            // only Long.MAX_VALUE + 1 together with minus is acceptable
-            BigDecimal bd = (BigDecimal) o;
+            case Types.DECIMAL :
 
-            if (minus && bd.subtract(new BigDecimal(Long.MAX_VALUE)).equals(
-                    new BigDecimal(1))) {
-                return Long.MIN_VALUE;
-            } else {
+                // only Long.MAX_VALUE + 1 together with minus is acceptable
+                if (minus && LONG_MAX_VALUE_INCREMENT.equals(o)) {
+                    return Long.MIN_VALUE;
+                }
+            default :
                 throw Trace.error(Trace.WRONG_DATA_TYPE,
                                   Types.getTypeString(t));
-            }
         }
 
         long v = ((Number) o).longValue();
@@ -835,6 +849,18 @@ public class Tokenizer {
 
                     return;
 
+                case ':' :
+                    Trace.check(++iIndex < iLength,
+                                Trace.UNEXPECTED_END_OF_COMMAND);
+
+                    c = sCommand.charAt(iIndex);
+
+                    Trace.check(Character.isJavaIdentifierStart(c),
+                                Trace.INVALID_IDENTIFIER, ":" + c);
+
+                    iType = NAMED_PARAM;
+                    break;
+
                 case '\"' :
                     lastTokenQuotedID = true;
                     iType             = QUOTED_IDENTIFIER;
@@ -916,6 +942,7 @@ public class Tokenizer {
 
             switch (iType) {
 
+                case NAMED_PARAM :
                 case NAME :
                     if (Character.isJavaIdentifierPart(c)) {
                         break;
@@ -924,6 +951,11 @@ public class Tokenizer {
                     // fredt - todo new char[] to back sToken
                     sToken = sCommand.substring(start, iIndex).toUpperCase(
                         Locale.ENGLISH);
+
+                    // the following only for NAME, not for NAMED_PARAM
+                    if (iType == NAMED_PARAM) {
+                        return;
+                    }
 
                     if (c == '.') {
                         typeLongNameFirst = iType;

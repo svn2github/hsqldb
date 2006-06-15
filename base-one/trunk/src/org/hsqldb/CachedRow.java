@@ -117,6 +117,15 @@ public class CachedRow extends Row {
      */
     CachedRow() {}
 
+    public static CachedRow newCachedRow(Table t, Object[] o) throws HsqlException {
+
+        if (t.isText){
+            return new CachedDataRow(t, o);
+        } else {
+            return new CachedRow(t, o);
+        }
+    }
+
     /**
      *  Constructor for new Rows.  Variable hasDataChanged is set to true in
      *  order to indicate the data needs saving.
@@ -125,7 +134,7 @@ public class CachedRow extends Row {
      * @param o row data
      * @throws HsqlException if a database access error occurs
      */
-    public CachedRow(Table t, Object[] o) throws HsqlException {
+    CachedRow(Table t, Object[] o) throws HsqlException {
 
         tTable = t;
 
@@ -251,7 +260,7 @@ public class CachedRow extends Row {
      * @return boolean
      * @throws HsqlException
      */
-    public boolean isKeepInMemory() {
+    synchronized public boolean isKeepInMemory() {
 
         Node n = nPrimaryNode;
 
@@ -278,7 +287,7 @@ public class CachedRow extends Row {
      * @return the current Row in Cache for this Object
      * @throws HsqlException
      */
-    Row getUpdatedRow() throws HsqlException {
+    synchronized Row getUpdatedRow() throws HsqlException {
         return tTable == null ? null
                               : (CachedRow) tTable.rowStore.get(iPos);
     }

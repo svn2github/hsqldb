@@ -98,6 +98,7 @@ class DiskNode extends Node {
     private int      iRight  = NO_POS;
     private int      iParent = NO_POS;
     private int      iId;    // id of Index object for this Node
+    boolean          keepInMemory;
     static final int SIZE_IN_BYTE = 4 * 4;
 
     DiskNode(CachedRow r, RowInputInterface in,
@@ -174,6 +175,24 @@ class DiskNode extends Node {
         return ret;
     }
 
+    boolean isLeft(Node node) throws HsqlException {
+
+        if (node == null) {
+            return iLeft == NO_POS;
+        }
+
+        return iLeft == ((DiskNode) node).getKey();
+    }
+
+    boolean isRight(Node node) throws HsqlException {
+
+        if (node == null) {
+            return iRight == NO_POS;
+        }
+
+        return iRight == ((DiskNode) node).getKey();
+    }
+
     Node getLeft() throws HsqlException {
 
         if (Trace.DOASSERT) {
@@ -229,11 +248,7 @@ class DiskNode extends Node {
 
         DiskNode parent = (DiskNode) getParent();
 
-        if (parent.iLeft != Node.NO_POS) {
-            return getKey() == parent.iLeft;
-        } else {
-            return equals(parent.getLeft());
-        }
+        return getKey() == parent.iLeft;
     }
 
     Object[] getData() throws HsqlException {
@@ -253,11 +268,8 @@ class DiskNode extends Node {
 
         ((CachedRow) rData).setChanged();
 
-        iParent = NO_POS;
-
-        if (n != null) {
-            iParent = n.getKey();
-        }
+        iParent = n == null ? NO_POS
+                            : n.getKey();
     }
 
     void setBalance(int b) throws HsqlException {
@@ -281,11 +293,8 @@ class DiskNode extends Node {
 
         ((CachedRow) rData).setChanged();
 
-        iLeft = NO_POS;
-
-        if (n != null) {
-            iLeft = n.getKey();
-        }
+        iLeft = n == null ? NO_POS
+                          : n.getKey();
     }
 
     void setRight(Node n) throws HsqlException {
@@ -296,11 +305,8 @@ class DiskNode extends Node {
 
         ((CachedRow) rData).setChanged();
 
-        iRight = NO_POS;
-
-        if (n != null) {
-            iRight = n.getKey();
-        }
+        iRight = n == null ? NO_POS
+                           : n.getKey();
     }
 
     boolean equals(Node n) {

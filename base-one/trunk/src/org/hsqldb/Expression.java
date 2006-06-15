@@ -379,11 +379,13 @@ public class Expression {
      */
     Expression(Expression e, int dataType, int precision, int scale) {
 
-        this.exprType  = CONVERT;
-        this.eArg      = e;
-        this.dataType  = dataType;
-        this.precision = precision;
-        this.scale     = scale;
+        this.exprType    = CONVERT;
+        this.eArg        = e;
+        this.dataType    = dataType;
+        this.precision   = precision;
+        this.scale       = scale;
+        this.columnAlias = e.columnAlias;
+        this.aliasQuoted = e.aliasQuoted;
 
         checkAggregate();
     }

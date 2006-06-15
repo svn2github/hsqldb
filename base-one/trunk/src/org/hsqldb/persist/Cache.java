@@ -112,7 +112,7 @@ public class Cache {
 
         int storageSize = row.getStorageSize();
 
-        if (cacheMap.size() == capacity
+        if (cacheMap.size() >= capacity
                 || storageSize + cacheBytesLength > bytesCapacity) {
             cleanUp();
         }

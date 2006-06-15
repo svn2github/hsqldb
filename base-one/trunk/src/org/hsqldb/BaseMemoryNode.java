@@ -110,6 +110,14 @@ abstract class BaseMemoryNode extends Node {
         nLeft = n;
     }
 
+    boolean isLeft(Node node) throws HsqlException {
+        return nLeft == node;
+    }
+
+    boolean isRight(Node node) throws HsqlException {
+        return nRight == node;
+    }
+
     Node getRight() throws HsqlException {
 
         if (Trace.DOASSERT) {

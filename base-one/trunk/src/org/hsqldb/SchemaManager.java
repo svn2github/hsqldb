@@ -772,6 +772,7 @@ public class SchemaManager {
         Schema schema = (Schema) schemaMap.get(table.tableName.schema.name);
         int    i      = schema.tableList.getIndex(table.tableName.name);
 
+        checkCascadeDropViews(table, false);
         table.rename(session, newName, isQuoted);
         schema.tableList.setKey(i, newName);
     }
@@ -864,7 +865,7 @@ public class SchemaManager {
     }
 
     /**
-     * Throws if the view is referenced in a view.
+     * Throws if the sequence is referenced in a view.
      */
     void checkCascadeDropViews(NumberSequence sequence,
                                boolean cascade) throws HsqlException {

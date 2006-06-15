@@ -238,16 +238,17 @@ public final class ServerConfiguration implements ServerConstants {
             return;
         }
 
-        String defaultdb = p.getProperty(SC_KEY_DATABASE);
+        if (!p.isPropertyTrue(SC_KEY_REMOTE_OPEN_DB)) {
+            if (p.getProperty(SC_KEY_DATABASE + "." + 0) == null) {
+                String defaultdb = p.getProperty(SC_KEY_DATABASE);
 
-        if (defaultdb != null) {
-            p.setProperty(SC_KEY_DATABASE + ".0", defaultdb);
-        }
+                if (defaultdb == null) {
+                    defaultdb = SC_DEFAULT_DATABASE;
+                }
 
-        if (!p.isPropertyTrue(SC_KEY_REMOTE_OPEN_DB)
-                && p.getProperty(SC_KEY_DATABASE + "." + 0) == null) {
-            p.setProperty(SC_KEY_DATABASE + "." + 0, SC_DEFAULT_DATABASE);
-            p.setProperty(SC_KEY_DBNAME + "." + 0, "");
+                p.setProperty(SC_KEY_DATABASE + ".0", defaultdb);
+                p.setProperty(SC_KEY_DBNAME + ".0", "");
+            }
         }
     }
 

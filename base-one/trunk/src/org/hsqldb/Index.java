@@ -257,7 +257,12 @@ public class Index {
         }
     }
 
-    Node getRoot(Session session) {
+    int getRoot() {
+        return (root == null) ? -1
+                              : root.getKey();
+    }
+
+    private Node getRoot(Session session) {
 
         if (isTemp && session != null) {
             return session.getIndexRoot(indexName, onCommitPreserve);
@@ -314,6 +319,8 @@ public class Index {
             int sign = isleft ? 1
                               : -1;
 
+            x = x.getUpdatedNode();
+
             switch (x.getBalance() * sign) {
 
                 case 1 :
@@ -332,30 +339,38 @@ public class Index {
                         replace(session, x, l);
                         set(x, isleft, child(l, !isleft));
                         set(l, !isleft, x);
+
+                        x = x.getUpdatedNode();
+
                         x.setBalance(0);
+
+                        l = l.getUpdatedNode();
+
                         l.setBalance(0);
                     } else {
                         Node r = child(l, !isleft);
 
                         replace(session, x, r);
-                        set(l, !isleft, child(r, isleft));
+                        set(l, !isleft, child(r.getUpdatedNode(), isleft));
                         set(r, isleft, l);
-                        set(x, isleft, child(r, !isleft));
+                        set(x, isleft, child(r.getUpdatedNode(), !isleft));
                         set(r, !isleft, x);
 
-                        int rb = r.getBalance();
+                        int rb = r.getUpdatedNode().getBalance();
 
-                        x.setBalance((rb == -sign) ? sign
-                                                   : 0);
-                        l.setBalance((rb == sign) ? -sign
-                                                  : 0);
-                        r.setBalance(0);
+                        x.getUpdatedNode().setBalance((rb == -sign) ? sign
+                                                                    : 0);
+                        l.getUpdatedNode().setBalance((rb == sign) ? -sign
+                                                                   : 0);
+                        r.getUpdatedNode().setBalance(0);
                     }
 
                     return;
             }
 
-            if (x.equals(getRoot(session))) {
+            x = x.getUpdatedNode();
+
+            if (x.isRoot()) {
                 return;
             }
 
@@ -410,56 +425,92 @@ public class Index {
             // swap d and x
             int b = x.getBalance();
 
+            x = x.getUpdatedNode();
+
             x.setBalance(d.getBalance());
+
+            d = d.getUpdatedNode();
+
             d.setBalance(b);
 
             // set x.parent
             Node xp = x.getParent();
             Node dp = d.getParent();
 
-            if (d == getRoot(session)) {
+            x = x.getUpdatedNode();
+
+            if (d.isRoot()) {
                 setRoot(session, x);
             }
 
             x.setParent(dp);
 
             if (dp != null) {
-                if (dp.getRight().equals(d)) {
+                dp = dp.getUpdatedNode();
+
+                if (dp.isRight(d)) {
                     dp.setRight(x);
                 } else {
                     dp.setLeft(x);
                 }
             }
 
-            // for in-memory tables we could use: d.rData=x.rData;
-            // but not for cached tables
             // relink d.parent, x.left, x.right
-            if (xp == d) {
+            d = d.getUpdatedNode();
+
+            if (d.equals(xp)) {
                 d.setParent(x);
 
-                if (d.getLeft().equals(x)) {
+                if (d.isLeft(x)) {
+                    x = x.getUpdatedNode();
+
                     x.setLeft(d);
-                    x.setRight(d.getRight());
+
+                    Node dr = d.getRight();
+
+                    x = x.getUpdatedNode();
+
+                    x.setRight(dr);
                 } else {
                     x.setRight(d);
-                    x.setLeft(d.getLeft());
+
+                    Node dl = d.getLeft();
+
+                    x = x.getUpdatedNode();
+
+                    x.setLeft(dl);
                 }
             } else {
                 d.setParent(xp);
+
+                xp = xp.getUpdatedNode();
+
                 xp.setRight(d);
-                x.setRight(d.getRight());
-                x.setLeft(d.getLeft());
+
+                Node dl = d.getLeft();
+                Node dr = d.getRight();
+
+                x = x.getUpdatedNode();
+
+                x.setLeft(dl);
+                x.setRight(dr);
             }
 
             x.getRight().setParent(x);
             x.getLeft().setParent(x);
 
             // set d.left, d.right
+            d = d.getUpdatedNode();
+
             d.setLeft(n);
 
             if (n != null) {
+                n = n.getUpdatedNode();
+
                 n.setParent(d);
             }
+
+            d = d.getUpdatedNode();
 
             d.setRight(null);
 
@@ -471,6 +522,7 @@ public class Index {
         replace(session, x, n);
 
         n = x.getParent();
+        x = x.getUpdatedNode();
 
         x.delete();
 
@@ -479,6 +531,8 @@ public class Index {
 
             int sign = isleft ? 1
                               : -1;
+
+            x = x.getUpdatedNode();
 
             switch (x.getBalance() * sign) {
 
@@ -501,13 +555,23 @@ public class Index {
                         set(r, isleft, x);
 
                         if (b == 0) {
+                            x = x.getUpdatedNode();
+
                             x.setBalance(sign);
+
+                            r = r.getUpdatedNode();
+
                             r.setBalance(-sign);
 
                             return;
                         }
 
+                        x = x.getUpdatedNode();
+
                         x.setBalance(0);
+
+                        r = r.getUpdatedNode();
+
                         r.setBalance(0);
 
                         x = r;
@@ -516,16 +580,26 @@ public class Index {
 
                         replace(session, x, l);
 
+                        l = l.getUpdatedNode();
                         b = l.getBalance();
 
                         set(r, isleft, child(l, !isleft));
                         set(l, !isleft, r);
                         set(x, !isleft, child(l, isleft));
                         set(l, isleft, x);
+
+                        x = x.getUpdatedNode();
+
                         x.setBalance((b == sign) ? -sign
                                                  : 0);
+
+                        r = r.getUpdatedNode();
+
                         r.setBalance((b == -sign) ? sign
                                                   : 0);
+
+                        l = l.getUpdatedNode();
+
                         l.setBalance(0);
 
                         x = l;
@@ -995,12 +1069,14 @@ public class Index {
     private void replace(Session session, Node x,
                          Node n) throws HsqlException {
 
-        if (x.equals(getRoot(session))) {
-            setRoot(session, n);
-
+        if (x.isRoot()) {
             if (n != null) {
+                n = n.getUpdatedNode();
+
                 n.setParent(null);
             }
+
+            setRoot(session, n);
         } else {
             set(x.getParent(), x.isFromLeft(), n);
         }
@@ -1017,6 +1093,8 @@ public class Index {
      */
     private void set(Node x, boolean isleft, Node n) throws HsqlException {
 
+        x = x.getUpdatedNode();
+
         if (isleft) {
             x.setLeft(n);
         } else {
@@ -1024,6 +1102,8 @@ public class Index {
         }
 
         if (n != null) {
+            n = n.getUpdatedNode();
+
             n.setParent(x);
         }
     }

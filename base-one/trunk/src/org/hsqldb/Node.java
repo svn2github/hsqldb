@@ -150,6 +150,10 @@ abstract class Node {
     /**
      *  Getters and setters for AVL index operations.
      */
+    abstract boolean isLeft(Node node) throws HsqlException;
+
+    abstract boolean isRight(Node node) throws HsqlException;
+
     abstract Node getLeft() throws HsqlException;
 
     abstract void setLeft(Node n) throws HsqlException;

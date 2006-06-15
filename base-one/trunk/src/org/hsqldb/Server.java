@@ -2157,7 +2157,11 @@ public class Server implements HsqlSocketRequestHandler {
      * @param error true if shutdown is in response to an error
      *      state, else false
      */
-    protected void shutdown(boolean error) {
+    protected synchronized void shutdown(boolean error) {
+
+        if (serverState == ServerConstants.SERVER_STATE_SHUTDOWN) {
+            return;
+        }
 
         StopWatch sw;
 
