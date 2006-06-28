@@ -412,7 +412,7 @@ public class Table extends BaseTable {
     }
 
     /**
-     *  Returns the list of constraints.
+     *  Returns the primary constraint.
      */
     Constraint getPrimaryConstraint() {
         return primaryKeyCols.length == 0 ? null

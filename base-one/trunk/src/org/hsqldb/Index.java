@@ -616,24 +616,20 @@ public class Index {
 
         Node node = findNotNull(session, rowdata, rowColMap, true);
 
-        return node == null ? emptyIterator
-                            : new IndexRowIterator(session, this, node);
+        return getIterator(session, node);
     }
 
     RowIterator findFirstRowForDelete(Session session, Object[] rowdata,
                                       int[] rowColMap) throws HsqlException {
 
-        Node node = findNotNull(session, rowdata, rowColMap, true);
+        Node node           = findNotNull(session, rowdata, rowColMap, true);
+        IndexRowIterator it = getIterator(session, node);
 
-        if (node == null) {
-            return emptyIterator;
-        } else {
-            RowIterator it = new IndexRowIterator(session, this, node);
-
-            updatableIterators.link((IndexRowIterator) it);
-
-            return it;
+        if (node != null) {
+            updatableIterators.link(it);
         }
+
+        return it;
     }
 
     /**
@@ -779,7 +775,7 @@ public class Index {
      * only. The rowdata has the same column mapping as this table.
      *
      * @param rowdata array containing table row data
-     * @return matching node
+     * @return iterator
      * @throws HsqlException
      */
     RowIterator findFirstRow(Session session,
@@ -808,8 +804,7 @@ public class Index {
             }
         }
 
-        return found == null ? emptyIterator
-                             : new IndexRowIterator(session, this, found);
+        return getIterator(session, found);
     }
 
     /**
@@ -819,7 +814,7 @@ public class Index {
      * @param value value to match
      * @param compare comparison Expression type
      *
-     * @return matching node
+     * @return iterator
      *
      * @throws HsqlException
      */
@@ -903,14 +898,13 @@ public class Index {
             }
         }
 
-        return x == null ? emptyIterator
-                         : new IndexRowIterator(session, this, x);
+        return getIterator(session, x);
     }
 
     /**
      * Finds the first node where the data is not null.
      *
-     * @return matching node
+     * @return iterator
      *
      * @throws HsqlException
      */
@@ -951,8 +945,7 @@ public class Index {
             }
         }
 
-        return x == null ? emptyIterator
-                         : new IndexRowIterator(session, this, x);
+        return getIterator(session, x);
     }
 
     /**
@@ -976,8 +969,7 @@ public class Index {
             depth++;
         }
 
-        return x == null ? emptyIterator
-                         : new IndexRowIterator(session, this, x);
+        return getIterator(session, x);
     }
 
     /**
@@ -1141,8 +1133,7 @@ public class Index {
      * Compares two table rows based on the columns of this index. The rowColMap
      * parameter specifies which columns of the other table are to be compared
      * with the colIndex columns of this index. The rowColMap can cover all
-     * or only some columns of this index. The invisible column is never
-     * compared
+     * or only some columns of this index.
      *
      * @param a row from another table
      * @param rowColMap column indexes in the other table
@@ -1294,7 +1285,7 @@ public class Index {
         }
     }
 
-    private RowIterator getIterator(Session session, Node x) {
+    private IndexRowIterator getIterator(Session session, Node x) {
 
         if (x == null) {
             return emptyIterator;

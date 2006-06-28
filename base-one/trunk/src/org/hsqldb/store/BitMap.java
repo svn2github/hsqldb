@@ -143,7 +143,9 @@ public class BitMap {
 
     private void doubleCapacity() {
 
-        int[] newmap = new int[capacity * 2];
+        int[] newmap = new int[map.length * 2];
+
+        capacity *= 2;
 
         System.arraycopy(map, 0, newmap, 0, map.length);
 

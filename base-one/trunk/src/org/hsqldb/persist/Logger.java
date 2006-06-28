@@ -78,6 +78,10 @@ public class Logger {
     boolean  logStatements;
     boolean  syncFile = false;
 
+    public Logger() {
+        appLog = new SimpleLog(null, SimpleLog.LOG_NONE, false);
+    }
+
     /**
      *  Opens the specified Database object's database files and starts up
      *  the logging process. <p>
@@ -95,8 +99,10 @@ public class Logger {
         int loglevel = db.getProperties().getIntegerProperty(
             HsqlDatabaseProperties.hsqldb_applog, 0);
 
-        appLog = new SimpleLog(path + ".app.log", loglevel,
-                               !db.isFilesReadOnly());
+        if (loglevel != SimpleLog.LOG_NONE) {
+            appLog = new SimpleLog(path + ".app.log", loglevel,
+                                   !db.isFilesReadOnly());
+        }
 
         appLog.sendLine(SimpleLog.LOG_ERROR, "Database (re)opened");
 

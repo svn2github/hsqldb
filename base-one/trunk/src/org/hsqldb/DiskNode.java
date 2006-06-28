@@ -98,7 +98,6 @@ class DiskNode extends Node {
     private int      iRight  = NO_POS;
     private int      iParent = NO_POS;
     private int      iId;    // id of Index object for this Node
-    boolean          keepInMemory;
     static final int SIZE_IN_BYTE = 4 * 4;
 
     DiskNode(CachedRow r, RowInputInterface in,
