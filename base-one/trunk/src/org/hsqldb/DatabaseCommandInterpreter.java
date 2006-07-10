@@ -181,7 +181,17 @@ class DatabaseCommandInterpreter {
             }
         } catch (Throwable t) {
             try {
-                session.endSchemaDefinition();
+                if (session.isSchemaDefintion()) {
+                    HsqlName schemaName = session.getSchemaHsqlName(null);
+
+                    database.schemaManager.dropSchema(schemaName.name, true);
+                    database.logger.writeToLog(session,
+                                               Token.T_DROP + ' '
+                                               + Token.T_SCHEMA + ' '
+                                               + schemaName.statementName
+                                               + ' ' + Token.T_CASCADE);
+                    session.endSchemaDefinition();
+                }
             } catch (HsqlException e) {}
 
             result = new Result(t, tokenizer.getLastPart());
@@ -204,11 +214,6 @@ class DatabaseCommandInterpreter {
                     break;
 
                 default :
-                    String schema = session.getSchemaName(null);
-
-                    session.endSchemaDefinition();
-                    database.schemaManager.dropSchema(schema, true);
-
                     throw Trace.error(Trace.INVALID_IDENTIFIER,
                                       Trace.IN_SCHEMA_DEFINITION,
                                       new Object[]{ token });
@@ -507,6 +512,7 @@ class DatabaseCommandInterpreter {
                 break;
 
             case Token.SCHEMA :
+                session.setScripting(false);
                 processCreateSchema();
                 break;
 
@@ -756,15 +762,16 @@ class DatabaseCommandInterpreter {
             Trace.check(Types.acceptsPrecisionCreateParam(type),
                         Trace.UNEXPECTED_TOKEN);
 
-            if (type != Types.TIMESTAMP && length == 0) {
+            if (type != Types.TIMESTAMP && type != Types.TIME
+                    && length == 0) {
                 throw Trace.error(Trace.INVALID_SIZE_PRECISION);
             }
 
             if (tokenizer.isGetThis(Token.T_COMMA)) {
-                scale = tokenizer.getInt();
-
                 Trace.check(Types.acceptsScaleCreateParam(type),
                             Trace.UNEXPECTED_TOKEN);
+
+                scale = tokenizer.getInt();
             }
 
             tokenizer.getThis(Token.T_CLOSEBRACKET);
@@ -790,6 +797,12 @@ class DatabaseCommandInterpreter {
             if (!hasLength) {
                 length = 6;
             } else if (length != 0 && length != 6) {
+                throw Trace.error(Trace.NUMERIC_VALUE_OUT_OF_RANGE);
+            }
+        }
+
+        if (type == Types.TIME) {
+            if (length != 0) {
                 throw Trace.error(Trace.NUMERIC_VALUE_OUT_OF_RANGE);
             }
         }
@@ -2508,14 +2521,14 @@ class DatabaseCommandInterpreter {
         boolean canAdd = true;
 
         if (t.findColumn(c.columnName.name) != -1) {
-            canAdd = false;
+            throw Trace.error(Trace.COLUMN_ALREADY_EXISTS);
         }
 
         if (c.isPrimaryKey() && t.hasPrimaryKey()) {
             canAdd = false;
         }
 
-        if (canAdd && !t.isEmpty(session)) {
+        if (canAdd &&!t.isEmpty(session)) {
             canAdd = c.isNullable() || c.getDefaultExpression() != null;
         }
 
@@ -2855,6 +2868,13 @@ class DatabaseCommandInterpreter {
             database.schemaManager.createSchema(name, isquoted);
         }
 
+        HsqlName schemaName = database.schemaManager.getSchemaHsqlName(name);
+
+        database.logger.writeToLog(session,
+                                   DatabaseScript.getSchemaCreateDDL(database,
+                                       schemaName));
+        database.logger.writeToLog(session,
+                                   "SET SCHEMA " + schemaName.statementName);
         session.startSchemaDefinition(name);
 
         session.loggedSchema = session.currentSchema;
@@ -3019,6 +3039,12 @@ class DatabaseCommandInterpreter {
         if (!cascade) {
             tokenizer.isGetThis(Token.T_RESTRICT);
         }
+
+        processDropSchema(name, cascade);
+    }
+
+    private void processDropSchema(String name,
+                                   boolean cascade) throws HsqlException {
 
         if (!database.schemaManager.schemaExists(name)) {
             throw Trace.error(Trace.INVALID_SCHEMA_NAME_NO_SUBCLASS);

@@ -77,4 +77,33 @@ public class Util {
     static final SQLException notSupported() {
         return sqlException(Trace.error(Trace.FUNCTION_NOT_SUPPORTED));
     }
+
+    public static SQLException nullArgument() {
+        return sqlException(Trace.INVALID_JDBC_ARGUMENT);
+    }
+
+    static SQLException nullArgument(String name) {
+        return sqlException(Trace.INVALID_JDBC_ARGUMENT, name + ": null");
+    }
+
+    public static SQLException invalidArgument() {
+        return sqlException(Trace.INVALID_JDBC_ARGUMENT);
+    }
+
+    public static SQLException invalidArgument(String name) {
+        return sqlException(Trace.INVALID_JDBC_ARGUMENT, name);
+    }
+
+    public static SQLException outOfRangeArgument() {
+        return sqlException(Trace.INVALID_JDBC_ARGUMENT);
+    }
+
+    public static SQLException outOfRangeArgument(String name) {
+        return sqlException(Trace.INVALID_JDBC_ARGUMENT, name);
+    }
+
+    public static SQLException connectionClosedException() {
+        return sqlException(Trace.CONNECTION_IS_CLOSED);
+    }
+
 }

@@ -69,7 +69,7 @@ public class TestStressInsert {
             stmt.execute("set property \"hsqldb.cache_scale\" 8");
             stmt.execute("set property \"hsqldb.cache_size_scale\" 10");
             stmt.execute("set write_delay 0");
-            stmt.execute("set logsize " + 0);
+            stmt.execute("set logsize " + 100);
 
             DatabaseMetaData metaData = con.getMetaData();
             ResultSet        rs = metaData.getTables(null, null, "A", null);

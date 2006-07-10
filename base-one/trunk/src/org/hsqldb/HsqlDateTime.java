@@ -99,11 +99,14 @@ public class HsqlDateTime {
      * @exception java.lang.IllegalArgumentException if the given argument
      * does not have the format <code>yyyy-mm-dd hh:mm:ss.fffffffff</code>
      */
-    public static Timestamp timestampValue(String s) {
+    public static Timestamp timestampValue(String s) throws HsqlException {
 
         if (s == null) {
-            throw new java.lang.IllegalArgumentException(
-                Trace.getMessage(Trace.HsqlDateTime_null_string));
+            throw Trace.error(Trace.HsqlDateTime_null_string);
+        }
+
+        if (s.length() > zerodatetime.length()) {
+            throw Trace.error(Trace.STRING_DATA_TRUNCATION);
         }
 
         s = s + zerodatetime.substring(s.length());
@@ -137,16 +140,14 @@ public class HsqlDateTime {
      *  value. Also accepts Timestamp values.
      *
      * @param s date in format <code>yyyy-mm-dd</code>,
-     *  'TODAY', 'NOW', 'CURRENT_DATE', 'SYSDATE' (case independent)
      * @return  corresponding <code>Date</code> value
      * @exception java.lang.IllegalArgumentException if the given argument
      * does not have the format <code>yyyy-mm-dd</code>
      */
-    public static Date dateValue(String s) {
+    public static Date dateValue(String s) throws HsqlException {
 
         if (s == null) {
-            throw new java.lang.IllegalArgumentException(
-                Trace.getMessage(Trace.HsqlDateTime_null_date));
+            throw Trace.error(Trace.HsqlDateTime_null_string);
         }
 
         if (s.length() > sdfdPattern.length()) {

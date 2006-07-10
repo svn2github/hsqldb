@@ -860,6 +860,7 @@ public class Types {
             case NUMERIC :
             case FLOAT :
             case TIMESTAMP :
+            case TIME :
                 return true;
 
             default :

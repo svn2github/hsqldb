@@ -2689,7 +2689,7 @@ public class Expression {
                 return tableFilter != null && tableFilter.isAssigned;
 
             case QUERY :
-                return true;
+                return subQuery.isResolved;
         }
 
         // todo: could recurse here, but never miss a 'false'!
@@ -3258,7 +3258,9 @@ public class Expression {
                 try {
                     return tableFilter.currentData[columnIndex];
                 } catch (NullPointerException e) {
-                    throw Trace.error(Trace.COLUMN_NOT_FOUND, columnName);
+                    String name = tableName == null ? columnName :
+                        tableName + '.' + columnName;
+                    throw Trace.error(Trace.COLUMN_NOT_FOUND, name);
                 }
             case FUNCTION :
                 return function.getValue(session);

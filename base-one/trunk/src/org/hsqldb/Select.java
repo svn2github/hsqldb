@@ -461,7 +461,7 @@ class Select {
         checkAggregateOrGroupByColumns(groupByEnd, orderByStart);
 
         // order by columns
-        checkAggregateOrGroupByColumns(orderByStart, orderByEnd);
+        checkAggregateOrGroupByOrderColumns(orderByStart, orderByEnd);
         prepareSort();
 
         simpleLimit = (isDistinctSelect == false && isGrouped == false
@@ -757,13 +757,32 @@ class Select {
                     continue;
                 }
 
-                if (isDistinctSelect) {
-                    throw Trace.error(
-                        Trace.INVALID_ORDER_BY_IN_DISTINCT_SELECT, exp);
-                } else {
-                    throw Trace.error(Trace.NOT_IN_AGGREGATE_OR_GROUP_BY,
-                                      exp);
+                throw Trace.error(Trace.NOT_IN_AGGREGATE_OR_GROUP_BY, exp);
+            }
+        }
+    }
+
+    private void checkAggregateOrGroupByOrderColumns(int start,
+            int end) throws HsqlException {
+
+        checkAggregateOrGroupByColumns(start, end);
+
+        if (start < end && isDistinctSelect) {
+            HsqlArrayList colExps = new HsqlArrayList();
+
+            for (int i = start; i < end; i++) {
+                exprColumns[i].collectInGroupByExpressions(colExps);
+            }
+
+            for (int i = 0, size = colExps.size(); i < size; i++) {
+                Expression exp = (Expression) colExps.get(i);
+
+                if (isSimilarIn(exp, 0, iResultLen)) {
+                    continue;
                 }
+
+                throw Trace.error(Trace.INVALID_ORDER_BY_IN_DISTINCT_SELECT,
+                                  exp);
             }
         }
     }
@@ -787,8 +806,6 @@ class Select {
                    || allColumnsAreDefinedIn(exp, groupColumnNames);
         } else if (isAggregated) {
             return exp.canBeInAggregate();
-        } else if (isDistinctSelect) {
-            return isSimilarIn(exp, 0, iResultLen);
         } else {
             return true;
         }

@@ -184,21 +184,19 @@ public class DatabaseScript {
         Iterator schemas = database.schemaManager.userSchemaNameIterator();
 
         while (schemas.hasNext()) {
-            HsqlName schema = database.schemaManager.toSchemaHsqlName(
-                (String) schemas.next());
+            String schemaKey = (String) schemas.next();
+            HsqlName schema =
+                database.schemaManager.toSchemaHsqlName(schemaKey);
             HashMappedList tTable =
                 database.schemaManager.getTables(schema.name);
             HsqlArrayList forwardFK = new HsqlArrayList();
 
             // schema creation
-            StringBuffer ab = new StringBuffer(128);
+            {
+                String ddl = getSchemaCreateDDL(database, schema);
 
-            ab.append(Token.T_CREATE).append(' ');
-            ab.append(Token.T_SCHEMA).append(' ');
-            ab.append(schema.statementName).append(' ');
-            ab.append(Token.T_AUTHORIZATION).append(' ');
-            ab.append(GranteeManager.DBA_ADMIN_ROLE_NAME);
-            addRow(r, ab.toString());
+                addRow(r, ddl);
+            }
 
             // sequences
             /*
@@ -424,6 +422,19 @@ public class DatabaseScript {
         a.append('\'');
 
         return a.toString();
+    }
+
+    static String getSchemaCreateDDL(Database database, HsqlName schemaName) {
+
+        StringBuffer ab = new StringBuffer(128);
+
+        ab.append(Token.T_CREATE).append(' ');
+        ab.append(Token.T_SCHEMA).append(' ');
+        ab.append(schemaName.statementName).append(' ');
+        ab.append(Token.T_AUTHORIZATION).append(' ');
+        ab.append(GranteeManager.DBA_ADMIN_ROLE_NAME);
+
+        return ab.toString();
     }
 
     static void getTableDDL(Database database, Table t, int i,

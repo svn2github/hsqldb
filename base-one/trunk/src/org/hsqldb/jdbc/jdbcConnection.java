@@ -1001,7 +1001,9 @@ public class jdbcConnection implements Connection {
 
         isClosed = true;
 
-        sessionProxy.close();
+        if (sessionProxy != null) {
+            sessionProxy.close();
+        }
 
         sessionProxy   = null;
         rootWarning    = null;
@@ -1220,13 +1222,16 @@ public class jdbcConnection implements Connection {
 
         checkClosed();
 
-        boolean ok = level == Connection.TRANSACTION_READ_UNCOMMITTED
-                     || level == Connection.TRANSACTION_READ_COMMITTED
-                     || level == Connection.TRANSACTION_REPEATABLE_READ
-                     || level == Connection.TRANSACTION_SERIALIZABLE;
+        switch (level) {
 
-        if (!ok) {
-            throw Util.notSupported();
+            case TRANSACTION_READ_UNCOMMITTED :
+            case TRANSACTION_READ_COMMITTED :
+            case TRANSACTION_REPEATABLE_READ :
+            case TRANSACTION_SERIALIZABLE :
+                break;
+
+            default :
+                throw Util.invalidArgument();
         }
 
         try {
@@ -1645,10 +1650,17 @@ public class jdbcConnection implements Connection {
 
         checkClosed();
 
-        if (holdability != jdbcResultSet.HOLD_CURSORS_OVER_COMMIT) {
-            String msg = "ResultSet holdability: " + holdability;
+        switch (holdability) {
 
-            throw Util.sqlException(Trace.FUNCTION_NOT_SUPPORTED, msg);
+            case jdbcResultSet.HOLD_CURSORS_OVER_COMMIT :
+                break;
+
+            case jdbcResultSet.CLOSE_CURSORS_AT_COMMIT :
+                String msg = "ResultSet holdability: " + holdability;    //NOI18N
+
+                throw Util.sqlException(Trace.FUNCTION_NOT_SUPPORTED, msg);
+            default :
+                throw Util.invalidArgument();
         }
     }
 
