@@ -164,11 +164,11 @@ class CachedDataRow extends CachedRow {
             return true;
         }
 
-        if (obj == null ||!(obj instanceof CachedDataRow)) {
-            return false;
+        if (obj instanceof CachedDataRow) {
+            return ((CachedDataRow) obj).iPos == iPos
+                   && ((CachedDataRow) obj).tTable == tTable;
         }
 
-        return ((CachedDataRow) obj).iPos == iPos
-               && ((CachedDataRow) obj).tTable == tTable;
+        return false;
     }
 }

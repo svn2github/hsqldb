@@ -117,9 +117,10 @@ public class CachedRow extends Row {
      */
     CachedRow() {}
 
-    public static CachedRow newCachedRow(Table t, Object[] o) throws HsqlException {
+    public static CachedRow newCachedRow(Table t,
+                                         Object[] o) throws HsqlException {
 
-        if (t.isText){
+        if (t.isText) {
             return new CachedDataRow(t, o);
         } else {
             return new CachedRow(t, o);
@@ -367,10 +368,8 @@ public class CachedRow extends Row {
     }
 
     /**
-     * Lifetime scope of this method depends on the operations performed on
-     * any cached tables since this row or the parameter were constructed.
-     * If only deletes or only inserts have been performed, this method
-     * remains valid. Otherwise it can return invalid results.
+     * With CACHED tables there may possibly exist two copies of the row.
+     * All copies will have the same iPos.
      *
      * @param obj row to compare
      * @return boolean

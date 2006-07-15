@@ -128,6 +128,7 @@ public class ZipUnzipFile {
                 }
 
                 if (f != null) {
+                    f.finish();    // reported to be missing from close() in some JRE libs
                     f.close();
                 }
 
