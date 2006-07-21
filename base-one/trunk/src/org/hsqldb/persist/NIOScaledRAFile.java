@@ -112,7 +112,7 @@ class NIOScaledRAFile extends ScaledRAFile {
             } catch (Exception e) {
                 e.printStackTrace();
 
-                throw new IOException(e.getMessage());
+                throw new IOException(e.toString());
             }
         }
 

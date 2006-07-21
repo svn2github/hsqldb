@@ -69,6 +69,7 @@ package org.hsqldb.util;
 import java.applet.Applet;
 import java.util.Enumeration;
 import java.util.Vector;
+
 import java.awt.BorderLayout;
 import java.awt.Button;
 import java.awt.Checkbox;

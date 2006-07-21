@@ -191,7 +191,7 @@ public class FileUtil implements FileAccess {
         if (e instanceof IOException) {
             return (IOException) e;
         } else {
-            return new IOException(e.getMessage());
+            return new IOException(e.toString());
         }
     }
 

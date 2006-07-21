@@ -78,6 +78,7 @@ import org.hsqldb.Trace;
 import org.hsqldb.lib.FileAccess;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.Iterator;
+import org.hsqldb.lib.SimpleLog;
 import org.hsqldb.lib.ZipUnzipFile;
 import org.hsqldb.scriptio.ScriptReaderBase;
 import org.hsqldb.scriptio.ScriptWriterBase;
@@ -237,7 +238,7 @@ public class Log {
         closeAllTextCaches(script);
 
         if (cache != null) {
-            cache.close(!script);
+            cache.close(true);
         }
 
         properties.setProperty(HsqlDatabaseProperties.db_version,
@@ -258,6 +259,9 @@ public class Log {
             fa.renameElement(scriptFileName + ".new", scriptFileName);
             fa.removeElement(logFileName);
         } catch (IOException e) {
+            database.logger.appLog.logContext(
+                SimpleLog.LOG_ERROR,
+                "script file rename / log delete failed");
             database.logger.appLog.logContext(e);
         }
 
@@ -275,7 +279,10 @@ public class Log {
                 fa.removeElement(fileName + ".backup");
             }
 
-            fa.renameElement(scriptFileName + ".new", scriptFileName);
+            if (fa.isStreamElement(scriptFileName + ".new")) {
+                fa.renameElement(scriptFileName + ".new", scriptFileName);
+            }
+
             fa.removeElement(logFileName);
             properties.setDBModified(
                 HsqlDatabaseProperties.FILES_NOT_MODIFIED);
@@ -333,6 +340,8 @@ public class Log {
      */
     void checkpoint(boolean defrag) throws HsqlException {
 
+        database.logger.appLog.logContext(SimpleLog.LOG_NORMAL, "start");
+
         if (filesReadOnly) {
             return;
         }
@@ -367,6 +376,9 @@ public class Log {
             fa.renameElement(scriptFileName + ".new", scriptFileName);
             fa.removeElement(logFileName);
         } catch (IOException e) {
+            database.logger.appLog.logContext(
+                SimpleLog.LOG_ERROR,
+                "script file rename / log delete failed");
             database.logger.appLog.logContext(e);
         }
 
@@ -392,6 +404,8 @@ public class Log {
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR, logFileName);
         }
+
+        database.logger.appLog.logContext(SimpleLog.LOG_NORMAL, "end");
     }
 
     /**
@@ -438,7 +452,7 @@ public class Log {
 
     void setLogSize(int megas) {
 
-        properties.setProperty("hsqldb.log_size", megas);
+        properties.setProperty(HsqlDatabaseProperties.hsqldb_log_size, megas);
 
         maxLogSize = megas * 1024 * 1024;
     }
@@ -461,7 +475,8 @@ public class Log {
 
         scriptFormat = type;
 
-        properties.setProperty("hsqldb.script_format", scriptFormat);
+        properties.setProperty(HsqlDatabaseProperties.hsqldb_script_format,
+                               scriptFormat);
 
         if (needsCheckpoint) {
             checkpoint(false);
@@ -653,11 +668,11 @@ public class Log {
             if (e instanceof HsqlException) {
                 throw (HsqlException) e;
             } else if (e instanceof IOException) {
-                throw Trace.error(Trace.FILE_IO_ERROR, e.getMessage());
+                throw Trace.error(Trace.FILE_IO_ERROR, e.toString());
             } else if (e instanceof OutOfMemoryError) {
                 throw Trace.error(Trace.OUT_OF_MEMORY);
             } else {
-                throw Trace.error(Trace.GENERAL_ERROR, e.getMessage());
+                throw Trace.error(Trace.GENERAL_ERROR, e.toString());
             }
         }
     }
@@ -707,7 +722,7 @@ public class Log {
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR, Trace.Message_Pair,
                               new Object[] {
-                fileName + ".backup", e.getMessage()
+                fileName + ".backup", e.toString()
             });
         }
     }

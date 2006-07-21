@@ -250,7 +250,7 @@ public class LockFile {
             throw new Exception(
                 Trace.getMessage(
                     Trace.LockFile_checkHeartbeat, true, new Object[] {
-                e.getMessage(), cpath
+                e.toString(), cpath
             }));
         }
 

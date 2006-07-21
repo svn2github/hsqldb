@@ -397,7 +397,7 @@ public class CodeSwitcher {
 
             return true;
         } catch (Exception e) {
-            printError(e.getMessage());
+            printError(e.toString());
 
             return false;
         }

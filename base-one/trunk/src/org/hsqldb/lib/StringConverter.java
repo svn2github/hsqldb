@@ -398,7 +398,7 @@ public class StringConverter {
     public static String readUTF(byte[] bytearr, int offset,
                                  int length) throws IOException {
 
-        char[] buf = new char[length * 2];
+        char[] buf = new char[length];
 
         return readUTF(bytearr, offset, length, buf);
     }
@@ -413,9 +413,8 @@ public class StringConverter {
         while (count < length) {
             c = (int) bytearr[offset + count];
 
-            if (bcount > buf.length - 4) {
-                buf = (char[]) ArrayUtil.resizeArray(buf,
-                                                     buf.length + length);
+            if (bcount == buf.length) {
+                buf = (char[]) ArrayUtil.resizeArray(buf, length);
             }
 
             if (c > 0) {

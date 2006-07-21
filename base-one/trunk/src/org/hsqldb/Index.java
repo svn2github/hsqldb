@@ -1332,7 +1332,7 @@ public class Index {
 
                     return row;
                 } catch (Exception e) {
-                    throw new NoSuchElementException();
+                    throw new NoSuchElementException(e.getMessage());
                 }
             } else {
                 return null;

@@ -171,7 +171,8 @@ public class Logger {
             }
         } catch (Throwable e) {
             if (appLog != null) {
-                appLog.sendLine(SimpleLog.LOG_NORMAL, "Database closed");
+                appLog.sendLine(SimpleLog.LOG_NORMAL, "error");
+                appLog.logContext(e);
                 appLog.close();
             }
 
@@ -330,7 +331,9 @@ public class Logger {
     public synchronized void checkpoint(boolean mode) throws HsqlException {
 
         if (logStatements) {
+            appLog.logContext(appLog.LOG_NORMAL, "start");
             log.checkpoint(mode);
+            appLog.logContext(appLog.LOG_NORMAL, "end");
         }
     }
 

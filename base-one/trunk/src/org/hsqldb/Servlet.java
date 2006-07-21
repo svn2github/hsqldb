@@ -149,7 +149,7 @@ public class Servlet extends javax.servlet.http.HttpServlet {
             rowOut = new RowOutputBinary(BUFFER_SIZE);
             rowIn  = new RowInputBinary(rowOut);
         } catch (ServletException exp) {
-            log(exp.getMessage());
+            log(exp.toString());
         }
 
         String dbStr = getInitParameter("hsqldb.server.database");

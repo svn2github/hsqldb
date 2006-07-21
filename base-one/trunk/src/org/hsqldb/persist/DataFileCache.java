@@ -162,6 +162,8 @@ public class DataFileCache {
 
         fileFreePosition = 0;
 
+        database.logger.appLog.logContext(SimpleLog.LOG_NORMAL, "start");
+
         try {
             boolean preexists = database.isFilesInJar();
             long    freesize  = 0;
@@ -240,7 +242,10 @@ public class DataFileCache {
             fileModified = false;
             freeBlocks = new DataFileBlockManager(FREE_BLOCKS_COUNT,
                                                   cacheFileScale, freesize);
+
+            database.logger.appLog.logContext(SimpleLog.LOG_NORMAL, "end");
         } catch (Throwable e) {
+            database.logger.appLog.logContext(SimpleLog.LOG_ERROR, "failed");
             database.logger.appLog.logContext(e);
             close(false);
 
@@ -275,9 +280,14 @@ public class DataFileCache {
 
             StopWatch sw = new StopWatch();
 
+            appLog.sendLine(SimpleLog.LOG_NORMAL,
+                            "DataFileCache.close(" + write + ") : start");
+
             if (write) {
                 cache.saveAll();
                 Trace.printSystemOut("saveAll: " + sw.elapsedTime());
+                appLog.sendLine(SimpleLog.LOG_NORMAL,
+                                "DataFileCache.close() : save data");
 
                 if (fileModified || freeBlocks.isModified()) {
 
@@ -299,12 +309,16 @@ public class DataFileCache {
                     }
 
                     dataFile.writeInt(flag);
+                    appLog.sendLine(SimpleLog.LOG_NORMAL,
+                                    "DataFileCache.close() : flags");
 
                     //
                     if (dataFile.length() != fileFreePosition) {
                         dataFile.seek(fileFreePosition);
                     }
 
+                    appLog.sendLine(SimpleLog.LOG_NORMAL,
+                                    "DataFileCache.close() : seek end");
                     Trace.printSystemOut("pos and flags: "
                                          + sw.elapsedTime());
                 }
@@ -312,6 +326,8 @@ public class DataFileCache {
 
             if (dataFile != null) {
                 dataFile.close();
+                appLog.sendLine(SimpleLog.LOG_NORMAL,
+                                "DataFileCache.close() : close");
 
                 dataFile = null;
 
@@ -343,18 +359,27 @@ public class DataFileCache {
         }
 
         try {
+            appLog.sendLine(SimpleLog.LOG_NORMAL,
+                            "DataFileCache.postClose(" + keep + ") : start");
+
             if (keep) {
                 database.getProperties().setProperty(
                     HsqlDatabaseProperties.hsqldb_cache_version,
                     HsqlDatabaseProperties.VERSION_STRING_1_7_0);
                 database.getProperties().save();
+                appLog.sendLine(SimpleLog.LOG_NORMAL,
+                                "DataFileCache.postClose() : save props");
 
                 if (fileModified) {
                     backup();
                 }
             } else {
                 fa.removeElement(backupFileName);
+                appLog.sendLine(SimpleLog.LOG_NORMAL,
+                                "DataFileCache.postClose() : delete backup");
                 deleteOrResetFreePos(database, fileName);
+                appLog.sendLine(SimpleLog.LOG_NORMAL,
+                                "DataFileCache.postClose() : delete file");
             }
         } catch (IOException e) {
             throw new HsqlException(
@@ -435,6 +460,7 @@ public class DataFileCache {
             Trace.printSystemOut("opened cache");
         } catch (Throwable e) {
             database.logger.appLog.logContext(e);
+            e.printStackTrace();
 
             throw new HsqlException(
                 e, Trace.getMessage(Trace.GENERAL_IO_ERROR),

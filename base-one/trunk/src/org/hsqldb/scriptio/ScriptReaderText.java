@@ -141,7 +141,7 @@ public class ScriptReaderText extends ScriptReaderBase {
             throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
                               Trace.DatabaseScriptReader_readExistingData,
                               new Object[] {
-                new Integer(lineCount), e.getMessage()
+                new Integer(lineCount), e.toString()
             });
         }
     }
@@ -216,7 +216,7 @@ public class ScriptReaderText extends ScriptReaderBase {
 
             rowData = rowIn.readData(colTypes);
         } catch (Exception e) {
-            throw new IOException(e.getMessage());
+            throw new IOException(e.toString());
         }
     }
 

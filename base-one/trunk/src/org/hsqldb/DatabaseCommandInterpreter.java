@@ -694,7 +694,7 @@ class DatabaseCommandInterpreter {
                 // start the trigger thread
                 td.start();
             } catch (Exception e) {
-                throw Trace.error(Trace.UNKNOWN_FUNCTION, e.getMessage());
+                throw Trace.error(Trace.UNKNOWN_FUNCTION, e.toString());
             }
         }
 

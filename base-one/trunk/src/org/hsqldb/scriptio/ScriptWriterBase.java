@@ -188,7 +188,7 @@ public abstract class ScriptWriterBase implements Runnable {
                 syncCount++;
             } catch (IOException e) {
                 Trace.printSystemOut("flush() or sync() error: "
-                                     + e.getMessage());
+                                     + e.toString());
             }
 
             needsSync = false;
@@ -245,7 +245,7 @@ public abstract class ScriptWriterBase implements Runnable {
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR, Trace.Message_Pair,
                               new Object[] {
-                e.getMessage(), outFile
+                e.toString(), outFile
             });
         }
     }
@@ -314,7 +314,7 @@ public abstract class ScriptWriterBase implements Runnable {
                         writeTableTerm(t);
                     }
                 } catch (Exception e) {
-                    throw Trace.error(Trace.ASSERT_FAILED, e.getMessage());
+                    throw Trace.error(Trace.ASSERT_FAILED, e.toString());
                 }
             }
         }

@@ -1004,7 +1004,7 @@ implements PreparedStatement {
 
             setParameter(parameterIndex, out.toByteArray());
         } catch (IOException e) {
-            throw Util.sqlException(Trace.INPUTSTREAM_ERROR, e.getMessage());
+            throw Util.sqlException(Trace.INPUTSTREAM_ERROR, e.toString());
         } finally {
             if (out != null) {
                 try {
@@ -1393,7 +1393,7 @@ implements PreparedStatement {
 
             setParameter(i, out.toByteArray());
         } catch (IOException e) {
-            throw Util.sqlException(Trace.INPUTSTREAM_ERROR, e.getMessage());
+            throw Util.sqlException(Trace.INPUTSTREAM_ERROR, e.toString());
         } finally {
             if (out != null) {
                 try {
@@ -1598,7 +1598,7 @@ implements PreparedStatement {
         try {
             s = HsqlDateTime.getDateString(x, cal);
         } catch (Exception e) {
-            throw Util.sqlException(Trace.INVALID_ESCAPE, e.getMessage());
+            throw Util.sqlException(Trace.INVALID_ESCAPE, e.toString());
         }
 
         setParameter(parameterIndex, s);
@@ -1636,7 +1636,7 @@ implements PreparedStatement {
         try {
             s = HsqlDateTime.getTimeString(x, cal);
         } catch (Exception e) {
-            throw Util.sqlException(Trace.INVALID_ESCAPE, e.getMessage());
+            throw Util.sqlException(Trace.INVALID_ESCAPE, e.toString());
         }
 
         setParameter(parameterIndex, s);

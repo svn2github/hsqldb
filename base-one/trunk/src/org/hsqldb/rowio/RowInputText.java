@@ -157,7 +157,7 @@ public class RowInputText extends RowInputBase implements RowInputInterface {
             throw new IOException(
                 Trace.getMessage(
                     Trace.TextDatabaseRowInput_getField3, true, new Object[] {
-                new Integer(field), e.getMessage()
+                new Integer(field), e.toString()
             }));
         }
 

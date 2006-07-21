@@ -2272,7 +2272,7 @@ public class Library {
                 }
             }
         } catch (Exception e) {
-            throw Trace.error(Trace.FUNCTION_CALL_ERROR, e.getMessage());
+            throw Trace.error(Trace.FUNCTION_CALL_ERROR, e.toString());
         }
     }
 

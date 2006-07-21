@@ -141,7 +141,7 @@ public class RowInputTextQuoted extends RowInputText {
                 Trace.getMessage(
                     Trace.QuotedTextDatabaseRowInput_getField2, true,
                     new Object[] {
-                new Integer(field), e.getMessage()
+                new Integer(field), e.toString()
             }));
         }
 

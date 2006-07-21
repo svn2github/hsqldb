@@ -67,6 +67,7 @@
 package org.hsqldb.util;
 
 import java.util.Vector;
+
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Event;

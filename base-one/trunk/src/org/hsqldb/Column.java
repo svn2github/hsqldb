@@ -1194,7 +1194,7 @@ public class Column {
         } catch (HsqlException e) {
             throw e;
         } catch (Exception e) {
-            throw Trace.error(Trace.WRONG_DATA_TYPE, e.getMessage());
+            throw Trace.error(Trace.WRONG_DATA_TYPE, e.toString());
         }
     }
 

@@ -171,7 +171,7 @@ public class ScriptRunner {
 
             // stop processing on bad log line
             message = logFilename + " line: " + scr.getLineNumber() + " "
-                      + e.getMessage();
+                      + e.toString();
 
             database.logger.appLog.logContext(SimpleLog.LOG_ERROR, message);
             Trace.printSystemOut(message);

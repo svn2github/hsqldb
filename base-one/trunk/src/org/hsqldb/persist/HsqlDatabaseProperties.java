@@ -377,7 +377,7 @@ public class HsqlDatabaseProperties extends HsqlProperties {
                              fileName + ".properties");
         } catch (Exception e) {
             database.logger.appLog.logContext(SimpleLog.LOG_ERROR,
-                                              "save properties");
+                                              "failed");
 
             throw Trace.error(Trace.FILE_IO_ERROR,
                               Trace.LOAD_SAVE_PROPERTIES, new Object[] {
@@ -466,14 +466,19 @@ public class HsqlDatabaseProperties extends HsqlProperties {
                                              : 20000;
     }
 
+    static String MODIFIED_NO = "no";
+    static String MODIFIED_YES = "yes";
+    static String MODIFIED_NEW = "no-new-files";
+
+
     public void setDBModified(int mode) throws HsqlException {
 
-        String value = "no";
+        String value = MODIFIED_NO;
 
         if (mode == FILES_MODIFIED) {
-            value = "yes";
+            value = MODIFIED_YES;
         } else if (mode == FILES_NEW) {
-            value = "no-new-files";
+            value = MODIFIED_NEW;
         }
 
         setProperty(db_modified, value);
@@ -484,9 +489,9 @@ public class HsqlDatabaseProperties extends HsqlProperties {
 
         String value = getProperty("modified");
 
-        if ("yes".equals(value)) {
+        if (MODIFIED_YES.equals(value)) {
             return FILES_MODIFIED;
-        } else if ("no-new-files".equals(value)) {
+        } else if (MODIFIED_NEW.equals(value)) {
             return FILES_NEW;
         }
 

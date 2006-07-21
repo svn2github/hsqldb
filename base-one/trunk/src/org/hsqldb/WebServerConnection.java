@@ -403,7 +403,7 @@ class WebServerConnection implements Runnable {
             os.close();
             is.close();
         } catch (Exception e) {
-            server.printError("processGet: " + e.getMessage());
+            server.printError("processGet: " + e.toString());
             server.printStackTrace(e);
         }
     }
@@ -482,7 +482,7 @@ class WebServerConnection implements Runnable {
             os.flush();
             os.close();
         } catch (Exception e) {
-            server.printError("processError: " + e.getMessage());
+            server.printError("processError: " + e.toString());
             server.printStackTrace(e);
         }
     }

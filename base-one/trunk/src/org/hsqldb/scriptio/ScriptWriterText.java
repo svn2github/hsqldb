@@ -172,7 +172,7 @@ public class ScriptWriterText extends ScriptWriterBase {
         needsSync   |= session.isAutoCommit();
         busyWriting = false;
 
-        if (forceSync) {
+        if (forceSync || writeDelay == 0) {
             sync();
         }
     }
@@ -225,7 +225,7 @@ public class ScriptWriterText extends ScriptWriterBase {
         needsSync   |= session.isAutoCommit();
         busyWriting = false;
 
-        if (forceSync) {
+        if (forceSync || writeDelay == 0) {
             sync();
         }
     }
@@ -250,7 +250,7 @@ public class ScriptWriterText extends ScriptWriterBase {
         needsSync   = true;
         busyWriting = false;
 
-        if (forceSync) {
+        if (forceSync || writeDelay == 0) {
             sync();
         }
     }

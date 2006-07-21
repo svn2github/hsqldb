@@ -72,7 +72,7 @@ class ScriptWriterZipped extends ScriptWriterBinary {
         } catch (IOException e) {
             throw Trace.error(Trace.FILE_IO_ERROR, Trace.Message_Pair,
                               new Object[] {
-                e.getMessage(), outFile
+                e.toString(), outFile
             });
         }
     }

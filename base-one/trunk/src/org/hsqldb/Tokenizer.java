@@ -1161,7 +1161,7 @@ public class Tokenizer {
         } catch (HsqlException e) {
             throw e;
         } catch (Exception e) {
-            e.getMessage();
+            e.toString();
         }
 
         return null;

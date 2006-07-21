@@ -142,7 +142,7 @@ public class SimpleLog {
         }
 
 //#endif
-        writer.println(info + " " + t.getMessage());
+        writer.println(info + " " + t.toString());
     }
 
     public void close() {
