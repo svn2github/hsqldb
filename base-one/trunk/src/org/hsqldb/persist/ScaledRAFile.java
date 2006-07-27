@@ -36,8 +36,10 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Constructor;
 
+import org.hsqldb.Database;
 import org.hsqldb.Trace;
 import org.hsqldb.lib.HsqlByteArrayInputStream;
+import org.hsqldb.lib.SimpleLog;
 import org.hsqldb.lib.Storage;
 
 // fredt@users 20030111 - patch 1.7.2 by bohgammer@users - pad file before seek() beyond end
@@ -51,12 +53,15 @@ import org.hsqldb.lib.Storage;
  * @version  1.8.0
  * @since  1.7.2
  */
-class ScaledRAFile implements Storage {
+class ScaledRAFile implements ScaledRAInterface {
 
-    static final int         DATA_FILE_RAF  = 0;
-    static final int         DATA_FILE_NIO  = 1;
-    static final int         DATA_FILE_JAR  = 2;
-    static final long        MAX_NIO_LENGTH = (1L << 28);
+    static final int  DATA_FILE_RAF  = 0;
+    static final int  DATA_FILE_NIO  = 1;
+    static final int  DATA_FILE_JAR  = 2;
+    static final long MAX_NIO_LENGTH = (1L << 28);
+
+    //
+    final SimpleLog          appLog;
     final RandomAccessFile   file;
     private final boolean    readOnly;
     final String             fileName;
@@ -75,7 +80,8 @@ class ScaledRAFile implements Storage {
      * seekPosition is the position in seek() calls or after reading or writing
      * realPosition is the file position
      */
-    static Storage newScaledRAFile(String name, boolean readonly, int type,
+    static Storage newScaledRAFile(Database database, String name,
+                                   boolean readonly, int type,
                                    String classname,
                                    String key)
                                    throws FileNotFoundException, IOException {
@@ -106,13 +112,13 @@ class ScaledRAFile implements Storage {
         if (type == DATA_FILE_JAR) {
             return new ScaledRAFileInJar(name);
         } else if (type == DATA_FILE_RAF) {
-            return new ScaledRAFile(name, readonly);
+            return new ScaledRAFile(database, name, readonly);
         } else {
             RandomAccessFile file = new RandomAccessFile(name, readonly ? "r"
                                                                         : "rw");
 
             if (file.length() > MAX_NIO_LENGTH) {
-                return new ScaledRAFile(name, file, readonly);
+                return new ScaledRAFile(database, name, file, readonly);
             } else {
                 file.close();
             }
@@ -120,35 +126,39 @@ class ScaledRAFile implements Storage {
             try {
                 Class.forName("java.nio.MappedByteBuffer");
 
-                Class c = Class.forName("org.hsqldb.persist.NIOScaledRAFile");
+                Class c =
+                    Class.forName("org.hsqldb.persist.ScaledRAFileHybrid");
                 Constructor constructor = c.getConstructor(new Class[] {
-                    String.class, boolean.class
+                    Database.class, String.class, boolean.class
                 });
 
-                return (ScaledRAFile) constructor.newInstance(new Object[] {
-                    name, new Boolean(readonly)
+                return (ScaledRAInterface) constructor.newInstance(
+                    new Object[] {
+                    database, name, new Boolean(readonly)
                 });
             } catch (Exception e) {
-                return new ScaledRAFile(name, readonly);
+                return new ScaledRAFile(database, name, readonly);
             }
         }
     }
 
-    ScaledRAFile(String name, RandomAccessFile file,
+    ScaledRAFile(Database database, String name, RandomAccessFile file,
                  boolean readonly) throws FileNotFoundException, IOException {
 
+        this.appLog   = database.logger.appLog;
         this.readOnly = readonly;
-        fileName      = name;
+        this.fileName = name;
         this.file     = file;
     }
 
-    ScaledRAFile(String name,
+    ScaledRAFile(Database database, String name,
                  boolean readonly) throws FileNotFoundException, IOException {
 
-        file          = new RandomAccessFile(name, readonly ? "r"
-                                                            : "rw");
+        this.appLog   = database.logger.appLog;
         this.readOnly = readonly;
-        fileName      = name;
+        this.fileName = name;
+        this.file     = new RandomAccessFile(name, readonly ? "r"
+                                                            : "rw");
     }
 
     public long length() throws IOException {
@@ -162,15 +172,21 @@ class ScaledRAFile implements Storage {
      */
     public void seek(long position) throws IOException {
 
-        if (file.length() < position) {
-            file.seek(file.length());
+        try {
+            if (file.length() < position) {
+                file.seek(file.length());
 
-            for (long ix = file.length(); ix < position; ix++) {
-                file.write(0);
+                for (long ix = file.length(); ix < position; ix++) {
+                    file.write(0);
+                }
             }
-        }
 
-        seekPosition = position;
+            seekPosition = position;
+        } catch (IOException e) {
+            appLog.logContext(e);
+
+            throw e;
+        }
     }
 
     public long getFilePointer() throws IOException {
@@ -179,164 +195,212 @@ class ScaledRAFile implements Storage {
 
     private void readIntoBuffer() throws IOException {
 
-        long filePos = seekPosition;
+        try {
+            long filePos = seekPosition;
 
-        bufferDirty = false;
+            bufferDirty = false;
 
-        long subOffset  = filePos % buffer.length;
-        long fileLength = file.length();
-        long readLength = fileLength - (filePos - subOffset);
+            long subOffset  = filePos % buffer.length;
+            long fileLength = file.length();
+            long readLength = fileLength - (filePos - subOffset);
 
-        if (readLength <= 0) {
-            throw new IOException("read beyond end of file");
+            if (readLength <= 0) {
+                throw new IOException("read beyond end of file");
+            }
+
+            if (readLength > buffer.length) {
+                readLength = buffer.length;
+            }
+
+            file.seek(filePos - subOffset);
+            file.readFully(buffer, 0, (int) readLength);
+
+            bufferOffset = filePos - subOffset;
+            realPosition = bufferOffset + readLength;
+        } catch (IOException e) {
+            appLog.logContext(e);
+
+            throw e;
         }
-
-        if (readLength > buffer.length) {
-            readLength = buffer.length;
-        }
-
-        file.seek(filePos - subOffset);
-        file.readFully(buffer, 0, (int) readLength);
-
-        bufferOffset = filePos - subOffset;
-        realPosition = bufferOffset + readLength;
     }
 
     public int read() throws IOException {
 
-        long fileLength = file.length();
+        try {
+            long fileLength = file.length();
 
-        if (seekPosition >= fileLength) {
-            return -1;
+            if (seekPosition >= fileLength) {
+                return -1;
+            }
+
+            if (bufferDirty || seekPosition < bufferOffset
+                    || seekPosition >= bufferOffset + buffer.length) {
+                readIntoBuffer();
+            } else {
+                cacheHit++;
+            }
+
+            ba.reset();
+            ba.skip(seekPosition - bufferOffset);
+
+            int val = ba.read();
+
+            seekPosition++;
+
+            return val;
+        } catch (IOException e) {
+            appLog.logContext(e);
+
+            throw e;
         }
-
-        if (bufferDirty || seekPosition < bufferOffset
-                || seekPosition >= bufferOffset + buffer.length) {
-            readIntoBuffer();
-        } else {
-            cacheHit++;
-        }
-
-        ba.reset();
-        ba.skip(seekPosition - bufferOffset);
-
-        int val = ba.read();
-
-        seekPosition++;
-
-        return val;
     }
 
     public long readLong() throws IOException {
 
-        file.seek(seekPosition);
+        try {
+            file.seek(seekPosition);
 
-        realPosition = seekPosition;
+            realPosition = seekPosition;
 
-        long value = file.readLong();
+            long value = file.readLong();
 
-        realPosition += 8;
-        seekPosition = realPosition;
+            realPosition += 8;
+            seekPosition = realPosition;
 
-        return value;
+            return value;
+        } catch (IOException e) {
+            appLog.logContext(e);
+
+            throw e;
+        }
     }
 
     public int readInt() throws IOException {
 
-        if (bufferDirty || seekPosition < bufferOffset
-                || seekPosition >= bufferOffset + buffer.length) {
-            readIntoBuffer();
-        } else {
-            cacheHit++;
+        try {
+            if (bufferDirty || seekPosition < bufferOffset
+                    || seekPosition >= bufferOffset + buffer.length) {
+                readIntoBuffer();
+            } else {
+                cacheHit++;
+            }
+
+            ba.reset();
+            ba.skip(seekPosition - bufferOffset);
+
+            int val = ba.readInt();
+
+            seekPosition += 4;
+
+            return val;
+        } catch (IOException e) {
+            appLog.logContext(e);
+
+            throw e;
         }
-
-        ba.reset();
-        ba.skip(seekPosition - bufferOffset);
-
-        int val = ba.readInt();
-
-        seekPosition += 4;
-
-        return val;
     }
 
     public void read(byte[] b, int offset, int length) throws IOException {
 
-        if (bufferDirty || seekPosition < bufferOffset
-                || seekPosition >= bufferOffset + buffer.length) {
-            readIntoBuffer();
-        } else {
-            cacheHit++;
-        }
-
-        ba.reset();
-        ba.skip(seekPosition - bufferOffset);
-
-        int bytesRead = ba.read(b, offset, length);
-
-        seekPosition += bytesRead;
-
-        if (bytesRead < length) {
-            if (seekPosition != realPosition) {
-                file.seek(seekPosition);
+        try {
+            if (bufferDirty || seekPosition < bufferOffset
+                    || seekPosition >= bufferOffset + buffer.length) {
+                readIntoBuffer();
+            } else {
+                cacheHit++;
             }
 
-            file.readFully(b, offset + bytesRead, length - bytesRead);
+            ba.reset();
+            ba.skip(seekPosition - bufferOffset);
 
-            seekPosition += (length - bytesRead);
-            realPosition = seekPosition;
+            int bytesRead = ba.read(b, offset, length);
+
+            seekPosition += bytesRead;
+
+            if (bytesRead < length) {
+                if (seekPosition != realPosition) {
+                    file.seek(seekPosition);
+                }
+
+                file.readFully(b, offset + bytesRead, length - bytesRead);
+
+                seekPosition += (length - bytesRead);
+                realPosition = seekPosition;
+            }
+        } catch (IOException e) {
+            appLog.logContext(e);
+
+            throw e;
         }
     }
 
     public void write(byte[] b, int off, int len) throws IOException {
 
-        if (realPosition != seekPosition) {
-            file.seek(seekPosition);
+        try {
+            if (realPosition != seekPosition) {
+                file.seek(seekPosition);
+            }
+
+            if (seekPosition >= bufferOffset
+                    && seekPosition < bufferOffset + buffer.length) {
+                bufferDirty = true;
+            }
+
+            file.write(b, off, len);
+
+            seekPosition += len;
+            realPosition = seekPosition;
+        } catch (IOException e) {
+            appLog.logContext(e);
+
+            throw e;
         }
-
-        if (seekPosition >= bufferOffset
-                && seekPosition < bufferOffset + buffer.length) {
-            bufferDirty = true;
-        }
-
-        file.write(b, off, len);
-
-        seekPosition += len;
-        realPosition = seekPosition;
     }
 
     public void writeInt(int i) throws IOException {
 
-        if (realPosition != seekPosition) {
-            file.seek(seekPosition);
+        try {
+            if (realPosition != seekPosition) {
+                file.seek(seekPosition);
+            }
+
+            if (seekPosition >= bufferOffset
+                    && seekPosition < bufferOffset + buffer.length) {
+                bufferDirty = true;
+            }
+
+            file.writeInt(i);
+
+            seekPosition += 4;
+            realPosition = seekPosition;
+        } catch (IOException e) {
+            appLog.logContext(e);
+
+            throw e;
         }
-
-        if (seekPosition >= bufferOffset
-                && seekPosition < bufferOffset + buffer.length) {
-            bufferDirty = true;
-        }
-
-        file.writeInt(i);
-
-        seekPosition += 4;
-        realPosition = seekPosition;
     }
 
     public void writeLong(long i) throws IOException {
 
-        if (realPosition != seekPosition) {
-            file.seek(seekPosition);
+        try {
+            if (realPosition != seekPosition) {
+                file.seek(seekPosition);
+            }
+
+            if (seekPosition >= bufferOffset
+                    && seekPosition < bufferOffset + buffer.length) {
+                bufferDirty = true;
+            }
+
+            file.writeLong(i);
+
+            seekPosition += 8;
+            realPosition = seekPosition;
+        } catch (IOException e) {
+            appLog.logContext(e);
+
+            throw e;
         }
-
-        if (seekPosition >= bufferOffset
-                && seekPosition < bufferOffset + buffer.length) {
-            bufferDirty = true;
-        }
-
-        file.writeLong(i);
-
-        seekPosition += 8;
-        realPosition = seekPosition;
     }
 
     public void close() throws IOException {
@@ -350,5 +414,17 @@ class ScaledRAFile implements Storage {
 
     public boolean wasNio() {
         return false;
+    }
+
+    public boolean canAccess(int length) {
+        return true;
+    }
+
+    public boolean canSeek(long position) {
+        return true;
+    }
+
+    public Database getDatabase() {
+        return null;
     }
 }

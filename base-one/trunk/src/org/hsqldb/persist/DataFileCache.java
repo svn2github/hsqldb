@@ -212,8 +212,8 @@ public class DataFileCache {
             String skey =
                 database.getURLProperties().getProperty("storage_key");
 
-            dataFile = ScaledRAFile.newScaledRAFile(fileName, readonly,
-                    fileType, cname, skey);
+            dataFile = ScaledRAFile.newScaledRAFile(database, fileName,
+                    readonly, fileType, cname, skey);
 
             if (preexists) {
                 dataFile.seek(FLAGS_POS);
@@ -708,7 +708,7 @@ public class DataFileCache {
         }
 
         try {
-            raFile = new ScaledRAFile(filename, false);
+            raFile = new ScaledRAFile(database, filename, false);
 
             raFile.seek(LONG_FREE_POS_POS);
             raFile.writeLong(INITIAL_FREE_POS);
@@ -722,25 +722,6 @@ public class DataFileCache {
                     database.logger.appLog.logContext(e);
                 }
             }
-        }
-    }
-
-    public static int getFlags(String filename) throws HsqlException {
-
-        try {
-            ScaledRAFile raFile =
-                (ScaledRAFile) ScaledRAFile.newScaledRAFile(filename, true,
-                    ScaledRAFile.DATA_FILE_RAF, null, null);
-
-            raFile.seek(FLAGS_POS);
-
-            int flags = raFile.readInt();
-
-            raFile.close();
-
-            return flags;
-        } catch (IOException e) {
-            throw Trace.error(Trace.DATA_FILE_ERROR);
         }
     }
 

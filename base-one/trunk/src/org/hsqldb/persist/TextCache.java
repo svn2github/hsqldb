@@ -300,8 +300,8 @@ public class TextCache extends DataFileCache {
         fileFreePosition = 0;
 
         try {
-            dataFile = ScaledRAFile.newScaledRAFile(fileName, readonly,
-                    ScaledRAFile.DATA_FILE_RAF, null, null);
+            dataFile = ScaledRAFile.newScaledRAFile(database, fileName,
+                    readonly, ScaledRAFile.DATA_FILE_RAF, null, null);
             fileFreePosition = dataFile.length();
 
             if (fileFreePosition > Integer.MAX_VALUE) {

@@ -186,8 +186,6 @@ class JDBCBench {
         Connection  guardian = null;
 
         try {
-            guardian = connect(url, user, password);
-
             if (init) {
                 System.out.println("Start: "
                                    + (new java.util.Date()).toString());
@@ -197,6 +195,8 @@ class JDBCBench {
                 System.out.println("Complete: "
                                    + (new java.util.Date()).toString());
             }
+
+            guardian = connect(url, user, password);
 
             if (startupCommand.length() != 0) {
                 Statement statement = guardian.createStatement();
@@ -211,7 +211,7 @@ class JDBCBench {
 
             MemoryWatcher.start();
 
-            transactions  = false;
+            transactions  = true;
             prepared_stmt = false;
             start_time    = System.currentTimeMillis();
 
@@ -236,6 +236,12 @@ class JDBCBench {
 
             vClient.removeAllElements();
             reportDone();
+            checkSums(guardian);
+
+            // debug - allows stopping the test
+            if (!transactions) {
+                throw new Exception("end after one round");
+            }
 
             transactions  = true;
             prepared_stmt = false;
@@ -262,32 +268,7 @@ class JDBCBench {
 
             vClient.removeAllElements();
             reportDone();
-
-            transactions  = false;
-            prepared_stmt = true;
-            start_time    = System.currentTimeMillis();
-
-            for (int i = 0; i < n_clients; i++) {
-                Client = new ClientThread(n_txn_per_client, url, user,
-                                          password);
-
-                Client.start();
-                vClient.addElement(Client);
-            }
-
-            /*
-             ** Barrier to complete this test session
-             */
-            e = vClient.elements();
-
-            while (e.hasMoreElements()) {
-                Client = (Thread) e.nextElement();
-
-                Client.join();
-            }
-
-            vClient.removeAllElements();
-            reportDone();
+            checkSums(guardian);
 
             transactions  = true;
             prepared_stmt = true;
@@ -314,6 +295,34 @@ class JDBCBench {
 
             vClient.removeAllElements();
             reportDone();
+            checkSums(guardian);
+
+            transactions  = true;
+            prepared_stmt = true;
+            start_time    = System.currentTimeMillis();
+
+            for (int i = 0; i < n_clients; i++) {
+                Client = new ClientThread(n_txn_per_client, url, user,
+                                          password);
+
+                Client.start();
+                vClient.addElement(Client);
+            }
+
+            /*
+             ** Barrier to complete this test session
+             */
+            e = vClient.elements();
+
+            while (e.hasMoreElements()) {
+                Client = (Thread) e.nextElement();
+
+                Client.join();
+            }
+
+            vClient.removeAllElements();
+            reportDone();
+            checkSums(guardian);
         } catch (Exception E) {
             System.out.println(E.getMessage());
             E.printStackTrace();
@@ -576,13 +585,20 @@ class JDBCBench {
 
             Stmt.execute(Query);
             Stmt.clearWarnings();
+            Stmt.execute("SET TABLE ACCOUNTS SOURCE \"ACCOUNTS.TXT\"");
+            Stmt.execute("SET TABLE BRANCHES SOURCE \"BBRANCHES.TXT\"");
+            Stmt.execute("SET TABLE TELLERS SOURCE \"TELLERS.TXT\"");
+            Stmt.execute("SET TABLE HISTORY SOURCE \"HISTORY.TXT\"");
 
             if (transactions) {
                 Conn.commit();
             }
 
             Stmt.close();
-        } catch (Exception E) {}
+        } catch (Exception E) {
+            System.out.println(
+                "Delete elements in table in case Drop didn't work");
+        }
 
         System.out.println(
             "Delete elements in table in case Drop didn't work");
@@ -737,6 +753,9 @@ class JDBCBench {
 
             System.out.println("\t" + (naccounts * tps)
                                + "\t records inserted");
+
+            // for tests
+            Stmt.execute(ShutdownCommand);
             Stmt.close();
         } catch (Exception E) {
             System.out.println(E.getMessage());
@@ -806,6 +825,71 @@ class JDBCBench {
         } catch (Exception E) {
             System.out.println(E.getMessage());
             E.printStackTrace();
+        }
+    }
+
+    void checkSums(Connection conn) throws Exception {
+
+        Statement st1 = null;
+        ResultSet rs  = null;
+        int       bbalancesum;
+        int       tbalancesum;
+        int       abalancesum;
+        int       deltasum;
+
+        try {
+            st1 = conn.createStatement();
+            rs  = st1.executeQuery("select sum(bbalance) from branches");
+
+            rs.next();
+
+            bbalancesum = rs.getInt(1);
+
+            rs.close();
+
+            rs = st1.executeQuery("select sum(tbalance) from tellers");
+
+            rs.next();
+
+            tbalancesum = rs.getInt(1);
+
+            rs.close();
+
+            rs = st1.executeQuery("select sum(abalance) from accounts");
+
+            rs.next();
+
+            abalancesum = rs.getInt(1);
+
+            rs.close();
+
+            rs = st1.executeQuery("select sum(delta) from history");
+
+            rs.next();
+
+            deltasum = rs.getInt(1);
+
+            rs.close();
+
+            rs = null;
+
+            st1.close();
+
+            st1 = null;
+
+            if (abalancesum != bbalancesum || bbalancesum != tbalancesum
+                    || tbalancesum != deltasum) {
+                System.out.println("sums don't match!");
+            } else {
+                System.out.println("sums match!");
+            }
+
+            System.out.println(abalancesum + " " + bbalancesum + " "
+                               + tbalancesum + " " + deltasum);
+        } finally {
+            if (st1 != null) {
+                st1.close();
+            }
         }
     }
 

@@ -36,8 +36,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.hsqldb.Database;
 import org.hsqldb.lib.HsqlByteArrayInputStream;
-import org.hsqldb.lib.Storage;
 
 /**
  * This class is a random access wrapper around a DataInputStream object and
@@ -49,7 +49,7 @@ import org.hsqldb.lib.Storage;
  * @version  1.8.0
  * @since  1.8.0
  */
-class ScaledRAFileInJar implements Storage {
+class ScaledRAFileInJar implements ScaledRAInterface {
 
     DataInputStream          file;
     final String             fileName;
@@ -230,5 +230,17 @@ class ScaledRAFileInJar implements Storage {
         while (position > skipPosition) {
             skipPosition += file.skip(position - skipPosition);
         }
+    }
+
+    public boolean canAccess(int length) {
+        return false;
+    }
+
+    public boolean canSeek(long position) {
+        return false;
+    }
+
+    public Database getDatabase() {
+        return null;
     }
 }

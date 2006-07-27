@@ -73,8 +73,7 @@ class ScriptReaderBinary extends ScriptReaderBase {
                         ? getClass().getResourceAsStream(fileName)
                         : db.getFileAccess().openInputStreamElement(fileName);
 
-        dataStreamIn = new DataInputStream(new BufferedInputStream(d,
-                1 << 13));
+        dataStreamIn = new DataInputStream(new BufferedInputStream(d, 1 << 13));
     }
 
     protected void readDDL(Session session)

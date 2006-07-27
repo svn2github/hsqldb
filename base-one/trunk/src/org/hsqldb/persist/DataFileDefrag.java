@@ -132,7 +132,7 @@ final class DataFileDefrag {
 
             // write out the end of file position
             dest = ScaledRAFile.newScaledRAFile(
-                filename
+                database, filename
                 + ".new", false, ScaledRAFile.DATA_FILE_RAF, database
                     .getURLProperties().getProperty(
                         "storage_class_name"), database.getURLProperties()
