@@ -251,7 +251,6 @@
 <b><font size="2" color="#FF0000">CREATE TRIGGER</font></b><font size="2" color="#FF0000"> name {BEFORE|AFTER} {INSERT|UPDATE|DELETE}
 <b>ON</b> table [FOR EACH ROW] [QUEUE n] [NOWAIT] <b>CALL</b> triggerClass
 ;</font></font>
-
 <p><font face="Arial" size="2">
 triggerClass is an application-supplied class that implements the
 org.hsqldb.Trigger interface e.g. "myPackage.trigClass".
@@ -544,7 +543,6 @@ Will not work if the index backs a UNIQUE of FOREIGN KEY constraint.
 </font>
 </font>
 <p> 
-
 <p><font face="Arial" size="2">See also: <a href="#INSERT">INSERT</a>, <a href="#UPDATE">UPDATE</a>, <a href="#DELETE">DELETE</a> 
 </font>
 <p> <font face="Arial" size="2"><br>
@@ -691,7 +689,6 @@ This command should not be used as the routine method of closing the database.</
 <p><font face="Arial">SHUTDOWN COMPACT writes out  a new .script file which contains the data for all the tables, including CACHED and TEXT tables. It then deletes the existing text table files and the  .data file before rewriting them. After this, it backs up the .data file in the same way as normal SHUTDOWN. This operations shrinks all files 
   to the minimum size. <br>
   Only an administrator may do this. 
-
 </font>
 <p> <font face="Arial"><br>
   <a name="UPDATE"></a>
@@ -818,7 +815,6 @@ This command should not be used as the routine method of closing the database.</
 <p><font face="Arial">
  CHAR and VARCHAR and LONGVARCHAR columns are by default compared and sorted according to POSIX standards. To use the current JRE locale for sorting and comparison, add the following database property to the properties file.</font>
 <p><font face="Arial, Helvetica" size="2"><font face="Arial">sql.compare_in_locale=true
-
 </font></font>
 <p>Columns of the type OTHER or OBJECT contain the serialized form of a Java Object in binary format. To insert or update such columns, a binary format string (see below under Expression) should be used. Using PreparedStatements with JDBC automates this transformation.
 <p><font face="Arial"><br>
@@ -1004,7 +1000,6 @@ strings.</font>
   VARCHAR); SELECT &quot;Nr&quot;, &quot;Name&quot;  FROM "Address";</font>
 <p><font face="Arial">The equivalent quoted identifier can be used for an unquoted identifer by converting the identifier to all uppercase and quoting it. For example, if a table  name is defined as  Address2 (unquoted), it can be referred to by its  quoted form, &quot;ADDRESS2&quot;, as well as address2, aDDress2 and ADDRESS2. Quoted identifiers should not be confused with SQL strings.</font>
 <p><font face="Arial">Quoting can sometimes be used for identifiers when there is an ambiguity. For example:</font>
-
 <p>SELECT COUNT(*) &quot;COUNT&quot; FROM MYTABLE;
 <p>Portability between different JRE locales is an issue when accented characters are used in unquoted  identifiers. Because native Java methods are used to convert the identifier to uppercase, the result may vary among different locales. It is recommended that accented characters are used only in quoted identifiers.
 <p>When using JDBC methods that take table, column, or index identifiers as arguments, treat the names as they are registered in the database. With these methods, unquoted identifiers should be used in all-uppercase to get the correct result. Quoted identifiers should be used in the exact case combination as they were defined - no quote character should be included in the name. JDBC methods that return a result set containing such identifiers return unquoted identifiers as all-uppercase and quoted identifiers in the exact case they are registered in the database <font color="#FF0000">(a change from 1.6.1 and previous versions)</font>.
