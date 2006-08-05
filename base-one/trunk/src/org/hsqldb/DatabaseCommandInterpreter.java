@@ -1238,8 +1238,8 @@ class DatabaseCommandInterpreter {
                 }
 
                 Constraint newconstraint =
-                    new Constraint(primaryConst.constName,
-                                   primaryConst.core.mainColArray);
+                    new Constraint(primaryConst.constName, t, t.getPrimaryIndex(),
+                                   Constraint.PRIMARY_KEY);
 
                 t.addConstraint(newconstraint);
                 database.schemaManager.registerConstraintName(

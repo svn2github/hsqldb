@@ -101,7 +101,7 @@ public class Index {
     private final HsqlName indexName;
     final boolean[]        colCheck;
     private final int[]    colIndex;
-    private final int[]    colType;
+    private final int[]    colTypes;
     final int[]            pkCols;
     final int[]            pkTypes;
     private final boolean  isUnique;    // DDL uniqueness
@@ -116,6 +116,7 @@ public class Index {
         null);
     IndexRowIterator updatableIterators;
     final boolean    onCommitPreserve;
+    final Table      table;
 
     /**
      * Constructor declaration
@@ -131,17 +132,18 @@ public class Index {
      * @param visColumns count of visible columns
      */
     Index(Database database, HsqlName name, Table table, int[] column,
-            int[] type, boolean isPk, boolean unique, boolean constraint,
+            int[] colTypes, boolean isPk, boolean unique, boolean constraint,
             boolean forward, int[] pkcols, int[] pktypes, boolean temp) {
 
-        indexName    = name;
-        colIndex     = column;
-        colType      = type;
-        pkCols       = pkcols;
-        pkTypes      = pktypes;
-        isUnique     = unique;
-        isConstraint = constraint;
-        isForward    = forward;
+        this.table     = table;
+        this.indexName = name;
+        this.colIndex  = column;
+        this.colTypes  = colTypes;
+        this.pkCols    = pkcols;
+        this.pkTypes   = pktypes;
+        isUnique       = unique;
+        isConstraint   = constraint;
+        isForward      = forward;
         useRowId = (!isUnique && pkCols.length == 0)
                    || (colIndex.length == 0);
         colCheck = table.getNewColumnCheckList();
@@ -203,7 +205,23 @@ public class Index {
      * Returns the array containing column indexes for index
      */
     int[] getColumnTypes() {
-        return colType;    // todo: this gives back also primary key field(s)!
+        return colTypes;    // todo: this gives back also primary key field(s)!
+    }
+
+    String getColumnNameList() {
+
+        String columnNameList = "";
+
+        for (int j = 0; j < colIndex.length; ++j) {
+            columnNameList +=
+                table.getColumn(colIndex[j]).columnName.statementName;
+
+            if (j < colIndex.length - 1) {
+                columnNameList += ",";
+            }
+        }
+
+        return columnNameList;
     }
 
     /**
@@ -297,8 +315,22 @@ public class Index {
             compare = compareRowForInsert(session, row, n.getRow());
 
             if (compare == 0) {
-                throw Trace.error(Trace.VIOLATION_OF_UNIQUE_INDEX,
-                                  indexName.name);
+                int    errorCode = Trace.VIOLATION_OF_UNIQUE_INDEX;
+                String name      = indexName.statementName;
+
+                if (isConstraint) {
+                    Constraint c =
+                        table.getUniqueOrPKConstraintForIndex(this);
+
+                    if (c != null) {
+                        name      = c.getName().name;
+                        errorCode = Trace.VIOLATION_OF_UNIQUE_CONSTRAINT;
+                    }
+                }
+
+                throw Trace.error(errorCode, new Object[] {
+                    name, getColumnNameList()
+                });
             }
 
             isleft = compare < 0;
@@ -848,7 +880,7 @@ public class Index {
             boolean t =
                 Column.compare(
                     collation, value, x.getData()[colIndex[0]],
-                    colType[0]) >= iTest;
+                    colTypes[0]) >= iTest;
 
             if (t) {
                 Node r = x.getRight();
@@ -879,7 +911,7 @@ public class Index {
         while (x != null) {
             Object colvalue = x.getData()[colIndex[0]];
             int result = Column.compare(collation, value, colvalue,
-                                        colType[0]);
+                                        colTypes[0]);
 
             if (result >= iTest) {
                 x = next(x);
@@ -914,7 +946,7 @@ public class Index {
 
         while (x != null) {
             boolean t = Column.compare(
-                collation, null, x.getData()[colIndex[0]], colType[0]) >= 0;
+                collation, null, x.getData()[colIndex[0]], colTypes[0]) >= 0;
 
             if (t) {
                 Node r = x.getRight();
@@ -1146,7 +1178,7 @@ public class Index {
                             Object[] b) throws HsqlException {
 
         int i = Column.compare(collation, a[rowColMap[0]], b[colIndex[0]],
-                               colType[0]);
+                               colTypes[0]);
 
         if (i != 0) {
             return i;
@@ -1156,7 +1188,7 @@ public class Index {
 
         for (int j = 1; j < fieldcount; j++) {
             i = Column.compare(collation, a[rowColMap[j]], b[colIndex[j]],
-                               colType[j]);
+                               colTypes[j]);
 
             if (i != 0) {
                 return i;
@@ -1214,7 +1246,7 @@ public class Index {
         for (; j < colIndex.length; j++) {
             Object currentvalue = a[colIndex[j]];
             int i = Column.compare(collation, currentvalue, b[colIndex[j]],
-                                   colType[j]);
+                                   colTypes[j]);
 
             if (i != 0) {
                 return i;

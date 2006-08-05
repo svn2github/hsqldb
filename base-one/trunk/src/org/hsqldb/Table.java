@@ -488,13 +488,14 @@ public class Table extends BaseTable {
      * @param  index
      * @return
      */
-    Constraint getUniqueConstraintForIndex(Index index) {
+    Constraint getUniqueOrPKConstraintForIndex(Index index) {
 
         for (int i = 0, size = constraintList.length; i < size; i++) {
             Constraint c = constraintList[i];
 
             if (c.getMainIndex() == index
-                    && c.getType() == Constraint.UNIQUE) {
+                    && (c.getType() == Constraint.UNIQUE
+                        || c.getType() == Constraint.PRIMARY_KEY)) {
                 return c;
             }
         }
@@ -1498,11 +1499,11 @@ public class Table extends BaseTable {
 
         int newindexNo = createIndexStructureGetNo(column, name, unique,
             constraint, forward);
-        Index       newindex     = indexList[newindexNo];
-        Index       primaryindex = getPrimaryIndex();
-        RowIterator it           = primaryindex.firstRow(session);
-        int         rowCount     = 0;
-        int         error        = 0;
+        Index         newindex     = indexList[newindexNo];
+        Index         primaryindex = getPrimaryIndex();
+        RowIterator   it           = primaryindex.firstRow(session);
+        int           rowCount     = 0;
+        HsqlException error        = null;
 
         try {
             while (it.hasNext()) {
@@ -1521,9 +1522,9 @@ public class Table extends BaseTable {
 
             return newindex;
         } catch (java.lang.OutOfMemoryError e) {
-            error = Trace.OUT_OF_MEMORY;
+            error = Trace.error(Trace.OUT_OF_MEMORY);
         } catch (HsqlException e) {
-            error = Trace.VIOLATION_OF_UNIQUE_INDEX;
+            error = e;
         }
 
         // backtrack on error
@@ -1547,7 +1548,7 @@ public class Table extends BaseTable {
 
         setBestRowIdentifiers();
 
-        throw Trace.error(error);
+        throw error;
     }
 
     /**
@@ -2031,13 +2032,16 @@ public class Table extends BaseTable {
                 indexList[i].insert(null, row, i);
             }
         } catch (HsqlException e) {
-            Index   index        = indexList[i];
-            boolean isconstraint = index.isConstraint;
 
-            if (isconstraint) {
-                throw Trace.error(Trace.VIOLATION_OF_UNIQUE_CONSTRAINT,
-                                  index.getName().name);
+            // unique index violation - rollback insert
+            for (--i; i >= 0; i--) {
+                Node n = row.getNode(i);
+
+                indexList[i].delete(null, n);
             }
+
+            row.delete();
+            removeRowFromStore(row);
 
             throw e;
         }
@@ -3294,8 +3298,6 @@ public class Table extends BaseTable {
                 indexList[i].insert(session, row, i);
             }
         } catch (HsqlException e) {
-            Index   index        = indexList[i];
-            boolean isconstraint = index.isConstraint;
 
             // unique index violation - rollback insert
             for (--i; i >= 0; i--) {
@@ -3306,14 +3308,6 @@ public class Table extends BaseTable {
 
             row.delete();
             removeRowFromStore(row);
-
-            if (isconstraint) {
-                Constraint c    = getUniqueConstraintForIndex(index);
-                String     name = c == null ? index.getName().name
-                                            : c.getName().name;
-
-                throw Trace.error(Trace.VIOLATION_OF_UNIQUE_CONSTRAINT, name);
-            }
 
             throw e;
         }

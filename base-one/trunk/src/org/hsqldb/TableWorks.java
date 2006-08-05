@@ -224,7 +224,8 @@ class TableWorks {
                 table.getSchemaName(), false);
         addOrDropPrimaryKey(cols, false);
 
-        Constraint newconstraint = new Constraint(name, cols);
+        Constraint newconstraint = new Constraint(name, table,
+            table.getPrimaryIndex(), Constraint.PRIMARY_KEY);
 
         table.addConstraint(newconstraint);
         table.database.schemaManager.registerConstraintName(name.name,
@@ -286,8 +287,9 @@ class TableWorks {
         // create an autonamed index
         HsqlName indexname = table.database.nameManager.newAutoName("IDX",
             name.name);
-        Index      index = createIndex(col, indexname, true, true, false);
-        Constraint newconstraint = new Constraint(name, table, index);
+        Index index = createIndex(col, indexname, true, true, false);
+        Constraint newconstraint = new Constraint(name, table, index,
+            Constraint.UNIQUE);
 
         table.addConstraint(newconstraint);
         table.database.schemaManager.registerConstraintName(name.name,
@@ -488,8 +490,8 @@ class TableWorks {
 
         if (column.isPrimaryKey()) {
             HsqlName pkNameAdd = tn.makeSysPKName();
-            Constraint newconstraint = new Constraint(pkNameAdd,
-                new int[]{ colIndex });
+            Constraint newconstraint = new Constraint(pkNameAdd, table,
+                table.getPrimaryIndex(), Constraint.PRIMARY_KEY);
 
             table.addConstraint(newconstraint);
             table.database.schemaManager.registerConstraintName(

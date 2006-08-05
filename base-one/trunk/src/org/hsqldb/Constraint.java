@@ -111,13 +111,13 @@ class Constraint {
     int              constType;
 
     /**
-     *  Constructor declaration for UNIQUE
+     *  Constructor declaration for PK and UNIQUE
      */
-    Constraint(HsqlName name, Table t, Index index) {
+    Constraint(HsqlName name, Table t, Index index, int type) {
 
         core           = new ConstraintCore();
         constName      = name;
-        constType      = UNIQUE;
+        constType      = type;
         core.mainTable = t;
         core.mainIndex = index;
         /* fredt - in unique constraints column list for iColMain is the
@@ -176,17 +176,6 @@ class Constraint {
         core.refIndex     = refIndex;
         core.deleteAction = deleteAction;
         core.updateAction = updateAction;
-    }
-
-    /**
-     * PK constraint constructor
-     */
-    Constraint(HsqlName name, int[] cols) {
-
-        core              = new ConstraintCore();
-        constName         = name;
-        constType         = PRIMARY_KEY;
-        core.mainColArray = cols;
     }
 
     /**

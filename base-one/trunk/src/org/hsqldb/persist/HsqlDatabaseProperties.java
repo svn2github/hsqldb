@@ -71,7 +71,7 @@ public class HsqlDatabaseProperties extends HsqlProperties {
     public static final String VERSION_STRING_1_8_0     = "1.8.0";
     public static final String FIRST_COMPATIBLE_VERSION = "1.8.0";
     public static final String THIS_VERSION             = "1.8.0";
-    public static final String THIS_FULL_VERSION        = "1.8.0.4";
+    public static final String THIS_FULL_VERSION        = "1.8.0.5";
     public static final String PRODUCT_NAME = "HSQL Database Engine";
     public static final int    MAJOR                    = 1,
                                MINOR                    = 8,
