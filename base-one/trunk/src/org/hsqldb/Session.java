@@ -597,6 +597,12 @@ public class Session implements SessionInterface {
 
         nestedOldTransIndex = rowActionList.size();
         isNestedTransaction = true;
+
+        if (isAutoCommit) {
+            try {
+                database.logger.writeToLog(this, "SET AUTOCOMMIT FALSE");
+            } catch (HsqlException e) {}
+        }
     }
 
     /**
@@ -627,8 +633,12 @@ public class Session implements SessionInterface {
         // reset after the rollback
         isNestedTransaction = false;
 
-        if (isAutoCommit == true) {
+        if (isAutoCommit) {
             database.txManager.commit(this);
+
+            try {
+                database.logger.writeToLog(this, "SET AUTOCOMMIT TRUE");
+            } catch (HsqlException e) {}
         }
     }
 

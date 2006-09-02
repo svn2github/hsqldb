@@ -6,6 +6,12 @@ hsqldb 1.8.0, including point releases, in reverse chronological order.
 Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
+Fixed issue where a crash during logging of an update query may result in
+incomplete logging and recovery
+Fixed issue where a PK defined after another constraint would result in wrong
+constraint name
+Fixed issue with incorrect evaluation of null values in CASE WHEN in certain cases
+
 2006.07.27 1.8.0.5
 
 (3 fixed issues affecting durability)

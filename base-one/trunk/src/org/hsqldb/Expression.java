@@ -3001,10 +3001,9 @@ public class Expression {
                     leftValue = ((Object[]) currValue)[0];
                 }
 
-                rightValue = currValue == null ? null
-                                               : eArg2.getAggregatedValue(
-                                                   session,
-                                                   ((Object[]) currValue)[1]);
+                rightValue = eArg2.getAggregatedValue(session,
+                                                      currValue == null ? null
+                                                                        : ((Object[]) currValue)[1]);
                 break;
 
             case AGGREGATE_BOTH :
@@ -3258,8 +3257,10 @@ public class Expression {
                 try {
                     return tableFilter.currentData[columnIndex];
                 } catch (NullPointerException e) {
-                    String name = tableName == null ? columnName :
-                        tableName + '.' + columnName;
+                    String name = tableName == null ? columnName
+                                                    : tableName + '.'
+                                                      + columnName;
+
                     throw Trace.error(Trace.COLUMN_NOT_FOUND, name);
                 }
             case FUNCTION :
