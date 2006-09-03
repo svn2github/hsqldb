@@ -4015,12 +4015,13 @@ public class Expression {
 
         // boucherb@users 20050516 - patch 1.8.0 removed DITypeInfo dependency
         if (valueClassName == null) {
-            valueClassName = (function == null)
-                             ? Types.getColStClsName(
-                                 (dataType == Types.VARCHAR_IGNORECASE)
-                                 ? Types.VARCHAR
-                                 : dataType)
-                             : function.getReturnClass().getName();
+            if (function == null) {
+                valueClassName = Types.getColStClsName(
+                    (dataType == Types.VARCHAR_IGNORECASE) ? Types.VARCHAR
+                                                           : dataType);
+            } else {
+                valueClassName = function.getReturnClassName();
+            }
         }
 
         return valueClassName;

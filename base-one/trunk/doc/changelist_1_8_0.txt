@@ -1,5 +1,7 @@
 Chronological Change List
 
+2006.09.03
+
 This file is the accumulated list of changes in the course of development of
 hsqldb 1.8.0, including point releases, in reverse chronological order.
 
@@ -11,6 +13,8 @@ incomplete logging and recovery
 Fixed issue where a PK defined after another constraint would result in wrong
 constraint name
 Fixed issue with incorrect evaluation of null values in CASE WHEN in certain cases
+Fixed issue where ResultSet column class names were misreported for functions
+returning primitive types
 
 2006.07.27 1.8.0.5
 

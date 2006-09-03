@@ -98,7 +98,7 @@ class Function {
 
     private String         sFunction;
     private Method         mMethod;
-    private Class          cReturnClass;
+    private String         returnClassName;
     private Class[]        aArgClasses;
     private int            iReturnType;
     private int            iArgCount;
@@ -193,9 +193,9 @@ class Function {
             methodCache.put(fqn, mMethod);
         }
 
-        cReturnClass = mMethod.getReturnType();
+        Class returnClass = mMethod.getReturnType();
 
-        if (cReturnClass.equals(org.hsqldb.Result.class)) {
+        if (returnClass.equals(org.hsqldb.Result.class)) {
 
             // For now, we can write stored procedures whose
             // descriptor explicitly specifies the above return type.
@@ -246,9 +246,11 @@ class Function {
             // types and presents the client with a view the underlying result
             // rather than with a view of the object as an opaque scalar value
             //
-            iReturnType = Types.getParameterTypeNr(cReturnClass);
+            iReturnType = Types.getParameterTypeNr(returnClass);
         }
 
+        returnClassName =
+            Types.getFunctionReturnClassName(returnClass.getName());
         aArgClasses  = mMethod.getParameterTypes();
         iArgCount    = aArgClasses.length;
         iArgType     = new int[iArgCount];
@@ -726,8 +728,8 @@ class Function {
     /**
      * Returns the Java Class of the object returned by getValue(). <p>
      */
-    Class getReturnClass() {
-        return cReturnClass;
+    String getReturnClassName() {
+        return returnClassName;
     }
 
     /**

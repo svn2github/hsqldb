@@ -33,6 +33,7 @@ package org.hsqldb;
 
 import org.hsqldb.lib.IntKeyHashMap;
 import org.hsqldb.lib.IntValueHashMap;
+import org.hsqldb.lib.HashMap;
 
 /**
  * Defines the constants that are used to identify SQL types for HSQLDB JDBC
@@ -455,16 +456,17 @@ public class Types {
 // boucherb@users - access changed for metadata 1.7.2
     static IntValueHashMap typeAliases;
     static IntKeyHashMap   typeNames;
-    static IntValueHashMap javaTypeNames;
+    static HashMap         javaTypeNames;
 
 //  boucherb@users - We can't handle method invocations in
-//                   Function.java whose number class is
+//                   Function.java or user-defined methods whose parameters
+//                   number class is
 //                   narrower than the corresponding internal
 //                   wrapper
     private static org.hsqldb.lib.HashSet illegalParameterClasses;
 
     static {
-        typeAliases = new IntValueHashMap(67, 1);
+        typeAliases = new IntValueHashMap(50);
 
         typeAliases.put("INTEGER", Types.INTEGER);
         typeAliases.put("INT", Types.INTEGER);
@@ -517,7 +519,7 @@ public class Types {
         typeAliases.put("java.lang.Void", Types.NULL);
 
         //
-        typeNames = new IntKeyHashMap(37);
+        typeNames = new IntKeyHashMap();
 
         typeNames.put(Types.NULL, "NULL");
         typeNames.put(Types.INTEGER, "INTEGER");
@@ -543,7 +545,7 @@ public class Types {
         typeNames.put(Types.OTHER, "OBJECT");
 
         //
-        illegalParameterClasses = new org.hsqldb.lib.HashSet(13);
+        illegalParameterClasses = new org.hsqldb.lib.HashSet();
 
         illegalParameterClasses.add(Byte.TYPE);
         illegalParameterClasses.add(Short.TYPE);
@@ -551,9 +553,45 @@ public class Types {
         illegalParameterClasses.add(Byte.class);
         illegalParameterClasses.add(Short.class);
         illegalParameterClasses.add(Float.class);
+
+        //
+        javaTypeNames = new HashMap();
+
+        javaTypeNames.put(DateClassName, "java.sql.Date");
+        javaTypeNames.put(TimeClassName, "java.sql.Time");
+        javaTypeNames.put(TimestampClassName, "java.sql.Timestamp");
+        javaTypeNames.put(DecimalClassName, "java.math.BigDecimal");
+        javaTypeNames.put("byte", "java.lang.Integer");
+        javaTypeNames.put("java.lang.Byte", "java.lang.Integer");
+        javaTypeNames.put("short", "java.lang.Integer");
+        javaTypeNames.put("java.lang.Short", "java.lang.Integer");
+        javaTypeNames.put("int", "java.lang.Integer");
+        javaTypeNames.put("java.lang.Integer", "java.lang.Integer");
+        javaTypeNames.put("long", "java.lang.Long");
+        javaTypeNames.put("java.lang.Long", "java.lang.Long");
+        javaTypeNames.put("double", "java.lang.Double");
+        javaTypeNames.put("java.lang.Double", "java.lang.Double");
+        javaTypeNames.put("boolean", "java.lang.Boolean");
+        javaTypeNames.put("java.lang.Boolean", "java.lang.Boolean");
+        javaTypeNames.put("java.lang.String", "java.lang.String");
+        javaTypeNames.put("void", "java.lang.Void");
+        javaTypeNames.put("[B", "[B");
     }
 
     /**
+     * Translates a type name returned from a method into the name of type
+     * returned in a ResultSet
+     */
+    static String getFunctionReturnClassName(String methodReturnType) {
+
+        String name = (String) javaTypeNames.get(methodReturnType);
+
+        return name == null ? "java.lang.Object"
+                            : name;
+    }
+
+    /**
+     * `
      *
      * @param type string
      * @return java.sql.Types int value
@@ -651,6 +689,7 @@ public class Types {
 
         if (type == Integer.MIN_VALUE) {
 
+            // ensure all nested types are serializable
             // byte[] is already covered as BINARY in typeAliases
             if (c.isArray()) {
                 while (c.isArray()) {
@@ -670,6 +709,7 @@ public class Types {
 
         return type;
     }
+
 
 /*
     static boolean areSimilar(int t1, int t2) {
