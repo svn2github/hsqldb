@@ -147,15 +147,7 @@ public class Log {
         properties = db.getProperties();
     }
 
-    /**
-     * When opening a database, the hsqldb.compatible_version property is
-     * used to determine if this version of the engine is equal to or greater
-     * than the earliest version of the engine capable of opening that
-     * database.<p>
-     *
-     * @throws  HsqlException
-     */
-    void open() throws HsqlException {
+    void initParams() {
 
         // Allows the user to set log size in the properties file.
         int logMegas = properties.getIntegerProperty(
@@ -169,6 +161,19 @@ public class Log {
         filesReadOnly  = database.isFilesReadOnly();
         scriptFileName = fileName + ".script";
         logFileName    = fileName + ".log";
+    }
+
+    /**
+     * When opening a database, the hsqldb.compatible_version property is
+     * used to determine if this version of the engine is equal to or greater
+     * than the earliest version of the engine capable of opening that
+     * database.<p>
+     *
+     * @throws  HsqlException
+     */
+    void open() throws HsqlException {
+
+        initParams();
 
         int state = properties.getDBModified();
 
@@ -190,7 +195,17 @@ public class Log {
                 break;
 
             case HsqlDatabaseProperties.FILES_NEW :
-                processNewFiles();
+                try {
+                    deleteBackup();
+                    backupData();
+                    renameNewBackup();
+                    renameNewScript();
+                    deleteLog();
+                    properties.setDBModified(
+                        HsqlDatabaseProperties.FILES_NOT_MODIFIED);
+                } catch (IOException e) {
+                    database.logger.appLog.logContext(e, null);
+                }
 
             // continue as non-modified files
             case HsqlDatabaseProperties.FILES_NOT_MODIFIED :
@@ -203,6 +218,8 @@ public class Log {
                 processScript();
 
                 if (isAnyCacheModified()) {
+                    properties.setDBModified(
+                        HsqlDatabaseProperties.FILES_MODIFIED);
                     close(false);
 
                     if (cache != null) {
@@ -232,8 +249,6 @@ public class Log {
 
         closeLog();
         deleteNewAndOldFiles();
-
-        // create '.script.new'
         writeScript(script);
         closeAllTextCaches(script);
 
@@ -249,46 +264,20 @@ public class Log {
 
         // set this one last to save the props
         properties.setDBModified(HsqlDatabaseProperties.FILES_NEW);
+        deleteLog();
 
-        if (cache != null) {
-            cache.postClose(!script);
+        if (script) {
+            deleteBackup();
+            deleteData();
+        } else {
+            try {
+                backupData();
+                renameNewBackup();
+            } catch (IOException e) {}
         }
 
-        // oj@openoffice.org - changed to file access api
-        try {
-            fa.renameElement(scriptFileName + ".new", scriptFileName);
-            fa.removeElement(logFileName);
-        } catch (IOException e) {
-            database.logger.appLog.logContext(
-                SimpleLog.LOG_ERROR,
-                "script file rename / log delete failed");
-            database.logger.appLog.logContext(e);
-        }
-
+        renameNewScript();
         properties.setDBModified(HsqlDatabaseProperties.FILES_NOT_MODIFIED);
-    }
-
-    void processNewFiles() throws HsqlException {
-
-        try {
-            if (fa.isStreamElement(fileName + ".data")) {
-                ZipUnzipFile.compressFile(fileName + ".data",
-                                          fileName + ".backup",
-                                          database.getFileAccess());
-            } else {
-                fa.removeElement(fileName + ".backup");
-            }
-
-            if (fa.isStreamElement(scriptFileName + ".new")) {
-                fa.renameElement(scriptFileName + ".new", scriptFileName);
-            }
-
-            fa.removeElement(logFileName);
-            properties.setDBModified(
-                HsqlDatabaseProperties.FILES_NOT_MODIFIED);
-        } catch (IOException e) {
-            database.logger.appLog.logContext(e);
-        }
     }
 
     /**
@@ -312,14 +301,53 @@ public class Log {
      */
     void deleteNewAndOldFiles() {
 
-        try {
-            fa.removeElement(fileName + ".data" + ".old");
-            fa.removeElement(fileName + ".data" + ".new");
-            fa.removeElement(fileName + ".backup" + ".new");
-            fa.removeElement(scriptFileName + ".new");
-        } catch (IOException e) {
-            database.logger.appLog.logContext(e);
+        fa.removeElement(fileName + ".data" + ".old");
+        fa.removeElement(fileName + ".data" + ".new");
+        fa.removeElement(fileName + ".backup" + ".new");
+        fa.removeElement(scriptFileName + ".new");
+    }
+
+    void deleteBackup() {
+        fa.removeElement(fileName + ".backup");
+    }
+
+    void deleteData() {
+        fa.removeElement(fileName + ".data");
+    }
+
+    void backupData() throws IOException {
+
+        if (fa.isStreamElement(fileName + ".data")) {
+            ZipUnzipFile.compressFile(fileName + ".data",
+                                      fileName + ".backup.new",
+                                      database.getFileAccess());
         }
+    }
+
+    void renameNewBackup() {
+
+        if (fa.isStreamElement(fileName + ".backup.new")) {
+            fa.renameElement(fileName + ".backup.new", fileName + ".backup");
+        }
+    }
+
+    void renameNewScript() {
+
+        if (fa.isStreamElement(scriptFileName + ".new")) {
+            fa.renameElement(scriptFileName + ".new", scriptFileName);
+        }
+    }
+
+    void deleteNewScript() {
+        fa.removeElement(scriptFileName + ".new");
+    }
+
+    void deleteNewBackup() {
+        fa.removeElement(scriptFileName + ".backup.new");
+    }
+
+    void deleteLog() {
+        fa.removeElement(logFileName);
     }
 
     /**
@@ -340,15 +368,12 @@ public class Log {
      */
     void checkpoint(boolean defrag) throws HsqlException {
 
-        database.logger.appLog.logContext(SimpleLog.LOG_NORMAL, "start");
-
         if (filesReadOnly) {
             return;
         }
 
-        closeLog();
-        closeAllTextCaches(false);
-        reopenAllTextCaches();
+        database.logger.appLog.logContext(SimpleLog.LOG_NORMAL, "start");
+        deleteNewAndOldFiles();
 
         if (cache != null) {
             if (forceDefrag()) {
@@ -358,30 +383,29 @@ public class Log {
             if (defrag) {
                 try {
                     cache.defrag();
-                } catch (Exception e) {
-                    cache.close(true);
-                    cache.postClose(true);
-                    cache.open(false);
-                }
+                } catch (Exception e) {}
             } else {
                 cache.close(true);
-                cache.postClose(true);
+
+                try {
+                    cache.backupFile();
+                } catch (IOException e1) {
+                    deleteNewBackup();
+                    cache.open(false);
+
+                    return;
+                }
+
                 cache.open(false);
             }
         }
 
         writeScript(false);
-
-        try {
-            fa.renameElement(scriptFileName + ".new", scriptFileName);
-            fa.removeElement(logFileName);
-        } catch (IOException e) {
-            database.logger.appLog.logContext(
-                SimpleLog.LOG_ERROR,
-                "script file rename / log delete failed");
-            database.logger.appLog.logContext(e);
-        }
-
+        properties.setDBModified(HsqlDatabaseProperties.FILES_NEW);
+        closeLog();
+        deleteLog();
+        renameNewScript();
+        renameNewBackup();
         properties.setDBModified(HsqlDatabaseProperties.FILES_MODIFIED);
 
         if (dbLogWriter == null) {
@@ -416,8 +440,9 @@ public class Log {
         long megas = properties.getIntegerProperty(
             HsqlDatabaseProperties.hsqldb_defrag_limit, 200);
         long defraglimit = megas * 1024 * 1024;
+        long lostSize    = cache.freeBlocks.getLostBlocksSize();
 
-        return cache.freeBlocks.getLostBlocksSize() > defraglimit;
+        return lostSize > defraglimit;
     }
 
     /**
@@ -452,7 +477,8 @@ public class Log {
 
     void setLogSize(int megas) {
 
-        properties.setProperty(HsqlDatabaseProperties.hsqldb_log_size, megas);
+        properties.setProperty(HsqlDatabaseProperties.hsqldb_log_size,
+                               String.valueOf(megas));
 
         maxLogSize = megas * 1024 * 1024;
     }
@@ -476,10 +502,10 @@ public class Log {
         scriptFormat = type;
 
         properties.setProperty(HsqlDatabaseProperties.hsqldb_script_format,
-                               scriptFormat);
+                               String.valueOf(scriptFormat));
 
         if (needsCheckpoint) {
-            checkpoint(false);
+            database.logger.needsCheckpoint = true;
         }
     }
 
@@ -516,7 +542,7 @@ public class Log {
         }
 
         if (maxLogSize > 0 && dbLogWriter.size() > maxLogSize) {
-            checkpoint(false);
+            database.logger.needsCheckpoint = true;
         }
     }
 
@@ -530,7 +556,7 @@ public class Log {
         }
 
         if (maxLogSize > 0 && dbLogWriter.size() > maxLogSize) {
-            checkpoint(false);
+            database.logger.needsCheckpoint = true;
         }
     }
 
@@ -544,7 +570,7 @@ public class Log {
         }
 
         if (maxLogSize > 0 && dbLogWriter.size() > maxLogSize) {
-            checkpoint(false);
+            database.logger.needsCheckpoint = true;
         }
     }
 
@@ -558,7 +584,7 @@ public class Log {
         }
 
         if (maxLogSize > 0 && dbLogWriter.size() > maxLogSize) {
-            checkpoint(false);
+            database.logger.needsCheckpoint = true;
         }
     }
 
@@ -571,7 +597,7 @@ public class Log {
         }
 
         if (maxLogSize > 0 && dbLogWriter.size() > maxLogSize) {
-            checkpoint(false);
+            database.logger.needsCheckpoint = true;
         }
     }
 
@@ -616,15 +642,7 @@ public class Log {
      */
     private void writeScript(boolean full) throws HsqlException {
 
-        String sNewName = scriptFileName + ".new";
-
-        try {
-            if (fa.isStreamElement(sNewName)) {
-                fa.removeElement(sNewName);
-            }
-        } catch (IOException e) {
-            database.logger.appLog.logContext(e);
-        }
+        deleteNewScript();
 
         //fredt - to do - flag for chache set index
         ScriptWriterBase scw = ScriptWriterBase.newScriptWriter(database,
@@ -663,7 +681,7 @@ public class Log {
                 closeAllTextCaches(false);
             }
 
-            database.logger.appLog.logContext(e);
+            database.logger.appLog.logContext(e, null);
 
             if (e instanceof HsqlException) {
                 throw (HsqlException) e;
@@ -692,7 +710,7 @@ public class Log {
         long dataLength = cache.getFileFreePos();
 
         if (logLength + dataLength > cache.maxDataFileSize) {
-            checkpoint(true);
+            database.logger.needsCheckpoint = true;
         }
     }
 

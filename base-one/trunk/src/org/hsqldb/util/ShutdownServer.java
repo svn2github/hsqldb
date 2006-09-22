@@ -90,10 +90,10 @@ public class ShutdownServer {
 
             // can use SHUTDOWN COMPACT or SHUTDOWN IMMEDIATELY
             statement.execute("SHUTDOWN " + shutdownarg);
-        } catch (ClassNotFoundException cnfe) {
-            System.err.println(cnfe);    // Driver not found
-        } catch (SQLException sqle) {
-            System.err.println(sqle);    // error connection to database
+        } catch (ClassNotFoundException e) {
+            System.err.println(e);    // Driver not found
+        } catch (SQLException e) {
+            System.err.println(e);    // error connection to database
         }
     }
 

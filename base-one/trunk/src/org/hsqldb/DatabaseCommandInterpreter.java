@@ -2107,9 +2107,6 @@ class DatabaseCommandInterpreter {
 
                 p = database.getProperties();
 
-                Trace.check(p.isSetPropertyAllowed(token),
-                            Trace.ACCESS_IS_DENIED, token);
-
                 boolean isboolean  = p.isBoolean(token);
                 boolean isintegral = p.isIntegral(token);
                 boolean isstring   = p.isString(token);
@@ -2130,7 +2127,7 @@ class DatabaseCommandInterpreter {
                     }
                 }
 
-                p.setProperty(token, value.toString().toLowerCase());
+                p.setDatabaseProperty(token, value.toString().toLowerCase());
                 p.setDatabaseVariables();
 
                 break;

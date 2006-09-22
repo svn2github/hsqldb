@@ -31,8 +31,6 @@
 
 package org.hsqldb.persist;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -157,6 +155,28 @@ public class HsqlProperties {
         return defaultValue;
     }
 
+    /**
+     * Choice limited to values list, defaultValue must be in the values list.
+     */
+    public int getIntegerProperty(String key, int defaultValue,
+                                  int[] values) {
+
+        String prop  = getProperty(key);
+        int    value = defaultValue;
+
+        try {
+            if (prop != null) {
+                value = Integer.parseInt(prop);
+            }
+        } catch (NumberFormatException e) {}
+
+        if (ArrayUtil.find(values, value) == -1) {
+            return defaultValue;
+        }
+
+        return value;
+    }
+
     public boolean isPropertyTrue(String key) {
         return isPropertyTrue(key, false);
     }
@@ -262,8 +282,10 @@ public class HsqlProperties {
 
         OutputStream fos = fa.openOutputStreamElement(fileString);
 
-        JavaSystem.saveProperties(stringProps,
-                                  HsqlDatabaseProperties.PRODUCT_NAME, fos);
+        JavaSystem.saveProperties(
+            stringProps,
+            HsqlDatabaseProperties.PRODUCT_NAME + " "
+            + HsqlDatabaseProperties.THIS_FULL_VERSION, fos);
         fos.close();
 
         return;

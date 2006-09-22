@@ -1009,7 +1009,7 @@ implements PreparedStatement {
             if (out != null) {
                 try {
                     out.close();
-                } catch (IOException e1) {}
+                } catch (IOException e) {}
             }
         }
     }
@@ -1398,7 +1398,7 @@ implements PreparedStatement {
             if (out != null) {
                 try {
                     out.close();
-                } catch (IOException e1) {}
+                } catch (IOException e) {}
             }
         }
     }

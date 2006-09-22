@@ -43,6 +43,7 @@ import org.hsqldb.Result;
 import org.hsqldb.ResultConstants;
 import org.hsqldb.Session;
 import org.hsqldb.Trace;
+import org.hsqldb.lib.SimpleLog;
 import org.hsqldb.lib.StringConverter;
 import org.hsqldb.rowio.RowInputTextLog;
 
@@ -93,7 +94,8 @@ public class ScriptReaderText extends ScriptReaderBase {
             Result result = session.sqlExecuteDirectNoPreChecks(statement);
 
             if (result != null && result.mode == ResultConstants.ERROR) {
-                db.logger.appLog.logContext(result.getException());
+                db.logger.appLog.logContext(SimpleLog.LOG_ERROR,
+                                            result.getMainString());
 
                 /** @todo fredt - if unavaialble external functions are to be ignored */
                 throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
@@ -136,7 +138,7 @@ public class ScriptReaderText extends ScriptReaderBase {
 
             db.setReferentialIntegrity(true);
         } catch (Exception e) {
-            db.logger.appLog.logContext(e);
+            db.logger.appLog.logContext(e, null);
 
             throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
                               Trace.DatabaseScriptReader_readExistingData,

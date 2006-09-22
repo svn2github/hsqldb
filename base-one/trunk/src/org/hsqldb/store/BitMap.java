@@ -57,6 +57,9 @@ public class BitMap {
         map             = new int[words];
     }
 
+    /**
+     * Resets to blank with original capacity
+     */
     public void reset() {
         map      = new int[defaultCapacity / 32];
         capacity = defaultCapacity;

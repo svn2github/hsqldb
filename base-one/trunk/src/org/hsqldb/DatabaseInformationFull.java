@@ -822,53 +822,20 @@ extends org.hsqldb.DatabaseInformationMain {
         nameSpace = "database.properties";
 
         // boolean properties
-        Iterator it = props.getBooleanPropertyNames().iterator();
+        Iterator it = props.getUserDefinedPropertyData().iterator();
 
         while (it.hasNext()) {
-            String name = (String) it.next();
+            Object[] metaData = (Object[]) it.next();
 
             row         = t.getEmptyRowData();
             row[iscope] = scope;
             row[ins]    = nameSpace;
-            row[iname]  = name;
-            row[ivalue] = props.getProperty(name, "false");
-            row[iclass] = "boolean";
+            row[iname]  = metaData[HsqlDatabaseProperties.indexName];
+            row[ivalue] = props.getProperty((String) row[iname]);
+            row[iclass] = metaData[HsqlDatabaseProperties.indexClass];
 
             t.insertSys(row);
         }
-
-        // integral properties
-        it = props.getIntegralPropertyNames().iterator();
-
-        while (it.hasNext()) {
-            String name = (String) it.next();
-
-            row         = t.getEmptyRowData();
-            row[iscope] = scope;
-            row[ins]    = nameSpace;
-            row[iname]  = name;
-            row[ivalue] = props.getProperty(name, "0");
-            row[iclass] = "int";
-
-            t.insertSys(row);
-        }
-
-        // string properties
-        it = props.getStringPropertyNames().iterator();
-
-        while (it.hasNext()) {
-            String name = (String) it.next();
-
-            row         = t.getEmptyRowData();
-            row[iscope] = scope;
-            row[ins]    = nameSpace;
-            row[iname]  = name;
-            row[ivalue] = props.getProperty(name, "");
-            row[iclass] = "java.lang.String";
-
-            t.insertSys(row);
-        }
-
         row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
@@ -1193,8 +1160,7 @@ extends org.hsqldb.DatabaseInformationMain {
             row[itable_schem] = table.getSchemaName();
             row[itable_name]  = table.getName().name;
 
-            if (table.getCache() != null
-                    && table.getCache() instanceof TextCache) {
+            if (table.getCache() instanceof TextCache) {
                 tc        = (TextCache) table.getCache();
                 row[idsd] = table.getDataSource();
                 row[ifile_path] =

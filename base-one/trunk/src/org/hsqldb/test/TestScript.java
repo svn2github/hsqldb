@@ -40,17 +40,19 @@ public class TestScript extends TestBase {
 //    String path = "TestSelfCheckConstraints.txt";
 //    String path = "TestSelfConstraints.txt";
 //    String path = "TestSelfFieldLimits.txt";
-//      String path = "TestSelfIssues.txt";
+//    String path = "TestSelfIssues.txt";
+//    String path = "TestSelfJoins.txt";
 //    String path = "TestSelfLeftJoin.txt";
 //    String path = "TestSelfNameResolution.txt";
 //    String path = "TestSelfInPredicateReferencing.txt";
-    String path = "TestSelfRoleNesting.txt";
-
+//   String path = "TestSelfRoleNesting.txt";
 //    String path = "TestSelfQueries.txt";
 //    String path = "TestSelfSchemaPersistB1.txt";
 //    String path = "TestSelfUnions.txt";
 //    String path = "TestSelfUserFunction.txt";
-//    String path = "TestTemp.txt";
+//    String path = "TestSelfViews.txt";
+    String path = "TestTemp.txt";
+
     public TestScript(String name) {
         super(name);
     }

@@ -720,7 +720,7 @@ public class LockFile {
             if (fis != null) {
                 try {
                     fis.close();
-                } catch (java.io.IOException ioe) {}
+                } catch (java.io.IOException e) {}
             }
         }
 

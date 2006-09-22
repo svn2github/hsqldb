@@ -53,6 +53,7 @@ public class ScaledRAFileHybrid implements ScaledRAInterface {
     final Database    database;
     final String      fileName;
     final boolean     isReadOnly;
+    final boolean     wasNio;
     long              maxLength;
     ScaledRAInterface store;
 
@@ -64,6 +65,8 @@ public class ScaledRAFileHybrid implements ScaledRAInterface {
         this.isReadOnly = readOnly;
 
         newStore(0);
+
+        this.wasNio = store.wasNio();
     }
 
     public long length() throws IOException {
@@ -129,7 +132,7 @@ public class ScaledRAFileHybrid implements ScaledRAInterface {
     }
 
     public boolean wasNio() {
-        return true;
+        return wasNio;
     }
 
     public boolean canAccess(int length) {
@@ -162,7 +165,7 @@ public class ScaledRAFileHybrid implements ScaledRAInterface {
         newStore(position);
     }
 
-    void newStore(long requiredSize) throws IOException {
+    void newStore(long requiredPosition) throws IOException {
 
         long currentPosition = 0;
 
@@ -172,10 +175,10 @@ public class ScaledRAFileHybrid implements ScaledRAInterface {
             store.close();
         }
 
-        if (requiredSize <= ScaledRAFile.MAX_NIO_LENGTH) {
+        if (requiredPosition <= ScaledRAFile.MAX_NIO_LENGTH) {
             try {
                 store = new ScaledRAFileNIO(database, fileName, isReadOnly,
-                                            (int) requiredSize);
+                                            (int) requiredPosition);
 
                 store.seek(currentPosition);
 

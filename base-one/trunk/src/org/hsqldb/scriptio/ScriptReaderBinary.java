@@ -33,6 +33,7 @@ package org.hsqldb.scriptio;
 
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -44,6 +45,7 @@ import org.hsqldb.Session;
 import org.hsqldb.Table;
 import org.hsqldb.Trace;
 import org.hsqldb.lib.Iterator;
+import org.hsqldb.lib.SimpleLog;
 import org.hsqldb.rowio.RowInputBase;
 import org.hsqldb.rowio.RowInputBinary;
 
@@ -89,7 +91,8 @@ class ScriptReaderBinary extends ScriptReaderBase {
             Result   result = session.sqlExecuteDirectNoPreChecks(s);
 
             if (result.mode == ResultConstants.ERROR) {
-                db.logger.appLog.logContext(result.getException());
+                db.logger.appLog.logContext(SimpleLog.LOG_ERROR,
+                                            result.getMainString());
 
                 /** @todo fredt - trap if unavaialble external functions are to be ignored */
                 throw Trace.error(result);
@@ -183,17 +186,21 @@ class ScriptReaderBinary extends ScriptReaderBase {
 
     boolean readRow(RowInputBase rowin, int pos) throws IOException {
 
-        int length = dataStreamIn.readInt();
-        int count  = 4;
+        try {
+            int length = dataStreamIn.readInt();
+            int count  = 4;
 
-        if (length == 0) {
+            if (length == 0) {
+                return false;
+            }
+
+            rowin.resetRow(pos, length);
+            dataStreamIn.readFully(rowin.getBuffer(), count, length - count);
+
+            return true;
+        } catch (EOFException e) {
             return false;
         }
-
-        rowin.resetRow(pos, length);
-        dataStreamIn.readFully(rowin.getBuffer(), count, length - count);
-
-        return true;
     }
 
     public boolean readLoggedStatement(Session session) throws IOException {

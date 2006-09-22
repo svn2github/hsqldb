@@ -72,7 +72,7 @@ public class Cache {
     int       makeRowCount = 0;
     int       saveRowCount = 0;
 
-    public Cache(DataFileCache dfc) {
+    Cache(DataFileCache dfc) {
 
         dataFileCache    = dfc;
         capacity         = dfc.capacity();
@@ -87,27 +87,27 @@ public class Cache {
      *  Structural initialisations take place here. This allows the Cache to
      *  be resized while the database is in operation.
      */
-    public void init(int capacity, long bytesCapacity) {}
+    void init(int capacity, long bytesCapacity) {}
 
-    public int size() {
+    int size() {
         return cacheMap.size();
     }
 
-    public long getTotalCachedBlockSize() {
+    long getTotalCachedBlockSize() {
         return cacheBytesLength;
     }
 
     /**
      * Returns a row if in memory cache.
      */
-    public synchronized CachedObject get(int pos) {
+    synchronized CachedObject get(int pos) {
         return (CachedObject) cacheMap.get(pos);
     }
 
     /**
      * Adds a row to the cache.
      */
-    public synchronized void put(int key,
+    synchronized void put(int key,
                                  CachedObject row) throws IOException {
 
         int storageSize = row.getStorageSize();
@@ -125,7 +125,7 @@ public class Cache {
     /**
      * Removes an object from memory cache. Does not release the file storage.
      */
-    public synchronized CachedObject release(int i) {
+    synchronized CachedObject release(int i) {
 
         CachedObject r = (CachedObject) cacheMap.remove(i);
 
@@ -176,7 +176,7 @@ public class Cache {
         saveRows(savecount);
     }
 
-    synchronized void saveRows(int count) throws IOException {
+    private synchronized void saveRows(int count) throws IOException {
 
         if (count == 0) {
             return;
@@ -203,7 +203,7 @@ public class Cache {
     /**
      * Writes out all modified cached Rows.
      */
-    public synchronized void saveAll() throws IOException {
+    synchronized void saveAll() throws IOException {
 
         Iterator it        = cacheMap.iterator();
         int      savecount = 0;

@@ -663,10 +663,10 @@ public class Server implements HsqlSocketRequestHandler {
      * Typically, this will be one of: <p>
      *
      * <ol>
-     * <li>SERVER_ONLINE
-     * <li>SERVER_OPENING
-     * <li>SERVER_CLOSING
-     * <li>SERVER_SHUTDOWN
+     * <li>ServerProperties.SERVER_STATE_ONLINE (1)
+     * <li>ServerProperties.SERVER_STATE_OPENING (4)
+     * <li>ServerProperties.SERVER_STATE_CLOSING (8)
+     * <li>ServerProperties.SERVER_STATE_SHUTDOWN (16)
      * </ol>
      *
      * @return this server's state code.
@@ -1906,12 +1906,12 @@ public class Server implements HsqlSocketRequestHandler {
                                                 : dbnum;
                     dblist[dbnum] =
                         serverProperties.getProperty(key).toLowerCase();
-                } catch (NumberFormatException e1) {
-                    printWithThread("dblist: " + e1.toString());
+                } catch (NumberFormatException e) {
+                    printWithThread("dblist: " + e.toString());
                 }
             }
-        } catch (ArrayIndexOutOfBoundsException e2) {
-            printWithThread("dblist: " + e2.toString());
+        } catch (ArrayIndexOutOfBoundsException e) {
+            printWithThread("dblist: " + e.toString());
         }
 
         return dblist;
@@ -2120,13 +2120,13 @@ public class Server implements HsqlSocketRequestHandler {
             while (true) {
                 try {
                     handleConnection(socket.accept());
-                } catch (java.io.InterruptedIOException iioe) {}
+                } catch (java.io.InterruptedIOException e) {}
             }
-        } catch (IOException ioe) {
+        } catch (IOException e) {
             if (getState() == ServerConstants.SERVER_STATE_ONLINE) {
-                setServerError(ioe);
+                setServerError(e);
                 printError(this + ".run()/handleConnection(): ");
-                printStackTrace(ioe);
+                printStackTrace(e);
             }
         } catch (Throwable t) {
             printWithThread(t.toString());

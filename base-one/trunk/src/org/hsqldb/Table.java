@@ -3253,18 +3253,6 @@ public class Table extends BaseTable {
         return (CachedRow) rowStore.get((int) id);
     }
 
-    void registerRow(CachedRow row) {}
-
-    /**
-     * called in autocommit mode or by transaction manager when a a delete is committed
-     */
-    void removeRowFromPersistence(Row row) {
-
-        if (isText && cache != null) {
-            rowStore.removePersistence(row.getPos());
-        }
-    }
-
     /**
      * called in autocommit mode or by transaction manager when a a delete is committed
      */
@@ -3298,6 +3286,8 @@ public class Table extends BaseTable {
                 indexList[i].insert(session, row, i);
             }
         } catch (HsqlException e) {
+            Index   index        = indexList[i];
+            boolean isconstraint = index.isConstraint;
 
             // unique index violation - rollback insert
             for (--i; i >= 0; i--) {
@@ -3308,6 +3298,14 @@ public class Table extends BaseTable {
 
             row.delete();
             removeRowFromStore(row);
+
+            if (isconstraint) {
+                Constraint c    = getUniqueOrPKConstraintForIndex(index);
+                String     name = c == null ? index.getName().name
+                                            : c.getName().name;
+
+                throw Trace.error(Trace.VIOLATION_OF_UNIQUE_CONSTRAINT, name);
+            }
 
             throw e;
         }
@@ -3482,7 +3480,7 @@ public class Table extends BaseTable {
                 return row;
             } catch (HsqlException e) {
                 return null;
-            } catch (IOException e1) {
+            } catch (IOException e) {
                 return null;
             }
         }
@@ -3518,7 +3516,7 @@ public class Table extends BaseTable {
                 if (Table.this.isText) {
                     cache.saveRow(row);
                 }
-            } catch (IOException e1) {
+            } catch (IOException e) {
 
                 //
             }

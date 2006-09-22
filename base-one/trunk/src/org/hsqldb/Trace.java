@@ -712,11 +712,11 @@ public class Trace {
             Exception e = new Exception();
 
             throw e;
-        } catch (Exception e1) {
+        } catch (Exception e) {
             HsqlByteArrayOutputStream os = new HsqlByteArrayOutputStream();
             PrintWriter               pw = new PrintWriter(os, true);
 
-            e1.printStackTrace(pw);
+            e.printStackTrace(pw);
 
             return os.toString();
         }

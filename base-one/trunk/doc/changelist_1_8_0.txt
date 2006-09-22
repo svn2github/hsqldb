@@ -1,13 +1,14 @@
 Chronological Change List
 
-2006.09.03
-
 This file is the accumulated list of changes in the course of development of
 hsqldb 1.8.0, including point releases, in reverse chronological order.
 
 Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
+2006.09.22  1.8.0.6
+
+Fixed issue where missing dbname.0 in server properties files was not ignored
 Fixed issue where a crash during logging of an update query may result in
 incomplete logging and recovery
 Fixed issue where a PK defined after another constraint would result in wrong
@@ -27,7 +28,7 @@ Fixed bug where an automatic rollback of an UPDATE statement was not logged.
 Fixed bug with nested JDBC escapes.
 Fixed bug with logging of schema definition.
 Fixed bug where DROP TABLE was allowed even when a view used the table.
-Fixed bug where DISTINCT some GROUP BY lists were not allowed.
+Fixed bug where DISTINCT together with some GROUP BY lists were not allowed.
 Fixed bug where Server.shutdown() threw spurious NPE.
 
 Improved .data file persistence classes with better errror logging.

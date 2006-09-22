@@ -586,7 +586,7 @@ public class Types {
 
         String name = (String) javaTypeNames.get(methodReturnType);
 
-        return name == null ? "java.lang.Object"
+        return name == null ? methodReturnType
                             : name;
     }
 
@@ -709,7 +709,6 @@ public class Types {
 
         return type;
     }
-
 
 /*
     static boolean areSimilar(int t1, int t2) {

@@ -83,12 +83,12 @@ public class TestCacheSize {
     protected String filepath = "/hsql/testcache/test";
 
     // frequent reporting of progress
-    boolean reportProgress = false;
+    boolean reportProgress = true;
 
     // type of the big table {MEMORY | CACHED | TEXT | ""}
     String  tableType      = "CACHED";
-    int     cacheScale     = 12;
-    int     cacheSizeScale = 10;
+    int     cacheScale     = 8;
+    int     cacheSizeScale = 8;
     boolean nioMode        = false;
 
     // script format {TEXT | BINARY | COMPRESSED}
@@ -107,10 +107,10 @@ public class TestCacheSize {
     int     deleteWhileInsertInterval = 10000;
 
     // size of the tables used in test
-    int bigrows = 16000;
+    int bigrows = 256000;
 
     // number of ops
-    int bigops    = 16000;
+    int bigops    = 256000;
     int smallops  = 8000;
     int smallrows = 0xfff;
 
@@ -127,14 +127,16 @@ public class TestCacheSize {
     private void checkSelects() {
 
         countTestID();
-        selectID();
+
+//        selectID();
         selectZipTable();
     }
 
     private void checkUpdates() {
 
         updateIDLinear();
-        updateID();
+
+//        updateID();
         countTestID();
         deleteTest();
         countTestID();
@@ -168,10 +170,11 @@ public class TestCacheSize {
                         user, password);
                 sStatement = cConnection.createStatement();
 
-                sStatement.execute("SET WRITE_DELAY " + 10);
-                sStatement.execute("SET CHECKPOINT DEFRAG " + 10);
+                sStatement.execute("SET WRITE_DELAY " + 100 + " MILLIS");
+                sStatement.execute("SET CHECKPOINT DEFRAG " + 0);
                 sStatement.execute("SET SCRIPTFORMAT " + logType);
-                sStatement.execute("SET LOGSIZE " + 6);
+                sStatement.execute("SET LOGSIZE " + 0);
+                sStatement.execute("SET PROPERTY \"hsqldb.applog\" " + 1);
                 sStatement.execute("SET PROPERTY \"hsqldb.cache_scale\" "
                                    + cacheScale);
                 sStatement.execute("SET PROPERTY \"hsqldb.cache_size_scale\" "
@@ -827,6 +830,14 @@ public class TestCacheSize {
 
                 count += ps.executeUpdate();
 
+/*
+                if ((i + 1) % 10000 == 0) {
+                    Statement st = cConnection.createStatement();
+
+                    st.execute("CHECKPOINT DEFRAG");
+                    st.close();
+                }
+*/
                 if (reportProgress && (i + 1) % 10000 == 0
                         || (slow && (i + 1) % 100 == 0)) {
                     System.out.println("delete " + (i + 1) + " : "

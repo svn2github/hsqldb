@@ -70,14 +70,15 @@ public class DataFileCache {
     public static final int FLAG_ROWINFO = 3;
 
     // file format fields
-    static final int LONG_EMPTY_SIZE   = 4;     // empty space size
-    static final int LONG_FREE_POS_POS = 12;    // where iFreePos is saved
-    static final int FLAGS_POS         = 28;
-    static final int INITIAL_FREE_POS  = 32;
+    static final int LONG_EMPTY_SIZE      = 4;     // empty space size
+    static final int LONG_FREE_POS_POS    = 12;    // where iFreePos is saved
+    static final int LONG_EMPTY_INDEX_POS = 20;    // empty space index
+    static final int FLAGS_POS            = 28;
+    static final int INITIAL_FREE_POS     = 32;
 
     //
     DataFileBlockManager     freeBlocks;
-    private static final int FREE_BLOCKS_COUNT = 512;
+    private static final int initIOBufferSize = 256;
 
     //
     protected String   fileName;
@@ -108,8 +109,9 @@ public class DataFileCache {
     //
     protected Storage dataFile;
     protected long    fileFreePosition;
-    protected int     maxCacheSize;             // number of Rows
-    protected long    maxCacheBytes;            // number of bytes
+    protected int     maxCacheSize;                // number of Rows
+    protected long    maxCacheBytes;               // number of bytes
+    protected int     maxFreeBlocksSize;
     protected Cache   cache;
 
     public DataFileCache(Database db,
@@ -126,21 +128,26 @@ public class DataFileCache {
     protected void initParams(Database database,
                               String baseFileName) throws HsqlException {
 
+        HsqlDatabaseProperties props = database.getProperties();
+
         fileName       = baseFileName + ".data";
         backupFileName = baseFileName + ".backup";
         this.database  = database;
         fa             = database.getFileAccess();
 
-        int cacheScale = database.getProperties().getIntegerProperty(
+        int cacheScale = props.getIntegerProperty(
             HsqlDatabaseProperties.hsqldb_cache_scale, 14, 8, 18);
-        int cacheSizeScale = database.getProperties().getIntegerProperty(
+        int cacheSizeScale = props.getIntegerProperty(
             HsqlDatabaseProperties.hsqldb_cache_size_scale, 10, 6, 20);
+        int cacheFreeCountScale = props.getIntegerProperty(
+            HsqlDatabaseProperties.hsqldb_cache_free_count_scale, 9, 6, 12);
 
         cacheFileScale = database.getProperties().getIntegerProperty(
             HsqlDatabaseProperties.hsqldb_cache_file_scale, 1);
 
-        Trace.printSystemOut("cache_scale: " + cacheScale);
-        Trace.printSystemOut("cache_size_scale: " + cacheSizeScale);
+        if (cacheFileScale != 1) {
+            cacheFileScale = 8;
+        }
 
         cacheReadonly = database.isFilesReadOnly();
 
@@ -235,18 +242,24 @@ public class DataFileCache {
                 }
             } else {
                 fileFreePosition = INITIAL_FREE_POS;
+
+                dataFile.seek(LONG_FREE_POS_POS);
+                dataFile.writeLong(INITIAL_FREE_POS);
+
+                // set unsaved flag;
+                dataFile.seek(FLAGS_POS);
+                dataFile.writeInt(0);
             }
 
             initBuffers();
 
             fileModified = false;
-            freeBlocks = new DataFileBlockManager(FREE_BLOCKS_COUNT,
+            freeBlocks = new DataFileBlockManager(maxFreeBlocksSize,
                                                   cacheFileScale, freesize);
 
             database.logger.appLog.logContext(SimpleLog.LOG_NORMAL, "end");
         } catch (Throwable e) {
-            database.logger.appLog.logContext(SimpleLog.LOG_ERROR, "failed");
-            database.logger.appLog.logContext(e);
+            database.logger.appLog.logContext(e, "failed");
             close(false);
 
             throw Trace.error(Trace.FILE_IO_ERROR, Trace.DataFileCache_open,
@@ -262,8 +275,8 @@ public class DataFileCache {
      *
      *  When false, just closes the file.
      *
-     *  When true, writes out all cached rows that have been modified and the free
-     *  position pointer for the *.data file and then closes the file.
+     *  When true, writes out all cached rows that have been modified and the
+     *  free position pointer for the *.data file and then closes the file.
      */
     public void close(boolean write) throws HsqlException {
 
@@ -341,7 +354,7 @@ public class DataFileCache {
                 fa.removeElement(backupFileName);
             }
         } catch (Throwable e) {
-            appLog.logContext(e);
+            appLog.logContext(e, null);
 
             throw Trace.error(Trace.FILE_IO_ERROR, Trace.DataFileCache_close,
                               new Object[] {
@@ -350,53 +363,17 @@ public class DataFileCache {
         }
     }
 
-    void postClose(boolean keep) throws HsqlException {
-
-        SimpleLog appLog = database.logger.appLog;
-
-        if (cacheReadonly) {
-            return;
-        }
-
-        try {
-            appLog.sendLine(SimpleLog.LOG_NORMAL,
-                            "DataFileCache.postClose(" + keep + ") : start");
-
-            if (keep) {
-                database.getProperties().setProperty(
-                    HsqlDatabaseProperties.hsqldb_cache_version,
-                    HsqlDatabaseProperties.VERSION_STRING_1_7_0);
-                database.getProperties().save();
-                appLog.sendLine(SimpleLog.LOG_NORMAL,
-                                "DataFileCache.postClose() : save props");
-
-                if (fileModified) {
-                    backup();
-                }
-            } else {
-                fa.removeElement(backupFileName);
-                appLog.sendLine(SimpleLog.LOG_NORMAL,
-                                "DataFileCache.postClose() : delete backup");
-                deleteOrResetFreePos(database, fileName);
-                appLog.sendLine(SimpleLog.LOG_NORMAL,
-                                "DataFileCache.postClose() : delete file");
-            }
-        } catch (IOException e) {
-            throw new HsqlException(
-                e, Trace.getMessage(Trace.GENERAL_IO_ERROR),
-                Trace.GENERAL_IO_ERROR);
-        }
-    }
-
     protected void initBuffers() {
 
         if (rowOut == null
-                || ((RowOutputBinary) rowOut).getBuffer().length > 256) {
+                || ((RowOutputBinary) rowOut).getBuffer().length
+                   > initIOBufferSize) {
             rowOut = new RowOutputBinary(256);
         }
 
         if (rowIn == null
-                || ((RowInputBinary) rowIn).getBuffer().length > 256) {
+                || ((RowInputBinary) rowIn).getBuffer().length
+                   > initIOBufferSize) {
             rowIn = new RowInputBinary(new byte[256]);
         }
     }
@@ -414,38 +391,20 @@ public class DataFileCache {
             return;
         }
 
+        database.logger.appLog.logContext(SimpleLog.LOG_NORMAL, "start");
+
         try {
+            boolean wasNio = dataFile.wasNio();
+
             cache.saveAll();
 
-            boolean        wasNio = dataFile.wasNio();
             DataFileDefrag dfd = new DataFileDefrag(database, this, fileName);
 
             dfd.process();
             close(false);
-            Trace.printSystemOut("closed old cache");
-
-            // first attemp to delete
-            fa.removeElement(fileName);
-
-            if (wasNio) {
-                System.gc();
-
-                if (fa.isStreamElement(fileName)) {
-                    fa.removeElement(fileName);
-
-                    if (fa.isStreamElement(fileName)) {
-                        fa.renameElement(fileName, fileName + ".old");
-
-                        File oldfile = new File(fileName + ".old");
-
-                        FileUtil.deleteOnExit(oldfile);
-                    }
-                }
-            }
-
-            // oj@openofice.org - change to file access api
-            fa.renameElement(fileName + ".new", fileName);
-            backup();
+            deleteFile(wasNio);
+            renameDataFile();
+            backupFile();
             database.getProperties().setProperty(
                 HsqlDatabaseProperties.hsqldb_cache_version,
                 HsqlDatabaseProperties.VERSION_STRING_1_7_0);
@@ -457,15 +416,15 @@ public class DataFileCache {
             open(cacheReadonly);
             dfd.updateTableIndexRoots();
             dfd.updateTransactionRowIDs();
-            Trace.printSystemOut("opened cache");
         } catch (Throwable e) {
-            database.logger.appLog.logContext(e);
-            e.printStackTrace();
+            database.logger.appLog.logContext(e, null);
 
             throw new HsqlException(
                 e, Trace.getMessage(Trace.GENERAL_IO_ERROR),
                 Trace.GENERAL_IO_ERROR);
         }
+
+        database.logger.appLog.logContext(SimpleLog.LOG_NORMAL, "end");
     }
 
     /**
@@ -595,9 +554,7 @@ public class DataFileCache {
 
             return object;
         } catch (IOException e) {
-            database.logger.appLog.logContext(SimpleLog.LOG_ERROR,
-                                              fileName + " get pos: " + i);
-            database.logger.appLog.logContext(e);
+            database.logger.appLog.logContext(e, fileName + " get pos: " + i);
 
             throw Trace.error(Trace.DATA_FILE_ERROR,
                               Trace.DataFileCache_makeRow, new Object[] {
@@ -634,10 +591,6 @@ public class DataFileCache {
         return cache.release(i);
     }
 
-    /**
-     * This is called internally when old rows need to be removed from the
-     * cache.
-     */
     protected synchronized void saveRows(CachedObject[] rows, int offset,
                                          int count) throws IOException {
 
@@ -658,12 +611,24 @@ public class DataFileCache {
      */
     public synchronized void saveRow(CachedObject row) throws IOException {
 
-        setFileModified();
-        rowOut.reset();
-        row.write(rowOut);
-        dataFile.seek((long) row.getPos() * cacheFileScale);
-        dataFile.write(rowOut.getOutputStream().getBuffer(), 0,
-                       rowOut.getOutputStream().size());
+        try {
+            setFileModified();
+            rowOut.reset();
+            row.write(rowOut);
+            dataFile.seek((long) row.getPos() * cacheFileScale);
+            dataFile.write(rowOut.getOutputStream().getBuffer(), 0,
+                           rowOut.getOutputStream().size());
+        } catch (IOException e) {
+            database.logger.appLog.logContext(e, null);
+
+            throw e;
+        } catch (Throwable e) {
+            database.logger.appLog.logContext(e, null);
+
+            throw new IOException(e.toString());
+        } finally {
+            initBuffers();
+        }
     }
 
     /**
@@ -671,33 +636,75 @@ public class DataFileCache {
      *
      * @throws  HsqlException
      */
-    public void backup() throws IOException {
+    void backupFile() throws IOException {
 
         try {
-            ZipUnzipFile.compressFile(fileName, backupFileName + ".new",
-                                      database.getFileAccess());
-            fa.renameElement(backupFileName + ".new", backupFileName);
+            if (fa.isStreamElement(fileName)) {
+                ZipUnzipFile.compressFile(fileName, backupFileName + ".new",
+                                          database.getFileAccess());
+            }
         } catch (IOException e) {
-            database.logger.appLog.logContext(e);
+            database.logger.appLog.logContext(e, null);
 
             throw e;
         }
+    }
+
+    void renameBackupFile() {
+
+        if (fa.isStreamElement(backupFileName + ".new")) {
+            fa.removeElement(backupFileName);
+            fa.renameElement(backupFileName + ".new", backupFileName);
+        }
+    }
+
+    /**
+     *  Renames the *.data.new file.
+     *
+     * @throws  HsqlException
+     */
+    void renameDataFile() {
+
+        if (fa.isStreamElement(fileName + ".new")) {
+            fa.removeElement(fileName);
+            fa.renameElement(fileName + ".new", fileName);
+        }
+    }
+
+    void deleteFile(boolean wasNio) {
+
+        // first attemp to delete
+        fa.removeElement(fileName);
+
+        if (fa.isStreamElement(fileName)) {
+            if (wasNio) {
+                System.gc();
+                fa.removeElement(fileName);
+            }
+
+            if (fa.isStreamElement(fileName)) {
+                fa.renameElement(fileName, fileName + ".old");
+
+                File oldfile = new File(fileName + ".old");
+
+                FileUtil.deleteOnExit(oldfile);
+            }
+        }
+    }
+
+    void deleteBackup() {
+        fa.removeElement(backupFileName);
     }
 
     /**
      * This method deletes a data file or resets its free position.
      * this is used only for nio files - not OOo files
      */
-    public static void deleteOrResetFreePos(Database database,
-            String filename) {
+    static void deleteOrResetFreePos(Database database, String filename) {
 
         ScaledRAFile raFile = null;
 
-        try {
-            database.getFileAccess().removeElement(filename);
-        } catch (IOException e) {
-            database.logger.appLog.logContext(e);
-        }
+        database.getFileAccess().removeElement(filename);
 
         if (database.isStoredFileAccess()) {
             return;
@@ -713,13 +720,13 @@ public class DataFileCache {
             raFile.seek(LONG_FREE_POS_POS);
             raFile.writeLong(INITIAL_FREE_POS);
         } catch (IOException e) {
-            database.logger.appLog.logContext(e);
+            database.logger.appLog.logContext(e, null);
         } finally {
             if (raFile != null) {
                 try {
                     raFile.close();
                 } catch (IOException e) {
-                    database.logger.appLog.logContext(e);
+                    database.logger.appLog.logContext(e, null);
                 }
             }
         }

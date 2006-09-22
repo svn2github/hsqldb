@@ -31,6 +31,7 @@
 
 package org.hsqldb.persist;
 
+import java.io.EOFException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -61,15 +62,15 @@ class ScaledRAFile implements ScaledRAInterface {
     static final long MAX_NIO_LENGTH = (1L << 28);
 
     //
-    final SimpleLog          appLog;
-    final RandomAccessFile   file;
-    private final boolean    readOnly;
-    final String             fileName;
-    boolean                  isNio;
-    boolean                  bufferDirty = true;
-    byte[]                   buffer      = new byte[4096];
-    HsqlByteArrayInputStream ba = new HsqlByteArrayInputStream(buffer);
-    long                     bufferOffset;
+    final SimpleLog                appLog;
+    final RandomAccessFile         file;
+    private final boolean          readOnly;
+    final String                   fileName;
+    boolean                        isNio;
+    boolean                        bufferDirty = true;
+    final byte[]                   buffer;
+    final HsqlByteArrayInputStream ba;
+    long                           bufferOffset;
 
     //
     long       seekPosition;
@@ -149,6 +150,13 @@ class ScaledRAFile implements ScaledRAInterface {
         this.readOnly = readonly;
         this.fileName = name;
         this.file     = file;
+
+        int bufferScale = database.getProperties().getIntegerProperty(
+            HsqlDatabaseProperties.hsqldb_raf_buffer_scale, 12, 8, 13);
+        int bufferSize = 1 << bufferScale;
+
+        buffer = new byte[bufferSize];
+        ba     = new HsqlByteArrayInputStream(buffer);
     }
 
     ScaledRAFile(Database database, String name,
@@ -159,6 +167,13 @@ class ScaledRAFile implements ScaledRAInterface {
         this.fileName = name;
         this.file     = new RandomAccessFile(name, readonly ? "r"
                                                             : "rw");
+
+        int bufferScale = database.getProperties().getIntegerProperty(
+            HsqlDatabaseProperties.hsqldb_raf_buffer_scale, 12);
+        int bufferSize = 1 << bufferScale;
+
+        buffer = new byte[bufferSize];
+        ba     = new HsqlByteArrayInputStream(buffer);
     }
 
     public long length() throws IOException {
@@ -172,21 +187,35 @@ class ScaledRAFile implements ScaledRAInterface {
      */
     public void seek(long position) throws IOException {
 
-        try {
-            if (file.length() < position) {
-                file.seek(file.length());
+        if (!readOnly && file.length() < position) {
+            long tempSize = position - file.length();
 
-                for (long ix = file.length(); ix < position; ix++) {
-                    file.write(0);
-                }
+            if (tempSize > 1 << 18) {
+                tempSize = 1 << 18;
             }
 
-            seekPosition = position;
-        } catch (IOException e) {
-            appLog.logContext(e);
+            byte[] temp = new byte[(int) tempSize];
 
-            throw e;
+            try {
+                long pos = file.length();
+
+                for (; pos < position - tempSize; pos += tempSize) {
+                    file.seek(pos);
+                    file.write(temp, 0, (int) tempSize);
+                }
+
+                file.seek(pos);
+                file.write(temp, 0, (int) (position - pos));
+
+                realPosition = position;
+            } catch (IOException e) {
+                appLog.logContext(e, null);
+
+                throw e;
+            }
         }
+
+        seekPosition = position;
     }
 
     public long getFilePointer() throws IOException {
@@ -195,15 +224,12 @@ class ScaledRAFile implements ScaledRAInterface {
 
     private void readIntoBuffer() throws IOException {
 
+        long filePos    = seekPosition;
+        long subOffset  = filePos % buffer.length;
+        long fileLength = file.length();
+        long readLength = fileLength - (filePos - subOffset);
+
         try {
-            long filePos = seekPosition;
-
-            bufferDirty = false;
-
-            long subOffset  = filePos % buffer.length;
-            long fileLength = file.length();
-            long readLength = fileLength - (filePos - subOffset);
-
             if (readLength <= 0) {
                 throw new IOException("read beyond end of file");
             }
@@ -217,8 +243,10 @@ class ScaledRAFile implements ScaledRAInterface {
 
             bufferOffset = filePos - subOffset;
             realPosition = bufferOffset + readLength;
+            bufferDirty  = false;
         } catch (IOException e) {
-            appLog.logContext(e);
+            resetPointer();
+            appLog.logContext(e, "" + realPosition + " " + readLength);
 
             throw e;
         }
@@ -249,7 +277,8 @@ class ScaledRAFile implements ScaledRAInterface {
 
             return val;
         } catch (IOException e) {
-            appLog.logContext(e);
+            resetPointer();
+            appLog.logContext(e, null);
 
             throw e;
         }
@@ -258,18 +287,37 @@ class ScaledRAFile implements ScaledRAInterface {
     public long readLong() throws IOException {
 
         try {
-            file.seek(seekPosition);
+            if (bufferDirty || seekPosition < bufferOffset
+                    || seekPosition >= bufferOffset + buffer.length) {
+                readIntoBuffer();
+            } else {
+                cacheHit++;
+            }
 
-            realPosition = seekPosition;
+            ba.reset();
 
-            long value = file.readLong();
+            if (seekPosition - bufferOffset
+                    != ba.skip(seekPosition - bufferOffset)) {
+                throw new EOFException();
+            }
 
-            realPosition += 8;
-            seekPosition = realPosition;
+            long val;
 
-            return value;
+            try {
+                val = ba.readLong();
+            } catch (EOFException e) {
+                file.seek(seekPosition);
+
+                val          = file.readLong();
+                realPosition = file.getFilePointer();
+            }
+
+            seekPosition += 8;
+
+            return val;
         } catch (IOException e) {
-            appLog.logContext(e);
+            resetPointer();
+            appLog.logContext(e, null);
 
             throw e;
         }
@@ -286,15 +334,29 @@ class ScaledRAFile implements ScaledRAInterface {
             }
 
             ba.reset();
-            ba.skip(seekPosition - bufferOffset);
 
-            int val = ba.readInt();
+            if (seekPosition - bufferOffset
+                    != ba.skip(seekPosition - bufferOffset)) {
+                throw new EOFException();
+            }
+
+            int val;
+
+            try {
+                val = ba.readInt();
+            } catch (EOFException e) {
+                file.seek(seekPosition);
+
+                val          = file.readInt();
+                realPosition = file.getFilePointer();
+            }
 
             seekPosition += 4;
 
             return val;
         } catch (IOException e) {
-            appLog.logContext(e);
+            resetPointer();
+            appLog.logContext(e, null);
 
             throw e;
         }
@@ -311,7 +373,11 @@ class ScaledRAFile implements ScaledRAInterface {
             }
 
             ba.reset();
-            ba.skip(seekPosition - bufferOffset);
+
+            if (seekPosition - bufferOffset
+                    != ba.skip(seekPosition - bufferOffset)) {
+                throw new EOFException();
+            }
 
             int bytesRead = ba.read(b, offset, length);
 
@@ -328,7 +394,8 @@ class ScaledRAFile implements ScaledRAInterface {
                 realPosition = seekPosition;
             }
         } catch (IOException e) {
-            appLog.logContext(e);
+            resetPointer();
+            appLog.logContext(e, null);
 
             throw e;
         }
@@ -339,6 +406,8 @@ class ScaledRAFile implements ScaledRAInterface {
         try {
             if (realPosition != seekPosition) {
                 file.seek(seekPosition);
+
+                realPosition = seekPosition;
             }
 
             if (seekPosition >= bufferOffset
@@ -351,7 +420,8 @@ class ScaledRAFile implements ScaledRAInterface {
             seekPosition += len;
             realPosition = seekPosition;
         } catch (IOException e) {
-            appLog.logContext(e);
+            resetPointer();
+            appLog.logContext(e, null);
 
             throw e;
         }
@@ -362,6 +432,8 @@ class ScaledRAFile implements ScaledRAInterface {
         try {
             if (realPosition != seekPosition) {
                 file.seek(seekPosition);
+
+                realPosition = seekPosition;
             }
 
             if (seekPosition >= bufferOffset
@@ -374,7 +446,8 @@ class ScaledRAFile implements ScaledRAInterface {
             seekPosition += 4;
             realPosition = seekPosition;
         } catch (IOException e) {
-            appLog.logContext(e);
+            resetPointer();
+            appLog.logContext(e, null);
 
             throw e;
         }
@@ -385,6 +458,8 @@ class ScaledRAFile implements ScaledRAInterface {
         try {
             if (realPosition != seekPosition) {
                 file.seek(seekPosition);
+
+                realPosition = seekPosition;
             }
 
             if (seekPosition >= bufferOffset
@@ -397,7 +472,8 @@ class ScaledRAFile implements ScaledRAInterface {
             seekPosition += 8;
             realPosition = seekPosition;
         } catch (IOException e) {
-            appLog.logContext(e);
+            resetPointer();
+            appLog.logContext(e, null);
 
             throw e;
         }
@@ -426,5 +502,16 @@ class ScaledRAFile implements ScaledRAInterface {
 
     public Database getDatabase() {
         return null;
+    }
+
+    private void resetPointer() {
+
+        try {
+            bufferDirty = true;
+
+            file.seek(seekPosition);
+
+            realPosition = seekPosition;
+        } catch (Throwable e) {}
     }
 }

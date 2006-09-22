@@ -248,6 +248,8 @@ public final class ServerConfiguration implements ServerConstants {
 
                 p.setProperty(SC_KEY_DATABASE + ".0", defaultdb);
                 p.setProperty(SC_KEY_DBNAME + ".0", "");
+            } else if (p.getProperty(SC_KEY_DBNAME + "." + 0) == null) {
+                p.setProperty(SC_KEY_DBNAME + ".0", "");
             }
         }
     }

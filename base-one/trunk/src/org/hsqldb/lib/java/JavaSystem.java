@@ -43,6 +43,7 @@ import java.math.BigInteger;
 import java.sql.DriverManager;
 import java.util.Properties;
 import java.text.Collator;
+import java.io.RandomAccessFile;
 
 // fredt@users 20020320 - patch 1.7.0 - JDBC 2 support and error trapping
 // fredt@users 20021030 - patch 1.7.2 - updates
@@ -170,7 +171,7 @@ public class JavaSystem {
 //#endif
     }
 
-    public static void createNewFile(File file) {
+    public static boolean createNewFile(File file) {
 
 //#ifdef JAVA1TARGET
 /*
@@ -178,9 +179,22 @@ public class JavaSystem {
 
 //#else
         try {
-            file.createNewFile();
+            return file.createNewFile();
         } catch (IOException e) {}
 
+        return false;
+
+//#endif
+    }
+
+    public static void setRAFileLength(RandomAccessFile raFile,
+                                       long length) throws IOException {
+//#ifdef JAVA1TARGET
+/*
+*/
+
+//#else
+        raFile.setLength(length);
 //#endif
     }
 }

@@ -140,6 +140,10 @@ public class DataFileBlockManager {
         return isModified;
     }
 
+    void clear() {
+        removeBlocks(lookup.size());
+    }
+
     private void resetList() {
 
         if (requestCount != 0) {

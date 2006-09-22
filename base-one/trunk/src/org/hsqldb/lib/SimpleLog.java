@@ -80,7 +80,7 @@ public class SimpleLog {
             writer = new PrintWriter(new FileWriter(file.getPath(), true),
                                      true);
         } catch (Exception e) {
-            e.printStackTrace();
+            writer = new PrintWriter(System.out);
         }
     }
 
@@ -88,11 +88,6 @@ public class SimpleLog {
         return level;
     }
 
-/*
-    public void setLevel(int level) {
-        this.level = level;
-    }
-*/
     public PrintWriter getPrintWriter() {
         return writer;
     }
@@ -113,8 +108,8 @@ public class SimpleLog {
         String info = HsqlDateTime.getSytemTimeString();
 
 //#ifdef JDBC3
-        Throwable           t        = new Throwable();
-        StackTraceElement[] elements = t.getStackTrace();
+        Throwable           temp     = new Throwable();
+        StackTraceElement[] elements = temp.getStackTrace();
 
         if (elements.length > 1) {
             info += " " + elements[1].getClassName() + "."
@@ -125,7 +120,7 @@ public class SimpleLog {
         writer.println(info + " " + message);
     }
 
-    public synchronized void logContext(Throwable t) {
+    public synchronized void logContext(Throwable t, String message) {
 
         if (level == LOG_NONE) {
             return;
@@ -134,7 +129,15 @@ public class SimpleLog {
         String info = HsqlDateTime.getSytemTimeString();
 
 //#ifdef JDBC3
-        StackTraceElement[] elements = t.getStackTrace();
+        Throwable           temp     = new Throwable();
+        StackTraceElement[] elements = temp.getStackTrace();
+
+        if (elements.length > 1) {
+            info += " " + elements[1].getClassName() + "."
+                    + elements[1].getMethodName();
+        }
+
+        elements = t.getStackTrace();
 
         if (elements.length > 0) {
             info += " " + elements[0].getClassName() + "."
@@ -142,7 +145,18 @@ public class SimpleLog {
         }
 
 //#endif
-        writer.println(info + " " + t.toString());
+        if (message == null) {
+            message = "";
+        }
+
+        writer.println(info + " " + t.toString() + " " + message);
+    }
+
+    public void flush() {
+
+        if (writer != null) {
+            writer.flush();
+        }
     }
 
     public void close() {

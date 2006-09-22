@@ -37,13 +37,13 @@ import org.hsqldb.Database;
 import org.hsqldb.DatabaseURL;
 import org.hsqldb.HsqlException;
 import org.hsqldb.Trace;
+import org.hsqldb.lib.HashMap;
+import org.hsqldb.lib.HashSet;
+import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.Set;
 import org.hsqldb.lib.SimpleLog;
-import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.java.JavaSystem;
-
-// loosecannon1@users 1.7.2 patch properties on the JDBC URL
-// tytar@users 20041209 - provide to set default table type
+import org.hsqldb.store.ValuePool;
 
 /**
  * Manages a .properties file for a database.
@@ -54,17 +54,32 @@ import org.hsqldb.lib.java.JavaSystem;
  */
 public class HsqlDatabaseProperties extends HsqlProperties {
 
-    // db files modified
-    public static final int FILES_NOT_MODIFIED = 0;
-    public static final int FILES_MODIFIED     = 1;
-    public static final int FILES_NEW          = 2;
+    // column number mappings
+    public static final int indexName         = 0;
+    public static final int indexAccess       = 1;
+    public static final int indexClass        = 2;
+    public static final int indexIsRange      = 3;
+    public static final int indexDefaultValue = 4;
+    public static final int indexRangeLow     = 5;
+    public static final int indexRangeHigh    = 6;
+    public static final int indexValues       = 7;
+    public static final int indexLimit        = 8;
 
-    // sets of properties
-    private static HashSet fullyProtectedProperties = new HashSet();
-    private static HashSet setProtectedProperties   = new HashSet();
-    private static HashSet booleanProperties        = new HashSet();
-    private static HashSet integralProperties       = new HashSet();
-    private static HashSet stringProperties         = new HashSet();
+    // accessibility
+    private static final int SET_PROPERTY  = 0;
+    private static final int SQL_PROPERTY  = 1;
+    private static final int FILE_PROPERTY = 2;
+
+    // db files modified
+    public static final int     FILES_NOT_MODIFIED = 0;
+    public static final int     FILES_MODIFIED     = 1;
+    public static final int     FILES_NEW          = 2;
+    private static final String MODIFIED_NO        = "no";
+    private static final String MODIFIED_YES       = "yes";
+    private static final String MODIFIED_NEW       = "no-new-files";
+
+    // allowed property metadata
+    private static HashMap meta = new HashMap();
 
     // versions
     public static final String VERSION_STRING_1_7_0     = "1.7.0";
@@ -85,9 +100,11 @@ public class HsqlDatabaseProperties extends HsqlProperties {
     //
     private static final String runtime_gc_interval = "runtime.gc_interval";
     public static final String  hsqldb_applog       = "hsqldb.applog";
-    public static final String  hsqldb_cache_scale  = "hsqldb.cache_scale";
     public static final String hsqldb_cache_file_scale =
         "hsqldb.cache_file_scale";
+    public static final String hsqldb_cache_free_count_scale =
+        "hsqldb.cache_free_count_scale";
+    public static final String hsqldb_cache_scale = "hsqldb.cache_scale";
     public static final String hsqldb_cache_size_scale =
         "hsqldb.cache_size_scale";
     public static final String  hsqldb_cache_version = "hsqldb.cache_version";
@@ -99,9 +116,11 @@ public class HsqlDatabaseProperties extends HsqlProperties {
     public static final String hsqldb_defrag_limit = "hsqldb.defrag_limit";
     private static final String hsqldb_files_readonly =
         "hsqldb.files_readonly";
-    public static final String  hsqldb_log_size      = "hsqldb.log_size";
-    public static final String  hsqldb_nio_data_file = "hsqldb.nio_data_file";
-    private static final String hsqldb_max_nio_scale = "hsqldb.max_nio_scale";
+    public static final String hsqldb_log_size      = "hsqldb.log_size";
+    public static final String hsqldb_nio_data_file = "hsqldb.nio_data_file";
+    public static final String hsqldb_max_nio_scale = "hsqldb.max_nio_scale";
+    public static final String hsqldb_raf_buffer_scale =
+        "hsqldb.raf_buffer_scale";
     private static final String hsqldb_original_version =
         "hsqldb.original_version";
     public static final String hsqldb_script_format = "hsqldb.script_format";
@@ -130,49 +149,84 @@ public class HsqlDatabaseProperties extends HsqlProperties {
 
     static {
 
-        // properties that are not user-defined or only modified in the
-        // *.properties file
-        String[] fullyProtectedPropertiesNames = {
-            db_version, hsqldb_compatible_version, hsqldb_cache_version,
-            hsqldb_original_version, hsqldb_files_readonly, db_readonly,
-            db_modified, sql_compare_in_locale, textdb_allow_full_path
-        };
+        // string defaults for protected props
+        meta.put(db_version, getMeta(db_version, FILE_PROPERTY, null));
+        meta.put(hsqldb_compatible_version,
+                 getMeta(hsqldb_compatible_version, FILE_PROPERTY, null));
+        meta.put(hsqldb_cache_version,
+                 getMeta(hsqldb_cache_version, FILE_PROPERTY, null));
+        meta.put(hsqldb_original_version,
+                 getMeta(hsqldb_original_version, FILE_PROPERTY, null));
+        meta.put(db_modified, getMeta(db_modified, FILE_PROPERTY, null));
 
-        fullyProtectedProperties.addAll(fullyProtectedPropertiesNames);
+        // string defaults for user defined props
+        meta.put(hsqldb_default_table_type,
+                 getMeta(hsqldb_default_table_type, SET_PROPERTY, "memory"));
+        meta.put(textdb_fs, getMeta(textdb_fs, SET_PROPERTY, ","));
+        meta.put(textdb_vs, getMeta(textdb_vs, SET_PROPERTY, null));
+        meta.put(textdb_lvs, getMeta(textdb_lvs, SET_PROPERTY, null));
+        meta.put(textdb_encoding,
+                 getMeta(textdb_encoding, SET_PROPERTY, null));
 
-        // properties that cannot be modified by SET PROPERTY command
-        String[] setProtectedPropertiesNames = {
-            hsqldb_log_size, hsqldb_script_format, hsqldb_defrag_limit,
-        };
+        // boolean defaults for protected props
+        meta.put(db_readonly, getMeta(db_readonly, FILE_PROPERTY, false));
+        meta.put(hsqldb_files_readonly,
+                 getMeta(hsqldb_files_readonly, FILE_PROPERTY, false));
 
-        setProtectedProperties.addAll(setProtectedPropertiesNames);
+        // boolean defaults for user defined props
+        meta.put(hsqldb_nio_data_file,
+                 getMeta(hsqldb_nio_data_file, SET_PROPERTY, false));
+        meta.put(hsqldb_catalogs,
+                 getMeta(hsqldb_catalogs, SET_PROPERTY, false));
+        meta.put(sql_enforce_strict_size,
+                 getMeta(sql_enforce_strict_size, SET_PROPERTY, false));
+        meta.put(sql_tx_no_multi_write,
+                 getMeta(sql_tx_no_multi_write, SET_PROPERTY, false));
+        meta.put(textdb_quoted, getMeta(textdb_quoted, SET_PROPERTY, false));
+        meta.put(textdb_all_quoted,
+                 getMeta(textdb_all_quoted, SET_PROPERTY, false));
+        meta.put(textdb_ignore_first,
+                 getMeta(textdb_ignore_first, SET_PROPERTY, false));
 
-        // user defined boolean properties
-        String[] booleanPropertiesNames = {
-            hsqldb_nio_data_file, hsqldb_catalogs, sql_enforce_strict_size,
-            textdb_quoted, textdb_all_quoted, textdb_ignore_first,
-            sql_tx_no_multi_write
-        };
+        // integral defaults for user-defined set props
+        meta.put(hsqldb_applog,
+                 getMeta(hsqldb_applog, SET_PROPERTY, 0, new byte[] {
+            0, 1, 2
+        }));
+        meta.put(hsqldb_cache_file_scale,
+                 getMeta(hsqldb_cache_file_scale, SET_PROPERTY, 1,
+                         new byte[] {
+            1, 8
+        }));
+        meta.put(hsqldb_script_format,
+                 getMeta(hsqldb_script_format, SET_PROPERTY, 0, new byte[] {
+            0, 1, 3
+        }));
 
-        booleanProperties.addAll(booleanPropertiesNames);
+        // integral defaults for proteced range props
+        meta.put(hsqldb_log_size,
+                 getMeta(hsqldb_log_size, SQL_PROPERTY, 0, 0, 16000));
+        meta.put(hsqldb_defrag_limit,
+                 getMeta(hsqldb_defrag_limit, SQL_PROPERTY, 200, 0, 16000));
 
-        // user defined integral properties
-        String[] integralPropertiesNames = {
-            runtime_gc_interval, hsqldb_applog, hsqldb_max_nio_scale,
-            hsqldb_cache_file_scale, hsqldb_cache_scale,
-            hsqldb_cache_size_scale, hsqldb_log_size, textdb_cache_scale,
-            textdb_cache_size_scale
-        };
-
-        integralProperties.addAll(integralPropertiesNames);
-
-        // user defined string properties
-        String[] stringPropertiesNames = {
-            textdb_fs, textdb_vs, textdb_lvs, textdb_encoding,
-            hsqldb_default_table_type
-        };
-
-        stringProperties.addAll(stringPropertiesNames);
+        // integral defaults for user defined range props
+        meta.put(runtime_gc_interval,
+                 getMeta(runtime_gc_interval, SET_PROPERTY, 0, 0, 1000000));
+        meta.put(hsqldb_cache_free_count_scale,
+                 getMeta(hsqldb_cache_free_count_scale, SET_PROPERTY, 9, 6,
+                         12));
+        meta.put(hsqldb_cache_scale,
+                 getMeta(hsqldb_cache_scale, SET_PROPERTY, 14, 8, 18));
+        meta.put(hsqldb_cache_size_scale,
+                 getMeta(hsqldb_cache_size_scale, SET_PROPERTY, 10, 6, 20));
+        meta.put(hsqldb_max_nio_scale,
+                 getMeta(hsqldb_max_nio_scale, SET_PROPERTY, 28, 24, 31));
+        meta.put(hsqldb_raf_buffer_scale,
+                 getMeta(hsqldb_raf_buffer_scale, SET_PROPERTY, 12, 8, 13));
+        meta.put(textdb_cache_scale,
+                 getMeta(textdb_cache_scale, SET_PROPERTY, 10, 8, 16));
+        meta.put(textdb_cache_size_scale,
+                 getMeta(textdb_cache_size_scale, SET_PROPERTY, 10, 6, 20));
     }
 
     private Database database;
@@ -255,7 +309,7 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         setProperty(hsqldb_cache_scale, 14);
 
         // maximum size of .log file in megabytes
-        setProperty(hsqldb_log_size, "200");
+        setProperty(hsqldb_log_size, 200);
 
         // type of logging (0 : text , 1 : binary, 3 : compressed)
         setProperty(hsqldb_script_format, 0);
@@ -376,8 +430,7 @@ public class HsqlDatabaseProperties extends HsqlProperties {
             fa.renameElement(fileName + ".properties" + ".new",
                              fileName + ".properties");
         } catch (Exception e) {
-            database.logger.appLog.logContext(SimpleLog.LOG_ERROR,
-                                              "failed");
+            database.logger.appLog.logContext(SimpleLog.LOG_ERROR, "failed");
 
             throw Trace.error(Trace.FILE_IO_ERROR,
                               Trace.LOAD_SAVE_PROPERTIES, new Object[] {
@@ -391,12 +444,8 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         Enumeration en = stringProps.propertyNames();
 
         while (en.hasMoreElements()) {
-            String key = (String) en.nextElement();
-            boolean accept = fullyProtectedProperties.contains(key)
-                             || setProtectedProperties.contains(key)
-                             || booleanProperties.contains(key)
-                             || integralProperties.contains(key)
-                             || stringProperties.contains(key);
+            String  key    = (String) en.nextElement();
+            boolean accept = meta.containsKey(key);
 
             if (!accept) {
                 stringProps.remove(key);
@@ -408,54 +457,79 @@ public class HsqlDatabaseProperties extends HsqlProperties {
      *  overload file database properties with any passed on URL line
      *  do not store password etc
      */
-    public void setURLProperties(HsqlProperties props) {
+    public void setURLProperties(HsqlProperties p) {
 
-        if (props != null) {
-            for (Enumeration e =
-                    props.propertyNames(); e.hasMoreElements(); ) {
-                String propertyName = (String) e.nextElement();
+        if (p != null) {
+            for (Enumeration e = p.propertyNames(); e.hasMoreElements(); ) {
+                String   propertyName = (String) e.nextElement();
+                Object[] row          = (Object[]) meta.get(propertyName);
 
-                if (isBoolean(propertyName) || isIntegral(propertyName)
-                        || isString(propertyName)
-                        || db_readonly.equals(propertyName)) {
-                    setProperty(propertyName,
-                                props.getProperty(propertyName));
+                if (row != null
+                        && (db_readonly.equals(propertyName)
+                            || ((Integer) row[indexAccess]).intValue()
+                               == SET_PROPERTY)) {
+
+                    // can add error checking with defaults
+                    setProperty(propertyName, p.getProperty(propertyName));
                 }
             }
         }
     }
 
-    public boolean isSetPropertyAllowed(String property) {
-        return !(fullyProtectedProperties.contains(property)
-                 || setProtectedProperties.contains(property));
+    public Set getUserDefinedPropertyData() {
+
+        Set      set = new HashSet();
+        Iterator it  = meta.values().iterator();
+
+        while (it.hasNext()) {
+            Object[] row = (Object[]) it.next();
+
+            if (((Integer) row[indexAccess]).intValue() == SET_PROPERTY) {
+                set.add(row);
+            }
+        }
+
+        return set;
     }
 
-    public boolean isBoolean(String property) {
-        return booleanProperties.contains(property);
+    public boolean isUserDefinedProperty(String key) {
+
+        Object[] row = (Object[]) meta.get(key);
+
+        return row != null
+               && ((Integer) row[indexAccess]).intValue() == SET_PROPERTY;
     }
 
-    public boolean isIntegral(String property) {
-        return integralProperties.contains(property);
+    public boolean isBoolean(String key) {
+
+        Object[] row = (Object[]) meta.get(key);
+
+        return row != null && row[indexClass].equals("boolean")
+               && ((Integer) row[indexAccess]).intValue() == SET_PROPERTY;
     }
 
-    public boolean isString(String property) {
-        return stringProperties.contains(property);
+    public boolean isIntegral(String key) {
+
+        Object[] row = (Object[]) meta.get(key);
+
+        return row != null && row[indexClass].equals("int")
+               && ((Integer) row[indexAccess]).intValue() == SET_PROPERTY;
     }
 
-    public Set getBooleanPropertyNames() {
-        return booleanProperties;
+    public boolean isString(String key) {
+
+        Object[] row = (Object[]) meta.get(key);
+
+        return row != null && row[indexClass].equals("java.lang.String")
+               && ((Integer) row[indexAccess]).intValue() == SET_PROPERTY;
     }
 
-    public Set getIntegralPropertyNames() {
-        return integralProperties;
-    }
+    public String setDatabaseProperty(String key,
+                                      String value) throws HsqlException {
 
-    public Set getStringPropertyNames() {
-        return stringProperties;
-    }
+        Object[] row = (Object[]) meta.get(key);
 
-    public String setProperty(String key, String value) {
-
+        // can check bounds here
         value = super.setProperty(key, value);
 
         return value;
@@ -463,13 +537,8 @@ public class HsqlDatabaseProperties extends HsqlProperties {
 
     public int getDefaultWriteDelay() {
         return database.isStoredFileAccess() ? 2000
-                                             : 20000;
+                                             : 10000;
     }
-
-    static String MODIFIED_NO = "no";
-    static String MODIFIED_YES = "yes";
-    static String MODIFIED_NEW = "no-new-files";
-
 
     public void setDBModified(int mode) throws HsqlException {
 
@@ -496,5 +565,63 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         }
 
         return FILES_NOT_MODIFIED;
+    }
+
+    private static Object[] getMeta(String name, int accessLevel,
+                                    String defaultValue) {
+
+        Object[] row = new Object[indexLimit];
+
+        row[indexName]         = name;
+        row[indexAccess]       = ValuePool.getInt(accessLevel);
+        row[indexClass]        = "java.lang.String";
+        row[indexDefaultValue] = defaultValue;
+
+        return row;
+    }
+
+    private static Object[] getMeta(String name, int accessLevel,
+                                    boolean defaultValue) {
+
+        Object[] row = new Object[indexLimit];
+
+        row[indexName]         = name;
+        row[indexAccess]       = ValuePool.getInt(accessLevel);
+        row[indexClass]        = "boolean";
+        row[indexDefaultValue] = defaultValue ? Boolean.TRUE
+                                              : Boolean.FALSE;
+
+        return row;
+    }
+
+    private static Object[] getMeta(String name, int accessLevel,
+                                    int defaultValue, byte[] values) {
+
+        Object[] row = new Object[indexLimit];
+
+        row[indexName]         = name;
+        row[indexAccess]       = ValuePool.getInt(accessLevel);
+        row[indexClass]        = "int";
+        row[indexDefaultValue] = ValuePool.getInt(defaultValue);
+        row[indexValues]       = values;
+
+        return row;
+    }
+
+    private static Object[] getMeta(String name, int accessLevel,
+                                    int defaultValue, int rangeLow,
+                                    int rangeHigh) {
+
+        Object[] row = new Object[indexLimit];
+
+        row[indexName]         = name;
+        row[indexAccess]       = ValuePool.getInt(accessLevel);
+        row[indexClass]        = "int";
+        row[indexDefaultValue] = ValuePool.getInt(defaultValue);
+        row[indexIsRange]      = Boolean.TRUE;
+        row[indexRangeLow]     = ValuePool.getInt(rangeLow);
+        row[indexRangeHigh]    = ValuePool.getInt(rangeHigh);
+
+        return row;
     }
 }

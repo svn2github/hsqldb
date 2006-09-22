@@ -31,6 +31,8 @@
 
 package org.hsqldb.persist;
 
+import java.io.EOFException;
+
 import org.hsqldb.Database;
 import org.hsqldb.HsqlException;
 import org.hsqldb.Result;
@@ -159,7 +161,10 @@ public class ScriptRunner {
             String message;
 
             // catch out-of-memory errors and terminate
-            if (e instanceof OutOfMemoryError) {
+            if (e instanceof EOFException) {
+
+                // end of file - normal end
+            } else if (e instanceof OutOfMemoryError) {
                 message = "out of memory processing " + logFilename
                           + " line: " + scr.getLineNumber();
 
@@ -167,14 +172,15 @@ public class ScriptRunner {
                                                   message);
 
                 throw Trace.error(Trace.OUT_OF_MEMORY);
+            } else {
+
+                // stop processing on bad log line
+                message = logFilename + " line: " + scr.getLineNumber() + " "
+                          + e.toString();
+
+                database.logger.appLog.logContext(SimpleLog.LOG_ERROR,
+                                                  message);
             }
-
-            // stop processing on bad log line
-            message = logFilename + " line: " + scr.getLineNumber() + " "
-                      + e.toString();
-
-            database.logger.appLog.logContext(SimpleLog.LOG_ERROR, message);
-            Trace.printSystemOut(message);
         } finally {
             if (scr != null) {
                 scr.close();

@@ -54,21 +54,22 @@ import org.hsqldb.lib.SimpleLog;
  */
 class ScaledRAFileNIO implements ScaledRAInterface {
 
-    private final boolean    readOnly;
-    private final long       bufferLength;
-    private RandomAccessFile file;
-    private MappedByteBuffer buffer;
-    private FileChannel      channel;
-    private boolean          bufferModified;
-    private SimpleLog        appLog;
+    private final boolean       readOnly;
+    private final long          bufferLength;
+    private RandomAccessFile    file;
+    private MappedByteBuffer    buffer;
+    private FileChannel         channel;
+    private boolean             bufferModified;
+    private SimpleLog           appLog;
+    private final static String JVM_ERROR = "JVM threw unsupported Exception";
 
     ScaledRAFileNIO(Database database, String name, boolean readOnly,
                     int bufferLength) throws Throwable {
 
         long fileLength;
 
-        if (bufferLength < 1 << 20) {
-            bufferLength = 1 << 20;
+        if (bufferLength < 1 << 18) {
+            bufferLength = 1 << 18;
         }
 
         try {
@@ -124,12 +125,40 @@ class ScaledRAFileNIO implements ScaledRAInterface {
         this.channel      = file.getChannel();
 
         try {
-            buffer = channel.map(isReadOnly() ? FileChannel.MapMode.READ_ONLY
-                                              : FileChannel.MapMode
-                                                  .READ_WRITE, 0, bufferLength);
+            buffer = channel.map(readOnly ? FileChannel.MapMode.READ_ONLY
+                                          : FileChannel.MapMode.READ_WRITE, 0,
+                                          bufferLength);
 
             Trace.printSystemOut("NIO file instance created. mode: "
                                  + readOnly);
+
+            if (!readOnly) {
+                long tempSize = bufferLength - fileLength;
+
+                if (tempSize > 1 << 18) {
+                    tempSize = 1 << 18;
+                }
+
+                byte[] temp = new byte[(int) tempSize];
+
+                try {
+                    long pos = fileLength;
+
+                    for (; pos < bufferLength - tempSize; pos += tempSize) {
+                        buffer.position((int) pos);
+                        buffer.put(temp, 0, temp.length);
+                    }
+
+                    buffer.position((int) pos);
+                    buffer.put(temp, 0, (int) (bufferLength - pos));
+                    buffer.force();
+                } catch (Throwable t) {
+                    appLog.logContext(t, JVM_ERROR + " " + "length: "
+                                      + bufferLength);
+                }
+
+                buffer.position(0);
+            }
         } catch (Throwable e) {
             Trace.printSystemOut("NIO constructor failed:  " + bufferLength);
 
@@ -148,11 +177,11 @@ class ScaledRAFileNIO implements ScaledRAInterface {
         try {
             return file.length();
         } catch (IOException e) {
-            appLog.logContext(e);
+            appLog.logContext(e, "nio");
 
             throw e;
         } catch (Throwable e) {
-            appLog.logContext(e);
+            appLog.logContext(e, JVM_ERROR);
 
             throw new IOException(e.toString());
         }
@@ -162,8 +191,12 @@ class ScaledRAFileNIO implements ScaledRAInterface {
 
         try {
             buffer.position((int) newPos);
+        } catch (IllegalArgumentException e) {
+            appLog.logContext(e, "nio");
+
+            throw new IOException(e.toString());
         } catch (Throwable e) {
-            appLog.logContext(e);
+            appLog.logContext(e, JVM_ERROR);
 
             throw new IOException(e.toString());
         }
@@ -174,7 +207,7 @@ class ScaledRAFileNIO implements ScaledRAInterface {
         try {
             return buffer.position();
         } catch (Throwable e) {
-            appLog.logContext(e);
+            appLog.logContext(e, JVM_ERROR);
 
             throw new IOException(e.toString());
         }
@@ -185,7 +218,7 @@ class ScaledRAFileNIO implements ScaledRAInterface {
         try {
             return buffer.get();
         } catch (Throwable e) {
-            appLog.logContext(e);
+            appLog.logContext(e, JVM_ERROR);
 
             throw new IOException(e.toString());
         }
@@ -196,7 +229,7 @@ class ScaledRAFileNIO implements ScaledRAInterface {
         try {
             buffer.get(b, offset, length);
         } catch (Throwable e) {
-            appLog.logContext(e);
+            appLog.logContext(e, JVM_ERROR);
 
             throw new IOException(e.toString());
         }
@@ -207,7 +240,7 @@ class ScaledRAFileNIO implements ScaledRAInterface {
         try {
             return buffer.getInt();
         } catch (Throwable e) {
-            appLog.logContext(e);
+            appLog.logContext(e, JVM_ERROR);
 
             throw new IOException(e.toString());
         }
@@ -218,7 +251,7 @@ class ScaledRAFileNIO implements ScaledRAInterface {
         try {
             return buffer.getLong();
         } catch (Throwable e) {
-            appLog.logContext(e);
+            appLog.logContext(e, JVM_ERROR);
 
             throw new IOException(e.toString());
         }
@@ -231,7 +264,7 @@ class ScaledRAFileNIO implements ScaledRAInterface {
 
             buffer.put(b, offset, len);
         } catch (Throwable e) {
-            appLog.logContext(e);
+            appLog.logContext(e, JVM_ERROR);
 
             throw new IOException(e.toString());
         }
@@ -244,7 +277,7 @@ class ScaledRAFileNIO implements ScaledRAInterface {
 
             buffer.putInt(i);
         } catch (Throwable e) {
-            appLog.logContext(e);
+            appLog.logContext(e, JVM_ERROR);
 
             throw new IOException(e.toString());
         }
@@ -257,7 +290,7 @@ class ScaledRAFileNIO implements ScaledRAInterface {
 
             buffer.putLong(i);
         } catch (Throwable e) {
-            appLog.logContext(e);
+            appLog.logContext(e, JVM_ERROR);
 
             throw new IOException(e.toString());
         }
@@ -270,18 +303,25 @@ class ScaledRAFileNIO implements ScaledRAInterface {
                                  + bufferLength);
 
             if (buffer != null && bufferModified) {
-                buffer.force();
+                try {
+                    buffer.force();
+                } catch (Throwable t) {
+                    try {
+                        buffer.force();
+                    } catch (Throwable t1) {
+                        appLog.logContext(t, JVM_ERROR + " " + "length: "
+                                          + bufferLength);
+                    }
+                }
             }
 
             buffer  = null;
             channel = null;
 
             file.close();
-            Trace.printSystemOut("NIO close() end - fileLength = "
-                                 + bufferLength);
             System.gc();
         } catch (Throwable e) {
-            appLog.logContext(e);
+            appLog.logContext(e, "length: " + bufferLength);
 
             throw new IOException(e.toString());
         }

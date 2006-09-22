@@ -1382,14 +1382,11 @@ public class Result {
 
             // At this point, we've nothing to lose by doing this
             System.gc();
-            t.printStackTrace();
 
             subString   = "S1000";
             mainString  = "out of memory";
             statementID = Trace.OUT_OF_MEMORY;
         } else {
-            t.printStackTrace();
-
             subString  = "S1000";
             mainString = Trace.getMessage(Trace.GENERAL_ERROR) + " " + t;
 

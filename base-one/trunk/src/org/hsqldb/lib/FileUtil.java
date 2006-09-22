@@ -84,8 +84,7 @@ public class FileUtil implements FileAccess {
         makeParentDirectories(new File(filename));
     }
 
-    public void removeElement(java.lang.String filename)
-    throws java.util.NoSuchElementException, java.io.IOException {
+    public void removeElement(java.lang.String filename) {
 
         if (isStreamElement(filename)) {
             delete(filename);
@@ -93,9 +92,7 @@ public class FileUtil implements FileAccess {
     }
 
     public void renameElement(java.lang.String oldName,
-                              java.lang.String newName)
-                              throws java.util.NoSuchElementException,
-                                     java.io.IOException {
+                              java.lang.String newName) {
         renameOverwrite(oldName, newName);
     }
 

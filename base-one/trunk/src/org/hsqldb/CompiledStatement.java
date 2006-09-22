@@ -607,8 +607,6 @@ final class CompiledStatement {
         try {
             return describeImpl(session);
         } catch (Exception e) {
-            e.printStackTrace();
-
             return e.toString();
         }
     }

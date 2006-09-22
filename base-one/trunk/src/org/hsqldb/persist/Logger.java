@@ -32,7 +32,6 @@
 package org.hsqldb.persist;
 
 import org.hsqldb.Database;
-import org.hsqldb.HsqlDateTime;
 import org.hsqldb.HsqlException;
 import org.hsqldb.NumberSequence;
 import org.hsqldb.Session;
@@ -64,19 +63,21 @@ import org.hsqldb.lib.SimpleLog;
  */
 public class Logger {
 
+    public SimpleLog appLog;
+
     /**
      *  The Log object this Logger object wraps
      */
-    Log              log;
-    public SimpleLog appLog;
+    private Log log;
 
     /**
      *  The LockFile object this Logger uses to cooperatively lock
      *  the database files
      */
-    LockFile lf;
-    boolean  logStatements;
-    boolean  syncFile = false;
+    private LockFile lf;
+    boolean          needsCheckpoint;
+    private boolean  logStatements;
+    private boolean  syncFile = false;
 
     public Logger() {
         appLog = new SimpleLog(null, SimpleLog.LOG_NONE, false);
@@ -94,6 +95,8 @@ public class Logger {
      *      the specified files are in use by another process
      */
     public void openLog(Database db) throws HsqlException {
+
+        needsCheckpoint = false;
 
         String path = db.getPath();
         int loglevel = db.getProperties().getIntegerProperty(
@@ -145,10 +148,8 @@ public class Logger {
     public boolean closeLog(int closemode) {
 
         if (log == null) {
-            if (appLog != null) {
-                appLog.sendLine(SimpleLog.LOG_ERROR, "Database closed");
-                appLog.close();
-            }
+            appLog.sendLine(SimpleLog.LOG_ERROR, "Database closed");
+            appLog.close();
 
             return true;
         }
@@ -170,21 +171,16 @@ public class Logger {
                     break;
             }
         } catch (Throwable e) {
-            if (appLog != null) {
-                appLog.sendLine(SimpleLog.LOG_NORMAL, "error");
-                appLog.logContext(e);
-                appLog.close();
-            }
+            appLog.logContext(e, "error closing log");
+            appLog.close();
 
             log = null;
 
             return false;
         }
 
-        if (appLog != null) {
-            appLog.sendLine(SimpleLog.LOG_ERROR, "Database closed");
-            appLog.close();
-        }
+        appLog.sendLine(SimpleLog.LOG_ERROR, "Database closed");
+        appLog.close();
 
         log = null;
 
@@ -332,6 +328,9 @@ public class Logger {
 
         if (logStatements) {
             appLog.logContext(appLog.LOG_NORMAL, "start");
+
+            needsCheckpoint = false;
+
             log.checkpoint(mode);
             appLog.logContext(appLog.LOG_NORMAL, "end");
         }
@@ -415,6 +414,10 @@ public class Logger {
      */
     public void closeTextCache(Table table) throws HsqlException {
         log.closeTextCache(table);
+    }
+
+    public boolean needsCheckpoint() {
+        return needsCheckpoint;
     }
 
     /**

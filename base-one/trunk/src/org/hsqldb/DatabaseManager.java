@@ -364,7 +364,6 @@ public class DatabaseManager {
                 }
 
                 if (foundKey == null) {
-                    e.printStackTrace();
 
                     // ??? return;
                 } else {

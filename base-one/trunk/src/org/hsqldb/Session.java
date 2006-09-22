@@ -74,8 +74,9 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.jdbc.jdbcConnection;
 import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HashMappedList;
-import org.hsqldb.lib.IntKeyHashMap;
 import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.IntKeyHashMap;
+import org.hsqldb.lib.SimpleLog;
 import org.hsqldb.lib.java.JavaSystem;
 import org.hsqldb.store.ValuePool;
 
@@ -1019,6 +1020,15 @@ public class Session implements SessionInterface {
             return r;
         } catch (Exception e) {
             return new Result(e, null);
+        } finally {
+            if (database != null && database.logger.needsCheckpoint()) {
+                try {
+                    database.logger.checkpoint(false);
+                } catch (HsqlException e) {
+                    database.logger.appLog.logContext(
+                        SimpleLog.LOG_ERROR, "checkpoint did not complete");
+                }
+            }
         }
     }
 

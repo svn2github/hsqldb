@@ -354,14 +354,14 @@ class Function {
                                     : mMethod.invoke(null, arguments);
 
             return Column.convertObject(ret, iReturnType);
-        } catch (InvocationTargetException e1) {
+        } catch (InvocationTargetException e) {
 
             // thrown by user functions
-            Throwable t = e1.getTargetException();
+            Throwable t = e.getTargetException();
             String    s = sFunction + " : " + t.toString();
 
             throw Trace.error(Trace.FUNCTION_CALL_ERROR, s);
-        } catch (IllegalAccessException e3) {
+        } catch (IllegalAccessException e) {
 
             // never thrown in this method
             throw Trace.error(Trace.FUNCTION_CALL_ERROR);

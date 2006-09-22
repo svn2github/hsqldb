@@ -59,13 +59,9 @@ public interface FileAccess {
 
     void createParentDirs(java.lang.String filename);
 
-    void removeElement(java.lang.String filename)
-    throws java.util.NoSuchElementException, java.io.IOException;
+    void removeElement(java.lang.String filename);
 
-    void renameElement(java.lang.String oldName,
-                       java.lang.String newName)
-                       throws java.util.NoSuchElementException,
-                              java.io.IOException;
+    void renameElement(java.lang.String oldName, java.lang.String newName);
 
     public interface FileSync {
         void sync() throws java.io.IOException;
