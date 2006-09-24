@@ -1482,6 +1482,22 @@ public class Result {
         return updateCount;
     }
 
+    public int getType() {
+        return mode;
+    }
+
+    public boolean isData() {
+        return mode == ResultConstants.DATA;
+    }
+
+    public boolean isError() {
+        return mode == ResultConstants.ERROR;
+    }
+
+    public boolean isUpdateCount() {
+        return mode == ResultConstants.UPDATECOUNT;
+    }
+
     public Iterator iterator() {
         return new ResultIterator();
     }

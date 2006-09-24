@@ -168,7 +168,7 @@ class DatabaseCommandInterpreter {
 
                 result = executePart(cmd, token);
 
-                if (result.mode == ResultConstants.ERROR) {
+                if (result.isError()) {
                     session.endSchemaDefinition();
 
                     break;

@@ -93,7 +93,7 @@ public class ScriptReaderText extends ScriptReaderBase {
 
             Result result = session.sqlExecuteDirectNoPreChecks(statement);
 
-            if (result != null && result.mode == ResultConstants.ERROR) {
+            if (result != null && result.isError()) {
                 db.logger.appLog.logContext(SimpleLog.LOG_ERROR,
                                             result.getMainString());
 

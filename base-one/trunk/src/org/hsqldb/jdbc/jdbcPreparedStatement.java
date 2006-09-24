@@ -346,12 +346,11 @@ implements PreparedStatement {
             throw Util.sqlException(e);
         }
 
-        if (resultIn.mode == ResultConstants.ERROR) {
+        if (resultIn.isError()) {
             Util.throwError(resultIn);
         }
 
-        return resultIn.mode == ResultConstants.DATA ? true
-                                                     : false;
+        return resultIn.isData();
     }
 
     /**
@@ -383,9 +382,9 @@ implements PreparedStatement {
             throw Util.sqlException(e);
         }
 
-        if (resultIn.mode == ResultConstants.ERROR) {
+        if (resultIn.isError()) {
             Util.throwError(resultIn);
-        } else if (resultIn.mode != ResultConstants.DATA) {
+        } else if (!resultIn.isData()) {
             String msg = "Expected but did not recieve a result set";
 
             throw Util.sqlException(Trace.UNEXPECTED_EXCEPTION, msg);
@@ -427,7 +426,7 @@ implements PreparedStatement {
             throw Util.sqlException(e);
         }
 
-        if (resultIn.mode == ResultConstants.ERROR) {
+        if (resultIn.isError()) {
             Util.throwError(resultIn);
         } else if (resultIn.mode != ResultConstants.UPDATECOUNT) {
             String msg = "Expected but did not recieve a row update count";
@@ -1817,7 +1816,7 @@ implements PreparedStatement {
 
         Result in = connection.sessionProxy.execute(resultOut);
 
-        if (in.mode == ResultConstants.ERROR) {
+        if (in.isError()) {
             Util.throwError(in);
         }
 

@@ -43,12 +43,9 @@ import org.hsqldb.lib.IntKeyHashMap;
 import org.hsqldb.lib.SimpleLog;
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.scriptio.ScriptReaderBase;
-import org.hsqldb.scriptio.ScriptWriterBase;
 
 /**
  * Restores the state of a Database instance from an SQL log file. <p>
- *
- * The log file is always plain text.
  *
  * If there is an error, processing stops at that line and the message is
  * logged to the application log. If memory runs out, an exception is thrown.
@@ -80,8 +77,8 @@ public class ScriptRunner {
         try {
             StopWatch sw = new StopWatch();
 
-            scr = ScriptReaderBase.newScriptReader(
-                database, logFilename, ScriptWriterBase.SCRIPT_TEXT_170);
+            scr = ScriptReaderBase.newScriptReader(database, logFilename,
+                                                   logType);
 
             while (scr.readLoggedStatement(current)) {
                 int sessionId = scr.getSessionNumber();
@@ -113,8 +110,7 @@ public class ScriptRunner {
                         result = current.sqlExecuteDirectNoPreChecks(
                             scr.getLoggedStatement());
 
-                        if (result != null
-                                && result.mode == ResultConstants.ERROR) {
+                        if (result != null && result.isError()) {
                             if (result.getException() != null) {
                                 throw result.getException();
                             }

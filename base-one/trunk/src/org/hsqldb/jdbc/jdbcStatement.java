@@ -221,7 +221,7 @@ public class jdbcStatement implements Statement {
         connection.clearWarningsNoCheck();
         fetchResult(sql);
 
-        if (resultIn == null || resultIn.mode == ResultConstants.DATA) {
+        if (resultIn == null || resultIn.isData()) {
 
             /**
              * @todo: - fredt@users - check for type of statement _must_ be done
@@ -229,7 +229,7 @@ public class jdbcStatement implements Statement {
              */
             throw new SQLException(
                 Trace.getMessage(Trace.jdbcStatement_executeUpdate));
-        } else if (resultIn.mode == ResultConstants.ERROR) {
+        } else if (resultIn.isError()) {
             Util.throwError(resultIn);
         }
 
@@ -627,7 +627,7 @@ public class jdbcStatement implements Statement {
         connection.clearWarningsNoCheck();
         fetchResult(sql);
 
-        return resultIn.mode == ResultConstants.DATA;
+        return resultIn.isData();
     }
 
     /**
@@ -656,10 +656,11 @@ public class jdbcStatement implements Statement {
 
         checkClosed();
 
-        return resultIn == null || resultIn.mode != ResultConstants.DATA
-               ? null
-               : new jdbcResultSet(this, resultIn, connection.connProperties,
-                                   connection.isNetConn);
+        return resultIn == null ||!resultIn.isData() ? null
+                                                     : new jdbcResultSet(this,
+                                                     resultIn,
+                                                         connection.connProperties,
+                                                             connection.isNetConn);
     }
 
     /**
@@ -679,9 +680,9 @@ public class jdbcStatement implements Statement {
 // fredt - omit checkClosed() in order to be able to handle the result of a
 // SHUTDOWN query
 //        checkClosed();
-        return (resultIn == null || resultIn.mode == ResultConstants.DATA)
-               ? -1
-               : resultIn.getUpdateCount();
+        return (resultIn == null || resultIn.isData()) ? -1
+                                                       : resultIn
+                                                       .getUpdateCount();
     }
 
     /**
@@ -1089,7 +1090,7 @@ public class jdbcStatement implements Statement {
 
         batchResultOut.clear();
 
-        if (resultIn.mode == ResultConstants.ERROR) {
+        if (resultIn.isError()) {
             Util.throwError(resultIn);
         }
 
@@ -1571,7 +1572,7 @@ public class jdbcStatement implements Statement {
         try {
             resultIn = connection.sessionProxy.execute(resultOut);
 
-            if (resultIn.mode == ResultConstants.ERROR) {
+            if (resultIn.isError()) {
                 throw new HsqlException(resultIn);
             }
         } catch (HsqlException e) {

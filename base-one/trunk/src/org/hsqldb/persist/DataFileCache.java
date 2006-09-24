@@ -111,7 +111,7 @@ public class DataFileCache {
     protected long    fileFreePosition;
     protected int     maxCacheSize;                // number of Rows
     protected long    maxCacheBytes;               // number of bytes
-    protected int     maxFreeBlocksSize;
+    protected int     maxFreeBlocks;
     protected Cache   cache;
 
     public DataFileCache(Database db,
@@ -157,7 +157,8 @@ public class DataFileCache {
         maxCacheSize    = lookupTableLength * 3;
         maxCacheBytes   = maxCacheSize * avgRowBytes;
         maxDataFileSize = cacheFileScale == 1 ? Integer.MAX_VALUE
-                                              : (long) Integer.MAX_VALUE * 8;
+                                              : (long) Integer.MAX_VALUE * 4;
+        maxFreeBlocks   = 1 << cacheFreeCountScale;
         dataFile        = null;
     }
 
@@ -254,7 +255,7 @@ public class DataFileCache {
             initBuffers();
 
             fileModified = false;
-            freeBlocks = new DataFileBlockManager(maxFreeBlocksSize,
+            freeBlocks = new DataFileBlockManager(maxFreeBlocks,
                                                   cacheFileScale, freesize);
 
             database.logger.appLog.logContext(SimpleLog.LOG_NORMAL, "end");
@@ -594,30 +595,14 @@ public class DataFileCache {
     protected synchronized void saveRows(CachedObject[] rows, int offset,
                                          int count) throws IOException {
 
-        for (int i = offset; i < offset + count; i++) {
-            CachedObject r = rows[i];
-
-            saveRow(r);
-
-            rows[i] = null;
-        }
-
-        initBuffers();
-    }
-
-    /**
-     * Writes out the specified Row. Will write only the Nodes or both Nodes
-     * and table row data depending on what is not already persisted to disk.
-     */
-    public synchronized void saveRow(CachedObject row) throws IOException {
-
         try {
-            setFileModified();
-            rowOut.reset();
-            row.write(rowOut);
-            dataFile.seek((long) row.getPos() * cacheFileScale);
-            dataFile.write(rowOut.getOutputStream().getBuffer(), 0,
-                           rowOut.getOutputStream().size());
+            for (int i = offset; i < offset + count; i++) {
+                CachedObject r = rows[i];
+
+                saveRow(r);
+
+                rows[i] = null;
+            }
         } catch (IOException e) {
             database.logger.appLog.logContext(e, null);
 
@@ -629,6 +614,20 @@ public class DataFileCache {
         } finally {
             initBuffers();
         }
+    }
+
+    /**
+     * Writes out the specified Row. Will write only the Nodes or both Nodes
+     * and table row data depending on what is not already persisted to disk.
+     */
+    public synchronized void saveRow(CachedObject row) throws IOException {
+
+        setFileModified();
+        rowOut.reset();
+        row.write(rowOut);
+        dataFile.seek((long) row.getPos() * cacheFileScale);
+        dataFile.write(rowOut.getOutputStream().getBuffer(), 0,
+                       rowOut.getOutputStream().size());
     }
 
     /**

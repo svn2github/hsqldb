@@ -1081,7 +1081,7 @@ public class Session implements SessionInterface {
             // esultConstants.EXECUTE_FAILED is encountered in the result
             if (in.mode == ResultConstants.UPDATECOUNT) {
                 updateCounts[count++] = in.updateCount;
-            } else if (in.mode == ResultConstants.DATA) {
+            } else if (in.isData()) {
 
                 // FIXME:  we don't have what it takes yet
                 // to differentiate between things like
@@ -1136,7 +1136,7 @@ public class Session implements SessionInterface {
             // ResultConstants.EXECUTE_FAILED is encountered
             if (in.mode == ResultConstants.UPDATECOUNT) {
                 updateCounts[count++] = in.updateCount;
-            } else if (in.mode == ResultConstants.DATA) {
+            } else if (in.isData()) {
 
                 // FIXME:  we don't have what it takes yet
                 // to differentiate between things like

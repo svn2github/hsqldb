@@ -90,7 +90,7 @@ class ScriptReaderBinary extends ScriptReaderBase {
             String   s      = (String) data[0];
             Result   result = session.sqlExecuteDirectNoPreChecks(s);
 
-            if (result.mode == ResultConstants.ERROR) {
+            if (result.isError()) {
                 db.logger.appLog.logContext(SimpleLog.LOG_ERROR,
                                             result.getMainString());
 

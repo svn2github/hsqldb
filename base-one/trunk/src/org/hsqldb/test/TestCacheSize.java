@@ -83,7 +83,7 @@ public class TestCacheSize {
     protected String filepath = "/hsql/testcache/test";
 
     // frequent reporting of progress
-    boolean reportProgress = true;
+    boolean reportProgress = false;
 
     // type of the big table {MEMORY | CACHED | TEXT | ""}
     String  tableType      = "CACHED";

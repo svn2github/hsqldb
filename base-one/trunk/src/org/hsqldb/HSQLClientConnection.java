@@ -99,7 +99,7 @@ public class HSQLClientConnection implements SessionInterface {
 
         Result resultIn = execute(login);
 
-        if (resultIn.mode == ResultConstants.ERROR) {
+        if (resultIn.isError()) {
 
 /** @todo fredt - review error message */
             throw Trace.error(resultIn);
@@ -192,7 +192,7 @@ public class HSQLClientConnection implements SessionInterface {
 
         Result in = execute(resultOut);
 
-        if (in.mode == ResultConstants.ERROR) {
+        if (in.isError()) {
             throw Trace.error(in);
         }
 
@@ -208,7 +208,7 @@ public class HSQLClientConnection implements SessionInterface {
 
         Result resultIn = execute(resultOut);
 
-        if (resultIn.mode == ResultConstants.ERROR) {
+        if (resultIn.isError()) {
             throw Trace.error(resultIn);
         }
     }
@@ -323,7 +323,7 @@ public class HSQLClientConnection implements SessionInterface {
         Result login    = new Result(ResultConstants.HSQLRESETSESSION);
         Result resultIn = execute(login);
 
-        if (resultIn.mode == ResultConstants.ERROR) {
+        if (resultIn.isError()) {
             isClosed = true;
 
             closeConnection();

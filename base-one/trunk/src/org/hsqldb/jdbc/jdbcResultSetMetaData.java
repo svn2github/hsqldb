@@ -185,7 +185,7 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
                                     Trace.JDBC_NO_RESULT_SET, null);
         }
 
-        if (r.mode != ResultConstants.DATA) {
+        if (!r.isData()) {
 
             // implied: columnCount = 0;
             return;

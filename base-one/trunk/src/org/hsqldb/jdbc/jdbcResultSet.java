@@ -5010,7 +5010,7 @@ public class jdbcResultSet implements ResultSet {
 
         if (r.mode == ResultConstants.UPDATECOUNT) {
             iUpdateCount = r.getUpdateCount();
-        } else if (r.mode == ResultConstants.ERROR) {
+        } else if (r.isError()) {
             Util.throwError(r);
         } else {
             if (s != null) {
