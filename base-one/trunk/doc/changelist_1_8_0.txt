@@ -6,9 +6,10 @@ hsqldb 1.8.0, including point releases, in reverse chronological order.
 Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
-2006.09.24  1.8.0.7
+2006.09.27  1.8.0.7
 
 Fixed regression in 1.8.0.6 that prevented reuse of empty spaces in the .data file.
+Fixed regression that prevented setting the textdb.allow_full_path property
 
 2006.09.22  1.8.0.6
 

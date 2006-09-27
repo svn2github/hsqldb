@@ -172,6 +172,8 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         meta.put(db_readonly, getMeta(db_readonly, FILE_PROPERTY, false));
         meta.put(hsqldb_files_readonly,
                  getMeta(hsqldb_files_readonly, FILE_PROPERTY, false));
+        meta.put(textdb_allow_full_path,
+                 getMeta(textdb_allow_full_path, FILE_PROPERTY, false));
 
         // boolean defaults for user defined props
         meta.put(hsqldb_nio_data_file,
