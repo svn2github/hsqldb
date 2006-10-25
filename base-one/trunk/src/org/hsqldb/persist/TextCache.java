@@ -479,7 +479,10 @@ public class TextCache extends DataFileCache {
                     wasNormal = true;
                     complete  = wasCR;
                     wasCR     = false;
-                    hasQuote  = !hasQuote;
+
+                    if (isQuoted) {
+                        hasQuote = !hasQuote;
+                    }
                     break;
 
                 case CR_CHAR :

@@ -87,6 +87,7 @@ public class HsqlDatabaseProperties extends HsqlProperties {
     public static final String FIRST_COMPATIBLE_VERSION = "1.8.0";
     public static final String THIS_VERSION             = "1.8.0";
     public static final String THIS_FULL_VERSION        = "1.8.0.7";
+    public static final String THIS_CACHE_VERSION       = "1.7.0";
     public static final String PRODUCT_NAME = "HSQL Database Engine";
     public static final int    MAJOR                    = 1,
                                MINOR                    = 8,
@@ -264,7 +265,7 @@ public class HsqlDatabaseProperties extends HsqlProperties {
 
         // data format of the cache file
         // this is set to 1.7.0 when a new *.data file is created
-        setProperty(hsqldb_cache_version, VERSION_STRING_1_7_0);
+        setProperty(hsqldb_cache_version, THIS_CACHE_VERSION);
 
         // the version that created this database
         // once created, this won't change if db is used with a future version

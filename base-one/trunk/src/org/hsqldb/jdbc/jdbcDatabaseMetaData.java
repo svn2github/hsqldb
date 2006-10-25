@@ -1734,7 +1734,7 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
      * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * In 1.8.0, HSQLDB supports schemas;
-     * this method always returns <code>true</code>.
+     * By default, this method returns <code>true</code>.
      *
      * </div>
      * <!-- end release-specific documentation -->
@@ -1754,7 +1754,7 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
      * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * In 1.8.0, HSQLDB supports schemas;
-     * this method always returns <code>true</code>.
+     * By default, this method returns <code>true</code>.
      *
      * </div>
      * <!-- end release-specific documentation -->
@@ -1774,7 +1774,7 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
      * <h3>HSQLDB-Specific Information:</h3> <p>
      *
      * In 1.8.0, HSQLDB supports schemas;
-     * this method always returns <code>true</code>.
+     * By default, this method returns <code>true</code>.
      *
      * </div>
      * <!-- end release-specific documentation -->

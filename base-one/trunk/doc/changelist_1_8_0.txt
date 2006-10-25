@@ -6,6 +6,12 @@ hsqldb 1.8.0, including point releases, in reverse chronological order.
 Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
+
+2006.10.25
+
+Fixed issue with some text table sources.
+
+
 2006.09.27  1.8.0.7
 
 Fixed regression in 1.8.0.6 that prevented reuse of empty spaces in the .data file.

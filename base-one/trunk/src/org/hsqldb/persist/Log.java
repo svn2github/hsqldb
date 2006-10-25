@@ -277,6 +277,8 @@ public class Log {
         }
 
         renameNewScript();
+        properties.setProperty(HsqlDatabaseProperties.hsqldb_cache_version,
+                               HsqlDatabaseProperties.THIS_CACHE_VERSION);
         properties.setDBModified(HsqlDatabaseProperties.FILES_NOT_MODIFIED);
     }
 

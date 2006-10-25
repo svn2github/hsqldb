@@ -2024,27 +2024,7 @@ public class Table extends BaseTable {
         updateIdentityValue(data);
         enforceFieldValueLimits(data, defaultColumnMap);
         enforceNullConstraints(data);
-
-        int i = 0;
-
-        try {
-            for (; i < indexList.length; i++) {
-                indexList[i].insert(null, row, i);
-            }
-        } catch (HsqlException e) {
-
-            // unique index violation - rollback insert
-            for (--i; i >= 0; i--) {
-                Node n = row.getNode(i);
-
-                indexList[i].delete(null, n);
-            }
-
-            row.delete();
-            removeRowFromStore(row);
-
-            throw e;
-        }
+        indexRow(null, row);
     }
 
     /**
@@ -3304,7 +3284,8 @@ public class Table extends BaseTable {
                 String     name = c == null ? index.getName().name
                                             : c.getName().name;
 
-                throw Trace.error(Trace.VIOLATION_OF_UNIQUE_CONSTRAINT, name);
+                throw Trace.error(Trace.VIOLATION_OF_UNIQUE_CONSTRAINT,
+                                  new Object[]{ name });
             }
 
             throw e;

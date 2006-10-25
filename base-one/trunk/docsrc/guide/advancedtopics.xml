@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: advancedtopics.xml,v 1.31 2005/06/29 23:15:11 fredt Exp $ -->
+<!-- $Id: advancedtopics.xml,v 1.32 2005/06/30 22:38:54 fredt Exp $ -->
 <chapter id="advanced-chapter">
   <title id="advanced-title">Advanced Topics</title>
 
@@ -18,9 +18,9 @@
       </author>
     </authorgroup>
 
-    <edition>$Revision: 1.31 $</edition>
+    <edition>$Revision: 1.32 $</edition>
 
-    <pubdate>$Date: 2005/06/29 23:15:11 $</pubdate>
+    <pubdate>$Date: 2005/06/30 22:38:54 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -792,7 +792,7 @@
               </entry>
 
               <entry>
-                <literal>no</literal>
+                <literal>false</literal>
               </entry>
 
               <entry>whole database is read-only</entry>
@@ -801,7 +801,7 @@
             <row>
               <entry nameend="c3" namest="c1">
                 <para>When true, the database cannot be modified in use. This
-                setting can be changed to <literal>yes</literal> if the
+                setting can be changed to <literal>true</literal> if the
                 database is to be opened from a CD. Prior to changing this
                 setting, the database should be closed with the
                 <literal>SHUTDOWN COMPACT</literal> command to ensure

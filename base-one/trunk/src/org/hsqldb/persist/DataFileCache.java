@@ -408,7 +408,7 @@ public class DataFileCache {
             backupFile();
             database.getProperties().setProperty(
                 HsqlDatabaseProperties.hsqldb_cache_version,
-                HsqlDatabaseProperties.VERSION_STRING_1_7_0);
+                HsqlDatabaseProperties.THIS_CACHE_VERSION);
             database.getProperties().save();
             cache.clear();
 
