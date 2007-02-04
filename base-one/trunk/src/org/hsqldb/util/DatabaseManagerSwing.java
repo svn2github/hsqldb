@@ -244,19 +244,32 @@ implements ActionListener, WindowListener, KeyListener {
     ArrayList                   localActionList = new ArrayList();
     private JFrame              jframe          = null;
     private static final String DEFAULT_RCFILE  = homedir + "/dbmanager.rc";
+    private static boolean TT_AVAILABLE = false;
+    static {
+        try {
+            Class.forName(DatabaseManagerSwing.class.getPackage().getName()
+                    + ".Transfer");
+            TT_AVAILABLE = true;
+        } catch (Throwable t) { }
+    }
     private static final String HELP_TEXT =
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.org.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.67 $";
+        + "problem reports or help requests:  $Revision: 1.69 $"
+        + (TT_AVAILABLE ? ""
+                : ("\n\nTransferTool classes are not in CLASSPATH.\n"
+               + "To enable the Tools menu, add 'X.jar' to your class path."));
+        ;
     private static final String ABOUT_TEXT =
-        "$Revision: 1.67 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.69 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2001-2005, The HSQL Development Group.\n"
-        + "http://hsqldb.org\n\n\n"
+        + "http://hsqldb.org  (User Guide available at this site).\n\n\n"
         + "You may use and redistribute according to the HSQLDB\n"
         + "license documented in the source code and at the web\n"
-        + "site above.";
+        + "site above."
+        + (TT_AVAILABLE ? "\n\nTransferTool options are available." : "");
     static final String    NL         = System.getProperty("line.separator");
     static final String    NULL_STR   = "[null]";
     static int             iMaxRecent = 24;
@@ -838,6 +851,7 @@ implements ActionListener, WindowListener, KeyListener {
         };
 
         jmenu = addMenu(bar, "Tools", stools);
+        jmenu.setEnabled(TT_AVAILABLE);
 
         localActionList.add(jmenu);
 
