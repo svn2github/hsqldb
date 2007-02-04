@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.133 2006/03/06 21:38:08 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.135 2006/07/27 20:04:31 fredt Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -105,7 +105,7 @@ import java.util.TreeMap;
  * setters would be best) instead of constructor args and System
  * Properties.
  *
- * @version $Revision: 1.133 $
+ * @version $Revision: 1.135 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlFile {
@@ -156,8 +156,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.133 $".substring("$Revision: ".length(),
-                "$Revision: 1.133 $".length() - 2);
+        revnum = "$Revision: 1.135 $".substring("$Revision: ".length(),
+                "$Revision: 1.135 $".length() - 2);
     }
 
     private static String BANNER =
@@ -3926,16 +3926,20 @@ public class SqlFile {
         int retval = isr.read(bfr, 0, bfr.length);
 
         isr.close();
-
+        /*  Per tracker 1547196, File.length is in bytes, but
+         *  InputStreamReader.read returns size in characters.
+         *  Therefore, this test fails if char size != 1 byte.
         if (retval != bfr.length) {
             throw new IOException("Didn't read all characters.  Read in "
                                   + retval + " characters");
         }
+        */
 
         String string = null;
 
         try {
-            string = new String(bfr);
+            string = new String(bfr, 0, retval);
+            // Sized explicitly to truncate nulls due to multibye characters.
         } catch (RuntimeException re) {
             throw new IOException(
                 "SqlFile converts your entire CSV file to a String at this time.\n"
