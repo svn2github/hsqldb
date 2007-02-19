@@ -51,6 +51,7 @@ hsqldbz.jar     ant hsqldbz     Min jar plus necessary util classes
 hsqltool.jar    ant hsqltool    SqlTool client and JDBC driver.
                                 (No direct urls of form
                                 jdbc:hsqldb:mem/file/res:*)
+transfer.jar    ant transfer    Transfer Tool classes only.
 
 jars built with JDK 1.2 OR 1.3 can now be used with JRE 1.1.</echo>
    </target>
@@ -686,6 +687,35 @@ examples:
             <!-- including 'org/hsqldb/jdbc*' just to be safe -->
             <fileset refid='jdbcclasses'/>
             <fileset refid='sqltoolclasses'/>
+        </jar>
+    </target>
+
+    <target name="transfer" depends="classes14, util"
+            description="Build the transfer.jar">
+        <jar jarfile="lib/transfer.jar">
+            <manifest>
+                <attribute name='Specification-Title' value='${hsqldb.title}'/>
+                <attribute name='Specification-Version' value='${hsqldb.version}'/>
+                <attribute name='Specification-Vendor' value='${hsqldb.vendor}'/>
+                <attribute name='Implementation-Title'
+                           value='HSQLDB Transfer Tool classes'/>
+                <attribute name='Implementation-Version' value='${build.label}'/>
+                <attribute name='Class-Path' value='hsqldb.jar'/>
+                <attribute name='Main-Class' value='org.hsqldb.util.DatabaseManagerSwing'/>
+                <!-- If we prefer to encourage use of Transfer instead of
+                     using Transfer functionality from DatabaseManager, then
+                     change the Main-Class to org.hsqldb.util.Transfer. -->
+            </manifest>
+            <!-- including 'org/hsqldb/jdbc*' just to be safe -->
+            <fileset dir='classes'
+                includes='
+                    org/hsqldb/util/Transfer*,
+                    org/hsqldb/util/DataAccessPoint*,
+                    org/hsqldb/util/HelperFactory*
+                    org/hsqldb/util/*TransferHelper*
+                    org/hsqldb/util/JDBCTypes*
+                    org/hsqldb/util/SQLStatements*
+            '/>
         </jar>
     </target>
 
