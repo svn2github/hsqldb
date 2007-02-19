@@ -158,8 +158,6 @@ import org.hsqldb.lib.java.JavaSystem;
 //              Added: Added a customCursor for the current wait cursor
 //      Added: Ability to switch the current LAF while runing (Native,Java or Motif)
 //unsaved@users 2005xxxx - improvements and bug fixes
-// TODO:  Move the COMMIT and ROLLBACK menu items from Option to Command menu.
-//            -- blaine
 
 /**
  * Swing Tool for managing a JDBC database.<p>
@@ -263,14 +261,14 @@ implements ActionListener, WindowListener, KeyListener {
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.org.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.71 $"
+        + "problem reports or help requests:  $Revision: 1.72 $"
         + (TT_AVAILABLE ? ""
                 : ("\n\nTransferTool classes are not in CLASSPATH.\n"
                        + "To enable the Tools menu, add 'transfer.jar' "
                        + "to your class path."));
         ;
     private static final String ABOUT_TEXT =
-        "$Revision: 1.71 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.72 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2001-2005, The HSQL Development Group.\n"
         + "http://hsqldb.org  (User Guide available at this site).\n\n\n"
@@ -778,7 +776,8 @@ implements ActionListener, WindowListener, KeyListener {
         String[] sitems = {
             "SSELECT", "IINSERT", "UUPDATE", "DDELETE", "EEXECUTE", "---",
             "-CREATE TABLE", "-DROP TABLE", "-CREATE INDEX", "-DROP INDEX",
-            "--", "-CHECKPOINT", "-SCRIPT", "-SET", "-SHUTDOWN", "--",
+            "--", "CCOMMIT*", "LROLLBACK*",
+            "-CHECKPOINT*", "-SCRIPT", "-SET", "-SHUTDOWN", "--",
             "-Test Script"
         };
 
@@ -848,7 +847,7 @@ implements ActionListener, WindowListener, KeyListener {
 
             // Added: (weconsultants@users) New menu options
             rbNativeLF, rbJavaLF, rbMotifLF, "--", "-Set Fonts", "--",
-            boxAutoCommit, "CCommit", "LRollback", "--", "-Disable MaxRows",
+            boxAutoCommit, "--", "-Disable MaxRows",
             "-Set MaxRows to 100", "--", boxLogging, "--", "-Insert test data"
         };
 
@@ -1244,9 +1243,10 @@ implements ActionListener, WindowListener, KeyListener {
                 //  Added: (weconsultants@users)
                 CommonSwing.errorMessage(e);
             }
-        } else if (s.equals("Commit")) {
+        } else if (s.equals("COMMIT*")) {
             try {
                 cConn.commit();
+                showHelp(new String[] {"", "COMMIT executed"});
             } catch (SQLException e) {
 
                 //  Added: (weconsultants@users)
@@ -1255,9 +1255,10 @@ implements ActionListener, WindowListener, KeyListener {
         } else if (s.equals("Insert test data")) {
             insertTestData();
             refreshTree();
-        } else if (s.equals("Rollback")) {
+        } else if (s.equals("ROLLBACK*")) {
             try {
                 cConn.rollback();
+                showHelp(new String[] {"", "ROLLBACK executed"});
             } catch (SQLException e) {
 
                 //  Added: (weconsultants@users)
@@ -1295,8 +1296,13 @@ implements ActionListener, WindowListener, KeyListener {
             showHelp(DatabaseManagerCommon.createIndexHelp);
         } else if (s.equals("DROP INDEX")) {
             showHelp(DatabaseManagerCommon.dropIndexHelp);
-        } else if (s.equals("CHECKPOINT")) {
-            showHelp(DatabaseManagerCommon.checkpointHelp);
+        } else if (s.equals("CHECKPOINT*")) {
+            try {
+                cConn.createStatement().executeUpdate("CHECKPOINT");
+                showHelp(new String[] {"", "CHECKPOINT executed"});
+            } catch (SQLException e) {
+                CommonSwing.errorMessage(e);
+            }
         } else if (s.equals("SCRIPT")) {
             showHelp(DatabaseManagerCommon.scriptHelp);
         } else if (s.equals("SHUTDOWN")) {
