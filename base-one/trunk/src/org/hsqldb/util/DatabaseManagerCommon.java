@@ -140,17 +140,30 @@ class DatabaseManagerCommon {
         "SCRIPT", "SCRIPT ['file']\n\n" + "(HSQLDB SQL only)"
     };
     static String[] shutdownHelp   = {
-        "SHUTDOWN", "SHUTDOWN [COMPACT|IMMEDIATELY]\n\n" + "(HSQLDB SQL only)"
+        "SHUTDOWN", "SHUTDOWN [COMPACT|IMMEDIATELY|SCRIPT]\n\n"
+                + "(HSQLDB SQL only)"
     };
     static String[] setHelp        = {
         "SET ",
-        "AUTOCOMMIT { TRUE | FALSE }\n" + "IGNORECASE { TRUE | FALSE }\n"
-        + "LOGSIZE size\n" + "MAXROWS maxrows\n" + "PASSWORD password\n"
-        + "READONLY { TRUE | FALSE }\n"
-        + "REFERENTIAL_INTEGRITY { TRUE | FALSE }\n"
-        + "TABLE table READONLY { TRUE | FALSE }\n"
-        + "TABLE table SOURCE \"file\" [DESC]\n"
-        + "WRITE_DELAY { TRUE | FALSE }\n\n" + "(HSQLDB SQL only)"
+        "SET AUTOCOMMIT { TRUE | FALSE }\n"
+        + "SET DATABASE COLLATION \"<collationname>\"\n"
+        + "SET CHECKPOINT DEFRAG <size>\n"
+        + "SET IGNORECASE { TRUE | FALSE }\n"
+        + "SET INITIAL SCHEMA <schemaname>\n"
+        + "SET LOGSIZE <size>\n"
+        //+ "SET MAXROWS maxrows\n"  Obsolete?
+        + "SET PASSWORD <password>\n"
+        + "SET PROPERTY \"<propname>\" <propvalue>\n"
+        //+ "SET READONLY { TRUE | FALSE }\n"  Obsolete?
+        + "SET REFERENTIAL_INTEGRITY { TRUE | FALSE }\n"
+        + "SET SCHEMA <schemaname>\n"
+        + "SET SCRIPTFORMAT { TEXT | BINARY | COMPRESSED }\n"
+        + "SET TABLE INDEX <tablename> '<index1rootPos>...'\n"
+        + "SET TABLE <tablename> READONLY { TRUE | FALSE }\n"
+        + "SET TABLE <tablename> SOURCE \"<file>\" [DESC]\n"
+        + "SET WRITE_DELAY { TRUE | FALSE | <seconds> | <ms> MILLIS }"
+        + "\n\n" 
+        + "(HSQLDB SQL only)"
     };
     static String[] testHelp = {
         "-->>>TEST<<<-- ;\n" + "--#1000;\n" + "DROP TABLE Test IF EXISTS;\n"
