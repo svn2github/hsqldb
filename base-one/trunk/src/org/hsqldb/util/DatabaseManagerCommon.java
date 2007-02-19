@@ -151,10 +151,10 @@ class DatabaseManagerCommon {
         + "SET IGNORECASE { TRUE | FALSE }\n"
         + "SET INITIAL SCHEMA <schemaname>\n"
         + "SET LOGSIZE <size>\n"
-        //+ "SET MAXROWS maxrows\n"  Obsolete?
+        + "SET MAXROWS maxrows\n"
         + "SET PASSWORD <password>\n"
         + "SET PROPERTY \"<propname>\" <propvalue>\n"
-        //+ "SET READONLY { TRUE | FALSE }\n"  Obsolete?
+        + "SET READONLY { TRUE | FALSE }\n"
         + "SET REFERENTIAL_INTEGRITY { TRUE | FALSE }\n"
         + "SET SCHEMA <schemaname>\n"
         + "SET SCRIPTFORMAT { TEXT | BINARY | COMPRESSED }\n"
