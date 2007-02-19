@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: sqlsyntax.xml,v 1.47 2005/11/06 20:03:36 unsaved Exp $ -->
+<!-- $Id: sqlsyntax.xml,v 1.48 2005/11/06 22:13:26 unsaved Exp $ -->
 <chapter id="sqlsyntax-chapter">
   <title id="sqlsyntax-title">SQL Syntax</title>
 
@@ -54,9 +54,9 @@
       </editor>
     </authorgroup>
 
-    <edition>$Revision: 1.47 $</edition>
+    <edition>$Revision: 1.48 $</edition>
 
-    <pubdate>$Date: 2005/11/06 20:03:36 $</pubdate>
+    <pubdate>$Date: 2005/11/06 22:13:26 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -1276,6 +1276,16 @@ INTERSECT [DISTINCT] } selectStatement]
       linkend="checkpoint-section" />.</para>
     </section>
 
+    <section>
+      <title>SET MAXROWS</title>
+
+      <programlisting>SET MAXROWS &lt;maxwors&gt;;</programlisting>
+
+      <para>
+          Describe me!
+      </para>
+    </section>
+
     <section id="set_password-section">
       <title id="set_password-title">SET PASSWORD</title>
 
@@ -1294,6 +1304,16 @@ INTERSECT [DISTINCT] } selectStatement]
       <para>Sets a database property. Properties that can be set using this
       command are either boolean or integral and are listed in the <link
       endterm="advanced-title" linkend="advanced-chapter" /> chapter.</para>
+    </section>
+
+    <section>
+      <title>SET READONLY</title>
+
+      <programlisting>SET READONLY {TRUE|FALSE};</programlisting>
+
+      <para>
+          Describe me!
+      </para>
     </section>
 
     <section id="set_refint-section">
