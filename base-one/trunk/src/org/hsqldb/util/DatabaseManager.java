@@ -114,13 +114,13 @@ implements ActionListener, WindowListener, KeyListener {
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.org.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.69 $"
+        + "problem reports or help requests:  $Revision: 1.30 $"
         + (TT_AVAILABLE ? ""
                 : ("\n\nTransferTool classes are not in CLASSPATH.\n"
                + "To enable the Tools menu, add 'transfer.jar' to your class path."));
         ;
     private static final String ABOUT_TEXT =
-        "$Revision: 1.69 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.30 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2001-2005, The HSQL Development Group.\n"
         + "http://hsqldb.org  (User Guide available at this site).\n\n\n"
@@ -470,8 +470,15 @@ implements ActionListener, WindowListener, KeyListener {
      * @param items
      */
     void addMenu(MenuBar b, String name, String[] items) {
+        /* It's a very poor design to encapsulate menu creation this way.
+         * Can't customize the menus this way (e.g. shortcut keys,
+         * mnemonics, disabling, etc. */
 
         Menu menu = new Menu(name);
+        if (name.equals("Tools") && !TT_AVAILABLE) {
+            // Terrible place to do this.  Forced to due to method design.
+            menu.setEnabled(false);
+        }
 
         addMenuItems(menu, items);
         b.add(menu);
