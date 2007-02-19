@@ -158,8 +158,7 @@ import org.hsqldb.lib.java.JavaSystem;
 //              Added: Added a customCursor for the current wait cursor
 //      Added: Ability to switch the current LAF while runing (Native,Java or Motif)
 //unsaved@users 2005xxxx - improvements and bug fixes
-// TODO:  Update the nav tree after doing a TransferTool import.
-//        Move the COMMIT and ROLLBACK menu items from Option to Command menu.
+// TODO:  Move the COMMIT and ROLLBACK menu items from Option to Command menu.
 //            -- blaine
 
 /**
@@ -264,14 +263,14 @@ implements ActionListener, WindowListener, KeyListener {
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.org.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.70 $"
+        + "problem reports or help requests:  $Revision: 1.71 $"
         + (TT_AVAILABLE ? ""
                 : ("\n\nTransferTool classes are not in CLASSPATH.\n"
                        + "To enable the Tools menu, add 'transfer.jar' "
                        + "to your class path."));
         ;
     private static final String ABOUT_TEXT =
-        "$Revision: 1.70 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.71 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2001-2005, The HSQL Development Group.\n"
         + "http://hsqldb.org  (User Guide available at this site).\n\n\n"
@@ -1083,7 +1082,17 @@ implements ActionListener, WindowListener, KeyListener {
         } else if (s.equals("Dump")) {
             Transfer.work(new String[]{ "-d" });
         } else if (s.equals("Restore")) {
+            JOptionPane.showMessageDialog(fMain.getContentPane(),
+                    "Use Ctrl-R or the View menu to\n"
+                    + "update nav. tree after Restoration", "Suggestion",
+                    JOptionPane.INFORMATION_MESSAGE);
+            // Regardless of whether autoRefresh is on, half of
+            // Restore runs asynchronously, so we could only
+            // update the tree from within the Transfer class.
             Transfer.work(new String[]{ "-r" });
+            // Would be better to put the modal suggestion here, after the
+            // user selects the import file, but that messes up the z
+            // layering of the 3 windows already displayed.
         } else if (s.equals(LOGGING_BOX_TEXT)) {
             JavaSystem.setLogToSystem(boxLogging.isSelected());
         } else if (s.equals(AUTOREFRESH_BOX_TEXT)) {
