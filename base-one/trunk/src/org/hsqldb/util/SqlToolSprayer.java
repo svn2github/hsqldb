@@ -37,7 +37,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Properties;
 
-/* $Id: SqlToolSprayer.java,v 1.14 2005/06/08 19:52:38 fredt Exp $ */
+/* $Id: SqlToolSprayer.java,v 1.15 2005/10/23 19:25:14 fredt Exp $ */
 
 /**
  * Sql Tool Sprayer.
@@ -54,18 +54,19 @@ import java.util.Properties;
  * </UL>
  *
  * @see @main()
- * @version $Revision: 1.14 $
+ * @version $Revision: 1.15 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlToolSprayer {
+    public static String LS = System.getProperty("line.separator");
 
     private static final String SYNTAX_MSG =
-        "SYNTAX:  java [-D...] SqlToolSprayer 'SQL;' [urlid1 urlid2...]\n"
-        + "System properties you may use [default values]:\n"
-        + "    sqltoolsprayer.period (in ms.) [500]\n"
-        + "    sqltoolsprayer.maxtime (in ms.) [0]\n"
-        + "    sqltoolsprayer.monfile (filepath) [none]\n"
-        + "    sqltoolsprayer.rcfile (filepath) [none.  SqlTool default used.]\n"
+        "SYNTAX:  java [-D...] SqlToolSprayer 'SQL;' [urlid1 urlid2...]" + LS
+        + "System properties you may use [default values]:" + LS
+        + "    sqltoolsprayer.period (in ms.) [500]" + LS
+        + "    sqltoolsprayer.maxtime (in ms.) [0]" + LS
+        + "    sqltoolsprayer.monfile (filepath) [none]" + LS
+        + "    sqltoolsprayer.rcfile (filepath) [none.  SqlTool default used.]" + LS
         + "    sqltoolsprayer.propfile (filepath) [none]";
 
     public static void main(String[] sa) {
@@ -172,7 +173,7 @@ public class SqlToolSprayer {
         // If all statuses true, then System.exit(0);
         for (int i = 0; i < status.length; i++) {
             if (status[i] != true) {
-                failedUrlids.add((String) urlids.get(i));
+                failedUrlids.add(urlids.get(i));
             }
         }
 

@@ -51,7 +51,6 @@ public class CSVWriter {
 
     private String             newline = System.getProperty("line.separator");
     private OutputStreamWriter writer  = null;
-    private int                nbrCols = 0;
     private int                nbrRows = 0;
 
     /**
@@ -77,8 +76,6 @@ public class CSVWriter {
      * @param header String[] with fieldnames
      */
     public void writeHeader(String[] header) throws IOException {
-
-        this.nbrCols = header.length;
 
         doWriteData(header);
     }
