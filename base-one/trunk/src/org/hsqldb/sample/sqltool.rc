@@ -1,4 +1,4 @@
-# $Id: sqltool.rc,v 1.16 2005/09/19 19:30:47 unsaved Exp $
+# $Id: sqltool.rc,v 1.17 2005/11/06 18:01:49 unsaved Exp $
 
 # This is a sample RC configuration file used by SqlTool, DatabaseManager,
 # and any other program that uses the org.hsqldb.util.RCData class.
@@ -13,11 +13,20 @@
 # your RC file.
 # See the documentation for SqlTool for various ways to use this file.
 
-# A personal Memory-Only database.
+# A personal Memory-Only (non-persistent) database.
 urlid mem
 url jdbc:hsqldb:mem:memdbid
 username sa
 password
+
+# A personal, local, persistent database.
+urlid personal
+url jdbc:hsqldb:file:${user.home}/db/personal;shutdown=true
+username sa
+password
+# When connecting directly to a file database like this, you should 
+# use the shutdown connection property like this to shut down the DB
+# properly when you exit the JVM.
 
 # This is for a hsqldb Server running with default settings on your local
 # computer (and for which you have not changed the password for "sa").
@@ -88,14 +97,31 @@ url jdbc:microsoft:sqlserver://hostname;DatabaseName=DbName;SelectMethod=Cursor
 # anything other than a "hello world" program).
 # This is for Microsoft's SQL Server 2000 driver (requires mssqlserver.jar
 # and msutil.jar).
-driver com.microsoft.jdbc.sqlserver.SQLServerDriver
-username myuser
-password hiddenpwd
+#driver com.microsoft.jdbc.sqlserver.SQLServerDriver
+#username myuser
+#password hiddenpwd
 
 # Template for a Sybase database
-urlid sybase
-url jdbc:sybase:Tds:hostname:4100/dbname
-username blaine
-password hiddenpwd
+#urlid sybase
+#url jdbc:sybase:Tds:hostname:4100/dbname
+#username blaine
+#password hiddenpwd
 # This is for the jConnect driver (requires jconn3.jar).
-driver com.sybase.jdbc3.jdbc.SybDriver
+#driver com.sybase.jdbc3.jdbc.SybDriver
+
+# Template for Embedded Derby / Java DB.
+#urlid derby1
+#url jdbc:derby:path/to/deb/directory;create=true
+#username bilbo
+#password baggins
+#driver org.apache.derby.jdbc.EmbeddedDriver
+# The embedded Derby driver requires derby.jar.
+# There'a also the org.apache.derby.jdbc.ClientDriver driver with URL
+# like jdbc:derby://<server>[:<port>]/databaseName, which requires
+# derbyclient.jar.
+# !! Run SqlTool with --autoCommit switch, since Derby decided (why???)
+# not to implement the SQL standard statement "commit"!!
+# Note that SqlTool can not shut down an embedded Derby database properly,
+# since that requires an additional SQL connection just for that purpose.
+# However, I've never lost data by not shutting it down properly.
+# Other than not supporting this quirk of Derby, SqlTool is miles ahead of ij.

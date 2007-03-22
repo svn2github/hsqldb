@@ -37,11 +37,15 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.Driver;
 import java.sql.SQLException;
 import java.util.Properties;
 import java.util.StringTokenizer;
+import java.net.URL;
+import java.net.MalformedURLException;
+import java.net.URLClassLoader;
 
-/* $Id: RCData.java,v 1.11 2006/02/10 22:04:58 unsaved Exp $ */
+/* $Id: RCData.java,v 1.13 2006/07/27 20:04:31 fredt Exp $ */
 
 /**
  * All the info we need to connect up to a database.
@@ -52,8 +56,20 @@ public class RCData {
 
     public static final String DEFAULT_JDBC_DRIVER = "org.hsqldb.jdbcDriver";
 
+    private String defaultJdbcDriverName = DEFAULT_JDBC_DRIVER;
+
+    public void setDefaultJdbcDriver(String defaultJdbcDriverName) {
+        this.defaultJdbcDriverName = defaultJdbcDriverName;
+    }
+    public String getDefaultJdbcDriverName() {
+        return defaultJdbcDriverName;
+    }
+
+
     /**
      * Just for testing and debugging.
+     *
+     * N.b. this echoes passwords!
      */
     public void report() {
         System.err.println("urlid: " + id + ", url: " + url + ", username: "
@@ -85,6 +101,8 @@ public class RCData {
         String          keyword, value;
         int             linenum = 0;
         BufferedReader  br      = new BufferedReader(new FileReader(file));
+        int             varOffset, varEnd;
+        String          varVal, varName;
 
         while ((s = br.readLine()) != null) {
             ++linenum;
@@ -97,6 +115,24 @@ public class RCData {
 
             if (s.charAt(0) == '#') {
                 continue;
+            }
+            while (true) {
+                // Recursive substitution for ${x} variables.
+                varOffset = s.indexOf("${");
+                if (varOffset < 0) break;
+                varEnd = s.indexOf('}', varOffset + 2);
+                if (varEnd < 0) break;
+                varName = s.substring(varOffset + 2, varEnd);
+                if (varName.length() < 1)
+                    throw new Exception("Bad variable at line " + linenum 
+                            + " in '" + file + "':  " + s);
+                varVal = System.getProperty(varName);
+                if (varVal == null)
+                    throw new Exception("No Java system property with name '"
+                            + varName + "' for line " + linenum
+                            + " in '" + file + "':  " + s);
+                s = s.substring(0, varOffset) + varVal
+                        + s.substring(varEnd + 1);
             }
 
             tokenizer = new StringTokenizer(s);
@@ -158,6 +194,8 @@ public class RCData {
                     truststore = value;
                 } else if (keyword.equals("password")) {
                     password = value;
+                } else if (keyword.equals("libpath")) {
+                    libpath = value;
                 } else {
                     try {
                         br.close();
@@ -182,14 +220,28 @@ public class RCData {
                                 + "for '" + dbKey + "' in file '" + file
                                 + "'");
         }
+        if (libpath != null)
+            throw new IllegalArgumentException(
+                    "Sorry, 'libpath' not supported yet");
+    }
+
+    /**
+     * Convenience constructor for backward compatibility.
+     *
+     * @see #RCData(String,String,String,String,String,String,String,String)
+     */
+    public RCData(String id, String url, String username, String password,
+                  String driver, String charset, String truststore)
+            throws Exception {
+        this(id, url, username, password, driver, charset, truststore, null);
     }
 
     /**
      * <p>Creates a new <code>RCData</code> object.
      *
-     * <p>The parameters driver, charset, and truststore are optional. Setting
-     * these parameters to <code>NULL</code> will set them to their default
-     * values.
+     * <p>The parameters driver, charset, truststore, and libpath are optional. 
+     * Setting these parameters to <code>NULL</code> will set them to their 
+     * default values.
      *
      * @param id The identifier for these connection settings
      * @param url The URL of the database to connect to
@@ -198,11 +250,12 @@ public class RCData {
      * @param driver The JDBC driver to use
      * @param charset The character set to use
      * @param truststore The trust store to use
+     * @param libpath The JDBC library to add to CLASSPATH
      * @throws Exception if the a non-optional parameter is set to <code>NULL</code>
      */
     public RCData(String id, String url, String username, String password,
                   String driver, String charset,
-                  String truststore) throws Exception {
+                  String truststore, String libpath) throws Exception {
 
         this.id         = id;
         this.url        = url;
@@ -211,6 +264,11 @@ public class RCData {
         this.driver     = driver;
         this.charset    = charset;
         this.truststore = truststore;
+        this.libpath    = libpath;
+
+        if (libpath != null)
+            throw new IllegalArgumentException(
+                    "Sorry, 'libpath' not supported yet");
 
         if (id == null || url == null || username == null
                 || password == null) {
@@ -225,6 +283,7 @@ public class RCData {
     String driver     = null;
     String charset    = null;
     String truststore = null;
+    String libpath    = null;
 
     /**
      * Gets a JDBC Connection using the data of this RCData object.
@@ -233,7 +292,7 @@ public class RCData {
      */
     public Connection getConnection()
     throws ClassNotFoundException, InstantiationException,
-           IllegalAccessException, SQLException {
+           IllegalAccessException, SQLException, MalformedURLException {
         return getConnection(null, null, null);
     }
 
@@ -248,6 +307,7 @@ public class RCData {
                                     throws ClassNotFoundException,
                                            InstantiationException,
                                            IllegalAccessException,
+                                           MalformedURLException,
                                            SQLException {
 
         Properties sysProps = System.getProperties();
@@ -284,8 +344,17 @@ public class RCData {
         // Why doesn't calling class.forName() load my JDBC driver?
         // There is a bug in the JDK 1.1.x that can cause Class.forName()
         // to fail. // new org.hsqldb.jdbcDriver();
-        Class.forName(curDriver).newInstance();
-
+        /* This does register the new driver instance, as can be shown by
+         * DriverManager.getDrivers(), but somehow the registered driver
+         * does not pick up the URL, and the result is always:
+         *     No suitable driver
+        DriverManager.registerDriver((Driver)
+        ((libpath == null) ? Class.forName(curDriver)
+                           : (new URLClassLoader(new URL[] {
+                                  new URL("file:///" + libpath)
+                              })).loadClass(curDriver)).newInstance());
+        */
+        Class.forName(curDriver);
         return DriverManager.getConnection(url, username, password);
     }
 }
