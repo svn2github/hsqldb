@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.95 2005/11/07 20:34:16 unsaved Exp $ -->
+<!-- $Id: sqltool.xml,v 1.96 2006/03/16 22:47:19 digifork Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -23,8 +23,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.95 $</edition>
-        <pubdate>$Date: 2005/11/07 20:34:16 $</pubdate>
+        <edition>$Revision: 1.96 $</edition>
+        <pubdate>$Date: 2006/03/16 22:47:19 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -99,6 +99,17 @@
                     Implemented method for specifying RC file parameters as a
                     command-line switch. Modified SqlTool to now accepts case
                     insensitive command-line switches. Added for HSQLDB v. 1.8.1.
+                </simpara></listitem><listitem><simpara>
+                    Allow use of Java system properties in RC files, like
+                    ${user.home}.  Works just like log4j and ant build files.
+                    Target HSQLDB version unknown.
+                </simpara></listitem><listitem><simpara>
+                    Fixed many places where SqlTool was outputting UNIX 
+                    newlines regardless of environment.
+                    Since newline vs. newline + carriage-return makes no
+                    difference with tty output, this was most noticeable
+                    with \o and \x commands (tee and CSV export, respectively).
+                    Target HSQLDB version unknown.
                 </simpara></listitem>
                 
             </itemizedlist>
