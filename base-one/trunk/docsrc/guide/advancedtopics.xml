@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: advancedtopics.xml,v 1.32 2005/06/30 22:38:54 fredt Exp $ -->
+<!-- $Id: advancedtopics.xml,v 1.33 2006/10/25 12:36:15 fredt Exp $ -->
 <chapter id="advanced-chapter">
   <title id="advanced-title">Advanced Topics</title>
 
@@ -18,9 +18,9 @@
       </author>
     </authorgroup>
 
-    <edition>$Revision: 1.32 $</edition>
+    <edition>$Revision: 1.33 $</edition>
 
-    <pubdate>$Date: 2005/06/30 22:38:54 $</pubdate>
+    <pubdate>$Date: 2006/10/25 12:36:15 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -625,7 +625,7 @@
               </entry>
 
               <entry>
-                <literal>9001</literal>
+                <literal>9001 (normal) or 554 (if TLS encrypted)</literal>
               </entry>
 
               <entry>TCP/IP port used for talking to clients. All databases
