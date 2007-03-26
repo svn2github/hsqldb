@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.137 2007/03/22 01:37:10 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.138 2007/03/26 03:56:04 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -105,7 +105,7 @@ import java.util.TreeMap;
  * setters would be best) instead of constructor args and System
  * Properties.
  *
- * @version $Revision: 1.137 $
+ * @version $Revision: 1.138 $
  * @author Blaine Simpson unsaved@users
  */
 
@@ -155,8 +155,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.137 $".substring("$Revision: ".length(),
-                "$Revision: 1.137 $".length() - 2);
+        revnum = "$Revision: 1.138 $".substring("$Revision: ".length(),
+                "$Revision: 1.138 $".length() - 2);
     }
 
     private static String BANNER =
@@ -3843,6 +3843,7 @@ public class SqlFile {
     public void importCsv(String filePath) throws IOException, BadSpecial {
         char[] bfr  = null;
         File   file = new File(filePath);
+        String trimmedLine;
 
         if (!file.canRead()) {
             throw new IOException("Can't read file '" + file + "'");
@@ -3890,14 +3891,27 @@ public class SqlFile {
         int colStart;
         int colEnd;
 
-        // First read header line
+        // First read one until we get one header line
+        int lineCount = 0; // Assume a 1 line header?
         int recStart = 0;
 
-        recEnd = string.indexOf(csvRowDelim, recStart);
+        while (true) {
+            if (recStart > string.length() - 2) {
+                throw new IOException("No header record");
+            }
+            recEnd = string.indexOf(csvRowDelim, recStart);
+            lineCount++; // Increment when we have line start and end
 
-        if (recEnd < 0) {
-            // File consists of only a header line
-            recEnd = string.length();
+            if (recEnd < 0) {
+                // Last line in file.  No data records.
+                recEnd = string.length();
+            }
+            trimmedLine = string.substring(recStart, recEnd).trim();
+            if (trimmedLine.length() > 1 && (csvSkipPrefix == null
+                        || !trimmedLine.startsWith(csvSkipPrefix))) {
+                break;
+            }
+            recStart = recEnd + csvRowDelim.length();
         }
 
         colStart = recStart;
@@ -3996,7 +4010,6 @@ public class SqlFile {
         }
 
         //System.out.println("INSERTION: (" + sb + ')');
-        int lineCount = 1; // Assume a 1 line header?
         try {
             PreparedStatement ps = curConn.prepareStatement(sb.toString()
                 + ')');
@@ -4015,18 +4028,19 @@ public class SqlFile {
                     break;
                 }
 
-                lineCount++;
                 recEnd = string.indexOf(csvRowDelim, recStart);
+                lineCount++; // Increment when we have line start and end
 
                 if (recEnd < 0) {
                     // Last record
                     recEnd = string.length();
                 }
+                trimmedLine = string.substring(recStart, recEnd).trim();
+                if (trimmedLine.length() < 1) {
+                    continue;  // Silently skip blank lines
+                }
                 if (csvSkipPrefix != null
-                        && recEnd >= recStart + csvSkipPrefix.length()
-                        && string.substring(recStart,
-                                recStart + csvSkipPrefix.length()).equals(
-                                csvSkipPrefix)) {
+                        && trimmedLine.startsWith(csvSkipPrefix)) {
                     skipCount++;
                     continue;
                 }
