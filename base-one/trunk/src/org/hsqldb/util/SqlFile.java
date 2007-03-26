@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.136 2007/02/04 21:37:28 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.137 2007/03/22 01:37:10 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -105,7 +105,7 @@ import java.util.TreeMap;
  * setters would be best) instead of constructor args and System
  * Properties.
  *
- * @version $Revision: 1.136 $
+ * @version $Revision: 1.137 $
  * @author Blaine Simpson unsaved@users
  */
 
@@ -155,8 +155,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.136 $".substring("$Revision: ".length(),
-                "$Revision: 1.136 $".length() - 2);
+        revnum = "$Revision: 1.137 $".substring("$Revision: ".length(),
+                "$Revision: 1.137 $".length() - 2);
     }
 
     private static String BANNER =
@@ -222,7 +222,7 @@ public class SqlFile {
         + "    \\s                   * Show previous commands (i.e. SQL command history)" + LS
         + "    \\-[3][;]             * reload a command to buffer (opt. exec. w/ \":;\"))" + LS
         + "    \\x {TABLE|SELECT...} eXport table or query to CSV text file" + LS
-        + "    \\m file/path.csv     iMport CSV text file records into a table" + LS
+        + "    \\m file/pth.csv [:#] iMport CSV text file records into a table" + LS
         + "    \\q [abort message]   Quit (or end input like Ctrl-Z or Ctrl-D)" + LS
     ;
     private static final String PL_HELP_TEXT = "PROCEDURAL LANGUAGE Commands." + LS
@@ -1044,10 +1044,14 @@ public class SqlFile {
     private boolean doPrepare   = false;
     private String  prepareVar  = null;
     private String  csvColDelim = null;
+    private String  csvSkipPrefix = null;
     private String  csvRowDelim = null;
-    private static final String CSV_SYNTAX_MSG =
-        "Export syntax:  x table_or_view_anme "
+    private static final String CSV_X_SYNTAX_MSG =
+        "Export syntax:  \\x table_or_view_name "
         + "[column_delimiter [record_delimiter]]";
+    private static final String CSV_M_SYNTAX_MSG =
+        "Import syntax:  \\m file/path.csv "
+        + "[:#] (prefix delimiter '#')";
 
     /**
      * Process a Special Command.
@@ -1094,14 +1098,21 @@ public class SqlFile {
 
             case 'm' :
                 if (arg1.length() != 1 || other == null) {
-                    throw new BadSpecial();
+                    throw new BadSpecial(CSV_M_SYNTAX_MSG);
                 }
 
+                csvSkipPrefix =
+                    convertEscapes((String) userVars.get("*CSV_SKIP_PREFIX"));
                 csvColDelim =
                     convertEscapes((String) userVars.get("*CSV_COL_DELIM"));
                 csvRowDelim =
                     convertEscapes((String) userVars.get("*CSV_ROW_DELIM"));
                 csvNullRep = (String) userVars.get("*CSV_NULL_REP");
+                int colonIndex = other.indexOf(" :");
+                if (colonIndex > -1 && colonIndex < other.length() - 2) {
+                    csvSkipPrefix = other.substring(colonIndex + 2);
+                    other = other.substring(0, colonIndex).trim();
+                }
 
                 if (csvColDelim == null) {
                     csvColDelim = DEFAULT_COL_DELIM;
@@ -1132,6 +1143,8 @@ public class SqlFile {
                     String tableName = ((other.indexOf(' ') > 0) ? null
                                                                  : other);
 
+                    csvSkipPrefix = convertEscapes(
+                            (String) userVars.get("*CSV_SKIP_PREFIX"));
                     csvColDelim = convertEscapes(
                         (String) userVars.get("*CSV_COL_DELIM"));
                     csvRowDelim = convertEscapes(
@@ -1180,7 +1193,7 @@ public class SqlFile {
                     if (e instanceof BadSpecial) {
                         // Not sure this test is right.  Maybe .length() == 0?
                         if (e.getMessage() == null) {
-                            throw new BadSpecial(CSV_SYNTAX_MSG);
+                            throw new BadSpecial(CSV_X_SYNTAX_MSG);
                         }
                         throw (BadSpecial) e;
                     }
@@ -3007,6 +3020,12 @@ public class SqlFile {
                 for (int i = 0; i < rows.size(); i++) {
                     fieldArray = (String[]) rows.get(i);
 
+                    if (csvSkipPrefix != null
+                            && fieldArray[0].startsWith(csvSkipPrefix)) {
+                        throw new SQLException(
+                                "Table data begins with our Skip Prefix '"
+                                               + csvSkipPrefix + "'");
+                    }
                     for (int j = 0; j < fieldArray.length; j++) {
                         csvSafe(fieldArray[j]);
                         pwCsv.print((fieldArray[j] == null)
@@ -3901,13 +3920,15 @@ public class SqlFile {
                                       + (headerList.size() + 1));
             }
 
-            headerList.add(string.substring(colStart, colEnd));
+            headerList.add(
+                (colEnd - colStart == 1 && string.charAt(colStart) == '-')
+                ? ((String) null)
+                : string.substring(colStart, colEnd));
 
             colStart = colEnd + csvColDelim.length();
         }
 
         String[]  headers   = (String[]) headerList.toArray(new String[0]);
-        boolean[] autonulls = new boolean[headers.length];
         String    tableName = (String) userVars.get("*CSV_TABLENAME");
 
         if (tableName == null) {
@@ -3922,13 +3943,22 @@ public class SqlFile {
 
         StringBuffer tmpSb = new StringBuffer();
 
+        int skippers = 0;
         for (int i = 0; i < headers.length; i++) {
-            if (i > 0) {
+            if (headers[i] == null) {
+                skippers++;
+                continue;
+            }
+            if (tmpSb.length() > 0) {
                 tmpSb.append(", ");
             }
 
             tmpSb.append(headers[i]);
         }
+        boolean[] autonulls = new boolean[headers.length - skippers];
+        // Remember that the headers array has all columns in CSV file,
+        // even skipped columns.
+        // The autonulls array only has columns that we will insert into.
 
         StringBuffer sb = new StringBuffer("INSERT INTO " + tableName + " ("
                                            + tmpSb + ") VALUES (");
@@ -3957,7 +3987,7 @@ public class SqlFile {
                                  + se.getMessage());
         }
 
-        for (int i = 0; i < headers.length; i++) {
+        for (int i = 0; i < autonulls.length; i++) {
             if (i > 0) {
                 sb.append(", ");
             }
@@ -3966,12 +3996,16 @@ public class SqlFile {
         }
 
         //System.out.println("INSERTION: (" + sb + ')');
+        int lineCount = 1; // Assume a 1 line header?
         try {
             PreparedStatement ps = curConn.prepareStatement(sb.toString()
                 + ')');
-            String[] dataVals = new String[headers.length];
-            int      recCount = 0;
-            int      colCount;
+            String[] dataVals = new String[autonulls.length];
+            // Length is number of cols to insert INTO, not nec. # in CSV file.
+            int recCount = 0;
+            int skipCount = 0;
+            int      readColCount;
+            int      storeColCount;
 
             // Insert data rows 1-row-at-a-time
             while (true) {
@@ -3981,18 +4015,27 @@ public class SqlFile {
                     break;
                 }
 
+                lineCount++;
                 recEnd = string.indexOf(csvRowDelim, recStart);
 
                 if (recEnd < 0) {
                     // Last record
                     recEnd = string.length();
                 }
+                if (csvSkipPrefix != null
+                        && recEnd >= recStart + csvSkipPrefix.length()
+                        && string.substring(recStart,
+                                recStart + csvSkipPrefix.length()).equals(
+                                csvSkipPrefix)) {
+                    skipCount++;
+                    continue;
+                }
+                recCount++;
 
                 colStart = recStart;
                 colEnd   = -1;
-                colCount = 0;
-
-                recCount++;
+                readColCount = 0;
+                storeColCount = 0;
 
                 while (true) {
                     if (colEnd == recEnd) {
@@ -4006,22 +4049,35 @@ public class SqlFile {
                         colEnd = recEnd;
                     }
 
-                    if (colCount == dataVals.length) {
+                    if (readColCount == headers.length) {
                         throw new IOException(
                             "Header has " + headers.length
-                            + " columns.  CSV record " + recCount
-                            + " has too many column values.");
+                            + " columns.  CSV input line " + lineCount
+                            + " has too many column values ("
+                            + (1 + readColCount) + ").");
                     }
 
-                    dataVals[colCount++] = string.substring(colStart, colEnd);
+                    if (headers[readColCount++] != null) {
+                        dataVals[storeColCount++] =
+                                string.substring(colStart, colEnd);
+                    }
                     colStart             = colEnd + csvColDelim.length();
                 }
 
-                if (colCount != dataVals.length) {
+                /* It's too late for the following two tests, since if
+                 * we inserted *ColCount > array.length, we would have
+                 * generated a runtime array index exception. */
+                if (readColCount != headers.length) {
                     throw new IOException("Header has " + headers.length
-                                          + " columns.  CSV record "
-                                          + recCount + " has " + colCount
+                                          + " columns.  CSV input line "
+                                          + lineCount + " has " + readColCount
                                           + " column values.");
+                }
+                if (storeColCount != dataVals.length) {
+                    throw new IOException("Header has " + dataVals.length
+                                      + " non-skip columns.  CSV input line "
+                                      + lineCount + " has " + storeColCount
+                                      + " column insertion values.");
                 }
 
                 for (int i = 0; i < dataVals.length; i++) {
@@ -4039,7 +4095,7 @@ public class SqlFile {
                 if (retval != 1) {
                     curConn.rollback();
 
-                    throw new BadSpecial("Insert of row " + recCount
+                    throw new BadSpecial("Insert from input line " + lineCount
                                          + " failed.  " + retval
                                          + " rows modified");
                 }
@@ -4049,13 +4105,19 @@ public class SqlFile {
 
             stdprintln("Successfully inserted " + recCount
                        + " rows into table '" + tableName + "'");
+            if (skipCount > 0) {
+                stdprintln("Skipped " + skipCount + " rows with prefix '"
+                        + csvSkipPrefix + "'");
+            }
         } catch (SQLException se) {
             try {
                 curConn.rollback();
             } catch (SQLException se2) {}
 
             throw new BadSpecial(
-                "SQL error encountered when inserting CSV data: " + se);
+                "SQL error encountered when inserting CSV data"
+                + ((lineCount > 1) ? (" from input line " + lineCount) : "")
+                + ": " + se);
         }
     }
 
