@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.138 2007/03/26 03:56:04 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.139 2007/03/26 04:58:13 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -105,7 +105,7 @@ import java.util.TreeMap;
  * setters would be best) instead of constructor args and System
  * Properties.
  *
- * @version $Revision: 1.138 $
+ * @version $Revision: 1.139 $
  * @author Blaine Simpson unsaved@users
  */
 
@@ -155,8 +155,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.138 $".substring("$Revision: ".length(),
-                "$Revision: 1.138 $".length() - 2);
+        revnum = "$Revision: 1.139 $".substring("$Revision: ".length(),
+                "$Revision: 1.139 $".length() - 2);
     }
 
     private static String BANNER =
@@ -435,7 +435,7 @@ public class SqlFile {
                         }
                     } else {
                         if (stringBuffer.length() > 0) {
-                            stringBuffer.append(LS);
+                            stringBuffer.append('\n');
                         }
 
                         stringBuffer.append(inputLine);
@@ -597,7 +597,7 @@ public class SqlFile {
                     // A null terminal line (i.e., /\s*;\s*$/) is never useful.
                     if (!trimmedInput.equals(";")) {
                         if (stringBuffer.length() > 0) {
-                            stringBuffer.append(LS);
+                            stringBuffer.append('\n');
                         }
 
                         stringBuffer.append((deTerminated == null) ? inputLine
