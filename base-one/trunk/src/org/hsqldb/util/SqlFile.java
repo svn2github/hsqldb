@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.139 2007/03/26 04:58:13 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.140 2007/03/27 01:11:15 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -105,7 +105,7 @@ import java.util.TreeMap;
  * setters would be best) instead of constructor args and System
  * Properties.
  *
- * @version $Revision: 1.139 $
+ * @version $Revision: 1.140 $
  * @author Blaine Simpson unsaved@users
  */
 
@@ -155,8 +155,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.139 $".substring("$Revision: ".length(),
-                "$Revision: 1.139 $".length() - 2);
+        revnum = "$Revision: 1.140 $".substring("$Revision: ".length(),
+                "$Revision: 1.140 $".length() - 2);
     }
 
     private static String BANNER =
@@ -222,7 +222,7 @@ public class SqlFile {
         + "    \\s                   * Show previous commands (i.e. SQL command history)" + LS
         + "    \\-[3][;]             * reload a command to buffer (opt. exec. w/ \":;\"))" + LS
         + "    \\x {TABLE|SELECT...} eXport table or query to CSV text file" + LS
-        + "    \\m file/pth.csv [:#] iMport CSV text file records into a table" + LS
+        + "    \\m file/path.csv [*] iMport CSV text file records into a table" + LS
         + "    \\q [abort message]   Quit (or end input like Ctrl-Z or Ctrl-D)" + LS
     ;
     private static final String PL_HELP_TEXT = "PROCEDURAL LANGUAGE Commands." + LS
@@ -1051,7 +1051,7 @@ public class SqlFile {
         + "[column_delimiter [record_delimiter]]";
     private static final String CSV_M_SYNTAX_MSG =
         "Import syntax:  \\m file/path.csv "
-        + "[:#] (prefix delimiter '#')";
+        + "[*]   (* means no comments in CSV file)";
 
     /**
      * Process a Special Command.
@@ -1100,9 +1100,22 @@ public class SqlFile {
                 if (arg1.length() != 1 || other == null) {
                     throw new BadSpecial(CSV_M_SYNTAX_MSG);
                 }
+                boolean noComments = other.charAt(other.length() - 1) == '*';
 
-                csvSkipPrefix =
-                    convertEscapes((String) userVars.get("*CSV_SKIP_PREFIX"));
+                if (noComments) {
+                    csvSkipPrefix = null;
+                    other = other.substring(0, other.length()-1).trim();
+                    if (other.length() < 1) {
+                        throw new BadSpecial(CSV_M_SYNTAX_MSG);
+                    }
+                } else {
+                    csvSkipPrefix = convertEscapes(
+                            (String) userVars.get("*CSV_SKIP_PREFIX"));
+                    if (csvSkipPrefix == null) {
+                        csvSkipPrefix = DEFAULT_SKIP_PREFIX;
+                    }
+
+                }
                 csvColDelim =
                     convertEscapes((String) userVars.get("*CSV_COL_DELIM"));
                 csvRowDelim =
@@ -1143,8 +1156,6 @@ public class SqlFile {
                     String tableName = ((other.indexOf(' ') > 0) ? null
                                                                  : other);
 
-                    csvSkipPrefix = convertEscapes(
-                            (String) userVars.get("*CSV_SKIP_PREFIX"));
                     csvColDelim = convertEscapes(
                         (String) userVars.get("*CSV_COL_DELIM"));
                     csvRowDelim = convertEscapes(
@@ -2219,6 +2230,7 @@ public class SqlFile {
     private static final String DEFAULT_ROW_DELIM =
         System.getProperty("line.separator");
     private static final String DEFAULT_COL_DELIM = "|";
+    private static final String DEFAULT_SKIP_PREFIX = "#";
     private static final int    DEFAULT_ELEMENT   = 0,
                                 HSQLDB_ELEMENT    = 1,
                                 ORACLE_ELEMENT    = 2
@@ -3020,12 +3032,6 @@ public class SqlFile {
                 for (int i = 0; i < rows.size(); i++) {
                     fieldArray = (String[]) rows.get(i);
 
-                    if (csvSkipPrefix != null
-                            && fieldArray[0].startsWith(csvSkipPrefix)) {
-                        throw new SQLException(
-                                "Table data begins with our Skip Prefix '"
-                                               + csvSkipPrefix + "'");
-                    }
                     for (int j = 0; j < fieldArray.length; j++) {
                         csvSafe(fieldArray[j]);
                         pwCsv.print((fieldArray[j] == null)
