@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.140 2007/03/27 01:11:15 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.141 2007/03/27 01:26:51 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -105,7 +105,7 @@ import java.util.TreeMap;
  * setters would be best) instead of constructor args and System
  * Properties.
  *
- * @version $Revision: 1.140 $
+ * @version $Revision: 1.141 $
  * @author Blaine Simpson unsaved@users
  */
 
@@ -155,8 +155,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.140 $".substring("$Revision: ".length(),
-                "$Revision: 1.140 $".length() - 2);
+        revnum = "$Revision: 1.141 $".substring("$Revision: ".length(),
+                "$Revision: 1.141 $".length() - 2);
     }
 
     private static String BANNER =
@@ -3849,7 +3849,6 @@ public class SqlFile {
     public void importCsv(String filePath) throws IOException, BadSpecial {
         char[] bfr  = null;
         File   file = new File(filePath);
-        String trimmedLine;
 
         if (!file.canRead()) {
             throw new IOException("Can't read file '" + file + "'");
@@ -3891,17 +3890,26 @@ public class SqlFile {
         }
 
         ArrayList headerList = new ArrayList();
+        String    tableName = (String) userVars.get("*CSV_TARGET_TABLE");
+        if (tableName == null) {
+            tableName = (String) userVars.get("*CSV_TABLENAME");
+            // This just for legacy variable name.
+        }
 
         // N.b.  ENDs are the index of 1 PAST the current item
-        int recEnd;
+        int recEnd = -1000; // Recognizable value incase something goes
+                            // horrifically wrong.
         int colStart;
         int colEnd;
 
         // First read one until we get one header line
         int lineCount = 0; // Assume a 1 line header?
-        int recStart = 0;
+        int recStart = -1;
+        String trimmedLine = null;
+        boolean switching = false;
 
         while (true) {
+            recStart = (recStart < 0) ? 0 : (recEnd + csvRowDelim.length());
             if (recStart > string.length() - 2) {
                 throw new IOException("No header record");
             }
@@ -3913,11 +3921,48 @@ public class SqlFile {
                 recEnd = string.length();
             }
             trimmedLine = string.substring(recStart, recEnd).trim();
-            if (trimmedLine.length() > 1 && (csvSkipPrefix == null
-                        || !trimmedLine.startsWith(csvSkipPrefix))) {
+            if (trimmedLine.length() < 1
+                    || (csvSkipPrefix != null 
+                            && trimmedLine.startsWith(csvSkipPrefix))) {
+                continue;
+            }
+            if (trimmedLine.startsWith("targettable=")) {
+                if (tableName == null) {
+                    tableName = trimmedLine.substring(
+                            "targettable=".length()).trim();
+                }
+                continue;
+            }
+            if (trimmedLine.equals("headerswitch{")) {
+                if (tableName == null) {
+                    throw new IOException("Headerswitch in CSV file, but "
+                            + "no target table specified yet.  Line "
+                            + lineCount);
+                }
+                switching = true;
+                continue;
+            }
+            if (trimmedLine.equals("}")) {
+                throw new IOException(
+                        "Reached close of headerswitch at line " + lineCount
+                        + " without matching a header line");
+            }
+System.err.println(Boolean.toString(switching));
+            if (!switching) {
                 break;
             }
-            recStart = recEnd + csvRowDelim.length();
+            int colonAt = trimmedLine.indexOf(':');
+            if (colonAt < 1 || colonAt == trimmedLine.length() - 1) {
+                throw new IOException(
+                        "Header line without table matcher at line "
+                        + lineCount);
+            }
+            String matcher = trimmedLine.substring(0, colonAt).trim();
+            if (matcher.equals("*") || matcher.equalsIgnoreCase(tableName)){
+                recStart = 1 + string.indexOf(':', recStart);
+                break;
+            }
+            // Skip non-matched header line
         }
 
         colStart = recStart;
@@ -3949,7 +3994,6 @@ public class SqlFile {
         }
 
         String[]  headers   = (String[]) headerList.toArray(new String[0]);
-        String    tableName = (String) userVars.get("*CSV_TABLENAME");
 
         if (tableName == null) {
             tableName = file.getName();
@@ -4050,6 +4094,21 @@ public class SqlFile {
                     skipCount++;
                     continue;
                 }
+                if (switching) {
+                    if (trimmedLine.equals("}")) {
+                        switching = false;
+                        continue;
+                    }
+                    int colonAt = trimmedLine.indexOf(':');
+                    if (colonAt < 1 || colonAt == trimmedLine.length() - 1) {
+                        throw new IOException(
+                                "Non-Header line within table matcher block "
+                                + "at line " + lineCount);
+                    }
+                    continue;
+                }
+
+                // Finally we will readlly add a record!
                 recCount++;
 
                 colStart = recStart;
