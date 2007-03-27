@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.143 2007/03/27 02:58:12 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.144 2007/03/27 04:12:48 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -105,7 +105,7 @@ import java.util.TreeMap;
  * setters would be best) instead of constructor args and System
  * Properties.
  *
- * @version $Revision: 1.143 $
+ * @version $Revision: 1.144 $
  * @author Blaine Simpson unsaved@users
  */
 
@@ -155,8 +155,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.143 $".substring("$Revision: ".length(),
-                "$Revision: 1.143 $".length() - 2);
+        revnum = "$Revision: 1.144 $".substring("$Revision: ".length(),
+                "$Revision: 1.144 $".length() - 2);
     }
 
     private static String BANNER =
@@ -3900,6 +3900,7 @@ public class SqlFile {
         */
 
         String string = null;
+        String dateString;
 
         try {
             string = new String(bfr, 0, retval);
@@ -3968,7 +3969,6 @@ public class SqlFile {
                         "Reached close of headerswitch at line " + lineCount
                         + " without matching a header line");
             }
-System.err.println(Boolean.toString(switching));
             if (!switching) {
                 break;
             }
@@ -4041,6 +4041,7 @@ System.err.println(Boolean.toString(switching));
             tmpSb.append(headers[i]);
         }
         boolean[] autonulls = new boolean[headers.length - skippers];
+        boolean[] parseDate = new boolean[autonulls.length];
         // Remember that the headers array has all columns in CSV file,
         // even skipped columns.
         // The autonulls array only has columns that we will insert into.
@@ -4060,12 +4061,19 @@ System.err.println(Boolean.toString(switching));
             }
 
             for (int i = 0; i < autonulls.length; i++) {
-                ctype = rsmd.getColumnType(i + 1);
-
-                // I.e., for VAR* column types, "" in CSV file means
-                // to insert "".  Otherwise, we'll insert null for "".
-                autonulls[i] = (ctype != java.sql.Types.VARBINARY
-                                && ctype != java.sql.Types.VARCHAR);
+                autonulls[i] = true;
+                parseDate[i] = false;
+                switch(rsmd.getColumnType(i + 1)) {
+                    case java.sql.Types.VARBINARY:
+                    case java.sql.Types.VARCHAR:
+                        // to insert "".  Otherwise, we'll insert null for "".
+                        autonulls[i] = false;
+                        break;
+                    case java.sql.Types.DATE:
+                    case java.sql.Types.TIME:
+                    case java.sql.Types.TIMESTAMP:
+                        parseDate[i] = true;
+                }
             }
         } catch (SQLException se) {
             throw new BadSpecial("Failed to get metadata for query: "
@@ -4181,13 +4189,35 @@ System.err.println(Boolean.toString(switching));
                 }
 
                 for (int i = 0; i < dataVals.length; i++) {
+                    // N.b. WE SPECIFICALLY DO NOT HANDLE TIMES WITHOUT
+                    // DATES, LIKE "3:14:00", BECAUSE, WHILE THIS MAY BE
+                    // USEFUL AND EFFICIENT, IT IS NOT PORTABLE.
                     //System.err.println("ps.setString(" + i + ", "
                     //      + dataVals[i] + ')');
-                    ps.setString(
-                        i + 1,
-                        (((dataVals[i].length() < 1 && autonulls[i]) || dataVals[i].equals(csvNullRep))
-                         ? null
-                         : dataVals[i]));
+                    if (parseDate[i]) {
+                        if ((dataVals[i].length() < 1 && autonulls[i])
+                              || dataVals[i].equals(csvNullRep)) {
+                            ps.setTimestamp(i + 1, null);
+                        } else {
+                            dateString = (dataVals[i].indexOf(':') > 0)
+                                ? dataVals[i] : (dataVals[i] + " 0:00:00");
+                            try {
+                                ps.setTimestamp(i + 1,
+                                        java.sql.Timestamp.valueOf(dateString));
+                            } catch (IllegalArgumentException iae) {
+                                throw new IOException(iae.getMessage()
+                                        + " for value '"
+                                    + dateString + "' at Line " + lineCount);
+                            }
+                        }
+                    } else {
+                        ps.setString(
+                            i + 1,
+                            (((dataVals[i].length() < 1 && autonulls[i])
+                              || dataVals[i].equals(csvNullRep))
+                             ? null
+                             : dataVals[i]));
+                    }
                 }
 
                 retval = ps.executeUpdate();
