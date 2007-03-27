@@ -45,7 +45,7 @@ import java.net.URL;
 import java.net.MalformedURLException;
 import java.net.URLClassLoader;
 
-/* $Id: RCData.java,v 1.13 2006/07/27 20:04:31 fredt Exp $ */
+/* $Id: RCData.java,v 1.14 2007/03/22 01:43:33 unsaved Exp $ */
 
 /**
  * All the info we need to connect up to a database.
@@ -101,8 +101,6 @@ public class RCData {
         String          keyword, value;
         int             linenum = 0;
         BufferedReader  br      = new BufferedReader(new FileReader(file));
-        int             varOffset, varEnd;
-        String          varVal, varName;
 
         while ((s = br.readLine()) != null) {
             ++linenum;
@@ -115,24 +113,6 @@ public class RCData {
 
             if (s.charAt(0) == '#') {
                 continue;
-            }
-            while (true) {
-                // Recursive substitution for ${x} variables.
-                varOffset = s.indexOf("${");
-                if (varOffset < 0) break;
-                varEnd = s.indexOf('}', varOffset + 2);
-                if (varEnd < 0) break;
-                varName = s.substring(varOffset + 2, varEnd);
-                if (varName.length() < 1)
-                    throw new Exception("Bad variable at line " + linenum 
-                            + " in '" + file + "':  " + s);
-                varVal = System.getProperty(varName);
-                if (varVal == null)
-                    throw new Exception("No Java system property with name '"
-                            + varName + "' for line " + linenum
-                            + " in '" + file + "':  " + s);
-                s = s.substring(0, varOffset) + varVal
-                        + s.substring(varEnd + 1);
             }
 
             tokenizer = new StringTokenizer(s);
@@ -338,6 +318,27 @@ public class RCData {
         } else {
             sysProps.put("javax.net.ssl.trustStore", curTrustStore);
         }
+        String urlString = null;
+        try {
+            urlString = expandSysPropVars(url);
+        } catch (IllegalArgumentException iae) {
+            throw new MalformedURLException(iae.getMessage()
+                    + " for URL '" + url + "'");
+        }
+        String userString = null;
+        try {
+            userString = expandSysPropVars(username);
+        } catch (IllegalArgumentException iae) {
+            throw new MalformedURLException(iae.getMessage()
+                    + " for user name '" + username + "'");
+        }
+        String passwordString = null;
+        try {
+            passwordString = expandSysPropVars(password);
+        } catch (IllegalArgumentException iae) {
+            throw new MalformedURLException(iae.getMessage()
+                    + " for password");
+        }
 
         // As described in the JDBC FAQ:
         // http://java.sun.com/products/jdbc/jdbc-frequent.html;
@@ -355,6 +356,33 @@ public class RCData {
                               })).loadClass(curDriver)).newInstance());
         */
         Class.forName(curDriver);
-        return DriverManager.getConnection(url, username, password);
+        return DriverManager.getConnection(urlString, userString,
+                passwordString);
+    }
+
+    public String expandSysPropVars(String inString) {
+        String outString = new String(inString);
+        int             varOffset, varEnd;
+        String          varVal, varName;
+
+        while (true) {
+            // Recursive substitution for ${x} variables.
+            varOffset = outString.indexOf("${");
+            if (varOffset < 0) break;
+            varEnd = outString.indexOf('}', varOffset + 2);
+            if (varEnd < 0) break;
+            varName = outString.substring(varOffset + 2, varEnd);
+            if (varName.length() < 1) {
+                throw new IllegalArgumentException("Bad variable setting");
+            }
+            varVal = System.getProperty(varName);
+            if (varVal == null) {
+                throw new IllegalArgumentException(
+                        "No Java system property with name '" + varName + "'");
+            }
+            outString = outString.substring(0, varOffset) + varVal
+                    + outString.substring(varEnd + 1);
+        }
+        return outString;
     }
 }
