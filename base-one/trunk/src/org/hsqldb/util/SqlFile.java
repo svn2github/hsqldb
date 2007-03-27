@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.142 2007/03/27 02:55:40 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.143 2007/03/27 02:58:12 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -105,7 +105,7 @@ import java.util.TreeMap;
  * setters would be best) instead of constructor args and System
  * Properties.
  *
- * @version $Revision: 1.142 $
+ * @version $Revision: 1.143 $
  * @author Blaine Simpson unsaved@users
  */
 
@@ -155,8 +155,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.142 $".substring("$Revision: ".length(),
-                "$Revision: 1.142 $".length() - 2);
+        revnum = "$Revision: 1.143 $".substring("$Revision: ".length(),
+                "$Revision: 1.143 $".length() - 2);
     }
 
     private static String BANNER =
@@ -2702,6 +2702,7 @@ public class SqlFile {
                                   int[] incCols,
                                   String filter) throws SQLException {
         java.sql.Timestamp ts;
+		int dotAt;
         int                updateCount = (statement == null) ? -1
                                                              : statement
                                                                  .getUpdateCount();
@@ -2839,29 +2840,46 @@ public class SqlFile {
                         val = null;
 
                         if (!binary) {
-                            // The special formatting for Timestamps is
-                            // because the most popular current databases
-                            // are VERY inconsistent about the format
-                            // returned by getString() for a Timestamp field.
-                            // In many cases, the output is very user-
-                            // unfriendly.  However, getTimestamp().toString()
-                            // is consistent and convenient.
-                            if (dataType[insi] == java.sql.Types.TIMESTAMP) {
-                                ts  = r.getTimestamp(i);
-                                val = ((ts == null) ? null
-                                                    : ts.toString());
-                            } else {
-                                val = r.getString(i);
+                            /*
+							 * The special formatting for all time-related
+							 * fields is because the most popular current 
+							 * databases are extremely inconsistent about 
+							 * what resolution is returned for the same types.
+							 * In my experience so far, Dates MAY have 
+							 * resolution down to second, but only TIMESTAMPs
+							 * support sub-second res. (and always can).
+							 * On top of that there is no consistency across
+							 * getObject().toString().  Oracle doesn't even
+							 * implement it for their custom TIMESTAMP type.
+							 */
+							switch (dataType[insi]) {
+								case java.sql.Types.TIMESTAMP:
+								case java.sql.Types.DATE:
+								case java.sql.Types.TIME:
+									ts  = r.getTimestamp(i);
+									val = ((ts == null) ? null : ts.toString());
+									if (dataType[insi]
+											!= java.sql.Types.TIMESTAMP
+											&& val != null) {
+										dotAt = val.indexOf('.');
+										if (dotAt > 1) {
+											val = val.substring(0, dotAt);
+										}
+									}
+									break;
+								default:
+									val = r.getString(i);
 
-                                // If we tried to get a String but it failed,
-                                // try getting it with a String Stream
-                                if (val == null) {
-                                    try {
-                                        val = streamToString(
-                                            r.getAsciiStream(i));
-                                    } catch (Exception e) {}
-                                }
-                            }
+									// If we tried to get a String but it 
+									// failed, try getting it with a String 
+									// Stream
+									if (val == null) {
+										try {
+											val = streamToString(
+												r.getAsciiStream(i));
+										} catch (Exception e) {}
+									}
+							}
                         }
 
                         if (binary || (val == null &&!r.wasNull())) {
