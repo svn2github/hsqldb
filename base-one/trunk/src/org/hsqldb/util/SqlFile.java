@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.141 2007/03/27 01:26:51 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.142 2007/03/27 02:55:40 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -105,7 +105,7 @@ import java.util.TreeMap;
  * setters would be best) instead of constructor args and System
  * Properties.
  *
- * @version $Revision: 1.141 $
+ * @version $Revision: 1.142 $
  * @author Blaine Simpson unsaved@users
  */
 
@@ -155,8 +155,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.141 $".substring("$Revision: ".length(),
-                "$Revision: 1.141 $".length() - 2);
+        revnum = "$Revision: 1.142 $".substring("$Revision: ".length(),
+                "$Revision: 1.142 $".length() - 2);
     }
 
     private static String BANNER =
@@ -1163,7 +1163,10 @@ public class SqlFile {
                     csvNullRep = (String) userVars.get("*CSV_NULL_REP");
 
                     String csvFilepath =
-                        (String) userVars.get("*CSV_FILEPATH");
+                        (String) userVars.get("*CSV_TARGET_FILE");
+					if (csvFilepath == null) {
+						csvFilepath = (String) userVars.get("*CSV_FILEPATH");
+					}
 
                     if (csvFilepath == null && tableName == null) {
                         throw new BadSpecial(
