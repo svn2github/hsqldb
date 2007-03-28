@@ -1,4 +1,4 @@
-# $Id: sqltool.rc,v 1.17 2005/11/06 18:01:49 unsaved Exp $
+# $Id: sqltool.rc,v 1.18 2007/03/22 01:43:32 unsaved Exp $
 
 # This is a sample RC configuration file used by SqlTool, DatabaseManager,
 # and any other program that uses the org.hsqldb.util.RCData class.
@@ -119,7 +119,7 @@ url jdbc:microsoft:sqlserver://hostname;DatabaseName=DbName;SelectMethod=Cursor
 # There'a also the org.apache.derby.jdbc.ClientDriver driver with URL
 # like jdbc:derby://<server>[:<port>]/databaseName, which requires
 # derbyclient.jar.
-# !! Run SqlTool with --autoCommit switch, since Derby decided (why???)
+# You can use \= to commit, since the Derby team decided (why???)
 # not to implement the SQL standard statement "commit"!!
 # Note that SqlTool can not shut down an embedded Derby database properly,
 # since that requires an additional SQL connection just for that purpose.
