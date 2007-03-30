@@ -45,7 +45,7 @@ import java.net.URL;
 import java.net.MalformedURLException;
 import java.net.URLClassLoader;
 
-/* $Id: RCData.java,v 1.14 2007/03/22 01:43:33 unsaved Exp $ */
+/* $Id: RCData.java,v 1.15 2007/03/27 03:27:11 unsaved Exp $ */
 
 /**
  * All the info we need to connect up to a database.
@@ -360,7 +360,7 @@ public class RCData {
                 passwordString);
     }
 
-    public String expandSysPropVars(String inString) {
+    static public String expandSysPropVars(String inString) {
         String outString = new String(inString);
         int             varOffset, varEnd;
         String          varVal, varName;

@@ -42,7 +42,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-/* $Id: SqlTool.java,v 1.55 2006/07/27 20:04:31 fredt Exp $ */
+/* $Id: SqlTool.java,v 1.56 2007/03/22 01:37:10 unsaved Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -53,7 +53,7 @@ import java.util.StringTokenizer;
  * See JavaDocs for the main method for syntax of how to run.
  *
  * @see #main()
- * @version $Revision: 1.55 $
+ * @version $Revision: 1.56 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlTool {
@@ -73,8 +73,8 @@ public class SqlTool {
     private static String CMDLINE_ID = "cmdline";
 
     static {
-        revnum = "$Revision: 1.55 $".substring("$Revision: ".length(),
-                                               "$Revision: 1.55 $".length()
+        revnum = "$Revision: 1.56 $".substring("$Revision: ".length(),
+                                               "$Revision: 1.56 $".length()
                                                - 2);
     }
     public static String LS = System.getProperty("line.separator");
@@ -181,7 +181,8 @@ public class SqlTool {
             console = new BufferedReader(new InputStreamReader(System.in));
 
             // Prompt for password
-            System.out.print(username + "'s password: ");
+            System.out.print(RCData.expandSysPropVars(username)
+                    + "'s password: ");
 
             // Read the password from the command line
             password = console.readLine();
