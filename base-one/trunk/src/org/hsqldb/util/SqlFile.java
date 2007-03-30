@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.144 2007/03/27 04:12:48 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.145 2007/03/27 05:07:01 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -105,7 +105,7 @@ import java.util.TreeMap;
  * setters would be best) instead of constructor args and System
  * Properties.
  *
- * @version $Revision: 1.144 $
+ * @version $Revision: 1.145 $
  * @author Blaine Simpson unsaved@users
  */
 
@@ -155,8 +155,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.144 $".substring("$Revision: ".length(),
-                "$Revision: 1.144 $".length() - 2);
+        revnum = "$Revision: 1.145 $".substring("$Revision: ".length(),
+                "$Revision: 1.145 $".length() - 2);
     }
 
     private static String BANNER =
@@ -221,9 +221,10 @@ public class SqlFile {
         + "    \\.                   Enter raw SQL.  End with line containing only \".\"" + LS
         + "    \\s                   * Show previous commands (i.e. SQL command history)" + LS
         + "    \\-[3][;]             * reload a command to buffer (opt. exec. w/ \":;\"))" + LS
+        + "    \\=                   commit JDBC session" + LS
         + "    \\x {TABLE|SELECT...} eXport table or query to CSV text file" + LS
         + "    \\m file/path.csv [*] iMport CSV text file records into a table" + LS
-        + "    \\q [abort message]   Quit (or end input like Ctrl-Z or Ctrl-D)" + LS
+        + "    \\q [abort message]   Quit (or you can end input with Ctrl-Z or Ctrl-D)" + LS
     ;
     private static final String PL_HELP_TEXT = "PROCEDURAL LANGUAGE Commands." + LS
         + "    *?                            Help" + LS
@@ -1368,6 +1369,12 @@ public class SqlFile {
 
                 stdprintln("Auto-commit is set to: "
                            + curConn.getAutoCommit());
+
+                return;
+            case '=' :
+                curConn.commit();
+                possiblyUncommitteds.set(false);
+                stdprintln("Session committed");
 
                 return;
 
