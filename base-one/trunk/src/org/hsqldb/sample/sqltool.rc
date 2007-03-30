@@ -1,4 +1,4 @@
-# $Id: sqltool.rc,v 1.18 2007/03/22 01:43:32 unsaved Exp $
+# $Id: sqltool.rc,v 1.19 2007/03/28 00:03:57 unsaved Exp $
 
 # This is a sample RC configuration file used by SqlTool, DatabaseManager,
 # and any other program that uses the org.hsqldb.util.RCData class.
@@ -111,9 +111,9 @@ url jdbc:microsoft:sqlserver://hostname;DatabaseName=DbName;SelectMethod=Cursor
 
 # Template for Embedded Derby / Java DB.
 #urlid derby1
-#url jdbc:derby:path/to/deb/directory;create=true
-#username bilbo
-#password baggins
+#url jdbc:derby:path/to/derby/directory;create=true
+#username ${user.name}
+#password any_noauthbydefault
 #driver org.apache.derby.jdbc.EmbeddedDriver
 # The embedded Derby driver requires derby.jar.
 # There'a also the org.apache.derby.jdbc.ClientDriver driver with URL
