@@ -42,7 +42,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-/* $Id: SqlTool.java,v 1.56 2007/03/22 01:37:10 unsaved Exp $ */
+/* $Id: SqlTool.java,v 1.57 2007/03/30 13:15:36 unsaved Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -53,7 +53,7 @@ import java.util.StringTokenizer;
  * See JavaDocs for the main method for syntax of how to run.
  *
  * @see #main()
- * @version $Revision: 1.56 $
+ * @version $Revision: 1.57 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlTool {
@@ -73,8 +73,8 @@ public class SqlTool {
     private static String CMDLINE_ID = "cmdline";
 
     static {
-        revnum = "$Revision: 1.56 $".substring("$Revision: ".length(),
-                                               "$Revision: 1.56 $".length()
+        revnum = "$Revision: 1.57 $".substring("$Revision: ".length(),
+                                               "$Revision: 1.57 $".length()
                                                - 2);
     }
     public static String LS = System.getProperty("line.separator");
@@ -193,9 +193,7 @@ public class SqlTool {
                 password = password.trim();
             }
         } catch (IOException e) {
-            exitMain(30,
-                     "Error while reading password from console: "
-                     + e.getMessage());
+            throw new SqlToolException(e.getMessage());
         }
 
         return password;
@@ -467,6 +465,7 @@ public class SqlTool {
                 varParser(rcParams, rcFields, true);
             } catch (SqlToolException e) {
                 exitMain(24, e.getMessage());
+                return;
             }
 
             try {
@@ -475,7 +474,19 @@ public class SqlTool {
                 rcDriver     = (String) rcFields.get("driver");
                 rcCharset    = (String) rcFields.get("charset");
                 rcTruststore = (String) rcFields.get("truststore");
-                rcPassword   = promptForPassword(rcUsername);
+
+                // Don't ask for password if what we have already is invalid!
+                if (rcUrl == null || rcUrl.length() < 1)
+                    throw new Exception("URL element is required");
+                if (rcUsername == null || rcUsername.length() < 1)
+                    throw new Exception("USER element is required");
+
+                try {
+                    rcPassword   = promptForPassword(rcUsername);
+                } catch (SqlToolException e) {
+                    exitMain(30, "Bad password: " + e.getMessage());
+                    return;
+                }
                 conData = new RCData(CMDLINE_ID, rcUrl, rcUsername,
                                      rcPassword, rcDriver, rcCharset,
                                      rcTruststore);
