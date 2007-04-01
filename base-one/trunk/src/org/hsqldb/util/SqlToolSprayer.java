@@ -37,11 +37,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Properties;
 
-/* $Id: SqlToolSprayer.java,v 1.15 2005/10/23 19:25:14 fredt Exp $ */
+/* $Id: SqlToolSprayer.java,v 1.16 2007/03/22 01:37:10 unsaved Exp $ */
 
 /**
  * Sql Tool Sprayer.
- * Invokes SqlTool.main() multiple times with the same SQL.
+ * Invokes SqlTool.objectMain() multiple times with the same SQL.
  * Invokes for multiple urlids and/or retries.
  *
  * See JavaDocs for the main method for syntax of how to run.
@@ -54,7 +54,7 @@ import java.util.Properties;
  * </UL>
  *
  * @see @main()
- * @version $Revision: 1.15 $
+ * @version $Revision: 1.16 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlToolSprayer {
@@ -75,8 +75,6 @@ public class SqlToolSprayer {
             System.err.println(SYNTAX_MSG);
             System.exit(4);
         }
-
-        System.setProperty("sqltool.noexit", "true");
 
         long period = ((System.getProperty("sqltoolsprayer.period") == null)
                        ? 500
@@ -143,13 +141,13 @@ public class SqlToolSprayer {
                 sqlToolArgs[sqlToolArgs.length - 1] = (String) urlids.get(i);
 
                 try {
-                    SqlTool.main(sqlToolArgs);
+                    new SqlTool().objectMain(sqlToolArgs);
 
                     status[i] = true;
 
                     System.err.println("Success for instance '"
                                        + urlids.get(i) + "'");
-                } catch (Exception e) {
+                } catch (SqlTool.SqlToolException se) {
                     onefailed = true;
                 }
             }
