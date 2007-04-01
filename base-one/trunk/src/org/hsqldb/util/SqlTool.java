@@ -42,7 +42,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-/* $Id: SqlTool.java,v 1.58 2007/03/31 02:25:40 unsaved Exp $ */
+/* $Id: SqlTool.java,v 1.59 2007/04/01 00:52:42 unsaved Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -59,7 +59,7 @@ import java.util.StringTokenizer;
  * Java way.
  *
  * @see #main()
- * @version $Revision: 1.58 $
+ * @version $Revision: 1.59 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlTool {
@@ -89,8 +89,8 @@ public class SqlTool {
     private static String CMDLINE_ID = "cmdline";
 
     static {
-        revnum = "$Revision: 1.58 $".substring("$Revision: ".length(),
-                                               "$Revision: 1.58 $".length()
+        revnum = "$Revision: 1.59 $".substring("$Revision: ".length(),
+                                               "$Revision: 1.59 $".length()
                                                - 2);
     }
     public static String LS = System.getProperty("line.separator");
@@ -144,6 +144,19 @@ public class SqlTool {
         }
     }
 
+    /** For trapping of exceptions inside this class.
+     * These are always handled inside this class.
+     */
+    private static class PrivateException extends Exception {
+        public PrivateException() {
+            super();
+        }
+
+        public PrivateException(String s) {
+            super(s);
+        }
+    }
+
     private static class FatalRuntime extends RuntimeException {
         int exitValue = 1;
         private FatalRuntime(String message, int exitValue) {
@@ -166,7 +179,7 @@ public class SqlTool {
      * @return The password the user entered
      */
     private static String promptForPassword(String username)
-    throws SqlToolException {
+    throws PrivateException {
 
         BufferedReader console;
         String         password;
@@ -189,7 +202,7 @@ public class SqlTool {
                 password = password.trim();
             }
         } catch (IOException e) {
-            throw new SqlToolException(e.getMessage());
+            throw new PrivateException(e.getMessage());
         }
 
         return password;
@@ -206,7 +219,7 @@ public class SqlTool {
      */
     private static void varParser(String varString, Map varMap,
                                   boolean lowerCaseKeys)
-                                  throws SqlToolException {
+                                  throws PrivateException {
 
         int             equals;
         String          curSetting;
@@ -225,7 +238,7 @@ public class SqlTool {
             equals     = curSetting.indexOf('=');
 
             if (equals < 1) {
-                throw new SqlToolException(
+                throw new PrivateException(
                     "Var settings not of format NAME=var[,...]");
             }
 
@@ -233,7 +246,7 @@ public class SqlTool {
             val = curSetting.substring(equals + 1).trim();
 
             if (var.length() < 1 || val.length() < 1) {
-                throw new SqlToolException(
+                throw new PrivateException(
                     "Var settings not of format NAME=var[,...]");
             }
 
@@ -457,37 +470,38 @@ public class SqlTool {
 
             try {
                 varParser(rcParams, rcFields, true);
-            } catch (SqlToolException e) {
+            } catch (PrivateException e) {
                 throw new FatalRuntime(SYNTAXERR_EXITVAL, e.getMessage());
             }
 
+            rcUrl        = (String) rcFields.get("url");
+            rcUsername   = (String) rcFields.get("user");
+            rcDriver     = (String) rcFields.get("driver");
+            rcCharset    = (String) rcFields.get("charset");
+            rcTruststore = (String) rcFields.get("truststore");
+
+            // Don't ask for password if what we have already is invalid!
+            if (rcUrl == null || rcUrl.length() < 1)
+                throw new FatalRuntime(RCERR_EXITVAL,
+                        "URL element is required for inline RC arg");
+            if (rcUsername == null || rcUsername.length() < 1)
+                throw new FatalRuntime(RCERR_EXITVAL,
+                        "USER element is required for inline RC arg");
+
             try {
-                rcUrl        = (String) rcFields.get("url");
-                rcUsername   = (String) rcFields.get("user");
-                rcDriver     = (String) rcFields.get("driver");
-                rcCharset    = (String) rcFields.get("charset");
-                rcTruststore = (String) rcFields.get("truststore");
-
-                // Don't ask for password if what we have already is invalid!
-                if (rcUrl == null || rcUrl.length() < 1)
-                    throw new Exception("URL element is required");
-                if (rcUsername == null || rcUsername.length() < 1)
-                    throw new Exception("USER element is required");
-
-                try {
-                    rcPassword   = promptForPassword(rcUsername);
-                } catch (SqlToolException e) {
-                    throw new FatalRuntime(INPUTERR_EXITVAL,
-                            "Bad password: " + e.getMessage());
-                }
+                rcPassword   = promptForPassword(rcUsername);
+            } catch (PrivateException e) {
+                throw new FatalRuntime(INPUTERR_EXITVAL,
+                        "Bad password: " + e.getMessage());
+            }
+            try {
                 conData = new RCData(CMDLINE_ID, rcUrl, rcUsername,
                                      rcPassword, rcDriver, rcCharset,
                                      rcTruststore);
-            } catch (SqlToolException e) {
-                throw e;
             } catch (Exception e) {
                 throw new FatalRuntime(RCERR_EXITVAL,
-                        "Invalid inline RC file specified: " + e.getMessage());
+                        "Failed to generate RCData from given values: "
+                        + e.getMessage());
             }
         } else {
             try {
@@ -571,8 +585,10 @@ public class SqlTool {
         SqlFile[] sqlFiles = new SqlFile[numFiles];
         HashMap   userVars = new HashMap();
 
-        if (varSettings != null) {
+        if (varSettings != null) try {
             varParser(varSettings, userVars, false);
+        } catch (PrivateException pe) {
+            throw new FatalRuntime(RCERR_EXITVAL, pe.getMessage());
         }
 
         // We print version before execing this one.
