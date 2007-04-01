@@ -42,7 +42,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-/* $Id: SqlTool.java,v 1.57 2007/03/30 13:15:36 unsaved Exp $ */
+/* $Id: SqlTool.java,v 1.58 2007/03/31 02:25:40 unsaved Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -51,9 +51,15 @@ import java.util.StringTokenizer;
  *  their Coding Conventions document).
  *
  * See JavaDocs for the main method for syntax of how to run.
+ * This class is mostly used in a static (a.o.t. object) way, because most
+ * of the work is done in the static main class.
+ * This class should be refactored so that the main work is done in an
+ * object method, and the static main invokes the object method.
+ * Then programmatic users could use instances of this class in the normal
+ * Java way.
  *
  * @see #main()
- * @version $Revision: 1.57 $
+ * @version $Revision: 1.58 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlTool {
@@ -66,6 +72,16 @@ public class SqlTool {
     private static boolean noexit;    // Whether System.exit() may be called.
     private static String  revnum = null;
 
+    public static final int NORMAL_EXITVAL = 0;
+    public static final int SQLTOOLERR_EXITVAL = 1;
+    public static final int SYNTAXERR_EXITVAL = 11;
+    public static final int RCERR_EXITVAL = 2;
+    public static final int SQLERR_EXITVAL = 3;
+    public static final int IOERR_EXITVAL = 4;
+    public static final int FILEERR_EXITVAL = 5;
+    public static final int INPUTERR_EXITVAL = 6;
+    public static final int CONNECTERR_EXITVAL = 7;
+
     /**
      * The configuration identifier to use when connection parameters are
      * specified on the command line
@@ -73,8 +89,8 @@ public class SqlTool {
     private static String CMDLINE_ID = "cmdline";
 
     static {
-        revnum = "$Revision: 1.57 $".substring("$Revision: ".length(),
-                                               "$Revision: 1.57 $".length()
+        revnum = "$Revision: 1.58 $".substring("$Revision: ".length(),
+                                               "$Revision: 1.58 $".length()
                                                - 2);
     }
     public static String LS = System.getProperty("line.separator");
@@ -128,39 +144,19 @@ public class SqlTool {
         }
     }
 
-    /**
-     * Exit the main() method by either throwing an exception or exiting JVM.
-     *
-     * Call return() right after you call this method, because this method
-     * will not exit if (noexit is true && retval == 0).
-     */
-    private static void exitMain(int retval) throws SqlToolException {
-        exitMain(retval, null);
-    }
-
-    /**
-     * Exit the main() method by either throwing an exception or exiting JVM.
-     *
-     * Call return() right after you call this method, because this method
-     * will not exit if (noexit is true && retval == 0).
-     */
-    private static void exitMain(int retval,
-                                 String msg) throws SqlToolException {
-
-        if (noexit) {
-            if (retval == 0) {
-                return;
-            } else if (msg == null) {
-                throw new SqlToolException();
-            } else {
-                throw new SqlToolException(msg);
-            }
+    private static class FatalRuntime extends RuntimeException {
+        int exitValue = 1;
+        private FatalRuntime(String message, int exitValue) {
+            super(message);
+            this.exitValue = exitValue;
         }
-        if (msg != null) {
-            ((retval == 0) ? System.out
-                           : System.err).println(msg);
+        private FatalRuntime(int exitValue, String message) {
+            this(message, exitValue);
         }
-        System.exit(retval);
+        private FatalRuntime(int exitValue) {
+            super();
+            this.exitValue = exitValue;
+        }
     }
 
     /**
@@ -257,6 +253,9 @@ public class SqlTool {
      * @param arg  Run "java... org.hsqldb.util.SqlTool --help" for syntax.
      * @throws SqlToolException May be thrown only if the system property
      *                          'sqltool.noexit' is set (to anything).
+     *                          Otherwise, this method will print a
+     *                          succinct message and System.exit()
+     *                          upon fatal error.
      */
     public static void main(String[] arg) throws SqlToolException {
 
@@ -294,6 +293,7 @@ public class SqlTool {
         noexit = System.getProperty("sqltool.noexit") != null;
 
         try {
+        try {
             while ((i + 1 < arg.length) && arg[i + 1].startsWith("--")) {
                 i++;
 
@@ -304,26 +304,24 @@ public class SqlTool {
                 parameter = arg[i].substring(2).toLowerCase();
 
                 if (parameter.equals("help")) {
-                    exitMain(0, SYNTAX_MESSAGE);
-
-                    return;
+                    System.out.println(SYNTAX_MESSAGE);
+                    if (noexit){
+                        return;
+                    }
+                    System.exit(NORMAL_EXITVAL);
                 } else if (parameter.equals("abortonerr")) {
                     if (coeOverride != null) {
-                        exitMain(
-                            0, "Switches '--abortOnErr' and "
+                        throw new FatalRuntime(SYNTAXERR_EXITVAL,
+                            "Switches '--abortOnErr' and "
                             + "'--continueOnErr' are mutually exclusive");
-
-                        return;
                     }
 
                     coeOverride = Boolean.FALSE;
                 } else if (parameter.equals("continueonerr")) {
                     if (coeOverride != null) {
-                        exitMain(
-                            0, "Switches '--abortOnErr' and "
+                        throw new FatalRuntime(SYNTAXERR_EXITVAL,
+                            "Switches '--abortOnErr' and "
                             + "'--continueOnErr' are mutually exclusive");
-
-                        return;
                     }
 
                     coeOverride = Boolean.TRUE;
@@ -410,10 +408,8 @@ public class SqlTool {
                     fw.flush();
                     fw.close();
                 } catch (IOException ioe) {
-                    exitMain(4, "Failed to write given sql to temp file: "
-                             + ioe);
-
-                    return;
+                    throw new FatalRuntime(IOERR_EXITVAL,
+                            "Failed to write given sql to temp file: " + ioe);
                 }
             }
 
@@ -450,9 +446,7 @@ public class SqlTool {
                 }
             }
         } catch (BadCmdline bcl) {
-            exitMain(2, SYNTAX_MESSAGE);
-
-            return;
+            throw new FatalRuntime(SYNTAXERR_EXITVAL, SYNTAX_MESSAGE);
         }
 
         RCData conData = null;
@@ -464,8 +458,7 @@ public class SqlTool {
             try {
                 varParser(rcParams, rcFields, true);
             } catch (SqlToolException e) {
-                exitMain(24, e.getMessage());
-                return;
+                throw new FatalRuntime(SYNTAXERR_EXITVAL, e.getMessage());
             }
 
             try {
@@ -484,8 +477,8 @@ public class SqlTool {
                 try {
                     rcPassword   = promptForPassword(rcUsername);
                 } catch (SqlToolException e) {
-                    exitMain(30, "Bad password: " + e.getMessage());
-                    return;
+                    throw new FatalRuntime(INPUTERR_EXITVAL,
+                            "Bad password: " + e.getMessage());
                 }
                 conData = new RCData(CMDLINE_ID, rcUrl, rcUsername,
                                      rcPassword, rcDriver, rcCharset,
@@ -493,10 +486,8 @@ public class SqlTool {
             } catch (SqlToolException e) {
                 throw e;
             } catch (Exception e) {
-                exitMain(1, "Invalid inline RC file specified: "
-                         + e.getMessage());
-
-                return;
+                throw new FatalRuntime(RCERR_EXITVAL,
+                        "Invalid inline RC file specified: " + e.getMessage());
             }
         } else {
             try {
@@ -504,18 +495,17 @@ public class SqlTool {
                                               ? DEFAULT_RCFILE
                                               : rcFile), targetDb);
             } catch (Exception e) {
-                exitMain(
-                    1, "Failed to retrieve connection info for database '"
-                    + targetDb + "': " + e.getMessage());
-
-                return;
+                throw new FatalRuntime(RCERR_EXITVAL,
+                        "Failed to retrieve connection info for database '"
+                        + targetDb + "': " + e.getMessage());
             }
         }
 
         if (listMode) {
-            exitMain(0);
-
-            return;
+            if (noexit) {
+                return;
+            }
+            System.exit(NORMAL_EXITVAL);
         }
 
         if (debug) {
@@ -539,14 +529,12 @@ public class SqlTool {
                                    + "'.");
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            //e.printStackTrace();
 
             // Let's not continue as if nothing is wrong.
-            exitMain(10,
+            throw new FatalRuntime(CONNECTERR_EXITVAL,
                      "Failed to get a connection to " + conData.url + " as "
                      + conData.username + ".  " + e.getMessage());
-
-            return;
         }
 
         File[] emptyFileArray      = {};
@@ -615,12 +603,8 @@ public class SqlTool {
                 conn.close();
             } catch (Exception e) {}
 
-            exitMain(2, ioe.getMessage());
-
-            return;
+            throw new FatalRuntime(FILEERR_EXITVAL, ioe.getMessage());
         }
-
-        int retval = 0;    // Value we will return via System.exit().
 
         try {
             for (int j = 0; j < sqlFiles.length; j++) {
@@ -632,19 +616,18 @@ public class SqlTool {
                 sqlFiles[j].execute(conn, coeOverride);
             }
         } catch (IOException ioe) {
-            System.err.println("Failed to execute SQL:  " + ioe.getMessage());
+            throw new FatalRuntime(IOERR_EXITVAL,
+                    "Problem with tool input:  " + ioe.getMessage());
 
-            retval = 3;
-
-            // These two Exception types are handled properly inside of SqlFile.
-            // We just need to return an appropriate error status.
+            // Following two Exception types are handled properly inside of 
+            // SqlFile.  We just need to return an appropriate error status.
         } catch (SqlToolError ste) {
-            retval = 2;
+            throw new FatalRuntime(SQLTOOLERR_EXITVAL);
 
             // Should not be handling SQLExceptions here!  SqlFile should handle
             // them.
         } catch (SQLException se) {
-            retval = 1;
+            throw new FatalRuntime(SQLERR_EXITVAL);
         } finally {
             try {
                 conn.close();
@@ -653,14 +636,20 @@ public class SqlTool {
 
         // Taking file removal out of final block because this is good debug
         // info to keep around if the program aborts.
-        if (tmpFile != null &&!tmpFile.delete()) {
+        if (tmpFile != null && !tmpFile.delete()) {
             System.err.println(
                 "Error occurred while trying to remove temp file '" + tmpFile
                 + "'");
         }
 
-        exitMain(retval);
-
-        return;
+        if (!noexit) {
+            System.exit(NORMAL_EXITVAL);
+        }
+        } catch(FatalRuntime fr) {
+            if (fr.getMessage() != null) {
+                System.err.println(fr.getMessage());
+            }
+            System.exit(fr.exitValue);
+        }
     }
 }
