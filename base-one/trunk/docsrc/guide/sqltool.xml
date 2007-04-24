@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml,v 1.96 2006/03/16 22:47:19 digifork Exp $ -->
+<!-- $Id: sqltool.xml,v 1.97 2007/03/22 01:51:33 unsaved Exp $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -23,8 +23,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 1.96 $</edition>
-        <pubdate>$Date: 2006/03/16 22:47:19 $</pubdate>
+        <edition>$Revision: 1.97 $</edition>
+        <pubdate>$Date: 2007/03/22 01:51:33 $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -110,6 +110,26 @@
                     difference with tty output, this was most noticeable
                     with \o and \x commands (tee and CSV export, respectively).
                     Target HSQLDB version unknown.
+                </simpara></listitem><listitem><simpara>
+                    Changed two CSV * variable names (still support the older
+                    names, however).
+                    Added the following several features for inside of CSV files.
+                    Blank lines are always permitted now.
+                    Comments are permitted unless run like "\m path *".
+                    Target table may be specified (before header line(s)).
+                    Can specify multiple header lines targeted for specific
+                    target tables.
+                </simpara></listitem><listitem><simpara>
+                    Gave up the ability to output just times without dates, but
+                    gained a lot of portability by using JDBC Timestamp 
+                    format for all JDBC time types.
+                    For traditional use, input is the same as before.
+                    Output to user and to CSV files is consistently JDBC 
+                    Timestamp format.
+                    CSV input now takes JDBC Timestamp format with date and
+                    optionally time of day.
+                    I've even used this to feed normal JDBC date formats to 
+                    Oracle.
                 </simpara></listitem>
                 
             </itemizedlist>
