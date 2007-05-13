@@ -198,6 +198,8 @@ public class Table extends BaseTable {
             case SYSTEM_SUBQUERY :
                 isTemp   = true;
                 isMemory = true;
+                break;
+
             case SYSTEM_TABLE :
                 isMemory = true;
                 break;
@@ -391,17 +393,11 @@ public class Table extends BaseTable {
      */
     void addConstraint(Constraint c) {
 
-        constraintList =
-            (Constraint[]) ArrayUtil.toAdjustedArray(constraintList, c,
-                constraintList.length, 1);
-    }
+        int i = c.getType() == Constraint.PRIMARY_KEY ? 0
+                                                      : constraintList.length;
 
-    /**
-     *  Adds a constraint.
-     */
-    void addPKConstraint(Constraint c) {
         constraintList =
-            (Constraint[]) ArrayUtil.toAdjustedArray(constraintList, c, 0, 1);
+            (Constraint[]) ArrayUtil.toAdjustedArray(constraintList, c, i, 1);
     }
 
     /**

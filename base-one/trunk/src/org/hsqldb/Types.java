@@ -1048,7 +1048,7 @@ public class Types {
                 return "SMALLINT";
 
             case Types.STRUCT :
-                return "STUCT";
+                return "STRUCT";
 
             case Types.TIME :
                 return "TIME";

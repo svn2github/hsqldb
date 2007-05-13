@@ -587,6 +587,58 @@ public class TestSql extends TestBase {
         }
     }
 
+    public void testBinds2() {
+
+        try {
+            PreparedStatement pstmt =
+                connection.prepareStatement("drop table test if exists");
+
+            pstmt.execute();
+
+            pstmt =
+                connection.prepareStatement("create table test (id integer, txt varchar(10))");
+
+            pstmt.execute();
+
+            pstmt =
+                connection.prepareStatement("insert into test values (10, 'hello')");
+
+            pstmt.execute();
+
+            pstmt =
+                connection.prepareStatement("select txt from test where id = ?");
+
+            pstmt.setInt(1, 10);
+            pstmt.execute();
+
+            ResultSet rs = pstmt.getResultSet();
+
+            rs.next();
+
+            String value = rs.getString(1);
+
+            assertEquals("hello", value);
+
+            pstmt =
+                connection.prepareStatement("select count(*) from test where id = ?");
+
+            pstmt.setInt(1, 10);
+            pstmt.execute();
+
+            rs = pstmt.getResultSet();
+
+            rs.next();
+
+            int count = rs.getInt(1);
+
+            assertEquals(1, count);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("TestSql.testBinds() error: "
+                               + e.getMessage());
+        }
+    }
+
     // miscellaneous tests
     public void testX1() {
 

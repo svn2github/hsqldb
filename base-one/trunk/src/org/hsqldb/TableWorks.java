@@ -227,7 +227,7 @@ class TableWorks {
         Constraint newconstraint = new Constraint(name, table,
             table.getPrimaryIndex(), Constraint.PRIMARY_KEY);
 
-        table.addPKConstraint(newconstraint);
+        table.addConstraint(newconstraint);
         table.database.schemaManager.registerConstraintName(name.name,
                 table.getName());
     }

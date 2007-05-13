@@ -393,6 +393,8 @@ public class Session implements SessionInterface {
         if (database.isFilesReadOnly() &&!user.isSys()) {
             throw Trace.error(Trace.DATABASE_IS_READONLY);
         }
+
+        checkReadWrite();
     }
 
     /**

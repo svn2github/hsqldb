@@ -40,8 +40,6 @@ import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.persist.DataFileCache;
 import org.hsqldb.persist.HsqlDatabaseProperties;
-import org.hsqldb.persist.HsqlProperties;
-import org.hsqldb.persist.Log;
 import org.hsqldb.persist.TextCache;
 import org.hsqldb.scriptio.ScriptWriterBase;
 import org.hsqldb.store.ValuePool;
@@ -836,6 +834,7 @@ extends org.hsqldb.DatabaseInformationMain {
 
             t.insertSys(row);
         }
+
         row         = t.getEmptyRowData();
         row[iscope] = scope;
         row[ins]    = nameSpace;
@@ -2668,7 +2667,6 @@ extends org.hsqldb.DatabaseInformationMain {
         // Intermediate holders
         Iterator     tables;
         Table        table;
-        Index        index;
         Constraint[] constraints;
         int          constraintCount;
         Constraint   constraint;
@@ -2699,25 +2697,6 @@ extends org.hsqldb.DatabaseInformationMain {
 
             if (table.isView() ||!isAccessibleTable(table)) {
                 continue;
-            }
-
-            index = table.getPrimaryIndex();
-
-            if (table.hasPrimaryKey()) {
-                row              = t.getEmptyRowData();
-                cat              = ns.getCatalogName(table);
-                schem            = table.getSchemaName();
-                row[icons_cat]   = cat;
-                row[icons_schem] = schem;
-                row[icons_name]  = index.getName().name;
-                row[icons_type]  = "PRIMARY KEY";
-                row[itab_cat]    = cat;
-                row[itab_schem]  = schem;
-                row[itab_name]   = table.getName().name;
-                row[iis_defr]    = "NO";
-                row[iinit_defr]  = "NO";
-
-                t.insertSys(row);
             }
 
             constraints     = table.getConstraints();
@@ -2756,6 +2735,12 @@ extends org.hsqldb.DatabaseInformationMain {
                 case Constraint.FOREIGN_KEY : {
                     row[icons_type] = "FOREIGN KEY";
                     table           = constraint.getRef();
+
+                    break;
+                }
+                case Constraint.PRIMARY_KEY : {
+                    row[icons_type] = "PRIMARY KEY";
+                    table           = constraint.getMain();
 
                     break;
                 }

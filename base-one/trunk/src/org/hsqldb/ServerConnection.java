@@ -161,14 +161,16 @@ class ServerConnection implements Runnable {
 
         if (session != null) {
             session.close();
-        }
 
-        session = null;
+            session = null;
+        }
 
         // fredt@user - closing the socket is to stop this thread
         try {
             socket.close();
         } catch (IOException e) {}
+
+        socket = null;
 
         synchronized (server.serverConnSet) {
             server.serverConnSet.remove(this);
@@ -206,7 +208,7 @@ class ServerConnection implements Runnable {
                 session = DatabaseManager.newSession(dbID,
                                                      resultIn.getMainString(),
                                                      resultIn.getSubString());
-                resultOut = new Result(ResultConstants.UPDATECOUNT);
+                resultOut            = new Result(ResultConstants.UPDATECOUNT);
                 resultOut.databaseID = session.getDatabase().databaseID;
                 resultOut.sessionID  = session.getId();
             } catch (HsqlException e) {
@@ -263,9 +265,9 @@ class ServerConnection implements Runnable {
                 // fredt - is thrown while constructing the result
                 server.printStackTrace(e);
             }
-
-            close();
         }
+
+        close();
     }
 
     /**

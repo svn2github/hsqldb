@@ -37,7 +37,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Properties;
 
-/* $Id: SqlToolSprayer.java,v 1.16 2007/03/22 01:37:10 unsaved Exp $ */
+/* $Id: SqlToolSprayer.java,v 1.17 2007/04/01 16:47:17 unsaved Exp $ */
 
 /**
  * Sql Tool Sprayer.
@@ -54,20 +54,20 @@ import java.util.Properties;
  * </UL>
  *
  * @see @main()
- * @version $Revision: 1.16 $
+ * @version $Revision: 1.17 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlToolSprayer {
-    public static String LS = System.getProperty("line.separator");
 
+    public static String LS = System.getProperty("line.separator");
     private static final String SYNTAX_MSG =
         "SYNTAX:  java [-D...] SqlToolSprayer 'SQL;' [urlid1 urlid2...]" + LS
         + "System properties you may use [default values]:" + LS
         + "    sqltoolsprayer.period (in ms.) [500]" + LS
         + "    sqltoolsprayer.maxtime (in ms.) [0]" + LS
         + "    sqltoolsprayer.monfile (filepath) [none]" + LS
-        + "    sqltoolsprayer.rcfile (filepath) [none.  SqlTool default used.]" + LS
-        + "    sqltoolsprayer.propfile (filepath) [none]";
+        + "    sqltoolsprayer.rcfile (filepath) [none.  SqlTool default used.]"
+        + LS + "    sqltoolsprayer.propfile (filepath) [none]";
 
     public static void main(String[] sa) {
 
@@ -80,11 +80,10 @@ public class SqlToolSprayer {
                        ? 500
                        : Integer.parseInt(
                            System.getProperty("sqltoolsprayer.period")));
-        long maxtime =
-            ((System.getProperty("sqltoolsprayer.maxtime") == null) ? 0
-                                                                    : Integer.parseInt(
-                                                                        System.getProperty(
-                                                                            "sqltoolsprayer.maxtime")));
+        long maxtime = ((System.getProperty("sqltoolsprayer.maxtime") == null)
+                        ? 0
+                        : Integer.parseInt(
+                            System.getProperty("sqltoolsprayer.maxtime")));
         String rcFile   = System.getProperty("sqltoolsprayer.rcfile");
         String propfile = System.getProperty("sqltoolsprayer.propfile");
         File monitorFile =
@@ -98,8 +97,8 @@ public class SqlToolSprayer {
             try {
                 getUrlsFromPropFile(propfile, urlids);
             } catch (Exception e) {
-                System.err.println("Failed to load property file '"
-                                   + propfile + "':  " + e);
+                System.err.println("Failed to load property file '" + propfile
+                                   + "':  " + e);
                 System.exit(3);
             }
         }
@@ -126,7 +125,7 @@ public class SqlToolSprayer {
         long     startTime     = (new Date()).getTime();
 
         while (true) {
-            if (monitorFile != null &&!monitorFile.exists()) {
+            if (monitorFile != null && !monitorFile.exists()) {
                 System.err.println("Required file is gone:  " + monitorFile);
                 System.exit(2);
             }
@@ -156,8 +155,7 @@ public class SqlToolSprayer {
                 break;
             }
 
-            if (maxtime == 0
-                    || (new Date()).getTime() > startTime + maxtime) {
+            if (maxtime == 0 || (new Date()).getTime() > startTime + maxtime) {
                 break;
             }
 

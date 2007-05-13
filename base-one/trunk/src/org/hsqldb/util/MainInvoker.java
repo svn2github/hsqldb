@@ -109,7 +109,6 @@ public class MainInvoker {
     }
 
     public static String LS = System.getProperty("line.separator");
-
     private static final String SYNTAX_MSG =
         "    java org.hsqldb.util.MainInvoker "
         + "[package1.Class1 [arg1a arg1b...] \"\"]... \\" + LS

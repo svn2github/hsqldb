@@ -1572,10 +1572,9 @@ class DatabaseInformationMain extends DatabaseInformation {
         Iterator       tables;
         Table          table;
         Object[]       row;
-        Index          index;
+        Constraint     constraint;
         int[]          cols;
         int            colCount;
-        DITableInfo    ti;
         HsqlProperties p;
 
         // column number mappings
@@ -1587,8 +1586,7 @@ class DatabaseInformationMain extends DatabaseInformation {
         final int ipk_name     = 5;
 
         // Initialization
-        ti = new DITableInfo();
-        p  = database.getProperties();
+        p = database.getProperties();
         tables = p.isPropertyTrue("hsqldb.system_table_primarykeys")
                  ? allTables()
                  : database.schemaManager.allTablesIterator();
@@ -1601,15 +1599,12 @@ class DatabaseInformationMain extends DatabaseInformation {
                 continue;
             }
 
-            index = table.getPrimaryIndex();
-
-            ti.setTable(table);
-
+            constraint     = table.getPrimaryConstraint();
             tableCatalog   = ns.getCatalogName(table);
             tableSchema    = table.getSchemaName();
-            tableName      = ti.getName();
-            primaryKeyName = index.getName().name;
-            cols           = index.getColumns();
+            tableName      = table.getName().name;
+            primaryKeyName = constraint.getName().name;
+            cols           = constraint.getMainColumns();
             colCount       = cols.length;
 
             for (int j = 0; j < colCount; j++) {
@@ -1617,7 +1612,7 @@ class DatabaseInformationMain extends DatabaseInformation {
                 row[itable_cat]   = tableCatalog;
                 row[itable_schem] = tableSchema;
                 row[itable_name]  = tableName;
-                row[icolumn_name] = ti.getColName(cols[j]);
+                row[icolumn_name] = table.getColumn(cols[j]).columnName.name;
                 row[ikey_seq]     = ValuePool.getInt(j + 1);
                 row[ipk_name]     = primaryKeyName;
 
