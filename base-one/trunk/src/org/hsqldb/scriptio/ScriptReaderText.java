@@ -40,7 +40,6 @@ import java.io.InputStreamReader;
 import org.hsqldb.Database;
 import org.hsqldb.HsqlException;
 import org.hsqldb.Result;
-import org.hsqldb.ResultConstants;
 import org.hsqldb.Session;
 import org.hsqldb.Trace;
 import org.hsqldb.lib.SimpleLog;
@@ -81,8 +80,7 @@ public class ScriptReaderText extends ScriptReaderBase {
             new InputStreamReader(new BufferedInputStream(d)));
     }
 
-    protected void readDDL(Session session)
-    throws IOException, HsqlException {
+    protected void readDDL(Session session) throws IOException, HsqlException {
 
         for (; readLoggedStatement(session); ) {
             if (rowIn.getStatementType() == INSERT_STATEMENT) {
@@ -97,12 +95,15 @@ public class ScriptReaderText extends ScriptReaderBase {
                 db.logger.appLog.logContext(SimpleLog.LOG_ERROR,
                                             result.getMainString());
 
-                /** @todo fredt - if unavaialble external functions are to be ignored */
-                throw Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
-                                  Trace.DatabaseScriptReader_readDDL,
-                                  new Object[] {
+                HsqlException error =
+                    Trace.error(Trace.ERROR_IN_SCRIPT_FILE,
+                                Trace.DatabaseScriptReader_readDDL,
+                                new Object[] {
                     new Integer(lineCount), result.getMainString()
                 });
+
+                /** @todo fredt - if unavaialble external functions are to be ignored */
+                throw error;
             }
         }
     }

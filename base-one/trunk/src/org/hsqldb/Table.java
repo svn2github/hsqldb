@@ -269,7 +269,7 @@ public class Table extends BaseTable {
 // akede@users - 1.7.2 patch Files readonly
         // Changing the mode of the table if necessary
         if (db.isFilesReadOnly() && isFileBased()) {
-            this.isReadOnly = true;
+            setIsReadOnly(true);
         }
 
 // ----------------------------------------------------------------------------
@@ -303,7 +303,7 @@ public class Table extends BaseTable {
     }
 
     public final boolean isReadOnly() {
-        return isReadOnly;
+        return isDataReadOnly();
     }
 
     final boolean isView() {
@@ -318,8 +318,18 @@ public class Table extends BaseTable {
         return tableType;
     }
 
-    public final boolean isDataReadOnly() {
+    public boolean isDataReadOnly() {
         return isReadOnly;
+    }
+
+    /**
+     * sets the isReadOnly flag, and invalidates the database's system tables as needed
+     */
+    protected void setIsReadOnly(boolean newReadOnly) {
+
+        isReadOnly = newReadOnly;
+
+        database.setMetaDirty(true);
     }
 
     /**
@@ -327,7 +337,7 @@ public class Table extends BaseTable {
      */
     void checkDataReadOnly() throws HsqlException {
 
-        if (isReadOnly) {
+        if (isDataReadOnly()) {
             throw Trace.error(Trace.DATA_IS_READONLY);
         }
     }
@@ -336,13 +346,13 @@ public class Table extends BaseTable {
 // akede@users - 1.7.2 patch Files readonly
     void setDataReadOnly(boolean value) throws HsqlException {
 
-        // Changing the Read-Only mode for the table is only allowed if the
+        // Changing the Read-Only mode for the table is only allowed if
         // the database can realize it.
         if (!value && database.isFilesReadOnly() && isFileBased()) {
             throw Trace.error(Trace.DATA_IS_READONLY);
         }
 
-        isReadOnly = value;
+        setIsReadOnly(value);
     }
 
     /**
@@ -389,15 +399,58 @@ public class Table extends BaseTable {
     }
 
     /**
+     * determines whether the table is actually connected to the underlying data source.
+     *
+     *  <p>This method is available for text tables only.</p>
+     *
+     *  @see setDataSource
+     *  @see disconnect
+     *  @see isConnected
+     */
+    public boolean isConnected() {
+        return true;
+    }
+
+    /**
+     * connects the table to the underlying data source.
+     *
+     *  <p>This method is available for text tables only.</p>
+     *
+     *  @param session
+     *      denotes the current session. Might be <code>null</code>.
+     *
+     *  @see setDataSource
+     *  @see disconnect
+     *  @see isConnected
+     */
+    public void connect(Session session) throws HsqlException {
+        throw Trace.error(Trace.CANNOT_CONNECT_TABLE);
+    }
+
+    /**
+     * disconnects the table from the underlying data source.
+     *
+     *  <p>This method is available for text tables only.</p>
+     *
+     *  @param session
+     *      denotes the current session. Might be <code>null</code>.
+     *
+     *  @see setDataSource
+     *  @see connect
+     *  @see isConnected
+     */
+    public void disconnect(Session session) throws HsqlException {
+        throw Trace.error(Trace.CANNOT_CONNECT_TABLE);
+    }
+
+    /**
      *  Adds a constraint.
      */
     void addConstraint(Constraint c) {
 
-        int i = c.getType() == Constraint.PRIMARY_KEY ? 0
-                                                      : constraintList.length;
-
         constraintList =
-            (Constraint[]) ArrayUtil.toAdjustedArray(constraintList, c, i, 1);
+            (Constraint[]) ArrayUtil.toAdjustedArray(constraintList, c,
+                constraintList.length, 1);
     }
 
     /**
@@ -883,8 +936,7 @@ public class Table extends BaseTable {
 
             if (c.constType == Constraint.CHECK) {
                 if (c.hasColumn(this, colname)) {
-                    throw Trace.error(Trace.COLUMN_IS_REFERENCED,
-                                      c.getName());
+                    throw Trace.error(Trace.COLUMN_IS_REFERENCED, c.getName());
                 }
             }
         }
@@ -1295,8 +1347,8 @@ public class Table extends BaseTable {
      */
     String getIndexRoots() {
 
-        String roots   = StringUtil.getList(getIndexRootsArray(), " ", "");
-        StringBuffer s = new StringBuffer(roots);
+        String       roots = StringUtil.getList(getIndexRootsArray(), " ", "");
+        StringBuffer s     = new StringBuffer(roots);
 
         s.append(' ');
         s.append(identitySequence.peek());
@@ -1448,8 +1500,7 @@ public class Table extends BaseTable {
         return database.nameManager.newAutoName("PK");
     }
 
-    void createPrimaryIndex(int[] pkcols,
-                            HsqlName name) throws HsqlException {
+    void createPrimaryIndex(int[] pkcols, HsqlName name) throws HsqlException {
 
         int[] pkcoltypes = new int[pkcols.length];
 
@@ -1473,17 +1524,16 @@ public class Table extends BaseTable {
 
         int[] indexcolumns = (int[]) ArrayUtil.resizeArray(index.getColumns(),
             index.getVisibleColumns());
-        int[] colarr = ArrayUtil.toAdjustedColumnArray(indexcolumns,
-            colindex, adjust);
+        int[] colarr = ArrayUtil.toAdjustedColumnArray(indexcolumns, colindex,
+            adjust);
 
         // if a column to remove is one of the Index columns
         if (colarr.length != index.getVisibleColumns()) {
             return null;
         }
 
-        return createIndexStructure(colarr, index.getName(),
-                                    index.isUnique(), index.isConstraint,
-                                    index.isForward);
+        return createIndexStructure(colarr, index.getName(), index.isUnique(),
+                                    index.isConstraint, index.isForward);
     }
 
     /**
@@ -1560,8 +1610,8 @@ public class Table extends BaseTable {
         return indexList[i];
     }
 
-    int createIndexStructureGetNo(int[] column, HsqlName name,
-                                  boolean unique, boolean constraint,
+    int createIndexStructureGetNo(int[] column, HsqlName name, boolean unique,
+                                  boolean constraint,
                                   boolean forward) throws HsqlException {
 
         if (primaryKeyCols == null) {
@@ -1859,8 +1909,7 @@ public class Table extends BaseTable {
      *
      * Not used for INSERT INTO .... SELECT ... FROM queries
      */
-    void insertIntoTable(Session session,
-                         Result result) throws HsqlException {
+    void insertIntoTable(Session session, Result result) throws HsqlException {
 
         insertResult(session, result);
 
@@ -1928,8 +1977,7 @@ public class Table extends BaseTable {
         indexRow(session, newrow);
 
         if (log && isLogged) {
-            database.logger.writeInsertStatement(session, this,
-                                                 row.getData());
+            database.logger.writeInsertStatement(session, this, row.getData());
         }
     }
 
@@ -2026,11 +2074,10 @@ public class Table extends BaseTable {
     /**
      * Checks a row against NOT NULL constraints on columns.
      */
-    protected void enforceNullConstraints(Object[] data)
-    throws HsqlException {
+    protected void enforceNullConstraints(Object[] data) throws HsqlException {
 
         for (int i = 0; i < columnCount; i++) {
-            if (data[i] == null &&!colNullable[i]) {
+            if (data[i] == null && !colNullable[i]) {
                 Trace.throwerror(Trace.TRY_TO_INSERT_NULL,
                                  "column: " + getColumn(i).columnName.name
                                  + " table: " + tableName.name);
@@ -2376,7 +2423,7 @@ public class Table extends BaseTable {
                         if (delete) {
 
                             //  foreign key referencing own table - do not update the row to be deleted
-                            if (reftable != table ||!refrow.equals(row)) {
+                            if (reftable != table || !refrow.equals(row)) {
                                 mergeUpdate(rowSet, refrow, rnd, r_columns);
                             }
                         }
@@ -2400,7 +2447,7 @@ public class Table extends BaseTable {
                         }
                     }
 
-                    if (delete &&!isUpdate &&!refrow.isCascadeDeleted()) {
+                    if (delete && !isUpdate && !refrow.isCascadeDeleted()) {
                         reftable.deleteNoRefCheck(session, refrow);
                     }
                 }
@@ -2507,14 +2554,14 @@ public class Table extends BaseTable {
 
                 // there must be no record in the 'slave' table
                 // sebastian@scienion -- dependent on forDelete | forUpdate
-                RowIterator refiterator = c.findFkRef(session,
-                                                      orow.getData(), false);
+                RowIterator refiterator = c.findFkRef(session, orow.getData(),
+                                                      false);
 
                 if (refiterator.hasNext()) {
                     if (c.core.updateAction == Constraint.NO_ACTION) {
-                        throw Trace.error(
-                            Trace.INTEGRITY_CONSTRAINT_VIOLATION,
-                            Trace.Constraint_violation, new Object[] {
+                        throw Trace.error(Trace.INTEGRITY_CONSTRAINT_VIOLATION,
+                                          Trace.Constraint_violation,
+                                          new Object[] {
                             c.core.fkName.name, c.core.refTable.getName().name
                         });
                     }
@@ -2564,8 +2611,7 @@ public class Table extends BaseTable {
                         for (int j = 0; j < r_columns.length; j++) {
                             rnd[r_columns[j]] = null;
                         }
-                    } else if (c.getUpdateAction()
-                               == Constraint.SET_DEFAULT) {
+                    } else if (c.getUpdateAction() == Constraint.SET_DEFAULT) {
 
                         // -- set default; we check referential integrity with ref==null; since we manipulated
                         // -- the values and referential integrity is no longer guaranteed to be valid
@@ -2829,8 +2875,7 @@ public class Table extends BaseTable {
 
                 // reached end of range
                 if (bestIndex.compareRowNonUnique(
-                        session, data, bestIndex.getColumns(),
-                        rowdata) != 0) {
+                        session, data, bestIndex.getColumns(), rowdata) != 0) {
                     row = null;
 
                     break;
@@ -2883,8 +2928,7 @@ public class Table extends BaseTable {
         removeRowFromStore(row);
 
         if (log && isLogged) {
-            database.logger.writeDeleteStatement(session, this,
-                                                 row.getData());
+            database.logger.writeDeleteStatement(session, this, row.getData());
         }
     }
 
@@ -3307,8 +3351,8 @@ public class Table extends BaseTable {
     void drop() throws HsqlException {}
 
     boolean isWritable() {
-        return !isReadOnly &&!database.databaseReadOnly
-               &&!(database.isFilesReadOnly() && (isCached || isText));
+        return !isDataReadOnly() && !database.databaseReadOnly
+               && !(database.isFilesReadOnly() && (isCached || isText));
     }
 
     /**

@@ -1318,6 +1318,20 @@ public class jdbcConnection implements Connection {
         checkClosed();
 
         synchronized (rootWarning_mutex) {
+            if (!isNetConn) {
+                HsqlException[] warnings =
+                    ((Session) sessionProxy).getAndClearWarnings();
+
+                for (int i = 0; i < warnings.length; i++) {
+                    SQLWarning warning = Util.sqlWarning(warnings[i]);
+
+                    addWarning(warning);
+                }
+
+                // get session warnings and clear the session warnings
+                // translate to SQLWarning objects and add to the Connection chain
+            }
+
             return rootWarning;
         }
     }

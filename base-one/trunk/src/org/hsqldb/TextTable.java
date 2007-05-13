@@ -48,8 +48,9 @@ import org.hsqldb.persist.TextCache;
  */
 class TextTable extends org.hsqldb.Table {
 
-    private String  dataSource = "";
-    private boolean isReversed = false;
+    private String  dataSource  = "";
+    private boolean isReversed  = false;
+    private boolean isConnected = false;
 
     /**
      *  Constructs a new TextTable from the given arguments.
@@ -66,101 +67,144 @@ class TextTable extends org.hsqldb.Table {
     }
 
     /**
-     * This method does some of the work involved with managing the creation
-     * and openning of the cache, the rest is done in Log.java and
-     * TextCache.java.
-     *
-     * Better clarification of the role of the methods is needed.
+     * common handling for all errors during <code>connect</code>
      */
-    private void openCache(String dataSourceNew, boolean isReversedNew,
-                           boolean isReadOnlyNew) throws HsqlException {
+    private void onConnectError(Session session) {
 
-        if (dataSourceNew == null) {
-            dataSourceNew = "";
+        if (cache != null) {
+            try {
+                cache.close(false);
+            } catch (HsqlException ex) {}
         }
+
+        cache = null;
+
+        clearAllRows(session);
+    }
+
+    public boolean isConnected() {
+        return isConnected;
+    }
+
+    /**
+     * connects to the data source
+     */
+    public void connect(Session session) throws HsqlException {
+        connect(session, isReadOnly);
+    }
+
+    /**
+     * connects to the data source
+     */
+    private void connect(Session session,
+                         boolean withReadOnlyData) throws HsqlException {
+
+        // Open new cache:
+        if ((dataSource.length() == 0) || isConnected) {
+
+            // nothing to do
+            return;
+        }
+
+        try {
+            cache = database.logger.openTextCache(this, dataSource,
+                                                  withReadOnlyData,
+                                                  isReversed);
+
+            // read and insert all the rows from the source file
+            CachedRow row     = null;
+            int       nextpos = 0;
+
+            if (((TextCache) cache).ignoreFirst) {
+                nextpos += ((TextCache) cache).readHeaderLine();
+            }
+
+            while (true) {
+                row = (CachedRow) rowStore.get(nextpos);
+
+                if (row == null) {
+                    break;
+                }
+
+                nextpos = row.getPos() + row.getStorageSize();
+
+                row.setNewNodes();
+                insertFromTextSource(row);
+            }
+        } catch (HsqlException e) {
+            int linenumber = cache == null ? 0
+                                           : ((TextCache) cache)
+                                               .getLineNumber();
+
+            onConnectError(session);
+
+            // everything is in order here.
+            // At this point table should either have a valid (old) data
+            // source and cache or have an empty source and null cache.
+            throw Trace.error(Trace.TEXT_FILE, new Object[] {
+                new Integer(linenumber), e.getMessage()
+            });
+        } catch (java.lang.RuntimeException t) {
+            onConnectError(session);
+
+            throw t;
+        }
+
+        isConnected = true;
+
+        setIsReadOnly(withReadOnlyData);
+    }
+
+    /**
+     * disconnects from the data source
+     */
+    public void disconnect(Session session) throws HsqlException {
 
         // Close old cache:
         database.logger.closeTextCache(this);
 
         cache = null;
 
-        clearAllRows(null);
+        clearAllRows(session);
 
-        // Open new cache:
-        if (dataSourceNew.length() > 0) {
-            try {
-                cache = database.logger.openTextCache(this, dataSourceNew,
-                                                      isReadOnlyNew,
-                                                      isReversedNew);
+        isConnected = false;
+    }
 
-                // read and insert all the rows from the source file
-                CachedRow row     = null;
-                int       nextpos = 0;
+    /**
+     * This method does some of the work involved with managing the creation
+     * and openning of the cache, the rest is done in Log.java and
+     * TextCache.java.
+     *
+     * Better clarification of the role of the methods is needed.
+     */
+    private void openCache(Session session, String dataSourceNew,
+                           boolean isReversedNew,
+                           boolean isReadOnlyNew) throws HsqlException {
 
-                if (((TextCache) cache).ignoreFirst) {
-                    nextpos += ((TextCache) cache).readHeaderLine();
-                }
-
-                while (true) {
-                    row = (CachedRow) rowStore.get(nextpos);
-
-                    if (row == null) {
-                        break;
-                    }
-
-                    nextpos = row.getPos() + row.getStorageSize();
-
-                    row.setNewNodes();
-                    insertFromTextSource(row);
-                }
-            } catch (HsqlException e) {
-                int linenumber = cache == null ? 0
-                                               : ((TextCache) cache)
-                                                   .getLineNumber();
-
-                if (!dataSource.equals(dataSourceNew)
-                        || isReversedNew != isReversed
-                        || isReadOnlyNew != isReadOnly) {
-
-                    // Restore old cache.
-                    // fredt - todo - recursion works - but code is not clear
-                    openCache(dataSource, isReversed, isReadOnly);
-                } else {
-                    if (cache != null) {
-                        cache.close(false);
-                    }
-
-                    //fredt added
-                    cache      = null;
-                    dataSource = "";
-                    isReversed = false;
-                }
-
-                // everything is in order here.
-                // At this point table should either have a valid (old) data
-                // source and cache or have an empty source and null cache.
-                throw Trace.error(Trace.TEXT_FILE, new Object[] {
-                    new Integer(linenumber), e.getMessage()
-                });
-            }
+        if (dataSourceNew == null) {
+            dataSourceNew = "";
         }
 
+        disconnect(session);
+
         dataSource = dataSourceNew;
-        isReversed = (isReversedNew && dataSourceNew.length() > 0);
+        isReversed = (isReversedNew && dataSource.length() > 0);
+
+        connect(session, isReadOnlyNew);
     }
 
     /**
      * High level command to assign a data source to the table definition.
      * Reassigns only if the data source or direction has changed.
      */
-    protected void setDataSource(Session s, String dataSourceNew,
+    protected void setDataSource(Session session, String dataSourceNew,
                                  boolean isReversedNew,
                                  boolean newFile) throws HsqlException {
 
         if (getTableType() == Table.TEMP_TEXT_TABLE) {
             ;
         } else {
-            s.checkAdmin();
+            session.checkAdmin();
         }
 
         dataSourceNew = dataSourceNew.trim();
@@ -169,14 +213,14 @@ class TextTable extends org.hsqldb.Table {
             throw Trace.error(Trace.TEXT_SOURCE_EXISTS, dataSourceNew);
         }
 
-        //-- Open if descending, direction changed, or file changed.
+        //-- Open if descending, direction changed, file changed, or not connected currently
         if (isReversedNew || (isReversedNew != isReversed)
-                ||!dataSource.equals(dataSourceNew)) {
-            openCache(dataSourceNew, isReversedNew, isReadOnly);
+                || !dataSource.equals(dataSourceNew) || !isConnected) {
+            openCache(session, dataSourceNew, isReversedNew, isReadOnly);
         }
 
         if (isReversed) {
-            isReadOnly = true;
+            setIsReadOnly(true);
         }
     }
 
@@ -219,20 +263,23 @@ class TextTable extends org.hsqldb.Table {
             throw Trace.error(Trace.UNKNOWN_DATA_SOURCE);
         }
 
-        if (isReadOnly) {
+        if (isDataReadOnly()) {
             throw Trace.error(Trace.DATA_IS_READONLY);
         }
     }
 
+    public boolean isDataReadOnly() {
+        return !isConnected() || super.isDataReadOnly();
+    }
+
     void setDataReadOnly(boolean value) throws HsqlException {
 
-        if (isReversed && value == true) {
+        if (isReversed && value == false) {
             throw Trace.error(Trace.DATA_IS_READONLY);
         }
 
-        openCache(dataSource, isReversed, value);
-
-        isReadOnly = value;
+        openCache(null, dataSource, isReversed, value);
+        setIsReadOnly(value);
     }
 
     boolean isIndexCached() {
@@ -244,7 +291,7 @@ class TextTable extends org.hsqldb.Table {
     }
 
     void drop() throws HsqlException {
-        openCache("", false, false);
+        openCache(null, "", false, false);
     }
 
     void setIndexRoots(String s) throws HsqlException {

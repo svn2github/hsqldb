@@ -235,8 +235,7 @@ class DatabaseCommandInterpreter {
                 if (cStatement.parameters.length != 0) {
                     Trace.doAssert(
                         false,
-                        Trace.getMessage(
-                            Trace.ASSERT_DIRECT_EXEC_WITH_PARAM));
+                        Trace.getMessage(Trace.ASSERT_DIRECT_EXEC_WITH_PARAM));
                 }
 
                 result = session.sqlExecuteCompiledNoPreChecks(cStatement,
@@ -246,14 +245,12 @@ class DatabaseCommandInterpreter {
             }
             case Token.INSERT : {
                 Parser parser = new Parser(session, database, tokenizer);
-                CompiledStatement cStatement =
-                    parser.compileInsertStatement();
+                CompiledStatement cStatement = parser.compileInsertStatement();
 
                 if (cStatement.parameters.length != 0) {
                     Trace.doAssert(
                         false,
-                        Trace.getMessage(
-                            Trace.ASSERT_DIRECT_EXEC_WITH_PARAM));
+                        Trace.getMessage(Trace.ASSERT_DIRECT_EXEC_WITH_PARAM));
                 }
 
                 result = session.sqlExecuteCompiledNoPreChecks(cStatement,
@@ -263,14 +260,12 @@ class DatabaseCommandInterpreter {
             }
             case Token.UPDATE : {
                 Parser parser = new Parser(session, database, tokenizer);
-                CompiledStatement cStatement =
-                    parser.compileUpdateStatement();
+                CompiledStatement cStatement = parser.compileUpdateStatement();
 
                 if (cStatement.parameters.length != 0) {
                     Trace.doAssert(
                         false,
-                        Trace.getMessage(
-                            Trace.ASSERT_DIRECT_EXEC_WITH_PARAM));
+                        Trace.getMessage(Trace.ASSERT_DIRECT_EXEC_WITH_PARAM));
                 }
 
                 result = session.sqlExecuteCompiledNoPreChecks(cStatement,
@@ -280,14 +275,12 @@ class DatabaseCommandInterpreter {
             }
             case Token.DELETE : {
                 Parser parser = new Parser(session, database, tokenizer);
-                CompiledStatement cStatement =
-                    parser.compileDeleteStatement();
+                CompiledStatement cStatement = parser.compileDeleteStatement();
 
                 if (cStatement.parameters.length != 0) {
                     Trace.doAssert(
                         false,
-                        Trace.getMessage(
-                            Trace.ASSERT_DIRECT_EXEC_WITH_PARAM));
+                        Trace.getMessage(Trace.ASSERT_DIRECT_EXEC_WITH_PARAM));
                 }
 
                 result = session.sqlExecuteCompiledNoPreChecks(cStatement,
@@ -302,8 +295,7 @@ class DatabaseCommandInterpreter {
                 if (cStatement.parameters.length != 0) {
                     Trace.doAssert(
                         false,
-                        Trace.getMessage(
-                            Trace.ASSERT_DIRECT_EXEC_WITH_PARAM));
+                        Trace.getMessage(Trace.ASSERT_DIRECT_EXEC_WITH_PARAM));
                 }
 
                 result = session.sqlExecuteCompiledNoPreChecks(cStatement,
@@ -620,8 +612,7 @@ class DatabaseCommandInterpreter {
             schemaname =
                 session.getSchemaNameForWrite(tokenizer.getLongNameFirst());
         } else if (!schemaname.equals(
-                session.getSchemaNameForWrite(
-                    tokenizer.getLongNameFirst()))) {
+                session.getSchemaNameForWrite(tokenizer.getLongNameFirst()))) {
             throw Trace.error(Trace.INVALID_SCHEMA_NAME_NO_SUBCLASS);
         }
 
@@ -762,8 +753,7 @@ class DatabaseCommandInterpreter {
             Trace.check(Types.acceptsPrecisionCreateParam(type),
                         Trace.UNEXPECTED_TOKEN);
 
-            if (type != Types.TIMESTAMP && type != Types.TIME
-                    && length == 0) {
+            if (type != Types.TIMESTAMP && type != Types.TIME && length == 0) {
                 throw Trace.error(Trace.INVALID_SIZE_PRECISION);
             }
 
@@ -1151,7 +1141,7 @@ class DatabaseCommandInterpreter {
         int[]   pkCols       = null;
         int     colIndex     = 0;
         boolean constraint   = false;
-        Table   t = newTable(type, token, isnamequoted, schemaname);
+        Table   t            = newTable(type, token, isnamequoted, schemaname);
 
         tokenizer.getThis(Token.T_OPENBRACKET);
 
@@ -1168,7 +1158,7 @@ class DatabaseCommandInterpreter {
 
                     // fredt@users : check for quoted reserved words used as column names
                     constraint = !tokenizer.wasQuotedIdentifier()
-                                 &&!tokenizer.wasLongName();
+                                 && !tokenizer.wasLongName();
             }
 
             tokenizer.back();
@@ -1238,7 +1228,8 @@ class DatabaseCommandInterpreter {
                 }
 
                 Constraint newconstraint =
-                    new Constraint(primaryConst.constName, t, t.getPrimaryIndex(),
+                    new Constraint(primaryConst.constName, t,
+                                   t.getPrimaryIndex(),
                                    Constraint.PRIMARY_KEY);
 
                 t.addConstraint(newconstraint);
@@ -1876,8 +1867,7 @@ class DatabaseCommandInterpreter {
      * @throws HsqlException
      */
     private void processAlterColumnRename(Table t,
-                                          Column column)
-                                          throws HsqlException {
+                                          Column column) throws HsqlException {
 
         String  newName  = tokenizer.getSimpleName();
         boolean isquoted = tokenizer.wasQuotedIdentifier();
@@ -2222,6 +2212,7 @@ class DatabaseCommandInterpreter {
                     case Token.SOURCE : {
                         session.checkAdmin();
 
+                        // SET TABLE <table> SOURCE HEADER
                         if (tokenizer.isGetThis(Token.T_HEADER)) {
                             token = tokenizer.getString();
 
@@ -2229,11 +2220,39 @@ class DatabaseCommandInterpreter {
                                 throw Trace.error(Trace.TEXT_TABLE_SOURCE);
                             }
 
-                            t.setHeader(token);
+                            try {
+                                t.setHeader(token);
+
+                                // add an entry to applog too
+                            } catch (HsqlException e) {
+                                if (session.isProcessingLog()
+                                        || session.isProcessingScript()) {
+                                    session.addWarning(e);
+                                } else {
+                                    throw e;
+                                }
+                            }
 
                             break;
                         }
 
+                        // SET TABLE <table> SOURCE ON
+                        if (tokenizer.isGetThis(Token.T_ON)) {
+                            t.connect(session);
+                            database.setMetaDirty(false);
+
+                            break;
+                        }
+
+                        // SET TABLE <table> SOURCE OFF
+                        if (tokenizer.isGetThis(Token.T_OFF)) {
+                            t.disconnect(session);
+                            database.setMetaDirty(false);
+
+                            break;
+                        }
+
+                        // SET TABLE <table> SOURCE <source>
                         token = tokenizer.getString();
 
                         if (!tokenizer.wasQuotedIdentifier()) {
@@ -2244,13 +2263,25 @@ class DatabaseCommandInterpreter {
 
                         isDesc = tokenizer.isGetThis(Token.T_DESC);
 
-                        t.setDataSource(session, token, isDesc, false);
+                        try {
+                            t.setDataSource(session, token, isDesc, false);
+                        } catch (HsqlException e) {
+                            if (session.isProcessingLog()
+                                    || session.isProcessingScript()) {
+                                session.addWarning(e);
+
+                                // add an entry to applog too
+                            } else {
+                                throw e;
+                            }
+                        }
 
                         break;
                     }
                     case Token.READONLY : {
                         session.checkAdmin();
                         t.setDataReadOnly(processTrueOrFalse());
+                        database.setMetaDirty(false);
 
                         break;
                     }
@@ -2525,7 +2556,7 @@ class DatabaseCommandInterpreter {
             canAdd = false;
         }
 
-        if (canAdd &&!t.isEmpty(session)) {
+        if (canAdd && !t.isEmpty(session)) {
             canAdd = c.isNullable() || c.getDefaultExpression() != null;
         }
 
@@ -2611,8 +2642,7 @@ class DatabaseCommandInterpreter {
             throw Trace.error(Trace.INDEX_NOT_FOUND, name);
         }
 
-        database.schemaManager.checkIndexExists(name, t.getSchemaName(),
-                true);
+        database.schemaManager.checkIndexExists(name, t.getSchemaName(), true);
 
         if (HsqlName.isReservedIndexName(name)) {
             throw Trace.error(Trace.SYSTEM_INDEX, name);
@@ -2765,7 +2795,7 @@ class DatabaseCommandInterpreter {
         String tableschema =
             session.getSchemaNameForWrite(tokenizer.getLongNameFirst());
 
-        if (schema != null &&!schema.equals(tableschema)) {
+        if (schema != null && !schema.equals(tableschema)) {
             throw Trace.error(Trace.INVALID_SCHEMA_NAME_NO_SUBCLASS);
         }
 
@@ -2778,7 +2808,7 @@ class DatabaseCommandInterpreter {
         int[]    indexColumns  = processColumnList(t, true);
         String   extra         = tokenizer.getSimpleToken();
 
-        if (!Token.T_DESC.equals(extra) &&!Token.T_ASC.equals(extra)) {
+        if (!Token.T_DESC.equals(extra) && !Token.T_ASC.equals(extra)) {
             tokenizer.back();
         }
 
@@ -2929,7 +2959,7 @@ class DatabaseCommandInterpreter {
         }
 
         if (ifexists && schema != null
-                &&!database.schemaManager.schemaExists(schema)) {
+                && !database.schemaManager.schemaExists(schema)) {
             return;
         }
 
@@ -3257,9 +3287,9 @@ class DatabaseCommandInterpreter {
 
         TableWorks tableWorks = new TableWorks(session, t);
 
-        tableWorks.createForeignKey(tc.core.mainColArray,
-                                    tc.core.refColArray, tc.constName,
-                                    tc.core.refTable, tc.core.deleteAction,
+        tableWorks.createForeignKey(tc.core.mainColArray, tc.core.refColArray,
+                                    tc.constName, tc.core.refTable,
+                                    tc.core.deleteAction,
                                     tc.core.updateAction);
     }
 
@@ -3314,9 +3344,8 @@ class DatabaseCommandInterpreter {
         String password;
         User   userObject;
 
-        userName = getUserIdentifier();
-        userObject =
-            (User) database.getUserManager().getUsers().get(userName);
+        userName   = getUserIdentifier();
+        userObject = (User) database.getUserManager().getUsers().get(userName);
 
         Trace.check(userObject != null, Trace.USER_NOT_FOUND, userName);
         tokenizer.getThis(Token.T_SET);
@@ -3350,8 +3379,7 @@ class DatabaseCommandInterpreter {
      *
      * @throws HsqlException
      */
-    private void processRoleGrantOrRevoke(boolean grant)
-    throws HsqlException {
+    private void processRoleGrantOrRevoke(boolean grant) throws HsqlException {
 
         String         token;
         HsqlArrayList  list = new HsqlArrayList();

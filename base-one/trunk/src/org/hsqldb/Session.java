@@ -390,7 +390,7 @@ public class Session implements SessionInterface {
      */
     void checkDDLWrite() throws HsqlException {
 
-        if (database.isFilesReadOnly() &&!user.isSys()) {
+        if (database.isFilesReadOnly() && !user.isSys()) {
             throw Trace.error(Trace.DATABASE_IS_READONLY);
         }
 
@@ -407,8 +407,7 @@ public class Session implements SessionInterface {
     boolean addDeleteAction(Table table, Row row) throws HsqlException {
 
         if (!isAutoCommit || isNestedTransaction) {
-            Transaction t = new Transaction(true, table, row,
-                                            actionTimestamp);
+            Transaction t = new Transaction(true, table, row, actionTimestamp);
 
             rowActionList.add(t);
             database.txManager.addTransaction(this, t);
@@ -464,8 +463,7 @@ public class Session implements SessionInterface {
                 isAutoCommit = autocommit;
 
                 try {
-                    database.logger.writeToLog(this,
-                                               getAutoCommitStatement());
+                    database.logger.writeToLog(this, getAutoCommitStatement());
                 } catch (HsqlException e) {}
             }
         }
@@ -561,8 +559,7 @@ public class Session implements SessionInterface {
         try {
             database.logger.writeToLog(this,
                                        Token.T_ROLLBACK + " " + Token.T_TO
-                                       + " " + Token.T_SAVEPOINT + " "
-                                       + name);
+                                       + " " + Token.T_SAVEPOINT + " " + name);
         } catch (HsqlException e) {}
 
         database.txManager.rollbackSavepoint(this, name);
@@ -629,8 +626,8 @@ public class Session implements SessionInterface {
         }
 
         if (rollback) {
-            database.txManager.rollbackTransactions(this,
-                    nestedOldTransIndex, true);
+            database.txManager.rollbackTransactions(this, nestedOldTransIndex,
+                    true);
         }
 
         // reset after the rollback
@@ -839,7 +836,7 @@ public class Session implements SessionInterface {
             while (tokenizer.getPosition() < tokenizer.getLength()) {
                 token = tokenizer.getString();
 
-                if (token.length() != 0 &&!token.equals(Token.T_SEMICOLON)) {
+                if (token.length() != 0 && !token.equals(Token.T_SEMICOLON)) {
                     throw Trace.error(Trace.UNEXPECTED_TOKEN, token);
                 }
             }
@@ -1486,5 +1483,31 @@ public class Session implements SessionInterface {
         if (indexArrayKeepMap != null) {
             indexArrayKeepMap.clear();
         }
+    }
+
+    // warnings
+    HsqlArrayList sqlWarnings;
+
+    public void addWarning(HsqlException warning) {
+
+        if (sqlWarnings == null) {
+            sqlWarnings = new HsqlArrayList(true);
+        }
+
+        sqlWarnings.add(warning);
+    }
+
+    public HsqlException[] getAndClearWarnings() {
+
+        if (sqlWarnings == null) {
+            return new HsqlException[0];
+        }
+
+        HsqlException[] array = new HsqlException[sqlWarnings.size()];
+
+        sqlWarnings.toArray(array);
+        sqlWarnings.clear();
+
+        return array;
     }
 }

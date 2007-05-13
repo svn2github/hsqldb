@@ -433,7 +433,7 @@ public class Tokenizer {
      * @return popped name
      * @throws HsqlException if next token is not an AName
      */
-    String getName() throws HsqlException {
+    public String getName() throws HsqlException {
 
         getToken();
 
@@ -949,8 +949,9 @@ public class Tokenizer {
                     }
 
                     // fredt - todo new char[] to back sToken
-                    sToken = sCommand.substring(start, iIndex).toUpperCase(
-                        Locale.ENGLISH);
+                    sToken =
+                        sCommand.substring(start,
+                                           iIndex).toUpperCase(Locale.ENGLISH);
 
                     // the following only for NAME, not for NAMED_PARAM
                     if (iType == NAMED_PARAM) {

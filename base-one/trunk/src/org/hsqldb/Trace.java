@@ -368,7 +368,8 @@ public class Trace {
     COLUMN_IS_IN_CONSTRAINT                 = 252,
     COLUMN_SIZE_REQUIRED                    = 253,
     INVALID_SIZE_PRECISION                  = 254,
-    LAST_ERROR_HANDLE                       = 255;
+    CANNOT_CONNECT_TABLE                    = 255,
+    LAST_ERROR_HANDLE                       = 256;
 
     //
     static String MESSAGE_TAG = "$$";

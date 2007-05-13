@@ -168,9 +168,8 @@ public class DatabaseScript {
                 delay /= 1000;
             }
 
-            String statement = "SET WRITE_DELAY " + delay
-                               + (millis ? " MILLIS"
-                                         : "");
+            String statement = "SET WRITE_DELAY " + delay + (millis ? " MILLIS"
+                                                                    : "");
 
             addRow(r, statement);
         }
@@ -205,8 +204,7 @@ public class DatabaseScript {
                      [START WITH <value>]
                      [INCREMENT BY <value>]
              */
-            Iterator it =
-                database.schemaManager.sequenceIterator(schema.name);
+            Iterator it = database.schemaManager.sequenceIterator(schema.name);
 
             while (it.hasNext()) {
                 NumberSequence seq = (NumberSequence) it.next();
@@ -277,7 +275,7 @@ public class DatabaseScript {
                 }
 
                 // readonly for TEXT tables only
-                if (t.isText() && t.isDataReadOnly()) {
+                if (t.isText() && t.isConnected() && t.isDataReadOnly()) {
                     a = new StringBuffer(64);
 
                     a.append(Token.T_SET).append(' ').append(
@@ -342,7 +340,7 @@ public class DatabaseScript {
                 Table t = (Table) tTable.get(i);
 
                 if (indexRoots && t.isIndexCached()
-                        &&!t.isEmpty(sysSession)) {
+                        && !t.isEmpty(sysSession)) {
                     addRow(r, getIndexRootsDDL((Table) tTable.get(i)));
                 }
             }
@@ -470,7 +468,7 @@ public class DatabaseScript {
         HsqlName   pkName  = null;
         Constraint pkConst = t.getPrimaryConstraint();
 
-        if (pkConst != null &&!pkConst.getName().isReservedIndexName()) {
+        if (pkConst != null && !pkConst.getName().isReservedIndexName()) {
             pkName = pkConst.getName();
         }
 

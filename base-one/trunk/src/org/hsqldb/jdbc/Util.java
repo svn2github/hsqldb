@@ -37,6 +37,8 @@ import org.hsqldb.HsqlException;
 import org.hsqldb.Result;
 import org.hsqldb.Trace;
 
+import java.sql.SQLWarning;
+
 /**
  * Provides driver constants and a gateway from internal HsqlExceptions to
  * external SQLExceptions.
@@ -60,6 +62,11 @@ public class Util {
     public static final SQLException sqlException(HsqlException e) {
         return new SQLException(e.getMessage(), e.getSQLState(),
                                 e.getErrorCode());
+    }
+
+    public static final SQLWarning sqlWarning(HsqlException e) {
+        return new SQLWarning(e.getMessage(), e.getSQLState(),
+                              e.getErrorCode());
     }
 
     static final SQLException sqlException(int id) {
@@ -105,5 +112,4 @@ public class Util {
     public static SQLException connectionClosedException() {
         return sqlException(Trace.CONNECTION_IS_CLOSED);
     }
-
 }

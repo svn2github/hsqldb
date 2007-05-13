@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: texttables.xml,v 1.11 2005/06/02 06:38:55 fredt Exp $ -->
+<!-- $Id: texttables.xml,v 1.12 2005/06/29 23:15:13 fredt Exp $ -->
 <chapter id="texttables-chapter">
   <title id="texttables-title">Text Tables</title>
 
@@ -30,9 +30,9 @@
       </author>
     </authorgroup>
 
-    <edition>$Revision: 1.11 $</edition>
+    <edition>$Revision: 1.12 $</edition>
 
-    <pubdate>$Date: 2005/06/02 06:38:55 $</pubdate>
+    <pubdate>$Date: 2005/06/29 23:15:13 $</pubdate>
 
     <keywordset>
       <keyword>Text</keyword>
@@ -140,7 +140,7 @@
           <para>From version 1.7.2 the new source file is scanned and indexes
           are built when it is assigned to the table. At this point any
           violation of NOT NULL, UNIQUE or PRIMARY KEY constrainst are caught
-          and the assignment is aborted. owever, foreign key constraints are
+          and the assignment is aborted. However, foreign key constraints are
           not checked at the time of assignment or reassignment of the source
           file.</para>
         </listitem>
@@ -344,6 +344,31 @@
 
       <programlisting>
     SET TABLE mytable SOURCE "myfile;ignore_first=true;all_quoted=true;cache_scale=12"</programlisting>
+
+    </section>
+    <section id='disconnecting_text_tables'>
+      <title>Disconnecting Text Tables</title>
+
+      <para>The following describes behaviour present in 1.8.0.8 and later.</para>
+
+      <para>Text tables may be <emphasis>disconnected</emphasis> from their underlying data source, i.e.
+      the text file.</para>
+
+      <para>You can explicitly disconnect a text table from its file by issuing the
+      following statement:
+      <programlisting>  SET TABLE mytable SOURCE OFF</programlisting>
+      </para>
+
+      <para>Subsequently, <literal>mytable</literal> will be empty and read-only. However, the data
+      source description will be preserved, and the table can be re-connected to it with
+      <programlisting>  SET TABLE mytable SOURCE ON</programlisting>
+      </para>
+
+      <para>When a database is opened, if the source file for an existing text table is missing
+      the table remains disconnected from its data source, but the source sescription is preserved.
+      This allows the missing source file to be added to the directory and the table re-connected to it
+      with the above command.
+      </para>
     </section>
   </section>
 

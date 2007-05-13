@@ -456,8 +456,7 @@ extends org.hsqldb.DatabaseInformationMain {
             row[icache_size] = ValuePool.getInt(cache.getCachedObjectCount());
             row[icache_length] =
                 ValuePool.getLong(cache.getTotalCachedBlockSize());
-            row[ifree_bytes] =
-                ValuePool.getInt(cache.getTotalFreeBlockSize());
+            row[ifree_bytes] = ValuePool.getInt(cache.getTotalFreeBlockSize());
             row[ifree_count] = ValuePool.getInt(cache.getFreeBlockCount());
             row[ifree_pos]   = ValuePool.getLong(cache.getFileFreePos());
 
@@ -968,8 +967,7 @@ extends org.hsqldb.DatabaseInformationMain {
             row[iautocmt]  = ValuePool.getBoolean(s.isAutoCommit());
             row[ireadonly] = ValuePool.getBoolean(s.isReadOnly());
             row[imaxrows]  = ValuePool.getInt(s.getSQLMaxRows());
-            row[ilast_id] =
-                ValuePool.getLong(s.getLastIdentity().longValue());
+            row[ilast_id] = ValuePool.getLong(s.getLastIdentity().longValue());
             row[it_size]   = ValuePool.getInt(s.getTransactionSize());
             row[it_schema] = s.getSchemaName(null);
 
@@ -1150,7 +1148,7 @@ extends org.hsqldb.DatabaseInformationMain {
         while (tables.hasNext()) {
             table = (Table) tables.next();
 
-            if (!table.isText() ||!isAccessibleTable(table)) {
+            if (!table.isText() || !isAccessibleTable(table)) {
                 continue;
             }
 
@@ -1158,10 +1156,10 @@ extends org.hsqldb.DatabaseInformationMain {
             row[itable_cat]   = ns.getCatalogName(table);
             row[itable_schem] = table.getSchemaName();
             row[itable_name]  = table.getName().name;
+            row[idsd]         = table.getDataSource();
 
             if (table.getCache() instanceof TextCache) {
-                tc        = (TextCache) table.getCache();
-                row[idsd] = table.getDataSource();
+                tc = (TextCache) table.getCache();
                 row[ifile_path] =
                     FileUtil.canonicalOrAbsolutePath(tc.getFileName());
                 row[ifile_enc] = tc.stringEncoding;
@@ -1748,7 +1746,7 @@ extends org.hsqldb.DatabaseInformationMain {
         while (tables.hasNext()) {
             table = (Table) tables.next();
 
-            if (!table.isView() ||!isAccessibleTable(table)) {
+            if (!table.isView() || !isAccessibleTable(table)) {
                 continue;
             }
 
@@ -2179,8 +2177,7 @@ extends org.hsqldb.DatabaseInformationMain {
         Table t = sysTables[SYSTEM_CHECK_COLUMN_USAGE];
 
         if (t == null) {
-            t = createBlankTable(
-                sysTableHsqlNames[SYSTEM_CHECK_COLUMN_USAGE]);
+            t = createBlankTable(sysTableHsqlNames[SYSTEM_CHECK_COLUMN_USAGE]);
 
             addColumn(t, "CONSTRAINT_CATALOG", Types.VARCHAR);
             addColumn(t, "CONSTRAINT_SCHEMA", Types.VARCHAR);
@@ -2269,7 +2266,7 @@ extends org.hsqldb.DatabaseInformationMain {
                     columnTable = tableFilter.getTable();
 
                     if (columnTable.getTableType() == Table.SYSTEM_SUBQUERY
-                            ||!isAccessibleTable(columnTable)) {
+                            || !isAccessibleTable(columnTable)) {
                         continue;
                     }
 
@@ -2695,7 +2692,7 @@ extends org.hsqldb.DatabaseInformationMain {
         while (tables.hasNext()) {
             table = (Table) tables.next();
 
-            if (table.isView() ||!isAccessibleTable(table)) {
+            if (table.isView() || !isAccessibleTable(table)) {
                 continue;
             }
 
@@ -2706,7 +2703,7 @@ extends org.hsqldb.DatabaseInformationMain {
                 constraint = constraints[i];
 
                 if (constraint.getType() == Constraint.FOREIGN_KEY
-                        &&!isAccessibleTable(constraint.getRef())) {
+                        && !isAccessibleTable(constraint.getRef())) {
                     continue;
                 }
 
@@ -2969,7 +2966,7 @@ extends org.hsqldb.DatabaseInformationMain {
                 columnTable = tableFilter.getTable();
 
                 if (columnTable.getTableType() == Table.SYSTEM_SUBQUERY
-                        ||!isAccessibleTable(columnTable)) {
+                        || !isAccessibleTable(columnTable)) {
                     continue;
                 }
 
@@ -3049,8 +3046,7 @@ extends org.hsqldb.DatabaseInformationMain {
         Table t = sysTables[SYSTEM_VIEW_ROUTINE_USAGE];
 
         if (t == null) {
-            t = createBlankTable(
-                sysTableHsqlNames[SYSTEM_VIEW_ROUTINE_USAGE]);
+            t = createBlankTable(sysTableHsqlNames[SYSTEM_VIEW_ROUTINE_USAGE]);
 
             addColumn(t, "TABLE_CATALOG", Types.VARCHAR);
             addColumn(t, "TABLE_SCHEMA", Types.VARCHAR);
@@ -3415,7 +3411,7 @@ extends org.hsqldb.DatabaseInformationMain {
         Object[]      row;
 
         // Initialization
-        users = database.getUserManager().listVisibleUsers(session, false);
+        users     = database.getUserManager().listVisibleUsers(session, false);
         userCount = users.size();
 
         // Do it.
@@ -3729,9 +3725,8 @@ extends org.hsqldb.DatabaseInformationMain {
                 row      = t.getEmptyRowData();
                 roleName = (String) roles.next();
                 isGrantable =
-                    grantee.hasRole(GranteeManager.DBA_ADMIN_ROLE_NAME)
-                    ? "YES"
-                    : "NO";
+                    grantee.hasRole(GranteeManager.DBA_ADMIN_ROLE_NAME) ? "YES"
+                                                                        : "NO";
                 row[irole]      = roleName;
                 row[igrantee]   = granteeName;
                 row[igrantor]   = grantorName;
