@@ -2222,14 +2222,24 @@ class DatabaseCommandInterpreter {
 
                             try {
                                 t.setHeader(token);
-
-                                // add an entry to applog too
-                            } catch (HsqlException e) {
+                            } catch (Throwable e) {
                                 if (session.isProcessingLog()
                                         || session.isProcessingScript()) {
-                                    session.addWarning(e);
+                                    HsqlException warning =
+                                        Trace.error(Trace.GENERAL_IO_ERROR,
+                                                    e.getMessage());
+
+                                    session.addWarning(warning);
+
+                                    // add an entry to applog too
                                 } else {
-                                    throw e;
+                                    if (e instanceof HsqlException) {
+                                        throw (HsqlException) e;
+                                    } else {
+                                        throw Trace.error(
+                                            Trace.GENERAL_IO_ERROR,
+                                            e.getMessage());
+                                    }
                                 }
                             }
 
@@ -2265,14 +2275,23 @@ class DatabaseCommandInterpreter {
 
                         try {
                             t.setDataSource(session, token, isDesc, false);
-                        } catch (HsqlException e) {
+                        } catch (Throwable e) {
                             if (session.isProcessingLog()
                                     || session.isProcessingScript()) {
-                                session.addWarning(e);
+                                HsqlException warning =
+                                    Trace.error(Trace.GENERAL_IO_ERROR,
+                                                e.getMessage());
+
+                                session.addWarning(warning);
 
                                 // add an entry to applog too
                             } else {
-                                throw e;
+                                if (e instanceof HsqlException) {
+                                    throw (HsqlException) e;
+                                } else {
+                                    throw Trace.error(Trace.GENERAL_IO_ERROR,
+                                                      e.getMessage());
+                                }
                             }
                         }
 
