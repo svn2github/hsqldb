@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2005, The HSQL Development Group
+/* Copyright (c) 2001-2007, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-/* $Id: SqlTool.java,v 1.61 2007/04/01 15:59:28 unsaved Exp $ */
+/* $Id: SqlTool.java,v 1.62 2007/05/13 15:27:38 fredt Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -59,7 +59,7 @@ import java.util.StringTokenizer;
  * Java way.
  *
  * @see #main()
- * @version $Revision: 1.61 $
+ * @version $Revision: 1.62 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlTool {
@@ -86,8 +86,8 @@ public class SqlTool {
     private static String CMDLINE_ID = "cmdline";
 
     static {
-        revnum = "$Revision: 1.61 $".substring("$Revision: ".length(),
-                                               "$Revision: 1.61 $".length()
+        revnum = "$Revision: 1.62 $".substring("$Revision: ".length(),
+                                               "$Revision: 1.62 $".length()
                                                - 2);
     }
 
@@ -388,10 +388,6 @@ public class SqlTool {
                     }
 
                     sqlText = arg[i];
-
-                    if (sqlText.charAt(sqlText.length() - 1) != ';') {
-                        sqlText += ";";
-                    }
                 } else if (parameter.equals("debug")) {
                     debug = true;
                 } else if (parameter.equals("noautofile")) {
