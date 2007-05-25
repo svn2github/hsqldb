@@ -51,13 +51,15 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java,v 1.146 2007/03/30 13:16:43 unsaved Exp $ */
+/* $Id: SqlFile.java,v 1.147 2007/05/13 15:27:37 fredt Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -105,7 +107,7 @@ import java.util.TreeMap;
  * setters would be best) instead of constructor args and System
  * Properties.
  *
- * @version $Revision: 1.146 $
+ * @version $Revision: 1.147 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlFile {
@@ -118,7 +120,7 @@ public class SqlFile {
     private String           contPrompt       = "  +> ";
     private Connection       curConn          = null;
     private boolean          htmlMode         = false;
-    private HashMap          userVars         = null;
+    private Map              userVars         = null;
     private String[]         statementHistory = null;
     private boolean          chunking         = false;
     private String           csvNullRep       = null;
@@ -156,8 +158,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 1.146 $".substring("$Revision: ".length(),
-                "$Revision: 1.146 $".length() - 2);
+        revnum = "$Revision: 1.147 $".substring("$Revision: ".length(),
+                "$Revision: 1.147 $".length() - 2);
     }
 
     private static String BANNER =
@@ -243,10 +245,8 @@ public class SqlFile {
         + LS
         + "    \\-[3][;]             * reload a command to buffer (opt. exec. w/ \":;\"))"
         + LS + "    \\=                   commit JDBC session" + LS
-        + "    \\x {TABLE|SELECT...} eXport table or query to CSV text file"
-        + LS
-        + "    \\m file/path.csv [*] iMport CSV text file records into a table"
-        + LS
+        + "    \\x {TABLE|SELECT...} eXport table or query to CSV text file (options \\x?)" + LS
+        + "    \\m file/path.csv [*] iMport CSV text file records into a table (opts \\m?)" + LS
         + "    \\q [abort message]   Quit (or you can end input with Ctrl-Z or Ctrl-D)"
         + LS
     ;
@@ -301,6 +301,21 @@ public class SqlFile {
         + LS + "            the number of rows updated)." + LS
     ;
 
+    private static final String CSV_OPTIONS_TEXT =
+        "All of the CSV PL variables are optional.  To see all PL var. values,"
+        + LS + "run '* listvalue'.  Set the values like:" + LS
+        + "    * *CSV_COL_DELIM = ," + LS
+        + "Don't forget the * indicating a PL command PLUS the leading * in"
+        + LS + "all of these variable names.  \\x or \\m below indicates where" + LS
+        + "the setting is applicable." + LS
+        + "    *CSV_SKIP_PREFIX   \\m    Comment line prefix in CSV files" + LS
+        + "    *CSV_COL_DELIM     \\m\\x  Column delimiter" + LS
+        + "    *CSV_ROW_DELIM     \\m\\x  Row delimiter" + LS
+        + "    *CSV_NULL_REP      \\m\\x  String to represent database null" + LS
+        + "    *CSV_TARGET_FILE   \\x    File which exports will write to" + LS
+        + "    *CSV_TABLENAME     \\m    Table which imports will write to" + LS
+        + "    *CSV_CONST_COLS    \\m    Column vals to write to every row";
+
     /**
      * Interpret lines of input file as SQL Statements, Comments,
      * Special Commands, and Buffer Commands.
@@ -312,8 +327,8 @@ public class SqlFile {
      *                       Special commands are enabled, and
      *                       continueOnError defaults to true.
      */
-    public SqlFile(File inFile, boolean inInteractive,
-                   HashMap inVars) throws IOException {
+    public SqlFile(File inFile, boolean inInteractive, Map inVars)
+            throws IOException {
 
         file        = inFile;
         interactive = inInteractive;
@@ -341,7 +356,7 @@ public class SqlFile {
      *
      * @see #SqlFile(File,boolean)
      */
-    public SqlFile(boolean inInteractive, HashMap inVars) throws IOException {
+    public SqlFile(boolean inInteractive, Map inVars) throws IOException {
         this(null, inInteractive, inVars);
     }
 
@@ -1164,6 +1179,12 @@ public class SqlFile {
                 return;
 
             case 'm' :
+                if (arg1.equals("m?") ||
+                        (arg1.equals("m") && other != null
+                                 && other.equals("?"))) {
+                    stdprintln(CSV_OPTIONS_TEXT + LS + CSV_M_SYNTAX_MSG);
+                    return;
+                }
                 if (arg1.length() != 1 || other == null) {
                     throw new BadSpecial(CSV_M_SYNTAX_MSG);
                 }
@@ -1220,6 +1241,12 @@ public class SqlFile {
                 return;
 
             case 'x' :
+                if (arg1.equals("x?") ||
+                        (arg1.equals("x") && other != null
+                                 && other.equals("?"))) {
+                    stdprintln(CSV_OPTIONS_TEXT + LS + CSV_X_SYNTAX_MSG);
+                    return;
+                }
                 try {
                     if (arg1.length() != 1 || other == null) {
                         throw new BadSpecial();
@@ -1243,7 +1270,7 @@ public class SqlFile {
 
                     if (csvFilepath == null && tableName == null) {
                         throw new BadSpecial(
-                            "You must set PL variable '*CSV_FILEPATH' in "
+                            "You must set PL variable '*CSV_TARGET_FILE' in "
                             + "order to use the query variant of \\x");
                     }
 
@@ -2830,7 +2857,7 @@ public class SqlFile {
                                                                : incCols
                                                                    .length;
                 String            val;
-                ArrayList         rows        = new ArrayList();
+                List              rows        = new ArrayList();
                 String[]          headerArray = null;
                 String[]          fieldArray;
                 int[]             maxWidth = new int[incCount];
@@ -3366,7 +3393,7 @@ public class SqlFile {
         String filter = ((inFilter == null) ? null : inFilter.toUpperCase());
          */
         String    filter      = inFilter;
-        ArrayList rows        = new ArrayList();
+        List      rows        = new ArrayList();
         String[]  headerArray = {
             "name", "datatype", "width", "no-nulls"
         };
@@ -3993,6 +4020,39 @@ public class SqlFile {
 
         char[] bfr  = null;
         File   file = new File(filePath);
+        String tmpString = (String) userVars.get("*CSV_CONST_COLS");
+        SortedMap constColMap = null;
+        int constColMapSize = 0;
+        if (tmpString != null) {
+            // Can't use StringTokenizer, since our delimiters are fixed
+            // whereas StringTokenizer delimiters are a list of OR delimiters.
+
+            // We trim col. names, but not values.  Must allow users to
+            // specify values as spaces, empty string, null.
+            constColMap = new TreeMap();
+            int startOffset;
+            int postOffset = -1;
+            int firstEq;
+            String n;
+            do {
+                startOffset = postOffset + 1;
+                postOffset = tmpString.indexOf(csvColDelim, startOffset);
+                if (postOffset < 0) postOffset = tmpString.length();
+                if (postOffset == startOffset)
+                    throw new BadSpecial("*CSV_CONST_COLS has null setting");
+                firstEq = tmpString.indexOf('=', startOffset);
+                if (firstEq < startOffset + 1 || firstEq > postOffset)
+                    throw new BadSpecial("*CSV_CONST_COLS element malformatted");
+                n = tmpString.substring(startOffset, firstEq).trim();
+                if (n.length() < 1)
+                    throw new BadSpecial(
+                            "*CSV_CONST_COLS element has null col. name");
+                constColMap.put(n,
+                        tmpString.substring(firstEq + 1, postOffset));
+            } while (postOffset < tmpString.length());
+            stdprintln("Using Constant Column map:  " + constColMap);
+            constColMapSize = constColMap.size();
+        }
 
         if (!file.canRead()) {
             throw new IOException("Can't read file '" + file + "'");
@@ -4035,7 +4095,7 @@ public class SqlFile {
                 + "Please run the program with more RAM (try Java -Xm* switches).");
         }
 
-        ArrayList headerList = new ArrayList();
+        List      headerList = new ArrayList();
         String    tableName  = (String) userVars.get("*CSV_TARGET_TABLE");
 
         if (tableName == null) {
@@ -4161,6 +4221,10 @@ public class SqlFile {
             colStart = colEnd + csvColDelim.length();
         }
 
+        if (constColMap != null) {
+            headerList.addAll(constColMap.keySet());
+        }
+
         String[] headers = (String[]) headerList.toArray(new String[0]);
 
         if (tableName == null) {
@@ -4231,7 +4295,7 @@ public class SqlFile {
             }
         } catch (SQLException se) {
             throw new BadSpecial("Failed to get metadata for query: "
-                                 + se.getMessage());
+                     + se.getMessage() + "  (Used: " + typeQuerySb + ')');
         }
 
         for (int i = 0; i < autonulls.length; i++) {
@@ -4303,7 +4367,7 @@ public class SqlFile {
                     continue;
                 }
 
-                // Finally we will readlly add a record!
+                // Finally we will really add a record!
                 recCount++;
 
                 colStart      = recStart;
@@ -4324,12 +4388,13 @@ public class SqlFile {
                         colEnd = recEnd;
                     }
 
-                    if (readColCount == headers.length) {
-                        throw new IOException("Header has " + headers.length
-                                              + " columns.  CSV input line "
-                                              + lineCount
-                                              + " has too many column values ("
-                                              + (1 + readColCount) + ").");
+                    if (readColCount == headers.length - constColMapSize) {
+                        throw new IOException(
+                            "Header has "
+                                    + (headers.length - constColMapSize)
+                            + " columns.  CSV input line " + lineCount
+                            + " has too many column values ("
+                            + (1 + readColCount) + ").");
                     }
 
                     if (headers[readColCount++] != null) {
@@ -4340,22 +4405,29 @@ public class SqlFile {
                     colStart = colEnd + csvColDelim.length();
                 }
 
+                if (constColMap != null) {
+                    Iterator it = constColMap.values().iterator();
+                    while (it.hasNext()) {
+                        dataVals[storeColCount++] = (String) it.next();
+                    }
+                }
                 /* It's too late for the following two tests, since if
                  * we inserted *ColCount > array.length, we would have
                  * generated a runtime array index exception. */
-                if (readColCount != headers.length) {
-                    throw new IOException("Header has " + headers.length
+                if (readColCount != headers.length - constColMapSize) {
+                    throw new IOException("Header has "
+                            + (headers.length - constColMapSize)
                                           + " columns.  CSV input line "
                                           + lineCount + " has " + readColCount
                                           + " column values.");
                 }
-
                 if (storeColCount != dataVals.length) {
-                    throw new IOException(
-                        "Header has " + dataVals.length
-                        + " non-skip columns.  CSV input line " + lineCount
-                        + " has " + storeColCount
-                        + " column insertion values.");
+                    throw new IOException("Header has "
+                            + (dataVals.length - constColMapSize)
+                                      + " non-skip columns.  CSV input line "
+                                      + lineCount + " has "
+                            + (storeColCount - constColMapSize)
+                                      + " column insertion values.");
                 }
 
                 for (int i = 0; i < dataVals.length; i++) {
