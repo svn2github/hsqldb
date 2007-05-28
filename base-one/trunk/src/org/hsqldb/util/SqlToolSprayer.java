@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2005, The HSQL Development Group
+/* Copyright (c) 2001-2007, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,11 +37,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Properties;
 
-/* $Id: SqlToolSprayer.java,v 1.17 2007/04/01 16:47:17 unsaved Exp $ */
+/* $Id: SqlToolSprayer.java 135 2007-05-27 22:53:39Z unsaved $ */
 
 /**
  * Sql Tool Sprayer.
- * Invokes SqlTool.objectMain() multiple times with the same SQL.
+ * Invokes SqlTool.main() multiple times with the same SQL.
  * Invokes for multiple urlids and/or retries.
  *
  * See JavaDocs for the main method for syntax of how to run.
@@ -54,20 +54,19 @@ import java.util.Properties;
  * </UL>
  *
  * @see @main()
- * @version $Revision: 1.17 $
+ * @version $Revision: 135 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlToolSprayer {
 
-    public static String LS = System.getProperty("line.separator");
     private static final String SYNTAX_MSG =
-        "SYNTAX:  java [-D...] SqlToolSprayer 'SQL;' [urlid1 urlid2...]" + LS
-        + "System properties you may use [default values]:" + LS
-        + "    sqltoolsprayer.period (in ms.) [500]" + LS
-        + "    sqltoolsprayer.maxtime (in ms.) [0]" + LS
-        + "    sqltoolsprayer.monfile (filepath) [none]" + LS
-        + "    sqltoolsprayer.rcfile (filepath) [none.  SqlTool default used.]"
-        + LS + "    sqltoolsprayer.propfile (filepath) [none]";
+        "SYNTAX:  java [-D...] SqlToolSprayer 'SQL;' [urlid1 urlid2...]\n"
+        + "System properties you may use [default values]:\n"
+        + "    sqltoolsprayer.period (in ms.) [500]\n"
+        + "    sqltoolsprayer.maxtime (in ms.) [0]\n"
+        + "    sqltoolsprayer.monfile (filepath) [none]\n"
+        + "    sqltoolsprayer.rcfile (filepath) [none.  SqlTool default used.]\n"
+        + "    sqltoolsprayer.propfile (filepath) [none]";
 
     public static void main(String[] sa) {
 
@@ -76,14 +75,17 @@ public class SqlToolSprayer {
             System.exit(4);
         }
 
+        System.setProperty("sqltool.noexit", "true");
+
         long period = ((System.getProperty("sqltoolsprayer.period") == null)
                        ? 500
                        : Integer.parseInt(
                            System.getProperty("sqltoolsprayer.period")));
-        long maxtime = ((System.getProperty("sqltoolsprayer.maxtime") == null)
-                        ? 0
-                        : Integer.parseInt(
-                            System.getProperty("sqltoolsprayer.maxtime")));
+        long maxtime =
+            ((System.getProperty("sqltoolsprayer.maxtime") == null) ? 0
+                                                                    : Integer.parseInt(
+                                                                        System.getProperty(
+                                                                            "sqltoolsprayer.maxtime")));
         String rcFile   = System.getProperty("sqltoolsprayer.rcfile");
         String propfile = System.getProperty("sqltoolsprayer.propfile");
         File monitorFile =
@@ -97,8 +99,8 @@ public class SqlToolSprayer {
             try {
                 getUrlsFromPropFile(propfile, urlids);
             } catch (Exception e) {
-                System.err.println("Failed to load property file '" + propfile
-                                   + "':  " + e);
+                System.err.println("Failed to load property file '"
+                                   + propfile + "':  " + e);
                 System.exit(3);
             }
         }
@@ -125,7 +127,7 @@ public class SqlToolSprayer {
         long     startTime     = (new Date()).getTime();
 
         while (true) {
-            if (monitorFile != null && !monitorFile.exists()) {
+            if (monitorFile != null &&!monitorFile.exists()) {
                 System.err.println("Required file is gone:  " + monitorFile);
                 System.exit(2);
             }
@@ -140,13 +142,13 @@ public class SqlToolSprayer {
                 sqlToolArgs[sqlToolArgs.length - 1] = (String) urlids.get(i);
 
                 try {
-                    new SqlTool().objectMain(sqlToolArgs);
+                    SqlTool.main(sqlToolArgs);
 
                     status[i] = true;
 
                     System.err.println("Success for instance '"
                                        + urlids.get(i) + "'");
-                } catch (SqlTool.SqlToolException se) {
+                } catch (Exception e) {
                     onefailed = true;
                 }
             }
@@ -155,7 +157,8 @@ public class SqlToolSprayer {
                 break;
             }
 
-            if (maxtime == 0 || (new Date()).getTime() > startTime + maxtime) {
+            if (maxtime == 0
+                    || (new Date()).getTime() > startTime + maxtime) {
                 break;
             }
 

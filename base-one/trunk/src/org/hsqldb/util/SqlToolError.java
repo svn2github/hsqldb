@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2005, The HSQL Development Group
+/* Copyright (c) 2001-2007, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,17 +37,18 @@ package org.hsqldb.util;
  * This class is misnamed, because it is not only errors.
  * When there is time, this file and class should be renamed.
  */
-public class SqlToolError extends Exception {
+public class SqlToolError extends AppendableException {
+    static final long serialVersionUID = 1792522673702223649L;
 
-    public SqlToolError(Exception e) {
-        super(e.getMessage());
+    public SqlToolError(Throwable cause) {
+        super(cause.getMessage(), cause);
     }
-
+    public SqlToolError() {
+    }
     public SqlToolError(String s) {
         super(s);
     }
-
-    public SqlToolError() {
-        super();
+    public SqlToolError(String string, Throwable cause) {
+        super(string, cause);
     }
 }

@@ -42,7 +42,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-/* $Id: SqlTool.java,v 1.63 2007/05/25 00:37:29 unsaved Exp $ */
+/* $Id: SqlTool.java 135 2007-05-27 22:53:39Z unsaved $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -59,7 +59,7 @@ import java.util.StringTokenizer;
  * Java way.
  *
  * @see #main()
- * @version $Revision: 1.63 $
+ * @version $Revision: 135 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlTool {
@@ -69,14 +69,15 @@ public class SqlTool {
     private Connection conn;
 
     // N.b. the following is static!
-    private static String   revnum             = null;
+    private static String  revnum = null;
+
     public static final int SQLTOOLERR_EXITVAL = 1;
-    public static final int SYNTAXERR_EXITVAL  = 11;
-    public static final int RCERR_EXITVAL      = 2;
-    public static final int SQLERR_EXITVAL     = 3;
-    public static final int IOERR_EXITVAL      = 4;
-    public static final int FILEERR_EXITVAL    = 5;
-    public static final int INPUTERR_EXITVAL   = 6;
+    public static final int SYNTAXERR_EXITVAL = 11;
+    public static final int RCERR_EXITVAL = 2;
+    public static final int SQLERR_EXITVAL = 3;
+    public static final int IOERR_EXITVAL = 4;
+    public static final int FILEERR_EXITVAL = 5;
+    public static final int INPUTERR_EXITVAL = 6;
     public static final int CONNECTERR_EXITVAL = 7;
 
     /**
@@ -86,90 +87,82 @@ public class SqlTool {
     private static String CMDLINE_ID = "cmdline";
 
     static {
-        revnum = "$Revision: 1.63 $".substring("$Revision: ".length(),
-                                               "$Revision: 1.63 $".length()
+        revnum = "$Revision: 135 $".substring("$Revision: ".length(),
+                                               "$Revision: 135 $".length()
                                                - 2);
     }
-
     public static String LS = System.getProperty("line.separator");
+
     private static final String SYNTAX_MESSAGE =
         "Usage: java [-Dsqlfile.X=Y...] org.hsqldb.util.SqlTool \\" + LS
         + "    [--optname [optval...]] urlid [file1.sql...]" + LS
         + "where arguments are:" + LS
         + "    --help                   Displays this message" + LS
         + "    --list                   List urlids in the rc file" + LS
-        + "    --noInput                Do not read stdin (default if sql file given"
-        + LS + "                             or --sql switch used)." + LS
-        + "    --stdInput               Read stdin IN ADDITION to sql files/--sql input"
-        + LS
-        + "    --inlineRc URL=val1,USER=val2[,DRIVER=val3][,CHARSET=val4][,TRUST=val5]"
-        + LS + "                             Inline RC file variables" + LS
+        + "    --noInput                Do not read stdin (default if sql file given" + LS
+        + "                             or --sql switch used)." + LS
+        + "    --stdInput               Read stdin IN ADDITION to sql files/--sql input" + LS
+        + "    --inlineRc URL=val1,USER=val2[,DRIVER=val3][,CHARSET=val4][,TRUST=val5]" + LS
+        + "                             Inline RC file variables" + LS
         + "    --debug                  Print Debug info to stderr" + LS
-        + "    --noAutoFile             Do not execute auto.sql from home dir"
-        + LS + "    --autoCommit             Auto-commit JDBC DML commands"
-        + LS
-        + "    --sql \"SQL; Statements\"  Execute given SQL instead of stdin (before"
-        + LS
-        + "                             SQL files if any are specified) where \"SQL\""
-        + LS
-        + "                             consists of SQL command(s).  See the Guide."
-        + LS
-        + "    --rcFile /file/path.rc   Connect Info File [$HOME/sqltool.rc]"
-        + LS
-        + "    --abortOnErr             Abort on Error (overrides defaults)"
-        + LS
-        + "    --continueOnErr          Continue on Error (overrides defaults)"
-        + LS + "    --setVar NAME1=val1[,NAME2=val2...]   PL variables" + LS
+        + "    --noAutoFile             Do not execute auto.sql from home dir" + LS
+        + "    --autoCommit             Auto-commit JDBC DML commands" + LS
+        + "    --sql \"SQL; Statements\"  Execute given SQL instead of stdin (before" + LS
+        + "                             SQL files if any are specified) where \"SQL\"" + LS
+        + "                             consists of SQL command(s).  See the Guide." + LS
+        + "    --rcFile /file/path.rc   Connect Info File [$HOME/sqltool.rc]" + LS
+        + "    --abortOnErr             Abort on Error (overrides defaults)" + LS
+        + "    --continueOnErr          Continue on Error (overrides defaults)" + LS
+        + "    --setVar NAME1=val1[,NAME2=val2...]   PL variables" + LS
         + "    --driver a.b.c.Driver    JDBC driver class ["
         + RCData.DEFAULT_JDBC_DRIVER + "]" + LS
-        + "    urlid                    ID of url/userame/password in rcfile"
-        + LS + "    file1.sql...             SQL files to be executed [stdin]"
-        + LS + "                             "
+        + "    urlid                    ID of url/userame/password in rcfile" + LS
+        + "    file1.sql...             SQL files to be executed [stdin]" + LS
+        + "                             "
         + "(Use '-' for non-interactively stdin)." + LS
-        + "See the SqlTool Manual for the supported sqltool.* System Properties."
-        + LS + "SqlTool v. " + revnum + ".";
+        + "See the SqlTool Manual for the supported sqltool.* System Properties." + LS
+        + "SqlTool v. " + revnum + ".";
+    /*  These LS's are extremely ugly.  Once we can use Java v. 4, we can
+     *  write the text using "\n"s, then run replaceAll("\n", LS) in a
+     *  static initializer if !equals("\n", "LS)  (or very similar to that). */
 
     /** Utility nested class for internal use. */
-    private static class BadCmdline extends Exception {}
-    ;
+    private static class BadCmdline extends Exception {
+        static final long serialVersionUID = -2134764796788108325L;
+        BadCmdline() {}
+    }
 
     /** Utility object for internal use. */
     private static BadCmdline bcl = new BadCmdline();
 
-    /**
-     * For trapping of exceptions inside this class.
+    /** For trapping of exceptions inside this class.
      * These are always handled inside this class.
      */
     private static class PrivateException extends Exception {
+        static final long serialVersionUID = -7765061479594523462L;
 
-        public PrivateException() {
+        PrivateException() {
             super();
         }
 
-        public PrivateException(String s) {
+        PrivateException(String s) {
             super(s);
         }
     }
 
     public static class SqlToolException extends Exception {
+        static final long serialVersionUID = 1424909871915188519L;
 
         int exitValue = 1;
-
-        private SqlToolException(String message, int exitValue) {
-
+        SqlToolException(String message, int exitValue) {
             super(message);
-
             this.exitValue = exitValue;
         }
-
-        private SqlToolException(int exitValue, String message) {
+        SqlToolException(int exitValue, String message) {
             this(message, exitValue);
         }
-
-        private SqlToolException(int exitValue) {
-
+        SqlToolException(int exitValue) {
             super();
-
             this.exitValue = exitValue;
         }
     }
@@ -193,7 +186,7 @@ public class SqlTool {
 
             // Prompt for password
             System.out.print(RCData.expandSysPropVars(username)
-                             + "'s password: ");
+                    + "'s password: ");
 
             // Read the password from the command line
             password = console.readLine();
@@ -274,17 +267,14 @@ public class SqlTool {
      * @see objectMain(String[])
      */
     public static void main(String[] args) {
-
         try {
             new SqlTool().objectMain(args);
         } catch (SqlToolException fr) {
             if (fr.getMessage() != null) {
                 System.err.println(fr.getMessage());
             }
-
             System.exit(fr.exitValue);
         }
-
         System.exit(0);
     }
 
@@ -344,14 +334,11 @@ public class SqlTool {
 
                 if (parameter.equals("help")) {
                     System.out.println(SYNTAX_MESSAGE);
-
                     return;
                 }
-
                 if (parameter.equals("abortonerr")) {
                     if (coeOverride != null) {
-                        throw new SqlToolException(
-                            SYNTAXERR_EXITVAL,
+                        throw new SqlToolException(SYNTAXERR_EXITVAL,
                             "Switches '--abortOnErr' and "
                             + "'--continueOnErr' are mutually exclusive");
                     }
@@ -359,8 +346,7 @@ public class SqlTool {
                     coeOverride = Boolean.FALSE;
                 } else if (parameter.equals("continueonerr")) {
                     if (coeOverride != null) {
-                        throw new SqlToolException(
-                            SYNTAXERR_EXITVAL,
+                        throw new SqlToolException(SYNTAXERR_EXITVAL,
                             "Switches '--abortOnErr' and "
                             + "'--continueOnErr' are mutually exclusive");
                     }
@@ -445,9 +431,8 @@ public class SqlTool {
                     fw.flush();
                     fw.close();
                 } catch (IOException ioe) {
-                    throw new SqlToolException(
-                        IOERR_EXITVAL,
-                        "Failed to write given sql to temp file: " + ioe);
+                    throw new SqlToolException(IOERR_EXITVAL,
+                            "Failed to write given sql to temp file: " + ioe);
                 }
             }
 
@@ -465,12 +450,12 @@ public class SqlTool {
 
                 // I.e., if there are any SQL files specified.
                 scriptFiles =
-                    new File[arg.length - i - 1 + ((stdinputOverride == null || !stdinputOverride.booleanValue()) ? 0
-                                                                                                                  : 1)];
+                    new File[arg.length - i - 1 + ((stdinputOverride == null ||!stdinputOverride.booleanValue()) ? 0
+                                                                                                                 : 1)];
 
                 if (debug) {
-                    System.err.println("scriptFiles has " + scriptFiles.length
-                                       + " elements");
+                    System.err.println("scriptFiles has "
+                                       + scriptFiles.length + " elements");
                 }
 
                 while (i + 1 < arg.length) {
@@ -506,44 +491,37 @@ public class SqlTool {
             rcTruststore = (String) rcFields.get("truststore");
 
             // Don't ask for password if what we have already is invalid!
-            if (rcUrl == null || rcUrl.length() < 1) {
-                throw new SqlToolException(
-                    RCERR_EXITVAL,
-                    "URL element is required for inline RC arg");
-            }
-
-            if (rcUsername == null || rcUsername.length() < 1) {
-                throw new SqlToolException(
-                    RCERR_EXITVAL,
-                    "USER element is required for inline RC arg");
-            }
+            if (rcUrl == null || rcUrl.length() < 1)
+                throw new SqlToolException(RCERR_EXITVAL,
+                        "URL element is required for inline RC arg");
+            if (rcUsername == null || rcUsername.length() < 1)
+                throw new SqlToolException(RCERR_EXITVAL,
+                        "USER element is required for inline RC arg");
 
             try {
-                rcPassword = promptForPassword(rcUsername);
+                rcPassword   = promptForPassword(rcUsername);
             } catch (PrivateException e) {
                 throw new SqlToolException(INPUTERR_EXITVAL,
-                                           "Bad password: " + e.getMessage());
+                        "Bad password: " + e.getMessage());
             }
-
             try {
                 conData = new RCData(CMDLINE_ID, rcUrl, rcUsername,
                                      rcPassword, rcDriver, rcCharset,
                                      rcTruststore);
             } catch (Exception e) {
-                throw new SqlToolException(
-                    RCERR_EXITVAL,
-                    "Failed to generate RCData from given values: "
-                    + e.getMessage());
+                throw new SqlToolException(RCERR_EXITVAL,
+                        "Failed to generate RCData from given values: "
+                        + e.getMessage());
             }
         } else {
             try {
-                conData = new RCData(new File((rcFile == null) ? DEFAULT_RCFILE
-                                                               : rcFile), targetDb);
+                conData = new RCData(new File((rcFile == null)
+                                              ? DEFAULT_RCFILE
+                                              : rcFile), targetDb);
             } catch (Exception e) {
-                throw new SqlToolException(
-                    RCERR_EXITVAL,
-                    "Failed to retrieve connection info for database '"
-                    + targetDb + "': " + e.getMessage());
+                throw new SqlToolException(RCERR_EXITVAL,
+                        "Failed to retrieve connection info for database '"
+                        + targetDb + "': " + e.getMessage());
             }
         }
 
@@ -572,24 +550,23 @@ public class SqlTool {
                                    + "'.");
             }
         } catch (Exception e) {
-
             //e.printStackTrace();
+
             // Let's not continue as if nothing is wrong.
             throw new SqlToolException(CONNECTERR_EXITVAL,
-                                       "Failed to get a connection to "
-                                       + conData.url + " as "
-                                       + conData.username + ".  "
-                                       + e.getMessage());
+                     "Failed to get a connection to " + conData.url + " as "
+                     + conData.username + ".  " + e.getMessage());
         }
 
         File[] emptyFileArray      = {};
         File[] singleNullFileArray = { null };
         File   autoFile            = null;
 
-        if (interactive && !noautoFile) {
-            autoFile = new File(System.getProperty("user.home") + "/auto.sql");
+        if (interactive &&!noautoFile) {
+            autoFile = new File(System.getProperty("user.home")
+                                + "/auto.sql");
 
-            if ((!autoFile.isFile()) || !autoFile.canRead()) {
+            if ((!autoFile.isFile()) ||!autoFile.canRead()) {
                 autoFile = null;
             }
         }
@@ -615,12 +592,10 @@ public class SqlTool {
         SqlFile[] sqlFiles = new SqlFile[numFiles];
         Map   userVars = new HashMap();
 
-        if (varSettings != null) {
-            try {
-                varParser(varSettings, userVars, false);
-            } catch (PrivateException pe) {
-                throw new SqlToolException(RCERR_EXITVAL, pe.getMessage());
-            }
+        if (varSettings != null) try {
+            varParser(varSettings, userVars, false);
+        } catch (PrivateException pe) {
+            throw new SqlToolException(RCERR_EXITVAL, pe.getMessage());
         }
 
         // We print version before execing this one.
@@ -630,7 +605,8 @@ public class SqlTool {
             int fileIndex = 0;
 
             if (autoFile != null) {
-                sqlFiles[fileIndex++] = new SqlFile(autoFile, false, userVars);
+                sqlFiles[fileIndex++] = new SqlFile(autoFile, false,
+                                                    userVars);
             }
 
             if (tmpFile != null) {
@@ -662,11 +638,6 @@ public class SqlTool {
 
                 sqlFiles[j].execute(conn, coeOverride);
             }
-        } catch (IOException ioe) {
-            throw new SqlToolException(IOERR_EXITVAL,
-                                       "Problem with tool input:  "
-                                       + ioe.getMessage());
-
             // Following two Exception types are handled properly inside of
             // SqlFile.  We just need to return an appropriate error status.
         } catch (SqlToolError ste) {
