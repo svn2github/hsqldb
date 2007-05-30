@@ -169,7 +169,14 @@ public class WebServer extends Server {
         // finished setting up properties;
         Server server = new WebServer();
 
-        server.setProperties(props);
+        try {
+            server.setProperties(props);
+        } catch (Exception e) {
+            server.printError("Failed to set properties");
+            server.printStackTrace(e);
+
+            return;
+        }
 
         // now messages go to the channel specified in properties
         server.print("Startup sequence initiated from main() method");

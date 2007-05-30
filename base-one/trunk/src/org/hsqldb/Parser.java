@@ -212,8 +212,7 @@ class Parser {
      * @param full if true, generate a list of HsqlNames, else a list of
      *  String objects
      */
-    static HsqlArrayList getColumnNames(Database db, Table table,
-                                        Tokenizer t,
+    static HsqlArrayList getColumnNames(Database db, Table table, Tokenizer t,
                                         boolean full) throws HsqlException {
 
         HsqlArrayList columns = new HsqlArrayList();
@@ -229,7 +228,7 @@ class Parser {
                 columns.add(t.getName());
 
                 if (t.wasLongName()
-                        &&!t.getLongNameFirst().equals(
+                        && !t.getLongNameFirst().equals(
                             table.getName().name)) {
                     throw (Trace.error(Trace.TABLE_NOT_FOUND,
                                        t.getLongNameFirst()));
@@ -270,14 +269,14 @@ class Parser {
         subQueryLevel++;
 
         boolean canHaveOrder = predicateType == Expression.VIEW;
-        boolean limitWithOrder = predicateType == Expression.VIEW
-                                 || predicateType == Expression.QUERY
-                                 || predicateType == Expression.IN
+        boolean canHaveLimit = predicateType == Expression.SELECT
+                               || predicateType == Expression.VIEW
+                               || predicateType == Expression.QUERY;
+        boolean limitWithOrder = predicateType == Expression.IN
                                  || predicateType == Expression.ALL
-                                 || predicateType == Expression.ANY
-                                 || predicateType == Expression.SELECT;
-        Select s = parseSelect(brackets, canHaveOrder, false, limitWithOrder,
-                               true);
+                                 || predicateType == Expression.ANY;
+        Select s = parseSelect(brackets, canHaveOrder, canHaveLimit,
+                               limitWithOrder, true);
 
         sq.level = subQueryLevel;
 
@@ -484,7 +483,7 @@ class Parser {
             }
 
             if (token.equals(Token.T_LEFT)
-                    &&!tokenizer.wasQuotedIdentifier()) {
+                    && !tokenizer.wasQuotedIdentifier()) {
                 tokenizer.isGetThis(Token.T_OUTER);
                 tokenizer.getThis(Token.T_JOIN);
 
@@ -502,7 +501,7 @@ class Parser {
 
                 // MarcH HuugO RIGHT JOIN SUPPORT
             } else if (token.equals(Token.T_RIGHT)
-                       &&!tokenizer.wasQuotedIdentifier()) {
+                       && !tokenizer.wasQuotedIdentifier()) {
                 tokenizer.isGetThis(Token.T_OUTER);
                 tokenizer.getThis(Token.T_JOIN);
 
@@ -627,15 +626,15 @@ class Parser {
         boolean hasLimit = select.limitCondition != null;
 
         if (limitWithOrder) {
-            if (hasLimit &&!hasOrder) {
+            if (hasLimit && !hasOrder) {
                 throw Trace.error(Trace.ORDER_LIMIT_REQUIRED);
             }
         } else {
-            if (hasOrder &&!canHaveOrder) {
+            if (hasOrder && !canHaveOrder) {
                 throw Trace.error(Trace.INVALID_ORDER_BY);
             }
 
-            if (hasLimit &&!canHaveLimit) {
+            if (hasLimit && !canHaveLimit) {
                 throw Trace.error(Trace.INVALID_LIMIT);
             }
         }
@@ -1010,13 +1009,12 @@ class Parser {
         throw Trace.error(Trace.INVALID_ORDER_BY);
     }
 
-    private TableFilter parseSimpleTableFilter(int type)
-    throws HsqlException {
+    private TableFilter parseSimpleTableFilter(int type) throws HsqlException {
 
         String alias  = null;
         String token  = tokenizer.getName();
         String schema = session.getSchemaName(tokenizer.getLongNameFirst());
-        Table table = database.schemaManager.getTable(session, token, schema);
+        Table  table = database.schemaManager.getTable(session, token, schema);
 
         checkTableWriteAccess(table, type);
 
@@ -1088,10 +1086,10 @@ class Parser {
         }
 
         if ((token.equals(Token.T_LEFT) || token.equals(Token.T_RIGHT))
-                &&!tokenizer.wasQuotedIdentifier()) {
+                && !tokenizer.wasQuotedIdentifier()) {
             tokenizer.back();
         } else if (token.equals(Token.T_AS)
-                   &&!tokenizer.wasQuotedIdentifier()) {
+                   && !tokenizer.wasQuotedIdentifier()) {
             sAlias = tokenizer.getSimpleName();
 
             if (tokenizer.isGetThis(Token.T_OPENBRACKET)) {
@@ -1394,8 +1392,7 @@ class Parser {
 
             Expression c = readTerm();
 
-            Trace.check(c.getType() == Expression.VALUE,
-                        Trace.INVALID_ESCAPE);
+            Trace.check(c.getType() == Expression.VALUE, Trace.INVALID_ESCAPE);
 
             String s = (String) c.getValue(session, Types.VARCHAR);
 
@@ -1481,7 +1478,7 @@ class Parser {
                 Expression value = parseExpression();
 
                 if (value.exprType == Expression.VALUE
-                        && value.valueData == null &&!value.isParam()) {
+                        && value.valueData == null && !value.isParam()) {
                     throw Trace.error(Trace.NULL_IN_VALUE_LIST);
                 }
 
@@ -1707,18 +1704,7 @@ class Parser {
                 break;
             }
             case Expression.SELECT : {
-/*
-                // accept ORDRY BY with LIMIT
-                Select select = parseSelect(0, false, false, true, true);
-
-                select.resolve(session);
-
-                SubQuery sq = new SubQuery();
-
-                sq.select = select;
- */
-                SubQuery sq = parseSubquery(0, null, false,
-                                            Expression.SELECT);
+                SubQuery sq = parseSubquery(0, null, false, Expression.SELECT);
 
                 r = new Expression(sq);
 
@@ -2061,8 +2047,8 @@ class Parser {
                 break;
             }
 
-            Expression condition = new Expression(Expression.IS_NULL,
-                                                  current, null);
+            Expression condition = new Expression(Expression.IS_NULL, current,
+                                                  null);
             Expression alternatives = new Expression(Expression.ALTERNATIVE,
                 new Expression(Types.NULL, null), current);
             Expression casewhen = new Expression(Expression.CASEWHEN,
@@ -2653,7 +2639,7 @@ class Parser {
 
         token = tokenizer.getString();
 
-        if (brackets == 1 &&!tokenizer.wasThis(Token.T_SELECT)) {
+        if (brackets == 1 && !tokenizer.wasThis(Token.T_SELECT)) {
             brackets = 0;
 
             tokenizer.back();
@@ -2705,8 +2691,7 @@ class Parser {
             case Token.SELECT : {
 
                 // accept ORDER BY or ORDRY BY with LIMIT
-                Select select = parseSelect(brackets, true, false, true,
-                                            true);
+                Select select = parseSelect(brackets, true, false, true, true);
 
                 if (len != select.iResultLen) {
                     throw Trace.error(Trace.COLUMN_COUNT_DOES_NOT_MATCH);
@@ -2783,7 +2768,7 @@ class Parser {
             String tablename = tokenizer.getLongNameFirst();
 
             if (tablename != null
-                    &&!tableFilter.getName().equals(tablename)) {
+                    && !tableFilter.getName().equals(tablename)) {
                 throw Trace.error(Trace.TABLE_NOT_FOUND);
             }
 

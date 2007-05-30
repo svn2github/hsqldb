@@ -151,6 +151,26 @@ import org.hsqldb.resources.BundleHandler;
  *       This behaviour allows the previous
  *       database connection url format to work with essentially unchanged
  *       semantics.<p>
+ *
+ *   <li>When the  <em>remote_open</em> property is true, a connection attempt
+ *       to an unopened database results in the database being opened. The URL
+ *       for connection should include the property filepath to specify the path.
+ *       'jdbc:hsqldb:hsql[s]://host[port]/<b>&lt;alias&gt;;filepath=hsqldb:file:&lt;database path&gt;</b>'.
+ *       the given alias and filepath value will be associated together. The
+ *       database user and password to start this connection must be valid.
+ *       If this form of connection is used again, after the database has been
+ *       opened, the filepath property is ignored.<p>
+ *
+ *   <li>Once an alias such as "mydb" has been associated with a path, it cannot
+ *       be  reassigned to a different path.<p>
+ *
+ *   <li>If a database is closed with the SHUTDOWN command, its
+ *       alias is removed. It is then possible to connect to this database again
+ *       with a different (or the same) alias.<p>
+ *
+ *   <li>If the same database is connected to via two different
+ *       aliases, and then one of the is closed with the SHUTDOWN command, the
+ *       other is also closed.<p>
  * </ul>
  *
  * From the 'server.properties' file, options can be set similarly, using a
@@ -341,7 +361,14 @@ public class Server implements HsqlSocketRequestHandler {
         // finished setting up properties;
         Server server = new Server();
 
-        server.setProperties(props);
+        try {
+            server.setProperties(props);
+        } catch (Exception e) {
+            server.printError("Failed to set properties");
+            server.printStackTrace(e);
+
+            return;
+        }
 
         // now messages go to the channel specified in properties
         server.print("Startup sequence initiated from main() method");
@@ -879,8 +906,7 @@ public class Server implements HsqlSocketRequestHandler {
      *   position="0"
      *   description="(optional) returns false if path is empty"
      */
-    public boolean putPropertiesFromFile(String path)
-    throws RuntimeException {
+    public boolean putPropertiesFromFile(String path) {
 
         if (getState() != ServerConstants.SERVER_STATE_SHUTDOWN) {
             throw new RuntimeException();
@@ -895,7 +921,12 @@ public class Server implements HsqlSocketRequestHandler {
         }
 
         printWithThread("putPropertiesFromFile(): [" + path + ".properties]");
-        setProperties(p);
+
+        try {
+            setProperties(p);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to set properties: " + e);
+        }
 
         return true;
     }
@@ -919,7 +950,7 @@ public class Server implements HsqlSocketRequestHandler {
      *   position="0"
      *   description="semicolon-delimited key=value pairs"
      */
-    public void putPropertiesFromString(String s) throws RuntimeException {
+    public void putPropertiesFromString(String s) {
 
         if (getState() != ServerConstants.SERVER_STATE_SHUTDOWN) {
             throw new RuntimeException();
@@ -934,7 +965,11 @@ public class Server implements HsqlSocketRequestHandler {
         HsqlProperties p = HsqlProperties.delimitedArgPairsToProps(s, "=",
             ";", ServerConstants.SC_KEY_PREFIX);
 
-        setProperties(p);
+        try {
+            setProperties(p);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to set properties: " + e);
+        }
     }
 
     /**
@@ -1321,9 +1356,6 @@ public class Server implements HsqlSocketRequestHandler {
     protected synchronized void setState(int state) {
         serverState = state;
     }
-
-// Package visibility for related classes and intefaces
-// that may need to make calls back here.
 
     /**
      * This is called from org.hsqldb.DatabaseManager when a database is
@@ -2098,7 +2130,7 @@ public class Server implements HsqlSocketRequestHandler {
         // already open.
         if (openDatabases() == false) {
             setServerError(null);
-            printError("run()/openDatabases(): ");
+            printError("Shutting down because there are no open databases");
             shutdown(true);
 
             return;

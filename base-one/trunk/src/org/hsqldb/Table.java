@@ -681,7 +681,9 @@ public class Table extends BaseTable {
      */
     protected Table duplicate() throws HsqlException {
 
-        Table t = (new Table(database, tableName, tableType));
+        Table t = new Table(database, tableName, tableType);
+
+        t.onCommitPreserve = onCommitPreserve;
 
         return t;
     }

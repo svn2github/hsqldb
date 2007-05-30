@@ -110,7 +110,7 @@ import org.hsqldb.rowio.RowOutputBinary;
  *  hsqldb.server.use_web-inf_path
  * </pre>
  * should be set "true" in the web.xml file of the servlet container.
- * In this case, the database path should begin with a "/".
+ * In this case, the database path should not begin with a "/".
  *
  * From version 1.7.2 JDBC connections via the HTTP protocol are persistent
  * in the JDBC sense. The JDBC Connection that is established can support
@@ -163,7 +163,7 @@ public class Servlet extends javax.servlet.http.HttpServlet {
             getInitParameter("hsqldb.server.use_web-inf_path");
 
         if (!dbStr.equals(".") && "true".equalsIgnoreCase(useWebInfStr)) {
-            dbStr = getServletContext().getRealPath("/") + "WEB-INF" + dbStr;
+            dbStr = getServletContext().getRealPath("/") + "/WEB-INF/" + dbStr;
         }
 
 // end WEB-INF patch

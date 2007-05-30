@@ -419,7 +419,7 @@ public class Tokenizer {
     public boolean wasThis(String match) throws HsqlException {
 
         if (sToken.equals(match) && iType != QUOTED_IDENTIFIER
-                && iType != LONG_NAME) {
+                && iType != LONG_NAME && iType != STRING) {
             return true;
         }
 

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: running.xml,v 1.20 2005/07/02 09:11:39 fredt Exp $ -->
+<!-- $Id: running.xml,v 1.21 2005/09/19 00:03:12 unsaved Exp $ -->
 <chapter>
   <title>Running and Using Hsqldb</title>
 
@@ -18,9 +18,9 @@
       </author>
     </authorgroup>
 
-    <edition>$Revision: 1.20 $</edition>
+    <edition>$Revision: 1.21 $</edition>
 
-    <pubdate>$Date: 2005/07/02 09:11:39 $</pubdate>
+    <pubdate>$Date: 2005/09/19 00:03:12 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -269,10 +269,10 @@
       separate servlet engine (or application server) such as Tomcat or Resin
       provides access to the database. The Servlet Mode cannot be started
       independently from the servlet engine. The
-      <filename>hsqlServlet</filename> class, in the HSQLDB jar, should be
+      <filename>Servlet</filename> class, in the HSQLDB jar, should be
       installed on the application server to provide the connection. The
       database is specified using an application server property. Refer to the
-      source file <filename>hsqlServlet.java</filename> to see the
+      source file <filename>org.hsqldb.Servlet.java</filename> to see the
       details.</para>
 
       <para>Both Web Server and Servlet modes can only be accessed using the

@@ -62,12 +62,16 @@ public class HsqlServerFactory {
 
         Server server = new Server();
 
-        server.setProperties(props);
+        try {
+            server.setProperties(props);
+        } catch (Exception e) {
+            throw new SQLException("Failed to set server properties: " + e);
+        }
 
         if (server.openDatabases() == false) {
             Throwable t = server.getServerError();
 
-            if (t != null && t instanceof HsqlException) {
+            if (t instanceof HsqlException) {
                 throw Util.sqlException((HsqlException) t);
             } else {
                 throw new SQLException(Trace.getMessage(Trace.GENERAL_ERROR));
