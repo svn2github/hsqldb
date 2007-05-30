@@ -42,7 +42,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-/* $Id: SqlTool.java 135 2007-05-27 22:53:39Z unsaved $ */
+/* $Id: SqlTool.java 145 2007-05-30 02:41:33Z unsaved $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -59,7 +59,7 @@ import java.util.StringTokenizer;
  * Java way.
  *
  * @see #main()
- * @version $Revision: 135 $
+ * @version $Revision: 145 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlTool {
@@ -87,8 +87,8 @@ public class SqlTool {
     private static String CMDLINE_ID = "cmdline";
 
     static {
-        revnum = "$Revision: 135 $".substring("$Revision: ".length(),
-                                               "$Revision: 135 $".length()
+        revnum = "$Revision: 145 $".substring("$Revision: ".length(),
+                                               "$Revision: 145 $".length()
                                                - 2);
     }
     public static String LS = System.getProperty("line.separator");
@@ -234,7 +234,7 @@ public class SqlTool {
 
             if (equals < 1) {
                 throw new PrivateException(
-                    "Var settings not of format NAME=var[,...]");
+                    "Var settings not of format name=value[,...]");
             }
 
             var = curSetting.substring(0, equals).trim();
@@ -242,7 +242,7 @@ public class SqlTool {
 
             if (var.length() < 1 || val.length() < 1) {
                 throw new PrivateException(
-                    "Var settings not of format NAME=var[,...]");
+                    "Var settings not of format name=value[,...]");
             }
 
             if (lowerCaseKeys) {
