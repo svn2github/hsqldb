@@ -61,7 +61,7 @@ import java.util.SortedMap;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java 146 2007-05-30 02:43:31Z unsaved $ */
+/* $Id: SqlFile.java,v 1.151 2007/05/30 02:49:35 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -109,7 +109,7 @@ import java.util.TreeMap;
  * setters would be best) instead of constructor args and System
  * Properties.
  *
- * @version $Revision: 146 $
+ * @version $Revision: 1.151 $
  * @author Blaine Simpson unsaved@users
  */
 
@@ -164,8 +164,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 146 $".substring("$Revision: ".length(),
-                "$Revision: 146 $".length() - 2);
+        revnum = "$Revision: 1.151 $".substring("$Revision: ".length(),
+                "$Revision: 1.151 $".length() - 2);
     }
 
     private static String BANNER =
@@ -3031,10 +3031,20 @@ public class SqlFile {
                                 case java.sql.Types.TIME:
                                     ts  = r.getTimestamp(i);
                                     val = ((ts == null) ? null : ts.toString());
+                                    // Following block truncates non-zero
+                                    // sub-seconds from time types OTHER than 
+                                    // TIMESTAMP.
                                     if (dataType[insi]
                                             != java.sql.Types.TIMESTAMP
                                             && val != null) {
-                                        dotAt = val.indexOf('.');
+                                        dotAt = val.lastIndexOf('.');
+                                        for (int z = dotAt + 1;
+                                                z < val.length(); z++) {
+                                            if (val.charAt(z) != '0') {
+                                                dotAt = 0;
+                                                break;
+                                            }
+                                        }
                                         if (dotAt > 1) {
                                             val = val.substring(0, dotAt);
                                         }
