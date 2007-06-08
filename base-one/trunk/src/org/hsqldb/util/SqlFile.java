@@ -61,7 +61,7 @@ import java.util.SortedMap;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/* $Id: SqlFile.java 198 2007-06-07 23:37:06Z unsaved $ */
+/* $Id: SqlFile.java 201 2007-06-08 12:26:53Z unsaved $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -109,7 +109,7 @@ import java.util.TreeMap;
  * setters would be best) instead of constructor args and System
  * Properties.
  *
- * @version $Revision: 198 $
+ * @version $Revision: 201 $
  * @author Blaine Simpson unsaved@users
  */
 
@@ -228,8 +228,8 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "$Revision: 198 $".substring("$Revision: ".length(),
-                "$Revision: 198 $".length() - 2);
+        revnum = "$Revision: 201 $".substring("$Revision: ".length(),
+                "$Revision: 201 $".length() - 2);
     }
 
     private static String BANNER =
@@ -2971,7 +2971,6 @@ public class SqlFile {
                         case java.sql.Types.CLOB :
                         case java.sql.Types.LONGVARBINARY :
                         case java.sql.Types.LONGVARCHAR :
-                            // TODO:  Make sure final 2 available in Java 1.3!
                             autonulls[insi] = false;
                             break;
                     }
@@ -4616,12 +4615,6 @@ public class SqlFile {
                               || dataVals[i].equals(nullRepToken))
                              ? null
                              : dataVals[i]));
-
-System.err.println("setString to (" +
-                            (((dataVals[i].length() < 1 && autonulls[i])
-                              || dataVals[i].equals(nullRepToken))
-                             ? null
-                             : dataVals[i]) + ')');
                     }
                 }
 
