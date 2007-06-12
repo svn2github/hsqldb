@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2005, The HSQL Development Group
+/* Copyright (c) 2001-2007, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Properties;
 
-/* $Id: SqlToolSprayer.java,v 1.18 2007/05/13 15:27:38 fredt Exp $ */
+/* $Id: SqlToolSprayer.java 143 2007-05-29 01:27:17Z fredt $ */
 
 /**
  * Sql Tool Sprayer.
@@ -54,20 +54,25 @@ import java.util.Properties;
  * </UL>
  *
  * @see @main()
- * @version $Revision: 1.18 $
+ * @version $Revision: 143 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlToolSprayer {
 
     public static String LS = System.getProperty("line.separator");
-    private static final String SYNTAX_MSG =
-        "SYNTAX:  java [-D...] SqlToolSprayer 'SQL;' [urlid1 urlid2...]" + LS
-        + "System properties you may use [default values]:" + LS
-        + "    sqltoolsprayer.period (in ms.) [500]" + LS
-        + "    sqltoolsprayer.maxtime (in ms.) [0]" + LS
-        + "    sqltoolsprayer.monfile (filepath) [none]" + LS
+    private static String SYNTAX_MSG =
+        "SYNTAX:  java [-D...] SqlToolSprayer 'SQL;' [urlid1 urlid2...]\n"
+        + "System properties you may use [default values]:\n"
+        + "    sqltoolsprayer.period (in ms.) [500]\n"
+        + "    sqltoolsprayer.maxtime (in ms.) [0]\n"
+        + "    sqltoolsprayer.monfile (filepath) [none]\n"
         + "    sqltoolsprayer.rcfile (filepath) [none.  SqlTool default used.]"
-        + LS + "    sqltoolsprayer.propfile (filepath) [none]";
+        + "\n    sqltoolsprayer.propfile (filepath) [none]";
+    static {
+        if (!LS.equals("\n")) {
+            SYNTAX_MSG = SYNTAX_MSG.replaceAll("\n", LS);
+        }
+    }
 
     public static void main(String[] sa) {
 

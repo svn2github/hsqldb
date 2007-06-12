@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2005, The HSQL Development Group
+/* Copyright (c) 2001-2007, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,9 +31,9 @@
 
 package org.hsqldb.util;
 
-import java.util.ArrayList;
-import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 
 /**
  * Invokes the static main(String[]) method from each class specified.
@@ -42,7 +42,7 @@ import java.lang.reflect.InvocationTargetException;
  *
  * @author   Blaine Simpson, unsaved@users
  * @since    HSQLDB 1.8.0
- * @version  $Revision: 1.6 $
+ * @version  $Revision: 69 $
  */
 public class MainInvoker {
 
@@ -109,13 +109,18 @@ public class MainInvoker {
     }
 
     public static String LS = System.getProperty("line.separator");
-    private static final String SYNTAX_MSG =
+    private static String SYNTAX_MSG =
         "    java org.hsqldb.util.MainInvoker "
-        + "[package1.Class1 [arg1a arg1b...] \"\"]... \\" + LS
-        + "    packageX.ClassX [argXa argXb...]" + LS + "OR" + LS
-        + "    java org.hsqldb.util.MainInvoker --help" + LS + LS
+        + "[package1.Class1 [arg1a arg1b...] \"\"]... \\\n"
+        + "    packageX.ClassX [argXa argXb...]\n" + "OR\n"
+        + "    java org.hsqldb.util.MainInvoker --help\n\n"
         + "Note that you can only invoke classes in 'named' (non-default) "
         + "packages.  Delimit multiple classes with empty strings.";
+    static {
+        if (!LS.equals("\n")) {
+            SYNTAX_MSG = SYNTAX_MSG.replaceAll("\n", LS);
+        }
+    }
 
     /**
      * Invokes the static main(String[]) method from each specified class.
