@@ -35,9 +35,9 @@ import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -53,18 +53,17 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
-import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-/* $Id: SqlFile.java 225 2007-06-12 02:08:58Z unsaved $ */
+/* $Id: SqlFile.java 233 2007-06-14 03:23:15Z unsaved $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -113,13 +112,7 @@ import java.util.regex.PatternSyntaxException;
  * on "buffer", and expect it to contain the method specific prefix
  * (if any).
  *
- * It's really poor design to have the input file given in the
- * constructor.  This constains users to only call execute() once and
- * only one on each SqlFile object.  Unfortunately, fixing this would
- * have a dramatic effect on the public interface and therefore would
- * wreak havoc on existing programmatic users.
- *
- * @version $Revision: 225 $
+ * @version $Revision: 233 $
  * @author Blaine Simpson unsaved@users
  */
 
@@ -170,7 +163,7 @@ public class SqlFile {
         }
     }
     // This can throw a runtime exception, but since the pattern
-    // Strings are constant, one test run of the program will tell 
+    // Strings are constant, one test run of the program will tell
     // if the patterns are good.
 
     /**
@@ -264,7 +257,7 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "225";
+        revnum = "233";
     }
 
     private static String BANNER =
@@ -272,17 +265,20 @@ public class SqlFile {
         + "Distribution is permitted under the terms of the HSQLDB license.\n"
         + "(c) 2004-2007 Blaine Simpson and the HSQLDB Development Group.\n\n"
         + "    \\q    to Quit.\n    \\?    lists Special Commands.\n"
-        + "    :?    lists Buffer/Editing commands.\n"
-        + "    *?    lists PL commands (including alias commands).\n\n"
+        + "    :?    lists Edit-Buffer/History commands.\n"
+        + "    *?    lists PL commands.\n\n"
         + "SPECIAL Commands begin with '\\' and execute when you hit ENTER.\n"
-        + "BUFFER Commands begin with ':' and execute when you hit ENTER.\n"
+        + "EDIT BUFFER / HISTORY Commands begin with ':' and execute when you hit ENTER.\n"
         + "COMMENTS begin with '/*' and end with the very next '*/'.\n"
         + "PROCEDURAL LANGUAGE commands begin with '*' and end when you hit ENTER.\n"
         + "All other lines comprise SQL Statements.\n"
         + "  SQL Statements are terminated by either a blank line (which moves the\n"
         + "  statement into the buffer without executing) or a line ending with ';'\n"
         + "  (which executes the statement).\n"
-        + "  SQL Statements may begin with '/PLVARNAME' and/or contain *{PLVARNAME}s.\n";
+        + "  SQL Commands may begin with '/PLVARNAME' for a PL variable command alias.\n"
+        + "After turning on variable expansion with command \"*\" (or any other PL\n"
+        + "command), PL variables may be used in any command (other than : commands)\n"
+        + "like so: *{PLVARNAME}.\n";
     private static String BUFFER_HELP_TEXT =
         "Edit Buffer and History Commands.  Not available for non-interactive use.\n"
         + "    :?                edit buffer / history Help\n"
@@ -312,7 +308,7 @@ public class SqlFile {
         + "                       ;:  execute immediately after substitution\n"
     ;
     private static String HELP_TEXT = "SPECIAL Commands.\n"
-        + "Filter substrings are cases-sensitive!  Use \"SCHEMANAME.\" to narrow to schema.\n"
+        + "Filter substrings are case-sensitive!  Use \"SCHEMANAME.\" to narrow to schema.\n"
         + "    \\?                   special command Help\n"
         + "    \\p [line to print]   Print string to stdout\n"
         + "    \\w file/path.sql     Append current buffer to file\n"
@@ -413,6 +409,12 @@ public class SqlFile {
         + "    u:  list Users\n"
         + "    r:  list Roles\n"
         + "    *:  list table-like objects\n";
+    private static String RAW_LEADIN_MSG =
+        RAW_LEADIN_MSG =
+            "Enter RAW SQL.  No \\, :, * commands.\n"
+            + "End with a line containing only \".;\" to send to database,\n"
+            + "or \":.\" to store to edit buffer for editing or saving.\n"
+            + "-----------------------------------------------------------";
 
     static {
         if (!LS.equals("\n")) {
@@ -422,6 +424,7 @@ public class SqlFile {
             PL_HELP_TEXT = PL_HELP_TEXT.replaceAll("\n", LS);
             DSV_OPTIONS_TEXT = DSV_OPTIONS_TEXT.replaceAll("\n", LS);
             D_OPTIONS_TEXT = D_OPTIONS_TEXT.replaceAll("\n", LS);
+            RAW_LEADIN_MSG = RAW_LEADIN_MSG.replaceAll("\n", LS);
         }
     }
 
@@ -625,7 +628,7 @@ public class SqlFile {
                 try {
                     if (chunking) {
                         boolean rawExecute = inputLine.equals(".;");
-                        if (rawExecute || inputLine.equals(".")) {
+                        if (rawExecute || inputLine.equals(":.")) {
                             chunking = false;
 
                             setBuf(immCmdSB.toString());
@@ -701,14 +704,7 @@ public class SqlFile {
                             immCmdSB.append(inputLine);
 
                             if (interactive) {
-                                stdprintln(
-                                    "Enter RAW SQL.  No \\, :, * commands.");
-                                stdprintln(
-                                    "End with a line containing only \".;\" "
-                                    + "to execute, or \".\" to store to "
-                                    + "buffer for editing or saving.");
-                                stdprintln("--------------------------------"
-                                    + "--------------------------------------");
+                                stdprintln(RAW_LEADIN_MSG);
                             }
 
                             continue;
@@ -1623,7 +1619,7 @@ public class SqlFile {
                 // the forked program could gobble up program input,
                 // depending on how SqlTool was invoked, nested scripts,
                 // etc.
-                
+
                 // I'd like to execute the user's default shell if they
                 // ran "\!" with no argument, but (a) there is no portable
                 // way to determine the user's default or login shell; and
@@ -1683,8 +1679,7 @@ public class SqlFile {
                 chunking = true;
 
                 if (interactive) {
-                    stdprintln("Enter RAW SQL.  No \\, :, * commands.  "
-                               + "End with a line containing only \".\":");
+                    stdprintln(RAW_LEADIN_MSG);
                 }
 
                 return;
