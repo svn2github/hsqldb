@@ -31,71 +31,67 @@
 
 package org.hsqldb.util;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Allows additional messages to be appended.
  *
  * It often makes for better (and more efficient) design to add context
  * details to an exception at intermediate points in the thread.
- * This class makes it easy and efficient to cath and rethrow for that purpose.
- *
- * It also implements the Java 1.4 cause() methods.
- * This functionality should be removed (or call super...() as appropriate)
- * if we drop support for Java versions under 1.4..
+ * This class makes it easy and efficient to catch and rethrow for that purpose.
  */
 public class AppendableException extends Exception {
-    static final long serialVersionUID = -1002629580611098803L;
 
-    public static String     LS = System.getProperty("line.separator");
-    private Throwable cause = null;
-    public List appendages = null;
+    static final long    serialVersionUID = -1002629580611098803L;
+    public static String LS = System.getProperty("line.separator");
+    public List          appendages       = null;
 
     public String getMessage() {
+
         String message = super.getMessage();
+
         if (appendages == null) {
             return message;
         }
+
         StringBuffer sb = new StringBuffer();
+
         if (message != null) {
             sb.append(message);
         }
+
         for (int i = 0; i < appendages.size(); i++) {
             if (sb.length() > 0) {
                 sb.append(LS);
             }
+
             sb.append(appendages.get(i));
         }
+
         return sb.toString();
     }
 
     public void appendMessage(String s) {
+
         if (appendages == null) {
             appendages = new ArrayList();
         }
+
         appendages.add(s);
     }
 
-    public Throwable getCause() {
-        return cause;
-    }
-
-    public AppendableException() {
-    }
+    public AppendableException() {}
 
     public AppendableException(String s) {
         super(s);
     }
 
     public AppendableException(Throwable cause) {
-        // super(cause);
-        this.cause = cause;
+        super(cause);
     }
 
     public AppendableException(String string, Throwable cause) {
-        // super(string, cause);
-        this(string);
-        this.cause = cause;
+         super(string, cause);
     }
 }
