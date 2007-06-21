@@ -306,8 +306,8 @@ examples:
          <exclude name="org/hsqldb/persist/ScaledRAFileNIO.java"/>
          <exclude name="org/hsqldb/persist/ScaledRAFileHybrid.java"/>
       </javac>
-      <copy todir="${basedir}/classes/org/hsqldb/resources">
-         <fileset dir="${src}/org/hsqldb/resources" includes="*.properties"/>
+      <copy todir="${basedir}/classes">
+        <fileset dir="${src}" includes="**/*.properties"/>
       </copy>
     </target>
 
@@ -527,7 +527,7 @@ examples:
          <exclude name="org/hsqldb/util/*.*"/>
          <exclude name="org/hsqldb/test/*.*"/>
          <exclude name="org/hsqldb/sample/*.*"/>
-         <exclude name="org/hsqldb/resources/*.properties"/>
+         <exclude name="**/*.properties"/>
          <include name="org/hsqldb/resources/sql-error-messages.properties"/>
          <exclude name="hsqlServlet.class"/>
          <exclude name="org/hsqldb/Servlet.class"/>
