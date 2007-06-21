@@ -307,7 +307,7 @@ examples:
          <exclude name="org/hsqldb/persist/ScaledRAFileHybrid.java"/>
       </javac>
       <copy todir="${basedir}/classes">
-        <fileset dir="${src}" includes="**/*.properties"/>
+        <fileset dir="${src}" includes="**/*.properties, **/*.text"/>
       </copy>
     </target>
 
@@ -649,7 +649,17 @@ examples:
     <fileset id='sqltoolclasses' dir='classes'
         includes='org/hsqldb/util/SqlTool*,
                   org/hsqldb/util/RCData*,
+                  org/hsqldb/util/RefCapablePropertyResourceBundle*,
+                  org/hsqldb/util/SqltoolRB*,
+                  org/hsqldb/util/ValidatingResourceBundle*,
+                  org/hsqldb/util/AppendableException*,
+                  org/hsqldb/util/SqlToolError*,
                   org/hsqldb/util/SqlFile*
+                  org/hsqldb/lib/FileAccess*
+                  '/>
+    <fileset id='sqltoolres' dir='classes'
+        includes='org/hsqldb/util/**/*.text,
+                  org/hsqldb/util/**/*.properties
                   '/>
 
 <!-- classes referenced by the org.hsqldb.jdbc package classes -->
@@ -687,6 +697,7 @@ examples:
             <!-- including 'org/hsqldb/jdbc*' just to be safe -->
             <fileset refid='jdbcclasses'/>
             <fileset refid='sqltoolclasses'/>
+            <fileset refid='sqltoolres'/>
         </jar>
     </target>
 
