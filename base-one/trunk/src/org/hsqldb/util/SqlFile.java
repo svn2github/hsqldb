@@ -65,7 +65,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-/* $Id: SqlFile.java 295 2007-06-21 03:44:02Z unsaved $ */
+/* $Id: SqlFile.java 300 2007-06-22 02:38:17Z unsaved $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -114,7 +114,7 @@ import java.util.regex.PatternSyntaxException;
  * on "buffer", and expect it to contain the method specific prefix
  * (if any).
  *
- * @version $Revision: 295 $
+ * @version $Revision: 300 $
  * @author Blaine Simpson unsaved@users
  */
 
@@ -261,7 +261,7 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "295";
+        revnum = "300";
     }
 
     private String DSV_OPTIONS_TEXT = null;
@@ -295,7 +295,7 @@ public class SqlFile {
             System.err.println("Failed to initialize resource bundle");
             throw re;
         }
-        rawPrompt = rb.getString(SqltoolRB.RAWMODE_PROMPT);
+        rawPrompt = rb.getString(SqltoolRB.RAWMODE_PROMPT) + "> ";
         DSV_OPTIONS_TEXT = rb.getString(SqltoolRB.DSV_OPTIONS);
         D_OPTIONS_TEXT = rb.getString(SqltoolRB.D_OPTIONS);
         RAW_LEADIN_MSG = rb.getString(SqltoolRB.RAW_LEADIN);
@@ -377,7 +377,8 @@ public class SqlFile {
      * false otherwise).
      */
     private boolean             continueOnError = false;
-    private static final String DEFAULT_CHARSET = "US-ASCII";
+    private static final String DEFAULT_CHARSET = null;
+    // Change to Charset.defaultCharset().name(); once we can use Java 1.5!
     private BufferedReader      br              = null;
     private String              charset         = null;
     private String              buffer          = null;
@@ -431,9 +432,14 @@ public class SqlFile {
                                               : specifiedCharSet);
 
         try {
-            br = new BufferedReader(new InputStreamReader((file == null)
-                    ? System.in
-                    : new FileInputStream(file), charset));
+            br = new BufferedReader((charset == null)
+                    ?  (new InputStreamReader((file == null)
+                            ? System.in : (new FileInputStream(file))))
+                    :  (new InputStreamReader(((file == null)
+                            ? System.in : (new FileInputStream(file))),
+                                    charset)));
+            // Replace with just "(new FileInputStream(file), charset)"
+            // once use defaultCharset from Java 1.5 in charset init. above.
             curLinenum = 0;
 
             if (interactive) {
@@ -1081,8 +1087,9 @@ public class SqlFile {
                     // Note that this pattern does not include the leading :.
                     if (m.groupCount() < 3 || m.groupCount() > 4) {
                         // Assertion failed
-                        throw new RuntimeException("Matched substitution pattern, "
-                            + "but captured " + m.groupCount() + " groups");
+                        throw new RuntimeException(
+                                "Matched substitution pattern, but "
+                                + "captured " + m.groupCount() + " groups");
                     }
                     String optionGroup = (
                             (m.groupCount() > 3 && m.group(4) != null)
@@ -1275,9 +1282,13 @@ public class SqlFile {
                                             ? (tableName + ".dsv")
                                             : dsvTargetFile);
 
-                    pwDsv = new PrintWriter(
-                        new OutputStreamWriter(
-                            new FileOutputStream(dsvFile), charset));
+                    pwDsv = new PrintWriter((charset == null)
+                       ? (new OutputStreamWriter(new FileOutputStream(dsvFile)))
+                       : (new OutputStreamWriter(new FileOutputStream(dsvFile),
+                               charset)));
+                    // Replace with just "(new FileOutputStream(file), charset)"
+                    // once use defaultCharset from Java 1.5 in charset init.
+                    // above.
 
                     ResultSet rs = curConn.createStatement().executeQuery(
                             (tableName == null) ? other
@@ -1386,9 +1397,15 @@ public class SqlFile {
                 }
 
                 try {
-                    pwQuery = new PrintWriter(
-                        new OutputStreamWriter(
-                            new FileOutputStream(other, true), charset));
+                    pwQuery = new PrintWriter((charset == null)
+                            ? (new OutputStreamWriter(
+                                    new FileOutputStream(other, true)))
+                            : (new OutputStreamWriter(
+                                    new FileOutputStream(other, true), charset))
+                    );
+                    // Replace with just "(new FileOutputStream(file), charset)"
+                    // once use defaultCharset from Java 1.5 in charset init.
+                    // above.
 
                     /* Opening in append mode, so it's possible that we will
                      * be adding superfluous <HTML> and <BODY> tags.
@@ -1419,17 +1436,25 @@ public class SqlFile {
                     throw new BadSpecial(rb.getString(SqltoolRB.BUFFER_EMPTY));
                 }
 
+                PrintWriter pw = null;
                 try {
-                    PrintWriter pw = new PrintWriter(
-                        new OutputStreamWriter(
-                            new FileOutputStream(other, true), charset));
+                    pw = new PrintWriter((charset == null)
+                            ?  (new OutputStreamWriter(
+                                    new FileOutputStream(other, true)))
+                            :  (new OutputStreamWriter(
+                                    new FileOutputStream(other, true), charset))
+                    );
+                    // Replace with just "(new FileOutputStream(file), charset)"
+                    // once use defaultCharset from Java 1.5 in charset init.
+                    // above.
 
                     pw.println(buffer + ';');
                     pw.flush();
-                    pw.close();
                 } catch (Exception e) {
                     throw new BadSpecial(rb.getString(SqltoolRB.FILE_NOAPPEND,
                             new String[] {other}), e);
+                } finally {
+                    if (pw != null) pw.close();
                 }
 
                 return;
@@ -2178,9 +2203,14 @@ public class SqlFile {
         }
 
         File tmpFile = File.createTempFile("sqltool-", ".sql");
-        PrintWriter pw = new PrintWriter(
-            new OutputStreamWriter(new FileOutputStream(tmpFile), charset));
+        PrintWriter pw = new PrintWriter((charset == null)
+                ?  (new OutputStreamWriter(new FileOutputStream(tmpFile)))
+                :  (new OutputStreamWriter(new FileOutputStream(tmpFile),
+                        charset)));
+        // Replace with just "(new FileOutputStream(file), charset)"
+        // once use defaultCharset from Java 1.5 in charset init. above.
 
+        try {
         pw.println("/* " + (new java.util.Date()) + ". "
                    + getClass().getName() + " PL block. */");
         pw.println();
@@ -2242,7 +2272,9 @@ public class SqlFile {
         }
 
         pw.flush();
-        pw.close();
+        } finally {
+            pw.close();
+        }
 
         return tmpFile;
     }
@@ -3017,9 +3049,8 @@ public class SqlFile {
                                     if (val == null) {
                                         try {
                                             val = SqlFile.streamToString(
-                                                r.getAsciiStream(i),
-                                                charset);
-                                        } catch (Exception e) {}
+                                                r.getAsciiStream(i), charset);
+                                        } catch (Exception e) { }
                                     }
                             }
                         }
@@ -3675,21 +3706,28 @@ public class SqlFile {
                                  + "' has no value set");
         }
 
-        OutputStreamWriter osw =
-            new OutputStreamWriter(new FileOutputStream(dumpFile), charset);
+        OutputStreamWriter osw = ((charset == null)
+                ? (new OutputStreamWriter(new FileOutputStream(dumpFile)))
+                : (new OutputStreamWriter(new FileOutputStream(dumpFile),
+                            charset)));
+        // Replace with just "(new FileOutputStream(file), charset)"
+        // once use defaultCharset from Java 1.5 in charset init. above.
 
-        osw.write(val);
+        try {
+            osw.write(val);
 
-        if (val.length() > 0) {
-            char lastChar = val.charAt(val.length() - 1);
+            if (val.length() > 0) {
+                char lastChar = val.charAt(val.length() - 1);
 
-            if (lastChar != '\n' && lastChar != '\r') {
-                osw.write(LS);
+                if (lastChar != '\n' && lastChar != '\r') {
+                    osw.write(LS);
+                }
             }
-        }
 
-        osw.flush();
-        osw.close();
+            osw.flush();
+        } finally {
+            osw.close();
+        }
 
         // Since opened in overwrite mode, since we didn't exception out,
         // we can be confident that we wrote all the bytest in the file.
@@ -3708,30 +3746,64 @@ public class SqlFile {
         }
 
         FileOutputStream fos = new FileOutputStream(dumpFile);
+        int len = 0;
 
-        fos.write(binBuffer);
+        try {
+            fos.write(binBuffer);
 
-        int len = binBuffer.length;
+            len = binBuffer.length;
 
-        binBuffer = null;
+            binBuffer = null;
 
-        fos.flush();
-        fos.close();
+            fos.flush();
+        } finally {
+            fos.close();
+        }
         stdprintln("Saved " + len + " bytes to '" + dumpFile + "'");
     }
 
+    /**
+     * As the name says...
+     * This method always closes the input stream.
+     */
     static public String streamToString(InputStream is, String cs)
             throws IOException {
-        char[]            xferBuffer   = new char[10240];
-        StringWriter      stringWriter = new StringWriter();
-        InputStreamReader isr          = new InputStreamReader(is, cs);
-        int               i;
-
-        while ((i = isr.read(xferBuffer)) > 0) {
-            stringWriter.write(xferBuffer, 0, i);
+        try {
+            byte[] ba = null;
+            int bytesread = 0;
+            int retval;
+            try {
+                ba = new byte[is.available()];
+            } catch (RuntimeException re) {
+                throw new IOException(
+                    "Resource is too big to read in one gulp.\n"
+                    + "Please run the program with more RAM "
+                    + "(try Java -Xm* switches).: " + re);
+            }
+            while (bytesread < ba.length &&
+                    (retval = is.read(
+                            ba, bytesread, ba.length - bytesread)) > 0) {
+                bytesread += retval;
+            }
+            if (bytesread != ba.length) {
+                throw new IOException(
+                        "Didn't read all bytes.  Read in "
+                          + bytesread + " bytes out of " + ba.length + ')');
+            }
+            try {
+                return (cs == null) ? (new String(ba))
+                                         : (new String(ba, cs));
+            } catch (UnsupportedEncodingException uee) {
+                throw new RuntimeException(uee);
+            } catch (RuntimeException re) {
+                throw new IOException (
+                    "Value too big to convert to String.  "
+                    + "Please run the program with more RAM "
+                    + "(try Java -Xm* switches).: " + re);
+            }
+        } finally {
+            is.close();
         }
-
-        return stringWriter.toString();
     }
 
     /**
@@ -3739,9 +3811,8 @@ public class SqlFile {
      */
     private void load(String varName, File asciiFile, String cs)
             throws IOException {
-        FileInputStream fis = new FileInputStream(asciiFile);
-        String string = SqlFile.streamToString(fis, cs);
-        fis.close();
+        String string =
+                SqlFile.streamToString(new FileInputStream(asciiFile), cs);
         userVars.put(varName, string);
         updateUserSettings();
     }
@@ -3764,14 +3835,16 @@ public class SqlFile {
     static public byte[] loadBinary(File binFile) throws IOException {
         byte[]                xferBuffer = new byte[10240];
         ByteArrayOutputStream baos       = new ByteArrayOutputStream();
-        FileInputStream       fis        = new FileInputStream(binFile);
         int                   i;
+        FileInputStream       fis        = new FileInputStream(binFile);
 
-        while ((i = fis.read(xferBuffer)) > 0) {
-            baos.write(xferBuffer, 0, i);
+        try {
+            while ((i = fis.read(xferBuffer)) > 0) {
+                baos.write(xferBuffer, 0, i);
+            }
+        } finally {
+            fis.close();
         }
-
-        fis.close();
 
         byte[] ba = baos.toByteArray();
 
@@ -4061,7 +4134,7 @@ public class SqlFile {
      */
     public void importDsv(String filePath, String skipPrefix)
             throws SqlToolError {
-        char[] bfr  = null;
+        byte[] bfr  = null;
         File   file = new File(filePath);
         SortedMap constColMap = null;
         int constColMapSize = 0;
@@ -4108,10 +4181,8 @@ public class SqlFile {
             throw new SqlToolError("Can't read file '" + file + "'");
         }
 
-        int fileLength = (int) (file.length());
-
         try {
-            bfr = new char[fileLength];
+            bfr = new byte[(int) file.length()];
         } catch (RuntimeException re) {
             throw new SqlToolError(
                 "SqlFile can only read in your DSV file in one chunk at this time.\n"
@@ -4119,35 +4190,44 @@ public class SqlFile {
                 re);
         }
 
-        int retval = -1;
+        int bytesread = 0;
+        int retval;
+        InputStream is = null;
 
         try {
-            InputStreamReader isr =
-                new InputStreamReader(new FileInputStream(file), charset);
-            retval = isr.read(bfr, 0, bfr.length);
+            is = new FileInputStream(file);
+            while (bytesread < bfr.length &&
+                    (retval = is.read(bfr, bytesread, bfr.length - bytesread))
+                    > 0) {
+                bytesread += retval;
+            }
 
-            isr.close();
         } catch (IOException ioe) {
             throw new SqlToolError(ioe);
+        } finally {
+            if (is != null) try {
+                is.close();
+            } catch (IOException ioe) {
+                errprintln("Failed to close input file: " + ioe);
+            }
         }
-        /*  Per tracker 1547196, File.length is in bytes, but
-         *  InputStreamReader.read returns size in characters.
-         *  Therefore, this test fails if char size != 1 byte.
-        if (retval != bfr.length) {
+        if (bytesread != bfr.length) {
             throw new SqlToolError("Didn't read all characters.  Read in "
-                                  + retval + " characters");
+                      + bytesread + " characters of " + bfr.length
+                      + " byte file '" + file + "'");
         }
-        */
 
         String string = null;
         String dateString;
 
         try {
-            string = new String(bfr, 0, retval);
-            // Sized explicitly to truncate nulls due to multibye characters.
+            string = ((charset == null)
+                    ? (new String(bfr)) : (new String(bfr, charset)));
+        } catch (UnsupportedEncodingException uee) {
+            throw new RuntimeException(uee);
         } catch (RuntimeException re) {
             throw new SqlToolError(
-                "SqlFile converts your entire DSV file to a String at this time.\n"
+                "Failed to convert your entire DSV file to a String.\n"
                 + "Please run the program with more RAM (try Java -Xm* switches).",
                 re);
         }
@@ -4374,9 +4454,13 @@ public class SqlFile {
         String tmp = dsvRejectFile;
         if (tmp != null) try {
             rejectFile = new File(tmp);
-            rejectWriter = new PrintWriter(
-                        new OutputStreamWriter(
-                            new FileOutputStream(rejectFile), charset));
+            rejectWriter = new PrintWriter((charset == null)
+                    ? (new OutputStreamWriter(new FileOutputStream(rejectFile)))
+                    : (new OutputStreamWriter(new FileOutputStream(rejectFile),
+                            charset)));
+                    // Replace with just "(new FileOutputStream(file), charset)"
+                    // once use defaultCharset from Java 1.5 in charset init.
+                    // above.
             rejectWriter.print(headerLine + dsvRowDelim);
         } catch (IOException ioe) {
             throw new SqlToolError("Failed to set up reject file '"
@@ -4385,9 +4469,14 @@ public class SqlFile {
         tmp = dsvRejectReport;
         if (tmp != null) try {
             rejectReportFile = new File(tmp);
-            rejectReportWriter = new PrintWriter(
-                        new OutputStreamWriter(
-                            new FileOutputStream(rejectReportFile), charset));
+            rejectReportWriter = new PrintWriter((charset == null)
+                    ? (new OutputStreamWriter(
+                            new FileOutputStream(rejectFile)))
+                    : (new OutputStreamWriter(
+                            new FileOutputStream(rejectFile), charset)));
+                    // Replace with just "(new FileOutputStream(file), charset)"
+                    // once use defaultCharset from Java 1.5 in charset init.
+                    // above.
             rejectReportWriter.println("<HTML>");
             rejectReportWriter.println("<HEAD><STYLE>");
             rejectReportWriter.println("    th { background-color:aqua; }");

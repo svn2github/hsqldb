@@ -41,7 +41,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
-/* $Id: SqlTool.java 290 2007-06-20 12:59:10Z unsaved $ */
+/* $Id: SqlTool.java 299 2007-06-22 02:10:20Z unsaved $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -58,7 +58,7 @@ import java.util.Map;
  * Java way.
  *
  * @see #main()
- * @version $Revision: 290 $
+ * @version $Revision: 299 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlTool {
@@ -92,7 +92,7 @@ public class SqlTool {
     // issue).
 
     static {
-        revnum = "290";
+        revnum = "299";
         try {
             rb = new SqltoolRB();
             rb.validate();
@@ -405,13 +405,16 @@ public class SqlTool {
 
                     //(new java.io.FileWriter(tmpFile)).write(sqlText);
                     java.io.FileWriter fw = new java.io.FileWriter(tmpFile);
+                    try {
 
-                    fw.write("/* " + (new java.util.Date()) + ".  "
-                             + SqlTool.class.getName()
-                             + " command-line SQL. */" + LS + LS);
-                    fw.write(sqlText + LS);
-                    fw.flush();
-                    fw.close();
+                        fw.write("/* " + (new java.util.Date()) + ".  "
+                                 + SqlTool.class.getName()
+                                 + " command-line SQL. */" + LS + LS);
+                        fw.write(sqlText + LS);
+                        fw.flush();
+                    } finally {
+                        fw.close();
+                    }
                 } catch (IOException ioe) {
                     throw new SqlToolException(IOERR_EXITVAL,
                             rb.getString(SqltoolRB.SQLTEMPFILE_FAILURE)
