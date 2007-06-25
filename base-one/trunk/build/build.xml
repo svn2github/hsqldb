@@ -655,6 +655,7 @@ examples:
                   org/hsqldb/util/AppendableException*,
                   org/hsqldb/util/SqlToolError*,
                   org/hsqldb/util/SqlFile*
+                  org/hsqldb/lib/StringUtil*
                   org/hsqldb/lib/FileAccess*
                   '/>
     <fileset id='sqltoolres' dir='classes'
