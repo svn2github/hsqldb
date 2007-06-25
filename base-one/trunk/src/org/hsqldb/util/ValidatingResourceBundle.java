@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: ValidatingResourceBundle.java 318 2007-06-25 03:10:47Z unsaved $
+ * $Id: ValidatingResourceBundle.java 320 2007-06-25 11:23:52Z unsaved $
  */
 
 
@@ -74,26 +74,27 @@ abstract public class ValidatingResourceBundle {
 
     /** @see RefCapablePropertyResourceBundle#getString(String) */
     public String getString(int id) {
-        return wrappedRCPRB.getString((String) getKeyIdToString().get(id));
+        return wrappedRCPRB.getString((String) getKeyIdToString().get(
+                new Integer(id)));
     }
 
     /** @see RefCapablePropertyResourceBundle#getString(String, String[]) */
     public String getString(int id, String[] sa) {
-        return wrappedRCPRB.getString((String) getKeyIdToString().get(id), sa,
-                missingPosValueBehavior);
+        return wrappedRCPRB.getString((String) getKeyIdToString().get(
+                new Integer(id)), sa, missingPosValueBehavior);
     }
 
     /** @see RefCapablePropertyResourceBundle#getExpandedString(String) */
     public String getExpandedString(int id) {
         return wrappedRCPRB.getExpandedString(
-                (String) getKeyIdToString().get(id),
+                (String) getKeyIdToString().get(new Integer(id)),
                 missingPropertyBehavior);
     }
 
     /** @see RefCapablePropertyResourceBundle#getExpandedString(String, String[]) */
     public String getExpandedString(int id, String[] sa) {
         return wrappedRCPRB.getExpandedString(
-                (String) getKeyIdToString().get(id), sa,
+                (String) getKeyIdToString().get(new Integer(id)), sa,
                 missingPropertyBehavior, missingPosValueBehavior);
     }
 

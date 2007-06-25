@@ -64,7 +64,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-/* $Id: SqlFile.java 318 2007-06-25 03:10:47Z unsaved $ */
+/* $Id: SqlFile.java 320 2007-06-25 11:23:52Z unsaved $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -119,7 +119,7 @@ import java.util.regex.PatternSyntaxException;
  * reject report completely standalone so it may be copied or emailed
  * without concern about breaking anything.
  *
- * @version $Revision: 318 $
+ * @version $Revision: 320 $
  * @author Blaine Simpson unsaved@users
  */
 
@@ -271,7 +271,7 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "318";
+        revnum = "320";
     }
 
     private String DSV_OPTIONS_TEXT = null;
@@ -2308,9 +2308,11 @@ public class SqlFile {
     /**
      * Wrapper methods so don't need to call x(..., false) in most cases.
      */
+    /* Unused.  Enable when/if need.
     private void stdprintln() {
         stdprintln(false);
     }
+    */
 
     private void stdprint(String s) {
         stdprint(s, false);
@@ -3376,12 +3378,11 @@ public class SqlFile {
         }
         if (history.size() < 1) {
             throw new BadSpecial(rb.getString(SqltoolRB.HISTORY_NONE));
-        } else {
-            for (int i = 0; i < history.size(); i++) {
-                psStd.println("#" + (i + oldestHist) + " or "
-                        + (i - history.size()) + ':');
-                psStd.println((String) history.get(i));
-            }
+        }
+        for (int i = 0; i < history.size(); i++) {
+            psStd.println("#" + (i + oldestHist) + " or "
+                    + (i - history.size()) + ':');
+            psStd.println((String) history.get(i));
         }
         if (buffer != null) {
             psStd.println(rb.getString(SqltoolRB.EDITBUFFER_CONTENTS, buffer));
@@ -3596,12 +3597,10 @@ public class SqlFile {
         String[] tokens = new String[negate ? (inTokens.length - 1)
                                             : inTokens.length];
         String inToken;
-        String varName;
 
         for (int i = 0; i < tokens.length; i++) {
             inToken = inTokens[i + (negate ? 1 : 0)];
             if (inToken.length() > 1 && inToken.charAt(0) == '*') {
-                varName = inToken.substring(1);
                 tokens[i] = (String) userVars.get(inToken.substring(1));
             } else {
                 tokens[i] = inTokens[i + (negate ? 1 : 0)];
@@ -4744,7 +4743,8 @@ public class SqlFile {
                 if (rejectReportFile != null && !rejectReportFile.delete())
                     errprintln(rb.getString(
                             SqltoolRB.DSV_REJECTREPORT_PURGEFAIL,
-                                    rejectFile.toString()));
+                                    (rejectFile == null)
+                                            ? null : rejectFile.toString()));
                 // These are trivial errors.
             }
         }

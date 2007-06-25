@@ -41,7 +41,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
-/* $Id: SqlTool.java 318 2007-06-25 03:10:47Z unsaved $ */
+/* $Id: SqlTool.java 320 2007-06-25 11:23:52Z unsaved $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -58,7 +58,7 @@ import java.util.Map;
  * Java way.
  *
  * @see #main()
- * @version $Revision: 318 $
+ * @version $Revision: 320 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlTool {
@@ -92,7 +92,7 @@ public class SqlTool {
     // issue).
 
     static {
-        revnum = "318";
+        revnum = "320";
         try {
             rb = new SqltoolRB();
             rb.validate();
@@ -296,7 +296,6 @@ public class SqlTool {
         String  rcUrl            = null;
         String  rcUsername       = null;
         String  rcPassword       = null;
-        String  rcDriver         = null;
         String  rcCharset        = null;
         String  rcTruststore     = null;
         Map     rcFields         = null;
