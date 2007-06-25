@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: ValidatingResourceBundle.java 289 2007-06-20 12:43:41Z unsaved $
+ * $Id: ValidatingResourceBundle.java 318 2007-06-25 03:10:47Z unsaved $
  */
 
 
@@ -37,6 +37,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.Collection;
 
 /**
  * Purpose of this class is to wrap a RefCapablePropertyResourceBundle to
@@ -149,6 +151,14 @@ abstract public class ValidatingResourceBundle {
         if (validated) return;
         validated = true;
         Set allIdStrings = new HashSet(getKeyIdToString().values());
+        if (allIdStrings.size() < getKeyIdToString().values().size()) {
+            Collection c = getKeyIdToString().values();
+            Iterator it = allIdStrings.iterator();
+            while (it.hasNext()) c.remove(it.next());
+            throw new RuntimeException(
+                    "Duplicate property key(s) string in keyIdToString map: "
+                            + c);
+        }
         Enumeration allKeys = wrappedRCPRB.getKeys();
         while (allKeys.hasMoreElements()) {
             // We can't test positional parameters, but we can verify that
@@ -163,5 +173,73 @@ abstract public class ValidatingResourceBundle {
             throw new RuntimeException(
                     "Resource Bundle pre-validation failed.  "
                     + "Following property key(s) not mapped.\n" + allIdStrings);
+    }
+
+    /* Convenience wrappers follow for getString(int, String[]) for up to
+     * 3 int and/or String positionals.  Java 5 variable-length parameters
+     * can eliminate the repetition here, plus generalize to random 
+     * numbers of parameters. */
+    public String getString(int id, String s1) {
+        return getString(id, new String[] {s1});
+    }
+    public String getString(int id, String s1, String s2) {
+        return getString(id, new String[] {s1, s2});
+    }
+    public String getString(int id, String s1, String s2, String s3) {
+        return getString(id, new String[] {s1, s2, s3});
+    }
+    public String getString(int id, int i1) {
+        return getString(id, new String[] {Integer.toString(i1)});
+    }
+    public String getString(int id, int i1, int i2) {
+        return getString(id, new String[] {
+            Integer.toString(i1), Integer.toString(i2)
+        });
+    }
+    public String getString(int id, int i1, int i2, int i3) {
+        return getString(id, new String[] {
+            Integer.toString(i1), Integer.toString(i2), Integer.toString(i3)
+        });
+    }
+    public String getString(int id, int i1, String s2) {
+        return getString(id, new String[] {
+            Integer.toString(i1), s2
+        });
+    }
+    public String getString(int id, String s1, int i2) {
+        return getString(id, new String[] {
+            s1, Integer.toString(i2)
+        });
+    }
+
+    public String getString(int id, int i1, int i2, String s3) {
+        return getString(id, new String[] {
+            Integer.toString(i1), Integer.toString(i2), s3
+        });
+    }
+    public String getString(int id, int i1, String s2, int i3) {
+        return getString(id, new String[] {
+            Integer.toString(i1), s2, Integer.toString(i3)
+        });
+    }
+    public String getString(int id, String s1, int i2, int i3) {
+        return getString(id, new String[] {
+            s1, Integer.toString(i2), Integer.toString(i3)
+        });
+    }
+    public String getString(int id, int i1, String s2, String s3) {
+        return getString(id, new String[] {
+            Integer.toString(i1), s2, s3
+        });
+    }
+    public String getString(int id, String s1, String s2, int i3) {
+        return getString(id, new String[] {
+            s1, s2, Integer.toString(i3)
+        });
+    }
+    public String getString(int id, String s1, int i2, String s3) {
+        return getString(id, new String[] {
+            s1, Integer.toString(i2), s3
+        });
     }
 }
