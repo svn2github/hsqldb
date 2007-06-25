@@ -64,7 +64,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-/* $Id: SqlFile.java 320 2007-06-25 11:23:52Z unsaved $ */
+/* $Id: SqlFile.java 322 2007-06-25 16:00:18Z unsaved $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -113,13 +113,7 @@ import java.util.regex.PatternSyntaxException;
  * on "buffer", and expect it to contain the method specific prefix
  * (if any).
  *
- * Reject reports purposefully do not allow for external files (CSS,
- * JS, etc.), even for customization, nor does a reject report have a
- * HREF link to the associated DSV reject file.  This is to make the
- * reject report completely standalone so it may be copied or emailed
- * without concern about breaking anything.
- *
- * @version $Revision: 320 $
+ * @version $Revision: 322 $
  * @author Blaine Simpson unsaved@users
  */
 
@@ -271,7 +265,7 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "320";
+        revnum = "322";
     }
 
     private String DSV_OPTIONS_TEXT = null;
@@ -1786,7 +1780,7 @@ public class SqlFile {
             if (iterations++ > 10000)
                 throw new SqlToolError(rb.getString(SqltoolRB.VAR_INFINITE,
                         varName));
-            // TODO:  Use a smarter algorithm to handle (or prohibit) 
+            // TODO:  Use a smarter algorithm to handle (or prohibit)
             // recursion without this clumsy detection tactic.
 
             varValue = (String) userVars.get(varName);
@@ -3512,8 +3506,7 @@ public class SqlFile {
                 }
 
                 fieldArray[1] = m.getColumnTypeName(i + 1);
-                fieldArray[2] = Integer.toString(m.getColumnDisplaySize(i
-                        + 1));
+                fieldArray[2] = Integer.toString(m.getColumnDisplaySize(i + 1));
                 fieldArray[3] =
                     ((m.isNullable(i + 1) == java.sql.ResultSetMetaData.columnNullable)
                      ? (htmlMode ? "&nbsp;"
@@ -3716,6 +3709,8 @@ public class SqlFile {
 
     /**
      * Ascii file dump.
+     *
+     * dumpFile must not be null.
      */
     private void dump(String varName,
                       File dumpFile) throws IOException, BadSpecial {
@@ -3759,6 +3754,8 @@ public class SqlFile {
 
     /**
      * Binary file dump
+     *
+     * dumpFile must not be null.
      */
     private void dump(File dumpFile) throws IOException, BadSpecial {
         if (binBuffer == null) {
@@ -4488,12 +4485,7 @@ public class SqlFile {
                         file.getPath(),
                         ((rejectFile == null) ? rb.getString(SqltoolRB.NONE)
                                         : rejectFile.getPath()),
-                        ((rejectFile == null)
-                                ? rb.getString(SqltoolRB.BLOCK_DISABLED)
-                                : "-->"),
-                        ((rejectFile == null)
-                                ? rb.getString(SqltoolRB.BLOCK_DISABLED)
-                                : "<!--"),
+                        ((rejectFile == null) ? null : rejectFile.getPath()),
                     }));
         } catch (IOException ioe) {
             throw new SqlToolError(rb.getString(

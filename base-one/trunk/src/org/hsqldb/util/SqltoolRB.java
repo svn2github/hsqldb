@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: SqltoolRB.java 318 2007-06-25 03:10:47Z unsaved $
+ * $Id: SqltoolRB.java 322 2007-06-25 16:00:18Z unsaved $
  */
 
 
@@ -267,7 +267,6 @@ public class SqltoolRB extends ValidatingResourceBundle {
     static public final int DSV_REJECTFILE_SETUPFAIL = keyCounter++;
     static public final int DSV_REJECTREPORT_SETUPFAIL = keyCounter++;
     static public final int NONE = keyCounter++;
-    static public final int BLOCK_DISABLED = keyCounter++;
     static public final int INSERTION_PREPAREFAIL = keyCounter++;
     static public final int DSV_HEADER_MATCHERNONHEAD = keyCounter++;
     static public final int DSV_COLCOUNT_MISMATCH = keyCounter++;
@@ -282,6 +281,8 @@ public class SqltoolRB extends ValidatingResourceBundle {
     static public final int DSV_REJECTREPORT_PURGEFAIL = keyCounter++;
 
     private static Object[] memberKeyArray = new Object[] {
+        /* With Java 5, can use auto-boxing and get rid of all of the
+         * Integer instantiations below.*/
         // SqlTool class, file references:
         new Integer(SQLTOOL_SYNTAX), "SqlTool.syntax",
         // SqlTool inline properties:
@@ -448,7 +449,6 @@ public class SqltoolRB extends ValidatingResourceBundle {
         new Integer(DSV_REJECTFILE_SETUPFAIL), "dsv.rejectfile.setupfail",
         new Integer(DSV_REJECTREPORT_SETUPFAIL), "dsv.rejectreport.setupfail",
         new Integer(NONE), "none",
-        new Integer(BLOCK_DISABLED), "block.disabled",
         new Integer(INSERTION_PREPAREFAIL), "insertion.preparefail",
         new Integer(DSV_HEADER_MATCHERNONHEAD), "dsv.header.matchernonhead",
         new Integer(DSV_COLCOUNT_MISMATCH), "dsv.colcount.mismatch",
