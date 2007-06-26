@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: SqltoolRB.java 322 2007-06-25 16:00:18Z unsaved $
+ * $Id: SqltoolRB.java 325 2007-06-26 02:32:48Z unsaved $
  */
 
 
@@ -270,6 +270,7 @@ public class SqltoolRB extends ValidatingResourceBundle {
     static public final int INSERTION_PREPAREFAIL = keyCounter++;
     static public final int DSV_HEADER_MATCHERNONHEAD = keyCounter++;
     static public final int DSV_COLCOUNT_MISMATCH = keyCounter++;
+    static public final int DSV_INSERTCOL_MISMATCH = keyCounter++;
     static public final int TIME_BAD = keyCounter++;
     static public final int BOOLEAN_BAD = keyCounter++;
     static public final int INPUTREC_MODIFIED = keyCounter++;
@@ -452,6 +453,7 @@ public class SqltoolRB extends ValidatingResourceBundle {
         new Integer(INSERTION_PREPAREFAIL), "insertion.preparefail",
         new Integer(DSV_HEADER_MATCHERNONHEAD), "dsv.header.matchernonhead",
         new Integer(DSV_COLCOUNT_MISMATCH), "dsv.colcount.mismatch",
+        new Integer(DSV_INSERTCOL_MISMATCH), "dsv.insertcol.mismatch",
         new Integer(TIME_BAD), "time.bad",
         new Integer(BOOLEAN_BAD), "boolean.bad",
         new Integer(INPUTREC_MODIFIED), "inputrec.modified",
