@@ -64,7 +64,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-/* $Id: SqlFile.java 325 2007-06-26 02:32:48Z unsaved $ */
+/* $Id: SqlFile.java 330 2007-06-27 02:24:31Z unsaved $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -113,7 +113,7 @@ import java.util.regex.PatternSyntaxException;
  * on "buffer", and expect it to contain the method specific prefix
  * (if any).
  *
- * @version $Revision: 325 $
+ * @version $Revision: 330 $
  * @author Blaine Simpson unsaved@users
  */
 
@@ -148,17 +148,17 @@ public class SqlFile {
      * unpredictable wrt whether you get a null capture group vs. no capture.
      * Must always check count!
      */
-    private static Pattern   specialPattern   =
+    private static Pattern   specialPattern =
             Pattern.compile("\\s*\\\\(\\S+)(?:\\s+(.*\\S))?\\s*");
-    private static Pattern   plPattern   =
+    private static Pattern   plPattern  =
             Pattern.compile("\\s*\\*\\s*(.*\\S)?\\s*");
-    private static Pattern   foreachPattern   =
+    private static Pattern   foreachPattern =
             Pattern.compile("\\s*\\*\\s*foreach\\s+(\\S+)\\s*\\(([^)]*)\\)\\s*");
-    private static Pattern   ifwhilePattern   =
+    private static Pattern   ifwhilePattern =
             Pattern.compile("\\s*\\*\\s*\\S+\\s*\\(([^)]*)\\)\\s*");
-    private static Pattern   varsetPattern   =
+    private static Pattern   varsetPattern =
             Pattern.compile("\\s*\\*\\s*(\\S+)\\s*([=_~])\\s*(?:(.*\\S)\\s*)?");
-    private static Pattern   substitutionPattern   =
+    private static Pattern   substitutionPattern =
             Pattern.compile("\\s*s(\\S)(.+?)\\1(.*?)\\1(.+)?\\s*");
             // Note that this pattern does not include the leading :.
     private static Pattern wincmdPattern = null;
@@ -265,7 +265,7 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "325";
+        revnum = "330";
     }
 
     private String DSV_OPTIONS_TEXT = null;
@@ -629,6 +629,7 @@ public class SqlFile {
                     }
 
                     setBuf(immCmdSB.toString());
+                    bufContainsSql = true;
                     immCmdSB.setLength(0);
                     historize();
                     processSQL();
@@ -926,6 +927,7 @@ public class SqlFile {
             processSpecial(buffer);
             return;
         }
+        bufContainsSql = true;
         processSQL();
     }
 
@@ -943,7 +945,7 @@ public class SqlFile {
     private void processBuffHist(String inString)
     throws BadSpecial, SQLException, SqlToolError {
         if (inString.length() < 1) {
-            throw new BadSpecial(rb.getString(SqltoolRB.SPECIAL_UNSPECIFIED));
+            throw new BadSpecial(rb.getString(SqltoolRB.BUFHIST_UNSPECIFIED));
         }
 
         char commandChar = inString.charAt(0);
@@ -1068,18 +1070,13 @@ public class SqlFile {
                             :  (new OutputStreamWriter(
                                     new FileOutputStream(other.trim(), true),
                                             charset))
-                            // Appendmode so can append to an SQL script, but
-                            // due to issue discribed immediately below, this
-                            // doesn't quite work any more.
+                            // Appendmode so can append to an SQL script.
                     );
                     // Replace with just "(new FileOutputStream(file), charset)"
                     // once use defaultCharset from Java 1.5 in charset init.
                     // above.
 
-                    pw.println(buffer);
-                    // TODO:  Consider whether to append ";" to SQL commands
-                    // to make them normal SQL scripts.  Difficulty with that is
-                    // determining whether the command in buffer is SQL or not.
+                    pw.println(buffer + (bufContainsSql ? ";" : ""));
                     pw.flush();
                 } catch (Exception e) {
                     throw new BadSpecial(rb.getString(SqltoolRB.FILE_APPENDFAIL,
@@ -1200,7 +1197,8 @@ public class SqlFile {
     /**
      * Process a Special Command.
      *
-     * @param inString Complete command, including the leading '\' character.
+     * @param inString TRIMMED complete command, including the leading
+     *                 '\' character.
      * @throws SQLException thrown by JDBC driver.
      * @throws BadSpecial special-command-specific errors.
      * @throws SqlToolError all other errors, plus QuitNow,
@@ -1208,6 +1206,9 @@ public class SqlFile {
      */
     private void processSpecial(String inString)
     throws BadSpecial, QuitNow, SQLException, SqlToolError {
+        if (inString.equals("\\")) {
+            throw new BadSpecial(rb.getString(SqltoolRB.SPECIAL_UNSPECIFIED));
+        }
         Matcher m = specialPattern.matcher(
                 plMode ? dereference(inString, false) : inString);
         if (!m.matches()) {
@@ -2786,7 +2787,7 @@ public class SqlFile {
     private boolean excludeSysSchemas = false;
 
     /**
-     * Process the immediate command as an SQL Statement
+     * Process the contents of Edit Buffer as an SQL Statement
      *
      * @throws SQLException thrown by JDBC driver.
      * @throws SqlToolError all other errors.
@@ -3424,9 +3425,11 @@ public class SqlFile {
     private void setBuf(String newContent) {
         buffer = new String(newContent);
         // System.err.println("Buffer is now (" + buffer + ')');
+        bufContainsSql = false;
     }
 
     int oldestHist = 1;
+    boolean bufContainsSql = true;
 
     /**
      * Add a command onto the history list.
@@ -4151,7 +4154,6 @@ public class SqlFile {
         byte[] bfr  = null;
         File   file = new File(filePath);
         SortedMap constColMap = null;
-        int constColMapSize = 0;
         if (dsvConstCols != null) {
             // We trim col. names, but not values.  Must allow users to
             // specify values as spaces, empty string, null.
@@ -4169,7 +4171,6 @@ public class SqlFile {
                 }
                 constColMap.put(n, constPairs[i].substring(firstEq + 1));
             }
-            constColMapSize = constColMap.size();
         }
         Set skipCols = null;
         if (dsvSkipCols != null) {
