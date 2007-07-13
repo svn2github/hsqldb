@@ -1,4 +1,4 @@
-# $Id: sqltool.rc,v 1.19 2007/03/28 00:03:57 unsaved Exp $
+# $Id: sqltool.rc,v 1.20 2007/03/30 12:44:18 unsaved Exp $
 
 # This is a sample RC configuration file used by SqlTool, DatabaseManager,
 # and any other program that uses the org.hsqldb.util.RCData class.
@@ -56,7 +56,6 @@ password
 #driver oracle.jdbc.OracleDriver
 
 
-
 # Template for a TLS-encrypted HSQLDB Server.
 # Remember that the hostname in hsqls (and https) JDBC URLs must match the
 # CN of the server certificate (the port and instance alias that follows 
@@ -91,7 +90,8 @@ password
 # the same purpose as "schemas" with more SQL-compliant databases.
 
 # Template for a Microsoft SQL Server database
-url jdbc:microsoft:sqlserver://hostname;DatabaseName=DbName;SelectMethod=Cursor
+#urlid msappsvr
+#url jdbc:microsoft:sqlserver://hostname;DatabaseName=DbName;SelectMethod=Cursor
 # The SelectMethod setting is required to do more than one thing on a JDBC
 # session (I guess Microsoft thought nobody would really use Java for 
 # anything other than a "hello world" program).
