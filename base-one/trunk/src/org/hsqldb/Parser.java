@@ -73,7 +73,10 @@ import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HashMappedList;
 import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.IntKeyHashMap;
 import org.hsqldb.lib.IntValueHashMap;
+import org.hsqldb.lib.Iterator;
+import org.hsqldb.lib.StringConverter;
 import org.hsqldb.store.ValuePool;
 import org.hsqldb.lib.HashSet;
 
@@ -132,6 +135,7 @@ class Parser {
     private Object    oData;
     private int       iType;
     private int       iToken;
+    private boolean   compilingView;
 
     //
     private int           subQueryLevel;
@@ -150,6 +154,20 @@ class Parser {
         database     = db;
         tokenizer    = t;
         this.session = session;
+    }
+
+    /**
+     *  sets a flag indicating the parser is used for compiling a view
+     */
+    void setCompilingView() {
+        compilingView = true;
+    }
+
+    /**
+     *  determines whether the parser is used for compiling a view
+     */
+    boolean isCompilingView() {
+        return compilingView;
     }
 
     /**
@@ -393,7 +411,21 @@ class Parser {
         HsqlArrayList vcolumn = new HsqlArrayList();
 
         do {
-            Expression e = parseExpression();
+            int        expPos = tokenizer.getPosition();
+            Expression e      = parseExpression();
+
+            if (isCompilingView()) {
+                if (e.getType() == Expression.ASTERISK) {
+                    if (select.asteriskPositions == null) {
+                        select.asteriskPositions = new IntKeyHashMap();
+                    }
+
+                    // remember the position of the asterisk. For the moment, just
+                    // remember the expression, so it can later be found and replaced
+                    // with the concrete column list
+                    select.asteriskPositions.put(expPos, e);
+                }
+            }
 
             token = tokenizer.getString();
 
@@ -878,6 +910,7 @@ class Parser {
                 colcount = vcolumn.size();
 
                 String tablename = e.getTableName();
+                int    oldPos    = pos;
 
                 if (tablename == null) {
                     for (int i = 0; i < filters.length; i++) {
@@ -893,6 +926,45 @@ class Parser {
 
                     pos      = addFilterColumns(f, vcolumn, pos);
                     colcount = vcolumn.size();
+                }
+
+                if (isCompilingView()) {
+
+                    // find this expression's position in the Select's asterisk list
+                    boolean foundAsteriskPos = false;
+                    Iterator expSearch =
+                        select.asteriskPositions.keySet().iterator();
+
+                    while (expSearch.hasNext()) {
+                        int expPos = expSearch.nextInt();
+
+                        if (e == select.asteriskPositions.get(expPos)) {
+
+                            // compile the complete column list which later is to replace the asterisk
+                            StringBuffer completeColList = new StringBuffer();
+
+                            for (int col = oldPos; col < pos; ++col) {
+                                Expression resolvedColExpr =
+                                    (Expression) (vcolumn.get(col));
+
+                                completeColList.append(
+                                    resolvedColExpr.getColumnDDL());
+
+                                if (col < pos - 1) {
+                                    completeColList.append(", ");
+                                }
+                            }
+
+                            select.asteriskPositions.put(
+                                expPos, completeColList.toString());
+
+                            foundAsteriskPos = true;
+
+                            break;
+                        }
+                    }
+
+                    Trace.doAssert(foundAsteriskPos);
                 }
             } else {
                 if (e.getFilter() == null) {
@@ -917,14 +989,18 @@ class Parser {
     /**
      * Add all columns of a table filter to list of columns
      */
-    static int addFilterColumns(TableFilter filter, HsqlArrayList columnList,
-                                int position) {
+    int addFilterColumns(TableFilter filter, HsqlArrayList columnList,
+                         int position) throws HsqlException {
 
         Table table = filter.getTable();
         int   count = table.getColumnCount();
 
         for (int i = 0; i < count; i++) {
             Expression e = new Expression(filter, table.getColumn(i));
+
+            if (isCompilingView()) {
+                e.resolveTables(filter);
+            }
 
             columnList.add(position++, e);
         }

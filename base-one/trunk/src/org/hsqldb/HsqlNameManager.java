@@ -162,7 +162,7 @@ public class HsqlNameManager {
             this.name = this.statementName = name;
         }
 
-        void rename(String name, boolean isquoted) {
+        public void rename(String name, boolean isquoted) {
 
             this.name          = name;
             this.statementName = name;
@@ -174,15 +174,17 @@ public class HsqlNameManager {
             }
 
             if (name.startsWith("SYS_")) {
-                int index = name.lastIndexOf('_') + 1;
+                int length = sysPrefixLength(name);
 
-                try {
-                    int temp = Integer.parseInt(name.substring(index));
+                if (length > 0) {
+                    try {
+                        int temp = Integer.parseInt(name.substring(length));
 
-                    if (temp > manager.sysNumber) {
-                        manager.sysNumber = temp;
-                    }
-                } catch (NumberFormatException e) {}
+                        if (temp > manager.sysNumber) {
+                            manager.sysNumber = temp;
+                        }
+                    } catch (NumberFormatException e) {}
+                }
             }
         }
 
@@ -214,17 +216,33 @@ public class HsqlNameManager {
         /**
          * "SYS_IDX_" is used for auto-indexes on referring FK columns or
          * unique constraints.
-         * "SYS_PK_" is for the primary key indexes.
+         * "SYS_PK_" is for the primary key constraints
+         * "SYS_CT_" is for unique and check constraints
          * "SYS_REF_" is for FK constraints in referenced tables
+         * "SYS_FK_" is for FK constraints in referencing tables
          *
          */
-        static boolean isReservedIndexName(String name) {
-            return (name.startsWith("SYS_IDX_") || name.startsWith("SYS_PK_")
-                    || name.startsWith("SYS_REF_"));
+        static final String[] sysPrefixes = new String[] {
+            "SYS_IDX_", "SYS_PK_", "SYS_REF_", "SYS_CT_", "SYS_FK_",
+        };
+
+        static int sysPrefixLength(String name) {
+
+            for (int i = 0; i < sysPrefixes.length; i++) {
+                if (name.startsWith(sysPrefixes[i])) {
+                    return sysPrefixes[i].length();
+                }
+            }
+
+            return 0;
         }
 
-        boolean isReservedIndexName() {
-            return isReservedIndexName(name);
+        static boolean isReservedName(String name) {
+            return sysPrefixLength(name) > 0;
+        }
+
+        boolean isReservedName() {
+            return isReservedName(name);
         }
 
         public String toString() {

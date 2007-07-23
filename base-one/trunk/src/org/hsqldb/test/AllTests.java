@@ -61,6 +61,7 @@ public class AllTests extends TestCase {
         suite.addTestSuite(org.hsqldb.test.TestSubselect.class);
         suite.addTestSuite(org.hsqldb.test.TestTimestamp.class);
         suite.addTestSuite(org.hsqldb.test.TestTextTable.class);
+        suite.addTestSuite(org.hsqldb.test.TestViewAsterisks.class);
 
         return suite;
     }

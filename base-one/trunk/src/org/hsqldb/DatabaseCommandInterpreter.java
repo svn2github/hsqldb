@@ -2529,7 +2529,7 @@ class DatabaseCommandInterpreter {
     private HsqlName newIndexHsqlName(String name,
                                       boolean isQuoted) throws HsqlException {
 
-        return HsqlName.isReservedIndexName(name)
+        return HsqlName.isReservedName(name)
                ? database.nameManager.newAutoName("USER", name)
                : database.nameManager.newHsqlName(name, isQuoted);
     }
@@ -2568,7 +2568,7 @@ class DatabaseCommandInterpreter {
         boolean canAdd = true;
 
         if (t.findColumn(c.columnName.name) != -1) {
-            throw Trace.error(Trace.COLUMN_ALREADY_EXISTS);
+            throw Trace.error(Trace.COLUMN_ALREADY_EXISTS, c.columnName.name);
         }
 
         if (c.isPrimaryKey() && t.hasPrimaryKey()) {
@@ -2663,11 +2663,11 @@ class DatabaseCommandInterpreter {
 
         database.schemaManager.checkIndexExists(name, t.getSchemaName(), true);
 
-        if (HsqlName.isReservedIndexName(name)) {
+        if (HsqlName.isReservedName(name)) {
             throw Trace.error(Trace.SYSTEM_INDEX, name);
         }
 
-        if (HsqlName.isReservedIndexName(newName)) {
+        if (HsqlName.isReservedName(newName)) {
             throw Trace.error(Trace.BAD_INDEX_CONSTRAINT_NAME, newName);
         }
 

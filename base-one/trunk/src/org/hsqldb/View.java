@@ -82,6 +82,7 @@ class View extends Table {
         compileTimeSchema = session.getSchemaHsqlName(null);
 
         compile(session);
+        replaceAsterisksInStatement();
 
         HsqlName[] schemas = getSchemas();
 
@@ -125,6 +126,9 @@ class View extends Table {
         // create the working table
         Parser p = new Parser(session, this.database,
                               new Tokenizer(statement));
+
+        p.setCompilingView();
+
         int brackets = p.parseOpenBracketsSelect();
 
         viewSubQuery = p.parseSubquery(brackets, colList, true,
@@ -152,6 +156,74 @@ class View extends Table {
      */
     String getStatement() {
         return statement;
+    }
+
+    /**
+     *  is a private helper for replaceAsterisksInStatement, to avoid some code duplication
+     */
+    private void collectAsteriskPos(final Select select,
+                                    HsqlArrayList asteriskPositions) {
+
+        if (select.asteriskPositions == null) {
+            return;
+        }
+
+        Iterator asterisks = select.asteriskPositions.keySet().iterator();
+
+        while (asterisks.hasNext()) {
+            int pos = asterisks.nextInt();
+
+            asteriskPositions.set(pos, select.asteriskPositions.get(pos));
+        }
+    }
+
+    /**
+     *  replaces all asterisks in our statement with the actual column list
+     *
+     *  This way, we ensure what is required by the standard: a view returns a result
+     *  which reflects the structure of the underlying tables at the *time of the definition
+     *  of the view.
+     */
+    private void replaceAsterisksInStatement() {
+
+        HsqlArrayList asteriskPositions = new HsqlArrayList();
+
+        asteriskPositions.setSize(statement.length());
+
+        // asterisk positions in sub queries
+        for (int i = 0; i < viewSubqueries.length; ++i) {
+
+            // collect the occurances of asterisks in the statement
+            Select subSelect = viewSubqueries[i].select;
+
+            collectAsteriskPos(subSelect, asteriskPositions);
+
+            // the same for all (possible) UNION SELECTs of the sub select
+            if (subSelect.unionArray != null) {
+
+                // start with index 1, not 0 - the first select is the one already covered by subSelect
+                for (int u = 1; u < subSelect.unionArray.length; ++u) {
+                    collectAsteriskPos(subSelect.unionArray[u],
+                                       asteriskPositions);
+                }
+            }
+        }
+
+        StringBuffer expandedStatement = new StringBuffer(statement);
+
+        for (int pos = asteriskPositions.size() - 1; pos >= 0; --pos) {
+            String colList = (String) asteriskPositions.get(pos);
+
+            if (colList == null) {
+                continue;
+            }
+
+            expandedStatement.replace(pos,
+                                      expandedStatement.indexOf("*", pos) + 1,
+                                      colList);
+        }
+
+        statement = expandedStatement.toString();
     }
 
     /**

@@ -245,7 +245,7 @@ public class DatabaseScript {
                 for (int j = 1; j < t.getIndexCount(); j++) {
                     Index index = t.getIndex(j);
 
-                    if (HsqlName.isReservedIndexName(index.getName().name)) {
+                    if (HsqlName.isReservedName(index.getName().name)) {
 
                         // the following are autocreated with the table
                         // indexes for primary keys
@@ -468,7 +468,7 @@ public class DatabaseScript {
         HsqlName   pkName  = null;
         Constraint pkConst = t.getPrimaryConstraint();
 
-        if (pkConst != null && !pkConst.getName().isReservedIndexName()) {
+        if (pkConst != null && !pkConst.getName().isReservedName()) {
             pkName = pkConst.getName();
         }
 

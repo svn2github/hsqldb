@@ -163,7 +163,7 @@ public class Servlet extends javax.servlet.http.HttpServlet {
             getInitParameter("hsqldb.server.use_web-inf_path");
 
         if (!dbStr.equals(".") && "true".equalsIgnoreCase(useWebInfStr)) {
-            dbStr = getServletContext().getRealPath("/") + "/WEB-INF/" + dbStr;
+            dbStr = getServletContext().getRealPath("/") + "WEB-INF" + dbStr;
         }
 
 // end WEB-INF patch

@@ -70,6 +70,7 @@ import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.HashMap;
 import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.HsqlArrayList;
+import org.hsqldb.lib.IntKeyHashMap;
 import org.hsqldb.lib.Iterator;
 
 // fredt@users 20010701 - patch 1.6.1 by hybris
@@ -129,6 +130,7 @@ class Select {
                           EXCEPT    = 4;
     private boolean       simpleLimit;        // true if maxrows can be uses as is
     Result.ResultMetaData resultMetaData;
+    IntKeyHashMap         asteriskPositions;
 
     /**
      * Experimental.

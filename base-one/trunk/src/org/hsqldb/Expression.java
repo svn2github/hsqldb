@@ -535,6 +535,34 @@ public class Expression {
     }
 
     /**
+     *  returns the complete name of the column represented by the expression
+     *
+     *  If an alias is known for the column's table, this alias will precede the
+     *  column name, except it's "SYSTEM_SUBQUERY".
+     *  If no alias is known, the column's table will be asked for its
+     *  statementName, which then will precede the column name.
+     */
+    String getColumnDDL() throws HsqlException {
+
+        Trace.doAssert(exprType == COLUMN);
+
+        StringBuffer buf = new StringBuffer();
+
+        Table table = tableFilter.getTable();
+
+        if (tableName != null) {
+            if (!tableName.equals("SYSTEM_SUBQUERY"))
+                buf.append('"').append(tableName).append('"').append('.');
+        }
+        else
+            buf.append(table.tableName.statementName).append('.');
+
+        buf.append(table.getColumn(columnIndex).columnName.statementName);
+
+        return buf.toString();
+    }
+
+    /**
      * For use with CHECK constraints. Under development.
      *
      * Currently supports a subset of expressions and is suitable for CHECK
@@ -2011,7 +2039,6 @@ public class Expression {
 
             case VALUE :
                 if (dataType == Types.BOOLEAN && valueData != null) {
-                    dataType = 0;
                     exprType = ((Boolean) valueData).booleanValue() ? TRUE
                                                                     : FALSE;
                 }

@@ -126,6 +126,7 @@ public class Tokenizer {
     private int              beginIndex;
     private int              iType;
     private String           sToken;
+    private int              indexLongNameFirst = -1;
     private String           sLongNameFirst = null;
     private int              typeLongNameFirst;
 
@@ -160,16 +161,17 @@ public class Tokenizer {
 
     public void reset(String s) {
 
-        sCommand          = s;
-        iLength           = s.length();
-        iIndex            = 0;
-        tokenIndex        = 0;
-        nextTokenIndex    = 0;
-        beginIndex        = 0;
-        iType             = NO_TYPE;
-        typeLongNameFirst = NO_TYPE;
-        sToken            = null;
-        sLongNameFirst    = null;
+        sCommand           = s;
+        iLength            = s.length();
+        iIndex             = 0;
+        tokenIndex         = 0;
+        nextTokenIndex     = 0;
+        beginIndex         = 0;
+        iType              = NO_TYPE;
+        typeLongNameFirst  = NO_TYPE;
+        sToken             = null;
+        indexLongNameFirst = -1;
+        sLongNameFirst     = null;
 
 //        sLongNameLast  = null;
         bWait             = false;
@@ -188,7 +190,7 @@ public class Tokenizer {
         }
 
         nextTokenIndex = iIndex;
-        iIndex         = tokenIndex;
+        iIndex         = ( indexLongNameFirst != -1 ) ? indexLongNameFirst : tokenIndex;
         bWait          = true;
     }
 
@@ -741,8 +743,9 @@ public class Tokenizer {
         }
 
         if (!retainFirst) {
-            sLongNameFirst    = null;
-            typeLongNameFirst = NO_TYPE;
+            sLongNameFirst     = null;
+            indexLongNameFirst = -1;
+            typeLongNameFirst  = NO_TYPE;
         }
 
         while (iIndex < iLength
@@ -876,8 +879,9 @@ public class Tokenizer {
                     c = sCommand.charAt(iIndex);
 
                     if (c == '.') {
-                        sLongNameFirst    = sToken;
-                        typeLongNameFirst = iType;
+                        sLongNameFirst     = sToken;
+                        indexLongNameFirst = tokenIndex;
+                        typeLongNameFirst  = iType;
 
                         iIndex++;
 
@@ -959,8 +963,9 @@ public class Tokenizer {
                     }
 
                     if (c == '.') {
-                        typeLongNameFirst = iType;
-                        sLongNameFirst    = sToken;
+                        typeLongNameFirst  = iType;
+                        sLongNameFirst     = sToken;
+                        indexLongNameFirst = tokenIndex;
 
                         iIndex++;
 

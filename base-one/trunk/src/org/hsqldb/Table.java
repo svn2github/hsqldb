@@ -581,7 +581,7 @@ public class Table extends BaseTable {
     void addColumn(Column column) throws HsqlException {
 
         if (findColumn(column.columnName.name) >= 0) {
-            throw Trace.error(Trace.COLUMN_ALREADY_EXISTS);
+            throw Trace.error(Trace.COLUMN_ALREADY_EXISTS, column.columnName.name);
         }
 
         if (column.isIdentity()) {
@@ -661,10 +661,6 @@ public class Table extends BaseTable {
         String oldname = tableName.name;
 
         tableName.rename(newname, isquoted);
-
-        if (HsqlName.isReservedIndexName(getPrimaryIndex().getName().name)) {
-            getPrimaryIndex().getName().rename("SYS_PK", newname, isquoted);
-        }
 
         renameTableInCheckConstraints(session, oldname, newname);
     }

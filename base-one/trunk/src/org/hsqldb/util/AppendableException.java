@@ -92,6 +92,6 @@ public class AppendableException extends Exception {
     }
 
     public AppendableException(String string, Throwable cause) {
-         super(string, cause);
+        super(string, cause);
     }
 }
