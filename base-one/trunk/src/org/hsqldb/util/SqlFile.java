@@ -64,7 +64,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-/* $Id: SqlFile.java 350 2007-07-26 00:13:31Z unsaved $ */
+/* $Id: SqlFile.java,v 1.167 2007/07/26 00:21:27 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -113,7 +113,7 @@ import java.util.regex.PatternSyntaxException;
  * on "buffer", and expect it to contain the method specific prefix
  * (if any).
  *
- * @version $Revision: 350 $
+ * @version $Revision: 1.167 $
  * @author Blaine Simpson unsaved@users
  */
 
@@ -3451,7 +3451,7 @@ public class SqlFile {
         // by using "(?-OPTIONS)" or (?OPTIONS) in their regexes.
         for (int index = history.size() - 1; index >= 0; index--)
             if (pattern.matcher((String) history.get(index)).find())
-                return Integer.valueOf(index + oldestHist);
+                return new Integer(index + oldestHist);
         return null;
     }
 

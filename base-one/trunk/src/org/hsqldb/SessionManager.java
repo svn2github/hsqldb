@@ -98,10 +98,6 @@ public class SessionManager {
 
         s.isProcessingLog = forlog;
 
-        sessionMap.put(sessionIdCount, s);
-
-        sessionIdCount++;
-
         if (!forlog && sessionMap.isEmpty()) {
             HsqlException[] warnings = sysSession.getAndClearWarnings();
 
@@ -109,6 +105,11 @@ public class SessionManager {
                 s.addWarning(warnings[i]);
             }
         }
+
+        sessionMap.put(sessionIdCount, s);
+
+        sessionIdCount++;
+
 
         return s;
     }
