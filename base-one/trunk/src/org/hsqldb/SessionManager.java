@@ -102,6 +102,14 @@ public class SessionManager {
 
         sessionIdCount++;
 
+        if (!forlog && sessionMap.isEmpty()) {
+            HsqlException[] warnings = sysSession.getAndClearWarnings();
+
+            for (int i = 0; i < warnings.length; i++) {
+                s.addWarning(warnings[i]);
+            }
+        }
+
         return s;
     }
 
