@@ -145,9 +145,16 @@ class TextTable extends org.hsqldb.Table {
                 new Integer(linenumber), e.getMessage()
             });
         } catch (java.lang.RuntimeException t) {
+            int linenumber = cache == null ? 0
+                                           : ((TextCache) cache)
+                                               .getLineNumber();
+
             onConnectError(session);
 
-            throw t;
+            throw Trace.error(Trace.TEXT_FILE, new Object[] {
+                new Integer(linenumber),
+                t.getClass().getName() + ": " + t.getMessage()
+            });
         }
 
         isConnected = true;
