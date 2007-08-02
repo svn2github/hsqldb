@@ -64,7 +64,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-/* $Id: SqlFile.java,v 1.167 2007/07/26 00:21:27 unsaved Exp $ */
+/* $Id: SqlFile.java 354 2007-08-02 18:10:05Z unsaved $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -113,7 +113,7 @@ import java.util.regex.PatternSyntaxException;
  * on "buffer", and expect it to contain the method specific prefix
  * (if any).
  *
- * @version $Revision: 1.167 $
+ * @version $Revision: 354 $
  * @author Blaine Simpson unsaved@users
  */
 
@@ -273,7 +273,7 @@ public class SqlFile {
     private static String revnum = null;
 
     static {
-        revnum = "350";
+        revnum = "354";
     }
 
     private String DSV_OPTIONS_TEXT = null;
@@ -455,7 +455,7 @@ public class SqlFile {
             }
 
             while (true) {
-                if (magicPrefix == null) {
+                if (interactive && magicPrefix == null) {
                     psStd.print((immCmdSB.length() > 0 || rawMode == RAW_DATA)
                             ? contPrompt : ((rawMode == RAW_FALSE)
                                     ? primaryPrompt : rawPrompt));
@@ -1003,7 +1003,7 @@ public class SqlFile {
                 // groups.  Unfortunately, there's no way to guarantee that :( .
             }
             histNum = ((hm.group(1) == null || hm.group(1).length() < 1)
-                    ? null : Integer.valueOf(hm.group(1)));
+                    ? null : new Integer(hm.group(1)));
         }
         if (hm.groupCount() != 2) {
             throw new BadSpecial(rb.getString(SqltoolRB.EDIT_MALFORMAT));
@@ -1065,7 +1065,7 @@ public class SqlFile {
 
                 magicPrefix = immCmdSB.toString();
                 immCmdSB.setLength(0);
-                stdprint(magicPrefix);
+                if (interactive) stdprint(magicPrefix);
 
                 return;
 
