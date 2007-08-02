@@ -1,4 +1,4 @@
-<!-- $Id: sqltool.xml 351 2007-07-26 00:15:13Z unsaved $ -->
+<!-- $Id: sqltool.xml 355 2007-08-02 18:13:20Z unsaved $ -->
 
 <chapter id='sqltool-chapter'>
     <title id='sqltool-title'>SqlTool</title>
@@ -14,8 +14,8 @@
                 </affiliation>
             </author>
         </authorgroup>
-        <edition>$Revision: 351 $</edition>
-        <pubdate>$Date: 2007-07-25 20:15:13 -0400 (Wed, 25 Jul 2007) $</pubdate>
+        <edition>$Revision: 355 $</edition>
+        <pubdate>$Date: 2007-08-02 14:13:20 -0400 (Thu, 02 Aug 2007) $</pubdate>
         <keywordset>
             <keyword>SqlTool</keyword>
             <keyword>HSQLDB</keyword>
@@ -148,7 +148,7 @@
             section about that).
             This document is now updated for the current versions of SqlTool
             and SqlFile at the time I am writing this (versions 333 and
-            350 correspondingly, SqlFile is the class which does most of the
+            354 correspondingly, SqlFile is the class which does most of the
             work for SqlTool).
             Therefore, if you are using a version of SqlTool or SqlFile that
             is more than a couple revisions greater, you should find a newer
@@ -159,7 +159,7 @@
             The startup banner will report both versions when you run SqlTool
             interactively.
             (Dotted version numbers of SqlTool and SqlFile are older than 
-            333 and 350).
+            333 and 354).
         </simpara>
         <note> <simpara>
             This guide covers SqlTool bundled with series 1.8 and 1.9 of
@@ -1229,6 +1229,11 @@ java org.hsqldb.util.SqlTool urlid</screen>
         <simpara>
             I find the ":/regex/"  and ":/regex/;" constructs particularly
             handy for every-day usage.
+            <informalexample><screen>
+                    :/\\d/;</screen>
+            </informalexample>re-executes the last \d command that you gave
+            (The extra "\" is needed to escape the special meaning of "\"
+            in regular expressions).
             It's great to be able to recall and execute the last "insert"
             command, for example, without needing to check the history or
             keep track of how many commands back it was.  To re-execute
