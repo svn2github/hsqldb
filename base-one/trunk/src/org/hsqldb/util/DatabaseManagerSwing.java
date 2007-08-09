@@ -197,6 +197,7 @@ implements ActionListener, WindowListener, KeyListener {
      * "-u -r -l" = "-url".  -blaine
      */
     private static String homedir = null;
+    private boolean isOracle = false; // Need some workarounds for Oracle
 
     static {
         try {
@@ -265,14 +266,14 @@ implements ActionListener, WindowListener, KeyListener {
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.org.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.73 $"
+        + "problem reports or help requests:  $Revision: 1.75 $"
         + (TT_AVAILABLE ? ""
                         : ("\n\nTransferTool classes are not in CLASSPATH.\n"
                            + "To enable the Tools menu, add 'transfer.jar' "
                            + "to your class path."));
     ;
     private static final String ABOUT_TEXT =
-        "$Revision: 1.73 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.75 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
         + "Copyright (c) 2001-2005, The HSQL Development Group.\n"
         + "http://hsqldb.org  (User Guide available at this site).\n\n\n"
@@ -629,13 +630,13 @@ implements ActionListener, WindowListener, KeyListener {
 
         try {
             dMeta      = cConn.getMetaData();
+            isOracle = (dMeta.getDatabaseProductName().indexOf("Oracle") >= 0);
             sStatement = cConn.createStatement();
 
             updateAutoCommitBox();
 
             // Workaround for EXTREME SLOWNESS getting this info from O.
-            showIndexDetails =
-                (dMeta.getDatabaseProductName().indexOf("Oracle") < 0);
+            showIndexDetails = !isOracle;
 
             Driver driver = DriverManager.getDriver(dMeta.getURL());
             ConnectionSetting newSetting = new ConnectionSetting(
@@ -2142,9 +2143,7 @@ implements ActionListener, WindowListener, KeyListener {
             while (result.next()) {
                 schema = result.getString(2);
 
-                if ((!showSys)
-                        && dMeta.getDatabaseProductName().indexOf("Oracle")
-                           > -1 && oracleSysUsers.contains(schema)) {
+                if ((!showSys) && isOracle && oracleSysUsers.contains(schema)) {
                     continue;
                 }
 
@@ -2185,6 +2184,12 @@ implements ActionListener, WindowListener, KeyListener {
 
                 try {
                     name   = (String) tables.elementAt(i);
+                    if (isOracle && name.startsWith("BIN$")) {
+                        continue;
+                        // Oracle Recyle Bin tables.
+                        // Contains metacharacters which screw up metadata
+                        // queries below.
+                    }
                     schema = (String) schemas.elementAt(i);
 
                     String schemaname = "";
