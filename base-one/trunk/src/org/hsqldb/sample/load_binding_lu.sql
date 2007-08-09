@@ -1,6 +1,6 @@
 /*
-    $Id$
-    Load BINDING Lookup table
+    $Id: load_binding_lu.sql,v 1.1 2004/06/09 13:50:26 unsaved Exp $
+    Load BINDING Lookup Text Table
 */
 
 \p Creating table BINDING_TMPTXT
