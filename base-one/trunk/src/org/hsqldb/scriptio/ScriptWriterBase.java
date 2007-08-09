@@ -203,6 +203,7 @@ public abstract class ScriptWriterBase implements Runnable {
         try {
             if (fileStreamOut != null) {
                 fileStreamOut.flush();
+                outDescriptor.sync();
                 fileStreamOut.close();
 
                 fileStreamOut = null;

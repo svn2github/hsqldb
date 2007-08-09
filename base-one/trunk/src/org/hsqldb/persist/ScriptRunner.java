@@ -36,7 +36,6 @@ import java.io.EOFException;
 import org.hsqldb.Database;
 import org.hsqldb.HsqlException;
 import org.hsqldb.Result;
-import org.hsqldb.ResultConstants;
 import org.hsqldb.Session;
 import org.hsqldb.Trace;
 import org.hsqldb.lib.IntKeyHashMap;
