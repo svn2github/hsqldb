@@ -446,7 +446,8 @@ class Parser {
         if (token.equals(Token.T_INTO)) {
             boolean getname = true;
 
-            token = tokenizer.getString();
+            token           = tokenizer.getString();
+            select.intoType = database.getDefaultTableType();
 
             if (tokenizer.wasSimpleToken()) {
                 switch (Token.get(token)) {
@@ -468,18 +469,17 @@ class Parser {
                         break;
 
                     default :
-                        select.intoType = database.getDefaultTableType();
-                        getname         = false;
+                        getname = false;
                         break;
                 }
 
                 if (getname) {
                     token = tokenizer.getName();
-                } else {
-                    if (!tokenizer.wasName()) {
-                        tokenizer.throwUnexpected();
-                    }
                 }
+            }
+
+            if (!tokenizer.wasName()) {
+                tokenizer.throwUnexpected();
             }
 
             select.sIntoTable = database.nameManager.newHsqlName(token,
