@@ -7,10 +7,11 @@ Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
 
-2007.08.09
+2007.08.28  1.8.0.8
 
 Fixed issue with some text table sources.
 Fixed issue caused after adding columns to tables used in certain view definitions
+Added sych call before closing .script files.
 Minor bug fixes
 
 New implementation of HsqlTimer to allow proper database shutdown while used 
