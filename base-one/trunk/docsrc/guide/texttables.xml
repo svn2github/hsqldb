@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: texttables.xml,v 1.13 2007/05/13 23:48:33 fredt Exp $ -->
+<!-- $Id: texttables.xml,v 1.14 2007/05/30 18:34:46 fredt Exp $ -->
 <chapter id="texttables-chapter">
   <title id="texttables-title">Text Tables</title>
 
@@ -30,9 +30,9 @@
       </author>
     </authorgroup>
 
-    <edition>$Revision: 1.13 $</edition>
+    <edition>$Revision: 1.14 $</edition>
 
-    <pubdate>$Date: 2007/05/13 23:48:33 $</pubdate>
+    <pubdate>$Date: 2007/05/30 18:34:46 $</pubdate>
 
     <keywordset>
       <keyword>Text</keyword>
@@ -365,7 +365,7 @@
       </para>
 
       <para>When a database is opened, if the source file for an existing text table is missing
-      the table remains disconnected from its data source, but the source sescription is preserved.
+      the table remains disconnected from its data source, but the source description is preserved.
       This allows the missing source file to be added to the directory and the table re-connected to it
       with the above command.
       </para>
