@@ -365,7 +365,7 @@
       </para>
 
       <para>When a database is opened, if the source file for an existing text table is missing
-      the table remains disconnected from its data source, but the source description is preserved.
+      the table remains disconnected from its data source, but the source sescription is preserved.
       This allows the missing source file to be added to the directory and the table re-connected to it
       with the above command.
       </para>
