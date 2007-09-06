@@ -6,6 +6,10 @@ hsqldb 1.8.0, including point releases, in reverse chronological order.
 Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
+2007.09.06  1.8.0.8.1
+
+Fixed regression that impacted performance of system table selects and JDBC 
+DatabaseMetaData calls that use system tables.
 
 2007.08.28  1.8.0.8
 
