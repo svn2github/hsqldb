@@ -352,7 +352,7 @@ public class Table extends BaseTable {
             throw Trace.error(Trace.DATA_IS_READONLY);
         }
 
-        setIsReadOnly(value);
+        isReadOnly = value;
     }
 
     /**
