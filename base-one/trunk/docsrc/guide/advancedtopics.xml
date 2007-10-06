@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Id: advancedtopics.xml,v 1.33 2006/10/25 12:36:15 fredt Exp $ -->
+<!-- $Id: advancedtopics.xml,v 1.34 2007/03/24 11:39:08 unsaved Exp $ -->
 <chapter id="advanced-chapter">
   <title id="advanced-title">Advanced Topics</title>
 
@@ -18,9 +18,9 @@
       </author>
     </authorgroup>
 
-    <edition>$Revision: 1.33 $</edition>
+    <edition>$Revision: 1.34 $</edition>
 
-    <pubdate>$Date: 2006/10/25 12:36:15 $</pubdate>
+    <pubdate>$Date: 2007/03/24 11:39:08 $</pubdate>
 
     <keywordset>
       <keyword>Hsqldb</keyword>
@@ -1267,9 +1267,10 @@
               <para>A CHECKPOINT operation does not normally reclaim the empty
               spaces, whereas CHECKPOINT DEFRAG always does.</para>
 
-              <para>This property determines when a normal CHECKPOINT, whether
-              initiated by an administrator or when the size of the log
-              exceeds its limit.</para>
+              <para>This property determines when to perform a CHECKPOINT DEFRAG
+              when a normal CHECKPOINT occurs (whether initiated by an 
+              administrator or when the size of the log exceeds its limit).
+              </para>
 
               <para>The numeric value is the number of megabytes of recorded
               empty spaces in the .data file that would force a DEFRAG

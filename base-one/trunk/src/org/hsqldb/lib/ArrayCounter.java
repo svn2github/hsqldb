@@ -44,7 +44,7 @@ public class ArrayCounter {
     /**
      * Returns an int[] array of length segments containing the distribution
      * count of the elements in unsorted int[] array with values between min
-     * and max (range). Values outside the min-max reange are ignored<p>
+     * and max (range). Values outside the min-max range are ignored<p>
      *
      * A usage example is determining the count of people of each age group
      * in a large int[] array containing the age of each person. Called with
@@ -94,8 +94,7 @@ public class ArrayCounter {
      * the maximum age of a given number of people. With the example array
      * given in countSegments, rank(array, c, 6000, 18, 65, 0) will return an age
      * value between 18-64 (inclusive) and the count of all people aged between
-     * 18 and the returned value(exclusive) will be less than or equal
-     * 6000.
+     * 18 and the returned value(exclusive) will be less than or equal 6000.
      *
      */
     public static int rank(int[] array, int elements, int target, int start,

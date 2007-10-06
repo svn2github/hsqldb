@@ -26,8 +26,6 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id: SqltoolRB.java 339 2007-07-24 03:42:15Z unsaved $
  */
 
 
@@ -35,6 +33,8 @@ package org.hsqldb.util;
 
 import java.util.Map;
 import java.util.HashMap;
+
+/* $Id: SqltoolRB.java,v 1.7 2007/07/25 04:33:59 unsaved Exp $ */
 
 /**
  * Resource Bundle for SqlTool and associated classes.
