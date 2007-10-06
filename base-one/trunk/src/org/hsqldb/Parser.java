@@ -286,7 +286,8 @@ class Parser {
 
         subQueryLevel++;
 
-        boolean canHaveOrder = predicateType == Expression.VIEW;
+        boolean canHaveOrder = predicateType == Expression.VIEW
+                               || predicateType == Expression.SELECT;
         boolean canHaveLimit = predicateType == Expression.SELECT
                                || predicateType == Expression.VIEW
                                || predicateType == Expression.QUERY;

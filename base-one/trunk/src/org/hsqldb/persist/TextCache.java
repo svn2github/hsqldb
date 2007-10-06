@@ -345,7 +345,7 @@ public class TextCache extends DataFileCache {
             dataFile = null;
 
             if (empty &&!cacheReadonly) {
-                FileUtil.delete(fileName);
+                FileUtil.getDefaultInstance().delete(fileName);
             }
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR,
@@ -373,7 +373,7 @@ public class TextCache extends DataFileCache {
                     dataFile = null;
                 }
 
-                FileUtil.delete(fileName);
+                FileUtil.getDefaultInstance().delete(fileName);
             }
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR,

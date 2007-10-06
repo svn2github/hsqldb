@@ -140,7 +140,8 @@ public class WebServer extends Server {
      */
     public static void main(String[] args) {
 
-        String propsPath = FileUtil.canonicalOrAbsolutePath("webserver");
+        String propsPath =
+            FileUtil.getDefaultInstance().canonicalOrAbsolutePath("webserver");
         HsqlProperties fileProps =
             ServerConfiguration.getPropertiesFromFile(propsPath);
         HsqlProperties props = fileProps == null ? new HsqlProperties()

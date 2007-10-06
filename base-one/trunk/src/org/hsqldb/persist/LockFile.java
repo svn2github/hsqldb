@@ -310,7 +310,7 @@ public class LockFile {
             }
         }
 
-        f      = FileUtil.canonicalFile(file);
+        f      = FileUtil.getDefaultInstance().canonicalFile(file);
         cpath  = f.getPath();
         raf    = null;
         locked = false;
@@ -362,7 +362,7 @@ public class LockFile {
         mn = "lockImpl(): ";
 
         trace(mn + "entered.");
-        FileUtil.deleteOnExit(f);
+        FileUtil.getDefaultInstance().deleteOnExit(f);
 
         return true;
     }
@@ -565,7 +565,7 @@ public class LockFile {
 
         f = new File(path);
 
-        FileUtil.makeParentDirectories(f);
+        FileUtil.getDefaultInstance().makeParentDirectories(f);
         lf.setFile(f);
 
         return lf;

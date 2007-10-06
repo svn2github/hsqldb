@@ -450,7 +450,8 @@ extends org.hsqldb.DatabaseInformationMain {
             cache = (DataFileCache) caches.next();
             row   = t.getEmptyRowData();
             row[icache_file] =
-                FileUtil.canonicalOrAbsolutePath(cache.getFileName());
+                FileUtil.getDefaultInstance().canonicalOrAbsolutePath(
+                    cache.getFileName());
             row[imax_cache_sz]    = ValuePool.getInt(cache.capacity());
             row[imax_cache_bytes] = ValuePool.getLong(cache.bytesCapacity());
             row[icache_size] = ValuePool.getInt(cache.getCachedObjectCount());
@@ -1161,7 +1162,8 @@ extends org.hsqldb.DatabaseInformationMain {
             if (table.getCache() instanceof TextCache) {
                 tc = (TextCache) table.getCache();
                 row[ifile_path] =
-                    FileUtil.canonicalOrAbsolutePath(tc.getFileName());
+                    FileUtil.getDefaultInstance().canonicalOrAbsolutePath(
+                        tc.getFileName());
                 row[ifile_enc] = tc.stringEncoding;
                 row[ifs]       = tc.fs;
                 row[ivfs]      = tc.vs;

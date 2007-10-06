@@ -287,8 +287,7 @@ public class Server implements HsqlSocketRequestHandler {
 
             super(name);
 
-            setName(name + '@'
-                    + Integer.toString(Server.this.hashCode(), 16));
+            setName(name + '@' + Integer.toString(Server.this.hashCode(), 16));
         }
 
         /**
@@ -332,7 +331,8 @@ public class Server implements HsqlSocketRequestHandler {
      */
     public static void main(String[] args) {
 
-        String propsPath = FileUtil.canonicalOrAbsolutePath("server");
+        String propsPath =
+            FileUtil.getDefaultInstance().canonicalOrAbsolutePath("server");
         HsqlProperties fileProps =
             ServerConfiguration.getPropertiesFromFile(propsPath);
         HsqlProperties props = fileProps == null ? new HsqlProperties()
@@ -548,8 +548,8 @@ public class Server implements HsqlSocketRequestHandler {
     public String getDatabasePath(int index, boolean asconfigured) {
 
         if (asconfigured) {
-            return serverProperties.getProperty(
-                ServerConstants.SC_KEY_DATABASE + "." + index);
+            return serverProperties.getProperty(ServerConstants.SC_KEY_DATABASE
+                                                + "." + index);
         } else if (getState() == ServerConstants.SERVER_STATE_ONLINE) {
             return (dbPath == null || index < 0 || index >= dbPath.length)
                    ? null
@@ -616,10 +616,8 @@ public class Server implements HsqlSocketRequestHandler {
      *  description="At which ServerSocket listens for connections"
      */
     public int getPort() {
-
-        return serverProperties.getIntegerProperty(
-            ServerConstants.SC_KEY_PORT,
-            ServerConfiguration.getDefaultPort(serverProtocol, isTls()));
+        return serverProperties.getIntegerProperty(ServerConstants.SC_KEY_PORT,
+                ServerConfiguration.getDefaultPort(serverProtocol, isTls()));
     }
 
     /**
@@ -921,7 +919,7 @@ public class Server implements HsqlSocketRequestHandler {
             throw new RuntimeException();
         }
 
-        path = FileUtil.canonicalOrAbsolutePath(path);
+        path = FileUtil.getDefaultInstance().canonicalOrAbsolutePath(path);
 
         HsqlProperties p = ServerConfiguration.getPropertiesFromFile(path);
 
@@ -1150,8 +1148,8 @@ public class Server implements HsqlSocketRequestHandler {
     public void setRestartOnShutdown(boolean restart) {
 
         printWithThread("setRestartOnShutdown(" + restart + ")");
-        serverProperties.setProperty(
-            ServerConstants.SC_KEY_AUTORESTART_SERVER, restart);
+        serverProperties.setProperty(ServerConstants.SC_KEY_AUTORESTART_SERVER,
+                                     restart);
     }
 
     /**
@@ -1766,8 +1764,7 @@ public class Server implements HsqlSocketRequestHandler {
         HsqlProperties newprops = DatabaseURL.parseURL(filepath, false);
 
         if (newprops == null) {
-            RuntimeException e =
-                new RuntimeException("invalid database path");
+            RuntimeException e = new RuntimeException("invalid database path");
 
             printError("invalid database path");
             setServerError(e);
@@ -1779,8 +1776,7 @@ public class Server implements HsqlSocketRequestHandler {
         String type = newprops.getProperty("connection_type");
 
         try {
-            int dbid = DatabaseManager.getDatabase(type, path, this,
-                                                   newprops);
+            int dbid = DatabaseManager.getDatabase(type, path, this, newprops);
 
             dbID[i]    = dbid;
             dbAlias[i] = alias;
@@ -2030,8 +2026,7 @@ public class Server implements HsqlSocketRequestHandler {
     /** Prints a timestamped message indicating that this server is online */
     private void printServerOnlineMessage() {
 
-        String s = getProductName() + " " + getProductVersion()
-                   + " is online";
+        String s = getProductName() + " " + getProductVersion() + " is online";
 
         printWithTimestamp(s);
         printResource("online.help");
@@ -2282,6 +2277,6 @@ public class Server implements HsqlSocketRequestHandler {
      * @param key for message
      */
     protected static void printHelp(String key) {
-        System.out.println(BundleHandler.getString(serverBundleHandle, key));
+        System.out.print(BundleHandler.getString(serverBundleHandle, key));
     }
 }

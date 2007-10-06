@@ -87,8 +87,8 @@ public class TestCacheSize {
 
     // type of the big table {MEMORY | CACHED | TEXT | ""}
     String  tableType      = "CACHED";
-    int     cacheScale     = 8;
-    int     cacheSizeScale = 8;
+    int     cacheScale     = 14;
+    int     cacheSizeScale = 10;
     boolean nioMode        = false;
 
     // script format {TEXT | BINARY | COMPRESSED}
@@ -915,13 +915,14 @@ public class TestCacheSize {
 
     static void deleteDatabase(String path) {
 
-        FileUtil.delete(path + ".backup");
-        FileUtil.delete(path + ".properties");
-        FileUtil.delete(path + ".script");
-        FileUtil.delete(path + ".data");
-        FileUtil.delete(path + ".log");
-        FileUtil.delete(path + ".lck");
-        FileUtil.delete(path + ".csv");
+        FileUtil fileUtil = FileUtil.getDefaultInstance();
+        fileUtil.delete(path + ".backup");
+        fileUtil.delete(path + ".properties");
+        fileUtil.delete(path + ".script");
+        fileUtil.delete(path + ".data");
+        fileUtil.delete(path + ".log");
+        fileUtil.delete(path + ".lck");
+        fileUtil.delete(path + ".csv");
     }
 
     int nextIntRandom(Random r, int range) {

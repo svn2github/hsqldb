@@ -675,7 +675,7 @@ public class DataFileCache {
         // first attemp to delete
         fa.removeElement(fileName);
 
-        if (fa.isStreamElement(fileName)) {
+        if (!database.isStoredFileAccess() && fa.isStreamElement(fileName)) {
             if (wasNio) {
                 System.gc();
                 fa.removeElement(fileName);
@@ -686,7 +686,7 @@ public class DataFileCache {
 
                 File oldfile = new File(fileName + ".old");
 
-                FileUtil.deleteOnExit(oldfile);
+                FileUtil.getDefaultInstance().deleteOnExit(oldfile);
             }
         }
     }

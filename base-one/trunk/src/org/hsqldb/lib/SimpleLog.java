@@ -75,7 +75,7 @@ public class SimpleLog {
     private void makeLog(File file) {
 
         try {
-            FileUtil.makeParentDirectories(file);
+            FileUtil.getDefaultInstance().makeParentDirectories(file);
 
             writer = new PrintWriter(new FileWriter(file.getPath(), true),
                                      true);

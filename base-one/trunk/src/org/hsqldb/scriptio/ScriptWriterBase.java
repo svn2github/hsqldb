@@ -142,7 +142,7 @@ public abstract class ScriptWriterBase implements Runnable {
         boolean exists = false;
 
         if (isDump) {
-            exists = FileUtil.exists(file);
+            exists = FileUtil.getDefaultInstance().exists(file);
         } else {
             exists = db.getFileAccess().isStreamElement(file);
         }
