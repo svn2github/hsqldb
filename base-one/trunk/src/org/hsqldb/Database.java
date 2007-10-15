@@ -118,6 +118,7 @@ import org.hsqldb.persist.Logger;
  */
 public class Database {
 
+    //
     int    databaseID;
     String sType;
     String sName;
@@ -472,12 +473,19 @@ public class Database {
      *  the given method alias. If there is no Java method, then returns the
      *  alias itself.
      */
-    String getJavaName(String s) {
+    String getJavaName(String name) throws HsqlException {
 
-        String alias = (String) hAlias.get(s);
+        String target = (String) hAlias.get(name);
 
-        return (alias == null) ? s
-                               : alias;
+        if (target == null) {
+            target = name;
+        }
+
+        if (HsqlDatabaseProperties.supportsJavaMethod(target)) {
+            return target;
+        }
+
+        throw Trace.error(Trace.ACCESS_IS_DENIED, target);
     }
 
     /**

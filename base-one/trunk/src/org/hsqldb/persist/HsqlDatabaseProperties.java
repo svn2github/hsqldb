@@ -44,6 +44,7 @@ import org.hsqldb.lib.Set;
 import org.hsqldb.lib.SimpleLog;
 import org.hsqldb.lib.java.JavaSystem;
 import org.hsqldb.store.ValuePool;
+import org.hsqldb.lib.StringUtil;
 
 /**
  * Manages a .properties file for a database.
@@ -53,6 +54,54 @@ import org.hsqldb.store.ValuePool;
  * @since 1.7.0
  */
 public class HsqlDatabaseProperties extends HsqlProperties {
+
+    private static String hsqldb_method_class_names =
+        "hsqldb.method_class_names";
+    private static HashSet accessibleJavaMethodNames;
+
+    static {
+        try {
+            String prop = System.getProperty(hsqldb_method_class_names);
+
+            if (prop != null) {
+                accessibleJavaMethodNames = new HashSet();
+
+                String[] names = StringUtil.split(prop, ";");
+
+                for (int i = 0; i < names.length; i++) {
+                    accessibleJavaMethodNames.add(names[i]);
+                }
+            }
+        } catch (Exception e) {}
+    }
+
+    /**
+     * If the system property "hsqldb.method_class_names" is not set, then
+     * static methods of all available Java classes can be accessed as functions
+     * in HSQLDB. If the property is set, then only the list of semicolon
+     * seperated method names becomes accessible. An empty property value means
+     * no class is accessible.<p>
+     *
+     * All methods of org.hsqldb.Library are always accessible.
+     *
+     *
+     */
+    public static boolean supportsJavaMethod(String name) {
+
+        if (name.startsWith("org.hsqldb.Library")) {
+            return true;
+        }
+
+        if (accessibleJavaMethodNames == null) {
+            return true;
+        }
+
+        if (accessibleJavaMethodNames.contains(name)) {
+            return true;
+        }
+
+        return false;
+    }
 
     // column number mappings
     public static final int indexName         = 0;
@@ -197,8 +246,7 @@ public class HsqlDatabaseProperties extends HsqlProperties {
             0, 1, 2
         }));
         meta.put(hsqldb_cache_file_scale,
-                 getMeta(hsqldb_cache_file_scale, SET_PROPERTY, 1,
-                         new byte[] {
+                 getMeta(hsqldb_cache_file_scale, SET_PROPERTY, 1, new byte[] {
             1, 8
         }));
         meta.put(hsqldb_script_format,
@@ -364,8 +412,8 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         try {
             exists = super.load();
         } catch (Exception e) {
-            throw Trace.error(Trace.FILE_IO_ERROR,
-                              Trace.LOAD_SAVE_PROPERTIES, new Object[] {
+            throw Trace.error(Trace.FILE_IO_ERROR, Trace.LOAD_SAVE_PROPERTIES,
+                              new Object[] {
                 fileName, e
             });
         }
@@ -435,8 +483,8 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         } catch (Exception e) {
             database.logger.appLog.logContext(SimpleLog.LOG_ERROR, "failed");
 
-            throw Trace.error(Trace.FILE_IO_ERROR,
-                              Trace.LOAD_SAVE_PROPERTIES, new Object[] {
+            throw Trace.error(Trace.FILE_IO_ERROR, Trace.LOAD_SAVE_PROPERTIES,
+                              new Object[] {
                 fileName, e
             });
         }
