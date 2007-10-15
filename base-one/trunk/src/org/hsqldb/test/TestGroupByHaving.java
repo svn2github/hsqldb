@@ -129,7 +129,6 @@ public class TestGroupByHaving extends TestCase {
 
     protected void tearDown() throws Exception {
 
-        super.tearDown();
 
         // I decided not the use the "IF EXISTS" clause since it is not a
         // SQL standard.
@@ -150,6 +149,7 @@ public class TestGroupByHaving extends TestCase {
 
             conn = null;
         }
+        super.tearDown();
     }
 
     private void addEmployee(int id, String firstName, String lastName,

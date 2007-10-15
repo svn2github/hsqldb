@@ -369,7 +369,9 @@ public class Trace {
     COLUMN_SIZE_REQUIRED                    = 253,
     INVALID_SIZE_PRECISION                  = 254,
     CANNOT_CONNECT_TABLE                    = 255,
-    LAST_ERROR_HANDLE                       = 256;
+    INVALID_FILE_ACCESS_CLASS               = 256,
+    INVALID_STORAGE_CLASS                   = 257,
+    LAST_ERROR_HANDLE                       = 258;
 
     //
     static String MESSAGE_TAG = "$$";

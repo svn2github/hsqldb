@@ -219,22 +219,21 @@ public class Database {
             String storagekey = urlProperties.getProperty("storage_key");
 
             try {
-                Class zclass = Class.forName(fileaccess_class_name);
-                Constructor constructor = zclass.getConstructor(new Class[]{
-                    Object.class });
+                ClassLoader classLoader =
+                    Thread.currentThread().getContextClassLoader();
+                Class fileAccessClass =
+                    classLoader.loadClass(fileaccess_class_name);
+                Constructor constructor =
+                    fileAccessClass.getConstructor(new Class[]{
+                        Object.class });
 
                 fileaccess =
                     (FileAccess) constructor.newInstance(new Object[]{
                         storagekey });
                 isStoredFileAccess = true;
-            } catch (java.lang.ClassNotFoundException e) {
-                System.out.println("ClassNotFoundException");
-            } catch (java.lang.InstantiationException e) {
-                System.out.println("InstantiationException");
-            } catch (java.lang.IllegalAccessException e) {
-                System.out.println("IllegalAccessException");
             } catch (Exception e) {
-                System.out.println("Exception");
+                throw Trace.error(Trace.INVALID_FILE_ACCESS_CLASS,
+                                  e.toString());
             }
         } else {
             fileaccess = FileUtil.getDefaultInstance();
@@ -272,7 +271,7 @@ public class Database {
         try {
             databaseProperties = new HsqlDatabaseProperties(this);
             isNew = !DatabaseURL.isFileBasedDatabaseType(sType)
-                    ||!databaseProperties.checkFileExists();
+                    || !databaseProperties.checkFileExists();
 
             if (isNew && urlProperties.isPropertyTrue("ifexists")) {
                 throw Trace.error(Trace.DATABASE_NOT_EXISTS, sName);

@@ -54,8 +54,8 @@ import junit.framework.TestResult;
 public class TestJDBCSavepoints extends TestCase {
 
 //  You change the url and serverProps to reflect your preferred settings
-    // String serverProps = "database.0=mem:test;silent=false;trace=true" // debugging
-    String serverProps = "database.0=mem:test;silent=true;trace=false";
+    // String serverProps = "database.0=mem:test;dbname.0=;silent=false;trace=true" // debugging
+    String serverProps = "database.0=mem:test;dbname.0=;silent=true;trace=false";
 
     //String     url         = "jdbc:hsqldb:hsql://localhost";
     String     url = "jdbc:hsqldb:http://localhost";

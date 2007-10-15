@@ -89,24 +89,22 @@ class ScaledRAFile implements ScaledRAInterface {
 
         if (classname != null) {
             try {
-                Class       zclass      = Class.forName(classname);
-                Constructor constructor = zclass.getConstructor(new Class[] {
+                ClassLoader classLoader =
+                    Thread.currentThread().getContextClassLoader();
+                Class storageClass = classLoader.loadClass(classname);
+                Constructor constructor =
+                    storageClass.getConstructor(new Class[] {
                     String.class, Boolean.class, Object.class
                 });
 
                 return (Storage) constructor.newInstance(new Object[] {
                     name, new Boolean(readonly), key
                 });
-            } catch (ClassNotFoundException e) {
-                throw new IOException();
-            } catch (NoSuchMethodException e) {
-                throw new IOException();
-            } catch (InstantiationException e) {
-                throw new IOException();
-            } catch (IllegalAccessException e) {
-                throw new IOException();
-            } catch (java.lang.reflect.InvocationTargetException e) {
-                throw new IOException();
+            } catch (Exception e) {
+                throw new IOException(
+                    Trace.getMessage(
+                        Trace.INVALID_STORAGE_CLASS, true,
+                        new Object[]{ e.toString() }));
             }
         }
 

@@ -51,6 +51,7 @@ public class AllTests extends TestCase {
         suite.addTestSuite(org.hsqldb.test.TestBug808460.class);
         suite.addTestSuite(org.hsqldb.test.TestDatabaseMetaData.class);
         suite.addTestSuite(org.hsqldb.test.TestDateTime.class);
+        suite.addTestSuite(org.hsqldb.test.TestJDBCSavepoints.class);
         suite.addTestSuite(org.hsqldb.test
             .TestINPredicateParameterizationAndCorrelation.class);
         suite.addTestSuite(org.hsqldb.test.TestSqlPersistent.class);

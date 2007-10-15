@@ -94,10 +94,10 @@ public class TestSubselect extends TestCase {
 
     protected void tearDown() throws Exception {
 
-        super.tearDown();
         jdbcConnection.close();
 
         jdbcConnection = null;
+        super.tearDown();
     }
 
     void createDataset() throws SQLException {

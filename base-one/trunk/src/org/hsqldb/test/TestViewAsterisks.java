@@ -99,8 +99,8 @@ public class TestViewAsterisks extends TestBase {
     }
 
     protected void tearDown() {
-        super.tearDown();
         executeStatement("SHUTDOWN");
+        super.tearDown();
     }
 
     /**

@@ -184,8 +184,8 @@ public class TestTextTable extends TestBase
     }
 
     protected void tearDown() {
-        super.tearDown();
         executeStatement("SHUTDOWN");
+        super.tearDown();
     }
 
     /** returns the data source definition for a given text table

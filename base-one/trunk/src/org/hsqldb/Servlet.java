@@ -97,7 +97,7 @@ import org.hsqldb.rowio.RowOutputBinary;
  * use the normal JDBC interfaces to connect to the URL of this servlet. An
  * example URL is:
  * <pre>
- * jdbc:hsqldb:http://localhost.com:8080/servlet/org.hsqldb.Servlet
+ * jdbc:hsqldb:http://myhost.com:8080/servlet/org.hsqldb.Servlet
  * </pre>
  * The database path/name is taken from the servlet engine property:
  * <pre>
