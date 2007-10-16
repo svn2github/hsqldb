@@ -703,7 +703,7 @@ public class Log {
     private void processDataFile() throws HsqlException {
 
         if (cache == null || filesReadOnly || database.isStoredFileAccess()
-                ||!fa.isStreamElement(logFileName)) {
+                || !fa.isStreamElement(logFileName)) {
             return;
         }
 
@@ -756,7 +756,8 @@ public class Log {
 
         closeTextCache(table);
 
-        if (!properties.isPropertyTrue("textdb.allow_full_path")) {
+        if (!properties.isPropertyTrue(
+                HsqlDatabaseProperties.textdb_allow_full_path)) {
             if (source.indexOf("..") != -1) {
                 throw (Trace.error(Trace.ACCESS_IS_DENIED, source));
             }

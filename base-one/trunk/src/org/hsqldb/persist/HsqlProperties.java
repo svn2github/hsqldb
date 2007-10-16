@@ -158,8 +158,7 @@ public class HsqlProperties {
     /**
      * Choice limited to values list, defaultValue must be in the values list.
      */
-    public int getIntegerProperty(String key, int defaultValue,
-                                  int[] values) {
+    public int getIntegerProperty(String key, int defaultValue, int[] values) {
 
         String prop  = getProperty(key);
         int    value = defaultValue;
@@ -324,7 +323,10 @@ public class HsqlProperties {
             if (p.startsWith("-?")) {
                 props.addError(NO_VALUE_FOR_KEY, p.substring(1));
             } else if (p.charAt(0) == '-') {
-                props.setProperty(type + "." + p.substring(1), arg[i + 1]);
+                String value = i + 1 < arg.length ? arg[i + 1]
+                                                  : "";
+
+                props.setProperty(type + "." + p.substring(1), value);
 
                 i++;
             }

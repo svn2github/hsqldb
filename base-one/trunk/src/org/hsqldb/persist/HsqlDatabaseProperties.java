@@ -429,8 +429,9 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         // do not open if the database belongs to a later (future) version
         int check = version.substring(0, 5).compareTo(THIS_VERSION);
 
-        Trace.check(check <= 0, Trace.WRONG_DATABASE_FILE_VERSION);
-
+        if (check > 0) {
+            throw Trace.error(Trace.WRONG_DATABASE_FILE_VERSION);
+        }
         version = getProperty(db_version);
 
         if (version.charAt(2) == '6') {

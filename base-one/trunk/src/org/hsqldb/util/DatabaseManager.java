@@ -117,19 +117,19 @@ implements ActionListener, WindowListener, KeyListener {
         "See the forums, mailing lists, and HSQLDB User Guide\n"
         + "at http://hsqldb.org.\n\n"
         + "Please paste the following version identifier with any\n"
-        + "problem reports or help requests:  $Revision: 1.31 $"
+        + "problem reports or help requests:  $Revision: 1.33 $"
         + (TT_AVAILABLE ? ""
                         : ("\n\nTransferTool classes are not in CLASSPATH.\n"
                            + "To enable the Tools menu, add 'transfer.jar' to your class path."));
     ;
     private static final String ABOUT_TEXT =
-        "$Revision: 1.31 $ of DatabaseManagerSwing\n\n"
+        "$Revision: 1.33 $ of DatabaseManagerSwing\n\n"
         + "Copyright (c) 1995-2000, The Hypersonic SQL Group.\n"
-        + "Copyright (c) 2001-2005, The HSQL Development Group.\n"
+        + "Copyright (c) 2001-2007, The HSQL Development Group.\n"
         + "http://hsqldb.org  (User Guide available at this site).\n\n\n"
         + "You may use and redistribute according to the HSQLDB\n"
         + "license documented in the source code and at the web\n"
-        + "site above."
+        + "site above."          //
         + (TT_AVAILABLE ? "\n\nTransferTool options are available."
                         : "");
     Connection       cConn;
@@ -300,11 +300,14 @@ implements ActionListener, WindowListener, KeyListener {
                 }
 
                 autoConnect = true;
-                c = (new RCData(new File((rcFile == null) ? DEFAULT_RCFILE
-                                                          : rcFile), urlid).getConnection(
-                                                          null, System.getProperty(
-                                                              "sqlfile.charset"), System.getProperty(
-                                                                  "javax.net.ssl.trustStore")));
+
+                if (rcFile == null) {
+                    rcFile = DEFAULT_RCFILE;
+                }
+
+                c = new RCData(new File(rcFile), urlid).getConnection(null,
+                               System.getProperty("sqlfile.charset"),
+                               System.getProperty("javax.net.ssl.trustStore"));
             } else {
                 c = ConnectionDialog.createConnection(m.fMain, "Connect");
             }
@@ -624,7 +627,7 @@ implements ActionListener, WindowListener, KeyListener {
 
                 if (4096 <= ifHuge.length()) {
                     buf.append(
-                        "This huge file cannot be edited. Please execute\n");
+                        "This huge file cannot be edited.\n Please execute or clear\n");
                     txtCommand.setText(buf.toString());
                 } else {
                     txtCommand.setText(ifHuge);
@@ -829,7 +832,9 @@ implements ActionListener, WindowListener, KeyListener {
     public void windowClosing(WindowEvent ev) {
 
         try {
-            cConn.close();
+            if (cConn != null) {
+                cConn.close();
+            }
         } catch (Exception e) {}
 
         fMain.dispose();
@@ -899,6 +904,10 @@ implements ActionListener, WindowListener, KeyListener {
         lTime = System.currentTimeMillis();
 
         try {
+            if (sStatement == null) {
+                return;
+            }
+
             sStatement.execute(sCmd);
 
             lTime = System.currentTimeMillis() - lTime;

@@ -52,17 +52,12 @@ import org.hsqldb.lib.java.JavaSystem;
  */
 public class FileUtil implements FileAccess {
 
-    private static FileUtil fileUtil;
+    private static FileUtil fileUtil = new FileUtil();
 
     /** Creates a new instance of FileUtil */
     FileUtil() {}
 
     public static FileUtil getDefaultInstance() {
-
-        if (fileUtil == null) {
-            fileUtil = new FileUtil();
-        }
-
         return fileUtil;
     }
 
@@ -154,8 +149,7 @@ public class FileUtil implements FileAccess {
         return (new File(filename)).exists();
     }
 
-    public boolean exists(String fileName, boolean resource,
-                                 Class cla) {
+    public boolean exists(String fileName, boolean resource, Class cla) {
 
         if (fileName == null || fileName.length() == 0) {
             return false;

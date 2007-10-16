@@ -91,8 +91,7 @@ class ConnectionDialogCommon {
             "jdbc:informix-sqli://\u00ABhost?\u00BB:1533/\u00ABdatabase?\u00BB:"
             + "INFORMIXSERVER=\u00ABserver?\u00BB"
         }, {
-            "InstantDb", "jdbc.idbDriver",
-            "jdbc:idb:\u00ABdatabase?\u00BB.prp"
+            "InstantDb", "jdbc.idbDriver", "jdbc:idb:\u00ABdatabase?\u00BB.prp"
         }, {
             "MySQL Connector/J", "com.mysql.jdbc.Driver",
             "jdbc:mysql://\u00ABhost?\u00BB/\u00ABdatabase?\u00BB"

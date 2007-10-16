@@ -101,7 +101,7 @@ class DatabaseManagerCommon {
         + "[INTO [CACHED|TEMP|TEXT] newTable] \n" + "FROM tableList \n"
         + "[WHERE Expression] \n"
         + "[ORDER BY selectExpression [{ASC | DESC}] [, ...] ] \n"
-        + "[GROUP BY Expression [, ...] ] \n"                      //
+        + "[GROUP BY Expression [, ...] ] \n"                             //
         + "[UNION [ALL] selectStatement]"
     };
     static String[] insertHelp = {
@@ -151,9 +151,10 @@ class DatabaseManagerCommon {
         + "SET DATABASE COLLATION \"<collationname>\"\n"
         + "SET CHECKPOINT DEFRAG <size>\n"
         + "SET IGNORECASE { TRUE | FALSE }\n"
-        + "SET INITIAL SCHEMA <schemaname>\n"                      //
-        + "SET LOGSIZE <size>\n"                                   //
-        + "SET MAXROWS maxrows\n" + "SET PASSWORD <password>\n"    //
+        + "SET INITIAL SCHEMA <schemaname>\n"                             //
+        + "SET LOGSIZE <size>\n"                                          //
+        + "SET MAXROWS maxrows\n"                                         //
+        + "SET PASSWORD <password>\n"                                     //
         + "SET PROPERTY \"<propname>\" <propvalue>\n"
         + "SET READONLY { TRUE | FALSE }\n"
         + "SET REFERENTIAL_INTEGRITY { TRUE | FALSE }\n"
@@ -162,8 +163,9 @@ class DatabaseManagerCommon {
         + "SET TABLE INDEX <tablename> '<index1rootPos>...'\n"
         + "SET TABLE <tablename> READONLY { TRUE | FALSE }\n"
         + "SET TABLE <tablename> SOURCE \"<file>\" [DESC]\n"
-        + "SET WRITE_DELAY { TRUE | FALSE | <seconds> | <ms> MILLIS }"
-        + "\n\n" + "(HSQLDB SQL only)"
+        + "SET WRITE_DELAY { TRUE | FALSE | <seconds> | <ms> MILLIS }"    //
+        + "\n\n"                                                          //
+        + "(HSQLDB SQL only)"
     };
     static String[] testHelp = {
         "-->>>TEST<<<-- ;\n" + "--#1000;\n" + "DROP TABLE Test IF EXISTS;\n"
@@ -231,15 +233,15 @@ class DatabaseManagerCommon {
         String[] demo = {
             "DROP TABLE Item IF EXISTS;", "DROP TABLE Invoice IF EXISTS;",
             "DROP TABLE Product IF EXISTS;", "DROP TABLE Customer IF EXISTS;",
-            "CREATE TABLE Customer(ID INTEGER PRIMARY KEY,FirstName VARCHAR,"
-            + "LastName VARCHAR,Street VARCHAR,City VARCHAR);",
-            "CREATE TABLE Product(ID INTEGER PRIMARY KEY,Name VARCHAR,"
-            + "Price DECIMAL);",
+            "CREATE TABLE Customer(ID INTEGER PRIMARY KEY,FirstName VARCHAR(20),"
+            + "LastName VARCHAR(20),Street VARCHAR(20),City VARCHAR(20));",
+            "CREATE TABLE Product(ID INTEGER PRIMARY KEY,Name VARCHAR(20),"
+            + "Price DECIMAL(10,2));",
             "CREATE TABLE Invoice(ID INTEGER PRIMARY KEY,CustomerID INTEGER,"
-            + "Total DECIMAL, FOREIGN KEY (CustomerId) "
+            + "Total DECIMAL(10,2), FOREIGN KEY (CustomerId) "
             + "REFERENCES Customer(ID) ON DELETE CASCADE);",
             "CREATE TABLE Item(InvoiceID INTEGER,Item INTEGER,"
-            + "ProductID INTEGER,Quantity INTEGER,Cost DECIMAL,"
+            + "ProductID INTEGER,Quantity INTEGER,Cost DECIMAL(10,2),"
             + "PRIMARY KEY(InvoiceID,Item), "
             + "FOREIGN KEY (InvoiceId) REFERENCES "
             + "Invoice (ID) ON DELETE CASCADE, FOREIGN KEY (ProductId) "
@@ -310,9 +312,9 @@ class DatabaseManagerCommon {
         sStatement.execute("UPDATE Product SET Price=ROUND(Price*.1,2)");
         sStatement.execute(
             "UPDATE Item SET Cost=Cost*"
-            + "SELECT Price FROM Product prod WHERE ProductID=prod.ID");
-        sStatement.execute("UPDATE Invoice SET Total=SELECT SUM(Cost*"
-                           + "Quantity) FROM Item WHERE InvoiceID=Invoice.ID");
+            + "(SELECT Price FROM Product prod WHERE ProductID=prod.ID)");
+        sStatement.execute("UPDATE Invoice SET Total=(SELECT SUM(Cost*"
+                           + "Quantity) FROM Item WHERE InvoiceID=Invoice.ID)");
 
         return ("SELECT * FROM Customer");
     }

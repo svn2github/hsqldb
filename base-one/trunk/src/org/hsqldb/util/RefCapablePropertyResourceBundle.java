@@ -44,6 +44,9 @@ import java.io.InputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
+
+/* $Id: RefCapablePropertyResourceBundle.java 330 2007-06-27 02:24:31Z unsaved $ */
+
 /**
  * Just like PropertyResourceBundle, except keys mapped to nothing in the
  * properties file will load the final String value from a text file.

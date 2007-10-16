@@ -34,6 +34,7 @@ package org.hsqldb.persist;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
+import org.hsqldb.Database;
 import org.hsqldb.HsqlException;
 import org.hsqldb.Table;
 import org.hsqldb.Trace;
@@ -46,7 +47,6 @@ import org.hsqldb.rowio.RowOutputText;
 import org.hsqldb.rowio.RowOutputTextQuoted;
 import org.hsqldb.scriptio.ScriptWriterText;
 import org.hsqldb.store.ObjectCacheHashMap;
-import org.hsqldb.Database;
 
 // Ito Kazumitsu 20030328 - patch 1.7.2 - character encoding support
 // Dimitri Maziuk - patch for NL in string support
@@ -344,7 +344,7 @@ public class TextCache extends DataFileCache {
 
             dataFile = null;
 
-            if (empty &&!cacheReadonly) {
+            if (empty && !cacheReadonly) {
                 FileUtil.getDefaultInstance().delete(fileName);
             }
         } catch (Exception e) {
@@ -388,8 +388,7 @@ public class TextCache extends DataFileCache {
      *
      */
     public synchronized void remove(int pos,
-                                    PersistentStore store)
-                                    throws IOException {
+                                    PersistentStore store) throws IOException {
 
         CachedObject row = (CachedObject) uncommittedCache.remove(pos);
 
@@ -540,9 +539,8 @@ public class TextCache extends DataFileCache {
                     complete = true;
 
                     if (!cacheReadonly) {
-                        dataFile.write(
-                            ScriptWriterText.BYTES_LINE_SEP, 0,
-                            ScriptWriterText.BYTES_LINE_SEP.length);
+                        dataFile.write(ScriptWriterText.BYTES_LINE_SEP, 0,
+                                       ScriptWriterText.BYTES_LINE_SEP.length);
                     }
 
                     break;

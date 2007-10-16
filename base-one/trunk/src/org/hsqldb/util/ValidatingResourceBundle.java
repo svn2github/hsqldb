@@ -38,6 +38,8 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Collection;
 
+/* $Id: ValidatingResourceBundle.java 321 2007-06-25 11:38:03Z unsaved $ */
+
 /**
  * Purpose of this class is to wrap a RefCapablePropertyResourceBundle to
  *  reliably detect any possible use of a missing property key as soon as
@@ -176,7 +178,7 @@ abstract public class ValidatingResourceBundle {
 
     /* Convenience wrappers follow for getString(int, String[]) for up to
      * 3 int and/or String positionals.  Java 5 variable-length parameters
-     * can eliminate the repetition here, plus generalize to random 
+     * can eliminate the repetition here, plus generalize to random
      * numbers of parameters. */
     public String getString(int id, String s1) {
         return getString(id, new String[] {s1});
