@@ -234,7 +234,7 @@ public class Database {
                 isStoredFileAccess = true;
             } catch (Exception e) {
                 throw Trace.error(Trace.INVALID_FILE_ACCESS_CLASS,
-                                  e.toString());
+                                  new Object[]{ e.toString() });
             }
         } else {
             fileaccess = FileUtil.getDefaultInstance();

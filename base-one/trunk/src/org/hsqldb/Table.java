@@ -581,7 +581,8 @@ public class Table extends BaseTable {
     void addColumn(Column column) throws HsqlException {
 
         if (findColumn(column.columnName.name) >= 0) {
-            throw Trace.error(Trace.COLUMN_ALREADY_EXISTS, column.columnName.name);
+            throw Trace.error(Trace.COLUMN_ALREADY_EXISTS,
+                              column.columnName.name);
         }
 
         if (column.isIdentity()) {
@@ -661,7 +662,6 @@ public class Table extends BaseTable {
         String oldname = tableName.name;
 
         tableName.rename(newname, isquoted);
-
         renameTableInCheckConstraints(session, oldname, newname);
     }
 
@@ -3304,8 +3304,6 @@ public class Table extends BaseTable {
                 indexList[i].insert(session, row, i);
             }
         } catch (HsqlException e) {
-            Index   index        = indexList[i];
-            boolean isconstraint = index.isConstraint;
 
             // unique index violation - rollback insert
             for (--i; i >= 0; i--) {
@@ -3316,15 +3314,6 @@ public class Table extends BaseTable {
 
             row.delete();
             removeRowFromStore(row);
-
-            if (isconstraint) {
-                Constraint c    = getUniqueOrPKConstraintForIndex(index);
-                String     name = c == null ? index.getName().name
-                                            : c.getName().name;
-
-                throw Trace.error(Trace.VIOLATION_OF_UNIQUE_CONSTRAINT,
-                                  new Object[]{ name });
-            }
 
             throw e;
         }
