@@ -82,22 +82,46 @@ public class HsqlDatabaseProperties extends HsqlProperties {
      * seperated method names becomes accessible. An empty property value means
      * no class is accessible.<p>
      *
-     * All methods of org.hsqldb.Library are always accessible.
+     * A property value that ends with .* is treated as a wild card and allows
+     * access to all classe or method names formed by substitution of the
+     * asterisk.<p>
+     *
+     * All methods of org.hsqldb.Library and java.lang.Math are always
+     * accessible.
      *
      *
      */
     public static boolean supportsJavaMethod(String name) {
 
-        if (name.startsWith("org.hsqldb.Library")) {
+        if (accessibleJavaMethodNames == null) {
             return true;
         }
 
-        if (accessibleJavaMethodNames == null) {
+        if (name.startsWith("org.hsqldb.Library.")) {
+            return true;
+        }
+
+        if (name.startsWith("java.lang.Math.")) {
             return true;
         }
 
         if (accessibleJavaMethodNames.contains(name)) {
             return true;
+        }
+
+        Iterator it = accessibleJavaMethodNames.iterator();
+
+        while (it.hasNext()) {
+            String className = (String) it.next();
+            int    limit     = className.lastIndexOf(".*");
+
+            if (limit < 1) {
+                continue;
+            }
+
+            if (name.startsWith(className.substring(0, limit + 1))) {
+                return true;
+            }
         }
 
         return false;
@@ -432,6 +456,7 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         if (check > 0) {
             throw Trace.error(Trace.WRONG_DATABASE_FILE_VERSION);
         }
+
         version = getProperty(db_version);
 
         if (version.charAt(2) == '6') {
