@@ -89,9 +89,16 @@ class ScaledRAFile implements ScaledRAInterface {
 
         if (classname != null) {
             try {
-                ClassLoader classLoader =
-                    Thread.currentThread().getContextClassLoader();
-                Class storageClass = classLoader.loadClass(classname);
+                Class storageClass = null;
+                try {
+                    ClassLoader classLoader =
+                        Thread.currentThread().getContextClassLoader();
+                    storageClass =
+                        classLoader.loadClass(classname);
+                }
+                catch (ClassNotFoundException e) {
+                    storageClass = Class.forName(classname);
+                }
                 Constructor constructor =
                     storageClass.getConstructor(new Class[] {
                     String.class, Boolean.class, Object.class

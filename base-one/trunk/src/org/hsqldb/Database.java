@@ -220,10 +220,16 @@ public class Database {
             String storagekey = urlProperties.getProperty("storage_key");
 
             try {
-                ClassLoader classLoader =
-                    Thread.currentThread().getContextClassLoader();
-                Class fileAccessClass =
-                    classLoader.loadClass(fileaccess_class_name);
+                Class fileAccessClass = null;
+                try {
+                    ClassLoader classLoader =
+                        Thread.currentThread().getContextClassLoader();
+                    fileAccessClass =
+                        classLoader.loadClass(fileaccess_class_name);
+                }
+                catch (ClassNotFoundException e) {
+                    fileAccessClass = Class.forName(fileaccess_class_name);
+                }
                 Constructor constructor =
                     fileAccessClass.getConstructor(new Class[]{
                         Object.class });
