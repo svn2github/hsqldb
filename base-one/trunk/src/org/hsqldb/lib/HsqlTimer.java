@@ -276,6 +276,10 @@ public final class HsqlTimer implements ObjectComparator, ThreadFactory {
         }
     }
 
+    /** for compatiblity with previous version */
+    public synchronized void shutDown() {
+        shutdown();
+    }
     /**
      * Shuts down this timer immediately, interrupting the wait state associated
      * with the current head of the task queue or the wait state internal to
