@@ -6,6 +6,15 @@ hsqldb 1.8.0, including point releases, in reverse chronological order.
 Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
+2007.10.22  1.8.0.9
+
+Internal changes to classloader for FileAccess classes for next OOo release.
+new optional Java system property hsqldb.method_class_names allows preventing
+access to classe other than org.hsqldb.Library and java.lang.Math or specifying
+a semicolumn-separated list of allowed classes. For example,
+java -Dhsqldb.method_class_names="org.me.MyClass;org.you.YourClass" 
+allows access to methods in the two specified classes.
+
 2007.09.06  1.8.0.8.1
 
 Fixed regression that impacted performance of system table selects and JDBC 
