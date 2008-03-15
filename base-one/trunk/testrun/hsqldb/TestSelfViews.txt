@@ -79,6 +79,13 @@ create view S4 as select distinct * from abc;
 create view S5 as select abc.* from abc;
 create view S6 as select a.* from abc as a;
 create view S7 as ( select * from abc );
+create view S11 as select*from abc;
+create view S12 as select limit 0 2*from abc cba order by id;
+create view S13 as select top 2 * from abc cfc order by id;
+create view S14 as select distinct *from abc;
+create view S15 as select bcd.* from abc bcd;
+create view S16 as select a.*from abc as a;
+create view S17 as ( select * from abc );
 -- asterisks combined with other columns
 create view C1 as select *, a as a2 from abc;
 create view C2 as select b as b2, * from abc;
