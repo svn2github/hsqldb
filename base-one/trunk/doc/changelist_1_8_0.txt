@@ -6,6 +6,15 @@ hsqldb 1.8.0, including point releases, in reverse chronological order.
 Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
+2008.03.16  towards 1.8.0.9
+
+Fixed issue with org.hsqldb.Servlet
+Fixed issue with scripting of views
+Fixed issue with HsqlTimer
+Minor improvement to WebServer
+Minor corrections to utilities.
+
+
 2007.10.22  1.8.0.9
 
 Internal changes to classloader for FileAccess classes for next OOo release.
