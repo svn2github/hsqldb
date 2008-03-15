@@ -34,6 +34,8 @@ package org.hsqldb;
 import org.hsqldb.HsqlNameManager.HsqlName;
 import org.hsqldb.lib.HsqlArrayList;
 import org.hsqldb.lib.Iterator;
+import org.hsqldb.lib.IntKeyHashMap;
+import org.hsqldb.lib.ArrayUtil;
 
 // fredt@users 20020420 - patch523880 by leptipre@users - VIEW support - modified
 // fredt@users 20031227 - remimplementated as compiled query
@@ -162,7 +164,7 @@ class View extends Table {
      *  is a private helper for replaceAsterisksInStatement, to avoid some code duplication
      */
     private void collectAsteriskPos(final Select select,
-                                    HsqlArrayList asteriskPositions) {
+                                    IntKeyHashMap asteriskPositions) {
 
         if (select.asteriskPositions == null) {
             return;
@@ -173,7 +175,7 @@ class View extends Table {
         while (asterisks.hasNext()) {
             int pos = asterisks.nextInt();
 
-            asteriskPositions.set(pos, select.asteriskPositions.get(pos));
+            asteriskPositions.put(pos, select.asteriskPositions.get(pos));
         }
 
         // The following is to guarantee the invariant of this class, that the |astersiskPositions|
@@ -194,9 +196,7 @@ class View extends Table {
      */
     private void replaceAsterisksInStatement() throws HsqlException {
 
-        HsqlArrayList asteriskPositions = new HsqlArrayList();
-
-        asteriskPositions.setSize(statement.length());
+        IntKeyHashMap asteriskPositions = new IntKeyHashMap();
 
         // asterisk positions in sub queries
         for (int i = 0; i < viewSubqueries.length; ++i) {
@@ -217,19 +217,39 @@ class View extends Table {
             }
         }
 
-        StringBuffer expandedStatement = new StringBuffer(statement);
+        int[]    positions = new int[asteriskPositions.size()];
+        Iterator it        = asteriskPositions.keySet().iterator();
 
-        for (int pos = asteriskPositions.size() - 1; pos >= 0; --pos) {
+        for (int i = 0; i < positions.length; i++) {
+            positions[i] = it.nextInt();
+        }
+
+        ArrayUtil.sortArray(positions);
+
+        StringBuffer expandedStatement = new StringBuffer();
+        int          lastPos           = 0;
+        String       segment;
+
+        for (int i = 0; i < positions.length; i++) {
+            int    pos     = positions[i];
             String colList = (String) asteriskPositions.get(pos);
 
             if (colList == null) {
                 continue;
             }
 
-            expandedStatement.replace(pos,
-                                      expandedStatement.indexOf("*", pos) + 1,
-                                      colList);
+            segment = statement.substring(lastPos, pos);
+            lastPos = statement.indexOf("*", pos) + 1;
+
+            expandedStatement.append(segment);
+            expandedStatement.append(' ');
+            expandedStatement.append(colList);
+            expandedStatement.append(' ');
         }
+
+        segment = statement.substring(lastPos, statement.length());
+
+        expandedStatement.append(segment);
 
         statement = expandedStatement.toString();
     }

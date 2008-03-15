@@ -106,7 +106,7 @@ implements ActionListener, WindowListener, KeyListener {
 
     static {
         try {
-            Class.forName(DatabaseManagerSwing.class.getPackage().getName()
+            Class.forName(DatabaseManager.class.getPackage().getName()
                           + ".Transfer");
 
             TT_AVAILABLE = true;

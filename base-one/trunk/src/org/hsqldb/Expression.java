@@ -546,16 +546,16 @@ public class Expression {
 
         Trace.doAssert(exprType == COLUMN);
 
-        StringBuffer buf = new StringBuffer();
+        StringBuffer buf   = new StringBuffer();
+        Table        table = tableFilter.getTable();
 
-        Table table = tableFilter.getTable();
-
-        if (tableName != null) {
-            if (!tableName.equals("SYSTEM_SUBQUERY"))
+        if (!table.getName().name.equals(tableName)) {
+            if (!tableName.equals("SYSTEM_SUBQUERY")) {
                 buf.append('"').append(tableName).append('"').append('.');
-        }
-        else
+            }
+        } else {
             buf.append(table.tableName.statementName).append('.');
+        }
 
         buf.append(table.getColumn(columnIndex).columnName.statementName);
 
@@ -2217,8 +2217,8 @@ public class Expression {
                         eArg  = null;
                         eArg2 = null;
                     }
-                } else if ((argFixed &&!Boolean.TRUE.equals(arg))
-                           || (arg2Fixed &&!Boolean.TRUE.equals(arg2))) {
+                } else if ((argFixed && !Boolean.TRUE.equals(arg))
+                           || (arg2Fixed && !Boolean.TRUE.equals(arg2))) {
                     exprType = FALSE;
                     eArg     = null;
                     eArg2    = null;
@@ -2409,12 +2409,12 @@ public class Expression {
                 } else if (case1.dataType != case2.dataType) {
                     if (case2.exprType == Expression.VALUE) {
                         dataType = case2.dataType = case1.dataType;
-                        case2.valueData =
-                            Column.convertObject(case2.valueData, dataType);
+                        case2.valueData = Column.convertObject(case2.valueData,
+                                                               dataType);
                     } else if (case1.exprType == Expression.VALUE) {
                         dataType = case1.dataType = case2.dataType;
-                        case1.valueData =
-                            Column.convertObject(case1.valueData, dataType);
+                        case1.valueData = Column.convertObject(case1.valueData,
+                                                               dataType);
                     } else {
                         throw Trace.error(Trace.UNRESOLVED_PARAMETER_TYPE,
                                           Trace.Expression_resolveTypes7,
@@ -2562,7 +2562,7 @@ public class Expression {
             Expression eLast = new Expression(Types.VARCHAR,
                                               likeObject.getRangeHigh());
 
-            if (between &&!like) {
+            if (between && !like) {
                 Expression eArgOld = eArg;
 
                 eArg       = new Expression(BIGGER_EQUAL, eArgOld, eFirst);
@@ -3038,9 +3038,8 @@ public class Expression {
                     currValue = new Object[2];
                 }
 
-                leftValue =
-                    eArg.getAggregatedValue(session,
-                                            ((Object[]) currValue)[0]);
+                leftValue = eArg.getAggregatedValue(session,
+                                                    ((Object[]) currValue)[0]);
                 rightValue =
                     eArg2.getAggregatedValue(session,
                                              ((Object[]) currValue)[1]);
@@ -3452,9 +3451,8 @@ public class Expression {
                 return eArg.testExistsCondition(session);
 
             case FUNCTION :
-                Object value =
-                    Column.convertObject(function.getValue(session),
-                                         Types.BOOLEAN);
+                Object value = Column.convertObject(function.getValue(session),
+                                                    Types.BOOLEAN);
 
                 return (Boolean) value;
         }
@@ -3592,8 +3590,8 @@ public class Expression {
             for (int i = 0; i < len; i++) {
                 Object o2 = valueList[i].getValue(session, dataType);
 
-                if (Column.compare(
-                        session.database.collation, o, o2, dataType) == 0) {
+                if (Column.compare(session.database.collation, o, o2, dataType)
+                        == 0) {
                     return Boolean.TRUE;
                 }
             }
@@ -3628,8 +3626,7 @@ public class Expression {
         throw Trace.error(Trace.WRONG_DATA_TYPE);
     }
 
-    private Boolean testExistsCondition(Session session)
-    throws HsqlException {
+    private Boolean testExistsCondition(Session session) throws HsqlException {
 
         if (subQuery.isResolved) {
             return subQuery.table.isEmpty(session) ? Boolean.FALSE
@@ -4001,8 +3998,7 @@ public class Expression {
 
             case AND :
             case OR :
-                return eArg.isFixedConditional()
-                       && eArg2.isFixedConditional();
+                return eArg.isFixedConditional() && eArg2.isFixedConditional();
 
             default :
                 return false;
@@ -4031,8 +4027,8 @@ public class Expression {
 
         // IDENTITY columns are not nullable but NULLs are accepted
         // and converted into the next identity value for the table
-        nullability = c.isNullable() &&!isIdentity ? NULLABLE
-                                                   : NO_NULLS;
+        nullability = c.isNullable() && !isIdentity ? NULLABLE
+                                                    : NO_NULLS;
         isWritable  = t.isWritable();
         catalog     = t.getCatalogName();
         schema      = t.getSchemaName();
