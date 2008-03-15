@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2005, The HSQL Development Group
+/* Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -599,8 +599,8 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
      */
     public String getDatabaseProductVersion() throws SQLException {
 
-        ResultSet rs = execute(
-            "call \"org.hsqldb.Library.getDatabaseProductVersion\"()");
+        ResultSet rs =
+            execute("call \"org.hsqldb.Library.getDatabaseProductVersion\"()");
 
         rs.next();
 
@@ -1521,8 +1521,7 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
      * @return <code>true</code> if so; <code>false</code> otherwise
      * @exception SQLException if a database access error occurs
      */
-    public boolean supportsIntegrityEnhancementFacility()
-    throws SQLException {
+    public boolean supportsIntegrityEnhancementFacility() throws SQLException {
         return true;
     }
 
@@ -2189,8 +2188,7 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
      *      <code>false</code> if they might not remain open
      * @exception SQLException if a database access error occurs
      */
-    public boolean supportsOpenStatementsAcrossRollback()
-    throws SQLException {
+    public boolean supportsOpenStatementsAcrossRollback() throws SQLException {
         return true;
     }
 
@@ -3032,8 +3030,7 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
      * @exception SQLException if a database access error occurs
      * @see #getSearchStringEscape
      */
-    public ResultSet getProcedureColumns(String catalog,
-                                         String schemaPattern,
+    public ResultSet getProcedureColumns(String catalog, String schemaPattern,
                                          String procedureNamePattern,
                                          String columnNamePattern)
                                          throws SQLException {
@@ -3344,8 +3341,7 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
      */
     public ResultSet getColumns(String catalog, String schemaPattern,
                                 String tableNamePattern,
-                                String columnNamePattern)
-                                throws SQLException {
+                                String columnNamePattern) throws SQLException {
 
         if (wantsIsNull(tableNamePattern) || wantsIsNull(columnNamePattern)) {
             return executeSelect("SYSTEM_COLUMNS", "0=1");
@@ -3436,11 +3432,13 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
 
         schema = translateSchema(schema);
 
-        StringBuffer select = toQueryPrefix("SYSTEM_COLUMNPRIVILEGES").append(
-            and("TABLE_CAT", "=", catalog)).append(
-            and("TABLE_SCHEM", "=", schema)).append(
-            and("TABLE_NAME", "=", table)).append(
-            and("COLUMN_NAME", "LIKE", columnNamePattern));
+        StringBuffer select =
+            toQueryPrefix("SYSTEM_COLUMNPRIVILEGES").append(and("TABLE_CAT",
+                "=", catalog)).append(and("TABLE_SCHEM", "=",
+                                          schema)).append(and("TABLE_NAME",
+                                              "=",
+                                              table)).append(and("COLUMN_NAME",
+                                                  "LIKE", columnNamePattern));
 
         // By default, the query already returns the result
         // ordered by column name, privilege...
@@ -3628,13 +3626,11 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
 
         Integer Nullable = (nullable) ? null
                                       : INT_COLUMNS_NO_NULLS;
-        StringBuffer select = toQueryPrefix(
-            "SYSTEM_BESTROWIDENTIFIER").append(
+        StringBuffer select = toQueryPrefix("SYSTEM_BESTROWIDENTIFIER").append(
             and("TABLE_CAT", "=", catalog)).append(
             and("TABLE_SCHEM", "=", schema)).append(
             and("TABLE_NAME", "=", table)).append(
-            and("NULLABLE", "=", Nullable)).append(
-            " AND SCOPE IN " + scopeIn);
+            and("NULLABLE", "=", Nullable)).append(" AND SCOPE IN " + scopeIn);
 
         // By default, query already returns rows in contract order.
         // However, the way things are set up, there should never be
@@ -4304,8 +4300,8 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
      */
 
 // fredt@users 20020526 - comment - changed to exact table name
-    public ResultSet getIndexInfo(String catalog, String schema,
-                                  String table, boolean unique,
+    public ResultSet getIndexInfo(String catalog, String schema, String table,
+                                  boolean unique,
                                   boolean approximate) throws SQLException {
 
         if (table == null) {
@@ -4320,8 +4316,8 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
             toQueryPrefix("SYSTEM_INDEXINFO").append(and("TABLE_CAT", "=",
                 catalog)).append(and("TABLE_SCHEM", "=",
                                      schema)).append(and("TABLE_NAME", "=",
-                                         table)).append(and("NON_UNIQUE",
-                                             "=", nu));
+                                         table)).append(and("NON_UNIQUE", "=",
+                                             nu));
 
         // By default, this query already returns the table ordered by
         // NON_UNIQUE, TYPE, INDEX_NAME, and ORDINAL_POSITION...
@@ -5421,8 +5417,12 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
     jdbcDatabaseMetaData(jdbcConnection c) throws SQLException {
 
         // PRE: is non-null and not closed
-        connection       = c;
-        useSchemaDefault = c.connProperties.isPropertyTrue("default_schema");
+        connection = c;
+
+        if (c.connProperties != null) {
+            useSchemaDefault =
+                c.connProperties.isPropertyTrue("default_schema");
+        }
     }
 
     /**
@@ -5500,8 +5500,7 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
         boolean      isStr = (val instanceof String);
 
         if (isStr && ((String) val).length() == 0) {
-            return sb.append(" AND ").append(id).append(
-                " IS NULL").toString();
+            return sb.append(" AND ").append(id).append(" IS NULL").toString();
         }
 
         String v = isStr ? Column.createSQLString((String) val)

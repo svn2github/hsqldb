@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2005, The HSQL Development Group
+/* Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -135,8 +135,9 @@ public class DataFileCache {
         this.database  = database;
         fa             = database.getFileAccess();
 
-        int cacheScale = props.getIntegerProperty(
-            HsqlDatabaseProperties.hsqldb_cache_scale, 14, 8, 18);
+        int cacheScale =
+            props.getIntegerProperty(HsqlDatabaseProperties.hsqldb_cache_scale,
+                                     14, 8, 18);
         int cacheSizeScale = props.getIntegerProperty(
             HsqlDatabaseProperties.hsqldb_cache_size_scale, 10, 6, 20);
         int cacheFreeCountScale = props.getIntegerProperty(
@@ -177,9 +178,14 @@ public class DataFileCache {
             long    freesize  = 0;
 
             if (!preexists && fa.isStreamElement(fileName)) {
+
+                // OOo related code
                 if (database.isStoredFileAccess()) {
                     preexists = true;
-                } else {
+                }
+
+                // OOo end;
+                if (!preexists) {
 
                     // discard "empty" databases
                     File f = new File(fileName);
@@ -333,8 +339,7 @@ public class DataFileCache {
 
                     appLog.sendLine(SimpleLog.LOG_NORMAL,
                                     "DataFileCache.close() : seek end");
-                    Trace.printSystemOut("pos and flags: "
-                                         + sw.elapsedTime());
+                    Trace.printSystemOut("pos and flags: " + sw.elapsedTime());
                 }
             }
 
@@ -434,8 +439,7 @@ public class DataFileCache {
      * Adds the file space for the row to the list of free positions.
      */
     public synchronized void remove(int i,
-                                    PersistentStore store)
-                                    throws IOException {
+                                    PersistentStore store) throws IOException {
 
         CachedObject r    = release(i);
         int          size = r == null ? getStorageSize(i)
@@ -542,6 +546,10 @@ public class DataFileCache {
 
                 object = store.get(rowInput);
 
+                if (object == null) {
+                    throw new IOException("cannot build object from file");
+                }
+
                 // for text tables with empty rows at the beginning,
                 // pos may move forward in readObject
                 i = object.getPos();
@@ -595,6 +603,9 @@ public class DataFileCache {
     protected synchronized void saveRows(CachedObject[] rows, int offset,
                                          int count) throws IOException {
 
+        if (count == 0) {
+            return;
+        }
         try {
             for (int i = offset; i < offset + count; i++) {
                 CachedObject r = rows[i];
@@ -675,7 +686,13 @@ public class DataFileCache {
         // first attemp to delete
         fa.removeElement(fileName);
 
-        if (!database.isStoredFileAccess() && fa.isStreamElement(fileName)) {
+        // OOo related code
+        if (database.isStoredFileAccess()) {
+            return;
+        }
+
+        // OOo end
+        if (fa.isStreamElement(fileName)) {
             if (wasNio) {
                 System.gc();
                 fa.removeElement(fileName);
@@ -705,10 +722,12 @@ public class DataFileCache {
 
         database.getFileAccess().removeElement(filename);
 
+        // OOo related code
         if (database.isStoredFileAccess()) {
             return;
         }
 
+        // OOo end
         if (!database.getFileAccess().isStreamElement(filename)) {
             return;
         }
@@ -774,7 +793,7 @@ public class DataFileCache {
     protected synchronized void setFileModified() throws IOException {
 
         if (!fileModified) {
-
+/*
             // unset saved flag;
             dataFile.seek(FLAGS_POS);
 
@@ -785,7 +804,7 @@ public class DataFileCache {
             }
 
             dataFile.writeInt(flag);
-
+*/
             fileModified = true;
         }
     }

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2005, The HSQL Development Group
+/* Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -175,6 +175,14 @@ class View extends Table {
 
             asteriskPositions.set(pos, select.asteriskPositions.get(pos));
         }
+
+        // The following is to guarantee the invariant of this class, that the |astersiskPositions|
+        // member of the various Select instances properly describe the occurances
+        // of Expression.ASTERISK in the statement.
+        // Since we are going to replace all those asterisks, we also need to reset the various
+        // |astersiskPositions| instances, which is best done here were all non-null
+        // Select's need to pass by.
+        select.asteriskPositions = null;
     }
 
     /**
@@ -184,7 +192,7 @@ class View extends Table {
      *  which reflects the structure of the underlying tables at the *time of the definition
      *  of the view.
      */
-    private void replaceAsterisksInStatement() {
+    private void replaceAsterisksInStatement() throws HsqlException {
 
         HsqlArrayList asteriskPositions = new HsqlArrayList();
 

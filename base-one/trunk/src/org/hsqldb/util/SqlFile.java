@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2007, The HSQL Development Group
+/* Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,7 +64,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-/* $Id: SqlFile.java 354 2007-08-02 18:10:05Z unsaved $ */
+/* $Id: SqlFile.java,v 1.169 2007/08/02 18:15:32 unsaved Exp $ */
 
 /**
  * Encapsulation of a sql text file like 'myscript.sql'.
@@ -113,7 +113,7 @@ import java.util.regex.PatternSyntaxException;
  * on "buffer", and expect it to contain the method specific prefix
  * (if any).
  *
- * @version $Revision: 354 $
+ * @version $Revision: 1.169 $
  * @author Blaine Simpson unsaved@users
  */
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2007, The HSQL Development Group
+/* Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,7 @@ import java.util.ArrayList;
  *
  * @author   Blaine Simpson, unsaved@users
  * @since    HSQLDB 1.8.0
- * @version  $Revision: 69 $
+ * @version  $Revision: 1.9 $
  */
 public class MainInvoker {
 

@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2005, The HSQL Development Group
+ * Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -90,6 +90,7 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.Vector;
+
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
@@ -105,7 +106,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JApplet;
@@ -195,8 +195,8 @@ implements ActionListener, WindowListener, KeyListener {
      * be reserved for single-letter switches which can be mixed like
      * "-u -r -l" = "-url".  -blaine
      */
-    private static String homedir = null;
-    private boolean isOracle = false; // Need some workarounds for Oracle
+    private static String homedir  = null;
+    private boolean       isOracle = false;    // Need some workarounds for Oracle
 
     static {
         try {
@@ -595,7 +595,7 @@ implements ActionListener, WindowListener, KeyListener {
         }
 
         // Added: (weconsultants@users): For preloadng FontDialogSwing
-        FontDialogSwing.CreatFontDialog(refForFontDialogSwing);
+        FontDialogSwing.creatFontDialog(refForFontDialogSwing);
         m.start();
     }
 
@@ -1235,7 +1235,7 @@ implements ActionListener, WindowListener, KeyListener {
         } else if (s.equals("Set Fonts")) {
 
             // Added: (weconsultants@users)
-            FontDialogSwing.CreatFontDialog(refForFontDialogSwing);
+            FontDialogSwing.creatFontDialog(refForFontDialogSwing);
         } else if (s.equals(AUTOCOMMIT_BOX_TEXT)) {
             try {
                 cConn.setAutoCommit(boxAutoCommit.isSelected());
@@ -2142,7 +2142,8 @@ implements ActionListener, WindowListener, KeyListener {
             while (result.next()) {
                 schema = result.getString(2);
 
-                if ((!showSys) && isOracle && oracleSysUsers.contains(schema)) {
+                if ((!showSys) && isOracle
+                        && oracleSysUsers.contains(schema)) {
                     continue;
                 }
 
@@ -2182,13 +2183,16 @@ implements ActionListener, WindowListener, KeyListener {
                 String name;
 
                 try {
-                    name   = (String) tables.elementAt(i);
+                    name = (String) tables.elementAt(i);
+
                     if (isOracle && name.startsWith("BIN$")) {
                         continue;
+
                         // Oracle Recyle Bin tables.
                         // Contains metacharacters which screw up metadata
                         // queries below.
                     }
+
                     schema = (String) schemas.elementAt(i);
 
                     String schemaname = "";

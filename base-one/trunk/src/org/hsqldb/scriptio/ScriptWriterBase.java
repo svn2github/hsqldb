@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2005, The HSQL Development Group
+/* Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -51,6 +51,7 @@ import org.hsqldb.lib.FileAccess;
 import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.HsqlTimer;
 import org.hsqldb.lib.Iterator;
+import org.hsqldb.lib.SimpleLog;
 
 //import org.hsqldb.lib.StopWatch;
 // todo - can lock the database engine as readonly in a wrapper for this when
@@ -300,6 +301,8 @@ public abstract class ScriptWriterBase implements Runnable {
                         break;
                 }
 
+                int rowCount = 0;
+
                 try {
                     if (script) {
                         schemaToLog = t.getName().schema;
@@ -308,13 +311,22 @@ public abstract class ScriptWriterBase implements Runnable {
 
                         RowIterator it = t.rowIterator(currentSession);
 
+                        rowCount = 0;
+
                         while (it.hasNext()) {
                             writeRow(currentSession, t, it.next().getData());
+
+                            rowCount++;
                         }
 
                         writeTableTerm(t);
                     }
-                } catch (Exception e) {
+                } catch (Throwable e) {
+                    this.database.logger.appLog.logContext(
+                        SimpleLog.LOG_ERROR,
+                        t.getName().name + " problem after row " + rowCount);
+                    System.gc();
+
                     throw Trace.error(Trace.ASSERT_FAILED, e.toString());
                 }
             }

@@ -50,7 +50,7 @@ class JDBCBench {
     /* main program,    creates a 1-tps database:  i.e. 1 branch, 10 tellers,...
      *                    runs one TPC BM B transaction
      * example command line:
-     * -driver  org.hsqldb.jdbcDriver -url jdbc:hsqldb:/hsql/jdbcbench/test -user sa -clients 20
+     * -driver  org.hsqldb.jdbcDriver -url jdbc:hsqldb:/hsql/jdbcbench/test -user sa -clients 20 -tpc 10000
      */
     public static void main(String[] Args) {
 
@@ -186,12 +186,17 @@ class JDBCBench {
         Connection  guardian = null;
 
         try {
+            java.util.Date start = new java.util.Date();
+
             if (init) {
-                System.out.println("Start: "
-                                   + (new java.util.Date()).toString());
+                System.out.println("Start: " + start.toString());
                 System.out.print("Initializing dataset...");
                 createDatabase(url, user, password);
-                System.out.println("done.\n");
+
+                double seconds = (System.currentTimeMillis() - start.getTime())
+                                 / 1000D;
+
+                System.out.println("done. in " + seconds + " seconds\n");
                 System.out.println("Complete: "
                                    + (new java.util.Date()).toString());
             }
@@ -449,6 +454,11 @@ class JDBCBench {
             Statement Stmt       = Conn.createStatement();
             String    Query;
 
+//
+            Stmt.execute("SET WRITE_DELAY 10000 MILLIS;");
+            Stmt.execute("SET PROPERTY \"hsqldb.cache_scale\" 16;");
+
+//
             Query = "SELECT count(*) ";
             Query += "FROM   accounts";
 
@@ -585,11 +595,13 @@ class JDBCBench {
 
             Stmt.execute(Query);
             Stmt.clearWarnings();
+
+/*
             Stmt.execute("SET TABLE ACCOUNTS SOURCE \"ACCOUNTS.TXT\"");
             Stmt.execute("SET TABLE BRANCHES SOURCE \"BBRANCHES.TXT\"");
             Stmt.execute("SET TABLE TELLERS SOURCE \"TELLERS.TXT\"");
             Stmt.execute("SET TABLE HISTORY SOURCE \"HISTORY.TXT\"");
-
+*/
             if (transactions) {
                 Conn.commit();
             }
@@ -680,8 +692,7 @@ class JDBCBench {
             }
 
             if (prepared_stmt) {
-                Query =
-                    "INSERT INTO tellers(Tid,Bid,Tbalance) VALUES (?,?,0)";
+                Query = "INSERT INTO tellers(Tid,Bid,Tbalance) VALUES (?,?,0)";
                 pstmt = Conn.prepareStatement(Query);
             }
 
@@ -884,8 +895,8 @@ class JDBCBench {
                 System.out.println("sums match!");
             }
 
-            System.out.println(abalancesum + " " + bbalancesum + " "
-                               + tbalancesum + " " + deltasum);
+            System.out.println("A " + abalancesum + " B " + bbalancesum
+                               + " T " + tbalancesum + " H " + deltasum);
         } finally {
             if (st1 != null) {
                 st1.close();
@@ -905,6 +916,8 @@ class JDBCBench {
 
         public ClientThread(int number_of_txns, String url, String user,
                             String password) {
+
+            System.out.println(number_of_txns);
 
             ntrans = number_of_txns;
             Conn   = connect(url, user, password);

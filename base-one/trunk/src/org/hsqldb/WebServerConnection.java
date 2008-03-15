@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2005, The HSQL Development Group
+/* Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -325,8 +325,7 @@ class WebServerConnection implements Runnable {
 
             OutputStream outStream = socket.getOutputStream();
             String header = getHead(HEADER_OK, false,
-                                    "application/octet-stream",
-                                    rowOut.size());
+                                    "application/octet-stream", rowOut.size());
 
             outStream.write(header.getBytes(ENCODING));
             outStream.write(rowOut.getOutputStream().getBuffer(), 0,
@@ -394,8 +393,10 @@ class WebServerConnection implements Runnable {
             os.write(hdr.getBytes(ENCODING));
 
             if (send) {
-                while ((b = is.read()) != -1) {
-                    os.write(b);
+                byte[] buffer = new byte[512];
+
+                while ((b = is.read(buffer)) != -1) {
+                    os.write(buffer, 0, b);
                 }
             }
 

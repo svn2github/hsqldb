@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2005, The HSQL Development Group
+/* Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -63,5 +63,12 @@ class ScriptReaderZipped extends ScriptReaderBinary {
         dataStreamIn = new DataInputStream(
             new BufferedInputStream(
                 new InflaterInputStream(d, new Inflater()), 1 << 13));
+    }
+
+    public void close() {
+
+        try {
+            ((DataInputStream) dataStreamIn).close();
+        } catch (IOException e) {}
     }
 }

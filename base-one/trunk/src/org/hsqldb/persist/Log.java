@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2005, The HSQL Development Group
+ * Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -474,7 +474,7 @@ public class Log {
     }
 
     int getLogSize() {
-        return (int) (maxLogSize / (1024 * 11024));
+        return (int) (maxLogSize / (1024 * 1024));
     }
 
     void setLogSize(int megas) {
@@ -495,10 +495,12 @@ public class Log {
      */
     void setScriptType(int type) throws HsqlException {
 
+        // OOo related code
         if (database.isStoredFileAccess()) {
             return;
         }
 
+        // end OOo
         boolean needsCheckpoint = scriptFormat != type;
 
         scriptFormat = type;
@@ -668,8 +670,7 @@ public class Log {
                                                        scriptFileName,
                                                        scriptFormat);
 
-                scr.readAll(database.sessionManager.getSysSession(null,
-                        true));
+                scr.readAll(database.sessionManager.getSysSession(null, true));
                 scr.close();
             }
         } catch (Throwable e) {
@@ -702,7 +703,13 @@ public class Log {
      */
     private void processDataFile() throws HsqlException {
 
-        if (cache == null || filesReadOnly || database.isStoredFileAccess()
+        // OOo related code
+        if (database.isStoredFileAccess()) {
+            return;
+        }
+
+        // OOo end
+        if (cache == null || filesReadOnly
                 || !fa.isStreamElement(logFileName)) {
             return;
         }

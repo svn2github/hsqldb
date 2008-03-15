@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2005, The HSQL Development Group
+/* Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,9 +42,9 @@ import org.hsqldb.lib.HashSet;
 import org.hsqldb.lib.Iterator;
 import org.hsqldb.lib.Set;
 import org.hsqldb.lib.SimpleLog;
+import org.hsqldb.lib.StringUtil;
 import org.hsqldb.lib.java.JavaSystem;
 import org.hsqldb.store.ValuePool;
-import org.hsqldb.lib.StringUtil;
 
 /**
  * Manages a .properties file for a database.
@@ -411,7 +411,7 @@ public class HsqlDatabaseProperties extends HsqlProperties {
         // "textdb.cache_scale", 10  -- allowed range 8-16
         // "textdb.cache_size_scale", 10  -- allowed range 8-20
         //
-        // settings for OOo integration
+        // OOo related code
         if (db.isStoredFileAccess()) {
             setProperty(hsqldb_default_table_type, "cached");
             setProperty(hsqldb_cache_scale, 13);
@@ -419,6 +419,8 @@ public class HsqlDatabaseProperties extends HsqlProperties {
             setProperty(sql_enforce_strict_size, true);
             setProperty(hsqldb_nio_data_file, false);
         }
+
+        // OOo end
     }
 
     /**
@@ -613,8 +615,14 @@ public class HsqlDatabaseProperties extends HsqlProperties {
     }
 
     public int getDefaultWriteDelay() {
-        return database.isStoredFileAccess() ? 2000
-                                             : 10000;
+
+        // OOo related code
+        if (database.isStoredFileAccess()) {
+            return 2000;
+        }
+
+        // OOo end
+        return 10000;
     }
 
     public void setDBModified(int mode) throws HsqlException {

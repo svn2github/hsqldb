@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2005, The HSQL Development Group
+ * Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -283,7 +283,7 @@ public class Servlet extends javax.servlet.http.HttpServlet {
                     try {
                         Session session = DatabaseManager.newSession(dbType,
                             dbPath, resultIn.getMainString(),
-                            resultIn.getSubString(), null);
+                            resultIn.getSubString(), new HsqlProperties());
 
                         resultOut = new Result(ResultConstants.UPDATECOUNT);
                         resultOut.sessionID = session.getId();
@@ -316,6 +316,7 @@ public class Servlet extends javax.servlet.http.HttpServlet {
             } catch (HsqlException e) {}
             finally {
                 if (outStream != null) {
+                    outStream.flush();
                     outStream.close();
                 }
 

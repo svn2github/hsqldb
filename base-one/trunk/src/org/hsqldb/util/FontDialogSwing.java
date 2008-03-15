@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2005, The HSQL Development Group
+/* Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -84,7 +84,7 @@ public class FontDialogSwing extends JDialog {
      * Create and display FontDialogSwing Dialog.
      *
      */
-    public static void CreatFontDialog(DatabaseManagerSwing owner) {
+    public static void creatFontDialog(DatabaseManagerSwing owner) {
 
         if (isRunning) {
             frame.setVisible(true);

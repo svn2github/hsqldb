@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2005, The HSQL Development Group
+/* Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,7 @@ import java.util.Date;
  * not retain a live background thread during periods when the task queue is
  * empty.
  * @author boucherb@users
- * @version 1.8.0.3
+ * @version 1.8.0.10
  * @since 1.7.2
  */
 public final class HsqlTimer implements ObjectComparator, ThreadFactory {
@@ -280,6 +280,7 @@ public final class HsqlTimer implements ObjectComparator, ThreadFactory {
     public synchronized void shutDown() {
         shutdown();
     }
+
     /**
      * Shuts down this timer immediately, interrupting the wait state associated
      * with the current head of the task queue or the wait state internal to
@@ -306,7 +307,6 @@ public final class HsqlTimer implements ObjectComparator, ThreadFactory {
             if (runner != null && runner.isAlive()) {
                 runner.interrupt();
             }
-            ;
 
             this.taskQueue.cancelAllTasks();
         }
@@ -704,15 +704,21 @@ public final class HsqlTimer implements ObjectComparator, ThreadFactory {
             this.relative = relative;
         }
 
+        // fixed reported race condition
+
         /** Sets this task's cancelled flag true and signals its taskQueue. */
         void cancel() {
 
+            boolean signalCancelled = false;
+
             synchronized (cancel_mutex) {
                 if (!cancelled) {
-                    cancelled = true;
-
-                    HsqlTimer.this.taskQueue.signalTaskCancelled(this);
+                    cancelled = signalCancelled = true;
                 }
+            }
+
+            if (signalCancelled) {
+                HsqlTimer.this.taskQueue.signalTaskCancelled(this);
             }
         }
 

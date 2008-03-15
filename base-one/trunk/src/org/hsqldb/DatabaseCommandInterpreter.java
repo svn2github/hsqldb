@@ -33,7 +33,7 @@
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2005, The HSQL Development Group
+ * Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -80,6 +80,7 @@ import org.hsqldb.lib.java.JavaSystem;
 import org.hsqldb.persist.HsqlDatabaseProperties;
 import org.hsqldb.scriptio.ScriptWriterBase;
 import org.hsqldb.scriptio.ScriptWriterText;
+import org.hsqldb.lib.StringConverter;
 
 /**
  * Provides SQL Interpreter services relative to a Session and
@@ -1455,37 +1456,42 @@ class DatabaseCommandInterpreter {
 
         HsqlName[] colList = null;
 
-        // fredt - a bug in 1.8.0.0 and previous versions causes view
-        // definitions to script without double quotes around column names
-        // in certain cases; the workaround here discards such scripted column
-        // lists when used in OOo
         if (tokenizer.isGetThis(Token.T_OPENBRACKET)) {
-            try {
+            int position = tokenizer.getPosition();
+
+            // fredt - a bug in 1.8.0.0 and previous versions causes view
+            // definitions to script without double quotes around column names
+            // in certain cases; the workaround here quotes such scripted column
+            // lists when used in OOo
+            if (database.isStoredFileAccess()
+                    && session.isProcessingScript()) {
+                int newPosition = position;
+
+                while (true) {
+                    newPosition = tokenizer.getPosition();
+
+                    if (tokenizer.getString().equals(Token.T_CLOSEBRACKET)) {
+                        break;
+                    }
+                }
+
+                String   s       = tokenizer.getPart(position, newPosition);
+                String[] columns = StringUtil.split(s, ",");
+
+                colList = new HsqlName[columns.length];
+
+                for (int i = 0; i < columns.length; i++) {
+                    colList[i] = database.nameManager.newHsqlName(columns[i],
+                            true);
+                }
+
+                //
+            } else {
                 HsqlArrayList list = Parser.getColumnNames(database, null,
                     tokenizer, true);
 
                 colList = new HsqlName[list.size()];
                 colList = (HsqlName[]) list.toArray(colList);
-
-                //added lines to make sure all valid columns are quoted
-                if (database.isStoredFileAccess()) {
-                    for (int i = 0; i < colList.length; i++) {
-                        if (!colList[i].isNameQuoted) {
-                            colList = null;
-
-                            break;
-                        }
-                    }
-                }
-            } catch (HsqlException e) {
-
-                //added lines to catch unquoted names with spaces
-                if (database.isStoredFileAccess()) {
-                    while (!tokenizer.getString().equals(
-                            Token.T_CLOSEBRACKET)) {}
-                } else {
-                    throw e;
-                }
             }
         }
 

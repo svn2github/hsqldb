@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2005, The HSQL Development Group
+/* Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -112,7 +112,7 @@ public class Token {
     static final String T_CURRENT_ROLE                 = "CURRENT_ROLE";           //reserved
     static final String T_CURRENT_TIME                 = "CURRENT_TIME";           //reserved
     static final String T_CURRENT_TIMESTAMP            = "CURRENT_TIMESTAMP";      //reserved
-    static final String T_CURRENT_TRANS_TROUP_FOR_TYPE =
+    static final String T_CURRENT_TRANS_GROUP_FOR_TYPE =
         "CURRENT_TRANSFORM_GROUP_FOR_TYPE";                                        //reserved
     static final String        T_CURRENT_USER    = "CURRENT_USER";                 //reserved
     static final String        T_CURSOR          = "CURSOR";                       //reserved

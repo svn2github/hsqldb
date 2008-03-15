@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2007, The HSQL Development Group
+/* Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Properties;
 
-/* $Id: SqlToolSprayer.java 143 2007-05-29 01:27:17Z fredt $ */
+/* $Id: SqlToolSprayer.java,v 1.21 2007/06/12 02:37:57 unsaved Exp $ */
 
 /**
  * Sql Tool Sprayer.
@@ -54,7 +54,7 @@ import java.util.Properties;
  * </UL>
  *
  * @see @main()
- * @version $Revision: 143 $
+ * @version $Revision: 1.21 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlToolSprayer {

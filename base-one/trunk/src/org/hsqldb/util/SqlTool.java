@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2007, The HSQL Development Group
+/* Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
-/* $Id: SqlTool.java 333 2007-06-27 04:12:54Z unsaved $ */
+/* $Id: SqlTool.java,v 1.72 2007/06/29 12:23:47 unsaved Exp $ */
 
 /**
  * Sql Tool.  A command-line and/or interactive SQL tool.
@@ -58,7 +58,7 @@ import java.util.Map;
  * Java way.
  *
  * @see #main()
- * @version $Revision: 333 $
+ * @version $Revision: 1.72 $
  * @author Blaine Simpson unsaved@users
  */
 public class SqlTool {
