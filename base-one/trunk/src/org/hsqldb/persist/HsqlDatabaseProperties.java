@@ -159,12 +159,20 @@ public class HsqlDatabaseProperties extends HsqlProperties {
     public static final String VERSION_STRING_1_8_0     = "1.8.0";
     public static final String FIRST_COMPATIBLE_VERSION = "1.8.0";
     public static final String THIS_VERSION             = "1.8.0";
-    public static final String THIS_FULL_VERSION        = "1.8.0.9";
+    public static final String THIS_FULL_VERSION        = "1.8.0.10";
     public static final String THIS_CACHE_VERSION       = "1.7.0";
     public static final String PRODUCT_NAME = "HSQL Database Engine";
     public static final int    MAJOR                    = 1,
                                MINOR                    = 8,
                                REVISION                 = 0;
+
+    /**
+     * system properties supported by HSQLDB
+     */
+    public static final String system_lockfile_poll_retries_property =
+        "hsqldb.lockfile_poll_retries";
+    public static final String system_max_char_or_varchar_display_size =
+        "hsqldb.max_char_or_varchar_display_size";
 
     //
     public static final String  db_version  = "version";
@@ -190,6 +198,7 @@ public class HsqlDatabaseProperties extends HsqlProperties {
     public static final String hsqldb_defrag_limit = "hsqldb.defrag_limit";
     private static final String hsqldb_files_readonly =
         "hsqldb.files_readonly";
+    public static final String hsqldb_lock_file     = "hsqldb.lock_file";
     public static final String hsqldb_log_size      = "hsqldb.log_size";
     public static final String hsqldb_nio_data_file = "hsqldb.nio_data_file";
     public static final String hsqldb_max_nio_scale = "hsqldb.max_nio_scale";
@@ -250,6 +259,8 @@ public class HsqlDatabaseProperties extends HsqlProperties {
                  getMeta(textdb_allow_full_path, FILE_PROPERTY, false));
 
         // boolean defaults for user defined props
+        meta.put(hsqldb_lock_file,
+                 getMeta(hsqldb_lock_file, SET_PROPERTY, true));
         meta.put(hsqldb_nio_data_file,
                  getMeta(hsqldb_nio_data_file, SET_PROPERTY, false));
         meta.put(hsqldb_catalogs,

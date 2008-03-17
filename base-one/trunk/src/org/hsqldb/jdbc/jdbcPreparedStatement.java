@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2005, The HSQL Development Group
+/* Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -50,10 +50,10 @@ import java.sql.Clob;
 import java.sql.Ref;
 
 //#endif JAVA2
-//#ifdef JDBC3
+//#ifdef JAVA4
 import java.sql.ParameterMetaData;
 
-//#endif JDBC3
+//#endif JAVA4
 import org.hsqldb.Column;
 import org.hsqldb.HsqlDateTime;
 import org.hsqldb.HsqlException;
@@ -561,8 +561,7 @@ implements PreparedStatement {
      * @param x the parameter value
      * @exception SQLException if a database access error occurs
      */
-    public void setBoolean(int parameterIndex,
-                           boolean x) throws SQLException {
+    public void setBoolean(int parameterIndex, boolean x) throws SQLException {
 
         Boolean b = x ? Boolean.TRUE
                       : Boolean.FALSE;
@@ -1308,9 +1307,13 @@ implements PreparedStatement {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      * jdbcPreparedStatement)
      */
+
+//#ifdef JAVA2
     public void setRef(int i, Ref x) throws SQLException {
         throw Util.notSupported();
     }
+
+//#endif JAVA2
 
     /**
      * <!-- start generic documentation -->
@@ -1342,11 +1345,16 @@ implements PreparedStatement {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      * jdbcPreparedStatement)
      */
-
 // boucherb@users 20030801 - method implemented
 //#ifdef JAVA2
     public void setBlob(int i, Blob x) throws SQLException {
 
+//#else
+/*
+    public void setBlob(int i, jdbcBlob x) throws SQLException {
+*/
+
+//#endif JAVA2
         if (x instanceof jdbcBlob) {
             setParameter(i, ((jdbcBlob) x).data);
 
@@ -1362,8 +1370,7 @@ implements PreparedStatement {
         final long length = x.length();
 
         if (length > Integer.MAX_VALUE) {
-            String msg = "Maximum Blob input octet length exceeded: "
-                         + length;
+            String msg = "Maximum Blob input octet length exceeded: " + length;
 
             throw Util.sqlException(Trace.INPUTSTREAM_ERROR, msg);
         }
@@ -1402,8 +1409,6 @@ implements PreparedStatement {
         }
     }
 
-//#endif JAVA2
-
     /**
      * <!-- start generic documentation -->
      * Sets the designated parameter to the given <code>Clob</code> object.
@@ -1433,6 +1438,7 @@ implements PreparedStatement {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *  jdbcPreparedStatement)
      */
+
 // boucherb@users 20030801 - method implemented
 //#ifdef JAVA2
     public void setClob(int i, Clob x) throws SQLException {
@@ -1452,8 +1458,7 @@ implements PreparedStatement {
         final long length = x.length();
 
         if (length > Integer.MAX_VALUE) {
-            String msg = "Max Clob input character length exceeded: "
-                         + length;
+            String msg = "Max Clob input character length exceeded: " + length;
 
             throw Util.sqlException(Trace.INPUTSTREAM_ERROR, msg);
         }
@@ -1508,9 +1513,13 @@ implements PreparedStatement {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *   jdbcPreparedStatement)
      */
+
+//#ifdef JAVA2
     public void setArray(int i, Array x) throws SQLException {
         throw Util.notSupported();
     }
+
+//#endif JAVA2
 
     /**
      * <!-- start generic documentation -->
@@ -1746,13 +1755,13 @@ implements PreparedStatement {
      * @exception SQLException if a database access error occurs
      * @since JDK 1.4, HSQL 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void setURL(int parameterIndex,
                        java.net.URL x) throws SQLException {
         throw Util.notSupported();
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -1776,7 +1785,7 @@ implements PreparedStatement {
      * @since JDK 1.4, HSQL 1.7.0
      */
 // boucherb@users 20030801 - method implemented
-//#ifdef JDBC3
+//#ifdef JAVA4
     public ParameterMetaData getParameterMetaData() throws SQLException {
 
         checkClosed();
@@ -1789,7 +1798,7 @@ implements PreparedStatement {
         return (ParameterMetaData) pmd;
     }
 
-//#endif JDBC3
+//#endif JAVA4
     //-------------------- Internal Implementation -----------------------------
 
     /**
@@ -2132,8 +2141,7 @@ implements PreparedStatement {
 
             case Types.BINARY :
             case Types.OTHER :
-                throw Util.sqlException(
-                    Trace.error(Trace.INVALID_CONVERSION));
+                throw Util.sqlException(Trace.error(Trace.INVALID_CONVERSION));
             default :
                 setParameter(i, new Long(value));
         }

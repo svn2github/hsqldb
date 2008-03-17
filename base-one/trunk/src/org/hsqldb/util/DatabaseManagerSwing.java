@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * This software consists of voluntary contributions made by many individuals 
+ * This software consists of voluntary contributions made by many individuals
  * on behalf of the Hypersonic SQL Group.
  *
  *
@@ -90,7 +90,6 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.Vector;
-
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
@@ -106,6 +105,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JApplet;
@@ -637,11 +637,18 @@ implements ActionListener, WindowListener, KeyListener {
             // Workaround for EXTREME SLOWNESS getting this info from O.
             showIndexDetails = !isOracle;
 
-            Driver driver = DriverManager.getDriver(dMeta.getURL());
-            ConnectionSetting newSetting = new ConnectionSetting(
-                dMeta.getDatabaseProductName(), driver.getClass().getName(),
-                dMeta.getURL(),
-                dMeta.getUserName().replaceAll("@localhost", ""), "");
+            Driver driver   = DriverManager.getDriver(dMeta.getURL());
+            String userName = dMeta.getUserName();
+            int    index    = userName.indexOf("@localhost");
+
+            if (index > -1) {
+                userName = userName.substring(index, userName.length());
+            }
+
+            ConnectionSetting newSetting =
+                new ConnectionSetting(dMeta.getDatabaseProductName(),
+                                      driver.getClass().getName(),
+                                      dMeta.getURL(), userName, "");
             Hashtable settings =
                 ConnectionDialogCommon.loadRecentConnectionSettings();
 

@@ -57,6 +57,9 @@
 /*r1,a,b,c
  2,d,e,f*/select * from VV1;
 
+/*r1
+ 2*/select * from VV2;
+
 /*r1,first A
  1,first B
  2,second A
@@ -66,3 +69,12 @@
  1,first B
  2,second A
  2,second B*/select * from U2;
+
+/*r
+ 1,first A
+ 2,second A*/select * from VM1;
+/*r
+ 1,first A,1,first B
+ 1,first A,2,second B
+ 2,second A,1,first B
+ 2,second A,2,second B*/select * from VM2;

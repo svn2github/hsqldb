@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2005, The HSQL Development Group
+/* Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -74,7 +74,7 @@ public class Logger {
      *  The LockFile object this Logger uses to cooperatively lock
      *  the database files
      */
-    private LockFile lf;
+    private LockFile lockFile;
     boolean          needsCheckpoint;
     private boolean  logStatements;
     private boolean  syncFile = false;
@@ -111,7 +111,10 @@ public class Logger {
 
         logStatements = false;
 
-        if (!db.isFilesReadOnly()) {
+        boolean useLock = db.getProperties().isPropertyTrue(
+            HsqlDatabaseProperties.hsqldb_lock_file);
+
+        if (useLock && !db.isFilesReadOnly()) {
             acquireLock(path);
         }
 
@@ -404,8 +407,7 @@ public class Logger {
      */
     public DataFileCache openTextCache(Table table, String source,
                                        boolean readOnlyData,
-                                       boolean reversed)
-                                       throws HsqlException {
+                                       boolean reversed) throws HsqlException {
         return log.openTextCache(table, source, readOnlyData, reversed);
     }
 
@@ -425,18 +427,21 @@ public class Logger {
      */
     public void acquireLock(String path) throws HsqlException {
 
-        if (lf != null) {
+        if (lockFile != null) {
             return;
         }
 
-        lf = LockFile.newLockFileLock(path);
+//#ifdef JAVA2FULL
+        lockFile = LockFile.newLockFileLock(path);
+
+//#endif
     }
 
     public void releaseLock() {
 
         try {
-            if (lf != null) {
-                lf.tryRelease();
+            if (lockFile != null) {
+                lockFile.tryRelease();
             }
         } catch (Exception e) {
             if (Trace.TRACE) {
@@ -444,6 +449,6 @@ public class Logger {
             }
         }
 
-        lf = null;
+        lockFile = null;
     }
 }

@@ -344,7 +344,7 @@ public class HsqlDateTime {
      */
     private static synchronized void resetToday(long millis) {
 
-//#ifdef JDBC3
+//#ifdef JAVA4
         // Use method directly
         today.setTimeInMillis(millis);
 
@@ -355,7 +355,7 @@ public class HsqlDateTime {
         today.setTime(tempDate);
 */
 
-//#endif JDBC3
+//#endif JAVA4
         resetToDate(today);
 
         currentDate = new Date(getTimeInMillis(today));
@@ -370,7 +370,7 @@ public class HsqlDateTime {
      */
     private static void setTimeInMillis(Calendar cal, long millis) {
 
-//#ifdef JDBC3
+//#ifdef JAVA4
         // Use method directly
         cal.setTimeInMillis(millis);
 
@@ -383,7 +383,7 @@ public class HsqlDateTime {
         }
 */
 
-//#endif JDBC3
+//#endif JAVA4
     }
 
     public static long getTimeInMillis(java.util.Date dt, Calendar source,
@@ -415,7 +415,7 @@ public class HsqlDateTime {
      */
     public static long getTimeInMillis(Calendar cal) {
 
-//#ifdef JDBC3
+//#ifdef JAVA4
         // Use method directly
         return (cal.getTimeInMillis());
 
@@ -425,7 +425,7 @@ public class HsqlDateTime {
         return (cal.getTime().getTime());
 */
 
-//#endif JDBC3
+//#endif JAVA4
     }
 
     public static long getNormalisedTime(long t) {

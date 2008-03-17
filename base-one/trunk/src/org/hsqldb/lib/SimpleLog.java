@@ -107,7 +107,7 @@ public class SimpleLog {
 
         String info = HsqlDateTime.getSytemTimeString();
 
-//#ifdef JDBC3
+//#ifdef JAVA4
         Throwable           temp     = new Throwable();
         StackTraceElement[] elements = temp.getStackTrace();
 
@@ -128,7 +128,7 @@ public class SimpleLog {
 
         String info = HsqlDateTime.getSytemTimeString();
 
-//#ifdef JDBC3
+//#ifdef JAVA4
         Throwable           temp     = new Throwable();
         StackTraceElement[] elements = temp.getStackTrace();
 

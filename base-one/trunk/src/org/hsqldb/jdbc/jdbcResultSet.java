@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * This software consists of voluntary contributions made by many individuals 
+ * This software consists of voluntary contributions made by many individuals
  * on behalf of the Hypersonic SQL Group.
  *
  *
@@ -1798,7 +1798,7 @@ public class jdbcResultSet implements ResultSet {
         // true - it has ---- false it hasn't
         checkClosed();
 
-        return rResult.rRoot != null &&!bInit;
+        return rResult.rRoot != null && !bInit;
 
         // End New Cose
     }
@@ -2621,8 +2621,7 @@ public class jdbcResultSet implements ResultSet {
      * @exception SQLException if a database access error occurs
      * @since JDK 1.2
      */
-    public void updateBoolean(int columnIndex,
-                              boolean x) throws SQLException {
+    public void updateBoolean(int columnIndex, boolean x) throws SQLException {
         throw Util.notSupported();
     }
 
@@ -3386,8 +3385,7 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *   jdbcResultSet)
      */
-    public void updateDouble(String columnName,
-                             double x) throws SQLException {
+    public void updateDouble(String columnName, double x) throws SQLException {
         updateDouble(findColumn(columnName), x);
     }
 
@@ -3449,8 +3447,7 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *   jdbcResultSet)
      */
-    public void updateString(String columnName,
-                             String x) throws SQLException {
+    public void updateString(String columnName, String x) throws SQLException {
         updateString(findColumn(columnName), x);
     }
 
@@ -3736,8 +3733,7 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *   jdbcResultSet)
      */
-    public void updateObject(String columnName,
-                             Object x) throws SQLException {
+    public void updateObject(String columnName, Object x) throws SQLException {
         updateObject(findColumn(columnName), x);
     }
 
@@ -4015,9 +4011,13 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      * jdbcResultSet)
      */
+
+//#ifdef JAVA2
     public Object getObject(int i, Map map) throws SQLException {
         throw Util.notSupported();
     }
+
+//#endif JAVA2
 
     /**
      * <!-- start generic documentation -->
@@ -4044,9 +4044,12 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      * jdbcResultSet)
      */
+//#ifdef JAVA2
     public Ref getRef(int i) throws SQLException {
         throw Util.notSupported();
     }
+
+//#endif JAVA2
 
     /**
      * <!-- start generic documentation -->
@@ -4069,7 +4072,6 @@ public class jdbcResultSet implements ResultSet {
      * @exception SQLException if a database access error occurs
      * @since JDK 1.2
      */
-
 //#ifdef JAVA2
     public Blob getBlob(int i) throws SQLException {
 
@@ -4138,9 +4140,12 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *  jdbcResultSet)
      */
+//#ifdef JAVA2
     public Array getArray(int i) throws SQLException {
         throw Util.notSupported();
     }
+
+//#endif JAVA2
 
     /**
      * <!-- start generic documentation -->
@@ -4174,6 +4179,7 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *  jdbcResultSet)
      */
+//#ifdef JAVA2
     public Object getObject(String colName, Map map) throws SQLException {
 
         // MODIFIED:
@@ -4182,6 +4188,8 @@ public class jdbcResultSet implements ResultSet {
         // boucherb@users 2002013
         return getObject(findColumn(colName), map);
     }
+
+//#endif JAVA2
 
     /**
      * <!-- start generic documentation -->
@@ -4207,9 +4215,12 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *  jdbcResultSet)
      */
+//#ifdef JAVA2
     public Ref getRef(String colName) throws SQLException {
         return getRef(findColumn(colName));
     }
+
+//#endif JAVA2
 
     /**
      * <!-- start generic documentation -->
@@ -4232,7 +4243,6 @@ public class jdbcResultSet implements ResultSet {
      * @exception SQLException if a database access error occurs
      * @since JDK 1.2
      */
-
 //#ifdef JAVA2
     public Blob getBlob(String colName) throws SQLException {
         return getBlob(findColumn(colName));
@@ -4293,9 +4303,12 @@ public class jdbcResultSet implements ResultSet {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *  jdbcResultSet)
      */
+//#ifdef JAVA2
     public Array getArray(String colName) throws SQLException {
         return getArray(findColumn(colName));
     }
+
+//#endif JAVA2
 
     /**
      * <!-- start generic documentation -->
@@ -4519,12 +4532,12 @@ public class jdbcResultSet implements ResultSet {
      *    or if a URL is malformed
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public java.net.URL getURL(int columnIndex) throws SQLException {
         throw Util.notSupported();
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -4552,12 +4565,12 @@ public class jdbcResultSet implements ResultSet {
      *       or if a URL is malformed
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public java.net.URL getURL(String columnName) throws SQLException {
         throw Util.notSupported();
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -4584,13 +4597,13 @@ public class jdbcResultSet implements ResultSet {
      * @exception SQLException if a database access error occurs
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void updateRef(int columnIndex,
                           java.sql.Ref x) throws SQLException {
         throw Util.notSupported();
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -4617,13 +4630,13 @@ public class jdbcResultSet implements ResultSet {
      * @exception SQLException if a database access error occurs
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void updateRef(String columnName,
                           java.sql.Ref x) throws SQLException {
         throw Util.notSupported();
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -4650,13 +4663,13 @@ public class jdbcResultSet implements ResultSet {
      * @exception SQLException if a database access error occurs
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void updateBlob(int columnIndex,
                            java.sql.Blob x) throws SQLException {
         throw Util.notSupported();
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -4683,13 +4696,13 @@ public class jdbcResultSet implements ResultSet {
      * @exception SQLException if a database access error occurs
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void updateBlob(String columnName,
                            java.sql.Blob x) throws SQLException {
         throw Util.notSupported();
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -4716,13 +4729,13 @@ public class jdbcResultSet implements ResultSet {
      * @exception SQLException if a database access error occurs
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void updateClob(int columnIndex,
                            java.sql.Clob x) throws SQLException {
         throw Util.notSupported();
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -4749,13 +4762,13 @@ public class jdbcResultSet implements ResultSet {
      * @exception SQLException if a database access error occurs
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void updateClob(String columnName,
                            java.sql.Clob x) throws SQLException {
         throw Util.notSupported();
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -4782,13 +4795,13 @@ public class jdbcResultSet implements ResultSet {
      * @exception SQLException if a database access error occurs
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void updateArray(int columnIndex,
                             java.sql.Array x) throws SQLException {
         throw Util.notSupported();
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -4815,13 +4828,13 @@ public class jdbcResultSet implements ResultSet {
      * @exception SQLException if a database access error occurs
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void updateArray(String columnName,
                             java.sql.Array x) throws SQLException {
         throw Util.notSupported();
     }
 
-//#endif JDBC3
+//#endif JAVA4
     //-------------------- Internal Implementation -------------------------
 // Support for JDBC 2 from JRE 1.1.x
 
@@ -4864,7 +4877,7 @@ public class jdbcResultSet implements ResultSet {
      */
     private void checkAvailable() throws SQLException {
 
-        if (rResult == null ||!bInit || nCurrent == null) {
+        if (rResult == null || !bInit || nCurrent == null) {
             throw Util.sqlException(Trace.NO_DATA_IS_AVAILABLE);
         }
     }

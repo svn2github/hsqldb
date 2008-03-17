@@ -39,10 +39,10 @@ import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 
-//#ifdef JDBC3
+//#ifdef JAVA4
 import java.sql.Savepoint;
 
-//#endif JDBC3
+//#endif JAVA4
 //#ifdef JAVA2
 import java.util.Map;
 
@@ -1582,12 +1582,16 @@ public class jdbcConnection implements Connection {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview
      *     for jdbcConnection)
      */
+
+//#ifdef JAVA2
     public synchronized Map getTypeMap() throws SQLException {
 
         checkClosed();
 
         throw Util.notSupported();
     }
+
+//#endif JAVA2
 
     /**
      * <!-- start generic documentation -->
@@ -1617,6 +1621,7 @@ public class jdbcConnection implements Connection {
      *     for jdbcConnection)
      * @see #getTypeMap
      */
+//#ifdef JAVA2
     public synchronized void setTypeMap(Map map) throws SQLException {
 
         checkClosed();
@@ -1624,6 +1629,7 @@ public class jdbcConnection implements Connection {
         throw Util.notSupported();
     }
 
+//#endif JAVA2
 // boucherb@users 20020409 - javadocs for all JDBC 3 methods
 // boucherb@users 20020509 - todo
 // start adding implementations where it is easy:  Savepoints
@@ -1658,7 +1664,7 @@ public class jdbcConnection implements Connection {
      * @see ResultSet
      * @since JDK 1.4, HSQLDB 1.7.2
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public synchronized void setHoldability(int holdability)
     throws SQLException {
 
@@ -1678,7 +1684,7 @@ public class jdbcConnection implements Connection {
         }
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -1705,7 +1711,7 @@ public class jdbcConnection implements Connection {
      * @see ResultSet
      * @since JDK 1.4, HSQLDB 1.7.2
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public synchronized int getHoldability() throws SQLException {
 
         checkClosed();
@@ -1713,7 +1719,7 @@ public class jdbcConnection implements Connection {
         return jdbcResultSet.HOLD_CURSORS_OVER_COMMIT;
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -1743,7 +1749,7 @@ public class jdbcConnection implements Connection {
      * @see java.sql.Savepoint
      * @since JDK 1.4, HSQLDB 1.7.2
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public synchronized Savepoint setSavepoint() throws SQLException {
 
         checkClosed();
@@ -1751,7 +1757,7 @@ public class jdbcConnection implements Connection {
         throw Util.notSupported();
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -1771,7 +1777,7 @@ public class jdbcConnection implements Connection {
      * @see java.sql.Savepoint
      * @since JDK 1.4, HSQLDB 1.7.2
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public synchronized Savepoint setSavepoint(String name)
     throws SQLException {
 
@@ -1796,7 +1802,7 @@ public class jdbcConnection implements Connection {
         return new jdbcSavepoint(name, this);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -1818,7 +1824,7 @@ public class jdbcConnection implements Connection {
      * @see #rollback
      * @since JDK 1.4, HSQLDB 1.7.2
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public synchronized void rollback(Savepoint savepoint)
     throws SQLException {
 
@@ -1870,7 +1876,7 @@ public class jdbcConnection implements Connection {
         }
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -1890,7 +1896,7 @@ public class jdbcConnection implements Connection {
      * @see java.sql.Savepoint
      * @since JDK 1.4, HSQLDB 1.7.2
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public synchronized void releaseSavepoint(Savepoint savepoint)
     throws SQLException {
 
@@ -1933,7 +1939,7 @@ public class jdbcConnection implements Connection {
         }
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -1980,7 +1986,7 @@ public class jdbcConnection implements Connection {
      * @see ResultSet
      * @since JDK 1.4, HSQLDB 1.7.2
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public synchronized Statement createStatement(int resultSetType,
             int resultSetConcurrency,
             int resultSetHoldability) throws SQLException {
@@ -1994,7 +2000,7 @@ public class jdbcConnection implements Connection {
         return new jdbcStatement(this, resultSetType);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2050,7 +2056,7 @@ public class jdbcConnection implements Connection {
      * @see ResultSet
      * @since JDK 1.4, HSQLDB 1.7.2
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public synchronized PreparedStatement prepareStatement(String sql,
             int resultSetType, int resultSetConcurrency,
             int resultSetHoldability) throws SQLException {
@@ -2068,7 +2074,7 @@ public class jdbcConnection implements Connection {
         }
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2123,7 +2129,7 @@ public class jdbcConnection implements Connection {
      * @see ResultSet
      * @since JDK 1.4, HSQLDB 1.7.2
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public synchronized CallableStatement prepareCall(String sql,
             int resultSetType, int resultSetConcurrency,
             int resultSetHoldability) throws SQLException {
@@ -2141,7 +2147,7 @@ public class jdbcConnection implements Connection {
         }
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2195,7 +2201,7 @@ public class jdbcConnection implements Connection {
      *     returned
      * @since JDK 1.4, HSQLDB 1.7.2
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public synchronized PreparedStatement prepareStatement(String sql,
             int autoGeneratedKeys) throws SQLException {
 
@@ -2204,7 +2210,7 @@ public class jdbcConnection implements Connection {
         throw Util.notSupported();
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2260,7 +2266,7 @@ public class jdbcConnection implements Connection {
      * @exception SQLException if a database access error occurs
      * @since JDK 1.4, HSQLDB 1.7.2
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public synchronized PreparedStatement prepareStatement(String sql,
             int[] columnIndexes) throws SQLException {
 
@@ -2269,7 +2275,7 @@ public class jdbcConnection implements Connection {
         throw Util.notSupported();
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2325,7 +2331,7 @@ public class jdbcConnection implements Connection {
      * @exception SQLException if a database access error occurs
      * @since JDK 1.4, HSQLDB 1.7.2
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public synchronized PreparedStatement prepareStatement(String sql,
             String[] columnNames) throws SQLException {
 
@@ -2334,7 +2340,7 @@ public class jdbcConnection implements Connection {
         throw Util.notSupported();
     }
 
-//#endif JDBC3
+//#endif JAVA4
 //---------------------- internal implementation ---------------------------
 
     /**

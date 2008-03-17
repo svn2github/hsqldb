@@ -134,13 +134,14 @@ public class BaseHashMap {
                           boolean hasAccessCount)
                           throws IllegalArgumentException {
 
+        this.loadFactor      = loadFactor;
+        this.initialCapacity = initialCapacity;
+
         if (initialCapacity <= 0 || loadFactor <= 0.0) {
             throw new IllegalArgumentException();
         }
 
-        this.loadFactor      = loadFactor;
-        this.initialCapacity = initialCapacity;
-        threshold            = initialCapacity;
+        threshold = initialCapacity;
 
         if (threshold < 3) {
             threshold = 3;
@@ -337,8 +338,8 @@ public class BaseHashMap {
 
             // should throw maybe, if reset returns false?
             if (reset()) {
-                return addOrRemove(longKey, longValue, objectKey,
-                                   objectValue, remove);
+                return addOrRemove(longKey, longValue, objectKey, objectValue,
+                                   remove);
             } else {
                 return null;
             }
@@ -863,8 +864,8 @@ public class BaseHashMap {
      * access count. Always return at least accessMin + 1
      */
     protected int getAccessCountCeiling(int count, int margin) {
-        return ArrayCounter.rank(accessTable, hashIndex.newNodePointer,
-                                 count, accessMin + 1, accessCount, margin);
+        return ArrayCounter.rank(accessTable, hashIndex.newNodePointer, count,
+                                 accessMin + 1, accessCount, margin);
     }
 
     /**
@@ -1008,7 +1009,7 @@ public class BaseHashMap {
 
         public Object next() throws NoSuchElementException {
 
-            if ((keys &&!isObjectKey) || (!keys &&!isObjectValue)) {
+            if ((keys && !isObjectKey) || (!keys && !isObjectValue)) {
                 throw new NoSuchElementException("Hash Iterator");
             }
 
@@ -1031,7 +1032,7 @@ public class BaseHashMap {
 
         public int nextInt() throws NoSuchElementException {
 
-            if ((keys &&!isIntKey) || (!keys &&!isIntValue)) {
+            if ((keys && !isIntKey) || (!keys && !isIntValue)) {
                 throw new NoSuchElementException("Hash Iterator");
             }
 
@@ -1054,7 +1055,7 @@ public class BaseHashMap {
 
         public long nextLong() throws NoSuchElementException {
 
-            if ((!isLongKey ||!keys)) {
+            if ((!isLongKey || !keys)) {
                 throw new NoSuchElementException("Hash Iterator");
             }
 

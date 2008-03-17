@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2005, The HSQL Development Group
+/* Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -87,6 +87,7 @@ class ScaledRAFile implements ScaledRAInterface {
                                    String key)
                                    throws FileNotFoundException, IOException {
 
+//#ifdef JAVA4
         if (classname != null) {
             try {
                 Class storageClass = null;
@@ -115,6 +116,7 @@ class ScaledRAFile implements ScaledRAInterface {
             }
         }
 
+//#endif
         if (type == DATA_FILE_JAR) {
             return new ScaledRAFileInJar(name);
         } else if (type == DATA_FILE_RAF) {

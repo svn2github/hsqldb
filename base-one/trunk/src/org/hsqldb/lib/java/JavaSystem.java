@@ -75,47 +75,55 @@ public class JavaSystem {
      */
     public static int CompareIngnoreCase(String a, String b) {
 
-//#ifdef JAVA1TARGET
+//#ifdef JAVA2FULL
+        return a.compareToIgnoreCase(b);
+
+//#else
 /*
         return a.toUpperCase().compareTo(b.toUpperCase());
 */
 
-//#else
-        return a.compareToIgnoreCase(b);
-
-//#endif
+//#endif JAVA2
     }
 
     public static double parseDouble(String s) {
 
-//#ifdef JAVA1TARGET
+//#ifdef JAVA2FULL
+        return Double.parseDouble(s);
+
+//#else
 /*
         return new Double(s).doubleValue();
 */
 
-//#else
-        return Double.parseDouble(s);
-
-//#endif JAVA1TARGET
+//#endif JAVA2
     }
 
     public static BigInteger getUnscaledValue(BigDecimal o) {
 
-//#ifdef JAVA1TARGET
+//#ifdef JAVA2FULL
+        return o.unscaledValue();
+
+//#else
 /*
         int scale = o.scale();
         return o.movePointRight(scale).toBigInteger();
 */
-
-//#else
-        return o.unscaledValue();
 
 //#endif
     }
 
     public static void setLogToSystem(boolean value) {
 
-//#ifdef JAVA1TARGET
+//#ifdef JAVA2FULL
+        try {
+            PrintWriter newPrintWriter = (value) ? new PrintWriter(System.out)
+                                                 : null;
+
+            DriverManager.setLogWriter(newPrintWriter);
+        } catch (Exception e) {}
+
+//#else
 /*
         try {
             PrintStream newOutStream = (value) ? System.out
@@ -124,24 +132,12 @@ public class JavaSystem {
         } catch (Exception e){}
 */
 
-//#else
-        try {
-            PrintWriter newPrintWriter = (value) ? new PrintWriter(System.out)
-                                                 : null;
-
-            DriverManager.setLogWriter(newPrintWriter);
-        } catch (Exception e) {}
-
 //#endif
     }
 
     public static void deleteOnExit(File f) {
 
-//#ifdef JAVA1TARGET
-/*
-*/
-
-//#else
+//#ifdef JAVA2FULL
         f.deleteOnExit();
 
 //#endif
@@ -150,52 +146,48 @@ public class JavaSystem {
     public static void saveProperties(Properties props, String name,
                                       OutputStream os) throws IOException {
 
-//#ifdef JAVA1TARGET
-/*
-    props.save(os, name);
-*/
+//#ifdef JAVA2FULL
+        props.store(os, name);
 
 //#else
-        props.store(os, name);
+/*
+        props.save(os, name);
+*/
 
 //#endif
     }
 
     public static void runFinalizers() {
 
-//#ifdef JAVA1TARGET
-/*
+//#ifdef JAVA2FULL
         System.runFinalizersOnExit(true);
-*/
 
 //#endif
     }
 
     public static boolean createNewFile(File file) {
 
-//#ifdef JAVA1TARGET
-/*
-        return true;
-*/
-
-//#else
+//#ifdef JAVA2FULL
         try {
             return file.createNewFile();
         } catch (IOException e) {}
 
         return false;
 
+//#else
+/*
+        return true;
+*/
+
 //#endif
     }
 
     public static void setRAFileLength(RandomAccessFile raFile,
                                        long length) throws IOException {
-//#ifdef JAVA1TARGET
-/*
-*/
 
-//#else
+//#ifdef JAVA2FULL
         raFile.setLength(length);
+
 //#endif
     }
 }

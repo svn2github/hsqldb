@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2005, The HSQL Development Group
+/* Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -226,7 +226,7 @@ public class DatabaseManager {
                 // from this synchronized block
                 // it is here simply as a placeholder for future development
                 case Database.DATABASE_OPENING :
-                    throw Trace.error(Trace.DATABASE_ALREADY_IN_USE,
+                    throw Trace.error(Trace.LOCK_FILE_ACQUISITION_FAILURE,
                                       Trace.DatabaseManager_getDatabase);
             }
         }

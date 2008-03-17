@@ -313,8 +313,7 @@ implements CallableStatement {
      * @throws SQLException if preprocessing by driver fails
      */
     public jdbcCallableStatement(jdbcConnection c, String sql,
-                                 int type)
-                                 throws HsqlException, SQLException {
+                                 int type) throws HsqlException, SQLException {
 
         super(c, sql, type);
 
@@ -1011,9 +1010,13 @@ implements CallableStatement {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *   jdbcPreparedStatement)
      */
+
+//#ifdef JAVA2
     public Object getObject(int parameterIndex, Map map) throws SQLException {
         throw Util.notSupported();
     }
+
+//#endif JAVA2
 
     /**
      * <!-- start generic documentation -->
@@ -1041,9 +1044,12 @@ implements CallableStatement {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      * jdbcPreparedStatement)
      */
+//#ifdef JAVA2
     public Ref getRef(int parameterIndex) throws SQLException {
         throw Util.notSupported();
     }
+
+//#endif JAVA2
 
     /**
      * <!-- start generic documentation -->
@@ -1071,9 +1077,12 @@ implements CallableStatement {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *  jdbcPreparedStatement)
      */
+//#ifdef JAVA2
     public Blob getBlob(int parameterIndex) throws SQLException {
         throw Util.notSupported();
     }
+
+//#endif JAVA2
 
     /**
      * <!-- start generic documentation -->
@@ -1101,9 +1110,12 @@ implements CallableStatement {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *  jdbcPreparedStatement)
      */
+//#ifdef JAVA2
     public Clob getClob(int parameterIndex) throws SQLException {
         throw Util.notSupported();
     }
+
+//#endif JAVA2
 
     /**
      * <!-- start generic documentation -->
@@ -1131,9 +1143,12 @@ implements CallableStatement {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *  jdbcPreparedStatement)
      */
+//#ifdef JAVA2
     public Array getArray(int parameterIndex) throws SQLException {
         throw Util.notSupported();
     }
+
+//#endif JAVA2
 
     /**
      * <!-- start generic documentation -->
@@ -1168,8 +1183,7 @@ implements CallableStatement {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *      jdbcPreparedStatement)
      */
-    public Date getDate(int parameterIndex,
-                        Calendar cal) throws SQLException {
+    public Date getDate(int parameterIndex, Calendar cal) throws SQLException {
 
         throw Util.notSupported();
 
@@ -1214,8 +1228,7 @@ implements CallableStatement {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *    jdbcPreparedStatement)
      */
-    public Time getTime(int parameterIndex,
-                        Calendar cal) throws SQLException {
+    public Time getTime(int parameterIndex, Calendar cal) throws SQLException {
 
         throw Util.notSupported();
 
@@ -1364,13 +1377,13 @@ implements CallableStatement {
      * @since JDK 1.4, HSQL 1.7.0
      * @see java.sql.Types
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void registerOutParameter(String parameterName,
                                      int sqlType) throws SQLException {
         registerOutParameter(findParameterIndex(parameterName), sqlType);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -1406,13 +1419,13 @@ implements CallableStatement {
      * @since JDK 1.4, HSQLDB 1.7.0
      * @see java.sql.Types
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void registerOutParameter(String parameterName, int sqlType,
                                      int scale) throws SQLException {
         registerOutParameter(findParameterIndex(parameterName), sqlType);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -1460,13 +1473,13 @@ implements CallableStatement {
      * @see java.sql.Types
      * @since JDK 1.4, HSQL 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void registerOutParameter(String parameterName, int sqlType,
                                      String typeName) throws SQLException {
         registerOutParameter(findParameterIndex(parameterName), sqlType);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -1494,12 +1507,12 @@ implements CallableStatement {
      * @see #setURL
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public java.net.URL getURL(int parameterIndex) throws SQLException {
         throw Util.notSupported();
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -1525,13 +1538,13 @@ implements CallableStatement {
      * @see #getURL
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void setURL(String parameterName,
                        java.net.URL val) throws SQLException {
         setURL(findParameterIndex(parameterName), val);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -1553,13 +1566,13 @@ implements CallableStatement {
      * @exception SQLException if a database access error occurs
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void setNull(String parameterName,
                         int sqlType) throws SQLException {
         setNull(findParameterIndex(parameterName), sqlType);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -1583,13 +1596,13 @@ implements CallableStatement {
      * @see #getBoolean
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void setBoolean(String parameterName,
                            boolean x) throws SQLException {
         setBoolean(findParameterIndex(parameterName), x);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -1612,12 +1625,12 @@ implements CallableStatement {
      * @see #getByte
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void setByte(String parameterName, byte x) throws SQLException {
         setByte(findParameterIndex(parameterName), x);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -1640,12 +1653,12 @@ implements CallableStatement {
      * @see #getShort
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void setShort(String parameterName, short x) throws SQLException {
         setShort(findParameterIndex(parameterName), x);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -1668,12 +1681,12 @@ implements CallableStatement {
      * @see #getInt
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void setInt(String parameterName, int x) throws SQLException {
         setInt(findParameterIndex(parameterName), x);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -1696,12 +1709,12 @@ implements CallableStatement {
      * @see #getLong
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void setLong(String parameterName, long x) throws SQLException {
         setLong(findParameterIndex(parameterName), x);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -1724,12 +1737,12 @@ implements CallableStatement {
      * @see #getFloat
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void setFloat(String parameterName, float x) throws SQLException {
         setFloat(findParameterIndex(parameterName), x);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -1752,13 +1765,12 @@ implements CallableStatement {
      * @see #getDouble
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
-    public void setDouble(String parameterName,
-                          double x) throws SQLException {
+//#ifdef JAVA4
+    public void setDouble(String parameterName, double x) throws SQLException {
         setDouble(findParameterIndex(parameterName), x);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -1782,13 +1794,13 @@ implements CallableStatement {
      * @see #getBigDecimal
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void setBigDecimal(String parameterName,
                               BigDecimal x) throws SQLException {
         setBigDecimal(findParameterIndex(parameterName), x);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -1813,13 +1825,12 @@ implements CallableStatement {
      * @see #getString
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
-    public void setString(String parameterName,
-                          String x) throws SQLException {
+//#ifdef JAVA4
+    public void setString(String parameterName, String x) throws SQLException {
         setString(findParameterIndex(parameterName), x);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -1844,12 +1855,12 @@ implements CallableStatement {
      * @see #getBytes
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void setBytes(String parameterName, byte[] x) throws SQLException {
         setBytes(findParameterIndex(parameterName), x);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -1873,12 +1884,12 @@ implements CallableStatement {
      * @see #getDate
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void setDate(String parameterName, Date x) throws SQLException {
         setDate(findParameterIndex(parameterName), x);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -1901,12 +1912,12 @@ implements CallableStatement {
      * @see #getTime
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void setTime(String parameterName, Time x) throws SQLException {
         setTime(findParameterIndex(parameterName), x);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -1930,13 +1941,13 @@ implements CallableStatement {
      * @see #getTimestamp
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void setTimestamp(String parameterName,
                              Timestamp x) throws SQLException {
         setTimestamp(findParameterIndex(parameterName), x);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -1967,13 +1978,13 @@ implements CallableStatement {
      * @exception SQLException if a database access error occurs
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void setAsciiStream(String parameterName, java.io.InputStream x,
                                int length) throws SQLException {
         setAsciiStream(findParameterIndex(parameterName), x, length);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2003,13 +2014,13 @@ implements CallableStatement {
      * @exception SQLException if a database access error occurs
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void setBinaryStream(String parameterName, java.io.InputStream x,
                                 int length) throws SQLException {
         setBinaryStream(findParameterIndex(parameterName), x, length);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2053,13 +2064,13 @@ implements CallableStatement {
      * @see #getObject
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void setObject(String parameterName, Object x, int targetSqlType,
                           int scale) throws SQLException {
         setObject(findParameterIndex(parameterName), x, targetSqlType, scale);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2084,13 +2095,13 @@ implements CallableStatement {
      * @see #getObject
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void setObject(String parameterName, Object x,
                           int targetSqlType) throws SQLException {
         setObject(findParameterIndex(parameterName), x, targetSqlType);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2136,13 +2147,12 @@ implements CallableStatement {
      * @see #getObject
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
-    public void setObject(String parameterName,
-                          Object x) throws SQLException {
+//#ifdef JAVA4
+    public void setObject(String parameterName, Object x) throws SQLException {
         setObject(findParameterIndex(parameterName), x);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2174,14 +2184,14 @@ implements CallableStatement {
      * @exception SQLException if a database access error occurs
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void setCharacterStream(String parameterName,
                                    java.io.Reader reader,
                                    int length) throws SQLException {
         setCharacterStream(findParameterIndex(parameterName), reader, length);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2212,13 +2222,13 @@ implements CallableStatement {
      * @see #getDate
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void setDate(String parameterName, Date x,
                         Calendar cal) throws SQLException {
         setDate(findParameterIndex(parameterName), x, cal);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2249,13 +2259,13 @@ implements CallableStatement {
      * @see #getTime
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void setTime(String parameterName, Time x,
                         Calendar cal) throws SQLException {
         setTime(findParameterIndex(parameterName), x, cal);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2287,13 +2297,13 @@ implements CallableStatement {
      * @see #getTimestamp
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void setTimestamp(String parameterName, Timestamp x,
                              Calendar cal) throws SQLException {
         setTimestamp(findParameterIndex(parameterName), x, cal);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2334,13 +2344,13 @@ implements CallableStatement {
      * @exception SQLException if a database access error occurs
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public void setNull(String parameterName, int sqlType,
                         String typeName) throws SQLException {
         setNull(findParameterIndex(parameterName), sqlType, typeName);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2372,12 +2382,12 @@ implements CallableStatement {
      * @see #setString
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public String getString(String parameterName) throws SQLException {
         return getString(findParameterIndex(parameterName));
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2403,12 +2413,12 @@ implements CallableStatement {
      * @see #setBoolean
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public boolean getBoolean(String parameterName) throws SQLException {
         return getBoolean(findParameterIndex(parameterName));
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2433,12 +2443,12 @@ implements CallableStatement {
      * @see #setByte
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public byte getByte(String parameterName) throws SQLException {
         return getByte(findParameterIndex(parameterName));
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2463,12 +2473,12 @@ implements CallableStatement {
      * @see #setShort
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public short getShort(String parameterName) throws SQLException {
         return getShort(findParameterIndex(parameterName));
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2493,12 +2503,12 @@ implements CallableStatement {
      * @see #setInt
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public int getInt(String parameterName) throws SQLException {
         return getInt(findParameterIndex(parameterName));
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2523,12 +2533,12 @@ implements CallableStatement {
      * @see #setLong
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public long getLong(String parameterName) throws SQLException {
         return getLong(findParameterIndex(parameterName));
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2553,12 +2563,12 @@ implements CallableStatement {
      * @see #setFloat
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public float getFloat(String parameterName) throws SQLException {
         return getFloat(findParameterIndex(parameterName));
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2583,12 +2593,12 @@ implements CallableStatement {
      * @see #setDouble
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public double getDouble(String parameterName) throws SQLException {
         return getDouble(findParameterIndex(parameterName));
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2614,12 +2624,12 @@ implements CallableStatement {
      * @see #setBytes
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public byte[] getBytes(String parameterName) throws SQLException {
         return getBytes(findParameterIndex(parameterName));
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2644,12 +2654,12 @@ implements CallableStatement {
      * @see #setDate
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public Date getDate(String parameterName) throws SQLException {
         return getDate(findParameterIndex(parameterName));
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2674,12 +2684,12 @@ implements CallableStatement {
      * @see #setTime
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public Time getTime(String parameterName) throws SQLException {
         return getTime(findParameterIndex(parameterName));
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2704,12 +2714,12 @@ implements CallableStatement {
      * @see #setTimestamp
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public Timestamp getTimestamp(String parameterName) throws SQLException {
         return getTimestamp(findParameterIndex(parameterName));
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2741,12 +2751,12 @@ implements CallableStatement {
      * @see #setObject
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public Object getObject(String parameterName) throws SQLException {
         return getObject(findParameterIndex(parameterName));
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2772,13 +2782,12 @@ implements CallableStatement {
      * @see #setBigDecimal
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
-    public BigDecimal getBigDecimal(String parameterName)
-    throws SQLException {
+//#ifdef JAVA4
+    public BigDecimal getBigDecimal(String parameterName) throws SQLException {
         return getBigDecimal(findParameterIndex(parameterName));
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2810,13 +2819,13 @@ implements CallableStatement {
      * @see #setObject
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public Object getObject(String parameterName,
                             Map map) throws SQLException {
         return getObject(findParameterIndex(parameterName), map);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2841,12 +2850,12 @@ implements CallableStatement {
      * @exception SQLException if a database access error occurs
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public Ref getRef(String parameterName) throws SQLException {
         return getRef(findParameterIndex(parameterName));
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2871,12 +2880,12 @@ implements CallableStatement {
      * @exception SQLException if a database access error occurs
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public Blob getBlob(String parameterName) throws SQLException {
         return getBlob(findParameterIndex(parameterName));
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2901,12 +2910,12 @@ implements CallableStatement {
      * @exception SQLException if a database access error occurs
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public Clob getClob(String parameterName) throws SQLException {
         return getClob(findParameterIndex(parameterName));
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2931,12 +2940,12 @@ implements CallableStatement {
      * @exception SQLException if a database access error occurs
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public Array getArray(String parameterName) throws SQLException {
         return getArray(findParameterIndex(parameterName));
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -2969,13 +2978,13 @@ implements CallableStatement {
      * @see #setDate
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public Date getDate(String parameterName,
                         Calendar cal) throws SQLException {
         return getDate(findParameterIndex(parameterName), cal);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -3008,13 +3017,13 @@ implements CallableStatement {
      * @see #setTime
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public Time getTime(String parameterName,
                         Calendar cal) throws SQLException {
         return getTime(findParameterIndex(parameterName), cal);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -3048,13 +3057,13 @@ implements CallableStatement {
      * @see #setTimestamp
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public Timestamp getTimestamp(String parameterName,
                                   Calendar cal) throws SQLException {
         return getTimestamp(findParameterIndex(parameterName), cal);
     }
 
-//#endif JDBC3
+//#endif JAVA4
 
     /**
      * <!-- start generic documentation -->
@@ -3081,10 +3090,10 @@ implements CallableStatement {
      * @see #setURL
      * @since JDK 1.4, HSQLDB 1.7.0
      */
-//#ifdef JDBC3
+//#ifdef JAVA4
     public java.net.URL getURL(String parameterName) throws SQLException {
         return getURL(findParameterIndex(parameterName));
     }
 
-//#endif JDBC3
+//#endif JAVA4
 }

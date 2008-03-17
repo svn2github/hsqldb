@@ -103,8 +103,12 @@ create view Q4 as select a.*, b.* from ( select * from table_a ) as a, ( select 
 create view L1 ("c1","c2","c3","c4") as select * from abc;
 -- views on views
 create view VV1 as select * from S1;
+create view VV2 as select id from S1;
 -- views with UNION SELECT
 create view U1 as select * from table_a union select * from table_b;
 create view U2 as select * from ( select * from table_a union select * from table_b );
+-- views with ... well, simply some more views
+create view VM1 as select id_a, name_a from ( select * from table_a );
+create view VM2 as select distinct * from VM1, ( select * from table_b );
 --
 SHUTDOWN
