@@ -14,7 +14,7 @@
         Do not address questions about property file(s) to the
         hsqldb community. -->
    <property file='build/build.properties'/>
-   <property name="hsqldb.version" value="1.8.0.9"/>
+   <property name="hsqldb.version" value="1.8.0.10"/>
 
    <tstamp>
        <format property="_tmpstamp" pattern="yyyy/MM/dd-hh:mm:ss"
@@ -101,7 +101,6 @@ examples:
    <target name="-javaversion4">
       <available classname="java.nio.Buffer" property="ant.java.iscjava14"/>
       <available classname="java.nio.Buffer" property="ant.java.iscjavamodern"/>
-      <available classname="com.jamonapi.MonitorFactory" property="jamon"/>
    </target>
 
    <target name="javaversion2" depends="-javaversion4"
@@ -131,42 +130,11 @@ examples:
    </target>
 
     <target name="codeswitcher" depends="-prepare"
-            description="uses +-JDBC2 +-JDBC2 +-JAVA2">
+            description="uses +-JAVA2 +-JAVA4">
       <javac destdir="classes">
          <src path="${src}"/>
          <include name="org/hsqldb/util/CodeSwitcher.java"/>
        </javac>
-    </target>
-
-    <target name="switchtojava1target" depends="codeswitcher"
-            description="self explanatory">
-      <java classname="org.hsqldb.util.CodeSwitcher" classpath="classes" >
-         <arg line="${src}/org/hsqldb/Column.java
-                    ${src}/org/hsqldb/Tokenizer.java
-                    ${src}/org/hsqldb/lib/java/JavaSystem.java
-                    ${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java
-                    ${src}/org/hsqldb/jdbc/jdbcResultSet.java
-                    ${src}/org/hsqldb/jdbc/jdbcStatement.java
-                    ${src}/org/hsqldb/rowio/RowInputTextLog.java
-                    ${src}/org/hsqldb/util/ConnectionDialogCommon.java
-                    +JAVA1TARGET"/>
-
-       </java>
-    </target>
-
-    <target name="switchoffjava1target" depends="codeswitcher"
-            description="self explanatory">
-      <java classname="org.hsqldb.util.CodeSwitcher" classpath="classes" >
-         <arg line="${src}/org/hsqldb/Column.java
-                    ${src}/org/hsqldb/Tokenizer.java
-                    ${src}/org/hsqldb/lib/java/JavaSystem.java
-                    ${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java
-                    ${src}/org/hsqldb/jdbc/jdbcResultSet.java
-                    ${src}/org/hsqldb/jdbc/jdbcStatement.java
-                    ${src}/org/hsqldb/rowio/RowInputTextLog.java
-                    ${src}/org/hsqldb/util/ConnectionDialogCommon.java
-                    -JAVA1TARGET"/>
-       </java>
     </target>
 
     <target name="switchtodeprecatedjdbc" depends="codeswitcher"
@@ -187,74 +155,77 @@ examples:
        </java>
     </target>
 
-    <target name="switch1" depends="codeswitcher"
-            description="self explanatory" if="jamon">
-      <java classname="org.hsqldb.util.CodeSwitcher" classpath="classes">
-         <arg line="${src}/org/hsqldb/monitor/DBMonFactory.java +JAMON"/>
-       </java>
-    </target>
-
-    <target name="switch2" depends="switch1"
-            description="self explanatory" unless="jamon">
-      <java classname="org.hsqldb.util.CodeSwitcher" classpath="classes">
-         <arg line="${src}/org/hsqldb/monitor/DBMonFactory.java -JAMON"/>
-       </java>
-    </target>
-
-    <target name="switches" depends="switch2"
+    <target name="switches" depends="codeswitcher"
             description="self explanatory">
     </target>
 
     <target name="switchtojdk11" depends="switches"
-            description="self explanatory" unless="ant.java.iscjavamodern">
+            description="self explanatory">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath="classes" >
-         <arg line="${src}/org/hsqldb/jdbc/jdbcStubs.java
-                    ${src}/org/hsqldb/jdbc/jdbcConnection.java
-                    ${src}/org/hsqldb/jdbc/jdbcDatabaseMetaData.java
-                    ${src}/org/hsqldb/jdbc/jdbcCallableStatement.java
-                    ${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java
-                    ${src}/org/hsqldb/jdbc/jdbcResultSet.java
+         <arg line="${src}/org/hsqldb/lib/java/JavaSystem.java
                     ${src}/org/hsqldb/jdbc/jdbcStatement.java
-                    ${src}/org/hsqldb/lib/SimpleLog.java
-                    ${src}/org/hsqldb/rowio/RowInputTextLog.java
-                    ${src}/org/hsqldb/HsqlDateTime.java -JAVA2 -JDBC3"/>
+                    ${src}/org/hsqldb/persist/LockFile.java
+                    ${src}/org/hsqldb/persist/Logger.java
+                    ${src}/org/hsqldb/util/DatabaseManager.java
+                    ${src}/org/hsqldb/util/ConnectionDialogCommon.java
+                    +JAVA2 -JAVA2FULL -JAVA4"/>
        </java>
        <available classname="java.util.Vector" property="noswing"/>
     </target>
 
-    <target name="switchtojdk12" depends="switches"
+    <target name="switchtojdk13" depends="switches"
             description="self explanatory" if="ant.java.iscjava12">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath="classes" >
-         <arg line="${src}/org/hsqldb/jdbc/jdbcStubs.java
-                    ${src}/org/hsqldb/jdbc/jdbcConnection.java
+         <arg line="${src}/org/hsqldb/lib/java/JavaSystem.java
+                    ${src}/org/hsqldb/jdbc/jdbcBlob.java
                     ${src}/org/hsqldb/jdbc/jdbcDatabaseMetaData.java
                     ${src}/org/hsqldb/jdbc/jdbcCallableStatement.java
+                    ${src}/org/hsqldb/jdbc/jdbcClob.java
+                    ${src}/org/hsqldb/jdbc/jdbcConnection.java
                     ${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java
                     ${src}/org/hsqldb/jdbc/jdbcResultSet.java
                     ${src}/org/hsqldb/jdbc/jdbcStatement.java
+                    ${src}/org/hsqldb/persist/LockFile.java
+                    ${src}/org/hsqldb/persist/Logger.java
+                    ${src}/org/hsqldb/persist/ScaledRAFile.java
+                    ${src}/org/hsqldb/rowio/RowInputTextLog.java
+                    ${src}/org/hsqldb/util/DatabaseManager.java
+                    ${src}/org/hsqldb/util/ConnectionDialogCommon.java
                     ${src}/org/hsqldb/lib/SimpleLog.java
                     ${src}/org/hsqldb/rowio/RowInputTextLog.java
-                    ${src}/org/hsqldb/HsqlDateTime.java +JAVA2 -JDBC3"/>
+                    ${src}/org/hsqldb/lib/SimpleLog.java
+                    ${src}/org/hsqldb/rowio/RowInputTextLog.java
+                    ${src}/org/hsqldb/HsqlDateTime.java +JAVA2 +JAVA2FULL -JAVA4"/>
        </java>
     </target>
 
     <target name="switchtojdk14" depends="switches"
             description="self explanatory" if="ant.java.iscjava14">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath="classes" >
-         <arg line="${src}/org/hsqldb/jdbc/jdbcStubs.java
-                    ${src}/org/hsqldb/jdbc/jdbcConnection.java
+         <arg line="${src}/org/hsqldb/lib/java/JavaSystem.java
+                    ${src}/org/hsqldb/jdbc/jdbcBlob.java
                     ${src}/org/hsqldb/jdbc/jdbcDatabaseMetaData.java
                     ${src}/org/hsqldb/jdbc/jdbcCallableStatement.java
+                    ${src}/org/hsqldb/jdbc/jdbcClob.java
+                    ${src}/org/hsqldb/jdbc/jdbcConnection.java
                     ${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java
                     ${src}/org/hsqldb/jdbc/jdbcResultSet.java
                     ${src}/org/hsqldb/jdbc/jdbcStatement.java
+                    ${src}/org/hsqldb/persist/LockFile.java
+                    ${src}/org/hsqldb/persist/Logger.java
+                    ${src}/org/hsqldb/persist/ScaledRAFile.java
+                    ${src}/org/hsqldb/rowio/RowInputTextLog.java
+                    ${src}/org/hsqldb/util/DatabaseManager.java
+                    ${src}/org/hsqldb/util/ConnectionDialogCommon.java
                     ${src}/org/hsqldb/lib/SimpleLog.java
                     ${src}/org/hsqldb/rowio/RowInputTextLog.java
-                    ${src}/org/hsqldb/HsqlDateTime.java +JAVA2 +JDBC3"/>
+                    ${src}/org/hsqldb/lib/SimpleLog.java
+                    ${src}/org/hsqldb/rowio/RowInputTextLog.java
+                    ${src}/org/hsqldb/HsqlDateTime.java +JAVA2 +JAVA2FULL +JAVA4"/>
        </java>
     </target>
 
-    <target name="store" depends="switchtojdk11,switchtojdk12,switchtojdk14"
+    <target name="store" depends="switchtojdk14"
             description="compiles the /store folder">
       <javac srcdir="${src}"
              destdir="classes"
@@ -311,19 +282,8 @@ examples:
       </copy>
     </target>
 
-   <target name="classes12" depends="classes" if="ant.java.iscjavamodern"
-           description="compiles 1.2 specific classes">
-      <javac srcdir="${src}"
-             destdir="classes"
-                 debug="${build.debug}"
-                 optimize="${build.optimize}"
-       >
-         <include name="org/hsqldb/jdbc/jdbcBlob.java"/>
-         <include name="org/hsqldb/jdbc/jdbcClob.java"/>
-      </javac>
-   </target>
 
-   <target name="classes14" depends="classes12" if="ant.java.iscjava14"
+   <target name="classes14" depends="classes" if="ant.java.iscjava14"
            description="compiles 1.4 specific classes">
       <javac srcdir="${src}"
              destdir="classes"
