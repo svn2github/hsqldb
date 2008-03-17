@@ -1349,12 +1349,6 @@ implements PreparedStatement {
 //#ifdef JAVA2
     public void setBlob(int i, Blob x) throws SQLException {
 
-//#else
-/*
-    public void setBlob(int i, jdbcBlob x) throws SQLException {
-*/
-
-//#endif JAVA2
         if (x instanceof jdbcBlob) {
             setParameter(i, ((jdbcBlob) x).data);
 
@@ -1439,6 +1433,7 @@ implements PreparedStatement {
      *  jdbcPreparedStatement)
      */
 
+//#endif JAVA2
 // boucherb@users 20030801 - method implemented
 //#ifdef JAVA2
     public void setClob(int i, Clob x) throws SQLException {
@@ -1513,7 +1508,6 @@ implements PreparedStatement {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *   jdbcPreparedStatement)
      */
-
 //#ifdef JAVA2
     public void setArray(int i, Array x) throws SQLException {
         throw Util.notSupported();
@@ -1556,7 +1550,6 @@ implements PreparedStatement {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *   jdbcPreparedStatement)
      */
-
 // boucherb@users 20030801 - method implemented
     public ResultSetMetaData getMetaData() throws SQLException {
 
