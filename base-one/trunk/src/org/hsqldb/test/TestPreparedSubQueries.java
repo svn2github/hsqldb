@@ -35,6 +35,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 
+import org.hsqldb.jdbc.jdbcDataSource;
+
 /**
  * @author kloska@users
  */
@@ -89,9 +91,11 @@ class TestPreparedSubQueries {
         try {
             String url = "jdbc:hsqldb:test";
 
-            Class.forName("org.hsqldb.jdbcDriver");
+            jdbcDataSource dataSource = new jdbcDataSource();
 
-            con = java.sql.DriverManager.getConnection(url, "sa", "");
+            dataSource.setDatabase(url);
+
+            con = dataSource.getConnection("sa", "");
 
             System.out.println("SciSelect::connect -- connected to '" + url
                                + "'");

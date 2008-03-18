@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2005, The HSQL Development Group
+/* Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,12 +33,12 @@ package org.hsqldb.test;
 
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.hsqldb.Trace;
+import org.hsqldb.jdbc.jdbcDataSource;
 
 import junit.framework.TestCase;
 
@@ -80,8 +80,12 @@ public class TestGroupByHaving extends TestCase {
     // Class methods
     //------------------------------------------------------------
     protected static Connection getJDBCConnection() throws SQLException {
-        return DriverManager.getConnection(databaseURL, databaseUser,
-                                           databasePassword);
+
+        jdbcDataSource dataSource = new jdbcDataSource();
+
+        dataSource.setDatabase(databaseURL);
+
+        return dataSource.getConnection(databaseUser, databasePassword);
     }
 
     protected void setUp() throws Exception {
@@ -91,8 +95,6 @@ public class TestGroupByHaving extends TestCase {
         if (conn != null) {
             return;
         }
-
-        Class.forName(databaseDriver);
 
         conn = getJDBCConnection();
         stmt = conn.createStatement();
@@ -129,7 +131,6 @@ public class TestGroupByHaving extends TestCase {
 
     protected void tearDown() throws Exception {
 
-
         // I decided not the use the "IF EXISTS" clause since it is not a
         // SQL standard.
         try {
@@ -149,6 +150,7 @@ public class TestGroupByHaving extends TestCase {
 
             conn = null;
         }
+
         super.tearDown();
     }
 

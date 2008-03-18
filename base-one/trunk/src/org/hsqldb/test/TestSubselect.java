@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2005, The HSQL Development Group
+/* Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,13 +31,12 @@
 
 package org.hsqldb.test;
 
-import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.hsqldb.jdbc.jdbcDataSource;
 import junit.framework.TestCase;
 
 /**
@@ -78,14 +77,16 @@ public class TestSubselect extends TestCase {
     // Class methods
     //------------------------------------------------------------
     protected static Connection getJDBCConnection() throws SQLException {
-        return DriverManager.getConnection(databaseURL, databaseUser,
-                                           databasePassword);
+        jdbcDataSource dataSource = new jdbcDataSource();
+
+        dataSource.setDatabase(databaseURL);
+
+        return dataSource.getConnection(databaseUser, databasePassword);
     }
 
     protected void setUp() throws Exception {
 
         TestSelf.deleteDatabase("/hsql/test/subselect");
-        Class.forName(databaseDriver);
 
         jdbcConnection = getJDBCConnection();
 
@@ -442,12 +443,5 @@ public class TestSubselect extends TestCase {
         assertEquals(
             "Statement <" + sql + "> returned wrong number of rows.",
             expectedSizes.length, rowCount);
-    }
-
-    //------------------------------------------------------------
-    // Main program
-    //------------------------------------------------------------
-    public static void main(String[] args) throws IOException {
-        junit.swingui.TestRunner.run(TestSubselect.class);
     }
 }

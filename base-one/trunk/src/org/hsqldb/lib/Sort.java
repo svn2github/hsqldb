@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * This software consists of voluntary contributions made by many individuals 
+ * This software consists of voluntary contributions made by many individuals
  * on behalf of the Hypersonic SQL Group.
  *
  *
@@ -152,26 +152,5 @@ public class Sort {
 
         w[a] = w[b];
         w[b] = t;
-    }
-
-    public static class StringComparator implements ObjectComparator {
-
-        public int compare(Object a, Object b) {
-
-            // handle nulls
-            if (a == b) {
-                return 0;
-            }
-
-            if (a == null) {
-                return -1;
-            }
-
-            if (b == null) {
-                return 1;
-            }
-
-            return ((String) a).compareTo((String) b);
-        }
     }
 }

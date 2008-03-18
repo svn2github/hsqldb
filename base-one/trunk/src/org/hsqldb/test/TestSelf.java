@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * This software consists of voluntary contributions made by many individuals 
+ * This software consists of voluntary contributions made by many individuals
  * on behalf of the Hypersonic SQL Group.
  *
  *
@@ -70,13 +70,14 @@ import java.io.File;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.Date;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.Types;
 
+import org.hsqldb.jdbc.jdbcDataSource;
 import org.hsqldb.lib.Sort;
+import org.hsqldb.lib.StringComparator;
 
 /**
  *  Main test class, containing several JDBC and script based tests to
@@ -161,8 +162,6 @@ class TestSelf extends TestUtil {
 
         // DriverManager.setLogStream(System.out);
         try {
-            DriverManager.registerDriver(new org.hsqldb.jdbcDriver());
-
             if (persistent) {
                 testPersistence();
                 deleteDatabase("test2");
@@ -205,7 +204,11 @@ class TestSelf extends TestUtil {
         Connection cConnection = null;
 
         try {
-            cConnection = DriverManager.getConnection(url, user, password);
+            jdbcDataSource dataSource = new jdbcDataSource();
+
+            dataSource.setDatabase(url);
+
+            cConnection = dataSource.getConnection(user, password);
         } catch (Exception e) {
             e.printStackTrace();
             print("TestSelf init error: " + e.getMessage());
@@ -232,18 +235,21 @@ class TestSelf extends TestUtil {
 
             filelist = new File(new File(absolute).getParent()).list();
 
-            Sort.sort((Object[]) filelist, new Sort.StringComparator(), 0,
+            Sort.sort((Object[]) filelist, new StringComparator(), 0,
                       filelist.length - 1);
 
             for (int i = 0; i < filelist.length; i++) {
                 String fname = filelist[i];
 
                 if (fname.startsWith("TestSelf") && fname.endsWith(".txt")
-                        &&!fname.equals("TestSelf.txt")) {
+                        && !fname.equals("TestSelf.txt")) {
                     print("Openning DB");
 
-                    cConnection = DriverManager.getConnection(url, user,
-                            password);
+                    jdbcDataSource dataSource = new jdbcDataSource();
+
+                    dataSource.setDatabase(url);
+
+                    cConnection = dataSource.getConnection(user, password);
 
                     testScript(cConnection, fname);
                     cConnection.close();
@@ -460,8 +466,7 @@ class TestSelf extends TestUtil {
 
             int[] ia2 = (int[]) (r.getObject(1));
 
-            if (ia2[0] != 1 || ia2[1] != 2 || ia2[2] != 3
-                    || ia2.length != 3) {
+            if (ia2[0] != 1 || ia2[1] != 2 || ia2[2] != 3 || ia2.length != 3) {
                 throw new Exception("Object data error: int[]");
             }
 
@@ -617,7 +622,7 @@ class TestSelf extends TestUtil {
                 i = r.getInt(11);             // NULLABLE
                 s = s.toUpperCase();
 
-                if (!s.equals("ID4INTEGER") &&!s.equals("DAT4INTEGER")) {
+                if (!s.equals("ID4INTEGER") && !s.equals("DAT4INTEGER")) {
                     throw new Exception("Wrong database meta data");
                 }
             }
@@ -635,8 +640,7 @@ class TestSelf extends TestUtil {
     }
 
     static void testPerformance(String url, String user, String password,
-                                int max,
-                                boolean persistent) throws Exception {
+                                int max, boolean persistent) throws Exception {
 
         if (persistent) {
             deleteDatabase("test2");
@@ -654,7 +658,11 @@ class TestSelf extends TestUtil {
         print(name + " Performance");
 
         try {
-            cConnection = DriverManager.getConnection(url, user, password);
+            jdbcDataSource dataSource = new jdbcDataSource();
+
+            dataSource.setDatabase(url);
+
+            cConnection = dataSource.getConnection(user, password);
             sStatement  = cConnection.createStatement();
         } catch (Exception e) {
             e.printStackTrace();
@@ -713,9 +721,12 @@ class TestSelf extends TestUtil {
                 // close & reopen to test backup
                 cConnection.close();
 
-                cConnection = DriverManager.getConnection(url, user,
-                        password);
-                sStatement = cConnection.createStatement();
+                jdbcDataSource dataSource = new jdbcDataSource();
+
+                dataSource.setDatabase(url);
+
+                cConnection = dataSource.getConnection(user, password);
+                sStatement  = cConnection.createStatement();
             }
 
             start = System.currentTimeMillis();
@@ -752,9 +763,12 @@ class TestSelf extends TestUtil {
                 // open the database; it must be restored after shutdown
                 cConnection.close();
 
-                cConnection = DriverManager.getConnection(url, user,
-                        password);
-                sStatement = cConnection.createStatement();
+                jdbcDataSource dataSource = new jdbcDataSource();
+
+                dataSource.setDatabase(url);
+
+                cConnection = dataSource.getConnection(user, password);
+                sStatement  = cConnection.createStatement();
             }
 
             start = System.currentTimeMillis();

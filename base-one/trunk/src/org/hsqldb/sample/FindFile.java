@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * This software consists of voluntary contributions made by many individuals 
+ * This software consists of voluntary contributions made by many individuals
  * on behalf of the Hypersonic SQL Group.
  *
  *
@@ -68,11 +68,12 @@ package org.hsqldb.sample;
 
 import java.io.File;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+
+import org.hsqldb.jdbc.jdbcDataSource;
 
 /**
  * Extract a directory tree and store in an HSQLDB database.
@@ -100,16 +101,16 @@ class FindFile {
         // Exceptions may occur
         try {
 
-            // Load the HSQL Database Engine JDBC driver
-            Class.forName("org.hsqldb.jdbcDriver");
+            // get a DataSource object and set the URL
+            // 'testfiles' in the URL is the name of the database
+            jdbcDataSource dataSource = new jdbcDataSource();
+
+            dataSource.setDatabase("jdbc:hsqldb:file:testfiles");
 
             // Connect to the database
             // It will be create automatically if it does not yet exist
-            // 'testfiles' in the URL is the name of the database
             // "sa" is the user name and "" is the (empty) password
-            Connection conn =
-                DriverManager.getConnection("jdbc:hsqldb:testfiles", "sa",
-                                            "");
+            Connection conn = dataSource.getConnection("SA", "");
 
             // Check the command line parameters
             if (arg.length == 1) {

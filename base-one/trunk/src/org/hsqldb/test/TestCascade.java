@@ -38,12 +38,13 @@ package org.hsqldb.test;
  */
 import java.io.File;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
 import junit.framework.TestCase;
+
+import org.hsqldb.jdbc.jdbcDataSource;
 
 /**
  * Test case to demonstrate catastrophic bug in cascade delete code.
@@ -62,10 +63,13 @@ public class TestCascade extends TestCase {
     protected void setUp() {
 
         try {
-            Class.forName("org.hsqldb.jdbcDriver");
             createDatabase();
 
-            con = DriverManager.getConnection("jdbc:hsqldb:testdb", "sa", "");
+            jdbcDataSource dataSource = new jdbcDataSource();
+
+            dataSource.setDatabase("jdbc:hsqldb:testdb");
+
+            con = dataSource.getConnection("sa", "");
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println(this + ".setUp() error: " + e.getMessage());
@@ -85,8 +89,7 @@ public class TestCascade extends TestCase {
             insertData(con);
 
             Statement stmt = con.createStatement();
-            ResultSet rs =
-                stmt.executeQuery("SELECT COUNT(EIACODXA) FROM CA");
+            ResultSet rs = stmt.executeQuery("SELECT COUNT(EIACODXA) FROM CA");
 
             rs.next();
 
@@ -116,9 +119,12 @@ public class TestCascade extends TestCase {
         new File("testdb.properties").delete();
         new File("testdb.script").delete();
 
-        Connection con = DriverManager.getConnection("jdbc:hsqldb:testdb",
-            "sa", "");
-        String[] saDDL = {
+        jdbcDataSource dataSource = new jdbcDataSource();
+
+        dataSource.setDatabase("jdbc:hsqldb:testdb");
+
+        Connection con   = dataSource.getConnection("sa", "");
+        String[]   saDDL = {
             "CREATE CACHED TABLE XB (EIACODXA VARCHAR(10) NOT NULL, LSACONXB VARCHAR(18) NOT NULL, ALTLCNXB VARCHAR(2) NOT NULL, LCNTYPXB VARCHAR(1) NOT NULL, LCNINDXB VARCHAR(1), LCNAMEXB VARCHAR(19), UPDT_BY VARCHAR(32), LST_UPDT TIMESTAMP, CONSTRAINT XPKXB PRIMARY KEY (EIACODXA, LSACONXB, ALTLCNXB, LCNTYPXB));",
 
 //            "CREATE INDEX XIF2XB ON XB (EIACODXA);",

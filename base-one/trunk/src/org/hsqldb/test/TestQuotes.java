@@ -42,6 +42,8 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
+import org.hsqldb.jdbc.jdbcDataSource;
+
 /**
  *  Test handling of quote characters in strings
  *
@@ -79,11 +81,10 @@ public class TestQuotes extends TestCase {
         ResultSet         rs2        = null;
 
         try {
-            DriverManager.registerDriver(new org.hsqldb.jdbcDriver());
+            jdbcDataSource dataSource = new jdbcDataSource();
 
-            connection = DriverManager.getConnection("jdbc:hsqldb:.", "sa",
-                    "");
-            statement = connection.createStatement();
+            connection = dataSource.getConnection("SA", "");
+            statement  = connection.createStatement();
 
             statement.executeUpdate(CREATETABLE);
 

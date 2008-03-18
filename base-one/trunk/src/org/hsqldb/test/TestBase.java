@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2005, The HSQL Development Group
+/* Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,11 +33,10 @@ package org.hsqldb.test;
 
 import java.lang.reflect.Constructor;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 
 import org.hsqldb.Server;
-
+import org.hsqldb.jdbc.jdbcDataSource;
 import junit.framework.TestCase;
 import junit.framework.TestResult;
 
@@ -89,13 +88,6 @@ public abstract class TestBase extends TestCase {
                 url = "jdbc:hsqldb:file:test;sql.enforce_strict_size=true";
             }
         }
-
-        try {
-            Class.forName("org.hsqldb.jdbcDriver");
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println(this + ".setUp() error: " + e.getMessage());
-        }
     }
 
     protected void tearDown() {
@@ -108,7 +100,12 @@ public abstract class TestBase extends TestCase {
     }
 
     Connection newConnection() throws SQLException {
-        return DriverManager.getConnection(url, user, password);
+
+        jdbcDataSource dataSource = new jdbcDataSource();
+
+        dataSource.setDatabase(url);
+
+        return dataSource.getConnection(user, password);
     }
 
     public static void runWithResult(Class testCaseClass, String testName) {

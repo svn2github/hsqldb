@@ -32,9 +32,10 @@
 package org.hsqldb.test;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
+
+import org.hsqldb.jdbc.jdbcDataSource;
 
 public class TestMultipleConnections {
 
@@ -88,10 +89,11 @@ public class TestMultipleConnections {
     protected Connection createObject() {
 
         try {
-            Class.forName("org.hsqldb.jdbcDriver");
+            jdbcDataSource dataSource = new jdbcDataSource();
 
-            return DriverManager.getConnection("jdbc:hsqldb:/hsql/test/test",
-                                               "sa", "");
+            dataSource.setDatabase("jdbc:hsqldb:/hsql/test/test");
+
+            return dataSource.getConnection("sa", "");
         } catch (Exception ex) {
             ex.printStackTrace();
         }

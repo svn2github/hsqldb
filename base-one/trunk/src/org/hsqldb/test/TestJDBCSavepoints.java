@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2005, The HSQL Development Group
+/* Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,6 +43,8 @@ import org.hsqldb.WebServer;
 import junit.framework.TestCase;
 import junit.framework.TestResult;
 
+import org.hsqldb.jdbc.jdbcDataSource;
+
 /**
  * Tests JDBC java.sql.Savepoint support in context of new engine SQL-savepoint
  * support and new HSQL protocol extensions for savepoint support. <p>
@@ -55,7 +57,8 @@ public class TestJDBCSavepoints extends TestCase {
 
 //  You change the url and serverProps to reflect your preferred settings
     // String serverProps = "database.0=mem:test;dbname.0=;silent=false;trace=true" // debugging
-    String serverProps = "database.0=mem:test;dbname.0=;silent=true;trace=false";
+    String serverProps =
+        "database.0=mem:test;dbname.0=;silent=true;trace=false";
 
     //String     url         = "jdbc:hsqldb:hsql://localhost";
     String     url = "jdbc:hsqldb:http://localhost";
@@ -91,10 +94,12 @@ public class TestJDBCSavepoints extends TestCase {
         server.start();
 
         try {
-            Class.forName("org.hsqldb.jdbcDriver");
+            jdbcDataSource dataSource = new jdbcDataSource();
 
-            conn1 = DriverManager.getConnection(url, user, password);
-            conn2 = DriverManager.getConnection(url, user, password);
+            dataSource.setDatabase(url);
+
+            conn1 = dataSource.getConnection(user, password);
+            conn2 = dataSource.getConnection(user, password);
             stmt  = conn1.createStatement();
         } catch (Exception e) {
 
@@ -144,7 +149,7 @@ public class TestJDBCSavepoints extends TestCase {
 
         stmt.executeUpdate(sql);
 
-        sql = "create table t(id int, fn varchar, ln varchar, zip int)";
+        sql = "create table t(id int, fn varchar(20), ln varchar(20), zip int)";
 
         stmt.executeUpdate(sql);
         conn1.setAutoCommit(true);

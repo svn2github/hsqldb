@@ -33,13 +33,13 @@ package org.hsqldb.test;
 
 import java.io.FileWriter;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Random;
 
+import org.hsqldb.jdbc.jdbcDataSource;
 import org.hsqldb.lib.FileUtil;
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.persist.HsqlProperties;
@@ -125,9 +125,8 @@ public class TestCacheSize {
     FileWriter writer;
 
     //
-    String filler =
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        + "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    String filler = "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                    + "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     private void checkSelects() {
 
@@ -166,14 +165,15 @@ public class TestCacheSize {
             sStatement  = null;
             cConnection = null;
 
-            Class.forName("org.hsqldb.jdbcDriver");
-
             if (filedb) {
                 deleteDatabase(filepath);
 
-                cConnection = DriverManager.getConnection(url + filepath,
-                        user, password);
-                sStatement = cConnection.createStatement();
+                jdbcDataSource dataSource = new jdbcDataSource();
+
+                dataSource.setDatabase(url + filepath);
+
+                cConnection = dataSource.getConnection(user, password);
+                sStatement  = cConnection.createStatement();
 
                 sStatement.execute("SET WRITE_DELAY " + 2);
                 sStatement.execute("SET CHECKPOINT DEFRAG " + 0);
@@ -207,9 +207,8 @@ public class TestCacheSize {
         String    ddl11 = "DROP TABLE zip IF EXISTS";
         String    ddl2  = "CREATE TABLE zip( zip INT IDENTITY )";
         String ddl3 = "CREATE " + tableType + " TABLE test( id INT IDENTITY,"
-                      + " firstname VARCHAR(20), "
-                      + " lastname VARCHAR(20), " + " zip INTEGER, "
-                      + " filler VARCHAR(300))";
+                      + " firstname VARCHAR(20), " + " lastname VARCHAR(20), "
+                      + " zip INTEGER, " + " filler VARCHAR(300))";
         String ddl31 = "SET TABLE test SOURCE \"test.csv;cache_scale="
                        + cacheScale + "\"";
 
@@ -241,8 +240,12 @@ public class TestCacheSize {
 
             cConnection = null;
             sStatement  = null;
-            cConnection = DriverManager.getConnection(url + filepath, user,
-                    password);
+
+            jdbcDataSource dataSource = new jdbcDataSource();
+
+            dataSource.setDatabase(url + filepath);
+
+            cConnection = dataSource.getConnection(user, password);
 
             System.out.println("connection time -- " + sw.elapsedTime());
             sw.zero();
@@ -484,11 +487,13 @@ public class TestCacheSize {
     protected void checkResults() {
 
         try {
-            StopWatch sw = new StopWatch();
-            ResultSet rs;
+            StopWatch      sw = new StopWatch();
+            ResultSet      rs;
+            jdbcDataSource dataSource = new jdbcDataSource();
 
-            cConnection = DriverManager.getConnection(url + filepath, user,
-                    password);
+            dataSource.setDatabase(url + filepath);
+
+            cConnection = dataSource.getConnection(user, password);
 
             long time = sw.elapsedTime();
 
@@ -788,6 +793,7 @@ public class TestCacheSize {
 
                 int randomLength = nextIntRandom(randomgen, filler.length());
                 String newFiller = filler.substring(randomLength);
+
                 ps.setString(1, newFiller);
                 ps.setInt(2, random);
                 ps.execute();
@@ -903,8 +909,8 @@ public class TestCacheSize {
         long rate = (count * 1000) / (time + 1);
 
         storeResult("delete with random id", count, time, rate);
-        System.out.println("delete time for random id " + count
-                           + " rows  -- " + time + " ms -- " + rate + " tps");
+        System.out.println("delete time for random id " + count + " rows  -- "
+                           + time + " ms -- " + rate + " tps");
     }
 
     void deleteZipTable() {
@@ -963,6 +969,7 @@ public class TestCacheSize {
     static void deleteDatabase(String path) {
 
         FileUtil fileUtil = FileUtil.getDefaultInstance();
+
         fileUtil.delete(path + ".backup");
         fileUtil.delete(path + ".properties");
         fileUtil.delete(path + ".script");

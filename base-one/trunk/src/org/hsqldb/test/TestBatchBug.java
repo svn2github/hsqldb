@@ -32,11 +32,12 @@
 package org.hsqldb.test;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+
+import org.hsqldb.jdbc.jdbcDataSource;
 
 public class TestBatchBug {
 
@@ -71,10 +72,6 @@ public class TestBatchBug {
     public static void main(String[] arg) {
 
         try {
-
-// Load the HSQL Database Engine JDBC driver
-            Class.forName("org.hsqldb.jdbcDriver");
-
             String[] urls = {
                 IN_PROCESS_FILE_URL, HSQLDB_LOCALHOST_URL,
             };
@@ -98,7 +95,11 @@ public class TestBatchBug {
 
         System.out.println(url);
 
-        Connection con = DriverManager.getConnection(url, "sa", "");
+        jdbcDataSource dataSource = new jdbcDataSource();
+
+        dataSource.setDatabase(url);
+
+        Connection con = dataSource.getConnection("sa", "");
 
         reCreateTable(con, "CACHED");
         populateTable(con);
@@ -191,8 +192,7 @@ public class TestBatchBug {
         prep.close();
     }
 
-    static String createInsertSQL(boolean prepStmt,
-                                  boolean getIdAfterInsert) {
+    static String createInsertSQL(boolean prepStmt, boolean getIdAfterInsert) {
 
         StringBuffer sql = new StringBuffer();
 

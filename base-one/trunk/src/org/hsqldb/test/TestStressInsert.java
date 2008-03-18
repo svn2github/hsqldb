@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2005, The HSQL Development Group
+/* Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,12 +32,13 @@
 package org.hsqldb.test;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.Statement;
 import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.Random;
+
+import org.hsqldb.jdbc.jdbcDataSource;
 
 /**
  * Test with small cache and very large row inserts
@@ -55,9 +56,11 @@ public class TestStressInsert {
         String driver = "org.hsqldb.jdbcDriver";
         String url    = "jdbc:hsqldb:file:testing/test";
 
-        Class.forName(driver);
+        jdbcDataSource dataSource = new jdbcDataSource();
 
-        con = DriverManager.getConnection(url, "sa", "");
+        dataSource.setDatabase(url);
+
+        con = dataSource.getConnection("sa", "");
 
         con.setAutoCommit(true);
 
@@ -65,6 +68,7 @@ public class TestStressInsert {
         Statement stmt = con.createStatement();
 
         try {
+
 //            stmt.execute("set property \"hsqldb.nio_data_file\" false");
             stmt.execute("set property \"hsqldb.cache_scale\" 8");
             stmt.execute("set property \"hsqldb.cache_size_scale\" 10");
@@ -117,7 +121,7 @@ public class TestStressInsert {
 
         try {
             TestStressInsert test = new TestStressInsert();
-            long     t1   = System.currentTimeMillis();
+            long             t1   = System.currentTimeMillis();
 
             System.out.print("Initializing...");
             test.init();
@@ -129,10 +133,11 @@ public class TestStressInsert {
             for (int i = 0; i < MAX_SIZE; i++) {
                 test.insert(test.getRandomBytes(16));
 
-
-                if (i %100 == 0 ) {
+                if (i % 100 == 0) {
                     long t3 = System.currentTimeMillis();
+
                     System.out.println("inserted " + i + " in " + (t3 - t2));
+
                     t2 = t3;
                 }
             }

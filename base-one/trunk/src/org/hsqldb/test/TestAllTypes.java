@@ -32,7 +32,6 @@
 package org.hsqldb.test;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -41,6 +40,7 @@ import java.util.Random;
 
 import org.hsqldb.lib.StopWatch;
 import org.hsqldb.persist.HsqlProperties;
+import org.hsqldb.jdbc.jdbcDataSource;
 
 /**
  * Test large tables containing columns of different types.
@@ -91,12 +91,13 @@ public class TestAllTypes {
             HsqlProperties props      = new HsqlProperties(filepath);
             boolean        fileexists = props.checkFileExists();
 
-            Class.forName("org.hsqldb.jdbcDriver");
+            if (!network && !fileexists == false) {
+                jdbcDataSource dataSource = new jdbcDataSource();
 
-            if (!network &&!fileexists == false) {
-                cConnection = DriverManager.getConnection(url + filepath,
-                        user, password);
-                sStatement = cConnection.createStatement();
+                dataSource.setDatabase(url + filepath);
+
+                cConnection = dataSource.getConnection(user, password);
+                sStatement  = cConnection.createStatement();
 
                 sStatement.execute("SET SCRIPTFORMAT " + logType);
                 sStatement.execute("SET LOGSIZE " + 400);
@@ -107,9 +108,8 @@ public class TestAllTypes {
                 props.setProperty("hsqldb.cache_scale", "" + cacheScale);
                 props.save();
 
-                cConnection = DriverManager.getConnection(url + filepath,
-                        user, password);
-                sStatement = cConnection.createStatement();
+                cConnection = dataSource.getConnection(user, password);
+                sStatement  = cConnection.createStatement();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -150,8 +150,7 @@ public class TestAllTypes {
         // referential integrity checks will slow down inserts a bit
         String ddl6 =
             "ALTER TABLE test add constraint c1 FOREIGN KEY (zip) REFERENCES zip(zip);";
-        String filler =
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        String filler = "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
         try {
             System.out.println("Connecting");
@@ -159,8 +158,12 @@ public class TestAllTypes {
 
             cConnection = null;
             sStatement  = null;
-            cConnection = DriverManager.getConnection(url + filepath, user,
-                    password);
+
+            jdbcDataSource dataSource = new jdbcDataSource();
+
+            dataSource.setDatabase(url + filepath);
+
+            cConnection = dataSource.getConnection(user, password);
 
             System.out.println("connected: " + sw.elapsedTime());
             sw.zero();
@@ -271,11 +274,13 @@ public class TestAllTypes {
     protected void checkResults() {
 
         try {
-            StopWatch sw = new StopWatch();
-            ResultSet rs;
+            StopWatch      sw = new StopWatch();
+            ResultSet      rs;
+            jdbcDataSource dataSource = new jdbcDataSource();
 
-            cConnection = DriverManager.getConnection(url + filepath, user,
-                    password);
+            dataSource.setDatabase(url + filepath);
+
+            cConnection = dataSource.getConnection(user, password);
 
             System.out.println("Reopened database: " + sw.elapsedTime());
             sw.zero();

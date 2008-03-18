@@ -37,11 +37,10 @@
 package org.hsqldb.test;
 
 import java.sql.Connection;
-import java.sql.Driver;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import org.hsqldb.jdbc.jdbcDataSource;
 
 /**
  *
@@ -58,14 +57,9 @@ public class TestSubQueriesInPreparedStatements {
         Connection        conn;
         Statement         stmnt;
         PreparedStatement pstmnt;
-        Driver            driver;
-
-        driver =
-            (Driver) Class.forName("org.hsqldb.jdbcDriver").newInstance();
-
-        DriverManager.registerDriver(driver);
-
-        conn = DriverManager.getConnection("jdbc:hsqldb:mem:test", "sa", "");
+        jdbcDataSource dataSource = new jdbcDataSource();
+        dataSource.setDatabase("jdbc:hsqldb:mem:test");
+        conn = dataSource.getConnection("SA", "");
         stmnt  = conn.createStatement();
         pstmnt = conn.prepareStatement("drop table t if exists");
 

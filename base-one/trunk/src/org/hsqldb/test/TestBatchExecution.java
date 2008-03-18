@@ -32,14 +32,13 @@
 package org.hsqldb.test;
 
 import java.sql.Connection;
-import java.sql.Driver;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.hsqldb.lib.StopWatch;
+import org.hsqldb.jdbc.jdbcDataSource;
 
 /**
  * A quick test of the new CompiledStatement and batch execution facilities.
@@ -108,7 +107,6 @@ public class TestBatchExecution extends TestBase {
         int    runs;
         String db_path;
         String url;
-        Driver driver;
 
         runs    = def_runs;
         db_path = def_db_path;
@@ -121,20 +119,18 @@ public class TestBatchExecution extends TestBase {
             db_path = args[1];
         } catch (Exception e) {}
 
-        // get the connection and statement
-        driver =
-            (Driver) Class.forName("org.hsqldb.jdbcDriver").newInstance();
-
-        DriverManager.registerDriver(driver);
-
-        url   = "jdbc:hsqldb:file:" + db_path;
-        conn  = DriverManager.getConnection(url, "SA", "");
-        stmnt = conn.createStatement();
+        url = "jdbc:hsqldb:file:" + db_path;
 
         runTests(runs);
     }
 
     static void runTests(int runs) throws Exception {
+
+        jdbcDataSource dataSource = new jdbcDataSource();
+
+        dataSource.setDatabase(url);
+        conn  = dataSource.getConnection("SA", "");
+        stmnt = conn.createStatement();
 
         println("");
         println("***************************************");
@@ -157,7 +153,7 @@ public class TestBatchExecution extends TestBase {
         println("---------------------------------------");
 
         // get the connection and statement
-        conn  = DriverManager.getConnection(url, "SA", "");
+        conn  = dataSource.getConnection("SA", "");
         stmnt = conn.createStatement();
 
         println("");
@@ -181,7 +177,7 @@ public class TestBatchExecution extends TestBase {
         println("---------------------------------------");
 
         // get the connection and statement
-        conn  = DriverManager.getConnection(url, "SA", "");
+        conn  = dataSource.getConnection("SA", "");
         stmnt = conn.createStatement();
 
         println("");
@@ -207,6 +203,9 @@ public class TestBatchExecution extends TestBase {
     }
 
     public static void nonPreparedTest() throws Exception {
+
+        org.hsqldb.jdbc.jdbcStatement stmnt =
+            (org.hsqldb.jdbc.jdbcStatement) TestBatchExecution.stmnt;
 
         stmnt.addBatch(drop_table_sql);
         stmnt.addBatch(create_memory + table_sql);
@@ -300,10 +299,11 @@ public class TestBatchExecution extends TestBase {
     public static void preparedTestTwo() {
 
         try {
-            Class.forName("org.hsqldb.jdbcDriver");
+            jdbcDataSource dataSource = new jdbcDataSource();
 
-            Connection con = DriverManager.getConnection("jdbc:hsqldb:.",
-                "sa", "");
+            dataSource.setDatabase("jdbc:hsqldb:.");
+
+            Connection con = dataSource.getConnection("SA", "");
 
             System.out.println("con=" + con);
 
@@ -342,8 +342,6 @@ public class TestBatchExecution extends TestBase {
 
             System.out.println("bye.");
         } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
     }

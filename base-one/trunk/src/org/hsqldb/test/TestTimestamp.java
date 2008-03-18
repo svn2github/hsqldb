@@ -32,7 +32,6 @@
 package org.hsqldb.test;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -44,6 +43,8 @@ import java.util.TimeZone;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
+
+import org.hsqldb.jdbc.jdbcDataSource;
 
 public class TestTimestamp extends TestCase {
 
@@ -57,22 +58,14 @@ public class TestTimestamp extends TestCase {
         super(testName);
     }
 
-    private void initOracle() throws Exception {
-
-        Class.forName("oracle.jdbc.driver.OracleDriver");
-
-        conn = DriverManager.getConnection(
-            "jdbc:oracle:thin:@oracle:1521:MILL", "aaa", "qqq");
-
-        conn.setAutoCommit(false);
-    }
-
     private void initHypersonic() throws Exception {
 
-        Class.forName("org.hsqldb.jdbcDriver");
+        jdbcDataSource dataSource = new jdbcDataSource();
 
-//        conn = DriverManager.getConnection("jdbc:hsqldb:hsql://localhost/yourtest", "sa", "");
-        conn = DriverManager.getConnection("jdbc:hsqldb:mem:.", "sa", "");
+        dataSource.setDatabase("jdbc:hsqldb:mem:.");
+
+//        dataSource.setDatabase("jdbc:hsqldb:hsql://localhost/yourtest");
+        conn = dataSource.getConnection("sa", "");
 
         conn.setAutoCommit(false);
     }
@@ -331,9 +324,8 @@ public class TestTimestamp extends TestCase {
 
         sql_ = "select  a.ID_CURRENCY, a.DATE_CHANGE, a.CURS "
                + "from CASH_CURR_VALUE a, CASH_CURRENCY b "
-               + "where a.ID_CURRENCY=b.ID_CURRENCY and "
-               + "b.ID_SITE=? and " + "a.ID_CURRENCY=? and "
-               + "DATE_CHANGE = ?";
+               + "where a.ID_CURRENCY=b.ID_CURRENCY and " + "b.ID_SITE=? and "
+               + "a.ID_CURRENCY=? and " + "DATE_CHANGE = ?";
         ps = null;
         rs = null;
 

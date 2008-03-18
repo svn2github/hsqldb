@@ -1403,6 +1403,8 @@ implements PreparedStatement {
         }
     }
 
+//#endif JAVA2
+
     /**
      * <!-- start generic documentation -->
      * Sets the designated parameter to the given <code>Clob</code> object.
@@ -1432,8 +1434,6 @@ implements PreparedStatement {
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview for
      *  jdbcPreparedStatement)
      */
-
-//#endif JAVA2
 // boucherb@users 20030801 - method implemented
 //#ifdef JAVA2
     public void setClob(int i, Clob x) throws SQLException {

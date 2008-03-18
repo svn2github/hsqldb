@@ -35,7 +35,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -44,6 +43,8 @@ import java.sql.Types;
 
 import junit.framework.TestCase;
 import junit.framework.TestResult;
+
+import org.hsqldb.jdbc.jdbcDataSource;
 
 /**
  * Test sql statements via jdbc against a database with cached tables
@@ -75,9 +76,11 @@ public class TestSqlPersistent extends TestCase {
         TestSelf.deleteDatabase("/hsql/test/testpersistent");
 
         try {
-            Class.forName("org.hsqldb.jdbcDriver");
+            jdbcDataSource dataSource = new jdbcDataSource();
 
-            cConnection = DriverManager.getConnection(url, user, password);
+            dataSource.setDatabase(url);
+
+            cConnection = dataSource.getConnection(user, password);
             sStatement  = cConnection.createStatement();
         } catch (Exception e) {
             e.printStackTrace();
@@ -177,9 +180,8 @@ public class TestSqlPersistent extends TestCase {
             ps.setObject(3, bytearrayValue, Types.OTHER);
             ps.execute();
 
-            ResultSet rs =
-                sStatement.executeQuery("SELECT * FROM PREFERENCE");
-            boolean result = rs.next();
+            ResultSet rs = sStatement.executeQuery("SELECT * FROM PREFERENCE");
+            boolean   result = rs.next();
 
             // a string can be retrieved as a String or a stream
             // as Unicode string
@@ -187,20 +189,9 @@ public class TestSqlPersistent extends TestCase {
 
             System.out.println(str);
 
-            // as Unicode stream
-            InputStream is = rs.getUnicodeStream(2);
-            int         c;
-
-            while ((c = is.read()) > -1) {
-                c = is.read();
-
-                System.out.print((char) c);
-            }
-
-            System.out.println();
-
             // as ASCII stream, ignoring the high order bytes
-            is = rs.getAsciiStream(2);
+            InputStream is = rs.getAsciiStream(2);
+            int         c;
 
             while ((c = is.read()) > -1) {
                 System.out.print((char) c);
@@ -240,8 +231,7 @@ public class TestSqlPersistent extends TestCase {
             {
                 sqlString = "DELETE FROM PREFERENCE WHERE user_id = ?";
 
-                PreparedStatement st =
-                    cConnection.prepareStatement(sqlString);
+                PreparedStatement st = cConnection.prepareStatement(sqlString);
 
                 st.setString(1, "2");
 
@@ -338,9 +328,8 @@ public class TestSqlPersistent extends TestCase {
             */
             ps.execute();
 
-            ResultSet rs =
-                sStatement.executeQuery("SELECT * FROM TESTOBJECT");
-            boolean result = rs.next();
+            ResultSet rs = sStatement.executeQuery("SELECT * FROM TESTOBJECT");
+            boolean   result = rs.next();
 
             // retrieving objects inserted into the third column
             stringValueResult = (String) rs.getObject(2);
