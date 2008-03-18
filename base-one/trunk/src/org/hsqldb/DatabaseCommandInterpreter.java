@@ -1471,7 +1471,7 @@ class DatabaseCommandInterpreter {
                 // definitions to script without double quotes around column names
                 // in certain cases; the workaround here quotes such scripted column
                 // lists when used in OOo
-                if (!database.isStoredFileAccess()
+                if (database.isStoredFileAccess()
                         && session.isProcessingScript()) {
                     int newPosition = position;
 
