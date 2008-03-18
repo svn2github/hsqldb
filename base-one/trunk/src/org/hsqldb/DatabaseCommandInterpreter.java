@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * This software consists of voluntary contributions made by many individuals 
+ * This software consists of voluntary contributions made by many individuals
  * on behalf of the Hypersonic SQL Group.
  *
  *
@@ -1459,39 +1459,41 @@ class DatabaseCommandInterpreter {
         if (tokenizer.isGetThis(Token.T_OPENBRACKET)) {
             int position = tokenizer.getPosition();
 
-            // fredt - a bug in 1.8.0.0 and previous versions causes view
-            // definitions to script without double quotes around column names
-            // in certain cases; the workaround here quotes such scripted column
-            // lists when used in OOo
-            if (database.isStoredFileAccess()
-                    && session.isProcessingScript()) {
-                int newPosition = position;
-
-                while (true) {
-                    newPosition = tokenizer.getPosition();
-
-                    if (tokenizer.getString().equals(Token.T_CLOSEBRACKET)) {
-                        break;
-                    }
-                }
-
-                String   s       = tokenizer.getPart(position, newPosition);
-                String[] columns = StringUtil.split(s, ",");
-
-                colList = new HsqlName[columns.length];
-
-                for (int i = 0; i < columns.length; i++) {
-                    colList[i] = database.nameManager.newHsqlName(columns[i],
-                            true);
-                }
-
-                //
-            } else {
+            try {
                 HsqlArrayList list = Parser.getColumnNames(database, null,
                     tokenizer, true);
 
                 colList = new HsqlName[list.size()];
                 colList = (HsqlName[]) list.toArray(colList);
+            } catch (HsqlException e) {
+
+                // fredt - a bug in 1.8.0.0 and previous versions causes view
+                // definitions to script without double quotes around column names
+                // in certain cases; the workaround here quotes such scripted column
+                // lists when used in OOo
+                if (!database.isStoredFileAccess()
+                        && session.isProcessingScript()) {
+                    int newPosition = position;
+
+                    while (true) {
+                        newPosition = tokenizer.getPosition();
+
+                        if (tokenizer.getString().equals(
+                                Token.T_CLOSEBRACKET)) {
+                            break;
+                        }
+                    }
+
+                    String   s = tokenizer.getPart(position, newPosition);
+                    String[] columns = StringUtil.split(s, ",");
+
+                    colList = new HsqlName[columns.length];
+
+                    for (int i = 0; i < columns.length; i++) {
+                        colList[i] =
+                            database.nameManager.newHsqlName(columns[i], true);
+                    }
+                }
             }
         }
 
