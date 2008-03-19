@@ -1493,6 +1493,8 @@ class DatabaseCommandInterpreter {
                         colList[i] =
                             database.nameManager.newHsqlName(columns[i], true);
                     }
+                } else {
+                    throw e;
                 }
             }
         }
