@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2005, The HSQL Development Group
+/* Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1144,4 +1144,17 @@ public class jdbcResultSetMetaData implements ResultSetMetaData {
                                     String.valueOf(column));
         }
     }
+//#ifdef JAVA6
+/*
+    public <T> T unwrap(Class<T> iface) throws SQLException
+    {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public boolean isWrapperFor(Class<?> iface) throws SQLException
+    {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+*/
+//#endif JAVA6
 }

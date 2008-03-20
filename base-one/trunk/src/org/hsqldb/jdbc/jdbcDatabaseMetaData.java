@@ -36,6 +36,12 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+//#ifdef JAVA6
+/*
+import java.sql.RowIdLifetime;
+*/
+
+//#endif JAVA6
 import org.hsqldb.Column;
 import org.hsqldb.Library;
 import org.hsqldb.Trace;
@@ -5642,4 +5648,53 @@ public class jdbcDatabaseMetaData implements DatabaseMetaData {
 
         return schemaName;
     }
+
+//#ifdef JAVA6
+/*
+    public RowIdLifetime getRowIdLifetime() throws SQLException
+    {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public ResultSet getSchemas(String catalog, String schemaPattern) throws SQLException
+    {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public boolean supportsStoredFunctionsUsingCallSyntax() throws SQLException
+    {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+	public boolean autoCommitFailureClosesAllResultSets() throws SQLException
+    {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public ResultSet getClientInfoProperties() throws SQLException
+    {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public ResultSet getFunctions(String catalog, String schemaPattern, String functionNamePattern) throws SQLException
+    {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public ResultSet getFunctionColumns(String catalog, String schemaPattern, String functionNamePattern, String columnNamePattern) throws SQLException
+    {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public <T> T unwrap(Class<T> iface) throws SQLException
+    {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public boolean isWrapperFor(Class<?> iface) throws SQLException
+    {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+*/
+
+//#endif JAVA6
 }

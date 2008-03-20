@@ -461,6 +461,21 @@ public class jdbcBlob implements Blob {
         data = newData;
     }
 
+//#ifdef JAVA6
+/*
+    public void free() throws SQLException
+    {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public InputStream getBinaryStream(long pos, long length) throws SQLException
+    {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+*/
+
+//#endif JAVA6
+
 //    public static void main(String[] args) throws Exception {
 //
 //        System.out.println("--------------------------------");

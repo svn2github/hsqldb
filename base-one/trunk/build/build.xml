@@ -98,12 +98,18 @@ examples:
       <echo message="ant.java.hasjsse=${ant.java.hasjsse}" />
    </target>
 
-   <target name="-javaversion4">
+   <target name="javaversion6">
+      <available classname="java.net.IDN" property="ant.java.iscjava16"/>
+      <available classname="java.net.IDN" property="ant.java.iscjava14"/>
+      <available classname="java.net.IDN" property="ant.java.iscjavamodern"/>
+   </target>
+
+   <target name="javaversion4" depends="javaversion6">
       <available classname="java.nio.Buffer" property="ant.java.iscjava14"/>
       <available classname="java.nio.Buffer" property="ant.java.iscjavamodern"/>
    </target>
 
-   <target name="javaversion2" depends="-javaversion4"
+   <target name="javaversion2" depends="javaversion4"
            unless="ant.java.iscjava14">
       <available classname="java.lang.ref.Reference" property="ant.java.iscjava12"/>
       <available classname="java.lang.ref.Reference" property="ant.java.iscjavamodern"/>
@@ -222,6 +228,45 @@ examples:
                     ${src}/org/hsqldb/lib/SimpleLog.java
                     ${src}/org/hsqldb/rowio/RowInputTextLog.java
                     ${src}/org/hsqldb/HsqlDateTime.java +JAVA2 +JAVA2FULL +JAVA4"/>
+       </java>
+    </target>
+
+
+    <target name="switchtojdk16" depends="switches"
+            description="self explanatory" if="ant.java.iscjava16">
+      <java classname="org.hsqldb.util.CodeSwitcher" classpath="classes" >
+          <arg file="${src}/org/hsqldb/jdbc/jdbcDriver.java"/>
+          <arg file="${src}/org/hsqldb/jdbc/jdbcBlob.java"/>
+          <arg file="${src}/org/hsqldb/jdbc/jdbcCallableStatement.java"/>
+          <arg file="${src}/org/hsqldb/jdbc/jdbcClob.java"/>
+          <arg file="${src}/org/hsqldb/jdbc/jdbcConnection.java"/>
+          <arg file="${src}/org/hsqldb/jdbc/jdbcDataSource.java"/>
+          <arg file="${src}/org/hsqldb/jdbc/jdbcDatabaseMetaData.java"/>
+          <arg file="${src}/org/hsqldb/jdbc/jdbcParameterMetaData.java"/>
+          <arg file="${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java"/>
+          <arg file="${src}/org/hsqldb/jdbc/jdbcResultSet.java"/>
+          <arg file="${src}/org/hsqldb/jdbc/jdbcResultSetMetaData.java"/>
+          <arg file="${src}/org/hsqldb/jdbc/jdbcStatement.java"/>
+          <arg value="+JAVA6"/>
+       </java>
+    </target>
+
+    <target name="switchoffjdk16" depends="switches"
+            description="self explanatory" if="ant.java.iscjava16">
+      <java classname="org.hsqldb.util.CodeSwitcher" classpath="classes" >
+          <arg file="${src}/org/hsqldb/jdbc/jdbcDriver.java"/>
+          <arg file="${src}/org/hsqldb/jdbc/jdbcBlob.java"/>
+          <arg file="${src}/org/hsqldb/jdbc/jdbcCallableStatement.java"/>
+          <arg file="${src}/org/hsqldb/jdbc/jdbcClob.java"/>
+          <arg file="${src}/org/hsqldb/jdbc/jdbcConnection.java"/>
+          <arg file="${src}/org/hsqldb/jdbc/jdbcDataSource.java"/>
+          <arg file="${src}/org/hsqldb/jdbc/jdbcDatabaseMetaData.java"/>
+          <arg file="${src}/org/hsqldb/jdbc/jdbcParameterMetaData.java"/>
+          <arg file="${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java"/>
+          <arg file="${src}/org/hsqldb/jdbc/jdbcResultSet.java"/>
+          <arg file="${src}/org/hsqldb/jdbc/jdbcResultSetMetaData.java"/>
+          <arg file="${src}/org/hsqldb/jdbc/jdbcStatement.java"/>
+          <arg value="-JAVA6"/>
        </java>
     </target>
 

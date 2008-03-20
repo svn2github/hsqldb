@@ -31,6 +31,7 @@
 
 package org.hsqldb.jdbc;
 
+import java.io.Reader;
 import java.io.StringReader;
 import java.sql.Clob;
 import java.sql.SQLException;
@@ -461,4 +462,18 @@ public final class jdbcClob implements Clob {
             data = new String(ldata.substring(0, (int) chars));
         }
     }
+
+//#ifdef JAVA6
+/*
+    public void free() throws SQLException
+    {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public Reader getCharacterStream(long pos, long length) throws SQLException
+    {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+*/
+//#endif JAVA6
 }

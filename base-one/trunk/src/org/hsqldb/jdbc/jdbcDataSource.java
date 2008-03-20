@@ -297,4 +297,19 @@ implements Serializable, Referenceable, DataSource {
     public void setUser(String user) {
         this.user = user;
     }
+
+//#ifdef JAVA6
+/*
+    public <T> T unwrap(Class<T> iface) throws SQLException
+    {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public boolean isWrapperFor(Class<?> iface) throws SQLException
+    {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+*/
+
+//#endif JAVA6
 }
