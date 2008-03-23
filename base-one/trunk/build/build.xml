@@ -529,11 +529,10 @@ examples:
          <exclude name="org/hsqldb/jdbc/jdbcDataSource.class"/>
          <exclude name="org/hsqldb/jdbc/jdbcDataSourceFactory.class"/>
          <exclude name="org/hsqldb/jmx/**"/>
-         <exclude name="org/hsqldb/util/*.*"/>
-         <exclude name="org/hsqldb/test/*.*"/>
-         <exclude name="org/hsqldb/sample/*.*"/>
+         <exclude name="org/hsqldb/util/**"/>
+         <exclude name="org/hsqldb/test/**"/>
+         <exclude name="org/hsqldb/sample/**"/>
          <exclude name="**/*.properties"/>
-         <include name="org/hsqldb/resources/sql-error-messages.properties"/>
          <exclude name="hsqlServlet.class"/>
          <exclude name="org/hsqldb/Servlet.class"/>
          <exclude name="org/hsqldb/HsqlSocketFactory.class"/>
@@ -552,8 +551,8 @@ examples:
          <exclude name="org/hsqldb/DIProcedureInfo.class"/>
          <exclude name="org/hsqldb/HSQLClientConnection.class"/>
          <exclude name="org/hsqldb/HTTPClientConnection.class"/>
-
-
+         <fileset dir="classes"
+                includes="org/hsqldb/resources/sql-error-messages.properties"/>
        </jar>
     </target>
 
