@@ -6,7 +6,7 @@ hsqldb 1.8.0, including point releases, in reverse chronological order.
 Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
-2008.03.19  towards 1.8.0.10
+2008.03.24  towards 1.8.0.10
 
 New database property hsqldb.lock_file, true by default. When false, no lock
 file is created when the database is opened.
@@ -16,7 +16,8 @@ Fixed issue with org.hsqldb.Servlet
 Fixed issue with scripting of views
 Fixed issue with HsqlTimer
 Minor improvement to WebServer
-Minor corrections to utilities.
+Minor corrections to utilities
+Correction to build.xml to allow hsqldbmin target
 
 2007.10.22  1.8.0.9
 

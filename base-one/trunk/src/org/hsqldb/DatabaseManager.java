@@ -483,7 +483,7 @@ public class DatabaseManager {
     private static String filePathToKey(String path) throws HsqlException {
 
         try {
-            return FileUtil.getDefaultInstance().canonicalPath(path);
+            return FileUtil.getDefaultInstance().canonicalOrAbsolutePath(path);
         } catch (Exception e) {
             throw Trace.error(Trace.FILE_IO_ERROR, e.toString());
         }
