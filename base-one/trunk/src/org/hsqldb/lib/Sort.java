@@ -91,7 +91,7 @@ public class Sort {
         }
 
         while (r - l > 10) {
-            i = (r + l) >> 1;
+            i = (r + l) >>> 1;
 
             if (comparator.compare(w[l], w[r]) > 0) {
                 swap(w, l, r);

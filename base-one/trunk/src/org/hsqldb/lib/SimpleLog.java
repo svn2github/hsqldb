@@ -51,11 +51,11 @@ import org.hsqldb.HsqlDateTime;
  */
 public class SimpleLog {
 
-    public static int   LOG_NONE   = 0;
-    public static int   LOG_ERROR  = 1;
-    public static int   LOG_NORMAL = 2;
-    private PrintWriter writer;
-    private int         level;
+    public static final int LOG_NONE   = 0;
+    public static final int LOG_ERROR  = 1;
+    public static final int LOG_NORMAL = 2;
+    private PrintWriter     writer;
+    private int             level;
 
     public SimpleLog(String path, int level, boolean useFile) {
 
@@ -116,7 +116,7 @@ public class SimpleLog {
                     + elements[1].getMethodName();
         }
 
-//#endif
+//#endif JAVA4
         writer.println(info + " " + message);
     }
 
@@ -144,7 +144,7 @@ public class SimpleLog {
                     + elements[0].getMethodName();
         }
 
-//#endif
+//#endif JAVA4
         if (message == null) {
             message = "";
         }
