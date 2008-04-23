@@ -1215,6 +1215,7 @@ public class Types {
                 return null;
 
             case Types.CHAR :
+            case Types.VARCHAR :
             case Types.DATALINK :
             case Types.LONGVARCHAR :
             case Types.OTHER :
