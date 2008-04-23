@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<!-- author fredt@users.sourceforge.net 2001 - 2005 -->
-<!-- additional targets by unsaved@users.sourceforge.net 2004 - 2005 -->
+<!-- author fredt@users.sourceforge.net 2001 - 2008 -->
+<!-- additional targets by unsaved@users.sourceforge.net 2004 - 2008 -->
 
 <project name="hsqldb" default="help" basedir="../">
    <!-- This loads properties in the same exact way as if you ran
@@ -100,19 +100,14 @@ examples:
 
    <target name="javaversion6">
       <available classname="java.net.IDN" property="ant.java.iscjava16"/>
-      <available classname="java.net.IDN" property="ant.java.iscjava14"/>
-      <available classname="java.net.IDN" property="ant.java.iscjavamodern"/>
    </target>
 
-   <target name="javaversion4" depends="javaversion6">
+   <target name="javaversion4" depends="javaversion6" unless="ant.java.iscjava16">
       <available classname="java.nio.Buffer" property="ant.java.iscjava14"/>
-      <available classname="java.nio.Buffer" property="ant.java.iscjavamodern"/>
    </target>
 
-   <target name="javaversion2" depends="javaversion4"
-           unless="ant.java.iscjava14">
+   <target name="javaversion2" depends="javaversion4" unless="ant.java.iscjava14">
       <available classname="java.lang.ref.Reference" property="ant.java.iscjava12"/>
-      <available classname="java.lang.ref.Reference" property="ant.java.iscjavamodern"/>
    </target>
 
    <target name="-prepare" depends="init,javaversion2">
@@ -146,35 +141,38 @@ examples:
     <target name="switchtodeprecatedjdbc" depends="codeswitcher"
             description="self explanatory">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath="classes" >
-         <arg line="${src}/org/hsqldb/jdbc/jdbcCallableStatement.java
-                    ${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java
-                    ${src}/org/hsqldb/jdbc/jdbcResultSet.java +DEPRECATEDJDBC"/>
-       </java>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcCallableStatement.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcResultSet.java"/>
+        <arg value="+DEPRECATEDJDBC"/>
+      </java>
     </target>
 
     <target name="switchoffdeprecatedjdbc" depends="codeswitcher"
             description="self explanatory">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath="classes" >
-         <arg line="${src}/org/hsqldb/jdbc/jdbcCallableStatement.java
-                    ${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java
-                    ${src}/org/hsqldb/jdbc/jdbcResultSet.java -DEPRECATEDJDBC"/>
-       </java>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcCallableStatement.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcResultSet.java"/>
+        <arg value="-DEPRECATEDJDBC"/>
+      </java>
     </target>
 
     <target name="switches" depends="codeswitcher"
             description="self explanatory">
     </target>
 
-    <target name="switchtojdk11" depends="switches"
-            description="self explanatory">
+    <target name="switchtojdk11" depends="switches" description="self explanatory">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath="classes" >
-         <arg line="${src}/org/hsqldb/lib/java/JavaSystem.java
-                    ${src}/org/hsqldb/jdbc/jdbcStatement.java
-                    ${src}/org/hsqldb/persist/LockFile.java
-                    ${src}/org/hsqldb/persist/Logger.java
-                    ${src}/org/hsqldb/util/DatabaseManager.java
-                    ${src}/org/hsqldb/util/ConnectionDialogCommon.java
-                    +JAVA2 -JAVA2FULL -JAVA4"/>
+        <arg file="${src}/org/hsqldb/lib/java/JavaSystem.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcStatement.java"/>
+        <arg file="${src}/org/hsqldb/persist/LockFile.java"/>
+        <arg file="${src}/org/hsqldb/persist/Logger.java"/>
+        <arg file="${src}/org/hsqldb/util/DatabaseManager.java"/>
+        <arg file="${src}/org/hsqldb/util/ConnectionDialogCommon.java"/>
+        <arg value="+JAVA2"/>
+        <arg value="-JAVA2FULL"/>
+        <arg value="-JAVA4"/>
        </java>
        <available classname="java.util.Vector" property="noswing"/>
     </target>
@@ -182,95 +180,105 @@ examples:
     <target name="switchtojdk13" depends="switches"
             description="self explanatory" if="ant.java.iscjava12">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath="classes" >
-         <arg line="${src}/org/hsqldb/lib/java/JavaSystem.java
-                    ${src}/org/hsqldb/jdbc/jdbcBlob.java
-                    ${src}/org/hsqldb/jdbc/jdbcDatabaseMetaData.java
-                    ${src}/org/hsqldb/jdbc/jdbcCallableStatement.java
-                    ${src}/org/hsqldb/jdbc/jdbcClob.java
-                    ${src}/org/hsqldb/jdbc/jdbcConnection.java
-                    ${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java
-                    ${src}/org/hsqldb/jdbc/jdbcResultSet.java
-                    ${src}/org/hsqldb/jdbc/jdbcStatement.java
-                    ${src}/org/hsqldb/persist/LockFile.java
-                    ${src}/org/hsqldb/persist/Logger.java
-                    ${src}/org/hsqldb/persist/ScaledRAFile.java
-                    ${src}/org/hsqldb/rowio/RowInputTextLog.java
-                    ${src}/org/hsqldb/util/DatabaseManager.java
-                    ${src}/org/hsqldb/util/ConnectionDialogCommon.java
-                    ${src}/org/hsqldb/lib/SimpleLog.java
-                    ${src}/org/hsqldb/rowio/RowInputTextLog.java
-                    ${src}/org/hsqldb/lib/SimpleLog.java
-                    ${src}/org/hsqldb/rowio/RowInputTextLog.java
-                    ${src}/org/hsqldb/HsqlDateTime.java +JAVA2 +JAVA2FULL -JAVA4"/>
+        <arg file="${src}/org/hsqldb/lib/java/JavaSystem.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcBlob.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcDatabaseMetaData.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcDataSource.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcDriver.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcCallableStatement.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcClob.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcConnection.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcParameterMetaData.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcResultSet.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcResultSetMetaData.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcStatement.java"/>
+        <arg file="${src}/org/hsqldb/persist/LockFile.java"/>
+        <arg file="${src}/org/hsqldb/persist/Logger.java"/>
+        <arg file="${src}/org/hsqldb/persist/ScaledRAFile.java"/>
+        <arg file="${src}/org/hsqldb/rowio/RowInputTextLog.java"/>
+        <arg file="${src}/org/hsqldb/util/DatabaseManager.java"/>
+        <arg file="${src}/org/hsqldb/util/ConnectionDialogCommon.java"/>
+        <arg file="${src}/org/hsqldb/lib/SimpleLog.java"/>
+        <arg file="${src}/org/hsqldb/rowio/RowInputTextLog.java"/>
+        <arg file="${src}/org/hsqldb/lib/SimpleLog.java"/>
+        <arg file="${src}/org/hsqldb/rowio/RowInputTextLog.java"/>
+        <arg file="${src}/org/hsqldb/HsqlDateTime.java"/>
+        <arg value="+JAVA2"/>
+        <arg value="+JAVA2FULL"/>
+        <arg value="-JAVA4"/>
+        <arg value="-JAVA6"/>
        </java>
     </target>
 
     <target name="switchtojdk14" depends="switches"
             description="self explanatory" if="ant.java.iscjava14">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath="classes" >
-         <arg line="${src}/org/hsqldb/lib/java/JavaSystem.java
-                    ${src}/org/hsqldb/jdbc/jdbcBlob.java
-                    ${src}/org/hsqldb/jdbc/jdbcDatabaseMetaData.java
-                    ${src}/org/hsqldb/jdbc/jdbcCallableStatement.java
-                    ${src}/org/hsqldb/jdbc/jdbcClob.java
-                    ${src}/org/hsqldb/jdbc/jdbcConnection.java
-                    ${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java
-                    ${src}/org/hsqldb/jdbc/jdbcResultSet.java
-                    ${src}/org/hsqldb/jdbc/jdbcStatement.java
-                    ${src}/org/hsqldb/persist/LockFile.java
-                    ${src}/org/hsqldb/persist/Logger.java
-                    ${src}/org/hsqldb/persist/ScaledRAFile.java
-                    ${src}/org/hsqldb/rowio/RowInputTextLog.java
-                    ${src}/org/hsqldb/util/DatabaseManager.java
-                    ${src}/org/hsqldb/util/ConnectionDialogCommon.java
-                    ${src}/org/hsqldb/lib/SimpleLog.java
-                    ${src}/org/hsqldb/rowio/RowInputTextLog.java
-                    ${src}/org/hsqldb/lib/SimpleLog.java
-                    ${src}/org/hsqldb/rowio/RowInputTextLog.java
-                    ${src}/org/hsqldb/HsqlDateTime.java +JAVA2 +JAVA2FULL +JAVA4"/>
+        <arg file="${src}/org/hsqldb/lib/java/JavaSystem.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcBlob.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcDatabaseMetaData.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcDataSource.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcCallableStatement.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcClob.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcConnection.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcParameterMetaData.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcResultSet.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcResultSetMetaData.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcStatement.java"/>
+        <arg file="${src}/org/hsqldb/persist/LockFile.java"/>
+        <arg file="${src}/org/hsqldb/persist/Logger.java"/>
+        <arg file="${src}/org/hsqldb/persist/ScaledRAFile.java"/>
+        <arg file="${src}/org/hsqldb/rowio/RowInputTextLog.java"/>
+        <arg file="${src}/org/hsqldb/util/DatabaseManager.java"/>
+        <arg file="${src}/org/hsqldb/util/ConnectionDialogCommon.java"/>
+        <arg file="${src}/org/hsqldb/lib/SimpleLog.java"/>
+        <arg file="${src}/org/hsqldb/rowio/RowInputTextLog.java"/>
+        <arg file="${src}/org/hsqldb/lib/SimpleLog.java"/>
+        <arg file="${src}/org/hsqldb/rowio/RowInputTextLog.java"/>
+        <arg file="${src}/org/hsqldb/HsqlDateTime.java"/>
+        <arg value="+JAVA2"/>
+        <arg value="+JAVA2FULL"/>
+        <arg value="+JAVA4"/>
+        <arg value="-JAVA6"/>
        </java>
     </target>
 
 
-    <target name="switchtojdk16" depends="switches"
+    <target name="switchtojdk16" depends="switchtojdk14"
             description="self explanatory" if="ant.java.iscjava16">
       <java classname="org.hsqldb.util.CodeSwitcher" classpath="classes" >
-          <arg file="${src}/org/hsqldb/jdbc/jdbcDriver.java"/>
-          <arg file="${src}/org/hsqldb/jdbc/jdbcBlob.java"/>
-          <arg file="${src}/org/hsqldb/jdbc/jdbcCallableStatement.java"/>
-          <arg file="${src}/org/hsqldb/jdbc/jdbcClob.java"/>
-          <arg file="${src}/org/hsqldb/jdbc/jdbcConnection.java"/>
-          <arg file="${src}/org/hsqldb/jdbc/jdbcDataSource.java"/>
-          <arg file="${src}/org/hsqldb/jdbc/jdbcDatabaseMetaData.java"/>
-          <arg file="${src}/org/hsqldb/jdbc/jdbcParameterMetaData.java"/>
-          <arg file="${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java"/>
-          <arg file="${src}/org/hsqldb/jdbc/jdbcResultSet.java"/>
-          <arg file="${src}/org/hsqldb/jdbc/jdbcResultSetMetaData.java"/>
-          <arg file="${src}/org/hsqldb/jdbc/jdbcStatement.java"/>
-          <arg value="+JAVA6"/>
-       </java>
+        <arg file="${src}/org/hsqldb/lib/java/JavaSystem.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcBlob.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcDatabaseMetaData.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcDataSource.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcCallableStatement.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcClob.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcConnection.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcParameterMetaData.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcResultSet.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcResultSetMetaData.java"/>
+        <arg file="${src}/org/hsqldb/jdbc/jdbcStatement.java"/>
+        <arg file="${src}/org/hsqldb/persist/LockFile.java"/>
+        <arg file="${src}/org/hsqldb/persist/Logger.java"/>
+        <arg file="${src}/org/hsqldb/persist/ScaledRAFile.java"/>
+        <arg file="${src}/org/hsqldb/rowio/RowInputTextLog.java"/>
+        <arg file="${src}/org/hsqldb/util/DatabaseManager.java"/>
+        <arg file="${src}/org/hsqldb/util/ConnectionDialogCommon.java"/>
+        <arg file="${src}/org/hsqldb/lib/SimpleLog.java"/>
+        <arg file="${src}/org/hsqldb/rowio/RowInputTextLog.java"/>
+        <arg file="${src}/org/hsqldb/lib/SimpleLog.java"/>
+        <arg file="${src}/org/hsqldb/rowio/RowInputTextLog.java"/>
+        <arg file="${src}/org/hsqldb/HsqlDateTime.java"/>
+        <arg value="+JAVA2"/>
+        <arg value="+JAVA2FULL"/>
+        <arg value="+JAVA4"/>
+        <arg value="+JAVA6"/>
+      </java>
     </target>
 
-    <target name="switchoffjdk16" depends="switches"
-            description="self explanatory" if="ant.java.iscjava16">
-      <java classname="org.hsqldb.util.CodeSwitcher" classpath="classes" >
-          <arg file="${src}/org/hsqldb/jdbc/jdbcDriver.java"/>
-          <arg file="${src}/org/hsqldb/jdbc/jdbcBlob.java"/>
-          <arg file="${src}/org/hsqldb/jdbc/jdbcCallableStatement.java"/>
-          <arg file="${src}/org/hsqldb/jdbc/jdbcClob.java"/>
-          <arg file="${src}/org/hsqldb/jdbc/jdbcConnection.java"/>
-          <arg file="${src}/org/hsqldb/jdbc/jdbcDataSource.java"/>
-          <arg file="${src}/org/hsqldb/jdbc/jdbcDatabaseMetaData.java"/>
-          <arg file="${src}/org/hsqldb/jdbc/jdbcParameterMetaData.java"/>
-          <arg file="${src}/org/hsqldb/jdbc/jdbcPreparedStatement.java"/>
-          <arg file="${src}/org/hsqldb/jdbc/jdbcResultSet.java"/>
-          <arg file="${src}/org/hsqldb/jdbc/jdbcResultSetMetaData.java"/>
-          <arg file="${src}/org/hsqldb/jdbc/jdbcStatement.java"/>
-          <arg value="-JAVA6"/>
-       </java>
-    </target>
-
-    <target name="store" depends="switchtojdk14"
+    <target name="store" depends="switchtojdk16"
             description="compiles the /store folder">
       <javac srcdir="${src}"
              destdir="classes"
@@ -673,7 +681,7 @@ examples:
     <target name="hsqljdbc" depends="classes14"
              description="Build the hsqljdbc.jar">
         <jar jarfile="lib/hsqljdbc.jar" compress="true">
-         <manifest>
+          <manifest>
              <attribute name='Specification-Title' value='${hsqldb.title}'/>
              <attribute name='Specification-Version' value='${hsqldb.version}'/>
              <attribute name='Specification-Vendor' value='${hsqldb.vendor}'/>
@@ -681,8 +689,8 @@ examples:
                         value='JDBC client runtime'/>
              <attribute name='Implementation-Version' value='${build.label}'/>
              <attribute name='Implementation-Vendor' value='${build.vendor}'/>
-         </manifest>
-            <fileset refid='jdbcclasses'/>
+          </manifest>
+          <fileset refid='jdbcclasses'/>
         </jar>
     </target>
 
