@@ -441,11 +441,17 @@ public class DataFileCache {
     public synchronized void remove(int i,
                                     PersistentStore store) throws IOException {
 
-        CachedObject r    = release(i);
-        int          size = r == null ? getStorageSize(i)
-                                      : r.getStorageSize();
+        CachedObject r = release(i);
 
-        freeBlocks.add(i, size);
+        // bug fix for 1.8.0.10
+        // if r is not in the cache, it is not known if the space has already
+        // been reallocated to multiple rows, therefore we no longer read the
+        // space size from file
+        if (r != null) {
+            int size = r.getStorageSize();
+
+            freeBlocks.add(i, size);
+        }
     }
 
     public synchronized void removePersistence(int i,
@@ -606,6 +612,7 @@ public class DataFileCache {
         if (count == 0) {
             return;
         }
+
         try {
             for (int i = offset; i < offset + count; i++) {
                 CachedObject r = rows[i];
