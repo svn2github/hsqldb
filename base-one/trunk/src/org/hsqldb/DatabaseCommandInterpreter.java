@@ -1457,8 +1457,6 @@ class DatabaseCommandInterpreter {
         HsqlName[] colList = null;
 
         if (tokenizer.isGetThis(Token.T_OPENBRACKET)) {
-            int position = tokenizer.getPosition();
-
             try {
                 HsqlArrayList list = Parser.getColumnNames(database, null,
                     tokenizer, true);
@@ -1469,29 +1467,17 @@ class DatabaseCommandInterpreter {
 
                 // fredt - a bug in 1.8.0.0 and previous versions causes view
                 // definitions to script without double quotes around column names
-                // in certain cases; the workaround here quotes such scripted column
-                // lists when used in OOo
+                // in certain cases; the workaround here discards the column
+                // names
                 if (database.isStoredFileAccess()
                         && session.isProcessingScript()) {
-                    int newPosition = position;
-
                     while (true) {
-                        newPosition = tokenizer.getPosition();
+                        String token = tokenizer.getString();
 
-                        if (tokenizer.getString().equals(
-                                Token.T_CLOSEBRACKET)) {
+                        if (token.equals(Token.T_CLOSEBRACKET)
+                                || token.equals("")) {
                             break;
                         }
-                    }
-
-                    String   s = tokenizer.getPart(position, newPosition);
-                    String[] columns = StringUtil.split(s, ",");
-
-                    colList = new HsqlName[columns.length];
-
-                    for (int i = 0; i < columns.length; i++) {
-                        colList[i] =
-                            database.nameManager.newHsqlName(columns[i], true);
                     }
                 } else {
                     throw e;

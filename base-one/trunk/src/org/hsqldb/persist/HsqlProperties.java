@@ -279,13 +279,15 @@ public class HsqlProperties {
 // oj@openoffice.org
         fa.createParentDirs(fileString);
 
-        OutputStream fos = fa.openOutputStreamElement(fileString);
+        OutputStream        fos = fa.openOutputStreamElement(fileString);
+        FileAccess.FileSync outDescriptor = fa.getFileSync(fos);
 
         JavaSystem.saveProperties(
             stringProps,
             HsqlDatabaseProperties.PRODUCT_NAME + " "
             + HsqlDatabaseProperties.THIS_FULL_VERSION, fos);
         fos.flush();
+        outDescriptor.sync();
         fos.close();
 
         return;

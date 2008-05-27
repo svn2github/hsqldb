@@ -549,12 +549,12 @@ public class Expression {
         StringBuffer buf   = new StringBuffer();
         Table        table = tableFilter.getTable();
 
-        if (!table.getName().name.equals(tableName)) {
-            if (!tableName.equals("SYSTEM_SUBQUERY")) {
+        if (!tableName.equals("SYSTEM_SUBQUERY")) {
+            if (!table.getName().name.equals(tableName)) {
                 buf.append('"').append(tableName).append('"').append('.');
+            } else {
+                buf.append(table.tableName.statementName).append('.');
             }
-        } else {
-            buf.append(table.tableName.statementName).append('.');
         }
 
         buf.append(table.getColumn(columnIndex).columnName.statementName);
