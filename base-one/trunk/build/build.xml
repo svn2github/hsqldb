@@ -323,7 +323,7 @@ examples:
          <exclude name="org/hsqldb/HsqlSocketFactorySecure.java" unless="ant.java.hasjsse"/>
          <exclude name="org/hsqldb/jdbc/jdbcBlob.java"/>
          <exclude name="org/hsqldb/jdbc/jdbcClob.java"/>
-         <exclude name="org/hsqldb/jdbc/jdbcDataSource*.java"/>
+         <exclude name="org/hsqldb/jdbc/jdbcDataSourceFactory.java"/>
          <exclude name="org/hsqldb/jdbc/jdbcParameterMetaData.java"/>
          <exclude name="org/hsqldb/jdbc/jdbcSavepoint.java"/>
          <exclude name="org/hsqldb/persist/NIOLockFile.java"/>
@@ -343,7 +343,7 @@ examples:
                  debug="${build.debug}"
                  optimize="${build.optimize}"
        >
-      <include name="org/hsqldb/jdbc/jdbcDataSource*.java"/>
+      <include name="org/hsqldb/jdbc/jdbcDataSourceFactory.java"/>
       <include name="org/hsqldb/jdbc/jdbcParameterMetaData.java"/>
       <include name="org/hsqldb/jdbc/jdbcSavepoint.java"/>
       <include name="org/hsqldb/persist/NIOLockFile.java"/>
@@ -502,9 +502,9 @@ examples:
              <attribute name='Implementation-Vendor' value='${build.vendor}'/>
          </manifest>
          <exclude name="org/hsqldb/jmx/**"/>
-         <exclude name="org/hsqldb/util/*.*"/>
-         <exclude name="org/hsqldb/test/*.*"/>
-         <exclude name="org/hsqldb/sample/*.*"/>
+         <exclude name="org/hsqldb/util/**"/>
+         <exclude name="org/hsqldb/test/**"/>
+         <exclude name="org/hsqldb/sample/**"/>
          <exclude name="org/hsqldb/jdbc/jdbcStubs.class"/>
          <exclude name="org/hsqldb/jdbc/Array.class"/>
          <exclude name="org/hsqldb/jdbc/Blob.class"/>
@@ -534,7 +534,6 @@ examples:
          <exclude name="org/hsqldb/jdbc/Clob.class"/>
          <exclude name="org/hsqldb/jdbc/Ref.class"/>
          <exclude name="org/hsqldb/jdbc/Map.class"/>
-         <exclude name="org/hsqldb/jdbc/jdbcDataSource.class"/>
          <exclude name="org/hsqldb/jdbc/jdbcDataSourceFactory.class"/>
          <exclude name="org/hsqldb/jmx/**"/>
          <exclude name="org/hsqldb/util/**"/>
@@ -553,7 +552,6 @@ examples:
          <exclude name="org/hsqldb/ServerConnection.class"/>
          <exclude name="org/hsqldb/WebServer.class"/>
          <exclude name="org/hsqldb/WebServerConnection.class"/>
-         <exclude name="org/hsqldb/DatabaseInformationFull.class"/>
          <exclude name="org/hsqldb/rowio/RowInputLegacy.class"/>
          <exclude name="org/hsqldb/rowio/RowOutputLegacy.class"/>
          <exclude name="org/hsqldb/DIProcedureInfo.class"/>
