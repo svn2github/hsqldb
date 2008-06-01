@@ -37,12 +37,14 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
 
+//#ifdef JAVA4
 import javax.naming.NamingException;
 import javax.naming.Reference;
 import javax.naming.Referenceable;
 import javax.naming.StringRefAddr;
 import javax.sql.DataSource;
 
+//#endif JAVA4
 import org.hsqldb.jdbcDriver;
 
 // boucherb@users 20040411 - doc 1.7.2 - javadoc updates toward 1.7.2 final
@@ -91,8 +93,16 @@ import org.hsqldb.jdbcDriver;
  * @author deforest@users
  * @version 1.7.2
  */
+//#ifdef JAVA4
 public class jdbcDataSource
 implements Serializable, Referenceable, DataSource {
+
+//#else
+/*
+public class jdbcDataSource implements Serializable {
+*/
+
+//#endif JAVA4
 
     /**
      * Login timeout
@@ -211,6 +221,7 @@ implements Serializable, Referenceable, DataSource {
     }
 
     // javadoc to be copied from javax.naming.Referenceable.getReference()
+//#ifdef JAVA4
     public Reference getReference() throws NamingException {
 
         String    cname = "org.hsqldb.jdbc.jdbcDataSourceFactory";
@@ -222,6 +233,8 @@ implements Serializable, Referenceable, DataSource {
 
         return ref;
     }
+
+//#endif JAVA4
 
     /**
      * Retrieves the user ID for the connection. <p>

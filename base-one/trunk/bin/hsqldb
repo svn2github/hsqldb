@@ -23,9 +23,9 @@
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED. IN NO EVENT SHALL HSQL DEVELOPMENT GROUP, HSQLDB.ORG, 
-# OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
-# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+# ARE DISCLAIMED. IN NO EVENT SHALL HSQL DEVELOPMENT GROUP, HSQLDB.ORG,
+# OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
 # PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
 # LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 # ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
@@ -33,7 +33,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# $Id: hsqldb,v 1.37 2005/07/25 22:27:14 unsaved Exp $
+# $Id: hsqldb,v 1.38 2007/08/29 22:55:10 unsaved Exp $
 
 # UNIX init script for HSQLDB.
 
@@ -71,7 +71,7 @@
 # any combination of classes with the normal static main methods.
 # However, you must still have a TARGET_CLASS which is a HSQLDB Server or
 # WebServer  We connect to this server to check for status and to shut down.
-# This is the one class which must use the default server property file 
+# This is the one class which must use the default server property file
 # name, either "server.properties" or "webserver.properties" (because
 # we get the list of urlids to check from this file).
 # Other than these constraints, you can supply invocation arguments to the
@@ -114,7 +114,7 @@ PIDCHECKER_FLAGFILE=/tmp/pidchecker.run
 # The following settings get overridden by optional setting in the config file.
 # Time to allow for JVM to die after all HSQLDB instances stopped.
 MAX_TERMINATE_SECS=1
-# We require all Server/WebServer instances to be accessible within 
+# We require all Server/WebServer instances to be accessible within
 # $MAX_START_SECS from when the Server/WebServer is started.
 MAX_START_SECS=60
 # Class in the org.hsqldb package to start.
@@ -330,7 +330,7 @@ case "$COMMAND" in
         }
         echo "There is an hsqldb server loaded from $HSQLDB_JAR_PATH
 running with pid $HSQLDB_PID."
-        # I would give a nice ps command here, were ps not so damned 
+        # I would give a nice ps command here, were ps not so damned
         # OS-specific.
         AUTH_FILE_SWITCH=
         # N.b., there will be a problem if there are special characters or

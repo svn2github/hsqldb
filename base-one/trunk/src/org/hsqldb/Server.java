@@ -1,4 +1,4 @@
-/* Copyright (c) 2001-2005, The HSQL Development Group
+/* Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -63,6 +63,8 @@ import org.hsqldb.resources.BundleHandler;
 // fredt@users 20040320 - 1.7.2 - review and correction
 // fredt@users 20050225 - 1.8.0 - minor corrections
 // fredt@users 20051231 - 1.8.1 - support for remote opening of databases
+// fredt@users 20080531 - 1.8.1 - removed synchronized from print methods
+// unnecessary and could cause deadlock
 
 /**
  * The HSQLDB HSQL protocol network database server. <p>
@@ -335,17 +337,20 @@ public class Server implements HsqlSocketRequestHandler {
             FileUtil.getDefaultInstance().canonicalOrAbsolutePath("server");
         HsqlProperties fileProps =
             ServerConfiguration.getPropertiesFromFile(propsPath);
-        HsqlProperties props = fileProps == null ? new HsqlProperties()
-                                                 : fileProps;
+        HsqlProperties props       = fileProps == null ? new HsqlProperties()
+                                                       : fileProps;
         HsqlProperties stringProps = null;
+
         try {
             stringProps = HsqlProperties.argArrayToProps(args,
                     ServerConstants.SC_KEY_PREFIX);
         } catch (ArrayIndexOutOfBoundsException aioob) {
+
             // I'd like to exit with 0 here, but it's possible that user
             // has called main() programmatically and does not want us to
             // exit.
             printHelp("server.help");
+
             return;
         }
 
@@ -709,7 +714,7 @@ public class Server implements HsqlSocketRequestHandler {
      *  access="read-only"
      *  description="1:ONLINE 4:OPENING 8:CLOSING, 16:SHUTDOWN"
      */
-    public synchronized int getState() {
+    public int getState() {
         return serverState;
     }
 
@@ -1437,7 +1442,7 @@ public class Server implements HsqlSocketRequestHandler {
      *
      * @param msg The message to print
      */
-    protected synchronized void print(String msg) {
+    protected void print(String msg) {
 
         PrintWriter writer = logWriter;
 
@@ -1482,7 +1487,7 @@ public class Server implements HsqlSocketRequestHandler {
      *
      * @param t the Throwable whose stack trace is to be printed
      */
-    protected synchronized void printStackTrace(Throwable t) {
+    protected void printStackTrace(Throwable t) {
 
         if (errWriter != null) {
             t.printStackTrace(errWriter);
@@ -1522,7 +1527,7 @@ public class Server implements HsqlSocketRequestHandler {
      *
      * @param msg the message to print
      */
-    protected synchronized void printError(String msg) {
+    protected void printError(String msg) {
 
         PrintWriter writer = errWriter;
 

@@ -6,8 +6,9 @@ hsqldb 1.8.0, including point releases, in reverse chronological order.
 Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
-2008.05.27  towards 1.8.0.10
+2008.06.02  1.8.0.10
 
+Fixed deadlock in shutdown of Server
 Fixed bug that in some circumstances could result in corrupted .data file and
 cause Null Pointer or other exceptions.
 New database property hsqldb.lock_file, true by default. When false, no lock
