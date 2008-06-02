@@ -1099,7 +1099,7 @@ includes='**/*.css, **/*.java, **/*.sql, **/*.txt, **/*.properties, **/*.cfg'/>
         <!-- We use ant-contrib-X.jar (where X is a version).  Make sure
              that this jar is located at path-to-ant-bin/../lib -->
         <available property='_contrib_there'
-                   classname='net.sf.antcontrib.logic.For'/>
+                   classname='net.sf.antcontrib.logic.ForTask'/>
         <fail unless='_contrib_there' message="You must put a recent cut of ant-contrib-X.jar into 'path-to-ant-bin/../lib/' (or just put the jar into your CLASSPATH before running ant)"/>
         <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
         <property name='_contrib_initted' value='true'/>
