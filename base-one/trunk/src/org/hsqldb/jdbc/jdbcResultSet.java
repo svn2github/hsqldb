@@ -766,7 +766,7 @@ public class jdbcResultSet implements ResultSet {
         }
 
         if (bd != null) {
-            bd = bd.setScale(scale, BigDecimal.ROUND_HALF_DOWN);
+            bd = bd.setScale(scale, BigDecimal.ROUND_DOWN);
         }
 
         return bd;

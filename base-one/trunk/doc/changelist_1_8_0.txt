@@ -6,8 +6,19 @@ hsqldb 1.8.0, including point releases, in reverse chronological order.
 Fred Toussi (fredt@users.sourceforge.net)
 Maintainer, HSQLDB Project
 
+post 1.8.0.10
+Fixed issue with LIKE statements not working in CHECK constraints
+Changed rounding of DECIMAL values in division to ROUND_DOWN for uniformity
+with other integer types. Now 7/4 and 7/5 both return 1, while the first one was
+previously rounded up to 2.
+Added optimisation for query conditions in the form of 
+T1.A = T2.A AND T1.B = T2.B where there is an index on (A,B).
+
+
 2008.06.02  1.8.0.10
 
+Removed use of the lock file by default. 
+Connection property hsqldb.lock_file=true should now be specified for its use.
 Fixed deadlock in shutdown of Server
 Fixed bug that in some circumstances could result in corrupted .data file and
 cause Null Pointer or other exceptions.

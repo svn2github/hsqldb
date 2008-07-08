@@ -2474,11 +2474,6 @@ public class Expression {
 //
 // NOTE:
 //
-// For the old behaviour, simply comment out the block below
-        if (likeObject.optimised) {
-            return;
-        }
-
         boolean isRightArgFixedConstant = eArg2.isFixedConstant();
         String likeStr = isRightArgFixedConstant
                          ? (String) eArg2.getValue(session, Types.VARCHAR)
@@ -2487,6 +2482,11 @@ public class Expression {
                              || eArg2.dataType == Types.VARCHAR_IGNORECASE;
 
         likeObject.setParams(session, likeStr, ignoreCase);
+
+// For the old behaviour, simply comment out the block below
+        if (likeObject.optimised) {
+            return;
+        }
 
         if (!isRightArgFixedConstant) {
 

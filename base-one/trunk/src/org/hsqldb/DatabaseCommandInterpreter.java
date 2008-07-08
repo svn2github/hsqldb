@@ -80,7 +80,6 @@ import org.hsqldb.lib.java.JavaSystem;
 import org.hsqldb.persist.HsqlDatabaseProperties;
 import org.hsqldb.scriptio.ScriptWriterBase;
 import org.hsqldb.scriptio.ScriptWriterText;
-import org.hsqldb.lib.StringConverter;
 
 /**
  * Provides SQL Interpreter services relative to a Session and

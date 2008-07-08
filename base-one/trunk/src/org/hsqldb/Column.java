@@ -27,13 +27,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * This software consists of voluntary contributions made by many individuals 
+ * This software consists of voluntary contributions made by many individuals
  * on behalf of the Hypersonic SQL Group.
  *
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2005, The HSQL Development Group
+ * Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -135,8 +135,8 @@ public class Column {
     private Expression      defaultExpression;
     long                    identityStart;
     long                    identityIncrement;
-    static final BigInteger MAX_LONG = BigInteger.valueOf(Long.MAX_VALUE);
-    static final BigInteger MIN_LONG = BigInteger.valueOf(Long.MIN_VALUE);
+    static final BigInteger MAX_LONG      = BigInteger.valueOf(Long.MAX_VALUE);
+    static final BigInteger MIN_LONG      = BigInteger.valueOf(Long.MIN_VALUE);
     static final BigInteger MAX_INT = BigInteger.valueOf(Integer.MAX_VALUE);
     static final BigInteger MIN_INT = BigInteger.valueOf(Integer.MIN_VALUE);
     static final BigDecimal BIG_DECIMAL_0 = new BigDecimal(0.0);
@@ -471,8 +471,7 @@ public class Column {
      * @return result
      * @throws  HsqlException
      */
-    static Object multiply(Object a, Object b,
-                           int type) throws HsqlException {
+    static Object multiply(Object a, Object b, int type) throws HsqlException {
 
         if (a == null || b == null) {
             return null;
@@ -561,7 +560,7 @@ public class Column {
 
                 return (bbd.signum() == 0) ? null
                                            : abd.divide(bbd, scale,
-                                           BigDecimal.ROUND_HALF_DOWN);
+                                           BigDecimal.ROUND_DOWN);
             }
             case Types.TINYINT :
             case Types.SMALLINT :
@@ -597,8 +596,7 @@ public class Column {
      * @return result
      * @throws  HsqlException
      */
-    static Object subtract(Object a, Object b,
-                           int type) throws HsqlException {
+    static Object subtract(Object a, Object b, int type) throws HsqlException {
 
         if (a == null || b == null) {
             return null;
@@ -699,8 +697,7 @@ public class Column {
                                          Library.rtrim((String) b));
 
             case Types.VARCHAR_IGNORECASE :
-                return collation.compareIgnoreCase(((String) a),
-                                                   ((String) b));
+                return collation.compareIgnoreCase(((String) a), ((String) b));
 
             case Types.TINYINT :
             case Types.SMALLINT :
@@ -869,8 +866,7 @@ public class Column {
                     if (o instanceof java.lang.Integer) {
                         int temp = ((Number) o).intValue();
 
-                        if (Short.MAX_VALUE < temp
-                                || temp < Short.MIN_VALUE) {
+                        if (Short.MAX_VALUE < temp || temp < Short.MIN_VALUE) {
                             throw Trace.error(
                                 Trace.NUMERIC_VALUE_OUT_OF_RANGE);
                         }
@@ -881,8 +877,7 @@ public class Column {
                     if (o instanceof java.lang.Long) {
                         long temp = ((Number) o).longValue();
 
-                        if (Short.MAX_VALUE < temp
-                                || temp < Short.MIN_VALUE) {
+                        if (Short.MAX_VALUE < temp || temp < Short.MIN_VALUE) {
                             throw Trace.error(
                                 Trace.NUMERIC_VALUE_OUT_OF_RANGE);
                         }
@@ -1481,7 +1476,7 @@ public class Column {
             case Types.DECIMAL :
                 BigDecimal dec = (BigDecimal) obj;
 
-                dec = dec.setScale(scale, BigDecimal.ROUND_HALF_DOWN);
+                dec = dec.setScale(scale, BigDecimal.ROUND_DOWN);
 
                 BigInteger big  = JavaSystem.getUnscaledValue(dec);
                 int        sign = big.signum() == -1 ? 1

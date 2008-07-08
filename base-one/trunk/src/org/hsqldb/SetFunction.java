@@ -94,7 +94,7 @@ public class SetFunction {
             return;
         }
 
-        if (isDistinct &&!distinctValues.add(item)) {
+        if (isDistinct && !distinctValues.add(item)) {
             return;
         }
 
@@ -238,9 +238,8 @@ public class SetFunction {
 
                     case Types.NUMERIC :
                     case Types.DECIMAL :
-                        return currentBigDecimal.divide(
-                            new BigDecimal(count),
-                            BigDecimal.ROUND_HALF_DOWN);
+                        return currentBigDecimal.divide(new BigDecimal(count),
+                                                        BigDecimal.ROUND_DOWN);
 
                     default :
                         throw Trace.error(Trace.SUM_OF_NON_NUMERIC);
@@ -476,8 +475,7 @@ public class SetFunction {
         }
 
         return sample ? (n == 1) ? null    // NULL (not NaN) is correct in this case
-                                 : new Double(Math.sqrt(vk
-                                 / (double) (n - 1)))
+                                 : new Double(Math.sqrt(vk / (double) (n - 1)))
                       : new Double(Math.sqrt(vk / (double) (n)));
     }
 

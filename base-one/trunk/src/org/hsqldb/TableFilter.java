@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * This software consists of voluntary contributions made by many individuals 
+ * This software consists of voluntary contributions made by many individuals
  * on behalf of the Hypersonic SQL Group.
  *
  *
@@ -610,6 +610,14 @@ final class TableFilter {
 
             currentData = currentRow.getData();
 
+            if (isMultiFindFirst) {
+                if (filterIndex.compareRowNonUnique(
+                        session, currentJoinData, filterIndex.colIndex,
+                        currentData) != 0) {
+                    break;
+                }
+            }
+
             if (!(eEnd == null || eEnd.testCondition(session))) {
                 break;
             }
@@ -623,6 +631,11 @@ final class TableFilter {
 
         if (result) {
             return true;
+        }
+
+        if (isMultiFindFirst) {
+            ArrayUtil.clearArray(ArrayUtil.CLASS_CODE_OBJECT,
+                                 currentJoinData, 0, currentJoinData.length);
         }
 
         currentRow  = null;
