@@ -27,13 +27,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * This software consists of voluntary contributions made by many individuals 
+ * This software consists of voluntary contributions made by many individuals
  * on behalf of the Hypersonic SQL Group.
  *
  *
  * For work added by the HSQL Development Group:
  *
- * Copyright (c) 2001-2005, The HSQL Development Group
+ * Copyright (c) 2001-2008, The HSQL Development Group
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -100,7 +100,7 @@ public class Index {
     // fields
     private final HsqlName indexName;
     final boolean[]        colCheck;
-    private final int[]    colIndex;
+    final int[]            colIndex;
     private final int[]    colTypes;
     final int[]            pkCols;
     final int[]            pkTypes;
@@ -144,18 +144,16 @@ public class Index {
         isUnique       = unique;
         isConstraint   = constraint;
         isForward      = forward;
-        useRowId = (!isUnique && pkCols.length == 0)
-                   || (colIndex.length == 0);
-        colCheck = table.getNewColumnCheckList();
+        useRowId = (!isUnique && pkCols.length == 0) || (colIndex.length == 0);
+        colCheck       = table.getNewColumnCheckList();
 
         ArrayUtil.intIndexesToBooleanArray(colIndex, colCheck);
 
-        updatableIterators = new IndexRowIterator(null, null, null);
-        updatableIterators.next = updatableIterators.last =
-            updatableIterators;
-        collation        = database.collation;
-        isTemp           = temp;
-        onCommitPreserve = table.onCommitPreserve;
+        updatableIterators      = new IndexRowIterator(null, null, null);
+        updatableIterators.next = updatableIterators.last = updatableIterators;
+        collation               = database.collation;
+        isTemp                  = temp;
+        onCommitPreserve        = table.onCommitPreserve;
     }
 
     /**
@@ -256,14 +254,12 @@ public class Index {
 
         setRoot(session, null);
 
-        depth = 0;
-        updatableIterators.next = updatableIterators.last =
-            updatableIterators;
+        depth                   = 0;
+        updatableIterators.next = updatableIterators.last = updatableIterators;
     }
 
     void clearIterators() {
-        updatableIterators.next = updatableIterators.last =
-            updatableIterators;
+        updatableIterators.next = updatableIterators.last = updatableIterators;
     }
 
     void setRoot(Session session, Node node) {
@@ -319,8 +315,7 @@ public class Index {
                 String name      = indexName.statementName;
 
                 if (isConstraint) {
-                    Constraint c =
-                        table.getUniqueOrPKConstraintForIndex(this);
+                    Constraint c = table.getUniqueOrPKConstraintForIndex(this);
 
                     if (c != null) {
                         name      = c.getName().name;
@@ -654,8 +649,8 @@ public class Index {
     RowIterator findFirstRowForDelete(Session session, Object[] rowdata,
                                       int[] rowColMap) throws HsqlException {
 
-        Node node           = findNotNull(session, rowdata, rowColMap, true);
-        IndexRowIterator it = getIterator(session, node);
+        Node             node = findNotNull(session, rowdata, rowColMap, true);
+        IndexRowIterator it   = getIterator(session, node);
 
         if (node != null) {
             updatableIterators.link(it);
@@ -815,7 +810,7 @@ public class Index {
 
         Node    x      = getRoot(session);
         Node    found  = null;
-        boolean unique = isUnique &&!isNull(rowdata);
+        boolean unique = isUnique && !isNull(rowdata);
 
         while (x != null) {
             int c = compareRowNonUnique(session, rowdata, colIndex,
@@ -862,7 +857,7 @@ public class Index {
             iTest = 0;
         }
 
-        if (value == null &&!isEqual) {
+        if (value == null && !isEqual) {
             return emptyIterator;
         }
 
@@ -1257,7 +1252,7 @@ public class Index {
             }
         }
 
-        if (isUnique &&!useRowId &&!hasNull) {
+        if (isUnique && !useRowId && !hasNull) {
             return 0;
         }
 
