@@ -1476,7 +1476,7 @@ public class Column {
             case Types.DECIMAL :
                 BigDecimal dec = (BigDecimal) obj;
 
-                dec = dec.setScale(scale, BigDecimal.ROUND_DOWN);
+                dec = dec.setScale(scale, BigDecimal.ROUND_HALF_DOWN);
 
                 BigInteger big  = JavaSystem.getUnscaledValue(dec);
                 int        sign = big.signum() == -1 ? 1

@@ -1391,7 +1391,7 @@ class DatabaseInformationMain extends DatabaseInformation {
             // added for unique: INDEX_QUALIFIER, TABLE_NAME
             // false PK, as INDEX_QUALIFIER may be null
             t.createPrimaryKey(null, new int[] {
-                3, 6, 5, 7, 4, 2
+                3, 6, 5, 7, 4, 2, 1
             }, false);
 
             return t;
