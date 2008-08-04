@@ -56,6 +56,7 @@ public class SimpleLog {
     public static final int LOG_NORMAL = 2;
     private PrintWriter     writer;
     private int             level;
+    private boolean         isSystem;
 
     public SimpleLog(String path, int level, boolean useFile) {
 
@@ -67,6 +68,7 @@ public class SimpleLog {
 
                 makeLog(file);
             } else {
+                isSystem = true;
                 writer = new PrintWriter(System.out);
             }
         }
@@ -80,6 +82,7 @@ public class SimpleLog {
             writer = new PrintWriter(new FileWriter(file.getPath(), true),
                                      true);
         } catch (Exception e) {
+            isSystem = true;
             writer = new PrintWriter(System.out);
         }
     }
@@ -161,8 +164,10 @@ public class SimpleLog {
 
     public void close() {
 
-        if (writer != null) {
+        if (writer != null && !isSystem) {
             writer.close();
         }
+
+        writer = null;
     }
 }
