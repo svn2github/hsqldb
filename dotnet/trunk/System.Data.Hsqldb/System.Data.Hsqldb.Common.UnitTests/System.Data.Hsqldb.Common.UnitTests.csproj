@@ -1,0 +1,83 @@
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{A70D80BA-E0D5-4E1F-9051-F272FEB02531}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Ssystem.Data.Hsqldb.Common.UnitTests</RootNamespace>
+    <AssemblyName>Ssystem.Data.Hsqldb.Common.UnitTests</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="nunit.framework, Version=2.4.8.0, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\NUnit\bin\nunit.framework.dll</HintPath>
+    </Reference>
+    <Reference Include="Org.Hsqldb, Version=1.8.0.7, Culture=neutral, PublicKeyToken=05732303801b208f, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Lib\Org.Hsqldb.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="TestCoverage, Version=1.0.0.0, Culture=neutral">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Lib\TestCoverage.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Converter.UnitTests\TestLexographicEnumConverter.cs" />
+    <Compile Include="IO.UnitTests\TestJavaInputStreamAdapter.cs" />
+    <Compile Include="IO.UnitTests\TestJavaInputStreamWrapper.cs" />
+    <Compile Include="IO.UnitTests\TestJavaOutputStreamAdapter.cs" />
+    <Compile Include="IO.UnitTests\TestJavaOutputStreamWrapper.cs" />
+    <Compile Include="IO.UnitTests\TestJavaReaderWrapper.cs" />
+    <Compile Include="IO.UnitTests\TestJavaWriterWrapper.cs" />
+    <Compile Include="Lob.UnitTests\TestJdbcBlob.cs" />
+    <Compile Include="Lob.UnitTests\TestJdbcClob.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Sql.Predicate.UnitTests\TestLike.cs" />
+    <Compile Include="Sql.Type.UnitTests\TestSqlObject.cs" />
+    <Compile Include="Sql.UnitTests\TestToken.cs" />
+    <Compile Include="Sql.UnitTests\TestTokenizer.cs" />
+    <Compile Include="TestHsqlBatchUpdateException.cs" />
+    <Compile Include="TestHsqlConvert.cs" />
+    <Compile Include="TestHsqlConvert.FromDotNet.cs" />
+    <Compile Include="TestHsqlConvert.FromJava.cs" />
+    <Compile Include="TestHsqlDataSourceException.cs" />
+    <Compile Include="TestHsqlDataSourceExceptionCollection.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\System.Data.Hsqldb.Common\System.Data.Hsqldb.Common.csproj">
+      <Project>{F929C8C3-AB4B-4EAA-BEF9-9A25669FEA6F}</Project>
+      <Name>System.Data.Hsqldb.Common</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

@@ -39,7 +39,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SNK", "SNK", "{01F61A05-4F3
 		Org.Hsqldb.snk = Org.Hsqldb.snk
 	EndProjectSection
 EndProject
-Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "G:\...\Documentation\", "Documentation\", "{5EAD87DF-5015-419D-99A0-12FEF2A71C20}"
+Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "C:\...\Documentation\", "Documentation\", "{5EAD87DF-5015-419D-99A0-12FEF2A71C20}"
 	ProjectSection(WebsiteProperties) = preProject
 		SccProjectName = "Svn"
 		SccAuxPath = "Svn"
@@ -72,6 +72,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "System.Data.Hsqldb.Client",
 	ProjectSection(WebsiteProperties) = preProject
 		Debug.AspNetCompiler.Debug = "True"
 		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "System.Data.Hsqldb.Common.UnitTests", "System.Data.Hsqldb.Common.UnitTests\System.Data.Hsqldb.Common.UnitTests.csproj", "{A70D80BA-E0D5-4E1F-9051-F272FEB02531}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+	ProjectSection(ProjectDependencies) = postProject
+		{F929C8C3-AB4B-4EAA-BEF9-9A25669FEA6F} = {F929C8C3-AB4B-4EAA-BEF9-9A25669FEA6F}
 	EndProjectSection
 EndProject
 Global
@@ -118,6 +127,16 @@ Global
 		{EDA7BAF9-0BF6-4423-B644-18FA5EE44F1A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{EDA7BAF9-0BF6-4423-B644-18FA5EE44F1A}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{EDA7BAF9-0BF6-4423-B644-18FA5EE44F1A}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{A70D80BA-E0D5-4E1F-9051-F272FEB02531}.Debug|.NET.ActiveCfg = Debug|Any CPU
+		{A70D80BA-E0D5-4E1F-9051-F272FEB02531}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A70D80BA-E0D5-4E1F-9051-F272FEB02531}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A70D80BA-E0D5-4E1F-9051-F272FEB02531}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{A70D80BA-E0D5-4E1F-9051-F272FEB02531}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{A70D80BA-E0D5-4E1F-9051-F272FEB02531}.Release|.NET.ActiveCfg = Release|Any CPU
+		{A70D80BA-E0D5-4E1F-9051-F272FEB02531}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A70D80BA-E0D5-4E1F-9051-F272FEB02531}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A70D80BA-E0D5-4E1F-9051-F272FEB02531}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{A70D80BA-E0D5-4E1F-9051-F272FEB02531}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
