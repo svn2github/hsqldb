@@ -1,0 +1,77 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <link rel="stylesheet" type="text/css" href="../../styles/presentation.css">
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../../html/hsqldb.gif"></td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br>
+                    <span class="topicTitle">Chapter 2 - SQL Issues</span>
+                    <br>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><a href="../Chapter 2 - SQL Issues.html">Chapter Overview </a>
+                            &gt; <a href="Types And Arithmetic Operations.html">Types And Arithmetic Operations
+                            </a>&gt; <span class="nolink">Other Numeric Types</span> </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <p>
+            HSQLDB treats SQL literal numbers with a decimal point as <tt>SQL DECIMAL</tt> unless
+            they are written with an exponent.</p>
+        <p>
+            Thus <tt>0.2</tt> is considered an <tt>SQL DECIMAL</tt> value but <tt>0.2E0</tt>
+            is considered an <tt>SQL DOUBLE</tt> value.</p>
+        <p>
+            When a <tt>DbParameter.Value</tt> is assigned a <tt>System.Double</tt> or <tt>System.Single</tt>,
+            the value is treated as <tt>SQL DOUBLE</tt> automatically.</p>
+        <p>
+            When an <tt>SQL REAL</tt>, <tt>FLOAT</tt> or <tt>DOUBLE</tt> (all synonymous) is
+            part of an SQL expression, the type of the result is <tt>SQL DOUBLE</tt>.</p>
+        <p>
+            Otherwise, when no <tt>SQL DOUBLE</tt> value exists, if an <tt>SQL DECIMAL</tt>
+            or <tt>SQL NUMERIC</tt> value is part an SQL expression, the type of the result
+            is <tt>SQL DECIMAL</tt>.</p>
+        <p>
+            A numeric value can be retrieved from a <tt>DataReader</tt> in any requested CLR
+            number type, so long as it can be represented in that type. This means, for example,
+            that an <tt>SQL DECIMAL</tt> or <tt>SQL NUMERIC</tt> value can be retrieved as a
+            <tt>System.Double (<span style="font-family: Verdana">a narrower type, that is)</span></tt>,
+            so long as it is within the <tt>System.Double.MinValue</tt> - <tt>Double.MaxValue</tt>
+            range.</p>
+        <p>
+            Similarly, when the result of an SQL expression is stored in a base table column,
+            the value must lie in the range representable by the column's data type or an exception
+            is raised.</p>
+        <p>
+            The distinction between <tt>SQL DOUBLE</tt> and <tt>SQL DECIMAL</tt> is important
+            under the SQL division operation. Specifically, when the operands are <tt>SQL DECIMAL</tt>,
+            the result is a value with a scale (number of digits to the right of the decimal
+            point) equal to the larger of the scales of the two operands. With <tt>SQL DOUBLE</tt>
+            operands, on the other hand, the scale of the result is, within finite limitations,
+            as large as required to most accurately represent the value. For example, <tt>10.0/8.0</tt>
+            (<tt>SQL DECIMAL</tt>) equals <tt>1.2</tt> but <tt>10.0E0/8.0E0</tt> (<tt>SQL DOUBLE</tt>)
+            equals <tt>1.25</tt>. With the exception of the SQL division operation, however,
+            <tt>SQL DECIMAL</tt> operands imply the use of exact arithmetic;
+            in particular, under the SQL multiplication operation, the scale of the result is the sum of the
+            scales of the operands.</p>
+        <p>
+            Finally, please note that special <dfn>IEEE</dfn> floating point values such as
+            <tt>NaN</tt> and <tt>+/-Infinity</tt> are supported, but do have have special SQL
+            synonyms and hence can only be represented
+            in complex SQL expression form, for example
+            as 0.0E0/0.0E0, x.yEz/0.0E0 and -x.yEz/0.0E0, respectively.</p>
+    </div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 2 -->

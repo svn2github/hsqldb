@@ -1,0 +1,76 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <link rel="stylesheet" type="text/css" href="../../styles/presentation.css">
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../../html/hsqldb.gif">
+                </td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br>
+                    <span class="topicTitle">Chapter 8 - SQL Syntax</span>
+                    <br>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><a href="../Chapter 8 - SQL Syntax.html">Chapter Overview</a>
+                            &gt; <a href="SQL Commands.html">SQL Commands</a> &gt; <span class="nolink">
+                                Session Control Commands</span> </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <h3>
+            CONNECT</h3>
+        <pre lang="sql">CONNECT USER &lt;username&gt; PASSWORD &lt;password&gt;;
+       </pre>
+        <p>
+            Password should be delimited using leading and trailing double quote characters.</p>
+        <p>
+            Use "" to denote the empty password.</p>
+        <h3>
+            DISCONNECT</h3>
+        <pre lang="sql">DISCONNECT;
+        </pre>
+        <p>
+            Closes the current session.</p>
+        <p>
+            After disconnecting, it is not possible to execute
+            other queries (including <tt>CONNECT</tt>).</p>
+        <p>
+            This command should be reserved for SQL scripts only.</p>
+        <p>
+            From ADO.NET, the <tt>System.Data.IDbConnection.Close()</tt>
+            method should be used instead.</p>
+        <h3>
+            SET PASSWORD</h3>
+        <pre lang="sql">SET PASSWORD &lt;password&gt;;
+        </pre>
+        <p>
+            Changes the password of the currently connected user.</p>
+        <p>
+            Password should be delimited using leading and trailing double quote characters.</p>
+        <p>
+            Use "" to denote the empty password.</p>
+        <h3>
+            SET SCHEMA</h3>
+        <pre lang="sql">SET SCHEMA &lt;schemaname&gt;;
+        </pre>
+        <p>
+            Sets the default schema qualifier for the current session.</p>
+        <p>
+            This is the schema used to qualify database object identifiers when the schema
+            name is not provided explicitly.</p>
+        <p>
+            The initial value is <tt>PUBLIC</tt>.</p>
+    </div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 5 -->

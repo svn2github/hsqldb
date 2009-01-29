@@ -1,0 +1,465 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <link rel="stylesheet" type="text/css" href="../styles/presentation.css">
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../html/hsqldb.gif"></td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br>
+                    <span class="topicTitle">Chapter 3 - Deployment Issues</span>
+                    <br>
+                    <div id="toolbar">
+                        <span id="chickenFeet"></span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <p>
+            This section covers system related issues and answers some deployment questions that have been
+            repeatedly posted in the HSQLDB forums and mailing lists.</p>
+        <h3>
+            Modes of Operation and Table Types</h3>
+        <p>
+            HSQLDB has an assortment of operation modes, table data storage engines and other
+            features that allow it to be used in a number of widely varying scenarios.</p>
+        <p>
+            Levels of memory usage, speed and accessibility are influenced by how HSQLDB is
+            deployed.</p>
+        <h4>
+            Modes of Operation</h4>
+        <p>
+            The decision to run HSQLDB as a separate server process or as an in-process database
+            should be based on the following:</p>
+        <ul type="disc">
+            <li>
+                <p>
+                    When run as a server on a separate machine, database instances are isolated from
+                    hardware failures and crashes on the hosts running the application.</p>
+            </li>
+            <li>
+                <p>
+                    When run as a server on the same machine, database instances are isolated from application
+                    crashes and application memory leaks.</p>
+            </li>
+            <li>
+                <p>
+                    Server connections are slower than in-process connections due to network round-trip
+                    latencies and the overhead of streaming the data for each database call.</p>
+            </li>
+        </ul>
+        <h4>
+            Table Types</h4>
+        <p>
+            <tt>TEXT</tt> tables are designed for special applications where the data has to
+            be in an interchangeable format, such as comma-separated values (<dfn>CSV)</dfn>.
+            The <tt>TEXT</tt> table storage engine is the slowest of the HSQLDB table storage
+            engines; normally, <tt>TEXT</tt> tables should not be used for general-purpose data
+            storage.</p>
+        <p>
+            <tt>MEMORY</tt> tables and <tt>CACHED</tt> tables, on the other hand, <em>are</em>
+            suitable for general-purpose data storage. The differences include:</p>
+        <ul type="disc">
+            <li>
+                <p>
+                    Normally, <tt>MEMORY</tt> table data is read completely into memory from the database
+                    initialization <tt>.script</tt> when a database is opened and occupies physical
+                    memory until the database is <tt>SHUTDOWN</tt>, the hosting table is dropped, or
+                    rows are updated or deleted. In contrast, <tt>CACHED</tt> table data is read into
+                    memory lazily, on demand and is subject to being swapped out of memory at any time
+                    to make room for subsequent access to additional <tt>CACHED</tt> table data. Furthermore,
+                    there are declarative policies that are strictly enforced regarding the maximum
+                    number of rows and the maximum size, in bytes, occupied in memory by <tt>CACHED</tt>
+                    table data.</p>
+            </li>
+            <li>
+                <p>
+                    When a database is shutdown in the normal way, <em>all</em> <tt>MEMORY</tt> table
+                    data is written to the database initialization <tt>.script</tt> in the form of <tt>SQL
+                        INSERT</tt> statements, whereas only dirty <tt>CACHED</tt> table data that is
+                    still buffered in memory is written to the binary <tt>.data</tt> image file in binary
+                    format. Also, a compressed backup file is created from the <tt>.data</tt> file,
+                    whereas, the database initialization <tt>.script</tt>
+                requires no further processing. </li>
+            <li>
+                <p>
+                    As hinted above, the size and capacity of the row buffer for <tt>CACHED</tt> tables
+                    is configurable. Thus, it is possible to specify settings that allow all <tt>CACHED</tt>
+                    table data to be buffered in memory at once. In this case, the data access performance
+                    characteristic is comparable to, but slightly less than that for <tt>MEMORY</tt>
+                    tables, not incuding the overhead for initially loading all <tt>MEMORY</tt> table
+                    data from disk into physical memory.</p>
+            </li>
+            <li>
+                <p>
+                    For normal applications, it is recommended that <tt>MEMORY</tt> tables are used
+                    for smaller data sets, leaving <tt>CACHED</tt> tables for large data sets. For special
+                    applications where maximal access speed is absolutely paramount and there is enough
+                    physical memory available, <tt>MEMORY</tt> tables may be used for large tables as
+                    well, with the caveat that one pays for that last ounce of speed with longer startup
+                    and shutdown times, although this can be mitigated somewhat by specifying alternate
+                    database initialization file formats, as discussed in <a href="../Chapter 8 - SQL Syntax/SQL Commands/Database Control Commands.html#set_scriptformat-section">
+                        Database Control Commands: SET SCRIPTFORMAT</a>.</p>
+            </li>
+        </ul>
+        <h3>
+            Large Objects</h3>
+        <p>
+            Character Large Object (<tt>CLOBS</tt>) are supported using the <tt>LONGVARCHAR</tt>
+            data type. Binary Large Objects (<tt>BLOBS</tt>) are supported using the <tt>LONGVARBINARY</tt>
+            data type. Serialized object data storage is supported using the <tt>OBJECT</tt>
+            data type</p>
+        <p>
+            For best performance, it is not recommended to mix large object columns in a table
+            with serveral standard column types; instead, the recommended practice is to split
+            the declarations across at least two tables, where the first contains the standard
+            fields plus a reference to the second table, which contains the large object column
+            and the referenced key. Alternately, the second table may reference the first, if
+            a one-to-many large object association is required (or an intersection table may
+            be used, if serveral tables must reference the same large object data).</p>
+        <p>
+            This practice yeilds a number of benefits, the most important of which is that migrating
+            large object data out of the primary table may allow it to be declared as a <tt>MEMORY</tt>
+            table, maximizing access speed to the primary table and lowering memory pressure
+            for regular queries against the primary data, while the secondary table may be declared
+            CACHED, limiting large object loads to only those points where the large object
+            data is absolutely required.
+        </p>
+        <p>
+            The following demonstrates how to exploit the separation:
+        </p>
+        <pre>    CREATE MEMORY TABLE MAINTABLE(MAINID INTEGER, ......);
+
+    CREATE CACHED TABLE LOBTABLE(LOBID INTEGER, LOBDATA LONGVARBINARY);
+
+    SELECT *
+      FROM (SELECT *
+              FROM MAINTABLE &lt;join any other table&gt;
+             WHERE &lt;various conditions apply&gt;)
+      JOIN LOBTABLE ON (MAINID=LOBID);
+        </pre>
+        <p>
+            The inner <tt>SELECT</tt> finds the required rows without reference to the <tt>LOBTABLE</tt>
+            and when it has found all the rows, retrieves the related large objects from the
+            <tt>LOBTABLE</tt>.</p>
+        <h3>
+            Disk And Memory Usage</h3>
+        <h4>
+            Disk Usage</h4>
+        <p>
+            HSQLDB locates all data files in the same directory. Data file creation and deletion
+            should be left up to the database engine and the following principles must be observed:</p>
+        <ul type="disc">
+            <li>
+                <p>
+                    The process running HSQLDB must have full privileges on the directory where the
+                    files are stored. This includes full file-level read, write, create and delete privileges,
+                    as well as the privilege to create any missing directories along the path to the
+                    database files.</p>
+            </li>
+            <li>
+                <p>
+                    The file system must have enough spare room for both the permanent and temporary
+                    data files. Note that:</p>
+                <ul type="disc">
+                    <li>The default maximum size of the <tt>.log</tt> file is <tt>200MB</tt>.</li>
+                    <li>The <tt>.data</tt> file can grow to up to <tt>8GB</tt>.</li>
+                    <li>The <tt>.backup</tt> file is typically 50% the size of the <tt>.data</tt> file but
+                        in theory can approach 100% the size of the <tt>.data</tt> file.</li>
+                    <li>The temporary file created by <tt>SHUTDOWN COMPACT</tt> can be equal in size to
+                        the <tt>.data</tt> file.</li>
+                </ul>
+            </li>
+        </ul>
+        <h4>
+            Memory Usage</h4>
+        <p>
+            Database memory usage can be thought of a consisting of three distinct pools:
+        </p>
+        <ul>
+            <li>permanent - MEMORY table data and index structures</li>
+            <li>dynamic - CACHED and SYSTEM table data and index structures</li>
+            <li>transient - result sets and internal accounting structures created by data query
+                and
+                manipulation</li></ul>
+        <p>
+            Additionally, transactions utilize physical memory to represent rollback (undo)
+            information.</p>
+        <p>
+            Over the last few releases, physical memory usage has been significantly reduced.&nbsp;
+            As well, there is ongoing work to support spill-to-disk options for the transient
+            memory pool and transaction undo lists.</p>
+        <p>
+            For the current release, however, it is still important to understand the general
+            principles and implications of HSQLDB database memory usage policy.&nbsp;</p>
+        <p>
+            <strong>Memory used for table data</strong></p>
+        <p>
+            <tt>MEMORY</tt> table usage is the sum of memory used by each row, where each row
+            is an object with two reference variables (~4 bytes each) and an object
+            array representing column values. Each array slot is an object reference variable,
+            such as to a <tt>java.lang.Integer</tt>, <tt>java.lang.Long</tt>, <tt>
+                java.lang.String...</tt>,
+            again typically consuming ~4 bytes plus the memory consumed by the referenced
+            object itself (e.g. ~12 bytes for <tt>java.lang.Integer</tt>).</p>
+        <p>
+            As well, a user-defined table index adds a <tt>Node</tt> object to each row, where
+            each <tt>Node</tt> has 6 reference variables (again, ~4 bytes each).</p>
+        <p>
+            As a result, a <tt>MEMORY</tt> table with just one column of type <tt>SQL INTEGER</tt>
+            will consume ~80 bytes per row.
+        </p>
+        <p>
+            Please note that each additional column adds at least a few bytes to the physical
+            memory consumed by each row. Also note that the in-memory representation for character
+            data is UTF-16, or two bytes per character, as opposed to UTF-8 on disk, or between
+            one and three bytes per character.</p>
+        <p>
+            Per-row <tt>CACHED</tt> table usage is similar to, but more expensive than per-row
+            <tt>MEMORY</tt> table usage, primarily because additional accounting structures
+            are required to implement the policy used to buffer rows in memory; to associate
+            each row with a location on disk; to determine the level of storage fragementation
+            on disk.</p>
+        <p>
+            <strong>Memory used for building result sets</strong></p>
+        <p>
+            Result set row usage is lower than table row usage (there are fewer variables and
+            no index nodes), but is still considerable.
+        </p>
+        <p>
+            Presently, the engine builds result sets 100% in memory, with no spill to disk. This limits
+            the upper bound on result set size.</p>
+        <p>
+            Server mode database instances release the physical memory consumed while building
+            a result set as soon as it
+            has been transmitted to the client. However, transmission presently involves
+            considerable overhead,
+            specifically that required to first fully serialize the result set data into an
+            array of bytes before writing to the client socket.</p>
+        <p>
+            In-process databases, on the other hand, have no control over when result set memory
+            is released; the client software may hold a reference to a result set indefinitely after
+            its generating query operation returns.</p>
+        <p>
+            <strong>Memory used to perform data manipulation</strong></p>
+        <p>
+            Including this release, the engine loads and holds all involved <tt>CACHED</tt>
+            table <tt>UPDATE</tt>, <tt>DELETE</tt> and <tt>SELECT INTO</tt> rows in physical
+            memory for the duration of each query execution, including rows referenced by the
+            <tt>ON {UPDATE | DELETE}</tt> clause of any <tt>FOREIGN KEY</tt> table constraints.
+            This policy severely limits the
+            engine's present ability to perform updates, deletes and select into inserts involving
+            a large number of <tt>CACHED</tt> table rows. If possible, one's programs should
+            be designed to perform such large operations by decomposing them into smaller sets.</p>
+        <p>
+            When executing multirow transactions, a list of all row-level insert, delete or
+            update operations is stored in memory so that they can be undone when a <tt>ROLLBACK</tt>
+            is issued. Hence, transactions that modify a large number of rows will also consume
+            a great deal of additional memory in the transaction UNDO list until a subsequent
+            <tt>COMMIT</tt> or <tt>ROLLBACK</tt> clears it.</p>
+        <p>
+            <strong>Memory usage and the HSQLDB Value Pool</strong></p>
+        <p>
+            HSQLDB uses a value pool for immutable objects. Depending on the value distribution
+            in one's database and query results, this may significantly reduce the upper bound
+            on the runtime heap memory footprint, as it may be possible to avoid the creation
+            of many object instances representing the same value.</p>
+        <p>
+            For example, if 100 rows were to referrence an <tt>SQL INTEGER</tt> column of a
+            parent row using 100 distinct but equal valued <tt>java.lang.Integer</tt> instances,
+            the resulting memory consumption would be <tt>100 * ((~12</tt> bytes per <tt>java.lang.Integer</tt>)
+            + (~4 bytes per array slot)) or 1600 bytes. On the other hand, if the parent column
+            value were to be retrieved from the value pool and assigned to the corresponding
+            column of each child row, then the resulting memory consumption would be ~12 (bytes
+            for the single, immutable <tt>java.lang.Integer</tt>) + (100 * (~4 bytes per array
+            slot)) or ~412 bytes: a saving of ~1188 bytes and a reduction of memory consumption
+            to ~25% that of the first case.</p>
+        <p>
+            Of course, if one's database holds an effectively random distribution of data, the
+            benefit of a value pool is likely low or non-existent.&nbsp; In practice, value
+            pool induced savings are on some order strictly less than but similar to the reciprocal of the effective
+            operating data redundancy.</p>
+        <h4>
+            Row Buffer Memory Allocation</h4>
+        <p>
+            With <tt>CACHED</tt> tables, row data is stored primarily on disk, while only a fraction
+            (up to a declared maximum number of rows) is held in memory at any one time, the
+            default being 49152 rows as controlled by the <tt>hsqldb.cache_scale</tt> database
+            property.</p>
+        <p>
+            In theory, limiting rows alone may not be a completely effective way of controlling
+            row buffer memory allocation. For example, let there be a <tt>CACHED</tt> table
+            with 100,000 rows such that 40% consume 1,000 bytes each in physical memory
+            and the remaining rows consume 100 bytes each in memory. Then, given a query that
+            always selects half of the rows (50,000), the worst case result set includes all
+            of the larger rows ((10,000 * 100) + (40,000 * 1000) = 41,000,000 bytes), whereas
+            the average case result set includes an even distribution (25000 * 100 + 25000 *
+            1000 = 27,500,000 bytes). Now, let the objective be to limit row buffer memory allocation
+            to no greater than 32MB by specifying an upper limit of 50,000 buffered rows. Obviously,
+            this is satisfactory in the average case and, upon further analysis, will be satisfactory
+            in a large majority of cases, but just as obviously is simply <em>not</em> a completely
+            satisfactory solution.</p>
+        <p>
+            To solve such a problem, an additional property, <tt>hsqldb.cache_size_scale</tt>
+            should be used in conjunction with the <tt>hsqldb.cache_scale</tt> property to enforce
+            an additional limit (this time in actual bytes) on row buffer memory allocation.</p>
+        <p>
+            With both properties at their respective default values, the buffer manager attempts
+            to limit allocation to an approximate maximum of 50MB.</p>
+        <p>
+            Whatever the calculated limit on allocation, the policy is enforced by comparing
+            the limit against the sum of the reported size of each buffered row's binary image
+            on disk, which is generally smaller than its in-memory representation.
+        </p>
+        <p>
+            For a number of reasons, the effective maximum row buffer memory allocation may actually be several (emperically 2-4) times the
+            declared limit:</p>
+        <ol>
+            <li>
+                <p>
+                    Because of the discrepancy between the reported size of each buffered row's binary
+                    image on disk and its in-memory represention, for instance due to the expansion
+                    of UTF-8 encoded character data on disk to UTF-16 in memory.</p>
+            </li>
+            <li>
+                <p>
+                    Because the buffer manager never refuses to load a requested row, instead only releasing
+                    currently buffered rows to make room. As a result, the theoretical maximum is greater
+                    than the calculated limit by some value between the memory required to represent
+                    the largest single row in the database and the memory required to represent the
+                    two largest rows in the database.</p>
+            </li>
+            <li>
+                <p>
+                    Because the row flushing policy of the current buffer manager is suboptimal.</p>
+            </li>
+        </ol>
+        <p>
+            Note that if memory is at a premium, the <tt>hsqldb.cache_scale</tt> or <tt>hsqldb.cache_size_scale</tt>
+            database properties can be reduced significantly, even to <em>very</em> conservative
+            values (768 rows and 64 bytes per row, a limit of ~48KB), but
+            at the cost of reduced <tt>CACHED</tt> table query performance. Also note that under
+            certain workloads, garbage collection and/or heap settings, &nbsp;specifying cache
+            scale and/or cache size scale too high may also reduce performance due to well-known
+            effects that are beyond the scope of this guide.</p>
+        <h3>
+            Managing Database Connections</h3>
+        <p>
+            Multiple database connections are supported in all HSQLDB operation modes</p>
+        <p>
+            The engine is known to work with most connection pooling software, but for In-Process operation
+            it is generally superfluous. </p>
+        <p>
+            For network operation, connection pooling is recommended
+            in order to avoid socket resource starvation under the <em>connection per request</em>
+            stateless service model. However, the overhead of obtaining an HSQLDB network connection
+            is currently significantly
+            lower than a number of commonly used commerial DBMS, so it may not be realistic expect the same order of performance
+            boost normally realized by implementing network
+            connection pooling.</p>
+        <p>
+            <strong>Typical reasons to use a connection pool:</strong></p>
+        <ul type="disc">
+            <li>
+                <p>
+                    To allow new queries to be performed while a time-consuming query is being performed
+                    in the background. This is not possible in this release, as the engine blocks at
+                    the database instance level for the duration of each request, effectively processing
+                    requests in serial order. That is, the engine supports muliplexed statement execution,
+                    rather than true multi-threaded concurrent statement execution, although true multi-threaded
+                    operation is under development and will be introduced in a future
+                    version.</p>
+            </li>
+            <li>
+                <p>
+                    To limit the maximum number of simultaneous in-process connections to the database
+                    for performance reasons. With HSQLDB, tests indicate that it is possible to open
+                    ~ 50,000 connection objects in a modern VM configured with 64MB maximum heap before
+                    an out of memory exception is raised.&nbsp; Hence, enforcing a limit is likely to
+                    be useful only if your application is designed in a way that opens a tremendous
+                    number of connections, for instance by spawing a large number of threads, each of
+                    which opens a large number of connections to perform a variety of small, short-running
+                    tasks.</p>
+            </li>
+            <li>
+                <p>
+                    To limit the maximum number of simultaneous network connections in order to avoid
+                    socket resource exhaustion.&nbsp; This is an external concern and hence applies
+                    to HSQLDB as much as to any other service with a socket interface.</p>
+            </li>
+            <li>
+                <p>
+                    To implement efficient transaction processing in a multi-threaded application. This
+                    can be useful with HSQLDB as well. For example, a web application transaction may
+                    involve some processing between database queries and/or may include a sequence of
+                    user responses across page navigations and reloads. Rather than having to choose
+                    between a connection per page request model (forcing the application to directly
+                    implement locking, transactional accounting and possibly compensating transactions)
+                    or a connection per HTTP session model (which may require an unacceptable maximum
+                    number of simultaneously open connections), connections can be drawn from a pool,
+                    assigned to an HTTP session for the duration of a transaction and aggressively returned
+                    to the pool at the end of each transaction (whose duration may be less than the
+                    duration of an HTTP request <em>or</em> the duration of an HTTP session). With a
+                    pool implementation that is capable of detecting and reaping connections that are
+                    deemed to have timed out due to inactivity, the best of both worlds can be achieved:
+                    session-scope work is possible, is isolated and can be committed or rolled back
+                    separate from the work performed in other sessions or other transactions within
+                    the same session, yet connections can be resued across HTTP sessions, reducing the
+                    ceiling on the maximum number of simultaneously open connections that must be supported.</p>
+            </li>
+        </ul>
+        <p>
+            An application that is not both multi-threaded and transactional, such as an application
+            for recording user login and logout actions, does not need more than one connection.
+            The connection can stay open indefinitely and only needs to be reopened when it
+            is dropped due to network problems.</p>
+        <div class="alert">
+            <h3 class="title">
+                Notes</h3>
+            <ol>
+                <li>
+                    <p>
+                        Most virtual machines adhere to a policy that prevents allocating over some configurable
+                        maximum amount of heap memory. As per the discussion of disk and memory usage above,
+                        the default amount may not adequate when large memory tables
+                        are used; the average size of rows in cached tables is large; transactions
+                        affect a large number of rows;
+                        large queries are executed. In such cases, the virtual machine settings should
+                        be consulted and, if possible, must be (re)configured to accept a larger maximum.</p>
+                </li>
+                <li>
+                    <p>
+                        When using an in-process database with previous HSQLDB versions, the application
+                        had to keep at least one connection to the database open, otherwise the database
+                        would close automatically when the connection count transitioned from one (1) to
+                        zero (0), meaning further attempts to create connections could fail.</p>
+                    <p>
+                        This is no longer required, as the engine implements a different policy: in the
+                        current release, an explicit SHUTDOWN command is required to close a database. Note,
+                        however, that the
+                        "Shutdown=True;" connection property can be used by the first
+                        connection to revert to the previous behavior if required.</p>
+                </li>
+                <li>
+                    <p>
+                        When using a server-hosted database (and to some extent, an in-process
+                        database), care must be taken to avoid creating and dropping connections too frequently.
+                        Failure to observe this may result in socket resource and/or other operating system resource exhaustion, leading
+                        to unsuccessful connection attempts or general O/S or process
+                        level failure when the application is under heavy load.</p>
+                </li>
+            </ol>
+        </div>
+    </div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 4 -->

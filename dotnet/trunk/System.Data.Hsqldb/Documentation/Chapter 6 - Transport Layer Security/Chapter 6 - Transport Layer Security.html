@@ -1,0 +1,189 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <link rel="stylesheet" type="text/css" href="../styles/presentation.css">
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../html/hsqldb.gif">
+                </td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br>
+                    <span class="topicTitle">Chapter 6 - Transport Layer Security</span>
+                    <br>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><span class="nolink"></span></span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <h3>
+            Requirements
+        </h3>
+        <ul type="disc">
+            <li>
+                <p>
+                    A <a href="http://java.sun.com/j2ee/1.4/docs/tutorial/doc/Security6.html">JKS keystore</a>
+                    containing a private key.
+                </p>
+            </li>
+            <li>
+                <p>
+                    An operational HSQLDB Server or WebServer installation.</p>
+            </li>
+        </ul>
+        <h2 class="title" style="clear: both">
+            Encrypting Communications</h2>
+        <div class="alert">
+            <h3 class="title">
+                Note</h3>
+            <p>
+                Presently, only 1-way, server-cert<span style="background-color: #ffffff">ificate</span>
+            encryption is tested.
+        </div>
+        <h3>
+            Client-Side</h3>
+        <p>
+            Specifiy one of the following protocols in the <tt>ConnectionString</tt> property of an
+            <tt>HsqlConnection</tt> object.</p>
+        <ul type="disc">
+            <li>
+                <p>
+                    <tt class="literal">"Protocol=Hsqls;" </tt>
+                </p>
+            </li>
+            <li>
+                <p>
+                    <tt class="literal">"Protocol=Https;" </tt>
+                </p>
+            </li>
+        </ul>
+        <p>
+            At this time, the <tt>https</tt> protocol works only for ADO.NET clients using this
+            software release or clients running Java 1.4 or greater.
+        </p>
+        <p>
+            If the target server presents a certificate that is already approved by your default
+            trust keystores, then there is nothing further required.</p>
+        <p>
+            Otherwise, some additional configuration must be performed to tell the software
+            to explicitly "trust" the server certificate.
+        </p>
+        <p>
+            First, obtain the public portion of the certificate. Because this is the certificate
+            presented to all clients by the server, it is quite possible to write a client that
+            dumps it to file or perhaps to use an existing ssl client to perform the same operation.
+            However, it is likely that wanting to trust a non-commercial certificate means one
+            already has access to the server keystore. If so, here's an example of how to extract
+            the required information from the server's JKS keystore:
+        </p>
+        <p class="title">
+            <b>Exporting the certificate from the server's keystore</b></p>
+        <pre>    keytool -export -keystore server.store -alias existing_alias -file server.cer
+        </pre>
+        In this example, <tt class="filename">server.cer</tt> is the X509 certificate that
+        you need for the next step.
+        <p>
+        </p>
+        <p>
+            Then to add this certificate to one of the system trust keystores or to a keystore
+            of your own:
+        </p>
+        <p class="title">
+            <b>Adding a certificate to the client keystore</b></p>
+        <pre class="screen">    keytool -import -trustcacerts -keystore trust.store -alias new_alias -file server.cer
+        </pre>
+        <p>
+            When making a new keystore, it is probably best to start with a copy of the Java
+            system default keystore, which can be found under the JAVA_HOME directory (typically
+            jre/lib/security/cacerts for a JDK).
+        </p>
+        <p>
+            If you have added the certificate to a system trust store, then you are finished.</p>
+        <p>
+            Otherwise, it is necessary to specify the location of the custom trust keystore
+            to the client program.</p>
+        <p>
+            The generic way to set the trust keystore is to set the sytem property <tt class="classname">
+                javax.net.ssl.trustStore</tt> every time the client program is run. 
+        </p>
+        <p class="title">
+            <b>Specifying your own trust store to a client application</b></p>
+        <pre>    System.Data.Hsqldb.SqlTool.exe -Djavax.net.ssl.trustStore=/home/me/trust.store ...
+        </pre>
+        This example runs the program <a href="../Chapter 7 - SQL Tool/Chapter 7 - SQL Tool.html"
+            title="Chapter&nbsp;3.&nbsp;UNIX Quick Start">SqlTool</a>. 
+        <br />
+        <br />
+        SqlTool has built-in
+        TLS support, however, so, for SqlTool you can set <tt class="literal">truststore</tt>
+        on a per-urlid basis in the SqlTool configuration file.
+        <p>
+        </p>
+        <p>
+            N.B. The hostname in your database URL must match the <span class="emphasis"><em>Common
+                Name</em></span> of the server's certificate exactly. That means that if a site
+            certificate is <tt class="literal">admc.com</tt>, you can not specify the Host connection
+            property as <tt class="literal">localhost</tt> or <tt class="literal">www.admc.com:
+                it must be precisley: admc.com.</tt></p>
+        <p>
+            For more information, see the JSSERefGuide.html on <a href="http://java.sun.com/j2se/1.4.2/docs/guide/security/jsse/JSSERefGuide.html"
+                target="_top">Sun's site</a>, or in the subdirectory <tt class="filename">docs/guide/security/jsse</tt>
+            located in a any recent Java Standard Edition installation.</p>
+        <h3 class="title">
+            <a name="N1115E"></a>Server-Side</h3>
+        <p>
+            Create a JKS keystore containing a private key. Then set the system property javax.net.ssl.keyStore
+            to the path of that file and <tt class="classname">javax.net.ssl.keyStorePassword</tt>
+            to the password of the keystore (which must match the password required to access
+            the private key -- they have to be the same).
+        </p>
+        <p>
+            <b>Running an Hsqldb server with TLS encryption</b></p>
+        <pre class="screen">
+    &gt;System.Data.Hsqldb.Server.exe -Djavax.net.ssl.keyStorePassword=secret -Djavax.net.ssl.keyStore=/path/to/server.store</pre>
+        <div class="caution" style="margin-left: 0.5in; margin-right: 0.5in">
+            <h3 style="color: OrangeRed">
+                Caution</h3>
+            <p>
+                Specifying a password on the command-line is definitely <span class="bold"><b><em>not
+                    secure</em></b></span>.
+            </p>
+        </div>
+        <h2>
+            Making a Private-key Keystore</h2>
+        <p>
+            You can use a certificate signed by a certificate authority, or you can make your
+            own.</p>
+        <p>
+            Regardless, the <em>Common Name</em> of the certificate has to precisely match the
+            host property specified by client software.
+        </p>
+        <h3>
+            CA-Signed Cert</h3>
+        <p>
+            Obtaining an official CA-signed SSL certificate is well documented <a href="http://www.cacert.org/">
+                here</a>, <a href="http://www.verisign.com/">here</a> and <a href="http://en.wikipedia.org/wiki/Certificate_authority">
+                    here</a>.</p>
+        <p>
+            To achieve interoperation between <a href="http://www.openssl.org" target="_top">openssl</a>
+            and JKS keystores, follow the instructions found <a href="http://mark.foster.cc/kb/openssl-keytool.html">
+                here</a>.</p>
+        <h3 class="title">
+            <a name="N111C3"></a>Non-CA-Signed Cert</h3>
+        <p>
+            Review the <tt>keytool</tt> documentation or see the <a href="http://java.sun.com/j2se/1.4.2/docs/guide/security/jsse/JSSERefGuide.html#CreateKeystore"
+                target="_top">Creating a Keystore</a> section of the JSSE Reference Guide.
+        </p>
+    </div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 7 -->

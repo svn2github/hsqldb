@@ -1,0 +1,443 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <link rel="stylesheet" type="text/css" href="../../styles/presentation.css">
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../../html/hsqldb.gif">
+                </td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br>
+                    <span class="topicTitle">Chapter 8 - SQL Syntax</span>
+                    <br>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><a href="../Chapter 8 - SQL Syntax.html">Chapter Overview</a>
+                            &gt; <a href="SQL Commands.html">SQL Commands</a> &gt; <span class="nolink">SQL
+                                Commands</span> </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <h3>
+            CHECKPOINT</h3>
+        <pre lang="sql">CHECKPOINT [DEFRAG];
+        </pre>
+        <p>
+            <strong class="nb">Requires administrative privileges.</strong>
+        </p>
+        <p>
+            Ensures that the present state of the database is written to disk.</p>
+        <ol>
+            <li>Closes the database.</li>
+            <li>If <tt>DEFRAG</tt> is specified, rewrites the <tt>CACHED</tt> table binary image
+                to remove fragmentation and achieve optimum size.</li>
+            <li>Safely rewrites the initialization script</li>
+            <li>Deletes the transaction log file</li>
+            <li>Reopens the database, processing the new initialization script.</li>
+        </ol>
+        <a name="set-database-collation"></a>
+        <h3>
+            SET DATABASE COLLATION</h3>
+        <pre lang="sql">SET DATABASE COLLATION &lt;delimited collation identifier&gt;;
+        </pre>
+        <p>
+            <strong class="nb">Requires administrative privileges.</strong>
+        </p>
+        <p>
+            Sets the collation from the set found in the source for <tt>org.hsqldb.Collation</tt>.</p>
+        <p>
+            Each database can have its own collation.</p>
+        <p>
+            Once issued, the database retains the given collation across restarts, indepenent
+            of the <tt>Locale</tt> of the hosting VM.</p>
+        <h3>
+            SET CHECKPOINT DEFRAG</h3>
+        <pre lang="sql">SET CHECKPOINT DEFRAG &lt;size&gt;;
+        </pre>
+        <p>
+            <strong class="nb">Requires administrative privileges.</strong>
+        </p>
+        <p>
+            <tt>&lt;size&gt;</tt> is taken to be in megabytes of currently estimated unrecoverable
+            space in the the <tt>CACHED</tt> table binary image.</p>
+        <p>
+            When the estimated fragmentation is greater than <em>size</em>, the image file
+            is compacted as part of the <tt>CHECKPOINT</tt> operation.</p>
+        <h3>
+            SET IGNORECASE</h3>
+        <pre lang="sql">SET IGNORECASE { TRUE | FALSE };
+        </pre>
+        <p>
+            <strong class="nb">Requires administrative privileges.</strong>
+        </p>
+        <p>
+            Applies only to columns declared subsequent to setting this value to <tt>TRUE;</tt>
+            existing columns are not affected.</p>
+        <p>
+            When set <tt>TRUE</tt>, the engine silently alters subsequent <tt>VARCHAR</tt>
+            column declarations to <tt>VARCHAR_IGNORECASE</tt>.</p>
+        <p>
+            When set <tt>FALSE</tt>, there is no effect on existing <tt>VARCHAR_IGNORECASE</tt>
+            columns.</p>
+        <p>
+            The setting is initially <tt>FALSE</tt> for new database instances.</p>
+        <h3>
+            SET PROPERTY</h3>
+        <pre lang="sql">SET PROPERTY &lt;delimited property identifier&gt; &lt;value&gt;;
+        </pre>
+        <p>
+            Sets a database property.</p>
+        <p>
+            <a href="../../Chapter 4 - Configuration And Settings/Chapter 4 - Configuration And Settings.html">
+                Chapter 4 - Configuration And Settings</a> discusses database properties in detail.</p>
+        <h3>
+            <a name="set_refint-section"></a>SET REFERENTIAL INTEGRITY</h3>
+        <pre lang="sql">SET REFERENTIAL_INTEGRITY { TRUE | FALSE };
+        </pre>
+        <p>
+            <strong class="nb">Requires administrative privileges.</strong>
+        </p>
+        <p>
+            Enables or disables foreign key constraint checking.</p>
+        <p>
+            Normally, should left <tt>TRUE</tt> (the default).</p>
+        <p>
+            Set <tt>FALSE</tt> temporarily during bulk data import when the source data
+            is in the wrong order to satisfy immediate-mode foreign key constraints.</p>
+        <div style="margin-left: 0.5in; margin-right: 0.5in">
+            <h3 class="warning">
+                Warning</h3>
+            <p>
+                When referential integrity is set back to <tt>TRUE</tt>, existing data is not
+                checked for consistency against existing referential integrity constraints.
+                The setting applies only to subsequent data manipulation.</p>
+            <p>
+                When manually altering this setting, it is the administrator's responsibility
+                to verify consistency, for example by testing assertions with SQL queries and
+                taking appropriate actions based on the results.</p>
+        </div>
+        <h3>
+            <a name="set_scriptformat-section"></a>SET SCRIPTFORMAT</h3>
+        <pre lang="sql">SET SCRIPTFORMAT {TEXT | BINARY | COMPRESSED};
+        </pre>
+        <p>
+            <strong style="color: Orange">Requires administrative privileges.</strong></p>
+        <p>
+            Changes the format of the database initialization script.</p>
+        <p>
+            The <tt>BINARY</tt> formatter produces regular SQL insert statements, with the
+            exception that data values are written in native binary rather than in SQL-literal
+            format.</p>
+        <p>
+            The <tt>COMPRESSED</tt> formatter is simply a decoration of the <tt>BINARY</tt>
+            formatter, using the GZIP algorithm.</p>
+        <p>
+            <tt>BINARY</tt> and <tt>COMPRESSED</tt> formats result in slightly faster database
+            initialization (20-30%) and <tt>COMPRESSED</tt> produces a much smaller file.</p>
+        <p>
+            In general, however, it is best to stick with <tt>TEXT</tt> format.</p>
+        <p>
+            <tt>BINARY</tt> or <tt>COMPRESSED</tt> should be reserved for very large script
+            files, where the performance improvement or disk savings are worth the increased
+            difficulty of resolving corruption issues, should they occur.</p>
+        <h3>
+            <a name="set_table_readonly-section"></a>SET TABLE READONLY</h3>
+        <pre lang="sql">SET TABLE &lt;tablename&gt; READONLY {TRUE | FALSE};
+        </pre>
+        <p>
+            When <tt>TRUE</tt>, causes the engine to treat the specified table as read only.</p>
+        <p>
+            When <tt>FALSE</tt>, causes the engine to treat the specified table as writable.</p>
+        <div class="alert">
+            <p>
+                This command does not apply to system tables, which are always treated as read-only.</p>
+        </div>
+        <h3>
+            <a name="set_table_source-section"></a>SET TABLE SOURCE</h3>
+        <pre lang="sql">SET TABLE &lt;tablename&gt; SOURCE &lt;file and options&gt; [DESC];
+        </pre>
+        <p>
+            <strong style="color: Orange">Requires administrative privileges.</strong></p>
+        <p>
+            For details, see the <a title="Chapter 5 - Text Tables" href="../../Chapter 5 - Text Tables/Chapter 5 - Text Tables.html">
+                Text Tables</a> chapter.</p>
+        <p>
+            This command is used exclusively with <tt>TEXT</tt> tables to specify which
+            file contains the data and how the data is formatted.</p>
+        <p>
+            The optional <tt>DESC</tt> qualifier causes the engine to index the file from
+            the end and treat it as read-only.</p>
+        <p>
+            The &lt;file and options&gt; argument is a character sequence with the following
+            format:</p>
+        <pre lang="sql">    &lt;file and options&gt;::= &lt;doublequote&gt; &lt;filepath&gt; [&lt;semicolon&gt; &lt;option&gt;...] &lt;doublequote&gt;
+        </pre>
+        <p>
+            Example:</p>
+        <pre lang="sql">    SET TABLE mytable SOURCE "myfile;fs=|;vs=.;lvs=~"
+        </pre>
+        <p>
+            <strong>Supported Properties</strong></p>
+        <dl>
+            <dt style="margin-bottom: 1em;"><tt>quoted = { <strong><u>true</u></strong> | false
+                }</tt></dt>
+            <dd>
+                <p>
+                    When <tt>false</tt>, treats double quote characters as data rather than field
+                    delimiters.</p>
+            </dd>
+            <dt style="margin-bottom: 1em;"><tt>all_quoted = { true | <strong><u>false</u></strong>
+                }</tt></dt>
+            <dd>
+                <p>
+                    When <tt>true</tt>, delimits all fields using double quotes.</p>
+            </dd>
+            <dt style="margin-bottom: 1em;"><tt>encoding = &lt;encoding name&gt;</tt></dt>
+            <dd>
+                <p>
+                    specifies the character encoding for character data fields, for example: <tt>encoding=UTF-8</tt></p>
+            </dd>
+            <dt style="margin-bottom: 1em;"><tt>ignore_first = { true | <strong><u>false</u></strong>
+                }</tt></dt>
+            <dd>
+                <p>
+                    When <tt>true</tt>, ignores the first line of the file.</p>
+            </dd>
+            <dt style="margin-bottom: 1em;"><tt>cache_scale= &lt;integer value&gt;</tt></dt>
+            <dd>
+                <p>
+                    Exponent used to compute the upper limit on the number of <tt>TEXT</tt> table
+                    rows buffered in physical memory.</p>
+                <p>
+                    The default is <tt>8</tt>, equivalent to 3*(2**8) or 768 rows.</p>
+            </dd>
+            <dt style="margin-bottom: 1em;"><tt>cache_size_scale = &lt;integer value&gt;</tt></dt>
+            <dd>
+                <p>
+                    Exponent to compute the estimated average size of TEXT table rows.</p>
+                <p>
+                    The default is <tt>8</tt>, equivalent to (2**8) or 256 bytes per row.</p>
+                <p>
+                    In combination with <tt>cache_scale</tt>, places an upper limit on amount of
+                    memory allocated for buffering <tt>TEXT</tt> table row data in memory.</p>
+                <p>
+                    For example, the default values produce an upper limit of (768 rows * 256 bytes
+                    per row) = 192KB</p>
+            </dd>
+            <dt style="margin-bottom: 1em;"><tt>fs = &lt;character literal&gt; | &lt;special
+                separator indicator&gt;</tt></dt>
+            <dd>
+                <p>
+                    generic field separator</p>
+            </dd>
+            <dt style="margin-bottom: 1em;"><tt>vs = &lt;character literal&gt; | &lt;special
+                separator indicator&gt;</tt></dt>
+            <dd>
+                <p>
+                    <tt>VARCHAR</tt> field separator</p>
+            </dd>
+            <dt style="margin-bottom: 1em;"><tt>lvs = &lt;character literal&gt; | &lt;special
+                separator indicator&gt;</tt></dt>
+            <dd>
+                <p>
+                    <tt>LONGVARCHAR</tt> field separator</p>
+            </dd>
+        </dl>
+        <p>
+            <strong>Special Text Table separator indicators</strong></p>
+        <dl>
+            <dt style="margin-bottom: 1em;"><tt>\semi</tt></dt>
+            <dd>
+                <p>
+                    semicolon</p>
+            </dd>
+            <dt style="margin-bottom: 1em;"><tt>\quote</tt></dt>
+            <dd>
+                <p>
+                    quote</p>
+            </dd>
+            <dt style="margin-bottom: 1em;"><tt>\space</tt></dt>
+            <dd>
+                <p>
+                    space character</p>
+            </dd>
+            <dt style="margin-bottom: 1em;"><tt>\apos</tt></dt>
+            <dd>
+                <p>
+                    apostrophe</p>
+            </dd>
+            <dt style="margin-bottom: 1em;"><tt>\n</tt></dt>
+            <dd>
+                <p>
+                    newline - Used as an end anchor (like $ in regular expressions)</p>
+            </dd>
+            <dt style="margin-bottom: 1em;"><tt>\r</tt></dt>
+            <dd>
+                <p>
+                    carriage return</p>
+            </dd>
+            <dt style="margin-bottom: 1em;"><tt>\t</tt></dt>
+            <dd>
+                <p>
+                    tab</p>
+            </dd>
+            <dt style="margin-bottom: 1em;"><tt>\\</tt></dt>
+            <dd>
+                <p>
+                    backslash</p>
+            </dd>
+            <dt style="margin-bottom: 1em;"><tt>\u####</tt></dt>
+            <dd>
+                <p>
+                    a Unicode character specified in hexadecimal</p>
+            </dd>
+        </dl>
+        <h3>
+            <a name="script-section"></a>SCRIPT</h3>
+        <pre lang="sql">SCRIPT ['&lt;path&gt;'];
+        </pre>
+        <p>
+            <strong><span style="color: #ffa500">Requires administrative privileges.</span></strong>
+        </p>
+        <p>
+            Behaves differently, depending on inclusion or exclusion of <tt>'&lt;path&gt;'</tt>:</p>
+        <ol>
+            <li>
+                <p>
+                    When <em>included</em>, creates a database initialization script (&lt;<tt>path&gt;.script</tt>).</p>
+                <p>
+                    The resulting file contains the data definition language (<tt>DDL</tt>) and
+                    SQL insert statements required to recreate the entire structure and content
+                    of the database instance.</p>
+                <p>
+                    Note that <tt>&lt;path&gt;</tt> is relative to the machine hosting the database
+                    instance, <em>not</em> the machine running the software that issues the command.</p>
+                <p>
+                    Also note that it is considered illegal to specify <tt>'&lt;path&gt;'</tt> such
+                    that an existing file would be overwritten; doing so will raise an exception.</p>
+                <p>
+                    Finally, note that the resulting file has the HSQLDB native initialization script
+                    format, meaning that certain Unicode sequences may be double-escaped. The implication
+                    is that the resulting file may not be generally executable as an SQL script.
+                    It is suitable, however, for recording database backups or for cloning an existing
+                    database instance.</p>
+                <li>
+                    <p>
+                        When <em>excluded</em>, generates a single column result set.</p>
+                    <p>
+                        The rows, one per command, contain the data definition language (<tt>DDL</tt>)
+                        required to recreate the current structure of the database instance.
+                    </p>
+                </li>
+        </ol>
+        <h3>
+            <a name="shutdown-section"></a>SHUTDOWN</h3>
+        <pre lang="sql">SHUTDOWN [IMMEDIATELY | COMPACT | SCRIPT];
+        </pre>
+        <p>
+            <strong><span style="color: Orange">Requires administrative privileges.</span></strong>
+        </p>        
+        <p>
+            Closes the current database.</p>        
+        <p>
+            <strong>Varieties of the SHUTDOWN command</strong></p>
+        <dl>
+            <dt><tt>SHUTDOWN</tt></dt>
+            <dd style="margin-top: 1em;">
+                <ol>
+                    <li>
+                        <p>
+                            Performs a <tt>CHECKPOINT</tt></p>
+                    </li>
+                    <li>
+                        <p>
+                            Backs up the <tt>CACHED</tt> table binary image (the <tt>&lt;database&gt;.data</tt>
+                            file) in zipped format.</p>
+                    </li>
+                    <li>
+                        <p>
+                            Closes the database files.</p>
+                    </li>
+                </ol>
+            </dd>
+            <dt><tt>SHUTDOWN IMMEDIATELY</tt></dt>
+            <dd style="margin-top: 1em;">
+                <ul>
+                    <li>
+                        <p>
+                            Just closes the database files; roughly simulates a process crash or abrupt
+                            power down.
+                        </p>
+                    </li>
+                    <li>
+                        <p>
+                            Can be used to perform light-weight tests of the database recovery mechanism.</p>
+                    </li>
+                    <li>
+                        <p>
+                            Should not be used as the default method of closing a database.</p>
+                    </li>
+                </ul>
+            </dd>
+            <dt><tt>SHUTDOWN COMPACT</tt></dt>
+            <dd style="margin-top: 1em;">
+                <ol>
+                    <li>
+                        <p>
+                            Performs a normal <tt>SHUTDOWN.</tt></p>
+                    </li>
+                    <li>
+                        <p>
+                            Compacts the <span style="font-family: Courier New">CACHED</span> table binary
+                            image (the <tt>&lt;database&gt;.data</tt> file).</p>
+                    </li>
+                    <li>
+                        <p>
+                            Compacts all <tt>TEXT</tt> table files.</p>
+                    </li>
+                </ol>
+            </dd>
+            <dt><tt>SHUTDOWN SCRIPT</tt></dt>
+            <dd style="margin-top: 1em;">
+                <ol style="margin-bottom: 1em;">
+                    <li>
+                        <p>
+                            Performs a <tt>CHECKPOINT</tt></p>
+                    </li>
+                    <li>
+                        <p>
+                            Writes to the database initialization <tt>.script</tt> the data definition language
+                            (<tt>DDL</tt>) statements required to recreate the present database structure.</p>
+                    </li>
+                    <li>
+                        <p>
+                            Writes to the database initialization <tt>.script</tt> the SQL insert statements
+                            required to recreate all <tt>MEMORY</tt>, <tt>CACHED</tt> and <tt>TEXT</tt>
+                            table data.</p>
+                    </li>
+                    <li>
+                        <p>
+                            deletes all other database files, including the <tt>&lt;database&gt;.properties</tt> file.</p>
+                    </li>
+                </ol>
+                <p>
+                    Allows the resulting script to be edited for special purposes prior to the next
+                    startup.</p>
+                <p>
+                    Useful when upgrading to a new HSQLDB version or when attempting to perform
+                    a purely script-based bulk merge of two or more databases.</p>
+            </dd>
+        </dl>
+    </div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 6 -->

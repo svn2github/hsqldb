@@ -1,0 +1,107 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <link rel="stylesheet" type="text/css" href="../../styles/presentation.css"/>
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css"/>
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../../html/hsqldb.gif"/>
+                </td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br/>
+                    <span class="topicTitle">Chapter 8 - SQL Syntax</span>
+                    <br/>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><a href="../Chapter 8 - SQL Syntax.html">Chapter Overview</a>
+                            &gt; <a href="SQL Commands.html">SQL Commands</a> &gt; <span class="nolink">Data
+                                Privilege Comands</span> </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <h3>
+            GRANT</h3>
+        <pre lang="sql">GRANT { SELECT | DELETE | INSERT | UPDATE | ALL } [,...]
+   ON { table | CLASS "Fully.Qualified.Type.Name" }
+   TO &lt;grantee&gt;;
+
+GRANT &lt;rolename&gt; [,...]
+   TO &lt;grantee&gt;;
+        </pre>
+        <p>
+            <span style="color:Orange">Requires Administrative privileges</span>.</p>        
+        <p>
+            <em>&lt;grantee&gt;</em> is either a user name, a role name, or <tt>PUBLIC, which </tt>
+            effectively
+            means <span><em>all users</em></span>.</p>
+        <p>
+            The first form of the <tt>GRANT</tt> command assigns privileges to a grantee
+            for table access or method invocation upon a type.</p>
+        <p>
+            To allow a user to invoke a method of a type from SQL, the privilege <em>ALL</em> must be granted.
+            Examples:</p>
+        <pre lang="sql">    GRANT SELECT ON Test TO GUEST;
+    GRANT ALL ON CLASS "System.String" TO PUBLIC;
+        </pre>
+        <p>
+            The second form of the <tt>GRANT</tt> command gives the specified &lt;grantee&gt;
+            membership in the specified role.</p>        
+        <h3>
+            <a name="revoke-section"></a>REVOKE</h3>
+        <pre lang="sql">REVOKE { SELECT | DELETE | INSERT | UPDATE | ALL } [,...]
+    ON { table | CLASS "Fully.Qualified.Type.Name" }
+  FROM &lt;grantee&gt;;
+
+REVOKE &lt;rolename&gt; [,...]
+  FROM &lt;grantee&gt;;
+        </pre>
+<p>
+            <span style="color:Orange">Requires Administrative privileges</span>.</p>                
+        <p>
+            <em>&lt;grantee&gt;</em> is either a user name, a role name, or <tt>PUBLIC</tt>.</p>
+        <p>
+            The first form of the <tt>REVOKE</tt> command withdraws privileges from a grantee&nbsp;on
+            a table or for invocation of methods on a type.</p>
+        <p>
+            The second form of the <tt>REVOKE</tt> command withdraws membership of the specified
+            <em>&lt;grantee&gt;</em> from the specified role.</p>
+        <div class="alert">
+            <h3 class="title">
+                Note</h3>
+            <p>
+                There are a number of special (predefined) roles and users:</p>
+            <ul>
+                <li><tt>_SYSTEM</tt> - the user that grants predefined privileges to other predefined
+                    users/roles.</li>
+                <li><tt>PUBLIC</tt> -a (virtual) user that automatically grants its privileges to
+                    all normal roles and users</li>
+                <li><tt>DBA</tt> - the database administrator role.
+                <p/>
+                <ul>
+                <li>Possessing this role, either directly or indirectly, grants unrestricted access to all features of the database instance.</li>
+                    <li>Upon creation, each new database instance contains
+                    a single user "SA" with an empty
+                        password and membership in the DBA role.</li>
+                    <li>Users with the DBA role may use the ADMIN option of the <a href="Data Definition Language Commands/CREATE Commands.html#create_user-section">
+                        CREATE USER</a> command to grant the DBA role as part of the user creation operation.</li>
+                </ul>
+                </li>
+                
+            </ul>
+            <p>
+                It is illegal to attempt to alter the privileges of <tt>_SYSTEM</tt> or <tt>DBA</tt>.</p>
+            <p>
+                It is not possible to connect as <tt>_SYSTEM</tt> or <tt>PUBLIC</tt>.</p>
+        </div>
+    </div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 3 -->

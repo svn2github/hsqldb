@@ -1,0 +1,210 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <link rel="stylesheet" type="text/css" href="../styles/presentation.css">
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../html/hsqldb.gif">
+                </td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br>
+                    <span class="topicTitle">Chapter 7 - SQL Tool</span>
+                    <br>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><a href="Chapter 7 - SQL Tool.html">Chaper Overview</a> &gt;
+                            <span class="nolink">The sqltool.rc File</span> </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <p>
+            The sqltool.rc file can be used by any client program built against
+            the <tt>org.hsqldb.util.RCData</tt> class.</p>
+        <p>
+            This includes <em>SqlTool</em> and <em>DatabaseManager</em>, and you can even use it with
+            your own client programs.</p>
+        <h3>
+            Important</h3>
+        <p>
+            Do not forget to adequately protect your configuration file(s).</p>
+        <p>
+            Each configuration file should be readable, both locally and remotely,
+            only to users who run programs that need it.</p>
+        <p>
+            On UNIX type systems, this is accomplished by using some variant of the <tt class="literal">
+            <a href="http://nixdoc.net/man-pages/OpenBSD/man1/chmod.1.html">chmod</a>/<a href="http://nixdoc.net/man-pages/Linux/man1/chown.1.html">chown</a></tt>
+            commands.</p>
+        <p>
+            On <em>Windows<sup style="font-size: smaller">tm</sup></em>, this is accomplished using
+            either the security tab of the file properties dialog or the
+            <a href="http://www.microsoft.com/resources/documentation/windows/xp/all/proddocs/en-us/cacls.mspx?mfr=true">CACLS</a>
+            command line program.</p>
+        <p>
+            On any system, one must also make sure that such files are protected
+            from anonymous remote access such as via SBM file shares, WebDav, IIS, NFS,
+            FTP, Samba, etc.</p>
+        <h3>
+            Example</h3>
+        <p>
+            Below is the default example.sqltool.rc file; it can be found in the Etc
+            folder of your HSQLDB installation directory:</p>
+        <blockquote>
+            <pre>
+<span style="color: green"># $Id: sqltool.rc,v 1.14 2005/05/22 04:46:16 unsaved Exp $
+
+</span><span style="color: green"># This is a sample RC configuration file used by SqlTool, DatabaseManager,
+# and any other program that uses the org.hsqldb.util.RCData class.
+</span>
+<span style="color: green"># You can run SqlTool right now by copying this file to your home directory
+# and running
+#    java -jar /path/to/hsqldb.jar mem
+# This will access the first urlid definition below in order to use a
+# personal Memory-Only database.</span>
+
+<span style="color: green"># If you have the least concerns about security, then secure access to
+# your RC file.
+# See the documentation for SqlTool for various ways to use this file.
+</span>
+<span style="color: green"># A personal Memory-Only database.
+</span>urlid mem
+url jdbc:hsqldb:mem:memdbid
+username sa
+password
+
+<span style="color: green"># This is for a hsqldb Server running with default settings on your local
+# computer (and for which you have not changed the password for "sa").
+</span>urlid localhost-sa
+url jdbc:hsqldb:hsql://localhost
+username sa
+password
+
+
+
+# Template for a urlid for an Oracle database.
+# You will need to put the oracle.jdbc.OracleDriver class into your
+# classpath.
+# In the great majority of cases, you want to use the file classes12.zip
+# (which you can get from the directory $ORACLE_HOME/jdbc/lib of any
+# Oracle installation compatible with your server).
+# Since you need to add to the classpath, you can't invoke SqlTool with
+# the jar switch, like "java -jar .../hsqldb.jar..." or
+# "java -jar .../hsqlsqltool.jar...".
+# Put both the HSQLDB jar and classes12.zip in your classpath (and export!)
+# and run something like "java org.hsqldb.util.SqlTool...".
+
+#urlid cardiff2
+#url jdbc:oracle:thin:@aegir.admc.com:1522:TRAFFIC_SID
+#username blaine
+#password secretpassword
+#driver oracle.jdbc.OracleDriver
+
+
+
+# Template for a TLS-encrypted HSQLDB Server.
+# Remember that the hostname in hsqls (and https) JDBC URLs must match the
+# CN of the server certificate (the port and instance alias that follows
+# are not part of the certificate at all).
+# You only need to set "truststore" if the server cert is not approved by
+# your system default truststore (which a commercial certificate probably
+# would be).
+
+#urlid tls
+#url jdbc:hsqldb:hsqls://db.admc.com:9001/lm2
+#username blaine
+#password asecret
+#truststore /home/blaine/ca/db/db-trust.store
+
+
+# Template for a Postgresql database
+#urlid blainedb
+#url jdbc:postgresql://idun.africawork.org/blainedb
+#username blaine
+#password losung1
+#driver org.postgresql.Driver
+
+# Template for a MySQL database
+#urlid mysql-testdb
+#url jdbc:mysql:///test
+#username root
+#username blaine
+#password hiddenpwd
+#driver com.mysql.jdbc.Driver
+        </pre>
+        </blockquote>
+        <h3>
+            Notes</h3>
+        <p>
+            You can put this type of file anywhere you want and specify its location
+            to <em>SqlTool</em> or <em>DatabaseManager</em> by using the <tt>--rcfile</tt>
+            argument.</p>
+        <p>
+            If you do not give <tt>--rcfile</tt> arguments to <em>SqlTool</em> or
+            <em>DatabaseManager</em>, the default location is implied.</p>
+        <p>
+            The default location is <tt>sqltool.rc</tt> or <tt>dbmanager.rc</tt> in
+            your <em>%USERPROFILE%</em> directory.</p>
+        <p>
+            If you have any doubt about where your <em>%USERPROFILE%</em> directory is,
+            just run <em>SqlTool</em> with a phony urlid and it will tell you where it
+            expects the configuration file to be.</p>
+        <p>
+            The configuration file consists of stanza(s) like this:</p>
+        <pre>    urlid web
+    url jdbc:hsqldb:hsql://localhost
+    username web
+    password webspassword
+        </pre>
+        <p>
+            These four settings are required for every urlid.</p>
+        <p>
+            The file may contain an arbitrary number of blank lines and comments:</p>
+        <pre>    # This is a comment
+        </pre>
+        <p>
+            You can also put the following optional settings into a urlid stanza. The setting
+            will, of course, only apply to that urlid:</p>
+
+            <dl>
+                <dt><tt>charset</tt></dt>
+
+                <dd>
+                    This is used by the <em>SqlTool</em> program, but not by the <em>DatabaseManager</em> program.</dd>
+                <dd>
+                    Alternatively, you can set this for one <em>SqlTool</em> invocation by setting the
+                    system property <tt>sqlfile.charset</tt>.</dd>
+                <dd>
+                    Defaults to <tt>US-ASCII</tt>.</dd>
+
+                <dt><tt>driver</tt></dt>
+
+                <dd>
+                    Sets the JDBC driver class name.</dd>
+                <dd>
+                    Alternatively, you can set this for any <em>SqlTool</em>/<em>DatabaseManager</em> invocation
+                    by using the command line switch <em>--driver</em>.</dd>
+                <dd>
+                    Defaults to <em>org.hsqldb.jdbcDriver</em>.</dd>
+                <dt><tt>truststore</tt></dt>
+                <dd>
+                    TLS trust keystore store file path.</dd>
+                <dd>
+                    You usually only need to set this if the server is using a non-publicly-certified
+                    certificate (like a self-signed self-ca'd cert).</dd>
+            </dl>
+
+        <p>
+            System property and SqlTool command-line switches override settings made in
+            the configuration file.</p>
+    </div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 2 -->

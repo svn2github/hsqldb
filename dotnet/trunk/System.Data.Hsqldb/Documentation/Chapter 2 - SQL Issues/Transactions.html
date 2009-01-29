@@ -1,0 +1,69 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <link rel="stylesheet" type="text/css" href="../styles/presentation.css">
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../html/hsqldb.gif"></td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br>
+                    <span class="topicTitle">Chapter 2 - SQL Issues</span>
+                    <br>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><a href="Chapter 2 - SQL Issues.html">Chaper Overview </a>
+                            &gt; <span class="nolink">Transactions </span></span>
+                    </div>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <p>
+            HSQLDB currently supports transactions only at the <tt>READ_UNCOMMITTED</tt>
+            level, also known as <tt>LEVEL 0</tt> transaction isolation.</p>
+        <p>
+            This means that during the lifetime of a transaction, other database sessions
+            can see uncommitted changes made by that transaction.</p>
+        <p>
+            Also, HSQLDB does not currently support transactional <dfn>DATA DEFINITION LANGUAGE</dfn>
+            (<tt>DDL</tt>). Instead, when an SQL <tt>CREATE | ALTER | DROP TABLE ... ALTER COLUMN</tt>
+            or <tt>DROP COLUMN</tt> command results in changes to the table structure, the
+            current transaction is committed. If an uncommitted transaction in a different
+            session has changed the data in the affected table, it may not be possible to
+            roll it back after the <tt>ALTER TABLE</tt> command. This may also apply to
+            <tt>ADD | DROP INDEX</tt> an <tt>ADD | DROP CONSTRAINT</tt> commands. It is
+            recommended to use <tt>DDL</tt> commands only when it is known that there are
+            no in-progress transactions.</p>
+        <p>
+            Similarly, although uncommitted transactions can be continued, committed, or
+            rolled back after a <tt>CHECKPOINT</tt> command is issued, if the database is
+            not subsequently closed properly with the <tt>SHUTDOWN</tt> command, any such
+            transactions that remain uncommitted at the time of shutdown are partly committed
+            (to the state at <tt>CHECKPOINT</tt>) at the next startup. Because of this,
+            it is presently recommended to use the <tt>CHECKPOINT</tt> command only when there
+            are no in-progress transactions.</p>
+        <p>
+            Finally, the default behavior when different transactions modify the same row
+            is to simply allow each transaction to commit using a "last writer wins policy."</p>
+        <p>
+            Recognizing that this not always an acceptable policy (especially since the
+            case cannot be prevented by specifying a more restrictive isolation level),
+            the following property is provided to indicate that an exception is to be raised
+            when one transaction attempts to modify a row that belongs to a different
+            transaction's write set:</p>
+        <pre lang="sql">    SET PROPERTY "sql.tx_no_multi_rewrite" <var>TRUE</var>
+        </pre>
+        <p>
+            Other than the above issues, testing and bug feedback indicates that the HSQLDB
+            transaction facility is mature and conforms fully to <dfn>ACID</dfn> (Atomic,
+            Isolated, Consistent, Durable).</p>
+    </div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 5 -->

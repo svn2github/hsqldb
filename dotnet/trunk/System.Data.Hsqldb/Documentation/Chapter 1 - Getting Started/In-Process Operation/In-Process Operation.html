@@ -1,0 +1,74 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:mshelp="http://msdn.microsoft.com/mshelp" xml:lang="en-ca" lang="en-ca" dir="ltr">
+<head>
+    <link rel="stylesheet" type="text/css" href="../../styles/presentation.css"/>
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css"/>
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../../html/hsqldb.gif"/>
+                </td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br/>
+                    <span class="topicTitle">Chapter 1 - Getting Started</span>
+                    <br/>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><a href="../Chapter 1 - Getting Started.html">Chapter Overview
+                        </a>&gt; <span class="nolink">In-Process Operation</span> </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <p>
+            Runs the database engine as part of your application program in the same .NET
+            Virtual Machine.</p>
+        <p>
+            An <em>In-Process</em> database instance is opened by the first connection (no
+            separate API is required), with the database path specified in the connection
+            string.</p>
+        <h3>
+            Benefits</h3>
+        <ul>
+            <li>Typically orders of magnitude faster access, as network round-trips are avoided
+                and the data is not converted to and from serial form for transmission over the network.</li>
+        </ul>
+        <h3>
+            Drawbacks</h3>
+        <ul>
+            <li>Ad-hoc out-of-process data access is impossible while the application is running, making development,
+                testing, quality-assurance, etc. less convenient and more expensive.</li>
+            <li>Difficult to control database instance lifecycle:
+                <ul type="disc">
+                    <li>How to avoid or control an open/close cycle per connection?</li>
+                    <li>When to close?</li>
+                    <li>Who is allowed to close?</li>
+                </ul>
+            </li>
+        </ul>
+        <p>
+            To work around the drawbacks, it is possible to run an HSQLDB Server thread
+            in-process with the application and it is possible to control instance lifecycle
+            using the <tt>"Shutdown=True"</tt> connection string property.</p>
+        <p>
+            However, it is generally easier and more productive to use an HSQLDB Server
+            instance during elaboration and build cycles, switching to <em>In-Process</em>
+            mode only for formal unit testing, acceptance testing and deployment phases.</p>
+        <p>
+            There are three main modes of In-Process Operation, each of which is distiguished
+            by a unique connection protocol specifier:</p>
+        <ul>
+            <li><a href="File Protocol.html">File Protocol</a></li>
+            <li><a href="Res Protocol.html">Res Protocol</a></li>
+            <li><a href="Mem Protocol.html">Mem Protocol</a></li>
+        </ul>
+    </div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 5 -->

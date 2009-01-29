@@ -1,0 +1,73 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <link rel="stylesheet" type="text/css" href="../styles/presentation.css">
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../html/hsqldb.gif">
+                </td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br>
+                    <span class="topicTitle">Chapter 1 - Getting Started</span>
+                    <br>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><a href="Chapter 1 - Getting Started.html">Chapter Overview
+                        </a>&gt; <span class="nolink">Closing A Database</span> </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <p>
+            Like any resource, an <em>In-Process</em> database instance should be closed
+            explicitly when it is no longer needed.</p>
+        <p>
+            Using SQL, a database instance can be closed with the <tt>SHUTDOWN</tt> command:</p>
+        <pre lang="cs">     using (DbCommand command = connection.CreateCommand())
+    {
+        command.CommandText = "SHUTDOWN";
+        command.CommandType = CommandType.Text;
+        command.ExecuteNonQuery();
+        ...
+    }
+        </pre>
+        <p>
+            Using the connection string property <tt>"Shutdown=true"</tt>, the first connection
+            to an <em>In-Process</em> instance (the connection that opens the database)
+            can specify that the database automatically closes when the connection count
+            transitions from one (<tt>1</tt>) to zero (<tt>0</tt>):</p>
+        <pre lang="cs">    connection.ConnectionString = @"Protocol=File;Path=c:\dbfile\db1;User ID=SA;Shutdown=True;";
+        </pre>
+        <h3>
+            Issues</h3>
+        <ul>
+            <li>
+                <p>
+                    To execute the <tt>SHUTDOWN</tt> command, the connected user must have the <tt>DBA</tt>
+                    privilege.</p>
+                <p>
+                    Among other reasons, this is why the <tt>"Shutdown"</tt> connection string property
+                    is provided.</p>
+                <p>
+                    The <tt>Shutdown</tt> connection string property <em>does not</em> require the DBA privilege.</p>
+            </li>
+        </ul>
+        <div class="alert">
+            <h3 class="title">
+                Note</h3>
+            <p>
+                The <tt><a href="../Chapter 8 - SQL Syntax/SQL Commands/Database Control Commands.html#shutdown-section">
+                    SHUTDOWN</a></tt> command can take several options.</p>
+        </div>
+    </div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 7 -->

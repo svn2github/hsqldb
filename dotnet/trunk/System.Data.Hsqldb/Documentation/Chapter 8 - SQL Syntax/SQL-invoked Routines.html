@@ -1,0 +1,576 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <link rel="stylesheet" type="text/css" href="../styles/presentation.css">
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../html/hsqldb.gif">
+                </td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br>
+                    <span class="topicTitle">Chapter 8 - SQL Syntax</span>
+                    <br>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><a href="Chapter 8 - SQL Syntax.html">Chapter Overview</a> <span
+                            class="nolink">SQL-invoked Routines </span></span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+<div id="main">
+    <h3>
+        CALL</h3>
+    <pre>CALL &lt;expression&gt;;
+    </pre>
+    <p>
+        Any expression can be evaluated as an SQL-invoked routine, including, but not limited
+        to User-defined routines:</p>
+    <pre lang="sql">     CALL (2 / 3 + 4);
+    </pre>
+    <p>
+        By default, this command generates a result set with one column and one row (the
+        result), just like a <tt>SELECT</tt> statement with one row and one column.</p>
+    <p>
+        Programming directly against the low-level HSQLDB API, it is possible for a User-defined
+        routine to generate a multi-column, multi-row result set when it is invoked using
+        <tt>CALL</tt>. The routine must be declared to return object and the returned object
+        must be an instance of <em>org.hsqldb.Result</em>.</p>
+    <h2>
+        User-defined Routines</h2>
+    <p>
+        User-defined SQL-invoked routines are simply public static methods that are called
+        directly from the SQL language using a fully-qualified name or an alias.</p>
+    <p>
+        Invocation requires that the defining class can be resolved reflectively at runtime
+        within the database engine.</p>
+    <p>
+        The direct invocation syntax is:</p>
+    <pre lang="sql">    "System.Math.Min"(2.0, a)
+    </pre>
+    <p>
+        meaning that the fully qualified named must be specified and must be delimited to
+        prevent case-insensitive treatment by the engine.</p>
+    <p>
+        An alias can be created using the command <tt>CREATE ALIAS</tt>:</p>
+    <pre lang="sql">
+    CREATE ALIAS SQRT FOR "System.Math.Sqrt";
+    </pre>
+    <p>
+        When an alias is defined, then the function can also be invoked using the alias:</p>
+    <pre lang="sql">    SELECT SQRT(A), B FROM MYTABLE;
+    </pre>
+    <p>
+        An administrative user may directly invoke any public static method whose execution
+        is granted to executing code base.</p>
+    <p>
+        Other users may invoke only the methods of classes to which they have been granted
+        access:</p>
+    <pre lang="sql">    GRANT ALL ON CLASS "System.Convert" TO PUBLIC;
+    </pre>
+    <p>
+        The engine currently resolves invocation of overloaded methods by selecting the
+        first one returned via relection that matches the fully qualified name (not including
+        signature). This process is not guaranteed to be deterministic and certainly does
+        not provide a "one size fits all" solution. If it is required to invoke overloaded
+        methods, it is currently recommended simply to create a class with static methods
+        that acts as a wrapper to control precisely which method signature of the underlying
+        class is selected.</p>
+    <h2>
+        Built-in Routines</h2>
+    <p>
+        Built-in SQL-invoked routines are special routines that are provided automatically
+        for use by any user. They are often implemented in ways that would be impossible
+        via the User-defined SQL-invoked routine mechanism.</p>
+    <fieldset>
+        <legend>Numerical Functions</legend>
+        <dl>
+            <dt><tt>ABS(d)</tt></dt>
+            <dd>
+                <p>
+                    returns the absolute value of a double value</p>
+            </dd>
+            <dt><tt>ACOS(d)</tt></dt>
+            <dd>
+                <p>
+                    returns the arc cosine of an angle</p>
+            </dd>
+            <dt><tt>ASIN(d)</tt></dt>
+            <dd>
+                <p>
+                    returns the arc sine of an angle</p>
+            </dd>
+            <dt><tt>ATAN(d)</tt></dt>
+            <dd>
+                <p>
+                    returns the arc tangent of an angle</p>
+            </dd>
+            <dt><tt>ATAN2(a,b)</tt></dt>
+            <dd>
+                <p>
+                    returns the tangent of a/b</p>
+            </dd>
+            <dt><tt>BITAND(a,b)</tt></dt>
+            <dd>
+                <p>
+                    returns bitwise logical a &amp; b</p>
+            </dd>
+            <dt><tt>BITOR(a,b)</tt></dt>
+            <dd>
+                <p>
+                    returns bitwise logical a | b</p>
+            </dd>
+            <dt><tt>CEILING(d)</tt></dt>
+            <dd>
+                <p>
+                    returns the smallest integer that is not less than d</p>
+            </dd>
+            <dt><tt>COS(d)</tt></dt>
+            <dd>
+                <p>
+                    returns the cosine of an angle</p>
+            </dd>
+            <dt><tt>COT(d)</tt></dt>
+            <dd>
+                <p>
+                    returns the cotangent of an angle</p>
+            </dd>
+            <dt><tt>DEGREES(d)</tt></dt>
+            <dd>
+                <p>
+                    converts radians to degrees</p>
+            </dd>
+            <dt><tt>EXP(d)</tt></dt>
+            <dd>
+                <p>
+                    returns e (2.718...) raised to the power of d</p>
+            </dd>
+            <dt><tt>FLOOR(d)</tt></dt>
+            <dd>
+                <p>
+                    returns the largest integer that is not greater than d</p>
+            </dd>
+            <dt><tt>LOG(d)</tt></dt>
+            <dd>
+                <p>
+                    returns the natural logarithm (base e)</p>
+            </dd>
+            <dt><tt>LOG10(d)</tt></dt>
+            <dd>
+                <p>
+                    returns the logarithm (base 10)</p>
+            </dd>
+            <dt><tt>MOD(a,b)</tt></dt>
+            <dd>
+                <p>
+                    returns a modulo b</p>
+            </dd>
+            <dt><tt>PI()</tt></dt>
+            <dd>
+                <p>
+                    returns pi (3.1415...)</p>
+            </dd>
+            <dt><tt>POWER(a,b)</tt></dt>
+            <dd>
+                <p>
+                    returns a raised to the power of b</p>
+            </dd>
+            <dt><tt>RADIANS(d)</tt></dt>
+            <dd>
+                <p>
+                    converts degrees to radians</p>
+            </dd>
+            <dt><tt>RAND()</tt></dt>
+            <dd>
+                <p>
+                    returns a random number x bigger or equal to 0.0 and smaller than 1.0</p>
+            </dd>
+            <dt><tt>ROUND(a,b)</tt></dt>
+            <dd>
+                <p>
+                    rounds a to b digits after the decimal point</p>
+            </dd>
+            <dt><tt>ROUNDMAGIC(d)</tt></dt>
+            <dd>
+                <p>
+                    solves rounding problems such as 3.11-3.1-0.01</p>
+            </dd>
+            <dt><tt>SIGN(d)</tt></dt>
+            <dd>
+                <p>
+                    returns -1 if d is smaller than 0, 0 if d==0 and 1 if d is bigger than 0</p>
+            </dd>
+            <dt><tt>SIN(d)</tt></dt>
+            <dd>
+                <p>
+                    returns the sine of an angle</p>
+            </dd>
+            <dt><tt>SQRT(d)</tt></dt>
+            <dd>
+                <p>
+                    returns the square root</p>
+            </dd>
+            <dt><tt>TAN(A)</tt></dt>
+            <dd>
+                <p>
+                    returns the trigonometric tangent of an angle</p>
+            </dd>
+            <dt><tt>TRUNCATE(a,b)</tt></dt>
+            <dd>
+                <p>
+                    truncates a to b digits after the decimal point</p>
+            </dd>
+        </dl>
+    </fieldset>
+    <fieldset>
+        <legend>String Functions</legend>
+        <dl>
+            <dt><tt>ASCII(s)</tt></dt>
+            <dd>
+                <p>
+                    returns the ASCII code of the leftmost character of s</p>
+            </dd>
+            <dt><tt>BIT_LENGTH(str)</tt></dt>
+            <dd>
+                <p>
+                    returns the length of the string in bits</p>
+            </dd>
+            <dt><tt>CHAR(c)</tt></dt>
+            <dd>
+                <p>
+                    returns a character that has the ASCII code c</p>
+            </dd>
+            <dt><tt>CHAR_LENGTH(str)</tt></dt>
+            <dd>
+                <p>
+                    returns the length of the string in characters</p>
+            </dd>
+            <dt><tt>CONCAT(str1,str2)</tt></dt>
+            <dd>
+                <p>
+                    returns str1 + str2</p>
+            </dd>
+            <dt><tt>DIFFERENCE(s1,s2)</tt></dt>
+            <dd>
+                <p>
+                    returns the difference between the sound of s1 and s2</p>
+            </dd>
+            <dt><tt>HEXTORAW(s1)</tt></dt>
+            <dd>
+                <p>
+                    returns translated string</p>
+            </dd>
+            <dt><tt>INSERT(s,start,len,s2)</tt></dt>
+            <dd>
+                <p>
+                    returns a string where len number of characters beginning at start has been replaced
+                    by s2</p>
+            </dd>
+            <dt><tt>LCASE(s)</tt></dt>
+            <dd>
+                <p>
+                    converts s to lower case</p>
+            </dd>
+            <dt><tt>LEFT(s,count)</tt></dt>
+            <dd>
+                <p>
+                    returns the leftmost count of characters of s) - requires double quoting - use SUBSTRING()
+                    instead</p>
+            </dd>
+            <dt><tt>LENGTH(s)</tt></dt>
+            <dd>
+                <p>
+                    returns the number of characters in s</p>
+            </dd>
+            <dt><tt>LOCATE(search,s,[start])</tt></dt>
+            <dd>
+                <p>
+                    returns the first index (1=left, 0=not found) where search is found in s, starting
+                    at start</p>
+            </dd>
+            <dt><tt>LTRIM(s)</tt></dt>
+            <dd>
+                <p>
+                    removes all leading blanks in s</p>
+            </dd>
+            <dt><tt>OCTET_LENGTH(str)</tt></dt>
+            <dd>
+                <p>
+                    returns the length of the string in bytes (twice the number of characters)</p>
+            </dd>
+            <dt><tt>RAWTOHEX(s1)</tt></dt>
+            <dd>
+                <p>
+                    returns translated string</p>
+            </dd>
+            <dt><tt>REPEAT(s,count)</tt></dt>
+            <dd>
+                <p>
+                    returns s repeated count times</p>
+            </dd>
+            <dt><tt>REPLACE(s,replace,s2)</tt></dt>
+            <dd>
+                <p>
+                    replaces all occurrences of replace in s with s2</p>
+            </dd>
+            <dt><tt>RIGHT(s,count)</tt></dt>
+            <dd>
+                <p>
+                    returns the rightmost count of characters of s</p>
+            </dd>
+            <dt><tt>RTRIM(s)</tt></dt>
+            <dd>
+                <p>
+                    removes all trailing spaces</p>
+            </dd>
+            <dt><tt>SOUNDEX(s)</tt></dt>
+            <dd>
+                <p>
+                    returns a four character code representing the sound of s</p>
+            </dd>
+            <dt><tt>SPACE(count)</tt></dt>
+            <dd>
+                <p>
+                    returns a string consisting of count spaces</p>
+            </dd>
+            <dt><tt>SUBSTR(s,start[,len])</tt></dt>
+            <dd>
+                <p>
+                    alias for substring</p>
+            </dd>
+            <dt><tt>SUBSTRING(s,start[,len])</tt></dt>
+            <dd>
+                <p>
+                    returns the substring starting at start (1=left) with length len</p>
+            </dd>
+            <dt><tt>UCASE(s)</tt></dt>
+            <dd>
+                <p>
+                    converts s to upper case</p>
+            </dd>
+            <dt><tt>LOWER(s)</tt></dt>
+            <dd>
+                <p>
+                    converts s to lower case</p>
+            </dd>
+            <dt><tt>UPPER(s)</tt></dt>
+            <dd>
+                <p>
+                    converts s to upper case</p>
+            </dd>
+        </dl>
+    </fieldset>
+    <fieldset>
+        <legend>Date/Time Functions</legend>
+        <dl>
+            <dt><tt>CURDATE()</tt></dt>
+            <dd>
+                <p>
+                    returns the current date</p>
+            </dd>
+            <dt><tt>CURTIME()</tt></dt>
+            <dd>
+                <p>
+                    returns the current time</p>
+            </dd>
+            <dt><tt>DATEDIFF(string, datetime1, datetime2)</tt></dt>
+            <dd>
+                <p>
+                    returns the count of units of time elapsed from datetime1 to datetime2. The string
+                    indicates the unit of time and can have the following values 'ms'='millisecond',
+                    'ss'='second','mi'='minute','hh'='hour', 'dd'='day', 'mm'='month', 'yy' = 'year'.
+                    Both the long and short form of the strings can be used.</p>
+            </dd>
+            <dt><tt>DAYNAME(date)</tt></dt>
+            <dd>
+                <p>
+                    returns the name of the day</p>
+            </dd>
+            <dt><tt>DAYOFMONTH(date)</tt></dt>
+            <dd>
+                <p>
+                    returns the day of the month (1-31)</p>
+            </dd>
+            <dt><tt>DAYOFWEEK(date)</tt></dt>
+            <dd>
+                <p>
+                    returns the day of the week (1 means Sunday)</p>
+            </dd>
+            <dt><tt>DAYOFYEAR(date)</tt></dt>
+            <dd>
+                <p>
+                    returns the day of the year (1-366)</p>
+            </dd>
+            <dt><tt>HOUR(time)</tt></dt>
+            <dd>
+                <p>
+                    return the hour (0-23)</p>
+            </dd>
+            <dt><tt>MINUTE(time)</tt></dt>
+            <dd>
+                <p>
+                    returns the minute (0-59)</p>
+            </dd>
+            <dt><tt>MONTH(date)</tt></dt>
+            <dd>
+                <p>
+                    returns the month (1-12)</p>
+            </dd>
+            <dt><tt>MONTHNAME(date)</tt></dt>
+            <dd>
+                <p>
+                    returns the name of the month</p>
+            </dd>
+            <dt><tt>NOW()</tt></dt>
+            <dd>
+                <p>
+                    returns the current date and time as a timestamp) - use CURRENT_TIMESTAMP instead</p>
+            </dd>
+            <dt><tt>QUARTER(date)</tt></dt>
+            <dd>
+                <p>
+                    returns the quarter (1-4)</p>
+            </dd>
+            <dt><tt>SECOND(time)</tt></dt>
+            <dd>
+                <p>
+                    returns the second (0-59)</p>
+            </dd>
+            <dt><tt>WEEK(date)</tt></dt>
+            <dd>
+                <p>
+                    returns the week of this year (1-53)</p>
+            </dd>
+            <dt><tt>YEAR(date)</tt></dt>
+            <dd>
+                <p>
+                    returns the year</p>
+            </dd>
+            <dt><tt>CURRENT_DATE</tt></dt>
+            <dd>
+                <p>
+                    returns the current date</p>
+            </dd>
+            <dt><tt>CURRENT_TIME</tt></dt>
+            <dd>
+                <p>
+                    returns the current time</p>
+            </dd>
+            <dt><tt>CURRENT_TIMESTAMP</tt></dt>
+            <dd>
+                <p>
+                    returns the current timestamp</p>
+            </dd>
+        </dl>
+    </fieldset>
+    <fieldset>
+        <legend>Session Functions</legend>
+        <dl>
+            <dt><tt>DATABASE()</tt></dt>
+            <dd>
+                <p>
+                    returns the name of the database of this connection</p>
+            </dd>
+            <dt><tt>USER()</tt></dt>
+            <dd>
+                <p>
+                    returns the user name of this connection</p>
+            </dd>
+            <dt><tt>CURRENT_USER</tt></dt>
+            <dd>
+                <p>
+                    SQL standard function, returns the user name of this connection</p>
+            </dd>
+            <dt><tt>IDENTITY()</tt></dt>
+            <dd>
+                <p>
+                    returns the last identity values that was inserted by this connection</p>
+            </dd>
+        </dl>
+    </fieldset>
+    <fieldset>
+        <legend>System Functions</legend>
+        <dl>
+            <dt><tt>IFNULL(exp,value)</tt></dt>
+            <dd>
+                <p>
+                    if exp is null, value is returned else exp) - use COALESCE() instead</p>
+            </dd>
+            <dt><tt>CASEWHEN(exp,v1,v2)</tt></dt>
+            <dd>
+                <p>
+                    if exp is true, v1 is returned, else v2) - use CASE WHEN instead</p>
+            </dd>
+            <dt><tt>CONVERT(term,type)</tt></dt>
+            <dd>
+                <p>
+                    converts exp to another data type</p>
+            </dd>
+            <dt><tt>CAST(term AS type)</tt></dt>
+            <dd>
+                <p>
+                    converts exp to another data type</p>
+            </dd>
+            <dt><tt>COALESCE(expr1,expr2,expr3,...)</tt></dt>
+            <dd>
+                <p>
+                    if expr1 is not null then it is returned else, expr2 is evaluated and if not null
+                    it is returned and so on</p>
+            </dd>
+            <dt><tt>NULLIF(v1,v2)</tt></dt>
+            <dd>
+                <p>
+                    if v1 equals v2 return null, otherwise v1</p>
+            </dd>
+            <dt><tt>CASE v1 WHEN...</tt></dt>
+            <dd>
+                <p>
+                    <tt>CASE v1 WHEN v2 THEN v3 [ELSE v4] END</tt></p>
+                <p>
+                    when v1 equals v2 return v3 [otherwise v4 or null if there is no ELSE]</p>
+            </dd>
+            <dt><tt>CASE WHEN...</tt></dt>
+            <dd>
+                <p>
+                    <tt>CASE WHEN expr1 THEN v1[WHEN expr2 THEN v2] [ELSE v4] END</tt></p>
+                <p>
+                    when expr1 is true return v1 [optionally repeated for more cases] [otherwise v4
+                    or null if there is no ELSE]</p>
+            </dd>
+            <dt><tt>EXTRACT</tt></dt>
+            <dd>
+                <p>
+                    <tt>EXTRACT ({YEAR | MONTH | DAY | HOUR | MINUTE | SECOND} FROM &lt;datetime value&gt;)</tt></p>
+            </dd>
+            <dt><tt>POSITION (... IN ..)</tt></dt>
+            <dd>
+                <p>
+                    <tt>POSITION(&lt;string expression&gt; IN &lt;string expression&gt;)</tt></p>
+                <p>
+                    if the first string is a sub-string of the second one, returns the position of the
+                    sub-string, counting from one; otherwise 0</p>
+            </dd>
+            <dt><tt>SUBSTRING(... FROM ... FOR ...)</tt></dt>
+            <dd>
+                <p>
+                    <tt>SUBSTRING(&lt;string expression&gt; FROM &lt;numeric expression&gt; [FOR &lt;numeric
+                        expression&gt;])</tt></p>
+            </dd>
+            <dt><tt>TRIM( LEADING ... FROM ...)</tt></dt>
+            <dd>
+                <p>
+                    <tt>TRIM([{LEADING | TRAILING | BOTH}] FROM &lt;string expression&gt;)</tt></p>
+            </dd>
+        </dl>
+    </fieldset>
+</div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 4 -->

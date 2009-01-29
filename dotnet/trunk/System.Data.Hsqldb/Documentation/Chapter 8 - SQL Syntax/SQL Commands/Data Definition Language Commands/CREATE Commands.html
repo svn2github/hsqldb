@@ -1,0 +1,456 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <link rel="stylesheet" type="text/css" href="../../../styles/presentation.css" />
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css" />
+
+    <script language="javascript" type="text/javascript">
+// <!CDATA[
+
+function main_onclick() {
+
+}
+
+// ]]>
+    </script>
+
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../../../html/hsqldb.gif" />
+                </td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br />
+                    <span class="topicTitle">Chapter 8 - SQL Syntax</span>
+                    <br />
+                    <div id="toolbar">
+                        <span id="chickenFeet"><a href="../../Chapter 8 - SQL Syntax.html">Chapter Overview</a>
+                            &gt; <a href="../SQL Commands.html">SQL Commands</a> &gt; <a href="Data Definition Language Commands.html">
+                                Data Definition Language Commands</a> &gt; <span class="nolink">CREATE Commands</span>
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main" onclick="return main_onclick()">
+        <h3>
+            <a name="create_alias-section"></a>CREATE ALIAS</h3>
+        <pre lang="sql">CREATE ALIAS &lt;sql-invoked-routine-identifier&gt; FOR &lt;delimited-public-static-method-identifier&gt;;
+        </pre>
+        <p>
+            <strong class="nb">Requires Administrative privileges.</strong></p>
+        <p>
+            Creates an friendly name for a public static method of a class.</p>
+        <p>
+            The specified method must be resolvable via reflection from within the application
+            domain in which the database runs.</p>
+        <p>
+            Example:</p>
+        <pre lang="sql">    CREATE ALIAS TO_STRING FOR "System.Convert.ToString";</pre>
+        <a name="create_index-section"></a>
+        <h3>
+            CREATE INDEX</h3>
+        <pre lang="sql">CREATE [UNIQUE] INDEX &lt;index&gt; ON &lt;table&gt; (&lt;column&gt; [ASC | DESC] [,(&lt;column&gt; [ASC | DESC]]*
+        </pre>
+        <p>
+            <strong class="nb">Requires Administrative privileges.</strong></p>
+        <p>
+            Creates an index on one or more columns in a table.</p>
+        <p>
+            Unique indexes are deprecated. Please use UNIQUE constraints instead.</p>
+        <p>
+            Creating an index on searched columns may improve performance.</p>
+        <p>
+            ASC is the default qualifier. Although ignored, the DESC qualifier can be specified
+            for command compatibility with other databases.</p>
+        <p>
+            As per the SQL standard, the name of an index must be unique within the schema of
+            the table upon which it is defined.</p>
+        <h3>
+            <a name="create_role-section"></a>CREATE ROLE</h3>
+        <pre lang="sql">CREATE ROLE &lt;rolename&gt;;
+        </pre>
+        <p>
+            <strong class="nb">Requires Administrative privileges.</strong></p>
+        <p>
+            Creates the named role with no members.</p>
+        <p>
+            The name must be unique within the database.</p>
+        <h3>
+            <a name="N11CA5"></a>CREATE SCHEMA</h3>
+        <pre lang="sql">CREATE SCHEMA &lt;schemaname&gt; AUTHORIZATION DBA [&lt;createStatement&gt; [&lt;grantStatement&gt;] [...];
+        </pre>
+        <p>
+            <strong class="nb">Requires Administrative privileges.</strong></p>
+        <p>
+            Creates a new schema.</p>
+        <p>
+            The name must be unique within the database.</p>
+        <p>
+            The first semicolon encountered terminates the command.</p>
+        <p>
+            In the example below, a new schema, ACCOUNTS, is created, then two tables and a
+            view are added to this schema and some rights on these objects are granted:</p>
+        <pre lang="sql">    CREATE SCHEMA ACCOUNTS AUTHORIZATION DBA
+    CREATE TABLE AB(A INTEGER, ...)
+    CREATE TABLE CD(C CHAHR, ...)
+    CREATE VIEW VI AS SELECT ...
+    GRANT SELECT TO PUBLIC ON AB
+    GRANT SELECT TO JOE ON CD;
+        </pre>
+        <h3>
+            <a name="create_sequence-section"></a>CREATE SEQUENCE</h3>
+        <pre>CREATE SEQUENCE &lt;sequencename&gt; [AS {INTEGER | BIGINT}] [START WITH &lt;startvalue&gt;] [INCREMENT BY &lt;incrementvalue&gt;];
+        </pre>
+        <p>
+            <strong class="nb">Requires Administrative privileges.</strong></p>
+        <p>
+            Creates a new sequence.</p>
+        <p>
+            The name must be unique within the database.</p>
+        <ul>
+            <li>The default type is INTEGER.</li>
+            <li>The default start value is 0 and the increment 1.</li>
+            <li>Negative values are not allowed.</li>
+            <li>If a sequence goes beyond Integer.MAXVALUE or Long.MAXVALUE, the next result is
+                determined by 2's complement arithmetic.</li>
+        </ul>
+        <p>
+            The next value for a sequence can be included in SELECT, INSERT and UPDATE statements
+            as in the following example:</p>
+        <pre>SELECT [...,] NEXT VALUE FOR &lt;sequencename&gt; [, ...] FROM &lt;tablename&gt;
+        </pre>
+        <p>
+            As per SQL:2003 (and unlike Oracle), there is no syntax for retrieving the current
+            (i.e. previously generated) value.</p>
+        <h3>
+            <a name="create_table-section"></a>CREATE TABLE</h3>
+        <pre lang="sql">CREATE [MEMORY | CACHED | [GLOBAL] TEMPORARY | TEMP  | TEXT] TABLE &lt;name&gt;
+    ( &lt;columnDefinition&gt; [, ...] [, &lt;constraintDefinition&gt;...] ) [ON COMMIT {DELETE | PRESERVE} ROWS];
+        </pre>
+        <p>
+            <strong class="nb">Requires Administrative privileges</strong></p>
+        <p>
+            Creates a new table.</p>
+        <p>
+            The name must be unique within the table's schema.</p>
+        <p>
+            If the database protocol is Mem, then CACHED translates to MEMORY and TEXT raises
+            an exception.</p>
+        <p>
+            If the database is 'files_read_only', then CACHED also raises an exception.</p>
+        <div>
+            <p>
+                <strong>Components of a CREATE TABLE command</strong></p>
+            <dl>
+                <dt><a name="columnDef-entry"></a><span><a name="columnDef-title"></a><font size="2">
+                    columnDefinition</font></span></dt>
+                <dd>
+                    <pre lang="sql">    columnname Datatype [(columnSize[,precision])] [{DEFAULT &lt;defaultValue&gt; |
+                GENERATED BY DEFAULT AS IDENTITY (START WITH &lt;n&gt;[, INCREMENT BY &lt;m&gt;])}] |
+            [[NOT] NULL] [IDENTITY] [PRIMARY KEY]
+                    </pre>
+                    <blockquote>
+                        <p>
+                            <em>DefaultValue</em></p>
+                        <ul type="disc">
+                            <li>
+                                <p>
+                                    For CHAR, VARCHAR or LONGVARCHAR, an SQL string literal, CURRENT_USER or NULL.</p>
+                            </li>
+                            <li>
+                                <p>
+                                    For DATE, TIME or TIMESTAMP, a corresponding DATE, TIME or TIMESTAMP literal value
+                                    or NULL.</p>
+                            </li>
+                            <li>
+                                <p>
+                                    For DATE, additionally: CURRENT_DATE or TODAY</p>
+                            </li>
+                            <li>
+                                <p>
+                                    FOR TIME, additionally: CURRENT_TIME</p>
+                            </li>
+                            <li>
+                                <p>
+                                    For TIMESTAMP, additionally: CURRENT_TIMESTAMP or NOW.</p>
+                            </li>
+                            <li>
+                                <p>
+                                    For BOOLEAN, the literals FALSE, TRUE or NULL.</p>
+                            </li>
+                            <li>
+                                <p>
+                                    For columns of any number type, any number literal that can be cast implicitly to
+                                    the column's type, or NULL.</p>
+                            </li>
+                            <li>
+                                <p>
+                                    For BINARY, VARBINARY, LONGVARBINARY, any valid SQL string literal composed of an
+                                    even number of hexits, or NULL.</p>
+                            </li>
+                        </ul>
+                    </blockquote>
+                </dd>
+                <dd>
+                    <dl>
+                        <dt>
+                            <br />
+                            Identity<br />
+                        </dt>
+                        <dd>
+                            <p>
+                                An identity column is an autoincrement column of either INTEGER or BIGINT type and
+                                is implicitly the primary key column, disallowing subsequent declaration of further
+                                identity columns, primary key columns or primary key constraints.</p>
+                            <p>
+                                The extended syntax (START WITH &lt;n&gt;) clause specifies the first value that
+                                will be used. The last inserted value into an identity column for a connection is
+                                available using the function IDENTITY(), for example (where Id is the identity column):</p>
+                            <pre lang="sql">    INSERT INTO Test (Id, Name) VALUES (NULL,'Test');
+    CALL IDENTITY();
+    </pre>
+                        </dd>
+                    </dl>
+                </dd>
+                <dt>&nbsp;</dt>
+                <dt><span><font size="2">constraintDefinition</font></span></dt>
+                <dd>
+                    <pre lang="sql">    [CONSTRAINT &lt;name&gt;]
+        UNIQUE ( &lt;column&gt; [,&lt;column&gt;...] ) |
+        PRIMARY KEY ( &lt;column&gt; [,&lt;column&gt;...] ) |
+        FOREIGN KEY ( &lt;column&gt; [,&lt;column&gt;...] ) REFERENCES &lt;refTable&gt; ( &lt;column&gt; [,&lt;column&gt;...])
+        [ON {DELETE | UPDATE} {RESTRICT | NO ACTION | CASCADE | SET DEFAULT | SET NULL}] |
+        CHECK(&lt;search condition&gt;)
+        </pre>
+                    <p>
+                        At most, one ON DELETE and one ON UPDATE clause is accepted by a foreign key constraint
+                        clause. The default action is NO ACTION, which is a SQL:200n synonym for the older,
+                        now deprecated RESTRICT action keyword.</p>
+                </dd>
+                <dt><span><font size="2">search condition</font></span></dt>
+                <dd>
+                    <p>
+                        A search condition is similar to the set of conditions in a WHERE clause. In the
+                        current release (1.8), the search condition for a CHECK constraint can only reference
+                        the current row.</p>
+                </dd>
+                <dt><span><font size="2">General syntax limitations</font></span></dt>
+                <dd>
+                    <ul>
+                        <li>
+                            <p>
+                                Database instances are created in a legacy mode that does not enforce column size
+                                and precision.You can set the property: sql.enforce_strict_size=true to enable this
+                                feature.</p>
+                        </li>
+                        <li>
+                            <p>
+                                Only NOT NULL constraints can be part of the column definition. Other constraints
+                                must appear after column definition list.</p>
+                        </li>
+                        <li>
+                            <p>
+                                The default behavior for a TEMPORARY TABLE is ON COMMIT DELETE ROWS. Specify ON
+                                COMMIT PRESERVE ROWS to keep the rows across commits.</p>
+                        </li>
+                    </ul>
+                </dd>
+            </dl>
+        </div>
+        <h3>
+            <a name="create_trigger-section"></a>CREATE TRIGGER</h3>
+        <pre lang="sql">CREATE TRIGGER &lt;name&gt;
+    {BEFORE | AFTER} {INSERT | UPDATE | DELETE} ON &lt;table&gt;
+    [FOR EACH ROW] [QUEUE n] [NOWAIT] CALL &lt;TriggerClass&gt;;
+    </pre>
+        <p>
+            <strong class="nb">Requires Administrative privileges.</strong></p>
+        <p>
+            TriggerClass is an application-supplied class that implements the <tt>org.hsqldb.Trigger</tt>
+            interface, such as "My.Name.Space.TrigClass".</p>
+        <p>
+            It is the <em>fire</em> method of this interface that is invoked when the trigger
+            event occurs. You must ensure this class can be loaded and from within the application
+            domain of the running database instance, and the class must a a zero-argument constructor
+            which must be possible to invoke reflectively at runtime.</p>
+        <p>
+            When the 'fire' method of the interface is invoked, it is passed the following arguments:</p>
+        <pre lang="C#">    fire (string triggerName, string tableName, object oldRow[], object newRow[])
+        </pre>
+        <p>
+            where oldRow[] and newRow[] represent the 'before' and 'after' states of the current
+            row, with column values supplied in declaration order.</p>
+        <p>
+            The mapping of row array values to database types is the internal mapping listed
+            in the SQL Type Mapping table presented at the begining of the <a href="../../SQL Data Types.html">
+                SQL Data Types</a> topic. If a value in newRow[] is to be modified by the trigger,
+            it must be of the correct internal type or database corruption will result.</p>
+        <p>
+            Note that the number of elements in each row array is larger than the number of
+            columns in the table. Never modify elements of the array beyond the column count
+            of the table that fires the trigger, as this will also lead to database corruption.</p>
+        <p>
+            If a trigger method needs to access access the same database instance, it must establish
+            its own connection, as one is not supplied in the method signature. Currently, attempting
+            to execute commands on the same database instance during trigger execution can lead
+            data inconsistency and other problems, such as deadlock, so it is not recommended.</p>
+        <p>
+            <strong>Implementation notes:</strong></p>
+        <p>
+            The default queue size is 1024.</p>
+        <p>
+            If QUEUE 0 is specified, the fire method is executed in the same thread as the database
+            engine, which allows a trigger action to <em>"safely" </em>alter the data that is
+            about to be stored in the database, in so much as this situation offers a garantee
+            regarding the order of operations; although not enforced, when the queue size is
+            specified non-zero, a trigger action <em><strong>must not</strong></em> alter data
+            in a row array, as there is no garantee regarding the order of operations. That
+            is, by the time the trigger action executes, the row array may no longer actually
+            be referenced by the database (it may have been subject to replacement in the interim,
+            e.g. via update or delete, and hence is otherwise ready for garbage collection)
+            or worse, the trigger action may execute out of sequence with respect to other validation,
+            integrity or persistence concerns, leading to database corruption.</p>
+        <p>
+            In general, when QUEUE 0 is specified, data may be checked or modified in BEFORE
+            INSERT / UPDATE + FOR EACH ROW triggers. All declared table constraints are then
+            enforced by the database engine and if there is a violation, the action is rejected
+            for the SQL command that initiated the INSERT or UPDATE.</p>
+        <p>
+            There is an exception to this rule, which is that with UPDATE queries, referential
+            integrity and cascading actions resulting from ON UPDATE CASCASE / SET NULL / SET
+            DEFAULT are all performed prior to the invocation of the trigger method. Hence,
+            if an invalid value that breaks referential integrity is inserted in the row by
+            the trigger method, this action is not checked and results in inconsistent data
+            in the table.</p>
+        <p>
+            Alternatively, if a trigger is to be used to provide external notification and not
+            for checking or altering the data, then a queue size larger than zero should be
+            specified, so that the main thread may proceed without blocking on external i/o
+            operations.</p>
+        <p>
+            When the queue size is specified greater than zero, the engine utilizes an event
+            queue that is processed by a dedicated trigger thread. This is particularly useful
+            with 'FOR EACH ROW' triggers, when a large number of events occur in rapid succession,
+            without the trigger thread getting a chance to run. However, if the queue becomes
+            full, subsequent additions cause the main thread to block, awaiting space in the
+            queue.</p>
+        <p>
+            Take great care if a triggered action involves accessing the same database instance.
+            Deadlock will always occur for each row triggers with queue size of zero. This can
+            be avoided either by ensuring the QUEUE parameter is large enough that access does
+            not need to occur until after each row is processed by the main thread, or by using
+            the NOWAIT parameter which causes new trigger events to overwrite the tail of the
+            queue.</p>
+        <p>
+            Note also that the timing of trigger method calls is not guaranteed when the queue
+            size is non-zero, so applications should implement their own synchronization measures
+            if necessary.</p>
+        <p>
+            Finally, you absolutely must not modify newRow[] values when the queue size is non-zero.
+            Due to the non-deterministic timing to thread execution, such modifications will,
+            at worst, almost certainly result in data inconsistency, and at best are not guaranteed
+            to become visible in the database.</p>
+        <h3>
+            <a name="create_user-section"></a>CREATE USER</h3>
+        <pre>CREATE USER &lt;username&gt; PASSWORD &lt;password&gt; [ADMIN];
+        </pre>
+        <p>
+            <strong class="nb">Requires Administrative privileges.</strong></p>
+        <p>
+            Creates a new user or new database administrator.</p>
+        <p>
+            Password must be delimited using double quote characters. Use "" to denote an empty
+            password.</p>
+        <h3>
+            <a name="create_view-section"></a>CREATE VIEW</h3>
+        <pre>CREATE VIEW &lt;viewname&gt;[(&lt;viewcolumn&gt;,..) AS SELECT ... FROM ... [WHERE Expression];
+    [ORDER BY orderExpression [, ...]]
+    [LIMIT &lt;limit&gt; [OFFSET &lt;offset&gt;]];
+        </pre>
+        <p>
+            <strong class="nb">Requires Administrative privileges.</strong></p>
+        <p>
+            A view can be thought of as either a virtual table or a stored query. The data accessible
+            through a view is not stored in the database as a distinct object. What is stored
+            in the database is a SELECT statement. The result set of the SELECT statement forms
+            the virtual table returned by the view. A user can use this virtual table by referencing
+            the view name in SQL statements the same way a table is referenced. A view is used
+            any or all of these functions:</p>
+        <div>
+            <ul type="disc">
+                <li>
+                    <p>
+                        Restrict a user to specific rows in a table. For example, allow an employee to see
+                        only the rows recording his or her work in a labor-tracking table.</p>
+                </li>
+                <li>
+                    <p>
+                        Restrict a user to specific columns. For example, allow employees who do not work
+                        in payroll to see the name, office, work phone, and department columns in an employee
+                        table, but do not allow them to see any columns with salary information or personal
+                        information.</p>
+                </li>
+                <li>
+                    <p>
+                        Join columns from multiple tables so that they look like a single table.</p>
+                </li>
+                <li>
+                    <p>
+                        Aggregate information instead of supplying details. For example, present the sum
+                        of a column, or the maximum or minimum value from a column.</p>
+                </li>
+            </ul>
+        </div>
+        <p>
+            Views are created by defining the SELECT statement that retrieves the data to be
+            presented by the view. The data tables referenced by the SELECT statement are known
+            as the base tables for the view. In this example, is a view that selects data from
+            three base tables to present a virtual table of commonly needed data:</p>
+        <div>
+            <pre>    CREATE VIEW mealsjv AS
+            SELECT m.mid mid, m.name name, t.mealtype mt, a.aid aid,
+            a.gname + ' ' + a.sname author, m.description description,
+            m.asof asof
+            FROM meals m, mealtypes t, authors a
+            WHERE m.mealtype = t.mealtype
+            AND m.aid = a.aid;
+            </pre>
+        </div>
+        <p>
+            You can then reference mealsjv in statements in the same way you would reference
+            a table:</p>
+        <div>
+            <pre>    SELECT * FROM mealsjv;
+            </pre>
+        </div>
+        <p>
+            A view can reference another view. For example, mealsjv presents information that
+            is useful for long descriptions that contain identifiers, but a short list might
+            be all a web page display needs. A view can be built that selects only specific
+            mealsjv columns:</p>
+        <div>
+            <pre>    CREATE VIEW mealswebv AS SELECT name, author FROM mealsjv;
+            </pre>
+        </div>
+        <p>
+            The SELECT statement in a VIEW definition should return columns with distinct names.
+            If the names of two columns in the SELECT statement are the same, use a column alias
+            to distinguish between them. A list of new column names can always be defined for
+            a view.</p>
+        <div>
+            <pre>    CREATE VIEW aview (new_name, new_author) AS
+            SELECT name, author
+    FROM mealsjv
+    </pre>
+        </div>
+    </div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 1 -->

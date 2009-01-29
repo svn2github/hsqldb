@@ -1,0 +1,202 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+<link
+    rel="stylesheet"
+    type="text/css"
+    href="../styles/presentation.css">
+<link
+    rel="stylesheet"
+    type="text/css"
+    href="ms-help://Hx/HxRuntime/HxLink.css">
+</head>
+<body>
+<div id="control">
+<table
+    border="0"
+    width="100%"
+    cellpadding="0"
+    cellspacing="0">
+    <tr>
+        <td
+            align="center"
+            valign="top"
+            style="padding-right: 10px"><img
+            alt="HSQLDB Logo"
+            src="../html/hsqldb.gif"></td>
+        <td
+            valign="top"
+            width="100%"><span class="productTitle"><@HtmlEncHelpTitle/></span>
+        <br>
+        <span class="topicTitle">Chapter 4 - Configuration And Settings</span> <br>
+        <div id="toolbar"><span id="chickenFeet"> <a
+            href="Chapter 4 - Configuration And Settings.html"> Chapter Overview </a> &gt;
+        <span class="nolink">Connection Settings</span> </span></div>
+        </td>
+    </tr>
+</table>
+</div>
+<div id="main">
+<p>The normal method of accessing an HSQLDB database is via the ADO.NET <tt>System.Data.IDbConnection</tt>
+interface, using its <tt>ConnectionString</tt> property to identify the data
+source.</p>
+
+<p>A full description of each HSQLDB connection string property can be
+found in the HSQLDB ADO.NET connector API documentation for the <tt>System.Data.Hsqldb.Client.HsqlConnectionStringBuilder</tt>
+class.</p>
+
+<h3>Basic Connection String Properties</h3>
+
+<table
+    style="margin: auto; width: auto;"
+    rules="none"
+    summary="Hsqldb Connection String Components"
+    frame="void">
+    <tbody>
+        <tr style="BACKGROUND: #ccccff; COLOR: #003399">
+            <th>Protocol</th>
+
+            <th>Host and Port</th>
+
+            <th>Path</th>
+        </tr>
+    </tbody>
+
+    <tbody valign="top">
+        <tr style="BACKGROUND: #f0f0f0">
+            <td align="left"><tt>Protocol=Mem;</tt></td>
+
+            <td align="left">Not Applicable</td>
+
+            <td align="left"><tt>Path=accounts</tt></td>
+        </tr>
+
+        <tr style="BACKGROUND: #eeeeff;">
+            <td
+                align="left"
+                colspan="3">
+            <p>Lowercase, single-word identifier creates the in-memory
+            database when the first connection is made.</p>
+
+            <p>Subsequent use of the same Connection String connects to
+            the existing database instance.</p>
+            </td>
+        </tr>
+
+        <tr style="BACKGROUND: #f0f0f0">
+            <td align="left"><tt>Protocol=File;</tt></td>
+
+            <td align="left">Not Applicable</td>
+
+            <td align="left">
+            <ul>
+                <li><tt>Path=mydb</tt></li>
+
+                <li><tt>Path=/opt/db/accounts;</tt></li>
+
+                <li><tt>Path=C:/data/mydb;</tt></li>
+            </ul>
+            </td>
+        </tr>
+
+        <tr style="BACKGROUND: #eeeeff">
+            <td
+                align="left"
+                colspan="3">
+            <p>The file path specifies the database file on disk.</p>
+
+            <p>The first path example refers to a set of mydb.* files in
+            the working directory of the command used to start the application.</p>
+
+            <p>The second and third path examples specify absolute paths
+            on the host machine.</p>
+            </td>
+        </tr>
+
+        <tr style="BACKGROUND: #f0f0f0">
+            <td align="left"><tt>Protocol=Res;</tt></td>
+
+            <td align="left">Not Applicable</td>
+
+            <td align="left"><tt>Path=resource.path.to.dbname;</tt></td>
+        </tr>
+
+        <tr style="BACKGROUND: #eeeeff">
+            <td
+                align="left"
+                colspan="3">
+            <p>Database files are embedded resources in an assembly.</p>
+            </td>
+        </tr>
+
+        <tr style="BACKGROUND: #f0f0f0">
+            <td align="left">
+            <ul>
+                <li><tt>Protocol=Hsql;</tt></li>
+
+                <li><tt>Protocol=Hsqls;</tt></li>
+
+                <li><tt>Protocol=Http;</tt></li>
+
+                <li><tt>Protocol=Https;</tt></li>
+            </ul>
+            </td>
+
+            <td align="left">
+            <ul>
+                <li><tt>Host=localhost;</tt></li>
+
+                <li><tt>Host=192.0.0.10;Port=9500;</tt></li>
+
+                <li><tt>Host=dbserver.somedomain.com</tt></li>
+            </ul>
+            </td>
+
+            <td align="left">
+            <ul>
+                <li><tt>Path=/an_alias;</tt></li>
+
+                <li><tt>Path=/enrollments;</tt></li>
+
+                <li><tt>Path=/quickdb;</tt></li>
+            </ul>
+            </td>
+        </tr>
+
+        <tr style="BACKGROUND: #eeeeff">
+            <td
+                align="left"
+                colspan="3">
+            <p>The <em>Host</em> property specifies the IP address or host
+            name of the server and the <em>Port</em> property specifies an
+            optional port number.</p>
+
+            <p>The database to which to connect is specified by the Path
+            property and must match a path <em>alias</em> for a database exposed
+            by the server.</p>
+
+            <p>
+                A path <em>alias</em> is a lowercase string specified in the <tt
+                class="filename">server.properties</tt> file or on the server
+            command line to refer to an actual database instance hosted by the
+            server.</p>
+
+            <p>The following lines in <tt class="filename">server.properties</tt>
+            or <tt class="filename">webserver.properties</tt> specify the
+            database path aliases listed above:</p>
+            <pre class="programlisting">    server.database.0=file:/opt/db/accounts
+    server.dbname.0=an_alias
+
+    server.database.1=file:/opt/db/mydb
+    server.dbname.1=enrollments
+
+    server.database.2=mem:adatabase
+    server.dbname.2=quickdb</pre></td>
+        </tr>
+    </tbody>
+</table>
+</div>
+<include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 1 -->

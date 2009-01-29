@@ -1,0 +1,84 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <link rel="stylesheet" type="text/css" href="../../styles/presentation.css">
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../../html/hsqldb.gif"></td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br>
+                    <span class="topicTitle">Chapter 2 - SQL Issues</span>
+                    <br>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><a href="../Chapter 2 - SQL Issues.html">Chapter Overview
+                        </a>&gt; <a href="Types And Arithmetic Operations.html">Types And Arithmetic Operations
+                        </a>&gt; <span class="nolink">Integral Types</span> </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <p>
+            <tt>TINYINT</tt>, <tt>SMALLINT</tt>, <tt>INTEGER</tt>, <tt>BIGINT</tt>, <tt>NUMERIC</tt>
+            (with scale 0) and <tt>DECIMAL</tt> (with scale <tt>0</tt>) are fully interchangeable
+            internally, and no data narrowing takes place.</p>
+        <p>
+            Depending on the types of the operands, the result of operations is in any of
+            the related CLR types: <tt>System.Int32</tt>, <tt>System.Int64</tt> or <tt>System.Decimal</tt>.</p>
+        <p>
+            The <tt>IDbDataReader.GetXXX()</tt> methods can be used to retrieve the values
+            so long as the value can be represented by the resulting type. The type computation
+            is deterministic, based on the query plan rather than runtime evaluation.</p>
+        <p>
+            If a <tt>SELECT</tt> statement refers to a simple column or function, then the
+            return type is the type corresponding to the column or the return type of the
+            function.</p>
+        <p>
+            For example:</p>
+        <pre lang="sql">
+    CREATE TABLE t(a INTEGER, b BIGINT);
+    SELECT MAX(a), MAX(b) FROM t;
+        </pre>
+        <p>
+            generates a result set where the type of the first column is <tt>System.In32</tt>
+            and the second column is <tt>System.In64</tt>.</p>
+        <p>
+            However, as a result of uniform type promotion:</p>
+        <pre lang="sql">
+    SELECT MAX(a) + 1, MAX(b) + 1 FROM t;
+        </pre>
+        <p>
+            generates a result set having <tt>System.Int64</tt> and <tt>System.Decimal</tt>
+            column values.</p>
+        <div class="alert">
+            <h3 class="title">
+                Note</h3>
+            <p>
+                There is no built-in limit on the size of intermediate integral values in expressions;
+                instead, one should check the schema of the <tt>IDbDataReader</tt> column and
+                choose an appropriate <tt>GetXXX(int)</tt> or <tt>GetXXX(string)</tt> method
+                to retrieve it.</p>
+            <p>
+                Alternatively, one can use the <tt>GetValue(int)</tt> or <tt>GetValue(string)</tt>
+                method, then cast or <tt>System.Convert.ToXXX(IConvertible)</tt> the result
+                to the desired value type.</p>
+            <p>
+                When the result of an expression is stored in a column of a database table,
+                it has to fit in the target column, otherwise an exception is raised.</p>
+            <p>
+                For example, the result of evaluating the expression <tt>(1234567890123456789012
+                    / 12345687901234567890)</tt> can be stored in a column of any integral type,
+                even <tt>TINYINT</tt>, because its magnitude is small <tt>(&lt; 10**2)</tt>.</p>
+        </div>
+    </div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 1 -->

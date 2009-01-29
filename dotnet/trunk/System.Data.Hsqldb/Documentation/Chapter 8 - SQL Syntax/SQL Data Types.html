@@ -1,0 +1,304 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <link rel="stylesheet" type="text/css" href="../styles/presentation.css"/>
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css"/>
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../html/hsqldb.gif"/>
+                </td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br/>
+                    <span class="topicTitle">Chapter 8 - SQL Syntax</span>
+                    <br/>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><a href="Chapter 8 - SQL Syntax.html">Chapter Overview</a> &gt;                            
+                            <span class="nolink">SQL Data Types</span> </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <table class="nowrap" frame="void" rules="none" style="width: 100%; margin: auto;" summary="Data Types. The types on the same line are equivalent.">
+            <caption>
+                SQL Type Declaration And Mapping</caption>
+            <thead>
+                <tr style="background: #ccccff; color: #003399">
+                    <th>
+                        SQL Type Declaration</th>
+                    <th>
+                        Length or Precision</th>
+                    <th>
+                        System Type 
+                        <br />
+                        (C# | CLR | internal)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="background: #f0f0f0">
+                    <td>
+                        <tt>INTEGER</tt> | <tt>INT</tt></td>
+                    <td>
+                        as System Type</td>
+                    <td>
+                        <tt>int</tt> | <tt>System.Int32 | java.lang.Integer</tt></td>
+                </tr>
+                <tr style="background: #eeeeff">
+                    <td>
+                        <tt>DOUBLE [PRECISION]</tt></td>
+                    <td>
+                        as System Type</td>
+                    <td>
+                        <tt>double</tt> | <tt>System.Double | java.lang.Double</tt></td>
+                </tr>
+                <tr style="background: #f0f0f0">
+                    <td>
+                        <tt>FLOAT [(<var>precision</var>)]</tt></td>
+                    <td>
+                        <tt>24</tt> or <tt>53</tt> (magnitude bits)</td>
+                    <td>
+                        <tt>double</tt> | <tt>System.Double | java.lang.Double</tt></td>
+                </tr>
+                <tr style="background: #eeeeff">
+                    <td>
+                        <tt>VARCHAR [(<var>length</var>)]</tt></td>
+                    <td>
+                        <tt>1</tt> to <tt>System.Int32.MaxValue</tt></td>
+                    <td>
+                        <tt>string</tt> | <tt>System.String | java.lang.String</tt></td>
+                </tr>
+                <tr style="background: #f0f0f0">
+                    <td>
+                        <tt>VARCHAR_IGNORECASE [(<var>length</var>)]</tt></td>
+                    <td>
+                        <tt>1</tt> to <tt>System.Int32.MaxValue</tt></td>
+                    <td>
+                        <tt>string</tt> | <tt>System.String | java.lang.String</tt></td>
+                </tr>
+                <tr style="background: #eeeeff">
+                    <td>
+                        <tt>CHAR[ACTER] [(<var>length</var>)]</tt></td>
+                    <td>
+                        <tt>1</tt> to <tt>System.Int32.MaxValue</tt></td>
+                    <td>
+                        <tt>string</tt> | <tt>System.String | java.lang.String</tt></td>
+                </tr>
+                <tr style="background: #f0f0f0">
+                    <td>
+                        <tt>LONGVARCHAR</tt></td>
+                    <td>
+                        as System Type</td>
+                    <td>
+                        <tt>string</tt> | <tt>System.String | java.lang.String</tt></td>
+                </tr>
+                <tr style="background: #eeeeff">
+                    <td>
+                        <tt>DATE</tt></td>
+                    <td>
+                        <tt>yyyy-mm-dd</tt> portion only</td>
+                    <td>
+                        <tt>N/A | System.DateTime | java.sql.Date</tt></td>
+                </tr>
+                <tr style="background: #f0f0f0">
+                    <td>
+                        <tt>TIME</tt></td>
+                    <td>
+                        <tt>hh-mm-ss</tt> portion only</td>
+                    <td>
+                        <tt>N/A | System.DateTime | java.sql.Time</tt></td>
+                </tr>
+                <tr style="background: #eeeeff">
+                    <td>
+                        {<tt>TIMESTAMP</tt> | <tt>DATETIME</tt>} <tt>[(<var>precision</var>)]</tt></td>
+                    <td>
+                        <tt>yyyy-mm-dd hh-mm-ss.ffffff</tt></td>
+                    <td>
+                        <tt>N/A | System.DateTime | java.sql.Timestamp</tt></td>
+                </tr>
+                <tr style="background: #f0f0f0">
+                    <td>
+                        <tt>DECIMAL [(<var>precision</var>[,<var>scale</var>])]</tt></td>
+                    <td>
+                        as <tt>java.math.BigDecimal</tt>
+                    </td>
+                    <td>
+                        <tt>decimal</tt> | <tt>System.Decimal</tt> | <tt>java.math.BigDecimal</tt></td>
+                </tr>
+                <tr style="background: #eeeeff">
+                    <td>
+                        <tt>NUMERIC [(<var>precision</var>)]</tt></td>
+                    <td>
+                        as <tt>java.math.BigDecimal</tt></td>
+                    <td>
+                        <tt>N/A | java.math.BigDecimal | same</tt></td>
+                </tr>
+                <tr style="background: #f0f0f0">
+                    <td>
+                        <tt>BOOLEAN</tt> | <tt>BIT</tt></td>
+                    <td>
+                        as System Type</td>
+                    <td>
+                        <tt>bool</tt> | <tt>System.Boolean | java.lang.Boolean</tt></td>
+                </tr>
+                <tr style="background: #eeeeff">
+                    <td>
+                        <tt>TINYINT</tt></td>
+                    <td>
+                        as System Type</td>
+                    <td>
+                        <tt>sbyte</tt> | <tt>System.SByte | java.lang.Integer</tt></td>
+                </tr>
+                <tr style="background: #f0f0f0">
+                    <td>
+                        <tt>SMALLINT</tt></td>
+                    <td>
+                        as System Type</td>
+                    <td>
+                        <tt>short</tt> | <tt>System.Int16 | java.lang.Integer</tt></td>
+                </tr>
+                <tr style="background: #eeeeff">
+                    <td>
+                        <tt>BIGINT</tt></td>
+                    <td>
+                        as System Type</td>
+                    <td>
+                        <tt>long</tt> | <tt>System.Int64 | java.lang.Long</tt></td>
+                </tr>
+                <tr style="background: #f0f0f0">
+                    <td>
+                        <tt>REAL</tt></td>
+                    <td>
+                        as System Type</td>
+                    <td>
+                        <tt>float</tt> | <tt>System.Single | java.lang.Double</tt></td>
+                </tr>
+                <tr style="background: #eeeeff">
+                    <td>
+                        <tt>BINARY [(<var>length</var>)]</tt></td>
+                    <td>
+                        <tt>1</tt> to <tt>System.Int32.MaxValue</tt></td>
+                    <td>
+                        <tt>byte[]</tt> | <tt>System.Byte[] | org.hsqldb.types.Binary</tt></td>
+                </tr>
+                <tr style="background: #f0f0f0">
+                    <td>
+                        <tt>VARBINARY [(<var>length</var>)]</tt></td>
+                    <td>
+                        <tt>1</tt> to <tt>System.Int32.MaxValue</tt></td>
+                    <td>
+                        <tt>byte[]</tt> | <tt>System.Byte[] | org.hsqldb.types.Binary</tt></td>
+                </tr>
+                <tr style="background: #eeeeff">
+                    <td>
+                        <tt>LONGVARBINARY</tt></td>
+                    <td>
+                        as System Type</td>
+                    <td>
+                        <tt>byte[]</tt> | <tt>System.Byte[] | org.hsqldb.types.Binary</tt></td>
+                </tr>
+                <tr style="background: #f0f0f0">
+                    <td>
+                        <tt>OTHER</tt> | <tt>OBJECT</tt></td>
+                    <td>
+                        as <em>serialized form</em></td>
+                    <td>
+                        <tt>N/A | System.IO.ISerializable |&nbsp;<br />
+                            org.hsqldb.types.JavaObject<span style="font-family: Verdana;
+                            background-color: #f0f0f0"> </span></tt></td>
+                </tr>
+            </tbody>
+        </table>
+        <fieldset style="margin-top: 1em;">
+            <legend>SQL Type Mapping Interpretation</legend>
+            <ul>
+                <li>The <em>SQL Type</em> Declaration column lists the SQL standard type name (or name commonly
+                    used by RDMS), along will allowable create parameters.<p/>
+                </li>
+                <li><p>The <em>Length or Precision</em> column indicates the maximum <var>length</var>
+                    or <var>precision</var> of the type that can be declared / stored. Where <em><tt>1</tt> to
+                    <tt>System.Int32.MaxValue</tt></em> is stated, it is simply the syntactically
+                    enforced theoretical limit.
+                    </p>
+
+                    <p>In practice, because the 1.8.0 engine implements <em>in-line</em> row data storage
+                    for all types and length specifications, the maximum <var>length</var> of a <tt>CHAR[ACTER]</tt>,
+                    <tt>[LONG]VARCHAR</tt> or <tt>[[LONG]VAR]BINARY</tt> object that can be stored and
+                    retrieved with satisfactory performance is dictated by the amount of physical memory,
+                    drive speed and CPU power available.</p>
+
+                    <p>For instance, it has been demonstrated that values of a few (e.g. <tt>1-4</tt>)
+                    megabytes may be used successfully in production databases. However, this range should
+                    be treated as an upper limit since frequent handling of such values represents serious
+                    memory stress and flirts with possibly unrecoverable out-of-memory exception conditions; although occasional
+                    retrieval of rows that occupy 512KB or less is not likely to unduely impact performance
+                    on modern hardware, the best policy at present is to isolate all LOB storage (say column
+                    values that occupy greater than 8KB) to one or more optional join tables composed of no more than an ID column and a LOB value column and from which rows are retrieved only in response to explicit
+                    requests for the LOB data.</p>
+                    
+                    <p>For very large values (greater than a few hundred KB), it is far more performant
+                    to store in the database only paths to files containing LOB data and simply stream
+                    such data directly to the client, based on lookup of file paths.</p><p />
+                </li>
+                <li>The <em>System Type</em> column lists the recommended/default C# and/or CLR type mapping
+                    for the <em>SQL Type</em>, followed by the internal (i.e. native) representation used by
+                    the engine (which is useful to know when implementing database 
+                    <a href="SQL Commands/Data Definition Language Commands/CREATE Commands.html#create_trigger-section">
+                    triggers</a>).
+                </li>
+            </ul>
+        </fieldset>
+        <div class="alert" style="margin-top: 2em;">
+            <h3 class="title">
+                Notes</h3>
+            <p>
+                Observe that the recommended CLR mapping for <tt>SQL FLOAT</tt> is <em><tt>System.Double</tt></em>.
+                Because of the potential confusion with <tt>float</tt> (<em><tt>System.Single</tt></em>),
+                it is recommended that the <tt>SQL DOUBLE</tt> declaration is used instead of
+                <tt>SQL FLOAT</tt>.</p>
+            <p>
+                Also observe that <tt>VARCHAR_IGNORECASE</tt> is a special, case-insensitive
+                variation of <tt>VARCHAR</tt>. Note that this type is not portable and should
+                be avoided unless absolutely required.</p>
+            <p>
+                Finally, observe that <tt>TIMESTAMP(<var>precision</var>)</tt> accepts only
+                <tt>0</tt> or <tt>6</tt> (the default), where <em>zero</em> (<tt>0</tt>) denotes
+                that the fractional seconds component (<em><tt>ffffff</tt></em>) is not stored.</p>
+            <p>
+                When omitted, the engine interprets <var>length</var>, <var>precision</var>
+                and <var>scale</var> values to be those listed in the <em>Length or Precision</em>
+                column. When specified, <var>length</var>, <var>precision</var> and <var>scale</var>
+                values are stored in the object's descriptor and reported in meta data, but
+                are not enforced by default. However, you can issue the following command to
+                cause the engine enforce declared <var>length</var>, <var>precision</var> and
+                <var>scale</var>, as well as to pad <tt>CHAR[ACTER]</tt> values to <var>length</var>:</p>
+            <pre lang="sql">    SET PROPERTY "sql.enforce_strict_size" <var>TRUE</var>
+            </pre>
+            <p>
+                Please note that setting this property to <var><tt>TRUE</tt></var> does not
+                check existing values in the database, only values that are subsequently inserted
+                or updated. Thus, if absolute consistency is required, this command should be
+                issued immediately after database creation, before any values are added to the
+                database.</p>
+            <p>
+                <tt>CHAR</tt>, <tt>VARCHAR</tt> and <tt>LONGVARCHAR</tt> columns are compared
+                and sorted using the <dfn>UTF-16</dfn> Big Endian binary collation by default.
+                The <tt><a href="SQL Commands/Database Control Commands.html#set-database-collation">SET DATABASE COLLATION</a></tt> command allows this behavior to be modified.</p>
+            <p>
+                Columns of the type <tt>OTHER</tt> or <tt>OBJECT</tt> contain the serialized
+                form of an <tt>Object</tt> in binary format. In general, to insert or update
+                such columns, one should use a command parameter, as this allows the driver
+                to automate the transformation. For scripting purposes, however, it is nice
+                to know that the SQL string literal representation is the base 16 (hexadecimal)
+                encoding of the <em>serialized form</em>.</p>
+        </div>
+    </div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 2 -->

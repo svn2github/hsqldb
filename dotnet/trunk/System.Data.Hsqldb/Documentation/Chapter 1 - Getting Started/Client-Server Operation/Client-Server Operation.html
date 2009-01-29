@@ -1,0 +1,74 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+    <head>
+        <link rel="stylesheet" type="text/css" href="../../styles/presentation.css">
+        <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+    </head>
+    <body>
+        <div id="control">
+            <table border="0" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td align="center" valign="top" style="padding-right: 10px">
+                        <img alt="HSQLDB Logo" src="../../html/hsqldb.gif">
+                    </td>
+                    <td valign="top" width="100%">
+                        <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                        <br>
+                        <span class="topicTitle">Chapter 1 - Getting Started</span>
+                        <br>
+                        <div id="toolbar">
+                            <span id="chickenFeet">
+                                <a href="../Chapter 1 - Getting Started.html">
+                                    Chapter Overview
+                                </a>
+                                &gt;
+                                <span class="nolink">Client-Server Operation</span>
+                            </span>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div id="main">
+        <p>One way to expose and access a database instance is through a network interface.</p>
+
+        <p>Classically, this mode of operation is referred to as <dfn>Client-Server</dfn>.</p>
+
+        <p>Client-Server operation provides many benefits, such as maximizing
+        isolation, safety and flexibility.</p>
+
+        <p>In Client-Server mode, a database instance runs in a process where a
+            listener daemon waits for network connection requests, typically from other processes,
+            such as from programs running on the same computer or from programs running
+            other computers
+        across the network.</p>
+
+        <h3>Benefits</h3>
+
+        <ul>
+            <li>Database instances are isolated from client machine/process crashes and
+            from
+                external programming errors.</li><li>An arbitrary number of processes can communicate with a database
+            instance to retrieve or update information</li>
+        </ul>
+        
+        <h3>Drawbacks</h3>
+        
+        <ul>
+            <li>Sigificantly less performant than <dfn>In-Process</dfn> operation.</li>
+            <li>May require network configuration / administration.</li>
+        </ul>       
+        
+        <p>Next Topic: <a href="Accessing A Server From Client Code.html">Accessing A Server From
+                Client Code</a></p>
+        <div class="alert">
+        <h3 class="title">Note</h3>
+
+        <p>See <a href="../../Chapter 4 - Configuration And Settings/Chapter 4 - Configuration And Settings.html">Chapter 4 - Configuration And Settings</a>
+            for detailed network server configuration information.</p> 
+        </div>       
+        </div>
+        <include item="footer"/>
+    </body>
+</html>
+<!-- @SortOrder 4 -->

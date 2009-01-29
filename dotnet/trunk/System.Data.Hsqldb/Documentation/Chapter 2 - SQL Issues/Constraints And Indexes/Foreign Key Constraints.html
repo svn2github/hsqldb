@@ -1,0 +1,78 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <link rel="stylesheet" type="text/css" href="../../styles/presentation.css">
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../../html/hsqldb.gif"></td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br>
+                    <span class="topicTitle">Chapter 2 - SQL Issues</span>
+                    <br>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><a href="../Chapter 2 - SQL Issues.html">Chapter Overview
+                        </a>&gt; <a href="Constraints And Indexes.html">Constraints And Indexes </a>&gt;
+                            <span class="nolink">Foreign Key Constraints</span> </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <p>
+            HSQLDB supports both single and multiple column foreign keys.</p>
+        <p>
+            As per the SQL standard, a foreign key declaration can reference a target table
+            without naming the target column(s).</p>
+        <p>
+            When the target columns are not named, the primary key columns of the target
+            table are the referenced columns:</p>
+        <pre lang="sql">    CREATE TABLE child
+    (
+        c1 INTEGER
+       ,c2 VARCHAR
+       ,FOREIGN KEY (c1, c2) REFERENCES parent
+    );
+        </pre>
+        <p>
+            Otherwise, the target columns must be named:</p>
+        <pre lang="sql">    CREATE TABLE child
+    (
+        c1 INTEGER,
+       ,c2 VARCHAR
+       ,FOREIGN KEY (c1, c2) REFERENCES parent(p1, p2)
+    );
+        </pre>
+        <p>
+            <strong>General Rules:</strong></p>
+        <ul>
+            <li>Each pair of referencing and referenced columns in any foreign key constraint must be of
+                identical SQL type.</li>
+            <li>A unique or primary key constraint must pre-exist on the referenced columns
+                in the
+                referenced table.</li>
+            <li>a non-unique backing index may be automatically created on the referencing columns.</li>
+            <li>Given the second example:
+                <ul type="disc">
+                    <li>There must pre-exist a <tt>UNIQUE</tt> or <tt>PRIMARY KEY</tt> constraint on
+                        columns <tt>(<var>p1</var>,<var>p2</var>)</tt> in the table named <tt>parent</tt>.</li>
+                    <li>Columns <tt><var>p1</var></tt> and <tt><var>c1</var></tt> must be of the same
+                        type (<tt>INTEGER</tt>).</li>
+                    <li>Columns <tt><var>p2</var></tt> and <tt><var>c2</var></tt> must be of the same
+                        type (<tt>VARCHAR</tt>).</li>
+                    <li>A non-unique backing index is automatically created on columns <tt>(<var>c1</var>,
+                        <var>c2</var>)</tt> in the table named <tt>child</tt>.</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 4 -->

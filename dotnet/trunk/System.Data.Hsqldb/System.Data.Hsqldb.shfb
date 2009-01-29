@@ -1,0 +1,90 @@
+﻿<project schemaVersion="1.4.0.0">
+    <assemblies>
+        <assembly assemblyPath=".\System.Data.Hsqldb.Net\bin\Debug\System.Data.Hsqldb.Net.dll" xmlCommentsPath=".\System.Data.Hsqldb.Net\bin\Debug\System.Data.Hsqldb.Net.XML" commentsOnly="False" />
+        <assembly assemblyPath=".\System.Data.Hsqldb.Client\bin\Debug\System.Data.Hsqldb.Client.dll" xmlCommentsPath=".\System.Data.Hsqldb.Client\bin\Debug\System.Data.Hsqldb.Client.xml" commentsOnly="False" />
+    </assemblies>
+    <namespaceSummaries>
+        <namespaceSummaryItem name="" isDocumented="True" />
+        <namespaceSummaryItem name="System.Data.Hsqldb.Client" isDocumented="True">HSQLDB ADO.NET 2.0. Data Provider implementation.</namespaceSummaryItem>
+        <namespaceSummaryItem name="System.Data.Hsqldb.Client.Design" isDocumented="True">Data design support.</namespaceSummaryItem>
+        <namespaceSummaryItem name="System.Data.Hsqldb.Client.Design.Attribute" isDocumented="True">Data design support.</namespaceSummaryItem>
+        <namespaceSummaryItem name="System.Data.Hsqldb.Client.Design.Component" isDocumented="True">Data design support.</namespaceSummaryItem>
+        <namespaceSummaryItem name="System.Data.Hsqldb.Client.Design.Control" isDocumented="True">Data design support.</namespaceSummaryItem>
+        <namespaceSummaryItem name="System.Data.Hsqldb.Client.Design.Converter" isDocumented="True">Data design support.</namespaceSummaryItem>
+        <namespaceSummaryItem name="System.Data.Hsqldb.Client.Design.Designer" isDocumented="True">Data design support.</namespaceSummaryItem>
+        <namespaceSummaryItem name="System.Data.Hsqldb.Client.Design.Dialog" isDocumented="True">Data design support.</namespaceSummaryItem>
+        <namespaceSummaryItem name="System.Data.Hsqldb.Client.Design.Toolbox" isDocumented="True">Data design support.</namespaceSummaryItem>
+        <namespaceSummaryItem name="System.Data.Hsqldb.Client.Enumeration" isDocumented="True">Enumerated types untilized by the HSQLDB ADO.NET 2.0 driver.</namespaceSummaryItem>
+        <namespaceSummaryItem name="System.Data.Hsqldb.Client.Internal" isDocumented="True">Internal implementation classes for the HSQLDB ADO.NET 2.0 data provider</namespaceSummaryItem>
+        <namespaceSummaryItem name="System.Data.Hsqldb.Client.IO" isDocumented="True">Input/Output wrapper/adapter classes for the HSQLDB ADO.NET 2.0 data provider</namespaceSummaryItem>
+        <namespaceSummaryItem name="System.Data.Hsqldb.Client.Lob" isDocumented="True">Large Binary Object handling</namespaceSummaryItem>
+        <namespaceSummaryItem name="System.Data.Hsqldb.Client.MetaData" isDocumented="True">Supports the ADO.NET metadata collections contract.</namespaceSummaryItem>
+        <namespaceSummaryItem name="System.Data.Hsqldb.Client.MetaData.Collection" isDocumented="True">Metadata collections exposed by the HSQLDB ADO.NET 2.0 driver.</namespaceSummaryItem>
+        <namespaceSummaryItem name="System.Data.Hsqldb.Client.MetaData.Collection.Base" isDocumented="True">Base metadata collection classes.</namespaceSummaryItem>
+        <namespaceSummaryItem name="System.Data.Hsqldb.Client.Properties" isDocumented="True" />
+        <namespaceSummaryItem name="System.Data.Hsqldb.Client.Sql" isDocumented="True">SQL support, especially lexographic analysis</namespaceSummaryItem>
+        <namespaceSummaryItem name="System.Data.Hsqldb.Client.Sql.Predicate" isDocumented="True">Stand-alone SQL predicate support, such as for SQL LIKE pattern matching.</namespaceSummaryItem>
+        <namespaceSummaryItem name="System.Data.Hsqldb.Client.Sql.Type" isDocumented="True">Client-side representations of special SQL types that do not have a commonly accepted mapping to the .Net type system.</namespaceSummaryItem>
+        <namespaceSummaryItem name="System.Data.Hsqldb.Net" isDocumented="True">Support for network database services.</namespaceSummaryItem>
+        <namespaceSummaryItem name="System.Data.Hsqldb.Net.Configuration" isDocumented="True">Configuration for network database services.</namespaceSummaryItem>
+        <namespaceSummaryItem name="System.Data.Hsqldb.Net.Enumeration" isDocumented="True">Enumerated values for network database services.</namespaceSummaryItem>
+        <namespaceSummaryItem name="System.Data.Hsqldb.Net.Interface" isDocumented="True">Public interfaces exposed by network database services.</namespaceSummaryItem>
+        <namespaceSummaryItem name="System.Data.Hsqldb.Net.Internal" isDocumented="True">Internal implementation classes for network database services.</namespaceSummaryItem>
+        <namespaceSummaryItem name="System.Data.Hsqldb.Net.IO" isDocumented="True">Input/Output wrapper/adapter classes for network database services.</namespaceSummaryItem>
+        <namespaceSummaryItem name="System.Data.Hsqldb.Net.Properties" isDocumented="True">Properties for network database services.</namespaceSummaryItem>
+        <namespaceSummaryItem name="System.Data.Hsqldb.Net.Wrapper" isDocumented="True">Wrapper classes for network database services.</namespaceSummaryItem>
+    </namespaceSummaries>
+    <additionalContent>
+        <contentItem sourcePath="..\Documentation\Chapter 1 - Getting Started\*.*" destPath="Chapter 1 - Getting Started\" excludeItems="False" />
+        <contentItem sourcePath="..\Documentation\ClassDiagrams\*.*" destPath="ClassDiagrams\" excludeItems="False" />
+        <contentItem sourcePath="..\Documentation\Chapter 2 - SQL Issues\*.*" destPath="Chapter 2 - SQL Issues\" excludeItems="False" />
+        <contentItem sourcePath="..\Documentation\Chapter 3 - Deployment Issues\*.*" destPath="Chapter 3 - Deployment Issues\" excludeItems="False" />
+        <contentItem sourcePath="..\Documentation\Chapter 4 - Configuration And Settings\*.*" destPath="Chapter 4 - Configuration And Settings\" excludeItems="False" />
+        <contentItem sourcePath="..\Documentation\Chapter 5 - Text Tables\*.*" destPath="Chapter 5 - Text Tables\" excludeItems="False" />
+        <contentItem sourcePath="..\Documentation\Chapter 6 - Transport Layer Security\*.*" destPath="Chapter 6 - Transport Layer Security\" excludeItems="False" />
+        <contentItem sourcePath="..\Documentation\Chapter 7 - SQL Tool\*.*" destPath="Chapter 7 - SQL Tool\" excludeItems="False" />
+        <contentItem sourcePath="..\Documentation\Chapter 8 - SQL Syntax\*.*" destPath="Chapter 8 - SQL Syntax\" excludeItems="False" />
+        <contentItem sourcePath="..\Documentation\index.html" destPath="" excludeItems="False" />
+    </additionalContent>
+    <dependencies>
+        <dependencyItem depPath="GAC:System.Transactions, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+        <dependencyItem depPath="GAC:System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+        <dependencyItem depPath=".\Lib\*.*" />
+        <dependencyItem depPath="GAC:System.Configuration, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    </dependencies>
+    <componentConfigurations>
+        <component id="Post-transform Component" configuration="&lt;component type=&quot;SandcastleBuilder.Components.PostTransformComponent&quot; assembly=&quot;{@SHFBFolder}SandcastleBuilder.Components.dll&quot; id=&quot;Post-transform Component&quot;&gt;&lt;!-- Code colorizer files (required).&#xD;&#xA;                 Attributes:&#xD;&#xA;                    Stylesheet file (required)&#xD;&#xA;                    Script file (required)&#xD;&#xA;                    &quot;Copy&quot; image file (required) --&gt;&lt;colorizer stylesheet=&quot;{@SHFBFolder}Colorizer\highlight.css&quot; scriptFile=&quot;{@SHFBFolder}Colorizer\highlight.js&quot; copyImage=&quot;{@SHFBFolder}Colorizer\CopyCode.gif&quot; /&gt;&lt;!-- Output path for the files (required).  This should match the&#xD;&#xA;                 output path of the HTML files (see SaveComponent below). --&gt;&lt;outputPath value=&quot;Output\html&quot; /&gt;&lt;!-- Logo image file (optional).  Filename is required. The height,&#xD;&#xA;                 width, altText, placement, and alignment attributes are&#xD;&#xA;                 optional. --&gt;&lt;logoFile filename=&quot;{@ProjectFolder}hsqldb.gif&quot; height=&quot;0&quot; width=&quot;0&quot; altText=&quot;HSQLDB Logo&quot; placement=&quot;left&quot; alignment=&quot;left&quot; /&gt;&lt;/component&gt;" />
+    </componentConfigurations>
+    <ProjectSummary>ADO.NET 2.0 data provider for HSQLDB 1.8.0.</ProjectSummary>
+    <MissingTags>Parameter, Returns, AutoDocumentCtors</MissingTags>
+    <VisibleItems>InheritedMembers, InheritedFrameworkMembers, Protected, SealedProtected</VisibleItems>
+    <HtmlHelp1xCompilerPath path="" />
+    <HtmlHelp2xCompilerPath path="" />
+    <OutputPath>..\Documentation\Tmp\</OutputPath>
+    <SandcastlePath path="" />
+    <WorkingPath path="" />
+    <CleanIntermediates>False</CleanIntermediates>
+    <HelpFileFormat>Help2xAndWebsite</HelpFileFormat>
+    <PurgeDuplicateTopics>True</PurgeDuplicateTopics>
+    <CppCommentsFixup>False</CppCommentsFixup>
+    <FrameworkVersion>2.0.50727</FrameworkVersion>
+    <BinaryTOC>True</BinaryTOC>
+    <IncludeFavorites>False</IncludeFavorites>
+    <Preliminary>False</Preliminary>
+    <RootNamespaceContainer>True</RootNamespaceContainer>
+    <RootNamespaceTitle>ADO.NET 2.0 API For HSQLDB 1.8.0</RootNamespaceTitle>
+    <HelpTitle>HSQLDB 1.8.0 ADO.NET Data Provider</HelpTitle>
+    <HtmlHelpName>System.Data.Hsqldb</HtmlHelpName>
+    <Language>en-US</Language>
+    <CopyrightHref>http://hsqldb.org/</CopyrightHref>
+    <CopyrightText>Copyright © 2001-2009, The HSQL Development Group. All Rights Reserved.</CopyrightText>
+    <FeedbackEMailAddress>boucherb@users.sourceforge.net</FeedbackEMailAddress>
+    <HeaderText />
+    <FooterText />
+    <ProjectLinkType>Local</ProjectLinkType>
+    <SdkLinkType>Msdn</SdkLinkType>
+    <PresentationStyle>Prototype</PresentationStyle>
+    <NamingMethod>Guid</NamingMethod>
+    <SyntaxFilters>CSharp</SyntaxFilters>
+    <ContentPlacement>AboveNamespaces</ContentPlacement>
+</project>

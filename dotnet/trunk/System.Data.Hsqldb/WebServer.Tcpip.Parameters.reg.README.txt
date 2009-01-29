@@ -1,0 +1,216 @@
+The current HSQLDB Web Server implements only HTTP 1.0 and does not implement
+HTTP KEEPALIVE.  As such, a new socket is created, opened and closed for each SQL
+statement issued  to the server.
+
+Thus, high traffic is very likely to leave a large number of sockets
+continuously in TIME_WAIT, exhausting the number of non TIME_WAIT TCBs
+available for reuse.
+
+The included Org.Hsqldb.WebServer.Tcpip.Parameters.reg file provides some
+registry settings that can be used avoid suprious server failure under the
+current Web Server HTTP protocol implementation.
+
+Please note that none of the indicated settings are RFC-compliant.
+
+However, they do allow running the default HSQLDB Database Manager test
+script a number of times in short succession against the HSQLDB Web Server
+without experiencing failure due to socket (re)allocation errors.
+
+A better approach would be to provide an HTTP 1.1 implementation with
+HTTP KEEPALIVE enabled by default.  Work may proceed on this at some
+point in the future.
+
+boucherb@users
+
+********************************************************************************
+MaxFreeTcbs
+********************************************************************************
+
+Determines the number of TCP control blocks (TCBs) the system creates to support
+active connections. Because each connection requires a control block, this value
+determines how many active connections TCP can support simultaneously. If all
+control blocks are used and more connection requests arrive, TCP can prematurely
+release connections in the TIME_WAIT state in order to free a control block for
+a new connection.
+
+Normally, TCP does not release a connection or reuse its resources until the
+connection has remained closed for a period specified by the value of the
+TcpTimedWaitDelay entry. This interval is known as the TIME_WAIT or 2MSL (2 x
+maximum segment lifetime) state. However, if the system is supporting an
+unusually large number of connections and is running short of connection
+resources, TCP releases the connection before the value stored in the
+TcpTimedWaitDelay entry has expired.
+
+The default value for this entry is determined both by the amount of physical
+memory on the computer when TCP/IP starts and by the version of Windows running
+on the computer, as shown in the following table.
+
+Amount of physical memory        Windows 2000 Server      Windows 2000 Professional
+
+Less than 19 MB                  500                      250
+
+19–63 MB                         1,000                    500
+
+64 MB or more                    2,000                    1,000
+
+NOTE:
+
+Windows 2000 does not add this entry to the registry. You can add it by
+editing the registry or by using a program that edits the registry.
+
+Assuming most server-class machines now have at least 1GB RAM, the following seems
+to work well with the other settings to avoid TCB exhuastion:
+
+Decimal 32768 (X 1K/block = 32MB pre-allocated space)
+
+"MaxFreeTcbs"=dword:00008000
+
+********************************************************************************
+MaxFreeTWTcbs
+********************************************************************************
+
+This parameter controls the number of Transport Control Blocks (TCBs) in the
+TIME-WAIT state that are allowed on the TIME-WAIT state list. Once this number
+is exceeded, the oldest TCB will be scavenged from the list. In order to maintain
+connections in the TIME-WAIT state for at least 60 seconds, this value should
+be >= (60 * (the rate of graceful connection closures per second) for the
+computer. The default value is adequate for most cases.
+
+We set this equal to MaxFreeTcbs so that we don't scavenge until we reach a state
+where all TCBs have been used, closed and are still in TIME_WAIT.  The likelyhood
+of this happening is very low, given the other settings
+
+Decimal 32768
+
+"MaxFreeTWTcbs"=dword:00008000
+
+********************************************************************************
+TcpTimedWaitDelay
+********************************************************************************
+
+Determines the time that must elapse before TCP can release a closed
+connection and reuse its resources. This interval between closure and
+release is known as the TIME_WAIT state or 2MSL state. During this
+time, the connection can be reopened at much less cost to the client
+and server than establishing a new connection.
+
+RFC 793 requires that TCP maintains a closed connection for an interval
+at least equal to twice the maximum segment lifetime (2MSL) of the network.
+When a connection is released, its socket pair and TCP control block (TCB)
+can be used to support another connection. By default, the MSL is defined
+to be 120 seconds, and the value of this entry is equal to two MSLs, or
+4 minutes. However, you can use this entry to customize the interval.
+
+Reducing the value of this entry allows TCP to release closed connections
+faster, providing more resources for new connections. However, if the
+value is too low, TCP might release connection resources before the
+connection is complete, requiring the server to use additional resources
+to reestablish the connection.
+
+Note
+
+Normally, TCP does not release closed connections until the value of this
+entry expires. However, TCP can release connections before this value expires
+if it is running out of TCP control blocks (TCBs). The number of TCBs the
+system creates is specified by the value of the MaxFreeTcbs entry.
+
+Windows 2000 does not add this entry to the registry. You can add it by
+editing the registry or by using a program that edits the registry.
+
+We use a conservative twice the minimum:  60 seconds
+
+"TcpTimedWaitDelay"=dword:0000003C
+
+********************************************************************************
+MaxUserPort
+********************************************************************************
+
+Determines the highest port number TCP can assign when an application requests
+an available user port from the system. Typically, ephemeral ports (those used
+briefly for wild-card binds) are allocated to port numbers 1024 through 5000.
+
+
+NOTE
+
+Setting MaxUserPort higher than the default (or installing a service that
+whose well-known, i.e. registered IANA port that lies in the range 1025
+- MaxUserPort) may require setting up port reservation to avoid bind
+exceptions.
+
+Microsoft SQL Server, for instance, reserves the range 1433-1434 during
+installation.
+
+Port reservation allows an application to prevent a range of ports from being
+assigned during a wildcard bind. However, reserving a port range does not
+prevent an application from performing a specific bind (a request for the use
+of a specific port) within a reserved range. When reserving a port range, you
+must choose a contiguous range of port numbers from 1025 to the value of the
+MaxUserPort setting (5000 by default) or from 49152 to 65535. Multiple client
+applications can reserve the same range. When unreserving (removing the
+reservation), Windows Sockets removes the first entry it finds that is
+completely encompassed by the unreserve request.
+
+You can also specify a range of reserved ports with the registry by doing
+the following:
+
+1.
+ Click Start, click Run, type regedit.exe, and then click OK.
+
+2.
+ Locate and then click the following registry subkey:
+
+HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters
+
+3.
+ On the Edit menu, point to New, and then click Multi-string Value.
+
+4.
+ Type ReservedPorts and then press ENTER.
+
+5.
+ Double-click the ReservedPorts value, type the range of ports using the
+ syntax: x-y
+
+ To specify a single port, use the same value for x and y. For example,
+ to specify port 4000, type 4000-4000.
+
+6.
+ Click OK.
+
+7.
+ Quit Registry Editor
+
+
+Note
+
+Windows 2000 does not add this entry to the registry. You can add it by editing
+the registry or by using a program that edits the registry.
+
+Decimal 16000 (ports from 1025 to 7999)
+
+"MaxUserPort"=dword:00001f3f
+
+********************************************************************************
+MaxHashTableSize
+********************************************************************************
+
+Determines the size of the hash table in which TCP control blocks
+(TCBs) are stored.
+
+TCP stores control blocks in a hash table so it can find them very
+quickly. If you adjust the number of TCBs the system creates (as
+specified by the value of the MaxFreeTcbs entry), you should also
+adjust the value of this entry proportionately.
+
+Note
+
+The value of this entry must be a power of two. If you change the
+value, the system rounds the value you enter to the next higher
+power of two.
+
+Windows does not add this entry to the registry. You can add it by
+editing the registry or by using a program that edits the registry.
+
+Decimal 16384 seems to work fine with
+
+"MaxHashTableSize"=dword:00004000

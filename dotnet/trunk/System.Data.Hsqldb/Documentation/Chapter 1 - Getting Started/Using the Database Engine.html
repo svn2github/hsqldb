@@ -1,0 +1,110 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <link rel="stylesheet" type="text/css" href="../styles/presentation.css">
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../html/hsqldb.gif">
+                </td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br>
+                    <span class="topicTitle">Chapter 1 - Getting Started</span>
+                    <br>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><a href="Chapter 1 - Getting Started.html">Chapter Overview
+                        </a>&gt; <span class="nolink">Using the Database Engine</span> </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <p>
+            Once a connection is established, ADO.NET 2.0 methods are used to interact with
+            the database:</p>
+        <pre lang="sql">    using(DbCommand command = connection.CreateCommand())
+    {
+        command.CommandType = CommandType.Text;
+        command.CommandText = "SELECT MAX(value) FROM MY_TABLE;";                
+        
+        object maxValue = command.ExecuteScalar();
+        
+        command.CommandText = "UPDATE MY_TABLE SET value = 100 WHERE value = @MaxValue;";
+        
+        DbParameter parameter = command.CreateParameter();
+        
+        parameter.ParameterName = "@MaxValue";
+        parameter.Vaue = maxValue;
+        
+        command.Parameters.Add(parameter);
+        
+        int rowsAffected = command.ExecuteNonQuery();
+        
+        Console.WriteLine("Rows affected : " + rowsAffected);
+        
+        command.CommandText = "SELECT * FROM MY_TABLE WHERE value = 100;";
+        
+        DbDataReader reader = command.ExecuteReader();
+        
+        DataTable readerSchema = reader.GetSchemaTable();
+        
+        Console.WriteLine("Select results:");
+        Console.WriteLine("----------------------------------------");
+        
+        while(reader.Read())
+        {
+            foreach(DataColumn column in readerSchema.Columns)
+            {
+                string columnName = column.ColumnName;
+                object columnValue = reader.GetValue(columnName);
+                
+                Console.Write(columnName);
+                Console.Write(": ");
+                Console.WriteLine(columnValue);
+            }
+            
+            Console.WriteLine("----------------------------------------");
+        }
+    }
+            </pre>
+        <p>
+            The
+            <see cref="System.Data.Hsqldb.Client">System.Data.Hsqldb.Client</see>
+            Documentation lists the supported ADO.NET 2.0 methods, together with information
+            that is specific to HSQLDB.</p>
+        <p>
+            ADO.NET 2.0 methods are broadly divided into:</p>
+        <ul>
+            <li>
+                <see cref="System.Data.Hsqldb.Client.HsqlConnection">connection methods</see>
+            </li>
+            <li>
+                <see cref="System.Data.Hsqldb.Client.MetaData">meta data methods</see>
+            </li>
+            <li>
+                <see cref="System.Data.Hsqldb.Client.HsqlCommand">database query and modification methods</see>
+            </li>
+        </ul>
+        <p>
+            The database query and modification methods take commands in the form of SQL
+            character sequences to perform actions on the database and return the results
+            either as scalar values, as <tt>DbDataReader</tt> objects or as <tt>DataTable</tt>
+            objects.</p>
+        <p>
+            The HSQLDB dialect is quite close to the SQL92 and <a href="http://www.wiscorp.com/SQLStandards.html">
+                SQL:200n</a> standards, at least as far as has been possible to achieve 
+            in a small-footprint (~1 MB assembly), low-maintenance database engine.</p>
+        <p>
+            The full list of SQL commands is presented in the <a href="../Chapter 8 - SQL Syntax/Chapter 8 - SQL Syntax.html">
+                SQL Syntax chapter</a>.</p>
+    </div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 9 -->

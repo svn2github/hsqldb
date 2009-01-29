@@ -1,0 +1,87 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <link rel="stylesheet" type="text/css" href="../../styles/presentation.css">
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../../html/hsqldb.gif"></td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br>
+                    <span class="topicTitle">Chapter 2 - SQL Issues</span>
+                    <br>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><a href="../Chapter 2 - SQL Issues.html">Chapter Overview
+                        </a>&gt; <a href="Constraints And Indexes.html">Constraints And Indexes </a>&gt;
+                            <span class="nolink">Unique Constraints</span> </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <p>
+            HSLQDB follows the SQL standard, which states that a unique table constraint
+            conforms to the following rules:</p>
+        <blockquote dir="ltr" style="margin-right: 0px">
+            <p>
+                For the unique table constraint on table <tt>T</tt>:</p>
+            <blockquote dir="ltr" style="margin-right: 0px">
+                <pre lang="sql">CONSTRAINT &lt;constraint-name&gt; UNIQUE TN(UCL)</pre>
+            </blockquote>
+            <p>
+                Let <tt>TN</tt> be the table name.</p>
+            <p>
+                Let <tt>UCL</tt> be the Unique Column List where:</p>
+            <blockquote dir="ltr" style="margin-right: 0px">
+                <p>
+                    a.) Each &lt;column name&gt; in the &lt;unique column list&gt; shall identify
+                    a column of <tt>T</tt>, and the same column shall not be identified more than
+                    once.</p>
+                <p>
+                    b) The set of columns in the &lt;unique column list&gt; shall be distinct from
+                    the unique columns of any other unique constraint descriptor that is included
+                    in the base table descriptor of <tt>T</tt>.</p>
+            </blockquote>
+            <p>
+                Let <tt>SC</tt> be the &lt;search condition&gt;:</p>
+            <blockquote dir="ltr" style="margin-right: 0px">
+                <pre lang="sql">UNIQUE ( SELECT UCL FROM TN )</pre>
+            </blockquote>
+            <p>
+                Then the unique table constraint <tt>UNIQUE TN(UCL)</tt> is not satisfied if
+                and only if:</p>
+            <blockquote dir="ltr" style="margin-right: 0px">
+                <pre lang="sql">EXISTS ( SELECT * FROM TN WHERE NOT (SC ) )</pre>
+            </blockquote>
+            <p>
+                is <var>True</var> where the general rules for the <tt>UNIQUE(&lt;table subquery&gt;)</tt>
+                predicate are:</p>
+            <p>
+                Let <tt>T</tt> be the result of the &lt;table subquery&gt;.</p>
+            <p>
+                If there are no two rows in <tt>T</tt> such that the value of each column in
+                one row is non-null and is not distinct from the value of the corresponding
+                column in the other row, then the result of the &lt;unique predicate&gt; is
+                <var>True</var>; otherwise, the result of the &lt;unique predicate&gt; is <var>False</var>.</p>
+        </blockquote>
+        <p>
+            In simpler terms, this means that a unique table constraint applies only to
+            the rows of a table where each column of the unique column list is non-null.</p>
+        <p>
+            To put it another way, it is "legal" for table <tt>T</tt> to contain rows that
+            are duplicate on a subset of the columns of the unique column list, so long
+            as at least one column of the unique column list is null.</p>
+        <p>
+            Be aware that a number of well-known commercial DBMS do not conform to the standard
+            regarding unique table constraints.</p>
+    </div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 2 -->

@@ -1,0 +1,198 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <link rel="stylesheet" type="text/css" href="../styles/presentation.css">
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../html/hsqldb.gif">
+                </td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br>
+                    <span class="topicTitle">Chapter 8 - SQL Syntax</span>
+                    <br>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><a href="Chapter 8 - SQL Syntax.html">Chapter Overview</a>
+                            <span class="nolink">SQL Expressions</span> </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <fieldset style="margin-top: 1em; margin-bottom: 1em;">
+            <legend>Components of an SQL Expression</legend>
+            <pre lang="sql" style="margin-top: 1em;">    &lt;expression&gt;:
+{
+      &lt;condition&gt; | &lt;value&gt;
+}
+
+    &lt;condition&gt;:
+{
+      [NOT] &lt;condition&gt; [{ OR | AND } &lt;condition&gt;]
+    | ( &lt;condition&gt; )
+    | &lt;value&gt; { = | &lt; | &lt;= | &gt; | &gt;= | &lt;&gt; | != } &lt;value&gt;
+    | &lt;value&gt; IS [NOT] NULL
+    | EXISTS(&lt;select-statement&gt;)
+    | &lt;value&gt; BETWEEN &lt;value&gt; AND &lt;value&gt;
+    | &lt;value&gt; [NOT] IN ( {&lt;value&gt; [, &lt;value&gt;]* | &lt;single-column-select-statement&gt; } )
+    | &lt;value&gt; [NOT] LIKE &lt;value&gt; [ESCAPE &lt;value&gt;]
+    | CASE &lt;value&gt; [WHEN &lt;value&gt; THEN &lt;value&gt;]* [ELSE &lt;value&gt;] END
+    | CASE [WHEN &lt;condition&gt; THEN &lt;value&gt;]* [ELSE &lt;value&gt;] END
+}
+    &lt;value&gt;:
+{
+     &lt;term&gt;
+   | [+ | -] &lt;value&gt;
+   | &lt;value&gt; { + | - | * | / | || } &lt;value&gt;
+   | ( &lt;value&gt; )
+   | &lt;function-identifier&gt; ( [&lt;expression&gt;] [,[&lt;expression&gt;]* )
+   | &lt;scalar-select-statement&gt;
+   | {ANY|ALL} (&lt;single-column-select-statement&gt;)
+   | NEXT VALUE FOR &lt;sequence-identifier&gt;
+   | CAST(&lt;expression&gt; AS &lt;type-specification&gt;)
+
+}
+    &lt;term&gt;:
+{
+      &lt;string-literal&gt;
+    | &lt;number-literal&gt;
+    | &lt;column-reference&gt;
+    | TRUE
+    | FALSE
+    | NULL
+}   
+    </pre>
+        </fieldset>
+        <h3 style="margin-bottom: 1em">
+            Definitions</h3>
+        <dl>
+            <dt><tt>NEXT VALUE FOR &lt;sequence-identifier&gt;</tt></dt>
+            <dd>
+                <p>
+                    In general, sequence values can be used in insert and update statements but
+                    not in <tt>CASE</tt> statements, order by clauses, search conditions, aggregate
+                    functions, or grouped queries. However, HSQLDB does not currently enforce all
+                    of the <dfn>SQL:2003</dfn> proposed rules regarding the legal use of sequence
+                    generated values.</p>
+            </dd>
+            <dt><tt>&lt;string-literal&gt;</tt></dt>
+            <dd>
+                <p>
+                    In HSQLDB, SQL string literals are <dfn>UTF-16</dfn> Unicode character sequences.
+                    An SQL string literal starts and ends with a single quote character: [']. An
+                    adjacent pair of single quote characters [''] may be used to represent a single
+                    quote character embedded in an SQL string literal.</p>
+                <p>
+                    Although the engine supports the non-standard <em>+</em> concatenation operator,
+                    string concatenation should be performed using the standard SQL <em>||</em>
+                    concatenation operator.</p>
+                <p>
+                    The <tt>LIKE</tt> keyword uses <tt>'%'</tt> to match any (including <tt>0</tt>)
+                    number of characters, and <tt>'_'</tt> to match exactly one character. To search
+                    for <tt>'%'</tt> or <tt>'_'</tt> itself, an escape character must also be specified
+                    using the <tt>ESCAPE</tt> clause. For example, if the backslash is the escaping
+                    character, <tt>'\%'</tt> and <tt>'\_'</tt> can be used to find the <tt>'%'</tt>
+                    and <tt>'_'</tt> characters themselves. For example, <tt>SELECT .... LIKE '\_%'
+                        ESCAPE '\'</tt> will find the strings beginning with an underscore.</p>
+            </dd>
+            <dt>Other literal values</dt>
+            <dd>
+                <ul type="disc" style="margin-top: 1em;">
+                    <li>An <tt>SQL DATE</tt> literal is a string literal with the format: <tt>'yyyy-mm-dd'</tt>
+                        (see <tt>java.sql.Date)</tt>. </li>
+                    <li>An <tt>SQL TIME</tt> literal is a string literal with the the format: <tt>'hh:mm:ss'</tt>
+                        (see <tt>java.sql.Time</tt>). </li>
+                    <li><p>An <tt>SQL TIMESTAMP</tt> or <tt>SQL DATETIME</tt> literal is a an SQL string
+                        literal with the the format: </p>
+                        <blockquote>
+                            <tt>'yyyy-mm-dd[hh:mm:ss[.ffffff]]'</tt> (see <tt>java.sql.Timestamp</tt>).
+                        </blockquote>
+                    </li>
+                </ul>
+                <p>
+                    When specifying default values for date/time columns in <tt>CREATE TABLE</tt>,
+                    <tt>SELECT</tt>, <tt>INSERT</tt> and <tt>UPDATE</tt> statements, the special
+                    SQL functions: <tt>NOW</tt>, <tt>SYSDATE</tt>, <tt>TODAY</tt>, <tt>CURRENT_TIMESTAMP</tt>,
+                    <tt>CURRENT_TIME</tt> and <tt>CURRENT_DATE</tt> can be used. <tt>NOW</tt> is
+                    used for <tt>TIME</tt> and <tt>TIMESTAMP</tt> columns; <tt>TODAY</tt> with <tt>DATE</tt>
+                    columns. The date and time function variants <tt>CURRENT_*</tt> are SQL standard
+                    versions and, for best portability, should be used in preference to others:</p>
+                <pre lang="sql">    CREATE TABLE T(D DATE DEFAULT CURRENT_DATE);
+    CREATE TABLE T1(TS TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+                 </pre>
+                <ul style="margin-bottom: 1em;">
+                    <li>An <tt>SQL [LONG[VAR]]BINARY</tt> literal is an SQL string literal with the
+                        the format: <tt>'[[a-fA-F09][a-fA-F09]]*'</tt></li>
+                    <li><em>Not A Number</em> (<tt>NaN</tt>), <em>Positive Infinity</em> and <em>Negative
+                        Infinity</em> can be represented, but only indirectly, as <tt>0E1/0E1</tt>, <tt>1E1/0E1</tt>
+                        and <tt>-1E1/0E1</tt>, respectively.</li>
+                </ul>
+            </dd>
+            <dt style="margin-bottom: 1em;">Identifiers: <tt>&lt;column-reference&gt;</tt>, <tt>&lt;function-identifier&gt;</tt>,
+                <tt>&lt;sequence-identifier&gt;</tt> and passwords</dt>
+            <dd>
+                <p>
+                    The character set for a delimited (quoted) identifier is Unicode.</p>
+                <p>
+                    The initial character of a non-delimited identifier must satisfy <tt>java.lang.Character.isJavaIdentifierStart(char)</tt>.<br />
+                    The subsequent characters of a non-delimited identifier must satisfy <tt>java.lang.Character.isJavaIdentifierPart(char)</tt>.</p>
+                <p>
+                    The characters of a non-delimited identifier are treated as uppercase. An important
+                    implication is that the identifier restriction values passed to the ADO.NET
+                    meta data facility must match the identifier case treatment used by the engine.
+                    This is dissimilar to the case-insensitive <tt>System.Data.IDbDataReader</tt>
+                    interface methods and index operators that take a column name to reference a
+                    value in the current row of a result set or the optionally case-sensitive methods
+                    and index operators of <tt>System.Data.DataTable</tt> and <tt>System.Data.DataSet</tt>
+                    that take a column name or table name.</p>
+                <p>
+                    Delimited identifiers may be used for naming tables, columns, constraints, indexes,
+                    sequences and triggers.</p>
+                <p>
+                    Delimited identifiers start and end with the double quote character: ["]. An
+                    adjacent pair of double quote characters [""] may be used to represent a double
+                    quote character embedded in a delimited identifier.</p>
+                <p>
+                    With delimited identifiers, the following is possible and results in mixed-case
+                    identifier treatment:</p>
+                <pre lang="sql">    CREATE TABLE "Address" ("Nr" INTEGER,"Name" VARCHAR); SELECT "Nr", "Name" FROM "Address";
+            </pre>
+                <p>
+                    A simple identifier may be addressed by a delimited identifier whose characters
+                    are upper case.</p>
+                <p>
+                    Delimited identifiers may also be used to disambiguate aliases and function
+                    identifiers.</p>
+                <p>
+                    For example:</p>
+                <pre lang="sql">    SELECT COUNT(*) AS "COUNT" FROM MYTABLE;
+    SELECT "LEFT"(COL1, 2) FROM MYTABLE;
+                </pre>
+                <p>
+                    Although HSQLDB non-delimited identifiers accept Java identifier characters,
+                    the use of non-Latin1 characters does not comply with SQL standards. Portability
+                    between different locales could be an issue when accented characters (or extended
+                    unicode characters) are used in non-delimited identifiers. Because native Java
+                    methods are used to convert a non-delimited identifier to uppercase, the result
+                    may not be that expected for a specific locale. Thus, it is recommended
+                    that accented or extended unicode characters characters are used only in delimited
+                    identifiers.</p>
+                <p>
+                    A password is a form of identifier and must be delimited. However, passwords
+                    are currently treated as case insensitive for backward compatibility.</p>
+                <p>
+                    Please note that the case treatment of passwords will likely change in a future
+                    version.</p>
+            </dd>
+        </dl>
+    </div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 3 -->

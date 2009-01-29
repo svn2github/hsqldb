@@ -1,0 +1,423 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <link rel="stylesheet" type="text/css" href="../../styles/presentation.css">
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../../html/hsqldb.gif"></td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br>
+                    <span class="topicTitle">Chapter 4 - Configuration And Settings</span>
+                    <br>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><a href="../Chapter 4 - Configuration And Settings.html">Chapter
+                            Overview </a>&gt; <a href="Configuration Files.html">Configuration Files </a>&gt;
+                            <span class="nolink">The Database Properties File</span> </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <include item="footer" />
+    <div id="main">
+        <p>
+            Each database instance has a unique <tt>&lt;database&gt;.properties</tt> file. This
+            file contains the key/value pair settings specific to the instance.</p>
+        <p>
+            Many of the properties in the file can be altered using the following SQL syntax:</p>
+        <pre lang="sql">    SET PROPERTY "&lt;property identifier&gt;" &lt;property value&gt;
+        </pre>
+        <p>
+            or</p>
+        <pre lang="sql">    SET &lt;property identifier&gt; &lt;property value&gt;
+        </pre>
+        <p>
+            However, there are properties that can only be edited manually while the instance
+            is offline.</p>
+        <p>
+            Also, although some properties can be altered using SQL syntax, their effect may
+            not be applied until the instance is restarted or checkpointed.</p>
+        <h3 style="margin-bottom: 1em">
+            Database Properties</h3>
+        <div class="alert" style="margin-bottom: 2em;">
+            <h3 class="title">
+                Note</h3>
+            <p>
+                Properties that can be modified are indicated in the table below with the phrase:
+                (<tt>SET PROPERTY)</tt></p>
+            <p>
+                Properties that can be modified only by editing the <tt>&lt;dbname&gt;.properties</tt>
+                file while the instance is offline are indicated with the phrase: (<tt>PROPERTIES FILE
+                    ONLY)</tt></p>
+            <p>
+                Database properties that are not listed below should <em>never</em> be modified;
+                modification may result in database corruption or malfunction.</p>
+        </div>
+        <table frame="void" rules="none" style="margin: auto; width: 100%;" summary="Database-specific Property File Properties">
+            <thead>
+                <tr style="background: #ccccff; color: #003399">
+                    <th align="left">
+                        Value</th>
+                    <th align="left">
+                        Default</th>
+                    <th align="left">
+                        Description</th>
+                </tr>
+            </thead>
+            <tbody valign="top">
+                <tr style="background: #f0f0f0">
+                    <td>
+                        <tt>readonly (PROPERTIES FILE ONLY)</tt></td>
+                    <td>
+                        <tt>no</tt></td>
+                    <td>
+                        whole database is read-only</td>
+                </tr>
+                <tr style="background: #eeeeff">
+                    <td colspan="3">
+                        <p>
+                            When <tt>true</tt>, the database instance cannot be modified; any attempt to do
+                            so raises an exception.</p>
+                        <p>
+                            This setting should always be set <tt>true</tt> if the database is to be opened
+                            from a read-only medium, such as a CD or DVD.</p>
+                        <p>
+                            Prior to opening a database in <tt>readonly</tt> mode, it should be closed with
+                            the <tt>SHUTDOWN COMPACT</tt> command to ensure the consistency and compactness
+                            of the data.</p>
+                    </td>
+                </tr>
+                <tr style="background: #f0f0f0">
+                    <td>
+                        <tt>hsqldb.files_readonly (PROPERTIES FILE ONLY)</tt></td>
+                    <td>
+                        <tt>false</tt></td>
+                    <td>
+                        database files are read but not written</td>
+                </tr>
+                <tr style="background: #eeeeff">
+                    <td colspan="3">
+                        <p>
+                            When <tt>true</tt>, <span style="font-family: Courier New">CACHED</span> and <tt>TEXT</tt>
+                            tables are treated as <tt>readonly</tt> but new <tt>MEMORY</tt> tables can be created
+                            and all <tt>MEMORY</tt> table data can be modified, although such changes are transient
+                            because <em>all</em> database files are treated as read-only, including the transaction
+                            log and database initialization script.</p>
+                        <p>
+                            As with <tt>readonly</tt> mode, it is good practice to <tt>SHUTDOWN COMPACT</tt>
+                            a database prior to opening it in <tt>files_readonly</tt> mode, in order to ensure
+                            the consistency and compactness of the data.</p>
+                    </td>
+                </tr>
+                <tr style="background: #f0f0f0">
+                    <td>
+                        <tt>hsqldb.cache_file_scale (SET PROPERTY)</tt></td>
+                    <td>
+                        <tt>1</tt></td>
+                    <td>
+                        Larger data file. <tt>8</tt> corresponds to 8GB.</td>
+                </tr>
+                <tr style="background: #eeeeff">
+                    <td colspan="3">
+                        <p>
+                            Controls the byte-alignment of records in the <tt>CACHED</tt> table data image on disk.</p>
+                        <p>
+                            Set to <tt>8</tt> to increase the maximim size of the <tt>&lt;database&gt;.data</tt>
+                            file from <tt>2GB</tt> to <tt>8GB</tt>.</p>
+                        <p>
+                            To alter a database instance <em>without</em> pre-existing <tt>CACHED</tt> tables,
+                            simply issue the <tt>SET PROPERTY</tt> command before creating the first <tt>CACHED</tt>
+                            table.</p>
+                        <p>
+                            To alter a database <em>with</em> pre-existing cached tables, the instance must
+                            first be brought online and then taken offline with the <tt>SHUTDOWN SCRIPT</tt>
+                            command.</p>
+                        <p>
+                            This action transfers all <tt>CACHED</tt> table data to the database initialization
+                            script (<tt>&lt;database&gt;.script</tt>), allowing the <tt>&lt;database&gt;.data</tt>
+                            file to be recreated with the modified format, the next time the database is opened.</p>
+                        <p>
+                            While the instance is offline, add the following line below to the <tt>&lt;database&gt;.properties</tt>
+                            file:</p>
+                        <blockquote>
+                            <tt>hsqldb.cache_file_scale=8</tt></blockquote>
+                        <p>
+                            At this point, the instance may be reopened.</p>
+                    </td>
+                </tr>
+                <tr style="background: #f0f0f0">
+                    <td>
+                        <tt>sql.enforce_strict_size (SET PROPERTY)</tt></td>
+                    <td>
+                        <tt>false</tt></td>
+                    <td>
+                        size enforcement and padding string columns</td>
+                </tr>
+                <tr style="background: #eeeeff">
+                    <td colspan="3">
+                        <p>
+                            Use to conform to the SQL standards for <em>length</em> and <em>precision</em> declarations.</p>
+                        <p>
+                            When <tt>true</tt>, <tt>CHAR[ACTER]</tt>, <tt>VARCHAR</tt>, <tt>NUMERIC</tt> and
+                            <tt>DECIMAL</tt> values affected by an <tt>INSERT</tt> or <tt>UPDATE</tt> statement
+                            are checked against the declared <em>length</em>/<em>precision</em> and <tt>CHAR[ACTER]</tt>
+                            values are padded to declared <em>length</em>; an exception is raised if an overflow
+                            condition occurs.</p>
+                        <p>
+                            When <tt>false</tt> (default), values are stored verbatim, without <em>length</em>/<em>precision</em>
+                            checks.</p>
+                        <p>
+                            Note:</p>
+                        <p>
+                            <tt>TIMESTAMP(0)</tt> and <tt>TIMESTAMP(6)</tt> declarations are also accepted,
+                            where <tt>0</tt> denotes that the nanoseconds fractional component is not stored.</p>
+                    </td>
+                </tr>
+                <tr style="background: #f0f0f0">
+                    <td>
+                        <tt>sql.tx_no_multi_rewrite (SET PROPERTY)</tt></td>
+                    <td>
+                        <tt>false</tt></td>
+                    <td>
+                        transaction management</td>
+                </tr>
+                <tr style="background: #eeeeff">
+                    <td colspan="3">
+                        <p>
+                            When <tt>false</tt>, a transaction in <tt>READ_UNCOMMITED</tt> mode can overwrite
+                            rows inserted or updated by another uncommitted transaction.</p>
+                        <p>
+                            When <tt>true</tt>, an exception is raised when such a write is attempted.</p>
+                        <p>
+                            Note that there is some overhead associated with the <tt>true</tt> setting.</p>
+                    </td>
+                </tr>
+                <tr style="background: #f0f0f0">
+                    <td>
+                        <tt>hsqldb.cache_scale (SET PROPERTY)</tt></td>
+                    <td>
+                        <tt>14</tt></td>
+                    <td>
+                        memory cache exponent</td>
+                </tr>
+                <tr style="background: #eeeeff">
+                    <td colspan="3">
+                        <p>
+                            Used to compute the maximum number of rows held in memory by the cached table buffer
+                            manager.</p>
+                        <p>
+                            The number of rows is computed as <tt>3*(2<sup>value</sup>)</tt>.</p>
+                        <p>
+                            The default exponent (<tt>14</tt>) limits the maximum to <tt>49152</tt> <tt>CACHED</tt>
+                            table rows buffered in memory from disk.</p>
+                        <p>
+                            The exponent can range between <tt>8-18</tt>.</p>
+                        <p>
+                            When altered using the <tt>SET
+                                PROPERTY</tt> statement, the new setting does not become effective until the database is
+                            restarted or a <tt>CHECKPOINT</tt> occurs.</p>
+                    </td>
+                </tr>
+                <tr style="background: #f0f0f0">
+                    <td>
+                        <tt>hsqldb.cache_size_scale (SET PROPERTY)</tt></td>
+                    <td>
+                        <tt>10</tt></td>
+                    <td>
+                        memory cache exponent</td>
+                </tr>
+                <tr style="background: #eeeeff">
+                    <td colspan="3">
+                        <p>
+                            Used to compute the maximum number of bytes allocated to buffer <tt>CACHED</tt>
+                            table data in physical memory.</p>
+                        <p>
+                            The exponent is used to compute the expected average row size as <tt>2<sup>value</sup></tt>.
+                            The result is then multiplied by the <tt>hsqldb.cache_scale</tt> formula above to
+                            derive the upper limit that the buffer manager imposes upon the number of bytes
+                            buffered in memory from disk for <tt>CACHED</tt> table data.</p>
+                        <p>
+                            The default exponent (<tt>10</tt>) corresponds to an expected average of <tt>1024</tt>
+                            bytes per row. When combined with the default <tt>hsqldb.cache_scale</tt> exponent,
+                            the buffer manager (which uses an LRU policy to discard old data when new data needs
+                            to be read from disk) imposes a limit of <tt>50MB</tt> on the <tt>CACHED</tt> table
+                            data buffered from disk.</p>
+                        <p>
+                            The exponent can range between <tt>6-20</tt>.</p>
+                        <p>
+                            When altered using the <tt>SET PROPERTY</tt> statement, the new setting does not
+                            become effective until the database is restarted or a <tt>CHECKPOINT</tt> occurs.</p>
+                    </td>
+                </tr>
+                <tr style="background: #f0f0f0">
+                    <td>
+                        <tt>hsqldb.log_size (SET LOGSIZE nnn)</tt></td>
+                    <td>
+                        <tt>200</tt></td>
+                    <td>
+                        size of log when checkpoint is performed</td>
+                </tr>
+                <tr style="background: #eeeeff">
+                    <td colspan="3">
+                        <p>
+                            The size in megabytes to which the transaction <tt>.log</tt> file may grow before
+                            an automatic checkpoint occurs.</p>
+                        <p>
+                            Zero (<tt>0</tt>) disables automatic checkpoints in response to <tt>.log</tt> file
+                            growth.</p>
+                        <p>
+                            Note that a checkpoint rewrites the database initialization <tt>.script</tt> and
+                            clears the transaction <tt>.log</tt>.</p>
+                    </td>
+                </tr>
+                <tr style="background: #f0f0f0">
+                    <td>
+                        <tt>runtime.gc_interval (PROPERTIES FILE ONLY)</tt></td>
+                    <td>
+                        <tt>0</tt></td>
+                    <td align="left">
+                        forced garbage collection threshold</td>
+                </tr>
+                <tr style="background: #eeeeff">
+                    <td colspan="3">
+                        <p>
+                            Forces garbage collection each time a set number of record allocations occur.</p>
+                        <p>
+                            The
+                            default (<tt>0</tt>) denotes that no forced garbage collection occurs.</p>
+                        <p>
+                            Note that this property does not need to be set when the engine is hosted by a Server instance
+                            within a dedicated process. It is useful only when sharing a process with a client
+                            application, and only when used within certain Java Runtime Environments. Specifically,
+                            some JRE's increase the size of the memory heap before doing an automatic garbage
+                            collection, causing an out of memory error to be raised, even though there would
+                            be enough memory if a garbage collection had been performed before attempting to
+                            increase the heap size.</p>
+                        <p>
+                            In the intended scenario, useful values lie in the range
+                            10,000 to 100,000.</p>
+                    </td>
+                </tr>
+                <tr style="background: #f0f0f0">
+                    <td>
+                        <tt>hsqldb.nio_data_file (SET PROPERTY)</tt></td>
+                    <td>
+                        <tt>true</tt></td>
+                    <td>
+                        Toggles the use of <tt>java.nio</tt> (memory-mapped) data file access</td>
+                </tr>
+                <tr style="background: #eeeeff">
+                    <td colspan="3">
+                        <p>
+                            When <tt>false</tt>, results in somewhat reduced disk I/O performance.</p>
+                        <p>
+                            Memory-mapped file access is switched off automatically when the <tt>.data</tt>
+                            file becomes larger than can be mapped in memory, given the heap restrictions of
+                            the runtime environment; or when it is found to be larger than <tt>256MB</tt> at
+                            database initialization.</p>
+                        <p>
+                            If altered before the first <tt>CACHED</tt> table is created, the value becomes
+                            effective immediately; otherwise, it does not become effective until the database
+                            is restarted or a <tt>CHECKPOINT</tt> occurs.</p>
+                    </td>
+                </tr>
+                <tr style="background: #f0f0f0">
+                    <td>
+                        <tt>hsqldb.default_table_type (SET PROPERTY)</tt></td>
+                    <td>
+                        <tt>memory</tt></td>
+                    <td>
+                        The type of table to create when <tt>CREATE TABLE</tt> is unqualified</td>
+                </tr>
+                <tr style="background: #eeeeff">
+                    <td colspan="3">
+                        <p>
+                            By default, an unqualified <tt>CREATE TABLE</tt> command creates a <tt>MEMORY</tt>
+                            table.</p>
+                        <p>
+                            When set to <tt>"cached"</tt>, an unqualified <tt>CREATE TABLE</tt> command
+                            creates a <tt>CACHED</tt> table instead.</p>
+                        <p>
+                            Qualified <tt>CREATE TABLE</tt> commands are not affected by this property.</p>
+                    </td>
+                </tr>
+                <tr style="background: #f0f0f0">
+                    <td>
+                        <tt>hsqldb.applog (PROPERTIES FILE ONLY)</tt></td>
+                    <td>
+                        <tt>0</tt></td>
+                    <td>
+                        application logging level</td>
+                </tr>
+                <tr style="background: #eeeeff">
+                    <td colspan="3">
+                        <p>
+                            The default level (<tt>0</tt>) disables logging.</p>
+                        <p>
+                            Level 1 enables logging of persistence
+                            related events (database startup/shutdown), including failures.</p>
+                        <p>
+                            The events are logged
+                            in a file named <tt>&lt;databasename&gt;.app.log</tt></p>
+                    </td>
+                </tr>
+                <tr style="background: #f0f0f0">
+                    <td>
+                        <tt>textdb.* (SET PROPERTY)</tt></td>
+                    <td>
+                        ...</td>
+                    <td>
+                        default properties for new text tables</td>
+                </tr>
+                <tr style="background: #eeeeff">
+                    <td colspan="3">
+                        <p>
+                            A collection of properties that globally override the database engine defaults for
+                            newly created text tables.</p>
+                        <p>
+                            Note that the <tt>SET &lt;tablename&gt; SOURCE &lt;source string&gt;</tt> command
+                            overrides both the engine defaults and the <tt>textdb.*</tt> values.</p>
+                        <p>
+                            Individual <tt>textdb.*</tt> properties are listed in the <a href="../../Chapter 5 - Text Tables/Chapter 5 - Text Tables.html">
+                                Text Tables</a> chapter.</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="alert" style="margin-top: 2em;">
+            <h3 class="title">
+                Note</h3>
+            <p>
+                Although ignored in subsequent connections, the <em>initial</em> connection to an <em>In-Process</em> database instance may pass the
+                database properties listed in this section as part of the connection string:</p>
+            <pre lang="cs">connection.ConnectionString = "Protocol=File;Path=/db1;User ID=SA;hsqldb.cache_scale=18";
+            </pre>
+            <p>
+                The same is true for database URI specifications in the server and webserver properties
+                files:</p>
+            <pre>
+# server properties
+server.database.0=file:/db1;readonly=true            
+            </pre>
+            <p>
+                When HSQLDB is used in <a href="http://www.openoffice.org/">OpenOffice</a>, some property values have a different default.</p>
+            <p>
+                The affected properties and their OpenOffice default values are:</p>
+            <ul>
+                <li><tt>hsqldb.default_table_type=cached</tt></li>
+                <li><tt>hsqldb.cache_scale=13</tt></li>
+                <li><tt>hsqldb.log_size=10</tt></li>
+                <li><tt>hsqldb.nio_data_file=false</tt></li>
+                <li><tt>sql.enforce_strict_size=true</tt></li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
+<!-- @SortOrder 2 -->

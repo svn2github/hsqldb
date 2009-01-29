@@ -1,0 +1,113 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <link rel="stylesheet" type="text/css" href="../../styles/presentation.css">
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../../html/hsqldb.gif"></td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br>
+                    <span class="topicTitle">Chapter 4 - Configuration And Settings</span>
+                    <br>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><a href="../Chapter 4 - Configuration And Settings.html">Chaper Overview
+                        </a>&gt; <span class="nolink">Configuration Files</span> </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <p>
+            HSQLDB relies on a set of configuration files for various settings.</p>
+        <p>
+            Most of these files are of the <tt>java.util.Properties</tt> variety, consisting
+            of <tt>key=value</tt> lines.</p>
+        <p>
+            In all <tt>java.util.Properties</tt> variety configuration files, values are treated
+            in a case-sensitive manner.</p>
+        <p>
+            With the
+            exception of file names and resource URLs, HSQLDB property file values must be specified in lower case.</p>
+        <p>
+            For example:</p>
+        <blockquote dir="ltr" style="margin-right: 0px">
+            <p>
+                <tt>server.silent=FALSE</tt></p>
+        </blockquote>
+        <p dir="ltr">
+            <em>
+            is not</em> recognized, but:</p>
+        <blockquote dir="ltr" style="margin-right: 0px">
+            <p dir="ltr">
+                <tt>server.silent=false</tt></p>
+        </blockquote>
+        <p dir="ltr">
+            <em>is</em> recognized.</p>
+        <h3 style="margin-bottom: 0.5em" align="left">
+            Core Properties Files</h3>
+        <table rules="none" style="width: 100%; margin: auto;" summary="Hsqldb Server Properties Files"
+            frame="void">
+            <thead>
+                <tr style="background: #ccccff; color: #003399">
+                    <th>
+                        File Name</th>
+                    <th>
+                        Location</th>
+                    <th>
+                        Function</th>
+                </tr>
+            </thead>
+            <tbody valign="top">
+                <tr style="background: #f0f0f0">
+                    <td>
+                        <tt class="filename">server.properties</tt></td>
+                    <td>
+                        The working directory of the command used to run the <tt class="classname">Server</tt></td>
+                    <td>
+                        Settings for an HSQL protocol network database server</td>
+                </tr>
+                <tr style="background: #eeeeff">
+                    <td>
+                        <tt class="filename">webserver.properties</tt></td>
+                    <td>
+                        The working directory of the command used to run the <tt class="classname">WebServer</tt></td>
+                    <td>
+                        Settings for an HTTP protocol network database server</td>
+                </tr>
+                <tr style="background: #f0f0f0">
+                    <td>
+                        <tt class="filename">&lt;dbname&gt;.properties</tt></td>
+                    <td>
+                        The database directory</td>
+                    <td>
+                        Settings for a specific database instance.</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="alert" style="margin-top: 2em;">
+            <h3 class="title">
+                Note</h3>
+            <p>
+                The server and webserver properties files must be created and edited manually.</p>
+            <p>
+                The database properties file is generated automatically as part of database
+                creation.</p>
+            <p>
+                Although a database properties file can be edited manually while the database
+                is closed, many database properties
+                can also be altered using SQL commands while
+                the database is open.&nbsp; When there is a choice, use of SQL is the more portable
+                option.</p>
+        </div>
+    </div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 2 -->

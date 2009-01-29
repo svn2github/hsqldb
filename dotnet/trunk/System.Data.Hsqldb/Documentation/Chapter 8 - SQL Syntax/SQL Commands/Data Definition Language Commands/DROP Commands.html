@@ -1,0 +1,123 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <link rel="stylesheet" type="text/css" href="../../../styles/presentation.css">
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../../../html/hsqldb.gif">
+                </td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br>
+                    <span class="topicTitle">Chapter 8 - SQL Syntax</span>
+                    <br>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><a href="../../Chapter 8 - SQL Syntax.html">Chapter Overview</a>
+                            &gt; <a href="../SQL Commands.html">SQL Commands</a> &gt; <a href="Data Definition Language Commands.html">
+                                Data Definition Language Commands</a> <span class="nolink">ALTER Commands</span>
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <h3>
+            <a name="drop_index-section"></a>DROP INDEX</h3>
+        <pre>
+DROP INDEX index [IF EXISTS];
+</pre>
+        <p>
+            Removes the specified index from the database. Will not work if the index backs
+            a UNIQUE of FOREIGN KEY constraint.</p>
+        <p>
+            See also: <a title="CREATE INDEX" href="#create_index-section">CREATE INDEX</a>.</p>
+        <h3>
+            <a name="N11E14"></a>DROP ROLE</h3>
+        <pre>
+DROP ROLE &lt;rolename&gt;;
+</pre>
+        <p>
+            Removes all members from specified role, then removes the role itself.</p>
+        <h3>
+            <a name="drop_sequence-section"></a>DROP SEQUENCE</h3>
+        <pre>
+DROP SEQUENCE &lt;sequencename&gt; [IF EXISTS] [RESTRICT | CASCADE];
+</pre>
+        <p>
+            Removes the specified sequence from the database. When IF EXIST is used, the
+            statement returns without an error if the sequence does not exist. The RESTRICT
+            option is in effect by default, meaning that DROP will fail if any view reference
+            the sequence. Specify the <tt>CASCADE</tt> option to silently drop all dependent
+            database objects.</p>
+        <h3>
+            <a name="N11E2E"></a>DROP SCHEMA</h3>
+        <pre>
+DROP SCHEMA &lt;schemaname&gt; [RESTRICT | CASCADE];
+</pre>
+        <p>
+            Removes the specified schema from the database. The RESTRICT option is in effect
+            by default, meaning that DROP will fail if any objects such as tables or sequences
+            have been defined in the schema. Specify the <tt>CASCADE</tt> option to silently
+            drop all database objects in the schema.</p>
+        <p>
+            Requires Administrative privileges.</p>
+        <h3>
+            <a name="drop_table-section"></a>DROP TABLE</h3>
+        <pre>
+DROP TABLE &lt;table&gt; [IF EXISTS] [RESTRICT | CASCADE];
+</pre>
+        <p>
+            Removes a table, the data and indexes from the database. When IF EXIST is used,
+            the statement returns without an error even if the table does not exist.</p>
+        <p>
+            The RESTRICT option is in effect by default, meaning that DROP will fail if
+            any tables or views refer to this table. Specify the <tt>CASCADE</tt> option
+            to silently drop all dependent views, and to drop any foreign key constraint
+            that links this table with other tables.</p>
+        <p>
+            See also:</p>
+        <p>
+            <a title="CREATE TABLE" href="#create_table-section">CREATE TABLE</a>.</p>
+        <h3>
+            <a name="drop_trigger-section"></a>DROP TRIGGER</h3>
+        <pre>
+DROP TRIGGER &lt;trigger&gt;;
+</pre>
+        <p>
+            Removes a trigger from the database.</p>
+        <p>
+            See also: <a title="CREATE TRIGGER" href="#create_trigger-section">CREATE TRIGGER</a>.</p>
+        <h3>
+            <a name="drop_user-section"></a>DROP USER</h3>
+        <pre>
+DROP USER &lt;username&gt;;
+</pre>
+        <p>
+            Removes a user from the database.</p>
+        <p>
+            Only an administrator do this.</p>
+        <p>
+            See also: <a title="CREATE USER" href="#create_user-section">CREATE USER</a>.</p>
+        <h3>
+            <a name="drop_view-section"></a>DROP VIEW</h3>
+        <pre>
+DROP VIEW &lt;viewname&gt; [IF EXISTS] [RESTRICT | CASCADE];
+</pre>
+        <p>
+            Removes a view from the database. When IF EXIST is used, the statement returns
+            without an error if the view does not exist. The RESTRICT option is in effect
+            by default, meaning that DROP will fail if any other view refers to this view.
+            Specify the <tt>CASCADE</tt> option to silently drop all dependent views.</p>
+        <p>
+            See also: <a title="CREATE VIEW" href="#create_view-section">CREATE VIEW</a>.</p>
+    </div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 3 -->

@@ -1,0 +1,84 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <link rel="stylesheet" type="text/css" href="../../styles/presentation.css">
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../../html/hsqldb.gif">
+                </td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br>
+                    <span class="topicTitle">Chapter 1 - Getting Started</span>
+                    <br>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><a href="../Chapter 1 - Getting Started.html">Chapter Overview
+                        </a>&gt; <a href="In-Process Operation.html">In-Process Operation </a>&gt; <span
+                            class="nolink">File Protocol</span> </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <p>
+            If a database is named <tt>testdb</tt> and its files are located in the present
+            working directory, the following code makes the correct connection:</p>
+        <pre lang="cs">    using(DbConnection connection = dbFactory.CreateConnection())
+    {
+        connection.ConnectionString = "Protocol=File;Path=testdb;User ID=SA";
+        connection.Open();
+        // ...
+        </pre>
+        <p>
+            Forward slashes are known to work under both Windows and POSIX file system hosts, facilitating
+            <em>almost</em> platform-independent path specification.</p>
+        <p>
+            For example, if one's POSIX file system database path is <tt>/opt/db/testdb</tt>
+            and one creates an identical directory structure on the Windows <em>%SystemDrive%</em>
+            (typically C:\), the following path will work identically on both systems:</p>
+        <pre lang="cs">    connection.ConnectionString = "Protocol=File;Path=/opt/db/testdb;User ID=SA";
+    </pre>
+        <p>
+            However, please note that, as per the behavior of the java.io.File class, relative paths
+            are resolved against the present working directory (usually available as the read-only "user.dir"
+            java.lang.System property) in effect when the IKVM runtime initializes, <em>not</em>
+            the present working directory in effect when a connection is opened.
+        </p>
+        <p>
+            Please also note that, from the restricted (i.e. platform-independent) perspective
+            of the java.io.File class, there really is no such thing as a present working directory at
+            all. Instead, one is expected simply to access files relative to new java.io.File(".") and it
+            is left system dependent as to how the cannoical path of "." is resolved.&nbsp; However, it is to be expected that, for the majority of Windows and POSIX file system
+            hosts, java.io.File(".") resolves to the present working
+            directory in effect for
+            the operating system process that launches the .NET executable.
+        </p>
+        <p>
+            <strong>Guidelines:</strong></p>
+        <ol>
+            <li style="padding-bottom: 1em;">Both relative and absolute database file paths <em>
+                are</em> supported. </li>
+            <li style="padding-bottom: 1em;">Relative database file paths can be specified in a
+                platform independent manner as: <em>[dir1/dir2/.../dirn/]&lt;file-name-prefix&gt;</em>
+            </li>
+            <li style="padding-bottom: 1em;">Specification of absolute file paths is operating-system
+                specific.<br>
+                Please read your OS file system documentation. </li>
+            <li style="padding-bottom: 1em;">Specification of network mounts may be operating-system
+                specific (and is not recommended)<br>
+                Please read your OS file system documentation. </li>
+            <li>Special care may be needed w.r.t. file path specifications containing white-space,
+                mixed-case, special characters and/or reserved file names.<br>
+                Please read your OS file system documentation.</li>
+        </ol>
+    </div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 1 -->

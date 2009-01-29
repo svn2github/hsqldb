@@ -1,0 +1,72 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <link rel="stylesheet" type="text/css" href="../../styles/presentation.css">
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../../html/hsqldb.gif"></td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br>
+                    <span class="topicTitle">Chapter 2 - SQL Issues</span>
+                    <br>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><a href="../Chapter 2 - SQL Issues.html">Chapter Overview </a>
+                            &gt; <a href="Types And Arithmetic Operations.html">Types And Arithmetic Operations
+                            </a>&gt; <span class="nolink">Size, Precision And Scale</span> </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <p>
+            HSQLDB requires that <em>length</em>, <em>precision</em> and <em>scale</em> qualifiers
+            conform to the SQL standard.</p>
+        <p>
+            For example <tt>INTEGER(<var>8</var>)</tt>, while accepted under some DBMS, is not
+            acceptable, but <tt>FLOAT(<var>24</var>|<var>53</var>)</tt> is.</p>
+        <p>
+            Although the qualifier syntax is strictly enforced, qualifier semantics are ignored
+            unless:</p>
+        <pre lang="sql">
+    SET PROPERTY "sql.enforce_strict_size" <var>TRUE</var>
+        </pre>
+        <p>
+            When <em>sql.enforce_strict_size</em> is set <tt>true</tt>:</p>
+        <ul>
+            <li><em>length</em> declarations are enforced for <tt>CHAR[ACTER]</tt> or <tt>VARCHAR</tt>
+                types and <tt>CHAR[ACTER]</tt> types are padded to <em>length</em> as per the SQL
+                standard.</li>
+            <li><em>precision</em> and <em>scale</em> qualifiers are enforced for <tt>DECIMAL</tt>,
+                <tt>NUMERIC</tt> and <tt>TIMESTAMP</tt> types, but <tt>FLOAT</tt> <em>precision</em>
+                is presently still ignored.</li>
+        </ul>
+        <div class="alert">
+            <h3 class="title">
+                Notes</h3>
+            <p>
+                <tt>TIMESTAMP</tt> currently accepts <tt>0</tt> or <tt>6</tt> as its <em>precision</em>
+                qualifier, with <tt>0</tt> denoting that no nanoseconds component is to be stored.</p>
+            <p>
+                Casting a value to a qualified <tt>CHARACTER</tt> type will result in truncation
+                or padding as one would expect:</p>
+            <pre lang="sql">
+    CAST(mycol as CHAR(2)) = 'xy'
+            </pre>
+            <p>
+                matches mycol values beginning with 'xy' and is equivalent to:</p>
+            <pre lang="sql">
+    SUBSTRING(mycol FROM 1 FOR 2) = 'xy'
+            </pre>
+        </div>
+    </div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 5 -->

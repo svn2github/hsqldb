@@ -1,0 +1,422 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <link rel="stylesheet" type="text/css" href="../styles/presentation.css">
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../html/hsqldb.gif">
+                </td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br>
+                    <span class="topicTitle">Chapter 5 - Text Tables</span>
+                    <br>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><span class="nolink"></span></span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <h3 class="subtitle">
+            Table Definition</h3>
+        <p>
+            Creation is similar to conventional tables, with the addition of <tt>TEXT</tt> keyword:</p>
+        <pre lang="sql">    CREATE [[GLOBAL] TEMPORARY | TEMP] TEXT TABLE &lt;tablename&gt;
+    (
+        &lt;column definitions&gt; [, &lt;constraint definitions&gt;]
+    ) [ON COMMIT { PRESERVE | <em><u>DELETE</u></em> } ROWS];
+        </pre>
+        <p>
+            The <tt>SET TABLE</tt> command alters the source descriptor:</p>
+        <pre lang="sql">    SET TABLE &lt;tablename&gt; SOURCE "&lt;source descriptor&gt;" [DESC]
+        </pre>
+        <div class="alert">
+            <h3 class="title">
+                Note</h3>
+            <p>
+                <tt>TEXT</tt> tables are transactional, requiring read/write operation. Consequently,
+                they cannot be created or modified in <tt>readonly</tt> mode, <tt>files_readonly</tt>
+                mode, <tt>Mem</tt> protocol or <tt>Res</tt> protocol databases.</p>
+        </div>
+        <h3 class="title">
+            Lifecycle, Scope and Alteration</h3>
+        <ul type="disc">
+            <li>
+                <p>
+                    <tt>A TEXT</tt> table is initially <tt>READ ONLY</tt> and <tt>EMPTY</tt>. To become
+                    useful, a valid source descriptor must be subsequently assigned using the <tt>SET TABLE</tt>
+                    command.</p>
+            </li>
+            <li>
+                <p>
+                    A temporary <tt>TEXT</tt> table has the scope and the lifetime of an SQL session
+                    (an open Connection). A regular <tt>TEXT</tt> table has the scope and lifetime of
+                    a normal base table.</p>
+            </li>
+            <li>
+                <p>
+                    Altering a <tt>TEXT</tt> table's source descriptor has implications in the following
+                    areas:</p>
+                <ol type="1">
+                    <li>
+                        <p>
+                            Requires administrative privileges.</p>
+                    </li>
+                    <li>
+                        <p>
+                            Commits in-progress transactions.</p>
+                    </li>
+                    <li>
+                        <p>
+                            Revalidates existing table constraints, with the exception of foreign keys referencing
+                            the <tt>TEXT</tt> table. It is the responsibility of the administrator to manually
+                            revalidate the integrity of pre-existing foreign key references.</p>
+                    </li>
+                </ol>
+                <p>
+                    When a <tt>TEXT</tt> table's source descriptor is altered, the new source file is
+                    scanned and indexes are (re)built. At this point, <tt>NOT NULL</tt>, <tt>UNIQUE</tt>
+                    and <tt>PRIMARY KEY</tt> constraints are checked in immediate mode and assignment
+                    is aborted upon detection of the first constraint violation. Foreign key constraints,
+                    however, are <em>not</em> checked at the time of initial assignment or reassignment
+                    of the source file.</p>
+            </li>
+        </ul>
+        <h3 class="title">
+            Null Versus Empty Field Values</h3>
+        <ul type="disc">
+            <li>
+                <p>
+                    An <dfn>empty</dfn> field is defined to be a field whose representation in the <tt>TEXT</tt>
+                    table source file consists solely of zero (0) or more space characters.</p>
+            </li>
+            <li>
+                <p>
+                    When an empty field is delimited using double quotes and its corresponding column
+                    is declared to be of an SQL character type, then it is treated as a zero-length
+                    string.</p>
+            </li>
+            <li>
+                <p>
+                    Otherwise, an empty field is treated as an <tt>SQL NULL</tt> value.</p>
+            </li>
+        </ul>
+        <h3 class="title">
+            Configuration</h3>
+        <h4>
+            Field Separators</h4>
+        <p>
+            The default field separator is the comma character: [,].</p>
+        <p>
+            It is possible to specify an alternate field separator, for example:</p>
+        <pre lang="sql">    SET TABLE mytable SOURCE "myfile;fs=|"
+        </pre>
+        <p>
+            It is also possible to specify a distinct field separator for the <tt>SQL VARCHAR</tt>
+            and <tt>LONGVARCHAR</tt> types.</p>
+        <p>
+            For example, if the rows in the source file have the format:</p>
+        <pre>    &lt;field one&gt;|&lt;field two&gt;.&lt;field three&gt;~&lt;field four&gt;
+        </pre>
+        <p>
+            and the third and fourth columns are declared to be of type <tt>VARCHAR</tt> and
+            <tt>LONGVARCHAR</tt> respectively, then the source descriptor should be assigned
+            thus:</p>
+        <pre lang="sql">    SET TABLE mytable SOURCE "myfile;fs=|;vs=.;lvs=~"
+       </pre>
+        <p>
+            The engine recognises the following special indicators for field separators:</p>
+        <p class="title">
+            <b>Special indicators for field separators</b></p>
+        <dl>
+            <dt><span class="term">\semi</span> </dt>
+            <dd>
+                <p>
+                    semicolon</p>
+            </dd>
+            <dt><span class="term">\quote</span> </dt>
+            <dd>
+                <p>
+                    qoute</p>
+            </dd>
+            <dt><span class="term">\space</span> </dt>
+            <dd>
+                <p>
+                    space character</p>
+            </dd>
+            <dt><span class="term">\apos</span> </dt>
+            <dd>
+                <p>
+                    apostrophe</p>
+            </dd>
+            <dt><span class="term">\n</span> </dt>
+            <dd>
+                <p>
+                    newline - Used as an end anchor (like $ in regular expressions)</p>
+            </dd>
+            <dt><span class="term">\r</span> </dt>
+            <dd>
+                <p>
+                    carriage return</p>
+            </dd>
+            <dt><span class="term">\t</span> </dt>
+            <dd>
+                <p>
+                    tab</p>
+            </dd>
+            <dt><span class="term">\\</span> </dt>
+            <dd>
+                <p>
+                    backslash</p>
+            </dd>
+            <dt><span class="term">\uhhhh</span> </dt>
+            <dd>
+                <p>
+                    any Unicode character specified in hexadecimal</p>
+            </dd>
+        </dl>
+        <h4>
+            Header Lines and Field Delimiters</h4>
+        <p>
+            The <tt>TEXT</tt> table source descriptor accepts three additional boolean options:</p>
+        <ol>
+            <li>
+                <p>
+                    <tt>ignore_first</tt>
+                </p>
+                <p>
+                    The default is <tt>false</tt>. When <tt>true</tt>, the engine ignores the first
+                    line in the source file. Use when the first line contains, for example, the column
+                    labels.</p>
+            </li>
+            <li>
+                <p>
+                    <tt>all_quoted</tt>
+                </p>
+                <p>
+                    The default is <tt>false</tt>. When <tt>true</tt>, the engine delimits all character
+                    fields written to the source file using leading and trailing double quote characters.
+                    Otherwise, the policy depends on the <tt>quoted</tt> option below.</p>
+            </li>
+            <li>
+                <p>
+                    <tt>quoted</tt>
+                </p>
+                <p>
+                    The default is <tt>true</tt>. When <tt>true</tt>, the engine delimits character
+                    fields written to the source using leading and trailing double quote characters
+                    only
+                    when it is detected that a field's value contains a field separator character. When
+                    <tt>false</tt>, then engine never delimits field values and double quote characters
+                    are simply treated as data.</p>
+            </li>
+        </ol>
+        <p>
+            Example:</p>
+        <pre lang="sql">    SET TABLE mytable SOURCE "myfile;ignore_first=true;all_quoted=true"
+        </pre>
+        <p>
+            Note that when a field is written in delimited form, double quote characters that
+            are part of a field's value are escaped by writing two adjacent double quote characters:</p>
+        <pre>    "He said ""It's impossible""",1,"I Said ""You're right!""",2        
+        </pre>
+        <p>
+            When reading data, the engine determines that a field is delimited when the field's
+            first character is the double quote character and interprets the rest of the field
+            on this basis.</p>
+        <h4>
+            Character Encoding</h4>
+        <p>
+            The <tt>TEXT</tt> table source descriptor accepts an additional character-valued
+            option, <tt>encoding:</tt></p>
+        <pre lang="sql">    SET TABLE mytable SOURCE "myfile;encoding=UTF8"
+        </pre>
+        <p>
+            By default, the engine reads and writes source files using the <tt>ASCII</tt> character
+            encoding.</p>
+        <p>
+            The list of supported encodings can be found <a href="http://java.sun.com/j2se/1.5.0/docs/guide/intl/encoding.doc.html">
+                here</a>.</p>
+        <h4>
+            Row Buffering</h4>
+        <p>
+            As with <tt>CACHED</tt> tables, <tt>TEXT</tt> table data is buffered in memory.
+        </p>
+        <p>
+            Unlike <tt>CACHED</tt> tables for which there exists a single buffer manager per
+            database instance, the engine supplies a <em>separate</em> buffer manager for each
+            <tt>TEXT</tt> table.</p>
+        <p>
+            The default maximum number of buffered rows per <tt>TEXT</tt> table is computed
+            as <tt>3*(2<sup>cache_scale</sup>)</tt> using the <tt>textdb.cache_scale</tt> value.</p>
+        <p>
+            The default <tt>textdb.cache_scale</tt> value is <tt>10</tt>, which translates to a default maximum
+            of <tt>3072</tt> buffered rows per <tt>TEXT</tt> table.</p>
+        <p>
+            Since the property actually applies at table scope, it can also be assigned on a
+            per-table basis:</p>
+        <pre lang="sql">    SET TABLE mytable SOURCE "myfile;cache_scale=12"</pre>
+        <h4>
+            Read Direction</h4>
+        <p>
+            When the source descriptor is followed by the <tt>DESC</tt> keyword, the engine
+            treats the source file as <tt>READ ONLY</tt> and it is re-read in reverse order
+            in response to each <tt>SELECT</tt> statement, similar to the Unix tail command.</p>
+        <p>
+            This setting is especially useful when the source file is large, it is written periodically
+            by an external process and only the most recently written content is of interest.</p>
+        <p>
+            Note that when <tt>DESC</tt> is in effect, it is considered an error to issue:</p>
+        <pre lang="sql">    SET TABLE &lt;tablename&gt; READONLY FALSE</pre>
+        <h3>
+            Database Properties</h3>
+        <ol>
+            <li>
+                <p>
+                    <tt>textdb.fs</tt></p>
+                <p>
+                    A single character value denoting the database-wide default field separator character.</p>
+            </li>
+            <li>
+                <p>
+                    <tt>textdb.vfs</tt></p>
+                <p>
+                    A single character value denoting the database-wide default <tt>VARCHAR</tt> field separator character.</p>
+            </li>
+            <li>
+                <p>
+                    <tt>textdb.lvs</tt>
+                </p>
+                <p>
+                    A single character value denoting the database-wide default <tt>LONGVARCHAR</tt> field separator character.</p>
+            </li>
+            <li>
+                <p>
+                    <tt>textdb.quoted</tt></p>
+                <p>
+                    A boolean (true|false) keyword denoting the database-wide default <tt>quoted</tt> source descriptor property.</p>
+            </li>
+            <li>
+                <p>
+                    <tt>textdb.all_quoted</tt>
+                </p>
+                <p>
+                    A boolean (true|false) keyword denoting the database-wide default <tt>all_quoted</tt> source descriptor property.</p>
+            </li>
+            <li>
+                <p>
+                    <tt>textdb.ignore_first</tt>
+                </p>
+                <p>
+                    A boolean (true|false) keyword denoting the database-wide default <tt>ignore_first</tt> source descriptor property.</p>
+            </li>
+            <li>
+                <p>
+                    <tt>textdb.encoding</tt>
+                </p>
+                <p>
+                    A character sequence denoting the database-wide default <tt>encoding</tt> source descriptor property.</p>
+            </li>
+            <li>
+                <p>
+                    <tt class="literal">textdb.cache_scale</tt>
+                </p>
+                <p>
+                    An numeric character sequence denoting the database-wide default <tt>cache_scale</tt> source descriptor property.</p>
+            </li>
+            <li>
+                <p>
+                    <tt class="literal">textdb.allow_full_path</tt>
+                </p>
+                <p>
+                    A boolean (true|false) keyword that enables/suppresses source file path checking. See below.</p>
+            </li>
+        </ol>
+        <h3>
+            Issues And Limitations</h3>
+        <ul type="disc">
+            <li>
+                <p>
+                    By default, the engine raises an exception whenever an attempt is made to specify
+                    a source file that does not lie within the directory structure rooted at the directory
+                    that contains the primary database files. This behavior can be suppressed by manually
+                    specifying <tt>textdb.allow_full_path=true</tt>
+                    in the <tt>&lt;database&gt;.properties</tt> file.</p>
+            </li>
+            <li>
+                <p>
+                    The engine ignores all blank lines found in a table's source file.</p>
+            </li>
+            <li>
+                <p>
+                    The engine does not respect the original row order of pre-existing source files
+                    and does not perform row updates in-place.</p>
+                <p>
+                    Instead:</p>
+                <ol>
+                    <li>
+                        <p>
+                            row deletion is performed by replacing the corresponding line(s) in the source file
+                            with lines consisting of an equivalent number space characters.</p>
+                    </li>
+                    <li>
+                        <p>
+                            row insertion is performed by appending a new line at the end of the source file.</p>
+                    </li>
+                    <li>
+                        <p>
+                            row update consists of a row deletion followed by a row insertion.</p>
+                    </li>
+                    <li>
+                        <p>
+                            <tt>CHECKPOINT DEFRAG</tt> and <tt>SHUTDOWN COMPACT</tt> operations rewrite each
+                            source file based on the order of the primary index, not the row order of the existing
+                            file.</p>
+                    </li>
+                    <li>
+                        <p>
+                            Because the engine does not record the content of the ignored first line when the
+                            source descriptor includes the<tt> ignore_first=true </tt>option, a present limitation
+                            of the <tt>CHECKPOINT DEFRAG</tt> and <tt>SHUTDOWN COMPACT</tt> operations is that
+                            the original ignored first line is not preserved; a blank line is written instead.</p>
+                    </li>
+                </ol>
+            </li>
+            <li>
+                <p>
+                    When executing an SQL <tt>SELECT INTO</tt> statement of the form:</p>
+                <pre lang="sql">    SELECT &lt;select list&gt; INTO TEXT &lt;tablename&gt; FROM ...
+                </pre>
+                <p>
+                    the table's source file is created automatically in the directory that directly
+                    contains the primary database files
+                    and its name is derived from the specified <tt>&lt;tablename&gt;</tt>. In particular,
+                    the file name is computed by replacing all alphanumeric characters with their lowercase
+                    equivalent, replacing the remaining characters with the underscore character and appending
+                    <tt>".csv"</tt> to the result. Note that the legality of the resulting name may
+                    be subject to external operating system or file system constraints.</p>
+            </li>
+        </ul>
+        <ul type="disc">
+            <li>
+                <p>
+                    Because they are ordinarily used to represent record termination, representing the
+                    line feed or carriage return character within a field requires that the field is
+                    written in delimited form using the leading and trailing double quote convention.
+                    However, the engine makes no attempt to limit row content.&nbsp; Instead, when both <tt>quoted</tt> and <tt>all_quoted</tt> properties are <tt>false</tt>, inserting
+                    or updating a row such that it contains either character will cause the
+                    source file to become corrupt from the perspective of the table's source descriptor.</p>
+            </li>
+        </ul>
+        <include item="footer" />
+    </div>
+</body>
+</html>
+<!-- @SortOrder 6 -->

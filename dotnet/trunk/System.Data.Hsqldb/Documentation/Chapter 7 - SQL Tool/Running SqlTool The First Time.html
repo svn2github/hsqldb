@@ -1,0 +1,154 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <link rel="stylesheet" type="text/css" href="../styles/presentation.css">
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+    <style>
+.screen
+{
+BORDER: 2px ridge;
+PADDING: 5px;
+BACKGROUND: black;
+COLOR: #CCCCCC;
+MARGIN-BOTTOM: 0.5em;
+}
+</style>
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../html/hsqldb.gif">
+                </td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br>
+                    <span class="topicTitle">Chapter 7 - SQL Tool</span>
+                    <br>
+                    <div id="toolbar">
+                        <span id="chickenFeet">
+                        <a href="Chapter 7 - SQL Tool.html">Chaper Overview</a> 
+                        &gt;
+                        <span class="nolink">Running SqlTool For The First Time</span> </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <ol>
+            <li>
+                <p>
+                    Copy the <tt>sqltool.rc</tt> from the <em>Etc</em> folder of your HSQLDB installation
+                    directory to your <em>%USERPROFILE%</em> directory.</p>
+            </li>
+            <li>
+                <p>
+                    Change the file permissions of the copied <tt>sqltool.rc</tt> to deny access
+                    to everyone except yourself.</p>
+                <p>
+                    It is best practice to do this because the file contains database credentials.</p>
+            </li>
+            <li>
+                <p>
+                    Open a console and change the working directory to the the the <em>Bin</em>
+                    folder of your HSQLDB installation, for example:</p>
+                <pre class="screen">    &gt;CD "C:\Program Files\The HSQL Development Group\HSQLDB.NET 1.8.0\Bin"
+                </pre>
+            </li>
+            <li>
+                <p>
+                    Start the tool using the --help option</p>
+                <pre class="screen">    &gt;System.Data.Hsqldb.SqlTool --help
+                </pre>
+            </li>
+            <li>
+                <p>
+                    If everything is OK, you should see output like:</p>
+                <pre class="screen">Usage: java [-Dsqlfile.X=Y...] org.hsqldb.util.SqlTool \
+    [--optname [optval...]] urlid [file1.sql...]
+where arguments are:
+    --help                   Displays this message
+    --list                   List urlids in the rc file
+    --noInput                Do not read stdin (default if sql file given
+                             or --sql switch used).
+    --stdInput               Read stdin IN ADDITION to sql files/--sql input
+    --inlineRc URL=val1,USER=val2[,DRIVER=val3][,CHARSET=val4][,TRUST=val5]
+                             Inline RC file variables
+    --debug                  Print Debug info to stderr
+    --noAutoFile             Do not execute auto.sql from home dir
+    --autoCommit             Auto-commit JDBC DML commands
+    --sql "SQL; Statements"  Execute given SQL instead of stdin (before
+                             SQL files if any are specified) where "SQL"
+                             consists of SQL command(s).  See the Guide.
+    --rcFile /file/path.rc   Connect Info File [$HOME/sqltool.rc]
+    --abortOnErr             Abort on Error (overrides defaults)
+    --continueOnErr          Continue on Error (overrides defaults)
+    --setVar NAME1=val1[,NAME2=val2...]   PL variables
+    --driver a.b.c.Driver    JDBC driver class [org.hsqldb.jdbcDriver]
+    urlid                    ID of url/userame/password in rcfile
+    file1.sql...             SQL files to be executed [stdin]
+                             (Use '-' for non-interactively stdin).
+See the SqlTool Manual for the supported sqltool.* System Properties.
+SqlTool v. 1.55.
+
+&gt;_
+                </pre>
+            </li>
+            <li>
+                <p>
+                    Start the tool again using the pre-configured <em>mem</em> urlid contained on
+                    the sqltool.rc file</p>
+                <pre class="screen">    &gt;System.Data.Hsqldb.SqlTool mem
+                 </pre>
+            </li>
+            <li>
+                <p>
+                    If everything is OK, you should see output like:</p>
+                <pre class="screen">JDBC Connection established to a HSQL Database Engine v. 1.8.0 database as 'SA'.
+SqlTool v. 1.55.                        (SqlFile processor v. 1.135)
+Distribution is permitted under the terms of the HSQLDB license.
+(c) 2004-2005 Blaine Simpson and the HSQLDB Development Group.
+
+    \q    to Quit.
+    \?    lists Special Commands.
+    :?    lists Buffer/Editing commands.
+    *?    lists PL commands (including alias commands).
+
+SPECIAL Commands begin with '\' and execute when you hit ENTER.
+BUFFER Commands begin with ':' and execute when you hit ENTER.
+COMMENTS begin with '/*' and end with the very next '*/'.
+PROCEDURAL LANGUAGE commands begin with '*' and end when you hit ENTER.
+All other lines comprise SQL Statements.
+  SQL Statements are terminated by either a blank line (which moves the
+  statement into the buffer without executing) or a line ending with ';'
+  (which executes the statement).
+  SQL Statements may begin with '/PLVARNAME' and/or contain *{PLVARNAME}s.
+
+  sql&gt;_
+            </pre>
+            </li>
+            <li>
+                <p>
+                    You can now begin experimenting with interactive use of the SqlTool.</p>
+            </li>
+        </ol>
+        <div class="alert">
+            <h3 class="title">
+                Note</h3>
+            <ul>
+                <li>SqlTool does not <em>commit</em> changes by default. This leaves it to the user's
+                    discretion whether to commit or rollback their modifications. Remember to either
+                    run the command <tt>commit;</tt> before quitting SqlTool, or use the <tt>--autoCommit</tt>
+                    command-line switch.</li>
+                <li>If you put a file named <tt>auto.sql</tt> into your <em>%USERPROFILE%</em> directory,
+                    it will be executed automatically every time that you run SqlTool interactively
+                    without the <tt>--noAutoFile</tt> switch.</li>
+            </ul>
+        </div>
+    </div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 1 -->

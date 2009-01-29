@@ -1,0 +1,230 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <link rel="stylesheet" type="text/css" href="../../styles/presentation.css">
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../../html/hsqldb.gif">
+                </td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br>
+                    <span class="topicTitle">Chapter 8 - SQL Syntax</span>
+                    <br>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><a href="../Chapter 8 - SQL Syntax.html">Chapter Overview</a>
+                            &gt; <a href="SQL Commands.html">SQL Commands</a> &gt; <span class="nolink">Data Query
+                                And Manipulation Commands</span> </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <p>
+            <b>Data Query and Manipulation Language</b> (<strong>DQL</strong>/<b>DML</b>) is
+            a family of <a class="mw-redirect" href="/wiki/Computer_language" title="Computer language">
+                <span>computer languages</span></a> used by computer programs and database users
+            to create, retrieve, update and delete data in a <a href="/wiki/Database" title="Database">
+                <span>database</span></a>.&nbsp; For this reason, the acronym <strong>CRUD</strong>
+            is also often used to refer to this family of operations.</p>
+        <p>
+            Currently the most popular data query and manipulation language is&nbsp;<a href="/wiki/SQL"
+                title="SQL"><span>SQL</span></a>, which is used to retrieve and manipulate <a href="/wiki/Data"
+                    title="Data"><span>data</span></a> in a <a href="/wiki/Relational_database" title="Relational database">
+                        <span>Relational database</span></a></p>
+        <p>
+            Data query and manipulation languages were initially only used by <a href="/wiki/Computer_program"
+                title="Computer program"><span>computer programs</span></a>, but (with the advent
+            of SQL) have come to be used by people, as well.</p>
+        <p>
+            Data Query and Manipulation Languages have their functional capability organized
+            by the initial word in a statement, which is almost always a <a href="/wiki/Verb"
+                title="Verb"><span style="text-decoration: underline">verb</span></a>. In the
+            case of HSQLDB SQL, these verbs are DELETE, INSERT, SELECT and UPDATE:</p>
+        <h3>
+            DELETE</h3>
+        <pre lang="sql">DELETE FROM table [WHERE Condition];
+        </pre>
+        <p>
+            Removes the rows from the specified table that satisfy the specified condition -
+            all rows when the condition is ommitted.</p>
+        <h3>
+            <a name="explain-plan-section"></a>EXPLAIN PLAN</h3>
+        <pre lang="sql">
+EXPLAIN PLAN FOR { DELETE ... | INSERT ... | SELECT ... | UPDATE ..};
+        </pre>
+        <p>
+            <tt><span style="font-family: Verdana">Each HSQLDB SQL statement is a </span><a href="/wiki/Declarative_programming"
+                title="Declarative programming"><span style="text-decoration: underline; font-family: Verdana;">
+                    declarative</span></a><span style="font-family: Verdana"> command, </span><span style="font-family: Verdana">
+                        as opposed to </span><a href="/wiki/Imperative_programming" title="Imperative programming">
+                            <span style="text-decoration: underline; font-family: Verdana;">imperative</span></a><span
+                                style="font-family: Verdana">, in that it describes <i>what</i> the program should
+                                accomplish, rather than describing <i>how</i> to go about accomplishing it.</span></tt></p>
+        <p>
+            <tt>EXPLAIN PLAN</tt> can be used with any DQL/DML command to retrieve a detailed
+            list of the elements and usages in the actual execution plan, an abstract description
+            of <em>how</em> HSQLDB will go about accomplishing it.</p>
+        <p>
+            The generated list includes elements describing which indexes are employed and the
+            role they play.&nbsp; This information can be used to understand and hand-tune query
+            execution, as well as to determine if existing indexes are perhaps not utilized
+            or opportunities exist to create new indexes to improve the efficiency of the execution
+            plan.&nbsp;</p>
+        <h3>
+            INSERT</h3>
+        <pre lang="sql">INSERT INTO table [( column [,...] )]
+{
+      VALUES(Expression [,...])
+    | SelectStatement
+};
+        </pre>
+        <p>
+            Adds one or more new rows to a table.</p>
+        <h3>
+            SELECT</h3>
+        <pre lang="sql">   SELECT [{LIMIT &lt;offset&gt; &lt;limit&gt; | TOP &lt;limit&gt; | FIRST &lt;limit&gt;}][ALL | DISTINCT]
+          { selectExpression | table.* | * } [, ...]
+    [INTO [CACHED | TEMP  | TEXT] newTable]
+     FROM tableList
+   [WHERE Condition]
+[GROUP BY Expression [, ...]]
+  [HAVING Condtion]
+  [{UNION [ALL | DISTINCT] |
+    MINUS [DISTINCT] |
+   EXCEPT [DISTINCT] |
+INTERSECT [DISTINCT]} selectStatement]
+[ORDER BY orderExpression [, ...]]
+   [LIMIT &lt;limit&gt; [OFFSET &lt;offset&gt;]];
+        </pre>
+        <p>
+            Retrieves information from one or more tables in the database.</p>
+        <div>
+            <p>
+                <strong>Components of a <tt>SELECT</tt> command</strong></p>
+            <dl>
+                <dt style="margin-bottom: 1em;">tableList</dt>
+                <dd>
+                    <pre lang="sql">    table [{CROSS | INNER | LEFT OUTER | RIGHT OUTER} JOIN table ON Condition] [, ...]
+                    </pre>
+                </dd>
+                <dt style="margin-bottom: 1em;">table</dt>
+                <dd>
+                    <pre lang="sql">    { (selectStatement) [AS] label | tableName}
+                    </pre>
+                </dd>
+                <dt style="margin-bottom: 1em;">selectExpression</dt>
+                <dd>
+                    <pre lang="sql">    {
+          &lt;sql-expression&gt;
+        | COUNT(*)
+        | COUNT([ALL | DISTINCT]] Expression)
+        | MIN([ALL | DISTINCT]] Expression)
+        | MAX([ALL | DISTINCT]] Expression)
+        | SUM([ALL | DISTINCT]] Expression)
+        | AVG([ALL | DISTINCT]] Expression)
+        | SOME([ALL | DISTINCT]] Expression)
+        | EVERY([ALL | DISTINCT]] Expression)
+        | VAR_POP(Expression)
+        | VAR_SAMP(Expression)
+        | STDDEV_POP(Expression)
+        | STDDEV_SAMP(Expression)
+    } [[AS] label]
+                    </pre>
+                    <p>
+                        If <tt>DISTINCT</tt> is specified, only one instance of several equivalent values
+                        is used in the aggregate function.</p>
+                </dd>
+                <dd>
+                    <p>
+                        Except <tt>COUNT(*)</tt>, all aggregate functions exclude <tt>NULL</tt> values.</p>
+                </dd>
+                <dd>
+                    <p>
+                        The type of the returned value for <tt>SUM</tt> is subject to deterministic widening
+                        to ensure lossless results. The returned value type for <tt>COUNT</tt> is <tt>INTEGER</tt>,
+                        for <tt>MIN</tt>, <tt>MAX</tt> and <tt>AVG</tt> it is the same type as the column,
+                        for <tt>SOME</tt> and <tt>EVERY</tt> it is <tt>BOOLEAN</tt>. For <tt>VAR_POP</tt>,
+                        <tt>VAR_SAMP</tt>, <tt>STDDEV_POP</tt> and <tt>STDDEV_SAMP</tt> statistical functions,
+                        the type is always <tt>DOUBLE</tt>.</p>
+                    <p>
+                        If <tt>CROSS JOIN</tt> is specified, no <tt>ON</tt> condition is allowed for the
+                        join.</p>
+                </dd>
+                <dt style="margin-bottom: 1em;">orderExpression</dt>
+                <dd>
+                    <pre lang="sql">    { columnNr | columnAlias | selectExpression } [ASC | DESC]
+                    </pre>
+                </dd>
+                <dt style="margin-bottom: 1em;"><tt>LIMIT n m</tt></dt>
+                <dd>
+                    <p>
+                        Discards the first <tt>n</tt> rows <tt>(OFFSET)</tt> and returns the first <tt>m</tt>
+                        rows of the remaining result set <tt>(LIMIT)</tt>.</p>
+                </dd>
+                <dd>
+                    <p>
+                        Special cases:</p>
+                </dd>
+                <dd>
+                    <p>
+                        <tt>LIMIT 0 m</tt> is equivalent to <tt>TOP m</tt> or <tt>FIRST m</tt> in other
+                        RDBMS's</p>
+                </dd>
+                <dd>
+                    <p>
+                        <tt>LIMIT n 0</tt> discards the first <tt>n</tt> rows and returns the remaining
+                        rows.</p>
+                </dd>
+                <dt style="margin-bottom: 1em;"><tt>LIMIT m OFFSET n</tt></dt>
+                <dd>
+                    <p>
+                        Used at the end of the <tt>SELECT</tt> statement. The <tt>OFFSET</tt> term is optional.</p>
+                </dd>
+                <dt style="margin-bottom: 1em;"><tt>TOP m</tt></dt>
+                <dd>
+                    <p>
+                        Equivalent to <tt>LIMIT 0 m</tt>.</p>
+                </dd>
+                <dt style="margin-bottom: 1em;"><tt>UNION</tt> and other set operations</dt>
+                <dd>
+                    <p>
+                        Multiple <tt>UNION</tt> statements may be combined union <tt>UNION</tt>, <tt>EXCEPT</tt>
+                        and <tt>INTERSECT</tt>.</p>
+                </dd>
+                <dd>
+                    <p>
+                        Each <tt>SELECT</tt> is treated as a term, and the set operation as an operator
+                        in an expression.</p>
+                </dd>
+                <dd>
+                    <p>
+                        The expression is evaluated from left to right but <tt>INTERSECT</tt> has highest
+                        precedence.</p>
+                </dd>
+                <dd>
+                    <p>
+                        You can use parentheses around any number of <tt>SELECT</tt> statements to manually
+                        control the precedence.</p>
+                </dd>
+            </dl>
+        </div>
+        <h3>
+            UPDATE</h3>
+        <pre lang="sql">UPDATE table
+   SET column = Expression [, ...]
+[WHERE Condition];
+        </pre>
+        <p>
+            Modifies data of a table in the database.</p>
+    </div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 2 -->

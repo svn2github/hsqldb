@@ -1,0 +1,55 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <link rel="stylesheet" type="text/css" href="../styles/presentation.css">
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../html/hsqldb.gif"></td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br>
+                    <span class="topicTitle">Chapter 2 - SQL Issues</span>
+                    <br>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><a href="Chapter 2 - SQL Issues.html">Chaper Overview </a>
+                            &gt; <span class="nolink">SQL Standard Support </span></span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <p>
+            HSQLDB supports the dialect of SQL defined by SQL standards 92, 99 and 2003.
+            This means that where a feature of the standard <em>is</em> supported, the HSQLDB
+            syntax is specified by the standards text.</p>
+        <p>
+            HSQLDB supports many features of SQL92 and 99 up to <dfn>Advanced Level</dfn>,
+            and there is support for most of the SQL 2003 <dfn>Foundation</dfn> and several of the
+            <dfn>Optional Features</dfn>. However, support is by no means complete, so no claims of
+            conformance are made for any level of any standard.</p>
+        <p>
+            HSQLDB also supports some keywords that are not part of any SQL standard. However,
+            all keywords, including those that <em>are</em> HSQLDB-specific, may be delimited
+            (placed in double quotes) for use as database object identifiers:</p>
+        <pre lang="sql" title="Delimited keyword example">
+    CREATE TABLE mytable(id INTEGER, "POSITION" DECIMAL(10,4))
+        </pre>
+        <p>
+            Similarly, HSQLDB supports some expressions that are not part of any SQL standard,
+            for example:</p>
+        <pre lang="sql" title="Non-standard expressions example">
+    SELECT TOP 5 FROM ...
+    SELECT LIMIT 0 10 FROM ...
+    DROP TABLE mytable IF EXISTS
+        </pre>
+    </div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 1 -->

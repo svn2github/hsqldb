@@ -1,0 +1,196 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <link rel="stylesheet" type="text/css" href="../styles/presentation.css">
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+    <style>
+.item-body
+{
+padding-left: 1em;
+width: 40em;
+}    
+    </style>
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../html/hsqldb.gif">
+                </td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br>
+                    <span class="topicTitle">Chapter 1 - Getting Started</span>
+                    <br>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><a href="Chapter 1 - Getting Started.html">Chapter Overview
+                        </a>&gt; <span class="nolink">Introduction</span> </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <p>
+            The HSQLDB ADO.NET Data Provider installation contains several components and
+            programs:</p>
+        <ul type="disc">
+            <li>
+                <p>
+                    <strong><a href="http://www.ikvm.net/">IKVM</a> Runtime Assembly (IKVM.Runtime.dll</strong>)</p>
+                <div class="item-body">
+                    <p>
+                        An excellent JVM runtime implementation for .NET.</p>
+                    <p>
+                        Among other things, this contains:
+                    </p>
+                    <ul type="disc" style="margin-bottom: 1em;">
+                        <li>
+                            <p>
+                                A Byte Code JIT compiler/verifier:</p>
+                            <p>
+                                Just-in-time compiles Java Byte Code to CIL.
+                            </p>
+                        </li>
+                        <li>
+                            <p>
+                                An Object model remapping infrastructure:</p>
+                            <p>
+                                Allows Java code to recognize important NET base classes as corresponding Java
+                                base classes and visa versa.
+                            </p>
+                        </li>
+                        <li>
+                            <p>
+                                Managed .NET re-implementations of the native methods in GNU Classpath.</li>
+                    </ul>
+                </div>
+            </li>
+            <li>
+                <p>
+                    <strong> <a href="http://www.gnu.org/software/classpath/classpath.html">GNU
+                        Classpath</a> Assembly (IKVM.GNU.Classpath.dll)</strong></p>
+                <div class="item-body">
+                    <p>
+                        A compiled version of the GNU Classpath Java class libraries, plus some additional
+                        IKVM.NET specific code.</p>
+                    <p>
+                        Note that GNU Classpath isn't <em>part</em> of IKVM.NET, but it is <em>used</em>
+                        by IKVM.NET.</p>
+                </div>
+            </li>
+            <li>
+                <p>
+                    <strong><a href="http://sourceforge.net/project/showfiles.php?group_id=23316">HSQLDB</a> Embedded RDBMS Engine Assembly (Org.Hsqldb.dll)</strong></p>
+                <div class="item-body">
+                    <p>
+                        A slightly patched version of the
+                            HSQLDB 1.8 standard profile jar, recompiled as a managed .NET assembly
+                        using the <strong>ikvmc.exe</strong> static compiler.</p>
+                </div>
+            </li>
+            <li>
+                <p>
+                    <strong>ADO.NET Driver Assembly (System.Data.Hsqldb.Client.dll)</strong></p>
+                <div class="item-body">
+                    <p>
+                        Contains HSQLDB-specific managed .NET implementations of the abstract base classes
+                        found in the <tt>System.Data.Common</tt> namespace, such as <tt>DbConnection</tt>,
+                        <tt>DbCommand</tt>, <tt>DbDataReader</tt>, etc.</p>
+                </div>
+            </li>
+            <li>
+                <p>
+                    <strong>Network Server Assembly (System.Data.Hsqldb.Net.dll)</strong></p>
+                <div class="item-body">
+                    <p>
+                        Contains classes that expose the HSQLDB network database service APIs</p>
+                </div>
+            </li>
+            <li>
+                <p>
+                    <strong>Server Console Application (System.Data.Hsqldb.Server.exe)</strong></p>
+                <div class="item-body">
+                    <p>
+                        Allows an HSQLDB <tt>Server</tt> to be started from the console.</p>
+                </div>
+            </li>
+            <li>
+                <p>
+                    <strong>Server Service Application (System.Data.Hsqldb.Server.Service.exe)</strong></p>
+                <div class="item-body">
+                    <p>
+                        Contains a Windows<font size="-2"><sup><em>TM</em></sup></font> service and
+                        service installer for the HSQLDB network database Server</p>
+                </div>
+            </li>
+            <li>
+                <p>
+                    <strong>WebServer Console Application (System.Data.Hsqldb.WebServer.exe)</strong></p>
+                <div class="item-body">
+                    <p>
+                        Allows an HSQLDB <tt>WebServer</tt> to be started from the console.</p>
+                </div>
+            </li>
+            <li>
+                <p>
+                    <strong>WebServer Service Application (System.Data.Hsqldb.WebServer.Service.exe)</strong></p>
+                <div class="item-body">
+                    <p>
+                        Contains a Windows<font size="-2"><sup><em>TM</em></sup></font> service and
+                        service installer for the HSQLDB network database WebServer</p>
+                </div>
+            </li>
+            <li>
+                <p>
+                    <strong>Database Manager WinForms Application (System.Data.Hsqldb.DatabaseManager.exe)</strong></p>
+                <div class="item-body">
+                    <p>
+                        An interactive SQL GUI.</p>
+                </div>
+            </li>
+            <li>
+                <p>
+                    <strong>SQL Tool Console Application (System.Data.Hsqldb.SqlTool.exe)</strong></p>
+                <div class="item-body">
+                    <p>
+                        A batch/interactive SQL console application.</p>
+                </div>
+            </li>
+            <li>
+                <p>
+                    <strong><a href="http://msdn2.microsoft.com/en-us/vstudio/default.aspx">Visual Studio
+                        2005</a> Data Designer Extension Package</strong></p>
+                <div class="item-body">
+                    <p>
+                        Provides <em>Server Explorer</em> integration with Visual Studio 2005.</p>
+                </div>
+            </li>
+            <li>
+                <p>
+                    <strong><a href="http://www.hibernate.org/343.html">NHibernate</a> Dialect &amp; Driver Assembly</strong></p>
+                <div class="item-body">
+                    <p>
+                        Allows the data provider to be used with
+                            NHibernate for .NET</p>
+                </div>
+            </li>
+            <li>
+                <p>
+                    <strong><a href="http://galaxy.andromda.org/">AndroMDA</a> Mapping &amp; Configuration
+                        files </strong>
+                </p>
+                <div class="item-body">
+                    <p>
+                        Allows the data provider to be used with AndroMDA and <a href="http://sourceforge.net/project/showfiles.php?group_id=154568&package_id=188198">
+                            AndroidVS </a>
+                    </p>
+                </div>
+            </li>
+        </ul>
+        Next Topic: <a href="Running Tools.html">Running Tools</a></div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 1 -->

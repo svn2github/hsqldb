@@ -1,0 +1,166 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <link rel="stylesheet" type="text/css" href="../../styles/presentation.css">
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../../html/hsqldb.gif">
+                </td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br>
+                    <span class="topicTitle">Chapter 8 - SQL Syntax</span>
+                    <br>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><a href="../Chapter 8 - SQL Syntax.html">Chapter Overview</a>
+                            &gt; <a href="SQL Commands.html">SQL Commands</a> &gt; <span class="nolink">Transaction
+                                Control Commands</span> </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <h3>
+            <a name="commit-section"></a>COMMIT</h3>
+        <pre lang="sql">COMMIT [WORK];
+        </pre>
+        <p>
+            Ends the current transaction and makes the changes permanent.</p>
+        <h3>
+            <a name="release-savepoint-section"></a>RELEASE SAVEPOINT</h3>
+        <pre lang="sql">RELEASE SAVEPOINT &lt;savepoint name&gt;;
+        </pre>
+        <p>
+            Destroys the named savepoint and all savepoints created subsequent to its creation
+            within the current transaction.</p>
+        <h3>
+            <a name="rollback-section"></a>ROLLBACK</h3>
+        <pre lang="sql">ROLLBACK [(WORK | TO SAVEPOINT &lt;savepoint name&gt;)];
+        </pre>
+        <p>
+            The base form ends the current transaction and undoes changes made subsequent to the preceding
+            <tt>COMMIT</tt> or <tt>ROLLBACK</tt>.</p>
+        <p>
+            With the <tt>TO SAVEPOINT &lt;savepoint name&gt;</tt> extension, undoes changes made
+            subsequent to creating the named savepoint; has no effect if the named savepoint does
+            not exist within the current transaction.</p>
+        <h3>
+            <a name="savepoint-section"></a>SAVEPOINT</h3>
+        <pre lang="sql">SAVEPOINT &lt;savepoint name&gt;;
+        </pre>
+        <p>
+            Creates a new named <tt>SAVEPOINT</tt> for use with <tt>ROLLBACK TO SAVEPOINT</tt>
+            or <tt>RELEASE SAVEPOINT</tt>.</p>
+        <p>
+            If a save point with the given name pre-exists within the current transaction,
+            then the pre-existing save point is destroyed, meaning that it will no longer
+            be possible to roll back to that point.</p>
+        <h3>
+            <a name="set_autocommit-section"></a>SET AUTOCOMMIT</h3>
+        <pre lang="sql">SET AUTOCOMMIT { TRUE | FALSE };
+        </pre>
+        <p>
+            Sets an SQL session's auto-commit mode.</p>
+        <p>
+            When TRUE (the default), each statement is committed implicitly upon sucessful
+            completion.</p>
+        <p>
+            Otherwise, statements are grouped into transactions that are terminated either
+            by an SQL <tt>COMMIT</tt> or <tt>ROLLBACK</tt>.</p>
+        <div class="alert">
+            <h3 class="title">
+                Note</h3>
+            <p>
+                With the exception of writing SQL scripts, the <tt>COMMIT</tt>, <tt>RELEASE SAVEPOINT</tt>,
+                <tt>ROLLBACK</tt>, <tt>SAVEPOINT</tt> and <tt>SET AUTOCOMMIT</tt> commands should
+                <em>never</em> be used directly.</p>
+            <p>
+            To maintain ADO.NET code portability and to allow participation in
+                ADO.NET distributed transactions, the
+                <see cref="System.Data.IDbConnection.BeginTransaction()">
+                BeginTransaction()</see>
+                method should be used to start each new transaction and the resulting
+                <see cref="System.Data.IDbTransaction">IDbTransaction</see>
+                object should be used to commit or roll back the work. In order to create, release,
+                and roll back named save points, it is necessary to cast the resulting <tt>IDbTransaction</tt>
+                object to an
+                <see cref="System.Data.Hsqldb.Client.HsqlTransaction">HsqlDbTransaction</see>
+                object and invoke the corresponding methods
+                <see cref="System.Data.Hsqldb.Client.HsqlTransaction.Save(string)">Save(string)</see>
+                ,
+                <see cref="System.Data.Hsqldb.Client.HsqlTransaction.Release(string)">Release(string)</see>
+                and
+                <see cref="System.Data.Hsqldb.Client.HsqlTransaction.Rollback(string)">Rollback(string)</see>
+                .</p>
+        </div>
+        <h3>
+            <a name="set_logsize-section"></a>SET LOGSIZE</h3>
+        <pre lang="sql">SET LOGSIZE &lt;size in megabytes&gt;;
+        </pre>
+        <p>
+        <strong style="color: Orange">
+            Requires administrative privileges</strong>.</p>
+        <p>
+            Sets the maximum size to which the transaction log may grow before triggering
+            an automatic <tt>CHECKPOINT</tt>.</p>
+        <p>
+            The default is <tt>200</tt> (<tt>MB</tt>).</p>
+        <p>
+            <tt>0</tt> is interpreted as no limit; it disables automatic checkpoints based on transaction log growth.</p>
+        <h3>
+            <a name="set_write_delay-section"></a>SET WRITE DELAY</h3>
+        <pre lang="sql">SET WRITE_DELAY {{ TRUE | FALSE } | &lt;seconds&gt; | &lt;milliseconds&gt; MILLIS};
+        </pre>
+        <p style="color: Orange">
+            <strong>Requires administrative privileges</strong>.</p>
+        <p>
+            Controls the frequency at which the transaction log is sync'ed to disk.</p>
+        <p>
+            When <tt>WRITE_DELAY</tt>
+            is set to <tt>FALSE</tt> or <tt>0</tt>, a file sync takes place immediately
+            at each explicit or implicit <tt>COMMIT</tt>.&nbsp;
+        </p>
+        <p>
+            When <tt>WRITE_DELAY</tt> is set <tt>TRUE</tt> (the default) a file sync takes
+            place once
+            every 20 seconds</p>
+        <p>
+            Numeric values are interpreted in seconds unless the MILLIS option is specified also, in which case values are interpreted in milliseconds.</p>
+        <p>
+            It is possible to specify a numeric value as low as 10 MILLIS.&nbsp; Lower values
+            are silently adjusted back to 10 MILLIS.</p>
+        <p>
+            The purpose of this command is to control the tradeoff between maximum transaction
+            rate and maximum data loss in case of abnormal terminiation.</p>
+        <p>
+            For a given setting, data commited in the last write delay period
+            before abnormal
+            termination may not be recoverable. Data commited prior to this is guaranteed
+            to be recoverable, as long as the target disk sub-system and operating system
+            both live up to the advertised contract for the file sync system call.</p>
+        <p>
+            In practice,
+            a write delay of 100 milliseconds provides better than 99.9999% reliability
+            with an average one system crash per day, or 99.99999% with an average one system
+            crash per 6 days.</p>
+        <p>
+            A write delay of FALSE or 0 impacts performance in high load situations, as the engine
+            has to wait for the file system to catch up.&nbsp; In general, modern systems
+            exhibit a 5-15 millisecond latency for file sync calls, limiting the maximum
+            transaction rate to between 60 to 200 per second.&nbsp; I practice, setting
+            write delay to FALSE or 0 yeilds a much lower actual rate than the theoretical maximim
+            imposed by the average file sync latency of the system in question.</p>
+        <p>
+            Each time a <tt>SET WRITE_DELAY</tt> is issued with any value, a sync is immediately
+            performed.</p>
+    </div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 4 -->

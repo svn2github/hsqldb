@@ -1,0 +1,77 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <title>HSQLDB 1.8.0 For ADO.NET 2.0 - Accessing A Server From Client Code</title>   
+    <link rel="stylesheet" type="text/css" href="../../styles/presentation.css"/>
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css"/>
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../../html/hsqldb.gif"/>
+                </td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br/>
+                    <span class="topicTitle">Chapter 1 - Getting Started</span>
+                    <br/>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><a href="../Chapter 1 - Getting Started.html">Chapter Overview
+                        </a>&gt; <a href="Client-Server Operation.html">Client-Server Operation </a>&gt; <span
+                            class="nolink">Accessing A Server From Client Code</span> </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <p>
+            A client program can connect to a database instance hosted by a running HSQLDB <em>Server</em>
+            or <em>WebServer</em> using the standard ADO.NET 2.0 mechanism.</p>
+        <p>
+            First, to obtain and use a connection instance:</p>
+        <pre lang="cs">    using System.Data.Common;
+    ...
+    const string ProviderInvariantName = "System.Data.Hsqldb.Client";
+    DbFactory factory = DbProviderFactories.GetFactory(ProviderInvariantName);
+    using(DbConnection connection = factory.CreateConnection())
+    {</pre>
+        <p style="margin-top: 1em; margin-bottom: 1em;">
+            Then, to open the connection object:</p>
+        <pre lang="cs">       /*
+        * Alternatively, use "Http" or "Https" to access a WebServer.
+        * Use "Hsqls" to specify transport layer security.
+        */
+        string protocol = "Hsql";
+        string host = "localhost";
+        int port = 9001;
+        string userId = "SA";
+        DbConnectionStringBuilder builder = factory.CreateConnectionStringBuilder();
+        builder["Protocol"] = protocol;
+        builder["Host"] = host;
+        builder["Port"] = port;
+        builder["User ID"] = userId;
+        connection.ConnectionString = builder.ConnectionString;
+        connection.Open();
+        ...
+    }
+    </pre>
+    <p>Next Topic: <a href="Client-Server Network Protocols/Client-Server Network Protocols.html">
+            Client-Server Network Protocols</a></p>
+        <div class="alert">
+            <h3 class="title">
+                Note</h3>
+            <p>
+                In the above connection string, there is no mention of the database file; instead,
+                it was specified when running the server.</p>
+            <p>
+                See <a href="../../Chapter 4 - Configuration And Settings/Chapter 4 - Configuration And Settings.html">
+                    Chapter 4 - Configuration And Settings</a> for server configuration details.</p>
+        </div>
+    </div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 1 -->

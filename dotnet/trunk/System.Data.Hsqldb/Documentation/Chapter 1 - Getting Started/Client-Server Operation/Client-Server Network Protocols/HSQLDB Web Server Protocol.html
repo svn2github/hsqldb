@@ -1,0 +1,55 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <title>HSQLDB 1.8.0 For ADO.NET 2.0 - HSQLDB Web Server Protocol</title>
+    <link rel="stylesheet" type="text/css" href="../../../styles/presentation.css">
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../../../html/hsqldb.gif">
+                </td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br>
+                    <span class="topicTitle">Chapter 1 - Getting Started</span>
+                    <br>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><a href="../../Chapter 1 - Getting Started.html">Chapter
+                            Overview </a>&gt; <a href="../Client-Server Operation.html">Client-Server Operation
+                            </a>&gt; <a href="Client-Server Network Protocols.html">Client-Server Network Protocols
+                            </a>&gt; <span class="nolink">HSQLDB Web Server Protocol</span>&nbsp;</span></div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <p>
+            Use when the computer hosting the database server is restricted to the HTTP
+            protocol.</p>
+        <p>
+            The <em>only</em> reason for using the HSQLDB Web Server is to overcome firewall
+            restrictions imposed on client or server machines.</p>
+        <p>
+            It should <em>not</em> be used when there are no such restrictions.</p>
+        <p>
+            An HSQLDB WebServer process may be started by running the provided System.Data.Hsqldb.WebServer.exe
+            console application, for example:</p>
+        <pre>    &gt;System.Data.Hsqldb.WebServer.exe -database.0 file:c:\dbfiles\app1 -dbname.0 appdata
+    </pre>
+    <p>Next Topic: <a href="../../In-Process Operation/In-Process Operation.html">In-Process Operation</a></p>
+        <div class="alert">
+            <h3 class="title">
+                Note</h3>
+            <p>
+                The command line argument <tt>-?</tt> can be used to get a list of available
+                arguments.</p>
+        </div>
+    </div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 2 -->

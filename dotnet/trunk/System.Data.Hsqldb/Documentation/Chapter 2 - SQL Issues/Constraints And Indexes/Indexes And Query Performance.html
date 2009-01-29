@@ -1,0 +1,122 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+    <link rel="stylesheet" type="text/css" href="../../styles/presentation.css">
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+</head>
+<body>
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../../html/hsqldb.gif">
+                </td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br>
+                    <span class="topicTitle">Chapter 2 - SQL Issues</span>
+                    <br>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><a href="../Chapter 2 - SQL Issues.html">Chapter Overview
+                        </a>&gt; <a href="Constraints And Indexes.html">Constraints And Indexes </a>&gt;
+                            <span class="nolink">Indexes And Query Performance</span> </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <p>
+            Because they do no affect the actual semantics of the relational calculus,
+            the SQL standard is completely silent on the matter of indexes</p>
+        <p>
+            However, as with most RDBMS, HSQLDB indexes play a crucial role in improving &lt;search-condition&gt;
+            performance (such as in SQL SELECT and heavily predicated SQL UPDATE or DELETE operations)
+            , although
+            typically at the cost of decreased performance for SQL INSERT (and even
+            lightly predicated SQL UPDATE and DELETE) performance,
+            due to the overhead of maintaining index information.</p>
+        <p>
+            If no indexes exist in an HSQLDB database, then the current architecture dictates
+            that all rows of all involved tables must
+            be examined at least once and possibly
+            many times to perform each search.</p>
+        <p>
+            On the other hand, when there is an index on a column in an SQL <tt>WHERE</tt>
+            clause, it is often possible to significantly reduce the number of rows that
+            must be examined,
+            in turn reducing CPU load and possibly disk access overhead.</p>
+        <p>
+            And indexes are even more important in joins between multiple tables. For example:</p>
+        <pre lang="sql">    SELECT ... FROM t1 JOIN t2 ON (t1.c1 = t2.c2)
+        </pre>
+        <p>
+            is performed by fetching the rows of t1 one by one and finding, one by one,
+            the matching rows in <tt><var>t2</var></tt>.</p>
+        <p>
+            If there is no index index on <tt><var>t1.c1</var></tt> or <tt><var>t2.c2</var></tt>,
+            then for each row of <tt><var>t1</var></tt>, each row of <tt><var>t2</var></tt>
+            must be checked.</p>
+        <p>
+            That is, if <tt><var>t1</var></tt> and <tt><var>t2</var></tt> each contain <tt>10,000</tt>
+            rows, then a query without indexes requires <tt>100,000,000</tt> fetch/compare
+            cycles.</p>
+        <p>
+            However, when an eligible index exists, the number of required checks may be
+            <em>far</em> lower.</p>
+        <p>
+            For example, with an index on <tt><var>t2.c2</var></tt>, this is reduced to
+            fetching of each row in <tt><var>t1</var></tt> once, plus and index lookup on
+            <tt><var>t2(c2)</var></tt> to find the matching rows.</p>
+        <p>
+            With a random distribution of <tt><var>c1,c2</var></tt> values in <tt><var>t1,t2</var></tt>,
+            the theoretical number of required operations is reduced to <tt>O(n*log(n))</tt>
+            or ~<tt>1000</tt> times fewer operations in the concrete case above.</p>
+        <h3>
+            Notes</h3>
+        <p>
+            Recall that, like most DBMS, HSQLDB automatically creates backing indexes for primary key and unique constraints.</p>
+        <p>
+            Also, observe that each prefix of a multiple column unique index can be used
+            internally as a non-unique index on the prefix columns.</p>
+        <p>
+            In other words:</p>
+        <pre lang="sql">    CONSTRAINT name1 UNIQUE (c1, c2, c3);
+        </pre>
+        <p>
+            is, for the purpose of improving select performance, equivalent to:</p>
+        <pre lang="sql">    CREATE INDEX idx_xyz ON the_table(c1);
+        </pre>
+        <p>
+            Additionally, HSQLDB can use multi-column indexes to improve select performance
+            where there is a join or predicate on the values of <em>all</em> columns in
+            the index, although it should be noted that the order in which the columns of
+            the index or constraint are declared may affect the outcome: if the column that
+            contains more diverse values appears first, the searches will be slightly faster
+            and visa versa.</p>
+        <p>
+            Finally, HSQLDB features automatic, on-the-fly creation of indexes over views
+            and sub-selects that are used in a query. For example, an indexed access path
+            may be added to a view when it is joined with a table or another view.</p>
+        <p>
+            Otherwise, one should analyze the work to be performed by one's application
+            and define indexes in support of the identified work using the <tt>CREATE INDEX</tt>
+            command.</p>
+        <p>
+            Unfortunately, HSQLDB does not currently implement an optimizer that considers
+            multiple join orders when creating an execution plan for a query. Instead, it
+            simply uses the order specified in the query.</p>
+        <p>
+            As a result, the general rule is to write one's queries so that tables with
+            the best narrowing conditions on its columns are listed first. With queries
+            over larger data sets, changing the order in which tables, views and in-line
+            virtual tables are listed / joined may significantly affect query performance.</p>
+        <p>
+            To get some idea of the HSQLDB index usage for a specific query production,
+            one can review the output from the <tt><a href="../../Chapter 8 - SQL Syntax/SQL Commands/Data Query And Manipulation Language Commands.html#explain-plan-section">
+                EXPLAIN PLAN FOR &lt;query&gt;</a></tt> command.</p>
+    </div>
+    <include item="footer" />
+</body>
+</html>
+<!-- @SortOrder 5 -->
