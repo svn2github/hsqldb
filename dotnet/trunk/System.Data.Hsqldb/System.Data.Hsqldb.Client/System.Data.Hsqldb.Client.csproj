@@ -1,0 +1,274 @@
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <RootNamespace>System.Data.Hsqldb.Client</RootNamespace>
+    <AssemblyName>System.Data.Hsqldb.Client</AssemblyName>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{EDA7BAF9-0BF6-4423-B644-18FA5EE44F1A}</ProjectGuid>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\Org.Hsqldb.snk</AssemblyOriginatorKeyFile>
+    <DelaySign>False</DelaySign>
+    <AssemblyOriginatorKeyMode>File</AssemblyOriginatorKeyMode>
+    <ApplicationIcon>Image\Ico\Hsqldb.ico</ApplicationIcon>
+    <DocumentationFile>bin\Debug\Org.Hsqldb.Driver.dll.xml</DocumentationFile>
+    <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
+    <NoStdLib>False</NoStdLib>
+    <RegisterForComInterop>False</RegisterForComInterop>
+    <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
+    <BaseAddress>4194304</BaseAddress>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <FileAlignment>4096</FileAlignment>
+    <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <OutputPath>bin\Debug\</OutputPath>
+    <Optimize>false</Optimize>
+    <DefineConstants>TRACE;DEBUG;W32DESIGN SYSTRAN</DefineConstants>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>Full</DebugType>
+    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
+    <DocumentationFile>bin\Debug\System.Data.Hsqldb.Client.XML</DocumentationFile>
+    <NoWarn>
+    </NoWarn>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+    <CodeAnalysisRules>-Microsoft.Design#CA1020;-Microsoft.Globalization#CA1301;-Microsoft.Globalization#CA1302;-Microsoft.Globalization#CA1303;-Microsoft.Globalization#CA1306;-Microsoft.Globalization#CA1304;-Microsoft.Globalization#CA1305;-Microsoft.Globalization#CA1300;-Microsoft.Interoperability#CA1403;-Microsoft.Interoperability#CA1406;-Microsoft.Interoperability#CA1413;-Microsoft.Interoperability#CA1402;-Microsoft.Interoperability#CA1407;-Microsoft.Interoperability#CA1404;-Microsoft.Interoperability#CA1410;-Microsoft.Interoperability#CA1411;-Microsoft.Interoperability#CA1405;-Microsoft.Interoperability#CA1409;-Microsoft.Interoperability#CA1415;-Microsoft.Interoperability#CA1408;-Microsoft.Interoperability#CA1414;-Microsoft.Interoperability#CA1412;-Microsoft.Interoperability#CA1400;-Microsoft.Interoperability#CA1401;-Microsoft.Maintainability#CA1502;-Microsoft.Maintainability#CA1501;-Microsoft.Maintainability#CA1500;-Microsoft.Mobility#CA1600;-Microsoft.Mobility#CA1601;-Microsoft.Naming#CA1718;-Microsoft.Performance#CA1809;-Microsoft.Performance#CA1811;-Microsoft.Performance#CA1812;-Microsoft.Performance#CA1807;-Microsoft.Performance#CA1813;-Microsoft.Performance#CA1823;-Microsoft.Performance#CA1816;-Microsoft.Performance#CA1817;-Microsoft.Performance#CA1800;-Microsoft.Performance#CA1818;-Microsoft.Performance#CA1805;-Microsoft.Performance#CA1810;-Microsoft.Performance#CA1822;-Microsoft.Performance#CA1815;-Microsoft.Performance#CA1814;-Microsoft.Performance#CA1819;-Microsoft.Performance#CA1804;-Microsoft.Performance#CA1820;-Microsoft.Performance#CA1802;-Microsoft.Portability#CA1901;-Microsoft.Portability#CA1900;-Microsoft.Reliability#CA2000;-Microsoft.Reliability#CA2002;-Microsoft.Reliability#CA2003;-Microsoft.Reliability#CA2004;-Microsoft.Reliability#CA2006;-Microsoft.Security#CA2116;-Microsoft.Security#CA2117;-Microsoft.Security#CA2105;-Microsoft.Security#CA2115;-Microsoft.Security#CA2104;-Microsoft.Security#CA2122;-Microsoft.Security#CA2114;-Microsoft.Security#CA2123;-Microsoft.Security#CA2111;-Microsoft.Security#CA2108;-Microsoft.Security#CA2107;-Microsoft.Security#CA2103;-Microsoft.Security#CA2100;-Microsoft.Security#CA2118;-Microsoft.Security#CA2109;-Microsoft.Security#CA2119;-Microsoft.Security#CA2106;-Microsoft.Security#CA2112;-Microsoft.Security#CA2110;-Microsoft.Security#CA2120;-Microsoft.Security#CA2101;-Microsoft.Security#CA2121;-Microsoft.Security#CA2126;-Microsoft.Security#CA2124;-Microsoft.Usage#CA2209;-Microsoft.Usage#CA2236;-Microsoft.Usage#CA2227;-Microsoft.Usage#CA2213;-Microsoft.Usage#CA2216;-Microsoft.Usage#CA2215;-Microsoft.Usage#CA2214;-Microsoft.Usage#CA2222;-Microsoft.Usage#CA2202;-Microsoft.Usage#CA1806;-Microsoft.Usage#CA2217;-Microsoft.Usage#CA2212;-Microsoft.Usage#CA2219;-Microsoft.Usage#CA2201;-Microsoft.Usage#CA2228;-Microsoft.Usage#CA2221;-Microsoft.Usage#CA2220;-Microsoft.Usage#CA2240;-Microsoft.Usage#CA2229;-Microsoft.Usage#CA2238;-Microsoft.Usage#CA2207;-Microsoft.Usage#CA2208;-Microsoft.Usage#CA2235;-Microsoft.Usage#CA2237;-Microsoft.Usage#CA2232;-Microsoft.Usage#CA2223;-Microsoft.Usage#CA2211;-Microsoft.Usage#CA2233;-Microsoft.Usage#CA2225;-Microsoft.Usage#CA2226;-Microsoft.Usage#CA2231;-Microsoft.Usage#CA2224;-Microsoft.Usage#CA2218;-Microsoft.Usage#CA2234;-Microsoft.Usage#CA2241;-Microsoft.Usage#CA2239;-Microsoft.Usage#CA2200;-Microsoft.Usage#CA1801;-Microsoft.Usage#CA2205;-Microsoft.Usage#CA2230</CodeAnalysisRules>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <OutputPath>bin\Release\</OutputPath>
+    <Optimize>True</Optimize>
+    <DefineConstants>TRACE;W32DESIGN</DefineConstants>
+    <DebugSymbols>False</DebugSymbols>
+    <DebugType>None</DebugType>
+    <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
+    <NoWarn>0419</NoWarn>
+    <DocumentationFile>bin\Release\Org.Hsqldb.Driver.XML</DocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Org.Hsqldb, Version=1.8.0.7, Culture=neutral, PublicKeyToken=05732303801b208f, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Lib\Org.Hsqldb.dll</HintPath>
+    </Reference>
+    <Reference Include="IKVM.Runtime">
+      <HintPath>..\Lib\IKVM.Runtime.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="IKVM.GNU.Classpath">
+      <HintPath>..\Lib\IKVM.GNU.Classpath.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Configuration.Install" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Design" />
+    <Reference Include="System.DirectoryServices" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Transactions" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.XML" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="HsqlConnection.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="HsqlConnection.Internals.cs">
+      <DependentUpon>HsqlConnection.cs</DependentUpon>
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="HsqlConnection.Api.cs">
+      <DependentUpon>HsqlConnection.cs</DependentUpon>
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="HsqlConnectionStringBuilder.ConnectionStringKey.cs">
+      <DependentUpon>HsqlConnectionStringBuilder.cs</DependentUpon>
+    </Compile>
+    <Compile Include="HsqlCommand.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="HsqlCommand.Api.cs">
+      <DependentUpon>HsqlCommand.cs</DependentUpon>
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="HsqlCommand.Internals.cs">
+      <DependentUpon>HsqlCommand.cs</DependentUpon>
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="HsqlConnectionStringBuilder.cs" />
+    <Compile Include="HsqlTransaction.cs" />
+    <Compile Include="HsqTransaction.Api.cs">
+      <DependentUpon>HsqlTransaction.cs</DependentUpon>
+    </Compile>
+    <Compile Include="HsqlTransaction.Internals.cs">
+      <DependentUpon>HsqlTransaction.cs</DependentUpon>
+    </Compile>
+    <Compile Include="HsqlProviderFactory.cs" />
+    <Compile Include="HsqlParameter.cs" />
+    <Compile Include="HsqlParameterCollection.cs" />
+    <Compile Include="MetaData\Collection\Base\MetaDataCollection.cs" />
+    <Compile Include="MetaData\Collection\Base\CachedMetaDataCollection.cs" />
+    <Compile Include="MetaData\Collection\ColumnsCollection.cs" />
+    <Compile Include="MetaData\Collection\DatabasesCollection.cs" />
+    <Compile Include="MetaData\Collection\DataSourceInformationCollection.cs" />
+    <Compile Include="MetaData\Collection\DataTypesCollection.cs" />
+    <Compile Include="MetaData\Collection\ForeignKeysCollection.cs" />
+    <Compile Include="MetaData\Collection\IndexColumnsCollection.cs" />
+    <Compile Include="MetaData\Collection\IndexesCollection.cs" />
+    <Compile Include="MetaData\Collection\MetaDataCollectionsCollection.cs" />
+    <Compile Include="MetaData\Collection\ProcedureParametersCollection.cs" />
+    <Compile Include="MetaData\Collection\ProceduresCollection.cs" />
+    <Compile Include="MetaData\Collection\ReservedWordsCollection.cs" />
+    <Compile Include="MetaData\Collection\RestrictionsCollection.cs" />
+    <Compile Include="MetaData\Collection\TablesCollection.cs" />
+    <Compile Include="MetaData\Collection\UserDefinedTypesCollection.cs" />
+    <Compile Include="MetaData\Collection\UsersCollection.cs" />
+    <Compile Include="MetaData\Collection\ViewColumnsCollection.cs" />
+    <Compile Include="MetaData\Collection\ViewsCollection.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="HsqlDataSourceEnumerator.cs" />
+    <Compile Include="HsqlCommandBuilder.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="MetaData\Collection\HsqlDatabaseMetaData.cs" />
+    <Compile Include="MetaData\HsqlMetaDataCollectionNames.cs" />
+    <Compile Include="MetaData\HsqlMetaDataColumnNames.cs" />
+    <Compile Include="MetaData\HsqlResultSetMetaData.cs" />
+    <Compile Include="resfinder.cs" />
+    <Compile Include="Internal\HsqlDiagnostics.cs" />
+    <Compile Include="Design\Attributes\ResCategoryAttribute.cs" />
+    <Compile Include="Design\ComputerCollection.cs" />
+    <Compile Include="Design\Components\ConnectionPropertiesGrid.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Design\Converters\DataSourceConverter.cs" />
+    <Compile Include="Design\Converters\HsqlConnectionStringBuilderConverter.cs" />
+    <Compile Include="Design\Converters\InitialSchemaConverter.cs" />
+    <Compile Include="Design\Designers\HsqlDataAdapterDesigner.cs" />
+    <Compile Include="Design\Designers\HsqlDbCommandDesigner.cs" />
+    <Compile Include="Design\Dialogs\ConnectionPropertiesDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Design\Dialogs\ConnectionPropertiesDialog.Designer.cs">
+      <DependentUpon>ConnectionPropertiesDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Design\Dialogs\ConnectionDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Design\Dialogs\ConnectionDialog.Designer.cs">
+      <DependentUpon>ConnectionDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Design\PropertyGridHelper.cs" />
+    <Compile Include="Design\Controls\ConnectionPropertiesControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Design\Controls\ConnectionPropertiesControl.Designer.cs">
+      <DependentUpon>ConnectionPropertiesControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Design\Controls\ConnectionControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Design\Controls\ConnectionControl.Designer.cs">
+      <DependentUpon>ConnectionControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Design\Attributes\ResDescriptionAttribute.cs" />
+    <Compile Include="Design\ToolboxItems\HsqlDbDataAdapterToolboxItem.cs" />
+    <Compile Include="Internal\HsqlSession.Factory.cs">
+      <DependentUpon>HsqlSession.cs</DependentUpon>
+    </Compile>
+    <Compile Include="MetaData\Collection\SchemasCollection.cs" />
+    <Compile Include="MetaData\Collection\UniqueConstraintColumnsCollection.cs" />
+    <Compile Include="MetaData\Collection\UniqueConstraintsCollection.cs" />
+    <Compile Include="Internal\HsqlConnectionSettings.cs" />
+    <Compile Include="HsqlConnectionStringBuilder.DefaultValueOf.cs">
+      <DependentUpon>HsqlConnectionStringBuilder.cs</DependentUpon>
+    </Compile>
+    <Compile Include="HsqlConnectionStringBuilder.Util.cs">
+      <DependentUpon>HsqlConnectionStringBuilder.cs</DependentUpon>
+    </Compile>
+    <Compile Include="HsqlDataAdapter.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="HsqlDataReader.cs" />
+    <Compile Include="HsqlDataReader.Api.cs">
+      <DependentUpon>HsqlDataReader.cs</DependentUpon>
+    </Compile>
+    <Compile Include="HsqlDataReader.Api.SqlTypes.cs">
+      <DependentUpon>HsqlDataReader.cs</DependentUpon>
+    </Compile>
+    <Compile Include="HsqlDataReader.Internals.cs">
+      <DependentUpon>HsqlDataReader.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Internal\HsqlDriver.cs" />
+    <Compile Include="HsqlInstaller.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="HsqlDataPermission.cs" />
+    <Compile Include="Internal\HsqlStatement.cs" />
+    <Compile Include="HsqlRowUpdatedEventArgs.cs" />
+    <Compile Include="HsqlRowUpdatingEventArgs.cs" />
+    <Compile Include="Internal\HsqlEnlistment.cs" />
+    <Compile Include="Internal\HsqlTcpClient.cs" />
+    <Compile Include="MetaData\Collection\SequencesCollection.cs" />
+    <Compile Include="MetaData\Collection\DataSourceEnumerationCollection.cs" />
+    <Compile Include="MetaData\Collection\TableCheckConstraintsCollection.cs" />
+    <Compile Include="MetaData\Collection\ForeignKeyColumnsCollection.cs" />
+    <Compile Include="MetaData\Collection\PrimaryKeyColumnsCollection.cs" />
+    <Compile Include="MetaData\Collection\PrimaryKeysCollection.cs" />
+    <Compile Include="MetaData\Collection\TableTriggersCollection.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Internal\HsqlCommandSet.cs" />
+    <Compile Include="Internal\HsqlSession.cs" />
+    <Compile Include="Internal\IkvmResourceLoaderFactory.cs" />
+    <Compile Include="Sql\Token.List.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Image\Ico\Hsqldb.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Image\Bmp\hsqldb32.bmp" />
+    <EmbeddedResource Include="Image\Bmp\hsqldb16.bmp" />
+    <EmbeddedResource Include="Design\Controls\ConnectionPropertiesControl.resx">
+      <DependentUpon>ConnectionPropertiesControl.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Design\Controls\ConnectionControl.resx">
+      <DependentUpon>ConnectionControl.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Design\Dialogs\ConnectionPropertiesDialog.resx">
+      <DependentUpon>ConnectionPropertiesDialog.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Design\Dialogs\ConnectionDialog.resx">
+      <DependentUpon>ConnectionDialog.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Image\Bmp\HsqlConnection.bmp" />
+    <EmbeddedResource Include="Image\Bmp\HsqlCommand.bmp" />
+    <EmbeddedResource Include="Image\Bmp\HsqlCommandBuilder.bmp" />
+    <EmbeddedResource Include="Image\Bmp\HsqlDataAdapter.bmp" />
+    <EmbeddedResource Include="Image\Bmp\HsqlDataTable.bmp" />
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <SubType>Designer</SubType>
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\System.Data.Hsqldb.Common\System.Data.Hsqldb.Common.csproj">
+      <Project>{F929C8C3-AB4B-4EAA-BEF9-9A25669FEA6F}</Project>
+      <Name>System.Data.Hsqldb.Common</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
+  <PropertyGroup>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
+</Project>
