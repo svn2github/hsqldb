@@ -43,9 +43,9 @@ function main_onclick() {
         <pre lang="sql">CREATE ALIAS &lt;sql-invoked-routine-identifier&gt; FOR &lt;delimited-public-static-method-identifier&gt;;
         </pre>
         <p>
-            <strong class="nb">Requires Administrative privileges.</strong></p>
+            <strong class="nb">Requires administrative privileges.</strong></p>
         <p>
-            Creates an friendly name for a public static method of a class.</p>
+            Creates a friendly name for a public static method of a type.</p>
         <p>
             The specified method must be resolvable via reflection from within the application
             domain in which the database runs.</p>
@@ -55,32 +55,36 @@ function main_onclick() {
         <a name="create_index-section"></a>
         <h3>
             CREATE INDEX</h3>
-        <pre lang="sql">CREATE [UNIQUE] INDEX &lt;index&gt; ON &lt;table&gt; (&lt;column&gt; [ASC | DESC] [,(&lt;column&gt; [ASC | DESC]]*
+        <pre lang="sql">
+CREATE [UNIQUE] INDEX &lt;index&gt; ON &lt;table&gt; (&lt;column&gt; [ASC | DESC] [,(&lt;column&gt; [<span
+    style="text-decoration: underline">ASC</span> | DESC]]*
         </pre>
         <p>
-            <strong class="nb">Requires Administrative privileges.</strong></p>
+            <strong class="nb">Requires administrative privileges.</strong></p>
         <p>
-            Creates an index on one or more columns in a table.</p>
+            Creates an index on one or more columns of a base
+                        table, which may improve the performance
+            of <a href="../Data Query And Manipulation Language Commands.html">DQL/DML commands</a>
+            when the searched columns include a prefix of the indexed column set.</p>
         <p>
-            Unique indexes are deprecated. Please use UNIQUE constraints instead.</p>
-        <p>
-            Creating an index on searched columns may improve performance.</p>
-        <p>
-            ASC is the default qualifier. Although ignored, the DESC qualifier can be specified
-            for command compatibility with other databases.</p>
+            ASC may be ommited as it is the default qualifier and only supported index behavior;
+            the DESC qualifier constitutes legal syntax, but only in the interest of compatibility with other SQL dialects.</p>
         <p>
             As per the SQL standard, the name of an index must be unique within the schema of
             the table upon which it is defined.</p>
+        <p>
+            Note that unique indexes are deprecated; please use UNIQUE constraints instead (which
+            automatically create and drop any required UNIQUE backing indexes).</p>
         <h3>
             <a name="create_role-section"></a>CREATE ROLE</h3>
         <pre lang="sql">CREATE ROLE &lt;rolename&gt;;
         </pre>
         <p>
-            <strong class="nb">Requires Administrative privileges.</strong></p>
+            <strong class="nb">Requires administrative privileges.</strong></p>
         <p>
             Creates the named role with no members.</p>
         <p>
-            The name must be unique within the database.</p>
+            The role name must be unique within the database.</p>
         <h3>
             <a name="N11CA5"></a>CREATE SCHEMA</h3>
         <pre lang="sql">CREATE SCHEMA &lt;schemaname&gt; AUTHORIZATION DBA [&lt;createStatement&gt; [&lt;grantStatement&gt;] [...];
@@ -90,12 +94,12 @@ function main_onclick() {
         <p>
             Creates a new schema.</p>
         <p>
-            The name must be unique within the database.</p>
+            The schema name must be unique within the database.</p>
         <p>
             The first semicolon encountered terminates the command.</p>
         <p>
-            In the example below, a new schema, ACCOUNTS, is created, then two tables and a
-            view are added to this schema and some rights on these objects are granted:</p>
+            In the example below, a new ACCOUNTS schema is created, two tables and a
+            view are added to it and some rights are granted on the newly created tables:</p>
         <pre lang="sql">    CREATE SCHEMA ACCOUNTS AUTHORIZATION DBA
     CREATE TABLE AB(A INTEGER, ...)
     CREATE TABLE CD(C CHAHR, ...)
@@ -376,77 +380,94 @@ function main_onclick() {
         <p>
             <strong class="nb">Requires Administrative privileges.</strong></p>
         <p>
-            A view can be thought of as either a virtual table or a stored query. The data accessible
-            through a view is not stored in the database as a distinct object. What is stored
-            in the database is a SELECT statement. The result set of the SELECT statement forms
-            the virtual table returned by the view. A user can use this virtual table by referencing
-            the view name in SQL statements the same way a table is referenced. A view is used
+            A view may be thought of as either a virtual table or a stored query. The data accessible
+            through a view is not stored in the database as a distinct table object. Instead,
+            what is stored in the database is a view descriptor which includes an SQL SELECT statement. The subset of the relation satisfying the stored SELECT statement at
+            execution time constitutes the virtual table exposed through the view. So, an SQL
+            statement that references a view may be used to access this virtual table in a way
+            that is indistinguishable from accessing a base table.
+        </p>
+        <p>
+            A view may be used in
             any or all of these functions:</p>
         <div>
             <ul type="disc">
                 <li>
                     <p>
-                        Restrict a user to specific rows in a table. For example, allow an employee to see
-                        only the rows recording his or her work in a labor-tracking table.</p>
+                        To restrict access to specific rows. For example, to restrict an employee from access
+                        to rows other than those recording his or her own work in a labor-tracking table.&nbsp;
+                        In the relational calculus, this is refered to as a SELECTION.</p>
                 </li>
                 <li>
                     <p>
-                        Restrict a user to specific columns. For example, allow employees who do not work
-                        in payroll to see the name, office, work phone, and department columns in an employee
-                        table, but do not allow them to see any columns with salary information or personal
-                        information.</p>
+                        To restrict access to specific columns. For example, to restrict non-payroll employees from access to columns containing salary or personal
+                        information. In the relational
+                        calculus, this is refered to as a PROJECTION.</p>
                 </li>
                 <li>
                     <p>
-                        Join columns from multiple tables so that they look like a single table.</p>
+                        To combine the columns from multiple tables so that the result is indistiguishable
+                        from a single table. In the relational calculus, this is refered to as a JOIN</p>
                 </li>
                 <li>
                     <p>
-                        Aggregate information instead of supplying details. For example, present the sum
-                        of a column, or the maximum or minimum value from a column.</p>
+                        To aggregate and group information instead of supplying details. For example, to
+                        present the sum, maximum, minimum, average value from a column or to present a count
+                        of the occurences of each distinct value in a column.</p>
                 </li>
             </ul>
         </div>
         <p>
-            Views are created by defining the SELECT statement that retrieves the data to be
-            presented by the view. The data tables referenced by the SELECT statement are known
-            as the base tables for the view. In this example, is a view that selects data from
-            three base tables to present a virtual table of commonly needed data:</p>
+            The base tables referenced by the SELECT statement portion of a view's descriptor
+            are known
+            as the base tables for the view. In the following example, a view is created
+            that references data in three base tables, <em>meals</em>, <em>mealtype</em> and
+            <em>author</em>, to expose a new, virtual table containing commonly associated data:</p>
         <div>
-            <pre>    CREATE VIEW mealsjv AS
+            <pre>
+    CREATE VIEW mealsjv AS
             SELECT m.mid mid, m.name name, t.mealtype mt, a.aid aid,
             a.gname + ' ' + a.sname author, m.description description,
             m.asof asof
-            FROM meals m, mealtypes t, authors a
+            FROM meal m, mealtype t, author a
             WHERE m.mealtype = t.mealtype
             AND m.aid = a.aid;
             </pre>
         </div>
         <p>
-            You can then reference mealsjv in statements in the same way you would reference
-            a table:</p>
+            By reference to <em>mealsjv</em> in SQL statements, it is possible to access the
+            virtual table in the same way one would reference
+            a base table:</p>
         <div>
             <pre>    SELECT * FROM mealsjv;
             </pre>
         </div>
         <p>
-            A view can reference another view. For example, mealsjv presents information that
-            is useful for long descriptions that contain identifiers, but a short list might
-            be all a web page display needs. A view can be built that selects only specific
-            mealsjv columns:</p>
+            In addition to base table references, a view's SELECT statement may also reference
+            pre-existing views.&nbsp; In the following example, a new view is created that references
+            the pre-exising <em>mealsjv</em> view to provide a more compact representation of
+            the data to be used to render a (typically space-constrained) web page:</p>
         <div>
-            <pre>    CREATE VIEW mealswebv AS SELECT name, author FROM mealsjv;
+            <pre>
+    CREATE VIEW mealswebv AS SELECT DISTINCT name, author FROM mealsjv;
             </pre>
         </div>
         <p>
-            The SELECT statement in a VIEW definition should return columns with distinct names.
-            If the names of two columns in the SELECT statement are the same, use a column alias
+            Unlike the case of direct SELECT statement execution, it is generally the case that
+            special care should be taken to ensure VIEW definitions do not expose duplicate
+            column names.&nbsp; The reason for this is to avoid ambiguous column name conditions
+            that may otherwise possibly arise, such as when attempting to project or join on
+            a view's columns.</p>
+        <p>
+            If the names of two columns in the SELECT statement are the same, then the descriptor
+            should contain a column alias list
             to distinguish between them. A list of new column names can always be defined for
             a view.</p>
         <div>
-            <pre>    CREATE VIEW aview (new_name, new_author) AS
-            SELECT name, author
-    FROM mealsjv
+            <pre>
+    CREATE VIEW v_book (book_name, author_name, publisher_name) AS
+         SELECT b.name, a.name, p.name
+          FROM book b join author a on (b.author_id = a.id) join publisher p on (b.publisher_id = p.id)
     </pre>
         </div>
     </div>
