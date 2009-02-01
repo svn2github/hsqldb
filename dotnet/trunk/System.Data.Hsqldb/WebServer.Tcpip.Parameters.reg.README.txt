@@ -6,7 +6,7 @@ Thus, high traffic is very likely to leave a large number of sockets
 continuously in TIME_WAIT, exhausting the number of non TIME_WAIT TCBs
 available for reuse.
 
-The included Org.Hsqldb.WebServer.Tcpip.Parameters.reg file provides some
+The included WebServer.Tcpip.Parameters.reg file provides some
 registry settings that can be used avoid suprious server failure under the
 current Web Server HTTP protocol implementation.
 
