@@ -55,8 +55,7 @@ function main_onclick() {
         <a name="create_index-section"></a>
         <h3>
             CREATE INDEX</h3>
-        <pre lang="sql">
-CREATE [UNIQUE] INDEX &lt;index&gt; ON &lt;table&gt; (&lt;column&gt; [ASC | DESC] [,(&lt;column&gt; [<span
+        <pre lang="sql">CREATE [UNIQUE] INDEX &lt;index&gt; ON &lt;table&gt; (&lt;column&gt; [ASC | DESC] [,(&lt;column&gt; [<span
     style="text-decoration: underline">ASC</span> | DESC]]*
         </pre>
         <p>
@@ -65,7 +64,7 @@ CREATE [UNIQUE] INDEX &lt;index&gt; ON &lt;table&gt; (&lt;column&gt; [ASC | DESC
             Creates an index on one or more columns of a base
                         table, which may improve the performance
             of <a href="../Data Query And Manipulation Language Commands.html">DQL/DML commands</a>
-            when the searched columns include a prefix of the indexed column set.</p>
+            when the searched columns include a prefix of the index columns.</p>
         <p>
             ASC may be ommited as it is the default qualifier and only supported index behavior;
             the DESC qualifier constitutes legal syntax, but only in the interest of compatibility with other SQL dialects.</p>
@@ -90,7 +89,7 @@ CREATE [UNIQUE] INDEX &lt;index&gt; ON &lt;table&gt; (&lt;column&gt; [ASC | DESC
         <pre lang="sql">CREATE SCHEMA &lt;schemaname&gt; AUTHORIZATION DBA [&lt;createStatement&gt; [&lt;grantStatement&gt;] [...];
         </pre>
         <p>
-            <strong class="nb">Requires Administrative privileges.</strong></p>
+            <strong class="nb">Requires administrative privileges.</strong></p>
         <p>
             Creates a new schema.</p>
         <p>
@@ -99,24 +98,28 @@ CREATE [UNIQUE] INDEX &lt;index&gt; ON &lt;table&gt; (&lt;column&gt; [ASC | DESC
             The first semicolon encountered terminates the command.</p>
         <p>
             In the example below, a new ACCOUNTS schema is created, two tables and a
-            view are added to it and some rights are granted on the newly created tables:</p>
-        <pre lang="sql">    CREATE SCHEMA ACCOUNTS AUTHORIZATION DBA
-    CREATE TABLE AB(A INTEGER, ...)
-    CREATE TABLE CD(C CHAHR, ...)
-    CREATE VIEW VI AS SELECT ...
-    GRANT SELECT TO PUBLIC ON AB
-    GRANT SELECT TO JOE ON CD;
+            view are added to it and some rights are granted on the newly created tables, after which
+            the command terminates:</p>
+        <pre lang="sql">
+    CREATE SCHEMA ACCOUNTS 
+        AUTHORIZATION DBA
+        CREATE TABLE AB(A INTEGER, ...)
+        CREATE TABLE CD(C CHAHR, ...)
+        CREATE VIEW VI AS SELECT ...
+        GRANT SELECT TO PUBLIC ON AB
+        GRANT SELECT TO JOE ON CD
+    ;
         </pre>
         <h3>
             <a name="create_sequence-section"></a>CREATE SEQUENCE</h3>
         <pre>CREATE SEQUENCE &lt;sequencename&gt; [AS {INTEGER | BIGINT}] [START WITH &lt;startvalue&gt;] [INCREMENT BY &lt;incrementvalue&gt;];
         </pre>
         <p>
-            <strong class="nb">Requires Administrative privileges.</strong></p>
+            <strong class="nb">Requires administrative privileges.</strong></p>
         <p>
             Creates a new sequence.</p>
         <p>
-            The name must be unique within the database.</p>
+            The sequence name must be unique within the database.</p>
         <ul>
             <li>The default type is INTEGER.</li>
             <li>The default start value is 0 and the increment 1.</li>
@@ -424,8 +427,7 @@ CREATE [UNIQUE] INDEX &lt;index&gt; ON &lt;table&gt; (&lt;column&gt; [ASC | DESC
             that references data in three base tables, <em>meals</em>, <em>mealtype</em> and
             <em>author</em>, to expose a new, virtual table containing commonly associated data:</p>
         <div>
-            <pre>
-    CREATE VIEW mealsjv AS
+            <pre>    CREATE VIEW mealsjv AS
             SELECT m.mid mid, m.name name, t.mealtype mt, a.aid aid,
             a.gname + ' ' + a.sname author, m.description description,
             m.asof asof
@@ -448,8 +450,7 @@ CREATE [UNIQUE] INDEX &lt;index&gt; ON &lt;table&gt; (&lt;column&gt; [ASC | DESC
             the pre-exising <em>mealsjv</em> view to provide a more compact representation of
             the data to be used to render a (typically space-constrained) web page:</p>
         <div>
-            <pre>
-    CREATE VIEW mealswebv AS SELECT DISTINCT name, author FROM mealsjv;
+            <pre>    CREATE VIEW mealswebv AS SELECT DISTINCT name, author FROM mealsjv;
             </pre>
         </div>
         <p>
@@ -464,8 +465,7 @@ CREATE [UNIQUE] INDEX &lt;index&gt; ON &lt;table&gt; (&lt;column&gt; [ASC | DESC
             to distinguish between them. A list of new column names can always be defined for
             a view.</p>
         <div>
-            <pre>
-    CREATE VIEW v_book (book_name, author_name, publisher_name) AS
+            <pre>    CREATE VIEW v_book (book_name, author_name, publisher_name) AS
          SELECT b.name, a.name, p.name
           FROM book b join author a on (b.author_id = a.id) join publisher p on (b.publisher_id = p.id)
     </pre>
