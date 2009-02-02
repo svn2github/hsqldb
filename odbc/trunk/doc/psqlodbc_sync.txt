@@ -1,11 +1,37 @@
 $Id$
 
-Until I make the scripts to automate the process, use this file to document
-synchronization of our source files with the psqlodbc project's code baseline
-at
-      :pserver:anonymous@cvs.pgfoundry.org:/cvsroot/psqlodbc
+The critical thing to understand is that our psqlodbc-derived code is
+synchronized up to the point in time recorded in the file
+"config/psqldb_syncpoint.txt".  I hereafter call this point in time the
+"psqlodbc sync point".
 
-ORIGINAL population of src branch was done from our project root dir with:
+Use "bin/psqlupdates.bash" to list differences between the (last) psqlodbc
+sync point and any specified time (defaulting to now).
+
+The psqlupdates.bash script is obviously for Bash shell only.
+This script can easily be ported to CMD shell, but it will still require the
+traditional, command-line CVS client, which is freely available for Windows.
+If you want the ability to list the psqlodbc baseline differences, and you
+have (or plan to get) command-line CVS, contact me
+(blaine dot simpson at admc dot com), and I will port psqlupdates.bash to
+Windows.
+
+
+The psqlodbc code base lives in the CVS module "psqlodbc" at
+
+    :pserver:anonymous@cvs.pgfoundry.org:/cvsroot/psqlodbc
+
+
+ORIGINAL population of our src branch was done from our project root dir with:
 
     cvs -d :pserver:anonymous@cvs.pgfoundry.org:/cvsroot/psqlodbc  \
-      export -D '2008/02/01 GMT' -d src psqlodbc
+      export -D '2009/02/02 UTC' -d src psqlodbc
+
+Before any change was made to any psqlodbc file, I tagged our baseline with
+PSQLODBC_PRISTINE*.
+
+
+---
+
+* Actually, I will make the tag immediately after I commit the revision
+containing the text you are now reading).
