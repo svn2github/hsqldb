@@ -1,4 +1,7 @@
-@rem in order to automatically reinstall the provider at the system level (e.g. while developing/debugging DDEX support) add this to the csproj post-build event command line
+@rem in order to automatically reinstall the provider at the system level 
+@rem (e.g. while developing/debugging Visual Studio DDEX support) 
+@rem add this to the csproj post-build event command line:
+
 CALL "%VS80COMNTOOLS%vsvars32.bat"
 GacUtil /i $(ProjectDir)..\Lib\IKVM.GNU.Classpath.dll
 GacUtil /i $(ProjectDir)..\Lib\IKVM.Runtime.dll
