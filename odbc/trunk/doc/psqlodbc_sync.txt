@@ -1,0 +1,11 @@
+$Id$
+
+Until I make the scripts to automate the process, use this file to document
+synchronization of our source files with the psqlodbc project's code baseline
+at
+      :pserver:anonymous@cvs.pgfoundry.org:/cvsroot/psqlodbc
+
+ORIGINAL population of src branch was done from our project root dir with:
+
+    cvs -d :pserver:anonymous@cvs.pgfoundry.org:/cvsroot/psqlodbc  \
+      export -D '2008/02/01 GMT' -d src psqlodbc
