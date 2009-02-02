@@ -66,11 +66,13 @@ namespace System.Data.Hsqldb.Client
 
     public sealed partial class HsqlCommand : DbCommand, ICloneable
     {
+        #region Events
         /// <summary>Occurs when the execution of a Transact-SQL statement completes.</summary>
         /// <filterpriority>2</filterpriority>
         [Category("Data"), Description("Statement Completed Event")]
         public event StatementCompletedEventHandler StatementCompleted;
- 
+        #endregion
+
         #region DbCommand Members
 
         #region Instance Method Overrides
@@ -128,15 +130,25 @@ namespace System.Data.Hsqldb.Client
 
         #endregion
 
-        // TODO:
-        //protected override void Dispose(bool disposing)
-        //{
-        //    if (disposing)
-        //    {
-        //        InvalidateStatement();
-        //    }
-        //    base.Dispose(disposing);
-        //}
+        #region Dispose(bool)
+        /// <summary>
+        /// Releases the unmanaged resources used by this object and
+        /// optionally releases the managed resources.
+        /// </summary>
+        /// <param name="disposing">
+        /// true to release both managed and unmanaged resources; 
+        /// false to release only unmanaged resources.
+        /// </param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                InvalidateStatement();
+            }
+            
+            base.Dispose(disposing);
+        }
+        #endregion
 
         #region ExecuteDbDataReader(CommandBehavior)
 
