@@ -1,0 +1,15 @@
+$Id$
+
+UNIX Build Procedure
+
+  export PG_CONFIG=/path/to/bin/pg_config
+  # (Yes, you must have minimal PG binaries installed)
+
+  cd src
+
+  autoreconf -i
+
+  ./configure
+
+The final output gets written to ".libs/psqlodbcw.so" ("src/.libs/psqlodbc.so"
+from the project home directory).
