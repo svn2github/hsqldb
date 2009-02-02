@@ -28,7 +28,7 @@ ORIGINAL population of our src branch was done from our project root dir with:
       export -D '2009/02/02 UTC' -d src psqlodbc
 
 Before any change was made to any psqlodbc file, I tagged our baseline with
-PSQLODBC_PRISTINE*.
+psqlodbc_pristine*.
 
 
 ---
