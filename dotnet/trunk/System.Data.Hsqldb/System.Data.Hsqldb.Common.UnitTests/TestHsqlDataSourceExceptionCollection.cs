@@ -1,50 +1,36 @@
 using System;
-using TestCoverage;
 using NUnit.Framework;
+using System.Data.Hsqldb.TestCoverage;
+using System.Collections;
 
 namespace System.Data.Hsqldb.Common.UnitTests
 {
-    [TestFixture()]
-    [TestSubjectClassAttribute(TestSubject=typeof(System.Data.Hsqldb.Common.HsqlDataSourceExceptionCollection))]
+    [TestFixture, ForSubject(typeof(HsqlDataSourceExceptionCollection))]
     public class TestHsqlDataSourceExceptionCollection
-    {        
-        [TestSubjectMemberAttribute(MemeberName="CopyTo")]
-        [Test()]
-        public virtual void CopyTo()
+    {
+        HsqlDataSourceExceptionCollection NewTestSubject()
         {
+            return new HsqlDataSourceException().Exceptions;
+        }
 
-            // Create Constructor Parameters
+        [Test, OfMember("CopyTo")]
+        public void CopyTo()
+        {
+            HsqlDataSourceExceptionCollection testSubject = NewTestSubject();
 
-            System.Data.Hsqldb.Common.HsqlDataSourceExceptionCollection TestSubject = new System.Data.Hsqldb.Common.HsqlDataSourceExceptionCollection();
+            testSubject.CopyTo(new object[0], 0);
 
-            // Create Test Method Parameters
-            RecorderArray arrayRecording = new RecorderArray();
-
-            // There is no default constuctor for the parameter index type Int32.
-            int index;
-
-
-            TestSubject.CopyTo(arrayRecording, index);
-
-            // 
-            // Write your assertions here.
-            // 
+            Assert.Fail("TODO");
         }
         
-        [TestSubjectMemberAttribute(MemeberName="GetEnumerator")]
-        [Test()]
-        public virtual void GetEnumerator()
+        [Test, OfMember("GetEnumerator")]
+        public void GetEnumerator()
         {
-            // Create Constructor Parameters
+            HsqlDataSourceExceptionCollection testSubject = NewTestSubject();
 
-            System.Data.Hsqldb.Common.HsqlDataSourceExceptionCollection TestSubject = new System.Data.Hsqldb.Common.HsqlDataSourceExceptionCollection();
+            IEnumerator enumerator = testSubject.GetEnumerator();
 
-
-            TestSubject.GetEnumerator();
-
-            // 
-            // Write your assertions here.
-            // 
+            Assert.Fail("TODO");
         }
     }
 }

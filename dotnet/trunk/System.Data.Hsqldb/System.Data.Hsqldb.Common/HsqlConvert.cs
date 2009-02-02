@@ -52,7 +52,7 @@ using ParameterDirection = System.Data.ParameterDirection;
 using IsolationLevel = System.Data.IsolationLevel;
 using DbType = System.Data.DbType;
 using Trace = org.hsqldb.Trace;
-using Types = org.hsqldb.Types;
+using HsqlTypes = org.hsqldb.Types;
 
 using JavaBigDecimal = java.math.BigDecimal;
 using JavaBigInteger = java.math.BigInteger;
@@ -995,127 +995,127 @@ namespace System.Data.Hsqldb.Common
         {
             switch (type)
             {
-                case Types.ARRAY:
+                case HsqlTypes.ARRAY:
                     {
                         return typeof(java.sql.Array);
                     }
-                case Types.BIGINT:
+                case HsqlTypes.BIGINT:
                     {
                         return typeof(java.lang.Long);
                     }
-                case Types.BINARY:
+                case HsqlTypes.BINARY:
                     {
                         return typeof(byte[]);
                     }
-                case Types.BLOB:
+                case HsqlTypes.BLOB:
                     {
                         return typeof(IBlob);
                     }
-                case Types.BOOLEAN:
+                case HsqlTypes.BOOLEAN:
                     {
                         return typeof(java.lang.Boolean);
                     }
-                case Types.CHAR:
+                case HsqlTypes.CHAR:
                     {
                         return typeof(string);
                     }
-                case Types.CLOB:
+                case HsqlTypes.CLOB:
                     {
                         return typeof(IClob);
                     }
-                case Types.DATALINK:
+                case HsqlTypes.DATALINK:
                     {
                         return typeof(java.net.URL);
                     }
-                case Types.DATE:
+                case HsqlTypes.DATE:
                     {
                         return typeof(java.sql.Date);
                     }
-                case Types.DECIMAL:
+                case HsqlTypes.DECIMAL:
                     {
                         return typeof(java.math.BigDecimal);
                     }
-                case Types.DISTINCT:
+                case HsqlTypes.DISTINCT:
                     {
                         return typeof(object);
                     }
-                case Types.DOUBLE:
+                case HsqlTypes.DOUBLE:
                     {
                         return typeof(java.lang.Double);
                     }
-                case Types.FLOAT:
+                case HsqlTypes.FLOAT:
                     {
                         return typeof(java.lang.Double);
                     }
-                case Types.INTEGER:
+                case HsqlTypes.INTEGER:
                     {
                         return typeof(java.lang.Integer);
                     }
-                case Types.JAVA_OBJECT:
+                case HsqlTypes.JAVA_OBJECT:
                     {
                         return typeof(java.lang.Object);
                     }
-                case Types.LONGVARBINARY:
+                case HsqlTypes.LONGVARBINARY:
                     {
                         return typeof(byte[]);
                     }
-                case Types.LONGVARCHAR:
+                case HsqlTypes.LONGVARCHAR:
                     {
                         return typeof(string);
                     }
-                case Types.NULL:
+                case HsqlTypes.NULL:
                     {
                         return typeof(void);
                     }
-                case Types.NUMERIC:
+                case HsqlTypes.NUMERIC:
                     {
                         return typeof(java.math.BigDecimal);
                     }
-                case Types.OTHER:
+                case HsqlTypes.OTHER:
                     {
                         return typeof(object);
                     }
-                case Types.REAL:
+                case HsqlTypes.REAL:
                     {
                         return typeof(java.lang.Double);
                     }
-                case Types.REF:
+                case HsqlTypes.REF:
                     {
                         return typeof(java.sql.Ref);
                     }
-                case Types.SMALLINT:
+                case HsqlTypes.SMALLINT:
                     {
                         return typeof(java.lang.Integer);
                     }
-                case Types.STRUCT:
+                case HsqlTypes.STRUCT:
                     {
                         return typeof(java.sql.Struct);
                     }
-                case Types.TIME:
+                case HsqlTypes.TIME:
                     {
                         return typeof(java.sql.Time);
                     }
-                case Types.TIMESTAMP:
+                case HsqlTypes.TIMESTAMP:
                     {
                         return typeof(java.sql.Timestamp);
                     }
-                case Types.TINYINT:
+                case HsqlTypes.TINYINT:
                     {
                         return typeof(java.lang.Integer);
                     }
-                case Types.VARBINARY:
+                case HsqlTypes.VARBINARY:
                     {
                         return typeof(byte[]);
                     }
-                case Types.VARCHAR:
+                case HsqlTypes.VARCHAR:
                     {
                         return typeof(string);
                     }
-                case Types.VARCHAR_IGNORECASE:
+                case HsqlTypes.VARCHAR_IGNORECASE:
                     {
                         return typeof(string);
                     }
-                case Types.XML:
+                case HsqlTypes.XML:
                     {
                         return typeof(object);
                     }
@@ -1129,7 +1129,7 @@ namespace System.Data.Hsqldb.Common
 
         #endregion
 
-        #region ToSqlLiteral(HsqlParameter)
+        #region ToSqlLiteral(IDataParameter)
         /// <summary>
         /// Retreives the SQL literal representation of the given parameter's value.
         /// </summary>
@@ -1143,8 +1143,6 @@ namespace System.Data.Hsqldb.Common
         /// When there is no conversion for the <c>DbType</c> of the given
         /// parameter object.
         /// </exception>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity")]
         public static string ToSqlLiteral(IDataParameter parameter)
         {
             if (parameter == null)
@@ -1526,7 +1524,7 @@ namespace System.Data.Hsqldb.Common
         public static HsqlDataSourceException InvalidConversion(int type)
         {
             HsqlException hex = Trace.error(Trace.INVALID_CONVERSION,
-                Types.getTypeName(type));
+                HsqlTypes.getTypeName(type));
 
             return new HsqlDataSourceException(hex);
         }
@@ -1540,11 +1538,9 @@ namespace System.Data.Hsqldb.Common
         /// <returns><c>HsqlDataSourceException</c></returns>
         public static HsqlDataSourceException UnknownConversion(Object o, int targetType)
         {
-            string format
-                = "Unknown target SQL data type: {0} for source type: {1}"; // NOI18N
-            string sourceType = (o == null) 
-                ? "null"
-                : o.GetType().FullName;
+            string format = 
+                "Unknown target SQL data type: {0} for source type: {1}";
+            string sourceType = (o == null) ? "null" : o.GetType().FullName;
             HsqlException hex = Trace.error(Trace.INVALID_CONVERSION,
                 string.Format(format,targetType,sourceType));
 
@@ -1552,6 +1548,5 @@ namespace System.Data.Hsqldb.Common
         }
 
         #endregion
-
     }
 }

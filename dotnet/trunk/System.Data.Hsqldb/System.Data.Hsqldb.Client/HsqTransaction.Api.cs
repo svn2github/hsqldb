@@ -236,7 +236,7 @@ namespace System.Data.Hsqldb.Client
         /// <exception cref="ArgumentException">
         /// When an empty or illegal savepoint name is specified. 
         /// </exception>  
-        /// <exception cref="HsqlDataSourceException">
+        /// <exception cref="System.Data.Hsqldb.Common.HsqlDataSourceException">
         /// When the connection is broken.
         /// </exception>
         public void Save(string savePointName)
@@ -265,7 +265,7 @@ namespace System.Data.Hsqldb.Client
         /// <exception cref="ArgumentException">
         /// When an empty or illegal savepoint name is specified. 
         /// </exception>  
-        /// <exception cref="HsqlDataSourceException">
+        /// <exception cref="System.Data.Hsqldb.Common.HsqlDataSourceException">
         /// When there is no savepoint with the given name
         /// -or-
         /// When the connection is broken.
@@ -298,7 +298,7 @@ namespace System.Data.Hsqldb.Client
         /// <exception cref="ArgumentException">
         /// When an empty or illegal savepoint name is specified. 
         /// </exception>  
-        /// <exception cref="HsqlDataSourceException">
+        /// <exception cref="System.Data.Hsqldb.Common.HsqlDataSourceException">
         /// When there is no savepoint with the given name
         /// -or-
         /// When the connection is broken.

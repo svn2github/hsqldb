@@ -1,85 +1,69 @@
 using System;
-using TestCoverage;
 using NUnit.Framework;
+using System.Data.Hsqldb.Common.IO;
+using System.Data.Hsqldb.TestCoverage;
+using System.IO;
 
-namespace System.Data.Hsqldb.Common.IO.UnitTests
+namespace UnitTests
 {
-    [TestFixture()]
-    [TestSubjectClassAttribute(TestSubject=typeof(System.Data.Hsqldb.Common.IO.JavaOutputStreamAdapter))]
+    [TestFixture, ForSubject(typeof(JavaOutputStreamAdapter))]
     public class TestJavaOutputStreamAdapter
     {
-        
-        [TestSubjectMemberAttribute(MemeberName="close")]
-        [Test()]
-        public virtual void close()
+        static JavaOutputStreamAdapter NewTestSubject()
         {
-            // Create Constructor Parameters
-            RecorderStream streamRecording = new RecorderStream();
-
-            System.Data.Hsqldb.Common.IO.JavaOutputStreamAdapter TestSubject = new System.Data.Hsqldb.Common.IO.JavaOutputStreamAdapter(streamRecording);
-
-
-            TestSubject.close();
-
-            // 
-            // Write your assertions here.
-            // 
+            return NewTestSubject(new MemoryStream());
         }
-        
-        [TestSubjectMemberAttribute(MemeberName="Dispose")]
-        [Test()]
-        public virtual void Dispose()
+
+        static JavaOutputStreamAdapter NewTestSubject(Stream adaptee)
         {
-            // Create Constructor Parameters
-            RecorderStream streamRecording = new RecorderStream();
-
-            System.Data.Hsqldb.Common.IO.JavaOutputStreamAdapter TestSubject = new System.Data.Hsqldb.Common.IO.JavaOutputStreamAdapter(streamRecording);
-
-
-            TestSubject.Dispose();
-
-            // 
-            // Write your assertions here.
-            // 
+            return new JavaOutputStreamAdapter(adaptee);
         }
-        
-        [TestSubjectMemberAttribute(MemeberName="flush")]
-        [Test()]
-        public virtual void flush()
+
+        [Test, OfMember("close")]
+        public void close()
         {
-            // Create Constructor Parameters
-            RecorderStream streamRecording = new RecorderStream();
-
-            System.Data.Hsqldb.Common.IO.JavaOutputStreamAdapter TestSubject = new System.Data.Hsqldb.Common.IO.JavaOutputStreamAdapter(streamRecording);
-
-
-            TestSubject.flush();
-
-            // 
-            // Write your assertions here.
-            // 
+            using (JavaOutputStreamAdapter testSubject = NewTestSubject())
+            {
+                testSubject.close();
+            }
         }
-        
-        [TestSubjectMemberAttribute(MemeberName="write")]
-        [Test()]
-        public virtual void write()
+
+        [Test, OfMember("Dispose"), ExpectedException(typeof(ObjectDisposedException))]
+        public void Dispose()
+        {
+            JavaOutputStreamAdapter testSubject;
+
+            using (testSubject = NewTestSubject())
+            {
+
+            }
+
+            testSubject.write(1);
+        }
+
+        [Test, OfMember("flush")]
+        public void flush()
+        {
+            using (JavaOutputStreamAdapter testSubject = NewTestSubject())
+            {
+                testSubject.flush();
+            }
+        }
+
+        [Test, OfMember("write")]
+        public void write()
         {
             // Create Constructor Parameters
-            RecorderStream streamRecording = new RecorderStream();
+            using (MemoryStream stream = new MemoryStream())
+            using (JavaOutputStreamAdapter testSubject = NewTestSubject(stream))
+            {
+                int b = 1;
 
-            System.Data.Hsqldb.Common.IO.JavaOutputStreamAdapter TestSubject = new System.Data.Hsqldb.Common.IO.JavaOutputStreamAdapter(streamRecording);
+                testSubject.write(b);
+                testSubject.flush();
 
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter b type Int32.
-            int b;
-
-
-            TestSubject.write(b);
-
-            // 
-            // Write your assertions here.
-            // 
+                Assert.AreEqual(1, stream.Length);
+            }
         }
     }
 }

@@ -79,21 +79,21 @@ namespace System.Data.Hsqldb.Client
             #endregion
             #region ConnectionProtocol
 
-            /// <value><see cref="Enumeration.ConnectionProtocol.File"/></value>
+            /// <value><see cref="System.Data.Hsqldb.Common.Enumeration.ConnectionProtocol.File"/></value>
             public const ConnectionProtocol Protocol
                 = ConnectionProtocol.File;
 
             #endregion
             #region DatabaseAppLogLevel
 
-            /// <value><see cref="Enumeration.DatabaseAppLogLevel.Normal"/></value>
+            /// <value><see cref="System.Data.Hsqldb.Common.Enumeration.DatabaseAppLogLevel.Normal"/></value>
             public const DatabaseAppLogLevel DatabaseAppLogLevel
                 = System.Data.Hsqldb.Common.Enumeration.DatabaseAppLogLevel.Normal;
 
             #endregion
             #region DatabaseScriptFormat
 
-            /// <value><see cref="Enumeration.DatabaseScriptFormat.Text"/></value>
+            /// <value><see cref="System.Data.Hsqldb.Common.Enumeration.DatabaseScriptFormat.Text"/></value>
             public const DatabaseScriptFormat DatabaseScriptFormat
                 = System.Data.Hsqldb.Common.Enumeration.DatabaseScriptFormat.Text;
 
@@ -106,7 +106,7 @@ namespace System.Data.Hsqldb.Client
             #endregion
             #region DefaultTableType
 
-            /// <value><see cref="Enumeration.DefaultTableType.Memory"/></value>
+            /// <value><see cref="System.Data.Hsqldb.Common.Enumeration.DefaultTableType.Memory"/></value>
             public const DefaultTableType DefaultTableType
                 = System.Data.Hsqldb.Common.Enumeration.DefaultTableType.Memory;
 

@@ -1,54 +1,58 @@
 using System;
-using TestCoverage;
 using NUnit.Framework;
+using System.Data.Hsqldb.TestCoverage;
+using System.IO;
 
 namespace System.Data.Hsqldb.Common.IO.UnitTests
 {
-    [TestFixture()]
-    [TestSubjectClassAttribute(TestSubject=typeof(System.Data.Hsqldb.Common.IO.JavaWriterWrapper))]
+    [TestFixture, ForSubject(typeof(JavaWriterWrapper))]
     public class TestJavaWriterWrapper
     {
-        
-        [TestSubjectMemberAttribute(MemeberName="Flush")]
-        [Test()]
+        static JavaWriterWrapper NewTestSubject()
+        {
+            return NewTestSubject(new java.io.StringWriter());
+        }
+
+        static JavaWriterWrapper NewTestSubject(java.io.Writer writer)
+        {
+            return new JavaWriterWrapper(writer);
+        }
+
+        [Test, OfMember("Dispose"), ExpectedException(typeof(ObjectDisposedException))]
+        public virtual void Dispose()
+        {
+            TextWriter testSubject;
+
+            using (testSubject = NewTestSubject())
+            {
+                testSubject.Write("asdasd");
+            }
+
+            testSubject.Write("asasdasd");
+        }
+
+        [Test, OfMember("Flush")]
         public virtual void Flush()
         {
-            // Create Constructor Parameters
-            RecorderWriter writerRecording = new RecorderWriter();
-
-            System.Data.Hsqldb.Common.IO.JavaWriterWrapper TestSubject = new System.Data.Hsqldb.Common.IO.JavaWriterWrapper(writerRecording);
-
-
-            TestSubject.Flush();
-
-            // 
-            // Write your assertions here.
-            // 
-            Assert.IsTrue(TestSubject.Recordings.Writer.flushRecording.Called);
+            using (TextWriter testSubject = NewTestSubject())
+            {
+                testSubject.Flush();
+            }
         }
-        
-        [TestSubjectMemberAttribute(MemeberName="Write")]
-        [Test()]
+
+        [Test, OfMember("Write")]
         public virtual void Write()
         {
-            // Create Constructor Parameters
-            RecorderWriter writerRecording = new RecorderWriter();
+            java.io.StringWriter stringWriter = new java.io.StringWriter();
+            using (TextWriter testSubject = NewTestSubject(stringWriter))
+            {
+                char value = 'a';
 
-            System.Data.Hsqldb.Common.IO.JavaWriterWrapper TestSubject = new System.Data.Hsqldb.Common.IO.JavaWriterWrapper(writerRecording);
+                testSubject.Write(value);
+                testSubject.Flush();
 
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter value type Char.
-            char value;
-
-
-            TestSubject.Write(value);
-
-            // 
-            // Write your assertions here.
-            // 
-            Assert.AreEqual("<Please replace with valid value.>", TestSubject.Recordings.Writer.writeInt32Recording.PassedInt32b);
-            Assert.IsTrue(TestSubject.Recordings.Writer.writeInt32Recording.Called);
+                Assert.AreEqual("a", stringWriter.toString());
+            }
         }
     }
 }

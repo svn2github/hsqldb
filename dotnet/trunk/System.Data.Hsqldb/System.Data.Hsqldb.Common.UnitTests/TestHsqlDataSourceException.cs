@@ -1,37 +1,27 @@
 using System;
-using TestCoverage;
+using System.Data.Hsqldb.TestCoverage;
+using System.Runtime.Serialization;
 using NUnit.Framework;
 
 namespace System.Data.Hsqldb.Common.UnitTests
 {
-    [TestFixture()]
-    [TestSubjectClassAttribute(TestSubject=typeof(System.Data.Hsqldb.Common.HsqlDataSourceException))]
+    [TestFixture, ForSubject(typeof(HsqlDataSourceException))]
     public class TestHsqlDataSourceException
     {
         
-        [TestSubjectMemberAttribute(MemeberName="GetObjectData")]
-        [Test()]
-        public virtual void GetObjectData()
+        [Test, OfMember("GetObjectData")]
+        public void GetObjectData()
         {
-            // Create Constructor Parameters
+            Type type = typeof(HsqlDataSourceException);
+            FormatterConverter converter = new FormatterConverter();
+            SerializationInfo info = new SerializationInfo(type, converter);
+            StreamingContext context = new StreamingContext();
 
-            System.Data.Hsqldb.Common.HsqlDataSourceException TestSubject = new System.Data.Hsqldb.Common.HsqlDataSourceException();
+            HsqlDataSourceException testSubject = new HsqlDataSourceException("foo", -1, "42001");
 
-            // Create Test Method Parameters
+            testSubject.GetObjectData(info, context);
 
-            // There is no default constuctor for the parameter info type SerializationInfo.
-            System.Runtime.Serialization.SerializationInfo info;
-
-
-            // There is no default constuctor for the parameter context type StreamingContext.
-            System.Runtime.Serialization.StreamingContext context;
-
-
-            TestSubject.GetObjectData(info, context);
-
-            // 
-            // Write your assertions here.
-            // 
+            Assert.Fail("TODO");
         }
     }
 }

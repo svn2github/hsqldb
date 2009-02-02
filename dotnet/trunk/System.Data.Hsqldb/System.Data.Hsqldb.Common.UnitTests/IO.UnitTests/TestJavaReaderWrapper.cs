@@ -1,84 +1,69 @@
 using System;
-using TestCoverage;
+using System.Data.Hsqldb.TestCoverage;
+using System.IO;
 using NUnit.Framework;
 
 namespace System.Data.Hsqldb.Common.IO.UnitTests
-{
-    [TestFixture()]
-    [TestSubjectClassAttribute(TestSubject=typeof(System.Data.Hsqldb.Common.IO.JavaReaderWrapper))]
+{   
+    [TestFixture, ForSubject(typeof(JavaReaderWrapper))]
     public class TestJavaReaderWrapper
     {
-        
-        [TestSubjectMemberAttribute(MemeberName="Peek")]
-        [Test()]
-        public virtual void Peek()
+        static JavaReaderWrapper NewTestSubject(string s)
         {
-            // Create Constructor Parameters
-            RecorderReader readerRecording = new RecorderReader();
+            return NewTestSubject(new java.io.StringReader(s));
+        }
 
-            System.Data.Hsqldb.Common.IO.JavaReaderWrapper TestSubject = new System.Data.Hsqldb.Common.IO.JavaReaderWrapper(readerRecording);
-
-
-            TestSubject.Peek();
-
-            // 
-            // Write your assertions here.
-            // 
+        static JavaReaderWrapper NewTestSubject(java.io.Reader reader)
+        {
+            return new JavaReaderWrapper(reader);
         }
         
-        [TestSubjectMemberAttribute(MemeberName="Read")]
-        [Test()]
-        public virtual void Read()
+        [Test, OfMember("Peek")]
+        public void Peek()
         {
-            // Create Constructor Parameters
-            RecorderReader readerRecording = new RecorderReader();
+            using (TextReader testSubject = NewTestSubject("a"))
+            {
+                int expected = "a"[0];
+                int actual = testSubject.Peek();
 
-            System.Data.Hsqldb.Common.IO.JavaReaderWrapper TestSubject = new System.Data.Hsqldb.Common.IO.JavaReaderWrapper(readerRecording);
-
-            TestSubject.Recordings.Reader.readRecording.ReturnValue = "Please set the return value.";
-
-            TestSubject.Read();
-
-            // 
-            // Write your assertions here.
-            // 
-            Assert.IsTrue(TestSubject.Recordings.Reader.readRecording.Called);
+                Assert.AreEqual(expected, actual);
+            }
         }
-        
-        [TestSubjectMemberAttribute(MemeberName="ReadLine")]
-        [Test()]
+
+        [Test, OfMember("Read")]
+        public void Read()
+        {
+            using (TextReader testSubject = NewTestSubject("a"))
+            {
+                int expected = (int)"a"[0];
+                int actual = testSubject.Read();
+
+                Assert.AreEqual(expected, actual);
+            }
+        }
+
+        [Test, OfMember("ReadLine")]
         public virtual void ReadLine()
         {
-            // Create Constructor Parameters
-            RecorderReader readerRecording = new RecorderReader();
+            using (TextReader testSubject = NewTestSubject("a\na"))
+            {
+                string expected = "a";
+                string actual = testSubject.ReadLine();
 
-            System.Data.Hsqldb.Common.IO.JavaReaderWrapper TestSubject = new System.Data.Hsqldb.Common.IO.JavaReaderWrapper(readerRecording);
-
-            TestSubject.Recordings.LineReader.readLineRecording.ReturnValue = "Please set the return value.";
-
-            TestSubject.ReadLine();
-
-            // 
-            // Write your assertions here.
-            // 
-            Assert.IsTrue(TestSubject.Recordings.LineReader.readLineRecording.Called);
+                Assert.AreEqual(expected, actual);
+            }
         }
-        
-        [TestSubjectMemberAttribute(MemeberName="ReadToEnd")]
-        [Test()]
+
+        [Test, OfMember("ReadToEnd")]
         public virtual void ReadToEnd()
         {
-            // Create Constructor Parameters
-            RecorderReader readerRecording = new RecorderReader();
+            using (TextReader testSubject = NewTestSubject("a\na"))
+            {
+                string expected = "a\na";
+                string actual = testSubject.ReadToEnd();
 
-            System.Data.Hsqldb.Common.IO.JavaReaderWrapper TestSubject = new System.Data.Hsqldb.Common.IO.JavaReaderWrapper(readerRecording);
-
-
-            TestSubject.ReadToEnd();
-
-            // 
-            // Write your assertions here.
-            // 
+                Assert.AreEqual(expected, actual);
+            }
         }
     }
 }

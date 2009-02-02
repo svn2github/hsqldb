@@ -1,358 +1,210 @@
 using System;
-using TestCoverage;
 using NUnit.Framework;
+using System.Data.Hsqldb.TestCoverage;
+using System.Data.Hsqldb.Common.Enumeration;
 
 namespace System.Data.Hsqldb.Common.UnitTests
 {
-    [TestFixture()]
-    [TestSubjectClassAttribute(TestSubject=typeof(System.Data.Hsqldb.Common.HsqlConvert))]
+    [TestFixture, ForSubject(typeof(HsqlConvert))]
     public class TestHsqlConvert
     {
-        
-        [TestSubjectMemberAttribute(MemeberName="InvalidConversion")]
-        [Test()]
-        public virtual void InvalidConversion()
+        [Test, OfMember("InvalidConversion")]
+        public void InvalidConversion()
         {
-
-            // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-            System.Data.Hsqldb.Common.HsqlConvert TestSubject;
-
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter type type Int32.
-            int type;
-
-
-            TestSubject.InvalidConversion(type);
-
-            // 
-            // Write your assertions here.
-            // 
+            try
+            {
+                throw HsqlConvert.InvalidConversion(java.sql.Types.DATALINK);
+            }
+            catch (HsqlDataSourceException hdse)
+            {
+                Assert.AreEqual(org.hsqldb.Trace.INVALID_CONVERSION, -hdse.ErrorCode);
+            }
         }
-        
-        [TestSubjectMemberAttribute(MemeberName="NumericValueOutOfRange")]
-        [Test()]
-        public virtual void NumericValueOutOfRange()
+
+        [Test, OfMember("NumericValueOutOfRange")]
+        public void NumericValueOutOfRange()
         {
+            object n = 42L;
 
-            // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-            System.Data.Hsqldb.Common.HsqlConvert TestSubject;
-
-            // Create Test Method Parameters
-            object n = new object();
-
-            TestSubject.NumericValueOutOfRange(n);
-
-            // 
-            // Write your assertions here.
-            // 
+            try
+            {
+                throw HsqlConvert.NumericValueOutOfRange(n);
+            }
+            catch (HsqlDataSourceException hdse)
+            {
+                Assert.AreEqual(org.hsqldb.Trace.NUMERIC_VALUE_OUT_OF_RANGE, -hdse.ErrorCode);
+            }
         }
-        
-        [TestSubjectMemberAttribute(MemeberName="ParseBigInt")]
-        [Test()]
-        public virtual void ParseBigInt()
+
+        [Test, OfMember("ParseBigInt")]
+        public void ParseBigInt()
         {
+            long expected = long.MinValue;
+            long actual = HsqlConvert.ParseBigInt(Convert.ToString(expected));
 
-            // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-            System.Data.Hsqldb.Common.HsqlConvert TestSubject;
-
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter value type String.
-            string value;
-
-
-            TestSubject.ParseBigInt(value);
-
-            // 
-            // Write your assertions here.
-            // 
+            Assert.AreEqual(expected, actual);
         }
-        
-        [TestSubjectMemberAttribute(MemeberName="ParseDecimal")]
-        [Test()]
-        public virtual void ParseDecimal()
+
+        [Test, OfMember("ParseDecimal")]
+        public void ParseDecimal()
         {
+            decimal expected = decimal.MinValue;
+            decimal actual = HsqlConvert.ParseDecimal(Convert.ToString(expected));
 
-            // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-            System.Data.Hsqldb.Common.HsqlConvert TestSubject;
-
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter value type String.
-            string value;
-
-
-            TestSubject.ParseDecimal(value);
-
-            // 
-            // Write your assertions here.
-            // 
+            Assert.AreEqual(expected, actual);
         }
-        
-        [TestSubjectMemberAttribute(MemeberName="ParseDouble")]
-        [Test()]
-        public virtual void ParseDouble()
+
+        [Test, OfMember("ParseDouble")]
+        public void ParseDouble()
         {
+            double expected = double.MinValue;
+            double actual = HsqlConvert.ParseDouble(Convert.ToString(expected));
 
-            // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-            System.Data.Hsqldb.Common.HsqlConvert TestSubject;
-
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter value type String.
-            string value;
-
-
-            TestSubject.ParseDouble(value);
-
-            // 
-            // Write your assertions here.
-            // 
+            Assert.AreEqual(expected, actual);
         }
-        
-        [TestSubjectMemberAttribute(MemeberName="ParseInteger")]
-        [Test()]
-        public virtual void ParseInteger()
+
+        [Test, OfMember("ParseInteger")]
+        public void ParseInteger()
         {
-
-            // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-            System.Data.Hsqldb.Common.HsqlConvert TestSubject;
-
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter value type String.
-            string value;
-
-
-            TestSubject.ParseInteger(value);
-
-            // 
-            // Write your assertions here.
-            // 
+            int expected = int.MinValue;
+            int actual = HsqlConvert.ParseInteger(Convert.ToString(expected));
         }
-        
-        [TestSubjectMemberAttribute(MemeberName="ToDataType")]
-        [Test()]
-        public virtual void ToDataType()
+
+        [Test, OfMember("ToDataType")]
+        public void ToDataType()
         {
+            Type dataType = HsqlConvert.ToDataType(HsqlProviderType.BigInt);
 
-            // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-            System.Data.Hsqldb.Common.HsqlConvert TestSubject;
+            Assert.AreEqual(typeof(long), dataType);
 
-            // Create Test Method Parameters
+            Assert.Fail("TODO");
+        }
 
-            // There is no default constuctor for the parameter dbType type HsqlProviderType.
-            System.Data.Hsqldb.Common.Enumeration.HsqlProviderType dbType;
+        [Test, OfMember("ToDbType")]
+        public void ToDbType()
+        {
+            DbType actual = HsqlConvert.ToDbType(HsqlProviderType.BigInt);
 
+            Assert.AreEqual(DbType.Int64, actual);
 
-            TestSubject.ToDataType(dbType);
+            Assert.Fail("TODO");
+        }
 
-            // 
-            // Write your assertions here.
+        [Test, OfMember("ToHsqlIsolationLevel")]
+        public void ToHsqlIsolationLevel()
+        {
+            Assert.AreEqual(HsqlIsolationLevel.ReadCommited, HsqlConvert.ToHsqlIsolationLevel(IsolationLevel.ReadCommitted));
+            Assert.AreEqual(HsqlIsolationLevel.ReadCommited, HsqlConvert.ToHsqlIsolationLevel(IsolationLevel.Unspecified));
             //
+            Assert.AreEqual(HsqlIsolationLevel.ReadUncommited, HsqlConvert.ToHsqlIsolationLevel(IsolationLevel.ReadUncommitted));
+            Assert.AreEqual(HsqlIsolationLevel.RepeatableRead, HsqlConvert.ToHsqlIsolationLevel(IsolationLevel.RepeatableRead));
+            Assert.AreEqual(HsqlIsolationLevel.Serializable, HsqlConvert.ToHsqlIsolationLevel(IsolationLevel.Serializable));
 
-            int type;
+            try
+            {
+                HsqlConvert.ToHsqlIsolationLevel(IsolationLevel.Chaos);
 
+                Assert.Fail("There is no HsqlIsolationLevel corresponding to IsolationLevel.Chaos"); 
+            }
+            catch (ArgumentException ae)
+            {
+                Assert.AreEqual("isolationLevel", ae.ParamName);
+                Assert.AreEqual(string.Format("Unsupported: (0) ", IsolationLevel.Chaos), ae.Message); 
+            }
 
-            TestSubject.ToDataType(type);
+            try
+            {
+                HsqlConvert.ToHsqlIsolationLevel(IsolationLevel.Snapshot);
 
-            // 
-            // Write your assertions here.
-            //
+                Assert.Fail("There is no HsqlIsolationLevel corresponding to IsolationLevel.Snapshot"); 
+            }
+            catch (ArgumentException ae)
+            {
+                Assert.AreEqual("isolationLevel", ae.ParamName);
+                Assert.AreEqual(string.Format("Unsupported: (0) ", IsolationLevel.Snapshot), ae.Message); 
+            }
         }
-        
-        [TestSubjectMemberAttribute(MemeberName="ToDbType")]
-        [Test()]
-        public virtual void ToDbType()
+
+        [Test, OfMember("ToHsqlProviderType")]
+        public void ToHsqlProviderType()
         {
+            HsqlProviderType actual = HsqlConvert.ToHsqlProviderType(DbType.Int64);
 
-            // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-            System.Data.Hsqldb.Common.HsqlConvert TestSubject;
+            Assert.AreEqual(HsqlProviderType.BigInt, actual);
 
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter type type HsqlProviderType.
-            System.Data.Hsqldb.Common.Enumeration.HsqlProviderType type;
-
-
-            TestSubject.ToDbType(type);
-
-            // 
-            // Write your assertions here.
-            // 
+            Assert.Fail("TODO");
         }
-        
-        [TestSubjectMemberAttribute(MemeberName="ToHsqlIsolationLevel")]
-        [Test()]
-        public virtual void ToHsqlIsolationLevel()
+
+        [Test, OfMember("ToIsolationLevel")]
+        public void ToIsolationLevel()
         {
+            IsolationLevel actual  = HsqlConvert.ToIsolationLevel(HsqlIsolationLevel.ReadCommited);
 
-            // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-            System.Data.Hsqldb.Common.HsqlConvert TestSubject;
+            Assert.AreEqual(IsolationLevel.ReadCommitted, actual);
 
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter isolationLevel type IsolationLevel.
-            System.Data.IsolationLevel isolationLevel;
-
-
-            TestSubject.ToHsqlIsolationLevel(isolationLevel);
-
-            // 
-            // Write your assertions here.
-            // 
+            Assert.Fail("TODO");
         }
-        
-        [TestSubjectMemberAttribute(MemeberName="ToHsqlProviderType")]
-        [Test()]
-        public virtual void ToHsqlProviderType()
+
+        [Test, OfMember("ToParameterDirection")]
+        public void ToParameterDirection()
         {
+            ParameterDirection? actual = HsqlConvert.ToParameterDirection(ParameterMode.In);
 
-            // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-            System.Data.Hsqldb.Common.HsqlConvert TestSubject;
+            Assert.AreEqual(ParameterDirection.Input, actual);
 
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter type type DbType.
-            System.Data.DbType type;
-
-
-            TestSubject.ToHsqlProviderType(type);
-
-            // 
-            // Write your assertions here.
-            // 
+            Assert.Fail("TODO");
         }
-        
-        [TestSubjectMemberAttribute(MemeberName="ToIsolationLevel")]
-        [Test()]
-        public virtual void ToIsolationLevel()
+
+        [Test, OfMember("ToProviderSpecificDataType")]
+        public void ToProviderSpecificDataType()
         {
+            Type dataType = HsqlConvert.ToProviderSpecificDataType(java.sql.Types.BIGINT);
 
-            // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-            System.Data.Hsqldb.Common.HsqlConvert TestSubject;
+            Assert.AreEqual(typeof(long), dataType);
 
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter value type HsqlIsolationLevel.
-            System.Data.Hsqldb.Common.Enumeration.HsqlIsolationLevel value;
-
-
-            TestSubject.ToIsolationLevel(value);
-
-            // 
-            // Write your assertions here.
-            // 
-
-            System.Transactions.IsolationLevel value;
-
-
-            TestSubject.ToIsolationLevel(value);
-
-            // 
-            // Write your assertions here.
-            // 
+            Assert.Fail("TODO");
         }
-        
-        [TestSubjectMemberAttribute(MemeberName="ToParameterDirection")]
-        [Test()]
-        public virtual void ToParameterDirection()
+
+        [Test, OfMember("ToSqlLiteral")]
+        public void ToSqlLiteral()
         {
+            //IDataParameter parameter;
 
-            // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-            System.Data.Hsqldb.Common.HsqlConvert TestSubject;
-
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter mode type ParameterMode.
-            System.Data.Hsqldb.Common.Enumeration.ParameterMode mode;
-
-
-            TestSubject.ToParameterDirection(mode);
-
-            // 
-            // Write your assertions here.
-            // 
+            //string actual = HsqlConvert.ToSqlLiteral(parameter);
+            
+            Assert.Fail("TODO");
         }
-        
-        [TestSubjectMemberAttribute(MemeberName="ToProviderSpecificDataType")]
-        [Test()]
-        public virtual void ToProviderSpecificDataType()
+
+        [Test, OfMember("UnknownConversion")]
+        public void UnknownConversion()
         {
-
-            // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-            System.Data.Hsqldb.Common.HsqlConvert TestSubject;
-
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter type type Int32.
-            int type;
+            object o = new object();
+            int targetType = java.sql.Types.BIGINT;
 
 
-            TestSubject.ToProviderSpecificDataType(type);
-
-            // 
-            // Write your assertions here.
-            // 
+            try
+            {
+                throw HsqlConvert.UnknownConversion(o, targetType);
+            }
+            catch (HsqlDataSourceException hdse)
+            {
+                Assert.AreEqual(org.hsqldb.Trace.INVALID_CONVERSION, -hdse.ErrorCode);
+            }
         }
-        
-        [TestSubjectMemberAttribute(MemeberName="ToSqlLiteral")]
-        [Test()]
-        public virtual void ToSqlLiteral()
+
+        [Test, OfMember("WrongDataType")]
+        public void WrongDataType()
         {
-
-            // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-            System.Data.Hsqldb.Common.HsqlConvert TestSubject;
-
-            // Create Test Method Parameters
-            RecorderIDataParameter parameterRecording = new RecorderIDataParameter();
-
-            TestSubject.ToSqlLiteral(parameterRecording);
-
-            // 
-            // Write your assertions here.
-            // 
-        }
-        
-        [TestSubjectMemberAttribute(MemeberName="UnknownConversion")]
-        [Test()]
-        public virtual void UnknownConversion()
-        {
-
-            // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-            System.Data.Hsqldb.Common.HsqlConvert TestSubject;
-
-            // Create Test Method Parameters
             object o = new object();
 
-            // There is no default constuctor for the parameter targetType type Int32.
-            int targetType;
-
-
-            TestSubject.UnknownConversion(o, targetType);
-
-            // 
-            // Write your assertions here.
-            // 
-        }
-        
-        [TestSubjectMemberAttribute(MemeberName="WrongDataType")]
-        [Test()]
-        public virtual void WrongDataType()
-        {
-
-            // No public constructors were found, you need to get an instance of the test subject assigned to the variable TestSubject.
-            System.Data.Hsqldb.Common.HsqlConvert TestSubject;
-
-            // Create Test Method Parameters
-            object o = new object();
-
-            TestSubject.WrongDataType(o);
-
-            // 
-            // Write your assertions here.
-            // 
+            try
+            {
+                throw HsqlConvert.WrongDataType(o);
+            }
+            catch (HsqlDataSourceException hdse)
+            {
+                Assert.AreEqual(org.hsqldb.Trace.WRONG_DATA_TYPE, -hdse.ErrorCode);
+            }
         }
     }
 }

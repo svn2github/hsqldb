@@ -1,378 +1,322 @@
+#region Using
 using System;
-using TestCoverage;
+using System.Data.Hsqldb.Common;
+using System.Data.Hsqldb.Common.Enumeration;
+using System.Data.Hsqldb.Common.Sql;
+using System.Data.Hsqldb.TestCoverage;
 using NUnit.Framework;
+#endregion
 
-namespace System.Data.Hsqldb.Common.Sql.UnitTests
+namespace UnitTests
 {
-    [TestFixture()]
-    [TestSubjectClassAttribute(TestSubject=typeof(System.Data.Hsqldb.Common.Sql.Tokenizer))]
+    [TestFixture, ForSubject(typeof(Tokenizer))]
     public class TestTokenizer
     {
-        
-        [TestSubjectMemberAttribute(MemeberName="GetNextAsBigint")]
-        [Test()]
-        public virtual void GetNextAsBigint()
+        [Test, OfMember("GetNextAsBigint")]
+        public void GetNextAsBigint()
         {
-            // Create Constructor Parameters
+            Tokenizer testSubject = new Tokenizer("123456789123456789");
 
-            System.Data.Hsqldb.Common.Sql.Tokenizer TestSubject = new System.Data.Hsqldb.Common.Sql.Tokenizer();
+            long expected = 123456789123456789L;
+            long actual = testSubject.GetNextAsBigint();
 
-
-            TestSubject.GetNextAsBigint();
-
-            // 
-            // Write your assertions here.
-            // 
+            Assert.AreEqual(expected, actual);
         }
         
-        [TestSubjectMemberAttribute(MemeberName="GetNextAsInt")]
-        [Test()]
-        public virtual void GetNextAsInt()
+        [Test, OfMember("GetNextAsInt")]
+        public void GetNextAsInt()
         {
-            // Create Constructor Parameters
+            Tokenizer testSubject = new Tokenizer("123456789");
 
-            System.Data.Hsqldb.Common.Sql.Tokenizer TestSubject = new System.Data.Hsqldb.Common.Sql.Tokenizer();
+            int expected = 123456789;
+            int actual = testSubject.GetNextAsInt();
 
-
-            TestSubject.GetNextAsInt();
-
-            // 
-            // Write your assertions here.
-            // 
+            Assert.AreEqual(expected, actual); 
         }
         
-        [TestSubjectMemberAttribute(MemeberName="GetNextAsLiteralValue")]
-        [Test()]
-        public virtual void GetNextAsLiteralValue()
+        [Test, OfMember("GetNextAsLiteralValue")]
+        public void GetNextAsLiteralValue()
         {
             // Create Constructor Parameters
 
-            System.Data.Hsqldb.Common.Sql.Tokenizer TestSubject = new System.Data.Hsqldb.Common.Sql.Tokenizer();
-
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter requestedDataType type HsqlProviderType.
-            System.Data.Hsqldb.Common.Enumeration.HsqlProviderType requestedDataType;
+            Tokenizer testSubject = new Tokenizer();
 
 
-            TestSubject.GetNextAsLiteralValue(requestedDataType);
+            testSubject.Reset("123456789123456789"); 
 
-            // 
-            // Write your assertions here.
-            // 
+            try
+            {
+                testSubject.GetNextAsLiteralValue(HsqlProviderType.Array);
+
+                Assert.Fail("SQL ARRAY literal tokens are not supposed to be supported");
+            }
+            catch (HsqlDataSourceException)
+            {
+            }
+            
+            long bigint = (long) testSubject.GetNextAsLiteralValue(HsqlProviderType.BigInt);
+            byte[] bytes = testSubject.GetNextAsLiteralValue(HsqlProviderType.Binary) as byte[];
+
+            try
+            {
+                testSubject.GetNextAsLiteralValue(HsqlProviderType.Blob);
+
+                Assert.Fail("SQL BLOB literal tokens are not supposed to be supported at this time");
+            }
+            catch (HsqlDataSourceException)
+            {
+            }
+
+            //testSubject.GetNextAsLiteralValue(HsqlProviderType.Boolean);
+            //testSubject.GetNextAsLiteralValue(HsqlProviderType.Char);
+            try
+            {
+                testSubject.GetNextAsLiteralValue(HsqlProviderType.Clob);
+
+                Assert.Fail("SQL CLOB literal tokens are not supposed to be supported at this time");
+            }
+            catch (HsqlDataSourceException)
+            {
+            }
+            try
+            {
+                testSubject.GetNextAsLiteralValue(HsqlProviderType.DataLink);
+
+                Assert.Fail("SQL DATALINK literal tokens are not supposed to be supported at this time");
+            }
+            catch (HsqlDataSourceException)
+            {
+            }
+            //testSubject.GetNextAsLiteralValue(HsqlProviderType.Date);
+            //testSubject.GetNextAsLiteralValue(HsqlProviderType.Decimal);
+            try
+            {
+                testSubject.GetNextAsLiteralValue(HsqlProviderType.Distinct);
+
+                Assert.Fail("SQL DISTINCT literal tokens are not supposed to be supported");
+            }
+            catch (HsqlDataSourceException)
+            {
+            }
+            //testSubject.GetNextAsLiteralValue(HsqlProviderType.Double);
+            //testSubject.GetNextAsLiteralValue(HsqlProviderType.Float);
+            //testSubject.GetNextAsLiteralValue(HsqlProviderType.Integer);
+            try
+            {
+                testSubject.GetNextAsLiteralValue(HsqlProviderType.JavaObject);
+
+                Assert.Fail("SQL JAVA_OBJECT literal tokens are not supposed to be supported at this time");
+            }
+            catch (HsqlDataSourceException)
+            {
+            }
+            //testSubject.GetNextAsLiteralValue(HsqlProviderType.LongVarBinary);
+            //testSubject.GetNextAsLiteralValue(HsqlProviderType.LongVarChar);
+            //testSubject.GetNextAsLiteralValue(HsqlProviderType.Null);
+            //testSubject.GetNextAsLiteralValue(HsqlProviderType.Numeric);
+            //testSubject.GetNextAsLiteralValue(HsqlProviderType.Object);
+            //testSubject.GetNextAsLiteralValue(HsqlProviderType.Real);
+            try
+            {
+                testSubject.GetNextAsLiteralValue(HsqlProviderType.Ref);
+
+                Assert.Fail("SQL REF literal tokens are not supposed to be supported");
+            }
+            catch (HsqlDataSourceException)
+            {
+            }
+            //testSubject.GetNextAsLiteralValue(HsqlProviderType.SmallInt);
+            try
+            {
+                testSubject.GetNextAsLiteralValue(HsqlProviderType.Struct);
+
+                Assert.Fail("SQL STRUCT literal tokens are not supposed to be supported");
+            }
+            catch (HsqlDataSourceException)
+            {
+            }
+            //testSubject.GetNextAsLiteralValue(HsqlProviderType.Time);
+            //testSubject.GetNextAsLiteralValue(HsqlProviderType.TimeStamp);
+            //testSubject.GetNextAsLiteralValue(HsqlProviderType.TinyInt);
+            //testSubject.GetNextAsLiteralValue(HsqlProviderType.VarBinary);
+            //testSubject.GetNextAsLiteralValue(HsqlProviderType.VarChar);
+            try
+            {
+                testSubject.GetNextAsLiteralValue(HsqlProviderType.Xml);
+
+                Assert.Fail("SQL XML literal tokens are not supposed to be supported at this time");
+            }
+            catch (HsqlDataSourceException)
+            {
+            }
         }
         
-        [TestSubjectMemberAttribute(MemeberName="GetNextAsName")]
-        [Test()]
-        public virtual void GetNextAsName()
+        [Test, OfMember("GetNextAsName")]
+        public void GetNextAsName()
         {
-            // Create Constructor Parameters
+            Tokenizer testSubject = new Tokenizer("CREATE TABLE \"PUBLIC\".\"Foo \"\"BarBaz\"\"\"");
 
-            System.Data.Hsqldb.Common.Sql.Tokenizer TestSubject = new System.Data.Hsqldb.Common.Sql.Tokenizer();
+            testSubject.GetThis("CREATE");
+            testSubject.GetThis("TABLE");
 
+            string expectedChainFirst = "PUBLIC";
+            string expected = "Foo \"BarBaz\"";
+            string actualChainFirst = testSubject.IdentifierChainFirst;
+            string actual = testSubject.GetNextAsName();
 
-            TestSubject.GetNextAsName();
-
-            // 
-            // Write your assertions here.
-            // 
+            Assert.AreEqual(expectedChainFirst, actualChainFirst, "schema qualifier" );
+            Assert.AreEqual(expected, actual, "object name"); 
         }
         
-        [TestSubjectMemberAttribute(MemeberName="GetNextAsSimpleName")]
-        [Test()]
-        public virtual void GetNextAsSimpleName()
+        [Test, OfMember("GetNextAsSimpleName")]
+        public void GetNextAsSimpleName()
         {
             // Create Constructor Parameters
 
-            System.Data.Hsqldb.Common.Sql.Tokenizer TestSubject = new System.Data.Hsqldb.Common.Sql.Tokenizer();
+            Tokenizer testSubject = new Tokenizer("SIMPLE");
 
+            string expected = "SIMPLE";
+            string actual = testSubject.GetNextAsSimpleName();
 
-            TestSubject.GetNextAsSimpleName();
+            Assert.AreEqual(HsqlProviderType.Null, testSubject.LiteralValueDataType, "literal value data type");
+            Assert.AreEqual(false, testSubject.WasDelimitedIdentifier);
+            Assert.AreEqual(false, testSubject.WasIdentifierChain);
 
-            // 
-            // Write your assertions here.
-            // 
+            Assert.AreEqual(expected, actual);
         }
         
-        [TestSubjectMemberAttribute(MemeberName="GetNextAsSimpleToken")]
-        [Test()]
-        public virtual void GetNextAsSimpleToken()
+        [Test, OfMember("GetNextAsSimpleToken")]
+        public void GetNextAsSimpleToken()
         {
-            // Create Constructor Parameters
-
-            System.Data.Hsqldb.Common.Sql.Tokenizer TestSubject = new System.Data.Hsqldb.Common.Sql.Tokenizer();
-
-
-            TestSubject.GetNextAsSimpleToken();
-
-            // 
-            // Write your assertions here.
-            // 
+            Assert.Fail("TODO"); 
         }
         
-        [TestSubjectMemberAttribute(MemeberName="GetNextAsString")]
-        [Test()]
-        public virtual void GetNextAsString()
+        [Test, OfMember("GetNextAsString")]
+        public void GetNextAsString()
         {
-            // Create Constructor Parameters
-
-            System.Data.Hsqldb.Common.Sql.Tokenizer TestSubject = new System.Data.Hsqldb.Common.Sql.Tokenizer();
-
-
-            TestSubject.GetNextAsString();
-
-            // 
-            // Write your assertions here.
-            // 
+            Assert.Fail("TODO"); 
         }
         
-        [TestSubjectMemberAttribute(MemeberName="GetPart")]
-        [Test()]
-        public virtual void GetPart()
+        [Test, OfMember("GetPart")]
+        public void GetPart()
         {
-            // Create Constructor Parameters
-
-            System.Data.Hsqldb.Common.Sql.Tokenizer TestSubject = new System.Data.Hsqldb.Common.Sql.Tokenizer();
-
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter startIndex type Int32.
-            int startIndex;
-
-
-            // There is no default constuctor for the parameter endIndex type Int32.
-            int endIndex;
-
-
-            TestSubject.GetPart(startIndex, endIndex);
-
-            // 
-            // Write your assertions here.
-            // 
+            Assert.Fail("TODO");
         }
         
-        [TestSubjectMemberAttribute(MemeberName="GetThis")]
-        [Test()]
-        public virtual void GetThis()
+        [Test, OfMember("GetThis")]
+        public void GetThis()
         {
-            // Create Constructor Parameters
-
-            System.Data.Hsqldb.Common.Sql.Tokenizer TestSubject = new System.Data.Hsqldb.Common.Sql.Tokenizer();
-
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter match type String.
-            string match;
-
-
-            TestSubject.GetThis(match);
-
-            // 
-            // Write your assertions here.
-            // 
+            Assert.Fail("TODO");
         }
         
-        [TestSubjectMemberAttribute(MemeberName="IdentiferChainLengthExceeded")]
-        [Test()]
-        public virtual void IdentiferChainLengthExceeded()
+        [Test, OfMember("IdentiferChainLengthExceeded")]
+        public void IdentiferChainLengthExceeded()
         {
-            // Create Constructor Parameters
-
-            System.Data.Hsqldb.Common.Sql.Tokenizer TestSubject = new System.Data.Hsqldb.Common.Sql.Tokenizer();
-
-
-            TestSubject.IdentiferChainLengthExceeded();
-
-            // 
-            // Write your assertions here.
-            // 
+            Assert.Fail("TODO");
         }
         
-        [TestSubjectMemberAttribute(MemeberName="IllegalWaitState")]
-        [Test()]
-        public virtual void IllegalWaitState()
+        [Test, OfMember("IllegalWaitState")]
+        public void IllegalWaitState()
         {
-            // Create Constructor Parameters
-
-            System.Data.Hsqldb.Common.Sql.Tokenizer TestSubject = new System.Data.Hsqldb.Common.Sql.Tokenizer();
-
-
-            TestSubject.IllegalWaitState();
-
-            // 
-            // Write your assertions here.
-            // 
+            Assert.Fail("TODO"); 
         }
         
-        [TestSubjectMemberAttribute(MemeberName="InvalidIdentifier")]
-        [Test()]
-        public virtual void InvalidIdentifier()
+        [Test, OfMember("InvalidIdentifier")]
+        public void InvalidIdentifier()
         {
-            // Create Constructor Parameters
-
-            System.Data.Hsqldb.Common.Sql.Tokenizer TestSubject = new System.Data.Hsqldb.Common.Sql.Tokenizer();
-
-            // Create Test Method Parameters
-            object token = new object();
-
-            TestSubject.InvalidIdentifier(token);
-
-            // 
-            // Write your assertions here.
-            // 
+            Assert.Fail("TODO"); 
         }
         
-        [TestSubjectMemberAttribute(MemeberName="IsGetThis")]
-        [Test()]
-        public virtual void IsGetThis()
+        [Test, OfMember("IsGetThis")]
+        public void IsGetThis()
         {
-            // Create Constructor Parameters
-
-            System.Data.Hsqldb.Common.Sql.Tokenizer TestSubject = new System.Data.Hsqldb.Common.Sql.Tokenizer();
-
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter match type String.
-            string match;
-
-
-            TestSubject.IsGetThis(match);
-
-            // 
-            // Write your assertions here.
-            // 
+            Assert.Fail("TODO"); 
         }
         
-        [TestSubjectMemberAttribute(MemeberName="MatchFailed")]
-        [Test()]
-        public virtual void MatchFailed()
+        [Test, OfMember("MatchFailed")]
+        public void MatchFailed()
         {
-            // Create Constructor Parameters
-
-            System.Data.Hsqldb.Common.Sql.Tokenizer TestSubject = new System.Data.Hsqldb.Common.Sql.Tokenizer();
 
             // Create Test Method Parameters
             object token = new object();
             object match = new object();
 
-            TestSubject.MatchFailed(token, match);
-
-            // 
-            // Write your assertions here.
-            // 
+            try
+            {
+                throw Tokenizer.MatchFailed(token, match);
+            }
+            catch (HsqlDataSourceException hdse)
+            {   
+               Assert.AreEqual(org.hsqldb.Trace.UNEXPECTED_TOKEN, -hdse.ErrorCode);
+               Assert.IsTrue(hdse.Message.Contains(org.hsqldb.Trace.getMessage(
+                   org.hsqldb.Trace.TOKEN_REQUIRED)));
+            }
         }
         
-        [TestSubjectMemberAttribute(MemeberName="Reset")]
-        [Test()]
-        public virtual void Reset()
+        [Test, OfMember("Reset")]
+        public void Reset()
         {
-            // Create Constructor Parameters
-
-            System.Data.Hsqldb.Common.Sql.Tokenizer TestSubject = new System.Data.Hsqldb.Common.Sql.Tokenizer();
-
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter chars type String.
-            string chars;
-
-
-            TestSubject.Reset(chars);
-
-            // 
-            // Write your assertions here.
-            // 
+            Assert.Fail("TODO"); 
         }
         
-        [TestSubjectMemberAttribute(MemeberName="SetPartMarker")]
-        [Test()]
-        public virtual void SetPartMarker()
+        [Test, OfMember("SetPartMarker")]
+        public void SetPartMarker()
         {
-            // Create Constructor Parameters
-
-            System.Data.Hsqldb.Common.Sql.Tokenizer TestSubject = new System.Data.Hsqldb.Common.Sql.Tokenizer();
-
-
-            TestSubject.SetPartMarker();
-
-            // 
-            // Write your assertions here.
-            // 
+            Assert.Fail("TODO");
         }
         
-        [TestSubjectMemberAttribute(MemeberName="UnexpectedEndOfCommand")]
-        [Test()]
-        public virtual void UnexpectedEndOfCommand()
+        [Test, OfMember("UnexpectedEndOfCommand")]
+        public void UnexpectedEndOfCommand()
         {
-            // Create Constructor Parameters
-
-            System.Data.Hsqldb.Common.Sql.Tokenizer TestSubject = new System.Data.Hsqldb.Common.Sql.Tokenizer();
-
-
-            TestSubject.UnexpectedEndOfCommand();
-
-            // 
-            // Write your assertions here.
-            // 
+            try
+            {
+                throw Tokenizer.UnexpectedEndOfCommand();
+            }
+            catch (HsqlDataSourceException hdse)
+            {
+                Assert.AreEqual(org.hsqldb.Trace.UNEXPECTED_END_OF_COMMAND, -hdse.ErrorCode);
+            }
         }
         
-        [TestSubjectMemberAttribute(MemeberName="UnexpectedToken")]
-        [Test()]
-        public virtual void UnexpectedToken()
+        [Test, OfMember("UnexpectedToken")]
+        public void UnexpectedToken()
         {
-            // Create Constructor Parameters
-
-            System.Data.Hsqldb.Common.Sql.Tokenizer TestSubject = new System.Data.Hsqldb.Common.Sql.Tokenizer();
-
-            // Create Test Method Parameters
-            object token = new object();
-
-            TestSubject.UnexpectedToken(token);
-
-            // 
-            // Write your assertions here.
-            // 
+            try
+            {
+                throw Tokenizer.UnexpectedToken(42L);
+            }
+            catch (HsqlDataSourceException hdse)
+            {
+                Assert.AreEqual(org.hsqldb.Trace.UNEXPECTED_TOKEN, -hdse.ErrorCode);
+            }  
         }
         
-        [TestSubjectMemberAttribute(MemeberName="WasThis")]
-        [Test()]
-        public virtual void WasThis()
+        [Test, OfMember("WasThis")]
+        public void WasThis()
         {
-            // Create Constructor Parameters
+            Tokenizer testSubject = new Tokenizer("foo bar baz");
 
-            System.Data.Hsqldb.Common.Sql.Tokenizer TestSubject = new System.Data.Hsqldb.Common.Sql.Tokenizer();
+            testSubject.GetThis("foo");
+            testSubject.GetThis("bar");
 
-            // Create Test Method Parameters
+            bool expected = true;
+            bool actual = testSubject.WasThis("bar");
 
-            // There is no default constuctor for the parameter match type String.
-            string match;
-
-
-            TestSubject.WasThis(match);
-
-            // 
-            // Write your assertions here.
-            // 
+            Assert.AreEqual(expected, actual);
         }
         
-        [TestSubjectMemberAttribute(MemeberName="WrongDataType")]
-        [Test()]
-        public virtual void WrongDataType()
+        [Test, OfMember("WrongDataType")]
+        public void WrongDataType()
         {
-            // Create Constructor Parameters
-
-            System.Data.Hsqldb.Common.Sql.Tokenizer TestSubject = new System.Data.Hsqldb.Common.Sql.Tokenizer();
-
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter type type HsqlProviderType.
-            System.Data.Hsqldb.Common.Enumeration.HsqlProviderType type;
-
-
-            TestSubject.WrongDataType(type);
-
-            // 
-            // Write your assertions here.
-            // 
+            try
+            {
+                throw Tokenizer.WrongDataType(HsqlProviderType.JavaObject);
+            }
+            catch (HsqlDataSourceException hdse)
+            {
+                Assert.AreEqual(org.hsqldb.Trace.WRONG_DATA_TYPE, -hdse.ErrorCode);
+                Assert.IsTrue(hdse.Message.Contains("JAVA_OBJECT"));
+            } 
         }
     }
 }

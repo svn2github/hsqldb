@@ -1,102 +1,81 @@
 using System;
-using TestCoverage;
 using NUnit.Framework;
+using System.Data.Hsqldb.TestCoverage;
+using System.Data.Hsqldb.Common.IO;
+using System.IO;
 
-namespace System.Data.Hsqldb.Common.IO.UnitTests
+namespace UnitTests
 {
-    [TestFixture()]
-    [TestSubjectClassAttribute(TestSubject=typeof(System.Data.Hsqldb.Common.IO.JavaOutputStreamWrapper))]
+    [TestFixture, ForSubject(typeof(JavaOutputStreamWrapper))]
     public class TestJavaOutputStreamWrapper
     {
-        
-        [TestSubjectMemberAttribute(MemeberName="Flush")]
-        [Test()]
-        public virtual void Flush()
+        static JavaOutputStreamWrapper NewTestSubject()
         {
-            // Create Constructor Parameters
-            RecorderOutputStream outputStreamRecording = new RecorderOutputStream();
+            return NewTestSubject(new java.io.ByteArrayOutputStream());
+        }
 
-            System.Data.Hsqldb.Common.IO.JavaOutputStreamWrapper TestSubject = new System.Data.Hsqldb.Common.IO.JavaOutputStreamWrapper(outputStreamRecording);
+        static JavaOutputStreamWrapper NewTestSubject(java.io.OutputStream outputStream)
+        {
+            return new JavaOutputStreamWrapper(outputStream);
+        }
 
+        [Test, OfMember("Flush")]
+        public void Flush()
+        {
 
-            TestSubject.Flush();
-
-            // 
-            // Write your assertions here.
-            // 
-            Assert.IsTrue(TestSubject.Recordings.OutputStream.flushRecording.Called);
+            using (JavaOutputStreamWrapper testSubject = NewTestSubject())
+            {
+                testSubject.Flush();
+            }
         }
         
-        [TestSubjectMemberAttribute(MemeberName="Read")]
-        [Test()]
-        public virtual void Read()
+        [Test, OfMember("Read"), ExpectedException(typeof(NotSupportedException))]
+        public void Read()
         {
-            // Create Constructor Parameters
-            RecorderOutputStream outputStreamRecording = new RecorderOutputStream();
-
-            System.Data.Hsqldb.Common.IO.JavaOutputStreamWrapper TestSubject = new System.Data.Hsqldb.Common.IO.JavaOutputStreamWrapper(outputStreamRecording);
-
-            // Create Test Method Parameters
+            using (JavaOutputStreamWrapper testSubject = NewTestSubject())
+            {
+                testSubject.Read(null, 0, 0);
+            }
         }
         
-        [TestSubjectMemberAttribute(MemeberName="Seek")]
-        [Test()]
-        public virtual void Seek()
+        [Test, OfMember("Seek"), ExpectedException(typeof(NotSupportedException))]
+        public void Seek()
         {
-            // Create Constructor Parameters
-            RecorderOutputStream outputStreamRecording = new RecorderOutputStream();
+            using (JavaOutputStreamWrapper testSubject = NewTestSubject())
+            {
+                testSubject.Seek(0, SeekOrigin.Begin);
+            } 
+        }
 
-            System.Data.Hsqldb.Common.IO.JavaOutputStreamWrapper TestSubject = new System.Data.Hsqldb.Common.IO.JavaOutputStreamWrapper(outputStreamRecording);
-
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter offset type Int64.
-            long offset;
-
-
-            // There is no default constuctor for the parameter origin type SeekOrigin.
-            System.IO.SeekOrigin origin;
-
-
-            TestSubject.Seek(offset, origin);
-
-            // 
-            // Write your assertions here.
-            // 
+        [Test, OfMember("SetLength"), ExpectedException(typeof(NotSupportedException))]
+        public void SetLength()
+        {
+            using (JavaOutputStreamWrapper testSubject = NewTestSubject())
+            {
+                testSubject.SetLength(0);
+            } 
         }
         
-        [TestSubjectMemberAttribute(MemeberName="SetLength")]
-        [Test()]
-        public virtual void SetLength()
+        [Test, OfMember("Write")]
+        public void Write()
         {
-            // Create Constructor Parameters
-            RecorderOutputStream outputStreamRecording = new RecorderOutputStream();
+            java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
 
-            System.Data.Hsqldb.Common.IO.JavaOutputStreamWrapper TestSubject = new System.Data.Hsqldb.Common.IO.JavaOutputStreamWrapper(outputStreamRecording);
+            using (JavaOutputStreamWrapper testSubject = NewTestSubject(baos))
+            {
+                testSubject.Write(new byte[] { 1, 2, 3, 4, 5 }, 0, 5);
+                testSubject.Flush();
 
-            // Create Test Method Parameters
+                byte[] expected = new byte[] { 1, 2, 3, 4, 5 };
+                byte[] actual = baos.toByteArray();
 
-            // There is no default constuctor for the parameter value type Int64.
-            long value;
+                Assert.AreEqual(expected.Length, actual.Length);
 
-
-            TestSubject.SetLength(value);
-
-            // 
-            // Write your assertions here.
-            // 
-        }
-        
-        [TestSubjectMemberAttribute(MemeberName="Write")]
-        [Test()]
-        public virtual void Write()
-        {
-            // Create Constructor Parameters
-            RecorderOutputStream outputStreamRecording = new RecorderOutputStream();
-
-            System.Data.Hsqldb.Common.IO.JavaOutputStreamWrapper TestSubject = new System.Data.Hsqldb.Common.IO.JavaOutputStreamWrapper(outputStreamRecording);
-
-            // Create Test Method Parameters
+                for (int i = 0; i < expected.Length; i++)
+                {
+                    Assert.AreEqual(expected[i], actual[i]);
+                }
+            }
         }
     }
 }

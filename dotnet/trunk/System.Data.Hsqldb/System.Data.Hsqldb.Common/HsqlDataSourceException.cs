@@ -219,6 +219,7 @@ namespace System.Data.Hsqldb.Common
         /// <param name="se">
         /// The <c>java.sql.SQLException</c> to wrap.
         /// </param>
+        [CLSCompliant(false)]
         public HsqlDataSourceException(java.sql.SQLException se)
             : base(se.getMessage(), se)
         {
@@ -239,6 +240,7 @@ namespace System.Data.Hsqldb.Common
         /// wrapping the specified <c>org.hsqldb.HsqlException</c>.
         /// </summary>
         /// <param name="he">The <c>org.hsqldb.HsqlException</c> to wrap.</param>
+        [CLSCompliant(false)]
         public HsqlDataSourceException(HsqlException he)
             : base(he.getMessage(), he)
         {
@@ -257,6 +259,7 @@ namespace System.Data.Hsqldb.Common
         /// represents an error response.
         /// </remarks>
         /// <param name="result">The result.</param>
+        [CLSCompliant(false)]
         public HsqlDataSourceException(Result result)
             : this(new HsqlException(result)) { }
         #endregion

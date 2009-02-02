@@ -1,54 +1,47 @@
 using System;
-using TestCoverage;
 using NUnit.Framework;
+using System.Data.Hsqldb.TestCoverage;
 
 namespace System.Data.Hsqldb.Common.Sql.Type.UnitTests
 {
-    [TestFixture()]
-    [TestSubjectClassAttribute(TestSubject=typeof(System.Data.Hsqldb.Common.Sql.Type.SqlObject))]
+    [TestFixture, ForSubject(typeof(SqlObject))]
     public class TestSqlObject
     {
         
-        [TestSubjectMemberAttribute(MemeberName="AddSerializationHeader")]
-        [Test()]
-        public virtual void AddSerializationHeader()
+        [Test, OfMember("AddSerializationHeader")]
+        public void AddSerializationHeader()
         {
-            // Create Constructor Parameters
+            Assert.Fail("TODO");
         }
-        
-        [TestSubjectMemberAttribute(MemeberName="Deserialize")]
-        [Test()]
-        public virtual void Deserialize()
+
+        [Test, OfMember("Deserialize")]
+        public void Deserialize()
         {
-            // Create Constructor Parameters
+            Assert.Fail("TODO");
         }
-        
-        [TestSubjectMemberAttribute(MemeberName="getObject")]
-        [Test()]
+
+        [Test, OfMember("getObject")]
         public virtual void getObject()
         {
-            // Create Constructor Parameters
+            Assert.Fail("TODO");
         }
-        
-        [TestSubjectMemberAttribute(MemeberName="Serialize")]
-        [Test()]
-        public virtual void Serialize()
+
+        [Test, OfMember("Serialize")]
+        public void Serialize()
         {
-            // Create Constructor Parameters
+            Assert.Fail("TODO");
         }
-        
-        [TestSubjectMemberAttribute(MemeberName="StartsWithSerializationHeader")]
-        [Test()]
-        public virtual void StartsWithSerializationHeader()
+
+        [Test, OfMember("StartsWithSerializationHeader")]
+        public void StartsWithSerializationHeader()
         {
-            // Create Constructor Parameters
+            Assert.Fail("TODO");
         }
-        
-        [TestSubjectMemberAttribute(MemeberName="UnWrap")]
-        [Test()]
-        public virtual void UnWrap()
+
+        [Test, OfMember("UnWrap")]
+        public void UnWrap()
         {
-            // Create Constructor Parameters
+            Assert.Fail("TODO");
         }
     }
 }

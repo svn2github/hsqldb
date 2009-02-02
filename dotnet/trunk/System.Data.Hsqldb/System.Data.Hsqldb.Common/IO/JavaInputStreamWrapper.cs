@@ -52,7 +52,7 @@ namespace System.Data.Hsqldb.Common.IO
     ///      alt="JavaInputStreamWrapper Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>
-    public sealed class JavaInputStreamWrapper : Stream
+    public sealed class JavaInputStreamWrapper : Stream, IDisposable
     {
         #region Fields
 

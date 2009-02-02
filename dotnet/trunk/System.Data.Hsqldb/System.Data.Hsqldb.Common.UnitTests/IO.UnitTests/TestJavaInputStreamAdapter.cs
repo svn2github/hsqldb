@@ -1,63 +1,60 @@
+#region Using
 using System;
-using TestCoverage;
+using System.Data.Hsqldb.TestCoverage;
+using System.IO;
+using System.Text;
 using NUnit.Framework;
+#endregion
 
 namespace System.Data.Hsqldb.Common.IO.UnitTests
 {
-    [TestFixture()]
-    [TestSubjectClassAttribute(TestSubject=typeof(System.Data.Hsqldb.Common.IO.JavaInputStreamAdapter))]
+    [TestFixture, ForSubject(typeof(JavaInputStreamAdapter))]
     public class TestJavaInputStreamAdapter
     {
-        
-        [TestSubjectMemberAttribute(MemeberName="close")]
-        [Test()]
-        public virtual void close()
+        static JavaInputStreamAdapter NewTestSubject(string s, Encoding e)
         {
-            // Create Constructor Parameters
-            RecorderStream streamRecording = new RecorderStream();
+            MemoryStream ms = new System.IO.MemoryStream();
 
-            System.Data.Hsqldb.Common.IO.JavaInputStreamAdapter TestSubject = new System.Data.Hsqldb.Common.IO.JavaInputStreamAdapter(streamRecording);
+            using (StreamWriter sw = new StreamWriter(ms, e))
+            {
+                sw.Write(s);
+                sw.Flush();
+            }
 
+            ms.Position = 0;
 
-            TestSubject.close();
-
-            // 
-            // Write your assertions here.
-            // 
+            return new JavaInputStreamAdapter(ms);
         }
-        
-        [TestSubjectMemberAttribute(MemeberName="Dispose")]
-        [Test()]
-        public virtual void Dispose()
+
+        [Test, OfMember("close")]
+        public void close()
         {
-            // Create Constructor Parameters
-            RecorderStream streamRecording = new RecorderStream();
-
-            System.Data.Hsqldb.Common.IO.JavaInputStreamAdapter TestSubject = new System.Data.Hsqldb.Common.IO.JavaInputStreamAdapter(streamRecording);
-
-
-            TestSubject.Dispose();
-
-            // 
-            // Write your assertions here.
-            // 
+            using (JavaInputStreamAdapter testSubject = NewTestSubject("asdf", Encoding.UTF8))
+            {
+                testSubject.close();
+            }
         }
-        
-        [TestSubjectMemberAttribute(MemeberName="read")]
-        [Test()]
-        public virtual void read()
+
+        [Test, OfMember("Dispose"), ExpectedException(typeof(ObjectDisposedException))]
+        public void Dispose()
         {
-            // Create Constructor Parameters
-            RecorderStream streamRecording = new RecorderStream();
+            JavaInputStreamAdapter testSubject;
 
-            System.Data.Hsqldb.Common.IO.JavaInputStreamAdapter TestSubject = new System.Data.Hsqldb.Common.IO.JavaInputStreamAdapter(streamRecording);
+            using (testSubject = NewTestSubject("asdf", Encoding.UTF8))
+            {
 
+            }
 
-            TestSubject.read();
+            testSubject.read();
+        }
 
-            // 
-            // Write your assertions here.
-            // 
+        [Test, OfMember("read")]
+        public void read()
+        {
+            using (JavaInputStreamAdapter testSubject = NewTestSubject("asdf", Encoding.UTF8))
+            {
+                testSubject.read();
+            }
         }
     }
 }

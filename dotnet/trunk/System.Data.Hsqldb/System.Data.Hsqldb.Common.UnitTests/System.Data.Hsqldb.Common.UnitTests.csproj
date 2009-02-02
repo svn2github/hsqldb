@@ -7,8 +7,8 @@
     <ProjectGuid>{A70D80BA-E0D5-4E1F-9051-F272FEB02531}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Ssystem.Data.Hsqldb.Common.UnitTests</RootNamespace>
-    <AssemblyName>Ssystem.Data.Hsqldb.Common.UnitTests</AssemblyName>
+    <RootNamespace>System.Data.Hsqldb.Common.UnitTests</RootNamespace>
+    <AssemblyName>System.Data.Hsqldb.Common.UnitTests</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -28,6 +28,14 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="IKVM.GNU.Classpath, Version=0.31.2535.14596, Culture=neutral, PublicKeyToken=05732303801b208f, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Lib\IKVM.GNU.Classpath.dll</HintPath>
+    </Reference>
+    <Reference Include="IKVM.Runtime, Version=0.31.2535.14560, Culture=neutral, PublicKeyToken=05732303801b208f, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Lib\IKVM.Runtime.dll</HintPath>
+    </Reference>
     <Reference Include="nunit.framework, Version=2.4.8.0, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\NUnit\bin\nunit.framework.dll</HintPath>
@@ -38,14 +46,12 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Transactions" />
     <Reference Include="System.Xml" />
-    <Reference Include="TestCoverage, Version=1.0.0.0, Culture=neutral">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Lib\TestCoverage.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Converter.UnitTests\TestLexographicEnumConverter.cs" />
+    <Compile Include="IO.UnitTests\IOTest.cs" />
     <Compile Include="IO.UnitTests\TestJavaInputStreamAdapter.cs" />
     <Compile Include="IO.UnitTests\TestJavaInputStreamWrapper.cs" />
     <Compile Include="IO.UnitTests\TestJavaOutputStreamAdapter.cs" />
@@ -70,6 +76,10 @@
     <ProjectReference Include="..\System.Data.Hsqldb.Common\System.Data.Hsqldb.Common.csproj">
       <Project>{F929C8C3-AB4B-4EAA-BEF9-9A25669FEA6F}</Project>
       <Name>System.Data.Hsqldb.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\System.Data.Hsqldb.TestCoverage\System.Data.Hsqldb.TestCoverage.csproj">
+      <Project>{8C94A706-39D3-4B8E-B6E6-AE3704A8CCCA}</Project>
+      <Name>System.Data.Hsqldb.TestCoverage</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

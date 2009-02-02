@@ -1,37 +1,26 @@
 using System;
-using TestCoverage;
 using NUnit.Framework;
+using System.Data.Hsqldb.TestCoverage;
+using System.Runtime.Serialization;
 
 namespace System.Data.Hsqldb.Common.UnitTests
 {
-    [TestFixture()]
-    [TestSubjectClassAttribute(TestSubject=typeof(System.Data.Hsqldb.Common.HsqlBatchUpdateException))]
+    [TestFixture, ForSubject(typeof(HsqlBatchUpdateException))]
     public class TestHsqlBatchUpdateException
     {
-        
-        [TestSubjectMemberAttribute(MemeberName="GetObjectData")]
-        [Test()]
+        [Test, OfMember("GetObjectData")]        
         public virtual void GetObjectData()
         {
-            // Create Constructor Parameters
-
-            System.Data.Hsqldb.Common.HsqlBatchUpdateException TestSubject = new System.Data.Hsqldb.Common.HsqlBatchUpdateException();
-
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter info type SerializationInfo.
-            System.Runtime.Serialization.SerializationInfo info;
+            Type type = typeof(HsqlBatchUpdateException);
+            FormatterConverter converter = new FormatterConverter();
+            SerializationInfo info = new SerializationInfo(type, converter);
+            StreamingContext context = new StreamingContext();
+            HsqlBatchUpdateException exception = new HsqlBatchUpdateException(new int[] { 1, 1, 2, 1 });
 
 
-            // There is no default constuctor for the parameter context type StreamingContext.
-            System.Runtime.Serialization.StreamingContext context;
+            exception.GetObjectData(info, context);
 
-
-            TestSubject.GetObjectData(info, context);
-
-            // 
-            // Write your assertions here.
-            // 
+            Assert.Fail("TODO");
         }
     }
 }

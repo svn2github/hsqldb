@@ -1,23 +1,18 @@
-﻿using System;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-
+using System.Data.Hsqldb.TestCoverage;
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("System.Data.Hsqldb.Common")]
-[assembly: AssemblyDescription("Shared Library Classes")]
-#if DEBUG
-[assembly: AssemblyConfiguration("debug")]
-#else
-[assembly: AssemblyConfiguration("retail")]
-#endif
-[assembly: AssemblyCompany("The HSQL Development Group")]
-[assembly: AssemblyProduct("System.Data.Hsqldb.Common")]
-[assembly: AssemblyCopyright("Copyright © The HSQL Development Group 2009")]
-[assembly: AssemblyTrademark("HSQLDB")]
+[assembly: AssemblyTitle("System.Data.Hsqldb.TestCoverage")]
+[assembly: AssemblyDescription("")]
+[assembly: AssemblyConfiguration("")]
+[assembly: AssemblyCompany("ITO")]
+[assembly: AssemblyProduct("System.Data.Hsqldb.TestCoverage")]
+[assembly: AssemblyCopyright("Copyright ©2009 HSQL Development Group")]
+[assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
@@ -25,10 +20,8 @@ using System.Runtime.InteropServices;
 // COM, set the ComVisible attribute to true on that type.
 [assembly: ComVisible(false)]
 
-[assembly: CLSCompliant(true)]
-
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("c46f5384-235a-4526-b1db-48fc1674d4b6")]
+[assembly: Guid("0b883f25-e314-4cb5-b470-533b80e0f3fa")]
 
 // Version information for an assembly consists of the following four values:
 //

@@ -58,7 +58,7 @@ namespace System.Data.Hsqldb.Common.Sql
 
     /// <summary>
     /// <para>
-    /// Supports lexographic analysis of the HSQLDB SQL dialect.
+    /// Supports lexographic analysis and subsequent parsing of the HSQLDB SQL dialect.
     /// </para>
     /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.HsqlTokenizer.png"
     ///      alt="HsqlTokenizer Class Diagram"/>
@@ -218,9 +218,17 @@ namespace System.Data.Hsqldb.Common.Sql
             {
                 throw;
             }
+            catch (OutOfMemoryException)
+            {
+                throw;
+            }
+            catch (java.lang.Error)
+            {
+                throw;
+            }
             catch (Exception)
             {
-                //e.ToString();
+                // TODO: do not swallow others 
             }
 
             return null;
@@ -1081,7 +1089,7 @@ namespace System.Data.Hsqldb.Common.Sql
         /// Resets this tokenizer with the given character sequence.
         /// </summary>
         /// <param name="chars">
-        /// The character sequence to be tokenized.
+        /// The new character sequence to be tokenized.
         /// </param>
         public void Reset(string chars)
         {
@@ -1124,12 +1132,12 @@ namespace System.Data.Hsqldb.Common.Sql
         #region WasThis(string)
 
         /// <summary>
-        /// Determines whether the last read token is equal to
+        /// Determines whether the token that was last read is equal to
         /// the specified <c>match</c> value.
         /// </summary>
         /// <param name="match">The value to match.</param>
         /// <returns>
-        /// <c>true</c> if the last token was equal to the
+        /// <c>true</c> if the token that was last read is equal to the
         /// specified <c>match</c> value; otherwise, <c>false</c>.
         /// </returns>
         public bool WasThis(string match)
@@ -1377,15 +1385,22 @@ namespace System.Data.Hsqldb.Common.Sql
         #region NormalizedToken
 
         /// <summary>
-        /// Gets the last read token as it would actually
-        /// appear in an SQL statement.
+        /// Gets the character sequence denoted by last read token, as it 
+        /// would actually appear in a cannonical SQL statement, for instance, by
+        /// augmentation of string literal or name tokens with leading and 
+        /// trailing single or double quote delimiter characters, respectively,
+        /// and escaping, as required, any internal delimiter characters.
         /// </summary>
         /// <remarks>
-        /// The normalized form excludes leading, internal
-        /// and trailing whitespace.
+        /// The normalized form excludes leading whitespace and
+        /// trailing whitespace, including leading and/or trailing
+        /// whitespace internal to identifier chains, for example, when 
+        /// <c>"foo"  .  "bar"</c> is read, then <c>TokenType</c> is 
+        /// <c>IdentifierChain</c>, <c>IdentifierChainFirst</c> is <c>foo</c>,
+        /// and <c>NormalizedToken</c> is <c>"foo"."bar"</c>.
         /// </remarks>
         /// <value>
-        /// The normalized character sequence denoted by the last read token.
+        /// The normalized character sequence denoted by the token that was last read.
         /// </value>
         public string NormalizedToken
         {

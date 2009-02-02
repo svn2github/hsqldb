@@ -1,78 +1,65 @@
 using System;
-using TestCoverage;
+using System.Data.Hsqldb.TestCoverage;
 using NUnit.Framework;
 
 namespace System.Data.Hsqldb.Common.Lob.UnitTests
 {
-    [TestFixture()]
-    [TestSubjectClassAttribute(TestSubject=typeof(System.Data.Hsqldb.Common.Lob.JdbcBlob))]
+    [TestFixture, ForSubject(typeof(JdbcBlob))]
     public class TestJdbcBlob
     {
 
-        [TestSubjectMemberAttribute(MemeberName = "Free")]
-        [Test()]
+        [Test, OfMember("Free")]
         public virtual void Free()
         {
+            Assert.Fail("TODO");
         }
 
-        [TestSubjectMemberAttribute(MemeberName = "GetBinaryStream")]
-        [Test()]
+        [Test, OfMember("GetBinaryStream")]
         public virtual void GetBinaryStream()
         {
+            Assert.Fail("TODO");
         }
 
-        [TestSubjectMemberAttribute(MemeberName = "GetBytes")]
-        [Test()]
+        [Test, OfMember("GetBytes")]
         public virtual void GetBytes()
         {
+            Assert.Fail("TODO");
         }
 
-        [TestSubjectMemberAttribute(MemeberName = "Position")]
-        [Test()]
-        public virtual void Position_T1()
+        [Test, OfMember("Position")]
+        public virtual void Position()
         {
+            Assert.Fail("TODO");
         }
 
-        [TestSubjectMemberAttribute(MemeberName = "Position")]
-        [Test()]
-        public virtual void Position_T2()
-        {
-        }
-
-        [TestSubjectMemberAttribute(MemeberName = "SetBinaryStream")]
-        [Test()]
+        [Test, OfMember("SetBinaryStream")]
         public virtual void SetBinaryStream()
         {
+            Assert.Fail("TODO");
         }
 
-        [TestSubjectMemberAttribute(MemeberName = "SetBytes")]
-        [Test()]
-        public virtual void SetBytes_T1()
+        [Test, OfMember("SetBytes")]
+        public virtual void SetBytes()
         {
+            Assert.Fail("TODO");
         }
 
-        [TestSubjectMemberAttribute(MemeberName = "SetBytes")]
-        [Test()]
-        public virtual void SetBytes_T2()
-        {
-        }
-
-        [TestSubjectMemberAttribute(MemeberName = "Truncate")]
-        [Test()]
+        [Test, OfMember("Truncate")]
         public virtual void Truncate()
         {
+            Assert.Fail("TODO");
         }
 
-        [TestSubjectMemberAttribute(MemeberName = "UnWrap")]
-        [Test()]
+        [Test, OfMember("UnWrap")]
         public virtual void UnWrap()
         {
+            Assert.Fail("TODO");
         }
 
-        [TestSubjectMemberAttribute(MemeberName = "Wrap")]
-        [Test()]
+        [Test, OfMember("Wrap")]
         public virtual void Wrap()
         {
+            Assert.Fail("TODO");
         }
     }
 }

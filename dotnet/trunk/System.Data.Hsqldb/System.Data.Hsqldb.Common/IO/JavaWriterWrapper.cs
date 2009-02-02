@@ -58,6 +58,8 @@ namespace System.Data.Hsqldb.Common.IO
         /// </summary>
         private volatile java.io.Writer m_writer;
 
+        private static readonly Encoding ReportedEncoding = new UnicodeEncoding(true, false);
+
         /// <summary>
         /// Gets the wrapped java.io.Writer.
         /// </summary>
@@ -345,17 +347,33 @@ namespace System.Data.Hsqldb.Common.IO
         #region Encoding
 
         /// <summary>
-        /// Specifies the <see cref="T:System.Text.Encoding"/>
-        /// in which the output is written.
+        /// Exposes the <see cref="T:System.Text.Encoding"/> with which,
+        /// effectively, the output is written to the wrapped
+        /// <c>java.io.Writer</c>.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// From the perspective of a client that lacks intimate knowlege of how
+        /// this wrapper was constructed, because this wrapper passes all
+        /// character sequences directly and unmodified through to the wrapped
+        /// <c>java.io.Writer</c> instance, the encoding is effectively
+        /// <c>System.Text.Encoding.BigEndianUnicode</c>, with the exception
+        /// that no byte order mark is written.
+        /// </para>
+        /// <para>
+        /// Depending on the type of wrapped <c>java.io.Writer</c> instance,
+        /// however, The encoding at the ultimate destination may be different,
+        /// for example if the wrapped <c>java.io.Writer</c> is an instance
+        /// of <c>java.io.OutputStreamWriter</c>.
+        /// </para>
+        /// </remarks>
         /// <value>
-        /// The <see cref="T:System.Text.Encoding"/> in which
-        /// the output is written; this is aways
-        /// <c>BigEndianUnicode</c>.
+        /// the <see cref="T:System.Text.Encoding"/> in which the output is written 
+        /// to the wrapped <c>java.io.Writer</c>.
         /// </value>
         public override Encoding Encoding
         {
-            get { return Encoding.BigEndianUnicode; }
+            get { return ReportedEncoding; }
         }
 
         #endregion

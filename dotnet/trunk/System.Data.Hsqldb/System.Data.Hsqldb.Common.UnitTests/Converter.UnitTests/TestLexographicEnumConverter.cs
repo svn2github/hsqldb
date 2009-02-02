@@ -1,50 +1,44 @@
 using System;
-using TestCoverage;
+using System.Data.Hsqldb.TestCoverage;
+using System.ComponentModel;
+using System.Collections;
 using NUnit.Framework;
 
 namespace System.Data.Hsqldb.Common.Converter.UnitTests
 {
-    [TestFixture()]
-    [TestSubjectClassAttribute(TestSubject=typeof(System.Data.Hsqldb.Common.Converter.LexographicEnumConverter))]
+    [TestFixture, ForSubject(typeof(LexographicEnumConverter))]
     public class TestLexographicEnumConverter
     {
-        
-        [TestSubjectMemberAttribute(MemeberName="GetStandardValues")]
-        [Test()]
+        [Test, OfMember("GetStandardValues")]        
         public virtual void GetStandardValues()
         {
-            // Create Constructor Parameters
-            RecorderType typeRecording = new RecorderType();
+            LexographicEnumConverter TestSubject = new LexographicEnumConverter(typeof(Base64FormattingOptions));
 
-            System.Data.Hsqldb.Common.Converter.LexographicEnumConverter TestSubject = new System.Data.Hsqldb.Common.Converter.LexographicEnumConverter(typeRecording);
+            Base64FormattingOptions[] expected = new Base64FormattingOptions[] 
+            {
+                Base64FormattingOptions.InsertLineBreaks, 
+                Base64FormattingOptions.None
+            };
+            
+            Base64FormattingOptions[] actual = new Base64FormattingOptions[2];
+            
+            TestSubject.GetStandardValues().CopyTo(actual,0);
 
-            // Create Test Method Parameters
-            RecorderITypeDescriptorContext contextRecording = new RecorderITypeDescriptorContext();
-
-            TestSubject.GetStandardValues(contextRecording);
-
-            // 
-            // Write your assertions here.
-            // 
+            for (int i = 0; i < expected.Length; i++)
+            {
+                Assert.AreEqual(expected[i], actual[i]);
+            }
         }
-        
-        [TestSubjectMemberAttribute(MemeberName="GetStandardValuesSupported")]
-        [Test()]
+
+        [Test, OfMember("GetStandardValuesSupported")]
         public virtual void GetStandardValuesSupported()
         {
-            // Create Constructor Parameters
-            RecorderType typeRecording = new RecorderType();
+            LexographicEnumConverter TestSubject = new LexographicEnumConverter(typeof(Base64FormattingOptions));
 
-            System.Data.Hsqldb.Common.Converter.LexographicEnumConverter TestSubject = new System.Data.Hsqldb.Common.Converter.LexographicEnumConverter(typeRecording);
+            bool expected = true;
+            bool actual = TestSubject.GetStandardValuesSupported(null);
 
-            // Create Test Method Parameters
-            RecorderITypeDescriptorContext contextRecording = new RecorderITypeDescriptorContext();
-
-            TestSubject.GetStandardValuesSupported(contextRecording);
-
-            // 
-            // Write your assertions here.
-            // 
+            Assert.AreEqual(expected, actual); 
         }
     }
 }

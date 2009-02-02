@@ -1,104 +1,146 @@
+#region Using
 using System;
-using TestCoverage;
 using NUnit.Framework;
+using System.Data.Hsqldb.TestCoverage;
+using System.IO;
+using System.Text;
+#endregion
 
 namespace System.Data.Hsqldb.Common.IO.UnitTests
 {
-    [TestFixture()]
-    [TestSubjectClassAttribute(TestSubject=typeof(System.Data.Hsqldb.Common.IO.JavaInputStreamWrapper))]
+    [TestFixture, ForSubject(typeof(JavaInputStreamWrapper))]
     public class TestJavaInputStreamWrapper
     {
-        
-        [TestSubjectMemberAttribute(MemeberName="Flush")]
-        [Test()]
-        public virtual void Flush()
+        static JavaInputStreamWrapper NewTestSubject(string s, Encoding e)
         {
-            // Create Constructor Parameters
-            RecorderInputStream inputStreamRecording = new RecorderInputStream();
+            using(MemoryStream ms = new MemoryStream())
+            using (StreamWriter sw = new StreamWriter(ms, e))
+            {
+                sw.Write(s);
+                sw.Flush();
 
-            System.Data.Hsqldb.Common.IO.JavaInputStreamWrapper TestSubject = new System.Data.Hsqldb.Common.IO.JavaInputStreamWrapper(inputStreamRecording);
+                return new JavaInputStreamWrapper( new java.io.ByteArrayInputStream(ms.ToArray()));
+            }
+        }
 
+        public void CanRead()
+        {
+            using (JavaInputStreamWrapper testSubject = NewTestSubject("asdf", Encoding.UTF8))
+            {
+                bool expected = true;
+                bool actual = testSubject.CanRead;
 
-            TestSubject.Flush();
+                Assert.AreEqual(expected, actual);
+            }
+        }
 
-            // 
-            // Write your assertions here.
-            // 
+        public void CanSeek()
+        {
+            using (JavaInputStreamWrapper testSubject = NewTestSubject("asdf", Encoding.UTF8))
+            {
+                bool expected = true;
+                bool actual = testSubject.CanSeek;
+
+                Assert.AreEqual(expected, actual);
+            }
+        }
+
+        public void CanWrite()
+        {
+            using (JavaInputStreamWrapper testSubject = NewTestSubject("asdf", Encoding.UTF8))
+            {
+                bool expected = false;
+                bool actual = testSubject.CanWrite;
+
+                Assert.AreEqual(expected, actual);
+            }
+        }
+
+        [Test, OfMember("Dispose"), ExpectedException(typeof(ObjectDisposedException))]
+        public void Dispose()
+        {
+            JavaInputStreamWrapper testSubject;
+
+            using (testSubject = NewTestSubject("asdf", Encoding.UTF8))
+            {
+
+            }
+
+            testSubject.ReadByte();
+        }
+
+        [Test, OfMember("Flush")]
+        public void Flush()
+        {
+            using (JavaInputStreamWrapper testSubject = NewTestSubject("asdf", Encoding.UTF8))
+            {
+                testSubject.Flush(); // expect no-op.
+            }
+        }
+
+        [Test, OfMember("Length"), ExpectedException(typeof(NotSupportedException))]
+        public void Length()
+        {
+            using (JavaInputStreamWrapper testSubject = NewTestSubject("asdf", Encoding.UTF8))
+            {
+                long actual = testSubject.Length;
+            }
+        }
+
+        [Test, OfMember("Position")]
+        public void Position()
+        {
+            using (JavaInputStreamWrapper testSubject = NewTestSubject("asdf", Encoding.UTF8))
+            {
+                long expected = 0;
+                long actual = testSubject.Position;
+
+                Assert.AreEqual(expected, actual);
+            }
         }
         
-        [TestSubjectMemberAttribute(MemeberName="Read")]
-        [Test()]
-        public virtual void Read()
+        [Test, OfMember("Read")]
+        public void Read()
         {
-            // Create Constructor Parameters
-            RecorderInputStream inputStreamRecording = new RecorderInputStream();
+            using(JavaInputStreamWrapper testSubject = NewTestSubject("asdf", Encoding.UTF8))
+            using (StreamReader sr = new StreamReader(testSubject))
+            {
+                string expected = "asdf";
+                string actual = sr.ReadToEnd();
 
-            System.Data.Hsqldb.Common.IO.JavaInputStreamWrapper TestSubject = new System.Data.Hsqldb.Common.IO.JavaInputStreamWrapper(inputStreamRecording);
-
-            // Create Test Method Parameters
+                Assert.AreEqual(expected, actual);
+            }
         }
         
-        [TestSubjectMemberAttribute(MemeberName="Seek")]
-        [Test()]
-        public virtual void Seek()
+        [Test, OfMember("Seek")]
+        public void Seek()
         {
-            // Create Constructor Parameters
-            RecorderInputStream inputStreamRecording = new RecorderInputStream();
+            using (JavaInputStreamWrapper testSubject = NewTestSubject("asdf", Encoding.UTF8))
+            {
+                long offset = 0;
+                SeekOrigin origin = SeekOrigin.Begin;
 
-            System.Data.Hsqldb.Common.IO.JavaInputStreamWrapper TestSubject = new System.Data.Hsqldb.Common.IO.JavaInputStreamWrapper(inputStreamRecording);
-
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter offset type Int64.
-            long offset;
-
-
-            // There is no default constuctor for the parameter origin type SeekOrigin.
-            System.IO.SeekOrigin origin;
-
-            TestSubject.Recordings.InputStream.skipInt64Recording.ReturnValue = "Please set the return value.";
-
-            TestSubject.Seek(offset, origin);
-
-            // 
-            // Write your assertions here.
-            // 
-            Assert.AreEqual("<Please replace with valid value.>", TestSubject.Recordings.InputStream.skipInt64Recording.PassedInt64n);
-            Assert.IsTrue(TestSubject.Recordings.InputStream.skipInt64Recording.Called);
+                long newPosition = testSubject.Seek(offset, origin);
+            }
         }
         
-        [TestSubjectMemberAttribute(MemeberName="SetLength")]
-        [Test()]
+        [Test, OfMember("SetLength"), ExpectedException(typeof(NotSupportedException))]
         public virtual void SetLength()
         {
-            // Create Constructor Parameters
-            RecorderInputStream inputStreamRecording = new RecorderInputStream();
-
-            System.Data.Hsqldb.Common.IO.JavaInputStreamWrapper TestSubject = new System.Data.Hsqldb.Common.IO.JavaInputStreamWrapper(inputStreamRecording);
-
-            // Create Test Method Parameters
-
-            // There is no default constuctor for the parameter value type Int64.
-            long value;
-
-
-            TestSubject.SetLength(value);
-
-            // 
-            // Write your assertions here.
-            // 
+            using (JavaInputStreamWrapper testSubject = NewTestSubject("asdf", Encoding.UTF8))
+            {
+                long newLength = 0;
+                testSubject.SetLength(newLength);
+            }
         }
         
-        [TestSubjectMemberAttribute(MemeberName="Write")]
-        [Test()]
+        [Test, OfMember("Write"), ExpectedException(typeof(NotSupportedException))]
         public virtual void Write()
         {
-            // Create Constructor Parameters
-            RecorderInputStream inputStreamRecording = new RecorderInputStream();
-
-            System.Data.Hsqldb.Common.IO.JavaInputStreamWrapper TestSubject = new System.Data.Hsqldb.Common.IO.JavaInputStreamWrapper(inputStreamRecording);
-
-            // Create Test Method Parameters
+            using (JavaInputStreamWrapper testSubject = NewTestSubject("asdf", Encoding.UTF8))
+            {
+                testSubject.Write(null, 0, 0);
+            }
         }
     }
 }

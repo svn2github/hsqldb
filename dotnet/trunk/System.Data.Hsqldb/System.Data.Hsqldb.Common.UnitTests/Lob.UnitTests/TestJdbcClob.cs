@@ -1,78 +1,76 @@
 using System;
-using TestCoverage;
 using NUnit.Framework;
+using System.Data.Hsqldb.TestCoverage;
 
 namespace System.Data.Hsqldb.Common.Lob.UnitTests
 {
-    [TestFixture()]
-    [TestSubjectClassAttribute(TestSubject=typeof(System.Data.Hsqldb.Common.Lob.JdbcClob))]
+    [TestFixture, ForSubject(typeof(JdbcClob))]
     public class TestJdbcClob
     {
-
-        [TestSubjectMemberAttribute(MemeberName = "Free")]
-        [Test()]
+        [Test, OfMember("Free")]
         public virtual void Free()
         {
+            Assert.Fail("TODO");
         }
 
-        [TestSubjectMemberAttribute(MemeberName = "GetAsciiStream")]
-        [Test()]
+        [Test, OfMember("GetAsciiStream")]
         public virtual void GetAsciiStream()
         {
+            Assert.Fail("TODO");
         }
 
-        [TestSubjectMemberAttribute(MemeberName = "GetCharacterStream")]
-        [Test()]
+        [Test, OfMember("GetCharacterStream")]
         public virtual void GetCharacterStream()
         {
+            Assert.Fail("TODO");
         }
 
-        [TestSubjectMemberAttribute(MemeberName = "GetSubString")]
-        [Test()]
+        [Test, OfMember("GetSubString")]
         public virtual void GetSubString()
         {
+            Assert.Fail("TODO");
         }
 
-        [TestSubjectMemberAttribute(MemeberName = "Position")]
-        [Test()]
+        [Test, OfMember("Position")]
         public virtual void Position_T1()
         {
+            Assert.Fail("TODO");
         }
 
-        [TestSubjectMemberAttribute(MemeberName = "SetAsciiStream")]
-        [Test()]
+        [Test, OfMember("SetAsciiStream")]
         public virtual void SetAsciiStream()
         {
+            Assert.Fail("TODO");
         }
 
-        [TestSubjectMemberAttribute(MemeberName = "SetCharacterStream")]
-        [Test()]
+        [Test, OfMember("SetCharacterStream")]
         public virtual void SetCharacterStream()
         {
+            Assert.Fail("TODO");
         }
 
-        [TestSubjectMemberAttribute(MemeberName = "SetString")]
-        [Test()]
+        [Test, OfMember("SetString")]
         public virtual void SetString()
         {
+            Assert.Fail("TODO");
         }
 
-        [TestSubjectMemberAttribute(MemeberName = "Truncate")]
-        [Test()]
+        [Test, OfMember("Truncate")]
         public virtual void Truncate()
         {
+            Assert.Fail("TODO");
         }
 
-        [TestSubjectMemberAttribute(MemeberName = "UnWrap")]
-        [Test()]
+        [Test, OfMember("UnWrap")]
         public virtual void UnWrap()
         {
+            Assert.Fail("TODO");
         }
 
-        [TestSubjectMemberAttribute(MemeberName = "Wrap")]
-        [Test()]
+        [Test, OfMember("Wrap")]
         public virtual void Wrap()
         {
+            Assert.Fail("TODO");
         }
     }
 }

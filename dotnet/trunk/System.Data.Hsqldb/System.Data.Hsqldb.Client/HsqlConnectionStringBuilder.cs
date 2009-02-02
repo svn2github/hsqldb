@@ -41,6 +41,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 #endif
 using System.Data.Common;
+using System.Globalization;
 using System.Reflection;
 
 // Aliases
@@ -52,7 +53,7 @@ using System.Data.Hsqldb.Client.Design;
 using System.Data.Hsqldb.Client.Design.Attribute;
 using System.Data.Hsqldb.Client.Design.Converter;
 using System.Data.Hsqldb.Client.Internal;
-using System.Globalization;
+
 
 #endregion
 
@@ -545,7 +546,7 @@ namespace System.Data.Hsqldb.Client
         /// <para>
         /// Applies only to file: protocol connections.
         /// </para>
-        /// <seealso cref="Enumeration.DatabaseAppLogLevel" />
+        /// <seealso cref="T:System.Data.Hsqldb.Enumeration.DatabaseAppLogLevel" />
 #if W32DESIGN
         [AmbientValue(null)]
         [Category("File Protocol")]
@@ -679,7 +680,7 @@ namespace System.Data.Hsqldb.Client
         /// always requires an explicit table type qualifier.
         /// </para>
         /// <para>
-        /// Default value is <see cref="Enumeration.DefaultTableType.Memory"/>.
+        /// Default value is <see cref="System.Data.Hsqldb.Common.Enumeration.DefaultTableType.Memory"/>.
         /// </para>
         /// <para>
         /// This property must be specified by the connection that
@@ -689,7 +690,7 @@ namespace System.Data.Hsqldb.Client
         /// Applies only to file: protocol connections.
         /// </para>
         /// </remarks>
-        /// <seealso cref="Enumeration.DefaultTableType"/>       
+        /// <seealso cref="T:System.Data.Hsqldb.Enumeration.DefaultTableType"/>       
         [AmbientValue(null)]
         [Category("File Protocol")]
         [DefaultValue(DefaultValueOf.DefaultTableType)]
@@ -976,7 +977,7 @@ namespace System.Data.Hsqldb.Client
         /// <summary>
         /// The connection protocol to use.
         /// </summary>
-        /// <seealso cref="Enumeration.ConnectionProtocol"/>
+        /// <seealso cref="T:System.Data.Hsqldb.Enumeration.ConnectionProtocol"/>
         [AmbientValue(null)]
         [Category("Connection")]
         [DefaultValue(DefaultValueOf.Protocol)]
