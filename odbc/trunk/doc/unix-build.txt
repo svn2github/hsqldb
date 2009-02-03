@@ -15,3 +15,27 @@ The final output gets written to ".libs/psqlodbcw.so" ("src/.libs/psqlodbc.so"
 from the project home directory).  This location will be changing.
 
 Run "make maintainer-clean" to reset/clear all the steps above.
+
+
+**** IMPORTANT RUNTIME TIPS ****
+
+The unixODBC graphical program "ODBCConfig" just does not work for any driver
+I have ever tried to add.  If the same applies to you, you will need to edit
+the files
+    /etc/odbc.ini      Driver definitions
+    /etc/odbcinst.ini  Global DSN definitions
+    $HOME/.odbc.ini    Personal DSN definitions
+    
+Until we do further work, you must enable the undocumented DSN setting
+"UseServerSidePrepare".  You must set the value to "1" (without the quotes).
+Yes, it is boolean, and yes, it is arbitrary, but the value "Yes" will not
+work here.
+
+ODBC does not allow an empty string for a DSM database name.  Therefore,
+you must specify DSN database name of "/" (without the quotes) to indicate
+the default database
+
+You may want to turn on one or more of the log files, with DSN settings like
+(counter-intuitively) "Debug" for the mylog and "CommLog" for the comm. log.
+Just as for the Server Side Prepare setting above, you must set the value to
+"1".

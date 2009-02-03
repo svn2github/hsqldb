@@ -110,3 +110,7 @@ REPLACING INSTALLED DRIVER
 
     You may want to turn on one or more of the log files at the Datasource
     or Global level of the DSN Configure screen.
+
+    The logging destination files shown in the Data Source Administrator are
+    wrong, at least in some common cases.  The MyLog file gets written in
+    your home directory, if you have one.
