@@ -8,7 +8,11 @@
 # Usage:		NMAKE /f win32.mak CFG=[Release | Debug] [ALL | CLEAN]
 #
 # Comments:		Created by Dave Page, 2001-02-12
-#
+# Copyright (C) 1998          Insight Distribution Systems
+#               Significant modifications Copyright 2009 by
+#               the HSQL Development Group.  Changes made by the HSQL
+#               Development are documented precisely in the public HyperSQL
+#               source code repository, available through http://hsqldb.org.
 
 !IF "$(ANSI_VERSION)" == "yes"
 !MESSAGE Building the PostgreSQL ANSI 3.0 Driver for Win32...
@@ -262,7 +266,7 @@ BSC32_SBRS= \
 LINK32=link.exe
 LIB32=lib.exe
 !IF "$(MSDTC)" != "no"
-LINK32_FLAGS=$(OUTDIR)\$(DTCLIB).lib
+LINK32_FLAGS=$(OUTDIR)\$(DTCLIB).lib ws2_32.lib
 !ENDIF
 LINK32_FLAGS=$(LINK32_FLAGS) kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib winmm.lib /nologo /dll /machine:I386 /def:$(DEF_FILE)
 !IF  "$(ANSI_VERSION)" == "yes"
