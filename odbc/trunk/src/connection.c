@@ -734,11 +734,8 @@ inolog("md5 pwd=%s user=%s salt=%02x%02x%02x%02x%02x\n", ci->password, ci->usern
         return 1;
     }
     free(pwd1);
-    if (PROTOCOL_74(&(self->connInfo)))
-{
 inolog("putting p and %s\n", pwd2);
         SOCK_put_char(sock, 'p');
-}
     md5len = strlen(pwd2);
     SOCK_put_int(sock, (Int4) (4 + md5len + 1), 4);
     SOCK_put_n_char(sock, pwd2, (Int4) (md5len + 1));
@@ -753,30 +750,27 @@ EatReadyForQuery(ConnectionClass *conn)
 {
     int id = 0;
 
-    if (PROTOCOL_74(&(conn->connInfo)))
+    BOOL    is_in_error_trans = CC_is_in_error_trans(conn);
+    switch (id = SOCK_get_char(conn->sock))
     {
-        BOOL    is_in_error_trans = CC_is_in_error_trans(conn);
-        switch (id = SOCK_get_char(conn->sock))
-        {
-            case 'I':
-                if (CC_is_in_trans(conn))
-                {
-                    if (is_in_error_trans)
-                        CC_on_abort(conn, NO_TRANS);
-                    else
-                        CC_on_commit(conn);
-                }
-                break;
-            case 'T':
-                CC_set_in_trans(conn);
-                CC_set_no_error_trans(conn);
+        case 'I':
+            if (CC_is_in_trans(conn))
+            {
                 if (is_in_error_trans)
-                    CC_on_abort_partial(conn);
-                break;
-            case 'E':
-                CC_set_in_error_trans(conn);
-                break;  
-        }
+                    CC_on_abort(conn, NO_TRANS);
+                else
+                    CC_on_commit(conn);
+            }
+            break;
+        case 'T':
+            CC_set_in_trans(conn);
+            CC_set_no_error_trans(conn);
+            if (is_in_error_trans)
+                CC_on_abort_partial(conn);
+            break;
+        case 'E':
+            CC_set_in_error_trans(conn);
+            break;  
     }
     return id;  
 }
@@ -784,97 +778,65 @@ EatReadyForQuery(ConnectionClass *conn)
 int
 handle_error_message(ConnectionClass *self, char *msgbuf, size_t buflen, char *sqlstate, const char *comment, QResultClass *res)
 {
-    BOOL    new_format = FALSE, msg_truncated = FALSE, truncated, hasmsg = FALSE;
+    BOOL    msg_truncated = FALSE, truncated, hasmsg = FALSE;
     SocketClass *sock = self->sock;
     ConnInfo    *ci = &(self->connInfo);
     char    msgbuffer[ERROR_MSG_LENGTH];
     UDWORD  abort_opt;
 
     inolog("handle_error_message protocol=%s\n", ci->protocol);
-    if (PROTOCOL_74(ci))
-        new_format = TRUE;
-    else if (PROTOCOL_74REJECTED(ci))
+    truncated = SOCK_get_string(sock, msgbuffer,sizeof(msgbuffer));
+    size_t  msgl;
+
+    msgbuf[0] = '\0';
+    for (;msgbuffer[0];)
     {
-        if (!SOCK_get_next_byte(sock, TRUE)) /* peek the next byte */
+        mylog("%s: 'E' - %s\n", comment, msgbuffer);
+        qlog("ERROR from backend during %s: '%s'\n", comment, msgbuffer);
+        msgl = strlen(msgbuffer + 1);
+        switch (msgbuffer[0])
         {
-            uint32  leng;
-
-            mylog("peek the next byte = \\0\n");
-            new_format = TRUE;
-            strncpy_null(ci->protocol, PG74, sizeof(ci->protocol));
-            leng = SOCK_get_response_length(sock);
-            inolog("get the response length=%d\n", leng);
-        }
-    }
-
-inolog("new_format=%d\n", new_format);
-    truncated = SOCK_get_string(sock, new_format ? msgbuffer : msgbuf, new_format ? sizeof(msgbuffer) : buflen);
-    if (new_format)
-    {
-        size_t  msgl;
-
-        msgbuf[0] = '\0';
-        for (;msgbuffer[0];)
-        {
-            mylog("%s: 'E' - %s\n", comment, msgbuffer);
-            qlog("ERROR from backend during %s: '%s'\n", comment, msgbuffer);
-            msgl = strlen(msgbuffer + 1);
-            switch (msgbuffer[0])
-            {
-                case 'S':
+            case 'S':
+                if (buflen > 0)
+                {
+                    strncat(msgbuf, msgbuffer + 1, buflen);
+                    buflen -= msgl;
+                }
+                if (buflen > 0)
+                {
+                    strncat(msgbuf, ": ", buflen);
+                    buflen -= 2;
+                }
+                break;
+            case 'M':
+            case 'D':
+                if (buflen > 0)
+                {
+                    if (hasmsg)
+                    {
+                        strcat(msgbuf, "\n");
+                        buflen--;
+                    }
                     if (buflen > 0)
                     {
                         strncat(msgbuf, msgbuffer + 1, buflen);
                         buflen -= msgl;
                     }
-                    if (buflen > 0)
-                    {
-                        strncat(msgbuf, ": ", buflen);
-                        buflen -= 2;
-                    }
-                    break;
-                case 'M':
-                case 'D':
-                    if (buflen > 0)
-                    {
-                        if (hasmsg)
-                        {
-                            strcat(msgbuf, "\n");
-                            buflen--;
-                        }
-                        if (buflen > 0)
-                        {
-                            strncat(msgbuf, msgbuffer + 1, buflen);
-                            buflen -= msgl;
-                        }
-                    }
-                    if (truncated)
-                        msg_truncated = truncated;
-                    hasmsg = TRUE;
-                    break;
-                case 'C':
-                    if (sqlstate)
-                        strncpy_null(sqlstate, msgbuffer + 1, 8);
-                    break;
-            }
-            if (buflen < 0)
-                buflen = 0;
-            while (truncated)
-                truncated = SOCK_get_string(sock, msgbuffer, sizeof(msgbuffer));
-            truncated = SOCK_get_string(sock, msgbuffer, sizeof(msgbuffer));
+                }
+                if (truncated)
+                    msg_truncated = truncated;
+                hasmsg = TRUE;
+                break;
+            case 'C':
+                if (sqlstate)
+                    strncpy_null(sqlstate, msgbuffer + 1, 8);
+                break;
         }
-    }
-    else
-    {
-        msg_truncated = truncated;
-        /* Remove a newline */
-        if (msgbuf[0] != '\0' && msgbuf[(int)strlen(msgbuf) - 1] == '\n')
-            msgbuf[(int)strlen(msgbuf) - 1] = '\0';
-
-        mylog("%s: 'E' - %s\n", comment, msgbuf);
-        qlog("ERROR from backend during %s: '%s'\n", comment, msgbuf);
+        if (buflen < 0)
+            buflen = 0;
         while (truncated)
             truncated = SOCK_get_string(sock, msgbuffer, sizeof(msgbuffer));
+        truncated = SOCK_get_string(sock, msgbuffer, sizeof(msgbuffer));
     }
     abort_opt = 0;
     if (!strncmp(msgbuf, "FATAL", 5))
@@ -907,105 +869,86 @@ inolog("new_format=%d\n", new_format);
 int
 handle_notice_message(ConnectionClass *self, char *msgbuf, size_t buflen, char *sqlstate, const char *comment, QResultClass *res)
 {
-    BOOL    new_format = FALSE, msg_truncated = FALSE, truncated, hasmsg = FALSE;
+    BOOL    msg_truncated = FALSE, truncated, hasmsg = FALSE;
     SocketClass *sock = self->sock;
     char    msgbuffer[ERROR_MSG_LENGTH];
 
-    if (PROTOCOL_74(&(self->connInfo)))
-        new_format = TRUE;
+    size_t  msgl;
 
-    if (new_format)
+    msgbuf[0] = '\0';
+    for (;;)
     {
-        size_t  msgl;
+        truncated = SOCK_get_string(sock, msgbuffer, sizeof(msgbuffer));
+        if (!msgbuffer[0])
+            break;
 
-        msgbuf[0] = '\0';
-        for (;;)
+        mylog("%s: 'N' - %s\n", comment, msgbuffer);
+        qlog("NOTICE from backend during %s: '%s'\n", comment, msgbuffer);
+        msgl = strlen(msgbuffer + 1);
+        switch (msgbuffer[0])
         {
-            truncated = SOCK_get_string(sock, msgbuffer, sizeof(msgbuffer));
-            if (!msgbuffer[0])
+            case 'S':
+                if (buflen > 0)
+                {
+                    strncat(msgbuf, msgbuffer + 1, buflen);
+                    buflen -= msgl;
+                }
+                if (buflen > 0)
+                {
+                    strncat(msgbuf, ": ", buflen);
+                    buflen -= 2;
+                }
                 break;
-
-            mylog("%s: 'N' - %s\n", comment, msgbuffer);
-            qlog("NOTICE from backend during %s: '%s'\n", comment, msgbuffer);
-            msgl = strlen(msgbuffer + 1);
-            switch (msgbuffer[0])
-            {
-                case 'S':
+            case 'M':
+            case 'D':
+                if (buflen > 0)
+                {
+                    if (hasmsg)
+                    {
+                        strcat(msgbuf, "\n");
+                        buflen--;
+                    }
                     if (buflen > 0)
                     {
                         strncat(msgbuf, msgbuffer + 1, buflen);
                         buflen -= msgl;
                     }
-                    if (buflen > 0)
-                    {
-                        strncat(msgbuf, ": ", buflen);
-                        buflen -= 2;
-                    }
-                    break;
-                case 'M':
-                case 'D':
-                    if (buflen > 0)
-                    {
-                        if (hasmsg)
-                        {
-                            strcat(msgbuf, "\n");
-                            buflen--;
-                        }
-                        if (buflen > 0)
-                        {
-                            strncat(msgbuf, msgbuffer + 1, buflen);
-                            buflen -= msgl;
-                        }
-                    }
-                    else
-                        msg_truncated = TRUE;
-                    if (truncated)
-                        msg_truncated = truncated;
-                    hasmsg = TRUE;
-                    break;
-                case 'C':
-                    if (sqlstate && !sqlstate[0] && strcmp(msgbuffer + 1, "00000"))
-                        strncpy_null(sqlstate, msgbuffer + 1, 8);
-                    break;
-            }
-            if (buflen < 0)
-                msg_truncated = TRUE;
-            while (truncated)
-                truncated = SOCK_get_string(sock, msgbuffer, sizeof(msgbuffer));
+                }
+                else
+                    msg_truncated = TRUE;
+                if (truncated)
+                    msg_truncated = truncated;
+                hasmsg = TRUE;
+                break;
+            case 'C':
+                if (sqlstate && !sqlstate[0] && strcmp(msgbuffer + 1, "00000"))
+                    strncpy_null(sqlstate, msgbuffer + 1, 8);
+                break;
         }
-    }
-    else
-    {
-        msg_truncated = SOCK_get_string(sock, msgbuf, (Int4) buflen);
-
-        /* Remove a newline */
-        if (msgbuf[0] != '\0' && msgbuf[strlen(msgbuf) - 1] == '\n')
-            msgbuf[strlen(msgbuf) - 1] = '\0';
-
-        mylog("%s: 'N' - %s\n", comment, msgbuf);
-        qlog("NOTICE from backend during %s: '%s'\n", comment, msgbuf);
-        for (truncated = msg_truncated; truncated;)
+        if (buflen < 0)
+            msg_truncated = TRUE;
+        while (truncated)
             truncated = SOCK_get_string(sock, msgbuffer, sizeof(msgbuffer));
     }
-    if (res)
-    {
-        if (QR_command_successful(res))
-            QR_set_rstatus(res, PORES_NONFATAL_ERROR);
-        QR_set_notice(res, msgbuf);  /* will dup this string */
-    }
+if (res)
+{
+    if (QR_command_successful(res))
+        QR_set_rstatus(res, PORES_NONFATAL_ERROR);
+    QR_set_notice(res, msgbuf);  /* will dup this string */
+}
 
-    return msg_truncated;
+return msg_truncated;
 }
 
 CSTR std_cnf_strs = "standard_conforming_strings";
 
 void    getParameterValues(ConnectionClass *conn)
 {
-    SocketClass *sock = conn->sock;
-    /* ERROR_MSG_LENGTH is suffcient */
-    char msgbuffer[ERROR_MSG_LENGTH + 1];
-    
-    SOCK_get_string(sock, msgbuffer, sizeof(msgbuffer));
+SocketClass *sock = conn->sock;
+/* ERROR_MSG_LENGTH is suffcient */
+char msgbuffer[ERROR_MSG_LENGTH + 1];
+
+SOCK_get_string(sock, msgbuffer, sizeof(msgbuffer));
 inolog("parameter name=%s\n", msgbuffer);
     if (stricmp(msgbuffer, "server_encoding") == 0)
     {
@@ -1124,6 +1067,10 @@ static int  protocol3_opts_array(ConnectionClass *self, const char *opts[][2], B
     return cnt;
 }
 
+/*
+ * This function has a misleading name.  It does a transmission in addition
+ * to building the packet.
+ */
 static int  protocol3_packet_build(ConnectionClass *self)
 {
     CSTR    func = "protocol3_packet_build";
@@ -1411,28 +1358,12 @@ another_version_retry:
         if (anotherVersionRetry)
         {
 #ifdef  USE_SSPI
-            if (PROTOCOL_74(ci) || PROTOCOL_64(ci))
-            {
-                if (ssl_try_no < ssl_try_count)
-                    ssl_try_no++;
-            }
-            else
-                ssl_try_no = ssl_try_count;
+            if (ssl_try_no < ssl_try_count)
+            ssl_try_no++;
             if (ssl_try_no >= ssl_try_count)
             {
 #endif /* USE_SSPI */
-                /* retry older version */
-                if (PROTOCOL_62(ci))
-                {
-                    CC_set_error(self, CONNECTION_SERVER_NOT_REACHED, "Could not construct a socket to the server", func);
-                    return 0;
-                }
-                if (PROTOCOL_63(ci))
-                    strncpy_null(ci->protocol, PG62, sizeof(ci->protocol));
-                else if (PROTOCOL_64(ci))
-                    strncpy_null(ci->protocol, PG63, sizeof(ci->protocol));
-                else 
-                    strncpy_null(ci->protocol, PG64, sizeof(ci->protocol));
+                strncpy_null(ci->protocol, PG64, sizeof(ci->protocol));
 #ifdef  USE_SSPI
                 ssl_try_no = 0;
             }
@@ -1520,46 +1451,8 @@ inolog("protocol=%s version=%d,%d\n", ci->protocol, self->pg_version_major, self
             }
         }
 #endif /* USE_SSPI */
-        if (PROTOCOL_62(ci))
-        {
-            sock->reverse = TRUE;       /* make put_int and get_int work
-                                         * for 6.2 */
-
-            memset(&sp62, 0, sizeof(StartupPacket6_2));
-            sock->pversion = PG_PROTOCOL_62;
-            SOCK_put_int(sock, htonl(4 + sizeof(StartupPacket6_2)), 4);
-            sp62.authtype = htonl(NO_AUTHENTICATION);
-            strncpy_null(sp62.database, ci->database, PATH_SIZE);
-            strncpy_null(sp62.user, ci->username, USRNAMEDATALEN);
-            SOCK_put_n_char(sock, (char *) &sp62, sizeof(StartupPacket6_2));
-            SOCK_flush_output(sock);
-        }
-        else if (PROTOCOL_74(ci))
-        {
-            if (!protocol3_packet_build(self))
-                return 0;
-        }
-        else
-        {
-            memset(&sp, 0, sizeof(StartupPacket));
-
-            mylog("sizeof startup packet = %d\n", sizeof(StartupPacket));
-
-            if (PROTOCOL_63(ci))
-                sock->pversion = PG_PROTOCOL_63;
-            else
-                sock->pversion = PG_PROTOCOL_64;
-            /* Send length of Authentication Block */
-            SOCK_put_int(sock, 4 + sizeof(StartupPacket), 4);
-
-            sp.protoVersion = (ProtocolVersion) htonl(sock->pversion);
-
-            strncpy_null(sp.database, ci->database, SM_DATABASE);
-            strncpy_null(sp.user, ci->username, SM_USER);
-
-            SOCK_put_n_char(sock, (char *) &sp, sizeof(StartupPacket));
-            SOCK_flush_output(sock);
-        }
+        if (!protocol3_packet_build(self))
+            return 0;
 
         if (SOCK_get_errcode(sock) != 0)
         {
@@ -1577,183 +1470,166 @@ inolog("protocol=%s version=%d,%d\n", ci->protocol, self->pg_version_major, self
      * Now get the authentication request from backend
      */
 
-    if (!PROTOCOL_62(ci))
-    {
-        BOOL        beforeV2 = PG_VERSION_LT(self, 6.4),
-                    ReadyForQuery = FALSE, retry = FALSE;
-        uint32  leng;
+    BOOL        ReadyForQuery = FALSE, retry = FALSE;
+    uint32  leng;
 
-        do
+    do
+    {
+        if (password_req != AUTH_REQ_OK)
         {
-            if (password_req != AUTH_REQ_OK)
+            beresp = 'R';
+            startPacketReceived = TRUE;
+        }
+        else
+        {
+            beresp = SOCK_get_id(sock);
+            mylog("auth got '%c'\n", beresp);
+            if (0 != SOCK_get_errcode(sock))
+                goto sockerr_proc;
+            if (beresp != 'E' || startPacketReceived)
             {
-                beresp = 'R';
-                startPacketReceived = TRUE;
-            }
-            else
-            {
-                beresp = SOCK_get_id(sock);
-                mylog("auth got '%c'\n", beresp);
+                leng = SOCK_get_response_length(sock);
+                inolog("leng=%d\n", leng);
                 if (0 != SOCK_get_errcode(sock))
                     goto sockerr_proc;
-                if (PROTOCOL_74(ci))
-                {
-                    if (beresp != 'E' || startPacketReceived)
-                    {
-                        leng = SOCK_get_response_length(sock);
-                        inolog("leng=%d\n", leng);
-                        if (0 != SOCK_get_errcode(sock))
-                            goto sockerr_proc;
-                    }
-                    else
-                        strncpy_null(ci->protocol, PG74REJECTED, sizeof(ci->protocol));
-                }
-                startPacketReceived = TRUE;
             }
+            startPacketReceived = TRUE;
+        }
 
-            switch (beresp)
-            {
-                case 'E':
+        switch (beresp)
+        {
+            case 'E':
 inolog("Ekita retry=%d\n", retry);
-                    handle_error_message(self, msgbuffer, sizeof(msgbuffer), self->sqlstate, func, NULL);
-                    CC_set_error(self, CONN_INVALID_AUTHENTICATION, msgbuffer, func);
-                    qlog("ERROR from backend during authentication: '%s'\n", msgbuffer);
-                    if (PROTOCOL_74REJECTED(ci))
+                handle_error_message(self, msgbuffer, sizeof(msgbuffer), self->sqlstate, func, NULL);
+                CC_set_error(self, CONN_INVALID_AUTHENTICATION, msgbuffer, func);
+                qlog("ERROR from backend during authentication: '%s'\n", msgbuffer);
+                if (0 == strncmp(msgbuffer, "FATAL:", 6))
+                {
+                    const char *emsg = msgbuffer + 8;
+                    if (0 == strnicmp(emsg, "unsupported frontend protocol", 29))
                         retry = TRUE;
-                    else if (0 == strncmp(msgbuffer, "FATAL:", 6))
-                    {
-                        const char *emsg = msgbuffer + 8;
-                        if (0 == strnicmp(emsg, "unsupported frontend protocol", 29))
-                            retry = TRUE;
 #ifdef  USE_SSPI
-                        else if ('y' != ssl_call[ssl_try_no] &&
-                             ssl_try_no + 1 < ssl_try_count)
-                            retry = TRUE;
-#endif /* USE_SSPI */
-                    }
-                    else if (strnicmp(msgbuffer, "Unsupported frontend protocol", 29) == 0)
+                    else if ('y' != ssl_call[ssl_try_no] &&
+                         ssl_try_no + 1 < ssl_try_count)
                         retry = TRUE;
-                    if (retry)
+#endif /* USE_SSPI */
+                }
+                else if (strnicmp(msgbuffer, "Unsupported frontend protocol", 29) == 0)
+                    retry = TRUE;
+                if (retry)
+                    break;
+
+                return 0;
+            case 'R':
+
+                if (password_req != AUTH_REQ_OK)
+                {
+                    mylog("in 'R' password_req=%s\n", ci->password);
+                    areq = password_req;
+                    if (salt_para)
+                        memcpy(salt, salt_para, sizeof(salt));
+                    password_req = AUTH_REQ_OK;
+                    mylog("salt=%02x%02x%02x%02x%02x\n", (UCHAR)salt[0], (UCHAR)salt[1], (UCHAR)salt[2], (UCHAR)salt[3], (UCHAR)salt[4]);
+                }
+                else
+                {
+
+                    areq = SOCK_get_int(sock, 4);
+                    memset(salt, 0, sizeof(salt));
+                    if (areq == AUTH_REQ_MD5)
+                        SOCK_get_n_char(sock, salt, 4);
+                    else if (areq == AUTH_REQ_CRYPT)
+                        SOCK_get_n_char(sock, salt, 2);
+
+                    mylog("areq = %d salt=%02x%02x%02x%02x%02x\n", areq, (UCHAR)salt[0], (UCHAR)salt[1], (UCHAR)salt[2], (UCHAR)salt[3], (UCHAR)salt[4]);
+                }
+                switch (areq)
+                {
+                    case AUTH_REQ_OK:
                         break;
 
-                    return 0;
-                case 'R':
+                    case AUTH_REQ_KRB4:
+                        CC_set_error(self, CONN_AUTH_TYPE_UNSUPPORTED, "Kerberos 4 authentication not supported", func);
+                        return 0;
 
-                    if (password_req != AUTH_REQ_OK)
-                    {
-                        mylog("in 'R' password_req=%s\n", ci->password);
-                        areq = password_req;
-                        if (salt_para)
-                            memcpy(salt, salt_para, sizeof(salt));
-                        password_req = AUTH_REQ_OK;
-                        mylog("salt=%02x%02x%02x%02x%02x\n", (UCHAR)salt[0], (UCHAR)salt[1], (UCHAR)salt[2], (UCHAR)salt[3], (UCHAR)salt[4]);
-                    }
-                    else
-                    {
+                    case AUTH_REQ_KRB5:
+                        CC_set_error(self, CONN_AUTH_TYPE_UNSUPPORTED, "Kerberos 5 authentication not supported", func);
+                        return 0;
 
-                        areq = SOCK_get_int(sock, 4);
-                        memset(salt, 0, sizeof(salt));
-                        if (areq == AUTH_REQ_MD5)
-                            SOCK_get_n_char(sock, salt, 4);
-                        else if (areq == AUTH_REQ_CRYPT)
-                            SOCK_get_n_char(sock, salt, 2);
+                    case AUTH_REQ_PASSWORD:
+                        mylog("in AUTH_REQ_PASSWORD\n");
 
-                        mylog("areq = %d salt=%02x%02x%02x%02x%02x\n", areq, (UCHAR)salt[0], (UCHAR)salt[1], (UCHAR)salt[2], (UCHAR)salt[3], (UCHAR)salt[4]);
-                    }
-                    switch (areq)
-                    {
-                        case AUTH_REQ_OK:
-                            break;
+                        if (ci->password[0] == '\0')
+                        {
+                            CC_set_error(self, CONNECTION_NEED_PASSWORD, "A password is required for this connection.", func);
+                            return -areq;       /* need password */
+                        }
 
-                        case AUTH_REQ_KRB4:
-                            CC_set_error(self, CONN_AUTH_TYPE_UNSUPPORTED, "Kerberos 4 authentication not supported", func);
+                        mylog("past need password\n");
+
+                        SOCK_put_char(sock, 'p');
+                        SOCK_put_int(sock, (Int4) (4 + strlen(ci->password) + 1), 4);
+                        SOCK_put_n_char(sock, ci->password, (Int4) strlen(ci->password) + 1);
+                        sockerr = SOCK_flush_output(sock);
+
+                        mylog("past flush %dbytes\n", sockerr);
+                        break;
+
+                    case AUTH_REQ_CRYPT:
+                        CC_set_error(self, CONN_AUTH_TYPE_UNSUPPORTED, "Password crypt authentication not supported", func);
+                        return 0;
+                    case AUTH_REQ_MD5:
+                        mylog("in AUTH_REQ_MD5\n");
+                        if (ci->password[0] == '\0')
+                        {
+                            CC_set_error(self, CONNECTION_NEED_PASSWORD, "A password is required for this connection.", func);
+                            if (salt_para)
+                                memcpy(salt_para, salt, sizeof(salt));
+                            return -areq; /* need password */
+                        }
+                        if (md5_auth_send(self, salt))
+                        {
+                            CC_set_error(self, CONN_INVALID_AUTHENTICATION, "md5 hashing failed", func);
                             return 0;
+                        }
+                        break;
 
-                        case AUTH_REQ_KRB5:
-                            CC_set_error(self, CONN_AUTH_TYPE_UNSUPPORTED, "Kerberos 5 authentication not supported", func);
-                            return 0;
+                    case AUTH_REQ_SCM_CREDS:
+                        CC_set_error(self, CONN_AUTH_TYPE_UNSUPPORTED, "Unix socket credential authentication not supported", func);
+                        return 0;
 
-                        case AUTH_REQ_PASSWORD:
-                            mylog("in AUTH_REQ_PASSWORD\n");
+                    default:
+                        CC_set_error(self, CONN_AUTH_TYPE_UNSUPPORTED, "Unknown authentication type", func);
+                        return 0;
+                }
+                break;
+            case 'S': /* parameter status */
+                getParameterValues(self);
+                break;
+            case 'K':       /* Secret key (6.4 protocol) */
+                self->be_pid = SOCK_get_int(sock, 4);       /* pid */
+                self->be_key = SOCK_get_int(sock, 4);       /* key */
 
-                            if (ci->password[0] == '\0')
-                            {
-                                CC_set_error(self, CONNECTION_NEED_PASSWORD, "A password is required for this connection.", func);
-                                return -areq;       /* need password */
-                            }
-
-                            mylog("past need password\n");
-
-                            if (PROTOCOL_74(&(self->connInfo)))
-                                SOCK_put_char(sock, 'p');
-                            SOCK_put_int(sock, (Int4) (4 + strlen(ci->password) + 1), 4);
-                            SOCK_put_n_char(sock, ci->password, (Int4) strlen(ci->password) + 1);
-                            sockerr = SOCK_flush_output(sock);
-
-                            mylog("past flush %dbytes\n", sockerr);
-                            break;
-
-                        case AUTH_REQ_CRYPT:
-                            CC_set_error(self, CONN_AUTH_TYPE_UNSUPPORTED, "Password crypt authentication not supported", func);
-                            return 0;
-                        case AUTH_REQ_MD5:
-                            mylog("in AUTH_REQ_MD5\n");
-                            if (ci->password[0] == '\0')
-                            {
-                                CC_set_error(self, CONNECTION_NEED_PASSWORD, "A password is required for this connection.", func);
-                                if (salt_para)
-                                    memcpy(salt_para, salt, sizeof(salt));
-                                return -areq; /* need password */
-                            }
-                            if (md5_auth_send(self, salt))
-                            {
-                                CC_set_error(self, CONN_INVALID_AUTHENTICATION, "md5 hashing failed", func);
-                                return 0;
-                            }
-                            break;
-
-                        case AUTH_REQ_SCM_CREDS:
-                            CC_set_error(self, CONN_AUTH_TYPE_UNSUPPORTED, "Unix socket credential authentication not supported", func);
-                            return 0;
-
-                        default:
-                            CC_set_error(self, CONN_AUTH_TYPE_UNSUPPORTED, "Unknown authentication type", func);
-                            return 0;
-                    }
-                    break;
-                case 'S': /* parameter status */
-                    getParameterValues(self);
-                    break;
-                case 'K':       /* Secret key (6.4 protocol) */
-                    self->be_pid = SOCK_get_int(sock, 4);       /* pid */
-                    self->be_key = SOCK_get_int(sock, 4);       /* key */
-
-                    break;
-                case 'Z':       /* Backend is ready for new query (6.4) */
-                    EatReadyForQuery(self);
-                    ReadyForQuery = TRUE;
-                    break;
-                case 'N':   /* Notices may come */
-                    handle_notice_message(self, notice, sizeof(notice), self->sqlstate, "CC_connect", NULL);
-                    break;
-                default:
-                    snprintf(notice, sizeof(notice), "Unexpected protocol character='%c' during authentication", beresp);
-                    CC_set_error(self, CONN_INVALID_AUTHENTICATION, notice, func);
-                    return 0;
-            }
-            if (retry)
-            {
-                anotherVersionRetry = TRUE;
-                goto another_version_retry;
-            }
-
-            /*
-             * There were no ReadyForQuery responce before 6.4.
-             */
-            if (beforeV2 && areq == AUTH_REQ_OK)
+                break;
+            case 'Z':       /* Backend is ready for new query (6.4) */
+                EatReadyForQuery(self);
                 ReadyForQuery = TRUE;
-        } while (!ReadyForQuery);
-    }
+                break;
+            case 'N':   /* Notices may come */
+                handle_notice_message(self, notice, sizeof(notice), self->sqlstate, "CC_connect", NULL);
+                break;
+            default:
+                snprintf(notice, sizeof(notice), "Unexpected protocol character='%c' during authentication", beresp);
+                CC_set_error(self, CONN_INVALID_AUTHENTICATION, notice, func);
+                return 0;
+        }
+        if (retry)
+        {
+            anotherVersionRetry = TRUE;
+            goto another_version_retry;
+        }
+
+    } while (!ReadyForQuery);
 
 sockerr_proc:
     if (0 != (sockerr = SOCK_get_errcode(sock)))
@@ -1769,37 +1645,6 @@ sockerr_proc:
     }
 
     CC_clear_error(self);       /* clear any password error */
-
-    /*
-     * send an empty query in order to find out whether the specified
-     * database really exists on the server machine
-     */
-    if (!PROTOCOL_74(ci))
-    {
-        mylog("sending an empty query...\n");
-
-        res = CC_send_query(self, " ", NULL, 0, NULL);
-        if (res == NULL ||
-            (QR_get_rstatus(res) != PORES_EMPTY_QUERY &&
-             QR_command_nonfatal(res)))
-        {
-            CC_set_error(self, CONNECTION_NO_SUCH_DATABASE, "The database does not exist on the server\nor user authentication failed.", func);
-            QR_Destructor(res);
-            return 0;
-        }
-        QR_Destructor(res);
-
-        mylog("empty query seems to be OK.\n");
-
-        /* 
-         * Get the version number first so we can check it before
-         * sending options that are now obsolete. DJP 21/06/2002
-         */
-inolog("CC_lookup_pg_version\n");
-        CC_lookup_pg_version(self); /* Get PostgreSQL version for
-                           SQLGetInfo use */
-        CC_setenv(self);
-    }
 
     return 1;
 }   
@@ -1898,12 +1743,6 @@ inolog("CC_send_settings\n");
                 UTF8 != self->ccsc)
             {
                 QResultClass    *res;
-                if (PG_VERSION_LT(self, 7.1))
-                {
-                    CC_set_error(self, CONN_NOT_IMPLEMENTED_ERROR, "UTF-8 conversion isn't implemented before 7.1", func);
-                    ret = 0;
-                    goto cleanup;
-                }
                 if (self->original_client_encoding)
                     free(self->original_client_encoding);
                 self->original_client_encoding = NULL;
@@ -2321,7 +2160,6 @@ CC_send_query_append(ConnectionClass *self, const char *query, QueryInfo *qi, UD
     BOOL        msg_truncated,
                 ReadyToReturn = FALSE,
                 query_completed = FALSE,
-                beforeV2 = PG_VERSION_LT(self, 6.4),
                 aborted = FALSE,
                 used_passed_result_object = FALSE,
             discard_next_begin = FALSE,
@@ -2440,22 +2278,19 @@ CC_send_query_append(ConnectionClass *self, const char *query, QueryInfo *qi, UD
         lenrlscmd = strlen(rlscmd);
         lenperqsvp = strlen(per_query_svp);
     }
-    if (PROTOCOL_74(ci))
+    leng = (UInt4) qrylen;
+    if (appendq)
+        leng += (UInt4) (strlen(appendq) + 1);
+    if (issue_begin)
+        leng += (UInt4) (lenbgncmd + 1);
+    if (query_rollback)
     {
-        leng = (UInt4) qrylen;
-        if (appendq)
-            leng += (UInt4) (strlen(appendq) + 1);
-        if (issue_begin)
-            leng += (UInt4) (lenbgncmd + 1);
-        if (query_rollback)
-        {
-            leng += (UInt4) (lensvpcmd + 1 + lenperqsvp + 1);
-            leng += (UInt4) (1 + lenrlscmd + 1 + lenperqsvp);
-        }
-        leng++;
-        SOCK_put_int(sock, leng + 4, 4);
-inolog("leng=%d\n", leng);
+        leng += (UInt4) (lensvpcmd + 1 + lenperqsvp + 1);
+        leng += (UInt4) (1 + lenrlscmd + 1 + lenperqsvp);
     }
+    leng++;
+    SOCK_put_int(sock, leng + 4, 4);
+inolog("leng=%d\n", leng);
     if (issue_begin)
     {
         SOCK_put_n_char(sock, bgncmd, lenbgncmd);
@@ -2585,10 +2420,7 @@ inolog("Discarded the first SAVEPOINT\n");
                     }
                     else if (strnicmp(cmdbuffer, rbkcmd, lenrbkcmd) == 0)
                     {
-                        if (PROTOCOL_74(&(self->connInfo)))
-                            CC_set_in_error_trans(self); /* mark the transaction error in case of manual rollback */
-                        else
-                            CC_on_abort(self, NO_TRANS);
+                        CC_set_in_error_trans(self); /* mark the transaction error in case of manual rollback */
                     }
                     else
                     {
@@ -2597,23 +2429,11 @@ inolog("Discarded the first SAVEPOINT\n");
                             res->recent_processed_row_count = atoi(ptr + 1);
                         else
                             res->recent_processed_row_count = -1;
-                        if (PROTOCOL_74(&(self->connInfo)))
+                        if (NULL != self->current_schema &&
+                            strnicmp(cmdbuffer, "SET", 3) == 0)
                         {
-                            if (NULL != self->current_schema &&
-                                strnicmp(cmdbuffer, "SET", 3) == 0)
-                            {
-                                if (is_setting_search_path(query))
-                                    reset_current_schema(self);
-                            }
-                        }
-                        else
-                        {
-                            if (strnicmp(cmdbuffer, "COMMIT", 6) == 0)
-                                CC_on_commit(self);
-                            else if (strnicmp(cmdbuffer, "END", 3) == 0)
-                                CC_on_commit(self);
-                            else if (strnicmp(cmdbuffer, "ABORT", 5) == 0)
-                                CC_on_abort(self, NO_TRANS);
+                            if (is_setting_search_path(query))
+                                reset_current_schema(self);
                         }
                     }
 
@@ -2622,23 +2442,6 @@ inolog("Discarded the first SAVEPOINT\n");
                     QR_set_command(res, cmdbuffer);
                     query_completed = TRUE;
                     mylog("send_query: returning res = %p\n", res);
-                    if (!beforeV2)
-                        break;
-
-                    /*
-                     * (Quotation from the original comments) since
-                     * backend may produce more than one result for some
-                     * commands we need to poll until clear so we send an
-                     * empty query, and keep reading out of the pipe until
-                     * an 'I' is received
-                     */
-
-                    if (empty_reqs == 0)
-                    {
-                        SOCK_put_string(sock, "Q ");
-                        SOCK_flush_output(sock);
-                        empty_reqs++;
-                    }
                 }
                 break;
             case 'Z':           /* Backend is ready for new query (6.4) */
@@ -2659,7 +2462,7 @@ inolog("Discarded the first SAVEPOINT\n");
 
             case 'I':           /* The server sends an empty query */
                 /* There is a closing '\0' following the 'I', so we eat it */
-                if (PROTOCOL_74(ci) && 0 == response_length)
+                if (0 == response_length)
                     swallow = '\0';
                 else
                     swallow = SOCK_get_char(sock);
@@ -2801,14 +2604,6 @@ inolog("Discarded the first SAVEPOINT\n");
             break;
         if (CONN_DOWN == self->status)
             break;
-        /*
-         * There was no ReadyForQuery response before 6.4.
-         */
-        if (beforeV2)
-        {
-            if (empty_reqs == 0 && query_completed)
-                break;
-        }
     }
 
 cleanup:
@@ -2918,7 +2713,7 @@ CC_send_function(ConnectionClass *self, int fnid, void *result_buf, int *actual_
     Int4            response_length;
     ConnInfo        *ci;
     int         func_cs_count = 0;
-    BOOL            sinceV3, beforeV3, beforeV2, resultResponse;
+    BOOL        resultResponse;
 
     mylog("send_function(): conn=%p, fnid=%d, result_is_int=%d, nargs=%d\n", self, fnid, result_is_int, nargs);
 
@@ -2939,31 +2734,23 @@ CC_send_function(ConnectionClass *self, int fnid, void *result_buf, int *actual_
 #define return DONT_CALL_RETURN_FROM_HERE???
     ENTER_INNER_CONN_CS(self, func_cs_count);
     ci = &(self->connInfo);
-    sinceV3 = PROTOCOL_74(ci);
-    beforeV3 = (!sinceV3);
-    beforeV2 = (beforeV3 && !PROTOCOL_64(ci));
-    if (sinceV3)
+    leng = 4 + sizeof(uint32) + 2 + 2
+        + sizeof(uint16);
+
+    for (i = 0; i < nargs; i++)
     {
-        leng = 4 + sizeof(uint32) + 2 + 2
-            + sizeof(uint16);
- 
-        for (i = 0; i < nargs; i++)
+        leng += 4;
+        if (args[i].len >= 0)
         {
-            leng += 4;
-            if (args[i].len >= 0)
-            {
-                if (args[i].isint)
-                    leng += 4;
-                else
-                    leng += args[i].len;
-            }
+            if (args[i].isint)
+                leng += 4;
+            else
+                leng += args[i].len;
         }
-        leng += 2;
-        SOCK_put_char(sock, 'F');
-        SOCK_put_int(sock, leng, 4);
     }
-    else
-        SOCK_put_string(sock, "F ");
+    leng += 2;
+    SOCK_put_char(sock, 'F');
+    SOCK_put_int(sock, leng, 4);
     if (SOCK_get_errcode(sock) != 0)
     {
         CC_set_error(self, CONNECTION_COULD_NOT_SEND, "Could not send function to backend", func);
@@ -2973,14 +2760,9 @@ CC_send_function(ConnectionClass *self, int fnid, void *result_buf, int *actual_
     }
 
     SOCK_put_int(sock, fnid, 4);
-    if (sinceV3)
-    {
-        SOCK_put_int(sock, 1, 2); /* # of formats */
-        SOCK_put_int(sock, 1, 2); /* the format is binary */
-        SOCK_put_int(sock, nargs, 2);
-    }
-    else
-        SOCK_put_int(sock, nargs, 4);
+    SOCK_put_int(sock, 1, 2); /* # of formats */
+    SOCK_put_int(sock, 1, 2); /* the format is binary */
+    SOCK_put_int(sock, nargs, 2);
 
     mylog("send_function: done sending function\n");
 
@@ -2996,8 +2778,7 @@ CC_send_function(ConnectionClass *self, int fnid, void *result_buf, int *actual_
 
     }
 
-    if (sinceV3)
-        SOCK_put_int(sock, 1, 2); /* result format is binary */
+    SOCK_put_int(sock, 1, 2); /* result format is binary */
     mylog("    done sending args\n");
 
     SOCK_flush_output(sock);
@@ -3022,14 +2803,6 @@ inolog("send_func response_length=%d\n", response_length);
                     break;
                 } /* fall through */
             case 'V':
-                if ('V' == id)
-                {
-                    if (beforeV3) /* FunctionResultResponse */
-                    {
-                        resultResponse = TRUE;
-                        break;
-                    }
-                }
                 *actual_result_len = SOCK_get_int(sock, 4);
                 if (-1 != *actual_result_len)
                 {
@@ -3039,14 +2812,6 @@ inolog("send_func response_length=%d\n", response_length);
                         SOCK_get_n_char(sock, (char *) result_buf, *actual_result_len);
 
                     mylog("  after get result\n");
-                }
-                if (beforeV3)
-                {
-                    c = SOCK_get_char(sock); /* get the last '0' */
-                    if (beforeV2)
-                        done = TRUE;
-                    resultResponse = FALSE;
-                    mylog("   after get 0\n");
                 }
                 break;          /* ok */
 
@@ -3064,8 +2829,6 @@ inolog("send_func response_length=%d\n", response_length);
 
                 mylog("send_function(V): 'E' - %s\n", CC_get_errormsg(self));
                 qlog("ERROR from backend during send_function: '%s'\n", CC_get_errormsg(self));
-                if (beforeV2)
-                    done = TRUE;
                 ret = FALSE;
                 break;
 
@@ -3077,8 +2840,6 @@ inolog("send_func response_length=%d\n", response_length);
             case '0':   /* empty result */
                 if (resultResponse)
                 {
-                    if (beforeV2)
-                        done = TRUE;
                     resultResponse = FALSE;
                     break;
                 } /* fall through */
@@ -3294,30 +3055,9 @@ void
 CC_initialize_pg_version(ConnectionClass *self)
 {
     strcpy(self->pg_version, self->connInfo.protocol);
-    if (PROTOCOL_62(&self->connInfo))
-    {
-        self->pg_version_number = (float) 6.2;
-        self->pg_version_major = 6;
-        self->pg_version_minor = 2;
-    }
-    else if (PROTOCOL_63(&self->connInfo))
-    {
-        self->pg_version_number = (float) 6.3;
-        self->pg_version_major = 6;
-        self->pg_version_minor = 3;
-    }
-    else if (PROTOCOL_64(&self->connInfo))
-    {
-        self->pg_version_number = (float) 6.4;
-        self->pg_version_major = 6;
-        self->pg_version_minor = 4;
-    }
-    else
-    {
-        self->pg_version_number = (float) 7.4;
-        self->pg_version_major = 7;
-        self->pg_version_minor = 4;
-    }
+    self->pg_version_number = (float) 7.4;
+    self->pg_version_major = 7;
+    self->pg_version_minor = 4;
 }
 
 
@@ -3667,13 +3407,6 @@ if (TRUE)
         sock->pversion = PG_PROTOCOL_74;
         strncpy_null(ci->protocol, PG74, sizeof(ci->protocol));
         pversion = PQprotocolVersion(pqconn);
-        switch (pversion)
-        {
-            case 2:
-                sock->pversion = PG_PROTOCOL_64;
-                strncpy_null(ci->protocol, PG64, sizeof(ci->protocol));
-                break;
-        }
     }
     mylog("protocol=%s\n", self->connInfo.protocol);
     {
