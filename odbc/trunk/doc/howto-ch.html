@@ -6,7 +6,7 @@
   </HEAD>
 
   <body bgcolor="#ffffff" text="#000000" link="#ff0000" vlink="#a00000" alink="#0000ff">
-  
+
 <h1>psqlODBC HOWTO - Ch</h1>
 
 <p>
@@ -18,8 +18,8 @@ Description: Example based Mini-Howto on Accessing PostgreSQL from Ch
 </i>
 <br><br>
 Ch is a C/C++ interpreter from <a href="http://www.softintegration.com">http://www.softintegration.com</a>.<br>
-It is designed for cross-platform scripting, shell programming, 
-2D/3D plotting, numerical computing, and embedded scripting. 
+It is designed for cross-platform scripting, shell programming,
+2D/3D plotting, numerical computing, and embedded scripting.
 
 <br><br>
 Requirements to get the code to work:
@@ -39,8 +39,8 @@ You should be able to use the simple.c scripts, start Ch shell first.
 <blockquote>
 <pre>
 % ch
-                                   Ch 
-                  Standard edition, version 4.0.0.11291 
+                                   Ch
+                  Standard edition, version 4.0.0.11291
               (C) Copyright 2001-2003 SoftIntegration, Inc.
                      http://www.softintegration.com
 /home/wcheng> cd $CHHOME/package/iodbc/demos
@@ -53,7 +53,7 @@ SQLAllocHandle() ok
 SQLSetConnectAttr() ok
 /usr/local/ch/package/iodbc/demos&gt; cat simple.c
 
-/**************************** simple.c *****************************/ 
+/**************************** simple.c *****************************/
 #include &lt;sqlext.h&gt;
 #include &lt;stdio.h&gt;
 
@@ -73,7 +73,7 @@ void ODBC_error (       /* Get and print ODBC error messages */
         rc = SQLError(henv, hdbc, hstmt,
                       sqlstate, &nativeerr, errmsg,
                       SQL_MAX_MESSAGE_LENGTH - 1, &actualmsglen);
-                     
+
          if (rc == SQL_ERROR) {
               printf ("SQLError failed!\n");
               return;

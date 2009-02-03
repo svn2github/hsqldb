@@ -6,7 +6,7 @@
   </HEAD>
 
   <body bgcolor="#ffffff" text="#000000" link="#ff0000" vlink="#a00000" alink="#0000ff">
-  
+
 <h1>psqlODBC HOWTO - Visual Basic Large Objects</h1>
 
 <p>
@@ -62,25 +62,25 @@ interface to use:
 <blockquote>
 <pre>
 Private Sub DAO_Connect()
-	Dim chunk() As Byte
-	Dim fd As Integer
-	Dim flen As Long
-	Dim ws As Workspace
-	Dim cn As Database
-	Dim rs As DAO.Recordset
-	Dim strConnection As String
+    Dim chunk() As Byte
+    Dim fd As Integer
+    Dim flen As Long
+    Dim ws As Workspace
+    Dim cn As Database
+    Dim rs As DAO.Recordset
+    Dim strConnection As String
 
-	' Initialize the DB Engine
-	Set ws = DBEngine.Workspaces(0)
-	Let strConnection = "ODBC;DSN=pgsql_test_blob;"
-	Set cn = ws.OpenDatabase("", False, False, strConnection)
+    ' Initialize the DB Engine
+    Set ws = DBEngine.Workspaces(0)
+    Let strConnection = "ODBC;DSN=pgsql_test_blob;"
+    Set cn = ws.OpenDatabase("", False, False, strConnection)
 
-	' Open the table MYTABLE
-	Set rs = cn.OpenRecordset("MYTABLE")
+    ' Open the table MYTABLE
+    Set rs = cn.OpenRecordset("MYTABLE")
 
-	'
-	' Add a new record to the table
-	'
+    '
+    ' Add a new record to the table
+    '
     rs.AddNew
 
 
@@ -100,41 +100,41 @@ Private Sub DAO_Connect()
     Get fd, , chunk()
 
     ' Store it in the database
-	rs!object.AppendChunk chunk()
+    rs!object.AppendChunk chunk()
 
-	' Update changes
+    ' Update changes
     rs.Update
 
     ' Close the file
     Close fd
 
     ' Close the record set
-	rs.Close
+    rs.Close
 
-	'
-	' Read the blob object from the first record of MYTABLE
-	'
-	Set rs = Nothing
+    '
+    ' Read the blob object from the first record of MYTABLE
+    '
+    Set rs = Nothing
 
-	' Open the table
-	Set rs = cn.OpenRecordset("MYTABLE")
+    ' Open the table
+    Set rs = cn.OpenRecordset("MYTABLE")
 
-	' Open a file for writing
-	fd = FreeFile
-	Open "mydocument" For Binary Access Write As fd
-	flen = rs!object.FieldSize
-	ReDim chunk(1 to flen)
+    ' Open a file for writing
+    fd = FreeFile
+    Open "mydocument" For Binary Access Write As fd
+    flen = rs!object.FieldSize
+    ReDim chunk(1 to flen)
 
-	' Get it from the database
-	chunk() = rs!object.GetChunk(0, flen)
-	' ...and put it into the file
-	Put fd, , chunk()
+    ' Get it from the database
+    chunk() = rs!object.GetChunk(0, flen)
+    ' ...and put it into the file
+    Put fd, , chunk()
 
-	' Close all...
-	rs.Close
-	Close fd
-	cn.Close
-	Close
+    ' Close all...
+    rs.Close
+    Close fd
+    cn.Close
+    Close
 End Sub
 </pre>
 </blockquote>
@@ -143,115 +143,115 @@ End Sub
 <blockquote>
 <pre>
 Private Sub ADO_Store()
-	Dim cn As New ADODB.Connection
-	Dim rs As ADODB.Recordset
-	Dim cmd As ADODB.Command
-	Dim chunk() As Byte
-	Dim fd As Integer
-	Dim flen As Long
-	Dim main As ADODB.Parameter
-	Dim object As ADODB.Parameter
+    Dim cn As New ADODB.Connection
+    Dim rs As ADODB.Recordset
+    Dim cmd As ADODB.Command
+    Dim chunk() As Byte
+    Dim fd As Integer
+    Dim flen As Long
+    Dim main As ADODB.Parameter
+    Dim object As ADODB.Parameter
 
-	' Connect to the database using ODBC
-	With cn
-	    .ConnectionString = "dsn=pgsql_test_blob;"
-	    .Open
-	    .CursorLocation = adUseClient
-	End With
+    ' Connect to the database using ODBC
+    With cn
+        .ConnectionString = "dsn=pgsql_test_blob;"
+        .Open
+        .CursorLocation = adUseClient
+    End With
 
-	' Here is an example if you want to issue a direct command to the database
-	'
-	'Set cmd = New ADODB.Command
-	'With cmd
-	'    .CommandText = "delete from MYTABLE"
-	'    .ActiveConnection = cn
-	'    .Execute
-	'End With
-	'Set cmd = Nothing
+    ' Here is an example if you want to issue a direct command to the database
+    '
+    'Set cmd = New ADODB.Command
+    'With cmd
+    '    .CommandText = "delete from MYTABLE"
+    '    .ActiveConnection = cn
+    '    .Execute
+    'End With
+    'Set cmd = Nothing
 
-	'
-	' Here is an example of how insert directly into the database without using
-	' a recordset and the AddNew method
-	'
-	Set cmd = New ADODB.Command
-	cmd.ActiveConnection = cn
-	cmd.CommandText = "insert into MYTABLE(main,object) values(?,?)"
-	cmd.CommandType = adCmdText
+    '
+    ' Here is an example of how insert directly into the database without using
+    ' a recordset and the AddNew method
+    '
+    Set cmd = New ADODB.Command
+    cmd.ActiveConnection = cn
+    cmd.CommandText = "insert into MYTABLE(main,object) values(?,?)"
+    cmd.CommandType = adCmdText
 
-	' The main parameter
-	Set main = cmd.CreateParameter("main", adInteger, adParamInput)
-	main.Value = 100 '' a random integer value ''
-	cmd.Parameters.Append main
+    ' The main parameter
+    Set main = cmd.CreateParameter("main", adInteger, adParamInput)
+    main.Value = 100 '' a random integer value ''
+    cmd.Parameters.Append main
 
-	' Open the file for reading
-	fd = FreeFile
-	Open "mydocument" For Binary Access Read As fd
-	flen = LOF(fd)
-	If flen = 0 Then
-	    Close
-	    MsgBox "Error while opening the file"
-	    End
-	End If
+    ' Open the file for reading
+    fd = FreeFile
+    Open "mydocument" For Binary Access Read As fd
+    flen = LOF(fd)
+    If flen = 0 Then
+        Close
+        MsgBox "Error while opening the file"
+        End
+    End If
 
-	' The object parameter
-	'
-	' The fourth parameter indicates the memory to allocate to store the object
-	Set object = cmd.CreateParameter("object", _
+    ' The object parameter
+    '
+    ' The fourth parameter indicates the memory to allocate to store the object
+    Set object = cmd.CreateParameter("object", _
                                          adLongVarBinary, _
                                          adParamInput, _
                                          flen + 100)
-	ReDim chunk(1 to flen)
-	Get fd, , chunk()
+    ReDim chunk(1 to flen)
+    Get fd, , chunk()
 
-	' Insert the object into the parameter object
-	object.AppendChunk chunk()
-	cmd.Parameters.Append object
+    ' Insert the object into the parameter object
+    object.AppendChunk chunk()
+    cmd.Parameters.Append object
 
-	' Now execute the command
-	Set rs = cmd.Execute
+    ' Now execute the command
+    Set rs = cmd.Execute
 
-	' ... and close all
-	cn.Close
-	Close
+    ' ... and close all
+    cn.Close
+    Close
 End Sub
 
 Private Sub ADO_Fetch()
-	'
-	' Fetch the first record present in MYTABLE with a lo object stored
+    '
+    ' Fetch the first record present in MYTABLE with a lo object stored
 
-	Dim cn As New ADODB.Connection
-	Dim rs As ADODB.Recordset
-	Dim fd As Integer
-	Dim flen As Long
-	Dim chunk() As Byte
+    Dim cn As New ADODB.Connection
+    Dim rs As ADODB.Recordset
+    Dim fd As Integer
+    Dim flen As Long
+    Dim chunk() As Byte
 
-	' Connect to the database using ODBC
-	With cn
-	    .ConnectionString = "dsn=pgsql_test_blob;"
-	    .Open
-	    .CursorLocation = adUseClient
-	End With
+    ' Connect to the database using ODBC
+    With cn
+        .ConnectionString = "dsn=pgsql_test_blob;"
+        .Open
+        .CursorLocation = adUseClient
+    End With
 
-	' Open a recordset of the table
-	Set rs = New ADODB.Recordset
-	rs.Open "MYTABLE", cn, adOpenKeyset, adLockOptimistic, adCmdTable
+    ' Open a recordset of the table
+    Set rs = New ADODB.Recordset
+    rs.Open "MYTABLE", cn, adOpenKeyset, adLockOptimistic, adCmdTable
 
-	' Get the len of the stored object
-	flen = rs!object.ActualSize
+    ' Get the len of the stored object
+    flen = rs!object.ActualSize
 
-	' Initialize the file where to store the blob
-	fd = FreeFile
-	Open "mydocument" For Binary Access Write As fd
+    ' Initialize the file where to store the blob
+    fd = FreeFile
+    Open "mydocument" For Binary Access Write As fd
 
-	ReDim chunk(1 to flen)
+    ReDim chunk(1 to flen)
 
-	' Get it from the database
-	chunk() = rs!object.GetChunk(flen)
-	' ... and store in the file
-	Put fd, , chunk()
+    ' Get it from the database
+    chunk() = rs!object.GetChunk(flen)
+    ' ... and store in the file
+    Put fd, , chunk()
 
 
-	Close
+    Close
 End Sub
 </pre>
 </blockquote>
@@ -260,86 +260,86 @@ End Sub
 <blockquote>
 <pre>
 Private Sub RDO_Store()
-	Dim cn As New RDO.rdoConnection
-	Dim rs As RDO.rdoResultset
-	Dim cmd As RDO.rdoQuery
-	Dim fd As Integer
-	Dim flen As Long
-	Dim chunk() As Byte
+    Dim cn As New RDO.rdoConnection
+    Dim rs As RDO.rdoResultset
+    Dim cmd As RDO.rdoQuery
+    Dim fd As Integer
+    Dim flen As Long
+    Dim chunk() As Byte
 
-	' Connect to the database using ODBC
-	With cn
-	    .Connect = "dsn=pgsql_test_blob;"
-	    .LoginTimeout = 3
-	    .CursorDriver = rdUseOdbc
-	    .EstablishConnection rdDriverNoPrompt, True
-	End With
+    ' Connect to the database using ODBC
+    With cn
+        .Connect = "dsn=pgsql_test_blob;"
+        .LoginTimeout = 3
+        .CursorDriver = rdUseOdbc
+        .EstablishConnection rdDriverNoPrompt, True
+    End With
 
-	' Create the INSERT statement to store the record in the database
-	Set cmd = cn.CreateQuery("insert", _
+    ' Create the INSERT statement to store the record in the database
+    Set cmd = cn.CreateQuery("insert", _
                                  "insert into MYTABLE (main,object) values(?,?)")
 
-	' Insert the first parameter
-	cmd.rdoParameters(0).Value = 100 '' a random integer value ''
+    ' Insert the first parameter
+    cmd.rdoParameters(0).Value = 100 '' a random integer value ''
 
-	' Open the file for reading
-	fd = FreeFile
-	Open "mydocument" For Binary Access Read As fd
-	flen = LOF(fd)
-	If flen = 0 Then
-	    Close
-	    MsgBox "errore in apertura file"
-	    End
-	End If
+    ' Open the file for reading
+    fd = FreeFile
+    Open "mydocument" For Binary Access Read As fd
+    flen = LOF(fd)
+    If flen = 0 Then
+        Close
+        MsgBox "errore in apertura file"
+        End
+    End If
 
-	ReDim chunk(1 To flen)
-	' Get it ...
-	Get fd, , chunk()
-	' and store into the parameter object
-	cmd.rdoParameters(1).Type = rdTypeLONGVARBINARY
-	cmd.rdoParameters(1).AppendChunk chunk()
+    ReDim chunk(1 To flen)
+    ' Get it ...
+    Get fd, , chunk()
+    ' and store into the parameter object
+    cmd.rdoParameters(1).Type = rdTypeLONGVARBINARY
+    cmd.rdoParameters(1).AppendChunk chunk()
 
-	' Finally execute the INSERT statement
-	cmd.Execute
+    ' Finally execute the INSERT statement
+    cmd.Execute
 
-	' Close all
-	Close
+    ' Close all
+    Close
 End Sub
 
 Private Sub RDO_Fetch()
-	'
-	' Fetch the first record present in MYTABLE with a lo object stored
+    '
+    ' Fetch the first record present in MYTABLE with a lo object stored
 
-	Dim cn As New RDO.rdoConnection
-	Dim rs As RDO.rdoResultset
-	Dim fd As Integer
-	Dim flen As Long
-	Dim chunk() As Byte
+    Dim cn As New RDO.rdoConnection
+    Dim rs As RDO.rdoResultset
+    Dim fd As Integer
+    Dim flen As Long
+    Dim chunk() As Byte
 
-	' Connect to the database using ODBC
-	With cn
-	    .Connect = "dsn=pgsql_test_blob;"
-	    .LoginTimeout = 3
-	    .CursorDriver = rdUseOdbc
-	    .EstablishConnection rdDriverNoPrompt, True
-	End With
+    ' Connect to the database using ODBC
+    With cn
+        .Connect = "dsn=pgsql_test_blob;"
+        .LoginTimeout = 3
+        .CursorDriver = rdUseOdbc
+        .EstablishConnection rdDriverNoPrompt, True
+    End With
 
-	' Open the table
-	Set rs = cn.OpenResultset("select * from MYTABLE", rdOpenKeyset)
+    ' Open the table
+    Set rs = cn.OpenResultset("select * from MYTABLE", rdOpenKeyset)
 
-	' Get the length of the file
-	flen = rs!object.ColumnSize
+    ' Get the length of the file
+    flen = rs!object.ColumnSize
 
-	' Initialize the file where to store the object
-	fd = FreeFile
-	Open "mydocument" For Binary Access Write As fd
+    ' Initialize the file where to store the object
+    fd = FreeFile
+    Open "mydocument" For Binary Access Write As fd
 
-	ReDim chunk(1 To flen)
+    ReDim chunk(1 To flen)
 
-	' Get it from the database
-	chunk() = rs!object.GetChunk(flen)
-	Put fd, , chunk()
-	Close
+    ' Get it from the database
+    chunk() = rs!object.GetChunk(flen)
+    Put fd, , chunk()
+    Close
 End Sub
 </pre>
 </blockquote>

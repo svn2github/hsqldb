@@ -1,14 +1,14 @@
 #
-# File:			win64.mak
+# File:         win64.mak
 #
-# Description:		psqlodbc35w Unicode 64bit version Makefile.
-#			(can be built using platform SDK's buildfarm) 
+# Description:  psqlodbc35w Unicode 64bit version Makefile.
+#               (can be built using platform SDK's buildfarm) 
 #
-# Configurations:	Debug, Release
-# Build Types:		ALL, CLEAN
-# Usage:		NMAKE /f win64.mak CFG=[Release | Debug] [ALL | CLEAN]
+# Configurations: Debug, Release
+# Build Types:  ALL, CLEAN
+# Usage:        NMAKE /f win64.mak CFG=[Release | Debug] [ALL | CLEAN]
 #
-# Comments:		Created by Hiroshi Inoue, 2006-10-31
+# Comments:     Created by Hiroshi Inoue, 2006-10-31
 #
 
 !IF "$(CPU)" == ""

@@ -1,8 +1,8 @@
-/* File:			sspisvcs.h
+/* File:            sspisvcs.h
  *
- * Description:		See "sspisvcs.c"
+ * Description:     See "sspisvcs.c"
  *
- * Comments:		See "notice.txt" for copyright and license information.
+ * Comments:        See "notice.txt" for copyright and license information.
  *
  */
 
@@ -13,13 +13,13 @@
 
 /* SSPI Services */
 typedef enum {
-	SchannelService = 1L
-	,KerberosService = (1L << 1)
+    SchannelService = 1L
+    ,KerberosService = (1L << 1)
 } SSPI_Service;
 
-void	ReleaseSvcSpecData(SocketClass *self);
-int	StartupSspiService(SocketClass *self, SSPI_Service svc, const char *opt);
-int	SSPI_recv(SocketClass *self, void *buf, int len);
-int	SSPI_send(SocketClass *self, const void *buf, int len);
+void    ReleaseSvcSpecData(SocketClass *self);
+int StartupSspiService(SocketClass *self, SSPI_Service svc, const char *opt);
+int SSPI_recv(SocketClass *self, void *buf, int len);
+int SSPI_send(SocketClass *self, const void *buf, int len);
 
 #endif /* __SSPISVCS_H__ */

@@ -1,8 +1,8 @@
-/* File:			loadlib.h
+/* File:            loadlib.h
  *
- * Description:		See "loadlib.c"
+ * Description:     See "loadlib.c"
  *
- * Comments:		See "notice.txt" for copyright and license information.
+ * Comments:        See "notice.txt" for copyright and license information.
  *
  */
 
@@ -16,19 +16,19 @@
 extern "C" {
 #endif
 
-BOOL	SSLLIB_check(void);
-#ifndef	NOT_USE_LIBPQ
-void	*CALL_PQconnectdb(const char *conninfo, BOOL *);
+BOOL    SSLLIB_check(void);
+#ifndef NOT_USE_LIBPQ
+void    *CALL_PQconnectdb(const char *conninfo, BOOL *);
 #endif /* NOT_USE_LIBPQ */
-#ifdef	_HANDLE_ENLIST_IN_DTC_
-RETCODE	CALL_EnlistInDtc(ConnectionClass *conn, void * pTra, int method);
-RETCODE	CALL_DtcOnDisconnect(ConnectionClass *);
-RETCODE	CALL_DtcOnRelease(void);
+#ifdef  _HANDLE_ENLIST_IN_DTC_
+RETCODE CALL_EnlistInDtc(ConnectionClass *conn, void * pTra, int method);
+RETCODE CALL_DtcOnDisconnect(ConnectionClass *);
+RETCODE CALL_DtcOnRelease(void);
 #endif /* _HANDLE_ENLIST_IN_DTC_ */
-/* void	UnloadDelayLoadedDLLs(BOOL); */
-void	CleanupDelayLoadedDLLs(void);
+/* void UnloadDelayLoadedDLLs(BOOL); */
+void    CleanupDelayLoadedDLLs(void);
 
-#ifdef	__cplusplus
+#ifdef  __cplusplus
 }
 #endif
 #endif /* __LOADLIB_H__ */

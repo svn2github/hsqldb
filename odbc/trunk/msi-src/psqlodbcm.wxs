@@ -27,14 +27,14 @@
 -->
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Module Id="hsqlodbc" Version="$(var.VERSION)" Language="1033">
-    
-    <Package 
+
+    <Package
       Id="ACF10866-5C01-46f0-90F0-D5618638CA48"
       Description="HyperSQL ODBC Driver"
       Keywords="HSQLDB, HyperSQL, ODBC"
-      Manufacturer="The HSQL Development Group" 
+      Manufacturer="The HSQL Development Group"
       InstallerVersion="150"
-      Platforms="Intel" 
+      Platforms="Intel"
       Languages="1033"
       SummaryCodepage="1252" />
 
@@ -48,11 +48,11 @@
           <File Id="pgenlist.dll" Name="pgenlist.dll" Source="../src/Release/pgenlist.dll" />
           <File Id="pgenlista.dll" Name="pgenlista.dll" Source="../src/MultibyteRelease/pgenlista.dll" />
           <File Id="libpq.dll" Name="libpq.dll" Source="$(var.PROGRAMFILES)\PostgreSQL\8.3\bin\libpq.dll" KeyPath="yes" />
-          
+
           <!-- Gettext -->
           <File Id="libintl3.dll" Name="libintl3.dll" Source="$(var.PROGRAMFILES)\PostgreSQL\8.3\bin\libintl3.dll" />
           <File Id="libiconv2.dll" Name="libiconv2.dll" Source="$(var.PROGRAMFILES)\PostgreSQL\8.3\bin\libiconv2.dll" />
-          
+
           <!-- SSL -->
           <File Id="libeay32.dll" Name="libeay32.dll" Source="$(var.PROGRAMFILES)\PostgreSQL\8.3\bin\libeay32.dll" />
           <File Id="ssleay32.dll" Name="ssleay32.dll" Source="$(var.PROGRAMFILES)\PostgreSQL\8.3\bin\ssleay32.dll" />

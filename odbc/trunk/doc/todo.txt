@@ -12,7 +12,7 @@ Abort processing at
 connection.c:CC_send_query_append(), op switch for op 'Z'.
 This state is very likely to result in deadlock.
 
-Abort processing at 
+Abort processing at
 socket.c:SOCK_get_id(), the sock-reslen > 0 block ("has to eat...").
 This is a serious comm error and should not be ignored.
 

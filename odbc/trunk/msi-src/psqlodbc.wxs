@@ -26,15 +26,15 @@
 -->
 
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  
+
 <!-- Product details -->
 
-  <Product 
-    Manufacturer="The HSQL Development Group" 
+  <Product
+    Manufacturer="The HSQL Development Group"
     Id="838E187D-8B7A-473d-B93C-C8E970B15D2B"
     UpgradeCode="24BCA538-75A2-4a7f-B236-C99EFC2145DE"
     Name="hsqlodbc"
-    Version="$(var.VERSION)" 
+    Version="$(var.VERSION)"
     Language="1033">
 
 <!-- Package details -->
@@ -42,10 +42,10 @@
     <Package
       Keywords="HSQLDB, HyperSQL, ODBC"
       Comments="HyperSQL ODBC Driver"
-      Manufacturer="The HSQL Development Group" 
+      Manufacturer="The HSQL Development Group"
       InstallerVersion="300"
-      Languages="1033" 
-      Compressed="yes" 
+      Languages="1033"
+      Compressed="yes"
       SummaryCodepage="1252" />
 
 <!-- Directories -->

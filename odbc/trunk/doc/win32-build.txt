@@ -23,7 +23,7 @@ ONE-TIME SETUP FOR DLL BUILDING
 
 ONE-TIME SETUP FOR MSI (Windows Installer) BUILDING
 
-    Install latest versoin of Wix from Sourceforge.  Don't need the extra
+    Install latest version of Wix from Sourceforge.  Don't need the extra
      products.  Just get Wix3.*-x86-setup.zip and execute it.
      I did default install, other than changing install dir.
 

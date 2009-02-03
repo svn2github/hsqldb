@@ -13,3 +13,5 @@ UNIX Build Procedure
 
 The final output gets written to ".libs/psqlodbcw.so" ("src/.libs/psqlodbc.so"
 from the project home directory).  This location will be changing.
+
+Run "make maintainer-clean" to reset/clear all the steps above.

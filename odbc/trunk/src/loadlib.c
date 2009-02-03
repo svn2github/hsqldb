@@ -1,21 +1,21 @@
 /*------
- * Module:			loadlib.c
+ * Module:          loadlib.c
  *
- * Description:		This module contains routines related to
- *			delay load import libraries.
- *			
- * Comments:		See "notice.txt" for copyright and license information.
+ * Description:     This module contains routines related to
+ *          delay load import libraries.
+ *          
+ * Comments:        See "notice.txt" for copyright and license information.
  *-------
  */
 
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#ifndef	WIN32
+#ifndef WIN32
 #include <errno.h>
 #endif /* WIN32 */
 #ifndef NOT_USE_LIBPQ
-#ifdef	RESET_CRYPTO_CALLBACKS
+#ifdef  RESET_CRYPTO_CALLBACKS
 #include <openssl/ssl.h>
 #endif /* RESET_CRYPTO_CALLBACKS */
 #include <libpq-fe.h>
@@ -26,15 +26,15 @@
 #ifdef  WIN32
 #ifdef  _MSC_VER
 #pragma comment(lib, "Delayimp")
-#ifndef	NOT_USE_LIBPQ
+#ifndef NOT_USE_LIBPQ
 #pragma comment(lib, "libpq")
 #pragma comment(lib, "ssleay32")
-#ifdef	RESET_CRYPTO_CALLBACKS
+#ifdef  RESET_CRYPTO_CALLBACKS
 #pragma comment(lib, "libeay32")
 #endif /* RESET_CRYPTO_CALLBACKS */
 #endif /* NOT_USE_LIBPQ */
-#ifdef	_HANDLE_ENLIST_IN_DTC_
-#ifdef	UNICODE_SUPPORT
+#ifdef  _HANDLE_ENLIST_IN_DTC_
+#ifdef  UNICODE_SUPPORT
 #pragma comment(lib, "pgenlist")
 #else
 #pragma comment(lib, "pgenlista")
@@ -43,14 +43,14 @@
 // The followings works under VC++6.0 but doesn't work under VC++7.0.
 // Please add the equivalent linker options using command line etc.
 #if (_MSC_VER == 1200) && defined(DYNAMIC_LOAD) // VC6.0
-#ifndef	NOT_USE_LIBPQ
+#ifndef NOT_USE_LIBPQ
 #pragma comment(linker, "/Delayload:libpq.dll")
 #pragma comment(linker, "/Delayload:ssleay32.dll")
-#ifdef	RESET_CRYPTO_CALLBACKS
+#ifdef  RESET_CRYPTO_CALLBACKS
 #pragma comment(linker, "/Delayload:libeay32.dll")
 #endif /* RESET_CRYPTO_CALLBACKS */
 #endif /* NOT_USE_LIBPQ */
-#ifdef	UNICODE_SUPPORT
+#ifdef  UNICODE_SUPPORT
 #pragma comment(linker, "/Delayload:pgenlist.dll")
 #else
 #pragma comment(linker, "/Delayload:pgenlista.dll")
@@ -59,54 +59,54 @@
 #endif /* _MSC_VER */
 #endif /* _MSC_VER */
 #if defined(DYNAMIC_LOAD)
-#define	WIN_DYN_LOAD
-CSTR	libpq = "libpq";
-CSTR	libpqdll = "LIBPQ.dll";
-#ifdef	UNICODE_SUPPORT
-CSTR	pgenlist = "pgenlist";
-CSTR	pgenlistdll = "PGENLIST.dll";
+#define WIN_DYN_LOAD
+CSTR    libpq = "libpq";
+CSTR    libpqdll = "LIBPQ.dll";
+#ifdef  UNICODE_SUPPORT
+CSTR    pgenlist = "pgenlist";
+CSTR    pgenlistdll = "PGENLIST.dll";
 #else
-CSTR	pgenlist = "pgenlista";
-CSTR	pgenlistdll = "PGENLISTA.dll";
+CSTR    pgenlist = "pgenlista";
+CSTR    pgenlistdll = "PGENLISTA.dll";
 #endif /* UNICODE_SUPPORT */
 #if defined(_MSC_VER) && (_MSC_VER >= 1200)
-#define	_MSC_DELAY_LOAD_IMPORT
+#define _MSC_DELAY_LOAD_IMPORT
 #endif /* MSC_VER */
 #endif /* DYNAMIC_LOAD */
 #endif /* WIN32 */
 
 #if defined(_MSC_DELAY_LOAD_IMPORT)
-static BOOL	loaded_libpq = FALSE, loaded_ssllib = FALSE;
-static BOOL	loaded_pgenlist = FALSE;
+static BOOL loaded_libpq = FALSE, loaded_ssllib = FALSE;
+static BOOL loaded_pgenlist = FALSE;
 /*
- *	Load psqlodbc path based libpq dll.
+ *  Load psqlodbc path based libpq dll.
  */
 static HMODULE MODULE_load_from_psqlodbc_path(const char *module_name)
 {
-	extern	HINSTANCE	s_hModule;
-	HMODULE	hmodule = NULL;
-	char	szFileName[MAX_PATH];
+    extern  HINSTANCE   s_hModule;
+    HMODULE hmodule = NULL;
+    char    szFileName[MAX_PATH];
 
-	if (GetModuleFileName(s_hModule, szFileName, sizeof(szFileName)) > 0)
-	{
-		char drive[_MAX_DRIVE], dir[_MAX_DIR], sysdir[MAX_PATH];
+    if (GetModuleFileName(s_hModule, szFileName, sizeof(szFileName)) > 0)
+    {
+        char drive[_MAX_DRIVE], dir[_MAX_DIR], sysdir[MAX_PATH];
 
-		_splitpath(szFileName, drive, dir, NULL, NULL);
-		GetSystemDirectory(sysdir, MAX_PATH);
-		snprintf(szFileName, sizeof(szFileName), "%s%s%s.dll", drive, dir, module_name);
-		if (_strnicmp(szFileName, sysdir, strlen(sysdir)) != 0)
-		{
-			hmodule = LoadLibraryEx(szFileName, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
-			mylog("psqlodbc path based %s loaded module=%p\n", module_name, hmodule);
-		}
-	}
-	return hmodule;
+        _splitpath(szFileName, drive, dir, NULL, NULL);
+        GetSystemDirectory(sysdir, MAX_PATH);
+        snprintf(szFileName, sizeof(szFileName), "%s%s%s.dll", drive, dir, module_name);
+        if (_strnicmp(szFileName, sysdir, strlen(sysdir)) != 0)
+        {
+            hmodule = LoadLibraryEx(szFileName, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
+            mylog("psqlodbc path based %s loaded module=%p\n", module_name, hmodule);
+        }
+    }
+    return hmodule;
 }
 
 /*
- *	Error hook function for delay load import.
- *	Try to load psqlodbc path based libpq.
- *	Load alternative ssl library SSLEAY32 or LIBSSL32. 
+ *  Error hook function for delay load import.
+ *  Try to load psqlodbc path based libpq.
+ *  Load alternative ssl library SSLEAY32 or LIBSSL32. 
  */
 #if (_MSC_VER < 1300)
 extern PfnDliHook __pfnDliFailureHook;
@@ -117,53 +117,53 @@ extern PfnDliHook __pfnDliNotifyHook2;
 #endif /* _MSC_VER */
 
 static FARPROC WINAPI
-DliErrorHook(unsigned	dliNotify,
-		PDelayLoadInfo	pdli)
+DliErrorHook(unsigned   dliNotify,
+        PDelayLoadInfo  pdli)
 {
-	HMODULE	hmodule = NULL;
-	int	i;
-	static const char * const libarray[] = {"libssl32", "ssleay32"};
+    HMODULE hmodule = NULL;
+    int i;
+    static const char * const libarray[] = {"libssl32", "ssleay32"};
 
-	mylog("Dli%sHook %s Notify=%d\n", (dliFailLoadLib == dliNotify || dliFailGetProc == dliNotify) ? "Error" : "Notify", NULL != pdli->szDll ? pdli->szDll : pdli->dlp.szProcName, dliNotify);
-	switch (dliNotify)
-	{
-		case dliNotePreLoadLibrary:
-		case dliFailLoadLib:
+    mylog("Dli%sHook %s Notify=%d\n", (dliFailLoadLib == dliNotify || dliFailGetProc == dliNotify) ? "Error" : "Notify", NULL != pdli->szDll ? pdli->szDll : pdli->dlp.szProcName, dliNotify);
+    switch (dliNotify)
+    {
+        case dliNotePreLoadLibrary:
+        case dliFailLoadLib:
 #if (_MSC_VER < 1300)
-			__pfnDliNotifyHook = NULL;
+            __pfnDliNotifyHook = NULL;
 #else
-			__pfnDliNotifyHook2 = NULL;
+            __pfnDliNotifyHook2 = NULL;
 #endif /* _MSC_VER */
-			if (_strnicmp(pdli->szDll, libpq, 5) == 0)
-			{
-				if (hmodule = MODULE_load_from_psqlodbc_path(libpq), NULL == hmodule)
-					hmodule = LoadLibrary(libpq);
-			}
-			else if (_strnicmp(pdli->szDll, pgenlist, strlen(pgenlist)) == 0)
-			{
-				if (hmodule = MODULE_load_from_psqlodbc_path(pgenlist), NULL == hmodule)
-					hmodule = LoadLibrary(pgenlist);
-			}
-			else if (0 == _stricmp(pdli->szDll, libarray[0]) ||
-				 0 == _stricmp(pdli->szDll, libarray[1]))
-			{
-        			mylog("getting alternative ssl library instead of %s\n", pdli->szDll);
-        			for (i = 0; i < sizeof(libarray) / sizeof(const char * const); i++)
-        			{
-                			if (hmodule = GetModuleHandle(libarray[i]), NULL != hmodule)
-						break;
-				}
-        		}
-			break;
-	}
-	return (FARPROC) hmodule;
+            if (_strnicmp(pdli->szDll, libpq, 5) == 0)
+            {
+                if (hmodule = MODULE_load_from_psqlodbc_path(libpq), NULL == hmodule)
+                    hmodule = LoadLibrary(libpq);
+            }
+            else if (_strnicmp(pdli->szDll, pgenlist, strlen(pgenlist)) == 0)
+            {
+                if (hmodule = MODULE_load_from_psqlodbc_path(pgenlist), NULL == hmodule)
+                    hmodule = LoadLibrary(pgenlist);
+            }
+            else if (0 == _stricmp(pdli->szDll, libarray[0]) ||
+                 0 == _stricmp(pdli->szDll, libarray[1]))
+            {
+                    mylog("getting alternative ssl library instead of %s\n", pdli->szDll);
+                    for (i = 0; i < sizeof(libarray) / sizeof(const char * const); i++)
+                    {
+                            if (hmodule = GetModuleHandle(libarray[i]), NULL != hmodule)
+                        break;
+                }
+                }
+            break;
+    }
+    return (FARPROC) hmodule;
 }
 
 /*
- *	unload delay loaded libraries.
+ *  unload delay loaded libraries.
  *
- *	Openssl Library nmake defined
- *	ssleay32.dll is vc make, libssl32.dll is mingw make.
+ *  Openssl Library nmake defined
+ *  ssleay32.dll is vc make, libssl32.dll is mingw make.
  */
 #ifndef SSL_DLL
 #define SSL_DLL "SSLEAY32.dll"
@@ -172,162 +172,162 @@ DliErrorHook(unsigned	dliNotify,
 typedef BOOL (WINAPI *UnloadFunc)(LPCSTR);
 void CleanupDelayLoadedDLLs(void)
 {
-	BOOL	success;
+    BOOL    success;
 #if (_MSC_VER < 1300) /* VC6 DELAYLOAD IMPORT */
-	UnloadFunc	func = __FUnloadDelayLoadedDLL;
+    UnloadFunc  func = __FUnloadDelayLoadedDLL;
 #else
-	UnloadFunc	func = __FUnloadDelayLoadedDLL2;
+    UnloadFunc  func = __FUnloadDelayLoadedDLL2;
 #endif
-	/* The dll names are case sensitive for the unload helper */
-	if (loaded_libpq)
-	{
-#ifdef	RESET_CRYPTO_CALLBACKS
-		/*
-		 *	May be needed to avoid crash on exit
-		 *	when libpq doesn't reset the callbacks.
-		 */
-		CRYPTO_set_locking_callback(NULL);
-		CRYPTO_set_id_callback(NULL);
-		mylog("passed RESET_CRYPTO_CALLBACKS\n");
+    /* The dll names are case sensitive for the unload helper */
+    if (loaded_libpq)
+    {
+#ifdef  RESET_CRYPTO_CALLBACKS
+        /*
+         *  May be needed to avoid crash on exit
+         *  when libpq doesn't reset the callbacks.
+         */
+        CRYPTO_set_locking_callback(NULL);
+        CRYPTO_set_id_callback(NULL);
+        mylog("passed RESET_CRYPTO_CALLBACKS\n");
 #else
-		mylog("not passed RESET_CRYPTO_CALLBACKS\n");
+        mylog("not passed RESET_CRYPTO_CALLBACKS\n");
 #endif /* RESET_CRYPTO_CALLBACKS */
-		success = (*func)(libpqdll);
-		mylog("%s unload success=%d\n", libpqdll, success);
-	}
-	if (loaded_ssllib)
-	{
-		success = (*func)(SSL_DLL);
-		mylog("ssldll unload success=%d\n", success);
-	}
-	if (loaded_pgenlist)
-	{
-		success = (*func)(pgenlistdll);
-		mylog("%s unload success=%d\n", pgenlistdll, success);
-	}
-	return;
+        success = (*func)(libpqdll);
+        mylog("%s unload success=%d\n", libpqdll, success);
+    }
+    if (loaded_ssllib)
+    {
+        success = (*func)(SSL_DLL);
+        mylog("ssldll unload success=%d\n", success);
+    }
+    if (loaded_pgenlist)
+    {
+        success = (*func)(pgenlistdll);
+        mylog("%s unload success=%d\n", pgenlistdll, success);
+    }
+    return;
 }
 #else
 void CleanupDelayLoadedDLLs(void)
 {
-	return;
+    return;
 }
-#endif	/* _MSC_DELAY_LOAD_IMPORT */
+#endif  /* _MSC_DELAY_LOAD_IMPORT */
 
-#ifndef	NOT_USE_LIBPQ
+#ifndef NOT_USE_LIBPQ
 void *CALL_PQconnectdb(const char *conninfo, BOOL *libpqLoaded)
 {
-	void *pqconn = NULL;
-	*libpqLoaded = TRUE;
+    void *pqconn = NULL;
+    *libpqLoaded = TRUE;
 #if defined(_MSC_DELAY_LOAD_IMPORT)
-	__try {
+    __try {
 #if (_MSC_VER < 1300)
-		__pfnDliFailureHook = DliErrorHook;
-		__pfnDliNotifyHook = DliErrorHook;
+        __pfnDliFailureHook = DliErrorHook;
+        __pfnDliNotifyHook = DliErrorHook;
 #else
-		__pfnDliFailureHook2 = DliErrorHook;
-		__pfnDliNotifyHook2 = DliErrorHook;
+        __pfnDliFailureHook2 = DliErrorHook;
+        __pfnDliNotifyHook2 = DliErrorHook;
 #endif /* _MSC_VER */
-		pqconn = PQconnectdb(conninfo);
-	}
-	__except ((GetExceptionCode() & 0xffff) == ERROR_MOD_NOT_FOUND ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH) {
-		*libpqLoaded = FALSE;
-	}
+        pqconn = PQconnectdb(conninfo);
+    }
+    __except ((GetExceptionCode() & 0xffff) == ERROR_MOD_NOT_FOUND ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH) {
+        *libpqLoaded = FALSE;
+    }
 #if (_MSC_VER < 1300)
-	__pfnDliNotifyHook = NULL;
+    __pfnDliNotifyHook = NULL;
 #else
-	__pfnDliNotifyHook2 = NULL;
+    __pfnDliNotifyHook2 = NULL;
 #endif /* _MSC_VER */
-	if (*libpqLoaded)
-	{
-		loaded_libpq = TRUE;
-		/* ssllibs are already loaded by libpq
-		if (PQgetssl(pqconn))
-			loaded_ssllib = TRUE;
-		*/
-	}
+    if (*libpqLoaded)
+    {
+        loaded_libpq = TRUE;
+        /* ssllibs are already loaded by libpq
+        if (PQgetssl(pqconn))
+            loaded_ssllib = TRUE;
+        */
+    }
 #else
-	pqconn = PQconnectdb(conninfo);
+    pqconn = PQconnectdb(conninfo);
 #endif /* _MSC_DELAY_LOAD_IMPORT */
-	return pqconn;
+    return pqconn;
 }
 #endif /* NOT_USE_LIBPQ */
 
-#ifdef	_HANDLE_ENLIST_IN_DTC_
-RETCODE	CALL_EnlistInDtc(ConnectionClass *conn, void *pTra, int method)
+#ifdef  _HANDLE_ENLIST_IN_DTC_
+RETCODE CALL_EnlistInDtc(ConnectionClass *conn, void *pTra, int method)
 {
-	RETCODE	ret;
-	BOOL	loaded = TRUE;
-	
+    RETCODE ret;
+    BOOL    loaded = TRUE;
+    
 #if defined(_MSC_DELAY_LOAD_IMPORT)
-	__try {
+    __try {
 #if (_MSC_VER < 1300)
-		__pfnDliFailureHook = DliErrorHook;
-		__pfnDliNotifyHook = DliErrorHook;
+        __pfnDliFailureHook = DliErrorHook;
+        __pfnDliNotifyHook = DliErrorHook;
 #else
-		__pfnDliFailureHook2 = DliErrorHook;
-		__pfnDliNotifyHook2 = DliErrorHook;
+        __pfnDliFailureHook2 = DliErrorHook;
+        __pfnDliNotifyHook2 = DliErrorHook;
 #endif /* _MSC_VER */
-		ret = EnlistInDtc(conn, pTra, method);
-	}
-	__except ((GetExceptionCode() & 0xffff) == ERROR_MOD_NOT_FOUND ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH) {
-		loaded = FALSE;
-	}
-	if (loaded)
-		loaded_pgenlist = TRUE;
+        ret = EnlistInDtc(conn, pTra, method);
+    }
+    __except ((GetExceptionCode() & 0xffff) == ERROR_MOD_NOT_FOUND ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH) {
+        loaded = FALSE;
+    }
+    if (loaded)
+        loaded_pgenlist = TRUE;
 #if (_MSC_VER < 1300)
-	__pfnDliNotifyHook = NULL;
+    __pfnDliNotifyHook = NULL;
 #else
-	__pfnDliNotifyHook2 = NULL;
+    __pfnDliNotifyHook2 = NULL;
 #endif /* _MSC_VER */
 #else
-	ret = EnlistInDtc(conn, pTra, method);
-	loaded_pgenlist = TRUE;
+    ret = EnlistInDtc(conn, pTra, method);
+    loaded_pgenlist = TRUE;
 #endif /* _MSC_DELAY_LOAD_IMPORT */
-	return ret;
+    return ret;
 }
-RETCODE	CALL_DtcOnDisconnect(ConnectionClass *conn)
+RETCODE CALL_DtcOnDisconnect(ConnectionClass *conn)
 {
-	if (loaded_pgenlist)
-		return DtcOnDisconnect(conn);
-	return FALSE;
+    if (loaded_pgenlist)
+        return DtcOnDisconnect(conn);
+    return FALSE;
 }
-RETCODE	CALL_DtcOnRelease(void)
+RETCODE CALL_DtcOnRelease(void)
 {
-	if (loaded_pgenlist)
-		return DtcOnRelease();
-	return FALSE;
+    if (loaded_pgenlist)
+        return DtcOnRelease();
+    return FALSE;
 }
 #endif /* _HANDLE_ENLIST_IN_DTC_ */
 
 #if defined(WIN_DYN_LOAD)
 BOOL SSLLIB_check()
 {
-	extern	HINSTANCE	s_hModule;
-	HMODULE	hmodule = NULL;
+    extern  HINSTANCE   s_hModule;
+    HMODULE hmodule = NULL;
 
-	mylog("checking libpq library\n");
-	/* First search the driver's folder */
-#ifndef	NOT_USE_LIBPQ
-	if (NULL == (hmodule = MODULE_load_from_psqlodbc_path(libpq)))
-		/* Second try the PATH ordinarily */
-		hmodule = LoadLibrary(libpq);
-	mylog("libpq hmodule=%p\n", hmodule);
+    mylog("checking libpq library\n");
+    /* First search the driver's folder */
+#ifndef NOT_USE_LIBPQ
+    if (NULL == (hmodule = MODULE_load_from_psqlodbc_path(libpq)))
+        /* Second try the PATH ordinarily */
+        hmodule = LoadLibrary(libpq);
+    mylog("libpq hmodule=%p\n", hmodule);
 #endif /* NOT_USE_LIBPQ */
-#ifdef	USE_SSPI
-	if (NULL == hmodule)
-	{
-		hmodule = LoadLibrary("secur32.dll");
-		mylog("secur32 hmodule=%p\n", hmodule);
-	}
+#ifdef  USE_SSPI
+    if (NULL == hmodule)
+    {
+        hmodule = LoadLibrary("secur32.dll");
+        mylog("secur32 hmodule=%p\n", hmodule);
+    }
 #endif /* USE_SSPI */
-	if (hmodule)
-		FreeLibrary(hmodule);
-	return (NULL != hmodule);
+    if (hmodule)
+        FreeLibrary(hmodule);
+    return (NULL != hmodule);
 }
 #else
 BOOL SSLLIB_check()
 {
-	return TRUE;
+    return TRUE;
 }
-#endif	/* WIN_DYN_LOAD */
+#endif  /* WIN_DYN_LOAD */

@@ -1,13 +1,13 @@
 #
-# File:			win32.mak
+# File:         win32.mak
 #
-# Description:		psqlodbc35w Unicode version Makefile for Win32.
+# Description:  psqlodbc35w Unicode version Makefile for Win32.
 #
-# Configurations:	Debug, Release
-# Build Types:		ALL, CLEAN
-# Usage:		NMAKE /f win32.mak CFG=[Release | Debug] [ALL | CLEAN]
+# Configurations: Debug, Release
+# Build Types:  ALL, CLEAN
+# Usage:        NMAKE /f win32.mak CFG=[Release | Debug] [ALL | CLEAN]
 #
-# Comments:		Created by Dave Page, 2001-02-12
+# Comments:     Created by Dave Page, 2001-02-12
 # Copyright (C) 1998          Insight Distribution Systems
 #               Significant modifications Copyright 2009 by
 #               the HSQL Development Group.  Changes made by the HSQL

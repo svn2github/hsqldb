@@ -7,10 +7,10 @@ cursor names like "SQL_CUR0x4020d0e0".  For testing with prepared and
 non-prepared queries, the string "cursor" (case-insensitive) is not going
 over the wire.  There is only one occurrence of a statement with "cursor"
 in the driver source code.  convert.c:
-		if (SC_is_fetchcursor(stmt))
-		{
-			sprintf(new_statement, "%sdeclare \"%s\"%s cursor%s for ",
-				new_statement, SC_cursor_name(stmt), opt_scroll, opt_hold);
+        if (SC_is_fetchcursor(stmt))
+        {
+            sprintf(new_statement, "%sdeclare \"%s\"%s cursor%s for ",
+                new_statement, SC_cursor_name(stmt), opt_scroll, opt_hold);
 Contrary to the results of my code search, the driver setting
 "Use Declare/Fetch" definitely implies that it conditionally issues
 DECLARE...CURSOR commands.  Though I may not see it on the wire because

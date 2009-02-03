@@ -16,46 +16,46 @@ AM_MAINTAINER_MODE
 #
 AC_ARG_WITH(unixodbc, [  --with-unixodbc=DIR     odbc_config installation of unixODBC (default)],
 [
-	if test "$withval" != no; then
-		if test "$withval" = yes; then
-			AC_PATH_PROGS(ODBC_CONFIG, odbc_config)
-		else
-			ODBC_CONFIG=$withval
-		fi
-		if test ! -f "${ODBC_CONFIG}/bin/odbc_config"; then
-			if test ! -f "${ODBC_CONFIG}"; then
-				AC_MSG_ERROR([odbc_config not found (required for unixODBC build)])
-			fi
-		else
-			ODBC_CONFIG=${ODBC_CONFIG}/bin/odbc_config
-		fi
-	fi
+    if test "$withval" != no; then
+        if test "$withval" = yes; then
+            AC_PATH_PROGS(ODBC_CONFIG, odbc_config)
+        else
+            ODBC_CONFIG=$withval
+        fi
+        if test ! -f "${ODBC_CONFIG}/bin/odbc_config"; then
+            if test ! -f "${ODBC_CONFIG}"; then
+                AC_MSG_ERROR([odbc_config not found (required for unixODBC build)])
+            fi
+        else
+            ODBC_CONFIG=${ODBC_CONFIG}/bin/odbc_config
+        fi
+    fi
 
-	with_unixodbc=yes],
+    with_unixodbc=yes],
 [with_unixodbc=yes])
 
 
 #
 # Decide which iODBC driver manager to use
 #
-AC_ARG_WITH(iodbc, [  --with-iodbc=DIR	  iodbc_config installation of iODBC],
+AC_ARG_WITH(iodbc, [  --with-iodbc=DIR    iodbc_config installation of iODBC],
 [
-	if test "$withval" != no; then
-		if test "$withval" = yes; then
-			AC_PATH_PROGS(ODBC_CONFIG, iodbc-config)
-		else
-			ODBC_CONFIG=$withval
-		fi
-		if test ! -f "${ODBC_CONFIG}/bin/iodbc-config"; then
-			if test ! -f "${ODBC_CONFIG}"; then
-				AC_MSG_ERROR([iodbc-config not found (required for iODBC build)])
-			fi
-		else
-			ODBC_CONFIG=${ODBC_CONFIG}/bin/iodbc-config
-		fi
-	fi
+    if test "$withval" != no; then
+        if test "$withval" = yes; then
+            AC_PATH_PROGS(ODBC_CONFIG, iodbc-config)
+        else
+            ODBC_CONFIG=$withval
+        fi
+        if test ! -f "${ODBC_CONFIG}/bin/iodbc-config"; then
+            if test ! -f "${ODBC_CONFIG}"; then
+                AC_MSG_ERROR([iodbc-config not found (required for iODBC build)])
+            fi
+        else
+            ODBC_CONFIG=${ODBC_CONFIG}/bin/iodbc-config
+        fi
+    fi
 
-	with_iodbc=yes],
+    with_iodbc=yes],
 [with_iodbc=no])
 
 
@@ -77,18 +77,18 @@ fi
 #
 
 if test "$ODBC_CONFIG" != ""; then
-	if test "$with_iodbc" = yes; then
-		ODBC_INCLUDE=`${ODBC_CONFIG} --cflags`
-		CPPFLAGS="$CPPFLAGS ${ODBC_INCLUDE}"
-		ODBC_LIBS=`${ODBC_CONFIG} --libs`
-		LIBS="$LIBS ${ODBC_LIBS}"
-	else
-		ODBC_INCLUDE=`${ODBC_CONFIG} --include-prefix`
-		CPPFLAGS="$CPPFLAGS -I${ODBC_INCLUDE}"
-		ODBC_LIBS=`${ODBC_CONFIG} --libs`
-		LIBS="$LIBS ${ODBC_LIBS}"
-	fi
-	AC_MSG_NOTICE([using $ODBC_INCLUDE $ODBC_LIBS])
+    if test "$with_iodbc" = yes; then
+        ODBC_INCLUDE=`${ODBC_CONFIG} --cflags`
+        CPPFLAGS="$CPPFLAGS ${ODBC_INCLUDE}"
+        ODBC_LIBS=`${ODBC_CONFIG} --libs`
+        LIBS="$LIBS ${ODBC_LIBS}"
+    else
+        ODBC_INCLUDE=`${ODBC_CONFIG} --include-prefix`
+        CPPFLAGS="$CPPFLAGS -I${ODBC_INCLUDE}"
+        ODBC_LIBS=`${ODBC_CONFIG} --libs`
+        LIBS="$LIBS ${ODBC_LIBS}"
+    fi
+    AC_MSG_NOTICE([using $ODBC_INCLUDE $ODBC_LIBS])
 fi
 
 
@@ -100,7 +100,7 @@ PGAC_ARG_REQ(with, odbcver,
              [  --with-odbcver=VERSION  change default ODBC version number [[0x0351]]],
              [],
              [with_odbcver=0x0351])
-AC_DEFINE_UNQUOTED(ODBCVER, [$with_odbcver], 
+AC_DEFINE_UNQUOTED(ODBCVER, [$with_odbcver],
                    [Define to ODBC version (--with-odbcver)])
 
 
@@ -181,7 +181,7 @@ fi
 if test "$enable_pthreads" = yes; then
   AC_CHECK_LIB(pthreads, pthread_create,
                [],
-	       [AC_CHECK_LIB(pthread, pthread_create)])
+           [AC_CHECK_LIB(pthread, pthread_create)])
 fi
 
 
@@ -231,8 +231,8 @@ if test "$enable_pthreads" = yes; then
                  [AC_DEFINE(PG_RECURSIVE_MUTEXATTR, PTHREAD_MUTEX_RECURSIVE,
                             [Define if you have PTHREAD_MUTEX_RECURSIVE])],
                  [AC_TRY_COMPILE([#include <pthread.h>],
-		                 [int i = PTHREAD_MUTEX_RECURSIVE_NP;],
-		                 [AC_DEFINE(PG_RECURSIVE_MUTEXATTR, PTHREAD_MUTEX_RECURSIVE_NP,
+                         [int i = PTHREAD_MUTEX_RECURSIVE_NP;],
+                         [AC_DEFINE(PG_RECURSIVE_MUTEXATTR, PTHREAD_MUTEX_RECURSIVE_NP,
                                             [Define if you have PTHREAD_MUTEX_RECURSIVE_NP])])])
   fi
 fi
