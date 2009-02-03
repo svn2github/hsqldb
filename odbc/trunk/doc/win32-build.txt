@@ -77,6 +77,9 @@ REPLACING INSTALLED DRIVER
       Control Panel / Add/Remove Programs (other)
 
     Fortunately, DSNs for removed drivers are retained!
+    Uh... unfortunately, DSNs can only be removed or edited if a compatible
+    driver is not currently installed.  Therefore if you are not replacing
+    a driver with a compatible one, you have better remove your DSNs first.
 
     I see no benefit to using the upgrade batch script, which just passes
      params to "msiexec".
