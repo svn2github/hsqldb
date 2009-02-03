@@ -14,7 +14,8 @@
 /* the type numbers are defined by the OID's of the types' rows */
 /* in table pg_type */
 
-
+/* HSQLDB -- these types are generally superfluous. HSQLDB types correspond 
+   almost exactly to ODBC 3 types as defined by the spec. */
 #ifdef NOT_USED
 #define PG_TYPE_LO              ????    /* waiting for permanent type */
 #endif

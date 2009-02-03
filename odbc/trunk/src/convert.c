@@ -62,26 +62,27 @@ CSTR    MINFINITY_STRING = "-Infinity";
  *  This is just a simple substitution.  List augmented from:
  *  http://www.merant.com/datadirect/download/docs/odbc16/Odbcref/rappc.htm
  *  - thomas 2000-04-03
+ * HSQLDB supports all but one of the functions - rand(int ..) will be supported
  */
 char       *mapFuncs[][2] = {
 /*  { "ASCII",       "ascii"      }, built_in */
-    {"CHAR", "chr($*)" },
+/*  {"CHAR", "chr($*)" },
     {"CONCAT", "textcat($*)" },
 /*  { "DIFFERENCE", "difference" }, how to ? */
-    {"INSERT", "substring($1 from 1 for $2 - 1) || $4 || substring($1 from $2 + $3)" },
+/*  {"INSERT", "substring($1 from 1 for $2 - 1) || $4 || substring($1 from $2 + $3)" },
     {"LCASE", "lower($*)" },
     {"LEFT", "ltrunc($*)" },
     {"%2LOCATE", "strpos($2,  $1)" },   /* 2 parameters */
-    {"%3LOCATE", "strpos(substring($2 from $3), $1) + $3 - 1" },    /* 3 parameters */
-    {"LENGTH", "char_length($*)"},
+/*  {"%3LOCATE", "strpos(substring($2 from $3), $1) + $3 - 1" },    /* 3 parameters */
+/*  {"LENGTH", "char_length($*)"},
 /*  { "LTRIM",       "ltrim"      }, built_in */
-    {"RIGHT", "rtrunc($*)" },
+/*  {"RIGHT", "rtrunc($*)" },
     {"SPACE", "repeat('' '', $1)" },
 /*  { "REPEAT",      "repeat"     }, built_in */
 /*  { "REPLACE", "replace" }, ??? */
 /*  { "RTRIM",       "rtrim"      }, built_in */
 /*  { "SOUNDEX", "soundex" }, how to ? */
-    {"SUBSTRING", "substr($*)" },
+/*  {"SUBSTRING", "substr($*)" },
     {"UCASE", "upper($*)" },
 
 /*  { "ABS",         "abs"        }, built_in */
@@ -89,26 +90,27 @@ char       *mapFuncs[][2] = {
 /*  { "ASIN",        "asin"       }, built_in */
 /*  { "ATAN",        "atan"       }, built_in */
 /*  { "ATAN2",       "atan2"      }, bui;t_in */
-    {"CEILING", "ceil($*)" },
+/*  {"CEILING", "ceil($*)" },
 /*  { "COS",         "cos"        }, built_in */
 /*  { "COT",         "cot"        }, built_in */
 /*  { "DEGREES",         "degrees"    }, built_in */
 /*  { "EXP",         "exp"        }, built_in */
 /*  { "FLOOR",       "floor"      }, built_in */
-    {"LOG", "ln($*)" },
+/*    {"LOG", "ln($*)" },
     {"LOG10", "log($*)" },
 /*  { "MOD",         "mod"        }, built_in */
 /*  { "PI",          "pi"         }, built_in */
-    {"POWER", "pow($*)" },
+/*    {"POWER", "pow($*)" },
 /*  { "RADIANS",         "radians"    }, built_in */
-    {"%0RAND", "random()" },    /* 0 parameters */
-    {"%1RAND", "(setseed($1) * .0 + random())" },   /* 1 parameters */
+/*    {"%0RAND", "random()" },    /* 0 parameters */
+    {"%1RAND", "random()" },   /* 1 parameters -- this is not supported by HSQLDB - translating to no agrument */
+/*    {"%1RAND", "(setseed($1) * .0 + random())" },   /* 1 parameters */
 /*  { "ROUND",       "round"      }, built_in */
 /*  { "SIGN",        "sign"       }, built_in */
 /*  { "SIN",         "sin"        }, built_in */
 /*  { "SQRT",        "sqrt"       }, built_in */
 /*  { "TAN",         "tan"        }, built_in */
-    {"TRUNCATE", "trunc($*)" },
+/*    {"TRUNCATE", "trunc($*)" },
 
     {"CURRENT_DATE", "current_date" },
     {"CURRENT_TIME", "current_time" },
@@ -128,14 +130,14 @@ char       *mapFuncs[][2] = {
     {"MONTH",   "cast(extract(month from $1) as integer)" },
     {"MONTHNAME",    " to_char($1, 'Month')" },
 /*  { "NOW",         "now"        }, built_in */
-    {"QUARTER",  "cast(extract(quarter from $1) as integer)" },
+/*    {"QUARTER",  "cast(extract(quarter from $1) as integer)" },
     {"SECOND",  "cast(extract(second from $1) as integer)" },
     {"WEEK",    "cast(extract(week from $1) as integer)" },
     {"YEAR",    "cast(extract(year from $1) as integer)" },
 
 /*  { "DATABASE",    "database"   }, */
-    {"IFNULL", "coalesce($*)" },
-    {"USER", "cast(current_user as text)" },
+/*    {"IFNULL", "coalesce($*)" },
+    {"USER", "cast(current_user as text)" }, */
     {0, 0}
 };
 
