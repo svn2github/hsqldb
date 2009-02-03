@@ -19,3 +19,15 @@ the feature may be off, I should see CURSOR strings in the C code.
 SERVER-SIDE PREPARES
 Could mean either the EXTENDED mode commands, or the Postresql SQL commands
 "PREPARE/EXECUTE/DEALLOCATE".
+
+
+The win32 build does use the DTS library.
+
+SSPI.  This is for a very proprietary Microsoft SSL service.
+But, judging by the ifdefs in connection.c, sspi is require even on the UNIX
+client in order to have SSL ability????
+
+
+ws2_32.dll interceptor may be useful for debugging the Windows driver.
+    http://codemagnet.blogspot.com/2007/10/winsock2-replacement.html , but it
+    doesn't include the functions I need.

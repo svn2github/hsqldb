@@ -12,4 +12,4 @@ UNIX Build Procedure
   ./configure
 
 The final output gets written to ".libs/psqlodbcw.so" ("src/.libs/psqlodbc.so"
-from the project home directory).
+from the project home directory).  This location will be changing.

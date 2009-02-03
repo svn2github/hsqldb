@@ -26,6 +26,13 @@ CFG=Release
 !MESSAGE
 !ENDIF 
 
+USE_LIBPQ=no
+USE_SSPI=yes
+# SSPI on, because according to the ifdefs in connection.c, this is require
+# for any SSL capability.
+# LIBQP off, because our server does not support the Postgresql-specific
+# libpq library.
+
 !IF "$(CFG)" != "Release" && "$(CFG)" != "Debug"
 !MESSAGE Invalid configuration "$(CFG)" specified.
 !MESSAGE You can specify a configuration when running NMAKE

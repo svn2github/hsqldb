@@ -21,7 +21,10 @@ just build packets, but perform transmissions.
 
 Need to get a unique code/number for our driver's product/service for use with
 the Windows MSI installer.  Procedure is documented in the Wix tutorial, I
-think.
+think.  (Looks like it may be the Package Id in the *.wxs files).
+
+Move output directories out of the "src" branch, for both UNIX and Windows.
+
 
 ELIMINATE CODE FOR FOLLOWING CAPABILITIES, WHICH WE WILL NEVER NEED.
     [PGAPI stuff does apply to us.  Don't confuse this with libpq.]
@@ -29,14 +32,13 @@ ELIMINATE CODE FOR FOLLOWING CAPABILITIES, WHICH WE WILL NEVER NEED.
      or at least add validation so nothing accidentally runs thinking any of
      these features is on.
     libpq  (PostgreSQL-specific C API).  NOT_USE_LIBPQ true.
-     (Must use OpenSSL for Windows driver for SSL capability without libpq).
+     (Judging by the ifdefs in connection.c, sspi is require even on the UNIX
+     client in order to have SSL ability????)
     Any version-specific code for protocols other than PG_PROTOCOL_74.  All
      tests for versions after/greater something apply to us, since we are
      using the latest protocol.
     Function call stuff.  Both PostgreSQL-specific, and legacy.
     Non- conninfo[_]->use_server_side_prepare, since we always use server-side
      prepares.
-    SSPI.  This is for a very proprietary Microsoft SSL service.
-     sspisvcs.h and sspisvcs.c are not used AT ALL.
     use_declarefetch usage. (based on "Use Declare/Fetch" driver setting.
      DECLARE/FETCH/MOVE/CLOSE commands needed to support this.

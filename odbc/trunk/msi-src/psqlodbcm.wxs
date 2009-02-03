@@ -1,15 +1,38 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+    $Id$
+
+    MSI Installer for ODBC Driver for HyperSQL.
+
+    Significant modifications Copyright 2009 by
+    the HSQL Development Group.  Changes made by the HSQL
+    Development are documented precisely in the public HyperSQL
+    source code repository, available through http://hsqldb.org.
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Library General Public
+    License as published by the Free Software Foundation; either
+    version 2 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Library General Public License for more details.
+
+    You should have received a copy of the GNU Library General Public
+    License along with this library; if not, write to the
+    Free Foundation, Inc., 51 Franklin Street, Fifth Floor,
+    Boston, MA  02110-1301  USA
+-->
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  <Module
-    Id="psqlODBC"
-    Version="$(var.VERSION)"
-    Language="1033">
+  <Module Id="hsqlodbc" Version="$(var.VERSION)" Language="1033">
     
     <Package 
       Id="ACF10866-5C01-46f0-90F0-D5618638CA48"
-      Description="PostgreSQL ODBC Driver"
-      Keywords="PostgreSQL, ODBC"
-      Manufacturer="PostgreSQL Global Development Group" 
+      Description="HyperSQL ODBC Driver"
+      Keywords="HSQLDB, HyperSQL, ODBC"
+      Manufacturer="The HSQL Development Group" 
       InstallerVersion="150"
       Platforms="Intel" 
       Languages="1033"
@@ -17,13 +40,13 @@
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="BINDIR" Name=".">
-        <Component Id="psqlodbc.files" Guid="00A1ACE3-B7C2-41b8-A1F1-DB565990DA4E">
+        <Component Id="hsqlodbc.files" Guid="00A1ACE3-B7C2-41b8-A1F1-DB565990DA4E">
           <!-- PostgreSQL -->
-          <File Id="psqlodbc30a.dll" Name="psqlodbc30a.dll" Source="../MultibyteRelease/psqlodbc30a.dll" />
-          <File Id="psqlodbc35w.dll" Name="psqlodbc35w.dll" Source="../Release/psqlodbc35w.dll" />
-          <File Id="pgxalib.dll" Name="pgxalib.dll" Source="../Release/pgxalib.dll" />
-          <File Id="pgenlist.dll" Name="pgenlist.dll" Source="../Release/pgenlist.dll" />
-          <File Id="pgenlista.dll" Name="pgenlista.dll" Source="../MultibyteRelease/pgenlista.dll" />
+          <File Id="psqlodbc30a.dll" Name="psqlodbc30a.dll" Source="../src/MultibyteRelease/psqlodbc30a.dll" />
+          <File Id="psqlodbc35w.dll" Name="psqlodbc35w.dll" Source="../src/Release/psqlodbc35w.dll" />
+          <File Id="pgxalib.dll" Name="pgxalib.dll" Source="../src/Release/pgxalib.dll" />
+          <File Id="pgenlist.dll" Name="pgenlist.dll" Source="../src/Release/pgenlist.dll" />
+          <File Id="pgenlista.dll" Name="pgenlista.dll" Source="../src/MultibyteRelease/pgenlista.dll" />
           <File Id="libpq.dll" Name="libpq.dll" Source="$(var.PROGRAMFILES)\PostgreSQL\8.3\bin\libpq.dll" KeyPath="yes" />
           
           <!-- Gettext -->
@@ -45,25 +68,25 @@
 
           <!-- Note, installing the driver properly (IE, using ODBCDriver) has proven unreliable -->
           <!--       so we install the registry keys manually ourselves.                         -->
-          <RegistryValue Id="psqlodbc30a.reg.1" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\ODBC Drivers" Name="PostgreSQL ANSI" Type="string" Value="Installed" />
-          <RegistryValue Id="psqlodbc30a.reg.2" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\PostgreSQL ANSI" Name="APILevel" Type="string" Value="1" />
-          <RegistryValue Id="psqlodbc30a.reg.3" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\PostgreSQL ANSI" Name="ConnectFunctions" Type="string" Value="YYN" />
-          <RegistryValue Id="psqlodbc30a.reg.4" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\PostgreSQL ANSI" Name="Driver" Type="string" Value="[#psqlodbc30a.dll]" />
-          <RegistryValue Id="psqlodbc30a.reg.5" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\PostgreSQL ANSI" Name="DriverODBCVer" Type="string" Value="03.00" />
-          <RegistryValue Id="psqlodbc30a.reg.6" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\PostgreSQL ANSI" Name="FileUsage" Type="string" Value="0" />
-          <RegistryValue Id="psqlodbc30a.reg.7" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\PostgreSQL ANSI" Name="Setup" Type="string" Value="[#psqlodbc30a.dll]" />
-          <RegistryValue Id="psqlodbc30a.reg.8" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\PostgreSQL ANSI" Name="SQLLevel" Type="string" Value="1" />
-          <RegistryValue Id="psqlodbc30a.reg.9" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\PostgreSQL ANSI" Name="UsageCount" Type="integer" Value="1" />
+          <RegistryValue Id="psqlodbc30a.reg.1" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\ODBC Drivers" Name="HyperSQL ANSI" Type="string" Value="Installed" />
+          <RegistryValue Id="psqlodbc30a.reg.2" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\HyperSQL ANSI" Name="APILevel" Type="string" Value="1" />
+          <RegistryValue Id="psqlodbc30a.reg.3" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\HyperSQL ANSI" Name="ConnectFunctions" Type="string" Value="YYN" />
+          <RegistryValue Id="psqlodbc30a.reg.4" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\HyperSQL ANSI" Name="Driver" Type="string" Value="[#psqlodbc30a.dll]" />
+          <RegistryValue Id="psqlodbc30a.reg.5" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\HyperSQL ANSI" Name="DriverODBCVer" Type="string" Value="03.00" />
+          <RegistryValue Id="psqlodbc30a.reg.6" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\HyperSQL ANSI" Name="FileUsage" Type="string" Value="0" />
+          <RegistryValue Id="psqlodbc30a.reg.7" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\HyperSQL ANSI" Name="Setup" Type="string" Value="[#psqlodbc30a.dll]" />
+          <RegistryValue Id="psqlodbc30a.reg.8" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\HyperSQL ANSI" Name="SQLLevel" Type="string" Value="1" />
+          <RegistryValue Id="psqlodbc30a.reg.9" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\HyperSQL ANSI" Name="UsageCount" Type="integer" Value="1" />
 
-          <RegistryValue Id="psqlodbc35w.reg.1" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\ODBC Drivers" Name="PostgreSQL Unicode" Type="string" Value="Installed" />
-          <RegistryValue Id="psqlodbc35w.reg.2" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\PostgreSQL Unicode" Name="APILevel" Type="string" Value="1" />
-          <RegistryValue Id="psqlodbc35w.reg.3" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\PostgreSQL Unicode" Name="ConnectFunctions" Type="string" Value="YYN" />
-          <RegistryValue Id="psqlodbc35w.reg.4" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\PostgreSQL Unicode" Name="Driver" Type="string" Value="[#psqlodbc35w.dll]" />
-          <RegistryValue Id="psqlodbc35w.reg.5" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\PostgreSQL Unicode" Name="DriverODBCVer" Type="string" Value="03.51" />
-          <RegistryValue Id="psqlodbc35w.reg.6" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\PostgreSQL Unicode" Name="FileUsage" Type="string" Value="0" />
-          <RegistryValue Id="psqlodbc35w.reg.7" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\PostgreSQL Unicode" Name="Setup" Type="string" Value="[#psqlodbc35w.dll]" />
-          <RegistryValue Id="psqlodbc35w.reg.8" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\PostgreSQL Unicode" Name="SQLLevel" Type="string" Value="1" />
-          <RegistryValue Id="psqlodbc35w.reg.9" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\PostgreSQL Unicode" Name="UsageCount" Type="integer" Value="1" />
+          <RegistryValue Id="psqlodbc35w.reg.1" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\ODBC Drivers" Name="HyperSQL Unicode" Type="string" Value="Installed" />
+          <RegistryValue Id="psqlodbc35w.reg.2" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\HyperSQL Unicode" Name="APILevel" Type="string" Value="1" />
+          <RegistryValue Id="psqlodbc35w.reg.3" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\HyperSQL Unicode" Name="ConnectFunctions" Type="string" Value="YYN" />
+          <RegistryValue Id="psqlodbc35w.reg.4" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\HyperSQL Unicode" Name="Driver" Type="string" Value="[#psqlodbc35w.dll]" />
+          <RegistryValue Id="psqlodbc35w.reg.5" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\HyperSQL Unicode" Name="DriverODBCVer" Type="string" Value="03.51" />
+          <RegistryValue Id="psqlodbc35w.reg.6" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\HyperSQL Unicode" Name="FileUsage" Type="string" Value="0" />
+          <RegistryValue Id="psqlodbc35w.reg.7" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\HyperSQL Unicode" Name="Setup" Type="string" Value="[#psqlodbc35w.dll]" />
+          <RegistryValue Id="psqlodbc35w.reg.8" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\HyperSQL Unicode" Name="SQLLevel" Type="string" Value="1" />
+          <RegistryValue Id="psqlodbc35w.reg.9" Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\HyperSQL Unicode" Name="UsageCount" Type="integer" Value="1" />
         </Component>
       </Directory>
     </Directory>

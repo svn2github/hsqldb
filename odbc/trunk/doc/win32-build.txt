@@ -1,0 +1,85 @@
+$Id$
+
+This file documents building hsqlodbc from the command line, using
+Microsoft Visual C++ 2008.
+
+ONE-TIME SETUP FOR DLL BUILDING
+
+    Install the Postgresql binary to the default location
+    (C:\Program Files\PostreSQL\8.3).
+
+    Install the current MS Visual C++ Express edition from
+    http://msdn.microsoft.com.  As I write this, the current version is
+    "2008" with SP1.  Until we make the build scripts more flexible, this
+    is the version you need.
+
+    Install the current NON-LIGHT! OpenSSL for platform from
+    http://slproweb.com/products/Win32OpenSSL.html (misnomer, 64 binaries too).
+    Install to default location, select to install shareds to bin, not your
+    Windows directory.  Ignore warning about requiring Visual C++
+    redistributables.  (I need to verify this, because I see that, somehow,
+    there is a Visual C++ Redistributable on my PC).
+
+
+ONE-TIME SETUP FOR MSI (Windows Installer) BUILDING
+
+    Install latest versoin of Wix from Sourceforge.  Don't need the extra
+     products.  Just get Wix3.*-x86-setup.zip and execute it.
+     I did default install, other than changing install dir.
+
+
+BUILDING driver DLLs
+
+    The installation adds global variable VS90COMNTOOLS.
+    Run %VS90COMNTOOLS%\vsvars32.bat to set up your MSV C++ build environment.
+
+    To make the Unicode DLL (better ODBC support):
+        nmake /f win32.mak CFG=Release ALL
+    To make the ANSI DLL (required for some older/unmaintained/bad clients):
+        nmake /f win32.mak ANSI_VERSION=yes CFG=Release ALL
+
+    The output DLLs get written to directories "Release" and
+    "MultibyteRelease" ("src/Release" and "src/MultibyteRelease" from the
+    project home directory).  This location will be changing.
+
+    BEWARE!!!:  If nmake fails, do not expect the real failure details to
+     appear near where it aborts.  You must examine all of the nmake output.
+
+
+BUILDING MSI INSTALLER
+
+    You really need the MSI Installer, because
+        Editing ODBC.ini file has no effect.
+        Regedit doesn't work.
+
+    Put the Wix program's bin directory into your search path.
+
+    Run the nmake commands above for both the Unicode and ANSI DLLs.
+    Then run the make script in the "msi-src" directory.
+
+        cd src
+        nmake /f win32.mak CFG=Release ALL
+        nmake /f win32.mak ANSI_VERSION=yes CFG=Release ALL
+        cd ..\msi-src
+        .\make <VERSION>
+
+    where <VERSION> is a label of the format "08.03.0401" (without the qoutes).
+    The output *.msi file gets written to the same (msi-src) directory.
+
+
+REPLACING INSTALLED DRIVER
+
+    The "Date" column in the ODBC Data Source Administrator shows the driver
+     install date.
+
+    Can uninstall by rerunning the same *.msi used to install; or run
+      Control Panel / Programs and Features (Vista)
+      Control Panel / Add/Remove Programs (other)
+
+    Fortunately, DSNs for removed drivers are retained!
+
+    I see no benefit to using the upgrade batch script, which just passes
+     params to "msiexec".
+
+    Just make sure no "running" programs are using the driver, and you do not
+     need to reboot in order to pick up a newly installed driver.
