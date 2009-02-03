@@ -5,27 +5,33 @@ Microsoft Visual C++ 2008.
 
 ONE-TIME SETUP FOR DLL BUILDING
 
-    Install the Postgresql binary to the default location
-    (C:\Program Files\PostreSQL\8.3).
-
     Install the current MS Visual C++ Express edition from
-    http://msdn.microsoft.com.  As I write this, the current version is
-    "2008" with SP1.  Until we make the build scripts more flexible, this
-    is the version you need.
+    http://msdn.microsoft.com/express .  As I write this, the current version
+    is "2008" with SP1.  Until we make the build scripts more flexible, this
+    is the version you need.  You can install to any directory, and you can
+    certainly uncheck the option to install SQL Server.
 
     Install the current NON-LIGHT! OpenSSL for platform from
     http://slproweb.com/products/Win32OpenSSL.html (misnomer, 64 binaries too).
     Install to default location, select to install shareds to bin, not your
-    Windows directory.  Ignore warning about requiring Visual C++
-    redistributables.  (I need to verify this, because I see that, somehow,
-    there is a Visual C++ Redistributable on my PC).
+    Windows directory.  (I am not yet working with SSL.  I am seeing
+    conflicting information as to whether OpenSSL is required on Windows.
+    The code is looking like OpenSSL is needed only for libpq.. which we
+    do not want, and SSPI is needed for SSL capability.)
 
 
 ONE-TIME SETUP FOR MSI (Windows Installer) BUILDING
 
-    Install latest version of Wix from Sourceforge.  Don't need the extra
-     products.  Just get Wix3.*-x86-setup.zip and execute it.
-     I did default install, other than changing install dir.
+    Install a 3.x of Wix from http://sourceforge.net/projects/wix .
+    Don't need the extra products.  Just get Wix3.*-x86-setup.zip and execute
+    it.  You can change the installation directory to whatever you want, but
+    be careful about changing other settings.
+
+    Ignore the warning from the Wix installer about Votive.  You don't
+    need any other products or add-ons.
+
+    Install the Postgresql binary to the default location
+    (C:\Program Files\PostreSQL\8.3).
 
 
 BUILDING driver DLLs
