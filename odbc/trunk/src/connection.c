@@ -3272,35 +3272,15 @@ CC_send_settings(ConnectionClass *self)
  *  This function is just a hack to get the oid of our Large Object oid type.
  *  If a real Large Object oid type is made part of Postgres, this function
  *  will go away and the define 'PG_TYPE_LO' will be updated.
+ *
+ *  More specifically, the goal is to set the values
+ *    self->lobj_type and self->lo_is_domain.
  */
 static void
 CC_lookup_lo(ConnectionClass *self)
 {
-    QResultClass    *res;
     CSTR func = "CC_lookup_lo";
-
-    mylog("%s: entering...\n", func);
-
-    if (PG_VERSION_GE(self, 7.4))
-        res = CC_send_query(self, "select oid, typbasetype from pg_type where typname = '"  PG_TYPE_LO_NAME "'", 
-            NULL, IGNORE_ABORT_ON_CONN | ROLLBACK_ON_ERROR, NULL);
-    else
-        res = CC_send_query(self, "select oid, 0 from pg_type where typname='" PG_TYPE_LO_NAME "'",
-            NULL, IGNORE_ABORT_ON_CONN | ROLLBACK_ON_ERROR, NULL);
-    if (QR_command_maybe_successful(res) && QR_get_num_cached_tuples(res) > 0)
-    {
-        OID basetype;
-
-        self->lobj_type = QR_get_value_backend_int(res, 0, 0, NULL);
-        basetype = QR_get_value_backend_int(res, 0, 1, NULL);
-        if (PG_TYPE_OID == basetype)
-            self->lo_is_domain = 1;
-        else if (0 != basetype)
-            self->lobj_type = 0;
-    }
-    QR_Destructor(res);
-    mylog("Got the large object oid: %d\n", self->lobj_type);
-    qlog("    [ Large Object oid = %d ]\n", self->lobj_type);
+    mylog("%s: Stubbing.  TODO:  Implement LO support.\n", func);
     return;
 }
 
