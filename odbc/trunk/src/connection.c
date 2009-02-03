@@ -1,4 +1,4 @@
-/*------
+/*
  * Module:          connection.c
  *
  * Description:     This module contains routines related to
@@ -9,10 +9,31 @@
  * API functions:   SQLAllocConnect, SQLConnect, SQLDisconnect, SQLFreeConnect,
  *                  SQLBrowseConnect(NI)
  *
- * Comments:        See "notice.txt" for copyright and license information.
+ * Comments:        See "notice.txt" for copyright and license details.
+ *                  Significant modifications Copyright 2009 by
+ *                  the HSQL Development Group.  Changes made by the HSQL
+ *                  Development are documented precisely in the public HyperSQL
+ *                  source code repository, available through http://hsqldb.org.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Library General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Library General Public
+ *  License along with this library; if not, write to the
+ *  Free Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ *  Boston, MA  02110-1301  USA
+ *
  *-------
+ *
+ * Multibyte support    Eiji Tokuya 2001-03-15
  */
-/* Multibyte support    Eiji Tokuya 2001-03-15 */
 
 #ifndef NOT_USE_LIBPQ
 #include <libpq-fe.h>
