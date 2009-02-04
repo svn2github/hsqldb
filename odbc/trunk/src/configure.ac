@@ -9,6 +9,7 @@ AM_MAINTAINER_MODE
 
 
 # 0. Options processing
+NOT_USE_LIBQ="1"
 
 
 #
@@ -136,23 +137,6 @@ PGAC_ARG_BOOL(enable, pthreads, yes,
               [AC_DEFINE(POSIX_MULTITHREAD_SUPPORT, 1,
                          [Define to 1 to build with pthreads support (--enable-pthreads)])
                AC_DEFINE(_REENTRANT, 1, [Define _REENTRANT for several plaforms])])
-
-
-#
-# Find libpq headers and libraries
-#
-
-AC_PATH_PROGS(PG_CONFIG, pg_config)
-
-if test -z "$PG_CONFIG"; then
-  AC_MSG_ERROR([pg_config not found (set PG_CONFIG environment variable)])
-fi
-
-pg_includedir=`$PG_CONFIG --includedir`
-pg_libdir=`$PG_CONFIG --libdir`
-CPPFLAGS="$CPPFLAGS -I$pg_includedir"
-LDFLAGS="$LDFLAGS -L$pg_libdir"
-
 
 
 # 1. Programs

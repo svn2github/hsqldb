@@ -19,10 +19,10 @@
 #endif /* USE_SSPI */
 #ifndef NOT_USE_LIBPQ
 #include <libpq-fe.h>
+#endif /* NOT_USE_LIBPQ */
 #ifdef USE_SSL
 #include <openssl/ssl.h>
 #endif /* USE_SSL */
-#endif /* NOT_USE_LIBPQ */
 #include "socket.h"
 #include "loadlib.h"
 

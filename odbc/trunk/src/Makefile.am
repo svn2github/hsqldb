@@ -10,6 +10,8 @@ AUTOMAKE_OPTIONS = 1.8 foreign
 
 ACLOCAL_AMFLAGS = -I config
 
+DEFS = -DNOT_USE_LIBPQ -DHAVE_CONFIG_H
+
 if enable_unicode
 lib_LTLIBRARIES = psqlodbcw.la
 else
@@ -21,9 +23,6 @@ AM_CFLAGS = -Wall
 endif
 
 AM_LDFLAGS = -module -no-undefined -avoid-version
-
-psqlodbca_la_LIBADD = -lpq
-psqlodbcw_la_LIBADD = -lpq
 
 psqlodbca_la_SOURCES = \
     info.c bind.c columninfo.c connection.c convert.c drvconn.c \
@@ -53,7 +52,7 @@ EXTRA_DIST = license.txt readme.txt \
         win32.mak psqlodbc.reg psqlodbc.dsp psqlodbc.vcproj \
         psqlodbc.sln msdtc_enlist.cpp pgxalib.cpp xalibname.c \
         pgxalib.def odbc.sql odbc-drop.sql \
-    odbcapi25w.c sspisvcs.c sspisvcs.h \
+    odbcapi25w.c \
 \
     docs/index.html docs/config.html docs/config-opt.html \
     docs/faq.html docs/howto-accesslo.html \
