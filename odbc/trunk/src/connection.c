@@ -35,18 +35,12 @@
  * Multibyte support    Eiji Tokuya 2001-03-15
  */
 
-#ifndef NOT_USE_LIBPQ
-#include <libpq-fe.h>
-#endif /* NOT_USE_LIBPQ */
 #include "connection.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #ifdef  WIN32
-#ifdef  USE_SSPI
-#include "sspisvcs.h"
-#endif /* USE_SSPI */
 #else
 #include <errno.h>
 #endif /* WIN32 */
@@ -1275,29 +1269,6 @@ static char CC_initial_log(ConnectionClass *self, const char *func)
 }
 
 static  char    CC_setenv(ConnectionClass *self);
-#ifndef NOT_USE_LIBPQ
-static int LIBPQ_connect(ConnectionClass *self);
-static char
-LIBPQ_CC_connect(ConnectionClass *self, char password_req, char *salt_para)
-{
-    int     ret;
-    CSTR        func = "LIBPQ_CC_connect";
-
-    mylog("%s: entering...\n", func);
-
-    if (password_req == AUTH_REQ_OK) /* not yet connected */
-    {
-        if (0 == CC_initial_log(self, func))
-            return 0;
-    }
-
-    if (ret = LIBPQ_connect(self), ret <= 0)
-        return ret;
-    CC_setenv(self);
-
-    return 1;
-}
-#endif /* NOT_USE_LIBPQ */
 
 static char
 original_CC_connect(ConnectionClass *self, char password_req, char *salt_para)
@@ -1313,10 +1284,6 @@ original_CC_connect(ConnectionClass *self, char password_req, char *salt_para)
     char        salt[5], notice[512];
     CSTR        func = "original_CC_connect";
     BOOL    startPacketReceived = FALSE, anotherVersionRetry;
-#ifdef  USE_SSPI
-    int ssl_try_count, ssl_try_no;
-    char    ssl_call[2];
-#endif /* USE_SSPI */
 
     mylog("%s: entering...\n", func);
 
@@ -1330,44 +1297,13 @@ original_CC_connect(ConnectionClass *self, char password_req, char *salt_para)
         if (0 == CC_initial_log(self, func))
             return 0;
 
-#ifdef  USE_SSPI
-        ssl_try_count = 0;
-        switch (self->connInfo.sslmode[0])
-        {
-            case 'r':
-                ssl_call[ssl_try_count++] = 'y';
-                break;
-            case 'p':
-                ssl_call[ssl_try_count++] = 'y';
-                ssl_call[ssl_try_count++] = 'n';
-                break;
-            case 'a':
-                ssl_call[ssl_try_count++] = 'n';
-                ssl_call[ssl_try_count++] = 'y';
-                break;
-            default:
-                ssl_call[ssl_try_count++] = 'n';
-                break;
-        }
-        ssl_try_no = 0;
-#endif /* USE_SSPI */
         anotherVersionRetry = FALSE;
 
 another_version_retry:
 
         if (anotherVersionRetry)
         {
-#ifdef  USE_SSPI
-            if (ssl_try_no < ssl_try_count)
-            ssl_try_no++;
-            if (ssl_try_no >= ssl_try_count)
-            {
-#endif /* USE_SSPI */
                 strncpy_null(ci->protocol, PG64, sizeof(ci->protocol));
-#ifdef  USE_SSPI
-                ssl_try_no = 0;
-            }
-#endif /* USE_SSPI */
             if (self->sock)
             {
                 SOCK_Destructor(self->sock);
@@ -1404,53 +1340,6 @@ another_version_retry:
         mylog("connection to the server socket succeeded.\n");
 
 inolog("protocol=%s version=%d,%d\n", ci->protocol, self->pg_version_major, self->pg_version_minor);
-#ifdef  USE_SSPI
-        if ('y' == ssl_call[ssl_try_no])
-        {
-            struct {
-                Int4    slen;
-                ProtocolVersion pv;
-            } nego_packet;
-            char    rnego;
-
-            nego_packet.slen = htonl(sizeof(nego_packet));
-            nego_packet.pv = htonl(PG_NEGOTIATE_SSLMODE);
-            SOCK_put_n_char(sock, (char *) &nego_packet, sizeof(nego_packet));
-            SOCK_flush_output(sock);
-            if (0 != SOCK_get_errcode(sock))
-            {
-                mylog("%s:failed to send a negotiation packet\n", func);
-                goto sockerr_proc;
-            }
-            SOCK_get_n_char(sock, &rnego, 1);
-            if (0 != SOCK_get_errcode(sock))
-                goto sockerr_proc;
-            mylog("nego got '%c'\n", rnego);
-            switch (rnego)
-            {
-                case 'S':
-                    if (!StartupSspiService(sock, SchannelService, NULL))
-                    {
-                        CC_set_error(self, CONNECTION_SERVER_NOT_REACHED, "Service negotation failed", func);
-                        return 0;
-                    }
-                    break;
-                case 'N':
-                    ssl_try_no++;
-                    if (ssl_try_no < ssl_try_count &&
-                        'y' != ssl_call[ssl_try_no])
-                        break;
-                    else
-                    {
-                        anotherVersionRetry = TRUE;
-                        goto another_version_retry;
-                    }
-                default:
-                    CC_set_error(self, CONNECTION_SERVER_NOT_REACHED, "Service negotation failed", func);
-                    return 0;
-            }
-        }
-#endif /* USE_SSPI */
         if (!protocol3_packet_build(self))
             return 0;
 
@@ -1508,11 +1397,6 @@ inolog("Ekita retry=%d\n", retry);
                     const char *emsg = msgbuffer + 8;
                     if (0 == strnicmp(emsg, "unsupported frontend protocol", 29))
                         retry = TRUE;
-#ifdef  USE_SSPI
-                    else if ('y' != ssl_call[ssl_try_no] &&
-                         ssl_try_no + 1 < ssl_try_count)
-                        retry = TRUE;
-#endif /* USE_SSPI */
                 }
                 else if (strnicmp(msgbuffer, "Unsupported frontend protocol", 29) == 0)
                     retry = TRUE;
@@ -1655,51 +1539,12 @@ CC_connect(ConnectionClass *self, char password_req, char *salt_para)
     ConnInfo *ci = &(self->connInfo);
     CSTR    func = "CC_connect";
     char        ret, *saverr = NULL;
-#ifndef NOT_USE_LIBPQ
-    BOOL    call_libpq = FALSE;
-#endif /* NOT_USE_LIBPQ */
 
     mylog("%s: entering...\n", func);
 
     mylog("sslmode=%s\n", self->connInfo.sslmode);
-#ifndef NOT_USE_LIBPQ
-    if (self->connInfo.username[0] == '\0')
-        call_libpq = TRUE;
-    else if (self->connInfo.sslmode[0] != 'd') 
-#ifdef  USE_SSPI
-    {
-        if (0 == (SchannelService & self->svcs_allowed))
-            call_libpq = TRUE;
-    }
-#else
-        call_libpq = TRUE;
-#endif /* USE_SSPI */
-    if (call_libpq)
-    {
-        ret = LIBPQ_CC_connect(self, password_req, salt_para);
-#ifdef USE_SSPI
-        /*
-         *  If libpq is unavailable, try SSPI instead.
-         */
-        if (0 == ret && CONN_UNABLE_TO_LOAD_DLL == CC_get_errornumber(self))
-        {
-            self->svcs_allowed |= SchannelService;
-            ret = original_CC_connect(self, password_req, salt_para);
-        }
-#endif /* USE_SSPI */
-    }
-    else
-#endif /* NOT_USE_LIBPQ */
     {
         ret = original_CC_connect(self, password_req, salt_para);
-#ifndef NOT_USE_LIBPQ
-        if (0 == ret && CONN_AUTH_TYPE_UNSUPPORTED == CC_get_errornumber(self))
-        {
-            SOCK_Destructor(self->sock);
-            self->sock = (SocketClass *) 0;
-            ret = LIBPQ_CC_connect(self, password_req, salt_para);
-        }
-#endif /* NOT_USE_LIBPQ */
     }
     if (ret <= 0)
         return ret;
@@ -3071,10 +2916,6 @@ CC_send_cancel_request(const ConnectionClass *conn)
     if (!sock)
         return FALSE;
 
-#ifndef NOT_USE_LIBPQ
-    if (sock->via_libpq)
-        return LIBPQ_send_cancel_request(conn);
-#endif /* NOT_USE_LIBPQ */
     /*
      * We need to open a temporary connection to the postmaster. Use the
      * information saved by connectDB to do this with only kernel calls.
@@ -3162,167 +3003,6 @@ int CC_discard_marked_objects(ConnectionClass *conn)
 
     return 1;
 }
-
-#ifndef NOT_USE_LIBPQ
-static int
-LIBPQ_connect(ConnectionClass *self)
-{
-    CSTR    func = "LIBPQ_connect";
-    char    ret = 0;
-    char *conninfo = NULL;
-    void        *pqconn = NULL;
-    SocketClass *sock;
-    int socket = -1, pqret;
-    BOOL    libpqLoaded;
-
-    mylog("connecting to the database  using %s as the server\n",self->connInfo.server);
-    sock = self->sock;
-inolog("sock=%p\n", sock);
-    if (!sock)
-    {
-        sock = SOCK_Constructor(self);
-        if (!sock)
-        {
-            CC_set_error(self, CONN_OPENDB_ERROR, "Could not construct a socket to the server", func);
-            goto cleanup1;
-        }
-    }
-
-    if (!(conninfo = protocol3_opts_build(self)))
-    {
-        CC_set_error(self, CONN_OPENDB_ERROR, "Couldn't allcate conninfo", func);
-        goto cleanup1;
-    }
-    pqconn = CALL_PQconnectdb(conninfo, &libpqLoaded);
-    free(conninfo);
-    if (!libpqLoaded)
-    {
-        CC_set_error(self, CONN_UNABLE_TO_LOAD_DLL, "Couldn't load libpq library", func);
-        goto cleanup1;
-    }
-    sock->via_libpq = TRUE;
-    if (!pqconn)
-    {
-        CC_set_error(self, CONN_OPENDB_ERROR, "PQconnectdb error", func);
-        goto cleanup1;
-    }
-    sock->pqconn = pqconn;
-    pqret = PQstatus(pqconn);
-    if (CONNECTION_OK != pqret)
-    {
-        const char  *errmsg;
-inolog("status=%d\n", pqret);
-        errmsg = PQerrorMessage(pqconn);
-        CC_set_error(self, CONNECTION_SERVER_NOT_REACHED, errmsg, func);
-        if (CONNECTION_BAD == pqret && strstr(errmsg, "no password"))
-        {
-            mylog("password retry\n");
-            PQfinish(pqconn);
-            self->sock = sock;
-            return -1;
-        }
-        mylog("Could not establish connection to the database; LIBPQ returned -> %s\n", errmsg);
-        goto cleanup1;
-    }
-    ret = 1;
- 
-cleanup1:
-    if (!ret)
-    {
-        if (sock)
-            SOCK_Destructor(sock);
-        self->sock = NULL;
-        return ret;
-    }
-    mylog("libpq connection to the database succeeded.\n");
-    ret = 0;
-    socket = PQsocket(pqconn);
-inolog("socket=%d\n", socket);
-    sock->socket = socket;
-#ifdef USE_SSL
-    sock->ssl = PQgetssl(pqconn);
-inolog("ssl=%p\n", sock->ssl);
-#endif /* USE_SSL */
-if (TRUE)
-    {
-        int pversion;
-        ConnInfo    *ci = &self->connInfo;
-
-        sock->pversion = PG_PROTOCOL_74;
-        strncpy_null(ci->protocol, PG74, sizeof(ci->protocol));
-        pversion = PQprotocolVersion(pqconn);
-    }
-    mylog("protocol=%s\n", self->connInfo.protocol);
-    {
-        int pversion;
-        const char *conforming_strings;
-
-        pversion = PQserverVersion(pqconn);
-        self->pg_version_major = pversion / 10000;
-        self->pg_version_minor = (pversion % 10000) / 100;
-        sprintf(self->pg_version, "%d.%d.%d",  self->pg_version_major, self->pg_version_minor, pversion % 100);
-        self->pg_version_number = (float) atof(self->pg_version);
-        if (PG_VERSION_GE(self, 7.3))
-            self->schema_support = 1;
-        if (conforming_strings = PQparameterStatus(pqconn, std_cnf_strs), NULL != conforming_strings)
-        {
-            if (stricmp(conforming_strings, "on") == 0)
-                self->escape_in_literal = '\0';
-        }
-        /* blocking mode */
-        /* ioctlsocket(sock, FIONBIO , 0);
-        setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *) &on, sizeof(on)); */
-    }
-#ifdef USE_SSL
-    if (sock->ssl)
-    {
-        /* flags = fcntl(sock, F_GETFL);
-        fcntl(sock, F_SETFL, flags & (~O_NONBLOCKING));*/
-    }
-#endif /* USE_SSL */
-    mylog("Server version=%s\n", self->pg_version);
-    ret = 1;
-    if (ret)
-    {
-        self->sock = sock;
-        if (!CC_get_username(self)[0])
-        {
-            mylog("PQuser=%s\n", PQuser(pqconn));
-            strcpy(self->connInfo.username, PQuser(pqconn));
-        }
-    }
-    else
-    {
-        SOCK_Destructor(sock);
-        self->sock = NULL;
-    }
-    
-    mylog("%s: retuning %d\n", func, ret);
-    return ret;
-}
-
-static int
-LIBPQ_send_cancel_request(const ConnectionClass *conn)
-{
-    int ret = 0;
-    char    errbuf[256];
-    void    *cancel;
-    SocketClass *sock = CC_get_socket(conn);
-
-    if (!sock)
-        return FALSE;
-        
-    cancel = PQgetCancel(sock->pqconn);
-    if(!cancel)
-        return FALSE;
-    ret = PQcancel(cancel, errbuf, sizeof(errbuf));
-    PQfreeCancel(cancel);
-    if(1 == ret)
-        return TRUE;
-    else
-        return FALSE;
-}
-#endif /* NOT_USE_LIBPQ */
 
 const char *CurrCat(const ConnectionClass *conn)
 {

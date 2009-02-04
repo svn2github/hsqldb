@@ -3,7 +3,25 @@
  * Description:     See "socket.c"
  *
  * Comments:        See "notice.txt" for copyright and license information.
+ *                  Significant modifications Copyright 2009 by
+ *                  the HSQL Development Group.  Changes made by the HSQL
+ *                  Development are documented precisely in the public HyperSQL
+ *                  source code repository, available through http://hsqldb.org.
  *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Library General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Library General Public
+ *  License along with this library; if not, write to the
+ *  Free Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ *  Boston, MA  02110-1301  USA
  */
 
 #ifndef __SOCKET_H__
@@ -145,18 +163,10 @@ struct SocketClass_
     int     errornumber;
     int     sadr_len;
     struct sockaddr_storage sadr_area; /* Used for various connections */
-#ifdef  USE_SSPI
-    UInt4       sspisvcs;
-    void        *ssd;
-#endif /* USE_SSPI */
 #ifdef  USE_SSL
     /* SSL stuff */
     void        *ssl;       /* libpq ssl */
 #endif /* USE_SSL */
-#ifndef NOT_USE_LIBPQ
-    void        *pqconn;    /* libpq PGConn */
-    BOOL        via_libpq;  /* using libpq library ? */
-#endif /* NOT_USE_LIBPQ */
 
     char        reverse;        /* used to handle Postgres 6.2 protocol
                                  * (reverse byte order) */

@@ -9,17 +9,29 @@
  * API functions:   none
  *
  * Comments:        See "notice.txt" for copyright and license information.
- *-------
+ *                  Significant modifications Copyright 2009 by
+ *                  the HSQL Development Group.  Changes made by the HSQL
+ *                  Development are documented precisely in the public HyperSQL
+ *                  source code repository, available through http://hsqldb.org.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Library General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Library General Public
+ *  License along with this library; if not, write to the
+ *  Free Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ *  Boston, MA  02110-1301  USA
  */
 
 #include "psqlodbc.h"
 
-#ifdef  USE_SSPI
-#include "sspisvcs.h"
-#endif /* USE_SSPI */
-#ifndef NOT_USE_LIBPQ
-#include <libpq-fe.h>
-#endif /* NOT_USE_LIBPQ */
 #ifdef USE_SSL
 #include <openssl/ssl.h>
 #endif /* USE_SSL */
@@ -80,17 +92,9 @@ SOCK_Constructor(const ConnectionClass *conn)
     if (rv != NULL)
     {
         rv->socket = (SOCKETFD) -1;
-#ifdef  USE_SSPI
-        rv->ssd = NULL;
-        rv->sspisvcs = 0;
-#endif /* USE_SSPI */
-#ifndef NOT_USE_LIBPQ
-        rv->via_libpq = FALSE;
 #ifdef USE_SSL
         rv->ssl = NULL;
 #endif
-        rv->pqconn = NULL;
-#endif /* NOT_USE_LIBPQ */
         rv->pversion = 0;
         rv->reslen = 0;
         rv->buffer_filled_in = 0;
@@ -130,32 +134,10 @@ SOCK_Destructor(SocketClass *self)
         return;
     if (self->socket != (SOCKETFD) -1)
     {
-#ifndef NOT_USE_LIBPQ
-        if (self->pqconn)
-        {
-            if (self->via_libpq)
-            {
-                PQfinish(self->pqconn);
-                /* UnloadDelayLoadedDLLs(NULL != self->ssl); */
-            }
-            self->via_libpq = FALSE;
-            self->pqconn = NULL;
 #ifdef USE_SSL
             self->ssl = NULL;
 #endif
-        }
-        else
-#endif /* NOT_USE_LIBPQ */
         {
-#ifdef  USE_SSPI
-            if (self->ssd)
-            {
-                ReleaseSvcSpecData(self);
-                free(self->ssd);
-                self->ssd = NULL;
-            }
-            self->sspisvcs = 0;
-#endif /* USE_SSPI */
             SOCK_put_char(self, 'X');
             if (PG_PROTOCOL_74 == self->pversion)
                 SOCK_put_int(self, 4, 4);
@@ -505,25 +487,11 @@ static int SOCK_wait_for_ready(SocketClass *sock, BOOL output, int retry_count)
 
 static int SOCK_SSPI_recv(SocketClass *self, void *buffer, int len)
 {
-#ifdef  USE_SSPI
-    if (!self->sspisvcs || !self->ssd)
-        return recv(self->socket, (char *) buffer, len, RECV_FLAG);
-    else
-        return SSPI_recv(self, (char *) buffer, len);
-#endif /* USE_SSPI */
     return recv(self->socket, (char *) buffer, len, RECV_FLAG);
 }
 
 static int SOCK_SSPI_send(SocketClass *self, const void *buffer, int len)
 {
-#ifdef  USE_SSPI
-    CSTR func = "SOCK_SSPI_send";
-
-    if (!self->sspisvcs || !self->ssd)
-        return send(self->socket, (char *) buffer, len, SEND_FLAG);
-    else
-        return SSPI_send(self, buffer, len);
-#endif /* USE_SSPI */
     return send(self->socket, (char *) buffer, len, SEND_FLAG);
 }
 
