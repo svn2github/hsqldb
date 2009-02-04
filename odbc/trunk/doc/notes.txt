@@ -31,3 +31,10 @@ client in order to have SSL ability????
 ws2_32.dll interceptor may be useful for debugging the Windows driver.
     http://codemagnet.blogspot.com/2007/10/winsock2-replacement.html , but it
     doesn't include the functions I need.
+
+
+Settings
+   Turn USE_SSPI Off!
+   Turn NOT_USE_LIBPQ On!  (to disable libpq)
+   Disable SSL temporarily until we get it working again, on UNIX use the
+    configure "--disable-openssl" switch.

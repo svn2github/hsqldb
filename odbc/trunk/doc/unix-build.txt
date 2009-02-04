@@ -9,7 +9,9 @@ UNIX Build Procedure
 
   autoreconf -i
 
-  ./configure
+  ./configure --disable-openssl   # Until we add SSL capability back
+
+  make
 
 The final output gets written to ".libs/psqlodbcw.so" ("src/.libs/psqlodbc.so"
 from the project home directory).  This location will be changing.
