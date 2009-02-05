@@ -944,23 +944,21 @@ char msgbuffer[ERROR_MSG_LENGTH + 1];
 
 SOCK_get_string(sock, msgbuffer, sizeof(msgbuffer));
 inolog("parameter name=%s\n", msgbuffer);
+    SOCK_get_string(sock, msgbuffer, sizeof(msgbuffer));
     if (stricmp(msgbuffer, "server_encoding") == 0)
     {
-        SOCK_get_string(sock, msgbuffer, sizeof(msgbuffer));
         if (conn->server_encoding)
             free(conn->server_encoding);
         conn->server_encoding = strdup(msgbuffer);
     }
     else if (stricmp(msgbuffer, "client_encoding") == 0)
     {
-        SOCK_get_string(sock, msgbuffer, sizeof(msgbuffer));
         if (conn->current_client_encoding)
             free(conn->current_client_encoding);
         conn->current_client_encoding = strdup(msgbuffer);
     }
     else if (stricmp(msgbuffer, std_cnf_strs) == 0)
     {
-        SOCK_get_string(sock, msgbuffer, sizeof(msgbuffer));
         mylog("%s=%s\n", std_cnf_strs, msgbuffer); 
         if (stricmp(msgbuffer, "on") == 0)
         {
@@ -972,7 +970,6 @@ inolog("parameter name=%s\n", msgbuffer);
         char    szVersion[32];
         int major, minor;
 
-        SOCK_get_string(sock, msgbuffer, sizeof(msgbuffer));
         strncpy_null(conn->pg_version, msgbuffer, sizeof(conn->pg_version));
         strcpy(szVersion, "0.0");
         if (sscanf(conn->pg_version, "%d.%d", &major, &minor) >= 2)
@@ -990,8 +987,6 @@ inolog("parameter name=%s\n", msgbuffer);
         qlog("    [ PostgreSQL version string = '%s' ]\n", conn->pg_version);
         qlog("    [ PostgreSQL version number = '%1.1f' ]\n", conn->pg_version_number);
     }
-    else
-        SOCK_get_string(sock, msgbuffer, sizeof(msgbuffer));
 
 inolog("parameter value=%s\n", msgbuffer);
 }

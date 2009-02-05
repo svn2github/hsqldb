@@ -1,12 +1,13 @@
 $Id$
 
+Need to get a unique code/number for our driver's product/service for use with
+the Windows MSI installer.  Procedure is documented in the Wix tutorial, I
+think.  (Looks like it may be the Package Id in the *.wxs files).
+
 Enhance or replace msi-src/make.bat.  Doesn't even have a clean target, and 
 the process needs one.
 
 Update license RTF file, which has obsolete FSF address.
-
-connection.c:getParamValues() does the same exact SOCK_get_string in
-all 5 or 6 if/else blocks.  Replace with single command.
 
 Abort processing at
 connection.c:CC_send_query_append(), op switch for op 'Z'.
@@ -19,12 +20,7 @@ This is a serious comm error and should not be ignored.
 Rename the *packet_build() function(s) so they are not misleading.  They do not
 just build packets, but perform transmissions.
 
-Need to get a unique code/number for our driver's product/service for use with
-the Windows MSI installer.  Procedure is documented in the Wix tutorial, I
-think.  (Looks like it may be the Package Id in the *.wxs files).
-
 Move output directories out of the "src" branch, for both UNIX and Windows.
-
 
 Look into wiping code that uses
 Non- conninfo[_]->use_server_side_prepare, since we always use server-side
