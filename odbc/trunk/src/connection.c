@@ -766,6 +766,7 @@ EatReadyForQuery(ConnectionClass *conn)
             CC_set_in_error_trans(conn);
             break;  
     }
+mylog("## Server report Trans STATUS (%d)\n", id);
     return id;  
 }
 
