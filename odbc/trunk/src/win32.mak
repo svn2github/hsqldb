@@ -42,9 +42,9 @@ CFG=Release
 !ENDIF 
 
 USE_LIBPQ=no
-USE_SSPI=yes
-# SSPI on, because according to the ifdefs in connection.c, this is require
-# for any SSL capability.
+USE_SSPI=no
+# SSPI off.  When we add SSL capability again, we will probably do it in a 
+# more platform-portable way.
 # LIBQP off, because our server does not support the Postgresql-specific
 # libpq library.
 
@@ -328,9 +328,6 @@ LINK32_OBJS= \
 	"$(INTDIR)\qresult.obj" \
 	"$(INTDIR)\results.obj" \
 	"$(INTDIR)\setup.obj" \
-!IF "$(USE_SSPI)" == "yes"
-	"$(INTDIR)\sspisvcs.obj" \
-!ENDIF
 	"$(INTDIR)\socket.obj" \
 	"$(INTDIR)\statement.obj" \
 	"$(INTDIR)\tuple.obj" \

@@ -47,21 +47,26 @@
           <File Id="pgxalib.dll" Name="pgxalib.dll" Source="../src/Release/pgxalib.dll" />
           <File Id="pgenlist.dll" Name="pgenlist.dll" Source="../src/Release/pgenlist.dll" />
           <File Id="pgenlista.dll" Name="pgenlista.dll" Source="../src/MultibyteRelease/pgenlista.dll" />
-          <File Id="libpq.dll" Name="libpq.dll" Source="$(var.PROGRAMFILES)\PostgreSQL\8.3\bin\libpq.dll" KeyPath="yes" />
 
           <!-- Gettext -->
+          <!--
           <File Id="libintl3.dll" Name="libintl3.dll" Source="$(var.PROGRAMFILES)\PostgreSQL\8.3\bin\libintl3.dll" />
           <File Id="libiconv2.dll" Name="libiconv2.dll" Source="$(var.PROGRAMFILES)\PostgreSQL\8.3\bin\libiconv2.dll" />
+          -->
 
           <!-- SSL -->
+          <!--
           <File Id="libeay32.dll" Name="libeay32.dll" Source="$(var.PROGRAMFILES)\PostgreSQL\8.3\bin\libeay32.dll" />
           <File Id="ssleay32.dll" Name="ssleay32.dll" Source="$(var.PROGRAMFILES)\PostgreSQL\8.3\bin\ssleay32.dll" />
+          -->
 
           <!-- MIT Kerberos -->
+          <!--
           <File Id="comerr32.dll" Name="comerr32.dll" Source="$(var.PROGRAMFILES)\PostgreSQL\8.3\bin\comerr32.dll" />
           <File Id="krb5_32.dll" Name="krb5_32.dll" Source="$(var.PROGRAMFILES)\PostgreSQL\8.3\bin\krb5_32.dll" />
           <File Id="k5sprt32.dll" Name="k5sprt32.dll" Source="$(var.PROGRAMFILES)\PostgreSQL\8.3\bin\k5sprt32.dll" />
           <File Id="gssapi32.dll" Name="gssapi32.dll" Source="$(var.PROGRAMFILES)\PostgreSQL\8.3\bin\gssapi32.dll" />
+          -->
 
           <!-- VC++ 7.1 runtime - required by Kerberos -->
           <File Id="msvcr71.dll" Name="msvcr71.dll" Source="$(var.SYSTEM32DIR)\msvcr71.dll" />

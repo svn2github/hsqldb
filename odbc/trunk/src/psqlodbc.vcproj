@@ -45,7 +45,7 @@
 				Optimization="2"
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories="&quot;C:\Program Files\PostgreSQL\8.2\include&quot;;&quot;C:\OpenSSL\include&quot;"
-				PreprocessorDefinitions="NDEBUG;USE_LIBPQ;WIN32;_WINDOWS;_USRDLL;PSQLODBC_EXPORTS;ODBCVER=0x0351;DRIVER_CURSOR_IMPLEMENT;WIN_MULTITHREAD_SUPPORT;DYNAMIC_LOAD;MULTIBYTE;UNICODE_SUPPORT;USE_SSL;_CRT_SECURE_NO_DEPRECATE;USE_SSPI"
+				PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS;_USRDLL;PSQLODBC_EXPORTS;ODBCVER=0x0351;DRIVER_CURSOR_IMPLEMENT;WIN_MULTITHREAD_SUPPORT;DYNAMIC_LOAD;MULTIBYTE;UNICODE_SUPPORT;USE_SSL;_CRT_SECURE_NO_DEPRECATE"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -70,14 +70,14 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib XOleHlp.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib winmm.lib libpq.lib ssleay32.lib libeay32.lib"
+				AdditionalDependencies="kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib XOleHlp.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib winmm.lib ssleay32.lib libeay32.lib"
 				OutputFile="psqlodbc35w.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="&quot;C:\Program Files\PostgreSQL\8.2\lib\ms&quot;;&quot;C:\OpenSSL\lib\VC&quot;"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile=".\psqlodbc.def"
-				DelayLoadDLLs="libpq.dll;ssleay32.dll;libeay32.dll;secur32.dll;crypt32.dll;XOLEHLP.DLL"
+				DelayLoadDLLs="ssleay32.dll;libeay32.dll;secur32.dll;crypt32.dll;XOLEHLP.DLL"
 				ProgramDatabaseFile="psqlodbc35w.pdb"
 				SubSystem="2"
 				ImportLibrary="psqlodbc35w.lib"
@@ -142,7 +142,7 @@
 				Optimization="2"
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories="&quot;C:\Program Files\PostgreSQL\8.2\include&quot;;&quot;C:\OpenSSL\include&quot;"
-				PreprocessorDefinitions="_DEBUG;USE_LIBPQ;WIN32;_WINDOWS;_USRDLL;PSQLODBC_EXPORTS;ODBCVER=0x0351;DRIVER_CURSOR_IMPLEMENT;WIN_MULTITHREAD_SUPPORT;DYNAMIC_LOAD;MULTIBYTE;UNICODE_SUPPORT;USE_SSL;_CRT_SECURE_NO_DEPRECATE;USE_SSPI"
+				PreprocessorDefinitions="_DEBUG;WIN32;_WINDOWS;_USRDLL;PSQLODBC_EXPORTS;ODBCVER=0x0351;DRIVER_CURSOR_IMPLEMENT;WIN_MULTITHREAD_SUPPORT;DYNAMIC_LOAD;MULTIBYTE;UNICODE_SUPPORT;USE_SSL;_CRT_SECURE_NO_DEPRECATE"
 				StringPooling="true"
 				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="true"
@@ -168,14 +168,14 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib XOleHlp.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib winmm.lib libpq.lib ssleay32.lib libeay32.lib"
+				AdditionalDependencies="kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib XOleHlp.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib winmm.lib ssleay32.lib libeay32.lib"
 				OutputFile="psqlodbc35w.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="&quot;C:\Program Files\PostgreSQL\8.2\lib\ms&quot;;&quot;C:\OpenSSL\lib\VC&quot;"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile=".\psqlodbc.def"
-				DelayLoadDLLs="libpq.dll;ssleay32.dll;libeay32.dll;secur32.dll;crypt32.dll;XOLEHLP.DLL"
+				DelayLoadDLLs="ssleay32.dll;libeay32.dll;secur32.dll;crypt32.dll;XOLEHLP.DLL"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="psqlodbc35w.pdb"
 				SubSystem="2"
@@ -900,10 +900,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\sspisvcs.c"
-				>
-			</File>
-			<File
 				RelativePath="statement.c"
 				>
 				<FileConfiguration
@@ -1073,10 +1069,6 @@
 			</File>
 			<File
 				RelativePath="socket.h"
-				>
-			</File>
-			<File
-				RelativePath=".\sspisvcs.h"
 				>
 			</File>
 			<File

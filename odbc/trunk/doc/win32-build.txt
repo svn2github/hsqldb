@@ -30,9 +30,6 @@ ONE-TIME SETUP FOR MSI (Windows Installer) BUILDING
     Ignore the warning from the Wix installer about Votive.  You don't
     need any other products or add-ons.
 
-    Install the Postgresql binary to the default location
-    (C:\Program Files\PostreSQL\8.3).
-
 
 BUILDING driver DLLs
 
@@ -43,6 +40,8 @@ BUILDING driver DLLs
         nmake /f win32.mak CFG=Release ALL
     To make the ANSI DLL (required for some older/unmaintained/bad clients):
         nmake /f win32.mak ANSI_VERSION=yes CFG=Release ALL
+
+    Can use target "CLEAN" instead of "ALL, for the obvious purpose.
 
     The output DLLs get written to directories "Release" and
     "MultibyteRelease" ("src/Release" and "src/MultibyteRelease" from the

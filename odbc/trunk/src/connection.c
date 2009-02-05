@@ -777,10 +777,10 @@ handle_error_message(ConnectionClass *self, char *msgbuf, size_t buflen, char *s
     ConnInfo    *ci = &(self->connInfo);
     char    msgbuffer[ERROR_MSG_LENGTH];
     UDWORD  abort_opt;
+    size_t  msgl;
 
     inolog("handle_error_message protocol=%s\n", ci->protocol);
     truncated = SOCK_get_string(sock, msgbuffer,sizeof(msgbuffer));
-    size_t  msgl;
 
     msgbuf[0] = '\0';
     for (;msgbuffer[0];)
@@ -1284,6 +1284,8 @@ original_CC_connect(ConnectionClass *self, char password_req, char *salt_para)
     char        salt[5], notice[512];
     CSTR        func = "original_CC_connect";
     BOOL    startPacketReceived = FALSE, anotherVersionRetry;
+    BOOL        ReadyForQuery = FALSE, retry = FALSE;
+    uint32  leng;
 
     mylog("%s: entering...\n", func);
 
@@ -1358,9 +1360,6 @@ inolog("protocol=%s version=%d,%d\n", ci->protocol, self->pg_version_major, self
     /*
      * Now get the authentication request from backend
      */
-
-    BOOL        ReadyForQuery = FALSE, retry = FALSE;
-    uint32  leng;
 
     do
     {
