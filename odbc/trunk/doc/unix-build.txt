@@ -2,9 +2,6 @@ $Id$
 
 UNIX Build Procedure
 
-  export PG_CONFIG=/path/to/bin/pg_config
-  # (Yes, you must have minimal PG binaries installed)
-
   cd src
 
   autoreconf -i
@@ -24,6 +21,7 @@ Run "make maintainer-clean" to reset/clear all the steps above.
 The unixODBC graphical program "ODBCConfig" just does not work for any driver
 I have ever tried to add.  If the same applies to you, you will need to edit
 the files
+
     /etc/odbc.ini      Driver definitions
     /etc/odbcinst.ini  Global DSN definitions
     $HOME/.odbc.ini    Personal DSN definitions

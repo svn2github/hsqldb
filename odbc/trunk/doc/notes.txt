@@ -38,3 +38,6 @@ Settings
    Turn NOT_USE_LIBPQ On!  (to disable libpq)
    Disable SSL temporarily until we get it working again, on UNIX use the
     configure "--disable-openssl" switch.
+
+We have SSL disabled for now, because it was dependent upon SSPI and
+libpq, and we want to use neither of them.

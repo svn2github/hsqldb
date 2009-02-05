@@ -1,9 +1,9 @@
 $Id$
 
-Fix headers to most source files, which reference non-existent "notice.txt"
-file.
+Enhance or replace msi-src/make.bat.  Doesn't even have a clean target, and 
+the process needs one.
 
-Update license text file, which has obsolete FSF address.
+Update license RTF file, which has obsolete FSF address.
 
 connection.c:getParamValues() does the same exact SOCK_get_string in
 all 5 or 6 if/else blocks.  Replace with single command.
@@ -16,7 +16,7 @@ Abort processing at
 socket.c:SOCK_get_id(), the sock-reslen > 0 block ("has to eat...").
 This is a serious comm error and should not be ignored.
 
-Rename the *packet_build() functions so they are not misleading.  They do not
+Rename the *packet_build() function(s) so they are not misleading.  They do not
 just build packets, but perform transmissions.
 
 Need to get a unique code/number for our driver's product/service for use with
@@ -26,23 +26,10 @@ think.  (Looks like it may be the Package Id in the *.wxs files).
 Move output directories out of the "src" branch, for both UNIX and Windows.
 
 
-ELIMINATE CODE FOR FOLLOWING CAPABILITIES, WHICH WE WILL NEVER NEED.
-    [PGAPI stuff does apply to us.  Don't confuse this with libpq.]
-    Add code to remove conditional sets and checks for the following features,
-     or at least add validation so nothing accidentally runs thinking any of
-     these features is on.
-    libpq  (PostgreSQL-specific C API).  NOT_USE_LIBPQ true.
-     (Judging by the ifdefs in connection.c, sspi is require even on the UNIX
-     client in order to have SSL ability????)
-* Occurs in Makefile* (all but *.am derived), *.dsp, *.rc, *.vcproj win*.mak
-    Any version-specific code for protocols other than PG_PROTOCOL_74.  All
-     tests for versions after/greater something apply to us, since we are
-     using the latest protocol.
-    Function call stuff.  Both PostgreSQL-specific, and legacy.
-* Wipe connection.c:CC_send_function
-    Non- conninfo[_]->use_server_side_prepare, since we always use server-side
-     prepares.
-    use_declarefetch usage. (based on "Use Declare/Fetch" driver setting.
-     DECLARE/FETCH/MOVE/CLOSE commands needed to support this.
-    SSPI
-* Occurs in Makefile* (all but *.am derived), **.vcproj win*.mak
+Look into wiping code that uses
+Non- conninfo[_]->use_server_side_prepare, since we always use server-side
+prepares.
+
+Look into of use_declarefetch setting (based on "Use Declare/Fetch" driver
+setting.  DECLARE/FETCH/MOVE/CLOSE commands, which don't have, are needed to
+support this.

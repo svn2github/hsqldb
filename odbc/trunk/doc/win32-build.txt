@@ -11,13 +11,14 @@ ONE-TIME SETUP FOR DLL BUILDING
     is the version you need.  You can install to any directory, and you can
     certainly uncheck the option to install SQL Server.
 
+    [ THIS STEP UNNECESSARY UNTIL WE ENABLE SSL AGAIN
     Install the current NON-LIGHT! OpenSSL for platform from
     http://slproweb.com/products/Win32OpenSSL.html (misnomer, 64 binaries too).
     Install to default location, select to install shareds to bin, not your
     Windows directory.  (I am not yet working with SSL.  I am seeing
     conflicting information as to whether OpenSSL is required on Windows.
     The code is looking like OpenSSL is needed only for libpq.. which we
-    do not want, and SSPI is needed for SSL capability.)
+    do not want, and SSPI is needed for SSL capability.) ]
 
 
 ONE-TIME SETUP FOR MSI (Windows Installer) BUILDING
@@ -33,7 +34,7 @@ ONE-TIME SETUP FOR MSI (Windows Installer) BUILDING
 
 BUILDING driver DLLs
 
-    The installation adds global variable VS90COMNTOOLS.
+    The installation of Visual C++ adds global variable VS90COMNTOOLS.
     Run %VS90COMNTOOLS%\vsvars32.bat to set up your MSV C++ build environment.
 
     To make the Unicode DLL (better ODBC support):
@@ -70,6 +71,8 @@ BUILDING MSI INSTALLER
 
     where <VERSION> is a label of the format "08.03.0401" (without the qoutes).
     The output *.msi file gets written to the same (msi-src) directory.
+
+    It is alright to rename the *.msi output file.
 
 
 REPLACING INSTALLED DRIVER
