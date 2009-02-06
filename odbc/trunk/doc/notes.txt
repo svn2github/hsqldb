@@ -1,5 +1,70 @@
 $Id$
 
+RUNTIME SETTINGS
+
+ODBC does not allow an empty string for a DSM database name.  Therefore,
+you must specify DSN database name of "/" (without the quotes) to indicate
+the default database
+
+You may want to turn on one or more of the log files, with DSN settings like
+(counter-intuitively) "Debug" for the mylog and "CommLog" for the comm. log.
+Like several of the settings, must set the value to "1" to enable.
+
+
+(The settings marked with * below are on by default).
+
+When time allows, we need to remove the ability to set these.
+In the meantime, ALWAYS TURN THE FOLLOWING SETTINGS OFF.
+
+    Optimizer: 0.
+
+    Ksqo*: 0
+
+    UseDeclareFetch: 0.
+
+    Parse: 0. (not 100% sure Fred doesn't want to port this)
+
+    TextAsLongVarchar*: 0, UnknownsAsLongVarchar: 0, BoolsAsChar*: 0
+
+    ExtraSysTablePrefixes: "".  We distinguish System tables by schema.
+
+    RowVersioning: No.
+    Implemenation is Postgresql-specific.  Fred may reimplement.
+
+    DisallowPremature: 0.
+
+    Protocol: 7.4.
+
+Enable
+
+    UniqueIndex*: 1
+    (just a guess)  Dialog code says default is "1   /* don't recognize */"
+    Seems to be saying that the default is on and it is off.
+
+    UseServerSidePrepare: 1
+    (not Yes, etc.)
+
+Special
+
+    UnknownSizes may be useful until we start passing column precision/sizes
+    from the server.  After that, we don't want this setting.  Default -1???
+
+    MaxVarcharSize seems to only be desirable as a client app idiocy workaround.
+
+    UpdateableCursors*  0/1.  This is pseudo client cursor caching.
+     I think Fred is going to implement the real thing.
+
+    ByteaAsLongVarBinary: 0.  ?  Don't have LOs working yet.
+
+    FakeOidIndex: Yes|No
+    ShowOidColumn: Yes|No
+    I don't know much about OID/Rowid usage in ODBC.
+
+    CancelAsFreeStmt.  ? Undocumented.
+
+------------------------------------------------------------------------------
+
+
 CURSOR FUNCTIONALITY
 Most "cursor" functionality is handled internal in client-side code
 that we probably don't need to touch.  The low-leve code works with local
@@ -11,10 +76,12 @@ in the driver source code.  convert.c:
         {
             sprintf(new_statement, "%sdeclare \"%s\"%s cursor%s for ",
                 new_statement, SC_cursor_name(stmt), opt_scroll, opt_hold);
-Contrary to the results of my code search, the driver setting
-"Use Declare/Fetch" definitely implies that it conditionally issues
-DECLARE...CURSOR commands.  Though I may not see it on the wire because
+
+The driver setting "Use Declare/Fetch" implies that it conditionally issues
+DECLARE...CURSOR commands
+.  Though I may not see it on the wire because
 the feature may be off, I should see CURSOR strings in the C code.
+Contrary to the results of my code search, the driver setting
 
 SERVER-SIDE PREPARES
 Could mean either the EXTENDED mode commands, or the Postresql SQL commands

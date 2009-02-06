@@ -25,7 +25,3 @@ Move output directories out of the "src" branch, for both UNIX and Windows.
 Look into wiping code that uses
 Non- conninfo[_]->use_server_side_prepare, since we always use server-side
 prepares.
-
-Look into of use_declarefetch setting (based on "Use Declare/Fetch" driver
-setting.  DECLARE/FETCH/MOVE/CLOSE commands, which don't have, are needed to
-support this.

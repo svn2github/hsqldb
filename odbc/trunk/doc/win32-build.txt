@@ -101,11 +101,6 @@ REPLACING INSTALLED DRIVER
     Use Control Panel / Administrative Tools / Data Sources (ODBC) to
     configure your DSNs.  (This is the Windows ODBC Data Source Administrator).
 
-    Until we do further work, you must use the ODBC Data Source
-    Administrator to turn on "Server side prepare".  Click "Configure"
-    button for the selected DSN, then Datasource button to bring up
-    Advanced Options.  The setting is on Page 2.
-
     ODBC does not allow an empty string for a DSM database name.  Therefore,
     you must specify "/" (without the quotes) to indicate the default
     database.  This setting is on the main Configure page for the DSN.
@@ -117,4 +112,4 @@ REPLACING INSTALLED DRIVER
     wrong, at least in some common cases.  The MyLog file gets written in
     your home directory, if you have one.
 
-    Do not change "Protocol" from "7.4+".
+See the RUNTIME SETTINGS section in the notes.txt file.
