@@ -1,30 +1,43 @@
 using System;
+using System.Reflection;
 
 namespace System.Data.Hsqldb.TestCoverage
 {
+    /// <summary>
+    /// Indicates the assembly containing the subject type being tested within the test fixture.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Assembly, AllowMultiple=false, Inherited=true)]
     public class SubjectAssemblyAttribute : Attribute
     {
-        private string m_location;
+        private string m_fullName;
 
+        /// <summary>
+        /// Constructs a new instance for which the test subject assembly is null.
+        /// </summary>
         public SubjectAssemblyAttribute()
         {
         }
 
-        public SubjectAssemblyAttribute(string location)
+        /// <summary>
+        ///  Constructs a new instance with the given full name of the assembly containing the subject.
+        /// </summary>
+        /// <param name="fullName"></param>
+        public SubjectAssemblyAttribute(string fullName)
         {
-            m_location = location;
+            m_fullName = fullName;
         }
 
-        public string Location
+
+        /// <value>The full name of the assembly containing the subject type being tested within the test fixture</value>
+        public string FullName
         {
             get
             {
-                return m_location;
+                return m_fullName;
             }
             set
             {
-                m_location = value;
+                m_fullName = value;
             }
         }
     }

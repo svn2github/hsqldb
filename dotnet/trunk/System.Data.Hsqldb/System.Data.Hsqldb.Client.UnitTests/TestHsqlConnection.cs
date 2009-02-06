@@ -1,10 +1,9 @@
 using System;
-using System.Data.Hsqldb.TestCoverage;
-using NUnit.Framework;
-using System.Data.Hsqldb.Client;
 using System.Data;
+using System.Data.Hsqldb.Client;
+using System.Data.Hsqldb.TestCoverage;
 using System.Transactions;
-
+using NUnit.Framework;
 namespace UnitTests
 {    
     [TestFixture, ForSubject(typeof(HsqlConnection))]
@@ -16,19 +15,16 @@ namespace UnitTests
             using (HsqlConnection testSubject = new HsqlConnection())
             using (HsqlTransaction transaction = testSubject.BeginTransaction())
             {
-                Assert.Fail("TODO");
+                
             }
-        }
-        
-        [Test, OfMember("BeginTransaction")]
-        public virtual void BeginTransaction()
-        {
+
             using (HsqlConnection testSubject = new HsqlConnection())
-            using (HsqlTransaction transaction = testSubject.BeginTransaction(IsolationLevel.ReadUncommitted))
+            using (HsqlTransaction transaction = testSubject.BeginTransaction(System.Data.IsolationLevel.ReadUncommitted))
             {
-                Assert.Fail("TODO");
+                
             }
-        
+
+            Assert.Fail("TODO");
         }
         
         [Test, OfMember("ChangeDatabase")]

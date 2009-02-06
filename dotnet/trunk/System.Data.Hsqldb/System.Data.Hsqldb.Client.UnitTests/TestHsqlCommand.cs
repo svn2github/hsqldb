@@ -1,6 +1,4 @@
 using System;
-using TestCoverage;
-using TestDoubles;
 using NUnit.Framework;
 using System.Data.Hsqldb.TestCoverage;
 using System.Data.Hsqldb.Common.Enumeration;
@@ -158,15 +156,8 @@ namespace System.Data.Hsqldb.Client.UnitTests
                         int fieldCount = reader.GetValues(new object[reader.FieldCount]);
                     }
                 }
-
-                // 
-                Assert.Fail("TODO");
             }
-        }
 
-        [Test, OfMember("ExecuteReader")]
-        public virtual void ExecuteReader()
-        {
             using (HsqlConnection connection = NewConnection())
             using (HsqlCommand testSubject = connection.CreateCommand())
             {
@@ -174,13 +165,10 @@ namespace System.Data.Hsqldb.Client.UnitTests
                 HsqlDataReader reader = testSubject.ExecuteReader(CommandBehavior.SchemaOnly);
                 DataTable schemaTable = reader.GetSchemaTable();
 
-                foreach(DataRow row in schemaTable.Rows) 
+                foreach (DataRow row in schemaTable.Rows)
                 {
                     object[] values = row.ItemArray;
                 }
-
-                // 
-                Assert.Fail("TODO");
             }
         }
 
