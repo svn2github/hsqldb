@@ -251,7 +251,7 @@ namespace System.Data.Hsqldb.Client
             }
             #endregion
 
-            #region IsSingleRow(CommandBehavior
+            #region IsSingleRow(CommandBehavior)
             /// <summary>
             /// Determines whether the <c>SingleRow</c> flag is set in the
             /// specified <c>commandBehavior</c>.

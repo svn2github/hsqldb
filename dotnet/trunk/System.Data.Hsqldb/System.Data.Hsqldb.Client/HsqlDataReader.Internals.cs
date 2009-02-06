@@ -37,8 +37,9 @@
 using System.Collections;
 using System.Data;
 using System.Data.Common;
-using System.Data.Hsqldb.Common.IO;
+using System.Data.Hsqldb.Common;
 using System.Data.Hsqldb.Common.Enumeration;
+using System.Data.Hsqldb.Common.IO;
 using System.Data.Hsqldb.Client.MetaData;
 using System.Data.Hsqldb.Common.Sql.Type;
 using System.Data.SqlTypes;
@@ -49,7 +50,6 @@ using System.Text;
 using System.Xml;
 
 using Trace = org.hsqldb.Trace;
-using System.Data.Hsqldb.Common;
 
 #endregion
 
@@ -78,7 +78,7 @@ namespace System.Data.Hsqldb.Client
         private int m_fieldCount;
         private bool m_isClosed;
         private int[] m_columnTypes;
-        private DataTable m_schemaTable;
+        private WeakReference m_schemaTableReference;
         private org.hsqldb.Result.ResultMetaData m_metaData;
         private org.hsqldb.lib.IntValueHashMap m_columnMap;
 
@@ -123,7 +123,7 @@ namespace System.Data.Hsqldb.Client
                 (m_currentRecord == null) || 
                 (m_result == null))
             {
-                throw new HsqlDataSourceException((org.hsqldb.HsqlException)Trace.error(
+                throw new HsqlDataSourceException(Trace.error(
                     Trace.NO_DATA_IS_AVAILABLE));
             }
         }
@@ -131,15 +131,16 @@ namespace System.Data.Hsqldb.Client
 
         #region DisposeResult()
         /// <summary>
-        /// Releases all result row storage, making it elligible for garbage collection.
+        /// Releases all result row storage, making it elligible
+        /// for garbage collection.
         /// </summary>
         internal void DisposeResult()
         {
-            org.hsqldb.Result r = m_result;
+            org.hsqldb.Result result = m_result;
 
-            if (r != null)
+            if (result != null)
             {
-                r.clear();
+                result.clear();
             }
 
             m_recordsAffectedCounts = m_NoUpdateCounts;
@@ -147,19 +148,21 @@ namespace System.Data.Hsqldb.Client
         }
         #endregion
 
-        #region DisposeSchemaTable
+        #region DisposeSchemaTable()
         /// <summary>
-        /// 
+        /// Nullifies the reference, if any, to the internally cached
+        /// schema table instance, making it elligible for garbage collection.
         /// </summary>
         internal void DisposeSchemaTable()
         {
-            m_schemaTable = null;
+            m_schemaTableReference.Target = null;
         } 
         #endregion
 
-        #region DisposeColumnMap
+        #region DisposeColumnMap()
         /// <summary>
-        /// 
+        /// Nullifies the reference, if any, to the internally cached column
+        /// label map, making it elligible for garbage collection.
         /// </summary>
         internal void DisposeColumnMap()
         {
@@ -172,7 +175,7 @@ namespace System.Data.Hsqldb.Client
         /// <summary>
         /// Gets the standard or default representation of the value of the
         /// field with the given column ordinal in the current row of the
-        /// result set.
+        /// underlying result set.
         /// </summary>
         /// <remarks>
         /// Because this method does not check if this reader
@@ -414,7 +417,7 @@ namespace System.Data.Hsqldb.Client
         /// *only* when it is already known that this reader is open and
         /// row data is available.
         /// </remarks>        
-        /// <param name="ordinal">The ordinal.</param>
+        /// <param name="ordinal">The column ordinal.</param>
         /// <returns>The provider-specific value representation.</returns>
         internal object GetProviderSpecificValueInternal(int ordinal)
         {
@@ -508,9 +511,9 @@ namespace System.Data.Hsqldb.Client
                 case (int)HsqlProviderType.Object:
                     {
                         byte[] bytes = ((org.hsqldb.types.JavaObject)value).getBytes();
-                        bool dummy;
+                        bool isJavaObject;
 
-                        return SqlObject.Deserialize(bytes, out dummy);
+                        return SqlObject.Deserialize(bytes, out isJavaObject);
                     }
                 case (int)HsqlProviderType.Real:
                     {
@@ -561,6 +564,25 @@ namespace System.Data.Hsqldb.Client
             }
         }
 
+        #endregion
+
+        #region HasCommandBehavior(CommandBehavior)
+        /// <summary>
+        /// in common with the given <c>CommandBehavior</c>.
+        /// </summary>
+        /// <remarks>
+        /// Because the test is disjunctive, only one flag at a time can be
+        /// tested to make an accurate determiniation that it is set.
+        /// </remarks>
+        /// <param name="commandBehavior">to test</param>
+        /// <returns>
+        /// <c>true</c> if the given value shares any set flags in common with
+        /// this reader's set command behavior flags; otherwise <c>false</c>.
+        /// </returns>
+        internal bool HasCommandBehavior(CommandBehavior commandBehavior)
+        {
+            return 0 != (m_commandBehavior & commandBehavior);
+        } 
         #endregion
         
         #endregion

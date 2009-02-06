@@ -423,7 +423,7 @@ SELECT table_schem
                 return columnMap;
             }
 
-            StringBuilder sb = new StringBuilder("(");
+            StringBuilder sb = new StringBuilder('(');
             count = 0;
 
             foreach (TableIdentifier tableIdentifier in tableSet.Keys)
@@ -435,54 +435,60 @@ SELECT table_schem
 
                 count++;
 
+                sb.Append("(bri.table_schem");
+
                 string schemaName = tableIdentifier.m_schema;
+
+                if (string.IsNullOrEmpty(schemaName))
+                {
+                    sb.Append(" IS NULL ");
+                }
+                else
+                {
+                    sb.Append(" = ").Append(StringConverter.toQuotedString(
+                        schemaName, '\'', /*escape inner quotes*/ true));
+                }
+
                 string tableName = tableIdentifier.m_table;
 
-                string schemaPredicate = string.IsNullOrEmpty(schemaName)
-                    ? " IS NULL" : string.Concat(" = ", StringConverter
-                    .toQuotedString(schemaName, '\'', true));
+                sb.Append(" AND bri.table_name = ").Append(
+                    StringConverter.toQuotedString(tableName, '\'', 
+                    /*escape inner quotes*/ true));
 
-                string tablePredicate = string.Concat(" = ", StringConverter
-                    .toQuotedString(tableName, '\'', true));
-
-                sb.Append('(').Append("bri.table_schem").Append(
-                    schemaPredicate).Append(" AND ").Append("bri.table_name")
-                    .Append(tablePredicate).Append(')');
+                sb.Append(')');
             }
 
-            sb.Append(")");
+            sb.Append(')');
 
             string predicate = sb.ToString();
 
-            using (DbCommand command = reader.OriginatingConnection
-                .CreateCommand())
+            using (HsqlCommand command = 
+                reader.OriginatingConnection.CreateCommand())
             {
                 command.CommandText = string.Format(KeyInfoQuery, predicate);
                 command.CommandType = CommandType.Text;
 
-                using (reader = (HsqlDataReader)command.ExecuteReader())
+                using (HsqlDataReader keyInfoReader = command.ExecuteReader())
                 {
-                    while (reader.Read())
+                    while (keyInfoReader.Read())
                     {
-                        //string type = reader.GetString(0);
-                        bool isKey = reader.GetBoolean(3);
+                        bool isKey = keyInfoReader.GetBoolean(3);
 
                         if (!isKey)
                         {
                             continue;
                         }
 
-                        string schema = reader.GetString(0);
-                        string table = reader.GetString(1);
-                        string column = reader.GetString(2);
+                        string schema = keyInfoReader.GetString(0);
+                        string table = keyInfoReader.GetString(1);
+                        string column = keyInfoReader.GetString(2);
 
                         ColumnIdentifier key = new ColumnIdentifier(schema,
                             table, column);
-                        KeyInfo keyInfo;
 
-                        if (!columnMap.TryGetValue(key, out keyInfo))
+                        if (!columnMap.ContainsKey(key))
                         {
-                            keyInfo = new KeyInfo();
+                            KeyInfo keyInfo = new KeyInfo();
 
                             keyInfo.m_isKey = true;
                             keyInfo.m_isUnique = false;
@@ -512,15 +518,13 @@ SELECT table_schem
         /// <exception cref="HsqlDataSourceException">
         /// If a data access error occurs.
         /// </exception>
-        public static DataTable CreateSchemaTable(
-            HsqlDataReader reader)
+        public static DataTable CreateSchemaTable(HsqlDataReader reader)
         {
             Result result = reader.m_result;
             int columnCount = result.getColumnCount();
             ResultMetaData metaData = result.metaData;
             DataTable table = CreateTable(columnCount);
-            bool includeKeyInfo = (reader.m_commandBehavior &
-                CommandBehavior.KeyInfo) != 0;
+            bool includeKeyInfo = reader.HasCommandBehavior(CommandBehavior.KeyInfo);
             Dictionary<ColumnIdentifier, KeyInfo> keyInfoMap = (includeKeyInfo)
                 ? HsqlResultSetMetaData.GetKeyInfo(reader)
                 : null;
@@ -551,7 +555,7 @@ SELECT table_schem
                 bool isIdentity = isAutoIncrement;
                 bool isRowVersion = false;
                 bool isHidden = false;
-                bool isLong = IsLongProviderType(providerType);
+                bool isLong = HsqlConvert.ToIsLongProviderType(providerType);
                 bool isReadOnly = !metaData.isWritable[i];
 
                 if ((columnSize == 0)
@@ -652,9 +656,14 @@ SELECT table_schem
             AddColumn(collection, false, STOC.IsHidden, typeof(bool));
             AddColumn(collection, false, STC.IsLong, typeof(bool));
             AddColumn(collection, null, STOC.IsReadOnly, typeof(bool));
-            AddColumn(collection, null, STC.NonVersionedProviderType, typeof(int));
             AddColumn(collection, null, STOC.ProviderSpecificDataType, typeof(object));
-
+            AddColumn(collection, null, "DataTypeName", typeof(string));
+            AddColumn(collection, null, "XmlSchemaCollectionDatabase", typeof(string));
+            AddColumn(collection, null, "XmlSchemaCollectionOwningSchema", typeof(string));
+            AddColumn(collection, null, "XmlSchemaCollectionName", typeof(string));
+            AddColumn(collection, null, "UdtAssemblyQualifiedName", typeof(string));
+            AddColumn(collection, null, STC.NonVersionedProviderType, typeof(int));
+            
             return table;
         }
 
@@ -829,8 +838,6 @@ SELECT table_schem
             row[STC.BaseSchemaName] = baseSchemaName;
             row[STC.BaseTableName] = baseTableName;
             row[STC.DataType] = dataType;
-            row[STC.ProviderType] = providerType;
-            row[STC.NonVersionedProviderType] = providerType;
             row[STC.AllowDBNull] = allowDBNull;
             row[STC.ProviderType] = providerType;
             row[STC.IsAliased] = isAliased;
@@ -841,124 +848,18 @@ SELECT table_schem
             row[STOC.IsHidden] = isHidden;
             row[STC.IsLong] = isLong;
             row[STOC.IsReadOnly] = isReadOnly;
-            row[STOC.ProviderSpecificDataType] = GetProviderSpecificDataType(providerType);            
+            row[STOC.ProviderSpecificDataType] = HsqlConvert.ToProviderSpecificDataType(providerType);
+            row["DataTypeName"] = HsqlConvert.ToSqlDataTypeName(providerType);
+            //row["XmlSchemaCollectionDatabase"] = null;
+            //row["XmlSchemaCollectionOwningSchema"] = null;
+            //row["XmlSchemaCollectionName"] = null;
+            //row["UdtAssemblyQualifiedName"] = null;
+            row[STC.NonVersionedProviderType] = providerType;
 
             dataTable.Rows.Add(row);
         }
 
         #endregion
-
-        #region IsLongProviderType(int)
-
-        /// <summary>
-        /// Determines whether the provider-specific data type code
-        /// corresponds to a long type, such as an SQL LONGVARBINARY or
-        /// LONGVARCHAR type.
-        /// </summary>
-        /// <param name="type">
-        /// The provider-specific data type code for which to make the
-        /// determination.
-        /// </param>
-        /// <returns>
-        /// <c>true</c> if the specified data type code corresponds to
-        /// a long provider type; otherwise, <c>false</c>.
-        /// </returns>
-        static bool IsLongProviderType(int type)
-        {
-            switch (type)
-            {
-                case (int)HsqlProviderType.LongVarBinary:
-                case (int)HsqlProviderType.LongVarChar:
-                case (int)HsqlProviderType.Blob:
-                case (int)HsqlProviderType.Clob:
-                    {
-                        return true;
-                    }
-            }
-
-            return false;
-        }
-
-        #endregion
-
-        /// <summary>
-        /// Gets the <see cref="System.Type"/> used internally to represent
-        /// values of the SQL type indicated by the given data type code.
-        /// </summary>
-        /// <param name="type">The data type code</param>
-        /// <returns>
-        /// The <see cref="System.Type"/> used internally to represent
-        /// values of the indicated SQL type.
-        /// </returns>
-        static Type GetProviderSpecificDataType(int type)
-        {
-            switch (type)
-            {
-                case HsqlTypes.BIGINT:
-                    {
-                        return typeof(java.lang.Long);
-                    }
-                case HsqlTypes.BINARY:
-                case HsqlTypes.LONGVARBINARY:
-                case HsqlTypes.VARBINARY:
-                    {
-                        return typeof(byte[]);
-                    }
-                case HsqlTypes.OTHER:
-                    {
-                        // typeof(java.io.Serializable.__Interface)
-                        return typeof(object);
-                    }
-                case HsqlTypes.BOOLEAN:
-                    {
-                        return typeof(java.lang.Boolean);
-                    }
-                case HsqlTypes.CHAR:
-                case HsqlTypes.LONGVARCHAR:
-                case HsqlTypes.VARCHAR:
-                case HsqlTypes.XML:    //?
-                    {
-                        return typeof(string);
-                    }
-                case HsqlTypes.DATALINK:
-                    {
-                        return typeof(java.net.URL);
-                    }
-                case HsqlTypes.DATE:
-                    {
-                        return typeof(java.sql.Date);
-                    }
-                case HsqlTypes.DECIMAL:
-                case HsqlTypes.NUMERIC:
-                    {
-                        return typeof(java.math.BigDecimal);
-                    }
-                case HsqlTypes.DOUBLE:
-                case HsqlTypes.FLOAT:
-                case HsqlTypes.REAL:
-                    {
-                        return typeof(java.lang.Double);
-                    }
-                case HsqlTypes.INTEGER:
-                case HsqlTypes.SMALLINT:
-                case HsqlTypes.TINYINT:
-                    {
-                        return typeof(java.lang.Integer);
-                    }
-                case HsqlTypes.TIME:
-                    {
-                        return typeof(java.sql.Time);
-                    }
-                case HsqlTypes.TIMESTAMP:
-                    {
-                        return typeof(java.sql.Timestamp);
-                    }
-                default:
-                    {
-                        return null;
-                    }
-            }
-        }
     }
 
     #endregion

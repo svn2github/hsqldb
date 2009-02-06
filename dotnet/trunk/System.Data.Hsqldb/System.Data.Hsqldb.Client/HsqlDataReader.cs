@@ -310,7 +310,7 @@ namespace System.Data.Hsqldb.Client
         #region WriteResult(Stream, Result)
         /// <summary>
         /// Writes a <c>Result</c> to a <c>Stream</c> using
-        /// the HSQLDB 1.8.0.7 <c>org.hsqldb.Result</c> serialization
+        /// the HSQLDB 1.8.0 <c>org.hsqldb.Result</c> serialization
         /// protocol.
         /// </summary>
         /// <param name="stream">The stream.</param>

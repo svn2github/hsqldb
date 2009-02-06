@@ -395,7 +395,7 @@ namespace System.Data.Hsqldb.Client
                 // Don't leak compiled statement handles
                 if (connection != null &&
                     connection.State == ConnectionState.Open &&
-                    && statement != null)
+                    statement != null)
                 {
                     statement.Free(Session);
                 }

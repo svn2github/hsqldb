@@ -76,16 +76,22 @@ namespace System.Data.Hsqldb.Client
 
                 // free up any resoures dedicated to representing row data 
                 DisposeResult();
+                //DisposeColumnMap();
+                //DisposeSchemaTable();
                 BeforeFirst();
 
-                if (0 != (m_commandBehavior & CommandBehavior.CloseConnection))
+                // TODO: check interaction with System.Transaction enlistment
+                if (HasCommandBehavior(CommandBehavior.CloseConnection))
                 {
                     DbConnection connection = m_originatingConnection;
 
                     if (connection != null)
                     {
                         try { connection.Close(); }
-                        catch (Exception) { }
+                        catch (Exception) 
+                        { 
+                            // CHECKME:  rethrow or swallow?
+                        }
                     }
                 }
 
@@ -106,14 +112,19 @@ namespace System.Data.Hsqldb.Client
         /// </returns>
         public override DataTable GetSchemaTable()
         {
-            if (m_schemaTable == null)
+            DataTable schemaTable;
+            WeakReference stRef = m_schemaTableReference;
+
+            if (!stRef.IsAlive || null == (schemaTable = (DataTable) stRef.Target))
             {
                 CheckClosed();
 
-                m_schemaTable = HsqlResultSetMetaData.CreateSchemaTable(this);
+                schemaTable = HsqlResultSetMetaData.CreateSchemaTable(this);
+
+                stRef.Target = schemaTable;
             }
 
-            return m_schemaTable;
+            return schemaTable;
         }
         #endregion
 
@@ -374,7 +385,8 @@ namespace System.Data.Hsqldb.Client
             if (0 > dataOffset || dataOffset > int.MaxValue)
             {
                 throw new ArgumentException(
-                    "dataOffset out of range: " + dataOffset);
+                    "dataOffset value out of range: " + dataOffset,
+                    "dataOffset");
             }
 
             CheckClosed();
@@ -666,9 +678,13 @@ namespace System.Data.Hsqldb.Client
         /// <returns>
         /// A string representing the name of the SQL data type.
         /// </returns>
+        /// <exception cref="IndexOutOfRangeException">
+        /// When the specified <c>ordinal</c> is less than Zero (<c>0</c>)
+        /// or greater than or equal to <see cref="FieldCount">FieldCount</see>.
+        /// </exception>
         public override string GetDataTypeName(int ordinal)
         {
-            return org.hsqldb.Types.getTypeName(m_metaData.colTypes[ordinal]);
+            return HsqlConvert.ToSqlDataTypeName(m_metaData.colTypes[ordinal]);
         }
 
         #endregion
@@ -799,6 +815,10 @@ namespace System.Data.Hsqldb.Client
         /// <returns>
         /// The field type corresponding to the specified column ordinal.
         /// </returns>
+        /// <exception cref="IndexOutOfRangeException">
+        /// When the specified <c>ordinal</c> is less than Zero (<c>0</c>)
+        /// or greater than or equal to <see cref="FieldCount">FieldCount</see>.
+        /// </exception>
         public override Type GetFieldType(int ordinal)
         {
             return HsqlConvert.ToDataType(m_columnTypes[ordinal]);
@@ -837,7 +857,7 @@ namespace System.Data.Hsqldb.Client
                 throw new NullReferenceException();
             }
 
-            return (float)HsqlConvert.FromJava.ToReal(value);
+            return HsqlConvert.FromJava.ToReal(value);
         }
 
         #endregion
@@ -872,6 +892,8 @@ namespace System.Data.Hsqldb.Client
             {
                 throw new NullReferenceException();
             }
+
+            // TODO:  simplify and consider migrating to HsqlConvert.FromJava
 
             org.hsqldb.types.Binary binaryValue
                 = value as org.hsqldb.types.Binary;
@@ -1082,6 +1104,11 @@ namespace System.Data.Hsqldb.Client
         /// When the value of the specified column cannot be represented
         /// as a 16-bit signed integer.
         /// </exception>
+        /// <exception cref="System.OverflowException">
+        /// When the magnitude of the value of the specified column causes
+        /// an arithmetic overflow to occur while casting the value to a 16-bit
+        /// signed integer.
+        /// </exception>
         public override short GetInt16(int ordinal)
         {
             CheckClosed();
@@ -1158,6 +1185,11 @@ namespace System.Data.Hsqldb.Client
         /// When the value of the specified column cannot be represented
         /// as a 32-bit signed integer.
         /// </exception>
+        /// <exception cref="System.OverflowException">
+        /// When the magnitude of the value of the specified column causes
+        /// an arithmetic overflow to occur while casting the value to a 32-bit
+        /// signed integer.
+        /// </exception>
         public override int GetInt32(int ordinal)
         {
             CheckClosed();
@@ -1224,6 +1256,11 @@ namespace System.Data.Hsqldb.Client
         /// <exception cref="HsqlDataSourceException">
         /// When the value of the specified column cannot be represented
         /// as a 64-bit signed integer.
+        /// </exception>
+        /// <exception cref="System.OverflowException">
+        /// When the magnitude of the value of the specified column causes
+        /// an arithmetic overflow to occur while casting the value to a 64-bit
+        /// signed integer.
         /// </exception>
         public override long GetInt64(int ordinal)
         {
@@ -1481,7 +1518,6 @@ namespace System.Data.Hsqldb.Client
             m_columnMap.put(name, columnIndex);
 
             return columnIndex;
-
         }
 
         #endregion
@@ -1571,6 +1607,8 @@ namespace System.Data.Hsqldb.Client
             object[] data = m_currentRecord.data;
             int[] types = m_metaData.colTypes;
 
+            // inlined for performance
+
             for (int count = 0; count < valueCount; count++)
             {
                 object value = data[count];
@@ -1625,18 +1663,36 @@ namespace System.Data.Hsqldb.Client
                         }
                     case (int)HsqlProviderType.Double:
                     case (int)HsqlProviderType.Float:
-                    case (int)HsqlProviderType.Real:
                         {
                             values[count] = ((java.lang.Double)value)
                                 .doubleValue();
 
                             break;
                         }
+                    case (int)HsqlProviderType.Real:
+                        {
+                            values[count] = ((java.lang.Double)value)
+                                .floatValue();
+
+                            break;
+                        }
                     case (int)HsqlProviderType.Integer:
-                    case (int)HsqlProviderType.SmallInt:
-                    case (int)HsqlProviderType.TinyInt:
                         {
                             values[count] = ((java.lang.Integer)value)
+                                .intValue();
+
+                            break;
+                        }
+                    case (int)HsqlProviderType.SmallInt:
+                        {
+                            values[count] = (short) ((java.lang.Integer)value)
+                                .intValue();
+
+                            break;
+                        }
+                    case (int)HsqlProviderType.TinyInt:
+                        {
+                            values[count] = (sbyte) ((java.lang.Integer)value)
                                 .intValue();
 
                             break;
@@ -1755,7 +1811,7 @@ namespace System.Data.Hsqldb.Client
         #region this[int]
 
         /// <summary>
-        /// Gets an object instance representing the value for the current row
+        /// Gets an object instance representing the value in the current row
         /// of the field with the specified column ordinal.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
@@ -1770,8 +1826,12 @@ namespace System.Data.Hsqldb.Client
         #region this[string]
 
         /// <summary>
-        /// Gets the value of the specified column as an instance of Object.
+        /// Gets an object instance representing the value in the current row
+        /// of the field with the column ordinal corresponding to the specified name.
         /// </summary>
+        /// <remarks>
+        /// See <see cref="GetOrdinal(string)"/> and <see cref="GetValue(int)"/>.
+        /// </remarks>
         /// <param name="name">The name of the column.</param>
         /// <returns>The value of the specified column.</returns>
         public override object this[string name]
@@ -1875,9 +1935,8 @@ namespace System.Data.Hsqldb.Client
         /// </returns>
         public override IEnumerator GetEnumerator()
         {
-            return new DbEnumerator(
-                this, 
-                0 != (m_commandBehavior & CommandBehavior.CloseConnection));
+            return new DbEnumerator(this, /*closeReader*/this.HasCommandBehavior(
+                CommandBehavior.CloseConnection));
         }
 
         #endregion
@@ -2004,20 +2063,13 @@ namespace System.Data.Hsqldb.Client
         {
             get
             {
-                org.hsqldb.Result r = m_result;
+                org.hsqldb.Result result = m_result;
 
-                if (r == null || !r.isData() || r.isEmpty())
-                {
-                    return false;
-                }
-                else if (m_isInitialized)
-                {
-                    return (m_currentRow <= r.getSize());
-                }
-                else
-                {
-                    return r.isData() && !r.isEmpty();
-                }
+                bool hasRows = (result == null || !result.isData() || result.isEmpty()) 
+                    ? false 
+                    : (m_isInitialized) ? (m_currentRow <= result.getSize()) : true;
+
+                return hasRows;
             }
         }
 

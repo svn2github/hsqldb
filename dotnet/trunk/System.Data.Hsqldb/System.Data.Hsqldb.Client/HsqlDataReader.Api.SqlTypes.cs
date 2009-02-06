@@ -50,6 +50,7 @@ using System.Xml;
 
 using Trace = org.hsqldb.Trace;
 using System.Data.Hsqldb.Common;
+using System.IO.Compression;
 
 #endregion
 
@@ -373,8 +374,7 @@ namespace System.Data.Hsqldb.Client
 
             object value = m_currentRecord.data[ordinal];
 
-            return (value == null)
-                ? SqlMoney.Null
+            return (value == null) ? SqlMoney.Null
                 : new SqlMoney(HsqlConvert.FromJava.ToDecimal(value));
         }
         #endregion
@@ -465,50 +465,47 @@ namespace System.Data.Hsqldb.Client
             if (value is string)
             {
                 string stringValue = value as string;
-                MemoryStream stream = new MemoryStream(2 * stringValue.Length);
-                TextWriter writer = new StreamWriter(
-                    stream,
-                    Encoding.GetEncoding("utf-16"));
+                MemoryStream ms = new MemoryStream();
+                
+                using(GZipStream gzs = new GZipStream(ms, CompressionMode.Compress))
+                using (TextWriter writer = new StreamWriter(gzs, Encoding.UTF8))
+                {
+                    writer.Write(stringValue);
+                    writer.Flush();
+                }
 
-                writer.Write(stringValue);
+                ms.Position = 0;
 
-                stream.Position = 0;
-
-                return new SqlXml(stream);
+                return new SqlXml(new GZipStream(ms, CompressionMode.Decompress));
             }
             else if (value is org.hsqldb.types.Binary)
             {
                 byte[] bytes = ((org.hsqldb.types.Binary)value).getBytes();
-                MemoryStream stream = new MemoryStream(bytes.Length);
-                stream.Write(bytes, 0, bytes.Length);
-                stream.Position = 0;
 
-                return new SqlXml(stream);
+                return new SqlXml(new MemoryStream(bytes));
             }
             else if (value is byte[])
             {
-                byte[] bytes = value as byte[];
-                MemoryStream stream = new MemoryStream(bytes.Length);
-                stream.Write(bytes, 0, bytes.Length);
-                stream.Position = 0;
-
-                return new SqlXml(stream);
+                return new SqlXml(new MemoryStream(value as byte[]));
             }
             else if (value is char[])
             {
                 char[] chars = value as char[];
-                MemoryStream stream = new MemoryStream(2 * chars.Length);
-                TextWriter writer = new StreamWriter(stream, Encoding.GetEncoding("utf-16"));
+                MemoryStream ms = new MemoryStream(1 + chars.Length/2);
+                
+                using(GZipStream gzs = new GZipStream(ms, CompressionMode.Compress))
+                using (TextWriter writer = new StreamWriter(gzs, Encoding.UTF8))
+                {
+                    writer.Write(chars);
+                    writer.Flush();
+                }
 
-                writer.Write(chars);
+                ms.Position = 0;
 
-                stream.Position = 0;
-
-                return new SqlXml(stream);
+                return new SqlXml(new GZipStream(ms, CompressionMode.Decompress));
             }
 
-            throw new InvalidCastException(
-                GetDataTypeName(ordinal),
+            throw new InvalidCastException(GetDataTypeName(ordinal),
                 HsqlConvert.WrongDataType(value));
 
         }
