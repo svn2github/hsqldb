@@ -941,37 +941,38 @@ void    getParameterValues(ConnectionClass *conn)
 {
 SocketClass *sock = conn->sock;
 /* ERROR_MSG_LENGTH is suffcient */
-char msgbuffer[ERROR_MSG_LENGTH + 1];
+char nambuffer[ERROR_MSG_LENGTH + 1];
+char valbuffer[ERROR_MSG_LENGTH + 1];
 
-SOCK_get_string(sock, msgbuffer, sizeof(msgbuffer));
-inolog("parameter name=%s\n", msgbuffer);
-    SOCK_get_string(sock, msgbuffer, sizeof(msgbuffer));
-    if (stricmp(msgbuffer, "server_encoding") == 0)
+SOCK_get_string(sock, nambuffer, sizeof(nambuffer));
+inolog("parameter name=%s\n", nambuffer);
+    SOCK_get_string(sock, valbuffer, sizeof(valbuffer));
+    if (stricmp(nambuffer, "server_encoding") == 0)
     {
         if (conn->server_encoding)
             free(conn->server_encoding);
-        conn->server_encoding = strdup(msgbuffer);
+        conn->server_encoding = strdup(valbuffer);
     }
-    else if (stricmp(msgbuffer, "client_encoding") == 0)
+    else if (stricmp(nambuffer, "client_encoding") == 0)
     {
         if (conn->current_client_encoding)
             free(conn->current_client_encoding);
-        conn->current_client_encoding = strdup(msgbuffer);
+        conn->current_client_encoding = strdup(valbuffer);
     }
-    else if (stricmp(msgbuffer, std_cnf_strs) == 0)
+    else if (stricmp(nambuffer, std_cnf_strs) == 0)
     {
-        mylog("%s=%s\n", std_cnf_strs, msgbuffer); 
-        if (stricmp(msgbuffer, "on") == 0)
+        mylog("%s=%s\n", std_cnf_strs, valbuffer); 
+        if (stricmp(valbuffer, "on") == 0)
         {
             conn->escape_in_literal = '\0';
         }
     }
-    else if (stricmp(msgbuffer, "server_version") == 0)
+    else if (stricmp(nambuffer, "server_version") == 0)
     {
         char    szVersion[32];
         int major, minor;
 
-        strncpy_null(conn->pg_version, msgbuffer, sizeof(conn->pg_version));
+        strncpy_null(conn->pg_version, valbuffer, sizeof(conn->pg_version));
         strcpy(szVersion, "0.0");
         if (sscanf(conn->pg_version, "%d.%d", &major, &minor) >= 2)
         {
@@ -989,7 +990,7 @@ inolog("parameter name=%s\n", msgbuffer);
         qlog("    [ PostgreSQL version number = '%1.1f' ]\n", conn->pg_version_number);
     }
 
-inolog("parameter value=%s\n", msgbuffer);
+inolog("parameter value=%s\n", valbuffer);
 }
 
 static int  protocol3_opts_array(ConnectionClass *self, const char *opts[][2], BOOL libpqopt, int dim_opts)
