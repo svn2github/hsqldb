@@ -8,11 +8,15 @@ using System.Data.Hsqldb.TestCoverage;
 // associated with an assembly.
 [assembly: AssemblyTitle("System.Data.Hsqldb.Client.UnitTests")]
 [assembly: AssemblyDescription("")]
-[assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("ITO")]
+#if DEBUG
+[assembly: AssemblyConfiguration("debug")]
+#else
+[assembly: AssemblyConfiguration("retail")]
+#endif
+[assembly: AssemblyCompany("The HSQL Development Group")]
 [assembly: AssemblyProduct("System.Data.Hsqldb.Client.UnitTests")]
-[assembly: AssemblyCopyright("Copyright © ITO 2009")]
-[assembly: AssemblyTrademark("")]
+[assembly: AssemblyCopyright("Copyright © 2001-2009, The HSQL Development Group")]
+[assembly: AssemblyTrademark("HSQLDB")]
 [assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 

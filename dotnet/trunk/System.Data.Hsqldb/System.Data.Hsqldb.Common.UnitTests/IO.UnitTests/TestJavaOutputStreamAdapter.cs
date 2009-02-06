@@ -28,14 +28,14 @@ namespace System.Data.Hsqldb.Common.IO.UnitTests
             }
         }
 
-        [Test, OfMember("Dispose"), ExpectedException(typeof(ObjectDisposedException))]
+        [Test, OfMember("Dispose"), ExpectedException(typeof(java.io.IOException))]
         public void Dispose()
         {
             JavaOutputStreamAdapter testSubject;
 
             using (testSubject = NewTestSubject())
             {
-
+                testSubject.write(1);
             }
 
             testSubject.write(1);

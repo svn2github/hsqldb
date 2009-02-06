@@ -3,7 +3,7 @@ using System.Data.Hsqldb.TestCoverage;
 using NUnit.Framework;
 using System.Data.Hsqldb.Client;
 
-namespace UnitTests
+namespace System.Data.Hsqldb.Client.UnitTests
 {
     [TestFixture, ForSubject(typeof(HsqlConnectionStringBuilder))]
     public class TestHsqlConnectionStringBuilder

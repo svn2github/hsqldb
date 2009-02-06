@@ -322,6 +322,11 @@ namespace System.Data.Hsqldb.Common.Sql
         /// Gets the next token as a literal value of
         /// the requested SQL data type.
         /// </summary>
+        /// <remarks>
+        /// The <see cref="System.Type"/> of the returned object is
+        /// value return by <see cref="HsqlConvert.ToProviderSpecificDataType(int)"/>
+        /// when passed the <c>requestedDataType</c>, cast to an <c>int</c>.
+        /// </remarks>
         /// <param name="requestedDataType">
         /// The requested data type.
         /// </param>

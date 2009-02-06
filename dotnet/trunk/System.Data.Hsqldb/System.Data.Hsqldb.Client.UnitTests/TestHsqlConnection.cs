@@ -4,7 +4,8 @@ using System.Data.Hsqldb.Client;
 using System.Data.Hsqldb.TestCoverage;
 using System.Transactions;
 using NUnit.Framework;
-namespace UnitTests
+
+namespace System.Data.Hsqldb.Client.UnitTests
 {    
     [TestFixture, ForSubject(typeof(HsqlConnection))]
     public class TestHsqlConnection

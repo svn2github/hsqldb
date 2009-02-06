@@ -19,13 +19,14 @@ namespace System.Data.Hsqldb.Client.UnitTests
         public void Add()
         {
             HsqlParameterCollection testSubject = NewTestSubject();
-            HsqlParameter value = new HsqlParameter();
-
-            HsqlParameter rvalue = testSubject.Add(value);
-
+            
             object ovalue = new HsqlParameter();
 
+            
             int parameterIndex = testSubject.Add(ovalue);
+
+            HsqlParameter pvalue = new HsqlParameter();
+            HsqlParameter rvalue = testSubject.Add(pvalue);
 
             Assert.Fail("TODO");
         }
@@ -33,12 +34,9 @@ namespace System.Data.Hsqldb.Client.UnitTests
         [Test, OfMember("AddRange")]
         public void AddRange()
         {
-            // Create Constructor Parameters
-
             HsqlParameterCollection testSubject = NewTestSubject();
 
-            // Create Test Method Parameters
-            Array avalues = new object[] { new HsqlParameter() };
+            object[] avalues = new object[] { new HsqlParameter() };
 
             testSubject.AddRange(avalues);
 

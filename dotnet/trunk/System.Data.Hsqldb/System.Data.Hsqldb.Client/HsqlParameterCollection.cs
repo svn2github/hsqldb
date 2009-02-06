@@ -552,7 +552,24 @@ namespace System.Data.Hsqldb.Client
         /// </exception>
         public void AddRange(HsqlParameter[] values)
         {
-            this.AddRange(values);
+            if (values == null)
+            {
+                throw new ArgumentNullException(
+                    "values");
+            }
+
+            int count = 0;
+
+            foreach (HsqlParameter value in values)
+            {
+                ValidateParameter(-1, value);
+
+                m_parameters.Add(value);
+
+                count++;
+            }
+
+            m_isDirty = (count > 0);
         } 
         #endregion
 

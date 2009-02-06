@@ -15,11 +15,10 @@ namespace System.Data.Hsqldb.Common.IO.UnitTests
         {
             MemoryStream ms = new System.IO.MemoryStream();
 
-            using (StreamWriter sw = new StreamWriter(ms, e))
-            {
-                sw.Write(s);
-                sw.Flush();
-            }
+            StreamWriter sw = new StreamWriter(ms, e);
+            
+            sw.Write(s);
+            sw.Flush();
 
             ms.Position = 0;
 
@@ -35,7 +34,7 @@ namespace System.Data.Hsqldb.Common.IO.UnitTests
             }
         }
 
-        [Test, OfMember("Dispose"), ExpectedException(typeof(ObjectDisposedException))]
+        [Test, OfMember("Dispose"), ExpectedException(typeof(java.io.IOException))]
         public void Dispose()
         {
             JavaInputStreamAdapter testSubject;
