@@ -123,7 +123,7 @@ namespace System.Data.Hsqldb.Common
         private static readonly JavaBigDecimal MIN_DECIMAL = new JavaBigDecimal("-79228162514264337593543950335.5");
         //
         private static readonly JavaBigDecimal MAX_DOUBLE = JavaBigDecimal.valueOf(JavaDouble.MAX_VALUE);
-        private static readonly JavaBigDecimal MIN_DOUBLE = java.math.BigDecimal.valueOf(JavaDouble.MIN_VALUE);
+        private static readonly JavaBigDecimal MIN_DOUBLE = JavaBigDecimal.valueOf(JavaDouble.MIN_VALUE);
         //
         private static readonly JavaBigDecimal MAX_REAL = JavaBigDecimal.valueOf(JavaFloat.MAX_VALUE);
         private static readonly JavaBigDecimal MIN_REAL = JavaBigDecimal.valueOf(JavaFloat.MIN_VALUE);
@@ -149,7 +149,7 @@ namespace System.Data.Hsqldb.Common
         private static readonly int MIN_MILLISECOND = System.DateTime.MinValue.Millisecond;
         //
         private static readonly DotNetGregorianCalendar dotNetGregorianCalendar = new DotNetGregorianCalendar();
-        
+
         // So that each thread gets its own instance, meaning we don't have to synchonize access.
         [System.ThreadStatic]
         private static JavaGregorianCalendar m_javaGregorianCalendar;
@@ -193,103 +193,118 @@ namespace System.Data.Hsqldb.Common
         ///     <description>HsqlProviderType</description>
         ///   </listheader>
         ///   <item>
-        ///     <term>DbType.AnsiString</term>
-        ///     <description>HsqlProviderType.Binary</description>
-        ///   </item>
-        ///   <item>
-        ///     <term>DbType.AnsiStringFixedLength</term>
-        ///     <description>HsqlProviderType.Binary</description>
-        ///   </item>
-        ///   <item>
-        ///     <term>DbType.Binary</term>
-        ///     <description>HsqlProviderType.Binary</description>
-        ///   </item>
-        ///   <item>
-        ///     <term>DbType.Boolean</term>
-        ///     <description>HsqlProviderType.Boolean</description>
-        ///   </item>
-        ///   <item>
-        ///     <term>DbType.Byte</term>
-        ///     <description>HsqlProviderType.SmallInt</description>
-        ///   </item>
-        ///   <item>
-        ///     <term>DbType.Currency</term>
-        ///     <description>HsqlProviderType.Decimal</description>
-        ///   </item>
-        ///   <item>
-        ///     <term>DbType.Date</term>
-        ///     <description>HsqlProviderType.TimeStamp</description>
-        ///   </item>
-        ///   <item>
-        ///     <term>DbType.DateTime</term>
-        ///     <description>HsqlProviderType.TimeStamp</description>
-        ///   </item>
-        ///   <item>
-        ///     <term>DbType.Decimal</term>
-        ///     <description>HsqlProviderType.Decimal</description>
-        ///   </item>
-        ///   <item>
-        ///     <term>DbType.Double</term>
-        ///     <description>HsqlProviderType.Double</description>
-        ///   </item>
-        ///   <item>
-        ///     <term>DbType.Guid</term>
-        ///     <description>HsqlProviderType.Binary</description>
-        ///   </item>
-        ///   <item>
-        ///     <term>DbType.Int16</term>
-        ///     <description>HsqlProviderType.SmallInt</description>
-        ///   </item>
-        ///   <item>
-        ///     <term>DbType.Int32</term>
-        ///     <description>HsqlProviderType.Integer</description>
-        ///   </item>
-        ///   <item>
-        ///     <term>DbType.Int64</term>
-        ///     <description>HsqlProviderType.BigInt</description>
-        ///   </item>
-        ///   <item>
-        ///     <term>DbType.Object</term>
-        ///     <description>HsqlProviderType.Object</description>
-        ///   </item>
-        ///   <item>
-        ///     <term>DbType.SByte</term>
-        ///     <description>HsqlProviderType.TinyInt</description>
-        ///   </item>
-        ///   <item>
-        ///     <term>DbType.Single</term>
-        ///     <description>HsqlProviderType.Real</description>
-        ///   </item>
-        ///   <item>
-        ///     <term>DbType.String</term>
+        ///     <term>DbType.AnsiString - A variable-length stream of non-Unicode characters ranging between 1 and 8,000 characters.</term>
         ///     <description>HsqlProviderType.VarChar</description>
         ///   </item>
         ///   <item>
-        ///     <term>DbType.StringFixedLength</term>
+        ///     <term>DbType.AnsiStringFixedLength - A fixed-length stream of non-Unicode characters.</term>
         ///     <description>HsqlProviderType.Char</description>
         ///   </item>
         ///   <item>
-        ///     <term>DbType.Time</term>
+        ///     <term>DbType.Binary - A variable-length stream of binary data ranging between 1 and 8,000 bytes.</term>
+        ///     <description>HsqlProviderType.Binary</description>
+        ///   </item>
+        ///   <item>
+        ///     <term>DbType.Boolean A simple type representing Boolean values of true or false.</term>
+        ///     <description>HsqlProviderType.Boolean</description>
+        ///   </item>
+        ///   <item>
+        ///     <term>DbType.Byte An 8-bit unsigned integer ranging in value from 0 to 255.</term>
+        ///     <description>HsqlProviderType.SmallInt</description>
+        ///   </item>
+        ///   <item>
+        ///     <term>DbType.Currency - A currency value ranging from -2 63 (or -922,337,203,685,477.5808) 
+        ///           to 2 63 -1 (or +922,337,203,685,477.5807) with an accuracy to a ten-thousandth of a
+        ///           currency unit.</term>
+        ///     <description>HsqlProviderType.Decimal</description>
+        ///   </item>
+        ///   <item>
+        ///     <term>DbType.Date - Date and time data ranging in value from January 1, 1753 to December 31, 9999 to an accuracy of 3.33 milliseconds.</term>
         ///     <description>HsqlProviderType.TimeStamp</description>
         ///   </item>
         ///   <item>
-        ///     <term>DbType.UInt16</term>
+        ///     <term>DbType.DateTime - A type representing a date and time value.</term>
+        ///     <description>HsqlProviderType.TimeStamp</description>
+        ///   </item>
+        ///   <item>
+        ///     <term>DbType.DateTime2 - A type representing a date that is combined with a time of day that is based on 
+        ///     24-hour clock. datetime2 can be considered as an extension of the existing datetime type that has a 
+        ///     larger date range, a larger default fractional precision, and optional user-specified precision.
+        ///     </term>
+        ///     <description>HsqlProviderType.Timestamp</description>
+        ///   </item>
+        ///   <item>
+        ///     <term>DbType.DateTime2 - A type representing a date that is combined with a time of a day that has time
+        ///           zone awareness and is based on a 24-hour clock.
+        ///     </term>
+        ///     <description>HsqlProviderType.Timestamp</description>
+        ///   </item>
+        ///   <item>
+        ///     <term>DbType.Decimal - A simple type representing values ranging from 1.0 x 10 -28 to approximately 7.9 x 10 28 with 28-29 significant digits.</term>
+        ///     <description>HsqlProviderType.Decimal</description>
+        ///   </item>
+        ///   <item>
+        ///     <term>DbType.Double - A floating point type representing values ranging from approximately 5.0 x 10 -324 to 1.7 x 10 308 with a precision of 15-16 digits.</term>
+        ///     <description>HsqlProviderType.Double</description>
+        ///   </item>
+        ///   <item>
+        ///     <term>DbType.Guid - A globally unique identifier (or GUID).</term>
+        ///     <description>HsqlProviderType.Binary</description>
+        ///   </item>
+        ///   <item>
+        ///     <term>DbType.Int16 - An integral type representing signed 16-bit integers with values between -32768 and 32767.</term>
+        ///     <description>HsqlProviderType.SmallInt</description>
+        ///   </item>
+        ///   <item>
+        ///     <term>DbType.Int32 - An integral type representing signed 32-bit integers with values between -2147483648 and 2147483647.</term>
         ///     <description>HsqlProviderType.Integer</description>
         ///   </item>
         ///   <item>
-        ///     <term>DbType.UInt32</term>
+        ///     <term>DbType.Int64 - An integral type representing signed 64-bit integers with values between -9223372036854775808 and 9223372036854775807.</term>
         ///     <description>HsqlProviderType.BigInt</description>
         ///   </item>
         ///   <item>
-        ///     <term>DbType.UInt64</term>
+        ///     <term>DbType.Object - A general type representing any reference or value type not explicitly represented by another DbType value.</term>
+        ///     <description>HsqlProviderType.Object</description>
+        ///   </item>
+        ///   <item>
+        ///     <term>DbType.SByte - An integral type representing signed 8-bit integers with values between -128 and 127.</term>
+        ///     <description>HsqlProviderType.TinyInt</description>
+        ///   </item>
+        ///   <item>
+        ///     <term>DbType.Single - A floating point type representing values ranging from approximately 1.5 x 10 -45 to 3.4 x 10 38 with a precision of 7 digits.</term>
+        ///     <description>HsqlProviderType.Real</description>
+        ///   </item>
+        ///   <item>
+        ///     <term>DbType.String - A type representing Unicode character strings.</term>
+        ///     <description>HsqlProviderType.VarChar</description>
+        ///   </item>
+        ///   <item>
+        ///     <term>DbType.StringFixedLength - A type representing fixed-length Unicode character strings.</term>
+        ///     <description>HsqlProviderType.Char</description>
+        ///   </item>
+        ///   <item>
+        ///     <term>DbType.Time - Date and time data ranging in value from January 1, 1753 to December 31, 9999 to an accuracy of 3.33 milliseconds.</term>
+        ///     <description>HsqlProviderType.TimeStamp</description>
+        ///   </item>
+        ///   <item>
+        ///     <term>DbType.UInt16 - An integral type representing unsigned 16-bit integers with values between 0 and 65535.</term>
+        ///     <description>HsqlProviderType.Integer</description>
+        ///   </item>
+        ///   <item>
+        ///     <term>DbType.UInt32 - An integral type representing unsigned 32-bit integers with values between 0 and 4294967295.</term>
+        ///     <description>HsqlProviderType.BigInt</description>
+        ///   </item>
+        ///   <item>
+        ///     <term>DbType.UInt64 An integral type representing unsigned 64-bit integers with values between 0 and 18446744073709551615.</term>
         ///     <description>HsqlProviderType.Numeric</description>
         ///   </item>
         ///   <item>
-        ///     <term>DbType.VarNumeric</term>
+        ///     <term>DbType.VarNumeric - A variable-length numeric value.</term>
         ///     <description>HsqlProviderType.Numeric</description>
         ///   </item>
         ///   <item>
-        ///     <term>DbType.Xml</term>
+        ///     <term>DbType.Xml - A parsed representation of an XML document or fragment.</term>
         ///     <description>HsqlProviderType.Xml</description>
         ///   </item>
         ///   <item>
@@ -309,109 +324,117 @@ namespace System.Data.Hsqldb.Common
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity")]
         public static HsqlProviderType ToHsqlProviderType(DbType type)
         {
-            switch(type)
+            switch (type)
             {
-                case DbType.AnsiString :
-                    {
-                        return HsqlProviderType.Binary;
-                    }
-                case DbType.AnsiStringFixedLength :
-                    {
-                        return HsqlProviderType.Binary;
-                    }
-                case DbType.Binary :
-                    {
-                        return HsqlProviderType.Binary;
-                    }
-                case DbType.Boolean :
-                    {
-                        return HsqlProviderType.Boolean;
-                    }
-                case DbType.Byte :
-                    {
-                        return HsqlProviderType.SmallInt;
-                    }
-                case DbType.Currency :
-                    {
-                        return HsqlProviderType.Decimal;
-                    }
-                case DbType.Date :
-                    {
-                        return HsqlProviderType.TimeStamp;
-                    }
-                case DbType.DateTime :
-                    {
-                        return HsqlProviderType.TimeStamp;
-                    }
-                case DbType.Decimal :
-                    {
-                        return HsqlProviderType.Decimal;
-                    }
-                case DbType.Double :
-                    {
-                        return HsqlProviderType.Double;
-                    }
-                case DbType.Guid :
-                    {
-                        return HsqlProviderType.Binary;
-                    }
-                case DbType.Int16 :
-                    {
-                        return HsqlProviderType.SmallInt;
-                    }
-                case DbType.Int32 :
-                    {
-                        return HsqlProviderType.Integer;
-                    }
-                case DbType.Int64 :
-                    {
-                        return HsqlProviderType.BigInt;
-                    }
-                case DbType.Object :
-                    {
-                        return HsqlProviderType.Object;
-                    }
-                case DbType.SByte :
-                    {
-                        return HsqlProviderType.TinyInt;
-                    }
-                case DbType.Single :
-                    {
-                        return HsqlProviderType.Real;
-                    }
-                case DbType.String :
+                case DbType.AnsiString:
                     {
                         return HsqlProviderType.VarChar;
                     }
-                case DbType.StringFixedLength :
+                case DbType.AnsiStringFixedLength:
                     {
                         return HsqlProviderType.Char;
                     }
-                case DbType.Time :
+                case DbType.Binary:
+                    {
+                        return HsqlProviderType.Binary;
+                    }
+                case DbType.Boolean:
+                    {
+                        return HsqlProviderType.Boolean;
+                    }
+                case DbType.Byte:
+                    {
+                        return HsqlProviderType.SmallInt;
+                    }
+                case DbType.Currency:
+                    {
+                        return HsqlProviderType.Decimal;
+                    }
+                case DbType.Date:
                     {
                         return HsqlProviderType.TimeStamp;
                     }
-                case DbType.UInt16 :
+                case DbType.DateTime:
+                    {
+                        return HsqlProviderType.TimeStamp;
+                    }
+                case DbType.DateTime2:
+                    {
+                        return HsqlProviderType.TimeStamp;
+                    }
+                case DbType.DateTimeOffset:
+                    {
+                        return HsqlProviderType.TimeStamp;
+                    }
+                case DbType.Decimal:
+                    {
+                        return HsqlProviderType.Decimal;
+                    }
+                case DbType.Double:
+                    {
+                        return HsqlProviderType.Double;
+                    }
+                case DbType.Guid:
+                    {
+                        return HsqlProviderType.Binary;
+                    }
+                case DbType.Int16:
+                    {
+                        return HsqlProviderType.SmallInt;
+                    }
+                case DbType.Int32:
                     {
                         return HsqlProviderType.Integer;
                     }
-                case DbType.UInt32 :
+                case DbType.Int64:
                     {
                         return HsqlProviderType.BigInt;
                     }
-                case DbType.UInt64 :
+                case DbType.Object:
+                    {
+                        return HsqlProviderType.Object;
+                    }
+                case DbType.SByte:
+                    {
+                        return HsqlProviderType.TinyInt;
+                    }
+                case DbType.Single:
+                    {
+                        return HsqlProviderType.Real;
+                    }
+                case DbType.String:
+                    {
+                        return HsqlProviderType.VarChar;
+                    }
+                case DbType.StringFixedLength:
+                    {
+                        return HsqlProviderType.Char;
+                    }
+                case DbType.Time:
+                    {
+                        return HsqlProviderType.TimeStamp;
+                    }
+                case DbType.UInt16:
+                    {
+                        return HsqlProviderType.Integer;
+                    }
+                case DbType.UInt32:
+                    {
+                        return HsqlProviderType.BigInt;
+                    }
+                case DbType.UInt64:
                     {
                         return HsqlProviderType.Numeric;
                     }
-                case DbType.VarNumeric :
+                case DbType.VarNumeric:
                     {
                         return HsqlProviderType.Numeric;
                     }
-                case DbType.Xml :
+                case DbType.Xml:
                     {
                         return HsqlProviderType.Xml;
                     }
-                    default :
+                default:
                     {
                         return HsqlProviderType.Object;
                     }
@@ -434,59 +457,74 @@ namespace System.Data.Hsqldb.Common
         ///     <description>DbType</description>
         ///   </listheader>
         ///   <item>
-        ///     <term>HsqlProviderType.Array</term>
+        ///     <term>
+        ///      HsqlProviderType.Array - an SQL ARRAY value type, which
+        ///      is a fixed-length vector of some homogenous element type.
+        ///     </term>
         ///     <description>DbType.Object</description>
         ///   </item>
         ///   <item>
-        ///     <term>HsqlProviderType.BigInt</term>
+        ///     <term>
+        ///      HsqlProviderType.BigInt - an SQL BIGINT value type, which 
+        ///      is an integral number in the range 2^63 (-9,223,372,036,854,775,808)
+        ///      to 2^63-1 (9,223,372,036,854,775,807).</term>
         ///     <description>DbType.Int64</description>
         ///   </item>
         ///   <item>
-        ///     <term>HsqlProviderType.Binary</term>
+        ///     <term>
+        ///      HsqlProviderType.Binary - an SQL BINARY value type, which is
+        ///      an octet sequence of length 0 to 2^31.
+        ///     </term>
         ///     <description>DbType.Binary</description>
         ///   </item>
         ///   <item>
-        ///     <term>HsqlProviderType.Blob</term>
+        ///     <term>
+        ///      HsqlProviderType.Blob - an SQL BLOB value type, which is a 
+        ///      locator for an an octet sequence of length 0 to 2^63-1.
+        ///      </term>
         ///     <description>DbType.Object</description>
         ///   </item>
         ///   <item>
-        ///     <term>HsqlProviderType.Boolean</term>
+        ///     <term>
+        ///      HsqlProviderType.Boolean - an SQL BOOLEAN value type, which
+        ///      is a value from the set {TRUE, FALSE, UNKNOWN (i.e. NULL)}.
+        ///     </term>
         ///     <description>DbType.Boolean</description>
         ///   </item>
         ///   <item>
-        ///     <term>HsqlProviderType.Char</term>
+        ///     <term>HsqlProviderType.Char - an SQL CHAR value type, which is a fixed length Unicode character sequence of length 0 to 2^31</term>
         ///     <description>DbType.StringFixedLength</description>
         ///   </item>
         ///   <item>
-        ///     <term>HsqlProviderType.Clob</term>
+        ///     <term>HsqlProviderType.Clob - an SQL CLOB value type, which is a locator for an SQL Unicode character sequence of length 0 to 2^63-1.</term>
         ///     <description>DbType.String</description>
         ///   </item>
         ///   <item>
-        ///     <term>HsqlProviderType.DataLink</term>
+        ///     <term>HsqlProviderType.DataLink - an SQL DATALINK value type, which is an SQL MED URL for a managed external data item.</term>
         ///     <description>DbType.Object</description>
         ///   </item>
         ///   <item>
-        ///     <term>HsqlProviderType.Date</term>
+        ///     <term>HsqlProviderType.Date - an SQL DATE value type, which is a temporal value in format YYYY-MM-DD</term>
         ///     <description>DbType.DateTime</description>
         ///   </item>
         ///   <item>
-        ///     <term>HsqlProviderType.Decimal</term>
+        ///     <term>HsqlProviderType.Decimal - an SQL DECIMAL value type, which is an exact number that consists of an arbitrary precision integer unscaled value and a 32-bit integer scale.</term>
         ///     <description>DbType.Decimal</description>
         ///   </item>
         ///   <item>
-        ///     <term>HsqlProviderType.Distinct</term>
+        ///     <term>HsqlProviderType.Distinct - an SQL DISTINCT value type, which is a user defined type (UDT) that is a named variation on a built-in scalar type, such as SHORT_NAME IS CHAR(12) or POSITIVE_INT IS INTEGER CHECK(value >= 0)</term>
         ///     <description>return DbType.Object</description>
         ///   </item>
         ///   <item>
-        ///     <term>HsqlProviderType.Double</term>
+        ///     <term>HsqlProviderType.Double - an SQL DOUBLE PRECISION type which may be conceptually associated with the double-precision 64-bit format IEEE 754 values and operations specified in ANSI/IEEE Standard 754-1985.</term>
         ///     <description>DbType.Double</description>
         ///   </item>
         ///   <item>
-        ///     <term>HsqlProviderType.Float</term>
+        ///     <term>HsqlProviderType.Float an SQL DOUBLE PRECISION type which may be conceptually associated with the double-precision 64-bit format IEEE 754 values and operations specified in ANSI/IEEE Standard 754-1985.</term>
         ///     <description>DbType.Double</description>
         ///   </item>
         ///   <item>
-        ///     <term>HsqlProviderType.Integer</term>
+        ///     <term>HsqlProviderType.Integer - an SQL INTEGER which is an integral number in the range -2^31 (-2,147,483,648) to 2^31-1 (2,147,483,647)</term>
         ///     <description>DbType.Int32</description>
         ///   </item>
         ///   <item>
@@ -518,7 +556,7 @@ namespace System.Data.Hsqldb.Common
         ///     <description>DbType.Object</description>
         ///   </item>
         ///   <item>
-        ///     <term>HsqlProviderType.SmallInt</term>
+        ///     <term>HsqlProviderType.SmallInt - an SQL SMALLINT - 2^15 (-32,768) to 2^15-1 (32,767)</term>
         ///     <description>DbType.Int16</description>
         ///   </item>
         ///   <item>
@@ -526,12 +564,12 @@ namespace System.Data.Hsqldb.Common
         ///     <description>DbType.Object</description>
         ///   </item>
         ///   <item>
-        ///     <term>HsqlProviderType.Time</term>
+        ///     <term>HsqlProviderType.Time - an SQL TIME value in format HH:MM.SS</term>
         ///     <description>DbType.DateTime</description>
         ///   </item>
         ///   <item>
-        ///     <term>HsqlProviderType.TimeStamp</term>
-        ///     <description>DbType.DateTime</description>
+        ///     <term>HsqlProviderType.TimeStamp - an SQL TIMESTAMP value in format YYYY-MM-DD HH:MM:SS.ffffff</term>
+        ///     <description>DbType.DateTime2</description>
         ///   </item>
         ///   <item>
         ///     <term>HsqlProviderType.TinyInt</term>
@@ -566,125 +604,125 @@ namespace System.Data.Hsqldb.Common
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity")]
         public static DbType ToDbType(HsqlProviderType type)
         {
-            switch(type)
+            switch (type)
             {
-                case HsqlProviderType.Array :
+                case HsqlProviderType.Array:
                     {
                         return DbType.Object;
                     }
-                case HsqlProviderType.BigInt :
+                case HsqlProviderType.BigInt:
                     {
                         return DbType.Int64;
                     }
-                case HsqlProviderType.Binary :
+                case HsqlProviderType.Binary:
                     {
                         return DbType.Binary;
                     }
-                case HsqlProviderType.Blob :
+                case HsqlProviderType.Blob:
                     {
-                    return DbType.Object;
+                        return DbType.Object;
                     }
-                case HsqlProviderType.Boolean :
+                case HsqlProviderType.Boolean:
                     {
                         return DbType.Boolean;
                     }
-                case HsqlProviderType.Char :
+                case HsqlProviderType.Char:
                     {
                         return DbType.StringFixedLength;
                     }
-                case HsqlProviderType.Clob :
+                case HsqlProviderType.Clob:
                     {
                         return DbType.String;
                     }
-                case HsqlProviderType.DataLink :
+                case HsqlProviderType.DataLink:
                     {
                         return DbType.Object;
                     }
-                case HsqlProviderType.Date :
+                case HsqlProviderType.Date:
                     {
                         return DbType.DateTime;
                     }
-                case HsqlProviderType.Decimal :
+                case HsqlProviderType.Decimal:
                     {
                         return DbType.Decimal;
                     }
-                case HsqlProviderType.Distinct :
+                case HsqlProviderType.Distinct:
                     {
                         return DbType.Object;
                     }
-                case HsqlProviderType.Double :
+                case HsqlProviderType.Double:
                     {
                         return DbType.Double;
                     }
-                case HsqlProviderType.Float :
+                case HsqlProviderType.Float:
                     {
                         return DbType.Double;
                     }
-                case HsqlProviderType.Integer :
+                case HsqlProviderType.Integer:
                     {
                         return DbType.Int32;
                     }
-                case HsqlProviderType.JavaObject :
+                case HsqlProviderType.JavaObject:
                     {
                         return DbType.Object;
                     }
-                case HsqlProviderType.LongVarBinary :
+                case HsqlProviderType.LongVarBinary:
                     {
                         return DbType.Object;
                     }
-                case HsqlProviderType.LongVarChar :
+                case HsqlProviderType.LongVarChar:
                     {
                         return DbType.String;
                     }
-                case HsqlProviderType.Numeric :
+                case HsqlProviderType.Numeric:
                     {
                         return DbType.VarNumeric;
                     }
-                case HsqlProviderType.Object :
+                case HsqlProviderType.Object:
                     {
                         return DbType.Object;
                     }
-                case HsqlProviderType.Real :
+                case HsqlProviderType.Real:
                     {
                         return DbType.Single;
                     }
-                case HsqlProviderType.Ref :
+                case HsqlProviderType.Ref:
                     {
                         return DbType.Object;
                     }
-                case HsqlProviderType.SmallInt :
+                case HsqlProviderType.SmallInt:
                     {
                         return DbType.Int16;
                     }
-                case HsqlProviderType.Struct :
+                case HsqlProviderType.Struct:
                     {
                         return DbType.Object;
                     }
-                case HsqlProviderType.Time :
+                case HsqlProviderType.Time:
                     {
                         return DbType.DateTime;
                     }
-                case HsqlProviderType.TimeStamp :
+                case HsqlProviderType.TimeStamp:
                     {
-                        return DbType.DateTime;
+                        return DbType.DateTime2;
                     }
-                case HsqlProviderType.TinyInt :
+                case HsqlProviderType.TinyInt:
                     {
                         return DbType.SByte;
                     }
-                case HsqlProviderType.VarBinary :
+                case HsqlProviderType.VarBinary:
                     {
                         return DbType.Object;
                     }
-                case HsqlProviderType.VarChar :
+                case HsqlProviderType.VarChar:
                     {
                         return DbType.String;
                     }
-                case HsqlProviderType.Xml :
+                case HsqlProviderType.Xml:
                     {
                         return DbType.Xml;
                     }
-                default :
+                default:
                     {
                         return DbType.Object;
                     }
@@ -714,28 +752,28 @@ namespace System.Data.Hsqldb.Common
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1706:ShortAcronymsShouldBeUppercase", MessageId = "Member")]
         public static HsqlIsolationLevel ToHsqlIsolationLevel(IsolationLevel isolationLevel)
         {
-            switch(isolationLevel)
+            switch (isolationLevel)
             {
-                case IsolationLevel.ReadCommitted :
+                case IsolationLevel.ReadCommitted:
                 case IsolationLevel.Unspecified:
                     {
                         return HsqlIsolationLevel.ReadCommited;
                     }
-                case IsolationLevel.ReadUncommitted :
+                case IsolationLevel.ReadUncommitted:
                     {
                         return HsqlIsolationLevel.ReadUncommited;
                     }
-                case IsolationLevel.RepeatableRead :
+                case IsolationLevel.RepeatableRead:
                     {
                         return HsqlIsolationLevel.RepeatableRead;
                     }
-                case IsolationLevel.Serializable :
+                case IsolationLevel.Serializable:
                     {
                         return HsqlIsolationLevel.Serializable;
                     }
-                case IsolationLevel.Chaos :
-                case IsolationLevel.Snapshot :
-                default :
+                case IsolationLevel.Chaos:
+                case IsolationLevel.Snapshot:
+                default:
                     {
                         throw new ArgumentException("Unsupported: (0) "
                             + isolationLevel, "isolationLevel");
@@ -743,6 +781,39 @@ namespace System.Data.Hsqldb.Common
             }
         }
 
+        #endregion
+
+        #region ToIsLongProviderType(int)
+        /// <summary>
+        /// Determines whether the provider-specific data type code
+        /// corresponds to a long SQL type, such as an SQL LONGVARBINARY or
+        /// LONGVARCHAR type.
+        /// </summary>
+        /// <param name="type">
+        /// The provider-specific data type code for which to make the
+        /// determination.
+        /// </param>
+        /// <returns>
+        /// <c>true</c> if the specified data type code corresponds to
+        /// a long provider type; otherwise, <c>false</c>.
+        /// </returns>
+        public static bool ToIsLongProviderType(int type)
+        {
+            switch (type)
+            {
+                case HsqlTypes.LONGVARBINARY:
+                case HsqlTypes.LONGVARCHAR:
+                case HsqlTypes.BLOB:
+                case HsqlTypes.CLOB:
+                    {
+                        return true;
+                    }
+                default:
+                    {
+                        return false;
+                    }
+            }
+        }
         #endregion
 
         #region ToIsolationLevel(HsqlIsolationLevel)
@@ -754,7 +825,7 @@ namespace System.Data.Hsqldb.Common
         /// <returns><c>System.Data.IsolationLevel</c></returns>
         public static Data.IsolationLevel ToIsolationLevel(HsqlIsolationLevel value)
         {
-            switch(value)
+            switch (value)
             {
                 case HsqlIsolationLevel.ReadCommited:
                     {
@@ -827,7 +898,7 @@ namespace System.Data.Hsqldb.Common
                         return Data.IsolationLevel.Unspecified;
                     }
             }
-        } 
+        }
         #endregion
 
         #region ToParameterDirection(ParameterMode)
@@ -867,6 +938,16 @@ namespace System.Data.Hsqldb.Common
         }
         #endregion
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static string ToSqlDataTypeName(int type)
+        {
+            return HsqlTypes.getTypeName(type);
+        }
+
         #endregion
 
         #region Code To System.Type Conversion Methods
@@ -874,15 +955,20 @@ namespace System.Data.Hsqldb.Common
         #region ToDataType(HsqlProviderType)
 
         /// <summary>
-        /// Retrieves the <see cref="System.Type"/> that the driver uses
-        /// to represent values of the given HSQLDB SQL data type.
+        /// Retrieves the default <see cref="System.Type"/> used
+        /// to represent values of the given <c>HsqlProviderType</c>.
         /// </summary>
+        /// <remarks>
+        /// This is simply a convenience method that is equivalent to invoking
+        /// <see cref="ToDataType(int)"/> upon the result of casting the given
+        /// <c>HsqlProviderType</c> value to <c>int</c>.
+        /// </remarks>
         /// <param name="dbType">
-        /// The data type code returned by the HSQLDB driver.
+        /// An HSQLDB-specifc data type code.
         /// </param>
         /// <returns>
         /// The default <c>System.Type</c> that the driver uses to
-        /// represent values of the given SQL data type.
+        /// expose values of the given SQL data type to client software.
         /// </returns>
         public static Type ToDataType(HsqlProviderType dbType)
         {
@@ -894,84 +980,90 @@ namespace System.Data.Hsqldb.Common
         #region ToDataType(int)
 
         /// <summary>
-        /// Retrieves the <see cref="System.Type"/> that the driver uses
-        /// to represent values of the given HSQLDB SQL data type.
+        /// Retrieves the default <see cref="System.Type"/> used
+        /// to represent values of the given HSQLDB data type.
         /// </summary>
-        /// <param name="type">The HSQLDB SQL data type code.</param>
+        /// <remarks>
+        /// The retrieved value applies in particular to HSQLDB ADO.NET
+        /// data provider methods having return type of object or object[],
+        /// such as <see cref="HsqlDataReader.GetValue(int)"/> and its
+        /// variations, e.g. <c>HsqlDataReader.GetValues(object[])</c>.
+        /// </remarks>
+        /// <param name="type">The HSQLDB data type code.</param>
         /// <returns>
-        /// The default <c>System.Type</c> that the driver uses to
-        /// represent values of the given SQL data type.
+        /// The default <c>System.Type</c> used to represent values of the
+        /// given HSQLDB data type.
         /// </returns>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity")]
         public static Type ToDataType(int type)
         {
-            switch( type )
+            switch (type)
             {
-                case (int)HsqlProviderType.Array :
+                case (int)HsqlProviderType.Array:
                     {
                         return typeof(object);
                     }
-                case (int)HsqlProviderType.BigInt :
+                case (int)HsqlProviderType.BigInt:
                     {
                         return typeof(long);
                     }
-                case (int)HsqlProviderType.Blob :
+                case (int)HsqlProviderType.Blob:
                     {
                         return typeof(object);
                     }
-                case (int)HsqlProviderType.Binary :
-                case (int)HsqlProviderType.VarBinary :
-                case (int)HsqlProviderType.LongVarBinary :
+                case (int)HsqlProviderType.Binary:
+                case (int)HsqlProviderType.VarBinary:
+                case (int)HsqlProviderType.LongVarBinary:
                     {
                         return typeof(byte[]);
                     }
-                case (int)HsqlProviderType.Boolean :
+                case (int)HsqlProviderType.Boolean:
                     {
                         return typeof(bool);
                     }
-                case (int)HsqlProviderType.Clob :
+                case (int)HsqlProviderType.Clob:
                     {
                         return typeof(object);
                     }
-                case (int)HsqlProviderType.Char :
-                case (int)HsqlProviderType.VarChar :
-                case (int)HsqlProviderType.LongVarChar :
+                case (int)HsqlProviderType.Char:
+                case (int)HsqlProviderType.VarChar:
+                case (int)HsqlProviderType.LongVarChar:
                     {
                         return typeof(string);
                     }
-                case (int)HsqlProviderType.Date :
-                case (int)HsqlProviderType.Time :
-                case (int)HsqlProviderType.TimeStamp :
+                case (int)HsqlProviderType.Date:
+                case (int)HsqlProviderType.Time:
+                case (int)HsqlProviderType.TimeStamp:
                     {
                         return typeof(DateTime);
                     }
-                case (int)HsqlProviderType.Decimal :
-                case (int)HsqlProviderType.Numeric :
+                case (int)HsqlProviderType.Decimal:
+                case (int)HsqlProviderType.Numeric:
                     {
                         return typeof(decimal);
                     }
-                case (int)HsqlProviderType.Double :
-                case (int)HsqlProviderType.Float :
+                case (int)HsqlProviderType.Double:
+                case (int)HsqlProviderType.Float:
                     {
                         return typeof(double);
                     }
-                case (int)HsqlProviderType.Integer :
+                case (int)HsqlProviderType.Integer:
                     {
                         return typeof(int);
                     }
-                case (int)HsqlProviderType.Null :
+                case (int)HsqlProviderType.Null:
                     {
                         return typeof(object);
                     }
-                case (int)HsqlProviderType.Real :
+                case (int)HsqlProviderType.Real:
                     {
                         return typeof(double);
                     }
-                case (int)HsqlProviderType.SmallInt :
+                case (int)HsqlProviderType.SmallInt:
                     {
                         return typeof(int);
                     }
-                case (int)HsqlProviderType.TinyInt :
+                case (int)HsqlProviderType.TinyInt:
                     {
                         return typeof(int);
                     }
@@ -986,10 +1078,20 @@ namespace System.Data.Hsqldb.Common
 
         #region ToProviderSpecificDataType(int)
         /// <summary>
-        /// Retrieves the provider-specific type, given the SQL data type code.
+        /// Retrieves the <see cref="System.Type"/> used internally
+        /// by this HSQLDB ADO.NET data provider implementation to 
+        /// represent values of the SQL type identified by the given
+        /// data type code.
         /// </summary>
+        /// <remarks>
+        /// See <see cref="HsqlProviderType"/> and <see cref="org.hsqldb.Types"/>
+        /// </remarks>
         /// <param name="type">The SQL data type code.</param>
-        /// <returns>The provider-specific type</returns>
+        /// <returns>
+        /// The <see cref="System.Type"/> used internally by the HSQLDB
+        /// ADO.NET data provider to represent values of the indicated
+        /// SQL data type.
+        /// </returns>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity")]
         public static Type ToProviderSpecificDataType(int type)
         {
@@ -1073,7 +1175,7 @@ namespace System.Data.Hsqldb.Common
                     }
                 case HsqlTypes.OTHER:
                     {
-                        return typeof(object);
+                        return typeof(SqlObject);
                     }
                 case HsqlTypes.REAL:
                     {
@@ -1124,7 +1226,7 @@ namespace System.Data.Hsqldb.Common
                         return typeof(object);
                     }
             }
-        } 
+        }
         #endregion
 
         #endregion
@@ -1436,7 +1538,7 @@ namespace System.Data.Hsqldb.Common
             catch (java.lang.NumberFormatException nfe)
             {
                 throw new HsqlDataSourceException(Trace.error(
-                    Trace.INVALID_CONVERSION,nfe.toString()));
+                    Trace.INVALID_CONVERSION, nfe.toString()));
             }
         }
         #endregion
@@ -1473,7 +1575,7 @@ namespace System.Data.Hsqldb.Common
             }
         }
         #endregion
-        
+
         #endregion
 
         #region Exception Factory Methods
@@ -1490,7 +1592,7 @@ namespace System.Data.Hsqldb.Common
         {
             HsqlException ex = Trace.error(
                 Trace.NUMERIC_VALUE_OUT_OF_RANGE, n);
-            
+
             return new HsqlDataSourceException(ex);
         }
         #endregion
@@ -1538,11 +1640,11 @@ namespace System.Data.Hsqldb.Common
         /// <returns><c>HsqlDataSourceException</c></returns>
         public static HsqlDataSourceException UnknownConversion(Object o, int targetType)
         {
-            string format = 
+            string format =
                 "Unknown target SQL data type: {0} for source type: {1}";
             string sourceType = (o == null) ? "null" : o.GetType().FullName;
             HsqlException hex = Trace.error(Trace.INVALID_CONVERSION,
-                string.Format(format,targetType,sourceType));
+                string.Format(format, targetType, sourceType));
 
             return new HsqlDataSourceException(hex);
         }

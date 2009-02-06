@@ -91,7 +91,6 @@ using System.Text;
 using System.Data.Hsqldb.Common.Sql.Type;
 using System.Data.SqlTypes;
 
-
 #endregion
 
 namespace System.Data.Hsqldb.Common
@@ -100,9 +99,11 @@ namespace System.Data.Hsqldb.Common
     {
         #region FromDotNet
         /// <summary>
-        /// Provides conversions from the .NET type system
-        /// to the HSQLDB Java type mapping for SQL.
+        /// Provides conversions from the .NET type system to the HSQLDB Java internal type mapping for SQL.
         /// </summary>
+        /// <remarks>
+        /// This facility is intented primarily 
+        /// </remarks>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1034:NestedTypesShouldNotBeVisible")]
         public static class FromDotNet
         {
@@ -1941,7 +1942,7 @@ namespace System.Data.Hsqldb.Common
                 }
                 else if (nanosecond < 99999)
                 {
-                    sb.Append(0);
+                    sb.Append('0');
                 }
 
                 sb.Append(nanosecond);
@@ -6722,7 +6723,7 @@ namespace System.Data.Hsqldb.Common
             /// value to an <c>SQL OBJECT</c> value.
             /// </summary>
             /// <param name="value">
-            /// To convert to an an <c>SQL OBJECT</c> value.
+            /// To convert to an <c>SQL OBJECT</c> value.
             /// </param>
             /// <returns>
             /// The <c>SQL OBJECT</c> representation of the value.
@@ -6858,67 +6859,67 @@ namespace System.Data.Hsqldb.Common
                         }
                     case Types.BIGINT:
                         {
-                            return ToBigInt(objectValue);
+                            return FromDotNet.ToBigInt(objectValue);
                         }
                     case Types.BINARY:
                         {
-                            return ToBinary(objectValue);
+                            return FromDotNet.ToBinary(objectValue);
                         }
                     case Types.BLOB:
                         {
-                            throw InvalidConversion(Types.BLOB);
+                            throw HsqlConvert.InvalidConversion(Types.BLOB);
                         }
                     case Types.BOOLEAN:
                         {
-                            return ToBoolean(objectValue);
+                            return FromDotNet.ToBoolean(objectValue);
                         }
                     case Types.CHAR:
                         {
-                            return ToString(objectValue);
+                            return FromDotNet.ToString(objectValue);
                         }
                     case Types.CLOB:
                         {
-                            throw InvalidConversion(Types.CLOB);
+                            throw HsqlConvert.InvalidConversion(Types.CLOB);
                         }
                     case Types.DATALINK:
                         {
-                            throw InvalidConversion(Types.DATALINK);
+                            throw HsqlConvert.InvalidConversion(Types.DATALINK);
                         }
                     case Types.DATE:
                         {
-                            return ToDate(objectValue);
+                            return FromDotNet.ToDate(objectValue);
                         }
                     case Types.DECIMAL:
                         {
-                            return objectValue;
+                            return FromDotNet.ToDecimal(objectValue);
                         }
                     case Types.DISTINCT:
                         {
-                            throw InvalidConversion(Types.DISTINCT);
+                            throw HsqlConvert.InvalidConversion(Types.DISTINCT);
                         }
                     case Types.DOUBLE:
                         {
-                            return ToDouble(objectValue);
+                            return FromDotNet.ToDouble(objectValue);
                         }
                     case Types.FLOAT:
                         {
-                            return ToDouble(objectValue);
+                            return FromDotNet.ToDouble(objectValue);
                         }
                     case Types.INTEGER:
                         {
-                            return ToInteger(objectValue);
+                            return FromDotNet.ToInteger(objectValue);
                         }
                     case Types.JAVA_OBJECT:
                         {
-                            throw InvalidConversion(Types.JAVA_OBJECT);
+                            throw HsqlConvert.InvalidConversion(Types.JAVA_OBJECT);
                         }
                     case Types.LONGVARBINARY:
                         {
-                            return ToBinary(objectValue);
+                            return FromDotNet.ToBinary(objectValue);
                         }
                     case Types.LONGVARCHAR:
                         {
-                            return ToString(objectValue);
+                            return FromDotNet.ToString(objectValue);
                         }
                     case Types.NULL:
                         {
@@ -6926,52 +6927,52 @@ namespace System.Data.Hsqldb.Common
                         }
                     case Types.NUMERIC:
                         {
-                            return ToDecimal(objectValue);
+                            return FromDotNet.ToDecimal(objectValue);
                         }
                     case Types.OTHER:
                         {
-                            return ToOther(objectValue);
+                            return FromDotNet.ToOther(objectValue);
                         }
                     case Types.REAL:
                         {
-                            return ToReal(objectValue);
+                            return FromDotNet.ToReal(objectValue);
                         }
                     case Types.REF:
                         {
-                            throw InvalidConversion(Types.REF);
+                            throw HsqlConvert.InvalidConversion(Types.REF);
                         }
                     case Types.SMALLINT:
                         {
-                            return ToSmallInt(objectValue);
+                            return FromDotNet.ToSmallInt(objectValue);
                         }
                     case Types.STRUCT:
                         {
-                            throw InvalidConversion(Types.STRUCT);
+                            throw HsqlConvert.InvalidConversion(Types.STRUCT);
                         }
                     case Types.TIME:
                         {
-                            return ToTime(objectValue);
+                            return FromDotNet.ToTime(objectValue);
                         }
                     case Types.TIMESTAMP:
                         {
-                            return ToTimestamp(objectValue);
+                            return FromDotNet.ToTimestamp(objectValue);
                         }
                     case Types.TINYINT:
                         {
-                            return ToTinyInt(objectValue);
+                            return FromDotNet.ToTinyInt(objectValue);
                         }
                     case Types.VARBINARY:
                         {
-                            return ToBinary(objectValue);
+                            return FromDotNet.ToBinary(objectValue);
                         }
                     case Types.VARCHAR:
                     case Types.VARCHAR_IGNORECASE:
                         {
-                            return ToString(objectValue);
+                            return FromDotNet.ToString(objectValue);
                         }
                     case Types.XML:
                         {
-                            throw InvalidConversion(Types.XML);
+                            throw HsqlConvert.InvalidConversion(Types.XML);
                         }
                 }
 

@@ -67,6 +67,11 @@ namespace System.Data.Hsqldb.Common.Enumeration
         /// <summary>
         /// Identifies the generic SQL type <c>ARRAY</c>.
         /// </summary>
+        /// <remarks>
+        /// Although not implemented in HSQLDB 1.8.0, the SQL ARRAY
+        /// type denotes an indexable fixed-length vector of some
+        /// homogenous element type.
+        /// </remarks>
         [Browsable(false)]
         [EditorBrowsable(EditorBrowsableState.Advanced)]
         Array = Types.ARRAY,
@@ -75,6 +80,11 @@ namespace System.Data.Hsqldb.Common.Enumeration
         /// <summary>
         /// Identifies the generic SQL type <c>BIGINT</c>.
         /// </summary>
+        /// <remarks>
+        /// The HSQL BIGINT data type denotes an integral number in the 
+        /// range 2^63 (-9,223,372,036,854,775,808) to 2^63-1 
+        /// (9,223,372,036,854,775,807).
+        /// </remarks>
         [Description("Identifies the generic SQL type BIGINT")]
         [EditorBrowsable(EditorBrowsableState.Always)]
         BigInt = Types.BIGINT,

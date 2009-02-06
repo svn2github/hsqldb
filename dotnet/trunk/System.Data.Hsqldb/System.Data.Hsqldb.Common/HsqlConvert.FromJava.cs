@@ -113,12 +113,12 @@ namespace System.Data.Hsqldb.Common
             #region ToTinyInt(java.lang.Number)
             /// <summary>
             /// Converts the given Java <c>Number</c> object to a
-            /// <see cref="System.Int32"/> representation in the range
+            /// <see cref="System.SByte"/> representation in the range
             /// of <c>SQL TINYINT</c>.
             /// </summary>
             /// <param name="n">The Java <c>Number</c> to convert.</param>
             /// <returns>
-            /// A <c>System.Int32</c> representation in the range of <c>SQL TINYINT</c>.
+            /// A <c>System.SByte</c> representation in the range of <c>SQL TINYINT</c>.
             /// </returns>
             /// <exception cref="HsqlDataSourceException">
             /// When the given <c>Number</c> does not lie in the range of <c>SQL TINYINT</c>.
@@ -127,11 +127,11 @@ namespace System.Data.Hsqldb.Common
             /// When <c>n</c> is <c>null</c>.
             /// </exception>
             [CLSCompliant(false)]
-            public static int ToTinyInt(JavaNumber n)
+            public static sbyte ToTinyInt(JavaNumber n)
             {
                 if (n is JavaByte)
                 {
-                    return n.intValue();
+                    return (sbyte) n.intValue();
                 }
 
                 const int max = 127;
@@ -147,7 +147,7 @@ namespace System.Data.Hsqldb.Common
                         throw HsqlConvert.NumericValueOutOfRange(n);
                     }
 
-                    return value;
+                    return (sbyte) value;
                 }
                 else if (n is JavaLong)
                 {
@@ -158,7 +158,7 @@ namespace System.Data.Hsqldb.Common
                         throw HsqlConvert.NumericValueOutOfRange(n);
                     }
 
-                    return (int)value;
+                    return (sbyte)value;
                 }
                 else if (n is JavaDouble || n is JavaFloat)
                 {
@@ -172,7 +172,7 @@ namespace System.Data.Hsqldb.Common
                         throw NumericValueOutOfRange(n);
                     }
 
-                    return (int)value;
+                    return (sbyte)value;
                 }
 
                 JavaBigDecimal bigDecimalValue = n as JavaBigDecimal;
@@ -187,7 +187,7 @@ namespace System.Data.Hsqldb.Common
                         throw HsqlConvert.NumericValueOutOfRange(n);
                     }
 
-                    return bi.intValue();
+                    return (sbyte) bi.intValue();
                 }
 
                 long longVaue = n.longValue();
@@ -197,19 +197,19 @@ namespace System.Data.Hsqldb.Common
                     throw HsqlConvert.NumericValueOutOfRange(n);
                 }
 
-                return (int)longVaue;
+                return (sbyte)longVaue;
             }
             #endregion
 
             #region ToTinyInt(object)
             /// <summary>
             /// Converts the given Java <c>Object</c> to a
-            /// <see cref="System.Int32"/> representation in the
+            /// <see cref="System.SByte"/> representation in the
             /// range of <c>SQL TINYINT</c>.
             /// </summary>
             /// <param name="o">The Java <c>Object</c> to convert.</param>
             /// <returns>
-            /// A <c>System.Int32</c> representation in the range of <c>SQL TINYINT</c>.
+            /// A <c>System.SByte</c> representation in the range of <c>SQL TINYINT</c>.
             /// </returns>
             /// <exception cref="HsqlDataSourceException">
             /// When the result of the conversion does not lie in the range of <c>SQL TINYINT</c>
@@ -219,7 +219,7 @@ namespace System.Data.Hsqldb.Common
             /// <exception cref="NullReferenceException">
             /// When <c>o</c> is <c>null</c>.
             /// </exception>
-            public static int ToTinyInt(object o)
+            public static sbyte ToTinyInt(object o)
             {
                 JavaNumber numberValue = o as JavaNumber;
 
@@ -232,7 +232,7 @@ namespace System.Data.Hsqldb.Common
 
                 if (booleanValue != null)
                 {
-                    return booleanValue.booleanValue() ? 1 : 0;
+                    return (sbyte) (booleanValue.booleanValue() ? 1 : 0);
                 }
 
                 JavaObject objectValue = o as JavaObject;
@@ -246,7 +246,7 @@ namespace System.Data.Hsqldb.Common
 
                     return (isJavaObject)
                         ? FromJava.ToTinyInt(unwrapped)
-                        : FromDotNet.ToTinyInt(unwrapped).intValue();
+                        : (sbyte) FromDotNet.ToTinyInt(unwrapped).intValue();
                 }
 
                 if (o is java.util.Date
@@ -270,7 +270,7 @@ namespace System.Data.Hsqldb.Common
                     throw HsqlConvert.NumericValueOutOfRange(i);
                 }
 
-                return i;
+                return (sbyte) i;
             }
 
             #endregion
@@ -282,12 +282,12 @@ namespace System.Data.Hsqldb.Common
             #region ToSmallInt(java.lang.Number)
             /// <summary>
             /// Converts the given Java <c>Number</c> object to
-            /// a <see cref="System.Int32"/> representation in the range
+            /// a <see cref="System.Int16"/> representation in the range
             /// of <c>SQL SMALLINT</c>.
             /// </summary>
             /// <param name="n">The Java <c>Number</c> to convert.</param>
             /// <returns>
-            /// A <c>System.Int32</c> representation in the range of <c>SQL SMALLINT</c>.
+            /// A <c>System.Int16</c> representation in the range of <c>SQL SMALLINT</c>.
             /// </returns>
             /// <exception cref="HsqlDataSourceException">
             /// When the given <c>Number</c> does not lie in the range of <c>SQL SMALLINT</c>.
@@ -296,12 +296,12 @@ namespace System.Data.Hsqldb.Common
             /// When <c>n</c> is <c>null</c>.
             /// </exception>
             [CLSCompliant(false)]
-            public static int ToSmallInt(JavaNumber n)
+            public static short ToSmallInt(JavaNumber n)
             {
                 if (n is JavaByte
                     || n is JavaShort)
                 {
-                    return n.intValue();
+                    return n.shortValue();
                 }
 
                 const int max = JavaShort.MAX_VALUE;
@@ -316,7 +316,7 @@ namespace System.Data.Hsqldb.Common
                         throw HsqlConvert.NumericValueOutOfRange(n);
                     }
 
-                    return value;
+                    return (short) value;
                 }
 
                 if (n is JavaLong)
@@ -328,7 +328,7 @@ namespace System.Data.Hsqldb.Common
                         throw HsqlConvert.NumericValueOutOfRange(n);
                     }
 
-                    return (int)value;
+                    return (short) value;
                 }
 
                 if (n is JavaDouble || n is JavaFloat)
@@ -343,7 +343,7 @@ namespace System.Data.Hsqldb.Common
                         throw HsqlConvert.NumericValueOutOfRange(n);
                     }
 
-                    return (int)value;
+                    return (short) value;
                 }
 
                 JavaBigDecimal bigDecimalValue = n as JavaBigDecimal;
@@ -358,7 +358,7 @@ namespace System.Data.Hsqldb.Common
                         throw HsqlConvert.NumericValueOutOfRange(n);
                     }
 
-                    return bi.intValue();
+                    return bi.shortValue();
                 }
 
                 long l = n.longValue();
@@ -368,21 +368,21 @@ namespace System.Data.Hsqldb.Common
                     throw HsqlConvert.NumericValueOutOfRange(n);
                 }
 
-                return (int)l;
+                return (short) l;
             }
             #endregion
 
             #region ToSmallInt(object)
             /// <summary>
             /// Converts the given Java <c>Object</c> to a
-            /// <see cref="System.Int32"/> representation in the
+            /// <see cref="System.Int16"/> representation in the
             /// range of <c>SQL SMALLINT</c>.
             /// </summary>
             /// <param name="o">
             /// The Java <c>Object</c> to convert.
             /// </param>
             /// <returns>
-            /// A <c>System.Int32</c> representation in the range of <c>SQL SMALLINT</c>.
+            /// A <c>System.Int16</c> representation in the range of <c>SQL SMALLINT</c>.
             /// </returns>
             /// <exception cref="HsqlDataSourceException">
             /// When the result of the conversion does not lie in the range of <c>SQL SMALLINT</c>
@@ -392,7 +392,7 @@ namespace System.Data.Hsqldb.Common
             /// <exception cref="NullReferenceException">
             /// When <c>o</c> is <c>null</c>.
             /// </exception>
-            public static int ToSmallInt(object o)
+            public static short ToSmallInt(object o)
             {
                 JavaNumber numberValue = o as JavaNumber;
 
@@ -405,7 +405,7 @@ namespace System.Data.Hsqldb.Common
 
                 if (booleanValue != null)
                 {
-                    return booleanValue.booleanValue() ? 1 : 0;
+                    return (short) (booleanValue.booleanValue() ? 1 : 0);
                 }
 
                 JavaObject objectValue = o as JavaObject;
@@ -419,7 +419,7 @@ namespace System.Data.Hsqldb.Common
 
                     return (isJavaObject)
                         ? FromJava.ToSmallInt(unwrapped)
-                        : FromDotNet.ToSmallInt(unwrapped).intValue();
+                        : FromDotNet.ToSmallInt(unwrapped).shortValue();
                 }
 
                 if (o is java.util.Date
@@ -444,7 +444,7 @@ namespace System.Data.Hsqldb.Common
                     throw HsqlConvert.NumericValueOutOfRange(i);
                 }
 
-                return i;
+                return (short) i;
             }
             #endregion
 
@@ -854,12 +854,12 @@ namespace System.Data.Hsqldb.Common
             #region ToReal(java.lang.Number)
             /// <summary>
             /// Converts the given Java <c>Number</c> object to a 
-            /// <see cref="System.Double"/> representation
+            /// <see cref="System.Single"/> representation
             /// in the range of <c>SQL REAL</c>.
             /// </summary>
             /// <param name="n">The Java <c>Number</c> to convert.</param>
             /// <returns>
-            /// A <c>System.Double</c> representation in the range of <c>SQL REAL</c>.
+            /// A <c>System.Single</c> representation in the range of <c>SQL REAL</c>.
             /// </returns>
             /// <exception cref="HsqlDataSourceException">
             /// When the given Number does not lie in the range of <c>SQL REAL</c>.
@@ -868,7 +868,7 @@ namespace System.Data.Hsqldb.Common
             /// When <c>n</c> is <c>null</c>.
             /// </exception>
             [CLSCompliant(false)]
-            public static double ToReal(JavaNumber n)
+            public static float ToReal(JavaNumber n)
             {
                 JavaBigDecimal bigDecimalValue = n as JavaBigDecimal;
 
@@ -880,7 +880,7 @@ namespace System.Data.Hsqldb.Common
                         throw NumericValueOutOfRange(n);
                     }
 
-                    return bigDecimalValue.doubleValue();
+                    return bigDecimalValue.floatValue();
                 }
 
                 double d = n.doubleValue();
@@ -891,19 +891,19 @@ namespace System.Data.Hsqldb.Common
                     throw HsqlConvert.NumericValueOutOfRange(n);
                 }
 
-                return d;
+                return (float) d;
             }
             #endregion
 
             #region ToReal(object)
             /// <summary>
             /// Converts the given Java <c>Object</c> to a
-            /// <see cref="System.Double"/> representation
+            /// <see cref="System.Single"/> representation
             /// in the range of <c>SQL REAL</c>.
             /// </summary>
             /// <param name="o">The Java <c>Object</c> to convert.</param>
             /// <returns>
-            /// A <c>System.Double</c> representation in the range of <c>SQL REAL</c>.
+            /// A <c>System.Single</c> representation in the range of <c>SQL REAL</c>.
             /// </returns>
             /// <exception cref="HsqlDataSourceException">
             /// When the result of the conversion does not lie in the range of SQL REAL
@@ -913,7 +913,7 @@ namespace System.Data.Hsqldb.Common
             /// <exception cref="NullReferenceException">
             /// When <c>o</c> is <c>null</c>.
             /// </exception>
-            public static double ToReal(object o)
+            public static float ToReal(object o)
             {
                 JavaNumber numberValue = o as JavaNumber;
 
@@ -926,7 +926,7 @@ namespace System.Data.Hsqldb.Common
 
                 if (booleanValue != null)
                 {
-                    return booleanValue.booleanValue() ? 1D : 0D;
+                    return booleanValue.booleanValue() ? 1F : 0F;
                 }
 
                 JavaObject objectValue = o as JavaObject;
@@ -940,7 +940,7 @@ namespace System.Data.Hsqldb.Common
 
                     return (isJavaObject)
                         ? FromJava.ToReal(unwrapped)
-                        : FromDotNet.ToReal(unwrapped).doubleValue();
+                        : FromDotNet.ToReal(unwrapped).floatValue();
                 }
 
                 if (o is java.util.Date
@@ -965,7 +965,7 @@ namespace System.Data.Hsqldb.Common
                     throw NumericValueOutOfRange(doubleValue);
                 }
 
-                return doubleValue;
+                return (float) doubleValue;
             }
             #endregion
 
