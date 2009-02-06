@@ -6,10 +6,6 @@ ODBC does not allow an empty string for a DSM database name.  Therefore,
 you must specify DSN database name of "/" (without the quotes) to indicate
 the default database
 
-You may want to turn on one or more of the log files, with DSN settings like
-(counter-intuitively) "Debug" for the mylog and "CommLog" for the comm. log.
-Like several of the settings, must set the value to "1" to enable.
-
 
 (The settings marked with * below are on by default).
 
@@ -61,6 +57,12 @@ Special
     I don't know much about OID/Rowid usage in ODBC.
 
     CancelAsFreeStmt.  ? Undocumented.
+
+LOGGING
+
+    Debug = 1.  To write mylog() messages to the MyLog file.
+    Debug = 2.  To write both mylog() and inolog() messages to MyLog file.
+    CommLog = 1.  To write qlog() messages to the CommLog.
 
 ------------------------------------------------------------------------------
 
