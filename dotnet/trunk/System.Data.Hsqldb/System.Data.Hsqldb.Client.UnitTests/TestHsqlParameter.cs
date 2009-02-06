@@ -46,7 +46,7 @@ namespace System.Data.Hsqldb.Client.UnitTests
         }
         
         [Test, OfMember("ToString")]
-        public void ToString()
+        new public void ToString()
         {
             HsqlParameter testSubject = new HsqlParameter();
 

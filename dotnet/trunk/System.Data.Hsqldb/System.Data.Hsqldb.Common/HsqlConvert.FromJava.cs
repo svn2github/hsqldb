@@ -219,6 +219,7 @@ namespace System.Data.Hsqldb.Common
             /// <exception cref="NullReferenceException">
             /// When <c>o</c> is <c>null</c>.
             /// </exception>
+            [CLSCompliant(false)]
             public static sbyte ToTinyInt(object o)
             {
                 JavaNumber numberValue = o as JavaNumber;

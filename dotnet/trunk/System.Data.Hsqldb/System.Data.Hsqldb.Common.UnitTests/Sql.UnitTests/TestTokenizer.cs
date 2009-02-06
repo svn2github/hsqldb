@@ -7,7 +7,7 @@ using System.Data.Hsqldb.TestCoverage;
 using NUnit.Framework;
 #endregion
 
-namespace UnitTests
+namespace System.Data.Hsqldb.Common.Sql.UnitTests
 {
     [TestFixture, ForSubject(typeof(Tokenizer))]
     public class TestTokenizer

@@ -78,7 +78,7 @@ namespace System.Data.Hsqldb.Client
         private int m_fieldCount;
         private bool m_isClosed;
         private int[] m_columnTypes;
-        private WeakReference m_schemaTableReference;
+        private readonly WeakReference m_schemaTableReference = new WeakReference(null);
         private org.hsqldb.Result.ResultMetaData m_metaData;
         private org.hsqldb.lib.IntValueHashMap m_columnMap;
 

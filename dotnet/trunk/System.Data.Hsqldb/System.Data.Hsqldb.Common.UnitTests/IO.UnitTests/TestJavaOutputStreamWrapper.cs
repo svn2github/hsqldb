@@ -4,7 +4,7 @@ using System.Data.Hsqldb.TestCoverage;
 using System.Data.Hsqldb.Common.IO;
 using System.IO;
 
-namespace UnitTests
+namespace System.Data.Hsqldb.Common.IO.UnitTests
 {
     [TestFixture, ForSubject(typeof(JavaOutputStreamWrapper))]
     public class TestJavaOutputStreamWrapper
