@@ -1,0 +1,8 @@
+﻿<NUnitProject>
+  <Settings activeconfig="Debug" />
+  <Config name="Debug" binpathtype="Auto">
+    <assembly path="System.Data.Hsqldb.Common.UnitTests\bin\Debug\System.Data.Hsqldb.Common.UnitTests.dll" />
+    <assembly path="System.Data.Hsqldb.Client.UnitTests\bin\Debug\System.Data.Hsqldb.Client.UnitTests.dll" />
+  </Config>
+  <Config name="Release" binpathtype="Auto" />
+</NUnitProject>
