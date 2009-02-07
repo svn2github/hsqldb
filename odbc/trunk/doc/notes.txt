@@ -24,7 +24,8 @@ In the meantime, ALWAYS TURN THE FOLLOWING SETTINGS OFF.
     ExtraSysTablePrefixes: "".  We distinguish System tables by schema.
 
     RowVersioning: No.
-    Implemenation is Postgresql-specific.  Fred may reimplement.
+    Deprecated becase Implementation is Postgresql-specific.
+    Fred may re-implement.
 
     DisallowPremature: 0.
 
