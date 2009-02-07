@@ -146,6 +146,10 @@ namespace System.Data.Hsqldb.Client.Design.Converter
         /// exclusive list of possible values, using the specified
         /// context.
         /// </summary>
+        /// <remarks>
+        /// In other words, controls whether a control using this converter to provide the drop-down list 
+        /// disables (return <c>true</c>) or disables (return <c>false</c>) manual data entry  or enables manual  as well as list item selection.
+        /// </remarks>
         /// <param name="context">
         /// An <see cref="ITypeDescriptorContext"></see> that 
         /// provides a format context.
