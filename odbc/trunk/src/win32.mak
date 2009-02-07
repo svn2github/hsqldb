@@ -35,9 +35,9 @@
 #   Boston, MA  02110-1301  USA
 
 !IF "$(ANSI_VERSION)" == "yes"
-!MESSAGE Building the PostgreSQL ANSI 3.0 Driver for Win32...
+!MESSAGE Building the HyperSQL ANSI 3.0 Driver for Win32...
 !ELSE
-!MESSAGE Building the PostgreSQL Unicode 3.5 Driver for Win32...
+!MESSAGE Building the HyperSQL Unicode 3.5 Driver for Win32...
 !ENDIF
 !MESSAGE
 !IF "$(CFG)" == ""
@@ -68,18 +68,6 @@ USE_SSPI=no
 !ERROR An invalid configuration was specified.
 !ENDIF 
 
-#
-#
-!IF "$(PG_INC)" == ""
-PG_INC=$(PROGRAMFILES)\PostgreSQL\8.3\include
-!MESSAGE Using default PostgreSQL Include directory: $(PG_INC)
-!ENDIF
-
-!IF "$(PG_LIB)" == ""
-PG_LIB=$(PROGRAMFILES)\PostgreSQL\8.3\lib
-!MESSAGE Using default PostgreSQL Library directory: $(PG_LIB)
-!ENDIF
-
 !IF "$(LINKMT)" == ""
 LINKMT=MT
 !ENDIF
@@ -99,17 +87,11 @@ SSL_LIB=C:\OpenSSL\lib\VC
 !MESSAGE Using default OpenSSL Library directory: $(SSL_LIB)
 !ENDIF
 
-!IF "$(USE_LIBPQ)" != "no"
-SSL_DLL = "SSLEAY32.dll"
-RESET_CRYPTO = yes
-ADD_DEFINES = $(ADD_DEFINES) /D "SSL_DLL=\"$(SSL_DLL)\"" /D USE_SSL
-!ELSE
-ADD_DEFINES = $(ADD_DEFINES) /D NOT_USE_LIBPQ
-!ENDIF
+#SSL_DLL = "SSLEAY32.dll"
+#RESET_CRYPTO = yes
+#ADD_DEFINES = $(ADD_DEFINES) /D "SSL_DLL=\"$(SSL_DLL)\"" /D USE_SSL
 
-!IF "$(USE_SSPI)" == "yes"
-ADD_DEFINES = $(ADD_DEFINES) /D USE_SSPI
-!ENDIF
+ADD_DEFINES = $(ADD_DEFINES) /D NOT_USE_LIBPQ
 
 !IF "$(ANSI_VERSION)" == "yes"
 DTCLIB = pgenlista
@@ -124,16 +106,10 @@ MSDTC=no
 VC_FLAGS=/GX /YX
 !ELSE
 MSVC_VERSION=vc70
-!IF "$(USE_LIBPQ)" != "no"
-VC07_DELAY_LOAD=/DelayLoad:libpq.dll /DelayLoad:$(SSL_DLL)
-!IF "$(RESET_CRYPTO)" == "yes"
-VC07_DELAY_LOAD=$(VC07_DELAY_LOAD) /DelayLoad:libeay32.dll
-ADD_DEFINES=$(ADD_DEFINES) /D RESET_CRYPTO_CALLBACKS
-!ENDIF
-!ENDIF
-!IF "$(USE_SSPI)" == "yes"
-VC07_DELAY_LOAD=$(VC07_DELAY_LOAD) /Delayload:secur32.dll /Delayload:crypt32.dll
-!ENDIF
+#!IF "$(RESET_CRYPTO)" == "yes"
+#VC07_DELAY_LOAD=$(VC07_DELAY_LOAD) /DelayLoad:libeay32.dll
+#ADD_DEFINES=$(ADD_DEFINES) /D RESET_CRYPTO_CALLBACKS
+#!ENDIF
 VC07_DELAY_LOAD=$(VC07_DELAY_LOAD) /delayLoad:$(DTCDLL) /DELAY:UNLOAD
 VC_FLAGS=/EHsc
 !ENDIF
@@ -148,7 +124,7 @@ ADD_DEFINES = $(ADD_DEFINES) /D "_MEMORY_DEBUG_" /GS
 ADD_DEFINES = $(ADD_DEFINES) /GS
 !ENDIF
 !IF "$(ANSI_VERSION)" == "yes"
-ADD_DEFINES = $(ADD_DEFINES) /D "DBMS_NAME=\"PostgreSQL ANSI\"" /D "ODBCVER=0x0350"
+ADD_DEFINES = $(ADD_DEFINES) /D "DBMS_NAME=\"HyperSQL ANSI\"" /D "ODBCVER=0x0350"
 !ELSE
 ADD_DEFINES = $(ADD_DEFINES) /D "UNICODE_SUPPORT" /D "ODBCVER=0x0351"
 RSC_DEFINES = $(RSC_DEFINES) /D "UNICODE_SUPPORT"
@@ -243,7 +219,7 @@ CPP_PROJ=/nologo /$(LINKMT) /O2 /D "NDEBUG"
 !ELSEIF  "$(CFG)" == "Debug"
 CPP_PROJ=/nologo /$(LINKMT)d /Gm /ZI /Od /RTC1 /D "_DEBUG"
 !ENDIF
-CPP_PROJ=$(CPP_PROJ) /W3 $(VC_FLAGS) /I "$(PG_INC)" /I "$(SSL_INC)" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "_CRT_SECURE_NO_DEPRECATE" /D "PSQLODBC_EXPORTS" /D "WIN_MULTITHREAD_SUPPORT" $(ADD_DEFINES) /Fp"$(INTDIR)\hsqlodbc.pch" /Fo"$(INTDIR)"\ /Fd"$(INTDIR)"\ /FD
+CPP_PROJ=$(CPP_PROJ) /W3 $(VC_FLAGS) /I "$(SSL_INC)" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "_CRT_SECURE_NO_DEPRECATE" /D "PSQLODBC_EXPORTS" /D "WIN_MULTITHREAD_SUPPORT" $(ADD_DEFINES) /Fp"$(INTDIR)\hsqlodbc.pch" /Fo"$(INTDIR)"\ /Fd"$(INTDIR)"\ /FD
 !MESSAGE CPP_PROJ=$(CPP_PROJ)
 .c{$(INTDIR)}.obj::
    $(CPP) @<<
@@ -306,7 +282,7 @@ LINK32_FLAGS=$(LINK32_FLAGS) /incremental:no
 !ELSE
 LINK32_FLAGS=$(LINK32_FLAGS) /incremental:yes /debug
 !ENDIF
-LINK32_FLAGS=$(LINK32_FLAGS) $(VC07_DELAY_LOAD) /libpath:"$(PG_LIB)" /libpath:"$(SSL_LIB)"
+LINK32_FLAGS=$(LINK32_FLAGS) $(VC07_DELAY_LOAD) /libpath:"$(SSL_LIB)"
 
 LINK32_OBJS= \
 	"$(INTDIR)\bind.obj" \
