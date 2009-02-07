@@ -64,19 +64,18 @@ namespace System.Data.Hsqldb.Client
         /// Performs the installation.
         /// </summary>
         /// <param name="stateSaver">
-        /// An <see cref="IDictionary"/> used to save information
-        /// needed to perform a commit, rollback, or uninstall
-        /// operation.
+        /// An <see cref="IDictionary"/> used to save information needed to
+        /// perform a commit, rollback, or uninstall operation.
         /// </param>
         /// <exception cref="ArgumentException">
         /// When the stateSaver parameter is null.
         /// </exception>
         /// <exception cref="Exception">
-        /// When an exception occurrs in the <c>BeforeInstall</c>
-        /// event handler of one of the installers in the collection.
+        /// When an exception occurrs in the <c>BeforeInstall</c> event
+        /// handler of one of the installers in the collection.
         /// -or-
-        /// An exception occurred in the <c>AfterInstall</c>
-        /// event handler of one of the installers in the collection.
+        /// An exception occurred in the <c>AfterInstall</c> event handler
+        /// of one of the installers in the collection.
         /// </exception>
         public override void Install(IDictionary stateSaver)
         {
