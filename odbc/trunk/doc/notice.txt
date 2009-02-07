@@ -1,7 +1,6 @@
 $Id$
 
-hsqlodbc - ODBC Driver for HyperSQL Database
-
+HyperSQL ODBC Driver
 
 Copyright (c) 2009          The HSQL Development Group
 Copyright (C) 1998          Insight Distribution Systems

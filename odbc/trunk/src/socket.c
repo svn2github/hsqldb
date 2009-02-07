@@ -1,4 +1,8 @@
-/*-------
+/*
+ * $Id$
+ *
+ * HyperSQL ODBC Driver
+ *
  * Module:          socket.c
  *
  * Description:     This module contains functions for low level socket

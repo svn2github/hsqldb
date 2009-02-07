@@ -1,4 +1,9 @@
-/* File:            pgtypes.h
+/*
+ * $Id$
+ *
+ * HyperSQL ODBC Driver
+ *
+ * File:            pgtypes.h
  *
  * Description:     See "pgtypes.c"
  *

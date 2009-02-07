@@ -110,3 +110,8 @@ Settings
 
 We have SSL disabled for now, because it was dependent upon SSPI and
 libpq, and we want to use neither of them.
+
+
+UUIDs for Wix were generated using the perl module Data::UUID, with
+namespace "hsqlodbc" and "name" identifying the object being named,
+like "hsqlodbc_files" or "product".

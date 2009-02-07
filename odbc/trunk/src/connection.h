@@ -1,4 +1,9 @@
-/* File:            connection.h
+/*
+ * $Id$
+ *
+ * HyperSQL ODBC Driver
+ *
+ * File:            connection.h
  *
  * Description:     See "connection.c"
  *

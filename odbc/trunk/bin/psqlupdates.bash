@@ -5,8 +5,9 @@ PROGNAME="${0##*/}"
 
 # Lists changes to psqlodbc baseline between the last confirmed synchronization
 # point and now (or the specified time).
-#
-#  Copyright (C) 2009 Blaine Simpson and The HSQL Development Group
+
+#  HyperSQL ODBC Driver
+#  Copyright (C) 2009 Blaine Simpson and the HSQL Development Group
 #
 #  This library is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Library General Public

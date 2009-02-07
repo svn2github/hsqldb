@@ -1,4 +1,8 @@
 #
+# $Id$
+#
+# HyperSQL ODBC Driver
+#
 # File:         win32.mak
 #
 # Description:  psqlodbc35w Unicode version Makefile for Win32.

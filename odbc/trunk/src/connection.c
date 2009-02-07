@@ -1,4 +1,8 @@
 /*
+ * $Id$
+ *
+ * HyperSQL ODBC Driver
+ *
  * Module:          connection.c
  *
  * Description:     This module contains routines related to

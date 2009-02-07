@@ -1,4 +1,9 @@
-/* File:            socket.h
+/*
+ * $Id$
+ *
+ * File:            socket.h
+ *
+ * HyperSQL ODBC Driver
  *
  * Description:     See "socket.c"
  *

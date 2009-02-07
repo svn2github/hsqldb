@@ -6,8 +6,9 @@ PROGNAME="${0##*/}"
 # Textually or graphically displays the difference between two (specified)
 # driver log files, excluding most unique identifiers and non-textual
 # characters.
-#
-#  Copyright (C) 2009 Blaine Simpson and The HSQL Development Group
+
+#  HyperSQL ODBC Driver
+#  Copyright (C) 2009 Blaine Simpson and the HSQL Development Group
 #
 #  This library is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Library General Public
