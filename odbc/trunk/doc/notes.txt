@@ -14,13 +14,12 @@ In the meantime, ALWAYS TURN THE FOLLOWING SETTINGS OFF.
 
     Optimizer: 0.
 
-    Ksqo*: 0
+    Ksqo: 0
 
     UseDeclareFetch: 0.
 
     Parse: 0. (not 100% sure Fred doesn't want to port this)
 
-    TextAsLongVarchar*: 0, UnknownsAsLongVarchar: 0, BoolsAsChar*: 0
 
     ExtraSysTablePrefixes: "".  We distinguish System tables by schema.
 
@@ -37,17 +36,20 @@ Enable
     (just a guess)  Dialog code says default is "1   /* don't recognize */"
     Seems to be saying that the default is on and it is off.
 
-    UseServerSidePrepare: 1
+    UseServerSidePrepare*: 1
     (not Yes, etc.)
 
 Special
+
+    TextAsLongVarchar  0  Currently unused.  We may use this to switch some
+    HyperSQL data type to LongVarchar to satisfy some client programs.
 
     UnknownSizes may be useful until we start passing column precision/sizes
     from the server.  After that, we don't want this setting.  Default -1???
 
     MaxVarcharSize seems to only be desirable as a client app idiocy workaround.
 
-    UpdateableCursors*  0/1.  This is pseudo client cursor caching.
+    UpdateableCursors  0/1.  This is pseudo client cursor caching.
      I think Fred is going to implement the real thing.
 
     ByteaAsLongVarBinary: 0.  ?  Don't have LOs working yet.
