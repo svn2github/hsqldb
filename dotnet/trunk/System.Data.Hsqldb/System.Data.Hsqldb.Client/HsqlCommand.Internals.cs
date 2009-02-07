@@ -215,49 +215,6 @@ namespace System.Data.Hsqldb.Client
         }
         #endregion
 
-        #region PrepareInternal()
-        /// <summary>
-        /// Provides the core logic for the Prepare() method.
-        /// </summary>
-        internal void PrepareInternal()
-        {
-            if (!IsPrepared)
-            {
-                string sql;
-                HsqlSession session = this.Session;
-
-                switch (m_commandType)
-                {
-                    case CommandType.StoredProcedure:
-                        {
-                            sql = StoredProcedureCommandText;
-
-                            break;
-                        }
-                    case CommandType.Text:
-                        {
-                            sql = DefaultParameterMarkerCommandText;
-
-                            break;
-                        }
-                    case CommandType.TableDirect:
-                        {
-                            sql = TableDirectCommandText;
-                            break;
-                        }
-                    default:
-                        {
-                            throw new HsqlDataSourceException(
-                                "CommandType not supported: "
-                                + m_commandType); // NOI18N
-                        }
-                }
-
-                m_statement = session.PrepareStatement(sql);
-            }
-        }
-        #endregion
-
         #region ExecuteScalarInternal()
         /// <summary>
         /// Provides the core logic for the ExecuteScalar() method.
@@ -406,6 +363,90 @@ namespace System.Data.Hsqldb.Client
                 m_tokenList = null;
                 m_storedProcedureCommandText = null;
                 m_tableDirectCommandText = null;
+            }
+        }
+        #endregion
+
+        #region OnStatementCompleted(int)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="recordCount"></param>
+        internal void OnStatementCompleted(int recordCount)
+        {
+            if (0 <= recordCount)
+            {
+                StatementCompletedEventHandler handler = this.StatementCompleted;
+
+                if (handler != null)
+                {
+                    try
+                    {
+                        handler(this, new StatementCompletedEventArgs(recordCount));
+                    }
+                    catch (Exception exception)
+                    {
+                        Type type = exception.GetType();
+
+
+                        if ((type == typeof(StackOverflowException)) ||
+                            (type == typeof(OutOfMemoryException)) ||
+                            (type == typeof(ThreadAbortException)) ||
+                            (type == typeof(NullReferenceException)) ||
+                            (type == typeof(AccessViolationException)))
+                        {
+
+                            throw;
+                        }
+
+#if TRACE
+                        System.Diagnostics.Trace.WriteLine(exception);
+#endif
+                    }
+                }
+            }
+        } 
+        #endregion
+
+        #region PrepareInternal()
+        /// <summary>
+        /// Provides the core logic for the Prepare() method.
+        /// </summary>
+        internal void PrepareInternal()
+        {
+            if (!IsPrepared)
+            {
+                string sql;
+                HsqlSession session = this.Session;
+
+                switch (m_commandType)
+                {
+                    case CommandType.StoredProcedure:
+                        {
+                            sql = StoredProcedureCommandText;
+
+                            break;
+                        }
+                    case CommandType.Text:
+                        {
+                            sql = DefaultParameterMarkerCommandText;
+
+                            break;
+                        }
+                    case CommandType.TableDirect:
+                        {
+                            sql = TableDirectCommandText;
+                            break;
+                        }
+                    default:
+                        {
+                            throw new HsqlDataSourceException(
+                                "CommandType not supported: "
+                                + m_commandType); // NOI18N
+                        }
+                }
+
+                m_statement = session.PrepareStatement(sql);
             }
         }
         #endregion
