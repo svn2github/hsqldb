@@ -31,7 +31,7 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
             {
                 testSubject.Wrap(new byte[] { 5, 6, 7, 8 });
 
-                Assert.Fail("successful invocation of Wrap(long) before Free()");
+                Assert.Fail("successful invocation of Wrap(object) before Free()");
             }
             catch (Exception ex)
             {
@@ -41,10 +41,8 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
             testSubject.Free();
 
             try
-            {
-                Trace.WriteLine("testSubject.GetBinaryStream()");
-                
-                testSubject.GetBinaryStream();
+            {                
+                Stream stream = testSubject.GetBinaryStream();
 
                 Assert.Fail("successful invocation of GetBinaryStream() after Free()");
             }
@@ -57,7 +55,7 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
             {
                 byte[] bytes = testSubject.GetBytes(0L, (int) length);
 
-                Assert.Fail("successful invocation of GetBinaryStream(long,int) after Free()");
+                Assert.Fail("successful invocation of GetBytes(long,int) after Free()");
             }
             catch (Exception ex)
             {

@@ -388,6 +388,12 @@ namespace System.Data.Hsqldb.Common.Lob
         /// <exception cref="HsqlDataSourceException">
         /// If there is an error accessing the <c>CLOB</c> value.
         /// </exception>
+        /// <exception cref="ArgumentoutOfRangeException">
+        /// When <c>pos</c> is less than 1; 
+        /// <c>pos</c> is greater than <c>this.Length</c>;
+        /// <c>length</c> is less than zero; 
+        /// <c>length</c> is greater than <c>this.Length</c> - <c>pos - 1</c>
+        /// </exception>
         string IClob.GetSubString(long pos, int length)
         {
             lock (this)
