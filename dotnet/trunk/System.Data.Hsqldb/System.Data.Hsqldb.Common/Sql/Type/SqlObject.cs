@@ -171,16 +171,18 @@ namespace System.Data.Hsqldb.Common.Sql.Type
             }
 
             bool startsWithHeader = true; // maybe
+            byte[] headerBytes = m_HeaderBytes;
+            int headerBytesLength = headerBytes.Length;
 
-            if (value.Length <= 16)
+            if (value.Length < headerBytesLength)
             {
                 startsWithHeader = false;
             }
             else
             {
-                for (int i = 0; i < 16; i++)
+                for (int i = 0; i < headerBytesLength; i++)
                 {
-                    if (value[i] != m_HeaderBytes[i])
+                    if (value[i] != headerBytes[i])
                     {
                         startsWithHeader = false;
                         break;
@@ -212,9 +214,10 @@ namespace System.Data.Hsqldb.Common.Sql.Type
                 throw new ArgumentNullException("value");
             }
 
-            bool isArray = value.GetType().IsArray;            
+            bool isArray = value.GetType().IsArray;
+            int rank = (isArray ? ((Array)value).Rank : 0);
             bool isJavaSerializable = (isArray)
-                ? Serializable.IsInstanceArray(value, ((Array)value).Rank)
+                ? Serializable.IsInstanceArray(value, rank)
                 : Serializable.IsInstance(value);
 
             byte[] bytes;
@@ -229,7 +232,7 @@ namespace System.Data.Hsqldb.Common.Sql.Type
                 {
                     BinaryFormatter formatter = new BinaryFormatter();
 
-                    stream.Write(m_HeaderBytes, 0, 16);
+                    stream.Write(m_HeaderBytes, 0, m_HeaderBytes.Length);
                     formatter.Serialize(stream, value);
 
                     bytes = stream.ToArray();
@@ -285,7 +288,9 @@ namespace System.Data.Hsqldb.Common.Sql.Type
             {
                 isJavaObject = true;
 
-                obj = org.hsqldb.lib.InOutUtil.deserialize(value);
+                Serializable serializable = org.hsqldb.lib.InOutUtil.deserialize(value);
+
+                obj = serializable.ToObject();
             }
 
             return obj;
@@ -325,7 +330,7 @@ namespace System.Data.Hsqldb.Common.Sql.Type
         /// by writing a <c>java.io.Serializable</c> object graph to a
         /// <c>java.io.ObjectOutputStream</c>; otherwise, the
         /// <see cref="SerializationHeader"/> is automatically added because
-        /// it mut be assumed that the serialized form  was produced using
+        /// it must be assumed that the serialized form  was produced using
         /// <see cref="BinaryFormatter.Serialize(Stream,Object)"/>.
         /// </param>
         public SqlObject(byte[] data, bool isJavaObject)

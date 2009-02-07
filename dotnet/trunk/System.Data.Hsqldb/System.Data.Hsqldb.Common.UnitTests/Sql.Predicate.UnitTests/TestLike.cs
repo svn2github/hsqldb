@@ -7,7 +7,6 @@ namespace System.Data.Hsqldb.Common.Sql.Predicate.UnitTests
     [TestFixture, ForSubject(typeof(Like))]
     public class TestLike
     {
-
         [Test, OfMember("Matches")]
         public void Matches()
         {
@@ -50,10 +49,6 @@ namespace System.Data.Hsqldb.Common.Sql.Predicate.UnitTests
             Assert.That(testSubject.Matches("fOo").Value);
             Assert.That(testSubject.Matches("FOoBaR").Value);
             Assert.That(!testSubject.Matches("foa").Value);
-
-
-
-
         }
     }
 }
