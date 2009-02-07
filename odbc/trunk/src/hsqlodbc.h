@@ -30,8 +30,8 @@
  *  Boston, MA  02110-1301  USA
  */
 
-#ifndef __PSQLODBC_H__
-#define __PSQLODBC_H__
+#ifndef __HSQLODBC_H__
+#define __HSQLODBC_H__
 
 /* #define  __MS_REPORTS_ANSI_CHAR__ */
 
@@ -226,7 +226,7 @@ typedef double SDOUBLE;
 
 /* Driver stuff */
 
-#define DRIVERNAME              "PostgreSQL ODBC"
+#define DRIVERNAME              "HyperSQL ODBC"
 #if (ODBCVER >= 0x0300)
 #if (ODBCVER >= 0x0351)
 #define DRIVER_ODBC_VER             "03.51"
@@ -235,35 +235,35 @@ typedef double SDOUBLE;
 #endif /* ODBCVER 0x0351 */
 #ifndef DBMS_NAME
 #ifdef  UNICODE_SUPPORT
-#define DBMS_NAME               "PostgreSQL Unicode"
+#define DBMS_NAME               "HyperSQL Unicode"
 #else
-#define DBMS_NAME               "PostgreSQL ANSI"
+#define DBMS_NAME               "HyperSQL ANSI"
 #endif /* UNICODE_SUPPORT */
 #endif /* DBMS_NAME */
 #else
 #define DRIVER_ODBC_VER             "02.50"
-#define DBMS_NAME               "PostgreSQL Legacy"
+#define DBMS_NAME               "HyperSQL Legacy"
 #endif   /* ODBCVER */
 
 #ifdef WIN32
 #if (ODBCVER >= 0x0300)
 #ifdef  UNICODE_SUPPORT
 #if (ODBCVER >= 0x0350)
-#define DRIVER_FILE_NAME            "PSQLODBCU.DLL"
+#define DRIVER_FILE_NAME            "HSQLODBCU.DLL"
 #else
-#define DRIVER_FILE_NAME            "PSQLODBCU.DLL"
+#define DRIVER_FILE_NAME            "HSQLODBCU.DLL"
 #endif /* ODBCVER 0x0350 */
 #else
-#define DRIVER_FILE_NAME            "PSQLODBCA.DLL"
+#define DRIVER_FILE_NAME            "HSQLODBCA.DLL"
 #endif   /* UNICODE_SUPPORT */
 #else
-#define DRIVER_FILE_NAME            "PSQLODBCA.DLL"
+#define DRIVER_FILE_NAME            "HSQLODBCA.DLL"
 #endif   /* ODBCVER 0x0300 */
 #else
 #ifdef  UNICODE_SUPPORT
-#define DRIVER_FILE_NAME                        "psqlodbcu.so"
+#define DRIVER_FILE_NAME                        "hsqlodbcu.so"
 #else
-#define DRIVER_FILE_NAME                        "psqlodbca.so"
+#define DRIVER_FILE_NAME                        "hsqlodbca.so"
 #endif
 #endif   /* WIN32 */
 BOOL isMsAccess();
@@ -533,4 +533,4 @@ void        debug_memory_check(void);
 CSTR    NULL_STRING = "";
 CSTR    PRINT_NULL = "(null)";
 CSTR    OID_NAME = "oid";
-#endif /* __PSQLODBC_H__ */
+#endif /* __HSQLODBC_H__ */
