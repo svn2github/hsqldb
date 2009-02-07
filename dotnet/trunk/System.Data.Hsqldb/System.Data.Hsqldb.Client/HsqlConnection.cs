@@ -78,8 +78,7 @@ namespace System.Data.Hsqldb.Client
         /// Contructs a new <c>HsqlConnection</c>
         /// with the default connection string.
         /// </summary>
-        public HsqlConnection()
-            : base()
+        public HsqlConnection() : base()
         {
             m_id = idseq++;
             m_settings = new HsqlConnectionStringBuilder();
@@ -98,8 +97,7 @@ namespace System.Data.Hsqldb.Client
         /// <param name="connectionString">
         /// With which to initialize this object.
         /// </param>
-        public HsqlConnection(string connectionString)
-            : this()
+        public HsqlConnection(string connectionString) : this()
         {
             ConnectionString = connectionString;
         }
