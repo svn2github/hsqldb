@@ -73,18 +73,13 @@ namespace System.Data.Hsqldb.Client
     /// </summary>
     /// <author name="boucherb@users"/>
 #if W32DESIGN
+    [Designer("Microsoft.VSDesigner.Data.VS.SqlCommandDesigner, Microsoft.VSDesigner, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")] 
+    [DefaultEvent("RecordsAffected")]
     [ToolboxBitmap(typeof(resfinder), "System.Data.Hsqldb.Client.Image.Bmp.HsqlCommand.bmp")]
+    [ToolboxItem(true)]
 #endif
     public sealed partial class HsqlCommand : DbCommand, ICloneable
     {
-        //#region Events
-        ///// <summary>
-        ///// Occurs when the execution of an SQL statement completes.
-        ///// </summary>
-        //[ResCategory("DataCategory_StatementCompleted"), ResDescription("DbCommand_StatementCompleted")]
-        //public event StatementCompletedEventHandler StatementCompleted; 
-        //#endregion
-
         #region Constructors
 
         #region HsqlCommand()

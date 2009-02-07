@@ -426,14 +426,14 @@ namespace System.Data.Hsqldb.Client
         /// parse/execute/fetch cycle.
         /// </para>
         /// <para>
-        /// On the other hand if this command is long-running (e.g. is
+        /// On the other hand, if this command is long-running (e.g. is
         /// computationally complex, involves a large number of rows
         /// and/or involves time consuming disk access), then at worst the
-        /// performance will be the same if preparation is not performed.
-        /// And in some cases performace may actually be significantly better,
-        /// for instance because the engine can generally create a better plan
-        /// when the values of all condition expressions are statically bound
-        /// at parse time.
+        /// performance will be the same if preparation is *not* performed.
+        /// And in some cases, performace may actually be significantly better,
+        /// if preparation is *not* performed, for instance because the engine
+        /// may be able to create a better plan when the values of all condition
+        /// expressions are statically bound at parse time.
         /// </para>
         /// <para>
         /// The major exception to the long-running command rule-of-thumb above
@@ -449,7 +449,7 @@ namespace System.Data.Hsqldb.Client
         /// values, parse the resulting command, convert large value tokens
         /// to internal binary representation and possibly back to character
         /// sequence representation in order to record changes in the
-        /// transaction log; Not to mention how inefficient this is in terms
+        /// transaction log; not to mention how inefficient this is in terms
         /// CPU usage, this may require allocation of temporary buffers
         /// totalling many times the memory consumed by the parameter values
         /// themselves.
@@ -516,6 +516,11 @@ namespace System.Data.Hsqldb.Client
         /// is very likely to cause significant memory and CPU load.
         /// </para>
         /// </remarks>
+        /// <exception cref="T:System.InvalidOperationException">
+        /// When the <see cref="Connection"/> is not set.
+        /// -or- 
+        /// when the <see cref="Connection"/> is not <see cref="HsqlConnection.Open()"/>.
+        /// </exception>
         public override void Prepare()
         {
             lock (SyncRoot)
