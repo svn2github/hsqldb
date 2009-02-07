@@ -176,7 +176,7 @@ mylog(const char *fmt,...)
             MLOGFP = fopen(filebuf, PG_BINARY_A);
             if (!MLOGFP)
             {
-                generate_filename("c:\\podbclog", MYLOGFILE, filebuf);
+                generate_filename("c:\\hodbc.log", MYLOGFILE, filebuf);
                 MLOGFP = fopen(filebuf, PG_BINARY_A);
             }
         }
@@ -233,7 +233,7 @@ forcelog(const char *fmt,...)
         }
         if (!MLOGFP)
         {
-            generate_filename("C:\\podbclog", MYLOGFILE, filebuf);
+            generate_filename("C:\\hodbc.log", MYLOGFILE, filebuf);
             MLOGFP = fopen(filebuf, PG_BINARY_A);
         }
         if (MLOGFP)

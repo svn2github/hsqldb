@@ -9,36 +9,17 @@ the default database
 
 (The settings marked with * below are on by default).
 
-When time allows, we need to remove the ability to set these.
-In the meantime, ALWAYS TURN THE FOLLOWING SETTINGS OFF.
-
-    Optimizer: 0.
-
-    Ksqo: 0
-
-    UseDeclareFetch: 0.
-
-    Parse: 0. (not 100% sure Fred doesn't want to port this)
-
-
-    ExtraSysTablePrefixes: "".  We distinguish System tables by schema.
+Disable
 
     RowVersioning: No.
-    Deprecated becase Implementation is Postgresql-specific.
+    Deprecated because Implementation is Postgresql-specific.
     Fred may re-implement.
-
-    DisallowPremature: 0.
-
-    Protocol: 7.4.
 
 Enable
 
     UniqueIndex*: 1
     (just a guess)  Dialog code says default is "1   /* don't recognize */"
     Seems to be saying that the default is on and it is off.
-
-    UseServerSidePrepare*: 1
-    (not Yes, etc.)
 
 Special
 
@@ -60,6 +41,9 @@ Special
     I don't know much about OID/Rowid usage in ODBC.
 
     CancelAsFreeStmt.  ? Undocumented.
+
+    [Parse, not shown in Gui:  It's possible that Fred may want to implement
+    this]
 
 LOGGING
 

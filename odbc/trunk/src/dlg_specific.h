@@ -1,9 +1,32 @@
-/* File:            dlg_specific.h
+/*
+ * $Id$
+ *
+ * HyperSQL ODBC Driver
+ *
+ * File:            dlg_specific.h
  *
  * Description:     See "dlg_specific.c"
  *
  * Comments:        See "notice.txt" for copyright and license information.
+ *                  Significant modifications Copyright 2009 by
+ *                  the HSQL Development Group.  Changes made by the HSQL
+ *                  Development are documented precisely in the public HyperSQL
+ *                  source code repository, available through http://hsqldb.org.
  *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Library General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Library General Public
+ *  License along with this library; if not, write to the
+ *  Free Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ *  Boston, MA  02110-1301  USA
  */
 
 #ifndef __DLG_SPECIFIC_H__
@@ -39,9 +62,9 @@ extern "C" {
 
 #if (ODBCVER >= 0x0300)
 #ifdef  UNICODE_SUPPORT
-#define INI_DSN             "PostgreSQL35W"
+#define INI_DSN             "HyperSQLu"
 #else
-#define INI_DSN             "PostgreSQL30"
+#define INI_DSN             "HyperSQLa"
 #endif /* UNICODE_SUPPORT */
 #else
 #define INI_DSN             DBMS_NAME
@@ -193,16 +216,16 @@ const char *GetXaLibPath();
 #define BIT_IGNORE_ROUND_TRIP_TIME      (1L << 5)
 
 /*  Connection Defaults */
-#define DEFAULT_PORT                "5432"
+#define DEFAULT_PORT                "9001"
 #define DEFAULT_READONLY            0
 #define DEFAULT_PROTOCOL            "7.4"   /* the latest protocol is
                                                  * the default */
 #define DEFAULT_USEDECLAREFETCH         0
-#define DEFAULT_TEXTASLONGVARCHAR       1
+#define DEFAULT_TEXTASLONGVARCHAR       0
 #define DEFAULT_UNKNOWNSASLONGVARCHAR       0
-#define DEFAULT_BOOLSASCHAR         1
+#define DEFAULT_BOOLSASCHAR         0
 #define DEFAULT_OPTIMIZER           0       /* enable */
-#define DEFAULT_KSQO                1       /* on */
+#define DEFAULT_KSQO                0       /* on */
 #define DEFAULT_UNIQUEINDEX         1       /* dont recognize */
 #define DEFAULT_COMMLOG             0       /* dont log */
 #define DEFAULT_DEBUG               0
@@ -218,11 +241,11 @@ const char *GetXaLibPath();
 
 #define DEFAULT_CANCELASFREESTMT        0
 
-#define DEFAULT_EXTRASYSTABLEPREFIXES   "dd_;"
+#define DEFAULT_EXTRASYSTABLEPREFIXES   ""
 
 #define DEFAULT_DISALLOWPREMATURE   0
 #define DEFAULT_TRUEISMINUS1        0
-#define DEFAULT_UPDATABLECURSORS    1
+#define DEFAULT_UPDATABLECURSORS    0
 #ifdef  WIN32
 #define DEFAULT_LFCONVERSION        1
 #else
@@ -230,7 +253,7 @@ const char *GetXaLibPath();
 #endif  /* WIN32 */
 #define DEFAULT_INT8AS          0
 #define DEFAULT_BYTEAASLONGVARBINARY    0
-#define DEFAULT_USESERVERSIDEPREPARE    0
+#define DEFAULT_USESERVERSIDEPREPARE    1
 #define DEFAULT_LOWERCASEIDENTIFIER 0
 #define DEFAULT_SSLMODE         SSLMODE_DISABLE
 

@@ -440,9 +440,10 @@ BEGIN
     RTEXT           "SS&L Mode",IDC_STATIC,143,40,45,12,NOT WS_GROUP
     COMBOBOX        IDC_SSLMODE,192,36,104,50,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
-    CTEXT           "Couldn't load libpq - SSL mode is unavailable",
-                    IDC_NOTICE_USER,53,87,200,11,SS_NOTIFY | SS_CENTERIMAGE | 
-                    WS_BORDER
+    //CTEXT           "Couldn't load libpq - SSL mode is unavailable",
+                    //IDC_NOTICE_USER,53,87,200,11,SS_NOTIFY | SS_CENTERIMAGE | 
+    CTEXT           "SSL mode not supported yet",
+                    IDC_NOTICE_USER,53,87,200,11,WS_BORDER
     RTEXT           "&Server",IDC_STATIC,24,55,29,12,NOT WS_GROUP
     EDITTEXT        IDC_SERVER,57,54,72,12,ES_AUTOHSCROLL
     RTEXT           "&Port",IDC_STATIC,166,56,22,12
@@ -470,59 +471,60 @@ BEGIN
      PUSHBUTTON      "Cancel",IDCANCEL,254,121,44,15
 END
 
-DLG_OPTIONS_DRV DIALOG DISCARDABLE  0, 0, 287, 231
+DLG_OPTIONS_DRV DIALOG DISCARDABLE  0, 0, 287, 201
 STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Advanced Options (DataSource)"
 FONT 8, "MS Sans Serif"
 BEGIN
     PUSHBUTTON      "Page 1",IDPREVPAGE,5,5,40,15
     PUSHBUTTON      "Page 2",IDNEXTPAGE,49,5,40,15
-    CONTROL         "Disable Genetic &Optimizer",DRV_OPTIMIZER,"Button",
-                    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,15,26,116,10
-    CONTROL         "Comm&Log (C:\\hsqlodbc_xxxx.log)",DRV_COMMLOG,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,149,26,131,10
-    CONTROL         "&KSQO(Keyset Query Optimization)",DRV_KSQO,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,41,132,10
+    //CONTROL         "Disable Genetic &Optimizer",DRV_OPTIMIZER,"Button",
+                    //BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,15,26,116,10
+    CONTROL         "Comm&Log (~\\hsqlodbc_xxxx.log)",DRV_COMMLOG,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,149,41,131,10
+    //CONTROL         "&KSQO(Keyset Query Optimization)",DRV_KSQO,"Button",
+                    //BS_AUTOCHECKBOX | WS_TABSTOP,15,41,132,10
     CONTROL         "Recognize Unique &Indexes",DRV_UNIQUEINDEX,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,56,110,10
-    CONTROL         "P&arse Statements",DRV_PARSE,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,149,41,80,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,26,110,10
+    //CONTROL         "P&arse Statements",DRV_PARSE,"Button",BS_AUTOCHECKBOX | 
+                    //WS_TABSTOP,149,41,80,10
     //CONTROL         "&Use Declare/Fetch",DRV_USEDECLAREFETCH,"Button",
                     //BS_AUTOCHECKBOX | WS_TABSTOP,15,71,83,10
     CONTROL         "Cancel as FreeStmt (Exp)",DRV_CANCELASFREESTMT,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,149,56,114,10
-    CONTROL         "MyLog (C:\\mylog_xxxx.log)",DRV_DEBUG,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,149,71,112,10
-    GROUPBOX        "Unknown Sizes",IDC_STATIC,5,85,277,25
+                    BS_AUTOCHECKBOX | WS_TABSTOP,149,26,114,10
+    CONTROL         "MyLog (~\\mylog_*.log)",DRV_DEBUG,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,41,112,10
+    GROUPBOX        "Unknown Sizes",IDC_STATIC,5,55,277,25
     CONTROL         "Maximum",DRV_UNKNOWN_MAX,"Button",BS_AUTORADIOBUTTON | 
-                    WS_GROUP | WS_TABSTOP,15,96,45,10
+                    WS_GROUP | WS_TABSTOP,15,66,45,10
     CONTROL         "Don't Know",DRV_UNKNOWN_DONTKNOW,"Button",
-                    BS_AUTORADIOBUTTON | WS_TABSTOP,105,96,53,10
+                    BS_AUTORADIOBUTTON | WS_TABSTOP,105,66,53,10
     CONTROL         "Longest",DRV_UNKNOWN_LONGEST,"Button",
-                    BS_AUTORADIOBUTTON | WS_TABSTOP,215,95,50,10
-    GROUPBOX        "Data Type Options",IDC_STATIC,5,115,277,25
-    CONTROL         "Text as LongVarChar",DRV_TEXT_LONGVARCHAR,"Button",
-                    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,15,125,90,10
+                    BS_AUTORADIOBUTTON | WS_TABSTOP,215,65,50,10
+    GROUPBOX        "Data Type Options",IDC_STATIC,5,85,277,25
+    //CONTROL         "Text as LongVarChar",DRV_TEXT_LONGVARCHAR,"Button",
+    CONTROL         "PLACEHOLDER",DRV_TEXT_LONGVARCHAR,"Button",
+                    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,15,95,90,10
     CONTROL         "Unknowns as LongVarChar",DRV_UNKNOWNS_LONGVARCHAR,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,105,125,105,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,105,95,105,10
     CONTROL         "Bools as Char",DRV_BOOLS_CHAR,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,215,125,67,10
-    LTEXT           "&Cache Size:",IDC_STATIC,14,183,52,8
-    EDITTEXT        DRV_CACHE_SIZE,69,181,35,12,ES_AUTOHSCROLL
-    LTEXT           "Max &Varchar:",IDC_STATIC,13,161,54,8
-    EDITTEXT        DRV_VARCHAR_SIZE,70,160,35,12,ES_AUTOHSCROLL
-    LTEXT           "Max Lon&gVarChar:",IDC_STATIC,125,161,67,8
-    EDITTEXT        DRV_LONGVARCHAR_SIZE,199,160,35,12,ES_AUTOHSCROLL
-    LTEXT           "SysTable &Prefixes:",IDC_STATIC,126,178,61,18
-    EDITTEXT        DRV_EXTRASYSTABLEPREFIXES,199,181,71,12,ES_AUTOHSCROLL
-    DEFPUSHBUTTON   "OK",IDOK,5,212,50,14,WS_GROUP
-    PUSHBUTTON      "Cancel",IDCANCEL,81,211,50,15
-    PUSHBUTTON      "Apply",IDAPPLY,156,212,50,14
-    PUSHBUTTON      "Defaults",IDDEFAULTS,232,211,50,15
-    GROUPBOX        "Miscellaneous",IDC_STATIC,5,145,277,58
+                    WS_TABSTOP,215,95,67,10
+    LTEXT           "&Cache Size:",IDC_STATIC,14,153,52,8
+    EDITTEXT        DRV_CACHE_SIZE,69,151,35,12,ES_AUTOHSCROLL
+    LTEXT           "Max &Varchar:",IDC_STATIC,13,131,54,8
+    EDITTEXT        DRV_VARCHAR_SIZE,70,130,35,12,ES_AUTOHSCROLL
+    LTEXT           "Max Lon&gVarChar:",IDC_STATIC,125,131,67,8
+    EDITTEXT        DRV_LONGVARCHAR_SIZE,199,130,35,12,ES_AUTOHSCROLL
+    //LTEXT           "SysTable &Prefixes:",IDC_STATIC,126,178,61,18
+    //EDITTEXT        DRV_EXTRASYSTABLEPREFIXES,199,181,71,12,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,5,182,50,14,WS_GROUP
+    PUSHBUTTON      "Cancel",IDCANCEL,81,181,50,15
+    PUSHBUTTON      "Apply",IDAPPLY,156,182,50,14
+    PUSHBUTTON      "Defaults",IDDEFAULTS,232,181,50,15
+    GROUPBOX        "Miscellaneous",IDC_STATIC,5,115,277,58
 END
 
-DLG_OPTIONS_DS DIALOG DISCARDABLE  0, 0, 306, 241
+DLG_OPTIONS_DS DIALOG DISCARDABLE  0, 0, 306, 194
 STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Advanced Options (DataSource)"
 FONT 8, "MS Sans Serif"
@@ -531,64 +533,64 @@ BEGIN
     PUSHBUTTON      "Page 1",IDPREVPAGE,5,5,40,15
     CONTROL         "&Read Only",DS_READONLY,"Button",BS_AUTOCHECKBOX | 
                     WS_GROUP | WS_TABSTOP,15,26,102,10
-    CONTROL         "Row &Versioning",DS_ROWVERSIONING,"Button",
+    CONTROL         "Row &Versioning (depr.)",DS_ROWVERSIONING,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,163,26,85,10
     CONTROL         "Show System &Tables",DS_SHOWSYSTEMTABLES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,41,100,10
-    CONTROL         "Disallow &Premature",DS_DISALLOWPREMATURE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,163,41,85,10
+    //CONTROL         "Disallow &Premature",DS_DISALLOWPREMATURE,"Button",
+                    //BS_AUTOCHECKBOX | WS_TABSTOP,163,41,85,10
     CONTROL         "LF <-> CR/LF conversion",DS_LFCONVERSION,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,56,106,10
     CONTROL         "True is -1",DS_TRUEISMINUS1,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,163,56,86,10
     CONTROL         "Updatable Cursors",DS_UPDATABLECURSORS,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,71,87,10
-    CONTROL         "Server side prepare",DS_SERVERSIDEPREPARE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,163,71,90,10
+    //CONTROL         "Server side prepare",DS_SERVERSIDEPREPARE,"Button",
+                    //BS_AUTOCHECKBOX | WS_TABSTOP,163,71,90,10
     CONTROL         "bytea as LO",DS_BYTEAASLONGVARBINARY,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,16,84,87,10
-    GROUPBOX        "Int8 As",IDC_STATIC,5,97,256,25
+                    BS_AUTOCHECKBOX | WS_TABSTOP,163,41,87,10
+    GROUPBOX        "Int8 As",IDC_STATIC,5,82,256,25
     CONTROL         "default",DS_INT8_AS_DEFAULT,"Button",BS_AUTORADIOBUTTON | 
-                    WS_GROUP,12,107,40,10
+                    WS_GROUP,12,92,40,10
     CONTROL         "bigint",DS_INT8_AS_BIGINT,"Button",BS_AUTORADIOBUTTON | 
-                    WS_TABSTOP,55,107,35,10
+                    WS_TABSTOP,55,92,35,10
     CONTROL         "numeric",DS_INT8_AS_NUMERIC,"Button",BS_AUTORADIOBUTTON | 
-                    WS_TABSTOP,98,107,40,10
+                    WS_TABSTOP,98,92,40,10
     CONTROL         "varchar",DS_INT8_AS_VARCHAR,"Button",BS_AUTORADIOBUTTON | 
-                    WS_TABSTOP,141,107,40,10
+                    WS_TABSTOP,141,92,40,10
     CONTROL         "double",DS_INT8_AS_DOUBLE,"Button",BS_AUTORADIOBUTTON | 
-                    WS_TABSTOP,184,107,40,10
+                    WS_TABSTOP,184,92,40,10
     CONTROL         "int4",DS_INT8_AS_INT4,"Button",BS_AUTORADIOBUTTON | 
-                    WS_TABSTOP,227,107,29,10
-    LTEXT	   "Extra Opts",IDC_STATIC,264,98,40,17
-    EDITTEXT	    DS_EXTRA_OPTIONS,264,105,40,12,ES_AUTOHSCROLL
-    GROUPBOX        "Protocol",IDC_STATIC,5,126,136,25
-    CONTROL         "7.4+",DS_PG74,"Button",BS_AUTORADIOBUTTON | WS_GROUP,11,
-                    138,31,10
-    CONTROL         "6.4+",DS_PG64,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,
-                    45,138,27,10
-    CONTROL         "6.3",DS_PG63,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,
-                    79,138,26,10
-    CONTROL         "6.2",DS_PG62,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,
-                    110,138,26,10
-    GROUPBOX        "OID Options",IDC_STATIC,5,157,296,25
+                    WS_TABSTOP,227,92,29,10
+    LTEXT	   "Extra Opts",IDC_STATIC,264,83,40,17
+    EDITTEXT	    DS_EXTRA_OPTIONS,264,90,40,12,ES_AUTOHSCROLL
+    //GROUPBOX        "Protocol",IDC_STATIC,5,126,136,25
+    //CONTROL         "7.4+",DS_PG74,"Button",BS_AUTORADIOBUTTON | WS_GROUP,11,
+                    //138,31,10
+    //CONTROL         "6.4+",DS_PG64,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,
+                    //45,138,27,10
+    //CONTROL         "6.3",DS_PG63,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,
+                    //79,138,26,10
+    //CONTROL         "6.2",DS_PG62,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,
+                    //110,138,26,10
+    GROUPBOX        "OID Options",IDC_STATIC,5,111,296,25
     CONTROL         "Show &Column",DS_SHOWOIDCOLUMN,"Button",BS_AUTOCHECKBOX | 
-                    WS_GROUP | WS_TABSTOP,13,168,67,10
+                    WS_GROUP | WS_TABSTOP,13,123,67,10
     CONTROL         "Fake &Index",DS_FAKEOIDINDEX,"Button",BS_AUTOCHECKBOX | 
-                    WS_GROUP | WS_TABSTOP,80,168,59,10
-    LTEXT           "Connect &Settings:",IDC_STATIC,5,189,57,11
-    EDITTEXT        DS_CONNSETTINGS,90,189,211,27,ES_MULTILINE | 
+                    WS_GROUP | WS_TABSTOP,80,123,59,10
+    LTEXT           "Connect &Settings:",IDC_STATIC,5,142,57,11
+    EDITTEXT        DS_CONNSETTINGS,90,142,211,27,ES_MULTILINE | 
                     ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN
-    DEFPUSHBUTTON   "OK",IDOK,5,222,50,14,WS_GROUP
-    PUSHBUTTON      "Cancel",IDCANCEL,81,222,50,14
-    PUSHBUTTON      "Apply",IDAPPLY,156,222,50,14
-    GROUPBOX        "Level of rollback on errors",IDC_STATIC,147,126,154,25
+    DEFPUSHBUTTON   "OK",IDOK,5,174,50,14,WS_GROUP
+    PUSHBUTTON      "Cancel",IDCANCEL,81,174,50,14
+    PUSHBUTTON      "Apply",IDAPPLY,156,174,50,14
+    GROUPBOX        "Level of rollback on errors",IDC_STATIC,147,111,154,25
     CONTROL         "Nop",DS_NO_ROLLBACK,"Button",BS_AUTORADIOBUTTON | 
-                    WS_GROUP,151,138,36,9
+                    WS_GROUP,151,123,36,9
     CONTROL         "Transaction",DS_TRANSACTION_ROLLBACK,"Button",
-                    BS_AUTORADIOBUTTON | WS_TABSTOP,186,138,57,9
+                    BS_AUTORADIOBUTTON | WS_TABSTOP,186,123,57,9
     CONTROL         "Statement",DS_STATEMENT_ROLLBACK,"Button",
-                    BS_AUTORADIOBUTTON | WS_TABSTOP,247,138,47,9
+                    BS_AUTORADIOBUTTON | WS_TABSTOP,247,123,47,9
 END
 
 DLG_OPTIONS_GLOBAL DIALOG DISCARDABLE  0, 0, 306, 105
