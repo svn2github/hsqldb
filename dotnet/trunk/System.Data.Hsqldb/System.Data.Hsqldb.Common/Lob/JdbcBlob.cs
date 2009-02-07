@@ -306,7 +306,11 @@ namespace System.Data.Hsqldb.Common.Lob
         #region IBlob.CanWrite
         bool IBlob.CanWrite
         {
-            get { return true; }
+            get
+            {
+                return (m_blob != null) &&
+                    !typeof(org.hsqldb.jdbc.jdbcBlob).IsAssignableFrom(m_blob.GetType());
+            }            
         }
         #endregion
 

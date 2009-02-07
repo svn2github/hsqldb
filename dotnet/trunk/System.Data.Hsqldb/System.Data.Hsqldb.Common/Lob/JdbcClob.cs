@@ -305,7 +305,11 @@ namespace System.Data.Hsqldb.Common.Lob
 
         bool IClob.CanWrite
         {
-            get { throw new Exception("The method or operation is not implemented."); }
+            get
+            {
+                return (m_clob != null) && 
+                    !typeof(org.hsqldb.jdbc.jdbcClob).IsAssignableFrom(m_clob.GetType());
+            }
         }
 
         #region IClob.GetAsciiStream()
