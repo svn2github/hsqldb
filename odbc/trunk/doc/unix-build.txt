@@ -10,11 +10,13 @@ UNIX Build Procedure
 
   make
 
-The final output gets written to ".libs/psqlodbcw.so" ("src/.libs/psqlodbc.so"
+The final output gets written to ".libs/hsqlodbcu.so" ("src/.libs/hsqlodbcu.so"
 from the project home directory).  This location will be changing.
 
 Run "make maintainer-clean" to reset/clear all the steps above.
 
+Add parameter "--disable-unicode" to "configure" to build the ANSI driver
+"hsqlodbca.so" insteadf of "hsqlodbcu.so".
 
 **** IMPORTANT RUNTIME TIPS ****
 

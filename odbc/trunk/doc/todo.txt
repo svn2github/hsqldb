@@ -1,14 +1,5 @@
 $Id$
 
-Need to get a unique code/number for our driver's product/service for use with
-the Windows MSI installer.  Procedure is documented in the Wix tutorial, I
-think.  (Looks like it may be the Package Id in the *.wxs files).
-
-Enhance or replace msi-src/make.bat.  Doesn't even have a clean target, and 
-the process needs one.
-
-Update license RTF file, which has obsolete FSF address.
-
 Abort processing at
 connection.c:CC_send_query_append(), op switch for op 'Z'.
 This state is very likely to result in deadlock.

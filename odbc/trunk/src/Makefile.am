@@ -1,8 +1,8 @@
 #-------------------------------------------------------------------------
 #
-# Makefile.am for psqlodbc30w (PostgreSQL ODBC driver)
+# Makefile.am for hsqlodbcu and hsqlodbca(HyperSQL ODBC driver)
 #
-# $Header: /cvsroot/psqlodbc/psqlodbc/Makefile.am,v 1.51 2008/11/07 14:37:25 h-saito Exp $
+# $Id$
 #
 #-------------------------------------------------------------------------
 
@@ -13,9 +13,9 @@ ACLOCAL_AMFLAGS = -I config
 DEFS = -DNOT_USE_LIBPQ -DHAVE_CONFIG_H
 
 if enable_unicode
-lib_LTLIBRARIES = psqlodbcw.la
+lib_LTLIBRARIES = hsqlodbcu.la
 else
-lib_LTLIBRARIES = psqlodbca.la
+lib_LTLIBRARIES = hsqlodbca.la
 endif
 
 if GCC
@@ -24,7 +24,7 @@ endif
 
 AM_LDFLAGS = -module -no-undefined -avoid-version
 
-psqlodbca_la_SOURCES = \
+hsqlodbca_la_SOURCES = \
     info.c bind.c columninfo.c connection.c convert.c drvconn.c \
     environ.c execute.c lobj.c win_md5.c misc.c options.c \
     pgtypes.c psqlodbc.c qresult.c results.c socket.c parse.c \
@@ -38,11 +38,11 @@ psqlodbca_la_SOURCES = \
     psqlodbc.h qresult.h resource.h socket.h statement.h tuple.h \
     version.h loadlib.h pgenlist.h
 
-psqlodbcw_la_SOURCES = $(psqlodbca_la_SOURCES) \
+hsqlodbcu_la_SOURCES = $(hsqlodbca_la_SOURCES) \
     odbcapi30w.c odbcapiw.c win_unicode.c
 
-EXTRA_psqlodbca_la_SOURCES = md5.c
-EXTRA_psqlodbcw_la_SOURCES = md5.c
+EXTRA_hsqlodbca_la_SOURCES = md5.c
+EXTRA_hsqlodbcu_la_SOURCES = md5.c
 
 EXTRA_DIST = license.txt readme.txt \
     libtool.m4 psqlodbc.def psqlodbca.def \
