@@ -67,6 +67,59 @@ namespace System.Data.Hsqldb.Common.Lob
     /// <author name="boucherb@users"/>
     public interface IBlob
     {
+        #region CanSearch
+        /// <summary>
+        /// Retrieves whether the implementation supports the <c>Position</c>
+        /// search operations.
+        /// </summary>
+        /// <remarks>
+        /// The retrieved value may vary from one invocation to the next, 
+        /// depending on a number of factors, such as the type of object
+        /// wrapped by this <c>IClob</c> or changes in the state of the
+        /// underlying data source.
+        /// </remarks>
+        /// <value>
+        /// <c>true</c> if search is supported; <c>false</c> otherwise.
+        /// </value>
+        bool CanSearch { get; } 
+        #endregion
+
+        #region CanWrap
+        /// <summary>
+        /// Retrieves whether the implementation supports wrapping other
+        /// objects to adapt them to the <c>IClob</c> interface.
+        /// </summary>
+        bool CanWrap { get; } 
+        #endregion
+
+        #region CanWrapType(Type)
+        /// <summary>
+        /// Retrieves whether the implementation supports wrapping the given
+        /// type of object.
+        /// </summary>
+        /// <param name="type">to test</param>
+        /// <returns>
+        /// <c>true</c> if the implementation supports wrapping the given type;
+        /// otherwise <c>false</c>.
+        /// </returns>
+        bool CanWrapType(Type type); 
+        #endregion
+
+        #region CanWrite
+        /// <summary>
+        /// Retrieves whether the implementation supports the
+        /// <c>SetBinaryStream</c>, <c>SetBytes</c> and <c>Truncate</c>
+        /// operations.
+        /// </summary>
+        /// <remarks>
+        /// The retrieved value may vary from one invocation to the next, 
+        /// depending on a number of factors, such as the type of object
+        /// wrapped by this <c>IClob</c> or changes in the state of the
+        /// underlying data source.
+        /// </remarks>
+        bool CanWrite { get; } 
+        #endregion
+
         #region GetBinaryStream()
 
         /// <summary>
@@ -79,6 +132,9 @@ namespace System.Data.Hsqldb.Common.Lob
         /// </returns>
         /// <exception cref="System.Data.Common.DbException">
         /// If there is an error accessing the <c>BLOB</c> value.
+        /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// When this object is in the <see cref="Free()">Freed</see> state.
         /// </exception>
         Stream GetBinaryStream();
 
@@ -107,6 +163,9 @@ namespace System.Data.Hsqldb.Common.Lob
         /// <exception cref="System.Data.Common.DbException">
         /// If there is an error accessing the <c>BLOB</c> value.
         /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// When this object is in the <see cref="Free()">Freed</see> state.
+        /// </exception>
         byte[] GetBytes(long pos, int length);
 
         #endregion
@@ -120,6 +179,12 @@ namespace System.Data.Hsqldb.Common.Lob
         /// <exception cref="System.Data.Common.DbException">
         /// If there is an error accessing the <c>BLOB</c> value.
         /// </exception>
+        /// <exception cref="System.invalidOperationException">
+        /// When this object is in the <see cref="Free()">Freed</see> state.
+        /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// When this object is in the <see cref="Free()">Freed</see> state.
+        /// </exception>
         long Length { get; }
 
         #endregion
@@ -131,6 +196,9 @@ namespace System.Data.Hsqldb.Common.Lob
         /// by this <c>IBlob</c> object at which <c>pattern</c> begins. The
         /// search begins at position <c>start</c>.
         /// </summary>
+        /// <remarks>
+        /// Support for this method is optional.
+        /// </remarks>
         /// <param name="pattern">
         /// The <c>IBlob</c> object designating the <c>BLOB</c> value for
         /// which to search
@@ -146,6 +214,12 @@ namespace System.Data.Hsqldb.Common.Lob
         /// <exception cref="System.Data.Common.DbException">
         /// If there is an error accessing the <c>BLOB</c> value.
         /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// When this object is in the <see cref="Free()">Freed</see> state.
+        /// </exception>
+        /// <exception cref="System.NotSupportedException">
+        /// When this method is not supported by the underlying implementation.
+        /// </exception>
         long Position(IBlob pattern, long start);
 
         #endregion
@@ -158,6 +232,9 @@ namespace System.Data.Hsqldb.Common.Lob
         /// object. The search for <c>pattern</c> begins at position
         /// <c>start</c>.
         /// </summary>
+        /// <remarks>
+        /// Support for this method is optional.
+        /// </remarks>
         /// <param name="pattern">
         /// The octet pattern for which to search.
         /// </param>
@@ -171,6 +248,12 @@ namespace System.Data.Hsqldb.Common.Lob
         /// <exception cref="System.Data.Common.DbException">
         /// If there is an error accessing the <c>BLOB</c> value.
         /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// When this object is in the <see cref="Free()">Freed</see> state.
+        /// </exception>
+        /// <exception cref="System.NotSupportedException">
+        /// When this method is not supported by the underlying implementation.
+        /// </exception>
         long Position(byte[] pattern, long start);
 
         #endregion
@@ -182,14 +265,24 @@ namespace System.Data.Hsqldb.Common.Lob
         /// the <c>BLOB</c> value designated by this <c>IBlob</c> object. The stream
         /// begins at position <c>pos</c>.
         /// </summary>
+        /// <remarks>
+        /// Support for this method is optional.
+        /// </remarks>
         /// <param name="pos">
-        /// The position in the <c>BLOB</c> value at which to start writing.
+        /// The position in the <c>BLOB</c> value at which to start writing;
+        /// The first position is 1.
         /// </param>
         /// <returns>
         /// a <see cref="Stream"/> to which octet data can be written
         /// </returns>
         /// <exception cref="System.Data.Common.DbException">
         /// If there is an error accessing the <c>BLOB</c> value.
+        /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// When this object is in the <see cref="Free()">Freed</see> state.
+        /// </exception>
+        /// <exception cref="System.NotSupportedException">
+        /// When this method is not supported by the underlying implementation.
         /// </exception>
         Stream SetBinaryStream(long pos);
 
@@ -205,8 +298,12 @@ namespace System.Data.Hsqldb.Common.Lob
         /// <c>bytes</c> are written, starting at <c>offset</c> within
         /// <c>bytes</c>.
         /// </summary>
+        /// <remarks>
+        /// Support for this method is optional.
+        /// </remarks>
         /// <param name="pos">
-        /// The position in the <c>BLOB</c> value at which to start writing.
+        /// The position in the <c>BLOB</c> value at which to start writing;
+        /// the first position is 1.
         /// </param>
         /// <param name="bytes">
         /// The array contining the source octets.
@@ -225,6 +322,12 @@ namespace System.Data.Hsqldb.Common.Lob
         /// <exception cref="System.Data.Common.DbException">
         /// If there is an error accessing the <c>BLOB</c> value.
         /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// When this object is in the <see cref="Free()">Freed</see> state.
+        /// </exception>
+        /// <exception cref="System.NotSupportedException">
+        /// When this method is not supported by the underlying implementation.
+        /// </exception>
         int SetBytes(long pos, byte[] bytes, int offset, int length);
 
         #endregion
@@ -236,8 +339,12 @@ namespace System.Data.Hsqldb.Common.Lob
         /// designated by this <c>IBlob</c> object, starting at position
         /// <c>pos</c>, and returns the actual number of octets written.
         /// </summary>
+        /// <remarks>
+        /// Support for this method is optional.
+        /// </remarks>
         /// <param name="pos">
-        /// The position in the <c>BLOB</c> value at which to start writing.
+        /// The position in the <c>BLOB</c> value at which to start writing;
+        /// the first position is 1.
         /// </param>
         /// <param name="bytes">
         /// The octets to be written to the <c>BLOB</c> value that this
@@ -249,6 +356,12 @@ namespace System.Data.Hsqldb.Common.Lob
         /// <exception cref="System.Data.Common.DbException">
         /// If there is an error accessing the <c>BLOB</c> value.
         /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// When this object is in the <see cref="Free()">Freed</see> state.
+        /// </exception>
+        /// <exception cref="System.NotSupportedException">
+        /// When this method is not supported by the underlying implementation.
+        /// </exception>
         int SetBytes(long pos, byte[] bytes);
 
         #endregion
@@ -259,12 +372,21 @@ namespace System.Data.Hsqldb.Common.Lob
         /// Truncates, to <c>length</c> octets, the <c>BLOB</c> value
         /// designated by this <c>IBlob</c> object.
         /// </summary>
+        /// <remarks>
+        /// Support for this method is optional.
+        /// </remarks>
         /// <param name="length">
         /// The length, in octets, to which to truncate the <c>BLOB</c> value
         /// designated by this <c>IBlob</c> object.
         /// </param>
         /// <exception cref="System.Data.Common.DbException">
         /// If there is an error accessing the <c>BLOB</c> value.
+        /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// When this object is in the <see cref="Free()">Freed</see> state.
+        /// </exception>
+        /// <exception cref="System.NotSupportedException">
+        /// When this method is not supported by the underlying implementation.
         /// </exception>
         void Truncate(long length);
 
@@ -273,18 +395,19 @@ namespace System.Data.Hsqldb.Common.Lob
         #region Free()
 
         /// <summary>
-        /// Frees the <c>BLOB</c> reference that this <c>IBlob</c> object represents,
-        /// releasing any resources that this object holds to maintain the
-        /// reference.
+        /// Frees the <c>BLOB</c> reference that this <c>IBlob</c> object
+        /// represents, releasing any resources that this object holds to
+        /// maintain the reference.
         /// </summary>
         /// <remarks>
         /// An <c>IBlob</c> is invalid while in a freed state; any attempt to
         /// invoke a method other than <c>Free</c>, <c>Wrap(object)</c> or
         /// <c>Unwrap()</c> while in this state should result in raising a
-        /// <c>DbException</c>. While in a freed state, subsequent calls to
-        /// <c>Free</c> should simply be ignored. After calling <c>Free</c>,
-        /// an <c>IBlob</c> may subsequently transition out of a freed state
-        /// as the result of calling <c>Wrap(object)</c>.
+        /// <c>System.InvalidOperationException</c>. While in a freed state,
+        /// subsequent calls to <c>Free</c> should simply be ignored. After
+        /// calling <c>Free</c>, an <c>IBlob</c> may subsequently transition
+        /// out of the freed state and back into a valid state as the result
+        /// of calling <see cref="Wrap(object)"/>
         /// </remarks>
         /// <exception cref="System.Data.Common.DbException">
         /// If there is an error accessing the <c>BLOB</c> value.
@@ -304,21 +427,28 @@ namespace System.Data.Hsqldb.Common.Lob
         /// This is a completely optional operation.
         /// </para>
         /// <para>
-        /// Invoking this operation while this object is not in a freed
-        /// state should typically raise a
-        /// <see cref="System.Data.Common.DbException"/>.
+        /// Althogh not an absolute requirment, invoking this operation while
+        /// this object is not in a freed state should typically raise a
+        /// <see cref="System.InvalidOperationException"/>.
         /// </para>
         /// </remarks>
         /// <param name="obj">
         /// The object to wrap.
         /// </param>
-        /// <exception cref="System.NotImplementedException">
-        /// When this <c>IBlob</c> object does not implement this
-        /// operation.
+        /// <exception cref="System.ArgumentNullException">
+        /// When <c>obj</c> is <c>null</c>.
         /// </exception>
-        /// <exception cref="System.Data.Common.DbException">
+        /// <exception cref="System.ArgumentException">
+        /// When this <c>IBlob</c> implementation does not know how to wrap
+        /// objects of the runtime <see cref="System.Type"/> of the given
+        /// <c>obj</c> instance.
+        /// </exception>
+        /// <exception cref="System.InvalidOperationException">
         /// When this <c>IBlob</c> object disallows the operation,
-        /// for instance because it is not in a freed state.
+        /// for instance because it is not presently in a freed state.
+        /// </exception>
+        /// <exception cref="System.NotSupportedException">
+        /// When this method is not supported by the underlying implementation.
         /// </exception>
         void Wrap(object obj);
 
@@ -330,9 +460,8 @@ namespace System.Data.Hsqldb.Common.Lob
         /// Retrieves the object that this <c>IBlob</c> wraps.
         /// </summary>
         /// <remarks>
-        /// If an <c>IBlob</c> implementation does not wrap another
-        /// object, it should return a self-reference rather than
-        /// <c>null</c>.
+        /// If an <c>IBlob</c> implementation does not wrap another object,
+        /// it should return a self-reference rather than <c>null</c>.
         /// </remarks>
         /// <returns>
         /// The object that this <c>IBlob</c> wraps.

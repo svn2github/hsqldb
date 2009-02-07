@@ -280,6 +280,36 @@ namespace System.Data.Hsqldb.Common.Lob
 
         #region IBlob Explicit Interface Implementation
 
+        #region IBlob.CanSearch
+        bool IBlob.CanSearch
+        {
+            get { return true; }
+        } 
+        #endregion
+
+        #region IBlob.CanWrap
+        bool IBlob.CanWrap
+        {
+            get { return true; }
+        } 
+        #endregion
+
+        #region IBlob.CanWrapType(Type)
+        bool IBlob.CanWrapType(Type type)
+        {
+            return typeof(java.sql.Blob).IsAssignableFrom(type) ||
+                typeof(byte[]).IsAssignableFrom(type) ||
+                typeof(Stream).IsAssignableFrom(type);
+        } 
+        #endregion
+
+        #region IBlob.CanWrite
+        bool IBlob.CanWrite
+        {
+            get { return true; }
+        }
+        #endregion
+
         #region IBlob.Length
 
         /// <summary>

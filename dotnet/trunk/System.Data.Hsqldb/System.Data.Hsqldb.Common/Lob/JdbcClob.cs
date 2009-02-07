@@ -279,6 +279,35 @@ namespace System.Data.Hsqldb.Common.Lob
 
         #region Explicit Interface Implementation
 
+        #region IClob.CanSearch
+        bool IClob.CanSearch
+        {
+            get { return true; }
+        } 
+        #endregion
+
+        #region IClob.CanWrap
+        bool IClob.CanWrap
+        {
+            get { return true; }
+        } 
+        #endregion
+
+        #region IClob.CanWrapType(Type)
+        bool IClob.CanWrapType(Type type)
+        {
+            return typeof(java.sql.Clob).IsAssignableFrom(type) ||
+                typeof(string).IsAssignableFrom(type) ||
+                typeof(Stream).IsAssignableFrom(type) ||
+                typeof(TextReader).IsAssignableFrom(type);
+        } 
+        #endregion
+
+        bool IClob.CanWrite
+        {
+            get { throw new Exception("The method or operation is not implemented."); }
+        }
+
         #region IClob.GetAsciiStream()
         /// <summary>
         /// Retrieves the <c>CLOB</c> value designated by this <c>IClob</c> object as

@@ -50,7 +50,7 @@ namespace System.Data.Hsqldb.Common.Lob
     /// <remarks>
     /// <para>
     /// An SQL <c>CLOB</c> is a built-in type that stores a Character Large Object
-    /// as a column value in a row of a database table. By default, drivers
+    /// as a column value in a row of a database table. By default, data providers
     /// implement an <c>IClob</c> object using an SQL locator(CLOB), which
     /// means that an <c>IClob</c> object typically contains a logical pointer
     /// to the SQL <c>CLOB</c> data rather than the data itself.
@@ -65,21 +65,90 @@ namespace System.Data.Hsqldb.Common.Lob
     /// <author name="boucherb@users"/>
     public interface IClob
     {
+        #region CanSearch
+        /// <summary>
+        /// Retrieves whether the implementation supports the <c>Position</c>
+        /// search operations.
+        /// </summary>
+        /// <remarks>
+        /// The retrieved value may vary from one invocation to the next, 
+        /// depending on a number of factors, such as the type of object
+        /// wrapped by this <c>IClob</c> or changes in the state of the
+        /// underlying data source.
+        /// </remarks>
+        /// <value>
+        /// <c>true</c> if search is supported; <c>false</c> otherwise.
+        /// </value>
+        bool CanSearch { get; } 
+        #endregion
+
+        #region CanWrap
+        /// <summary>
+        /// Retrieves whether the implementation supports wrapping other
+        /// objects to adapt them to the <c>IClob</c> interface.
+        /// </summary>
+        bool CanWrap { get; } 
+        #endregion
+
+        #region CanWrapType(Type)
+        /// <summary>
+        /// Retrieves whether the implementation supports wrapping the given
+        /// type of object.
+        /// </summary>
+        /// <param name="type">to test</param>
+        /// <returns>
+        /// <c>true</c> if the implementation supports wrapping the given type;
+        /// otherwise <c>false</c>.
+        /// </returns>
+        bool CanWrapType(Type type); 
+        #endregion
+
+        #region CanWrite
+        /// <summary>
+        /// Retrieves whether the implementation supports the
+        /// <c>SetAsciiStream</c>, <c>SetCharacterStream</c>, 
+        /// <c>SetString</c> and <c>Truncate</c> operations.
+        /// operations.
+        /// </summary>
+        /// <remarks>
+        /// The retrieved value may vary from one invocation to the next, 
+        /// depending on a number of factors, such as the type of object
+        /// wrapped by this <c>IClob</c> or changes in the state of the
+        /// underlying data source.
+        /// </remarks>
+        bool CanWrite { get; } 
+        #endregion
+
         #region GetAsciiStream()
 
         /// <summary>
-        /// Retrieves the <c>CLOB</c> value designated by this
-        /// <c>IClob</c> object as an ascii stream.
+        /// Retrieves the <c>CLOB</c> value designated by this <c>IClob</c>
+        /// object as a stream of single-byte characters, typically using
+        /// ASCII encoding.
         /// </summary>
         /// <remarks>
+        /// <para>
         /// Note that multi-byte characters contained in the <c>CLOB</c> data
-        /// are UTF-8 encoded in the stream.
+        /// may be UTF-8 encoded in the returned <see cref="System.IO.Stream"/>.
+        /// Whether this is indicated via byte-order mark or some other fashion
+        /// is implemetation-dependent and typically must be negotatied apriori
+        /// in some way with the data source.
+        /// </para>
+        /// <para>
+        /// Note further that the preferred method for scanning <c>CLOB</c> 
+        /// data is via <see cref="GetCharacterStream()"/> which retrieves a
+        /// TextReader capable of automatically translating CLOB data to 
+        /// Unicode characters in the CLR-native System.Char data format.
+        /// </para>
         /// </remarks>
         /// <returns>
         /// A <see cref="System.IO.Stream"/> containing the <c>CLOB</c> data.
         /// </returns>
         /// <exception cref="System.Data.Common.DbException">
         /// If there is an error accessing the <c>CLOB</c> value.
+        /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// When this object is in the <see cref="Free()">Freed</see> state.
         /// </exception>
         Stream GetAsciiStream();
 
@@ -96,6 +165,9 @@ namespace System.Data.Hsqldb.Common.Lob
         /// </returns>
         /// <exception cref="System.Data.Common.DbException">
         /// If there is an error accessing the <c>CLOB</c> value.
+        /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// When this object is in the <see cref="Free()">Freed</see> state.
         /// </exception>
         TextReader GetCharacterStream();
 
@@ -123,6 +195,9 @@ namespace System.Data.Hsqldb.Common.Lob
         /// <exception cref="System.Data.Common.DbException">
         /// If there is an error accessing the <c>CLOB</c> value.
         /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// When this object is in the <see cref="Free()">Freed</see> state.
+        /// </exception>
         string GetSubString(long pos, int length);
 
         #endregion
@@ -135,6 +210,9 @@ namespace System.Data.Hsqldb.Common.Lob
         /// </summary>
         /// <exception cref="System.Data.Common.DbException">
         /// If there is an error accessing the <c>CLOB</c> value.
+        /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// When this object is in the <see cref="Free()">Freed</see> state.
         /// </exception>
         long Length
         {
@@ -165,6 +243,12 @@ namespace System.Data.Hsqldb.Common.Lob
         /// <exception cref="System.Data.Common.DbException">
         /// If there is an error accessing the <c>CLOB</c> value.
         /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// When this object is in the <see cref="Free()">Freed</see> state.
+        /// </exception>
+        /// <exception cref="System.NotSupportedException">
+        /// When this method is not supported by the underlying implementation.
+        /// </exception>
         long Position(IClob searchString, long start);
 
         #endregion
@@ -191,6 +275,12 @@ namespace System.Data.Hsqldb.Common.Lob
         /// <exception cref="System.Data.Common.DbException">
         /// If there is an error accessing the <c>CLOB</c> value.
         /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// When this object is in the <see cref="Free()">Freed</see> state.
+        /// </exception>
+        /// <exception cref="System.NotSupportedException">
+        /// When this method is not supported by the underlying implementation.
+        /// </exception>
         long Position(string searchString, long start);
 
         #endregion
@@ -198,8 +288,8 @@ namespace System.Data.Hsqldb.Common.Lob
         #region SetAsciiStream(long)
 
         /// <summary>
-        /// Retrieves a stream to be used to write Ascii characters to
-        /// the <c>CLOB</c> value that this <c>IClob</c> object represents,
+        /// Retrieves a stream to be used to write single byte ASCII characters
+        /// to the <c>CLOB</c> value that this <c>IClob</c> object represents,
         /// starting at position <c>pos</c>.
         /// </summary>
         /// <param name="pos">
@@ -214,6 +304,12 @@ namespace System.Data.Hsqldb.Common.Lob
         /// </exception>
         /// <exception cref="System.Data.Common.DbException">
         /// If there is an error accessing the <c>CLOB</c> value.
+        /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// When this object is in the <see cref="Free()">Freed</see> state.
+        /// </exception>
+        /// <exception cref="System.NotSupportedException">
+        /// When this method is not supported by the underlying implementation.
         /// </exception>
         Stream SetAsciiStream(long pos);
 
@@ -236,6 +332,12 @@ namespace System.Data.Hsqldb.Common.Lob
         /// <exception cref="System.Data.Common.DbException">
         /// If there is an error accessing the <c>CLOB</c> value.
         /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// When this object is in the <see cref="Free()">Freed</see> state.
+        /// </exception>
+        /// <exception cref="System.NotSupportedException">
+        /// When this method is not supported by the underlying implementation.
+        /// </exception>
         TextWriter SetCharacterStream(long pos);
 
         #endregion
@@ -248,7 +350,8 @@ namespace System.Data.Hsqldb.Common.Lob
         /// represents.
         /// </summary>
         /// <param name="pos">
-        /// The position at which to start writing to this <c>CLOB</c> object.
+        /// The position at which to start writing to this <c>CLOB</c> object;
+        /// the first position is 1.
         /// </param>
         /// <param name="str">
         /// The string to be written to the <c>CLOB</c> value that this
@@ -265,6 +368,12 @@ namespace System.Data.Hsqldb.Common.Lob
         /// <exception cref="System.Data.Common.DbException">
         /// If there is an error accessing the <c>CLOB</c> value.
         /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// When this object is in the <see cref="Free()">Freed</see> state.
+        /// </exception>
+        /// <exception cref="System.NotSupportedException">
+        /// When this method is not supported by the underlying implementation.
+        /// </exception>
         int SetString(long pos, string str, int offset, int length);
 
         #endregion
@@ -277,7 +386,8 @@ namespace System.Data.Hsqldb.Common.Lob
         /// </summary>
         /// <param name="pos">
         /// The position at which to start writing to the <c>CLOB</c>
-        /// value that this <c>IClob</c> object represents.
+        /// value that this <c>IClob</c> object represents; the first
+        /// position is 1.
         /// </param>
         /// <param name="str">
         /// The string to be written to the <c>CLOB</c> value that this
@@ -288,6 +398,12 @@ namespace System.Data.Hsqldb.Common.Lob
         /// </returns>
         /// <exception cref="System.Data.Common.DbException">
         /// If there is an error accessing the <c>CLOB</c> value.
+        /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// When this object is in the <see cref="Free()">Freed</see> state.
+        /// </exception>
+        /// <exception cref="System.NotSupportedException">
+        /// When this method is not supported by the underlying implementation.
         /// </exception>
         int SetString(long pos, string str);
 
@@ -305,6 +421,12 @@ namespace System.Data.Hsqldb.Common.Lob
         /// </param>
         /// <exception cref="System.Data.Common.DbException">
         /// If there is an error accessing the <c>CLOB</c> value.
+        /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// When this object is in the <see cref="Free()">Freed</see> state.
+        /// </exception>
+        /// <exception cref="System.NotSupportedException">
+        /// When this method is not supported by the underlying implementation.
         /// </exception>
         void Truncate(long length);
 
@@ -344,20 +466,28 @@ namespace System.Data.Hsqldb.Common.Lob
         /// This is a completely optional operation.
         /// </para>
         /// <para>
-        /// Invoking this operation while this object is not in a freed
-        /// state should typically raise a
-        /// <see cref="System.Data.Common.DbException"/>.
+        /// Althogh not an absolute requirment, invoking this operation while
+        /// this object is not in a freed state should typically raise a
+        /// <see cref="System.InvalidOperationException"/>.
         /// </para>
         /// </remarks>
-        /// <param name="o">
+        /// <param name="obj">
         /// The object to wrap.
         /// </param>
-        /// <exception cref="System.NotImplementedException">
-        /// When this <c>IClob</c> does not implement this operation.
+        /// <exception cref="System.ArgumentNullException">
+        /// When <c>obj</c> is <c>null</c>.
         /// </exception>
-        /// <exception cref="System.Data.Common.DbException">
-        /// When this <c>IClob</c> object disallows the operation
-        /// because it is not in a <c>Free</c>d state.
+        /// <exception cref="System.ArgumentException">
+        /// When this <c>IBlob</c> implementation does not know how to wrap
+        /// objects of the runtime <see cref="System.Type"/> of the given
+        /// <c>obj</c> instance.
+        /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// When this <c>IClob</c> object disallows the operation,
+        /// for instance because it is not presently in a freed state.
+        /// </exception>
+        /// <exception cref="System.NotSupportedException">
+        /// When this method is not supported by the underlying implementation.
         /// </exception>
         void Wrap(object o);
 
