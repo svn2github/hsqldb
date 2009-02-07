@@ -14,7 +14,7 @@
  *  Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/psqlodbc/psqlodbc/md5.c,v 1.12 2006/09/13 15:30:27 hinoue Exp $
+ *    $Id$
  */
 
 
