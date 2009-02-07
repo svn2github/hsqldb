@@ -17,10 +17,43 @@ namespace System.Data.Hsqldb.Common.Sql.Predicate.UnitTests
 
             testSubject.SetPattern("foo%");
 
-            bool expected = true;
-            bool? actual = testSubject.Matches("foobar");
+            Assert.That(null == testSubject.Matches(null));
+            Assert.That(testSubject.Matches("foo").Value);
+            Assert.That(testSubject.Matches("foobar").Value);
+            Assert.That(!testSubject.Matches("foa").Value);
 
-            Assert.AreEqual(expected, actual);
+            testSubject.SetPattern("foo_");
+
+            Assert.That(null == testSubject.Matches(null));
+            Assert.That(testSubject.Matches("fooz").Value);
+            Assert.That(!testSubject.Matches("foobar").Value);
+            Assert.That(!testSubject.Matches("foo").Value);
+
+            testSubject.SetPattern("foo\\_\\%");
+
+            Assert.That(null == testSubject.Matches(null));
+            Assert.That(testSubject.Matches("foo_%").Value);
+            Assert.That(!testSubject.Matches("foobar").Value);
+            Assert.That(!testSubject.Matches("foo").Value);
+
+            ignoreCase = true;
+
+            testSubject = new Like(ignoreCase, escapeCharacter);
+
+            testSubject.SetPattern("FOO%");
+
+            Assert.That(null == testSubject.Matches(null));
+            Assert.That(testSubject.Matches("foo").Value);
+            Assert.That(testSubject.Matches("foobar").Value);
+            Assert.That(!testSubject.Matches("foa").Value);
+
+            Assert.That(testSubject.Matches("fOo").Value);
+            Assert.That(testSubject.Matches("FOoBaR").Value);
+            Assert.That(!testSubject.Matches("foa").Value);
+
+
+
+
         }
     }
 }
