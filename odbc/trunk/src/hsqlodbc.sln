@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 9.00
 # Visual Studio 2005
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "psqlODBC", "psqlodbc.vcproj", "{C45ECB41-8473-4F11-8186-E5574CFBADCF}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hsqlodbc", "hsqlodbc.vcproj", "{C45ECB41-8473-4F11-8186-E5574CFBADCF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

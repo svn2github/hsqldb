@@ -63,7 +63,7 @@
                              Value="$(var.VERSION)" />
             </Component>
             <Merge Id="hsqlodbcm" DiskId="1" Language="1033"
-                   SourceFile="psqlodbc.msm" />
+                   SourceFile="../dist/hsqlodbc.msm" />
           </Directory>
           <Directory Id="DOCSDIR" Name="docs">
             <Component Id="docs" Guid="91C8184E-C164-31A0-A594-545B3E46D4D6">

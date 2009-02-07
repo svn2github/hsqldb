@@ -23,6 +23,9 @@
 ::  Free Foundation, Inc., 51 Franklin Street, Fifth Floor,
 ::  Boston, MA  02110-1301  USA
 
-@del *.msi
-@del *.msm
+@echo WARNING:  I need to add validatoin to make sure you run this from the
+@echo right directory.  Until then, proceed if you really want to wipe out
+@pause *.wix* and the entire directory ..\dist.
+
+@rmdir /s /q ..\dist
 @del *.wix*

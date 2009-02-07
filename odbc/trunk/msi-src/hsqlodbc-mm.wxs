@@ -43,10 +43,10 @@
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="BINDIR" Name=".">
         <Component Id="hsqlodbc_files" Guid="DA8F2D4A-1A56-3FCF-A80F-CE7AAAC061C2">
-          <File Id="psqlodbc30a_dll" Name="psqlodbc30a.dll"
-                Source="../src/MultibyteRelease/psqlodbc30a.dll" />
-          <File Id="psqlodbc35w_dll" Name="psqlodbc35w.dll"
-                Source="../src/Release/psqlodbc35w.dll" />
+          <File Id="hsqlodbca_dll" Name="hsqlodbca.dll"
+                Source="../src/MultibyteRelease/hsqlodbca.dll" />
+          <File Id="hsqlodbcu_dll" Name="hsqlodbcu.dll"
+                Source="../src/Release/hsqlodbcu.dll" />
           <File Id="pgxalib_dll" Name="pgxalib.dll"
                 Source="../src/Release/pgxalib.dll" />
           <File Id="pgenlist_dll" Name="pgenlist.dll"
@@ -56,30 +56,30 @@
 
           <!-- Gettext
           <File Id="libintl3_dll" Name="libintl3.dll"
-                Source="$(var.PROGRAMFILES)\PostgreSQL\8.3\bin\libintl3.dll" />
+                Source="$(var.PROGRAMFILES)/PostgreSQL/8.3/bin/libintl3.dll" />
           <File Id="libiconv2_dll" Name="libiconv2.dll"
-                Source="$(var.PROGRAMFILES)\PostgreSQL\8.3\bin\libiconv2.dll" />
+                Source="$(var.PROGRAMFILES)/PostgreSQL/8.3/bin/libiconv2.dll" />
 
              - SSL -
           <File Id="libeay32_dll" Name="libeay32.dll"
-                Source="$(var.PROGRAMFILES)\PostgreSQL\8.3\bin\libeay32.dll" />
+                Source="$(var.PROGRAMFILES)/PostgreSQL/8.3/bin/libeay32.dll" />
           <File Id="ssleay32_dll" Name="ssleay32.dll"
-                Source="$(var.PROGRAMFILES)\PostgreSQL\8.3\bin\ssleay32.dll" />
+                Source="$(var.PROGRAMFILES)/PostgreSQL/8.3/bin/ssleay32.dll" />
 
              - MIT Kerberos -
           <File Id="comerr32_dll" Name="comerr32.dll"
-                Source="$(var.PROGRAMFILES)\PostgreSQL\8.3\bin\comerr32.dll" />
+                Source="$(var.PROGRAMFILES)/PostgreSQL/8.3/bin/comerr32.dll" />
           <File Id="krb5_32_dll" Name="krb5_32.dll"
-                Source="$(var.PROGRAMFILES)\PostgreSQL\8.3\bin\krb5_32.dll" />
+                Source="$(var.PROGRAMFILES)/PostgreSQL/8.3/bin/krb5_32.dll" />
           <File Id="k5sprt32_dll" Name="k5sprt32.dll"
-                Source="$(var.PROGRAMFILES)\PostgreSQL\8.3\bin\k5sprt32.dll" />
+                Source="$(var.PROGRAMFILES)/PostgreSQL/8.3/bin/k5sprt32.dll" />
           <File Id="gssapi32_dll" Name="gssapi32.dll"
-                Source="$(var.PROGRAMFILES)\PostgreSQL\8.3\bin\gssapi32.dll" />
+                Source="$(var.PROGRAMFILES)/PostgreSQL/8.3/bin/gssapi32.dll" />
           -->
 
           <!-- VC++ 7.1 runtime - required by Kerberos -->
           <File Id="msvcr71_dll" Name="msvcr71.dll"
-                Source="$(var.SYSTEM32DIR)\msvcr71.dll" />
+                Source="$(var.SYSTEM32DIR)/msvcr71.dll" />
 
           <!-- Note, installing the driver properly (IE, using ODBCDriver) has proven
                unreliable so we install the registry keys manually ourselves.  -->
@@ -94,7 +94,7 @@
                          Name="ConnectFunctions" Type="string" Value="YYN" />
           <RegistryValue Id="hsqlodbc01a.reg.4" Root="HKLM"
                          Key="SOFTWARE\ODBC\ODBCINST.INI\HyperSQL ANSI"
-                         Name="Driver" Type="string" Value="[#psqlodbc30a_dll]" />
+                         Name="Driver" Type="string" Value="[#hsqlodbca_dll]" />
           <RegistryValue Id="hsqlodbc01a.reg.5" Root="HKLM"
                          Key="SOFTWARE\ODBC\ODBCINST.INI\HyperSQL ANSI"
                          Name="DriverODBCVer" Type="string" Value="03.00" />
@@ -103,7 +103,7 @@
                          Name="FileUsage" Type="string" Value="0" />
           <RegistryValue Id="hsqlodbc01a.reg.7" Root="HKLM"
                          Key="SOFTWARE\ODBC\ODBCINST.INI\HyperSQL ANSI"
-                         Name="Setup" Type="string" Value="[#psqlodbc30a_dll]" />
+                         Name="Setup" Type="string" Value="[#hsqlodbca_dll]" />
           <RegistryValue Id="hsqlodbc01a.reg.8" Root="HKLM"
                          Key="SOFTWARE\ODBC\ODBCINST.INI\HyperSQL ANSI"
                          Name="SQLLevel" Type="string" Value="1" />
@@ -122,7 +122,7 @@
                          Name="ConnectFunctions" Type="string" Value="YYN" />
           <RegistryValue Id="hsqlodbc01u.reg.4" Root="HKLM"
                          Key="SOFTWARE\ODBC\ODBCINST.INI\HyperSQL Unicode"
-                         Name="Driver" Type="string" Value="[#psqlodbc35w_dll]" />
+                         Name="Driver" Type="string" Value="[#hsqlodbcu_dll]" />
           <RegistryValue Id="hsqlodbc01u.reg.5" Root="HKLM"
                          Key="SOFTWARE\ODBC\ODBCINST.INI\HyperSQL Unicode"
                          Name="DriverODBCVer" Type="string" Value="03.51" />
@@ -131,7 +131,7 @@
                          Name="FileUsage" Type="string" Value="0" />
           <RegistryValue Id="hsqlodbc01u.reg.7" Root="HKLM"
                          Key="SOFTWARE\ODBC\ODBCINST.INI\HyperSQL Unicode"
-                         Name="Setup" Type="string" Value="[#psqlodbc35w_dll]" />
+                         Name="Setup" Type="string" Value="[#hsqlodbcu_dll]" />
           <RegistryValue Id="hsqlodbc01u.reg.8" Root="HKLM"
                          Key="SOFTWARE\ODBC\ODBCINST.INI\HyperSQL Unicode"
                          Name="SQLLevel" Type="string" Value="1" />

@@ -45,27 +45,27 @@ EXTRA_hsqlodbca_la_SOURCES = md5.c
 EXTRA_hsqlodbcu_la_SOURCES = md5.c
 
 EXTRA_DIST = license.txt readme.txt \
-    libtool.m4 psqlodbc.def psqlodbca.def \
+    libtool.m4 hsqlodbcu.def hsqlodbca.def \
     pgenlist.def  pgenlista.def \
     dlg_wingui.c inouealc.c win_setup.h \
-        setup.c win_unicode.c psqlodbc.rc win64.mak \
-        win32.mak psqlodbc.reg psqlodbc.dsp psqlodbc.vcproj \
-        psqlodbc.sln msdtc_enlist.cpp pgxalib.cpp xalibname.c \
+        setup.c win_unicode.c hsqlodbc.rc win64.mak \
+        win32.mak hsqlodbc.dsp hsqlodbc.vcproj \
+        hsqlodbc.sln msdtc_enlist.cpp pgxalib.cpp xalibname.c \
         pgxalib.def odbc.sql odbc-drop.sql \
     odbcapi25w.c \
 \
-    docs/index.html docs/config.html docs/config-opt.html \
-    docs/faq.html docs/howto-accesslo.html \
-    docs/howto-accessvba.html docs/howto-bo.html \
-    docs/howto-ch.html docs/howto-csharp.html \
-    docs/howto-vb.html docs/howto-vblo.html \
-    docs/unix-compilation.html docs/win32-compilation.html \
-    docs/release.html \
+    ../docs/index.html ../docs/config.html ../docs/config-opt.html \
+    ../docs/faq.html ../docs/howto-accesslo.html \
+    ../docs/howto-accessvba.html ../docs/howto-bo.html \
+    ../docs/howto-ch.html ../docs/howto-csharp.html \
+    ../docs/howto-vb.html ../docs/howto-vblo.html \
+    ../docs/unix-compilation.html ../docs/win32-compilation.html \
+    ../docs/release.html \
 \
-    installer/banner.bmp installer/lgpl.rtf \
-    installer/Make.bat installer/upgrade.bat \
-    installer/psqlodbc.wxs installer/psqlodbcm.wxs \
-    installer/README.txt installer/background.bmp
+    ../msi-src/banner.bmp ../msi-src/lgpl.rtf \
+    ../msi-src/Make.bat ../msi-src/upgrade.bat \
+    ../msi-src/hsqlodbc.wxs ../msi-src/hsqlodbc-mm.wxs \
+    ../msi-src/README.txt ../msi-src/background.bmp
 
 
 MAINTAINERCLEANFILES = \

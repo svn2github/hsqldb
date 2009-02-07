@@ -85,7 +85,7 @@ extern void MyLog(char *fmt,...);
 #define inolog  if (get_mylog() > 1) mylog /* for really temporary debug */
 
 #ifdef Q_LOG
-#define QLOGFILE            "psqlodbc_"
+#define QLOGFILE            "hsqlodbc_"
 #ifndef WIN32
 #define QLOGDIR             "/tmp"
 #else

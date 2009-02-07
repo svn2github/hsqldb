@@ -228,19 +228,19 @@ typedef double SDOUBLE;
 #if (ODBCVER >= 0x0300)
 #ifdef  UNICODE_SUPPORT
 #if (ODBCVER >= 0x0350)
-#define DRIVER_FILE_NAME            "PSQLODBC35W.DLL"
+#define DRIVER_FILE_NAME            "PSQLODBCU.DLL"
 #else
-#define DRIVER_FILE_NAME            "PSQLODBC30W.DLL"
+#define DRIVER_FILE_NAME            "PSQLODBCU.DLL"
 #endif /* ODBCVER 0x0350 */
 #else
-#define DRIVER_FILE_NAME            "PSQLODBC.DLL"
+#define DRIVER_FILE_NAME            "PSQLODBCA.DLL"
 #endif   /* UNICODE_SUPPORT */
 #else
-#define DRIVER_FILE_NAME            "PSQLODBC25.DLL"
+#define DRIVER_FILE_NAME            "PSQLODBCA.DLL"
 #endif   /* ODBCVER 0x0300 */
 #else
 #ifdef  UNICODE_SUPPORT
-#define DRIVER_FILE_NAME                        "psqlodbcw.so"
+#define DRIVER_FILE_NAME                        "psqlodbcu.so"
 #else
 #define DRIVER_FILE_NAME                        "psqlodbca.so"
 #endif

@@ -259,7 +259,7 @@ mylog("CONVERT_FUNCTIONS=" FORMAT_ULEN "\n", value);
              */
             /* version number to the dbms version string */
             /*
-            snprintf(tmp, sizeof(tmp) - 1, "%s %s", POSTGRESDRIVERVERSION, conn->pg_version);
+            snprintf(tmp, sizeof(tmp) - 1, "%s %s", HSQLDRIVERVERSION, conn->pg_version);
                         tmp[sizeof(tmp) - 1] = '\0'; */
             if (CC_fake_mss(conn))
                 p = "09.00.1399";
@@ -290,7 +290,7 @@ mylog("CONVERT_FUNCTIONS=" FORMAT_ULEN "\n", value);
             break;
 
         case SQL_DRIVER_VER:    /* ODBC 1.0 */
-            p = POSTGRESDRIVERVERSION;
+            p = HSQLDRIVERVERSION;
             break;
 
         case SQL_EXPRESSIONS_IN_ORDERBY:        /* ODBC 1.0 */

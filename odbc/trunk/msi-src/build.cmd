@@ -27,16 +27,13 @@
 ::  Free Foundation, Inc., 51 Franklin Street, Fifth Floor,
 ::  Boston, MA  02110-1301  USA
 
-REM Values to change include VERSION and SUBLOC, both below.
-
-REM The subdirectory to install into
-SET SUBLOC="0803"
+REM Values to change include VERSION below.
 
 if NOT "%1"=="" SET VERSION="%1"
 if NOT "%1"=="" GOTO GOT_VERSION
 
 REM The full version number of the build in XXXX.XX.XX format
-SET VERSION="08.03.0400"
+SET VERSION="09.02.06"
 
 echo.
 echo Version not specified - defaulting to %VERSION%
@@ -47,19 +44,19 @@ echo.
 echo.
 echo Building hsqlodbc merge module...
 
-candle -nologo -dVERSION=%VERSION% -dPROGRAMFILES="%ProgramFiles%" -dSYSTEM32DIR="%SystemRoot%/system32" psqlodbcm.wxs
+candle -nologo -dVERSION=%VERSION% -dPROGRAMFILES="%ProgramFiles%" -dSYSTEM32DIR="%SystemRoot%/system32" hsqlodbc-mm.wxs
 IF ERRORLEVEL 1 GOTO ERR_HANDLER
 
-light -nologo -out psqlodbc.msm psqlodbcm.wixobj
+light -nologo -o ..\dist\hsqlodbc.msm hsqlodbc-mm.wixobj
 IF ERRORLEVEL 1 GOTO ERR_HANDLER
 
 echo.
 echo Building hsqlodbc MSI database...
 
-candle -nologo -dVERSION=%VERSION% -dPROGRAMFILES="%ProgramFiles%" -dPROGRAMCOM="%ProgramFiles%/Common Files/Merge Modules" psqlodbc.wxs
+candle -nologo -dVERSION=%VERSION% -dPROGRAMFILES="%ProgramFiles%" -dPROGRAMCOM="%ProgramFiles%/Common Files/Merge Modules" hsqlodbc.wxs
 IF ERRORLEVEL 1 GOTO ERR_HANDLER
 
-light -nologo -ext WixUIExtension -cultures:en-us -sw1076 -sw1055 -sw1056 psqlodbc.wixobj
+light -nologo -o ..\dist\hsqlodbc.msi -ext WixUIExtension -cultures:en-us -sw1076 -sw1055 -sw1056 hsqlodbc.wixobj
 IF ERRORLEVEL 1 GOTO ERR_HANDLER
 
 echo.
@@ -68,7 +65,7 @@ GOTO EXIT
 
 :ERR_HANDLER
 echo.
-echo Aborting build!
+echo Aborting dist!
 GOTO EXIT
 
 :EXIT

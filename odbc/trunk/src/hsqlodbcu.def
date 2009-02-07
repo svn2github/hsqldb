@@ -1,4 +1,4 @@
-LIBRARY psqlodbc35w
+LIBRARY hsqlodbcu
 EXPORTS
 ;SQLAllocConnect @1
 ;SQLAllocEnv @2

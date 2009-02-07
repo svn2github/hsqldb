@@ -36,9 +36,9 @@ DLG_CONFIG DIALOGEX 65, 43, 359, 219
 STYLE DS_MODALFRAME | DS_3DLOOK | DS_CENTER | WS_POPUP | WS_VISIBLE | 
     WS_CAPTION | WS_SYSMENU
 #ifdef UNICODE_SUPPORT
-CAPTION "PostgreSQL Unicode ODBC セットアップ"
+CAPTION "HyperSQL Unicode ODBC セットアップ"
 #else
-CAPTION "PostgreSQL ANSI ODBC セットアップ"
+CAPTION "HyperSQL ANSI ODBC セットアップ"
 #endif
 FONT 9, "ＭＳ ゴシック", 0, 0, 0x1
 BEGIN
@@ -71,7 +71,7 @@ BEGIN
     PUSHBUTTON      "全体設定",IDC_DRIVER,269,155,53,15
     PUSHBUTTON      "デ－タソ－ス",IDC_DATASOURCE,269,132,53,15
     GROUPBOX        "既定の認証",IDC_STATIC,11,119,235,59
-    LTEXT           "PostgreSQL Ver7.3  Copyright (C) 1998-2006; Insight Distribution Systems",
+    LTEXT           "HyperSQL Ver1.9, PostgreSQL; Insight Distribution Systems",
                     IDC_STATIC,36,186,302,9
     LTEXT           "In the original form, Japanese patch Hiroshi-saito",
                     IDC_STATIC,35,198,295,8
@@ -89,7 +89,7 @@ BEGIN
     PUSHBUTTON      "設定2",IDNEXTPAGE,49,5,40,15
     CONTROL         "遺伝的最適化処理を無効にする(&O)",DRV_OPTIMIZER,"Button",
                     BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,15,26,140,10
-    CONTROL         "一般ログ出力をする(&L) (C:\\psqlodbc.log)",DRV_COMMLOG,
+    CONTROL         "一般ログ出力をする(&L) (C:\\hsqlodbc.log)",DRV_COMMLOG,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,167,24,170,10
     CONTROL         "&KSQO (ｸｴﾘｰｷｰｾｯﾄ最適化オプション)",DRV_KSQO,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,41,145,10
@@ -212,7 +212,7 @@ STYLE DS_MODALFRAME | DS_3DLOOK | DS_CENTER | WS_POPUP | WS_CAPTION |
 CAPTION "高度な設定(全体)"
 FONT 9, "ＭＳ ゴシック"
 BEGIN
-    CONTROL         "一般ログ(&L) (C:\\psqlodbc_xxxx.log - コミュニケ－ションログ)",
+    CONTROL         "一般ログ(&L) (C:\\hsqlodbc_xxxx.log - コミュニケ－ションログ)",
                     DRV_COMMLOG,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,22,24,
                     249,10
     CONTROL         "専用ログ (C:\\mylog_xxxx.log - 詳細デバッグ出力ログ)",
@@ -343,28 +343,28 @@ BEGIN
         BLOCK "041104e4"
         BEGIN
 #ifdef UNICODE_SUPPORT
-            VALUE "Comments", "PostgreSQL Unicode ODBC driver Japanese\0"
+            VALUE "Comments", "HyperSQL Unicode ODBC driver Japanese\0"
 #else
-            VALUE "Comments", "PostgreSQL ANSI ODBC driver Japanese\0"
+            VALUE "Comments", "HyperSQL ANSI ODBC driver Japanese\0"
 #endif
-            VALUE "CompanyName", "PostgreSQL Global Development Group\0"
-            VALUE "FileDescription", "PostgreSQL ODBC Driver (Japanese)\0"
-            VALUE "FileVersion", POSTGRES_RESOURCE_VERSION
+            VALUE "CompanyName", "HyperSQL Global Development Group\0"
+            VALUE "FileDescription", "HyperSQL ODBC Driver (Japanese)\0"
+            VALUE "FileVersion", HSQL_RESOURCE_VERSION
 #ifdef UNICODE_SUPPORT
-            VALUE "InternalName", "psqlodbc35w\0"
+            VALUE "InternalName", "hsqlodbcu\0"
 #else
-            VALUE "InternalName", "psqlodbc30a\0"
+            VALUE "InternalName", "hsqlodbca\0"
 #endif
             VALUE "LegalCopyright", "\0"
             VALUE "LegalTrademarks", "ODBC(TM) is a trademark of Microsoft Corporation.  Microsoftョ is a registered trademark of Microsoft Corporation. Windows(TM) is a trademark of Microsoft Corporation.\0"
 #ifdef UNICODE_SUPPORT
-            VALUE "OriginalFilename", "psqlodbc35w.dll\0"
+            VALUE "OriginalFilename", "hsqlodbcu.dll\0"
 #else
-            VALUE "OriginalFilename", "psqlodbc30a.dll\0"
+            VALUE "OriginalFilename", "hsqlodbca.dll\0"
 #endif
             VALUE "PrivateBuild", "for Japanese by Hiroshi Inoue & Hiroshi Saito\0"
-            VALUE "ProductName", "PostgreSQL\0"
-            VALUE "ProductVersion", POSTGRES_RESOURCE_VERSION
+            VALUE "ProductName", "HyperSQL\0"
+            VALUE "ProductVersion", HSQL_RESOURCE_VERSION
             VALUE "SpecialBuild", "\0"
         END
     END
@@ -425,9 +425,9 @@ DLG_CONFIG DIALOG DISCARDABLE  65, 43, 305, 142
 STYLE DS_MODALFRAME | DS_3DLOOK | DS_CENTER | WS_POPUP | WS_VISIBLE | 
     WS_CAPTION | WS_SYSMENU
 #ifdef UNICODE_SUPPORT
-CAPTION "PostgreSQL Unicode ODBC Driver (psqlODBC) Setup"
+CAPTION "HyperSQL Unicode ODBC Driver (hsqlodbc) Setup"
 #else
-CAPTION "PostgreSQL ANSI ODBC Driver (psqlODBC) Setup"
+CAPTION "HyperSQL ANSI ODBC Driver (hsqlodbc) Setup"
 #endif
 FONT 8, "MS Sans Serif"
 BEGIN
@@ -479,7 +479,7 @@ BEGIN
     PUSHBUTTON      "Page 2",IDNEXTPAGE,49,5,40,15
     CONTROL         "Disable Genetic &Optimizer",DRV_OPTIMIZER,"Button",
                     BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,15,26,116,10
-    CONTROL         "Comm&Log (C:\\psqlodbc_xxxx.log)",DRV_COMMLOG,"Button",
+    CONTROL         "Comm&Log (C:\\hsqlodbc_xxxx.log)",DRV_COMMLOG,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,149,26,131,10
     CONTROL         "&KSQO(Keyset Query Optimization)",DRV_KSQO,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,41,132,10
@@ -487,8 +487,8 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,56,110,10
     CONTROL         "P&arse Statements",DRV_PARSE,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,149,41,80,10
-    CONTROL         "&Use Declare/Fetch",DRV_USEDECLAREFETCH,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,71,83,10
+    //CONTROL         "&Use Declare/Fetch",DRV_USEDECLAREFETCH,"Button",
+                    //BS_AUTOCHECKBOX | WS_TABSTOP,15,71,83,10
     CONTROL         "Cancel as FreeStmt (Exp)",DRV_CANCELASFREESTMT,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,149,56,114,10
     CONTROL         "MyLog (C:\\mylog_xxxx.log)",DRV_DEBUG,"Button",
@@ -596,7 +596,7 @@ STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Global settings"
 FONT 8, "MS Sans Serif"
 BEGIN
-    CONTROL         "Comm&Log (C:\\psqlodbc_xxxx.log - Communications log)",
+    CONTROL         "Comm&Log (C:\\hsqlodbc_xxxx.log - Communications log)",
                     DRV_COMMLOG,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,22,24,
                     263,10
     CONTROL         "Mylog (C:\\mylog_xxxx.log - Detailed debug output)",
@@ -698,28 +698,28 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
 #ifdef UNICODE_SUPPORT
-            VALUE "Comments", "PostgreSQL Unicode ODBC driver\0"
+            VALUE "Comments", "HyperSQL Unicode ODBC driver\0"
 #else
-            VALUE "Comments", "PostgreSQL ANSI ODBC driver\0"
+            VALUE "Comments", "HyperSQL ANSI ODBC driver\0"
 #endif
-            VALUE "CompanyName", "PostgreSQL Global Development Group\0"
-            VALUE "FileDescription", "PostgreSQL ODBC Driver (English)\0"
-            VALUE "FileVersion", POSTGRES_RESOURCE_VERSION
+            VALUE "CompanyName", "The HSQL Development Group\0"
+            VALUE "FileDescription", "HyperSQL ODBC Driver (English)\0"
+            VALUE "FileVersion", HSQL_RESOURCE_VERSION
 #ifdef UNICODE_SUPPORT
-            VALUE "InternalName", "psqlodbc35w\0"
+            VALUE "InternalName", "hsqlodbcu\0"
 #else
-            VALUE "InternalName", "psqlodbc30a\0"
+            VALUE "InternalName", "hsqlodbca\0"
 #endif
             VALUE "LegalCopyright", "Copyright \0"
             VALUE "LegalTrademarks", "ODBC(TM) is a trademark of Microsoft Corporation.  Microsoft? is a registered trademark of Microsoft Corporation. Windows(TM) is a trademark of Microsoft Corporation.\0"
 #ifdef UNICODE_SUPPORT
-            VALUE "OriginalFilename", "psqlodbc35w.dll\0"
+            VALUE "OriginalFilename", "hsqlodbcu.dll\0"
 #else
-            VALUE "OriginalFilename", "psqlodbc30a.dll\0"
+            VALUE "OriginalFilename", "hsqlodbca.dll\0"
 #endif
             VALUE "PrivateBuild", "\0"
-            VALUE "ProductName", "PostgreSQL\0"
-            VALUE "ProductVersion", POSTGRES_RESOURCE_VERSION
+            VALUE "ProductName", "HyperSQL\0"
+            VALUE "ProductVersion", HSQL_RESOURCE_VERSION
             VALUE "SpecialBuild", "\0"
         END
     END

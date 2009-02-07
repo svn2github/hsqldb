@@ -1,7 +1,8 @@
 #
 # File:         win64.mak
 #
-# Description:  psqlodbc35w Unicode 64bit version Makefile.
+# Description:  64-bit Windows Build file for hsqlodbcu Unicode,
+#               and hsqlodbca ANSI versionsfile for Win32.
 #               (can be built using platform SDK's buildfarm) 
 #
 # Configurations: Debug, Release
@@ -128,9 +129,9 @@ NULL=nul
 !ENDIF
 
 !IF "$(ANSI_VERSION)" == "yes"
-MAINLIB = psqlodbc30a
+MAINLIB = hsqlodbca
 !ELSE
-MAINLIB = psqlodbc35w
+MAINLIB = hsqlodbcu
 !ENDIF
 MAINDLL = $(MAINLIB).dll 
 XALIB = pgxalib 
@@ -254,7 +255,7 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib advapi32.lib odbc32.lib odbccp32.
 !IF  "$(ANSI_VERSION)" == "yes"
 DEF_FILE= "psqlodbca.def"
 !ELSE
-DEF_FILE= "psqlodbc.def"
+DEF_FILE= "psqlodbcu.def"
 !ENDIF
 !IF  "$(CFG)" == "Release"
 LINK32_FLAGS=$(LINK32_FLAGS) /incremental:no
@@ -344,7 +345,7 @@ LINK32_XAOBJS= \
 <<
 
 
-SOURCE=psqlodbc.rc
+SOURCE=hsqlodbc.rc
 
 "$(INTDIR)\psqlodbc.res" : $(SOURCE) "$(INTDIR)"
 	$(RSC) $(RSC_PROJ)  $(RSC_DEFINES) $(SOURCE)

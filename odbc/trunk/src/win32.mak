@@ -5,7 +5,8 @@
 #
 # File:         win32.mak
 #
-# Description:  psqlodbc35w Unicode version Makefile for Win32.
+# Description:  32-bit Windows Build file for hsqlodbcu Unicode,
+#               and hsqlodbca ANSI versionsfile for Win32.
 #
 # Configurations: Debug, Release
 # Build Types:  ALL, CLEAN
@@ -164,9 +165,9 @@ NULL=nul
 !ENDIF
 
 !IF "$(ANSI_VERSION)" == "yes"
-MAINLIB = psqlodbc30a
+MAINLIB = hsqlodbca
 !ELSE
-MAINLIB = psqlodbc35w
+MAINLIB = hsqlodbcu
 !ENDIF
 MAINDLL = $(MAINLIB).dll 
 XALIB = pgxalib 
@@ -242,7 +243,7 @@ CPP_PROJ=/nologo /$(LINKMT) /O2 /D "NDEBUG"
 !ELSEIF  "$(CFG)" == "Debug"
 CPP_PROJ=/nologo /$(LINKMT)d /Gm /ZI /Od /RTC1 /D "_DEBUG"
 !ENDIF
-CPP_PROJ=$(CPP_PROJ) /W3 $(VC_FLAGS) /I "$(PG_INC)" /I "$(SSL_INC)" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "_CRT_SECURE_NO_DEPRECATE" /D "PSQLODBC_EXPORTS" /D "WIN_MULTITHREAD_SUPPORT" $(ADD_DEFINES) /Fp"$(INTDIR)\psqlodbc.pch" /Fo"$(INTDIR)"\ /Fd"$(INTDIR)"\ /FD
+CPP_PROJ=$(CPP_PROJ) /W3 $(VC_FLAGS) /I "$(PG_INC)" /I "$(SSL_INC)" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "_CRT_SECURE_NO_DEPRECATE" /D "PSQLODBC_EXPORTS" /D "WIN_MULTITHREAD_SUPPORT" $(ADD_DEFINES) /Fp"$(INTDIR)\hsqlodbc.pch" /Fo"$(INTDIR)"\ /Fd"$(INTDIR)"\ /FD
 !MESSAGE CPP_PROJ=$(CPP_PROJ)
 .c{$(INTDIR)}.obj::
    $(CPP) @<<
@@ -279,7 +280,7 @@ RSC=rc.exe
 BSC32=bscmake.exe
 MTL_PROJ=/nologo /mktyplib203 /win32 
 RSC_PROJ=/l 0x809 /d "MULTIBYTE" 
-BSC32_FLAGS=/nologo /o"$(OUTDIR)\psqlodbc.bsc" 
+BSC32_FLAGS=/nologo /o"$(OUTDIR)\hsqlodbc.bsc" 
 !IF  "$(CFG)" == "Release"
 MTL_PROJ=$(MTL_PROC) /D "NDEBUG" 
 RSC_PROJ=$(RSC_PROJ) /d "NDEBUG"
@@ -296,9 +297,9 @@ LINK32_FLAGS=$(OUTDIR)\$(DTCLIB).lib ws2_32.lib
 !ENDIF
 LINK32_FLAGS=$(LINK32_FLAGS) kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib winmm.lib /nologo /dll /machine:I386 /def:$(DEF_FILE)
 !IF  "$(ANSI_VERSION)" == "yes"
-DEF_FILE= "psqlodbca.def"
+DEF_FILE= "hsqlodbca.def"
 !ELSE
-DEF_FILE= "psqlodbc.def"
+DEF_FILE= "hsqlodbcu.def"
 !ENDIF
 !IF  "$(CFG)" == "Release"
 LINK32_FLAGS=$(LINK32_FLAGS) /incremental:no
@@ -385,7 +386,7 @@ LINK32_XAOBJS= \
 <<
 
 
-SOURCE=psqlodbc.rc
+SOURCE=hsqlodbc.rc
 
 "$(INTDIR)\psqlodbc.res" : $(SOURCE)
 	$(RSC) $(RSC_PROJ) /fo$@ $(RSC_DEFINES) $(SOURCE)
