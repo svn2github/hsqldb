@@ -139,8 +139,7 @@ namespace System.Data.Hsqldb.Client.Internal
         /// with the given builder.
         /// </summary>
         /// <param name="builder">The builder.</param>
-        internal HsqlConnectionSettings (
-            HsqlConnectionStringBuilder builder)
+        internal HsqlConnectionSettings (HsqlConnectionStringBuilder builder)
         {
             m_builder = builder;
 
