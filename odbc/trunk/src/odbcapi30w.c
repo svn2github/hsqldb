@@ -12,7 +12,7 @@
  *-------
  */
 
-#include "psqlodbc.h"
+#include "hsqlodbc.h"
 
 #if (ODBCVER >= 0x0300)
 #include <stdio.h>

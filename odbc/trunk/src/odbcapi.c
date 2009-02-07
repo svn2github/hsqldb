@@ -26,7 +26,7 @@
  *-------
  */
 
-#include "psqlodbc.h"
+#include "hsqlodbc.h"
 #include <stdio.h>
 #include <string.h>
 

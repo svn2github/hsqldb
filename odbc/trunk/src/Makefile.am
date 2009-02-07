@@ -27,7 +27,7 @@ AM_LDFLAGS = -module -no-undefined -avoid-version
 hsqlodbca_la_SOURCES = \
     info.c bind.c columninfo.c connection.c convert.c drvconn.c \
     environ.c execute.c lobj.c win_md5.c misc.c options.c \
-    pgtypes.c psqlodbc.c qresult.c results.c socket.c parse.c \
+    pgtypes.c hsqlodbc.c qresult.c results.c socket.c parse.c \
     statement.c tuple.c dlg_specific.c loadlib.c \
     multibyte.c odbcapi.c descriptor.c \
     odbcapi30.c pgapi30.c info30.c mylog.c \
@@ -35,7 +35,7 @@ hsqlodbca_la_SOURCES = \
     bind.h catfunc.h columninfo.h connection.h convert.h \
     descriptor.h dlg_specific.h environ.h \
     lobj.h md5.h misc.h multibyte.h pgapifunc.h pgtypes.h \
-    psqlodbc.h qresult.h resource.h socket.h statement.h tuple.h \
+    hsqlodbc.h qresult.h resource.h socket.h statement.h tuple.h \
     version.h loadlib.h pgenlist.h
 
 hsqlodbcu_la_SOURCES = $(hsqlodbca_la_SOURCES) \

@@ -229,9 +229,9 @@ LINK32=link.exe
 LIB32=lib.exe
 LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib advapi32.lib odbc32.lib odbccp32.lib wsock32.lib XOleHlp.lib winmm.lib "$(OUTDIR)\$(DTCLIB).lib" msvcrt.lib bufferoverflowu.lib /nologo /dll /machine:$(CPU) /def:"$(DEF_FILE)"
 !IF  "$(ANSI_VERSION)" == "yes"
-DEF_FILE= "psqlodbca.def"
+DEF_FILE= "hsqlodbca.def"
 !ELSE
-DEF_FILE= "psqlodbcu.def"
+DEF_FILE= "hsqlodbcu.def"
 !ENDIF
 !IF  "$(CFG)" == "Release"
 LINK32_FLAGS=$(LINK32_FLAGS) /incremental:no
@@ -261,7 +261,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\options.obj" \
 	"$(INTDIR)\parse.obj" \
 	"$(INTDIR)\pgtypes.obj" \
-	"$(INTDIR)\psqlodbc.obj" \
+	"$(INTDIR)\hsqlodbc.obj" \
 	"$(INTDIR)\qresult.obj" \
 	"$(INTDIR)\results.obj" \
 	"$(INTDIR)\setup.obj" \

@@ -32,7 +32,7 @@
 #ifndef __SOCKET_H__
 #define __SOCKET_H__
 
-#include "psqlodbc.h"
+#include "hsqlodbc.h"
 #include <errno.h>
 
 #ifndef WIN32

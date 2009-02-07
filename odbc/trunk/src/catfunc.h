@@ -9,7 +9,7 @@
 #ifndef __CATFUNC_H__
 #define __CATFUNC_H__
 
-#include "psqlodbc.h"
+#include "hsqlodbc.h"
 
 /*  SQLTables field position    */
 enum {

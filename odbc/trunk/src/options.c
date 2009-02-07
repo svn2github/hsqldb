@@ -13,7 +13,7 @@
  *--------
  */
 
-#include "psqlodbc.h"
+#include "hsqlodbc.h"
 #include <string.h>
 
 #include "environ.h"

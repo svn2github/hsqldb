@@ -6,7 +6,7 @@
 #ifndef _PG_API_FUNC_H__
 #define _PG_API_FUNC_H__
 
-#include "psqlodbc.h"
+#include "hsqlodbc.h"
 #include <stdio.h>
 #include <string.h>
 

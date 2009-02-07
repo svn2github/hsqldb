@@ -59,7 +59,7 @@ PGAPI_AllocEnv(HENV FAR * phenv)
 
     /*
      * Hack for systems on which none of the constructor-making techniques
-     * in psqlodbc.c work: if globals appears not to have been
+     * in hsqlodbc.c work: if globals appears not to have been
      * initialized, then cause it to be initialized.  Since this should be
      * the first function called in this shared library, doing it here
      * should work.

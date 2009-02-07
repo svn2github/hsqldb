@@ -34,7 +34,7 @@
  *  Boston, MA  02110-1301  USA
  */
 
-#include "psqlodbc.h"
+#include "hsqlodbc.h"
 
 #ifdef USE_SSL
 #include <openssl/ssl.h>

@@ -32,7 +32,7 @@
 #ifndef __DLG_SPECIFIC_H__
 #define __DLG_SPECIFIC_H__
 
-#include "psqlodbc.h"
+#include "hsqlodbc.h"
 #include "connection.h"
 
 #ifdef WIN32

@@ -9,7 +9,7 @@
 #ifndef __MISC_H__
 #define __MISC_H__
 
-#include "psqlodbc.h"
+#include "hsqlodbc.h"
 
 #include <stdio.h>
 #ifndef  WIN32

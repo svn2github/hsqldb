@@ -12,7 +12,7 @@
 #ifndef __DESCRIPTOR_H__
 #define __DESCRIPTOR_H__
 
-#include "psqlodbc.h"
+#include "hsqlodbc.h"
 
 typedef struct
 {

@@ -9,7 +9,7 @@
 #ifndef __CONVERT_H__
 #define __CONVERT_H__
 
-#include "psqlodbc.h"
+#include "hsqlodbc.h"
 
 #ifdef  __cplusplus
 extern "C" {

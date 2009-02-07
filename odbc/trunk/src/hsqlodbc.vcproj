@@ -790,7 +790,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="psqlodbc.c"
+				RelativePath="hsqlodbc.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -1060,7 +1060,7 @@
 				>
 			</File>
 			<File
-				RelativePath="psqlodbc.h"
+				RelativePath="hsqlodbc.h"
 				>
 			</File>
 			<File

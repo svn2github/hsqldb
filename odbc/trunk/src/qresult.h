@@ -9,7 +9,7 @@
 #ifndef __QRESULT_H__
 #define __QRESULT_H__
 
-#include "psqlodbc.h"
+#include "hsqlodbc.h"
 
 #include "connection.h"
 #include "socket.h"

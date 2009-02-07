@@ -32,7 +32,7 @@
 #ifndef __PGTYPES_H__
 #define __PGTYPES_H__
 
-#include "psqlodbc.h"
+#include "hsqlodbc.h"
 
 /* the type numbers are defined by the OID's of the types' rows */
 /* in table pg_type */

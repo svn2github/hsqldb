@@ -22,7 +22,7 @@
  */
 /* Multibyte support    Eiji Tokuya 2001-03-15 */
 
-#include "psqlodbc.h"
+#include "hsqlodbc.h"
 
 #include <stdio.h>
 #include <string.h>

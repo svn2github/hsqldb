@@ -9,7 +9,7 @@
 #ifndef __MD5_H__
 #define __MD5_H__
 
-#include "psqlodbc.h"
+#include "hsqlodbc.h"
 
 #include <stdlib.h>
 #include <string.h>

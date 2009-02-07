@@ -7,7 +7,7 @@
  *-------
  */
 
-#include "psqlodbc.h"
+#include "hsqlodbc.h"
 #ifdef  WIN32
 /* gcc <malloc.h> has been replaced by <stdlib.h> */
 #include <malloc.h>

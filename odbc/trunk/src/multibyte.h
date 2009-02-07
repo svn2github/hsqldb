@@ -5,7 +5,7 @@
  * Multibyte library header ( psqlODBC Only )
  *
  */
-#include "psqlodbc.h"
+#include "hsqlodbc.h"
 #include "qresult.h"
 
 /* PostgreSQL client encoding */

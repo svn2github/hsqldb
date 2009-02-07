@@ -6,7 +6,7 @@
  *
  */
 
-#include "psqlodbc.h"
+#include "hsqlodbc.h"
 #include "misc.h"
 
 #if (ODBCVER >= 0x0300)

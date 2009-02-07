@@ -13,7 +13,7 @@
 #ifndef __TUPLE_H__
 #define __TUPLE_H__
 
-#include "psqlodbc.h"
+#include "hsqlodbc.h"
 
 /*  Used by backend data AND manual result sets */
 struct TupleField_

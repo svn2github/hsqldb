@@ -9,7 +9,7 @@
 #ifndef __STATEMENT_H__
 #define __STATEMENT_H__
 
-#include "psqlodbc.h"
+#include "hsqlodbc.h"
 #include <time.h>
 
 #include "pgtypes.h"

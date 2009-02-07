@@ -15,10 +15,10 @@
  *-------
  */
 
-#include "psqlodbc.h"
+#include "hsqlodbc.h"
 
 #include <string.h>
-#include "psqlodbc.h"
+#include "hsqlodbc.h"
 #include "dlg_specific.h"
 #include "environ.h"
 #include "connection.h"

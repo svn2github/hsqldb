@@ -305,7 +305,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\options.obj" \
 	"$(INTDIR)\parse.obj" \
 	"$(INTDIR)\pgtypes.obj" \
-	"$(INTDIR)\psqlodbc.obj" \
+	"$(INTDIR)\hsqlodbc.obj" \
 	"$(INTDIR)\qresult.obj" \
 	"$(INTDIR)\results.obj" \
 	"$(INTDIR)\setup.obj" \

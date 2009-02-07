@@ -9,7 +9,7 @@
 #ifndef __LOADLIB_H__
 #define __LOADLIB_H__
 
-#include "psqlodbc.h"
+#include "hsqlodbc.h"
 
 #include <stdlib.h>
 #ifdef  __cplusplus
