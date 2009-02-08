@@ -52,13 +52,15 @@ namespace System.Data.Hsqldb.Common.Sql
     {
         #region Private Fields
         private string m_value;
+        private string m_idenifierChainFirst;
+        private string m_identifierChainLast;
         private TokenType m_type;
         private int m_hashCode;
         #endregion
 
         #region Constructors
 
-        #region HsqlToken(string, TokenType)
+        #region Token(string, TokenType)
         /// <summary>
         /// Initializes a new instance of the <see cref="Token"/> class.
         /// </summary>
@@ -66,7 +68,7 @@ namespace System.Data.Hsqldb.Common.Sql
         /// <param name="type">Type of the token.</param>
         public Token(string value, TokenType type)
         {
-            if (value == null)
+            if (string.IsNullOrEmpty(value))
             {
                 throw new ArgumentNullException("value");
             }
@@ -80,6 +82,28 @@ namespace System.Data.Hsqldb.Common.Sql
             m_type = type;
         }
         #endregion
+
+        #region Token(String,TokenType,string,string)
+        /// <summary>
+        /// Initializes a new instance of an <c>IdentifierChain</c> <see cref="Token"/.
+        /// </summary>
+        /// <param name="value">normalized string representation</param>
+        /// <param name="idenifierChainFirst">first part - usually a simple schema name</param>
+        /// <param name="identifierChainLast">secnd part - usually a simple SQl object name</param>
+		public Token(String value, string idenifierChainFirst,
+            string identifierChainLast) : this(value, TokenType.IdentifierChain) {
+            if (string.IsNullOrEmpty(idenifierChainFirst))
+            {
+                throw new ArgumentNullException("idenifierChainFirst");
+            }
+            if (string.IsNullOrEmpty(identifierChainLast))
+            {
+                throw new ArgumentNullException("identifierChainLast");
+            }
+            m_identifierChainLast = idenifierChainFirst;
+            m_identifierChainLast = identifierChainLast;
+        }
+	    #endregion
 
         #endregion
 
@@ -98,7 +122,7 @@ namespace System.Data.Hsqldb.Common.Sql
                 {
                     case TokenType.IdentifierChain:
                         {
-                            return m_value.Split('.')[0];
+                            return m_identifierChainFirst;
                         }
                     default:
                         {
@@ -123,7 +147,7 @@ namespace System.Data.Hsqldb.Common.Sql
                 {
                     case TokenType.IdentifierChain:
                         {
-                            return m_value.Split('.')[1];
+                            return m_identifierChainLast;
                         }
                     default:
                         {
@@ -138,7 +162,7 @@ namespace System.Data.Hsqldb.Common.Sql
         #region LiteralValue
         /// <summary>
         /// Gets the literal value.
-        /// </summary>
+        /// </summary>       
         /// <value>The literal value.</value>
         public object LiteralValue
         {
