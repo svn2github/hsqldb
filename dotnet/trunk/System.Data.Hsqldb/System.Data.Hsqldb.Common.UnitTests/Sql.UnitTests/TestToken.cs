@@ -1,6 +1,7 @@
 using System;
 using NUnit.Framework;
 using System.Data.Hsqldb.TestCoverage;
+using System.Data.Hsqldb.Common.Enumeration;
 
 namespace System.Data.Hsqldb.Common.Sql.UnitTests
 {
@@ -11,7 +12,9 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
         [Test, OfMember("Equals")]
         public void Equals()
         {
-            Assert.Fail("TODO");
+            Token testSubject = new Token(Token.ValueFor.ACTION, TokenType.Null);
+
+            Assert.AreEqual(Token.ValueFor.ACTION, testSubject.Value);
         }
 
         

@@ -192,13 +192,21 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
         [Test, OfMember("GetNextAsSimpleToken")]
         public void GetNextAsSimpleToken()
         {
-            Assert.Fail("TODO"); 
+            Tokenizer testSubject = new Tokenizer("FOO");
+
+            string actual = testSubject.GetNextAsSimpleToken();
+
+            Console.WriteLine(actual);
         }
         
         [Test, OfMember("GetNextAsString")]
         public void GetNextAsString()
         {
-            Assert.Fail("TODO"); 
+            Tokenizer testSubject = new Tokenizer("FOO.BAR");
+
+            string actual = testSubject.GetNextAsString();
+
+            Console.WriteLine(actual);
         }
         
         [Test, OfMember("GetPart")]
