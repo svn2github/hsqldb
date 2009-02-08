@@ -87,20 +87,21 @@ namespace System.Data.Hsqldb.Client.Sql
 
                 int parameterMarkerCount = 0;
                 int namedParameterCount = 0;
+                string tokenValue;
 
-                while (!string.IsNullOrEmpty(tokenizer.GetNextAsString()))
+                while (!string.IsNullOrEmpty(tokenValue = tokenizer.GetNextAsString()))
                 {
-                    string token = tokenizer.NormalizedToken;
+                    string normalizedTokenValue = tokenizer.NormalizedToken;
                     TokenType type = tokenizer.TokenType;
 
-                    if (Token.ValueFor.COMMA != token)
+                    if (Token.ValueFor.COMMA != normalizedTokenValue)
                     {
                         // each non-comma token is space-separated
                         // in the normalized form.
                         m_normalizedCapacity++;
                     }
 
-                    m_normalizedCapacity += token.Length;
+                    m_normalizedCapacity += normalizedTokenValue.Length;
 
                     switch (type)
                     {
@@ -116,7 +117,23 @@ namespace System.Data.Hsqldb.Client.Sql
                             }
                     }
 
-                    m_list.Add(new Token(token, type));
+                    switch (type)
+                    {
+                        case TokenType.IdentifierChain:
+                            {
+                                string identifierChainFirst =tokenizer.IdentifierChainFirst;
+                                string identifierChainLast = tokenValue;
+
+                                m_list.Add(new Token(normalizedTokenValue, type,
+                                    identifierChainFirst, identifierChainLast));
+                                break;
+                            }
+                        default:
+                            {
+                                m_list.Add(new Token(normalizedTokenValue, type));
+                                break;
+                            }
+                    }
                 }
 
                 m_namedParameterTokenPositions = new int[namedParameterCount];
@@ -137,8 +154,8 @@ namespace System.Data.Hsqldb.Client.Sql
 
                 for (int i = 0; i < count; i++)
                 {
-                    Token token = m_list[i];
-                    TokenType type = token.Type;
+                    Token tokenValue = m_list[i];
+                    TokenType type = tokenValue.Type;
 
                     switch (type)
                     {
@@ -147,7 +164,7 @@ namespace System.Data.Hsqldb.Client.Sql
                                 List<int> tokenOrdinals;
                                 List<int> bindOrdinals = null;
 
-                                string key = token.Value;
+                                string key = tokenValue.Value;
 
                                 if (!nameToTokenOrdinals.TryGetValue(
                                         key,
