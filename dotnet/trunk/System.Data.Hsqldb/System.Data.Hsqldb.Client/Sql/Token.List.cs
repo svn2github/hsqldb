@@ -124,7 +124,7 @@ namespace System.Data.Hsqldb.Client.Sql
                                 string identifierChainFirst =tokenizer.IdentifierChainFirst;
                                 string identifierChainLast = tokenValue;
 
-                                m_list.Add(new Token(normalizedTokenValue, type,
+                                m_list.Add(new Token(normalizedTokenValue,
                                     identifierChainFirst, identifierChainLast));
                                 break;
                             }
@@ -154,8 +154,8 @@ namespace System.Data.Hsqldb.Client.Sql
 
                 for (int i = 0; i < count; i++)
                 {
-                    Token tokenValue = m_list[i];
-                    TokenType type = tokenValue.Type;
+                    Token token = m_list[i];
+                    TokenType type = token.Type;
 
                     switch (type)
                     {
@@ -164,7 +164,7 @@ namespace System.Data.Hsqldb.Client.Sql
                                 List<int> tokenOrdinals;
                                 List<int> bindOrdinals = null;
 
-                                string key = tokenValue.Value;
+                                string key = token.Value;
 
                                 if (!nameToTokenOrdinals.TryGetValue(
                                         key,

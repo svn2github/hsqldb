@@ -52,7 +52,7 @@ namespace System.Data.Hsqldb.Common.Sql
     {
         #region Private Fields
         private string m_value;
-        private string m_idenifierChainFirst;
+        private string m_identifierChainFirst;
         private string m_identifierChainLast;
         private TokenType m_type;
         private int m_hashCode;
@@ -88,11 +88,11 @@ namespace System.Data.Hsqldb.Common.Sql
         /// Initializes a new instance of an <c>IdentifierChain</c> <see cref="Token"/.
         /// </summary>
         /// <param name="value">normalized string representation</param>
-        /// <param name="idenifierChainFirst">first part - usually a simple schema name</param>
+        /// <param name="identifierChainFirst">first part - usually a simple schema name</param>
         /// <param name="identifierChainLast">secnd part - usually a simple SQl object name</param>
-		public Token(String value, string idenifierChainFirst,
+		public Token(String value, string identifierChainFirst,
             string identifierChainLast) : this(value, TokenType.IdentifierChain) {
-            if (string.IsNullOrEmpty(idenifierChainFirst))
+            if (string.IsNullOrEmpty(identifierChainFirst))
             {
                 throw new ArgumentNullException("idenifierChainFirst");
             }
@@ -100,7 +100,7 @@ namespace System.Data.Hsqldb.Common.Sql
             {
                 throw new ArgumentNullException("identifierChainLast");
             }
-            m_identifierChainLast = idenifierChainFirst;
+            m_identifierChainFirst = identifierChainFirst;
             m_identifierChainLast = identifierChainLast;
         }
 	    #endregion
