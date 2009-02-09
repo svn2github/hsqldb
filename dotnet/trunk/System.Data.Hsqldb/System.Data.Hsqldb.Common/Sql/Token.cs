@@ -35,6 +35,7 @@
 #region Using
 using System;
 using System.Data.Hsqldb.Common.Enumeration;
+using System.Text;
 #endregion
 
 namespace System.Data.Hsqldb.Common.Sql
@@ -180,7 +181,7 @@ namespace System.Data.Hsqldb.Common.Sql
                         }
                     case TokenType.DateLiteral:
                         {
-                            return java.sql.Date.valueOf(m_value);
+                            return dateValueOf(m_value);
                         }
                     case TokenType.DecimalLiteral:
                         {
@@ -214,6 +215,38 @@ namespace System.Data.Hsqldb.Common.Sql
             }
         }
         #endregion
+
+        [CLSCompliant(false)]
+        public static java.sql.Date dateValueOf(String s)
+        {
+            int year;
+            int month;
+            int day;
+            int firstDash;
+            int secondDash;
+
+            if (s == null) throw new java.lang.IllegalArgumentException();
+
+            firstDash = s.IndexOf('-');
+            secondDash = s.IndexOf('-', firstDash + 1);
+
+            if ((firstDash > 0) & (secondDash > 0) & (secondDash < s.Length - 1))
+            {
+                string yearPart = s.Substring(0, firstDash);
+                string monthPart = s.Substring(firstDash + 1, secondDash - (firstDash + 1));
+                string dayPart = s.Substring(secondDash + 1);
+
+                year = java.lang.Integer.parseInt(yearPart) - 1900;
+                month = java.lang.Integer.parseInt(monthPart) - 1;
+                day = java.lang.Integer.parseInt(dayPart);
+            }
+            else
+            {
+                throw new java.lang.IllegalArgumentException();
+            }
+
+            return new java.sql.Date(year, month, day);
+        }
 
         #region Value
         /// <summary>
@@ -303,6 +336,27 @@ namespace System.Data.Hsqldb.Common.Sql
             return h;
         }
         #endregion 
+
+
+        #region ToString()
+        public override string ToString()
+        {
+            StringBuilder sb = new StringBuilder(base.ToString());
+
+            sb.Append("[value=").Append(Value);
+            sb.Append(",type=").Append(Type);
+
+            if (Type == TokenType.IdentifierChain)
+            {
+                sb.Append(",identifierChainFirst=").Append(IdentifierChainFirst);
+                sb.Append(",identifierChainLast=").Append(IdentifierChainLast);
+            }
+
+            sb.Append(']');
+
+            return sb.ToString();
+        } 
+        #endregion
         
         #endregion
     }

@@ -30,6 +30,10 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
 
                 Assert.Fail("successful invocation of Wrap(object) before Free()");
             }
+            catch (AssertionException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 Assert.IsInstanceOfType(typeof(InvalidOperationException), ex);
@@ -43,6 +47,10 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
 
                 Assert.Fail("successful invocation of GetAsciiStream() after Free()");
             }
+            catch (AssertionException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 Assert.IsInstanceOfType(typeof(InvalidOperationException), ex);
@@ -53,6 +61,10 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
                 TextReader reader = testSubject.GetCharacterStream();
 
                 Assert.Fail("successful invocation of GetCharactertream() after Free()");
+            }
+            catch (AssertionException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -65,6 +77,10 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
 
                 Assert.Fail("successful invocation of GetSubString(long,int) after Free()");
             }
+            catch (AssertionException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 Assert.IsInstanceOfType(typeof(InvalidOperationException), ex);
@@ -75,6 +91,10 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
                 long len = testSubject.Length;
 
                 Assert.Fail("successful invocation of Length property after Free()");
+            }
+            catch (AssertionException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -87,6 +107,10 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
 
                 Assert.Fail("successful invocation of Position(string,long) after Free()");
             }
+            catch (AssertionException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 Assert.IsInstanceOfType(typeof(InvalidOperationException), ex);
@@ -97,6 +121,10 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
                 long pos = testSubject.Position(new JdbcClob("234"), 1);
 
                 Assert.Fail("successful invocation of Position(IClob,long) after Free()");
+            }
+            catch (AssertionException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -109,6 +137,10 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
 
                 Assert.Fail("successful invocation of SetAsciiStream(long) after Free()");
             }
+            catch (AssertionException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 Assert.IsInstanceOfType(typeof(InvalidOperationException), ex);
@@ -119,6 +151,10 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
                 TextWriter writer = testSubject.SetCharacterStream(1);
 
                 Assert.Fail("successful invocation of SetCharacterStream(long) after Free()");
+            }
+            catch (AssertionException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -131,6 +167,10 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
 
                 Assert.Fail("successful invocation of SetString(long,string) after Free()");
             }
+            catch (AssertionException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 Assert.IsInstanceOfType(typeof(InvalidOperationException), ex);
@@ -142,6 +182,10 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
 
                 Assert.Fail("successful invocation of SetString(long,string,int,int) after Free()");
             }
+            catch (AssertionException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 Assert.IsInstanceOfType(typeof(InvalidOperationException), ex);
@@ -152,6 +196,10 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
                 testSubject.Truncate(0);
 
                 Assert.Fail("successful invocation of Truncate(long) after Free()");
+            }
+            catch (AssertionException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -235,6 +283,10 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
 
                 Assert.Fail("successful invocation of GetSubString(pos,len) with pos value too small (< 1)");
             }
+            catch (AssertionException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 // TODO:  actually throws ArgumentOutOfRangeException
@@ -249,6 +301,10 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
 
                 Assert.Fail("successful invocation of GetSubString(pos,len) with pos value too large (> LobCharsLength)");
             }
+            catch (AssertionException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 Assert.IsInstanceOfType(typeof(HsqlDataSourceException), ex);
@@ -259,6 +315,10 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
                 actual = testSubject.GetSubString(LobCharsLength + 1, 1);
 
                 Assert.Fail("successful invocation of GetSubString(pos,len) with pos value too large (> LobCharsLength) for non-zero len");
+            }
+            catch (AssertionException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -271,6 +331,10 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
 
                 Assert.Fail("successful invocation of GetSubString(pos,len) with negative len");
             }
+            catch (AssertionException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 Assert.IsInstanceOfType(typeof(HsqlDataSourceException), ex);
@@ -281,6 +345,10 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
                 actual = testSubject.GetSubString(1, LobCharsLength + 1);
 
                 Assert.Fail("successful invocation of GetSubString(pos,len) with len > LobCharsLength");
+            }
+            catch (AssertionException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -334,6 +402,10 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
 
                 Assert.Fail("successful invocation of SetAsciiStream(pos) with pos too small (<1)");
             }
+            catch (AssertionException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 Assert.IsInstanceOfType(typeof(HsqlDataSourceException), ex);
@@ -344,6 +416,10 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
                 Stream stream = testSubject.SetAsciiStream(LobCharsLength + 1);
 
                 Assert.Fail("successful invocation of SetAsciiStream(pos) with pos too large (LobCharsLength + 1)");
+            }
+            catch (AssertionException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -369,6 +445,10 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
 
                 Assert.Fail("successful invocation of SetCharacterStream(pos) with pos too small (<1)");
             }
+            catch (AssertionException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 Assert.IsInstanceOfType(typeof(HsqlDataSourceException), ex);
@@ -379,6 +459,10 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
                 TextWriter writer = testSubject.SetCharacterStream(LobCharsLength + 1);
 
                 Assert.Fail("successful invocation of SetCharacterStream(pos) with pos too large (LobCharsLength + 1)");
+            }
+            catch (AssertionException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -403,6 +487,10 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
 
                 Assert.Fail("successful invocation of SetString(pos,str) with pos too small (<1)");
             }
+            catch (AssertionException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 Assert.IsInstanceOfType(typeof(HsqlDataSourceException), ex);
@@ -413,6 +501,10 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
                 testSubject.SetString(LobCharsLength + 1, "123");
 
                 Assert.Fail("successful invocation of SetChars(pos,str) with pos too large (> LobCharsLength)");
+            }
+            catch (AssertionException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -425,6 +517,10 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
 
                 Assert.Fail("successful invocation of SetString(pos,str) with null str");
             }
+            catch (AssertionException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 Assert.IsInstanceOfType(typeof(HsqlDataSourceException), ex);
@@ -435,6 +531,10 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
                 testSubject.SetString(1, "123", -1, 3);
 
                 Assert.Fail("successful invocation of SetString(pos,str,offs,len) with offs < 0");
+            }
+            catch (AssertionException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -447,6 +547,10 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
 
                 Assert.Fail("successful invocation of SetString(pos,str,offs,len) with offs > str.length");
             }
+            catch (AssertionException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 Assert.IsInstanceOfType(typeof(HsqlDataSourceException), ex);
@@ -458,6 +562,10 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
 
                 Assert.Fail("successful invocation of SetString(pos,str,offs,len) with len < 0");
             }
+            catch (AssertionException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 Assert.IsInstanceOfType(typeof(HsqlDataSourceException), ex);
@@ -468,6 +576,10 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
                 testSubject.SetString(1, "123", 0, 4);
 
                 Assert.Fail("successful invocation of SetString(pos,str,offs,len) with len > str.length");
+            }
+            catch (AssertionException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -500,6 +612,10 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
 
                 Assert.Fail("successful invocation of Truncate(len) with len < 0");
             }
+            catch (AssertionException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 Assert.IsInstanceOfType(typeof(HsqlDataSourceException), ex);
@@ -507,6 +623,8 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
 
             // TODO:  test does not throw on len > testSubject.Length.  Why?  Fix?  Change constract description?
 
+            Assert.Fail("TODO:  test does not throw on len > testSubject.Length.  Why?  Fix?  Change constract description?");
+            
             //try
             //{
             //    testSubject.Truncate(testSubject.Length + 10);

@@ -94,7 +94,7 @@ namespace System.Data.Hsqldb.Common.Sql
 
         #region Constructors
 
-        #region HsqlTokenizer()
+        #region Tokenizer()
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Tokenizer"/> class.
@@ -457,8 +457,13 @@ namespace System.Data.Hsqldb.Common.Sql
         #region GetPart(int,int)
 
         /// <summary>
-        /// Gets a substring from the character sequence being tokenized
+        /// Gets a substring from the character sequence being tokenized.
         /// </summary>
+        /// <remarks>
+        /// The substring begins at the specified <c>startIndex</c> and extends 
+        /// to the character at <c>endIndex - 1</c>. Thus the length of 
+        /// the substring is <c>endIndex-startIndex</c>.
+        /// </remarks>
         /// <param name="startIndex">The starting index.</param>
         /// <param name="endIndex">The ending index.</param>
         /// <returns>The requested substring.</returns>
@@ -876,15 +881,12 @@ namespace System.Data.Hsqldb.Common.Sql
                                 break;
                             }
 
-                            m_token = m_chars
-                                .Substring(start, m_currentIndex - start)
-                                .ToUpper(m_EnglishCulture);
+                            m_token = m_chars.Substring(start, m_currentIndex
+                                - start).ToUpper(m_EnglishCulture);
 
                             if (m_tokenType == TokenType.NamedParameter)
                             {
-                                m_parameterName
-                                    = m_chars.Substring(
-                                        start,
+                                m_parameterName = m_chars.Substring(start,
                                         (m_currentIndex - start));
 
                                 return;
@@ -1021,12 +1023,12 @@ namespace System.Data.Hsqldb.Common.Sql
                             }
                             else if (c == '.')
                             {
-                                m_tokenType = TokenType.DecimalLiteral;
-
                                 if (point)
                                 {
                                     throw UnexpectedToken(c);
                                 }
+
+                                m_tokenType = TokenType.DecimalLiteral;
 
                                 point = true;
                             }
@@ -1070,10 +1072,8 @@ namespace System.Data.Hsqldb.Common.Sql
                                     throw UnexpectedToken(c);
                                 }
 
-                                m_token
-                                    = m_chars.Substring(
-                                        start,
-                                        (m_currentIndex - start));
+                                m_token = m_chars.Substring(start,
+                                    (m_currentIndex - start));
 
                                 return;
                             }
@@ -1196,8 +1196,11 @@ namespace System.Data.Hsqldb.Common.Sql
         /// </value>
         public string LastPart
         {
-            get {return m_chars.Substring(m_beginIndex,
-                                          m_currentIndex - m_beginIndex); }
+            get
+            {
+                return m_chars.Substring(m_beginIndex,
+                                         m_currentIndex - m_beginIndex);
+            }
         }
 
         #endregion

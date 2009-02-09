@@ -206,25 +206,129 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
 
             string actual = testSubject.GetNextAsString();
 
-            Console.WriteLine(actual);
+            Assert.AreEqual("BAR", actual);
+            Assert.AreEqual(true, testSubject.WasIdentifierChain);
+            Assert.AreEqual("FOO", testSubject.IdentifierChainFirst);
         }
         
         [Test, OfMember("GetPart")]
         public void GetPart()
         {
-            Assert.Fail("TODO");
+            Tokenizer testSubject = new Tokenizer("FOO.BAR AS BAR.FOO");
+
+            string actual = testSubject.GetPart(0, "FOO.BAR AS BAR.FOO".Length);
+
+            Assert.AreEqual("FOO.BAR AS BAR.FOO", actual);
+
+            testSubject.SetPartMarker();
+
+            Assert.AreEqual(0, testSubject.PartMarker);
+            Assert.AreEqual(0, testSubject.Position);
+            
+            actual = testSubject.GetNextAsString();
+
+            Assert.AreEqual("BAR", actual);
+            Assert.AreEqual(TokenType.IdentifierChain, testSubject.TokenType);
+            Assert.That(!testSubject.WasIdentifierChainFirstDelimited);
+            Assert.AreEqual("FOO", testSubject.IdentifierChainFirst);
+
+            Assert.AreEqual("FOO.BAR ".IndexOf(' '), testSubject.Position);
+
+            actual = testSubject.GetPart(testSubject.PartMarker, testSubject.Position);
+
+            Assert.AreEqual("FOO.BAR", actual);
+
+            testSubject.SetPartMarker();
+
+            actual = testSubject.GetNextAsString();
+
+            Assert.AreEqual(Token.ValueFor.AS, actual);
+            Assert.AreEqual("FOO.BAR_AS ".IndexOf(' '), testSubject.Position);
+
+            actual = testSubject.GetPart(testSubject.PartMarker, testSubject.Position);
+
+            Assert.AreEqual(" AS", actual);
         }
         
         [Test, OfMember("GetThis")]
         public void GetThis()
         {
-            Assert.Fail("TODO");
+            Tokenizer testSubject = new Tokenizer("create table test(id int, \"val\" varchar(12));");
+
+            Assert.AreEqual(Token.ValueFor.CREATE, testSubject.GetThis(Token.ValueFor.CREATE));
+            Assert.AreEqual(Token.ValueFor.TABLE, testSubject.GetThis(Token.ValueFor.TABLE));
+
+            try
+            {
+                string actual = testSubject.GetThis("test");
+
+                Assert.Fail("successful invocation of GetThis(string) with non-match value");
+            }
+            catch (Exception ex)
+            {
+                Assert.IsInstanceOfType(typeof(HsqlDataSourceException), ex);
+            }
+
+            Assert.That(testSubject.WasThis("TEST"));
+            Assert.That(testSubject.TokenType == TokenType.Name);
+
+            Assert.AreEqual(Token.ValueFor.OPENBRACKET, testSubject.GetThis(Token.ValueFor.OPENBRACKET));            
+            Assert.AreEqual("ID", testSubject.GetThis("ID"));
+            Assert.AreEqual(Token.ValueFor.INT, testSubject.GetThis(Token.ValueFor.INT));
+            Assert.AreEqual(Token.ValueFor.COMMA, testSubject.GetThis(Token.ValueFor.COMMA));
+
+            try
+            {
+                Assert.AreEqual("val", testSubject.GetThis("val"));
+            }
+            catch (Exception ex)
+            {
+                Assert.IsInstanceOfType(typeof(HsqlDataSourceException), ex);
+            }
+            Assert.That(testSubject.WasDelimitedIdentifier);
+            Assert.AreEqual("\"val\"", testSubject.NormalizedToken);
+
+            Assert.AreEqual(Token.ValueFor.VARCHAR, testSubject.GetThis(Token.ValueFor.VARCHAR));
+            Assert.AreEqual(Token.ValueFor.OPENBRACKET, testSubject.GetThis(Token.ValueFor.OPENBRACKET));
+            Assert.AreEqual("12", testSubject.GetThis("12"));
+            Assert.That(testSubject.TokenType == TokenType.NumberLiteral);
+            Assert.That(testSubject.LiteralValueDataType == HsqlProviderType.Integer);
+            Assert.AreEqual(Token.ValueFor.CLOSEBRACKET, testSubject.GetThis(Token.ValueFor.CLOSEBRACKET));
+            Assert.AreEqual(Token.ValueFor.CLOSEBRACKET, testSubject.GetThis(Token.ValueFor.CLOSEBRACKET));
+            Assert.AreEqual(Token.ValueFor.SEMICOLON, testSubject.GetThis(Token.ValueFor.SEMICOLON));
         }
         
         [Test, OfMember("IdentiferChainLengthExceeded")]
         public void IdentiferChainLengthExceeded()
         {
-            Assert.Fail("TODO");
+
+            try
+            {
+                throw Tokenizer.IdentiferChainLengthExceeded();
+            }
+            catch (Exception ex)
+            {
+                Assert.IsInstanceOfType(typeof(HsqlDataSourceException), ex);
+                Assert.AreEqual(org.hsqldb.Trace.THREE_PART_IDENTIFIER, -((HsqlDataSourceException)ex).ErrorCode);
+            }
+            
+            Tokenizer testSubject = new Tokenizer("foo.bar.baz");
+
+            try
+            {
+                string name = testSubject.GetNextAsName();
+
+                Assert.Fail("successful invocation of ReadToken() with greater than 2-part identifier token");
+            }
+            catch (AssertionException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Assert.IsInstanceOfType(typeof(HsqlDataSourceException), ex);
+                Assert.AreEqual(org.hsqldb.Trace.THREE_PART_IDENTIFIER, -((HsqlDataSourceException)ex).ErrorCode);
+            }
         }
         
         [Test, OfMember("IllegalWaitState")]
