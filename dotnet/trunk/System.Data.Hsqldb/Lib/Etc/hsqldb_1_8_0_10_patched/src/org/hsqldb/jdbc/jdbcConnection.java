@@ -43,9 +43,11 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 
 //#ifdef JAVA6
+/*
 import java.sql.NClob;
 import java.sql.SQLClientInfoException;
 import java.sql.SQLXML;
+*/
 
 //#endif JAVA6
 import java.sql.PreparedStatement;
@@ -2727,6 +2729,7 @@ public class jdbcConnection implements Connection {
     }
 
 //#ifdef JAVA6
+/*
     public Clob createClob() throws SQLException
     {
         throw new UnsupportedOperationException("Not supported yet.");
@@ -2791,6 +2794,7 @@ public class jdbcConnection implements Connection {
     {
         throw new UnsupportedOperationException("Not supported yet.");
     }
+*/
 
 //#endif JAVA6
 }
