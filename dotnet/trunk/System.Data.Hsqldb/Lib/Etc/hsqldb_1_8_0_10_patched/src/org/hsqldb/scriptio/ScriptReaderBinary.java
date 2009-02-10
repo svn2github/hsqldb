@@ -45,6 +45,7 @@ import org.hsqldb.Session;
 import org.hsqldb.Table;
 import org.hsqldb.Trace;
 import org.hsqldb.lib.Iterator;
+import org.hsqldb.lib.ResourceStreamProvider;
 import org.hsqldb.lib.SimpleLog;
 import org.hsqldb.rowio.RowInputBase;
 import org.hsqldb.rowio.RowInputBinary;
@@ -72,7 +73,7 @@ class ScriptReaderBinary extends ScriptReaderBase {
     protected void openFile() throws IOException {
 
         InputStream d = db.isFilesInJar()
-                        ? getClass().getResourceAsStream(fileName)
+                        ? ResourceStreamProvider.getResourceAsStream(fileName)
                         : db.getFileAccess().openInputStreamElement(fileName);
 
         dataStreamIn = new DataInputStream(new BufferedInputStream(d,

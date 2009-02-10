@@ -1369,6 +1369,9 @@ public class Server implements HsqlSocketRequestHandler {
         serverState = state;
     }
 
+// Package visibility for related classes and intefaces
+// that may need to make calls back here.
+
     /**
      * This is called from org.hsqldb.DatabaseManager when a database is
      * shutdown. This shuts the server down if it is the last database
@@ -1376,7 +1379,10 @@ public class Server implements HsqlSocketRequestHandler {
      * @param action a code indicating what has happend
      */
     final void notify(int action, int id) {
-
+        notifyImpl(action, id);
+    }
+    
+    protected void notifyImpl(int action, int id) {    
         printWithThread("notifiy(" + action + "," + id + ") entered");
 
         if (action != ServerConstants.SC_DATABASE_SHUTDOWN) {

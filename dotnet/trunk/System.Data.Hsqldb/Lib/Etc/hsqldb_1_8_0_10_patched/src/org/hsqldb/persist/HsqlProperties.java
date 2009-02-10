@@ -42,6 +42,7 @@ import org.hsqldb.Trace;
 import org.hsqldb.lib.ArrayUtil;
 import org.hsqldb.lib.FileAccess;
 import org.hsqldb.lib.FileUtil;
+import org.hsqldb.lib.ResourceStreamProvider;
 import org.hsqldb.lib.java.JavaSystem;
 
 /**
@@ -243,7 +244,7 @@ public class HsqlProperties {
 
 // oj@openoffice.org
         try {
-            fis = resource ? getClass().getResourceAsStream(propsFilename)
+            fis = resource ? ResourceStreamProvider.getResourceAsStream(propsFilename)
                            : fa.openInputStreamElement(propsFilename);
 
             stringProps.load(fis);
