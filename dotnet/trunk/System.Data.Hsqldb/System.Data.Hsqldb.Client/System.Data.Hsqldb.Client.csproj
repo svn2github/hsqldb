@@ -46,19 +46,13 @@
     <DocumentationFile>bin\Release\Org.Hsqldb.Driver.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Org.Hsqldb, Version=1.8.0.7, Culture=neutral, PublicKeyToken=05732303801b208f, processorArchitecture=MSIL">
+    <Reference Include="IKVM.OpenJDK.ClassLibrary, Version=0.38.0.4, Culture=neutral, PublicKeyToken=13235d27fcbfff58, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Lib\IKVM.OpenJDK.ClassLibrary.dll</HintPath>
+    </Reference>
+    <Reference Include="Org.Hsqldb, Version=1.8.0.10, Culture=neutral, PublicKeyToken=05732303801b208f, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Lib\Org.Hsqldb.dll</HintPath>
-    </Reference>
-    <Reference Include="IKVM.Runtime">
-      <HintPath>..\Lib\IKVM.Runtime.dll</HintPath>
-      <SpecificVersion>False</SpecificVersion>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="IKVM.GNU.Classpath">
-      <HintPath>..\Lib\IKVM.GNU.Classpath.dll</HintPath>
-      <SpecificVersion>False</SpecificVersion>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration.Install" />

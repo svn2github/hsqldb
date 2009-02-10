@@ -2325,7 +2325,7 @@ namespace System.Data.Hsqldb.Client.Internal
                 path = "";
             }
 
-            return new java.io.File(org.hsqldb.lib.FileUtil.canonicalOrAbsolutePath(path)).toURI().toURL().getFile();
+            return new java.io.File(org.hsqldb.lib.FileUtil.getDefaultInstance().canonicalOrAbsolutePath(path)).toURI().toURL().getFile();
             
         }
 

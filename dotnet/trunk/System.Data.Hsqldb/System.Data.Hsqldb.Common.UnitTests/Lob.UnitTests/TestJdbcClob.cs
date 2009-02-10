@@ -289,10 +289,7 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
             }
             catch (Exception ex)
             {
-                // TODO:  actually throws ArgumentOutOfRangeException
-                // Assert.IsInstanceOfType(typeof(HsqlDataSourceException), ex);
-
-                Assert.That(ex is ArgumentOutOfRangeException || ex is HsqlDataSourceException);
+                Assert.IsInstanceOfType(typeof(HsqlDataSourceException), ex);
             }
 
             try

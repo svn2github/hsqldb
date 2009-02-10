@@ -30,15 +30,11 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="IKVM.GNU.Classpath, Version=0.31.2535.14596, Culture=neutral, PublicKeyToken=05732303801b208f, processorArchitecture=MSIL">
+    <Reference Include="IKVM.OpenJDK.ClassLibrary, Version=0.38.0.4, Culture=neutral, PublicKeyToken=13235d27fcbfff58, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Lib\IKVM.GNU.Classpath.dll</HintPath>
+      <HintPath>..\Lib\IKVM.OpenJDK.ClassLibrary.dll</HintPath>
     </Reference>
-    <Reference Include="IKVM.Runtime, Version=0.31.2535.14560, Culture=neutral, PublicKeyToken=05732303801b208f, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Lib\IKVM.Runtime.dll</HintPath>
-    </Reference>
-    <Reference Include="Org.Hsqldb, Version=1.8.0.7, Culture=neutral, PublicKeyToken=05732303801b208f, processorArchitecture=MSIL">
+    <Reference Include="Org.Hsqldb, Version=1.8.0.10, Culture=neutral, PublicKeyToken=05732303801b208f, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Lib\Org.Hsqldb.dll</HintPath>
     </Reference>

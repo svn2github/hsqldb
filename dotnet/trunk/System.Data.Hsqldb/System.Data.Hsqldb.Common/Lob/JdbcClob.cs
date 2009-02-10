@@ -303,14 +303,16 @@ namespace System.Data.Hsqldb.Common.Lob
         } 
         #endregion
 
+        #region IColb.CanWrite
         bool IClob.CanWrite
         {
             get
             {
-                return (m_clob != null) && 
+                return (m_clob != null) &&
                     !typeof(org.hsqldb.jdbc.jdbcClob).IsAssignableFrom(m_clob.GetType());
             }
-        }
+        } 
+        #endregion
 
         #region IClob.GetAsciiStream()
         /// <summary>
@@ -333,7 +335,18 @@ namespace System.Data.Hsqldb.Common.Lob
             {
                 CheckFree();
 
-                return new JavaInputStreamWrapper(m_clob.getAsciiStream());
+                try
+                {
+                    return new JavaInputStreamWrapper(m_clob.getAsciiStream());
+                }
+                catch (java.sql.SQLException se)
+                {
+                    throw new HsqlDataSourceException(se);
+                }
+                catch (java.lang.Exception e)
+                {
+                    throw new HsqlDataSourceException(e.toString(), e);
+                }
             }
         }
         #endregion
@@ -362,6 +375,10 @@ namespace System.Data.Hsqldb.Common.Lob
                 catch (java.sql.SQLException se)
                 {
                     throw new HsqlDataSourceException(se);
+                }
+                catch (java.lang.Exception e)
+                {
+                    throw new HsqlDataSourceException(e.toString(), e);
                 }
             }
         }
@@ -408,6 +425,10 @@ namespace System.Data.Hsqldb.Common.Lob
                 {
                     throw new HsqlDataSourceException(ex);
                 }
+                catch (java.lang.Exception e)
+                {
+                    throw new HsqlDataSourceException(e.toString(), e);
+                }
             }
         }
         #endregion
@@ -435,9 +456,13 @@ namespace System.Data.Hsqldb.Common.Lob
                     {
                         return m_clob.length();
                     }
-                    catch (java.sql.SQLException ex)
+                    catch (java.sql.SQLException se)
                     {
-                        throw new HsqlDataSourceException(ex);
+                        throw new HsqlDataSourceException(se);
+                    }
+                    catch (java.lang.Exception e)
+                    {
+                        throw new HsqlDataSourceException(e.toString(), e);
                     }
                 }
             }
@@ -497,9 +522,13 @@ namespace System.Data.Hsqldb.Common.Lob
                         return m_clob.position(wrapped, start);
                     }
                 }
-                catch (java.sql.SQLException ex)
+                catch (java.sql.SQLException se)
                 {
-                    throw new HsqlDataSourceException(ex);
+                    throw new HsqlDataSourceException(se);
+                }
+                catch (java.lang.Exception e)
+                {
+                    throw new HsqlDataSourceException(e.toString(), e);
                 }
             }
         }
@@ -536,9 +565,13 @@ namespace System.Data.Hsqldb.Common.Lob
                 {
                     return m_clob.position(searchString, start);
                 }
-                catch (java.sql.SQLException ex)
+                catch (java.sql.SQLException se)
                 {
-                    throw new HsqlDataSourceException(ex);
+                    throw new HsqlDataSourceException(se);
+                }
+                catch (java.lang.Exception e)
+                {
+                    throw new HsqlDataSourceException(e.toString(), e);
                 }
             }
         }
@@ -575,8 +608,12 @@ namespace System.Data.Hsqldb.Common.Lob
                         m_clob.setAsciiStream(pos));
                 }
                 catch (java.sql.SQLException se)
-                {                    
+                {
                     throw new HsqlDataSourceException(se);
+                }
+                catch (java.lang.Exception e)
+                {
+                    throw new HsqlDataSourceException(e.toString(), e);
                 }
             }
         }
@@ -612,6 +649,10 @@ namespace System.Data.Hsqldb.Common.Lob
                 catch (java.sql.SQLException se)
                 {
                     throw new HsqlDataSourceException(se);
+                }
+                catch (java.lang.Exception e)
+                {
+                    throw new HsqlDataSourceException(e.toString(), e);
                 }
             }
         }
@@ -653,9 +694,13 @@ namespace System.Data.Hsqldb.Common.Lob
                 {
                     return m_clob.setString(pos, str, offset, length);
                 }
-                catch (java.sql.SQLException ex)
+                catch (java.sql.SQLException se)
                 {
-                    throw new HsqlDataSourceException(ex);
+                    throw new HsqlDataSourceException(se);
+                }
+                catch (java.lang.Exception e)
+                {
+                    throw new HsqlDataSourceException(e.toString(), e);
                 }
             }
         }
@@ -690,9 +735,13 @@ namespace System.Data.Hsqldb.Common.Lob
                 {
                     return m_clob.setString(pos, str);
                 }
-                catch (java.sql.SQLException ex)
+                catch (java.sql.SQLException se)
                 {
-                    throw new HsqlDataSourceException(ex);
+                    throw new HsqlDataSourceException(se);
+                }
+                catch (java.lang.Exception e)
+                {
+                    throw new HsqlDataSourceException(e.toString(), e);
                 }
             }
         }
@@ -720,9 +769,13 @@ namespace System.Data.Hsqldb.Common.Lob
                 {
                     m_clob.truncate(length);
                 }
-                catch (java.sql.SQLException ex)
+                catch (java.sql.SQLException se)
                 {
-                    throw new HsqlDataSourceException(ex);
+                    throw new HsqlDataSourceException(se);
+                }
+                catch (java.lang.Exception e)
+                {
+                    throw new HsqlDataSourceException(e.toString(), e);
                 }
             }
         }
@@ -803,9 +856,13 @@ namespace System.Data.Hsqldb.Common.Lob
                     {
                         m_clob = new org.hsqldb.jdbc.jdbcClob((string)obj);
                     }
-                    catch (java.sql.SQLException ex)
+                    catch (java.sql.SQLException se)
                     {
-                        throw new HsqlDataSourceException(ex);
+                        throw new HsqlDataSourceException(se);
+                    }
+                    catch (java.lang.Exception e)
+                    {
+                        throw new HsqlDataSourceException(e.toString(), e);
                     }
                 }
             }
