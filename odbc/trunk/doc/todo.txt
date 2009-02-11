@@ -16,3 +16,16 @@ Move output directories out of the "src" branch, for both UNIX and Windows.
 Look into wiping code that uses
 Non- conninfo[_]->use_server_side_prepare, since we always use server-side
 prepares.
+
+
+
+IMPLEMENTATION OF BINARY SUPPORT:
+    Seems to be entirely unused by jdbc:odbc.  It is very likely that nobody
+     would ever use it.
+
+    I have verified that SIMPLE queries of bytea values send 0 (text) cols
+     and D rows.
+    We so not need to support the binary ability of server-side curses (which
+     only works in psqlodbc SIMPLE mode).
+    Bind operations supports sending Binary parameters, and specification of
+     receiving row data with binary format (1).
