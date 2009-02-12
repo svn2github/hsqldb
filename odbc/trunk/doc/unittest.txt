@@ -1,0 +1,20 @@
+$Id$
+
+Evaluating Unit Testing frameworks.
+
+Want something simple, open source, cross-platform, yet
+ xUnit-compliant and capable.
+
+Candidates:  * = Actively developed.  ? = User activity but no recent releases
+                                          (could just be stable?)
+    *Check  http://check.sourceforge.net/
+    *Cmockery  http://code.google.com/p/cmockery/
+    ?CUnit http://cunit.sourceforge.net/  (could just be stable?)
+    CuTest  http://cutest.sourceforge.net/  (not touched since 2003)
+    RCUNIT  http://rcunit.sourceforge.net/
+    *Test Dept.  http://test-dept.googlecode.com/
+    *Unity  http://embunity.sourceforge.net/
+
+    Short List:
+        Check
+        *Cmockery  Looks best.  Apache 2.0 license.
