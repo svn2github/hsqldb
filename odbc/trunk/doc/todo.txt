@@ -29,3 +29,6 @@ IMPLEMENTATION OF BINARY SUPPORT:
      only works in psqlodbc SIMPLE mode).
     Bind operations supports sending Binary parameters, and specification of
      receiving row data with binary format (1).
+
+Fix bug that we inherited from psqlodbc:
+http://archives.postgresql.org/pgsql-odbc/2007-07/msg00020.php
