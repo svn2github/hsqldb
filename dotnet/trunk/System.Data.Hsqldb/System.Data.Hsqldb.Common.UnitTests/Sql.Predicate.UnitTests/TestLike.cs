@@ -10,9 +10,9 @@ namespace System.Data.Hsqldb.Common.Sql.Predicate.UnitTests
         [Test, OfMember("Matches")]
         public void Matches()
         {
-            bool ignoreCase = false;
-            char? escapeCharacter = '\\';
-            Like testSubject = new Like(ignoreCase, escapeCharacter);
+            bool ignoreCase;
+            char? escapeCharacter;
+            Like testSubject = new Like(ignoreCase = false, escapeCharacter = '\\');
 
             testSubject.SetPattern("foo%");
 
@@ -35,9 +35,7 @@ namespace System.Data.Hsqldb.Common.Sql.Predicate.UnitTests
             Assert.That(!testSubject.Matches("foobar").Value);
             Assert.That(!testSubject.Matches("foo").Value);
 
-            ignoreCase = true;
-
-            testSubject = new Like(ignoreCase, escapeCharacter);
+            testSubject = new Like(ignoreCase = true, escapeCharacter);
 
             testSubject.SetPattern("FOO%");
 
