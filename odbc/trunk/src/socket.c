@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * @(#)$Id$
  *
  * HyperSQL ODBC Driver
  *
