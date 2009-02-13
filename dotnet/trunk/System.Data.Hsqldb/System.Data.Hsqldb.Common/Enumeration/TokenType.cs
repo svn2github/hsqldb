@@ -63,11 +63,15 @@ namespace System.Data.Hsqldb.Common.Enumeration
         /// </summary>
         Special,
         /// <summary>
-        /// Specifies an SQL number literal token.
+        /// Specifies any SQL number literal token.
         /// </summary>
         NumberLiteral,
         /// <summary>
-        /// Specifies an SQL FLOAT literal token.
+        /// Specifies an SQL INTEGER literal
+        /// </summary>
+        IntegerLiteral,
+        /// <summary>
+        /// Specifies an SQL FLOAT (equivalently SQL DOUBLE [PRECISION]) literal token.
         /// </summary>
         FloatLiteral,
         /// <summary>

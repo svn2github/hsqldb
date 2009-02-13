@@ -53,8 +53,8 @@ namespace System.Data.Hsqldb.Common.Sql
     {
         #region Private Fields
         private string m_value;
-        private string m_identifierChainFirst;
-        private string m_identifierChainLast;
+        private string m_qualifierPart;
+        private string m_subjectPart;
         private TokenType m_type;
         private int m_hashCode;
         #endregion
@@ -65,8 +65,13 @@ namespace System.Data.Hsqldb.Common.Sql
         /// <summary>
         /// Initializes a new instance of the <see cref="Token"/> class.
         /// </summary>
-        /// <param name="value">The string value.</param>
-        /// <param name="type">Type of the token.</param>
+        /// <param name="value">
+        /// The token value, which must be in its normalized character sequence form.
+        /// </param>
+        /// <param name="type">
+        /// Type of the token, which allows the givne token value to be correctly converted
+        /// to a <see cref="LiteralValue"/>, etc.
+        /// </param>
         public Token(string value, TokenType type)
         {
             if (string.IsNullOrEmpty(value))
@@ -86,23 +91,37 @@ namespace System.Data.Hsqldb.Common.Sql
 
         #region Token(String,TokenType,string,string)
         /// <summary>
-        /// Initializes a new instance of an <c>IdentifierChain</c> <see cref="Token"/.
+        /// Initializes a new instance of a two-part <c>IdentifierChain</c> 
+        /// <see cref="Token"/.
         /// </summary>
-        /// <param name="value">normalized string representation</param>
-        /// <param name="identifierChainFirst">first part - usually a simple schema name</param>
-        /// <param name="identifierChainLast">secnd part - usually a simple SQl object name</param>
-		public Token(String value, string identifierChainFirst,
-            string identifierChainLast) : this(value, TokenType.IdentifierChain) {
-            if (string.IsNullOrEmpty(identifierChainFirst))
+        /// <remarks>the <see cref="TokenType"/> is inferred when using the
+        /// constructor form and hence is not included in the signature.
+        /// </remarks>
+        /// <param name="value">
+        /// The token value, which must be in its normalized character
+        /// sequence form.
+        /// </param>
+        /// <param name="qualifierPart">
+        /// usually an unqualified schema name
+        /// </param>
+        /// <param name="subjectPart">
+        /// usually a simple (unqualified) SQL object name
+        /// </param>
+		public Token(String value, string qualifierPart, string subjectPart)
+            : this(value, TokenType.IdentifierChain) {
+            //
+            if (string.IsNullOrEmpty(qualifierPart))
             {
-                throw new ArgumentNullException("idenifierChainFirst");
+                throw new ArgumentNullException("qualifierPart");
             }
-            if (string.IsNullOrEmpty(identifierChainLast))
+            //
+            if (string.IsNullOrEmpty(subjectPart))
             {
-                throw new ArgumentNullException("identifierChainLast");
+                throw new ArgumentNullException("subjectPart");
             }
-            m_identifierChainFirst = identifierChainFirst;
-            m_identifierChainLast = identifierChainLast;
+            //
+            m_qualifierPart = qualifierPart;
+            m_subjectPart = subjectPart;
         }
 	    #endregion
 
@@ -115,7 +134,7 @@ namespace System.Data.Hsqldb.Common.Sql
         /// Gets the first identifier chain component.
         /// </summary>
         /// <value>The first identifier chain component.</value>
-        public string IdentifierChainFirst
+        public string QualifierPart
         {
             get
             {
@@ -123,7 +142,7 @@ namespace System.Data.Hsqldb.Common.Sql
                 {
                     case TokenType.IdentifierChain:
                         {
-                            return m_identifierChainFirst;
+                            return m_qualifierPart;
                         }
                     default:
                         {
@@ -135,12 +154,12 @@ namespace System.Data.Hsqldb.Common.Sql
         } 
         #endregion
 
-        #region IdentifierChainLast
+        #region SubjectPart
         /// <summary>
-        /// Gets the last identifier chain component.
+        /// Gets the identifier chain terminal component.
         /// </summary>
-        /// <value>The last identifier chain component.</value>
-        public string IdentifierChainLast
+        /// <value>The terminal (right-most) identifier chain component.</value>
+        public string SubjectPart
         {
             get
             {
@@ -148,7 +167,7 @@ namespace System.Data.Hsqldb.Common.Sql
                 {
                     case TokenType.IdentifierChain:
                         {
-                            return m_identifierChainLast;
+                            return m_subjectPart;
                         }
                     default:
                         {
@@ -348,8 +367,8 @@ namespace System.Data.Hsqldb.Common.Sql
 
             if (Type == TokenType.IdentifierChain)
             {
-                sb.Append(",identifierChainFirst=").Append(IdentifierChainFirst);
-                sb.Append(",identifierChainLast=").Append(IdentifierChainLast);
+                sb.Append(",qualifierPart=").Append(QualifierPart);
+                sb.Append(",subjectPart=").Append(SubjectPart);
             }
 
             sb.Append(']');

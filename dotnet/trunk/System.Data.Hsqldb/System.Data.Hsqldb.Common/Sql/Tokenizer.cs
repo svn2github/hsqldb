@@ -33,8 +33,9 @@
 #endregion
 
 #region Using
-using System.Globalization;
 using System.Data.Hsqldb.Common.Enumeration;
+using System.Globalization;
+
 using BigDecimal = java.math.BigDecimal;
 using Boolean = java.lang.Boolean;
 using Character = java.lang.Character;
@@ -50,6 +51,7 @@ using StringConverter = org.hsqldb.lib.StringConverter;
 using Trace = org.hsqldb.Trace;
 using HsqlTypes = org.hsqldb.Types;
 using ValuePool = org.hsqldb.store.ValuePool;
+using System.Collections.Generic;
 #endregion
 
 namespace System.Data.Hsqldb.Common.Sql
@@ -58,32 +60,30 @@ namespace System.Data.Hsqldb.Common.Sql
 
     /// <summary>
     /// <para>
-    /// Supports lexographic analysis and subsequent parsing of the HSQLDB SQL dialect.
+    /// Supports the lexographic analysis and subsequent parsing of syntactic
+    /// productions in the HSQLDB dialect of SQL.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.HsqlTokenizer.png"
-    ///      alt="HsqlTokenizer Class Diagram"/>
+    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.Sql.Tokenizer.png"
+    ///      alt="Tokenizer Class Diagram"/>
     /// </summary>
     public sealed class Tokenizer
     {
         #region Instance Fields
 
         private bool m_acceptParameterMarkers = true;
-        private bool m_acceptNamedParameters = true;
+        private bool m_acceptNamedParameters = true;        
         private int m_beginIndex;
         private string m_chars;
         private int m_charsLength;
         private int m_currentIndex;
-        // NOTE: ReadToken() will clear m_identifierChainFirst unless
-        // m_retainIdentifierChainFirst is set true.
-        // TODO: implement handling of arbitrary length chained identifiers
-        //       as soon as similar handling is backported to 1.8.0.x series
-        //       engine.
-        private string m_identifierChainFirst = null;
-        private TokenType m_identifierChainFirstType = TokenType.None;
+        private bool m_enforceTwoPartIdentifierChain;
+        private List<Token> m_identifierChain;
+        private string m_identifierChainPredecessor = null;
+        private TokenType m_identifierChainPredecessorType = TokenType.None;
+        private bool m_inIdentifierChain;
         private int m_nextTokenIndex;
         private string m_parameterName;
         private char m_parameterNamePrefix = ' ';
-        private bool m_retainIdentifierChainFirst = false;
         private string m_token;
         private int m_tokenIndex;
         private TokenType m_tokenType = TokenType.None;
@@ -100,6 +100,7 @@ namespace System.Data.Hsqldb.Common.Sql
         /// Initializes a new instance of the <see cref="Tokenizer"/> class.
         /// </summary>
         public Tokenizer()
+            : this(string.Empty)
         {
         }
 
@@ -250,7 +251,7 @@ namespace System.Data.Hsqldb.Common.Sql
 
             ReadToken();
 
-            if (m_token.Equals("-"))
+            if (Token.ValueFor.MINUS == m_token)
             {
                 isNegative = true;
 
@@ -345,12 +346,10 @@ namespace System.Data.Hsqldb.Common.Sql
             {
                 try
                 {
-                    value = HsqlConvert
-                            .FromJava
-                            .ToObject(value, (int)requestedDataType);
-                    value = HsqlConvert
-                            .FromDotNet
-                            .ToObject(value, (int)requestedDataType);
+                    value = HsqlConvert.FromJava.ToObject(value, 
+                        (int)requestedDataType);
+                    value = HsqlConvert.FromDotNet.ToObject(value, 
+                        (int)requestedDataType);
                 }
                 catch (Exception)
                 {
@@ -403,7 +402,7 @@ namespace System.Data.Hsqldb.Common.Sql
             }
 
             string token = (m_tokenType == TokenType.IdentifierChain)
-                               ? m_identifierChainFirst
+                               ? m_identifierChainPredecessor
                                : m_token;
 
             throw UnexpectedToken(token);
@@ -429,7 +428,7 @@ namespace System.Data.Hsqldb.Common.Sql
             }
 
             string token = (m_tokenType == TokenType.IdentifierChain)
-                               ? m_identifierChainFirst
+                               ? m_identifierChainPredecessor
                                : m_token;
 
             throw UnexpectedToken(token);
@@ -559,13 +558,54 @@ namespace System.Data.Hsqldb.Common.Sql
                 || m_tokenType == TokenType.IdentifierChain)
             {
                 string token = (m_tokenType == TokenType.IdentifierChain)
-                                   ? m_identifierChainFirst
+                                   ? m_identifierChainPredecessor
                                    : m_token;
 
                 throw MatchFailed(token, match);
             }
         }
 
+        #endregion
+
+        #region ReadIdentifierChain()
+        /// <summary>
+        /// Reads an entire identifier chain.
+        /// </summary>
+        private void ReadIdentifierChain()
+        {
+            if (m_identifierChain == null)
+            {
+                m_identifierChain = new List<Token>();
+            }
+
+            if (m_inIdentifierChain)
+            {
+                if (m_enforceTwoPartIdentifierChain)
+                {
+                    throw IdentiferChainLengthExceeded();
+                }
+
+                Token predecessor = new Token(m_identifierChainPredecessor,
+                    m_identifierChainPredecessorType);
+
+                m_identifierChain.Add(predecessor);
+            }
+
+            m_identifierChainPredecessor = m_token;
+            m_identifierChainPredecessorType = m_tokenType;
+            m_inIdentifierChain = true;
+
+            m_currentIndex++;
+
+            // TODO: avoid recursion
+            // Also, this has problems when there is whitespace
+            // after the dot; same with NAME
+            ReadToken();
+
+            m_identifierChain.Add(new Token(m_token, m_tokenType));
+            m_inIdentifierChain = false;
+            m_tokenType = TokenType.IdentifierChain;
+        } 
         #endregion
 
         #region ReadToken()
@@ -584,10 +624,11 @@ namespace System.Data.Hsqldb.Common.Sql
                 return;
             }
 
-            if (!m_retainIdentifierChainFirst)
+            if (!m_inIdentifierChain)
             {
-                m_identifierChainFirst = null;
-                m_identifierChainFirstType = TokenType.None;
+                m_identifierChain = null;
+                m_identifierChainPredecessor = null;
+                m_identifierChainPredecessorType = TokenType.None;
             }
 
             while (m_currentIndex < m_charsLength
@@ -596,8 +637,8 @@ namespace System.Data.Hsqldb.Common.Sql
                 m_currentIndex++;
             }
 
-            m_token = "";
-            m_parameterName = "";
+            m_token = string.Empty;
+            m_parameterName = string.Empty;
             m_parameterNamePrefix = ' ';
             m_tokenIndex = m_currentIndex;
 
@@ -792,25 +833,7 @@ namespace System.Data.Hsqldb.Common.Sql
 
                             if (c == '.')
                             {
-                                m_identifierChainFirst = m_token;
-                                m_identifierChainFirstType = m_tokenType;
-
-                                m_currentIndex++;
-
-                                if (m_retainIdentifierChainFirst)
-                                {
-                                    //throw IdentiferChainLengthExceeded();
-                                }
-
-                                // TODO: avoid recursion
-                                // This has problems when there is whitespace
-                                // after the dot; same with NAME
-                                m_retainIdentifierChainFirst = true;
-
-                                ReadToken();
-
-                                m_retainIdentifierChainFirst = false;
-                                m_tokenType = TokenType.IdentifierChain;
+                                ReadIdentifierChain();
                             }
 
                             return;
@@ -895,26 +918,11 @@ namespace System.Data.Hsqldb.Common.Sql
                             // only for Name, not for NamedParameter
                             if (c == '.')
                             {
-                                m_identifierChainFirstType = m_tokenType;
-                                m_identifierChainFirst = m_token;
-
-                                m_currentIndex++;
-
-                                if (m_retainIdentifierChainFirst)
-                                {
-                                    //throw IdentiferChainLengthExceeded();
-                                }
-
-                                m_retainIdentifierChainFirst = true;
-
-                                // TODO: eliminate recursion
-                                ReadToken();
-
-                                m_retainIdentifierChainFirst = false;
-                                m_tokenType = TokenType.IdentifierChain;
+                                ReadIdentifierChain();
                             }
                             else if (c == '(')
                             {
+                                // noop
                                 // potentially a function call or SQL operator
                             }
                             else
@@ -1110,14 +1118,14 @@ namespace System.Data.Hsqldb.Common.Sql
             m_nextTokenIndex = 0;
             m_beginIndex = 0;
             m_tokenType = TokenType.None;
-            m_identifierChainFirstType = TokenType.None;
+            m_identifierChainPredecessorType = TokenType.None;
             m_token = null;
             m_parameterName = null;
             m_parameterNamePrefix = ' ';
-            m_identifierChainFirst = null;
+            m_identifierChainPredecessor = null;
             m_wait = false;
             m_wasLastTokenDelimited = false;
-            m_retainIdentifierChainFirst = false;
+            m_inIdentifierChain = false;
         }
 
         #endregion
@@ -1158,17 +1166,40 @@ namespace System.Data.Hsqldb.Common.Sql
 
         #region Instance Properties
 
-        #region IdentifierChainFirst
+        /// <summary>
+        /// Gets or sets a value indicating whether to enforce two part identifier chains.
+        /// </summary>
+        /// <value>
+        /// 	<c>true</c> to enforce two part identifier chains; otherwise, <c>false</c>.
+        /// </value>
+        public bool EnforceTwoPartIdentifierChain
+        {
+            get { return m_enforceTwoPartIdentifierChain; }
+            set { m_enforceTwoPartIdentifierChain = value; }
+        }
+
+        #region IdentifierChain
+        /// <summary>
+        /// Gets the identifier chain.
+        /// </summary>
+        /// <value>The identifier chain.</value>
+        public IEnumerable<Token> IdentifierChain
+        {
+            get { return m_identifierChain; }
+        } 
+        #endregion
+
+        #region IdentifierChainPredecessor
 
         /// <summary>
-        /// Gets the first component of the identifier chain.
+        /// Gets the component of the identifier chain immediately preceding the subject [right-most] component.
         /// </summary>
+        /// <value>The subject predecessor component of the identifier chain.</value>
         /// <remarks>
         /// Note: no token type check is performed; if the last read
         /// token is not an identifier chain, the value is <c>null</c>.
         /// </remarks>
-        /// <value>The first component of the identifier chain.</value>
-        public string IdentifierChainFirst
+        public string IdentifierChainPredecessor
         {
             get
             {
@@ -1177,7 +1208,7 @@ namespace System.Data.Hsqldb.Common.Sql
                     throw IllegalWaitState();
                 }
 
-                return m_identifierChainFirst;
+                return m_identifierChainPredecessor;
             }
         }
 
@@ -1263,8 +1294,12 @@ namespace System.Data.Hsqldb.Common.Sql
                             {
                                 try
                                 {
-                                    return ValuePool.getInt(
+                                    java.lang.Integer rval = ValuePool.getInt(
                                         Integer.parseInt(m_token));
+
+                                    m_tokenType = TokenType.IntegerLiteral;
+
+                                    return rval;
                                 }
                                 catch (Exception)
                                 {
@@ -1275,10 +1310,10 @@ namespace System.Data.Hsqldb.Common.Sql
                             {
                                 try
                                 {
-                                    m_tokenType = TokenType.BigIntLiteral;
-
-                                    return ValuePool.getLong(
+                                    java.lang.Long rval = ValuePool.getLong(
                                         Long.parseLong(m_token));
+
+                                    m_tokenType = TokenType.BigIntLiteral;
                                 }
                                 catch (Exception)
                                 {
@@ -1356,34 +1391,90 @@ namespace System.Data.Hsqldb.Common.Sql
                 switch (m_tokenType)
                 {
                     case TokenType.StringLiteral:
-                        return HsqlProviderType.VarChar;
-
+                        {
+                            return HsqlProviderType.VarChar;
+                        }
                     case TokenType.NumberLiteral:
-                        return HsqlProviderType.Integer;
+                        {
+                            if (m_token.Length < 11)
+                            {
+                                try
+                                {
+                                    java.lang.Integer.parseInt(m_token);
 
+                                    m_tokenType = TokenType.IntegerLiteral;
+
+                                    return HsqlProviderType.Integer;
+                                }
+                                catch (Exception)
+                                {
+                                }
+
+                            }
+
+                            if (m_token.Length < 20)
+                            {
+                                try
+                                {
+                                    java.lang.Long.parseLong(m_token);
+
+                                    m_tokenType = TokenType.BigIntLiteral;
+
+                                    return HsqlProviderType.BigInt;
+                                }
+                                catch (Exception)
+                                {
+                                }
+                            }
+
+                            try
+                            {
+                                java.lang.Double.parseDouble(m_token);
+
+                                m_tokenType = TokenType.FloatLiteral;
+
+                                return HsqlProviderType.Double;
+                            }
+                            catch (Exception)
+                            {
+                            }
+
+                            m_tokenType = TokenType.DecimalLiteral;
+
+                            return HsqlProviderType.Decimal;
+                        }
                     case TokenType.BigIntLiteral:
-                        return HsqlProviderType.BigInt;
-
+                        {
+                            return HsqlProviderType.BigInt;
+                        }
                     case TokenType.FloatLiteral:
-                        return HsqlProviderType.Double;
-
+                        {
+                            return HsqlProviderType.Double;
+                        }
                     case TokenType.DecimalLiteral:
-                        return HsqlProviderType.Decimal;
-
+                        {
+                            return HsqlProviderType.Decimal;
+                        }
                     case TokenType.BooleanLiteral:
-                        return HsqlProviderType.Boolean;
-
+                        {
+                            return HsqlProviderType.Boolean;
+                        }
                     case TokenType.DateLiteral:
-                        return HsqlProviderType.Date;
-
+                        {
+                            return HsqlProviderType.Date;
+                        }
                     case TokenType.TimeLiteral:
-                        return HsqlProviderType.Time;
-
+                        {
+                            return HsqlProviderType.Time;
+                        }
                     case TokenType.TimestampLiteral:
-                        return HsqlProviderType.TimeStamp;
-
+                        {
+                            return HsqlProviderType.TimeStamp;
+                        }
                     default:
-                        return HsqlProviderType.Null;
+                        {
+                            return HsqlProviderType.Null;
+                        }
                 }
             }
         }
@@ -1423,12 +1514,12 @@ namespace System.Data.Hsqldb.Common.Sql
 
                 if (WasIdentifierChain)
                 {
-                    string first = IdentifierChainFirst;
+                    string qualifierPart = IdentifierChainPredecessor;
 
-                    if (WasIdentifierChainFirstDelimited)
+                    if (WasIdentifierChainPredecessorDelimited)
                     {
-                        first = StringConverter.toQuotedString(
-                            first, '"', true);
+                        qualifierPart = StringConverter.toQuotedString(
+                            qualifierPart, '"', true);
                     }
 
                     if (WasDelimitedIdentifier)
@@ -1441,7 +1532,7 @@ namespace System.Data.Hsqldb.Common.Sql
                         token = m_token;
                     }
 
-                    token = first + '.' + token;
+                    token = qualifierPart + '.' + token;
                 }
                 else if (WasDelimitedIdentifier)
                 {
@@ -1563,6 +1654,7 @@ namespace System.Data.Hsqldb.Common.Sql
         /// <summary>
         /// Gets the type of the last read token.
         /// </summary>
+        /// <remarks></remarks>
         /// <value>The type of the last read token.</value>
         public TokenType TokenType
         {
@@ -1573,11 +1665,18 @@ namespace System.Data.Hsqldb.Common.Sql
                     throw IllegalWaitState();
                 }
 
-                return (m_tokenType == TokenType.Special)
-                           ? (m_token == "?")
-                                 ? TokenType.ParameterMarker
-                                 : m_tokenType
-                           : m_tokenType;
+                if (m_tokenType == TokenType.Special)
+                {
+                    return (m_token == "?") ? TokenType.ParameterMarker
+                        : TokenType.Special;
+                }
+                else if (m_tokenType == TokenType.NumberLiteral)
+                {
+                    // resolves most specific literal type
+                    object lv = this.LiteralValue;
+                }
+
+                return m_tokenType;
             }
         }
 
@@ -1615,6 +1714,10 @@ namespace System.Data.Hsqldb.Common.Sql
                     case TokenType.FloatLiteral:
                         {
                             return "Float";
+                        }
+                    case TokenType.IntegerLiteral:
+                        {
+                            return "Integer";
                         }
                     case TokenType.BigIntLiteral:
                         {
@@ -1687,12 +1790,13 @@ namespace System.Data.Hsqldb.Common.Sql
         #region WasDelimitedIdentifier
 
         /// <summary>
-        /// Retrieves whether the last read token
-        /// was an SQL delimited identifier.
+        /// Retrieves whether the last read token was an SQL delimited identifier.
         /// </summary>
+        /// <remarks>
+        /// This value also applies to the subject [right-most] part of an identifier chain.
+        /// </remarks>
         /// <returns>
-        /// <c>true</c> if the last read token was
-        /// an SQL delimited identifier;
+        /// <c>true</c> if the last read token was an SQL delimited identifier;
         /// otherwise, <c>false</c>.
         /// </returns>
         public bool WasDelimitedIdentifier
@@ -1705,9 +1809,6 @@ namespace System.Data.Hsqldb.Common.Sql
                 }
 
                 return m_wasLastTokenDelimited;
-
-                // m_tokenType won't help for LONG_NAMEs.
-                //return (m_tokenType == QUOTED_IDENTIFIER);
             }
         }
 
@@ -1737,9 +1838,10 @@ namespace System.Data.Hsqldb.Common.Sql
         #region WasIdentifierChainFirstDelimited
 
         /// <summary>
-        /// Determines whether the first part of
-        /// the last read chained identifier
-        /// token is a delimited identifier.
+        /// Determines whether the immediate predecessor of
+        /// the subject [right-most part] of the last read
+        /// chained identifier token is a delimited identifier
+        /// token.
         /// </summary>
         /// <remarks>
         /// Note: no token type check is performed;
@@ -1747,11 +1849,12 @@ namespace System.Data.Hsqldb.Common.Sql
         /// chain, the value is <c>false</c>.
         /// </remarks>
         /// <returns>
-        /// <c>true</c> if the first part of the last read
+        /// <c>true</c> if the immediate predecessor of
+        /// the subject [right-most part] of the last read
         /// multi-part identifier token was delimited;
         /// otherwise, <c>false</c>.
         /// </returns>
-        public bool WasIdentifierChainFirstDelimited
+        public bool WasIdentifierChainPredecessorDelimited
         {
             get
             {
@@ -1760,7 +1863,7 @@ namespace System.Data.Hsqldb.Common.Sql
                     throw IllegalWaitState();
                 }
 
-                return (m_identifierChainFirstType
+                return (m_identifierChainPredecessorType
                     == TokenType.DelimitedIdentifier);
             }
         }
@@ -1822,9 +1925,9 @@ namespace System.Data.Hsqldb.Common.Sql
         /// </value>
         /// <remarks>
         /// In this context, a valid SQL name is defined as
-        /// an SQL identifier chain, an SQL delimited identifier
-        /// or an SQL simple identifier that is not also defined
-        /// as an SQL keyword.
+        /// either an SQL delimited identifier, chained identifier
+        /// whose subject is either delimited or not an SQL keyword
+        /// or an SQL simple identifier that is not also an SQL keyword.
         /// </remarks>
         private bool WasName
         {
@@ -1835,7 +1938,7 @@ namespace System.Data.Hsqldb.Common.Sql
                     throw IllegalWaitState();
                 }
 
-                if (m_tokenType == TokenType.DelimitedIdentifier)
+                if (WasDelimitedIdentifier)
                 {
                     return true;
                 }
@@ -1846,7 +1949,7 @@ namespace System.Data.Hsqldb.Common.Sql
                     return false;
                 }
 
-                return !Token.Map.IsKeyword(m_token);
+                return  !Token.Map.IsKeyword(m_token);
             }
         }
 
