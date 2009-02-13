@@ -593,8 +593,8 @@ namespace System.Data.Hsqldb.Client
                 {
                     case TokenType.IdentifierChain:
                         {
-                            schema = token.IdentifierChainFirst;
-                            spName = token.IdentifierChainLast;
+                            schema = token.QualifierPart;
+                            spName = token.SubjectPart;
                             break;
 
                         }
@@ -738,8 +738,8 @@ SELECT DISTINCT p.specific_name
                 {
                     case TokenType.IdentifierChain:
                         {
-                            schema = token.IdentifierChainFirst;
-                            tableName = token.IdentifierChainLast;
+                            schema = token.QualifierPart;
+                            tableName = token.SubjectPart;
                             break;
 
                         }
