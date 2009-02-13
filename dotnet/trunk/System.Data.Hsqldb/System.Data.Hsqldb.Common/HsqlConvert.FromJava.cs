@@ -91,6 +91,7 @@ using DotNetCalendar = System.Globalization.GregorianCalendar;
 using JavaGregorianCalendar = java.util.GregorianCalendar;
 using Library = org.hsqldb.Library;
 using HsqlDateTime = org.hsqldb.HsqlDateTime;
+using System.Data.Hsqldb.Common.Sql;
 
 
 #endregion
@@ -261,10 +262,12 @@ namespace System.Data.Hsqldb.Common
 
                 if (stringValue == null)
                 {
-                    stringValue = o.ToString();
+                    java.lang.Object jobj = o as java.lang.Object;
+
+                    stringValue = (jobj == null) ? o.ToString() : jobj.toString();
                 }
 
-                int i = HsqlConvert.ParseInteger(stringValue.Trim());
+                int i = FromJava.ParseInteger(stringValue.Trim());
 
                 if (127 < i || i < -128)
                 {
@@ -418,14 +421,11 @@ namespace System.Data.Hsqldb.Common
                     object unwrapped = FromJava
                         .UnWrap(objectValue, out isJavaObject);
 
-                    return (isJavaObject)
-                        ? FromJava.ToSmallInt(unwrapped)
+                    return (isJavaObject) ? FromJava.ToSmallInt(unwrapped)
                         : FromDotNet.ToSmallInt(unwrapped).shortValue();
                 }
 
-                if (o is java.util.Date
-                    || o is HsqlBinary
-                    || o is Array)
+                if (o is java.util.Date || o is HsqlBinary || o is Array)
                 {
                     throw HsqlConvert.WrongDataType(o);
                 }
@@ -434,13 +434,14 @@ namespace System.Data.Hsqldb.Common
 
                 if (stringValue == null)
                 {
-                    stringValue = o.ToString();
+                    java.lang.Object jobj = o as java.lang.Object;
+
+                    stringValue = (jobj == null) ? o.ToString() : jobj.toString();
                 }
 
-                int i = HsqlConvert.ParseInteger(stringValue.Trim());
+                int i = FromJava.ParseInteger(stringValue.Trim());
 
-                if (JavaShort.MAX_VALUE < i
-                    || i < JavaShort.MIN_VALUE)
+                if (JavaShort.MAX_VALUE < i || i < JavaShort.MIN_VALUE)
                 {
                     throw HsqlConvert.NumericValueOutOfRange(i);
                 }
@@ -579,17 +580,14 @@ namespace System.Data.Hsqldb.Common
                 {
                     bool isJavaObject;
 
-                    object unwrapped = FromJava
-                        .UnWrap(objectValue, out isJavaObject);
+                    object unwrapped = FromJava.UnWrap(objectValue,
+                        out isJavaObject);
 
-                    return (isJavaObject)
-                        ? FromJava.ToInteger(unwrapped)
+                    return (isJavaObject) ? FromJava.ToInteger(unwrapped)
                         : FromDotNet.ToInteger(unwrapped).intValue();
                 }
 
-                if (o is java.util.Date
-                    || o is HsqlBinary
-                    || o is Array)
+                if (o is java.util.Date || o is HsqlBinary || o is Array)
                 {
                     throw HsqlConvert.WrongDataType(o);
                 }
@@ -598,10 +596,12 @@ namespace System.Data.Hsqldb.Common
 
                 if (stringValue == null)
                 {
-                    stringValue = o.ToString();
+                    java.lang.Object jobj = o as java.lang.Object;
+
+                    stringValue = (jobj == null) ? o.ToString() : jobj.toString();
                 }
 
-                return HsqlConvert.ParseInteger(stringValue.Trim());
+                return FromJava.ParseInteger(stringValue.Trim());
             }
 
             #endregion
@@ -715,17 +715,14 @@ namespace System.Data.Hsqldb.Common
                 {
                     bool isJavaObject;
 
-                    object unwrapped = FromJava
-                        .UnWrap(objectValue, out isJavaObject);
+                    object unwrapped = FromJava.UnWrap(objectValue,
+                        out isJavaObject);
 
-                    return (isJavaObject)
-                        ? FromJava.ToBigInt(unwrapped)
+                    return (isJavaObject) ? FromJava.ToBigInt(unwrapped)
                         : FromDotNet.ToBigInt(unwrapped).longValue();
                 }
 
-                if (o is java.util.Date
-                    || o is HsqlBinary
-                    || o is Array)
+                if (o is java.util.Date || o is HsqlBinary || o is Array)
                 {
                     throw HsqlConvert.WrongDataType(o);
                 }
@@ -734,10 +731,12 @@ namespace System.Data.Hsqldb.Common
 
                 if (stringValue == null)
                 {
-                    stringValue = o.ToString();
+                    java.lang.Object jobj = o as java.lang.Object;
+
+                    stringValue = (jobj == null) ? o.ToString() : jobj.toString();
                 }
 
-                return HsqlConvert.ParseBigInt(stringValue.Trim());
+                return FromJava.ParseBigInt(stringValue.Trim());
             }
             #endregion
 
@@ -822,17 +821,14 @@ namespace System.Data.Hsqldb.Common
                 {
                     bool isJavaObject;
 
-                    object unwrapped = FromJava
-                        .UnWrap(objectValue, out isJavaObject);
+                    object unwrapped = FromJava.UnWrap(objectValue,
+                        out isJavaObject);
 
-                    return (isJavaObject)
-                        ? FromJava.ToDouble(unwrapped)
+                    return (isJavaObject) ? FromJava.ToDouble(unwrapped)
                         : FromDotNet.ToDouble(unwrapped).doubleValue();
                 }
 
-                if (o is java.util.Date
-                    || o is HsqlBinary
-                    || o is Array)
+                if (o is java.util.Date || o is HsqlBinary || o is Array)
                 {
                     throw HsqlConvert.WrongDataType(o);
                 }
@@ -841,10 +837,12 @@ namespace System.Data.Hsqldb.Common
 
                 if (stringValue == null)
                 {
-                    stringValue = o.ToString();
+                    java.lang.Object jobj = o as java.lang.Object;
+
+                    stringValue = (jobj == null) ? o.ToString() : jobj.toString();
                 }
 
-                return HsqlConvert.ParseDouble(stringValue.Trim());
+                return FromJava.ParseDouble(stringValue.Trim());
             }
             #endregion
 
@@ -1040,9 +1038,7 @@ namespace System.Data.Hsqldb.Common
             [CLSCompliant(false)]
             public static decimal ToDecimal(JavaNumber n)
             {
-                if (n is JavaByte
-                    || n is JavaShort
-                    || n is JavaInteger)
+                if (n is JavaByte || n is JavaShort || n is JavaInteger)
                 {
                     return new decimal(n.intValue());
                 }
@@ -1069,7 +1065,7 @@ namespace System.Data.Hsqldb.Common
                     return decimal.Parse(bigDecimalValue.toPlainString());
                 }
 
-                return decimal.Parse(n.ToString());
+                return decimal.Parse(n.toString());
             }
             #endregion
 
@@ -1121,18 +1117,14 @@ namespace System.Data.Hsqldb.Common
                 {
                     bool isJavaObject;
 
-                    object unwrapped = FromJava.UnWrap(
-                        objectValue, 
+                    object unwrapped = FromJava.UnWrap(objectValue, 
                         out isJavaObject);
 
-                    return (isJavaObject)
-                        ? FromJava.ToDecimal(unwrapped)
+                    return (isJavaObject) ? FromJava.ToDecimal(unwrapped)
                         : FromJava.ToDecimal(FromDotNet.ToDecimal(unwrapped));
                 }
 
-                if (o is java.util.Date
-                    || o is HsqlBinary
-                    || o is Array)
+                if (o is java.util.Date || o is HsqlBinary || o is Array)
                 {
                     throw WrongDataType(o);
                 }
@@ -1141,10 +1133,12 @@ namespace System.Data.Hsqldb.Common
 
                 if (stringValue == null)
                 {
-                    stringValue = o.ToString();
+                    java.lang.Object jobj = o as java.lang.Object;
+
+                    stringValue = (jobj == null) ? o.ToString() : jobj.toString();
                 }
 
-                return HsqlConvert.ParseDecimal(stringValue.Trim());
+                return FromJava.ParseDecimal(stringValue.Trim());
             }
             #endregion
 
@@ -1265,7 +1259,9 @@ namespace System.Data.Hsqldb.Common
 
                 if (stringValue == null)
                 {
-                    stringValue = o.ToString();
+                    java.lang.Object jobj = o as java.lang.Object;
+
+                    stringValue = (jobj == null) ? o.ToString() : jobj.toString();
                 }
 
                 return stringValue.Trim().Equals("TRUE", IgnoreCase);
@@ -1312,7 +1308,7 @@ namespace System.Data.Hsqldb.Common
 
                 if (numberValue != null)
                 {
-                    return numberValue.ToString();
+                    return numberValue.toString();
                 }
 
                 JavaTime timeValue = o as JavaTime;
@@ -1349,14 +1345,16 @@ namespace System.Data.Hsqldb.Common
                 {
                     bool isJavaObject;
 
-                    object unwrapped = FromJava.UnWrap(objectValue, out isJavaObject);
+                    object unwrapped = FromJava.UnWrap(objectValue, 
+                        out isJavaObject);
 
-                    return (isJavaObject)
-                        ? FromJava.ToString(unwrapped)
+                    return (isJavaObject)? FromJava.ToString(unwrapped)
                         : FromDotNet.ToString(unwrapped);
                 }
 
-                return o.ToString();
+                java.lang.Object jobj = o as java.lang.Object;
+
+                return (jobj == null) ? o.ToString() : jobj.toString();
             }
             #endregion
 
@@ -1438,14 +1436,14 @@ namespace System.Data.Hsqldb.Common
 
                 if (timeValue != null)
                 {
-                    return ToTime(timeValue.getTime());
+                    return FromJava.ToTime(timeValue.getTime());
                 }
 
                 JavaTimestamp timestampValue = o as JavaTimestamp;
 
                 if (timestampValue != null)
                 {
-                    return ToTime(timestampValue.getTime());
+                    return FromJava.ToTime(timestampValue.getTime());
                 }
 
                 string s = o as string;
@@ -1461,11 +1459,10 @@ namespace System.Data.Hsqldb.Common
                 {
                     bool isJavaObject;
 
-                    object unwrapped = FromJava
-                        .UnWrap(objectValue, out isJavaObject);
+                    object unwrapped = FromJava.UnWrap(objectValue, 
+                        out isJavaObject);
 
-                    return (isJavaObject)
-                        ? FromJava.ToTime(unwrapped)
+                    return (isJavaObject) ? FromJava.ToTime(unwrapped)
                         : FromJava.ToTime(FromDotNet.ToTime(unwrapped).getTime());
                 }
 
@@ -1474,18 +1471,17 @@ namespace System.Data.Hsqldb.Common
                     throw InvalidConversion(HsqlTypes.DATE);
                 }
 
-                if (o is HsqlBinary
-                    || o is Array
-                    || o is JavaNumber)
+                if (o is HsqlBinary || o is Array || o is JavaNumber)
                 {
                     throw WrongDataType(o);
                 }
 
                 // last ditch effort
+                java.lang.Object jobj = o as java.lang.Object;
 
-                s = o.ToString().Trim();
+                s = (jobj == null) ? o.ToString() : jobj.toString();
 
-                return ToTime(HsqlDateTime.timeValue(s).getTime());
+                return ToTime(HsqlDateTime.timeValue(s.Trim()).getTime());
             }
             #endregion
 
@@ -1610,9 +1606,11 @@ namespace System.Data.Hsqldb.Common
                 }
 
                 // last ditch effort
-                s = o.ToString().Trim();
+                java.lang.Object jobj = o as java.lang.Object;
 
-                return ToTimestamp(HsqlDateTime.timestampValue(s).getTime());
+                s = (jobj == null) ? o.ToString() : jobj.toString();
+
+                return ToTimestamp(HsqlDateTime.timestampValue(s.Trim()).getTime());
             }
             #endregion
 
@@ -1739,9 +1737,11 @@ namespace System.Data.Hsqldb.Common
                     throw WrongDataType(o);
                 }
 
-                s = o.ToString().Trim();
+                java.lang.Object jobj = o as java.lang.Object;
 
-                return ToDate(HsqlDateTime.dateValue(s).getTime());
+                s = (jobj == null) ? o.ToString() : jobj.toString();
+
+                return ToDate(HsqlDateTime.dateValue(s.Trim()).getTime());
             }
             #endregion
 
@@ -2191,6 +2191,111 @@ namespace System.Data.Hsqldb.Common
                 return new Guid(bytes);
 
             }
+            #endregion
+
+            #region Number Parsing
+
+            #region ParseInteger(string)
+            /// <summary>
+            /// Parses the given value by treating it as an HSQLDB SQL INTEGER literal.
+            /// </summary>
+            /// <remarks>
+            /// The legal input formats are those supported by
+            /// <c>java.lang.Integer.ParseInt</c>
+            /// </remarks>
+            /// <param name="value">The value to parse.</param>
+            /// <returns>a <c>System.Int32</c> representation of the string</returns>
+            /// <exception cref="HsqlDataSourceException">
+            /// When a number format exception is encountered.
+            /// </exception>
+            public static int ParseInteger(string value)
+            {
+                try
+                {
+                    Tokenizer tokenizer = new Tokenizer(value);
+                    
+                    return tokenizer.GetNextAsInt();
+                }
+                catch (Exception e)
+                {
+                    throw new HsqlDataSourceException(Trace.error(
+                        Trace.INVALID_CONVERSION, e.Message));
+                }
+            }
+            #endregion
+
+            #region ParseBigInt(string)
+            /// <summary>
+            /// Parses the given value by treating it as an HSQLDB SQL BIGINT literal.
+            /// </summary>
+            /// <param name="value">The value to parse.</param>
+            /// <returns>a <c>System.Int64</c> representation of the string</returns>
+            /// <exception cref="HsqlDataSourceException">
+            /// When a number format exception is encountered.
+            /// </exception>
+            public static long ParseBigInt(string value)
+            {
+                Tokenizer tokenizer = new Tokenizer(value);
+
+                return tokenizer.GetNextAsBigint();
+            }
+            #endregion
+
+            #region ParseDouble(string)
+            /// <summary>
+            /// Parses the given value as an HSQLDB SQL DOUBLE.
+            /// </summary>
+            /// <remarks>
+            /// The legal input formats are those supported by
+            /// <c>java.lang.Double.ParseDouble</c>
+            /// </remarks>
+            /// <param name="value">The value to parse.</param>
+            /// <returns>An SQL DOUBLE representation of the given value.</returns>
+            /// <exception cref="HsqlDataSourceException">
+            /// When a number format exception is encountered.
+            /// </exception>
+            public static double ParseDouble(string value)
+            {
+                Tokenizer tokenizer = new Tokenizer(value);
+
+                return ((java.lang.Number)tokenizer.GetNextAsLiteralValue(
+                    HsqlProviderType.Double)).doubleValue();
+            }
+            #endregion
+
+            #region ParseDecimal(string)
+            /// <summary>
+            /// Parses the given value as an HSQLDB SQL DECIMAL value
+            /// </summary>
+            /// <remarks>
+            /// The legal input formats are those supported by
+            /// <c>System.Decimal.Parse(string)</c>.
+            /// Note that the HSQLDB SQL DECIMAL type accepts values
+            /// that can have precision and scale far larger than
+            /// System.Decimal.  It is recommended to submit a string
+            /// value to the database when the desired SQL DECIMAL value
+            /// cannot be represented as a <c>System.Decimal</c> value.
+            /// </remarks>
+            /// <param name="value">The value to parse.</param>
+            /// <returns>An SQL DECIMAL representation of the given value.</returns>
+            /// <exception cref="HsqlDataSourceException">
+            /// When the underlying call <c>System.Decimal.Parse(string)</c>
+            /// raises an exception.
+            /// </exception>
+            public static decimal ParseDecimal(string value)
+            {
+                try
+                {
+                    return decimal.Parse(value);
+                }
+                catch (Exception e)
+                {
+                    throw new HsqlDataSourceException(
+                        Trace.error(Trace.INVALID_CONVERSION, e.ToString()));
+                }
+            }
+            #endregion
+
             #endregion
         }
         #endregion

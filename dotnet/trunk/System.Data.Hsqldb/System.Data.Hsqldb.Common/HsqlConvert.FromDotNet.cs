@@ -1821,44 +1821,37 @@ namespace System.Data.Hsqldb.Common
                 {
                     if (year < 0 || year > 9999)
                     {
-                        throw new ArgumentOutOfRangeException(
-                            "year",
+                        throw new ArgumentOutOfRangeException("year",
                             year.ToString());
                     }
                     if (month < 1 || month > 12)
                     {
-                        throw new ArgumentOutOfRangeException(
-                            "month",
+                        throw new ArgumentOutOfRangeException("month",
                             month.ToString());
                     }
                     if (day < 1 || day > 31)
                     {
-                        throw new ArgumentOutOfRangeException(
-                            "day",
+                        throw new ArgumentOutOfRangeException("day",
                             day.ToString());
                     }
                     if (hour < 0 || hour > 23)
                     {
-                        throw new ArgumentOutOfRangeException(
-                            "hour",
+                        throw new ArgumentOutOfRangeException("hour",
                             hour.ToString());
                     }
                     if (minute < 0 || minute > 59)
                     {
-                        throw new ArgumentOutOfRangeException(
-                            "minute",
+                        throw new ArgumentOutOfRangeException("minute",
                             minute.ToString());
                     }
                     if (second < 0 || minute > 59)
                     {
-                        throw new ArgumentOutOfRangeException(
-                            "second",
+                        throw new ArgumentOutOfRangeException("second",
                             second.ToString());
                     }
                     if (nanosecond < 0 || nanosecond > 999999)
                     {
-                        throw new ArgumentOutOfRangeException(
-                            "nanosecond",
+                        throw new ArgumentOutOfRangeException("nanosecond",
                             nanosecond.ToString());
                     }
                 }
@@ -1973,20 +1966,17 @@ namespace System.Data.Hsqldb.Common
                 {
                     if (year < 0 || year > 9999)
                     {
-                        throw new ArgumentOutOfRangeException(
-                            "year",
+                        throw new ArgumentOutOfRangeException("year",
                             year.ToString());
                     }
                     if (month < 1 || month > 12)
                     {
-                        throw new ArgumentOutOfRangeException(
-                            "month",
+                        throw new ArgumentOutOfRangeException("month",
                             month.ToString());
                     }
                     if (day < 1 || day > 31)
                     {
-                        throw new ArgumentOutOfRangeException(
-                            "day",
+                        throw new ArgumentOutOfRangeException("day",
                             day.ToString());
                     }
                 }
@@ -2039,20 +2029,17 @@ namespace System.Data.Hsqldb.Common
                 {
                     if (hour < 0 || hour > 23)
                     {
-                        throw new ArgumentOutOfRangeException(
-                            "hour",
+                        throw new ArgumentOutOfRangeException("hour",
                             hour.ToString());
                     }
                     if (minute < 0 || minute > 59)
                     {
-                        throw new ArgumentOutOfRangeException(
-                            "minute",
+                        throw new ArgumentOutOfRangeException("minute",
                             minute.ToString());
                     }
                     if (second < 0 || minute > 59)
                     {
-                        throw new ArgumentOutOfRangeException(
-                            "second",
+                        throw new ArgumentOutOfRangeException("second",
                             second.ToString());
                     }
                 }
@@ -2435,6 +2422,13 @@ namespace System.Data.Hsqldb.Common
                             }
                             else
                             {
+                                java.lang.Object jobj = (value as java.lang.Object);
+
+                                if (jobj != null)
+                                {
+                                    return ValuePool.getString(jobj.toString());
+                                }
+
                                 return ValuePool.getString(Convert.ToString(value));
                             }
                         }
@@ -4679,7 +4673,7 @@ namespace System.Data.Hsqldb.Common
             [CLSCompliant(false)]
             public static JavaInteger ToInteger(string stringValue)
             {
-                return ValuePool.getInt(ParseInteger(stringValue));
+                return ParseInteger(stringValue);
             }
             #endregion
 
@@ -6978,6 +6972,122 @@ namespace System.Data.Hsqldb.Common
 
                 return objectValue;
             }
+            #endregion
+
+            #region Number Parsing
+
+            #region ParseInteger(string)
+            /// <summary>
+            /// Parses the given value using <see cref="System.Int32.Parse(string)"/>,
+            /// returning an equivalent <c>java.lang.Integer</c> instance retrieved
+            /// from the HSQLDB value pool.
+            /// </summary>
+            /// <param name="value">The value to parse.</param>
+            /// <returns>The number value parsed from the given string value</returns>
+            /// <exception cref="HsqlDataSourceException">
+            /// When a number format exception is encountered.
+            /// </exception>
+            [CLSCompliant(false)]
+            public static JavaInteger ParseInteger(string value)
+            {
+                try
+                {
+                    return ValuePool.getInt(Int32.Parse(value));
+                }
+                catch (Exception e)
+                {
+                    throw new HsqlDataSourceException(Trace.error(
+                        Trace.INVALID_CONVERSION, e.Message));
+                }
+            }
+            #endregion
+
+            #region ParseBigInt(string)
+            /// <summary>
+            /// Parses the given value using <see cref="System.Int64.Parse(string)"/>,
+            /// returning an equivalent <c>java.lang.Long</c> instance retrieved
+            /// from the HSQLDB value pool.
+            /// </summary>
+            /// <param name="value">The value to parse.</param>
+            /// <returns>The number value parsed from the given string value</returns>
+            /// <exception cref="HsqlDataSourceException">
+            /// When a number format exception is encountered.
+            /// </exception>
+            [CLSCompliant(false)]
+            public static JavaLong ParseBigInt(string value)
+            {
+                try
+                {
+                    return ValuePool.getLong(Int64.Parse(value));
+                }
+                catch (Exception e)
+                {
+                    throw new HsqlDataSourceException(Trace.error(
+                        Trace.INVALID_CONVERSION, e.Message));
+                }
+            }
+            #endregion
+
+            #region ParseDouble(string)
+            /// <summary>
+            /// Parses the given value using <see cref="System.Double.Parse(string)"/>,
+            /// returning an equivalent <c>java.lang.Double</c> instance retrieved
+            /// from the HSQLDB value pool.
+            /// </summary>
+            /// <remarks>
+            /// The legal input formats are those supported by
+            /// <c>java.lang.Double.ParseDouble</c>
+            /// </remarks>
+            /// <param name="value">The value to parse.</param>
+            /// <returns>The number value parsed from the given string value</returns>
+            /// <exception cref="HsqlDataSourceException">
+            /// When a number format exception is encountered.
+            /// </exception>
+            [CLSCompliant(false)]
+            public static JavaDouble ParseDouble(string value)
+            {
+                try
+                {
+                    double dval = System.Double.Parse(value);
+                    long lval = JavaDouble.doubleToLongBits(dval);
+                    
+                    return ValuePool.getDouble(lval);
+                }
+                catch (Exception e)
+                {
+                    throw new HsqlDataSourceException(Trace.error(
+                        Trace.INVALID_CONVERSION, e.Message));
+                }
+            }
+            #endregion
+
+            #region ParseDecimal(string)
+            /// <summary>
+            /// Parses the given value using <see cref="java.math.BigDecimal(string) constructor"/>,
+            /// returning an equivalent <c>java.math.BigDecimal</c> instance retrieved
+            /// from the HSQLDB value pool.
+            /// </summary>
+            /// <param name="value">The value to parse.</param>
+            /// <returns>The number value parsed from the given string value</returns>
+            /// <exception cref="HsqlDataSourceException">
+            /// When the underlying call <c>System.Decimal.Parse(string)</c>
+            /// raises an exception.
+            /// </exception>
+            [CLSCompliant(false)]
+            public static JavaBigDecimal ParseDecimal(string value)
+            {
+                try
+                {
+                    return ValuePool.getBigDecimal(new JavaBigDecimal(value));
+                }
+                catch (Exception e)
+                {
+                    throw new HsqlDataSourceException(
+                        Trace.error(Trace.INVALID_CONVERSION, e.ToString()));
+                }
+            }
+            #endregion
+
             #endregion
         }
         #endregion

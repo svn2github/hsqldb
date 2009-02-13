@@ -1281,8 +1281,8 @@ namespace System.Data.Hsqldb.Common
                         StringBuilder sb = new StringBuilder(
                             hex.Length + "CAST('' AS BINARY)".Length);
 
-                        return sb.Append("CAST('")
-                            .Append(hex).Append("' AS BINARY)").ToString();
+                        return sb.Append("CAST('").Append(hex).Append(
+                            "' AS BINARY)").ToString();
                     }
                 case DbType.Boolean:
                     {
@@ -1303,17 +1303,16 @@ namespace System.Data.Hsqldb.Common
                     {
                         StringBuilder sb = new StringBuilder(26);
 
-                        return sb.Append("CAST('")
-                            .Append(FromDotNet.ToDate(objectValue))
-                            .Append("' AS DATE)").ToString();
+                        return sb.Append("CAST('").Append(FromDotNet.ToDate(
+                            objectValue)).Append("' AS DATE)").ToString();
                     }
                 case DbType.DateTime:
                     {
                         StringBuilder sb = new StringBuilder(45);
 
-                        return sb.Append("CAST('")
-                            .Append(FromDotNet.ToTimestamp(objectValue))
-                            .Append("' AS TIMESTAMP)").ToString();
+                        return sb.Append("CAST('").Append(
+                            FromDotNet.ToTimestamp(objectValue)).Append(
+                            "' AS TIMESTAMP)").ToString();
                     }
                 case DbType.Decimal:
                     {
@@ -1362,8 +1361,8 @@ namespace System.Data.Hsqldb.Common
                         StringBuilder sb = new StringBuilder(
                             stringValue.Length + 2);
 
-                        return sb.Append('\'').Append(stringValue)
-                            .Append('\'').ToString();
+                        return sb.Append('\'').Append(stringValue).Append(
+                            '\'').ToString();
                     }
                 case DbType.Int16:
                     {
@@ -1425,10 +1424,8 @@ namespace System.Data.Hsqldb.Common
                     {
                         StringBuilder sb = new StringBuilder(24);
 
-                        return sb.Append("CAST('")
-                            .Append(FromDotNet.ToTime(objectValue))
-                            .Append("' AS TIME)")
-                            .ToString();
+                        return sb.Append("CAST('").Append(FromDotNet.ToTime(
+                            objectValue)).Append("' AS TIME)").ToString();
                     }
                 case DbType.UInt16:
                     {
@@ -1460,123 +1457,7 @@ namespace System.Data.Hsqldb.Common
         }
         #endregion
 
-        #region Number Parsing
 
-        #region ParseInteger(string)
-        /// <summary>
-        /// Parses the given value as an HSQLDB SQL INTEGER.
-        /// </summary>
-        /// <remarks>
-        /// The legal input formats are those supported by
-        /// <c>java.lang.Integer.ParseInt</c>
-        /// </remarks>
-        /// <param name="value">The value to parse.</param>
-        /// <returns>an SQL INTEGER representation of the string</returns>
-        /// <exception cref="HsqlDataSourceException">
-        /// When a number format exception is encountered.
-        /// </exception>
-        public static int ParseInteger(string value)
-        {
-            try
-            {
-                return JavaInteger.parseInt(value);
-            }
-            catch (java.lang.NumberFormatException nfe)
-            {
-                throw new HsqlDataSourceException(Trace.error(
-                    Trace.INVALID_CONVERSION, nfe.toString()));
-            }
-        }
-        #endregion
-
-        #region ParseBigInt(string)
-        /// <summary>
-        /// Parses the given value as an HSQLDB SQL BIGINT.
-        /// </summary>
-        /// <remarks>
-        /// The legal input formats are those supported by
-        /// <c>java.lang.Long.ParseLong</c>
-        /// </remarks>
-        /// <param name="value">The value to parse.</param>
-        /// <returns>An SQL BIGINT representation of the given value.</returns>
-        /// <exception cref="HsqlDataSourceException">
-        /// When a number format exception is encountered.
-        /// </exception>
-        public static long ParseBigInt(string value)
-        {
-            try
-            {
-                return JavaLong.parseLong(value);
-            }
-            catch (java.lang.NumberFormatException nfe)
-            {
-                throw new HsqlDataSourceException(Trace.error(
-                    Trace.INVALID_CONVERSION, nfe.toString()));
-            }
-        }
-        #endregion
-
-        #region ParseDouble(string)
-        /// <summary>
-        /// Parses the given value as an HSQLDB SQL DOUBLE.
-        /// </summary>
-        /// <remarks>
-        /// The legal input formats are those supported by
-        /// <c>java.lang.Double.ParseDouble</c>
-        /// </remarks>
-        /// <param name="value">The value to parse.</param>
-        /// <returns>An SQL DOUBLE representation of the given value.</returns>
-        /// <exception cref="HsqlDataSourceException">
-        /// When a number format exception is encountered.
-        /// </exception>
-        public static double ParseDouble(string value)
-        {
-            try
-            {
-                return JavaDouble.parseDouble(value);
-            }
-            catch (java.lang.NumberFormatException nfe)
-            {
-                throw new HsqlDataSourceException(Trace.error(
-                    Trace.INVALID_CONVERSION, nfe.toString()));
-            }
-        }
-        #endregion
-
-        #region ParseDecimal(string)
-        /// <summary>
-        /// Parses the given value as an HSQLDB SQL DECIMAL value
-        /// </summary>
-        /// <remarks>
-        /// The legal input formats are those supported by
-        /// <c>System.Decimal.Parse(string)</c>.
-        /// Note that the HSQLDB SQL DECIMAL type accepts values
-        /// that can have precision and scale far larger than
-        /// System.Decimal.  It is recommended to submit a string
-        /// value to the database when the desired SQL DECIMAL value
-        /// cannot be represented as a <c>System.Decimal</c> value.
-        /// </remarks>
-        /// <param name="value">The value to parse.</param>
-        /// <returns>An SQL DECIMAL representation of the given value.</returns>
-        /// <exception cref="HsqlDataSourceException">
-        /// When the underlying call <c>System.Decimal.Parse(string)</c>
-        /// raises an exception.
-        /// </exception>
-        public static decimal ParseDecimal(string value)
-        {
-            try
-            {
-                return decimal.Parse(value);
-            }
-            catch (Exception e)
-            {
-                throw new HsqlDataSourceException(
-                    Trace.error(Trace.INVALID_CONVERSION, e.ToString()));
-            }
-        }
-        #endregion
-
-        #endregion
 
         #region Exception Factory Methods
 
