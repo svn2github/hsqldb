@@ -83,6 +83,8 @@
 
           <!-- Note, installing the driver properly (IE, using ODBCDriver) has proven
                unreliable so we install the registry keys manually ourselves.  -->
+          <!-- The required settings are documented at
+               http://msdn.microsoft.com/en-us/library/ms714538(VS.85).aspx -->
           <RegistryValue Id="hsqlodbc01a.reg.1" Root="HKLM"
                          Key="SOFTWARE\ODBC\ODBCINST.INI\ODBC Drivers"
                          Name="HyperSQL ANSI" Type="string" Value="Installed" />
