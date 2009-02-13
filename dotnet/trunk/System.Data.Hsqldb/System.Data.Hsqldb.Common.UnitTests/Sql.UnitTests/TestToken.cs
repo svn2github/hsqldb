@@ -36,7 +36,7 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
         {
             Token testSubject = new Token("\"foo\".\"bar\"", "foo", "bar");
 
-            Assert.AreEqual("foo", testSubject.IdentifierChainFirst);
+            Assert.AreEqual("foo", testSubject.QualifierPart);
         }
 
         [Test, OfMember("IdentifierChainLast")]
@@ -44,7 +44,7 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
         {
             Token testSubject = new Token("\"foo\".\"bar\"", "foo", "bar");
 
-            Assert.AreEqual("bar", testSubject.IdentifierChainLast);
+            Assert.AreEqual("bar", testSubject.SubjectPart);
         }
 
         [Test, OfMember("LiteralValue")]
@@ -105,7 +105,7 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
 
             testSubject = new Token("\".foo.\".\".bar.\"", ".foo.", ".bar.");
 
-            expected = "System.Data.Hsqldb.Common.Sql.Token[value=\".foo.\".\".bar.\",type=IdentifierChain,identifierChainFirst=.foo.,identifierChainLast=.bar.]";
+            expected = "System.Data.Hsqldb.Common.Sql.Token[value=\".foo.\".\".bar.\",type=IdentifierChain,qualifierPart=.foo.,subjectPart=.bar.]";
             actual = testSubject.ToString();
 
             Assert.AreEqual(expected, actual);

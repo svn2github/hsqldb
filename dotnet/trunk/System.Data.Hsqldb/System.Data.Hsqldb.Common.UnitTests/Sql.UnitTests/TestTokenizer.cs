@@ -12,12 +12,24 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
     [TestFixture, ForSubject(typeof(Tokenizer))]
     public class TestTokenizer
     {
+        [Test, OfMember("EnforceTwoPartIdentifierChain")]
+        public void EnforceTwoPartIdentifierChain()
+        {
+            Tokenizer testSubject = new Tokenizer();
+
+            Assert.AreEqual(false, testSubject.EnforceTwoPartIdentifierChain);
+
+            testSubject.EnforceTwoPartIdentifierChain = true;
+
+            Assert.AreEqual(true, testSubject.EnforceTwoPartIdentifierChain);
+        }
+
         [Test, OfMember("GetNextAsBigint")]
         public void GetNextAsBigint()
         {
-            Tokenizer testSubject = new Tokenizer("123456789123456789");
+            Tokenizer testSubject = new Tokenizer(long.MinValue.ToString());
 
-            long expected = 123456789123456789L;
+            long expected = long.MinValue;
             long actual = testSubject.GetNextAsBigint();
 
             Assert.AreEqual(expected, actual);
@@ -162,14 +174,14 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
 
             testSubject.GetThis("CREATE");
             testSubject.GetThis("TABLE");
+            
+            string expectedSubjectPart = "Foo \"BarBaz\"";
+            string expectedQualifierPart = "PUBLIC";
+            string actualSubjectPart = testSubject.GetNextAsName();
+            string actualQualifierPart = testSubject.IdentifierChainPredecessor;
 
-            string expectedChainFirst = "PUBLIC";
-            string expected = "Foo \"BarBaz\"";
-            string actual = testSubject.GetNextAsName();
-            string actualChainFirst = testSubject.IdentifierChainFirst;
-
-            Assert.AreEqual(expectedChainFirst, actualChainFirst, "schema qualifier" );
-            Assert.AreEqual(expected, actual, "object name"); 
+            Assert.AreEqual(expectedQualifierPart, actualQualifierPart, "schema qualifier" );
+            Assert.AreEqual(expectedSubjectPart, actualSubjectPart, "object name"); 
         }
         
         [Test, OfMember("GetNextAsSimpleName")]
@@ -208,7 +220,7 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
 
             Assert.AreEqual("BAR", actual);
             Assert.AreEqual(true, testSubject.WasIdentifierChain);
-            Assert.AreEqual("FOO", testSubject.IdentifierChainFirst);
+            Assert.AreEqual("FOO", testSubject.IdentifierChainPredecessor);
         }
         
         [Test, OfMember("GetPart")]
@@ -229,8 +241,8 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
 
             Assert.AreEqual("BAR", actual);
             Assert.AreEqual(TokenType.IdentifierChain, testSubject.TokenType);
-            Assert.That(!testSubject.WasIdentifierChainFirstDelimited);
-            Assert.AreEqual("FOO", testSubject.IdentifierChainFirst);
+            Assert.That(!testSubject.WasIdentifierChainPredecessorDelimited);
+            Assert.AreEqual("FOO", testSubject.IdentifierChainPredecessor);
 
             Assert.AreEqual("FOO.BAR ".IndexOf(' '), testSubject.Position);
 
@@ -297,11 +309,22 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
             Assert.AreEqual(Token.ValueFor.CLOSEBRACKET, testSubject.GetThis(Token.ValueFor.CLOSEBRACKET));
             Assert.AreEqual(Token.ValueFor.SEMICOLON, testSubject.GetThis(Token.ValueFor.SEMICOLON));
         }
+
+        [Test, OfMember("IdentiferChain")]
+        public void IdentiferChain()
+        {
+
+        }
+
+        [Test, OfMember("IdentiferChainPredecessor")]
+        public void IdentiferChainPredecessor()
+        {
+
+        }
         
         [Test, OfMember("IdentiferChainLengthExceeded")]
         public void IdentiferChainLengthExceeded()
         {
-
             try
             {
                 throw Tokenizer.IdentiferChainLengthExceeded();
@@ -313,6 +336,8 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
             }
             
             Tokenizer testSubject = new Tokenizer("foo.bar.baz");
+
+            testSubject.EnforceTwoPartIdentifierChain = true;
 
             try
             {
@@ -334,19 +359,88 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
         [Test, OfMember("IllegalWaitState")]
         public void IllegalWaitState()
         {
-            Assert.Fail("TODO"); 
+            try
+            {
+                throw Tokenizer.IllegalWaitState();
+            }
+            catch (Exception ex)
+            {
+                Assert.IsInstanceOfType(typeof(HsqlDataSourceException), ex);
+                Assert.AreEqual(org.hsqldb.Trace.ASSERT_FAILED, -((HsqlDataSourceException)ex).ErrorCode);
+            }
         }
         
         [Test, OfMember("InvalidIdentifier")]
         public void InvalidIdentifier()
         {
-            Assert.Fail("TODO"); 
+            try
+            {
+                throw Tokenizer.InvalidIdentifier("fuddle duddle");
+            }
+            catch (Exception ex)
+            {
+                Assert.IsInstanceOfType(typeof(HsqlDataSourceException), ex);
+                Assert.AreEqual(org.hsqldb.Trace.INVALID_IDENTIFIER, -((HsqlDataSourceException)ex).ErrorCode);
+            }
         }
         
         [Test, OfMember("IsGetThis")]
         public void IsGetThis()
         {
-            Assert.Fail("TODO"); 
+            Tokenizer testSubject = new Tokenizer("create table test(id int, \"val\" varchar(12));");
+
+
+            if (testSubject.IsGetThis(Token.ValueFor.ALTER))
+            {
+                Assert.AreEqual(Token.ValueFor.CREATE, Token.ValueFor.ALTER);
+            }
+            else if (testSubject.IsGetThis(Token.ValueFor.CREATE)) 
+            {
+                if (testSubject.IsGetThis(Token.ValueFor.VIEW))
+                {
+                    Assert.AreEqual(Token.ValueFor.TABLE, Token.ValueFor.VIEW);
+                }
+                else if (testSubject.IsGetThis(Token.ValueFor.TABLE))
+                {
+                    string table_name = testSubject.GetNextAsName();
+                }
+                else
+                {
+                    Assert.AreNotEqual(Token.ValueFor.TABLE, testSubject.GetNextAsString());
+                }
+            }
+            else if (testSubject.IsGetThis(Token.ValueFor.DROP))
+            {
+                Assert.AreEqual(Token.ValueFor.CREATE, Token.ValueFor.DROP);
+            }
+            else
+            {
+                Assert.AreNotEqual(Token.ValueFor.CREATE, testSubject.GetNextAsString());
+            }
+        }
+
+        [Test, OfMember("LastPart")]
+        public void LastPart()
+        {
+            Assert.Fail("TODO");
+        }
+
+        [Test, OfMember("Length")]
+        public void Length()
+        {
+            Assert.Fail("TODO");
+        }
+
+        [Test, OfMember("LiteralValue")]
+        public void LiteralValue()
+        {
+            Assert.Fail("TODO");
+        }
+
+        [Test, OfMember("LiteralValueDataType")]
+        public void LiteralValueDataType()
+        {
+            Assert.Fail("TODO");
         }
         
         [Test, OfMember("MatchFailed")]
@@ -369,6 +463,30 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
                //    org.hsqldb.Trace.TOKEN_REQUIRED)));
             }
         }
+
+        [Test, OfMember("NormalizedToken")]
+        public void NormalizedToken()
+        {
+            Assert.Fail("TODO");
+        }
+
+        [Test, OfMember("ParameterName")]
+        public void ParameterName()
+        {
+            Assert.Fail("TODO");
+        }
+
+        [Test, OfMember("PartMarker")]
+        public void PartMarker()
+        {
+            Assert.Fail("TODO");
+        }
+
+        [Test, OfMember("Position")]
+        public void Position()
+        {
+            Assert.Fail("TODO");
+        }
         
         [Test, OfMember("Reset")]
         public void Reset()
@@ -378,6 +496,18 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
         
         [Test, OfMember("SetPartMarker")]
         public void SetPartMarker()
+        {
+            Assert.Fail("TODO");
+        }
+
+        [Test, OfMember("TokenType")]
+        public void TokenTypeTest()
+        {
+            Assert.Fail("TODO");
+        }
+
+        [Test, OfMember("TokenTypeName")]
+        public void TokenTypeName()
         {
             Assert.Fail("TODO");
         }
@@ -406,6 +536,36 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
             {
                 Assert.AreEqual(org.hsqldb.Trace.UNEXPECTED_TOKEN, -hdse.ErrorCode);
             }  
+        }
+
+        [Test, OfMember("WasDelimitedIdentifier")]
+        public void WasDelimitedIdentifier()
+        {
+            Assert.Fail("TODO");
+        }
+
+        [Test, OfMember("WasIdentifierChain")]
+        public void WasIdentifierChain()
+        {
+            Assert.Fail("TODO");
+        }
+
+        [Test, OfMember("WasIdentifierChainPredecessorDelimited")]
+        public void WasIdentifierChainPredecessorDelimited()
+        {
+            Assert.Fail("TODO");
+        }
+
+        [Test, OfMember("WasNamedParameter")]
+        public void WasNamedParameter()
+        {
+            Assert.Fail("TODO");
+        }
+
+        [Test, OfMember("WasParameterMarker")]
+        public void WasParameterMarker()
+        {
+            Assert.Fail("TODO");
         }
         
         [Test, OfMember("WasThis")]

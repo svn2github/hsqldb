@@ -36,39 +36,7 @@ namespace System.Data.Hsqldb.Common.UnitTests
             }
         }
 
-        [Test, OfMember("ParseBigInt")]
-        public void ParseBigInt()
-        {
-            long expected = long.MinValue;
-            long actual = HsqlConvert.ParseBigInt(Convert.ToString(expected));
-
-            Assert.AreEqual(expected, actual);
-        }
-
-        [Test, OfMember("ParseDecimal")]
-        public void ParseDecimal()
-        {
-            decimal expected = decimal.MinValue;
-            decimal actual = HsqlConvert.ParseDecimal(Convert.ToString(expected));
-
-            Assert.AreEqual(expected, actual);
-        }
-
-        [Test, OfMember("ParseDouble")]
-        public void ParseDouble()
-        {
-            double expected = double.MinValue;
-            double actual = HsqlConvert.ParseDouble(Convert.ToString(expected));
-
-            Assert.AreEqual(expected, actual);
-        }
-
-        [Test, OfMember("ParseInteger")]
-        public void ParseInteger()
-        {
-            int expected = int.MinValue;
-            int actual = HsqlConvert.ParseInteger(Convert.ToString(expected));
-        }
+        
 
         [Test, OfMember("ToDataType")]
         public void ToDataType()
