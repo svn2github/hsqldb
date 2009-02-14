@@ -72,6 +72,7 @@
 #define NULL_IF_NULL(a) ((a) ? ((const char *) a) : "(NULL)")
 
 /* extern GLOBAL_VALUES globals; */
+extern char *getOdbcFormatDriverFormatString();
 
 CSTR    pubstr = "public";
 CSTR    likeop = "like";
@@ -261,10 +262,13 @@ mylog("CONVERT_FUNCTIONS=" FORMAT_ULEN "\n", value);
             /*
             snprintf(tmp, sizeof(tmp) - 1, "%s %s", HSQLDRIVERVERSION, conn->pg_version);
                         tmp[sizeof(tmp) - 1] = '\0'; */
-            if (CC_fake_mss(conn))
-                p = "09.00.1399";
-            else
-            {
+            if (CC_fake_mss(conn)) {
+                p = getOdbcFormatDriverFormatString();
+                // Fri Feb 13 21:26:22 EST 2009
+                // Blaine changes to return Driver version if the server
+                // version is not available to us (like if we haven't
+                // connected yet!).
+            } else {
                 strncpy_null(tmp, conn->pg_version, sizeof(tmp));
                 p = tmp;
             }
@@ -290,12 +294,8 @@ mylog("CONVERT_FUNCTIONS=" FORMAT_ULEN "\n", value);
             break;
 
         case SQL_DRIVER_VER:    /* ODBC 1.0 */
-            p = PACKAGE_VERSION;
-            // Fri Feb 13 20:18:51 EST 2009
-            // TODO:  Check spec for format requirements for this string.
-            // Blaine has changed this String from the format ##.##.####,
-            // which format is incompatible with Microsoft's own product
-            // versioning requirements>
+            p = getOdbcFormatDriverFormatString();
+            // Fri Feb 13 21:26:22 EST 2009  Blaine improves
             break;
 
         case SQL_EXPRESSIONS_IN_ORDERBY:        /* ODBC 1.0 */
@@ -5432,4 +5432,14 @@ cleanup:
         ret = DiscardStatementSvp(stmt, ret, FALSE);
     mylog("%s(): EXIT, stmt=%p, ret=%d\n", func, stmt, ret);
     return ret;
+}
+
+// This is to format the String to satisfy the ODBC spec.
+char *getOdbcFormatDriverFormatString() {
+    // PACKAGE_VERSION consists of 4 integers.
+    unsigned int major, minor, release, build;
+    sscanf(PACKAGE_VERSION, "%u.%u.%u.%u", &major, &minor, &release, &build);
+    char * cp = malloc(100);
+    sprintf(cp, "%02u.%02u.%02u%02u", major, minor, release, build);
+    return cp;
 }
