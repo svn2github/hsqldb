@@ -33,11 +33,17 @@ if not exist "..\src\setpversion.cmd" (
     exit /b 1
 )
 if not exist "../src/MultibyteRelease/hsqlodbca.dll" (
-    echo 'hsqlodbca.cmd' not present in MultibyteRelease directory
+    echo 'hsqlodbca.dll' not present in MultibyteRelease directory
     exit /b 1
 )
 if not exist "../src/Release/hsqlodbcu.dll" (
-    echo 'hsqlodbcu.cmd' not present in Release directory
+    echo 'hsqlodbcu.dll' not present in Release directory
+    exit /b 1
+)
+
+java -version > nul
+IF ERRORLEVEL 1 (
+    echo You must have Java in your search path
     exit /b 1
 )
 
@@ -46,33 +52,37 @@ if not (%1)==() (
     exit /b 1
 )
 
+for /F "usebackq" %%x in (`java -jar ../bin/guidgen.jar`) do set NEW_GUID=%%x
+
 call ..\src\setpversion.cmd
 if errorlevel 1 exit /b 1
 
 echo Building hsqlodbc merge module v. %PACKAGE_VERSION%...
 
-candle -nologo -dVERSION=%PACKAGE_VERSION% -dPROGRAMFILES="%ProgramFiles%" -dSYSTEM32DIR="%SystemRoot%/system32" hsqlodbc-mm.wxs
-IF ERRORLEVEL 1 GOTO ERR_HANDLER
+candle -nologo -dVERSION=%PACKAGE_VERSION% -dPROGRAMFILES="%ProgramFiles%" -dSYSTEM32DIR="%SystemRoot%/system32" -dNEW_GUID="%NEW_GUID%" hsqlodbc-mm.wxs
+IF ERRORLEVEL 1 (
+    echo Candle execution for Merge Module failed
+    exit /b 1
+)
 
 light -nologo -o ..\dist\hsqlodbc.msm hsqlodbc-mm.wixobj
-IF ERRORLEVEL 1 GOTO ERR_HANDLER
+IF ERRORLEVEL 1 (
+    echo Light execution for Merge Module failed
+    exit /b 1
+)
 
-echo.
 echo Building hsqlodbc MSI database v. %PACKAGE_VERSION% for the MM...
 
 candle -nologo -dVERSION=%PACKAGE_VERSION% -dPROGRAMFILES="%ProgramFiles%" -dPROGRAMCOM="%ProgramFiles%/Common Files/Merge Modules" hsqlodbc.wxs
-IF ERRORLEVEL 1 GOTO ERR_HANDLER
+IF ERRORLEVEL 1 (
+    echo Candle execution for MSI failed
+    exit /b 1
+)
 
 light -nologo -o ..\dist\hsqlodbc.msi -ext WixUIExtension -cultures:en-us -sw1076 -sw1055 -sw1056 hsqlodbc.wixobj
-IF ERRORLEVEL 1 GOTO ERR_HANDLER
+IF ERRORLEVEL 1 (
+    echo Light execution for MSI failed
+    exit /b 1
+)
 
-echo.
-echo Done!
-GOTO EXIT
-
-:ERR_HANDLER
-echo.
-echo Aborting dist!
-GOTO EXIT
-
-:EXIT
+exit /b 0

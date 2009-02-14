@@ -40,7 +40,7 @@
            and
            http://wix.sourceforge.net/manual-wix3/generate_guids.htm
       -->
-    <Package Id="646C4361-B21B-3667-A4A9-A512A05B2F8A"
+    <Package Id="$(var.NEW_GUID)"
              Description="HyperSQL ODBC Driver"
              Keywords="HSQLDB, HyperSQL, ODBC"
              Manufacturer="The HSQL Development Group"
