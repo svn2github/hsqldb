@@ -1,0 +1,4 @@
+$Id$
+
+Our WiX MSI build procedure uses "UUID", copyright by John Burkard via
+MIT License.  Fully documented at http://johannburkard.de/software/uuid/ .
