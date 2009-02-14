@@ -5437,9 +5437,10 @@ cleanup:
 // This is to format the String to satisfy the ODBC spec.
 char *getOdbcFormatDriverFormatString() {
     // PACKAGE_VERSION consists of 4 integers.
+    char * cp = malloc(100);
+
     unsigned int major, minor, release, build;
     sscanf(PACKAGE_VERSION, "%u.%u.%u.%u", &major, &minor, &release, &build);
-    char * cp = malloc(100);
     sprintf(cp, "%02u.%02u.%02u%02u", major, minor, release, build);
     return cp;
 }
