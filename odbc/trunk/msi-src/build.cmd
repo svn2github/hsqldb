@@ -1,4 +1,5 @@
 @echo off
+setlocal
 
 ::  $Id$
 ::
@@ -27,33 +28,39 @@
 ::  Free Foundation, Inc., 51 Franklin Street, Fifth Floor,
 ::  Boston, MA  02110-1301  USA
 
-REM Values to change include VERSION below.
+if not exist "..\src\setpversion.cmd" (
+    echo 'setpversion.cmd' not present in source directory
+    exit /b 1
+)
+if not exist "../src/MultibyteRelease/hsqlodbca.dll" (
+    echo 'hsqlodbca.cmd' not present in MultibyteRelease directory
+    exit /b 1
+)
+if not exist "../src/Release/hsqlodbcu.dll" (
+    echo 'hsqlodbcu.cmd' not present in Release directory
+    exit /b 1
+)
 
-if NOT "%1"=="" SET VERSION="%1"
-if NOT "%1"=="" GOTO GOT_VERSION
+if not (%1)==() (
+    echo This script does not take any command-line arguments
+    exit /b 1
+)
 
-REM The full version number of the build in XXXX.XX.XX format
-SET VERSION="09.02.06"
+call ..\src\setpversion.cmd
+if errorlevel 1 exit /b 1
 
-echo.
-echo Version not specified - defaulting to %VERSION%
-echo.
+echo Building hsqlodbc merge module v. %PACKAGE_VERSION%...
 
-:GOT_VERSION
-
-echo.
-echo Building hsqlodbc merge module...
-
-candle -nologo -dVERSION=%VERSION% -dPROGRAMFILES="%ProgramFiles%" -dSYSTEM32DIR="%SystemRoot%/system32" hsqlodbc-mm.wxs
+candle -nologo -dVERSION=%PACKAGE_VERSION% -dPROGRAMFILES="%ProgramFiles%" -dSYSTEM32DIR="%SystemRoot%/system32" hsqlodbc-mm.wxs
 IF ERRORLEVEL 1 GOTO ERR_HANDLER
 
 light -nologo -o ..\dist\hsqlodbc.msm hsqlodbc-mm.wixobj
 IF ERRORLEVEL 1 GOTO ERR_HANDLER
 
 echo.
-echo Building hsqlodbc MSI database...
+echo Building hsqlodbc MSI database v. %PACKAGE_VERSION% for the MM...
 
-candle -nologo -dVERSION=%VERSION% -dPROGRAMFILES="%ProgramFiles%" -dPROGRAMCOM="%ProgramFiles%/Common Files/Merge Modules" hsqlodbc.wxs
+candle -nologo -dVERSION=%PACKAGE_VERSION% -dPROGRAMFILES="%ProgramFiles%" -dPROGRAMCOM="%ProgramFiles%/Common Files/Merge Modules" hsqlodbc.wxs
 IF ERRORLEVEL 1 GOTO ERR_HANDLER
 
 light -nologo -o ..\dist\hsqlodbc.msi -ext WixUIExtension -cultures:en-us -sw1076 -sw1055 -sw1056 hsqlodbc.wixobj

@@ -1,5 +1,5 @@
-
 @echo off
+setlocal
 
 :: Poor man's config.h generation for Windows
 :: findstr AC_INIT configure.ac
@@ -16,3 +16,4 @@ echo #define PACKAGE_VERSION_COMMAS %CVER%
 echo #define PACKAGE_VERSION_NTS "%FULLVER%\0"
 
 echo @set PACKAGE_VERSION=%FULLVER% > setpversion.cmd
+echo @exit /b 0 >> setpversion.cmd

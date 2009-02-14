@@ -1,4 +1,6 @@
-    
+@echo off
+setlocal
+
 ::  $Id$
 ::
 ::  Clean script for the Wix MSI generator for hsqlodbc,
@@ -23,9 +25,14 @@
 ::  Free Foundation, Inc., 51 Franklin Street, Fifth Floor,
 ::  Boston, MA  02110-1301  USA
 
-@echo WARNING:  I need to add validation to make sure you run this from the
-@echo right directory.  Until then, proceed if you really want to wipe out
-@pause *.wix* and the entire directory ..\dist.
+if not exist "hsqlodbc-mm.wxs" (
+    echo This script must be run from the 'msi-src' subdirectory.
+    exit /b 1
+)
 
-@rmdir /s /q ..\dist
-@del *.wix*
+rmdir /s /q ..\dist
+del *.wix*
+
+:: Leave this exit in place so that our other scripts can check for
+:: successful execution if they need to.
+exit /b 0

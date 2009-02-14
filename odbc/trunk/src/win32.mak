@@ -186,7 +186,10 @@ ALLDLL  = $(ALLDLL) "$(OUTDIR)\$(MAINDLL)"
 ALLDLL = $(ALLDLL) "$(OUTDIR)\$(XADLL)" "$(OUTDIR)\$(DTCDLL)"
 !ENDIF
 
-ALL : $(ALLDLL)
+ALL : GEN_CONFIG_H $(ALLDLL)
+
+GEN_CONFIG_H :
+	config_h > config.h
 
 CLEAN :
 	-@erase "$(INTDIR)\*.obj"
