@@ -1,0 +1,26 @@
+<project name="guidgen" default="jar" basedir="..">
+  <!-- $Id$ -->
+  <target name="compile" description="Build cass files for Guid Generation">
+    <property environment="env"/>
+    <fail unless="env.JAVA_HOME"
+    message="You must set env property 'JAVA_HOME' before compiling with Ant"/>
+    <mkdir dir="classes"/>
+    <javac classpath="bin/uuid-3.0.jar" destdir="classes" srcdir="config-src"/>
+  </target>
+
+  <target name="jar" depends="compile"
+          description="Build the Guid Generator jar file">
+    <jar destfile="bin/${ant.project.name}.jar" basedir="classes">
+      <manifest>
+        <attribute name="Main-Class" value="org.hsqldb.cmdline.GuidGenerator"/>
+        <attribute name="Class-Path" value="uuid-3.0.jar"/>
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="clean"
+description="Remove the Guid Generator jar file and the class file(s) for it">
+    <delete dir="classes"/>
+    <delete file="bin/${ant.project.name}.jar"/>
+  </target>
+</project>
