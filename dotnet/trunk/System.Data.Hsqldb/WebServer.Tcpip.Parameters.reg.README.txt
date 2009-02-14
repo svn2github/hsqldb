@@ -6,7 +6,7 @@ Thus, high traffic is very likely to leave a large number of sockets
 continuously in TIME_WAIT, exhausting the number of non TIME_WAIT TCBs
 available for reuse.
 
-The included WebServer.Tcpip.Parameters.reg file provides some
+The included WebServer.Tcpip.Parameters.reg.txt file provides some
 registry settings that can be used avoid suprious server failure under the
 current Web Server HTTP protocol implementation.
 
@@ -132,9 +132,9 @@ briefly for wild-card binds) are allocated to port numbers 1024 through 5000.
 
 NOTE
 
-Setting MaxUserPort higher than the default (or installing a service that
-whose well-known, i.e. registered IANA port that lies in the range 1025
-- MaxUserPort) may require setting up port reservation to avoid bind
+Setting MaxUserPort higher than the default (or installing a service
+whose well-known, i.e. registered with IANA, port lies in the range 1025
+- MaxUserPort), may require setting up port reservation to avoid bind
 exceptions.
 
 Microsoft SQL Server, for instance, reserves the range 1433-1434 during
@@ -211,6 +211,7 @@ power of two.
 Windows does not add this entry to the registry. You can add it by
 editing the registry or by using a program that edits the registry.
 
-Decimal 16384 seems to work fine with
+Decimal 16384 seems to work fine with MaxFreeTcbs specified
+earlier in this document.
 
 "MaxHashTableSize"=dword:00004000
