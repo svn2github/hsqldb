@@ -290,7 +290,12 @@ mylog("CONVERT_FUNCTIONS=" FORMAT_ULEN "\n", value);
             break;
 
         case SQL_DRIVER_VER:    /* ODBC 1.0 */
-            p = HSQLDRIVERVERSION;
+            p = PACKAGE_VERSION;
+            // Fri Feb 13 20:18:51 EST 2009
+            // TODO:  Check spec for format requirements for this string.
+            // Blaine has changed this String from the format ##.##.####,
+            // which format is incompatible with Microsoft's own product
+            // versioning requirements>
             break;
 
         case SQL_EXPRESSIONS_IN_ORDERBY:        /* ODBC 1.0 */

@@ -36,7 +36,7 @@ hsqlodbca_la_SOURCES = \
     descriptor.h dlg_specific.h environ.h \
     lobj.h md5.h misc.h multibyte.h pgapifunc.h pgtypes.h \
     hsqlodbc.h qresult.h resource.h socket.h statement.h tuple.h \
-    version.h loadlib.h pgenlist.h
+    loadlib.h pgenlist.h
 
 hsqlodbcu_la_SOURCES = $(hsqlodbca_la_SOURCES) \
     odbcapi30w.c odbcapiw.c win_unicode.c

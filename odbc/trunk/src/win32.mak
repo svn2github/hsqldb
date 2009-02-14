@@ -211,7 +211,7 @@ CLEAN :
 "$(OUTDIR)\$(MAINDLL)" : "$(OUTDIR)\$(DTCLIB).lib"
 !ENDIF
 
-$(INTDIR)\connection.obj $(INTDIR)\psqlodbc.res: version.h
+$(INTDIR)\connection.obj $(INTDIR)\psqlodbc.res: config.h
 
 CPP=cl.exe
 !IF  "$(CFG)" == "Release"

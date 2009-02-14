@@ -35,9 +35,8 @@
 
 /* #define  __MS_REPORTS_ANSI_CHAR__ */
 
-#ifndef WIN32
 #include "config.h"
-#else
+#ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
@@ -46,7 +45,6 @@
 #ifdef POSIX_MULTITHREAD_SUPPORT
 #include <pthread.h>
 #endif
-#include "version.h"
 
 #ifdef  WIN32
 #ifdef  _DEBUG

@@ -13,7 +13,7 @@
 // Generated from the TEXTINCLUDE 2 resource.
 //
 #include "windows.h"
-#include "version.h"
+#include "config.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -306,7 +306,7 @@ END
 2 TEXTINCLUDE DISCARDABLE 
 BEGIN
     "#include ""windows.h""\r\n"
-    "#include ""version.h""\r\n"
+    "#include ""config.h""\r\n"
     "\0"
 END
 
@@ -326,8 +326,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION PG_DRVFILE_VERSION
- PRODUCTVERSION PG_DRVFILE_VERSION
+ FILEVERSION PACKAGE_VERSION_COMMAS
+ PRODUCTVERSION PACKAGE_VERSION_COMMAS
  FILEFLAGSMASK 0x3L
 #ifdef _DEBUG
  FILEFLAGS 0x9L
@@ -349,7 +349,7 @@ BEGIN
 #endif
             VALUE "CompanyName", "HyperSQL Global Development Group\0"
             VALUE "FileDescription", "HyperSQL ODBC Driver (Japanese)\0"
-            VALUE "FileVersion", HSQL_RESOURCE_VERSION
+            VALUE "FileVersion", PACKAGE_VERSION_NTS
 #ifdef UNICODE_SUPPORT
             VALUE "InternalName", "hsqlodbcu\0"
 #else
@@ -364,7 +364,7 @@ BEGIN
 #endif
             VALUE "PrivateBuild", "for Japanese by Hiroshi Inoue & Hiroshi Saito\0"
             VALUE "ProductName", "HyperSQL\0"
-            VALUE "ProductVersion", HSQL_RESOURCE_VERSION
+            VALUE "ProductVersion", PACKAGE_VERSION_NTS
             VALUE "SpecialBuild", "\0"
         END
     END
@@ -683,8 +683,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION PG_DRVFILE_VERSION
- PRODUCTVERSION PG_DRVFILE_VERSION
+ FILEVERSION PACKAGE_VERSION_COMMAS
+ PRODUCTVERSION PACKAGE_VERSION_COMMAS
  FILEFLAGSMASK 0x3L
 #ifdef _DEBUG
  FILEFLAGS 0x9L
@@ -706,7 +706,7 @@ BEGIN
 #endif
             VALUE "CompanyName", "The HSQL Development Group\0"
             VALUE "FileDescription", "HyperSQL ODBC Driver (English)\0"
-            VALUE "FileVersion", HSQL_RESOURCE_VERSION
+            VALUE "FileVersion", PACKAGE_VERSION_NTS
 #ifdef UNICODE_SUPPORT
             VALUE "InternalName", "hsqlodbcu\0"
 #else
@@ -721,7 +721,7 @@ BEGIN
 #endif
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "HyperSQL\0"
-            VALUE "ProductVersion", HSQL_RESOURCE_VERSION
+            VALUE "ProductVersion", PACKAGE_VERSION_NTS
             VALUE "SpecialBuild", "\0"
         END
     END

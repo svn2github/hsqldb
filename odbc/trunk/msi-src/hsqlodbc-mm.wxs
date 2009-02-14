@@ -31,6 +31,15 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Module Id="hsqlodbc" Version="$(var.VERSION)" Language="1033">
 
+    <!--  *IMPORTANT* !!
+          Need to generate a unique GUID for each msm/msi build (assuming
+          anything at all in the contents have changed).
+          Should be able to just set Id to "*" below, but that WiX feature is
+          badly broken.  Here is how it should work:
+     http://wix.sourceforge.net/manual-wix3/wix_xsd_simple_type_autogenguid.htm
+           and
+           http://wix.sourceforge.net/manual-wix3/generate_guids.htm
+      -->
     <Package Id="646C4361-B21B-3667-A4A9-A512A05B2F8A"
              Description="HyperSQL ODBC Driver"
              Keywords="HSQLDB, HyperSQL, ODBC"

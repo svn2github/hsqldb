@@ -1,5 +1,5 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT(hsqlodbc, 09.02.0600, [dedmike@hsqldb.org])
+AC_INIT(hsqlodbc, 1.9.0.1)
 AC_PREREQ(2.57)
 AC_CONFIG_AUX_DIR(config)
 AM_INIT_AUTOMAKE
