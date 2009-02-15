@@ -24,8 +24,8 @@ width: 40em;
                     <span class="topicTitle">Chapter 1 - Getting Started</span>
                     <br>
                     <div id="toolbar">
-                        <span id="chickenFeet"><a href="Chapter 1 - Getting Started.html">Chapter Overview
-                        </a>&gt; <span class="nolink">Introduction</span> </span>
+                        <span id="chickenFeet"><a href="Chapter 1 - Getting Started.html">Chapter Overview </a>
+                            &gt; <span class="nolink">Introduction</span> </span>
                     </div>
                 </td>
             </tr>
@@ -33,8 +33,7 @@ width: 40em;
     </div>
     <div id="main">
         <p>
-            The HSQLDB ADO.NET Data Provider installation contains several components and
-            programs:</p>
+            The HSQLDB ADO.NET Data Provider installation contains several components and programs:</p>
         <ul type="disc">
             <li>
                 <p>
@@ -57,47 +56,69 @@ width: 40em;
                             <p>
                                 An Object model remapping infrastructure:</p>
                             <p>
-                                Allows Java code to recognize important NET base classes as corresponding Java
-                                base classes and visa versa.
+                                Allows Java code to recognize important NET base classes as corresponding Java base
+                                classes and visa versa.
                             </p>
                         </li>
                         <li>
                             <p>
-                                Managed .NET re-implementations of the native methods in GNU Classpath.</li>
+                            Managed .NET re-implementations of the native methods in OpenJDK / GNU Classpath.</li>
                     </ul>
                 </div>
             </li>
             <li>
                 <p>
-                    <strong> <a href="http://www.gnu.org/software/classpath/classpath.html">GNU
-                        Classpath</a> Assembly (IKVM.GNU.Classpath.dll)</strong></p>
+                    <strong><a href="http://openjdk.java.net/">OpenJDK</a> Assembly (IKVM.OpenJDK.ClassLibrary.dll)</strong></p>
                 <div class="item-body">
                     <p>
-                        A compiled version of the GNU Classpath Java class libraries, plus some additional
+                        A compiled version of the Java class libraries derived from the <a href="http://openjdk.java.net/">
+                            <span style="text-decoration: underline">OpenJDK</span></a> class library with
+                        some parts filled in with code from <a href="http://www.gnu.org/software/classpath/classpath.html">
+                            <span style="text-decoration: underline">GNU Classpath</span></a> and <a href="http://icedtea.classpath.org/wiki/Main_Page">
+                                <span style="text-decoration: underline">IcedTea</span></a>, plus some additional
                         IKVM.NET specific code.</p>
                     <p>
-                        Note that GNU Classpath isn't <em>part</em> of IKVM.NET, but it is <em>used</em>
-                        by IKVM.NET.</p>
+                        Note that OpenJDK and GNU Classpath are not <em>part</em> of IKVM.NET, but they
+                        are <em>used</em> by IKVM.NET.</p>
                 </div>
             </li>
             <li>
                 <p>
-                    <strong><a href="http://sourceforge.net/project/showfiles.php?group_id=23316">HSQLDB</a> Embedded RDBMS Engine Assembly (Org.Hsqldb.dll)</strong></p>
+                    <strong><a href="http://sourceforge.net/project/showfiles.php?group_id=23316">HSQLDB</a>
+                        Embedded RDBMS Engine Assembly (Org.Hsqldb.dll)</strong></p>
                 <div class="item-body">
                     <p>
-                        A slightly patched version of the
-                            HSQLDB 1.8 standard profile jar, recompiled as a managed .NET assembly
-                        using the <strong>ikvmc.exe</strong> static compiler.</p>
+                        A slightly patched version of the HSQLDB 1.8.0 standard profile jar, recompiled
+                        as a managed .NET assembly using the <strong>ikvmc.exe</strong> static compiler.</p>
                 </div>
             </li>
             <li>
                 <p>
-                    <strong>ADO.NET Driver Assembly (System.Data.Hsqldb.Client.dll)</strong></p>
+                    <strong><a href="http://msdn.microsoft.com/en-us/library/e80y5yhx.aspx">ADO.NET</a>
+                        Data Provider Assembly (System.Data.Hsqldb.Client.dll)</strong></p>
                 <div class="item-body">
                     <p>
                         Contains HSQLDB-specific managed .NET implementations of the abstract base classes
                         found in the <tt>System.Data.Common</tt> namespace, such as <tt>DbConnection</tt>,
                         <tt>DbCommand</tt>, <tt>DbDataReader</tt>, etc.</p>
+                </div>
+            </li>
+            <li>
+                <p>
+                    <strong>Common Support Assembly (System.Data.Hsqldb.Common.dll)</strong></p>
+                <div class="item-body">
+                    <p>
+                        Contains HSQLDB-specific managed .NET classes that provide a bridge between the
+                        Java-specific (non-CLSCompliant) <b>Org.Hsqldb.dll</b> assembly and the managed
+                        CLR runtime environment.
+                    </p>
+                    <p>
+                        In particular, provides the <span style="color: navy"><strong>enum</strong></span>
+                        types, adaptor, wrapper, and converter classes expected to be either commonly required
+                        by or found to be particularly useful in code that needs to interact with the APIs
+                        located in the <strong>System.Data.Hsqldb.Client</strong>, <strong>System.Data.Hsqldb.Net
+                        </strong>or<strong> Org.Hsqldb</strong> namespaces.
+                    </p>
                 </div>
             </li>
             <li>
@@ -121,8 +142,8 @@ width: 40em;
                     <strong>Server Service Application (System.Data.Hsqldb.Server.Service.exe)</strong></p>
                 <div class="item-body">
                     <p>
-                        Contains a Windows<font size="-2"><sup><em>TM</em></sup></font> service and
-                        service installer for the HSQLDB network database Server</p>
+                        Contains a Windows<font size="-2"><sup><em>TM</em></sup></font> service and service
+                        installer for the HSQLDB network database Server</p>
                 </div>
             </li>
             <li>
@@ -138,8 +159,8 @@ width: 40em;
                     <strong>WebServer Service Application (System.Data.Hsqldb.WebServer.Service.exe)</strong></p>
                 <div class="item-body">
                     <p>
-                        Contains a Windows<font size="-2"><sup><em>TM</em></sup></font> service and
-                        service installer for the HSQLDB network database WebServer</p>
+                        Contains a Windows<font size="-2"><sup><em>TM</em></sup></font> service and service
+                        installer for the HSQLDB network database WebServer</p>
                 </div>
             </li>
             <li>
@@ -160,20 +181,27 @@ width: 40em;
             </li>
             <li>
                 <p>
-                    <strong><a href="http://msdn2.microsoft.com/en-us/vstudio/default.aspx">Visual Studio
+                    <strong><a href="http://msdn.microsoft.com/en-us/library/ms950416.aspx">Visual Studio
                         2005</a> Data Designer Extension Package</strong></p>
                 <div class="item-body">
                     <p>
                         Provides <em>Server Explorer</em> integration with Visual Studio 2005.</p>
                 </div>
             </li>
-            <li>
-                <p>
-                    <strong><a href="http://www.hibernate.org/343.html">NHibernate</a> Dialect &amp; Driver Assembly</strong></p>
+            <li><a href="http://msdn.microsoft.com/en-us/library/aa187917.aspx">Visual Studio 2008</a><strong>
+                Data Designer Extension Package</strong>
                 <div class="item-body">
                     <p>
-                        Allows the data provider to be used with
-                            NHibernate for .NET</p>
+                        Provides <em>Server Explorer</em> integration with Visual Studio 2008.</p>
+                </div>
+            </li>
+            <li>
+                <p>
+                    <strong><a href="http://www.hibernate.org/343.html">NHibernate</a> Dialect &amp; Driver
+                        Assembly</strong></p>
+                <div class="item-body">
+                    <p>
+                        Allows the data provider to be used with NHibernate for .NET</p>
                 </div>
             </li>
             <li>
