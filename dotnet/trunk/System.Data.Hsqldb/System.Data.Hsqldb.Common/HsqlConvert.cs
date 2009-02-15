@@ -364,7 +364,7 @@ namespace System.Data.Hsqldb.Common
                     }
                 case DbType.DateTimeOffset:
                     {
-                        return HsqlProviderType.TimeStamp;
+                        return HsqlProviderType.Char;
                     }
                 case DbType.Decimal:
                     {
@@ -480,7 +480,7 @@ namespace System.Data.Hsqldb.Common
         ///   <item>
         ///     <term>
         ///      HsqlProviderType.Blob - an SQL BLOB value type, which is a 
-        ///      locator for an an octet sequence of length 0 to 2^63-1.
+        ///      locator for an octet sequence of length 0 to 2^63-1.
         ///      </term>
         ///     <description>DbType.Object</description>
         ///   </item>
@@ -497,7 +497,7 @@ namespace System.Data.Hsqldb.Common
         ///   </item>
         ///   <item>
         ///     <term>HsqlProviderType.Clob - an SQL CLOB value type, which is a locator for an SQL Unicode character sequence of length 0 to 2^63-1.</term>
-        ///     <description>DbType.String</description>
+        ///     <description>DbType.Object</description>
         ///   </item>
         ///   <item>
         ///     <term>HsqlProviderType.DataLink - an SQL DATALINK value type, which is an SQL MED URL for a managed external data item.</term>
@@ -632,7 +632,7 @@ namespace System.Data.Hsqldb.Common
                     }
                 case HsqlProviderType.Clob:
                     {
-                        return DbType.String;
+                        return DbType.Object;
                     }
                 case HsqlProviderType.DataLink:
                     {
@@ -1057,15 +1057,19 @@ namespace System.Data.Hsqldb.Common
                     }
                 case (int)HsqlProviderType.Real:
                     {
-                        return typeof(double);
+                        return typeof(float);
                     }
                 case (int)HsqlProviderType.SmallInt:
                     {
-                        return typeof(int);
+                        return typeof(short);
                     }
                 case (int)HsqlProviderType.TinyInt:
                     {
-                        return typeof(int);
+                        return typeof(sbyte);
+                    }
+                case (int)HsqlProviderType.Xml:
+                    {
+                        return typeof(string);
                     }
                 default:
                     {
@@ -1074,6 +1078,13 @@ namespace System.Data.Hsqldb.Common
             }
         }
 
+        #endregion
+
+        #region ToProviderSpecificDataType(HsqlProviderType)
+        public static Type ToProviderSpecificDataType(HsqlProviderType type)
+        {
+            return HsqlConvert.ToProviderSpecificDataType((int)type);
+        }
         #endregion
 
         #region ToProviderSpecificDataType(int)
@@ -1097,119 +1108,119 @@ namespace System.Data.Hsqldb.Common
         {
             switch (type)
             {
-                case HsqlTypes.ARRAY:
+                case (int)HsqlProviderType.Array:
                     {
                         return typeof(java.sql.Array);
                     }
-                case HsqlTypes.BIGINT:
+                case (int)HsqlProviderType.BigInt:
                     {
-                        return typeof(java.lang.Long);
+                        return typeof(JavaLong);
                     }
-                case HsqlTypes.BINARY:
+                case (int)HsqlProviderType.Binary:
                     {
                         return typeof(byte[]);
                     }
-                case HsqlTypes.BLOB:
+                case (int)HsqlProviderType.Blob:
                     {
                         return typeof(IBlob);
                     }
-                case HsqlTypes.BOOLEAN:
+                case (int)HsqlProviderType.Boolean:
                     {
-                        return typeof(java.lang.Boolean);
+                        return typeof(JavaBoolean);
                     }
-                case HsqlTypes.CHAR:
+                case (int)HsqlProviderType.Char:
                     {
                         return typeof(string);
                     }
-                case HsqlTypes.CLOB:
+                case (int)HsqlProviderType.Clob:
                     {
                         return typeof(IClob);
                     }
-                case HsqlTypes.DATALINK:
+                case (int)HsqlProviderType.DataLink:
                     {
                         return typeof(java.net.URL);
                     }
-                case HsqlTypes.DATE:
+                case (int)HsqlProviderType.Date:
                     {
                         return typeof(java.sql.Date);
                     }
-                case HsqlTypes.DECIMAL:
+                case (int)HsqlProviderType.Decimal:
                     {
                         return typeof(java.math.BigDecimal);
                     }
-                case HsqlTypes.DISTINCT:
+                case (int)HsqlProviderType.Distinct:
                     {
                         return typeof(object);
                     }
-                case HsqlTypes.DOUBLE:
+                case (int)HsqlProviderType.Double:
                     {
                         return typeof(java.lang.Double);
                     }
-                case HsqlTypes.FLOAT:
+                case (int)HsqlProviderType.Float:
                     {
                         return typeof(java.lang.Double);
                     }
-                case HsqlTypes.INTEGER:
+                case (int)HsqlProviderType.Integer:
                     {
                         return typeof(java.lang.Integer);
                     }
-                case HsqlTypes.JAVA_OBJECT:
+                case (int)HsqlProviderType.JavaObject:
                     {
                         return typeof(java.lang.Object);
                     }
-                case HsqlTypes.LONGVARBINARY:
+                case (int)HsqlProviderType.LongVarBinary:
                     {
                         return typeof(byte[]);
                     }
-                case HsqlTypes.LONGVARCHAR:
+                case (int)HsqlProviderType.LongVarChar:
                     {
                         return typeof(string);
                     }
-                case HsqlTypes.NULL:
+                case (int)HsqlProviderType.Null:
                     {
                         return typeof(void);
                     }
-                case HsqlTypes.NUMERIC:
+                case (int)HsqlProviderType.Numeric:
                     {
                         return typeof(java.math.BigDecimal);
                     }
-                case HsqlTypes.OTHER:
+                case (int)HsqlProviderType.Object:
                     {
                         return typeof(SqlObject);
                     }
-                case HsqlTypes.REAL:
+                case (int)HsqlProviderType.Real:
                     {
                         return typeof(java.lang.Double);
                     }
-                case HsqlTypes.REF:
+                case (int)HsqlProviderType.Ref:
                     {
                         return typeof(java.sql.Ref);
                     }
-                case HsqlTypes.SMALLINT:
+                case (int)HsqlProviderType.SmallInt:
                     {
                         return typeof(java.lang.Integer);
                     }
-                case HsqlTypes.STRUCT:
+                case (int)HsqlProviderType.Struct:
                     {
                         return typeof(java.sql.Struct);
                     }
-                case HsqlTypes.TIME:
+                case (int)HsqlProviderType.Time:
                     {
                         return typeof(java.sql.Time);
                     }
-                case HsqlTypes.TIMESTAMP:
+                case (int)HsqlProviderType.TimeStamp:
                     {
                         return typeof(java.sql.Timestamp);
                     }
-                case HsqlTypes.TINYINT:
+                case (int)HsqlProviderType.TinyInt:
                     {
                         return typeof(java.lang.Integer);
                     }
-                case HsqlTypes.VARBINARY:
+                case (int)HsqlProviderType.VarBinary:
                     {
                         return typeof(byte[]);
                     }
-                case HsqlTypes.VARCHAR:
+                case (int)HsqlProviderType.VarChar:
                     {
                         return typeof(string);
                     }
@@ -1217,9 +1228,9 @@ namespace System.Data.Hsqldb.Common
                     {
                         return typeof(string);
                     }
-                case HsqlTypes.XML:
+                case (int)HsqlProviderType.Xml:
                     {
-                        return typeof(object);
+                        return typeof(java.sql.SQLXML);
                     }
                 default:
                     {
@@ -1286,8 +1297,8 @@ namespace System.Data.Hsqldb.Common
                     }
                 case DbType.Boolean:
                     {
-                        return FromDotNet.ToBoolean(objectValue)
-                            .booleanValue() ? "TRUE" : "FALSE";
+                        return FromDotNet.ToBoolean(objectValue).booleanValue()
+                            ? "TRUE" : "FALSE";
                     }
                 case DbType.Byte:
                     {

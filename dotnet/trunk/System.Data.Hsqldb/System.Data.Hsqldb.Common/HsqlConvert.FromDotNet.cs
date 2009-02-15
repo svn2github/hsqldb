@@ -149,10 +149,13 @@ namespace System.Data.Hsqldb.Common
             [CLSCompliant(false)]
             public static JavaBoolean ToBoolean(string stringValue)
             {
-                return ((stringValue.Length == 5)
-                    && "TRUE".Equals(stringValue, IgnoreCase))
-                           ? TRUE
-                           : FALSE;
+                if (stringValue == null)
+                {
+                    throw new NullReferenceException("stringValue");
+                }
+
+                return (stringValue.Length == 4 && stringValue.Equals("TRUE", 
+                    IgnoreCase)) ? JavaBoolean.TRUE : JavaBoolean.FALSE;
             }
             #endregion
 
@@ -189,6 +192,24 @@ namespace System.Data.Hsqldb.Common
             public static JavaBoolean ToBoolean(sbyte sbyteValue)
             {
                 return (sbyteValue == 0) ? FALSE : TRUE;
+            }
+            #endregion
+
+            #region ToBoolean(char)
+            /// <summary>
+            /// Converts the given <c>System.Char</c>
+            /// value to an <c>SQL BOOLEAN</c> value.
+            /// </summary>
+            /// <param name="sbyteValue">
+            /// To convert to a <c>java.lang.Boolean</c> value.
+            /// </param>
+            /// <returns>
+            /// The corresponding <c>java.lang.Boolean</c> value.
+            /// </returns>
+            [CLSCompliant(false)]
+            public static JavaBoolean ToBoolean(char charValue)
+            {
+                return (charValue == 0) ? FALSE : TRUE;
             }
             #endregion
 
@@ -518,7 +539,7 @@ namespace System.Data.Hsqldb.Common
                         }
                     case TypeCode.Char:
                         {
-                            return ToBoolean((ushort)objectValue);
+                            return ToBoolean((char)objectValue);
                         }
                     case TypeCode.DateTime:
                         {
@@ -1222,10 +1243,10 @@ namespace System.Data.Hsqldb.Common
             [CLSCompliant(false)]
             public static Binary ToBinary(sbyte sbyteValue)
             {
-                if (sbyteValue < 0)
-                {
-                    throw NumericValueOutOfRange(sbyteValue);
-                }
+                //if (sbyteValue < 0)
+                //{
+                //    throw NumericValueOutOfRange(sbyteValue);
+                //}
                 // checkme
                 return new Binary(new byte[] { (byte)sbyteValue }, /*clone*/false);
             }
@@ -1670,7 +1691,7 @@ namespace System.Data.Hsqldb.Common
                         }
                     case TypeCode.Char:
                         {
-                            return ToBinary((ushort)objectValue);
+                            return ToBinary((char)objectValue);
                         }
                     case TypeCode.DateTime:
                         {
@@ -2112,14 +2133,43 @@ namespace System.Data.Hsqldb.Common
 
             #region ToString(INullable)
             /// <summary>
-            /// Converts the given <see cref="INullable"/>
-            /// value to an SQL <c>String</c> literal value.
-            /// </summary>
+            /// Converts the given <see cref="INullable"/> value to an equivalent
+            /// HSQLDB SQL literal value character sequence.
+            /// <remarks>
+            /// <para>
+            /// Note that, to be parsed as part of an HSQLDB SQL commad
+            /// text character sequence, the returned character sequence may
+            /// need to be converted to the SQL string literal form (i.e.
+            /// augmented with leading and trailing single quotes, and
+            /// with embedded single quotes escaped by doubling).
+            /// </para>
+            /// <para>
+            /// This is currently always true for <see cref="SqlBinary"/> and
+            /// <see cref="SqlBytes"/>, which are both converted to
+            /// hexadecimal-encoded character sequences.
+            /// </para>
+            /// <para>
+            /// More obviously, this is always true for <see cref="SqlChars"/>,
+            /// <see cref="SqlString"/> and <see cref="SqlXml"/>.  Additionally,
+            /// embedded CR/LF characters need to be encoded to hexadecimal
+            /// unicode escape form (i.e. sequences of the form: \uhhhh, where
+            /// hhhh is the hexadecimal representation of the 16-bit unicode
+            /// character code point).
+            /// </para>
+            /// <para>
+            /// Less obviously, because there exist a myriad of forms
+            /// and conventions regarding UUID/GUID handling, special
+            /// treatment is typically required for <see cref="SqlGuid"/>,
+            /// even if first converted to an equivalent <see cref="SqlBinary"/>
+            /// or <see cref="SqlBytes"/> instance.
+            /// </para>
+            /// </remarks>
             /// <param name="nullable">
-            /// To convert to an SQL <c>String</c> literal value.
+            /// To convert to an SQL literal value character sequence.
             /// </param>
             /// <returns>
-            /// The corresponding value.
+            /// The SQL literal value character sequence corresponding to the given
+            /// <c>nullable</c> value.
             /// </returns>
             /// <exception cref="HsqlDataSourceException">
             /// When the concrete type of the given <c>INullable</c> is not handled
@@ -2128,6 +2178,7 @@ namespace System.Data.Hsqldb.Common
             {
                 if (nullable == null || nullable.IsNull)
                 {
+                    /* CHECKME: "NULL" in this context?*/ 
                     return null;
                 }
                 else if (nullable is SqlBinary)
@@ -2137,9 +2188,7 @@ namespace System.Data.Hsqldb.Common
                 }
                 else if (nullable is SqlBoolean)
                 {
-                    return ((SqlBoolean)nullable).Value
-                        ? "TRUE"
-                        : "FALSE";
+                    return ((SqlBoolean)nullable).Value ? "TRUE" : "FALSE";
                 }
                 else if (nullable is SqlByte)
                 {
@@ -5635,7 +5684,7 @@ namespace System.Data.Hsqldb.Common
             public static JavaInteger ToSmallInt(float floatValue)
             {
                 if (floatValue <= short.MaxValue
-                    && floatValue <= short.MinValue
+                    && short.MinValue <= floatValue
                     && !(JavaFloat.isInfinite(floatValue) || JavaFloat.isNaN(floatValue)))
                 {
                     return ValuePool.getInt((int)floatValue);
@@ -5738,7 +5787,7 @@ namespace System.Data.Hsqldb.Common
             [CLSCompliant(false)]
             public static JavaInteger ToSmallInt(string stringValue)
             {
-                return ToSmallInt(ParseInteger(stringValue));
+                return ToSmallInt(FromDotNet.ParseInteger(stringValue).intValue());
             }
             #endregion
 
@@ -5804,6 +5853,10 @@ namespace System.Data.Hsqldb.Common
                     case TypeCode.Decimal:
                         {
                             return ToSmallInt((decimal)objectValue);
+                        }
+                    case TypeCode.Double:
+                        {
+                            return ToSmallInt((double)objectValue);
                         }
                     case TypeCode.Empty:
                         {
