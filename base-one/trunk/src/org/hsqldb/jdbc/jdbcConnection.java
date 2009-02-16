@@ -1586,16 +1586,13 @@ public class jdbcConnection implements Connection {
      * <div class="ReleaseSpecificDocumentation">
      * <h3>HSQLDB-Specific Information:</h3> <p>
      *
-     * HSQLDB 1.7.2 does not support this feature. Calling this
-     * method always throws a <code>SQLException</code>, stating that the
-     * function is not supported. <p>
+     * HSQLDB 1.8.0.11 always returns an empty map.<p>
      *
      * </div> <!-- end release-specific documentation -->
      *
      * @return the <code>java.util.Map</code> object associated with
      *     this <code>Connection</code> object
      * @exception SQLException if a database access error occurs
-     *     (always, up to HSQLDB 1.7.0, inclusive)
      * @since JDK 1.2 (JDK 1.1.x developers: read the new overview
      *     for jdbcConnection)
      */
@@ -1605,7 +1602,7 @@ public class jdbcConnection implements Connection {
 
         checkClosed();
 
-        throw Util.notSupported();
+        return new java.util.HashMap();
     }
 
 //#endif JAVA2
