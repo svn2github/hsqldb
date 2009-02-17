@@ -197,12 +197,12 @@ namespace System.Data.Hsqldb.Client.Internal
 
         #region SetParameters(object[])
         /// <summary>
-        /// Sets the parameters.
+        /// Sets the parameter values.
         /// </summary>
-        /// <param name="parameters">The parameters.</param>
-        internal void SetParameters(params object[] parameters)
+        /// <param name="values">The values.</param>
+        internal void SetParameterValues(params object[] values)
         {
-            m_request.setParameterData(parameters);
+            m_request.setParameterData(values);
         }
         #endregion
 
