@@ -1255,6 +1255,7 @@ class Select {
         for (int i = 0; i < iResultLen; i++) {
             e                    = exprColumns[i];
             rmd.colTypes[i]      = e.getDataType();
+			rmd.classNames[i]    = e.getValueClassName();
             rmd.colSizes[i]      = e.getColumnSize();
             rmd.colScales[i]     = e.getColumnScale();
             rmd.colLabels[i]     = e.getAlias();
@@ -1263,6 +1264,7 @@ class Select {
             rmd.colNames[i]      = e.getColumnName();
 
             if (rmd.isTableColumn(i)) {
+			    rmd.schemaNames[i] = e.getTableSchemaName();
                 rmd.colNullable[i] = e.nullability;
                 rmd.isIdentity[i]  = e.isIdentity;
                 rmd.isWritable[i]  = e.isWritable;
