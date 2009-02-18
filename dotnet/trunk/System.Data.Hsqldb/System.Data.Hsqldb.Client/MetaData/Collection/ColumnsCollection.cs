@@ -49,11 +49,74 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
     #region ColumnsCollection
     /// <summary>
     /// <para>
-    /// Provides the <see cref="HCN.Columns"/> collection.
+    /// Provides the <see cref="HCN.Columns"/> metadata collection.
     /// </para>
     /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.MetaData.Collection.ColumnsCollection.png"
     ///      alt="ColumnsCollection Class Diagram"/>
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Identifies the columns of tables defined in the database that are accessible
+    /// within the context of the SQL user and enabled roles associated with the
+    /// connecton to the data source:
+    /// </para>
+    /// <para>
+    ///<list type="table">
+    ///   <listheader>
+    ///     <term>Column</term>
+    ///     <description>Description</description>
+    ///   </listheader>
+    ///     <item><term>TABLE_CATALOG</term><description>Uri of the database containing the table</description></item>
+    ///     <item><term>TABLE_SCHEMA</term><description>Unqualified name of schema containing the table</description></item>
+    ///     <item><term>TABLE_NAME</term><description>Unqualified name of table containing the column</description></item>
+    ///     <item><term>COLUMN_NAME</term><description>Unqualified name of column being described</description></item>
+    ///     <item><term>ORDINAL_POSITION</term><description>One-based position of column within the table</description></item>
+    ///     <item><term>COLUMN_DEFAULT</term><description>The default value assigned to the column when there is no explicit assigment</description></item>
+    ///     <item><term>IS_NULLABLE</term><description>Whether the column accepts the null value: {'YES' | 'NO'}</description></item>
+    ///     <item><term>DATA_TYPE</term><description>Name of the column's data type (possibly fully qualified), as known to the database</description></item>
+    ///     <item><term>CHARACTER_MAXIMUM_LENGTH</term><description>Length or maximum length in characters; null if not applicable to the data type</description></item>
+    ///     <item><term>CHARACTER_OCTET_LENGTH</term><description>Length or maximum length in octets; null if not applicable to the data type</description></item>
+    ///     <item><term>NUMERIC_PRECISION</term><description>Precision of the numeric type; null if not applicable to the data type</description></item>
+    ///     <item><term>NUMERIC_PRECISION_RADIX</term><description>Radix of the precision of the numeric type; null if not applicable to the data type</description></item>
+    ///     <item><term>NUMERIC_SCALE</term><description>Scale of the numeric type; null if not applicable to the data type</description></item>
+    ///     <item><term>DATETIME_PRECISION</term><description>Fractional seconds precision of the datetime or interval type; null if not applicable to the data type</description></item>
+    ///     <item><term>INTERVAL_TYPE</term><description>Value for &lt;interval qualifier&gt; from table 27 of ISO/IEC 9075-2; null if not applicable to the data type</description></item>
+    ///     <item><term>INTERVAL_PRECISION</term><description>Leading field precision of the interval type; null if not applicable to the data type</description></item>
+    ///     <item><term>CHARACTER_SET_CATALOG</term><description>Uri of the database containing the character set; null if not applicable to the data type, which must be a character type</description></item>
+    ///     <item><term>CHARACTER_SET_SCHEMA</term><description>Unqualified name of schema containing the character set; null if not applicable to the data type, which must be a character type</description></item>
+    ///     <item><term>CHARACTER_SET_NAME</term><description>Unqualified name of the character set; null if not applicable to the data type, which must be a character type</description></item>
+    ///     <item><term>COLLATION_CATALOG</term><description>Uri of the database containing the character collation; null if not applicable to the data type, which must be a character type</description></item>
+    ///     <item><term>COLLATION_SCHEMA</term><description>Unqualified name of schema containing the character collation; null if not applicable to the data type, which must be a character type</description></item>
+    ///     <item><term>COLLATION_NAME</term><description>Unqualified name of the character collation; null if not applicable to the data type, which must be a character type</description></item>
+    ///     <item><term>DOMAIN_CATALOG</term><description>Uri of the database containing the domain data type; null if column is not a domain data type</description></item>
+    ///     <item><term>DOMAIN_SCHEMA</term><description>Unqualified name of schema containing the domain data type; null if column is not a domain data type</description></item>
+    ///     <item><term>DOMAIN_NAME</term><description>Unqualified name of the domain data type; null if column is not a domain data type</description></item>
+    ///     <item><term>UDT_CATALOG</term><description>Uri of the database containing the user defined data type; null if column is not a user defined data type</description></item>
+    ///     <item><term>UDT_SCHEMA</term><description>Unqualified name of schema containing the user defined data type; null if column is not a user defined data type</description></item>
+    ///     <item><term>UDT_NAME</term><description>Unqualified name of the user defined data type; null if column is not a user defined data type</description></item>
+    ///     <item><term>SCOPE_CATALOG</term><description>Uri of the database containing the referenceable table; null if column is not a REF type</description></item>
+    ///     <item><term>SCOPE_SCHEMA</term><description>Unqualified name of schema containing the referenceable table; null if column is not a REF type</description></item>
+    ///     <item><term>SCOPE_NAME</term><description>Unqualified name of the referenceable table; null if column is not a REF type</description></item>
+    ///     <item><term>MAXIMUM_CARDINALITY</term><description>the maximum cardinality of the array type being described. null if the column is not an ARRAY type</description></item>
+    ///     <item><term>DTD_IDENTIFIER</term><description>implementation-dependent value that uniquely identifies the data type descriptor among all data type descriptors</description></item>
+    ///     <item><term>IS_SELF_REFERENCING</term><description>Denotes whether the value stored in the column uniquely identifies the containing row in the entire database: {'YES' | 'NO'}</description></item>
+    ///     <item><term>IS_IDENTITY</term><description>Denotes whether the column is an identity column: {'YES' | 'NO'}</description></item>
+    ///     <item><term>IDENTITY_GENERATION</term><description>Describes how identity value are generated: {'ALWAYS' | 'BY DEFAULT' | NULL (if not an identity column)}</description></item>
+    ///     <item><term>IDENTITY_START</term><description>Character representation of the start value of the column; null not an identity column</description></item>
+    ///     <item><term>IDENTITY_INCREMENT</term><description>Character representation of the increment value of the column; null not an identity column</description></item>
+    ///     <item><term>IDENTITY_MAXIMUM</term><description>Character representation of the maximum value of the column; null not an identity column</description></item>
+    ///     <item><term>IDENTITY_MINIMUM</term><description>Character representation of the minimum value of the column; null not an identity column</description></item>
+    ///     <item><term>IDENTITY_CYCLE</term><description>Denotes whether modular arithemtic is used to generate the identity value from the increment, maximum and minimum: {'YES' | 'NO' | NULL (if not an identity column)}</description></item>
+    ///     <item><term>IS_GENERATED</term><description>Denotes whether column value is generated from a declared expression: {'ALWAYS', 'NEVER'}</description></item>
+    ///     <item><term>GENERATION_EXPRESSION</term><description>Text of the &lt;generation expression&gt; specified in the column definition; null if IS_GENERATED is 'NEVER'</description></item>
+    ///     <item><term>IS_UPDATABLE</term><description>Denotes whether the column is updateable: {'YES', 'NO'}</description></item>
+    ///     <item><term>DECLARED_DATA_TYPE</term><description>Textual value of the &lt;data type&gt; specified in the column definition, which may be different from the effective &lt;data type&gt; of the column</description></item>
+    ///     <item><term>DECLARED_NUMERIC_PRECISION</term><description>Integral value of the &lt;numeric precision&gt; specified in the column definition, which may be different from the effective &lt;numeric precision&gt; of the column; null if not applicable to the data type</description></item>
+    ///     <item><term>DECLARED_NUMERIC_SCALE</term><description>Integral value of the &lt;numeric scale&gt; specified in the column definition, which may be different from the effective &lt;numeric scale&gt; of the column; null if not applicable to the data type</description></item>
+    ///     <item><term>PRIMARY_KEY</term><description>boolean value that denotes whether the column belongs to the primary key of the table</description></item>
+    /// </list>
+    /// </para>
+    /// </remarks>
     /// <author name="boucherb@users"/>
     public sealed class ColumnsCollection : Base.MetaDataCollection
     {
@@ -143,7 +206,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
       ,null as maximum_cardinality
       ,null as dtd_identifier
       ,'NO' as is_self_referencing
-      ,null is_identity
+      ,'NO' is_identity
       ,null as identity_generation
       ,null as identity_start
       ,null as identity_increment
@@ -182,7 +245,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         /// <summary>
         /// Initializes a new instance of the <see cref="ColumnsCollection"/> class.
         /// </summary>
-        public ColumnsCollection() : base(){}
+        public ColumnsCollection() : base() { }
         #endregion
 
         #region CreateTable()
@@ -190,6 +253,9 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
         /// Creates a new <c>Columns</c> metadata collection table.
         /// </summary>
         /// <returns>
+        /// A new <see cref="DataTable"/> initialized with the columns
+        /// required to hold the metadata about the columns of the 
+        /// tables defined in the database.
         /// </returns>
         public override DataTable CreateTable()
         {
@@ -243,7 +309,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
             AddColumn(cols, null, "DECLARED_DATA_TYPE", typeof(string));
             AddColumn(cols, null, "DECLARED_NUMERIC_PRECISION", typeof(int));
             AddColumn(cols, null, "DECLARED_NUMERIC_SCALE", typeof(int));
-            AddColumn(cols, null, "PRIMARY_KEY", typeof (bool));
+            AddColumn(cols, null, "PRIMARY_KEY", typeof(bool));
 
             return table;
         }
@@ -369,63 +435,63 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
                     string dataType = (string)values[idatatype];
                     //
                     int? charMaxLength = (int?)values[icharmaxlen];
-                    int? charOctetLength = (int?) values[icharoctlen];
+                    int? charOctetLength = (int?)values[icharoctlen];
                     //
                     Nullable<int> ni;
-                    int? numPrecision = (int?) values[inumprec];
-                    short? numPrecRadix = (short?)(int?) values[inumprecrad];
-                    int? numScale = (int?) values[inumscale];
+                    int? numPrecision = (int?)values[inumprec];
+                    short? numPrecRadix = (short?)(int?)values[inumprecrad];
+                    int? numScale = (int?)values[inumscale];
                     //
-                    int? dateTimePrecision = (int?) values[idatetimeprec];
+                    int? dateTimePrecision = (int?)values[idatetimeprec];
                     //
-                    string intervalType = (string) values[iintervaltype];
-                    short? intervalPrecision = (short?) (int?) values[iintervalprec];
+                    string intervalType = (string)values[iintervaltype];
+                    short? intervalPrecision = (short?)(int?)values[iintervalprec];
                     //
-                    string characterSetCatalog = (string) values[icharsetcat];
-                    string characterSetSchema = (string) values[icharsetschem];
-                    string characterSetName = (string) values[icharsetname];
+                    string characterSetCatalog = (string)values[icharsetcat];
+                    string characterSetSchema = (string)values[icharsetschem];
+                    string characterSetName = (string)values[icharsetname];
                     //
-                    string collationCatalog = (string) values[icollationcat];
-                    string collationSchema = (string) values[icollationschem];
+                    string collationCatalog = (string)values[icollationcat];
+                    string collationSchema = (string)values[icollationschem];
                     string collationName = collation; // values[21];
                     // TODO
-                    string domainCatalog = (string) values[idomaincat];
-                    string domainSchema = (string) values[idomainschem];
-                    string domainName = (string) values[idomainname];
+                    string domainCatalog = (string)values[idomaincat];
+                    string domainSchema = (string)values[idomainschem];
+                    string domainName = (string)values[idomainname];
                     // TODO
-                    string udtCatalog = (string) values[iudtcat];
-                    string udtSchema = (string) values[iudtschem];
-                    string udtName = (string) values[iudtname];
+                    string udtCatalog = (string)values[iudtcat];
+                    string udtSchema = (string)values[iudtschem];
+                    string udtName = (string)values[iudtname];
                     // TODO
                     string scopeCatalog = (string)values[iscopecat];
                     string scopeSchema = (string)values[iscopeschem];
                     string scopeName = (string)values[iscopename];
                     //
-                    int? maximumCardinality = (int?) values[imaxcardinality];
+                    int? maximumCardinality = (int?)values[imaxcardinality];
                     //
-                    string dtdIdentifier =(string) values[idtdidentifier];
+                    string dtdIdentifier = (string)values[idtdidentifier];
                     //
-                    string isSelfReferencing = (string) values[iis_selfref];
+                    string isSelfReferencing = (string)values[iis_selfref];
 
                     // TODO:  Efficient implementation requires a new HQLDB system table.
                     //        Otherwise, we need to execute an empty select against the
                     //        column's table and read the ResultSetMetaData to tell if
                     //        autoIncrement is true for the column...ugh.
-                    string isIdentity = (string) values[iis_identity];
-                    string identityGeneration = (string) values[iidentitygen];
-                    string identityStart = (string) values[iidentitystart];
-                    string identityIncrement = (string) values[iidentityinc];
-                    string identityMaximum = (string) values[iidentitymax];
+                    string isIdentity = (string)values[iis_identity];
+                    string identityGeneration = (string)values[iidentitygen];
+                    string identityStart = (string)values[iidentitystart];
+                    string identityIncrement = (string)values[iidentityinc];
+                    string identityMaximum = (string)values[iidentitymax];
                     string identityMinimum = (string)values[iidentitymin];
                     string identityCycle = (string)values[iidentitycycle];
                     //
                     string isGenerated = (string)values[iis_generated];
-                    string generationExpression = (string) values[igenerationexp];
-                    string isUpdatable = (string) values[iis_updatable];
-                    string declaredDataType = (string) values[idecldatatype];
-                    int? declaredNumericPrecision = (int?) values[ideclnumprec];
-                    int? declaredNumericScale = (int?) values[ideclnumscale];
-                    bool primaryKey = (bool) values[iprimarykey];
+                    string generationExpression = (string)values[igenerationexp];
+                    string isUpdatable = (string)values[iis_updatable];
+                    string declaredDataType = (string)values[idecldatatype];
+                    int? declaredNumericPrecision = (int?)values[ideclnumprec];
+                    int? declaredNumericScale = (int?)values[ideclnumscale];
+                    bool primaryKey = (bool)values[iprimarykey];
 
                     AddRow(table,
                            catalogName,
@@ -610,7 +676,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
             }
             if (numericPrecisionRadix != null)
             {
-                row["NUMERIC_PRECISION_RADIX"] = (short) numericPrecisionRadix.Value;
+                row["NUMERIC_PRECISION_RADIX"] = (short)numericPrecisionRadix.Value;
             }
             if (numericScale != null)
             {
@@ -618,7 +684,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
             }
             if (dateTimePrecision != null)
             {
-                row["DATETIME_PRECISION"] = (short) dateTimePrecision.Value;
+                row["DATETIME_PRECISION"] = (short)dateTimePrecision.Value;
             }
             row["INTERVAL_TYPE"] = intervalType;
             if (intervalPrecision != null)
