@@ -20,13 +20,16 @@ namespace System.Data.Hsqldb.TestCoverage
         /// <summary>
         /// Constructs a new instance with the given test subject type.
         /// </summary>
-        /// <param name="testSubject"></param>
+        /// <param name="testSubject">The test subject.</param>
         public ForSubjectAttribute(Type testSubject)
         {
             m_testSubject = testSubject;
         }
 
 
+        /// <summary>
+        /// Gets or sets the test subject.
+        /// </summary>
         /// <value>the type of subject being tested within a test fixture</value>
         public Type TestSubject
         {

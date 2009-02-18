@@ -19,16 +19,21 @@ namespace System.Data.Hsqldb.TestCoverage
         }
 
         /// <summary>
-        ///  Constructs a new instance with the given full name of the assembly containing the subject.
+        /// Constructs a new instance with the given full name of the assembly containing the subject.
         /// </summary>
-        /// <param name="fullName"></param>
+        /// <param name="fullName">The full name.</param>
         public SubjectAssemblyAttribute(string fullName)
         {
             m_fullName = fullName;
         }
 
 
-        /// <value>The full name of the assembly containing the subject type being tested within the test fixture</value>
+        /// <summary>
+        /// Gets or sets the full name.
+        /// </summary>
+        /// <value>
+        /// The full name of the assembly containing the subject type being tested within the test fixture
+        /// </value>
         public string FullName
         {
             get

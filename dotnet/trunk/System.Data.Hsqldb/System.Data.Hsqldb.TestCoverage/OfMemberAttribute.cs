@@ -21,13 +21,18 @@ namespace System.Data.Hsqldb.TestCoverage
         /// <summary>
         /// Constructs a new instance with the given member name.
         /// </summary>
-        /// <param name="memberName"></param>
+        /// <param name="memberName">Name of the member.</param>
         public OfMemberAttribute(string memberName)
         {
             m_memberName = memberName;
         }
 
-        /// <value>the name of the subject member being tested within a test fixture</value>
+        /// <summary>
+        /// Gets or sets the name of the member.
+        /// </summary>
+        /// <value>
+        /// the name of the subject member being tested within a test fixture
+        /// </value>
         public string MemberName
         {
             get
