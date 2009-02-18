@@ -282,8 +282,8 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
             /// <summary>
             /// The HSQLDB data source product version.
             /// </summary>
-            /// <value>"1.8.0.7"</value>
-            public const string DataSourceProductVersion = "1.8.0.7";
+            /// <value>"1.8.0.10"</value>
+            public const string DataSourceProductVersion = "1.8.0.10";
 
             #endregion
 
@@ -294,7 +294,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
             /// </summary>
             /// <value>"01.80.7000"</value>
             public const string DataSourceProductVersionNormalized
-                = "01.80.7000";
+                = "01.80.0010";
 
             #endregion
 
@@ -367,14 +367,9 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
             /// <summary>
             /// The HSLQDB parameter marker pattern.
             /// </summary>
-            public const string ParameterMarkerPattern 
-                = 
-                //":(" 
-                //+ JavaIdentifierPattern 
-                //+ ")|
-                "@(" 
-                + JavaIdentifierPattern
-                + ")";
+            /// <value>@(^[\p{JavaIdentifierStart}][\p{JavaIdentifierPart}]*$)</value>
+            public const string ParameterMarkerPattern = 
+                "@(" + JavaIdentifierPattern + ")";
 
             #endregion
 
@@ -386,6 +381,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
             /// <remarks>
             /// Not actually enforced.
             /// </remarks>
+            /// <value>128</value>
             public const int ParameterNameMaxLength = 128;
 
             #endregion
@@ -395,6 +391,7 @@ namespace System.Data.Hsqldb.Client.MetaData.Collection
             /// <summary>
             /// The HSQLDB parameter name pattern.
             /// </summary>
+            /// <value>^[\p{JavaIdentifierStart}][\p{JavaIdentifierPart}]*$</value>
             public const string ParameterNamePattern = JavaIdentifierPattern;
 
             #endregion

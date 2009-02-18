@@ -67,7 +67,7 @@ namespace System.Data.Hsqldb.Client
     public sealed partial class HsqlCommand : DbCommand, ICloneable
     {
         #region Events
-        /// <summary>Occurs when the execution of a Transact-SQL statement completes.</summary>
+        /// <summary>Occurs when the execution of an <see cref="HsqlCommand"/> completes.</summary>
         /// <filterpriority>2</filterpriority>
         [Category("Data"), Description("Statement Completed Event")]
         public event StatementCompletedEventHandler StatementCompleted;
@@ -83,11 +83,18 @@ namespace System.Data.Hsqldb.Client
         /// Attempts to cancel the execution of this command.
         /// </summary>
         /// <remarks>
+        /// <para>
         /// Currently ignored (does nothing).
+        /// </para>
+        /// <para>
+        /// When implemented, the expected behavior is that if there is nothing to
+        /// cancel, then nothing happens, and even if there is a command in process,
+        /// no exception is generated in the event that the attempt to cancel fails.
+        /// </para>
         /// </remarks>
         public override void Cancel()
         {
-            // throw new InvalidOperationException("Not Yet supported");
+            // TODO
         }
 
         #endregion
@@ -98,8 +105,7 @@ namespace System.Data.Hsqldb.Client
         /// Creates a new <see cref="HsqlParameter"/> object.
         /// </summary>
         /// <remarks>
-        /// The new parameter is not initially associated with any parameter
-        /// collection.
+        /// This method simply delegates to <see cref="CreateParameter()"/>.
         /// </remarks>
         /// <returns>
         /// A new <see cref="HsqlParameter"/> object.
@@ -114,18 +120,144 @@ namespace System.Data.Hsqldb.Client
         #region CreateParameter()
 
         /// <summary>
-        /// Creates a new <see cref="HsqlParameter"/> object.
+        /// Creates a new <see cref="HsqlParameter"/> object having the
+        /// default property values and no initial association with a parameter
+        /// collection, such as, for instance, the parameter collection of this
+        /// command object.
         /// </summary>
         /// <remarks>
-        /// The new parameter is not initially associated with any parameter
-        /// collection.
+        /// <para>
+        /// Although not explicitly stated in the ADO.NET API docmentation for
+        /// either <see cref="IDbCommand"/> or <see cref="DbParameter"/>, after
+        /// a careful review of the history of the ADO.NET API and the current
+        /// behavior of <see cref="OdbcCommand"/>, <see cref="OleDbCommand"/>
+        /// and <see cref="SqlCommand"/>, it appears that the interface methods
+        /// <see cref="IDbConnection.CreateCommand()"/> and 
+        /// <see cref="IDbCommand.CreateParameter"/> were intended to do no
+        /// more than form a factory method hierarchy for obtaining
+        /// vendor-neutral default instances of <see cref="IDbCommand"/> and 
+        /// <see cref="IDbDataParameter"/>, respectively, under the requirement
+        /// of an OO approach to parameterized command execution within a
+        /// disconnected data API supporting reflection-enabled component
+        /// design surfaces.
+        /// </para>
+        /// <para>
+        /// Of course, the fatal flaw in the ADO.NET 1.0 scheme is that one is
+        /// still required to directly construct a provider-specific concrete
+        /// implementation of <see cref="IDbConnection"/> before proceeding
+        /// with the task of interacting with a data source, despite the
+        /// inclusion of provider-netural factory methods in the interfaces
+        /// that form the internal nodes of the access hierarchy.  That is,
+        /// the ADO.NET 1.0 scheme quite literally fails to address the 'root'
+        /// of the problem, and this failure remains to be adequately addressed
+        /// in ADO.NET 2.0... ;-)
+        /// </para>
+        /// <para>
+        /// But inadequate or otherwise, it *was* addressed, as it seems almost
+        /// certain that the just-discussed failing of ADO.NET 1.0 is, at least
+        /// in part, what prompted the introduction of
+        /// <see cref="System.Data.Common.DbProviderFactory"/> in ADO.NET 2.0,
+        /// making it possible to obtain concrete implementations of each of
+        /// the core ADO.NET <c>System.Data</c> interfaces, without necessarily
+        /// resorting to direct, concrete constuction of a root,
+        /// provider-specific <c>IDbConnection</c> instance from which all else
+        /// flows. 
+        /// </para>
+        /// <para>
+        /// Based on this observation, however, the only real remaining
+        /// advantage of the <c>IDbConnection.CreateCommand()</c> and
+        /// <c>IDbCommand.CreateParameter()</c> methods is that they support
+        /// class libraries, legacy and future, that need only be initialized
+        /// with (or take as method arguments) connection and/or command
+        /// interface implementations, whereas the implicit restriction of
+        /// the purist approach to utilizing <c>DbProviderFactory</c> is that,
+        /// under the existing state of the surrounding design contraints, it
+        /// must be possible at runtime to obtain a provider factory
+        /// implementation that is compatible with the runtime type of a
+        /// dependent <c>System.Data</c> interface instance, for example to
+        /// obtain a new command instance that is compatible with a given
+        /// connection instance or a new parameter instance that is compatible
+        /// with a given command instance.
+        /// </para>
+        /// <para>
+        /// Whether this truely is an advantage or is rather a hinderance,
+        /// however, is not clear, as it is a simple thing to use a
+        /// provider-specific default class constructor or an explicit cast
+        /// in addition to a provider-neutral factory method invocation in
+        /// order to access the provider-specific features of any
+        /// <c>IDbDataParameter</c>, and it can only be assumed that it was
+        /// precisely the desire to provide developers with a better and
+        /// more obvious way of writing provider-neutral code that prompted
+        /// the introduction of <see cref="DbProviderFactory"/>
+        /// </para>
+        /// <para>
+        /// Indeed, with the addition of <c>DbProviderFactory</c>, it is now
+        /// also possible to guaratee, in a provider-neutral fashion, a supply
+        /// of <c>System.Data</c> interface implementations that are also
+        /// highly compatible with the system component model (by virtue of
+        /// inheriting from <c>Component</c> or <c>MarshalByRefObject</c>).
+        /// </para>
+        /// <para>
+        /// So it should serve as a bit of a red-flag that this interface
+        /// method remains, has not been marked with the 
+        /// <c>[Obsolete("reason")]</c> attribute and, instead, the
+        /// <c>System.Data.Common.DbCommand</c> base class introduced in
+        /// ADO.NET 2.0 exposes a new, abstract <see cref="CreateDbCommand"/>
+        /// method that only further duplicates/obsfucates the purpose of
+        /// <c>DbProviderFactory.CreateParameter()</c>.
+        /// </para>
+        /// Indeed, it is clear in retrospect that the ADO.NET 1.0 API was not
+        /// thought out sufficiently beyond the immediate scope of shifting
+        /// away from a connected data API toward a disconnected data API.
+        /// And this clearly serves as a reminder that, even in ADO.NET 2.0,
+        /// the design still represents a somewhat leaky abstraction, what
+        /// with the 'beanification' of data access introducing things like
+        /// writable parent association properties.  For example, should 
+        /// changing a prepared command object's parent connection invalidate
+        /// the command's prepared state, or should a command attempt to
+        /// maintain it's prepared state in response to changing it's parent
+        /// connection?  Nowhere is this documented, yet the unresolved issue
+        /// leaks out as a natural consequence of a command's parent connection
+        /// being designed as writable property.  Sadly, the list of design
+        /// descisions that lead to such consequences is still quite large in
+        /// ADO.NET 2.0, certainly too large to warrant enumerating here.
+        /// </para>
+        /// <para>
+        /// In an ideal world, each object instance that can be obtained from
+        /// a <c>DbProviderFactory</c> would expose a property whose value is
+        /// the <c>DbProviderFactory</c> instance from which it was obtained.
+        /// </para>
+        /// <para>
+        /// Certainly this would neatly solve the problem of how to develop
+        /// future class libraries that can deal directly with objects
+        /// obtained through a <c>DbProviderFactory</c> instance, since it
+        /// transparently provides the opportunity to reaquire the factory
+        /// in order to subsequently produce ADO.NET object instances whose
+        /// runtime type is compatible with that of any object previously
+        /// obtained through the <c>DbProviderFactory</c> instance.
+        /// </para>
+        /// <para>
+        /// As a side benefit, this would clear up a remaining problem,
+        /// which is that, even if one attempts to be a
+        /// 'good ADO.NET 2.0 citizen' and obtain all ADO.NET instances
+        /// through a <c>DbProviderFactory</c> instance, the current state
+        /// of the design does not allow for context-free handling of ADO.NET
+        /// object instances in the event that an application must connect to
+        /// multiple data sources that vary by provider type.
+        /// </para>
+        /// Sadly, in the real world, the idealism described above still fails
+        /// to help legacy class libraries, as the described scheme still
+        /// requires existing <c>System.Data</c> interfacesto be be 
+        /// retrofitted with the factory property, meaning that all affected
+        /// legacy class libraries would need to be updated and redeployed.
+        /// </para>
         /// </remarks>
         /// <returns>
         /// A new <see cref="HsqlParameter"/> object.
         /// </returns>
         public new HsqlParameter CreateParameter()
         {
-            return new HsqlParameter();
+            return (HsqlParameter)HsqlProviderFactory.Instance.CreateParameter();
         }
 
         #endregion
@@ -135,10 +267,22 @@ namespace System.Data.Hsqldb.Client
         /// Releases the unmanaged resources used by this object and
         /// optionally releases the managed resources.
         /// </summary>
+        /// <remarks>
+        /// When invoked, if this object is <see cref="Prepare()"/>d, and
+        /// <c>disposing</c> is <c>true</c> to indicate disposal of
+        /// managed resources is requested, then this has the side-effect
+        /// of effectively invoking <see cref="UnPrepare()"/>, which,
+        /// if successful, closes the underlying compiled statement,
+        /// releasing both any local resources, as well as any remote reources
+        /// allocated to its representation and managment.
+        /// </remarks>
         /// <param name="disposing">
-        /// true to release both managed and unmanaged resources; 
-        /// false to release only unmanaged resources.
+        /// <c>true</c> to release both managed and unmanaged resources; 
+        /// <c>false</c> to release only unmanaged resources.
         /// </param>
+        /// <exception cref="HsqlDataSourceException">
+        /// If a database access error occurs.
+        /// </exception>
         protected override void Dispose(bool disposing)
         {
             if (disposing)
@@ -161,6 +305,18 @@ namespace System.Data.Hsqldb.Client
         /// <returns>
         /// The result of execution as a <see cref="HsqlDataReader"/>.
         /// </returns>
+        /// <exception cref="InvalidOperationException">
+        /// When the <see cref="Connection"/> is not set.
+        /// -or- 
+        /// when the <see cref="Connection"/> is not <see cref="HsqlConnection.Open()"/>.
+        /// </exception>
+        /// <exception cref="HsqlDataSourceException">
+        /// If a database access error occurs; the <see cref="CommandText"/>
+        /// contains a syntax error or violates some other constraint on
+        /// well-formedness; the <c>CommandText</c> does not meet the
+        /// requirments imposed by the current <see cref="CommandType"/>
+        /// value.
+        /// </exception>
         protected override DbDataReader ExecuteDbDataReader(
             CommandBehavior behavior)
         {
@@ -173,9 +329,22 @@ namespace System.Data.Hsqldb.Client
 
         /// <summary>
         /// Executes this command against its connection using
-        /// <see cref="CommandBehavior.Default"/>.
+        /// the <see cref="CommandBehavior.Default"/> 
+        /// <c>CommandBehavior</c>.
         /// </summary>
         /// <returns>An <see cref="HsqlDataReader"/>.</returns>
+        /// <exception cref="InvalidOperationException">
+        /// When the <see cref="Connection"/> is not set.
+        /// -or- 
+        /// when the <see cref="Connection"/> is not <see cref="HsqlConnection.Open()"/>.
+        /// </exception>
+        /// <exception cref="HsqlDataSourceException">
+        /// If a database access error occurs; the <see cref="CommandText"/>
+        /// contains a syntax error or violates some other constraint on
+        /// well-formedness; the <c>CommandText</c> does not meet the
+        /// requirments imposed by the current <see cref="CommandType"/>
+        /// value.
+        /// </exception>
         public new HsqlDataReader ExecuteReader()
         {
             return ExecuteReaderInternal(CommandBehavior.Default);
@@ -186,18 +355,18 @@ namespace System.Data.Hsqldb.Client
         #region ExecuteReader(CommandBehavior)
 
         /// <summary>
-        /// Executes this command against its connection, returning a data reader.
+        /// Using the given <see cref="CommandBehavior"/>, executes this
+        /// command against its connection, returning a data reader to
+        /// respresent the result.
         /// </summary>
         /// <remarks>
         /// <para>
-        /// The current implementation does not necessarily support or follow
-        /// to the letter the documented terms of every behavioral constraint
-        /// enumerated in <see cref="CommandBehavior">
-        /// System.Data.CommandBehavior</see>.
+        /// The current <c>HsqlCommand</c> implementation does not necessarily
+        /// support or follow to the letter the documented terms of every behavioral
+        /// constraint enumerated in <see cref="CommandBehavior"/>.
         /// </para>
         /// <para>
-        /// The following list describes the current state of affairs as noted
-        /// at November 12, 2007:
+        /// The following list describes the current state of affairs:
         /// </para>
         /// <list type="table">
         /// <listheader>
@@ -258,10 +427,10 @@ namespace System.Data.Hsqldb.Client
         /// directly available when using the standard API routines to retieve
         /// query result column metadata. Hence, depending on the ADO.NET 2.0
         /// data provider, inclusion of primary key information when invoking
-        /// invoking <see cref="DbDataReader.GetSchemaTable()"/> may imply a
-        /// performance overhead, in that multiple round-trips to the back-end
-        /// may be required. Currently, this is precisely the case for the
-        /// HSQLDB 1.8.0.7 ADO.NET 2.0 data provider implementation. 
+        /// <see cref="DbDataReader.GetSchemaTable()"/> may imply a performance
+        /// overhead, in that multiple round-trips to the back-end may be
+        /// required. Currently, this is precisely the case for the HSQLDB
+        /// 1.8.0 ADO.NET 2.0 data provider implementation. 
         /// </para>
         /// </description>        
         /// </item>
@@ -294,7 +463,7 @@ namespace System.Data.Hsqldb.Client
         /// <para>
         /// The present transport mechanism retrieves a snapshot of all result
         /// set rows as part of the execute call, before the representative
-        /// data reader is returned.
+        /// data reader is returned to the caller.
         /// </para>
         /// <para>
         /// When set, indicates the intent that result set rows will contain
@@ -339,7 +508,8 @@ namespace System.Data.Hsqldb.Client
         /// Indicates that each generated result set is expected to contain no
         /// more than a single row and hence is to be restricted to contain no
         /// more than a single row. Also indicates that a data provider may
-        /// optionally use this information to optimize performance.
+        /// optionally use this information to optimize execution and fetch
+        /// performance.
         /// </para>
         /// </description>
         /// </item>
@@ -351,6 +521,18 @@ namespace System.Data.Hsqldb.Client
         /// <returns>
         /// The result of execution as a <see cref="HsqlDataReader"/>.
         /// </returns>
+        /// <exception cref="InvalidOperationException">
+        /// When the <see cref="Connection"/> is not set.
+        /// -or- 
+        /// when the <see cref="Connection"/> is not <see cref="HsqlConnection.Open()"/>.
+        /// </exception>
+        /// <exception cref="HsqlDataSourceException">
+        /// If a database access error occurs; the <see cref="CommandText"/>
+        /// contains a syntax error or violates some other constraint on
+        /// well-formedness; the <c>CommandText</c> does not meet the
+        /// requirments imposed by the current <see cref="CommandType"/>
+        /// value.
+        /// </exception>
         public new HsqlDataReader ExecuteReader(CommandBehavior behavior)
         {            
             return ExecuteReaderInternal(behavior);
@@ -361,11 +543,23 @@ namespace System.Data.Hsqldb.Client
         #region ExecuteNonQuery()
 
         /// <summary>
-        /// Executes this command against its connection
-        /// with the assumption that the command does
-        /// generate query results.
+        /// Executes this command against its connection with the assumption
+        /// that the command does not generate any result that is suited to
+        /// representation via an <c>HsqlDatatReader</c>.
         /// </summary>
-        /// <returns>The number of rows affected.</returns>
+        /// <returns>The number of rows affected by the execution.</returns>
+        /// <exception cref="InvalidOperationException">
+        /// When the <see cref="Connection"/> is not set.
+        /// -or- 
+        /// when the <see cref="Connection"/> is not <see cref="HsqlConnection.Open()"/>.
+        /// </exception>
+        /// <exception cref="HsqlDataSourceException">
+        /// If a database access error occurs; the <see cref="CommandText"/>
+        /// contains a syntax error or violates some other constraint on
+        /// well-formedness; the <c>CommandText</c> does not meet the
+        /// requirments imposed by the current <see cref="CommandType"/>
+        /// value.
+        /// </exception>
         public override int ExecuteNonQuery()
         {
             lock (SyncRoot)
@@ -379,17 +573,48 @@ namespace System.Data.Hsqldb.Client
         #region ExecuteScalar
 
         /// <summary>
-        /// Executes the query represented by this command and returns
-        /// the first column of the first row in the initial result set.
+        /// Executes the routine or query determined by the 
+        /// <see cref="CommandText"/> and <see cref="CommandType"/>
+        /// and retrieves, in order of precedence, either an SQL-invoked
+        /// routine's declared or implied return value, the value of an
+        /// output parameter implicitly or explicity bound to the routine
+        /// return value role or, when no declared or implied return value
+        /// or output-parameter-value-to-return-value binding is encountered,
+        /// then the value of the first column of the first row in the initial
+        /// result set (should execution actually generate at least one, 
+        /// initial result set), else <c>null</c>.
         /// </summary>
         /// <remarks>
-        /// All other columns and rows are ignored. If the command execution
-        /// does not generate a result set or if the result set is empty,
-        /// returns <c>null</c>.
+        /// Note that, in comparison to <c>ExecuteReader(...)</c>,
+        /// the code required fetch a single value is substantially reduced.
+        /// Note further that this also avoids the necessity of creating
+        /// and subsequently closing or disposing an <see cref="HsqlDataReader"/>
+        /// instance. Finally note that selection an optimized execution and/or
+        /// fetch strategy may be possible when it is known that only a single
+        /// value must be retrieved.
+        /// </para>
+        /// <para>
+        /// For the reasons listed above, this method is absolutely the most
+        /// efficient way to retrieve a single value from an HSQLDB database
+        /// instance.
+        /// </para>
+        /// <para>
         /// </remarks>
         /// <returns>
-        /// The first column of the first row in the result set or <c>null</c>.
+        /// A single, scalar value, obtained as described in the summary above.
         /// </returns>
+        /// <exception cref="InvalidOperationException">
+        /// When the <see cref="Connection"/> is not set.
+        /// -or- 
+        /// when the <see cref="Connection"/> is not <see cref="HsqlConnection.Open()"/>.
+        /// </exception>
+        /// <exception cref="HsqlDataSourceException">
+        /// If a database access error occurs; the <see cref="CommandText"/>
+        /// contains a syntax error or violates some other constraint on
+        /// well-formedness; the <c>CommandText</c> does not meet the
+        /// requirments imposed by the current <see cref="CommandType"/>
+        /// value.
+        /// </exception>
         public override object ExecuteScalar()
         {
             lock (SyncRoot)
@@ -412,47 +637,50 @@ namespace System.Data.Hsqldb.Client
         /// number of rows) and is to be (re)executed a relatively large
         /// number of times (more than once or twice), preparation may result
         /// in significant performance gains (e.g. has been benchmarked at
-        /// between 160% to 600% faster for OLTP-style access to an embedded
-        /// data source), with actual speedup depending on the relative
-        /// overhead of reparsing on each execution, as governed by different
-        /// table persistence engines (<c>Memory</c>, <c>Text</c>,
-        /// <c>Cached</c>), database operation modes (<c>File</c>,
-        /// <c>Mem</c> and <c>Res</c>) and other configuration settings,
-        /// such as whether NIO file access enabled. Similar gains for
-        /// network access are experienced only when performing batch
-        /// execution or bulk copy. This is due to network round trip latency,
-        /// which otherwise typically adds at least one or two orders of
-        /// magnitude to the time taken to perform each short-running
-        /// parse/execute/fetch cycle.
+        /// between 160% to 600% faster for OLTP-style primary-key predicated
+        /// single row access to an embedded data source), with actual speedup
+        /// depending on the relative overhead of re-parsing on each execution,
+        /// as governed by the relative costs of first encoding  parameter
+        /// values to command text literal values only to be parsed back to
+        /// binary values inside the database engine, use of different table
+        /// persistence engines (<c>Memory</c>, <c>Text</c>, <c>Cached</c>),
+        /// database operation modes (<c>File</c>, <c>Mem</c> and <c>Res</c>)
+        /// and other configuration settings, such as whether NIO file access
+        /// is enabled. Similar gains for network access are to be expected
+        /// only when performing batch execution or bulk copy. This is due to
+        /// network round trip latency, which otherwise typically adds at least
+        /// one or two orders of magnitude to the time taken to perform each
+        /// short-running parse/execute/fetch cycle.
         /// </para>
         /// <para>
         /// On the other hand, if this command is long-running (e.g. is
         /// computationally complex, involves a large number of rows
         /// and/or involves time consuming disk access), then at worst the
         /// performance will be the same if preparation is *not* performed.
-        /// And in some cases, performace may actually be significantly better,
+        /// And in some cases, performace may actually be significantly better
         /// if preparation is *not* performed, for instance because the engine
-        /// may be able to create a better plan when the values of all condition
-        /// expressions are statically bound at parse time.
+        /// may be able to create a better plan when the values of all
+        /// condition expressions are statically bound at parse time and the
+        /// bound values lend themselves to the task.
         /// </para>
         /// <para>
         /// The major exception to the long-running command rule-of-thumb above
-        /// is when inserting or updating large binary, character, numeric or
-        /// decimal values (i.e. values that consume more than a few hundred bytes
-        /// each).
+        /// is when inserting or updating binary, character, numeric or
+        /// decimal values whose size, either indivually or taken together,
+        /// may put undue memory stress on the system.
         /// </para>
         /// <para>
-        /// Although such commands may be long running when the values are
-        /// very large, preparation should always be preferred because it
-        /// avoids the massive overhead required to produce a statically bound
-        /// UTF16 representation of the command together with its parameter
-        /// values, parse the resulting command, convert large value tokens
-        /// to internal binary representation and possibly back to character
-        /// sequence representation in order to record changes in the
-        /// transaction log; not to mention how inefficient this is in terms
-        /// CPU usage, this may require allocation of temporary buffers
-        /// totalling many times the memory consumed by the parameter values
-        /// themselves.
+        /// Although such commands may be relatively long running when the
+        /// values are very large, preparation should always be preferred
+        /// because it avoids the massive overhead required to produce a
+        /// statically bound UTF16 representation of the command together
+        /// with its parameter values, parse the resulting command, convert
+        /// large value tokens to internal binary representation and possibly
+        /// back to character sequence representation in order to record
+        /// changes in the transaction log; not to mention how inefficient
+        /// this is in terms CPU usage, this may require allocation of
+        /// temporary buffers totalling many times the memory consumed by the
+        /// parameter values themselves.
         /// </para>
         /// <para>
         /// For example, it is easy to argue that inserting or updating a
@@ -466,12 +694,11 @@ namespace System.Data.Hsqldb.Client
         /// for submission of a character sequence to an API is to require
         /// immutability, as in submission of a <c>System.String</c> or
         /// <c>java.lang.String</c> object.  If the common contract is the
-        /// case, then in order to submit a statically bound SQL character
-        /// sequence representing the insert or update, each byte of the
-        /// BINARY value must be encoded to UTF16 hexadecimal form.  That
-        /// is, each octet must be converted to two UTF16 characters, yielding
-        /// 4 + (4 * 2 characers * 2 bytes per character) = (4 + 16)
-        /// =  20 MB.
+        /// case, then to submit a statically bound SQL character sequence
+        /// representing the insert or update, each byte of the BINARY value
+        /// must be encoded to UTF16 hexadecimal form.  That is, each octet
+        /// must be converted to two UTF16 characters, yielding 4 + (4 * 2
+        /// characers * 2 bytes per character) = (4 + 16) =  20 MB.
         /// </para>
         /// <para>
         /// Second, if dynamically resized character buffers are used to
@@ -506,20 +733,36 @@ namespace System.Data.Hsqldb.Client
         /// 4 + 2*32 + 16 + 4 + 16 = 104MB.
         /// </para>
         /// <para>
-        /// Of course this is an overstated argument; it is highly unlikely
-        /// that worst case over-allocation occurs or that an SQL processing
-        /// pipeline implements every worst case algorithm described above.
+        /// Of course this is a somewhat overstated argument; it is highly
+        /// unlikely that worst case over-allocation occurs or that an SQL
+        /// processing pipeline implements every worst case algorithm described
+        /// above.
+        /// </para>
+        /// <para>
         /// However, the argument does drive the point home: unless an SQL
         /// execution pipeline adheres strictly to end-to-end UTF-8 encoding
         /// and/or streaming patterns aimed at eliminating superfluous memory
         /// allocation, using unprepared commands with large parameter values
-        /// is very likely to cause significant memory and CPU load.
+        /// is very likely to cause significant memory and CPU load internal
+        /// to the database engine itself.  And regardless of back-end design
+        /// or implementation, passing large parameter values via static binding
+        /// to command text withing the ADO.NET data provider implementation or,
+        /// much worse, client code being forced to handle the same task,
+        /// inevitably leads to excessive memory and CPU pressure conditions in
+        /// comparison to using prepared commands.
         /// </para>
         /// </remarks>
-        /// <exception cref="T:System.InvalidOperationException">
+        /// <exception cref="InvalidOperationException">
         /// When the <see cref="Connection"/> is not set.
         /// -or- 
         /// when the <see cref="Connection"/> is not <see cref="HsqlConnection.Open()"/>.
+        /// </exception>
+        /// <exception cref="HsqlDataSourceException">
+        /// If a database access error occurs; the <see cref="CommandText"/>
+        /// contains a syntax error or violates some other constraint on
+        /// well-formedness; the <c>CommandText</c> does not meet the
+        /// requirments imposed by the current <see cref="CommandType"/>
+        /// value.
         /// </exception>
         public override void Prepare()
         {
@@ -538,12 +781,29 @@ namespace System.Data.Hsqldb.Client
         #region Connection
 
         /// <summary>
-        /// Gets or sets the <c>HsqlConnection</c>
-        /// used to execute this command.
+        /// The <c>HsqlConnection</c> used to execute this command.
         /// </summary>
+        /// <remarks>
+        /// If this object is <see cref="Prepare"/>d and the
+        /// new <c>Connection</c> is distinct from the current
+        /// <c>Connection</c>, then actions equivalent to invoking
+        /// <see cref="UnPrepare()"/> are performed using the
+        /// current <c>Connection</c>, in order to release the
+        /// underlying compiled statement, before such a task is
+        /// made otherwise impossible by replacing by current
+        /// <c>Connection</c> with the new one.
+        /// </remarks>
         /// <value>
-        /// The connection to the data source.
+        /// Represents a physical connection to the underlying data source
+        /// together with a specific logical session context in which SQL
+        /// actions take place.
         /// </value>
+        /// <exception cref="HsqlDataSourceException">
+        /// If the current state of this object and the current and new 
+        /// <c>Connection</c> objects dicate that <see cref="UnPrepare()"/>
+        /// must be invoked, then any exception raised as a result is
+        /// rethrown here.
+        /// </exception>
 #if W32DESIGN
         [Category("Data")]
         [Description("Connection used to execute this command")]
@@ -591,7 +851,12 @@ namespace System.Data.Hsqldb.Client
         /// <remarks>
         /// The default value is an empty string ("").
         /// </remarks>
-        ///
+        /// <exception cref="HsqlDataSourceException">
+        /// If, when setting a new value, the current state of this object
+        /// and the current and new <c>CommandText</c> values dicate that,
+        /// effectively, <see cref="UnPrepare()"/> must be invoked, then any
+        /// exception raised as a result is rethrown here.
+        /// </exception>
 #if W32DESIGN
         [Category("Data")]
         [Description("Command text to execute")]
@@ -630,8 +895,11 @@ namespace System.Data.Hsqldb.Client
         /// to execute this command and generating an error.
         /// </summary>
         /// <value>
-        /// The time in seconds to wait for this command to execute.
+        /// The time in seconds to wait for this command to execute;  30 by default.
         /// </value>
+        /// <exception cref="ArgumentException">
+        /// When an attempt is made to set a value that is less than zero (0).
+        /// </exception>
 #if W32DESIGN
         [Category("Data")]
         [Description("Time to wait for the command to execute")]
@@ -661,13 +929,22 @@ namespace System.Data.Hsqldb.Client
         #region CommandType
 
         /// <summary>
-        /// Specifies how the <see cref="CommandText"/>
-        /// property is interpreted.
+        /// Specifies how <see cref="CommandText"/> is interpreted.
         /// </summary>
+        /// <remarks>
+        /// Assignment of an unsupported value results in a silent
+        /// conversion to <see cref="System.Data.CommandType.Text"/>.
+        /// </remarks>
         /// <value>
         /// One of the <see cref="CommandType"/> values.
         /// The default is <c>CommandType.Text</c>.
         /// </value>
+        /// <exception cref="HsqlDataSourceException">
+        /// When assigning a new value, if the current state of this object
+        /// and the current and new <c>CommandType</c> values dicate that
+        /// this command must be <see cref="UnPrepare()"/>d, then any
+        /// exception raised as a result is rethrown here.
+        /// </exception>
 #if W32DESIGN
         [Category("Data")]
         [DefaultValue(CommandType.Text)]
@@ -683,21 +960,7 @@ namespace System.Data.Hsqldb.Client
                 {
                     InvalidateStatement();
 
-                    switch (value)
-                    {
-                        case CommandType.StoredProcedure:
-                        case CommandType.TableDirect:
-                        case CommandType.Text:
-                            {
-                                m_commandType = value;
-                                break;
-                            }
-                        default:
-                            {
-                                m_commandType = CommandType.Text;
-                                break;
-                            }
-                    }
+                    m_commandType = HsqlCommand.ToSupportedCommandType(value);
                 }
             }
         }
@@ -797,6 +1060,12 @@ namespace System.Data.Hsqldb.Client
         /// automatically generated, in which case the default
         /// is <c>None</c>.
         /// </value>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// When setting a new value and it does not match
+        /// on the the <c>UpdateRowSource</c> values: {<c>None</c>, 
+        /// <c>OutputParameters</c>, <c>FirstReturnedRecord</c>, 
+        /// <c>Both</c>}.
+        /// </exception>
         [Category("Update")]
         [DefaultValue(UpdateRowSource.Both)]
         [Description("When used by a DataAdapter.Update, denotes how command results are applied to the current DataRow.")]
@@ -839,7 +1108,7 @@ namespace System.Data.Hsqldb.Client
         /// Specifies the <c>HsqlConnection</c> used to
         /// execute this command.
         /// </summary>
-        /// <value>The connection to the data source.</value>
+        /// <value>The connection to the data source.</value>       
         protected override DbConnection DbConnection
         {
             get { return Connection; }
@@ -932,21 +1201,21 @@ namespace System.Data.Hsqldb.Client
         /// Although intended primarily for the situatiuon where
         /// <see cref="HsqlCommand.CommandType"/> is <c>StoredProcedure</c>,
         /// it is also intended that this method will eventually work correctly
-        /// for <c>Text</c> and <c>TableDirect</c> too.
+        /// for the <c>Text</c> and <c>TableDirect</c> command types as well.
         /// </para>
         /// <para>
-        /// At present, however, an exception is thrown if
-        /// <c>CommandType.StoredProcedure</c> is not the current command type.
+        /// At present, an exception is thrown if <c>CommandType.StoredProcedure</c>
+        /// is not the current command type.
         /// </para>
         /// <para>
-        /// Currently, a side effect of this method is to
-        /// <see cref="Prepare()"/> this command.  This policy is used because
-        /// it is typically more efficient in the long run.  If the intent is
-        /// to minimize the number of open prepared statements, simply call
-        /// <see cref="UnPrepare()"/> immediately after invoking this method;
-        /// otherwise, if it is to be executed several times, then leaving this
-        /// command prepared is likely to result in better performance, both in
-        /// terms of improved speed and reduced memory footprint.
+        /// Currently, a side-effect of this method is to <see cref="Prepare()"/>
+        /// this command.  This policy is used because it is typically more
+        /// efficient in the long run.  If the intent is to minimize the number
+        /// of open prepared statements, simply call <see cref="UnPrepare()"/>
+        /// immediately after invoking this method; otherwise, if this command
+        /// is to be executed several times, then leaving it prepared will often
+        /// result in better performance, both in terms of improved speed and 
+        /// in reduced memory footprint.
         /// </para>
         /// </remarks>
         /// <exception cref="InvalidOperationException">
@@ -1040,11 +1309,11 @@ namespace System.Data.Hsqldb.Client
 
         #region UnPrepare()
         /// <summary>
-        /// Releases any resources associated with maintaining
-        /// this command object in a prepared state.
+        /// Releases any resources associated with maintaining this command
+        /// object in a prepared state.
         /// </summary>
         /// <remarks>
-        /// After this call, <c>IsPrepared</c> will be <c>false</c>. 
+        /// After this call, <see cref="IsPrepared"/> will be <c>false</c>. 
         ///</remarks>
         public void UnPrepare()
         {
@@ -1062,8 +1331,7 @@ namespace System.Data.Hsqldb.Client
         /// Indicates whether this command is prepared.
         /// </summary>
         /// <value>
-        /// <c>true</c> if this command is prepared;
-        /// otherwise, <c>false</c>.
+        /// <c>true</c> if this command is prepared; otherwise, <c>false</c>.
         /// </value>
         public bool IsPrepared
         {
@@ -1075,15 +1343,16 @@ namespace System.Data.Hsqldb.Client
         #region SyncRoot
 
         /// <summary>
-        /// Gets an object that can be used to synchronize access to this
-        /// object.
+        /// Can be used to synchronize access to this command.
         /// </summary>
         /// <remarks>
-        /// Use instead of lock(this) due to FxCop check CA2002:
-        /// DoNotLockOnObjectsWithWeakIdentity (System.MarshalByRefObject)
+        /// It is recommended to use <c>lock(command.SyncRoot)</c>
+        /// instead of <c>lock(command)</c> due to FxCop check 
+        /// <c>CA2002: DoNotLockOnObjectsWithWeakIdentity (System.MarshalByRefObject)</c>.
         /// </remarks>
         /// <value>
-        /// An object that can be used to synchronize access to this object.
+        /// An object instance with strong identity that can be used
+        /// to synchronize access to this object.
         /// </value>
         public object SyncRoot
         {

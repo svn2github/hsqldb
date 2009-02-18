@@ -89,11 +89,19 @@ namespace System.Data.Hsqldb.Client
         /// associated with any connection.
         /// </summary>
         /// <remarks>
-        /// An instance constructed in such a fashion must first be associated
-        /// with a connection before it can be executed.
+        /// <para>
+        /// The initial <c>CommandType</c> is 
+        /// <see cref="System.Data.CommandType.Text"/>
+        /// and the initial <c>CommandText</c> is empty.
+        /// </para>
+        /// <para>
+        /// An instance constructed in such a fashion must
+        /// first be associated with an open connection and
+        /// have meaningful <c>CommandText</c> assigned the
+        /// before it can be executed successfully.
+        /// </para>
         /// </remarks>
-        public HsqlCommand()
-            : base()
+        public HsqlCommand() : base()
         {
             GC.SuppressFinalize(this);
         }
@@ -106,11 +114,14 @@ namespace System.Data.Hsqldb.Client
         /// Constructs a new <c>HsqlCommand</c> instance that is initially
         /// associated with the given connection.
         /// </summary>
+        /// <remarks>
+        /// The initial <c>CommandType</c> is <see cref="System.Data.CommandType.Text"/>
+        /// and the initial <c>CommandText</c> is empty.
+        /// </remarks>
         /// <param name="connection">
         /// The connection with which this command is initially associated.
         /// </param>
-        public HsqlCommand(HsqlConnection connection)
-            : this()
+        public HsqlCommand(HsqlConnection connection) : this()
         {
             Connection = connection;
         }
@@ -123,11 +134,14 @@ namespace System.Data.Hsqldb.Client
         /// Constructs a new <c>HsqlCommand</c> instance with the given
         /// connection and command text.
         /// </summary>
+        /// <remarks>
+        /// The initial <c>CommandType</c> is <see cref="System.Data.CommandType.Text"/>
+        /// </remarks>
         /// <param name="connection">
         /// The connection with which this command is initially associated.
         /// </param>
         /// <param name="commandText">
-        /// The initial command text to execute.
+        /// The initial command text.
         /// </param>
         public HsqlCommand(HsqlConnection connection, string commandText)
             : this(connection)
@@ -156,7 +170,7 @@ namespace System.Data.Hsqldb.Client
             CommandType commandType)
             : this(connection, commandText)
         {
-            m_commandType = commandType;
+            m_commandType = HsqlCommand.ToSupportedCommandType(CommandType);
         }
 
         #endregion

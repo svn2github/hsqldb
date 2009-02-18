@@ -567,7 +567,7 @@ namespace System.Data.Hsqldb.Client
         /// Tests if this connection is closed,
         /// throwing an exception if it is.
         /// </summary>
-        /// <exception cref="HsqlDataSourceException">
+        /// <exception cref="InvalidOperationException">
         /// When this connection is closed.
         /// </exception>
         private void CheckClosed()
@@ -575,7 +575,7 @@ namespace System.Data.Hsqldb.Client
             // normal check.
             if (m_connectionState == ConnectionState.Closed)
             {
-                throw new HsqlDataSourceException(
+                throw new InvalidOperationException(
                     "Connection is closed."); // NOI18N
             }
 
@@ -584,7 +584,7 @@ namespace System.Data.Hsqldb.Client
 
             if (session == null || session.IsClosed())
             {
-                throw new HsqlDataSourceException(
+                throw new InvalidOperationException(
                     "Connection is closed."); // NOI18N
             }
         }

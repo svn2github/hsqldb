@@ -73,27 +73,34 @@ namespace System.Data.Hsqldb.Client
         private static readonly char[] m_ParmeterChars = new char[] { '@', ':' };
         // Optimization to avoid burning through empty object[] instances
         private static readonly object[] m_NoParameters = new object[0];
-        // Backs the CommandText property
+        //
+        // Backs the CommandText property.
         private string m_commandText = String.Empty;
-        // computed from m_commandText
+        // computed from m_commandText.
         private bool m_commandTextHasParameters;
         private string m_storedProcedureCommandText;
         private string m_tableDirectCommandText;
-        //
+        // Backs the CommandTimeout property.
         private int m_commandTimeout = 30;
+        // Backs the CommandType property.
         private CommandType m_commandType = CommandType.Text;
-        //
+        // Backs the Connection property.
         private HsqlConnection m_dbConnection;
+        // Backs the Transaction property.
         private HsqlTransaction m_dbTransaction;
+        // Backs the Parameters property.
         private HsqlParameterCollection m_dbParameterCollection;
-        //
+        // Backs the DesignTimeVisible property.
         private bool m_designTimeVisible = true;
+        // Backs the UpdatedRowSource property.
         private UpdateRowSource m_updateRowSource = UpdateRowSource.Both;
-        //
+        // Represents the prepared form of this command.
         private HsqlStatement m_statement;
+        // Used to reconcile objects in the Parameters collection
+        // and/or parameter metadata about the prepared form of this
+        // command against parameter tokens in the CommandText.
         private TokenList m_tokenList;
-
-        //
+        // Backs the SyncRoot property.
         private object m_syncRoot;
 
         #endregion
@@ -143,20 +150,51 @@ namespace System.Data.Hsqldb.Client
 
         #region ApplyParameters()
         /// <summary>
-        /// Applies the current parameter values to 
-        /// the prepared form of this command.
+        /// Applies the current values in this object's parameter collection
+        /// to the internal statement object, if any, that represents the 
+        /// prepared form of this command.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// If this command is not presently prepared, no action is taken.
+        /// </para>
+        /// <para>
+        /// On the other hand, this operation is invoked internally in whenever
+        /// an <c>ExecuteXXX</c> operation is invoked on a prepared
+        /// <c>HsqlCommand</c> instance.
+        /// </para>
+        /// </remarks>
+        /// <exception cref="HsqlDataSourceException">
+        /// When unbound parameters exist.  An unbound parameter condition
+        /// occurs when a parameter's existence is declared in the command
+        /// text using a marker or can be inferred from
+        /// the signature of the stored proceduce to be executed, and
+        /// the parameter collection of this <c>HsqlCommand</c> contains
+        /// no corresponding <c>HsqlParameter</c> instance or the
+        /// corresponding <c>HsqlParameter</c> instance exists, but either
+        /// it represents an explicitly required (non-defaulted) value binding
+        /// site and the value has not explicitly been set or it represents a
+        /// non-nullable binding site and its present value is either
+        /// implicitly null or has explicily been set null.
+        /// </exception>
         internal void ApplyParameters()
         {
+            HsqlStatement l_statement = m_statement;
+
+            if (l_statement == null)
+            {
+                return;
+            }
+
             HsqlParameterCollection parameters = m_dbParameterCollection;
 
             if (parameters == null || parameters.Count == 0)
             {
-                int expectedCount = m_statement.ParameterCount;
+                int expectedCount = l_statement.ParameterCount;
 
                 if (expectedCount == 0)
                 {
-                    m_statement.SetParameters(m_NoParameters);
+                    l_statement.SetParameterValues(m_NoParameters);
 
                     return;
                 }
@@ -167,7 +205,7 @@ namespace System.Data.Hsqldb.Client
             }
 
             TokenList tokenList = TokenList;
-            int[] bindTypes = m_statement.ParameterTypes;
+            int[] bindTypes = l_statement.ParameterTypes;
             object[] values = new object[tokenList.ParameterCount];
 
             int boundValueCount = 0;
@@ -189,8 +227,8 @@ namespace System.Data.Hsqldb.Client
                                 int bindPosition = bindPositions[i];
                                 int bindType = bindTypes[bindPosition];
 
-                                object value = HsqlConvert.FromDotNet
-                                    .ToObject(parameter.Value, bindType);
+                                object value = HsqlConvert.FromDotNet.ToObject(
+                                    parameter.Value, bindType);
 
                                 values[bindPosition] = value;
 
@@ -207,17 +245,16 @@ namespace System.Data.Hsqldb.Client
                 int unboundCount = values.Length - boundValueCount;
 
                 throw new HsqlDataSourceException(string.Format(
-                    "{0} unbound Parameters Exist."
-                    , unboundCount)); // NOI18N
+                    "{0} unbound Parameters Exist.", unboundCount)); // NOI18N
             }
 
-            m_statement.SetParameters(values);
+            l_statement.SetParameterValues(values);
         }
         #endregion
 
         #region ExecuteScalarInternal()
         /// <summary>
-        /// Provides the core logic for the ExecuteScalar() method.
+        /// Provides the core logic for the <see cref="ExecuteScalar()"/> method.
         /// </summary>
         /// <returns>The resulting scalar value</returns>
         internal object ExecuteScalarInternal()
@@ -238,8 +275,9 @@ namespace System.Data.Hsqldb.Client
 
         #region ExecuteReaderInternal(CommandBehavior)
         /// <summary>
-        /// Provides the core logic for the ExecuteReader() method.
+        /// Provides the core logic for the <see cref="ExecuteReader(CommandBehavior)"/> method.
         /// </summary>
+        /// <param name="behavior">The requested behavior.</param>
         /// <returns>
         /// The result generated by executing the query.
         /// </returns>
@@ -337,10 +375,8 @@ namespace System.Data.Hsqldb.Client
 
         #region InvalidateStatement()
         /// <summary>
-        /// Releases, if present, the underlying
-        /// <c>HsqlStatement</c> and makes eligible
-        /// for garbage collection any related
-        /// resources.
+        /// Releases, if present, the underlying <c>HsqlStatement</c> and
+        /// makes eligible for garbage collection any related resources.
         /// </summary>
         internal void InvalidateStatement()
         {
@@ -410,7 +446,7 @@ namespace System.Data.Hsqldb.Client
 
         #region PrepareInternal()
         /// <summary>
-        /// Provides the core logic for the Prepare() method.
+        /// Provides the core logic for the <see cref="Prepare()"/> method.
         /// </summary>
         internal void PrepareInternal()
         {
@@ -629,7 +665,7 @@ SELECT DISTINCT p.specific_name
                 {
                     stmt = session.PrepareStatement(query);
                     
-                    stmt.SetParameters(schema, spName, spName);
+                    stmt.SetParameterValues(schema, spName, spName);
                     
                     result = stmt.Execute(session);
                     reader = new HsqlDataReader(result);
@@ -961,6 +997,23 @@ SELECT DISTINCT p.specific_name
             return HsqlTypes.getPrecision(type);
         }
         #endregion 
+
+        static CommandType ToSupportedCommandType(CommandType commandType)
+        {
+            switch (commandType)
+            {
+                case CommandType.StoredProcedure:
+                case CommandType.TableDirect:
+                case CommandType.Text:
+                    {
+                        return commandType;
+                    }
+                default:
+                    {
+                        return CommandType.Text;
+                    }
+            }
+        }
 
         #endregion
 
