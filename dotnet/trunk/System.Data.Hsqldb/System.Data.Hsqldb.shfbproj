@@ -1,0 +1,188 @@
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
+  <PropertyGroup>
+    <!-- The configuration and platform will be used to determine which
+         assemblies to include from solution and project documentation
+         sources -->
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{07e81bae-da5a-4ea9-87a9-cd273aa4e924}</ProjectGuid>
+    <SHFBSchemaVersion>1.8.0.0</SHFBSchemaVersion>
+    <!-- AssemblyName, Name, and RootNamespace are not used by SHFB but Visual
+         Studio adds them anyway -->
+    <AssemblyName>Documentation</AssemblyName>
+    <RootNamespace>Documentation</RootNamespace>
+    <Name>Documentation</Name>
+    <!-- SHFB properties -->
+    <OutputPath>.\Help\</OutputPath>
+    <HtmlHelpName>Hsqldb1.8.0</HtmlHelpName>
+    <DocumentationSources>
+      <DocumentationSource sourceFile="System.Data.Hsqldb.sln" subFolders="True" />
+    </DocumentationSources>
+    <PlugInConfigurations>
+    </PlugInConfigurations>
+    <HelpFileFormat>HtmlHelp2x</HelpFileFormat>
+    <ProjectSummary>ADO.NET 2.0 data provider for HSQLDB 1.8.0.</ProjectSummary>
+    <VisibleItems>InheritedMembers, InheritedFrameworkMembers, Internals, Protected, SealedProtected</VisibleItems>
+    <NamespaceSummaries>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Client" isDocumented="True">HSQLDB ADO.NET 2.0. Data Provider implementation.</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.Client.Design" isDocumented="True">Data design support.</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.Client.Design.Attribute" isDocumented="True">Data design Attribute classes.</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.Client.Design.Component" isDocumented="True">Data design Component classes.</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.Client.Design.Control" isDocumented="True">Data design Control classes.</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.Client.Design.Converter" isDocumented="True">Data design Converter classes</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.Client.Design.Designer" isDocumented="True">Data design Designer classes.</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.Client.Design.Dialog" isDocumented="True">Data design Dialog classes.</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.Client.Design.Toolbox" isDocumented="True">Data design Toolbox classes.</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.Client.MetaData" isDocumented="True">Supports the ADO.NET metadata collections contract.</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.Client.MetaData.Collection" isDocumented="True">Concrete metadata collection implementations.</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.Client.MetaData.Collection.Base" isDocumented="True">Base metadata collection classes.</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.Client.Sql" isDocumented="True">SQL language support, especially lexographic analysis of command text in support of parameterization.</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.Client.UnitTests" isDocumented="True">Unit tests that verify the correctness of the HSQLDB ADO.NET 2.0 Data Provider implementation.</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.Common" isDocumented="True">HSQLDB ADO.NET 2.0. Common Support Library</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.Common.Enumeration" isDocumented="True">Enumerated types untilized by the HSQLDB 1.8.0 ADO.NET 2.0 Data Provider.</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.Common.Lob" isDocumented="True">Large Binary Object handling.</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.Common.Lob.UnitTests" isDocumented="True">Unit tests of Large Binary Object handling.</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.Common.Sql" isDocumented="True">Client-side SQL support, especially lexographic analysis.</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.Common.Sql.Predicate" isDocumented="True">Stand-alone SQL predicate support, such as for SQL LIKE pattern matching.</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.Common.Sql.Predicate.UnitTests" isDocumented="True">Unit tests of stand-alone SQL predicate support,</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.Common.Sql.Type" isDocumented="True">Client-side representations of special SQL types that do not have a commonly accepted mapping to the .Net type system.</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.Common.Sql.Type.UnitTests" isDocumented="True">Unit tests of client-side SQL type representations.</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.Common.Sql.UnitTests" isDocumented="True">Unit tests of client-side SQL support functions.</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.Common.UnitTests" isDocumented="True">Unit tests of HSQLDB ADO.NET 2.0. Common Support Library</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.TestCoverage" isDocumented="True">Defines attributes used to provide test coverage intention annotations at the assembly, class and method levels.</NamespaceSummaryItem>
+<NamespaceSummaryItem name="(global)" isDocumented="True">Global namespace.</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.Client.Internal" isDocumented="True">Internal implementation classes supporting the the HSQLDB ADO.NET 2.0 Data Provider</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.Common.Converter" isDocumented="True">Converter classes untilized by the HSQLDB 1.8.0 ADO.NET 2.0 Data Provider.</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.Common.Converter.UnitTests" isDocumented="True">unit tests of Converter classes.</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.Common.IO" isDocumented="True">Input/Output wrapper/adapter classes for the HSQLDB ADO.NET 2.0 Data Provider</NamespaceSummaryItem>
+<NamespaceSummaryItem name="System.Data.Hsqldb.Common.IO.UnitTests" isDocumented="True">Unit tests of Input/Output wrapper/adapter classes.</NamespaceSummaryItem></NamespaceSummaries>
+    <HelpTitle>HSQLDB 1.8.0 Documentation</HelpTitle>
+    <IndentHtml>True</IndentHtml>
+    <NamingMethod>MemberName</NamingMethod>
+    <PresentationStyle>vs2005</PresentationStyle>
+    <ProjectLinkType>Local</ProjectLinkType>
+    <RootNamespaceContainer>True</RootNamespaceContainer>
+    <RootNamespaceTitle>ADO.NET 2.0 API For HSQLDB 1.8.0</RootNamespaceTitle>
+    <HelpFileVersion>1.8.0.10</HelpFileVersion>
+    <CopyrightHref>http://hsqldb.org/</CopyrightHref>
+    <CopyrightText>Copyright &amp;#169%3b 2001-2009, The HSQL Development Group. All Rights Reserved.</CopyrightText>
+    <FeedbackEMailAddress>boucherb%40users.sourceforge.net</FeedbackEMailAddress>
+  </PropertyGroup>
+  <!-- There are no properties for these two groups but they need to appear in
+       order for Visual Studio to perform the build. -->
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="Documentation\styles\presentation.css" />
+    <Content Include="Documentation\html\hsqldb.gif" />
+    <Content Include="Documentation\ClassDiagrams\System.Data.Hsqldb.Client.MetaData.Collection.ReservedWordsCollection.png" />
+    <Content Include="Documentation\ClassDiagrams\System.Data.Hsqldb.Client.HsqlDataAdapter.png" />
+    <Content Include="Documentation\ClassDiagrams\System.Data.Hsqldb.Client.HsqlConvert.png" />
+    <Content Include="Documentation\ClassDiagrams\System.Data.Hsqldb.Client.HsqlConnectionStringBuilder.png" />
+    <Content Include="Documentation\ClassDiagrams\System.Data.Hsqldb.Client.HsqlConnection.png" />
+    <Content Include="Documentation\ClassDiagrams\System.Data.Hsqldb.Client.HsqlCommandBuilder.png" />
+    <Content Include="Documentation\ClassDiagrams\System.Data.Hsqldb.Client.HsqlCommand.png" />
+    <Content Include="Documentation\ClassDiagrams\System.Data.Hsqldb.Client.HsqlBatchUpdateException.png" />
+    <Content Include="Documentation\ClassDiagrams\System.Data.Hsqldb.Client.HsqlBatchItem.png" />
+    <Content Include="Documentation\Chapter 8 - SQL Syntax\SQL Commands\Data Definition Language Commands\DROP Commands.html" />
+    <Content Include="Documentation\Chapter 8 - SQL Syntax\SQL Commands\Data Definition Language Commands\Data Definition Language Commands.html" />
+    <Content Include="Documentation\Chapter 8 - SQL Syntax\SQL Commands\Data Definition Language Commands\CREATE Commands.html" />
+    <Content Include="Documentation\Chapter 8 - SQL Syntax\SQL Commands\Data Definition Language Commands\ALTER Commands.html" />
+    <Content Include="Documentation\Chapter 8 - SQL Syntax\SQL Commands\Transaction Control Commands.html" />
+    <Content Include="Documentation\Chapter 8 - SQL Syntax\SQL Commands\SQL Commands.html" />
+    <Content Include="Documentation\Chapter 8 - SQL Syntax\SQL Commands\Session Control Commands.html" />
+    <Content Include="Documentation\Chapter 8 - SQL Syntax\SQL Commands\Database Control Commands.html" />
+    <Content Include="Documentation\Chapter 8 - SQL Syntax\SQL Commands\Data Query And Manipulation Language Commands.html" />
+    <Content Include="Documentation\Chapter 8 - SQL Syntax\SQL Commands\Data Privilege Commands.html" />
+    <Content Include="Documentation\Chapter 8 - SQL Syntax\SQL-invoked Routines.html" />
+    <Content Include="Documentation\Chapter 8 - SQL Syntax\SQL Expressions.html" />
+    <Content Include="Documentation\Chapter 8 - SQL Syntax\SQL Data Types.html" />
+    <Content Include="Documentation\Chapter 8 - SQL Syntax\Chapter 8 - SQL Syntax.html" />
+    <Content Include="Documentation\Chapter 7 - SQL Tool\The sqltool.rc File.html" />
+    <Content Include="Documentation\Chapter 7 - SQL Tool\Running SqlTool The First Time.html" />
+    <Content Include="Documentation\Chapter 7 - SQL Tool\Chapter 7 - SQL Tool.html" />
+    <Content Include="Documentation\Chapter 6 - Transport Layer Security\Chapter 6 - Transport Layer Security.html" />
+    <Content Include="Documentation\Chapter 5 - Text Tables\Chapter 5 - Text Tables.html" />
+    <Content Include="Documentation\Chapter 4 - Configuration And Settings\Configuration Files\The Server And WebServer Properties Files.html" />
+    <Content Include="Documentation\Chapter 4 - Configuration And Settings\Configuration Files\The Database Properties File.html" />
+    <Content Include="Documentation\Chapter 4 - Configuration And Settings\Configuration Files\Configuration Files.html" />
+    <Content Include="Documentation\Chapter 4 - Configuration And Settings\Connection Settings.html" />
+    <Content Include="Documentation\Chapter 4 - Configuration And Settings\Chapter 4 - Configuration And Settings.html" />
+    <Content Include="Documentation\Chapter 3 - Deployment Issues\Chapter 3 - Deployment Issues.html" />
+    <Content Include="Documentation\Chapter 2 - SQL Issues\Types And Arithmetic Operations\Types And Arithmetic Operations.html" />
+    <Content Include="Documentation\Chapter 2 - SQL Issues\Types And Arithmetic Operations\Storage And Handling of CLR Objects.html" />
+    <Content Include="Documentation\Chapter 2 - SQL Issues\Types And Arithmetic Operations\Size, Precision And Scale.html" />
+    <Content Include="Documentation\Chapter 2 - SQL Issues\Types And Arithmetic Operations\Other Numeric Types.html" />
+    <Content Include="Documentation\Chapter 2 - SQL Issues\Types And Arithmetic Operations\Integral Types.html" />
+    <Content Include="Documentation\Chapter 2 - SQL Issues\Types And Arithmetic Operations\Bit And Boolean Types.html" />
+    <Content Include="Documentation\Chapter 2 - SQL Issues\Sequences And Identity\Sequences.html" />
+    <Content Include="Documentation\Chapter 2 - SQL Issues\Sequences And Identity\Sequences And Identity.html" />
+    <Content Include="Documentation\Chapter 2 - SQL Issues\Sequences And Identity\Identity Auto-Increment Columns.html" />
+    <Content Include="Documentation\Chapter 2 - SQL Issues\Constraints And Indexes\Unique Indexes.html" />
+    <Content Include="Documentation\Chapter 2 - SQL Issues\Constraints And Indexes\Unique Constraints.html" />
+    <Content Include="Documentation\Chapter 2 - SQL Issues\Constraints And Indexes\Primary Key Constraints.html" />
+    <Content Include="Documentation\Chapter 2 - SQL Issues\Constraints And Indexes\Indexes And Query Performance.html" />
+    <Content Include="Documentation\Chapter 2 - SQL Issues\Constraints And Indexes\Foreign Key Constraints.html" />
+    <Content Include="Documentation\Chapter 2 - SQL Issues\Constraints And Indexes\Constraints And Indexes.html" />
+    <Content Include="Documentation\Chapter 2 - SQL Issues\Transactions.html" />
+    <Content Include="Documentation\Chapter 2 - SQL Issues\SQL Standard Support.html" />
+    <Content Include="Documentation\Chapter 2 - SQL Issues\Chapter 2 - SQL Issues.html" />
+    <Content Include="Documentation\Chapter 1 - Getting Started\In-Process Operation\Res Protocol.html" />
+    <Content Include="Documentation\Chapter 1 - Getting Started\In-Process Operation\Mem Protocol.html" />
+    <Content Include="Documentation\Chapter 1 - Getting Started\In-Process Operation\In-Process Operation.html" />
+    <Content Include="Documentation\Chapter 1 - Getting Started\In-Process Operation\File Protocol.html" />
+    <Content Include="Documentation\Chapter 1 - Getting Started\Client-Server Operation\Client-Server Network Protocols\HSQLDB Web Server Protocol.html" />
+    <Content Include="Documentation\Chapter 1 - Getting Started\Client-Server Operation\Client-Server Network Protocols\HSQLDB Server Protocol.html" />
+    <Content Include="Documentation\Chapter 1 - Getting Started\Client-Server Operation\Client-Server Network Protocols\Client-Server Network Protocols.html" />
+    <Content Include="Documentation\Chapter 1 - Getting Started\Client-Server Operation\Client-Server Operation.html" />
+    <Content Include="Documentation\Chapter 1 - Getting Started\Client-Server Operation\Accessing A Server From Client Code.html" />
+    <Content Include="Documentation\Chapter 1 - Getting Started\Using the Database Engine.html" />
+    <Content Include="Documentation\Chapter 1 - Getting Started\Running Tools.html" />
+    <Content Include="Documentation\Chapter 1 - Getting Started\Multiple Database Instances.html" />
+    <Content Include="Documentation\Chapter 1 - Getting Started\Introduction.html" />
+    <Content Include="Documentation\Chapter 1 - Getting Started\Creating A Database.html" />
+    <Content Include="Documentation\Chapter 1 - Getting Started\Closing A Database.html" />
+    <Content Include="Documentation\Chapter 1 - Getting Started\Chapter 1 - Getting Started.html" />
+    <Content Include="Documentation\Chapter 1 - Getting Started\Anatomy Of A Database Instance.html" />
+    <Content Include="Documentation\index.html" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Documentation\styles\" />
+    <Folder Include="Documentation\html\" />
+    <Folder Include="Documentation\ClassDiagrams\" />
+    <Folder Include="Documentation\Chapter 8 - SQL Syntax\SQL Commands\Data Definition Language Commands\" />
+    <Folder Include="Documentation\Chapter 8 - SQL Syntax\SQL Commands\" />
+    <Folder Include="Documentation\Chapter 8 - SQL Syntax\" />
+    <Folder Include="Documentation\Chapter 7 - SQL Tool\" />
+    <Folder Include="Documentation\Chapter 6 - Transport Layer Security\" />
+    <Folder Include="Documentation\Chapter 5 - Text Tables\" />
+    <Folder Include="Documentation\Chapter 4 - Configuration And Settings\Configuration Files\" />
+    <Folder Include="Documentation\Chapter 4 - Configuration And Settings\" />
+    <Folder Include="Documentation\Chapter 3 - Deployment Issues\" />
+    <Folder Include="Documentation\Chapter 2 - SQL Issues\Types And Arithmetic Operations\" />
+    <Folder Include="Documentation\Chapter 2 - SQL Issues\Sequences And Identity\" />
+    <Folder Include="Documentation\Chapter 2 - SQL Issues\Constraints And Indexes\" />
+    <Folder Include="Documentation\Chapter 2 - SQL Issues\" />
+    <Folder Include="Documentation\Chapter 1 - Getting Started\In-Process Operation\" />
+    <Folder Include="Documentation\Chapter 1 - Getting Started\Client-Server Operation\Client-Server Network Protocols\" />
+    <Folder Include="Documentation\Chapter 1 - Getting Started\Client-Server Operation\" />
+    <Folder Include="Documentation\Chapter 1 - Getting Started\" />
+    <Folder Include="Documentation\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="IKVM.OpenJDK.ClassLibrary">
+      <HintPath>Lib\IKVM.OpenJDK.ClassLibrary.dll</HintPath>
+    </Reference>
+    <Reference Include="Org.Hsqldb">
+      <HintPath>Lib\Org.Hsqldb.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Data, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+    <Reference Include="System.Transactions, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+    <Reference Include="System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  </ItemGroup>
+  <!-- Import the SHFB build targets -->
+  <Import Project="$(SHFBROOT)\SandcastleHelpFileBuilder.targets" />
+</Project>
