@@ -101,7 +101,7 @@ namespace System.Data.Hsqldb.Client
         // command against parameter tokens in the CommandText.
         private TokenList m_tokenList;
         // Backs the SyncRoot property.
-        private object m_syncRoot;
+        private readonly object m_syncRoot = new object();
 
         #endregion
 

@@ -1420,16 +1420,7 @@ namespace System.Data.Hsqldb.Client
         /// </value>
         public object SyncRoot
         {
-            get
-            {
-                if (m_syncRoot == null)
-                {
-                    Interlocked.CompareExchange(ref m_syncRoot, new object(),
-                        null);
-                }
-
-                return m_syncRoot;
-            }
+            get { return m_syncRoot; }
         }
 
         #endregion

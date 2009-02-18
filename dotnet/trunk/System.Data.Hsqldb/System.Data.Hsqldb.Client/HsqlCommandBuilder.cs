@@ -274,9 +274,7 @@ namespace System.Data.Hsqldb.Client
         /// </returns>
         protected override string GetParameterName(string parameterName)
         {
-            return parameterName.StartsWith("@")
-                ? parameterName
-                : string.Concat("@", parameterName);
+            return string.Concat("@", parameterName);
         }
         #endregion
 
@@ -355,14 +353,12 @@ namespace System.Data.Hsqldb.Client
 
             if (adapter == base.DataAdapter)
             {
-                hsqlDataAdapter.RowUpdating
-                    -= new HsqlRowUpdatingEventHandler(
+                hsqlDataAdapter.RowUpdating -= new HsqlRowUpdatingEventHandler(
                         this.HsqlRowUpdatingHandler);
             }
             else
             {
-                hsqlDataAdapter.RowUpdating
-                    += new HsqlRowUpdatingEventHandler(
+                hsqlDataAdapter.RowUpdating += new HsqlRowUpdatingEventHandler(
                         this.HsqlRowUpdatingHandler);
             }
         }
@@ -390,8 +386,7 @@ namespace System.Data.Hsqldb.Client
             }
 
             return (s.Length >= 2) && s.StartsWith(m_DQ) && s.EndsWith(m_DQ)
-                ? s.Substring(1, s.Length - 2).Replace(m_DDQ, m_DQ)
-                : s;
+                ? s.Substring(1, s.Length - 2).Replace(m_DDQ, m_DQ) : s;
         }
         #endregion 
 
@@ -411,21 +406,14 @@ namespace System.Data.Hsqldb.Client
         [EditorBrowsable(EditorBrowsableState.Never)]
         public override CatalogLocation CatalogLocation
         {
-            get
-            {
-                return CatalogLocation.Start;
-            }
+            get { return CatalogLocation.Start; }
             set
             {
                 if (CatalogLocation.Start != value)
                 {
-                    string message =
-                        "Location must be CatalogLocationStart, value: "
-                        + value;
-
-                    throw new ArgumentException(
-                        message,
-                        "value");
+                    throw new ArgumentException(string.Format(
+                        "Location must be CatalogLocation.Start, value: {0}",
+                        value), "value");
                 }
             }
         }
@@ -450,13 +438,9 @@ namespace System.Data.Hsqldb.Client
             {
                 if (m_CatalogSeparator != value)
                 {
-                    string message
-                        = "Catalog Separator must be the period character [.], value: "
-                        + value;
-
-                    throw new ArgumentException(
-                        message,
-                        "value");
+                    throw new ArgumentException(string.Format(
+                        "Catalog Separator must be the period character " +
+                        "[.], value: (0}", value), "value");
                 }
             }
         }
@@ -491,13 +475,9 @@ namespace System.Data.Hsqldb.Client
             {
                 if (value != m_DQ)
                 {
-                    string message =
-                        "QuotePrefix must be double quote [\"], value: "
-                        + value;
-
-                    throw new ArgumentException(
-                        message,
-                        "value");
+                    throw new ArgumentException(string.Format(
+                        "QuotePrefix must be double quote [\"], value: {0}",
+                        value), "value");
                 }
             }
         }
@@ -518,13 +498,9 @@ namespace System.Data.Hsqldb.Client
             {
                 if (value != m_DQ)
                 {
-                    string message =
-                        "QuoteSuffix must be double quote [\"], value: "
-                        + value;
-
-                    throw new ArgumentException(
-                        message,
-                        "value");
+                    throw new ArgumentException(string.Format(
+                        "QuoteSuffix must be double quote [\"], value: {0}",
+                        value), "value");
                 }
             }
         }
@@ -549,13 +525,9 @@ namespace System.Data.Hsqldb.Client
             {
                 if (m_SchemaSeparator != value)
                 {
-                    string message =
-                        "SchemaSeparator must be the period character [.], value: "
-                        + value;
-
-                    throw new ArgumentException(
-                        message,
-                        "value");
+                    throw new ArgumentException(string.Format(
+                        "SchemaSeparator must be the period character " +
+                        "[.], value: {0}", value), "value");
                 }
             }
         }
@@ -569,13 +541,13 @@ namespace System.Data.Hsqldb.Client
 
         #region HsqlRowUpdatingHandler(object,HsqlRowUpdatingEventArgs)
         /// <summary>
-        /// Signature adapter 
+        /// Signature adapter.
         /// </summary>
         /// <param name="sender">The event sender.</param>
         /// <param name="evt">
         /// The event arguments instance containing the event data.
         /// </param>
-        private void HsqlRowUpdatingHandler(object sender,
+        private void HsqlRowUpdatingHandler(object sender, 
             HsqlRowUpdatingEventArgs evt)
         {
             base.RowUpdatingHandler(evt);

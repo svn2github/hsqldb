@@ -479,25 +479,6 @@ namespace System.Data.Hsqldb.Client
         }
         #endregion
 
-        #region SyncRoot
-        /// <summary>
-        /// Gets an object that can be used to synchronize access to this
-        /// object.
-        /// </summary>
-        /// <remarks>
-        /// Use lock(connection.SyncRoot) instead of lock(connection) due
-        /// to FxCop check CA2002: DoNotLockOnObjectsWithWeakIdentity
-        /// (System.MarshalByRefObject)
-        /// </remarks>
-        /// <value>
-        /// An object that can be used to synchronize access to this object.
-        /// </value>
-        public object SyncRoot
-        {
-            get { return m_syncRoot; }
-        }
-        #endregion
-
         #region LocalTransaction
         /// <summary>
         /// Gets an <see cref="HsqlTransaction"/> instance representing
