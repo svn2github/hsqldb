@@ -290,7 +290,7 @@ namespace System.Data.Hsqldb.Client
         /// </returns>
         public new HsqlParameter CreateParameter()
         {
-            return (HsqlParameter)HsqlProviderFactory.Instance.CreateParameter();
+            return new HsqlParameter();
         }
 
         #endregion
@@ -388,7 +388,10 @@ namespace System.Data.Hsqldb.Client
         /// <seealso cref="HsqlCommand.ExecuteReader(CommandBehavior)"/>
         public new HsqlDataReader ExecuteReader()
         {
-            return ExecuteReaderInternal(CommandBehavior.Default);
+            lock (SyncRoot)
+            {
+                return ExecuteReaderInternal(CommandBehavior.Default);
+            }
         }
 
         #endregion
@@ -577,8 +580,11 @@ namespace System.Data.Hsqldb.Client
         /// value.
         /// </exception>
         public new HsqlDataReader ExecuteReader(CommandBehavior behavior)
-        {            
-            return ExecuteReaderInternal(behavior);
+        {
+            lock (SyncRoot)
+            {
+                return ExecuteReaderInternal(behavior);
+            }
         }
 
         #endregion
@@ -1072,14 +1078,13 @@ namespace System.Data.Hsqldb.Client
         #region Transaction
 
         /// <summary>
-        /// Specifies the database transaction
-        /// within which this command executes.
+        /// Specifies the database transaction within which this command
+        /// executes.
         /// </summary>
         /// <value>
-        /// The database transaction within which
-        /// this command executes. The default value
-        /// is a <c>null</c> reference
-        /// (Nothing in Visual Basic).
+        /// The database transaction within which this command executes.
+        /// The default value is a <c>null</c> reference (Nothing in 
+        /// Visual Basic).
         /// </value>
 #if W32DESIGN
         [Browsable(false)]
@@ -1090,11 +1095,12 @@ namespace System.Data.Hsqldb.Client
 #endif
         public new HsqlTransaction Transaction
         {
-            get {
+            get
+            {
                 return (m_dbTransaction != null &&
                     m_dbTransaction.Connection != null) ? m_dbTransaction : null;
             }
-            set 
+            set
             {
                 if (m_dbTransaction != value)
                 {

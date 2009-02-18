@@ -290,7 +290,7 @@ namespace System.Data.Hsqldb.Client
                 
                 if (!wasAlreadyPrepared)
                 {
-                    Prepare();
+                    Prepare(); // already correctly locked.
                 }
 
                 HsqlDataReader reader0 = new HsqlDataReader(
