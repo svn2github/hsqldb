@@ -301,7 +301,7 @@ namespace System.Data.Hsqldb.Client
                 {
                     // Do it now, so that it does not fail later if
                     // originating connection is closed before first
-                    // call.
+                    // client invocation of reader.GetSchemaTable().
                     reader0.GetSchemaTable();
                 }
 
@@ -343,7 +343,7 @@ namespace System.Data.Hsqldb.Client
             {
                 // Do it now, so that it does not fail later if
                 // originating connection is closed before first
-                // call.
+                // client invocation of reader.GetSchemaTable().
                 reader.GetSchemaTable();
             }
 
@@ -382,6 +382,8 @@ namespace System.Data.Hsqldb.Client
         {
             try
             {
+                // localize member references to minimize
+                // potential race conditions.
                 HsqlConnection connection = m_dbConnection;
                 HsqlStatement statement = m_statement;
 
@@ -494,15 +496,21 @@ namespace System.Data.Hsqldb.Client
         #region ConnectionStateChanged(object,StateChangeEventArgs)
 
         /// <summary>
-        /// Signals that the state of this object's associated
-        /// connection has changed.
+        /// Signals that the state of this object's associated connection
+        /// has changed.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">
         /// The <see cref="StateChangeEventArgs"/>
         /// containing the event data.
         /// </param>
-        private void ConnectionStateChanged(object sender, StateChangeEventArgs e)
+        /// <exception cref="HsqlDataSourceException">
+        /// If transition to the new value invalidates the prepared
+        /// state of this command, then any exception raised as
+        /// a result is rethrown here.
+        /// </exception>
+        private void ConnectionStateChanged(object sender, 
+            StateChangeEventArgs e)
         {
             if (sender == m_dbConnection)
             {
