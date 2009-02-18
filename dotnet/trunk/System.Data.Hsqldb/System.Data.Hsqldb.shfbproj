@@ -23,40 +23,41 @@
     </PlugInConfigurations>
     <HelpFileFormat>HtmlHelp2x</HelpFileFormat>
     <ProjectSummary>ADO.NET 2.0 data provider for HSQLDB 1.8.0.</ProjectSummary>
-    <VisibleItems>InheritedMembers, InheritedFrameworkMembers, Internals, Protected, SealedProtected</VisibleItems>
+    <VisibleItems>InheritedMembers, InheritedFrameworkMembers, Protected, SealedProtected</VisibleItems>
     <NamespaceSummaries>
       <NamespaceSummaryItem name="System.Data.Hsqldb.Client" isDocumented="True">HSQLDB ADO.NET 2.0. Data Provider implementation.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.Client.Design" isDocumented="True">Data design support.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.Client.Design.Attribute" isDocumented="True">Data design Attribute classes.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.Client.Design.Component" isDocumented="True">Data design Component classes.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.Client.Design.Control" isDocumented="True">Data design Control classes.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.Client.Design.Converter" isDocumented="True">Data design Converter classes</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.Client.Design.Designer" isDocumented="True">Data design Designer classes.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.Client.Design.Dialog" isDocumented="True">Data design Dialog classes.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.Client.Design.Toolbox" isDocumented="True">Data design Toolbox classes.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.Client.MetaData" isDocumented="True">Supports the ADO.NET metadata collections contract.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.Client.MetaData.Collection" isDocumented="True">Concrete metadata collection implementations.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.Client.MetaData.Collection.Base" isDocumented="True">Base metadata collection classes.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.Client.Sql" isDocumented="True">SQL language support, especially lexographic analysis of command text in support of parameterization.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.Client.UnitTests" isDocumented="True">Unit tests that verify the correctness of the HSQLDB ADO.NET 2.0 Data Provider implementation.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.Common" isDocumented="True">HSQLDB ADO.NET 2.0. Common Support Library</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.Common.Enumeration" isDocumented="True">Enumerated types untilized by the HSQLDB 1.8.0 ADO.NET 2.0 Data Provider.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.Common.Lob" isDocumented="True">Large Binary Object handling.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.Common.Lob.UnitTests" isDocumented="True">Unit tests of Large Binary Object handling.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.Common.Sql" isDocumented="True">Client-side SQL support, especially lexographic analysis.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.Common.Sql.Predicate" isDocumented="True">Stand-alone SQL predicate support, such as for SQL LIKE pattern matching.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.Common.Sql.Predicate.UnitTests" isDocumented="True">Unit tests of stand-alone SQL predicate support,</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.Common.Sql.Type" isDocumented="True">Client-side representations of special SQL types that do not have a commonly accepted mapping to the .Net type system.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.Common.Sql.Type.UnitTests" isDocumented="True">Unit tests of client-side SQL type representations.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.Common.Sql.UnitTests" isDocumented="True">Unit tests of client-side SQL support functions.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.Common.UnitTests" isDocumented="True">Unit tests of HSQLDB ADO.NET 2.0. Common Support Library</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.TestCoverage" isDocumented="True">Defines attributes used to provide test coverage intention annotations at the assembly, class and method levels.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="(global)" isDocumented="True">Global namespace.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.Client.Internal" isDocumented="True">Internal implementation classes supporting the the HSQLDB ADO.NET 2.0 Data Provider</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.Common.Converter" isDocumented="True">Converter classes untilized by the HSQLDB 1.8.0 ADO.NET 2.0 Data Provider.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.Common.Converter.UnitTests" isDocumented="True">unit tests of Converter classes.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.Common.IO" isDocumented="True">Input/Output wrapper/adapter classes for the HSQLDB ADO.NET 2.0 Data Provider</NamespaceSummaryItem>
-<NamespaceSummaryItem name="System.Data.Hsqldb.Common.IO.UnitTests" isDocumented="True">Unit tests of Input/Output wrapper/adapter classes.</NamespaceSummaryItem></NamespaceSummaries>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Client.Design" isDocumented="True">Data design support.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Client.Design.Attribute" isDocumented="True">Data design Attribute classes.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Client.Design.Component" isDocumented="True">Data design Component classes.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Client.Design.Control" isDocumented="True">Data design Control classes.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Client.Design.Converter" isDocumented="True">Data design Converter classes</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Client.Design.Designer" isDocumented="True">Data design Designer classes.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Client.Design.Dialog" isDocumented="True">Data design Dialog classes.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Client.Design.Toolbox" isDocumented="True">Data design Toolbox classes.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Client.MetaData" isDocumented="True">Supports the ADO.NET metadata collections contract.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Client.MetaData.Collection" isDocumented="True">Concrete metadata collection implementations.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Client.MetaData.Collection.Base" isDocumented="True">Base metadata collection classes.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Client.Sql" isDocumented="True">SQL language support, especially lexographic analysis of command text in support of parameterization.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Client.UnitTests" isDocumented="True">Unit tests that verify the correctness of the HSQLDB ADO.NET 2.0 Data Provider implementation.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Common" isDocumented="True">HSQLDB ADO.NET 2.0. Common Support Library</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Common.Enumeration" isDocumented="True">Enumerated types untilized by the HSQLDB 1.8.0 ADO.NET 2.0 Data Provider.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Common.Lob" isDocumented="True">Large Binary Object handling.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Common.Lob.UnitTests" isDocumented="True">Unit tests of Large Binary Object handling.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Common.Sql" isDocumented="True">Client-side SQL support, especially lexographic analysis.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Common.Sql.Predicate" isDocumented="True">Stand-alone SQL predicate support, such as for SQL LIKE pattern matching.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Common.Sql.Predicate.UnitTests" isDocumented="True">Unit tests of stand-alone SQL predicate support,</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Common.Sql.Type" isDocumented="True">Client-side representations of special SQL types that do not have a commonly accepted mapping to the .Net type system.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Common.Sql.Type.UnitTests" isDocumented="True">Unit tests of client-side SQL type representations.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Common.Sql.UnitTests" isDocumented="True">Unit tests of client-side SQL support functions.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Common.UnitTests" isDocumented="True">Unit tests of HSQLDB ADO.NET 2.0. Common Support Library</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.TestCoverage" isDocumented="True">Defines attributes used to provide test coverage intention annotations at the assembly, class and method levels.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="(global)" isDocumented="True">Global namespace.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Client.Internal" isDocumented="True">Internal implementation classes supporting the the HSQLDB ADO.NET 2.0 Data Provider</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Common.Converter" isDocumented="True">Converter classes untilized by the HSQLDB 1.8.0 ADO.NET 2.0 Data Provider.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Common.Converter.UnitTests" isDocumented="True">unit tests of Converter classes.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Common.IO" isDocumented="True">Input/Output wrapper/adapter classes for the HSQLDB ADO.NET 2.0 Data Provider</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="System.Data.Hsqldb.Common.IO.UnitTests" isDocumented="True">Unit tests of Input/Output wrapper/adapter classes.</NamespaceSummaryItem>
+    </NamespaceSummaries>
     <HelpTitle>HSQLDB 1.8.0 Documentation</HelpTitle>
     <IndentHtml>True</IndentHtml>
     <NamingMethod>MemberName</NamingMethod>
@@ -66,8 +67,30 @@
     <RootNamespaceTitle>ADO.NET 2.0 API For HSQLDB 1.8.0</RootNamespaceTitle>
     <HelpFileVersion>1.8.0.10</HelpFileVersion>
     <CopyrightHref>http://hsqldb.org/</CopyrightHref>
-    <CopyrightText>Copyright &amp;#169%3b 2001-2009, The HSQL Development Group. All Rights Reserved.</CopyrightText>
+    <CopyrightText>Copyright 2001-2009, The HSQL Development Group. All Rights Reserved.</CopyrightText>
     <FeedbackEMailAddress>boucherb%40users.sourceforge.net</FeedbackEMailAddress>
+    <ComponentConfigurations>
+      <ComponentConfig id="Cached MSDN URL References" enabled="True" xmlns="">
+        <component id="Cached MSDN URL References" type="SandcastleBuilder.Components.CachedResolveReferenceLinksComponent" assembly="{@SHFBFolder}SandcastleBuilder.Components.dll" locale="{@Locale}" linkTarget="{@SdkLinkTarget}">
+<cache filename="{@LocalDataFolder}Cache\MsdnUrl.cache" />
+<targets base="{@SandcastlePath}Data\Reflection" recurse="true" files="*.xml" type="{@SDKLinks}" />
+<targets files="reflection.xml" type="{@ProjectLinks}" />
+</component>
+      </ComponentConfig>
+<ComponentConfig id="Cached Reflection Index Data" enabled="True" xmlns=""><component id="Cached Reflection Index Data" type="SandcastleBuilder.Components.CachedCopyFromIndexComponent" assembly="{@SHFBFolder}SandcastleBuilder.Components.dll">
+<index name="reflection" value="/reflection/apis/api" key="@id" cache="10">
+  <cache base="{@SandcastlePath}Data\Reflection" recurse="true" files="*.xml" cacheFile="{@LocalDataFolder}Cache\Reflection.cache" />
+  <data files="reflection.xml" />
+</index>
+<copy name="reflection" source="*" target="/document/reference" />
+</component></ComponentConfig>
+<ComponentConfig id="Cached Framework Comments Index Data" enabled="True" xmlns=""><component id="Cached Framework Comments Index Data" type="SandcastleBuilder.Components.CachedCopyFromIndexComponent" assembly="{@SHFBFolder}SandcastleBuilder.Components.dll">
+<index name="comments" value="/doc/members/member" key="@name" cache="100">
+{@CachedFrameworkCommentList}
+{@CommentFileList}
+            </index>
+<copy name="comments" source="*" target="/document/comments" />
+</component></ComponentConfig></ComponentConfigurations>
   </PropertyGroup>
   <!-- There are no properties for these two groups but they need to appear in
        order for Visual Studio to perform the build. -->
