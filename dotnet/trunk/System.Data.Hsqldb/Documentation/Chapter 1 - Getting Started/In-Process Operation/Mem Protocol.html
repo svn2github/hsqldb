@@ -1,8 +1,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp" xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <link rel="stylesheet" type="text/css" href="../../styles/presentation.css">
-    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+    <title>Chapter 1 - Getting Started - Mem Protocol</title>
+    <link rel="stylesheet" type="text/css" href="../../styles/presentation.css" />
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css" />
 </head>
 <body>
     <div id="control">
@@ -13,9 +14,9 @@
                 </td>
                 <td valign="top" width="100%">
                     <span class="productTitle"><@HtmlEncHelpTitle/></span>
-                    <br>
+                    <br />
                     <span class="topicTitle">Chapter 1 - Getting Started</span>
-                    <br>
+                    <br />
                     <div id="toolbar">
                         <span id="chickenFeet"><a href="../Chapter 1 - Getting Started.html">Chapter Overview
                         </a>&gt; <a href="In-Process Operation.html">In-Process Operation </a>&gt; <span
@@ -35,19 +36,20 @@
         // ...
             </pre>
         <p>
-            Because no information is written to disk, this protocol should typically be
-            reserved for special scenarios.</p>
+            Because no information is written to disk, this protocol should typically be reserved
+            for special scenarios.</p>
         <p>
             It is also possible to host a
             <var>
                 Mem</var>
-            protocol database instance within an HSQLDB Server instance by specifying the
-            protocol on the server command line:</p>
-        <pre>    &gt;System.Data.Hsqldb.Server.exe -database.0 mem:dbname
+            protocol database instance within an HSQLDB Server instance by specifying the protocol
+            on the server command line:</p>
+        <pre lang="dos">    &gt;System.Data.Hsqldb.Server.exe -database.0 mem:dbname
             </pre>
         <p>
             or in the <tt>server.properties</tt> file:</p>
-        <pre>    # URI of database
+        <pre lang="ps1" title="mem: database specified in server properties">
+    # URI of database
     server.database.0=mem:dbname
     # URL alias of database
     server.dbname.0=scratch
@@ -59,15 +61,19 @@
             <h3 class="title">
                 Note</h3>
             <p>
-                Because information is never written to or <em>read</em> from the file system,
-                the
+                Because information is never written to or <em>read</em> from the file system, the
                 <var>
                     Mem</var>
                 protocol convention is that the first connection to each database instance must
                 be by the <tt>"SA"</tt> user with no password specified.</p>
         </div>
+        <div id="footer">
+            <div class="footerLine">
+                <img alt="footer.gif" width="100%" height="3px" src="../../icons/footer.gif" title="Footer image" />
+            </div>
+            <include item="footer" />
+        </div>
     </div>
-    <include item="footer" />
 </body>
 </html>
 <!-- @SortOrder 3 -->

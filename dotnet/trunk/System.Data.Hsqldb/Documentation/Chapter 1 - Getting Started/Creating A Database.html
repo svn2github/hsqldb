@@ -1,24 +1,25 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp" xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <link rel="stylesheet" type="text/css" href="../styles/presentation.css">
-    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+    <title>Chapter 1 - Getting Started - Creating A Database</title>
+    <link rel="stylesheet" type="text/css" href="../styles/presentation.css" />
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css" />
 </head>
 <body>
     <div id="control">
         <table border="0" width="100%" cellpadding="0" cellspacing="0">
             <tr>
                 <td align="center" valign="top" style="padding-right: 10px">
-                    <img alt="HSQLDB Logo" src="../html/hsqldb.gif">
+                    <img alt="HSQLDB Logo" src="../html/hsqldb.gif" />
                 </td>
-                <td valign="top" width="100%">
+                <td valign="top" width="100%" style="width: 100%;">
                     <span class="productTitle"><@HtmlEncHelpTitle/></span>
-                    <br>
+                    <br />
                     <span class="topicTitle">Chapter 1 - Getting Started</span>
-                    <br>
+                    <br />
                     <div id="toolbar">
-                        <span id="chickenFeet"><a href="Chapter 1 - Getting Started.html">Chapter Overview
-                        </a>&gt; <span class="nolink">Creating A Database</span> </span>
+                        <span id="chickenFeet"><a href="Chapter 1 - Getting Started.html">Chapter Overview </a>
+                            &gt; <span class="nolink">Creating A Database</span> </span>
                     </div>
                 </td>
             </tr>
@@ -26,8 +27,8 @@
     </div>
     <div id="main">
         <p>
-            The normal way to create an HSQLDB database instance is simply to Open() an
-            HsqlConnection object:</p>
+            The normal way to create an HSQLDB database instance is simply to Open() an HsqlConnection
+            object:</p>
         <pre lang="cs" title="To Create A Database Programatically:">
     DbProviderFactory factory = DbProviderFactories.GetProviderFactory("System.Data.Hsqldb.Client");
     
@@ -38,23 +39,34 @@
     }        
         </pre>
         <p>
-            When an <tt>HsqlConnection</tt> object's <tt><var>ConnectionString</var></tt> specifies the <var>File</var> or <var>Mem</var> protocol,
-            a new database instance is automatically created if no database exists at the
-            given <var>Path</var>.
+            When an <tt>HsqlConnection</tt> object's <tt>
+                <var>
+                    ConnectionString</var></tt> specifies the
+            <var>
+                File</var>
+            or
+            <var>
+                Mem</var>
+            protocol, a new database instance is automatically created if no database exists
+            at the given
+            <var>
+                Path</var>.
         </p>
         <p>
-            This may be contrary to the normal DBMS experience where use of a proprietary
-            tool is required to first create (and possibly open) a database instance before subsequent
+            This may be contrary to the normal DBMS experience where use of a proprietary tool
+            is required to first create (and possibly open) a database instance before subsequent
             connections can be made.
         </p>
         <h3>
             Issues</h3>
         <ul>
             <li>The HSQLDB automatic database creation policy may be confusing to new users.</li>
-            <li>If a mistake is made in specifying the <var>Path</var> for connecting to an
-                existing database, a new database instance is created and a connection is nevertheless
-                established, making it seem as if one's previously created databases objects have mysteriously
-                "disappeared." </li>
+            <li>If a mistake is made in specifying the
+                <var>
+                    Path</var>
+                for connecting to an existing database, a new database instance is created and a
+                connection is nevertheless established, making it seem as if one's previously created
+                databases objects have mysteriously "disappeared." </li>
         </ul>
         <p>
             For trouble-shooting purposes, include the connection property <tt>"IfExists=True"</tt>
@@ -62,33 +74,40 @@
         </p>
         <p>
             When this property is in effect, an exception is thrown upon opening the connection
-            if the database at the specified <var>Path</var> does not exist.
+            if the database at the specified
+            <var>
+                Path</var>
+            does not exist.
         </p>
         <div class="alert">
             <h3 class="title">
                 Note</h3>
             <p>
-                By default, the same auto-creation policy applies when a server instance is
-                started.</p>
+                By default, the same auto-creation policy applies when a server instance is started.</p>
             <p>
                 However, it is possible to append <tt>";ifexists=true"</tt> to a server database
                 URI specification to alter the default behavior.
             </p>
             <p>
                 From the command line:</p>
-            <pre>    &gt;System.Data.Hsqldb.Server.exe  database.0=file:c:\databases\db1;ifexists=true ...           
+            <pre lang="pshell">    &gt;System.Data.Hsqldb.Server.exe  database.0=file:c:\databases\db1;ifexists=true ...           
             </pre>
             <p>
                 In the <tt>server.properties</tt> file:
             </p>
-            <pre>
+            <pre lang="c">
     #settings for database.i of n
     server.database.i=file:c:\databases\dbi;ifexists=true
     server.dbname.i=mustexistdb
             </pre>
         </div>
+        <div id="footer">
+            <div class="footerLine">
+                <img width="100%" height="3px" src="../../icons/footer.gif" title="Footer image" />
+            </div>
+            <include item="footer" />
+        </div>
     </div>
-    <include item="footer" />
 </body>
 </html>
 <!-- @SortOrder 6 -->

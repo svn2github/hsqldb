@@ -1,206 +1,241 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
 <head>
-<link
-    rel="stylesheet"
-    type="text/css"
-    href="../../styles/presentation.css">
-<link
-    rel="stylesheet"
-    type="text/css"
-    href="ms-help://Hx/HxRuntime/HxLink.css">
+    <link rel="stylesheet" type="text/css" href="../../styles/presentation.css">
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
 </head>
 <body>
-<div id="control">
-<table
-    border="0"
-    width="100%"
-    cellpadding="0"
-    cellspacing="0">
-    <tr>
-        <td
-            align="center"
-            valign="top"
-            style="padding-right: 10px"><img
-            alt="HSQLDB Logo"
-            src="../../html/hsqldb.gif"></td>
-        <td
-            valign="top"
-            width="100%"><span class="productTitle"><@HtmlEncHelpTitle/></span>
-        <br>
-        <span class="topicTitle">Chapter 2 - SQL Issues</span> <br>
-        <div id="toolbar"><span id="chickenFeet"> <a
-            href="../Chapter 2 - SQL Issues.html"> Chapter Overview </a> &gt;
-            <span class="nolink">Constraints And Indexes</span> </span></div>
-        </td>
-    </tr>
-</table>
-</div>
-<div id="main">
-<p>SQL integrity constraints, generally referred to simply as constraints,
-define the valid states of SQL-data by constraining the values in the base
-tables. A constraint is described by a constraint descriptor. The SQL standard
-defines that a constraint is either a table constraint, a domain constraint, or an
-assertion which is described by, respectively, a table constraint descriptor,
-a domain constraint descriptor, or an assertion descriptor.</p>
-<p><em>At present, HSQLDB supports only table constaints.</em></p>
-<p>By definition, every constraint descriptor includes:</p>
-<p>— The name of the constraint,</p>
-<p>— An applicable &lt;search condition&gt;,</p>
-<p>— An indication of whether or not the constraint is deferrable,</p>
-<p>— An indication of whether the initial constraint mode is deferred or immediate</p>
-<p>
-    with the limitation that each integrity constraint shall be defined using a
-&lt;search condition&gt; that is not <dfn>retrospectively deterministic</dfn>.</p>
-<h4>Checking of constraints</h4>
-<p>The standard states that every constraint is either deferrable or
-non-deferrable.</p>
-<p><em>At present, HSQLDB supports only non-deferrable constraints.</em></p>
-<p>Within an SQL-transaction, every constraint has a constraint mode; if a
-constraint is non-deferrable, <em>as is presently always the case with
-HSQLDB</em>, then its constraint mode is always immediate; otherwise, it is either
-immediate or deferred. Every constraint has an initial constraint mode that
-specifies the constraint mode for that constraint at the start of each
-SQL-transaction and immediately after definition of that constraint.</p>
-<p><em>At present, the constraint mode is implicitly an immutably immediate for all HSQLDB
-constraints.</em></p>
-<p>If a constraint is deferrable, <em>as may be supported in a future HSQLDB release</em>,
-    then its constraint mode may be changed (from immediate to deferred,
-or from deferred to immediate) by execution of a &lt;set constraints mode
-statement&gt;.</p>
-<p>The checking of a constraint depends on its constraint mode within the
-current SQL-transaction. Whenever an SQL-statement is executed, every
-constraint whose mode is immediate is checked, at a certain point after any
-changes to SQL-data and schemas resulting from that execution have been
-effected, to see if it is satisfied. A constraint is satisfied if and only if
-the applicable &lt;search condition&gt; included in its descriptor evaluates
-to <em>True</em> or <em>Unknown</em>. If any constraint is not satisfied, then
-any changes to SQL-data or schemas resulting from executing that statement are
-canceled.</p>
-<p>The standard states that the constraint mode can be set to immediate
-either explicitly by execution of a &lt;set constraints mode statement&gt; or
-implicitly at the end of the current SQL-transaction.</p>
-<p><em>HSQLDB does not presently support &lt;set constraints mode
-statement&gt;.</em></p>
-<p>When a &lt;commit statement&gt; is executed, all constraints are
-effectively checked and, if any constraint is not satisfied, then an exception
-condition is raised and the SQL-transaction is terminated by an implicit
-&lt;rollback statement&gt;.</p>
-<h3>Table constraints</h3>
-<p>A table constraint is a constraint whose descriptor is included in a
-base table descriptor. Being associated with a particular base table allows
-for convenient syntactic shorthands in which universal quantification over the
-rows of the table in question is implied.</p>
-<p>A table constraint is either a unique constraint, a referential
-constraint or a table check constraint. A table constraint is described by a
-table constraint descriptor, which is either a unique constraint descriptor, a
-referential constraint descriptor, or a table check constraint descriptor,
-respectively.</p>
-<p>The standard specifies that every table constraint specified for base
-table T is implicitly a constraint on every subtable of T, by virtue of the
-fact that every row in a subtable is considered to have a corresponding
-superrow in every one of its supertables.</p>
-<p><em>At present, HSQLDB does not support the concept of sub and
-super-tables.</em></p>
-<p>A unique constraint is satisfied if and only if no two rows in a table
-have the same non-null values in the unique columns. In addition, if the
-unique constraint was defined with PRIMARY KEY, then it requires that none of
-the values in the specified column or columns be a null value.</p>
-<p>In addition to the components of every table constraint descriptor, a
-unique constraint descriptor includes:</p>
-<p>— An indication of whether it was defined with PRIMARY KEY or UNIQUE.</p>
-<p>— The names and positions of the unique columns specified in the
-&lt;unique column list&gt;.</p>
-<p>If the table descriptor for base table T includes a unique constraint
-descriptor indicating that the unique constraint was defined with PRIMARY KEY,
-then the columns of that unique constraint constitute the primary key of T.</p>
-<p>The standard specifies that a table with a primary key cannot have a
-proper supertable.</p>
-<p><em>Again, HSQLDB does not currently support the concept of sub
-and super-tables.</em></p>
-<p>In addition to the components of every table constraint descriptor, a
-referential constraint descriptor includes:</p>
-<p>— A list of the names of the referencing columns specified in the
-&lt;referencing columns&gt;.</p>
-<p>— The referenced table specified in the &lt;referenced table and
-columns&gt;.</p>
-<p>— A list of the names of the referenced columns specified in the
-&lt;referenced table and columns&gt;.</p>
-<p>— The value of the &lt;match type&gt;, if specified, and the
-&lt;referential triggered action&gt;, if specified.</p>
-<p>The ordering of the lists of referencing column names and referenced
-column names is interpreted such that corresponding column names occupy
-corresponding positions in each list.</p>
-<p>In the case that a table constraint is a referential constraint, the
-table is referred to as the referencing table. The referenced columns of a
-referential constraint must be the unique columns of some unique constraint of
-the referenced table.</p>
-<p>According to the standard, a referential constraint is satisfied if one
-of the following conditions is true, depending on the &lt;match type&gt;
-specified in the &lt;referential constraint definition&gt;:</p>
-<p>— If no &lt;match type&gt; was specified then, for each row R1 of the
-referencing table, either at least one of the values of the referencing
-columns in R1 shall be a null value, or the value of each referencing column
-in R1 shall be equal to the value of the corresponding referenced column in
-some row of the referenced table.</p>
-<p>— If MATCH FULL was specified then, for each row R1 of the referencing
-table, either the value of every referencing column in R1 shall be a null
-value, or the value of every referencing column in R1 shall not be null and
-there shall be some row R2 of the referenced table such that the value of each
-referencing column in R1 is equal to the value of the corresponding referenced
-column in R2.</p>
-<p>— If MATCH PARTIAL was specified then, for each row R1 of the
-referencing table, there shall be some row R2 of the referenced table such
-that the value of each referencing column in R1 is either null or is equal to
-the value of the corresponding referenced column in R2.</p>
-<p>The referencing table may be the same table as the referenced table.</p>
-<p><em>At present, HSQLDB does not support the MATCH FULL or MATCH
-PARTIAL options.</em></p>
-<p>A table check constraint is satisfied if and only if the specified
-&lt;search condition&gt; evaluates to <em>True</em> or <em>Unknown</em> for
-every row of the table to which it applies.</p>
-<p>At present, HSQLDB limits the &lt;search condition&gt; of a table check
-constraint in that it may reference only the values the row being inserted or
-updated.</p>
-<h3>Domain constraints</h3>
-<p><em>At present, HSQLDB does not support domain constraint declarations, although
-    they may be supported in a future release.</em></p>
-<p>A domain constraint is a constraint that is specified for a domain. It
-is applied to all columns that are based on that domain, and to all values
-cast to that domain.</p>
-<p>A domain constraint is described by a domain constraint descriptor. In
-addition to the components of every constraint descriptor, a domain constraint
-descriptor includes:</p>
-<p>— The template &lt;search condition&gt; for the generation of domain
-constraint usage &lt;search condition&gt;s.</p>
-<p>— A possibly empty set of domain constraint usages.</p>
-<p>A domain constraint usage descriptor is created implicitly by the
-evaluation of a &lt;column definition&gt; whose &lt;data type or domain
-name&gt; is a &lt;domain name&gt;. If C is such a column and D is the domain
-identified by the &lt;domain name&gt;, then every domain constraint DC defined
-for D implies a domain constraint usage, to the effect that each value in C
-satisfies DC.</p>
-<p>In addition to the components of every table constraint descriptor, a
-domain constraint usage descriptor includes:</p>
-<p>— The name of the applicable column.</p>
-<p>— The applicable &lt;search condition&gt; that evaluates whether each
-value in C satisfies DC.</p>
-<p>A domain constraint is satisfied by SQL-data if and only if, for every
-table T that has a column named C based on that domain, the applicable
-&lt;search condition&gt; recorded in the appropriate domain constraint usage
-evaluates to <em>True</em> or <em>Unknown</em>.</p>
-<p>A domain constraint is satisfied by the result of a &lt;cast
-specification&gt; if and only if the specified template &lt;search
-condition&gt;, with each occurrence of the &lt;general value specification&gt;
-VALUE replaced by that result, evaluates to <em>True</em> or <em>Unknown</em>.</p>
-<h3>Assertions</h3>
-<p>An assertion is a constraint whose descriptor is an independent schema
-component not included in any table descriptor.</p>
-<p><em>At present, HSQLDB does not support Assertions and there is no
-current plan to support them in the future.</em></p>
-<p>Indeed, very few DBMS support Assertions.</p>
-</div>
-<include item="footer" />
+    <div id="control">
+        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" valign="top" style="padding-right: 10px">
+                    <img alt="HSQLDB Logo" src="../../html/hsqldb.gif"></td>
+                <td valign="top" width="100%">
+                    <span class="productTitle"><@HtmlEncHelpTitle/></span>
+                    <br>
+                    <span class="topicTitle">Chapter 2 - SQL Issues</span>
+                    <br>
+                    <div id="toolbar">
+                        <span id="chickenFeet"><a href="../Chapter 2 - SQL Issues.html">Chapter Overview </a>
+                            &gt; <span class="nolink">Constraints And Indexes</span> </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="main">
+        <p>
+            SQL integrity constraints, generally referred to simply as constraints, define the
+            valid states of SQL-data by constraining the values in the base tables. A constraint
+            is described by a constraint descriptor. The SQL standard defines that a constraint
+            is either a table constraint, a domain constraint, or an assertion which is described
+            by, respectively, a table constraint descriptor, a domain constraint descriptor,
+            or an assertion descriptor.</p>
+        <p>
+            <em>At present, HSQLDB supports only table constaints.</em></p>
+        <p>
+            By definition, every constraint descriptor includes:</p>
+        <p>
+            — The name of the constraint,</p>
+        <p>
+            — An applicable &lt;search condition&gt;,</p>
+        <p>
+            — An indication of whether or not the constraint is deferrable,</p>
+        <p>
+            — An indication of whether the initial constraint mode is deferred or immediate</p>
+        <p>
+            with the limitation that each integrity constraint shall be defined using a &lt;search
+            condition&gt; that is not <dfn>retrospectively deterministic</dfn>.</p>
+        <h4>
+            Checking of constraints</h4>
+        <p>
+            The standard states that every constraint is either deferrable or non-deferrable.</p>
+        <p>
+            <em>At present, HSQLDB supports only non-deferrable constraints.</em></p>
+        <p>
+            Within an SQL-transaction, every constraint has a constraint mode; if a constraint
+            is non-deferrable, <em>as is presently always the case with HSQLDB</em>, then its
+            constraint mode is always immediate; otherwise, it is either immediate or deferred.
+            Every constraint has an initial constraint mode that specifies the constraint mode
+            for that constraint at the start of each SQL-transaction and immediately after definition
+            of that constraint.</p>
+        <p>
+            <em>At present, the constraint mode is implicitly an immutably immediate for all HSQLDB
+                constraints.</em></p>
+        <p>
+            If a constraint is deferrable, <em>as may be supported in a future HSQLDB release</em>,
+            then its constraint mode may be changed (from immediate to deferred, or from deferred
+            to immediate) by execution of a &lt;set constraints mode statement&gt;.</p>
+        <p>
+            The checking of a constraint depends on its constraint mode within the current SQL-transaction.
+            Whenever an SQL-statement is executed, every constraint whose mode is immediate
+            is checked, at a certain point after any changes to SQL-data and schemas resulting
+            from that execution have been effected, to see if it is satisfied. A constraint
+            is satisfied if and only if the applicable &lt;search condition&gt; included in
+            its descriptor evaluates to <em>True</em> or <em>Unknown</em>. If any constraint
+            is not satisfied, then any changes to SQL-data or schemas resulting from executing
+            that statement are canceled.</p>
+        <p>
+            The standard states that the constraint mode can be set to immediate either explicitly
+            by execution of a &lt;set constraints mode statement&gt; or implicitly at the end
+            of the current SQL-transaction.</p>
+        <p>
+            <em>HSQLDB does not presently support &lt;set constraints mode statement&gt;.</em></p>
+        <p>
+            When a &lt;commit statement&gt; is executed, all constraints are effectively checked
+            and, if any constraint is not satisfied, then an exception condition is raised and
+            the SQL-transaction is terminated by an implicit &lt;rollback statement&gt;.</p>
+        <h3>
+            Table constraints</h3>
+        <p>
+            A table constraint is a constraint whose descriptor is included in a base table
+            descriptor. Being associated with a particular base table allows for convenient
+            syntactic shorthands in which universal quantification over the rows of the table
+            in question is implied.</p>
+        <p>
+            A table constraint is either a unique constraint, a referential constraint or a
+            table check constraint. A table constraint is described by a table constraint descriptor,
+            which is either a unique constraint descriptor, a referential constraint descriptor,
+            or a table check constraint descriptor, respectively.</p>
+        <p>
+            The standard specifies that every table constraint specified for base table T is
+            implicitly a constraint on every subtable of T, by virtue of the fact that every
+            row in a subtable is considered to have a corresponding superrow in every one of
+            its supertables.</p>
+        <p>
+            <em>At present, HSQLDB does not support the concept of sub and super-tables.</em></p>
+        <p>
+            A unique constraint is satisfied if and only if no two rows in a table have the
+            same non-null values in the unique columns. In addition, if the unique constraint
+            was defined with PRIMARY KEY, then it requires that none of the values in the specified
+            column or columns be a null value.</p>
+        <p>
+            In addition to the components of every table constraint descriptor, a unique constraint
+            descriptor includes:</p>
+        <p>
+            — An indication of whether it was defined with PRIMARY KEY or UNIQUE.</p>
+        <p>
+            — The names and positions of the unique columns specified in the &lt;unique column
+            list&gt;.</p>
+        <p>
+            If the table descriptor for base table T includes a unique constraint descriptor
+            indicating that the unique constraint was defined with PRIMARY KEY, then the columns
+            of that unique constraint constitute the primary key of T.</p>
+        <p>
+            The standard specifies that a table with a primary key cannot have a proper supertable.</p>
+        <p>
+            <em>Again, HSQLDB does not currently support the concept of sub and super-tables.</em></p>
+        <p>
+            In addition to the components of every table constraint descriptor, a referential
+            constraint descriptor includes:</p>
+        <p>
+            — A list of the names of the referencing columns specified in the &lt;referencing
+            columns&gt;.</p>
+        <p>
+            — The referenced table specified in the &lt;referenced table and columns&gt;.</p>
+        <p>
+            — A list of the names of the referenced columns specified in the &lt;referenced
+            table and columns&gt;.</p>
+        <p>
+            — The value of the &lt;match type&gt;, if specified, and the &lt;referential triggered
+            action&gt;, if specified.</p>
+        <p>
+            The ordering of the lists of referencing column names and referenced column names
+            is interpreted such that corresponding column names occupy corresponding positions
+            in each list.</p>
+        <p>
+            In the case that a table constraint is a referential constraint, the table is referred
+            to as the referencing table. The referenced columns of a referential constraint
+            must be the unique columns of some unique constraint of the referenced table.</p>
+        <p>
+            According to the standard, a referential constraint is satisfied if one of the following
+            conditions is true, depending on the &lt;match type&gt; specified in the &lt;referential
+            constraint definition&gt;:</p>
+        <p>
+            — If no &lt;match type&gt; was specified then, for each row R1 of the referencing
+            table, either at least one of the values of the referencing columns in R1 shall
+            be a null value, or the value of each referencing column in R1 shall be equal to
+            the value of the corresponding referenced column in some row of the referenced table.</p>
+        <p>
+            — If MATCH FULL was specified then, for each row R1 of the referencing table, either
+            the value of every referencing column in R1 shall be a null value, or the value
+            of every referencing column in R1 shall not be null and there shall be some row
+            R2 of the referenced table such that the value of each referencing column in R1
+            is equal to the value of the corresponding referenced column in R2.</p>
+        <p>
+            — If MATCH PARTIAL was specified then, for each row R1 of the referencing table,
+            there shall be some row R2 of the referenced table such that the value of each referencing
+            column in R1 is either null or is equal to the value of the corresponding referenced
+            column in R2.</p>
+        <p>
+            The referencing table may be the same table as the referenced table.</p>
+        <p>
+            <em>At present, HSQLDB does not support the MATCH FULL or MATCH PARTIAL options.</em></p>
+        <p>
+            A table check constraint is satisfied if and only if the specified &lt;search condition&gt;
+            evaluates to <em>True</em> or <em>Unknown</em> for every row of the table to which
+            it applies.</p>
+        <p>
+            At present, HSQLDB limits the &lt;search condition&gt; of a table check constraint
+            in that it may reference only the values the row being inserted or updated.</p>
+        <h3>
+            Domain constraints</h3>
+        <p>
+            <em>At present, HSQLDB does not support domain constraint declarations, although they
+                may be supported in a future release.</em></p>
+        <p>
+            A domain constraint is a constraint that is specified for a domain. It is applied
+            to all columns that are based on that domain, and to all values cast to that domain.</p>
+        <p>
+            A domain constraint is described by a domain constraint descriptor. In addition
+            to the components of every constraint descriptor, a domain constraint descriptor
+            includes:</p>
+        <p>
+            — The template &lt;search condition&gt; for the generation of domain constraint
+            usage &lt;search condition&gt;s.</p>
+        <p>
+            — A possibly empty set of domain constraint usages.</p>
+        <p>
+            A domain constraint usage descriptor is created implicitly by the evaluation of
+            a &lt;column definition&gt; whose &lt;data type or domain name&gt; is a &lt;domain
+            name&gt;. If C is such a column and D is the domain identified by the &lt;domain
+            name&gt;, then every domain constraint DC defined for D implies a domain constraint
+            usage, to the effect that each value in C satisfies DC.</p>
+        <p>
+            In addition to the components of every table constraint descriptor, a domain constraint
+            usage descriptor includes:</p>
+        <p>
+            — The name of the applicable column.</p>
+        <p>
+            — The applicable &lt;search condition&gt; that evaluates whether each value in C
+            satisfies DC.</p>
+        <p>
+            A domain constraint is satisfied by SQL-data if and only if, for every table T that
+            has a column named C based on that domain, the applicable &lt;search condition&gt;
+            recorded in the appropriate domain constraint usage evaluates to <em>True</em> or
+            <em>Unknown</em>.</p>
+        <p>
+            A domain constraint is satisfied by the result of a &lt;cast specification&gt; if
+            and only if the specified template &lt;search condition&gt;, with each occurrence
+            of the &lt;general value specification&gt; VALUE replaced by that result, evaluates
+            to <em>True</em> or <em>Unknown</em>.</p>
+        <h3>
+            Assertions</h3>
+        <p>
+            An assertion is a constraint whose descriptor is an independent schema component
+            not included in any table descriptor.</p>
+        <p>
+            <em>At present, HSQLDB does not support Assertions and there is no current plan to support
+                them in the future.</em></p>
+        <p>
+            Indeed, very few DBMS support Assertions.</p>
+        <div id="footer">
+            <div class="footerLine">
+                <img alt="footer.gif" width="100%" height="3px" src="../../icons/footer.gif" title="Footer image" />
+            </div>
+            <include item="footer" />
+        </div>            
+    </div>
 </body>
 </html>
 <!-- @SortOrder 2 -->

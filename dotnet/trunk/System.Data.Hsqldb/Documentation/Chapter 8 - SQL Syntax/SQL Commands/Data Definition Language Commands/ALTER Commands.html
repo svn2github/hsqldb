@@ -31,7 +31,8 @@
             ALTER INDEX</h3>
         <pre lang="sql">ALTER INDEX &lt;indexname&gt; RENAME TO &lt;newname&gt;;
         </pre>
-        <p><strong class="nb">Requires administrative privileges.</strong></p>
+        <p>
+            <strong class="nb">Requires administrative privileges.</strong></p>
         <p>
             Allows an index name to be changed so long as the new name does not conflict with
             other user-defined or system-defined index names found in the same schema.</p>
@@ -39,7 +40,8 @@
             <a name="alter_sequence-section"></a>ALTER SEQUENCE</h3>
         <pre lang="sql">ALTER SEQUENCE &lt;sequencename&gt; RESTART WITH &lt;value&gt;;
         </pre>
-        <p><strong class="nb">Requires administrative privileges.</strong></p>
+        <p>
+            <strong class="nb">Requires administrative privileges.</strong></p>
         <p>
             Assigns the next value to be returned from the indicated sequence object.</p>
         <h3>
@@ -75,13 +77,12 @@
             If an SQL view includes a <tt>SELECT * FROM &lt;tablename&gt;</tt> in its select
             statement, the new column is added to the view. This is a non-standard feature which
             is likely to change in the future.</p>
-        <pre>ALTER TABLE &lt;tablename&gt; DROP [COLUMN] &lt;columnname&gt;;
+        <pre lang="sql">ALTER TABLE &lt;tablename&gt; DROP [COLUMN] &lt;columnname&gt;;
         </pre>
         <p>
-            Drops the column from the table. Will consequently drop any single-column primary key or unique
-            constraint on the column as well, but will fail if the column is a
-            member of any multiple
-            key constraint or is referenced by a check constraint, foreign
+            Drops the column from the table. Will consequently drop any single-column primary
+            key or unique constraint on the column as well, but will fail if the column is a
+            member of any multiple key constraint or is referenced by a check constraint, foreign
             key constraint or view.</p>
         <pre lang="sql"> ALTER TABLE &lt;tablename&gt; 
  ALTER COLUMN &lt;columnname&gt;
@@ -94,7 +95,8 @@ ALTER COLUMN &lt;columnname&gt;
   SET DEFAULT &lt;defaultvalue&gt;};
         </pre>
         <p>
-            Assigns the specified default value to the column. Use NULL to effectively remove an existing non-NULL column default.</p>
+            Assigns the specified default value to the column. Use NULL to effectively remove
+            an existing non-NULL column default.</p>
         <pre lang="sql">ALTER TABLE &lt;tablename&gt;
 ALTER COLUMN &lt;columnname&gt; 
   SET [NOT] NULL
@@ -106,13 +108,14 @@ ALTER COLUMN &lt;columnname&gt;
 ALTER COLUMN &lt;columnDefinition&gt;;
         </pre>
         <p>
-            This form of <tt>ALTER TABLE ALTER COLUMN</tt> accepts a <a href="#columnDef-entry">columnDefinition</a>
-            as in a <tt>CREATE TABLE</tt> command, with the following restrictions.</p>
+            This form of <tt>ALTER TABLE ALTER COLUMN</tt> accepts a <a href="#columnDef-entry">
+                columnDefinition</a> as in a <tt>CREATE TABLE</tt> command, with the following
+            restrictions.</p>
         <div class="itemizedlist">
             <p>
                 <strong>Restrictions</strong></p>
             <ul type="disc">
-                <li> to accept an IDENTITY clause, the column referenced in the <em>&lt;columnDefinition&gt;
+                <li>to accept an IDENTITY clause, the column referenced in the <em>&lt;columnDefinition&gt;
                 </em>must be be the sole primary key column. </li>
                 <li>The resulting column IDENTITY, DEFAULT and NOT NULL attributes are those expressed
                     explicitly in <em>&lt;columnDefinition&gt;</em>, meaning existing IDENTITY, DEFAULT
@@ -131,27 +134,29 @@ ALTER COLUMN &lt;columnDefinition&gt;;
 RESTART WITH &lt;new sequence value&gt;;
         </pre>
         <p>
-            To be used exclusively for IDENTITY columns; assigns the next automatic
-            value for
+            To be used exclusively for IDENTITY columns; assigns the next automatic value for
             internal sequence generator backing the IDENTITY column.</p>
         <pre lang="sql">ALTER TABLE &lt;tablename&gt;
   ADD [CONSTRAINT &lt;constraintname&gt;]
 CHECK (&lt;search condition&gt;);
         </pre>
         <p>
-            Adds a check constraint to the table. </p>
+            Adds a check constraint to the table.
+        </p>
         <p>
             Fails if there is a pre-existing check constraint with the same name in the schema
             containing the target table.</p>
         <p>
-            In the current implementation, a check constraint expression may reference only the values of columns in the single row being inserted or updated; aggregate expressions
+            In the current implementation, a check constraint expression may reference only
+            the values of columns in the single row being inserted or updated; aggregate expressions
             and general queries, etc., are prohibited at this time.</p>
         <pre lang="sql"> ALTER TABLE &lt;tablename&gt; 
    ADD [CONSTRAINT &lt;constraintname&gt;]
 UNIQUE (&lt;column list&gt;);
         </pre>
         <p>
-            Adds a unique constraint to the table. </p>
+            Adds a unique constraint to the table.
+        </p>
         <p>
             Fails if:</p>
         <ul>
@@ -180,33 +185,31 @@ PRIMARY KEY (&lt;column list&gt;);
                 is greater than one.</li>
         </ul>
         <p>
-            &nbsp; &nbsp;&nbsp; ALTER TABLE &lt;tablename&gt;<br />
-            &nbsp; &nbsp; &nbsp;&nbsp;
-       ADD [CONSTRAINT &lt;constraintname&gt;] FOREIGN KEY (&lt;column list&gt;)<br />
-REFERENCES &lt;exptablename&gt; (&lt;column list&gt;)<br />
-            &nbsp; &nbsp; &nbsp;&nbsp;
-       [ON {DELETE | UPDATE} {CASCADE | SET DEFAULT | SET NULL}];<br />
-            &nbsp; &nbsp; &nbsp; &nbsp;
+            <pre lang="sql">
+ALTER TABLE &lt;tablename&gt;
+        ADD [CONSTRAINT &lt;constraintname&gt;] FOREIGN KEY (&lt;column list&gt;)
+ REFERENCES &lt;exptablename&gt; (&lt;column list&gt;)
+        [ON {DELETE | UPDATE} {CASCADE | SET DEFAULT | SET NULL}];
+            </pre>
         </p>
         <p>
             Adds a foreign key constraint to the table.</p>
         <p>
             This will fail if the new contraint is not satisfied by the existing data, i.e.
-            there exists at least one existing row in the referring table for which a matching row (with
-            equal values for the column list) is not found in the referenced table.</p>
+            there exists at least one existing row in the referring table for which a matching
+            row (with equal values for the column list) is not found in the referenced table.</p>
         <pre lang="sql">ALTER TABLE &lt;tablename&gt;
  DROP CONSTRAINT &lt;constraintname&gt;;
         </pre>
         <p>
             Drops a named unique, check or foreign key constraint from the table.</p>
-        <pre>ALTER TABLE &lt;tablename&gt; RENAME TO &lt;newname&gt;;
-        </pre>
+        <pre lang="sql">ALTER TABLE &lt;tablename&gt; RENAME TO &lt;newname&gt;;</pre>
         <h3>
             <a name="alter_user-section"></a>ALTER USER</h3>
         <pre lang="sql">ALTER USER &lt;username&gt; SET PASSWORD &lt;delimited password&gt;;
         </pre>
         <p>
-            <strong style="color: Orange;">Requires administrative privileges</strong>.</p>
+            <strong class="nb">Requires administrative privileges</strong>.</p>
         <p>
             Changes the password for an existing user.</p>
         <p>

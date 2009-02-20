@@ -61,17 +61,21 @@
             as large as required to most accurately represent the value. For example, <tt>10.0/8.0</tt>
             (<tt>SQL DECIMAL</tt>) equals <tt>1.2</tt> but <tt>10.0E0/8.0E0</tt> (<tt>SQL DOUBLE</tt>)
             equals <tt>1.25</tt>. With the exception of the SQL division operation, however,
-            <tt>SQL DECIMAL</tt> operands imply the use of exact arithmetic;
-            in particular, under the SQL multiplication operation, the scale of the result is the sum of the
+            <tt>SQL DECIMAL</tt> operands imply the use of exact arithmetic; in particular,
+            under the SQL multiplication operation, the scale of the result is the sum of the
             scales of the operands.</p>
         <p>
             Finally, please note that special <dfn>IEEE</dfn> floating point values such as
             <tt>NaN</tt> and <tt>+/-Infinity</tt> are supported, but do have have special SQL
-            synonyms and hence can only be represented
-            in complex SQL expression form, for example
+            synonyms and hence can only be represented in complex SQL expression form, for example
             as 0.0E0/0.0E0, x.yEz/0.0E0 and -x.yEz/0.0E0, respectively.</p>
+        <div id="footer">
+            <div class="footerLine">
+                <img alt="footer.gif" width="100%" height="3px" src="../../icons/footer.gif" title="Footer image" />
+            </div>
+            <include item="footer" />
+        </div>
     </div>
-    <include item="footer" />
 </body>
 </html>
 <!-- @SortOrder 2 -->

@@ -82,9 +82,20 @@ span.subsectionTitle {
 }
 
 div#footer {
+    font-size: 80%;
 	margin-top: 1em;
-	border-top: thin solid #003399;
+	/*border-top: thin solid #003399;*/
 	padding-top: 0.5em;
+}
+
+div.footerLine {
+	margin: 0;
+	width: 100%;
+	padding-top:	8;
+	padding-bottom:	6;
+	/*padding-left:	5;
+	padding-right:	2;*/
+
 }
 
 /* authored content (block) */

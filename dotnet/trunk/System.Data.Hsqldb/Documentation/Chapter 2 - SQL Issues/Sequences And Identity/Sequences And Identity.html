@@ -16,8 +16,8 @@
                     <span class="topicTitle">Chapter 2 - SQL Issues</span>
                     <br>
                     <div id="toolbar">
-                        <span id="chickenFeet"><a href="../Chapter 2 - SQL Issues.html">Chapter Overview
-                        </a>&gt; <span class="nolink">Sequences And Identity</span> </span>
+                        <span id="chickenFeet"><a href="../Chapter 2 - SQL Issues.html">Chapter Overview </a>
+                            &gt; <span class="nolink">Sequences And Identity</span> </span>
                     </div>
                 </td>
             </tr>
@@ -25,45 +25,46 @@
     </div>
     <div id="main">
         <p>
-            An SQL:2003 sequence generator is a mechanism for generating successive exact
-            numeric values, one at a time. A sequence generator is either an external sequence
-            generator or an internal sequence generator. An external sequence generator
-            is a named schema object while an internal sequence generator is a component
-            of another schema object. A sequence generator has a data type, which shall
-            be an exact numeric type with scale 0 (zero), a minimum value, a maximum value,
-            a start value, an increment, and a cycle option.</p>
+            An SQL:2003 sequence generator is a mechanism for generating successive exact numeric
+            values, one at a time. A sequence generator is either an external sequence generator
+            or an internal sequence generator. An external sequence generator is a named schema
+            object while an internal sequence generator is a component of another schema object.
+            A sequence generator has a data type, which shall be an exact numeric type with
+            scale 0 (zero), a minimum value, a maximum value, a start value, an increment, and
+            a cycle option.</p>
         <p>
-            Specification of a sequence generator can optionally include the specification
-            of a data type, a minimum value, a maximum value, a start value, an increment,
-            and a cycle option.</p>
+            Specification of a sequence generator can optionally include the specification of
+            a data type, a minimum value, a maximum value, a start value, an increment, and
+            a cycle option.</p>
         <p>
-            If a sequence generator is associated with a negative increment, then it is
-            a descending sequence generator;<br>
+            If a sequence generator is associated with a negative increment, then it is a descending
+            sequence generator;<br>
             otherwise, it is an ascending sequence generator.</p>
         <p>
-            A sequence generator has a time-varying current base value, which is a value
-            of its data type. A sequence generator has a cycle which consists of all the
-            possible values between the minimum value and the maximum value which are expressible
-            as (current base value + N * increment), where N is a non-negative number.</p>
+            A sequence generator has a time-varying current base value, which is a value of
+            its data type. A sequence generator has a cycle which consists of all the possible
+            values between the minimum value and the maximum value which are expressible as
+            (current base value + N * increment), where N is a non-negative number.</p>
         <p>
-            When a sequence generator is created, its current base value is initialized
-            to the start value. Subsequently, the current base value is set to the value
-            of the lowest non-issued value in the cycle for an ascending sequence generator,
-            or the highest non-issued value in the cycle for a descending sequence generator.</p>
+            When a sequence generator is created, its current base value is initialized to the
+            start value. Subsequently, the current base value is set to the value of the lowest
+            non-issued value in the cycle for an ascending sequence generator, or the highest
+            non-issued value in the cycle for a descending sequence generator.</p>
         <p>
-            Any time after a sequence generator is created, its current base value can be
-            set to an arbitrary value of its data<br>
+            Any time after a sequence generator is created, its current base value can be set
+            to an arbitrary value of its data<br>
             type by an &lt;alter sequence generator statement&gt;.</p>
         <p>
-            Changes to the current base value of a sequence generator are not controlled
-            by SQL-transactions; therefore,<br>
-            commits and rollbacks of SQL-transactions have no effect on the current base
-            value of a sequence generator.<br>
+            Changes to the current base value of a sequence generator are not controlled by
+            SQL-transactions; therefore,<br>
+            commits and rollbacks of SQL-transactions have no effect on the current base value
+            of a sequence generator.<br>
             A sequence generator is described by a sequence generator descriptor. A sequence
             generator descriptor includes:</p>
         <ul>
-            <li>The sequence generator name that is a schema-qualified sequence generator name
-                for an external sequence generator and zero-length for an internal sequence generator.</li><li>The data type descriptor of the data type associated with the sequence generator.</li>
+            <li>The sequence generator name that is a schema-qualified sequence generator name for
+                an external sequence generator and zero-length for an internal sequence generator.</li>
+            <li>The data type descriptor of the data type associated with the sequence generator.</li>
             <li>The increment of the sequence generator.</li>
             <li>The maximum value of the sequence generator.</li>
             <li>The minimum value of the sequence generator.</li>
@@ -75,11 +76,16 @@
                 Note</h3>
             <p>
                 HSQLDB supports a subset of the SQL:2003 sequence specification: the <tt>SEQUENCE</tt>
-                keyword for external generators and the <tt>IDENTITY</tt> keyword for internal
-                generators, each with a subset of the SQL 200n standard syntax.</p>
+                keyword for external generators and the <tt>IDENTITY</tt> keyword for internal generators,
+                each with a subset of the SQL 200n standard syntax.</p>
+        </div>
+        <div id="footer">
+            <div class="footerLine">
+                <img alt="footer.gif" width="100%" height="3px" src="../../icons/footer.gif" title="Footer image" />
+            </div>
+            <include item="footer" />
         </div>
     </div>
-    <include item="footer" />
 </body>
 </html>
 <!-- @SortOrder 4 -->
