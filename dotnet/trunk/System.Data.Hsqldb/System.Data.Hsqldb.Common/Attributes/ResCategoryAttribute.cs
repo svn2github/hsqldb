@@ -32,15 +32,12 @@
 
 #endregion
 
-#if W32DESIGN
-
 #region Using
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.ComponentModel;
-using System.Data.Hsqldb.Client.Properties;
 using System.Resources; 
+using System.Text;
 #endregion
 
 namespace System.Data.Hsqldb.Client.Design.Attribute
@@ -55,7 +52,8 @@ namespace System.Data.Hsqldb.Client.Design.Attribute
     public class ResCategoryAttribute : CategoryAttribute
     {
         #region Fields
-        private static readonly ResourceManager rm = Properties.Resources.ResourceManager; 
+        private static readonly ResourceManager rm = 
+            global::System.Data.Hsqldb.Common.Properties.Resources.ResourceManager; 
         #endregion
 
         #region Constructors
@@ -73,7 +71,7 @@ namespace System.Data.Hsqldb.Client.Design.Attribute
         
         #endregion
 
-        #region Methods Overrides
+        #region Method Overrides
 
         #region GetLocalizedString(string)
         /// <summary>
@@ -94,5 +92,3 @@ namespace System.Data.Hsqldb.Client.Design.Attribute
     #endregion
 
 }
-
-#endif

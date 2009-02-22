@@ -45,6 +45,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Attributes\ResCategoryAttribute.cs" />
+    <Compile Include="Attributes\ResDescriptionAttribute.cs" />
     <Compile Include="Converter\LexographicEnumConverter.cs" />
     <Compile Include="Enumeration\BaseColumnNullability.cs" />
     <Compile Include="Enumeration\ConnectionProtocol.cs" />
