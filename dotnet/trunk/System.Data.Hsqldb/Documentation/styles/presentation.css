@@ -83,9 +83,13 @@ span.subsectionTitle {
 
 div#footer {
     font-size: 80%;
-	margin-top: 1em;
+	/*margin-top: 0.5em;*/
 	/*border-top: thin solid #003399;*/
 	padding-top: 0.5em;
+}
+
+div#footer hr {
+	color: #D4DFFF;
 }
 
 div.footerLine {
@@ -156,6 +160,7 @@ table.authoredTable td {
 div.alert {
 	border: 1px solid #C8CDDE;
 	background: #F7F7FF;
+	margin-bottom: 1em;
 }
 
 div.alert h3.title
@@ -412,6 +417,8 @@ td.line {
 
 .nowrap * { white-space: nowrap; }
 
-.nb { color: Orange; }
+.nb { color: Orange; font-weight: bold; }
 
 .warning { color: OrangeRed }
+
+.nt { font-weight: bold; font-variant: small-caps; margin-top: 1em;}

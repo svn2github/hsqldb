@@ -18,8 +18,8 @@
                     <span class="topicTitle">Chapter 1 - Getting Started</span>
                     <br>
                     <div id="toolbar">
-                        <span id="chickenFeet"><a href="Chapter 1 - Getting Started.html">Chapter Overview
-                        </a>&gt; <span class="nolink">Closing A Database</span> </span>
+                        <span id="chickenFeet"><a href="Chapter 1 - Getting Started.html">Chapter Overview </a>
+                            &gt; <span class="nolink">Closing A Database</span> </span>
                     </div>
                 </td>
             </tr>
@@ -27,8 +27,8 @@
     </div>
     <div id="main">
         <p>
-            Like any resource, an <em>In-Process</em> database instance should be closed
-            explicitly when it is no longer needed.</p>
+            Like any resource, an <em>In-Process</em> database instance should be closed explicitly
+            when it is no longer needed.</p>
         <p>
             Using SQL, a database instance can be closed with the <tt>SHUTDOWN</tt> command:</p>
         <pre lang="cs">     using (DbCommand command = connection.CreateCommand())
@@ -40,10 +40,10 @@
     }
         </pre>
         <p>
-            Using the connection string property <tt>"Shutdown=true"</tt>, the first connection
-            to an <em>In-Process</em> instance (the connection that opens the database)
-            can specify that the database automatically closes when the connection count
-            transitions from one (<tt>1</tt>) to zero (<tt>0</tt>):</p>
+            Using the connection string property <tt>"Shutdown=True"</tt>, the first connection
+            to an <em>In-Process</em> instance (the connection that opens the database) can
+            specify that the database automatically closes when the connection count transitions
+            from one (<tt>1</tt>) to zero (<tt>0</tt>):</p>
         <pre lang="cs">    connection.ConnectionString = @"Protocol=File;Path=c:\dbfile\db1;User ID=SA;Shutdown=True;";
         </pre>
         <h3>
@@ -57,22 +57,47 @@
                     Among other reasons, this is why the <tt>"Shutdown"</tt> connection string property
                     is provided.</p>
                 <p>
-                    The <tt>Shutdown</tt> connection string property <em>does not</em> require the DBA privilege.</p>
+                    The <tt>Shutdown</tt> connection string property <em>does not</em> require the DBA
+                    privilege.</p>
             </li>
         </ul>
         <div class="alert">
             <h3 class="title">
                 Note</h3>
             <p>
-                The <tt><a href="../Chapter 8 - SQL Syntax/SQL Commands/Database Control Commands.html#shutdown-section">
-                    SHUTDOWN</a></tt> command can take several options.</p>
+                Be aware that the <tt><a href="../Chapter 8 - SQL Syntax/SQL Commands/Database Control Commands.html#shutdown-section">
+                    SHUTDOWN</a></tt> command can take several useful options.
+            </p>
+            <p>
+                However,
+                in response to having specified the <code>Shutdown=True</code> connection property, an automatic shutdown occurence is always of the standard type, which is identical to issuing the <code>SHUTDOWN</code>
+                command with no options.</p>
+            <p>
+                Also be aware that it is possible to programatically signal <em><strong>all</strong></em>
+                open <em>In-Process</em> database instances to shutdown using a specified mode,
+                which may be a far more convenient alternative than having to track open database
+                instances of interest in client code to subsequently allow them to be closed in
+                response to some central event.</p>
+            <p>
+                That said, offering such a programatic ability is also a prime example of giving
+                developers 'just enough rope to hang themselves'.&nbsp; As such, this should be
+                treated as an advanced topic, and that is why it is touched on only in the <a href="http://hsqldb.svn.sourceforge.net/viewvc/hsqldb/base-one/tags/hsqldb_1_8_0_10/src/org/hsqldb/DatabaseManager.java?revision=2785&view=markup">
+                    javadoc section of the source code</a> for the public static org.hsqldb.DatabaseManager.closeDatabases(int
+                mode) method.</p>
+            <p>
+                Finally, be aware that since an HSQLDB network database server can host more than
+                one database isntance and that it is also possible to host the same database instance
+                under more than one distinct server instance, by default, the act of closing a server
+                instance expends no work toward closing its hosted database instances.</p>
         </div>
+        <p class="nt">
+            Next Topic: <a href="Multiple Database Instances.html">Multiple Database Instances</a></p>
         <div id="footer">
             <div class="footerLine">
                 <img width="100%" alt="footer.gif" height="3px" src="../../icons/footer.gif" title="Footer image" />
             </div>
             <include item="footer" />
-        </div>        
+        </div>
     </div>
 </body>
 </html>

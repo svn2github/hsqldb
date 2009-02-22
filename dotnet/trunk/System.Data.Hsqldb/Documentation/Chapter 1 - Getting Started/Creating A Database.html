@@ -29,8 +29,7 @@
         <p>
             The normal way to create an HSQLDB database instance is simply to Open() an HsqlConnection
             object:</p>
-        <pre lang="cs" title="To Create A Database Programatically:">
-    DbProviderFactory factory = DbProviderFactories.GetProviderFactory("System.Data.Hsqldb.Client");
+        <pre lang="cs" title="To Create A Database Programatically:">    DbProviderFactory factory = DbProviderFactories.GetProviderFactory("System.Data.Hsqldb.Client");
     
     using(DbConnection connection = factory.CreateConnection())
     {
@@ -77,8 +76,7 @@
             if the database at the specified
             <var>
                 Path</var>
-            does not exist.
-        </p>
+            does not exist.</p>
         <div class="alert">
             <h3 class="title">
                 Note</h3>
@@ -90,17 +88,17 @@
             </p>
             <p>
                 From the command line:</p>
-            <pre lang="pshell">    &gt;System.Data.Hsqldb.Server.exe  database.0=file:c:\databases\db1;ifexists=true ...           
+            <pre lang="pshell" title="Append ;key=value extension to datbase uri cli option">    &gt;System.Data.Hsqldb.Server.exe  database.0=file:c:\databases\db1;ifexists=true ...           
             </pre>
             <p>
                 In the <tt>server.properties</tt> file:
             </p>
-            <pre lang="c">
-    #settings for database.i of n
+            <pre lang="c" title="Append ;key=value extension to datbase uri property">    #settings for database.i of n
     server.database.i=file:c:\databases\dbi;ifexists=true
     server.dbname.i=mustexistdb
             </pre>
         </div>
+        <span class="nt">Next Topic: <a href="Closing A Database.html">Closing A Database</a></span>
         <div id="footer">
             <div class="footerLine">
                 <img width="100%" height="3px" src="../../icons/footer.gif" title="Footer image" />

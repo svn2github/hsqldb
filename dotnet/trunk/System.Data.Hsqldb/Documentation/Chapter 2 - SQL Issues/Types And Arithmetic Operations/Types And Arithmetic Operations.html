@@ -16,8 +16,8 @@
                     <span class="topicTitle">Chapter 2 - SQL Issues</span>
                     <br>
                     <div id="toolbar">
-                        <span id="chickenFeet"><a href="../Chapter 2 - SQL Issues.html">Chapter Overview
-                        </a>&gt; <span class="nolink">Types and Arithmetic Operations</span> </span>
+                        <span id="chickenFeet"><a href="../Chapter 2 - SQL Issues.html">Chapter Overview </a>
+                            &gt; <span class="nolink">Types and Arithmetic Operations</span> </span>
                     </div>
                 </td>
             </tr>
@@ -25,18 +25,17 @@
     </div>
     <div id="main">
         <p>
-            Index creation and comparison predicate production is supported for columns
-            of all HSQLDB data types.</p>
+            Index creation and comparison predicate production is supported for columns of all
+            HSQLDB data types.</p>
         <p>
-            However, index creation on <tt>LONGVARBINARY</tt>, <tt>LONGVARCHAR</tt> and
-            <tt>OTHER</tt> columns is deprecated; such indexes will be disallowed in a future
-            version.</p>
+            However, index creation on <tt>LONGVARBINARY</tt>, <tt>LONGVARCHAR</tt> and <tt>OTHER</tt>
+            columns is deprecated; such indexes will be disallowed in a future version.</p>
         <p>
-            All types can be explicitly cast using the <tt>CONVERT</tt> and <tt>CAST</tt>
-            SQL functions, but in most cases the built-in implict cast system is sufficient.</p>
+            All types can be explicitly cast using the <tt>CONVERT</tt> and <tt>CAST</tt> SQL
+            functions, but in most cases the built-in implict cast system is sufficient.</p>
         <p>
-            Note that in early versions of HSQLDB, there were some artifical limitations
-            on arithmetic operations. For example, it was not possible to insert <tt>10/2.5</tt>
+            Note that in early versions of HSQLDB, there were some artifical limitations on
+            arithmetic operations. For example, it was not possible to insert <tt>10/2.5</tt>
             into a <tt>DOUBLE</tt> or <tt>DECIMAL</tt> column.</p>
         <p>
             All operations are now possible, with the following rules:</p>
@@ -44,21 +43,40 @@
             <li style="margin-bottom: 1em;"><tt>TINYINT</tt>, <tt>SMALLINT</tt>, <tt>INTEGER</tt>,
                 <tt>BIGINT</tt>, <tt>NUMERIC</tt> and <tt>DECIMAL</tt> (without a decimal point)
                 are supported integral types and map to <tt>sbyte</tt> (<tt>System.SByte</tt>),
-                <tt>short</tt> (<tt>System.Int16</tt>), <tt>int</tt> (<tt>System.Int32</tt>),
-                <tt>long</tt> (<tt>System.Int64</tt>) and (imperfectly) <tt>decimal</tt> (<tt>System.Decimal</tt>),
+                <tt>short</tt> (<tt>System.Int16</tt>), <tt>int</tt> (<tt>System.Int32</tt>), <tt>long</tt>
+                (<tt>System.Int64</tt>) and (imperfectly) <tt>decimal</tt> (<tt>System.Decimal</tt>),
                 respectively.</li>
-            <li style="margin-bottom: 1em;"><tt>REAL</tt>, <tt>FLOAT</tt> and <tt>DOUBLE</tt>
-                all map to <tt>double</tt> (<tt>System.Double</tt>), although the range of <tt>REAL</tt> is limited to
-                that of <tt>float</tt> (<tt>System.Single</tt>).</li>
-            <li style="margin-bottom: 1em;"><tt>DECIMAL</tt> and <tt>NUMERIC</tt> both map to
-                <tt>decimal</tt> (<tt>System.Decimal</tt>), but are represented internally by
-                <tt>java.math.BigDecimal</tt> and can have precision and scale far larger than
-                the range accepted by <tt>decimal</tt>. However, it is possible to submit and
-                retrieve values outside the range of <tt>decimal</tt> by employing character
-                representation.</li>
+            <li style="margin-bottom: 1em;"><tt>REAL</tt>, <tt>FLOAT</tt> and <tt>DOUBLE</tt> all
+                map to <tt>double</tt> (<tt>System.Double</tt>), although the range of <tt>REAL</tt>
+                is limited to that of <tt>float</tt> (<tt>System.Single</tt>).</li>
+            <li style="margin-bottom: 1em;"><tt>DECIMAL</tt> and <tt>NUMERIC</tt> both map to <tt>
+                decimal</tt> (<tt>System.Decimal</tt>), but are represented internally by <tt>java.math.BigDecimal</tt>
+                and can have precision and scale far larger than the range accepted by <tt>decimal</tt>.
+                However, it is possible to submit and retrieve values outside the range of <tt>decimal</tt>
+                by employing character representation.</li>
         </ul>
+        <h4>
+            Other Topics In This Section</h4>
+        <ul>
+            <li><a href="Integral Types.html"><span style="text-decoration: underline">
+                Integral Types</span></a> </li>
+            <li><a href="Other Numeric Types.html"><span style="text-decoration: underline">
+                Other Numeric Types</span></a> </li>
+            <li><a href="Size, Precision And Scale.html"><span
+                style="text-decoration: underline">Size, Precision And Scale</span></a> </li>
+            <li><a href="Bit And Boolean Types.html"><span style="text-decoration: underline">
+                Bit And Boolean Types</span></a> </li>
+            <li><a href="Storage And Handling of CLR Objects.html">
+                <span style="text-decoration: underline">Storage And Handling of CLR Objects</span></a></li>
+        </ul>
+        <span class="nt">Next Topic: <a href="Integral Types.html">Integral Types</a></span>
+        <div id="footer">
+            <div class="footerLine">
+                <img alt="footer.gif" width="100%" height="3px" src="../../icons/footer.gif" title="Footer image" />
+            </div>
+            <include item="footer" />
+        </div>        
     </div>
-    <include item="footer" />
 </body>
 </html>
 <!-- @SortOrder 3 -->

@@ -1,8 +1,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp" xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <link rel="stylesheet" type="text/css" href="../../styles/presentation.css">
-    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+    <title>Chapter 2 - SQL Issues - Constraints &amp; Indexes</title>
+    <link rel="stylesheet" type="text/css" href="../../styles/presentation.css" />
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css" />
 </head>
 <body>
     <div id="control">
@@ -12,9 +13,9 @@
                     <img alt="HSQLDB Logo" src="../../html/hsqldb.gif"></td>
                 <td valign="top" width="100%">
                     <span class="productTitle"><@HtmlEncHelpTitle/></span>
-                    <br>
+                    <br />
                     <span class="topicTitle">Chapter 2 - SQL Issues</span>
-                    <br>
+                    <br />
                     <div id="toolbar">
                         <span id="chickenFeet"><a href="../Chapter 2 - SQL Issues.html">Chapter Overview </a>
                             &gt; <span class="nolink">Constraints And Indexes</span> </span>
@@ -32,7 +33,7 @@
             by, respectively, a table constraint descriptor, a domain constraint descriptor,
             or an assertion descriptor.</p>
         <p>
-            <em>At present, HSQLDB supports only table constaints.</em></p>
+            <em class="nb">At present, HSQLDB supports only table constaints.</em></p>
         <p>
             By definition, every constraint descriptor includes:</p>
         <p>
@@ -51,19 +52,19 @@
         <p>
             The standard states that every constraint is either deferrable or non-deferrable.</p>
         <p>
-            <em>At present, HSQLDB supports only non-deferrable constraints.</em></p>
+            <em class="nb">At present, HSQLDB supports only non-deferrable constraints.</em></p>
         <p>
             Within an SQL-transaction, every constraint has a constraint mode; if a constraint
-            is non-deferrable, <em>as is presently always the case with HSQLDB</em>, then its
+            is non-deferrable, <em class="nb">as is presently always the case with HSQLDB</em>, then its
             constraint mode is always immediate; otherwise, it is either immediate or deferred.
             Every constraint has an initial constraint mode that specifies the constraint mode
             for that constraint at the start of each SQL-transaction and immediately after definition
             of that constraint.</p>
         <p>
-            <em>At present, the constraint mode is implicitly an immutably immediate for all HSQLDB
+            <em class="nb">At present, the constraint mode is implicitly an immutably immediate for all HSQLDB
                 constraints.</em></p>
         <p>
-            If a constraint is deferrable, <em>as may be supported in a future HSQLDB release</em>,
+            If a constraint is deferrable, <em class="nb">as may be supported in a future HSQLDB release</em>,
             then its constraint mode may be changed (from immediate to deferred, or from deferred
             to immediate) by execution of a &lt;set constraints mode statement&gt;.</p>
         <p>
@@ -80,7 +81,7 @@
             by execution of a &lt;set constraints mode statement&gt; or implicitly at the end
             of the current SQL-transaction.</p>
         <p>
-            <em>HSQLDB does not presently support &lt;set constraints mode statement&gt;.</em></p>
+            <em class="nb">HSQLDB does not presently support &lt;set constraints mode statement&gt;.</em></p>
         <p>
             When a &lt;commit statement&gt; is executed, all constraints are effectively checked
             and, if any constraint is not satisfied, then an exception condition is raised and
@@ -103,7 +104,7 @@
             row in a subtable is considered to have a corresponding superrow in every one of
             its supertables.</p>
         <p>
-            <em>At present, HSQLDB does not support the concept of sub and super-tables.</em></p>
+            <em class="nb">At present, HSQLDB does not support the concept of sub and super-tables.</em></p>
         <p>
             A unique constraint is satisfied if and only if no two rows in a table have the
             same non-null values in the unique columns. In addition, if the unique constraint
@@ -124,7 +125,7 @@
         <p>
             The standard specifies that a table with a primary key cannot have a proper supertable.</p>
         <p>
-            <em>Again, HSQLDB does not currently support the concept of sub and super-tables.</em></p>
+            <em class="nb">Again, HSQLDB does not currently support the concept of sub and super-tables.</em></p>
         <p>
             In addition to the components of every table constraint descriptor, a referential
             constraint descriptor includes:</p>
@@ -170,7 +171,7 @@
         <p>
             The referencing table may be the same table as the referenced table.</p>
         <p>
-            <em>At present, HSQLDB does not support the MATCH FULL or MATCH PARTIAL options.</em></p>
+            <em class="nb">At present, HSQLDB does not support the MATCH FULL or MATCH PARTIAL options.</em></p>
         <p>
             A table check constraint is satisfied if and only if the specified &lt;search condition&gt;
             evaluates to <em>True</em> or <em>Unknown</em> for every row of the table to which
@@ -181,8 +182,7 @@
         <h3>
             Domain constraints</h3>
         <p>
-            <em>At present, HSQLDB does not support domain constraint declarations, although they
-                may be supported in a future release.</em></p>
+            <em class="nb">At present, HSQLDB does not support domain constraint declarations, although they will be supported in a future release.</em></p>
         <p>
             A domain constraint is a constraint that is specified for a domain. It is applied
             to all columns that are based on that domain, and to all values cast to that domain.</p>
@@ -225,16 +225,31 @@
             An assertion is a constraint whose descriptor is an independent schema component
             not included in any table descriptor.</p>
         <p>
-            <em>At present, HSQLDB does not support Assertions and there is no current plan to support
+            <em class="nb">At present, HSQLDB does not support Assertions and there is no current plan to support
                 them in the future.</em></p>
         <p>
             Indeed, very few DBMS support Assertions.</p>
+        <h4>
+            Other Topics In This Section</h4>
+        <ul>
+        <li><a href="Primary Key Constraints.html"><span style="text-decoration: underline">
+            Primary Key Constraints</span></a> </li>
+        <li><a href="Unique Constraints.html"><span style="text-decoration: underline">
+            Unique Constraints</span></a> </li>
+        <li><a href="Unique Indexes.html"><span style="text-decoration: underline">
+            Unique Indexes</span></a> </li>
+        <li><a href="Foreign Key Constraints.html"><span style="text-decoration: underline">
+            Foreign Key Constraints</span></a> </li>
+        <li><a href="Indexes And Query Performance.html"><span style="text-decoration: underline">
+            Indexes And Query Performance</span></a>&nbsp;</li>
+        </ul>
+        <span class="nt">Next Topic: <a href="Primary Key Constraints.html">Primary Key Constraints</a></span> 
         <div id="footer">
             <div class="footerLine">
-                <img alt="footer.gif" width="100%" height="3px" src="../../icons/footer.gif" title="Footer image" />
+                <img alt="footer.gif" width="100%" height="3px" src="../../../icons/footer.gif" title="Footer image" />
             </div>
             <include item="footer" />
-        </div>            
+        </div>
     </div>
 </body>
 </html>

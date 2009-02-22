@@ -1,22 +1,22 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:mshelp="http://msdn.microsoft.com/mshelp">
 <head>
-    <title>Chapter 1 - Getting Started - Accessing A Server From Client Code</title>   
-    <link rel="stylesheet" type="text/css" href="../../styles/presentation.css"/>
-    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css"/>
+    <title>Chapter 1 - Getting Started - Accessing A Server From Client Code</title>
+    <link rel="stylesheet" type="text/css" href="../../styles/presentation.css" />
+    <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css" />
 </head>
 <body>
     <div id="control">
         <table border="0" width="100%" cellpadding="0" cellspacing="0">
             <tr>
                 <td align="center" valign="top" style="padding-right: 10px">
-                    <img alt="HSQLDB Logo" src="../../html/hsqldb.gif"/>
+                    <img alt="HSQLDB Logo" src="../../html/hsqldb.gif" />
                 </td>
                 <td valign="top" width="100%">
                     <span class="productTitle"><@HtmlEncHelpTitle/></span>
-                    <br/>
+                    <br />
                     <span class="topicTitle">Chapter 1 - Getting Started</span>
-                    <br/>
+                    <br />
                     <div id="toolbar">
                         <span id="chickenFeet"><a href="../Chapter 1 - Getting Started.html">Chapter Overview
                         </a>&gt; <a href="Client-Server Operation.html">Client-Server Operation </a>&gt; <span
@@ -32,7 +32,8 @@
             or <em>WebServer</em> using the standard ADO.NET 2.0 mechanism.</p>
         <p>
             First, to obtain and use a connection instance:</p>
-        <pre lang="cs">    using System.Data.Common;
+        <pre lang="cs" title="Use The Provider Factory">
+    using System.Data.Common;
     ...
     const string ProviderInvariantName = "System.Data.Hsqldb.Client";
     DbFactory factory = DbProviderFactories.GetFactory(ProviderInvariantName);
@@ -40,7 +41,8 @@
     {</pre>
         <p style="margin-top: 1em; margin-bottom: 1em;">
             Then, to open the connection object:</p>
-        <pre lang="cs">       /*
+        <pre lang="cs" title="Set Up The Connection String">
+        /*
         * Alternatively, use "Http" or "Https" to access a WebServer.
         * Use "Hsqls" to specify transport layer security.
         */
@@ -58,8 +60,6 @@
         ...
     }
     </pre>
-    <p>Next Topic: <a href="Client-Server Network Protocols/Client-Server Network Protocols.html">
-            Client-Server Network Protocols</a></p>
         <div class="alert">
             <h3 class="title">
                 Note</h3>
@@ -70,6 +70,8 @@
                 See <a href="../../Chapter 4 - Configuration And Settings/Chapter 4 - Configuration And Settings.html">
                     Chapter 4 - Configuration And Settings</a> for server configuration details.</p>
         </div>
+        <span class="nt">Next Topic: <a href="Client-Server Network Protocols/Client-Server Network Protocols.html">
+            Client-Server Network Protocols</a></span>
         <div id="footer">
             <div class="footerLine">
                 <img alt="footer.gif" width="100%" height="3px" src="../../icons/footer.gif" title="Footer image" />
