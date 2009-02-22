@@ -32,7 +32,6 @@
 
 #endregion
 
-#if W32DESIGN
 
 #region Using
 using System;
@@ -225,7 +224,4 @@ ORDER BY 1";
     } 
     #endregion
 }
-
-#endif
- 
 

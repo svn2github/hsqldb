@@ -32,10 +32,9 @@
 
 #endregion
 
-#if W32DESIGN
-
 #region Using
 using System;
+using System.Data.Hsqldb.Client;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Design.Serialization;
@@ -154,4 +153,4 @@ namespace System.Data.Hsqldb.Client.Design.Converter
     #endregion
 }
 
-#endif
+

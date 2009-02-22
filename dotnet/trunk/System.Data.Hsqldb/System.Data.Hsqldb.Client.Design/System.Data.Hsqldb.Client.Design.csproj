@@ -28,13 +28,87 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="IKVM.OpenJDK.ClassLibrary, Version=0.38.0.4, Culture=neutral, PublicKeyToken=13235d27fcbfff58, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Lib\IKVM.OpenJDK.ClassLibrary.dll</HintPath>
+    </Reference>
+    <Reference Include="Org.Hsqldb, Version=1.8.0.10, Culture=neutral, PublicKeyToken=05732303801b208f, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Lib\Org.Hsqldb.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Design" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Class1.cs" />
+    <Compile Include="Components\ConnectionPropertiesGrid.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="ComputerCollection.cs" />
+    <Compile Include="Controls\ConnectionControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\ConnectionControl.Designer.cs">
+      <DependentUpon>ConnectionControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\ConnectionPropertiesControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\ConnectionPropertiesControl.Designer.cs">
+      <DependentUpon>ConnectionPropertiesControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Converters\DataSourceConverter.cs" />
+    <Compile Include="Converters\HsqlConnectionStringBuilderConverter.cs" />
+    <Compile Include="Converters\InitialSchemaConverter.cs" />
+    <Compile Include="Designers\HsqlDataAdapterDesigner.cs" />
+    <Compile Include="Designers\HsqlDbCommandDesigner.cs" />
+    <Compile Include="Dialogs\ConnectionDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Dialogs\ConnectionDialog.Designer.cs">
+      <DependentUpon>ConnectionDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dialogs\ConnectionPropertiesDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Dialogs\ConnectionPropertiesDialog.Designer.cs">
+      <DependentUpon>ConnectionPropertiesDialog.cs</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PropertyGridHelper.cs" />
+    <Compile Include="ToolboxItems\HsqlDbDataAdapterToolboxItem.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Controls\ConnectionControl.resx">
+      <DependentUpon>ConnectionControl.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\ConnectionPropertiesControl.resx">
+      <DependentUpon>ConnectionPropertiesControl.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Dialogs\ConnectionDialog.resx">
+      <DependentUpon>ConnectionDialog.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Dialogs\ConnectionPropertiesDialog.resx">
+      <DependentUpon>ConnectionPropertiesDialog.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\System.Data.Hsqldb.Client\System.Data.Hsqldb.Client.csproj">
+      <Project>{EDA7BAF9-0BF6-4423-B644-18FA5EE44F1A}</Project>
+      <Name>System.Data.Hsqldb.Client</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\System.Data.Hsqldb.Common\System.Data.Hsqldb.Common.csproj">
+      <Project>{F929C8C3-AB4B-4EAA-BEF9-9A25669FEA6F}</Project>
+      <Name>System.Data.Hsqldb.Common</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

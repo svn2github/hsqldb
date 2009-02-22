@@ -32,16 +32,16 @@
 
 #endregion
 
-#if W32DESIGN
 
 #region Using
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.ComponentModel;
 using System.Data;
-
+using System.Data.Hsqldb.Client;
 using System.Data.Hsqldb.Client.MetaData.Collection;
+using System.Text;
+// aliases
 using DSEC = System.Data.Hsqldb.Client.MetaData.Collection.DataSourceEnumerationCollection;
 #endregion
 
@@ -182,5 +182,3 @@ namespace System.Data.Hsqldb.Client.Design.Converter
     } 
     #endregion
 }
-
-#endif
