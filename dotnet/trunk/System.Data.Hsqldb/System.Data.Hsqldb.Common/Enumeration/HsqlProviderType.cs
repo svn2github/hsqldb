@@ -282,7 +282,7 @@ namespace System.Data.Hsqldb.Common.Enumeration
 
     #endregion
 
-    #region HsqlProvidierTypeComparer
+    #region HsqlProviderTypeComparer
     /// <summary>
     /// 
     /// </summary>
@@ -297,7 +297,7 @@ namespace System.Data.Hsqldb.Common.Enumeration
 
         #region Static Initializer
         /// <summary>
-        /// Initializes the <see cref="HsqlProvidierTypeComparer"/> class.
+        /// Initializes the <see cref="HsqlProviderTypeComparer"/> class.
         /// </summary>
         static HsqlProviderTypeComparer()
         {
