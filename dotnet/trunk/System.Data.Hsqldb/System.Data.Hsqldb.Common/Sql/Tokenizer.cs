@@ -79,14 +79,14 @@ namespace System.Data.Hsqldb.Common.Sql
         private bool m_enforceTwoPartIdentifierChain;
         private List<Token> m_identifierChain;
         private string m_identifierChainPredecessor = null;
-        private TokenType m_identifierChainPredecessorType = TokenType.None;
+        private SqlTokenType m_identifierChainPredecessorType = SqlTokenType.None;
         private bool m_inIdentifierChain;
         private int m_nextTokenIndex;
         private string m_parameterName;
         private char m_parameterNamePrefix = ' ';
         private string m_token;
         private int m_tokenIndex;
-        private TokenType m_tokenType = TokenType.None;
+        private SqlTokenType m_tokenType = SqlTokenType.None;
         private bool m_wait;
         private bool m_wasLastTokenDelimited;
 
@@ -401,7 +401,7 @@ namespace System.Data.Hsqldb.Common.Sql
                 return m_token;
             }
 
-            string token = (m_tokenType == TokenType.IdentifierChain)
+            string token = (m_tokenType == SqlTokenType.IdentifierChain)
                                ? m_identifierChainPredecessor
                                : m_token;
 
@@ -427,7 +427,7 @@ namespace System.Data.Hsqldb.Common.Sql
                 return m_token;
             }
 
-            string token = (m_tokenType == TokenType.IdentifierChain)
+            string token = (m_tokenType == SqlTokenType.IdentifierChain)
                                ? m_identifierChainPredecessor
                                : m_token;
 
@@ -520,8 +520,8 @@ namespace System.Data.Hsqldb.Common.Sql
         {
             ReadToken();
 
-            if ((m_tokenType != TokenType.DelimitedIdentifier)
-                && (m_tokenType != TokenType.IdentifierChain)
+            if ((m_tokenType != SqlTokenType.DelimitedIdentifier)
+                && (m_tokenType != SqlTokenType.IdentifierChain)
                 && m_token.Equals(match))
             {
                 return true;
@@ -554,10 +554,10 @@ namespace System.Data.Hsqldb.Common.Sql
             }
 
             if (!m_token.Equals(match)
-                || m_tokenType == TokenType.DelimitedIdentifier
-                || m_tokenType == TokenType.IdentifierChain)
+                || m_tokenType == SqlTokenType.DelimitedIdentifier
+                || m_tokenType == SqlTokenType.IdentifierChain)
             {
-                string token = (m_tokenType == TokenType.IdentifierChain)
+                string token = (m_tokenType == SqlTokenType.IdentifierChain)
                                    ? m_identifierChainPredecessor
                                    : m_token;
 
@@ -604,7 +604,7 @@ namespace System.Data.Hsqldb.Common.Sql
 
             m_identifierChain.Add(new Token(m_token, m_tokenType));
             m_inIdentifierChain = false;
-            m_tokenType = TokenType.IdentifierChain;
+            m_tokenType = SqlTokenType.IdentifierChain;
         } 
         #endregion
 
@@ -628,7 +628,7 @@ namespace System.Data.Hsqldb.Common.Sql
             {
                 m_identifierChain = null;
                 m_identifierChainPredecessor = null;
-                m_identifierChainPredecessorType = TokenType.None;
+                m_identifierChainPredecessorType = SqlTokenType.None;
             }
 
             while (m_currentIndex < m_charsLength
@@ -645,7 +645,7 @@ namespace System.Data.Hsqldb.Common.Sql
             if (m_currentIndex >= m_charsLength)
             {
                 // character sequence has been exhausted.
-                m_tokenType = TokenType.None;
+                m_tokenType = SqlTokenType.None;
 
                 return;
             }
@@ -662,11 +662,11 @@ namespace System.Data.Hsqldb.Common.Sql
 
             if (Character.isJavaIdentifierStart(c))
             {
-                m_tokenType = TokenType.Name;
+                m_tokenType = SqlTokenType.Name;
             }
             else if (Character.isDigit(c))
             {
-                m_tokenType = TokenType.NumberLiteral;
+                m_tokenType = SqlTokenType.NumberLiteral;
                 digit = true;
             }
             else
@@ -676,7 +676,7 @@ namespace System.Data.Hsqldb.Common.Sql
                     case '(':
                         {
                             m_token = Token.ValueFor.OPENBRACKET;
-                            m_tokenType = TokenType.Special;
+                            m_tokenType = SqlTokenType.Special;
 
                             m_currentIndex++;
 
@@ -685,7 +685,7 @@ namespace System.Data.Hsqldb.Common.Sql
                     case ')':
                         {
                             m_token = Token.ValueFor.CLOSEBRACKET;
-                            m_tokenType = TokenType.Special;
+                            m_tokenType = SqlTokenType.Special;
 
                             m_currentIndex++;
 
@@ -694,7 +694,7 @@ namespace System.Data.Hsqldb.Common.Sql
                     case ',':
                         {
                             m_token = Token.ValueFor.COMMA;
-                            m_tokenType = TokenType.Special;
+                            m_tokenType = SqlTokenType.Special;
 
                             m_currentIndex++;
 
@@ -703,7 +703,7 @@ namespace System.Data.Hsqldb.Common.Sql
                     case '*':
                         {
                             m_token = Token.ValueFor.MULTIPLY;
-                            m_tokenType = TokenType.Special;
+                            m_tokenType = SqlTokenType.Special;
 
                             m_currentIndex++;
 
@@ -712,7 +712,7 @@ namespace System.Data.Hsqldb.Common.Sql
                     case '=':
                         {
                             m_token = Token.ValueFor.EQUALS;
-                            m_tokenType = TokenType.Special;
+                            m_tokenType = SqlTokenType.Special;
 
                             m_currentIndex++;
 
@@ -721,7 +721,7 @@ namespace System.Data.Hsqldb.Common.Sql
                     case ';':
                         {
                             m_token = Token.ValueFor.SEMICOLON;
-                            m_tokenType = TokenType.Special;
+                            m_tokenType = SqlTokenType.Special;
 
                             m_currentIndex++;
 
@@ -730,7 +730,7 @@ namespace System.Data.Hsqldb.Common.Sql
                     case '+':
                         {
                             m_token = Token.ValueFor.PLUS;
-                            m_tokenType = TokenType.Special;
+                            m_tokenType = SqlTokenType.Special;
 
                             m_currentIndex++;
 
@@ -739,7 +739,7 @@ namespace System.Data.Hsqldb.Common.Sql
                     case '%':
                         {
                             m_token = Token.ValueFor.PERCENT;
-                            m_tokenType = TokenType.Special;
+                            m_tokenType = SqlTokenType.Special;
 
                             m_currentIndex++;
 
@@ -753,7 +753,7 @@ namespace System.Data.Hsqldb.Common.Sql
                             }
 
                             m_token = Token.ValueFor.QUESTION;
-                            m_tokenType = TokenType.Special;
+                            m_tokenType = SqlTokenType.Special;
 
                             m_currentIndex++;
 
@@ -782,7 +782,7 @@ namespace System.Data.Hsqldb.Common.Sql
                             //Trace.check(Character.isJavaIdentifierStart(c),
                             //            Trace.INVALID_IDENTIFIER, ":" + c);
 
-                            m_tokenType = TokenType.NamedParameter;
+                            m_tokenType = SqlTokenType.NamedParameter;
                             m_parameterNamePrefix = ':';
 
                             break;
@@ -810,7 +810,7 @@ namespace System.Data.Hsqldb.Common.Sql
                             //Trace.check(Character.isJavaIdentifierStart(c),
                             //            Trace.INVALID_IDENTIFIER, "@" + c);
 
-                            m_tokenType = TokenType.NamedParameter;
+                            m_tokenType = SqlTokenType.NamedParameter;
                             m_parameterNamePrefix = '@';
 
                             break;
@@ -818,7 +818,7 @@ namespace System.Data.Hsqldb.Common.Sql
                     case '"':
                         {
                             m_wasLastTokenDelimited = true;
-                            m_tokenType = TokenType.DelimitedIdentifier;
+                            m_tokenType = SqlTokenType.DelimitedIdentifier;
 
                             m_currentIndex++;
 
@@ -840,7 +840,7 @@ namespace System.Data.Hsqldb.Common.Sql
                         }
                     case '\'':
                         {
-                            m_tokenType = TokenType.StringLiteral;
+                            m_tokenType = SqlTokenType.StringLiteral;
 
                             m_currentIndex++;
 
@@ -856,13 +856,13 @@ namespace System.Data.Hsqldb.Common.Sql
                     case '-':
                         {
                             cfirst = c;
-                            m_tokenType = TokenType.Special;
+                            m_tokenType = SqlTokenType.Special;
 
                             break;
                         }
                     case '.':
                         {
-                            m_tokenType = TokenType.DecimalLiteral;
+                            m_tokenType = SqlTokenType.DecimalLiteral;
                             point = true;
 
                             break;
@@ -883,8 +883,8 @@ namespace System.Data.Hsqldb.Common.Sql
                     c = ' ';
                     end = true;
 
-                    if (m_tokenType == TokenType.StringLiteral
-                        || m_tokenType == TokenType.DelimitedIdentifier)
+                    if (m_tokenType == SqlTokenType.StringLiteral
+                        || m_tokenType == SqlTokenType.DelimitedIdentifier)
                     {
                         throw UnexpectedEndOfCommand();
                     }
@@ -896,8 +896,8 @@ namespace System.Data.Hsqldb.Common.Sql
 
                 switch (m_tokenType)
                 {
-                    case TokenType.NamedParameter:
-                    case TokenType.Name:
+                    case SqlTokenType.NamedParameter:
+                    case SqlTokenType.Name:
                         {
                             if (Character.isJavaIdentifierPart(c))
                             {
@@ -907,7 +907,7 @@ namespace System.Data.Hsqldb.Common.Sql
                             m_token = m_chars.Substring(start, m_currentIndex
                                 - start).ToUpper(m_EnglishCulture);
 
-                            if (m_tokenType == TokenType.NamedParameter)
+                            if (m_tokenType == SqlTokenType.NamedParameter)
                             {
                                 m_parameterName = m_chars.Substring(start,
                                         (m_currentIndex - start));
@@ -932,25 +932,25 @@ namespace System.Data.Hsqldb.Common.Sql
 
                                 if (type != -1)
                                 {
-                                    m_tokenType = (TokenType)type;
+                                    m_tokenType = (SqlTokenType)type;
                                 }
                             }
 
                             return;
                         }
-                    case TokenType.DelimitedIdentifier:
-                    case TokenType.StringLiteral:
+                    case SqlTokenType.DelimitedIdentifier:
+                    case SqlTokenType.StringLiteral:
                         {
                             // shouldn't get here
                             break;
                         }
-                    case TokenType.Remark:
+                    case SqlTokenType.Remark:
                         {
                             if (end)
                             {
                                 // unfinished remark
                                 // TODO: log/trace error condition here
-                                m_tokenType = TokenType.None;
+                                m_tokenType = SqlTokenType.None;
 
                                 return;
                             }
@@ -972,11 +972,11 @@ namespace System.Data.Hsqldb.Common.Sql
 
                             break;
                         }
-                    case TokenType.RemarkLine:
+                    case SqlTokenType.RemarkLine:
                         {
                             if (end)
                             {
-                                m_tokenType = TokenType.None;
+                                m_tokenType = SqlTokenType.None;
 
                                 return;
                             }
@@ -990,23 +990,23 @@ namespace System.Data.Hsqldb.Common.Sql
 
                             break;
                         }
-                    case TokenType.Special:
+                    case SqlTokenType.Special:
                         {
                             if (c == '/' && cfirst == '/')
                             {
-                                m_tokenType = TokenType.RemarkLine;
+                                m_tokenType = SqlTokenType.RemarkLine;
 
                                 break;
                             }
                             else if (c == '-' && cfirst == '-')
                             {
-                                m_tokenType = TokenType.RemarkLine;
+                                m_tokenType = SqlTokenType.RemarkLine;
 
                                 break;
                             }
                             else if (c == '*' && cfirst == '/')
                             {
-                                m_tokenType = TokenType.Remark;
+                                m_tokenType = SqlTokenType.Remark;
 
                                 break;
                             }
@@ -1021,9 +1021,9 @@ namespace System.Data.Hsqldb.Common.Sql
 
                             return;
                         }
-                    case TokenType.NumberLiteral:
-                    case TokenType.FloatLiteral:
-                    case TokenType.DecimalLiteral:
+                    case SqlTokenType.NumberLiteral:
+                    case SqlTokenType.FloatLiteral:
+                    case SqlTokenType.DecimalLiteral:
                         {
                             if (Character.isDigit(c))
                             {
@@ -1036,7 +1036,7 @@ namespace System.Data.Hsqldb.Common.Sql
                                     throw UnexpectedToken(c);
                                 }
 
-                                m_tokenType = TokenType.DecimalLiteral;
+                                m_tokenType = SqlTokenType.DecimalLiteral;
 
                                 point = true;
                             }
@@ -1047,7 +1047,7 @@ namespace System.Data.Hsqldb.Common.Sql
                                     throw UnexpectedToken(c);
                                 }
 
-                                m_tokenType = TokenType.FloatLiteral;
+                                m_tokenType = SqlTokenType.FloatLiteral;
 
                                 // first character after exp may be + or -
                                 afterexp = true;
@@ -1072,7 +1072,7 @@ namespace System.Data.Hsqldb.Common.Sql
                                         && (start == (m_currentIndex - 1)))
                                     {
                                         m_token = Token.ValueFor.PERIOD;
-                                        m_tokenType = TokenType.Special;
+                                        m_tokenType = SqlTokenType.Special;
 
                                         return;
                                     }
@@ -1117,8 +1117,8 @@ namespace System.Data.Hsqldb.Common.Sql
             m_tokenIndex = 0;
             m_nextTokenIndex = 0;
             m_beginIndex = 0;
-            m_tokenType = TokenType.None;
-            m_identifierChainPredecessorType = TokenType.None;
+            m_tokenType = SqlTokenType.None;
+            m_identifierChainPredecessorType = SqlTokenType.None;
             m_token = null;
             m_parameterName = null;
             m_parameterNamePrefix = ' ';
@@ -1156,8 +1156,8 @@ namespace System.Data.Hsqldb.Common.Sql
         public bool WasThis(string match)
         {
             return m_token.Equals(match)
-                   && (m_tokenType != TokenType.DelimitedIdentifier)
-                   && (m_tokenType != TokenType.IdentifierChain);
+                   && (m_tokenType != SqlTokenType.DelimitedIdentifier)
+                   && (m_tokenType != SqlTokenType.IdentifierChain);
         }
 
         #endregion
@@ -1271,20 +1271,20 @@ namespace System.Data.Hsqldb.Common.Sql
 
                 switch (m_tokenType)
                 {
-                    case TokenType.Null:
+                    case SqlTokenType.Null:
                         {
                             return null;
                         }
-                    case TokenType.StringLiteral:
+                    case SqlTokenType.StringLiteral:
                         {
                             return m_token;
                         }
-                    case TokenType.BigIntLiteral:
+                    case SqlTokenType.BigIntLiteral:
                         {
                             return ValuePool.getLong(
                                 Long.parseLong(m_token));
                         }
-                    case TokenType.NumberLiteral:
+                    case SqlTokenType.NumberLiteral:
                         {
                             // Returns unsigned values which
                             // are later negated. As a result,
@@ -1297,7 +1297,7 @@ namespace System.Data.Hsqldb.Common.Sql
                                     java.lang.Integer rval = ValuePool.getInt(
                                         Integer.parseInt(m_token));
 
-                                    m_tokenType = TokenType.IntegerLiteral;
+                                    m_tokenType = SqlTokenType.IntegerLiteral;
 
                                     return rval;
                                 }
@@ -1313,43 +1313,43 @@ namespace System.Data.Hsqldb.Common.Sql
                                     java.lang.Long rval = ValuePool.getLong(
                                         Long.parseLong(m_token));
 
-                                    m_tokenType = TokenType.BigIntLiteral;
+                                    m_tokenType = SqlTokenType.BigIntLiteral;
                                 }
                                 catch (Exception)
                                 {
                                 }
                             }
 
-                            m_tokenType = TokenType.DecimalLiteral;
+                            m_tokenType = SqlTokenType.DecimalLiteral;
 
                             return new BigDecimal(m_token);
                         }
-                    case TokenType.FloatLiteral:
+                    case SqlTokenType.FloatLiteral:
                         {
                             double d = JavaSystem.parseDouble(m_token);
                             long l = java.lang.Double.doubleToLongBits(d);
 
                             return ValuePool.getDouble(l);
                         }
-                    case TokenType.DecimalLiteral:
+                    case SqlTokenType.DecimalLiteral:
                         {
                             return new BigDecimal(m_token);
                         }
-                    case TokenType.BooleanLiteral:
+                    case SqlTokenType.BooleanLiteral:
                         {
                             return m_token.Equals("TRUE", m_IgnoreCase)
                                        ? java.lang.Boolean.TRUE
                                        : java.lang.Boolean.FALSE;
                         }
-                    case TokenType.DateLiteral:
+                    case SqlTokenType.DateLiteral:
                         {
                             return HsqlDateTime.dateValue(m_token);
                         }
-                    case TokenType.TimeLiteral:
+                    case SqlTokenType.TimeLiteral:
                         {
                             return HsqlDateTime.timeValue(m_token);
                         }
-                    case TokenType.TimestampLiteral:
+                    case SqlTokenType.TimestampLiteral:
                         {
                             return HsqlDateTime.timestampValue(m_token);
                         }
@@ -1390,11 +1390,11 @@ namespace System.Data.Hsqldb.Common.Sql
                 // TODO: make sure this is used only for valued tokens.
                 switch (m_tokenType)
                 {
-                    case TokenType.StringLiteral:
+                    case SqlTokenType.StringLiteral:
                         {
                             return HsqlProviderType.VarChar;
                         }
-                    case TokenType.NumberLiteral:
+                    case SqlTokenType.NumberLiteral:
                         {
                             if (m_token.Length < 11)
                             {
@@ -1402,7 +1402,7 @@ namespace System.Data.Hsqldb.Common.Sql
                                 {
                                     java.lang.Integer.parseInt(m_token);
 
-                                    m_tokenType = TokenType.IntegerLiteral;
+                                    m_tokenType = SqlTokenType.IntegerLiteral;
 
                                     return HsqlProviderType.Integer;
                                 }
@@ -1418,7 +1418,7 @@ namespace System.Data.Hsqldb.Common.Sql
                                 {
                                     java.lang.Long.parseLong(m_token);
 
-                                    m_tokenType = TokenType.BigIntLiteral;
+                                    m_tokenType = SqlTokenType.BigIntLiteral;
 
                                     return HsqlProviderType.BigInt;
                                 }
@@ -1431,7 +1431,7 @@ namespace System.Data.Hsqldb.Common.Sql
                             {
                                 java.lang.Double.parseDouble(m_token);
 
-                                m_tokenType = TokenType.FloatLiteral;
+                                m_tokenType = SqlTokenType.FloatLiteral;
 
                                 return HsqlProviderType.Double;
                             }
@@ -1439,35 +1439,35 @@ namespace System.Data.Hsqldb.Common.Sql
                             {
                             }
 
-                            m_tokenType = TokenType.DecimalLiteral;
+                            m_tokenType = SqlTokenType.DecimalLiteral;
 
                             return HsqlProviderType.Decimal;
                         }
-                    case TokenType.BigIntLiteral:
+                    case SqlTokenType.BigIntLiteral:
                         {
                             return HsqlProviderType.BigInt;
                         }
-                    case TokenType.FloatLiteral:
+                    case SqlTokenType.FloatLiteral:
                         {
                             return HsqlProviderType.Double;
                         }
-                    case TokenType.DecimalLiteral:
+                    case SqlTokenType.DecimalLiteral:
                         {
                             return HsqlProviderType.Decimal;
                         }
-                    case TokenType.BooleanLiteral:
+                    case SqlTokenType.BooleanLiteral:
                         {
                             return HsqlProviderType.Boolean;
                         }
-                    case TokenType.DateLiteral:
+                    case SqlTokenType.DateLiteral:
                         {
                             return HsqlProviderType.Date;
                         }
-                    case TokenType.TimeLiteral:
+                    case SqlTokenType.TimeLiteral:
                         {
                             return HsqlProviderType.Time;
                         }
-                    case TokenType.TimestampLiteral:
+                    case SqlTokenType.TimestampLiteral:
                         {
                             return HsqlProviderType.TimeStamp;
                         }
@@ -1539,12 +1539,12 @@ namespace System.Data.Hsqldb.Common.Sql
                     token = StringConverter.toQuotedString(
                         m_token, '"', true);
                 }
-                else if (m_tokenType == TokenType.StringLiteral)
+                else if (m_tokenType == SqlTokenType.StringLiteral)
                 {
                     token = StringConverter.toQuotedString(
                         m_token, '\'', true);
                 }
-                else if (m_tokenType == TokenType.NamedParameter)
+                else if (m_tokenType == SqlTokenType.NamedParameter)
                 {
                     token = m_parameterNamePrefix + m_parameterName;
                 }
@@ -1656,7 +1656,7 @@ namespace System.Data.Hsqldb.Common.Sql
         /// </summary>
         /// <remarks></remarks>
         /// <value>The type of the last read token.</value>
-        public TokenType TokenType
+        public SqlTokenType TokenType
         {
             get
             {
@@ -1665,12 +1665,12 @@ namespace System.Data.Hsqldb.Common.Sql
                     throw IllegalWaitState();
                 }
 
-                if (m_tokenType == TokenType.Special)
+                if (m_tokenType == SqlTokenType.Special)
                 {
-                    return (m_token == "?") ? TokenType.ParameterMarker
-                        : TokenType.Special;
+                    return (m_token == "?") ? SqlTokenType.ParameterMarker
+                        : SqlTokenType.Special;
                 }
-                else if (m_tokenType == TokenType.NumberLiteral)
+                else if (m_tokenType == SqlTokenType.NumberLiteral)
                 {
                     // resolves most specific literal type
                     object lv = this.LiteralValue;
@@ -1699,81 +1699,81 @@ namespace System.Data.Hsqldb.Common.Sql
 
                 switch (m_tokenType)
                 {
-                    case TokenType.BooleanLiteral:
+                    case SqlTokenType.BooleanLiteral:
                         {
                             return "Boolean";
                         }
-                    case TokenType.DateLiteral:
+                    case SqlTokenType.DateLiteral:
                         {
                             return "Date";
                         }
-                    case TokenType.DecimalLiteral:
+                    case SqlTokenType.DecimalLiteral:
                         {
                             return "Decimal";
                         }
-                    case TokenType.FloatLiteral:
+                    case SqlTokenType.FloatLiteral:
                         {
                             return "Float";
                         }
-                    case TokenType.IntegerLiteral:
+                    case SqlTokenType.IntegerLiteral:
                         {
                             return "Integer";
                         }
-                    case TokenType.BigIntLiteral:
+                    case SqlTokenType.BigIntLiteral:
                         {
                             return "BigInt";
                         }
-                    case TokenType.IdentifierChain:
+                    case SqlTokenType.IdentifierChain:
                         {
                             return "Identifier Chain";
                         }
-                    case TokenType.Name:
+                    case SqlTokenType.Name:
                         {
                             return "Name";
                         }
-                    case TokenType.NamedParameter:
+                    case SqlTokenType.NamedParameter:
                         {
                             return "Named Parameter";
                         }
-                    case TokenType.None:
+                    case SqlTokenType.None:
                         {
                             return "None";
                         }
-                    case TokenType.Null:
+                    case SqlTokenType.Null:
                         {
                             return "NULL";
                         }
-                    case TokenType.NumberLiteral:
+                    case SqlTokenType.NumberLiteral:
                         {
                             return "Number";
                         }
-                    case TokenType.DelimitedIdentifier:
+                    case SqlTokenType.DelimitedIdentifier:
                         {
                             return "Delimited Identifier";
                         }
-                    case TokenType.Remark:
+                    case SqlTokenType.Remark:
                         {
                             return "Remark";
                         }
-                    case TokenType.RemarkLine:
+                    case SqlTokenType.RemarkLine:
                         {
                             return "Remark Line";
                         }
-                    case TokenType.Special:
+                    case SqlTokenType.Special:
                         {
                             return (m_token == "?")
                                        ? "Parameter Marker"
                                        : "Special";
                         }
-                    case TokenType.StringLiteral:
+                    case SqlTokenType.StringLiteral:
                         {
                             return "String";
                         }
-                    case TokenType.TimeLiteral:
+                    case SqlTokenType.TimeLiteral:
                         {
                             return "Time";
                         }
-                    case TokenType.TimestampLiteral:
+                    case SqlTokenType.TimestampLiteral:
                         {
                             return "Timestamp";
                         }
@@ -1829,7 +1829,7 @@ namespace System.Data.Hsqldb.Common.Sql
                     throw IllegalWaitState();
                 }
 
-                return (m_tokenType == TokenType.IdentifierChain);
+                return (m_tokenType == SqlTokenType.IdentifierChain);
             }
         }
 
@@ -1864,7 +1864,7 @@ namespace System.Data.Hsqldb.Common.Sql
                 }
 
                 return (m_identifierChainPredecessorType
-                    == TokenType.DelimitedIdentifier);
+                    == SqlTokenType.DelimitedIdentifier);
             }
         }
 
@@ -1893,13 +1893,13 @@ namespace System.Data.Hsqldb.Common.Sql
 
                 switch (m_tokenType)
                 {
-                    case TokenType.StringLiteral:
-                    case TokenType.NumberLiteral:
-                    case TokenType.BigIntLiteral:
-                    case TokenType.FloatLiteral:
-                    case TokenType.DecimalLiteral:
-                    case TokenType.BooleanLiteral:
-                    case TokenType.Null: // checkme
+                    case SqlTokenType.StringLiteral:
+                    case SqlTokenType.NumberLiteral:
+                    case SqlTokenType.BigIntLiteral:
+                    case SqlTokenType.FloatLiteral:
+                    case SqlTokenType.DecimalLiteral:
+                    case SqlTokenType.BooleanLiteral:
+                    case SqlTokenType.Null: // checkme
                         {
                             return true;
                         }
@@ -1943,8 +1943,8 @@ namespace System.Data.Hsqldb.Common.Sql
                     return true;
                 }
 
-                if (!((m_tokenType == TokenType.Name)
-                      || (m_tokenType == TokenType.IdentifierChain)))
+                if (!((m_tokenType == SqlTokenType.Name)
+                      || (m_tokenType == SqlTokenType.IdentifierChain)))
                 {
                     return false;
                 }
@@ -1976,7 +1976,7 @@ namespace System.Data.Hsqldb.Common.Sql
                     throw IllegalWaitState();
                 }
 
-                return (m_tokenType == TokenType.NamedParameter);
+                return (m_tokenType == SqlTokenType.NamedParameter);
             }
         }
 
@@ -2000,7 +2000,7 @@ namespace System.Data.Hsqldb.Common.Sql
                     throw IllegalWaitState();
                 }
 
-                return ((m_tokenType == TokenType.Special)
+                return ((m_tokenType == SqlTokenType.Special)
                         && (m_token == Token.ValueFor.QUESTION));
             }
         }
@@ -2027,13 +2027,13 @@ namespace System.Data.Hsqldb.Common.Sql
                     throw IllegalWaitState();
                 }
 
-                if ((m_tokenType == TokenType.DelimitedIdentifier)
+                if ((m_tokenType == SqlTokenType.DelimitedIdentifier)
                     && (m_token.Length != 0))
                 {
                     return true;
                 }
 
-                if (m_tokenType != TokenType.Name)
+                if (m_tokenType != SqlTokenType.Name)
                 {
                     return false;
                 }
@@ -2065,10 +2065,10 @@ namespace System.Data.Hsqldb.Common.Sql
             {
                 switch (m_tokenType)
                 {
-                    case TokenType.DelimitedIdentifier:
-                    case TokenType.IdentifierChain:
-                    case TokenType.StringLiteral:
-                    case TokenType.NamedParameter:
+                    case SqlTokenType.DelimitedIdentifier:
+                    case SqlTokenType.IdentifierChain:
+                    case SqlTokenType.StringLiteral:
+                    case SqlTokenType.NamedParameter:
                         {
                             return false;
                         }
@@ -2110,11 +2110,11 @@ namespace System.Data.Hsqldb.Common.Sql
             m_ValueTokens = new org.hsqldb.lib.IntValueHashMap();
 
             m_ValueTokens.put(Token.ValueFor.NULL,
-                (int)TokenType.Null);
+                (int)SqlTokenType.Null);
             m_ValueTokens.put(Token.ValueFor.TRUE,
-                (int)TokenType.BooleanLiteral);
+                (int)SqlTokenType.BooleanLiteral);
             m_ValueTokens.put(Token.ValueFor.FALSE,
-                (int)TokenType.BooleanLiteral);
+                (int)SqlTokenType.BooleanLiteral);
 
             m_EnglishCulture = CultureInfo.GetCultureInfo("en");
 

@@ -38,13 +38,13 @@ using System.Text;
 
 namespace System.Data.Hsqldb.Common.Enumeration
 {
-    #region ServerType
+    #region WindowsServerType
     /// <summary>
     /// Possible types of windows servers.
     /// </summary>
     [FlagsAttribute]
     [CLSCompliant(false)]
-    public enum ServerType : uint
+    public enum WindowsServerType : uint
     {
         /// <summary>
         /// All workstations

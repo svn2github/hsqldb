@@ -471,7 +471,7 @@ namespace System.Data.Hsqldb.Common.Lob
         /// <see cref="System.InvalidOperationException"/>.
         /// </para>
         /// </remarks>
-        /// <param name="obj">
+        /// <param name="o">
         /// The object to wrap.
         /// </param>
         /// <exception cref="System.ArgumentNullException">

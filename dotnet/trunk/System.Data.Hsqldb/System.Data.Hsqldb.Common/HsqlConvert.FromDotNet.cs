@@ -200,7 +200,7 @@ namespace System.Data.Hsqldb.Common
             /// Converts the given <c>System.Char</c>
             /// value to an <c>SQL BOOLEAN</c> value.
             /// </summary>
-            /// <param name="sbyteValue">
+            /// <param name="charValue">
             /// To convert to a <c>java.lang.Boolean</c> value.
             /// </param>
             /// <returns>
@@ -2164,6 +2164,7 @@ namespace System.Data.Hsqldb.Common
             /// or <see cref="SqlBytes"/> instance.
             /// </para>
             /// </remarks>
+            /// </summary>
             /// <param name="nullable">
             /// To convert to an SQL literal value character sequence.
             /// </param>
@@ -7116,7 +7117,9 @@ namespace System.Data.Hsqldb.Common
 
             #region ParseDecimal(string)
             /// <summary>
-            /// Parses the given value using <see cref="java.math.BigDecimal(string) constructor"/>,
+            /// Parses the given value using the constructor,
+            /// <a href="http://java.sun.com/javase/6/docs/api/java/math/BigDecimal.html#BigDecimal(java.lang.String)">
+            /// java.math.BigDecimal(string)</a>
             /// returning an equivalent <c>java.math.BigDecimal</c> instance retrieved
             /// from the HSQLDB value pool.
             /// </summary>

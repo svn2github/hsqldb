@@ -179,7 +179,7 @@ namespace System.Data.Hsqldb.Common.Lob
         /// <exception cref="System.Data.Common.DbException">
         /// If there is an error accessing the <c>BLOB</c> value.
         /// </exception>
-        /// <exception cref="System.invalidOperationException">
+        /// <exception cref="System.InvalidOperationException">
         /// When this object is in the <see cref="Free()">Freed</see> state.
         /// </exception>
         /// <exception cref="System.InvalidOperationException">

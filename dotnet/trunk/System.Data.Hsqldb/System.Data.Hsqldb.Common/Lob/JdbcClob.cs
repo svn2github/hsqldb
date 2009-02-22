@@ -47,7 +47,7 @@ namespace System.Data.Hsqldb.Common.Lob
     /// <para>
     /// An <c>IClob</c> implementation that wraps a <c>java.sql.Clob</c>.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.Lob.JdbcClob.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Common.Lob.JdbcClob.png"
     ///      alt="JdbcClob Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>
@@ -85,7 +85,8 @@ namespace System.Data.Hsqldb.Common.Lob
         /// <exception cref="ArgumentNullException">
         /// When the given <c>clob</c> is null.
         /// </exception>
-        internal JdbcClob(java.sql.Clob clob)
+        [CLSCompliant(false)]
+        public JdbcClob(java.sql.Clob clob)
         {
             if (clob == null)
             {
@@ -405,7 +406,7 @@ namespace System.Data.Hsqldb.Common.Lob
         /// <exception cref="HsqlDataSourceException">
         /// If there is an error accessing the <c>CLOB</c> value.
         /// </exception>
-        /// <exception cref="ArgumentoutOfRangeException">
+        /// <exception cref="ArgumentOutOfRangeException">
         /// When <c>pos</c> is less than 1; 
         /// <c>pos</c> is greater than <c>this.Length</c>;
         /// <c>length</c> is less than zero; 
@@ -818,7 +819,7 @@ namespace System.Data.Hsqldb.Common.Lob
         /// <param name="obj">
         /// The object to wrap; instances of <c>java.sql.Clob</c>, string,
         /// <see cref="Stream"/> and <see cref="TextReader"/> are currently
-        /// supported.
+        /// supported and all unwrap as <c>java.sql.Clob</c>.
         /// </param>        
         /// <exception cref="ArgumentException">
         /// When <c>obj</c> is not a <c>java.sql.Clob</c>,

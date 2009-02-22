@@ -986,7 +986,7 @@ namespace System.Data.Hsqldb.Common
         /// <remarks>
         /// The retrieved value applies in particular to HSQLDB ADO.NET
         /// data provider methods having return type of object or object[],
-        /// such as <see cref="HsqlDataReader.GetValue(int)"/> and its
+        /// such as <c>HsqlDataReader.GetValue(System.Int32)</c> and its
         /// variations, e.g. <c>HsqlDataReader.GetValues(object[])</c>.
         /// </remarks>
         /// <param name="type">The HSQLDB data type code.</param>
@@ -1081,6 +1081,16 @@ namespace System.Data.Hsqldb.Common
         #endregion
 
         #region ToProviderSpecificDataType(HsqlProviderType)
+        /// <summary>
+        /// Retrieves the provider-specific (i.e. internal) CLR 
+        /// <c>System.Type</c> used to represent values of the
+        /// given provider-specific SQL type.
+        /// </summary>
+        /// <param name="type">The provider specific SQL type</param>
+        /// <returns>
+        /// The corresponding provider specific CLR <c>System.Type</c> used 
+        /// to represent values of the given provider-specific SQL type.
+        /// </returns>
         public static Type ToProviderSpecificDataType(HsqlProviderType type)
         {
             return HsqlConvert.ToProviderSpecificDataType((int)type);

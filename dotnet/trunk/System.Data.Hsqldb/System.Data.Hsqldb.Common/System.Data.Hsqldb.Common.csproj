@@ -62,8 +62,8 @@
     <Compile Include="Enumeration\HsqlProviderType.cs" />
     <Compile Include="Enumeration\ParameterMode.cs" />
     <Compile Include="Enumeration\RoutineColumnType.cs" />
-    <Compile Include="Enumeration\ServerType.cs" />
-    <Compile Include="Enumeration\TokenType.cs" />
+    <Compile Include="Enumeration\SqlTokenType.cs" />
+    <Compile Include="Enumeration\WindowsServerType.cs" />
     <Compile Include="HsqlBatchException.cs" />
     <Compile Include="HsqlConvert.cs" />
     <Compile Include="HsqlConvert.FromDotNet.cs">

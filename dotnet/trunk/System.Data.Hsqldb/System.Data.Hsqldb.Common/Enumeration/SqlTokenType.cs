@@ -34,16 +34,16 @@
 
 namespace System.Data.Hsqldb.Common.Enumeration
 {
-    #region TokenType
+    #region SqlTokenType
 
     /// <summary>
     /// <para>
     /// Classifies the lexographic role of an <see cref="Common.Sql.Token"/>.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.TokenType.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.SqlTokenType.png"
     ///      alt="TokenType Class Diagram"/>
     /// </summary>
-    public enum TokenType
+    public enum SqlTokenType
     {
         /// <summary>
         /// Specifies that the tokenizer is before the

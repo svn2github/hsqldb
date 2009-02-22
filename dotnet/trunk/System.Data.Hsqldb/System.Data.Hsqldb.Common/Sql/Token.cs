@@ -55,7 +55,7 @@ namespace System.Data.Hsqldb.Common.Sql
         private string m_value;
         private string m_qualifierPart;
         private string m_subjectPart;
-        private TokenType m_type;
+        private SqlTokenType m_type;
         private int m_hashCode;
         #endregion
 
@@ -72,13 +72,13 @@ namespace System.Data.Hsqldb.Common.Sql
         /// Type of the token, which allows the givne token value to be correctly converted
         /// to a <see cref="LiteralValue"/>, etc.
         /// </param>
-        public Token(string value, TokenType type)
+        public Token(string value, SqlTokenType type)
         {
             if (string.IsNullOrEmpty(value))
             {
                 throw new ArgumentNullException("value");
             }
-            if (type == TokenType.None)
+            if (type == SqlTokenType.None)
             {
                 throw new ArgumentOutOfRangeException(
                     "type", type, "Not a valid token type");
@@ -92,7 +92,7 @@ namespace System.Data.Hsqldb.Common.Sql
         #region Token(String,TokenType,string,string)
         /// <summary>
         /// Initializes a new instance of a two-part <c>IdentifierChain</c> 
-        /// <see cref="Token"/.
+        /// <see cref="Token"/>.
         /// </summary>
         /// <remarks>the <see cref="TokenType"/> is inferred when using the
         /// constructor form and hence is not included in the signature.
@@ -108,7 +108,7 @@ namespace System.Data.Hsqldb.Common.Sql
         /// usually a simple (unqualified) SQL object name
         /// </param>
 		public Token(String value, string qualifierPart, string subjectPart)
-            : this(value, TokenType.IdentifierChain) {
+            : this(value, SqlTokenType.IdentifierChain) {
             //
             if (string.IsNullOrEmpty(qualifierPart))
             {
@@ -140,7 +140,7 @@ namespace System.Data.Hsqldb.Common.Sql
             {
                 switch (m_type)
                 {
-                    case TokenType.IdentifierChain:
+                    case SqlTokenType.IdentifierChain:
                         {
                             return m_qualifierPart;
                         }
@@ -165,7 +165,7 @@ namespace System.Data.Hsqldb.Common.Sql
             {
                 switch (m_type)
                 {
-                    case TokenType.IdentifierChain:
+                    case SqlTokenType.IdentifierChain:
                         {
                             return m_subjectPart;
                         }
@@ -190,39 +190,39 @@ namespace System.Data.Hsqldb.Common.Sql
             {
                 switch (m_type)
                 {
-                    case TokenType.BigIntLiteral:
+                    case SqlTokenType.BigIntLiteral:
                         {
                             return Convert.ToInt64(m_value);
                         }
-                    case TokenType.BooleanLiteral:
+                    case SqlTokenType.BooleanLiteral:
                         {
                             return (m_value == Token.ValueFor.TRUE);
                         }
-                    case TokenType.DateLiteral:
+                    case SqlTokenType.DateLiteral:
                         {
                             return java.sql.Date.valueOf(m_value);
                         }
-                    case TokenType.DecimalLiteral:
+                    case SqlTokenType.DecimalLiteral:
                         {
                             return Convert.ToDecimal(m_value);
                         }
-                    case TokenType.FloatLiteral:
+                    case SqlTokenType.FloatLiteral:
                         {
                             return Convert.ToDouble(m_value);
                         }
-                    case TokenType.NumberLiteral:
+                    case SqlTokenType.NumberLiteral:
                         {
                             return new java.math.BigDecimal(m_value);
                         }
-                    case TokenType.StringLiteral:
+                    case SqlTokenType.StringLiteral:
                         {
                             return m_value.Substring(1, m_value.Length - 2).Replace("''", "'");
                         }
-                    case TokenType.TimeLiteral:
+                    case SqlTokenType.TimeLiteral:
                         {
                             return java.sql.Time.valueOf(m_value);
                         }
-                    case TokenType.TimestampLiteral:
+                    case SqlTokenType.TimestampLiteral:
                         {
                             return java.sql.Timestamp.valueOf(m_value);
                         }
@@ -283,7 +283,7 @@ namespace System.Data.Hsqldb.Common.Sql
         /// Gets the type of the token.
         /// </summary>
         /// <value>The type of the token.</value>
-        public TokenType Type
+        public SqlTokenType Type
         {
             get { return m_type; }
         }
@@ -358,6 +358,13 @@ namespace System.Data.Hsqldb.Common.Sql
 
 
         #region ToString()
+        /// <summary>
+        /// Retrieves a <see cref="T:System.String"></see> representation of this object.
+        /// </summary>
+        /// <returns>
+        /// A value of the form: 
+        /// "System.Data.Hsqldb.Common.Sql.Token[value=this.Value,type=this.Type[,qualifierPart=this.QualifierPart,subjectPart=this.SubjectPart]]"
+        /// </returns>
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder(base.ToString());
@@ -365,7 +372,7 @@ namespace System.Data.Hsqldb.Common.Sql
             sb.Append("[value=").Append(Value);
             sb.Append(",type=").Append(Type);
 
-            if (Type == TokenType.IdentifierChain)
+            if (Type == SqlTokenType.IdentifierChain)
             {
                 sb.Append(",qualifierPart=").Append(QualifierPart);
                 sb.Append(",subjectPart=").Append(SubjectPart);

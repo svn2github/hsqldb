@@ -51,13 +51,12 @@ namespace System.Data.Hsqldb.Common.Enumeration
     /// <para>
     /// HSQLDB-specific data type codes.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.HsqlProviderType.png"
+    /// <img src="..Documentation//ClassDiagrams/System.Data.Hsqldb.Common.Enumeration.HsqlProviderType.png"
     ///      alt="HsqlProviderType Class Diagram"/>
     /// </summary>
     /// <remarks>
-    /// Enumerates the native data types of field,
-    /// property or parameter objects of the HSQLDB ADO.NET
-    /// data provider.
+    /// Enumerates the native data types of field, property or parameter
+    /// objects of the HSQLDB ADO.NET data provider.
     /// </remarks>
     /// <author name="boucherb@users"/>
     [TypeConverter(typeof(LexographicEnumConverter))]
@@ -287,22 +286,22 @@ namespace System.Data.Hsqldb.Common.Enumeration
     /// <summary>
     /// 
     /// </summary>
-    public sealed class HsqlProvidierTypeComparer : IComparer<HsqlProviderType>
+    public sealed class HsqlProviderTypeComparer : IComparer<HsqlProviderType>
     {
         #region Fields
         /// <summary>
         /// 
         /// </summary>
-        public static readonly HsqlProvidierTypeComparer Instance;
+        public static readonly HsqlProviderTypeComparer Instance;
         #endregion
 
         #region Static Initializer
         /// <summary>
         /// Initializes the <see cref="HsqlProvidierTypeComparer"/> class.
         /// </summary>
-        static HsqlProvidierTypeComparer()
+        static HsqlProviderTypeComparer()
         {
-            Instance = new HsqlProvidierTypeComparer();
+            Instance = new HsqlProviderTypeComparer();
         }
         #endregion
 
@@ -310,7 +309,7 @@ namespace System.Data.Hsqldb.Common.Enumeration
         /// <summary>
         /// Constructs a new <c>HsqlProvidierTypeComparer</c> instance.
         /// </summary>
-        private HsqlProvidierTypeComparer() { }
+        private HsqlProviderTypeComparer() { }
         #endregion
 
         #region IComparer<HsqlProviderType> Members
