@@ -240,7 +240,7 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
             actual = testSubject.GetNextAsString();
 
             Assert.AreEqual("BAR", actual);
-            Assert.AreEqual(TokenType.IdentifierChain, testSubject.TokenType);
+            Assert.AreEqual(SqlTokenType.IdentifierChain, testSubject.TokenType);
             Assert.That(!testSubject.WasIdentifierChainPredecessorDelimited);
             Assert.AreEqual("FOO", testSubject.IdentifierChainPredecessor);
 
@@ -282,7 +282,7 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
             }
 
             Assert.That(testSubject.WasThis("TEST"));
-            Assert.That(testSubject.TokenType == TokenType.Name);
+            Assert.That(testSubject.TokenType == SqlTokenType.Name);
 
             Assert.AreEqual(Token.ValueFor.OPENBRACKET, testSubject.GetThis(Token.ValueFor.OPENBRACKET));            
             Assert.AreEqual("ID", testSubject.GetThis("ID"));
@@ -303,7 +303,7 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
             Assert.AreEqual(Token.ValueFor.VARCHAR, testSubject.GetThis(Token.ValueFor.VARCHAR));
             Assert.AreEqual(Token.ValueFor.OPENBRACKET, testSubject.GetThis(Token.ValueFor.OPENBRACKET));
             Assert.AreEqual("12", testSubject.GetThis("12"));
-            Assert.That(testSubject.TokenType == TokenType.NumberLiteral);
+            Assert.That(testSubject.TokenType == SqlTokenType.NumberLiteral);
             Assert.That(testSubject.LiteralValueDataType == HsqlProviderType.Integer);
             Assert.AreEqual(Token.ValueFor.CLOSEBRACKET, testSubject.GetThis(Token.ValueFor.CLOSEBRACKET));
             Assert.AreEqual(Token.ValueFor.CLOSEBRACKET, testSubject.GetThis(Token.ValueFor.CLOSEBRACKET));

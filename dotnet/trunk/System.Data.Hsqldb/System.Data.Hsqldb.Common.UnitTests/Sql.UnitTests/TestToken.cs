@@ -11,24 +11,24 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
         [Test, OfMember("Equals")]
         public void Equals()
         {
-            Token testSubject = new Token(Token.ValueFor.ACTION, TokenType.Null);
+            Token testSubject = new Token(Token.ValueFor.ACTION, SqlTokenType.Null);
 
             Assert.AreEqual(Token.ValueFor.ACTION, testSubject.Value);
-            Assert.AreEqual(TokenType.Null, testSubject.Type);
+            Assert.AreEqual(SqlTokenType.Null, testSubject.Type);
 
-            Assert.AreEqual(new Token(Token.ValueFor.ACTION, TokenType.Null), testSubject);
-            Assert.AreNotEqual(new Token(Token.ValueFor.ADD, TokenType.Null), testSubject);
-            Assert.AreNotEqual(new Token(Token.ValueFor.ACTION, TokenType.StringLiteral), testSubject);
+            Assert.AreEqual(new Token(Token.ValueFor.ACTION, SqlTokenType.Null), testSubject);
+            Assert.AreNotEqual(new Token(Token.ValueFor.ADD, SqlTokenType.Null), testSubject);
+            Assert.AreNotEqual(new Token(Token.ValueFor.ACTION, SqlTokenType.StringLiteral), testSubject);
         }
 
         
         [Test, OfMember("GetHashCode")]
         new public void GetHashCode()
         {
-            Token testSubject = new Token(Token.ValueFor.ACTION, TokenType.Null);
+            Token testSubject = new Token(Token.ValueFor.ACTION, SqlTokenType.Null);
 
             Assert.AreEqual(new Token(Token.ValueFor.ACTION, 
-                TokenType.Null).GetHashCode(),testSubject.GetHashCode());
+                SqlTokenType.Null).GetHashCode(),testSubject.GetHashCode());
         }
 
         [Test, OfMember("IdentifierChainFirst")]
@@ -50,48 +50,48 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
         [Test, OfMember("LiteralValue")]
         public void LiteralValue()
         {
-            Token testSubject = new Token("1234", TokenType.BigIntLiteral);
+            Token testSubject = new Token("1234", SqlTokenType.BigIntLiteral);
 
             Assert.IsInstanceOfType(typeof(Int64), testSubject.LiteralValue);
             Assert.AreEqual(1234D, testSubject.LiteralValue);
 
-            testSubject = new Token("TRUE", TokenType.BooleanLiteral);
+            testSubject = new Token("TRUE", SqlTokenType.BooleanLiteral);
 
             Assert.IsInstanceOfType(typeof(bool), testSubject.LiteralValue);
             Assert.AreEqual(true, testSubject.LiteralValue);
 
-            testSubject = new Token("2009-2-8", TokenType.DateLiteral);
+            testSubject = new Token("2009-2-8", SqlTokenType.DateLiteral);
 
             Assert.IsInstanceOfType(typeof(java.sql.Date), testSubject.LiteralValue);
             Assert.AreEqual(java.sql.Date.valueOf("2009-2-8"), testSubject.LiteralValue);
 
-            testSubject = new Token("12345678987654321.12345678987654321", TokenType.DecimalLiteral);
+            testSubject = new Token("12345678987654321.12345678987654321", SqlTokenType.DecimalLiteral);
 
             Assert.IsInstanceOfType(typeof(decimal), testSubject.LiteralValue);
             Assert.AreEqual(12345678987654321.12345678987654321M, testSubject.LiteralValue);
 
-            testSubject = new Token("123.456", TokenType.FloatLiteral);
+            testSubject = new Token("123.456", SqlTokenType.FloatLiteral);
 
             Assert.IsInstanceOfType(typeof(double), testSubject.LiteralValue);
             Assert.AreEqual(123.456, testSubject.LiteralValue);
 
-            testSubject = new Token("FOO", TokenType.Null);
+            testSubject = new Token("FOO", SqlTokenType.Null);
             Assert.AreEqual("FOO", testSubject.LiteralValue);
 
-            testSubject = new Token("1234567898765432123456712345678987654321234567.1234567898765432123456712345678987654321234567", TokenType.NumberLiteral);
+            testSubject = new Token("1234567898765432123456712345678987654321234567.1234567898765432123456712345678987654321234567", SqlTokenType.NumberLiteral);
 
             Assert.IsInstanceOfType(typeof(java.math.BigDecimal), testSubject.LiteralValue);
             Assert.AreEqual(new java.math.BigDecimal("1234567898765432123456712345678987654321234567.1234567898765432123456712345678987654321234567"), testSubject.LiteralValue);
 
-            testSubject = new Token("'He said ''high five!'''", TokenType.StringLiteral);
+            testSubject = new Token("'He said ''high five!'''", SqlTokenType.StringLiteral);
             Assert.IsInstanceOfType(typeof(string), testSubject.LiteralValue);
             Assert.AreEqual("He said 'high five!'", testSubject.LiteralValue);
 
-            testSubject = new Token("12:01:01", TokenType.TimeLiteral);
+            testSubject = new Token("12:01:01", SqlTokenType.TimeLiteral);
             Assert.IsInstanceOfType(typeof(java.sql.Time), testSubject.LiteralValue);
             Assert.AreEqual(java.sql.Time.valueOf("12:01:01"), testSubject.LiteralValue);
 
-            testSubject = new Token("2009-02-09 12:01:01.001", TokenType.TimestampLiteral);
+            testSubject = new Token("2009-02-09 12:01:01.001", SqlTokenType.TimestampLiteral);
             Assert.IsInstanceOfType(typeof(java.sql.Timestamp), testSubject.LiteralValue);
             Assert.AreEqual(java.sql.Timestamp.valueOf("2009-02-09 12:01:01.001"), testSubject.LiteralValue);
         }
@@ -99,7 +99,7 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
         [Test, OfMember("ToString")]
         new public void ToString()
         {
-            Token testSubject = new Token(Token.ValueFor.ACTION, TokenType.NamedParameter);
+            Token testSubject = new Token(Token.ValueFor.ACTION, SqlTokenType.NamedParameter);
             string expected = "System.Data.Hsqldb.Common.Sql.Token[value=ACTION,type=NamedParameter]";
             string actual = testSubject.ToString();
 
@@ -114,7 +114,7 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
         [Test, OfMember("Value")]
         public void Value()
         {
-            Token testSubject = new Token(Token.ValueFor.ACTION, TokenType.Null);
+            Token testSubject = new Token(Token.ValueFor.ACTION, SqlTokenType.Null);
 
             Assert.AreEqual(Token.ValueFor.ACTION, testSubject.Value);
         }
@@ -122,9 +122,9 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
         [Test, OfMember("Type")]
         public void Type()
         {
-            Token testSubject = new Token(Token.ValueFor.ACTION, TokenType.Null);
+            Token testSubject = new Token(Token.ValueFor.ACTION, SqlTokenType.Null);
 
-            Assert.AreEqual(TokenType.Null, testSubject.Type);
+            Assert.AreEqual(SqlTokenType.Null, testSubject.Type);
         }
     }
 }
