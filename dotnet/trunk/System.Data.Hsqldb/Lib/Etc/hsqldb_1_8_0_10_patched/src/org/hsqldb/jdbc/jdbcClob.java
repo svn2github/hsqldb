@@ -448,18 +448,17 @@ public final class jdbcClob implements Clob {
 
         final String ldata = data;
         final long   dlen  = ldata.length();
-        final long   chars = len >> 1;
 
-        if (chars == dlen) {
+        if (len == dlen) {
 
             // nothing has changed, so there's nothing to be done
-        } else if (len < 0 || chars > dlen) {
+        } else if (len < 0 || len > dlen) {
             throw Util.sqlException(Trace.INVALID_JDBC_ARGUMENT,
                                     Long.toString(len));
         } else {
 
             // use new String() to ensure we get rid of slack
-            data = new String(ldata.substring(0, (int) chars));
+            data = new String(ldata.substring(0, (int) len));
         }
     }
 
