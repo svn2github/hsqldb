@@ -51,7 +51,7 @@ namespace System.Data.Hsqldb.Client
     /// <para>
     /// The HSQLDB <see cref="DbCommandBuilder">DbCommandBuilder</see> implementation.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.HsqlCommandBuilder.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.HsqlCommandBuilder.png"
     ///      alt="HsqlCommandBuilder Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>

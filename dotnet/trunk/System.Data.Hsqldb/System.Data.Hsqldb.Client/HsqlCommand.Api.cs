@@ -130,8 +130,10 @@ namespace System.Data.Hsqldb.Client
         /// Although not explicitly stated in the ADO.NET API docmentation for
         /// either <see cref="IDbCommand"/> or <see cref="DbParameter"/>, after
         /// a careful review of the history of the ADO.NET API and the current
-        /// behavior of <see cref="OdbcCommand"/>, <see cref="OleDbCommand"/>
-        /// and <see cref="SqlCommand"/>, it appears that the interface methods
+        /// behavior of <see cref="System.Data.Odbc.OdbcCommand"/>, 
+        /// <see cref="System.Data.OleDb.OleDbCommand"/>
+        /// and <see cref="System.Data.SqlClient.SqlCommand"/>, it appears that
+        /// the interface methods
         /// <see cref="IDbConnection.CreateCommand()"/> and 
         /// <see cref="IDbCommand.CreateParameter"/> were intended to do no
         /// more than to form a factory method hierarchy for obtaining
@@ -202,10 +204,12 @@ namespace System.Data.Hsqldb.Client
         /// <c>IDbCommand.CreateParameter()</c> method remains, has not been
         /// marked with the <c>[Obsolete("reason")]</c> attribute and, instead,
         /// the <c>System.Data.Common.DbCommand</c> base class introduced in
-        /// ADO.NET 2.0 exposes a new, abstract <see cref="CreateDbCommand"/>
+        /// ADO.NET 2.0 exposes a new, abstract 
+        /// <see cref="System.Data.Common.DbConnection.CreateDbCommand()"/>
         /// method that only further duplicates/obsfucates the purpose of
         /// <c>DbProviderFactory.CreateParameter()</c>.
         /// </para>
+        /// <para>
         /// Indeed, it seems to highlight that the ADO.NET 1.0 API was
         /// not thought out sufficiently beyond the immediate scope of 
         /// attempting to shift away from a connected data API toward a
@@ -239,7 +243,8 @@ namespace System.Data.Hsqldb.Client
         /// without adequately considering or at least adequately documenting
         /// the wider implications.
         /// </para>
-        /// <para>Sadly, the list of design descisions that lead to such
+        /// <para>
+        /// Sadly, the list of design descisions that lead to such
         /// consequences is still quite large in ADO.NET 2.0, certainly too
         /// large to warrant enumerating further here.
         /// </para>
@@ -277,6 +282,7 @@ namespace System.Data.Hsqldb.Client
         /// <c>DbProviderFactory.CreateCommand()</c> and 
         /// <c>DbProviderFactory.CreateParameter</c> methods.
         /// </para>
+        /// <para>
         /// In the real world, sadly, the idealistic solution described above
         /// does nothing to help legacy class libraries, as the described scheme
         /// requires existing <c>System.Data</c> interfaces to be retrofitted
@@ -635,6 +641,7 @@ namespace System.Data.Hsqldb.Client
         /// initial result set), else <c>null</c>.
         /// </summary>
         /// <remarks>
+        /// <para>
         /// Note that, in comparison to <c>ExecuteReader(...)</c>,
         /// the code required fetch a single value is substantially reduced.
         /// Note further that this also avoids the necessity of creating
@@ -648,7 +655,6 @@ namespace System.Data.Hsqldb.Client
         /// efficient way to retrieve a single value from an HSQLDB database
         /// instance.
         /// </para>
-        /// <para>
         /// </remarks>
         /// <returns>
         /// A single, scalar value, obtained as described in the summary above.
@@ -686,69 +692,107 @@ namespace System.Data.Hsqldb.Client
         /// If this command is short-running (e.g. involves only a small
         /// number of rows) and is to be (re)executed a relatively large
         /// number of times (more than once or twice), preparation may result
-        /// in significant performance gains (e.g. has been benchmarked at
-        /// between 160% to 600% faster for OLTP-style primary-key predicated
-        /// single row access to an embedded data source), with actual speedup
-        /// depending on the relative overhead of re-parsing on each execution,
-        /// as governed by the relative costs of first encoding  parameter
-        /// values to command text literal values only to be parsed back to
-        /// binary values inside the database engine, use of different table
-        /// persistence engines (<c>Memory</c>, <c>Text</c>, <c>Cached</c>),
-        /// database operation modes (<c>File</c>, <c>Mem</c> and <c>Res</c>)
-        /// and other configuration settings, such as whether NIO file access
-        /// is enabled. Similar gains for network access are to be expected
+        /// in significant performance gains
+        /// </para>
+        /// <para>
+        /// For example, based on varying JVM heap and garbage collection
+        /// settings, benchmark software settings and database instance 
+        /// settings, the Java version of the engine has been benchmarked
+        /// at between 160% to 600% faster for OLTP-style primary-key
+        /// predicated single row access to an embedded data source.
+        /// </para>
+        /// <para>
+        /// Similar gains for network access may be expected
         /// only when performing batch execution or bulk copy. This is due to
         /// network round trip latency, which otherwise typically adds at least
         /// one or two orders of magnitude to the time taken to perform each
         /// short-running parse/execute/fetch cycle.
         /// </para>
         /// <para>
-        /// On the other hand, if this command is long-running (e.g. is
+        /// Of course, the actual average speedup that can be reasonably
+        /// expected from exclusive use of prepared commands depends
+        /// on the relative overhead of re-parsing command text at each
+        /// execution.
+        /// </para>
+        /// <para>
+        /// And this is governed by the relative cost of static binding
+        /// under parameterization, which unavoidably involves the high
+        /// expense of first encoding parameter values to SQL literal 
+        /// character sequences, replacing the parameter markers found in
+        /// the command text with the corresponding SQL literal values,
+        /// transmitting the resulting statically bound command text to
+        /// the database engine and finally reparsing to derive the
+        /// command execution plan and also to recapture the binary versions
+        /// of the data values embedded in the command text.
+        /// </para>
+        /// <para>
+        /// Other factors that may affect the meaured relative overhead of
+        /// re-parsing command text include the use of different table
+        /// persistence engines (<c>Memory</c>, <c>Text</c>, <c>Cached</c>),
+        /// database operation modes (<c>File</c>, <c>Mem</c> and <c>Res</c>)
+        /// and other configuration settings, such as whether NIO file access
+        /// is enabled.
+        /// </para>
+        /// <para>
+        /// In general, if parsing and/or static binding dominate the time to
+        /// execute a command, and especially if such a command is to be
+        /// executed regularly, then it is best practice to prepare it
+        /// before execution.
+        /// </para>
+        /// <para>
+        /// On the other hand, if a command is long-running (e.g. is
         /// computationally complex, involves a large number of rows
-        /// and/or involves time consuming disk access), then at worst the
-        /// performance will be the same if preparation is *not* performed.
-        /// And in some cases, performace may actually be significantly better
-        /// if preparation is *not* performed, for instance because the engine
+        /// and/or involves time consuming disk access), then little 
+        /// or no performance difference should be expected between
+        /// prepared and unprepared execution. And in some less common
+        /// cases, performace may actually be significantly better if
+        /// preparation is *not* performed, for instance because the engine
         /// may be able to create a better plan when the values of all
-        /// condition expressions are statically bound at parse time and the
-        /// bound values lend themselves to the task.
+        /// condition expressions are statically bound at parse time and
+        /// the bound values lend themselves to the task.
         /// </para>
         /// <para>
-        /// The major exception to the long-running command rule-of-thumb above
-        /// is when inserting or updating binary, character, numeric or
-        /// decimal values whose size, either indivually or taken together,
-        /// may put undue memory stress on the system.
+        /// As hinted in the previous description of static binding
+        /// overhead, the major exception to the long-running command
+        /// rule-of-thumb is when inserting or updating large binary,
+        /// character, numeric or decimal values, where parameterization
+        /// combined with preparation should always be preferred, even in
+        /// the case whera a command will only be executed one.
         /// </para>
         /// <para>
-        /// Although such commands may be relatively long running when the
-        /// values are very large, preparation should always be preferred
-        /// because it avoids the massive overhead required to produce a
-        /// statically bound UTF16 representation of the command together
-        /// with its parameter values, parse the resulting command, convert
-        /// large value tokens to internal binary representation and possibly
-        /// back to character sequence representation in order to record
-        /// changes in the transaction log; not to mention how inefficient
-        /// this is in terms CPU usage, this may require allocation of
-        /// temporary buffers totalling many times the memory consumed by the
-        /// parameter values themselves.
+        /// This is because parameterization combined with preparation avoids
+        /// the massive overhead required to produce a statically bound UTF16
+        /// representation of the command together with its parameter values,
+        /// parse the resulting command, convert large value tokens to internal
+        /// binary representation and possibly again to character sequence
+        /// representation in order to record changes in the database transaction
+        /// log.
+        /// </para>
+        /// <para>
+        /// Indeed, without any consideration to the inefficiency of
+        /// static binding in terms CPU usage, under parameterization, 
+        /// one must take into consideration that it may require allocation
+        /// of temporary buffers totalling many times the memory consumed by
+        /// the in-memory, native binary form of the parameter values
+        /// themselves.
         /// </para>
         /// <para>
         /// For example, it is easy to argue that inserting or updating a
         /// single 4 MB BINARY field value in an embedded database instance
-        /// using an unprepared command may easily require temporary local
-        /// memory allocation of up to 26 (or more) times that used just
-        /// to represent the value itself (i.e. 104 MB or more):
+        /// using an unprepared parameterized command may easily require
+        /// temporary local memory allocation of up to 26 (or more) times
+        /// that used just to represent the value itself (i.e. 104 MB or more).
         /// </para>
         /// <para>
-        /// First, in both .Net or Java, the most common contract choice
-        /// for submission of a character sequence to an API is to require
-        /// immutability, as in submission of a <c>System.String</c> or
-        /// <c>java.lang.String</c> object.  If the common contract is the
-        /// case, then to submit a statically bound SQL character sequence
+        /// First, in both .Net or Java, the most common way to submit
+        /// character sequence data across an API boundary is via the immutable
+        /// <c>System.String</c> (or <c>java.lang.String</c>).  And under this
+        /// constaint, to submit a statically bound SQL character sequence
         /// representing the insert or update, each byte of the BINARY value
         /// must be encoded to UTF16 hexadecimal form.  That is, each octet
         /// must be converted to two UTF16 characters, yielding 4 + (4 * 2
-        /// characers * 2 bytes per character) = (4 + 16) =  20 MB.
+        /// characers * 2 bytes per character) = (4 + 16) =  20 MB, which
+        /// is already bordering on unacceptable.
         /// </para>
         /// <para>
         /// Second, if dynamically resized character buffers are used to
@@ -756,8 +800,9 @@ namespace System.Data.Hsqldb.Client
         /// using <c>System.Text.StringBuilder</c> or <c>java.util.StringBuffer</c>
         /// objects), then in the worst case there may be over-allocation by
         /// a factor of two each time a string object is built.  If this
-        /// occurs only once, precisely at this stage in the pipeline, this
-        /// yeilds 4 + 2*16 = 36 MB.
+        /// occurs no more than once, precisely at this stage in the pipeline,
+        /// this yeilds 4 + 2*16 = 36 MB, or a terrifying 9 times that of the
+        /// raw value.
         /// </para>
         /// <para>
         /// Third, in the worst case, when the resulting SQL character sequence
@@ -790,16 +835,18 @@ namespace System.Data.Hsqldb.Client
         /// </para>
         /// <para>
         /// However, the argument does drive the point home: unless an SQL
-        /// execution pipeline adheres strictly to end-to-end UTF-8 encoding
-        /// and/or streaming patterns aimed at eliminating superfluous memory
-        /// allocation, using unprepared commands with large parameter values
-        /// is very likely to cause significant memory and CPU load internal
-        /// to the database engine itself.  And regardless of back-end design
-        /// or implementation, passing large parameter values via static binding
-        /// to command text withing the ADO.NET data provider implementation or,
-        /// much worse, client code being forced to handle the same task,
-        /// inevitably leads to excessive memory and CPU pressure conditions in
-        /// comparison to using prepared commands.
+        /// execution pipeline adheres strictly to end-to-end UTF-8 string
+        /// encoding and/or streaming patterns aimed at eliminating superfluous
+        /// intermediate memory allocation, using unprepared commands with large
+        /// parameter values is very likely to cause significant memory and CPU
+        /// load internal to the database engine.
+        /// </para>
+        /// <para>
+        /// And regardless of back-end design or implementation, passing large
+        /// parameter values via static  binding to command text within the ADO.NET
+        /// data provider implementation or, much worse, developers being forced to
+        /// handle the same task in client code, inevitably leads to excessive memory
+        /// and CPU pressure conditions in comparison to using prepared commands.
         /// </para>
         /// </remarks>
         /// <exception cref="InvalidOperationException">

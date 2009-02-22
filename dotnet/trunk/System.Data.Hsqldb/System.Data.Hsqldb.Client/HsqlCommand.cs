@@ -68,7 +68,7 @@ namespace System.Data.Hsqldb.Client
     /// <para>
     /// The HSQLDB <see cref="DbCommand">DbCommand</see> implementation.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.HsqlCommand.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.HsqlCommand.png"
     ///      alt="HsqlCommand Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>

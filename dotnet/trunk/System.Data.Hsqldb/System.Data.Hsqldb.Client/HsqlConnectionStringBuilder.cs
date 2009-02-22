@@ -63,7 +63,7 @@ namespace System.Data.Hsqldb.Client
     /// <para>
     /// The HSQLDB <see cref="DbConnectionStringBuilder">DbConnectionStringBuilder</see> implementation.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.HsqlConnectionStringBuilder.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.HsqlConnectionStringBuilder.png"
     ///      alt="HsqlConnectionStringBuilder Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>

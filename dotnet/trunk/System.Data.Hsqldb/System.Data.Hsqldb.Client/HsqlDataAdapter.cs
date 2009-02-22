@@ -73,7 +73,7 @@ namespace System.Data.Hsqldb.Client
     /// <para>
     /// The HSQLDB <see cref="DbDataAdapter">DbDataAdapter</see> implementation.
     /// </para>
-    /// <img src="/ClassDiagrams/System.Data.Hsqldb.Client.HsqlDataAdapter.png"
+    /// <img src="../Documentation/ClassDiagrams/System.Data.Hsqldb.Client.HsqlDataAdapter.png"
     ///      alt="HsqlDataAdapter Class Diagram"/>
     /// </summary>
     /// <remarks>

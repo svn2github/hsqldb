@@ -92,7 +92,7 @@ namespace System.Data.Hsqldb.Client.Sql
                 tokenizer.GetNextAsString()))
             {
                 string normalizedTokenValue = tokenizer.NormalizedToken;
-                TokenType type = tokenizer.TokenType;
+                SqlTokenType type = tokenizer.TokenType;
 
                 if (Token.ValueFor.COMMA != normalizedTokenValue)
                 {
@@ -105,12 +105,12 @@ namespace System.Data.Hsqldb.Client.Sql
 
                 switch (type)
                 {
-                    case TokenType.ParameterMarker:
+                    case SqlTokenType.ParameterMarker:
                         {
                             parameterMarkerCount++;
                             break;
                         }
-                    case TokenType.NamedParameter:
+                    case SqlTokenType.NamedParameter:
                         {
                             namedParameterCount++;
                             break;
@@ -119,7 +119,7 @@ namespace System.Data.Hsqldb.Client.Sql
 
                 switch (type)
                 {
-                    case TokenType.IdentifierChain:
+                    case SqlTokenType.IdentifierChain:
                         {
                             string qualiferPart = tokenizer.IdentifierChainPredecessor;
                             string subjectPart = tokenValue;
@@ -155,11 +155,11 @@ namespace System.Data.Hsqldb.Client.Sql
             for (int i = 0; i < count; i++)
             {
                 Token token = m_list[i];
-                TokenType type = token.Type;
+                SqlTokenType type = token.Type;
 
                 switch (type)
                 {
-                    case TokenType.NamedParameter:
+                    case SqlTokenType.NamedParameter:
                         {
                             List<int> tokenOrdinals;
                             List<int> bindOrdinals = null;
@@ -187,7 +187,7 @@ namespace System.Data.Hsqldb.Client.Sql
 
                             break;
                         }
-                    case TokenType.ParameterMarker:
+                    case SqlTokenType.ParameterMarker:
                         {
                             m_parameterMarkerTokenPositions[
                                 parameterMarkerIndex++] = i;
@@ -427,7 +427,7 @@ namespace System.Data.Hsqldb.Client.Sql
 
                 switch (token.Type)
                 {
-                    case TokenType.NamedParameter:
+                    case SqlTokenType.NamedParameter:
                         {
                             capacity++;
                             break;
@@ -469,7 +469,7 @@ namespace System.Data.Hsqldb.Client.Sql
                     sb.Append(' ');
                 }
 
-                if (token.Type == TokenType.NamedParameter)
+                if (token.Type == SqlTokenType.NamedParameter)
                 {
                     sb.Append(marker);
                 }
@@ -610,14 +610,14 @@ namespace System.Data.Hsqldb.Client.Sql
             {
                 Token token = m_list[i];
                 string value = token.Value;
-                TokenType type = token.Type;
+                SqlTokenType type = token.Type;
 
                 if (i > 0 && (Token.ValueFor.COMMA != value))
                 {
                     sb.Append(' ');
                 }
 
-                if (type == TokenType.NamedParameter)
+                if (type == SqlTokenType.NamedParameter)
                 {
                     int index = parameters.IndexOf(value);
 

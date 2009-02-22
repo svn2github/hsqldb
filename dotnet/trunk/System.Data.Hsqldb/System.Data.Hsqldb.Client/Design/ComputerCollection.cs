@@ -62,8 +62,8 @@ namespace System.Data.Hsqldb.Client.Design
         /// <param name="serverType">One of the ServerType values</param>
         /// <param name="domain">The domain to search for computers in</param>
         [CLSCompliant(false)]
-        public ComputerCollection(ServerType serverType, string domain)
-            : this(UInt32.Parse(Enum.Format(typeof(ServerType), serverType, "x"), NumberStyles.HexNumber), domain)
+        public ComputerCollection(WindowsServerType serverType, string domain)
+            : this(UInt32.Parse(Enum.Format(typeof(WindowsServerType), serverType, "x"), NumberStyles.HexNumber), domain)
         {
         }
         #endregion

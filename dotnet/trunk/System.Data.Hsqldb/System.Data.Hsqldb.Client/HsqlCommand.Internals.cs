@@ -635,15 +635,15 @@ namespace System.Data.Hsqldb.Client
 
                 switch (token.Type)
                 {
-                    case TokenType.IdentifierChain:
+                    case SqlTokenType.IdentifierChain:
                         {
                             schema = token.QualifierPart;
                             spName = token.SubjectPart;
                             break;
 
                         }
-                    case TokenType.DelimitedIdentifier:
-                    case TokenType.Name:
+                    case SqlTokenType.DelimitedIdentifier:
+                    case SqlTokenType.Name:
                         {
                             schema = Connection.DefaultSchema;
                             spName = token.Value;
@@ -780,15 +780,15 @@ SELECT DISTINCT p.specific_name
 
                 switch (token.Type)
                 {
-                    case TokenType.IdentifierChain:
+                    case SqlTokenType.IdentifierChain:
                         {
                             schema = token.QualifierPart;
                             tableName = token.SubjectPart;
                             break;
 
                         }
-                    case TokenType.DelimitedIdentifier:
-                    case TokenType.Name:
+                    case SqlTokenType.DelimitedIdentifier:
+                    case SqlTokenType.Name:
                         {
                             schema = Connection.DefaultSchema;
                             tableName = token.Value;
