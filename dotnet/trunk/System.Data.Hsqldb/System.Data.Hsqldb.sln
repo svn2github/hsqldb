@@ -7,6 +7,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Sandcastle", "Sandcastle", 
 	EndProjectSection
 	ProjectSection(SolutionItems) = preProject
 		System.Data.Hsqldb.shfb = System.Data.Hsqldb.shfb
+		System.Data.Hsqldb.shfbproj = System.Data.Hsqldb.shfbproj
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Licence", "Licence", "{476D12B7-F078-4B1D-883E-52AFD3D6457B}"
@@ -106,6 +107,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NUnit", "NUnit", "{CB000531
 		TestGui.cmd = TestGui.cmd
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "System.Data.Hsqldb.Client.Design", "System.Data.Hsqldb.Client.Design\System.Data.Hsqldb.Client.Design.csproj", "{A62C51B3-7605-4F35-B9FA-53CFF487FE8C}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SubversionScc) = preSolution
 		Svn-Managed = True
@@ -180,6 +187,16 @@ Global
 		{69F3859A-9D6C-4B5F-BE50-D3799366C94A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{69F3859A-9D6C-4B5F-BE50-D3799366C94A}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{69F3859A-9D6C-4B5F-BE50-D3799366C94A}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{A62C51B3-7605-4F35-B9FA-53CFF487FE8C}.Debug|.NET.ActiveCfg = Debug|Any CPU
+		{A62C51B3-7605-4F35-B9FA-53CFF487FE8C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A62C51B3-7605-4F35-B9FA-53CFF487FE8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A62C51B3-7605-4F35-B9FA-53CFF487FE8C}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{A62C51B3-7605-4F35-B9FA-53CFF487FE8C}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{A62C51B3-7605-4F35-B9FA-53CFF487FE8C}.Release|.NET.ActiveCfg = Release|Any CPU
+		{A62C51B3-7605-4F35-B9FA-53CFF487FE8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A62C51B3-7605-4F35-B9FA-53CFF487FE8C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A62C51B3-7605-4F35-B9FA-53CFF487FE8C}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{A62C51B3-7605-4F35-B9FA-53CFF487FE8C}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
