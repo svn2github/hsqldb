@@ -32,8 +32,6 @@
 
 #endregion
 
-#if W32DESIGN
-
 #region Using
 using System;
 using System.Collections.Generic;
@@ -72,5 +70,3 @@ namespace System.Data.Hsqldb.Client.Design.Component
         }
     }
 }
-
-#endif
