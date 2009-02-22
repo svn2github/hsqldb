@@ -66,7 +66,7 @@ namespace System.Data.Hsqldb.Client
     /// </summary>
     /// <author name="boucherb@users"/>
 #if W32DESIGN
-    [ToolboxBitmap(typeof(resfinder), "System.Data.Hsqldb.Images.Bmp.HsqlConnection.bmp")]
+    [ToolboxBitmap(typeof(resfinder), "System.Data.Hsqldb.Client.Image.Bmp.HsqlConnection.bmp")]
 #endif
     public sealed partial class HsqlConnection : DbConnection, ICloneable, IDbConnection
     {        

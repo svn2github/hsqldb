@@ -37,9 +37,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-#if W32DESIGN
 using System.ComponentModel;
-#endif
 using System.Data.Common;
 using System.Globalization;
 using System.Reflection;
@@ -49,11 +47,8 @@ using DefaultValueOf = System.Data.Hsqldb.Client.HsqlConnectionStringBuilder.Def
 using Key = System.Data.Hsqldb.Client.HsqlConnectionStringBuilder.ConnectionStringKey;
 using Keyword = System.Data.Hsqldb.Common.Enumeration.ConnectionStringKeyword;
 using Utils = System.Data.Hsqldb.Client.HsqlConnectionStringBuilder.Util;
-using System.Data.Hsqldb.Client.Design;
-using System.Data.Hsqldb.Client.Design.Attribute;
-using System.Data.Hsqldb.Client.Design.Converter;
 using System.Data.Hsqldb.Client.Internal;
-
+using System.Data.Hsqldb.Client.Design.Attribute;
 
 #endregion
 
@@ -67,7 +62,6 @@ namespace System.Data.Hsqldb.Client
     ///      alt="HsqlConnectionStringBuilder Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>
-    //[DefaultMember("Item")]
     [DefaultProperty("DataSource")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1035:ICollectionImplementationsHaveStronglyTypedMembers")]
@@ -547,7 +541,6 @@ namespace System.Data.Hsqldb.Client
         /// Applies only to file: protocol connections.
         /// </para>
         /// <seealso cref="T:System.Data.Hsqldb.Enumeration.DatabaseAppLogLevel" />
-#if W32DESIGN
         [AmbientValue(null)]
         [Category("File Protocol")]
         [DefaultValue(DefaultValueOf.DatabaseAppLogLevel)]
@@ -555,7 +548,6 @@ namespace System.Data.Hsqldb.Client
         [DisplayName(Key.DatabaseAppLogLevel)]
         [EditorBrowsable(EditorBrowsableState.Advanced)]
         [RefreshProperties(RefreshProperties.All)]
-#endif
         public System.Data.Hsqldb.Common.Enumeration.DatabaseAppLogLevel DatabaseAppLogLevel
         {
             get { return m_settings.m_databaseAppLogLevel; }
@@ -633,7 +625,7 @@ namespace System.Data.Hsqldb.Client
         [Description("Value representing the ADO.NET database connection URI")]
         [DisplayName("Data Source")]
         [RefreshProperties(RefreshProperties.All)]
-        [TypeConverter(typeof(DataSourceConverter))]
+        [TypeConverter("System.Data.Hsqldb.Client.Design.Converter.DataSourceConverter")]
         public string DataSource
         {
             get { return m_settings.GetDataSource(); }
@@ -848,7 +840,7 @@ namespace System.Data.Hsqldb.Client
         [DefaultValue(DefaultValueOf.InitialSchema)]
         [Description("The Schema the connection should use, initially")]
         [DisplayName(Key.InitialSchema)]
-        [TypeConverter(typeof(InitialSchemaConverter))]
+        [TypeConverter("System.Data.Hsqldb.Client.Design.Converter.InitialSchemaConverter")]
         [RefreshProperties(RefreshProperties.All)]
         public string InitialSchema
         {

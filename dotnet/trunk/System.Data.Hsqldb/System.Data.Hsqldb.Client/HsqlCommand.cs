@@ -36,27 +36,26 @@
 
 using System;
 
-#if W32DESIGN
 using System.ComponentModel;
-using System.Drawing;
-#endif
-
 using System.Data;
 using System.Data.Common;
-using System.Text;
-using System.Threading;
-
 using System.Data.Hsqldb.Common.Enumeration;
 using System.Data.Hsqldb.Client.Internal;
 using System.Data.Hsqldb.Client.MetaData;
 using System.Data.Hsqldb.Common.Sql;
+using System.Text;
+using System.Threading;
+
+#if W32DESIGN
+using System.Drawing;
+#endif
 
 using ParameterMetaData = org.hsqldb.Result.ResultMetaData;
 using PMD = java.sql.ParameterMetaData.__Fields;
 using Result = org.hsqldb.Result;
 using ResultConstants = org.hsqldb.ResultConstants.__Fields;
 using HsqlTypes = org.hsqldb.Types;
-using System.Data.Hsqldb.Client.Design.Attribute;
+
 
 #endregion
 
@@ -72,11 +71,11 @@ namespace System.Data.Hsqldb.Client
     ///      alt="HsqlCommand Class Diagram"/>
     /// </summary>
     /// <author name="boucherb@users"/>
-#if W32DESIGN
-    [Designer("Microsoft.VSDesigner.Data.VS.SqlCommandDesigner, Microsoft.VSDesigner, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")] 
     [DefaultEvent("RecordsAffected")]
-    [ToolboxBitmap(typeof(resfinder), "System.Data.Hsqldb.Client.Image.Bmp.HsqlCommand.bmp")]
+    [Designer("Microsoft.VSDesigner.Data.VS.SqlCommandDesigner, Microsoft.VSDesigner, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")]
     [ToolboxItem(true)]
+#if W32DESIGN  
+    [ToolboxBitmap(typeof(resfinder), "System.Data.Hsqldb.Client.Image.Bmp.HsqlCommand.bmp")]
 #endif
     public sealed partial class HsqlCommand : DbCommand, ICloneable
     {

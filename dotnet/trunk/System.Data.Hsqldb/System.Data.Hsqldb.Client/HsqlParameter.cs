@@ -41,10 +41,6 @@ using System.Threading;
 using System.Data.Hsqldb.Common.Enumeration;
 using System.ComponentModel;
 using System.Data.SqlTypes;
-using System.Data.Hsqldb.Client.Design;
-using System.Drawing.Design;
-using System.ComponentModel.Design;
-using System.Data.Hsqldb.Client.Design.Converter;
 using System.Data.Hsqldb.Common.Converter;
 using System.Data.Hsqldb.Common;
 
@@ -575,7 +571,7 @@ namespace System.Data.Hsqldb.Client
         [Category("Data")]
         [DefaultValue((string)null)]
         [RefreshProperties(RefreshProperties.All)]
-        [Editor(typeof(BinaryEditor),typeof(UITypeEditor))]
+        [Editor("System.Drawing.Design.BinaryEditor","System.Drawing.Design.UITypeEditor")]
         //[TypeConverter(typeof(ArrayConverter))]
         public override object Value
         {

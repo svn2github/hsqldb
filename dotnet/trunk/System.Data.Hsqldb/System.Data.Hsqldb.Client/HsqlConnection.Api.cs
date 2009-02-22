@@ -505,7 +505,6 @@ namespace System.Data.Hsqldb.Client
         /// <value>
         /// Controls how an open connection is established.
         /// </value>
-#if W32DESIGN
         [Category("Data")]
         [DefaultValue("")]
         // Obsolete
@@ -514,7 +513,6 @@ namespace System.Data.Hsqldb.Client
         [RefreshProperties(RefreshProperties.All)]
         [ResDescription("DbConnection_ConnectionString")]
         [SettingsBindable(true)]
-#endif
         public override string ConnectionString
         {
             get { return m_connectionString; }
@@ -580,10 +578,8 @@ namespace System.Data.Hsqldb.Client
         /// the database name specified by sucessfully invoking
         /// <see cref="ChangeDatabase(string)"/>.
         ///</remarks>
-#if W32DESIGN
         [ResDescription("DbConnection_Database")]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-#endif
         public override string Database
         {
             get
@@ -606,11 +602,9 @@ namespace System.Data.Hsqldb.Client
         /// <returns>
         /// The name of the database server to which to connect.
         /// </returns>
-#if W32DESIGN
         [Browsable(true)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         [ResDescription("DbConnection_Datasource")]
-#endif
         public override string DataSource
         {
             get { return m_settings.DataSource; }
@@ -630,11 +624,9 @@ namespace System.Data.Hsqldb.Client
         /// embedded mode version string is retrieved; otherwise
         /// the empty string is retrieved.
         /// </remarks>
-#if W32DESIGN
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         [ResDescription("DbConnection_ServerVersion")]
-#endif
         public override string ServerVersion
         {
             get
@@ -665,11 +657,9 @@ namespace System.Data.Hsqldb.Client
         /// Gets the present state of this connection.
         /// </summary>
         /// <value>The state of this connection.</value>
-#if W32DESIGN
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         [ResDescription("DbConnection_State")]
-#endif
         public override ConnectionState State
         {
             get { return m_connectionState; }
@@ -708,11 +698,9 @@ namespace System.Data.Hsqldb.Client
         /// Gets the present default schema.
         /// </summary>
         /// <value>The present default schema.</value>
-#if W32DESIGN
         [Category("Data")]
         [DisplayName("Default Schema")]
         [Description("The default schema used to resolve database object names")]
-#endif
         public string DefaultSchema
         {
             get

@@ -35,9 +35,8 @@
 #region Using
 
 using System;
-
-#if W32DESIGN
 using System.ComponentModel;
+#if W32DESIGN
 using System.Drawing;
 #endif
 
@@ -900,12 +899,10 @@ namespace System.Data.Hsqldb.Client
         /// state of this command, then any exception raised as
         /// a result is rethrown here.
         /// </exception>
-#if W32DESIGN
         [Category("Data")]
         [Description("Connection used to execute this command")]
         [DefaultValue(null)]
         [Editor("Microsoft.VSDesigner.Data.Design.DbConnectionEditor, Microsoft.VSDesigner, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a", "System.Drawing.Design.UITypeEditor, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")]
-#endif
         public new HsqlConnection Connection
         {
             get { return m_dbConnection; }
@@ -953,12 +950,10 @@ namespace System.Data.Hsqldb.Client
         /// effectively, <see cref="UnPrepare()"/> must be invoked, then any
         /// exception raised as a result is rethrown here.
         /// </exception>
-#if W32DESIGN
         [Category("Data")]
         [Description("Command text to execute")]
         [DefaultValue("")]
         [RefreshProperties(RefreshProperties.All)]
-#endif
         public override String CommandText
         {
             get { return m_commandText; }
@@ -1002,11 +997,9 @@ namespace System.Data.Hsqldb.Client
         /// <exception cref="ArgumentException">
         /// When an attempt is made to set a value that is less than zero (0).
         /// </exception>
-#if W32DESIGN
         [Category("Data")]
         [Description("Time to wait for the command to execute")]
         [DefaultValue(30)]
-#endif
         public override int CommandTimeout
         {
             get { return m_commandTimeout; }
@@ -1047,12 +1040,10 @@ namespace System.Data.Hsqldb.Client
         /// state of this command, then any exception raised as
         /// a result is rethrown here.
         /// </exception>
-#if W32DESIGN
         [Category("Data")]
         [DefaultValue(CommandType.Text)]
         [Description("Specifies how the CommandText is interpreted.")]
         [RefreshProperties(RefreshProperties.All)]
-#endif
         public override CommandType CommandType
         {
             get { return m_commandType; }
@@ -1077,13 +1068,11 @@ namespace System.Data.Hsqldb.Client
         /// <value>
         /// Is used internally to support the designers
         /// and is not intended to be used in code.
-        /// </value>
-#if W32DESIGN        
+        /// </value>        
         [Browsable(false)]
         [DefaultValue(true)]
         [DesignOnly(true)]
         [EditorBrowsable(EditorBrowsableState.Never)]
-#endif
         public override bool DesignTimeVisible
         {
             get { return m_designTimeVisible; }
@@ -1101,11 +1090,9 @@ namespace System.Data.Hsqldb.Client
         /// <value>
         /// The parameters of the SQL statement or stored procedure call.
         /// </value>
-#if W32DESIGN
         [Category("Data")]
         [Description("The parameters collection")]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-#endif
         public new HsqlParameterCollection Parameters
         {
             get
@@ -1133,13 +1120,11 @@ namespace System.Data.Hsqldb.Client
         /// The default value is a <c>null</c> reference (Nothing in 
         /// Visual Basic).
         /// </value>
-#if W32DESIGN
         [Browsable(false)]
         [DefaultValue(null)]
         [Description("The transaction used by the command.")]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         [EditorBrowsable(EditorBrowsableState.Never)]
-#endif
         public new HsqlTransaction Transaction
         {
             get

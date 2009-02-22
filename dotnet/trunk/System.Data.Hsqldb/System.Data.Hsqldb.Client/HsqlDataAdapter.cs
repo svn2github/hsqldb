@@ -33,16 +33,16 @@
 #endregion
 
 #region Using
-#if W32DESIGN
+using System;
 using System.ComponentModel;
 using System.Data;
-using System.Drawing;
-#endif
-using System;
 using System.Data.Common;
 using System.Data.Hsqldb.Client.Design;
 using System.Data.Hsqldb.Client.Design.Attribute;
 using System.Data.Hsqldb.Client.Internal;
+#if W32DESIGN
+using System.Drawing;
+#endif
 #endregion
 
 namespace System.Data.Hsqldb.Client
@@ -81,9 +81,9 @@ namespace System.Data.Hsqldb.Client
     /// but inherits most of the functionality needed to fully
     /// implement a <c>DataAdapter</c>.
     /// </remarks>
-#if W32DESIGN
-    [ToolboxBitmap(typeof(resfinder), "System.Data.Hsqldb.Images.Bmp.HsqlDataAdapter.bmp")]
     [DefaultEvent("RowUpdated")]
+#if W32DESIGN
+    [ToolboxBitmap(typeof(resfinder), "System.Data.Hsqldb.Client.Image.Bmp.HsqlDataAdapter.bmp")]
 #endif
     public sealed class HsqlDataAdapter : DbDataAdapter, IDbDataAdapter, ICloneable
     {

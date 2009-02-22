@@ -33,14 +33,14 @@
 #endregion
 
 #region Using
+using System;
+using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
+using System.Data.Hsqldb.Common.Enumeration;
 #if W32DESIGN
 using System.Drawing;
-using System.ComponentModel;
 #endif
-using System.Data.Hsqldb.Common.Enumeration;
-using System;
 using System.Globalization;
 using System.Text;
 #endregion
@@ -56,7 +56,7 @@ namespace System.Data.Hsqldb.Client
     /// </summary>
     /// <author name="boucherb@users"/>
 #if W32DESIGN    
-    [ToolboxBitmap(typeof(resfinder), "System.Data.Hsqldb.Images.Bmp.HsqlCommandBuilder.bmp")]
+    [ToolboxBitmap(typeof(resfinder), "System.Data.Hsqldb.Client.Image.Bmp.HsqlCommandBuilder.bmp")]
 #endif
     public class HsqlCommandBuilder : DbCommandBuilder
     {

@@ -25,7 +25,7 @@
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <OutputPath>bin\Debug\</OutputPath>
     <Optimize>false</Optimize>
-    <DefineConstants>TRACE;DEBUG;W32DESIGN SYSTRAN</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;SYSTRAN</DefineConstants>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>Full</DebugType>
     <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
@@ -57,11 +57,7 @@
     <Reference Include="System" />
     <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Data" />
-    <Reference Include="System.Design" />
-    <Reference Include="System.DirectoryServices" />
-    <Reference Include="System.Drawing" />
     <Reference Include="System.Transactions" />
-    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
@@ -131,43 +127,6 @@
     <Compile Include="MetaData\HsqlResultSetMetaData.cs" />
     <Compile Include="resfinder.cs" />
     <Compile Include="Internal\HsqlDiagnostics.cs" />
-    <Compile Include="Design\Attributes\ResCategoryAttribute.cs" />
-    <Compile Include="Design\ComputerCollection.cs" />
-    <Compile Include="Design\Components\ConnectionPropertiesGrid.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Design\Converters\DataSourceConverter.cs" />
-    <Compile Include="Design\Converters\HsqlConnectionStringBuilderConverter.cs" />
-    <Compile Include="Design\Converters\InitialSchemaConverter.cs" />
-    <Compile Include="Design\Designers\HsqlDataAdapterDesigner.cs" />
-    <Compile Include="Design\Designers\HsqlDbCommandDesigner.cs" />
-    <Compile Include="Design\Dialogs\ConnectionPropertiesDialog.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Design\Dialogs\ConnectionPropertiesDialog.Designer.cs">
-      <DependentUpon>ConnectionPropertiesDialog.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Design\Dialogs\ConnectionDialog.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Design\Dialogs\ConnectionDialog.Designer.cs">
-      <DependentUpon>ConnectionDialog.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Design\PropertyGridHelper.cs" />
-    <Compile Include="Design\Controls\ConnectionPropertiesControl.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Design\Controls\ConnectionPropertiesControl.Designer.cs">
-      <DependentUpon>ConnectionPropertiesControl.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Design\Controls\ConnectionControl.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Design\Controls\ConnectionControl.Designer.cs">
-      <DependentUpon>ConnectionControl.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Design\Attributes\ResDescriptionAttribute.cs" />
-    <Compile Include="Design\ToolboxItems\HsqlDbDataAdapterToolboxItem.cs" />
     <Compile Include="Internal\HsqlSession.Factory.cs">
       <DependentUpon>HsqlSession.cs</DependentUpon>
     </Compile>
@@ -211,11 +170,6 @@
     <Compile Include="MetaData\Collection\PrimaryKeyColumnsCollection.cs" />
     <Compile Include="MetaData\Collection\PrimaryKeysCollection.cs" />
     <Compile Include="MetaData\Collection\TableTriggersCollection.cs" />
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
     <Compile Include="Internal\HsqlCommandSet.cs" />
     <Compile Include="Internal\HsqlSession.cs" />
     <Compile Include="Internal\IkvmResourceLoaderFactory.cs" />
@@ -227,32 +181,11 @@
   <ItemGroup>
     <EmbeddedResource Include="Image\Bmp\hsqldb32.bmp" />
     <EmbeddedResource Include="Image\Bmp\hsqldb16.bmp" />
-    <EmbeddedResource Include="Design\Controls\ConnectionPropertiesControl.resx">
-      <DependentUpon>ConnectionPropertiesControl.cs</DependentUpon>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Design\Controls\ConnectionControl.resx">
-      <DependentUpon>ConnectionControl.cs</DependentUpon>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Design\Dialogs\ConnectionPropertiesDialog.resx">
-      <DependentUpon>ConnectionPropertiesDialog.cs</DependentUpon>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Design\Dialogs\ConnectionDialog.resx">
-      <DependentUpon>ConnectionDialog.cs</DependentUpon>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
     <EmbeddedResource Include="Image\Bmp\HsqlConnection.bmp" />
     <EmbeddedResource Include="Image\Bmp\HsqlCommand.bmp" />
     <EmbeddedResource Include="Image\Bmp\HsqlCommandBuilder.bmp" />
     <EmbeddedResource Include="Image\Bmp\HsqlDataAdapter.bmp" />
     <EmbeddedResource Include="Image\Bmp\HsqlDataTable.bmp" />
-    <EmbeddedResource Include="Properties\Resources.resx">
-      <SubType>Designer</SubType>
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\System.Data.Hsqldb.Common\System.Data.Hsqldb.Common.csproj">
