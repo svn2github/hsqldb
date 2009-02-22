@@ -241,7 +241,7 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
             {
                 for (int i = 0; i < LobCharsLength; i++)
                 {
-                    Assert.AreEqual(LobChars[i], (char) reader.Read());
+                    Assert.AreEqual(LobChars[i], (char)reader.Read());
                 }
 
                 Assert.AreEqual(-1, reader.Read());
@@ -360,14 +360,14 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
 
             for (int i = 1; i <= LobCharsLength; i++)
             {
-                long p1 = testSubject.Position(""+i, 1);
+                long p1 = testSubject.Position("" + i, 1);
 
                 Assert.AreEqual(i, p1);
             }
 
             for (int i = 1; i <= LobCharsLength; i++)
             {
-                long p2 = testSubject.Position(new JdbcClob(""+i), 1);
+                long p2 = testSubject.Position(new JdbcClob("" + i), 1);
 
                 Assert.AreEqual(i, p2);
             }
@@ -497,7 +497,8 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
             {
                 testSubject.SetString(LobCharsLength + 1, "123");
 
-                Assert.Fail("successful invocation of SetChars(pos,str) with pos too large (> LobCharsLength)");
+                Assert.Fail("successful invocation of SetChars(pos,str) with "
+                    + "pos too large (> LobCharsLength)");
             }
             catch (AssertionException)
             {
@@ -542,7 +543,8 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
             {
                 testSubject.SetString(1, "123", 4, 3);
 
-                Assert.Fail("successful invocation of SetString(pos,str,offs,len) with offs > str.length");
+                Assert.Fail("successful invocation of SetString(pos,str,offs,len) "
+                    + "with offs > str.length");
             }
             catch (AssertionException)
             {
@@ -572,7 +574,8 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
             {
                 testSubject.SetString(1, "123", 0, 4);
 
-                Assert.Fail("successful invocation of SetString(pos,str,offs,len) with len > str.length");
+                Assert.Fail("successful invocation of SetString(pos,str,offs,len) "
+                    + "with len > str.length");
             }
             catch (AssertionException)
             {
@@ -618,20 +621,17 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
                 Assert.IsInstanceOfType(typeof(HsqlDataSourceException), ex);
             }
 
-            // TODO:  test does not throw on len > testSubject.Length.  Why?  Fix?  Change constract description?
+            try
+            {
+                testSubject.Truncate(testSubject.Length + 10);
 
-            Assert.Fail("TODO:  test does not throw on len > testSubject.Length.  Why?  Fix?  Change constract description?");
-            
-            //try
-            //{
-            //    testSubject.Truncate(testSubject.Length + 10);
-
-            //    Assert.Fail("successful invocation of Truncate(len) with len > testSubject.Length");
-            //}
-            //catch (Exception ex)
-            //{
-            //    Assert.IsInstanceOfType(typeof(HsqlDataSourceException), ex);
-            //}
+                Assert.Fail("successful invocation of Truncate(len) "
+                    + "with len > testSubject.Length");
+            }
+            catch (Exception ex)
+            {
+                Assert.IsInstanceOfType(typeof(HsqlDataSourceException), ex);
+            }
         }
 
         [Test, OfMember("UnWrap")]
@@ -653,7 +653,8 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
             {
                 if (testSubject.CanWrapType(typeof(Stream)))
                 {
-                    testSubject.Wrap(new MemoryStream(new byte[] { (byte)'1', (byte)'2', (byte)'3', (byte)'4' }));
+                    testSubject.Wrap(new MemoryStream(new byte[] {
+                        (byte)'1', (byte)'2', (byte)'3', (byte)'4' }));
                 }
 
                 testSubject = new JdbcBlob();
