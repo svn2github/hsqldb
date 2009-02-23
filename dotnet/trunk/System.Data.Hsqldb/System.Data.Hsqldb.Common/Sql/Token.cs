@@ -129,11 +129,11 @@ namespace System.Data.Hsqldb.Common.Sql
 
         #region Public Properties
 
-        #region IdentifierChainFirst
+        #region QualifierPart
         /// <summary>
-        /// Gets the first identifier chain component.
+        /// Gets the qualifier part of the identifier chain.
         /// </summary>
-        /// <value>The first identifier chain component.</value>
+        /// <value>The qualifier part of the identifier chain.</value>
         public string QualifierPart
         {
             get
@@ -156,7 +156,7 @@ namespace System.Data.Hsqldb.Common.Sql
 
         #region SubjectPart
         /// <summary>
-        /// Gets the identifier chain terminal component.
+        /// Gets the terminal (right-most) identifier chain component.
         /// </summary>
         /// <value>The terminal (right-most) identifier chain component.</value>
         public string SubjectPart
@@ -188,84 +188,10 @@ namespace System.Data.Hsqldb.Common.Sql
         {
             get
             {
-                switch (m_type)
-                {
-                    case SqlTokenType.BigIntLiteral:
-                        {
-                            return Convert.ToInt64(m_value);
-                        }
-                    case SqlTokenType.BooleanLiteral:
-                        {
-                            return (m_value == Token.ValueFor.TRUE);
-                        }
-                    case SqlTokenType.DateLiteral:
-                        {
-                            return java.sql.Date.valueOf(m_value);
-                        }
-                    case SqlTokenType.DecimalLiteral:
-                        {
-                            return Convert.ToDecimal(m_value);
-                        }
-                    case SqlTokenType.FloatLiteral:
-                        {
-                            return Convert.ToDouble(m_value);
-                        }
-                    case SqlTokenType.NumberLiteral:
-                        {
-                            return new java.math.BigDecimal(m_value);
-                        }
-                    case SqlTokenType.StringLiteral:
-                        {
-                            return m_value.Substring(1, m_value.Length - 2).Replace("''", "'");
-                        }
-                    case SqlTokenType.TimeLiteral:
-                        {
-                            return java.sql.Time.valueOf(m_value);
-                        }
-                    case SqlTokenType.TimestampLiteral:
-                        {
-                            return java.sql.Timestamp.valueOf(m_value);
-                        }
-                    default:
-                        {
-                            return m_value;
-                        }
-                }
+                return Tokenizer.ToLiteralValue(ref m_type, m_value);
             }
         }
         #endregion
-
-        //[CLSCompliant(false)]
-        //public static java.sql.Date dateValueOf(String s)
-        //{
-        //    int year;
-        //    int month;
-        //    int day;
-        //    int firstDash;
-        //    int secondDash;
-
-        //    if (s == null) throw new java.lang.IllegalArgumentException();
-
-        //    firstDash = s.IndexOf('-');
-        //    secondDash = s.IndexOf('-', firstDash + 1);
-
-        //    if ((firstDash > 0) & (secondDash > 0) & (secondDash < s.Length - 1))
-        //    {
-        //        string yearPart = s.Substring(0, firstDash);
-        //        string monthPart = s.Substring(firstDash + 1, secondDash - (firstDash + 1));
-        //        string dayPart = s.Substring(secondDash + 1);
-
-        //        year = java.lang.Integer.parseInt(yearPart) - 1900;
-        //        month = java.lang.Integer.parseInt(monthPart) - 1;
-        //        day = java.lang.Integer.parseInt(dayPart);
-        //    }
-        //    else
-        //    {
-        //        throw new java.lang.IllegalArgumentException();
-        //    }
-
-        //    return new java.sql.Date(year, month, day);
-        //}
 
         #region Value
         /// <summary>
@@ -355,7 +281,6 @@ namespace System.Data.Hsqldb.Common.Sql
             return h;
         }
         #endregion 
-
 
         #region ToString()
         /// <summary>

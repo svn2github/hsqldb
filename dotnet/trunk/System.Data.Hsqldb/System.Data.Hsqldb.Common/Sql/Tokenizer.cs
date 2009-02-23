@@ -33,25 +33,32 @@
 #endregion
 
 #region Using
-using System.Data.Hsqldb.Common.Enumeration;
-using System.Globalization;
-
-using BigDecimal = java.math.BigDecimal;
-using Boolean = java.lang.Boolean;
-using Character = java.lang.Character;
-using Double = java.lang.Double;
+using CultureInfo = System.Globalization.CultureInfo;
 using Exception = System.Exception;
-using Integer = java.lang.Integer;
+
+using JavaBigDecimal = java.math.BigDecimal;
+using JavaBoolean = java.lang.Boolean;
+using JavaCharacter = java.lang.Character;
+using JavaDouble = java.lang.Double;
+using JavaError = java.lang.Error;
+using JavaInteger = java.lang.Integer;
+using JavaLong = java.lang.Long;
+using JavaNumber = java.lang.Number;
 using JavaSystem = org.hsqldb.lib.java.JavaSystem;
+
+using GenericTokenEnumerable = System.Collections.Generic.IEnumerable<System.Data.Hsqldb.Common.Sql.Token>;
+using GenericTokenList = System.Collections.Generic.List<System.Data.Hsqldb.Common.Sql.Token>;
+
 using HsqlDateTime = org.hsqldb.HsqlDateTime;
 using HsqlException = org.hsqldb.HsqlException;
-using Long = java.lang.Long;
-using Number = java.lang.Number;
-using StringConverter = org.hsqldb.lib.StringConverter;
-using Trace = org.hsqldb.Trace;
+using HsqlProviderType = System.Data.Hsqldb.Common.Enumeration.HsqlProviderType;
+using HsqlStringConverter = org.hsqldb.lib.StringConverter;
+using HsqlTrace = org.hsqldb.Trace;
 using HsqlTypes = org.hsqldb.Types;
-using ValuePool = org.hsqldb.store.ValuePool;
-using System.Collections.Generic;
+using HsqlValuePool = org.hsqldb.store.ValuePool;
+
+using SqlTokenType = System.Data.Hsqldb.Common.Enumeration.SqlTokenType;
+using Regex = System.Text.RegularExpressions.Regex;
 #endregion
 
 namespace System.Data.Hsqldb.Common.Sql
@@ -68,16 +75,25 @@ namespace System.Data.Hsqldb.Common.Sql
     /// </summary>
     public sealed class Tokenizer
     {
+        #region Static Fields
+        static readonly Regex DateLiteralRegex = 
+            new Regex(@"^(\d{4})-(\d{2})-(\d{2})$");
+        static readonly Regex TimeLiteralRegex = 
+            new Regex(@"^(\d{2}):(\d{2}):(\d{2})$");
+        static readonly Regex TimestampLiteralRegex = 
+            new Regex(@"^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})(\.\d{1,9})?$");
+        #endregion
+
         #region Instance Fields
 
         private bool m_acceptParameterMarkers = true;
-        private bool m_acceptNamedParameters = true;        
+        private bool m_acceptNamedParameters = true;
         private int m_beginIndex;
         private string m_chars;
         private int m_charsLength;
         private int m_currentIndex;
         private bool m_enforceTwoPartIdentifierChain;
-        private List<Token> m_identifierChain;
+        private System.Collections.Generic.List<Token> m_identifierChain;
         private string m_identifierChainPredecessor = null;
         private SqlTokenType m_identifierChainPredecessorType = SqlTokenType.None;
         private bool m_inIdentifierChain;
@@ -99,8 +115,7 @@ namespace System.Data.Hsqldb.Common.Sql
         /// <summary>
         /// Initializes a new instance of the <see cref="Tokenizer"/> class.
         /// </summary>
-        public Tokenizer()
-            : this(string.Empty)
+        public Tokenizer() : this(string.Empty)
         {
         }
 
@@ -140,7 +155,7 @@ namespace System.Data.Hsqldb.Common.Sql
         {
             if (m_wait)
             {
-                throw IllegalWaitState();
+                throw Tokenizer.IllegalWaitState();
             }
 
             m_nextTokenIndex = m_currentIndex;
@@ -171,7 +186,7 @@ namespace System.Data.Hsqldb.Common.Sql
 
                     if (nextIndex < 0)
                     {
-                        throw UnexpectedEndOfCommand();
+                        throw Tokenizer.UnexpectedEndOfCommand();
                     }
 
                     if (nextIndex < (m_charsLength - 1)
@@ -223,7 +238,7 @@ namespace System.Data.Hsqldb.Common.Sql
             {
                 throw;
             }
-            catch (java.lang.Error)
+            catch (JavaError)
             {
                 throw;
             }
@@ -251,7 +266,7 @@ namespace System.Data.Hsqldb.Common.Sql
 
             ReadToken();
 
-            if (Token.ValueFor.MINUS == m_token)
+            if ("-" == m_token)
             {
                 isNegative = true;
 
@@ -272,25 +287,23 @@ namespace System.Data.Hsqldb.Common.Sql
                     {
                         // only Long.MAX_VALUE + 1 together with
                         // minus is acceptable
-                        if (isNegative
-                            && m_LongMaxValuePlusOne.equals(objectValue))
+                        if (isNegative && m_LongMaxValuePlusOne.equals(
+                            objectValue))
                         {
                             return long.MinValue;
                         }
 
-                        throw WrongDataType(tokenDataType);
+                        throw Tokenizer.WrongDataType(tokenDataType);
                     }
                 default:
                     {
-                        throw WrongDataType(tokenDataType);
+                        throw Tokenizer.WrongDataType(tokenDataType);
                     }
             }
 
-            long longValue = ((Number)objectValue).longValue();
+            long longValue = ((JavaNumber)objectValue).longValue();
 
-            return isNegative
-                       ? -longValue
-                       : longValue;
+            return isNegative ? -longValue : longValue;
         }
 
         #endregion
@@ -309,7 +322,7 @@ namespace System.Data.Hsqldb.Common.Sql
 
             if (value > int.MaxValue || value < int.MinValue)
             {
-                throw WrongDataType(LiteralValueDataType);
+                throw Tokenizer.WrongDataType(LiteralValueDataType);
             }
 
             return (int)value;
@@ -320,8 +333,8 @@ namespace System.Data.Hsqldb.Common.Sql
         #region GetNextAsLiteralValue(HsqlProviderType)
 
         /// <summary>
-        /// Gets the next token as a literal value of
-        /// the requested SQL data type.
+        /// Gets the next token as a literal value of the requested
+        /// SQL data type.
         /// </summary>
         /// <remarks>
         /// The <see cref="System.Type"/> of the returned object is
@@ -346,14 +359,14 @@ namespace System.Data.Hsqldb.Common.Sql
             {
                 try
                 {
-                    value = HsqlConvert.FromJava.ToObject(value, 
+                    value = HsqlConvert.FromJava.ToObject(value,
                         (int)requestedDataType);
-                    value = HsqlConvert.FromDotNet.ToObject(value, 
+                    value = HsqlConvert.FromDotNet.ToObject(value,
                         (int)requestedDataType);
                 }
                 catch (Exception)
                 {
-                    throw WrongDataType(dataType);
+                    throw Tokenizer.WrongDataType(dataType);
                 }
             }
 
@@ -379,7 +392,7 @@ namespace System.Data.Hsqldb.Common.Sql
                 return m_token;
             }
 
-            throw UnexpectedToken(m_token);
+            throw Tokenizer.UnexpectedToken(m_token);
         }
 
         #endregion
@@ -405,7 +418,7 @@ namespace System.Data.Hsqldb.Common.Sql
                                ? m_identifierChainPredecessor
                                : m_token;
 
-            throw UnexpectedToken(token);
+            throw Tokenizer.UnexpectedToken(token);
         }
 
         #endregion
@@ -431,7 +444,7 @@ namespace System.Data.Hsqldb.Common.Sql
                                ? m_identifierChainPredecessor
                                : m_token;
 
-            throw UnexpectedToken(token);
+            throw Tokenizer.UnexpectedToken(token);
         }
 
         #endregion
@@ -550,7 +563,7 @@ namespace System.Data.Hsqldb.Common.Sql
         {
             if (m_wait)
             {
-                throw IllegalWaitState();
+                throw Tokenizer.IllegalWaitState();
             }
 
             if (!m_token.Equals(match)
@@ -561,7 +574,7 @@ namespace System.Data.Hsqldb.Common.Sql
                                    ? m_identifierChainPredecessor
                                    : m_token;
 
-                throw MatchFailed(token, match);
+                throw Tokenizer.MatchFailed(token, match);
             }
         }
 
@@ -575,14 +588,14 @@ namespace System.Data.Hsqldb.Common.Sql
         {
             if (m_identifierChain == null)
             {
-                m_identifierChain = new List<Token>();
+                m_identifierChain = new GenericTokenList();
             }
 
             if (m_inIdentifierChain)
             {
                 if (m_enforceTwoPartIdentifierChain)
                 {
-                    throw IdentiferChainLengthExceeded();
+                    throw Tokenizer.IdentiferChainLengthExceeded();
                 }
 
                 Token predecessor = new Token(m_identifierChainPredecessor,
@@ -605,7 +618,7 @@ namespace System.Data.Hsqldb.Common.Sql
             m_identifierChain.Add(new Token(m_token, m_tokenType));
             m_inIdentifierChain = false;
             m_tokenType = SqlTokenType.IdentifierChain;
-        } 
+        }
         #endregion
 
         #region ReadToken()
@@ -632,7 +645,7 @@ namespace System.Data.Hsqldb.Common.Sql
             }
 
             while (m_currentIndex < m_charsLength
-                   && Character.isWhitespace(m_chars[m_currentIndex]))
+                   && JavaCharacter.isWhitespace(m_chars[m_currentIndex]))
             {
                 m_currentIndex++;
             }
@@ -660,11 +673,11 @@ namespace System.Data.Hsqldb.Common.Sql
 
             m_wasLastTokenDelimited = false;
 
-            if (Character.isJavaIdentifierStart(c))
+            if (JavaCharacter.isJavaIdentifierStart(c))
             {
                 m_tokenType = SqlTokenType.Name;
             }
-            else if (Character.isDigit(c))
+            else if (JavaCharacter.isDigit(c))
             {
                 m_tokenType = SqlTokenType.NumberLiteral;
                 digit = true;
@@ -770,17 +783,13 @@ namespace System.Data.Hsqldb.Common.Sql
                             {
                                 throw Tokenizer.UnexpectedEndOfCommand();
                             }
-                            //Trace.check(++m_currentIndex < m_charsLength,
-                            //            Trace.UNEXPECTED_END_OF_COMMAND);
 
                             c = m_chars[m_currentIndex];
 
-                            if (!Character.isJavaIdentifierStart(c))
+                            if (!JavaCharacter.isJavaIdentifierStart(c))
                             {
-                                throw InvalidIdentifier(":" + c);
+                                throw Tokenizer.InvalidIdentifier(":" + c);
                             }
-                            //Trace.check(Character.isJavaIdentifierStart(c),
-                            //            Trace.INVALID_IDENTIFIER, ":" + c);
 
                             m_tokenType = SqlTokenType.NamedParameter;
                             m_parameterNamePrefix = ':';
@@ -798,17 +807,13 @@ namespace System.Data.Hsqldb.Common.Sql
                             {
                                 throw Tokenizer.UnexpectedEndOfCommand();
                             }
-                            //Trace.check(++m_currentIndex < m_charsLength,
-                            //            Trace.UNEXPECTED_END_OF_COMMAND);
 
                             c = m_chars[m_currentIndex];
 
-                            if (!Character.isJavaIdentifierStart(c))
+                            if (!JavaCharacter.isJavaIdentifierStart(c))
                             {
                                 throw InvalidIdentifier(":" + c);
                             }
-                            //Trace.check(Character.isJavaIdentifierStart(c),
-                            //            Trace.INVALID_IDENTIFIER, "@" + c);
 
                             m_tokenType = SqlTokenType.NamedParameter;
                             m_parameterNamePrefix = '@';
@@ -883,10 +888,13 @@ namespace System.Data.Hsqldb.Common.Sql
                     c = ' ';
                     end = true;
 
-                    if (m_tokenType == SqlTokenType.StringLiteral
-                        || m_tokenType == SqlTokenType.DelimitedIdentifier)
+                    switch (m_tokenType)
                     {
-                        throw UnexpectedEndOfCommand();
+                        case SqlTokenType.StringLiteral:
+                        case SqlTokenType.DelimitedIdentifier:
+                            {
+                                throw Tokenizer.UnexpectedEndOfCommand();
+                            }
                     }
                 }
                 else
@@ -899,7 +907,7 @@ namespace System.Data.Hsqldb.Common.Sql
                     case SqlTokenType.NamedParameter:
                     case SqlTokenType.Name:
                         {
-                            if (Character.isJavaIdentifierPart(c))
+                            if (JavaCharacter.isJavaIdentifierPart(c))
                             {
                                 break;
                             }
@@ -922,8 +930,8 @@ namespace System.Data.Hsqldb.Common.Sql
                             }
                             else if (c == '(')
                             {
-                                // noop
-                                // potentially a function call or SQL operator
+                                // no-op
+                                // potentially a function call, SQL operator, etc.
                             }
                             else
                             {
@@ -941,7 +949,7 @@ namespace System.Data.Hsqldb.Common.Sql
                     case SqlTokenType.DelimitedIdentifier:
                     case SqlTokenType.StringLiteral:
                         {
-                            // shouldn't get here
+                            // should never get here
                             break;
                         }
                     case SqlTokenType.Remark:
@@ -1025,7 +1033,7 @@ namespace System.Data.Hsqldb.Common.Sql
                     case SqlTokenType.FloatLiteral:
                     case SqlTokenType.DecimalLiteral:
                         {
-                            if (Character.isDigit(c))
+                            if (JavaCharacter.isDigit(c))
                             {
                                 digit = true;
                             }
@@ -1033,7 +1041,7 @@ namespace System.Data.Hsqldb.Common.Sql
                             {
                                 if (point)
                                 {
-                                    throw UnexpectedToken(c);
+                                    throw Tokenizer.UnexpectedToken(c);
                                 }
 
                                 m_tokenType = SqlTokenType.DecimalLiteral;
@@ -1104,6 +1112,9 @@ namespace System.Data.Hsqldb.Common.Sql
         /// <param name="chars">
         /// The new character sequence to be tokenized.
         /// </param>
+        /// <exception cref="ArgumentNullException">
+        /// When <c>chars</c> is <c>null</c>.
+        /// </exception>
         public void Reset(string chars)
         {
             if (chars == null)
@@ -1140,6 +1151,163 @@ namespace System.Data.Hsqldb.Common.Sql
             m_beginIndex = m_currentIndex;
         }
 
+        #endregion
+
+
+        #region ToLiteralValue(SqlTokenType,string)
+        /// <summary>
+        /// Retrieves the SQL literal value of the given token value.
+        /// </summary>
+        /// <remarks>
+        /// Note that, as a ref parameter, the tokenType may be
+        /// re-assigned as part of computing the literal value.
+        /// </remarks>
+        /// <param name="tokenType">
+        /// Type of the token.
+        /// </param>
+        /// <param name="tokenValue">
+        /// The token value, as a character sequence
+        /// </param>
+        /// <returns>
+        /// the token literal value, as an object representing the SQL literal
+        /// numeric, temporal, boolean or character value.
+        /// </returns>
+        internal static object ToLiteralValue(ref SqlTokenType tokenType,
+            string tokenValue)
+        {
+            switch (tokenType)
+            {
+                case SqlTokenType.Null:
+                    {
+                        return null;
+                    }
+                case SqlTokenType.StringLiteral:
+                    {
+                        if (tokenValue.Length <= 10 && 
+                            Tokenizer.DateLiteralRegex.IsMatch(tokenValue))
+                        {
+                            try
+                            {
+                                object rval = HsqlDateTime.dateValue(tokenValue);
+
+                                tokenType = SqlTokenType.DateLiteral;
+
+                                return rval;
+                            }
+                            catch (Exception)
+                            {
+                            }
+                        }
+                        else if (tokenValue.Length <= 10 && 
+                            Tokenizer.TimeLiteralRegex.IsMatch(tokenValue))
+                        {
+                            try
+                            {
+                                object rval = HsqlDateTime.timeValue(tokenValue);
+
+                                tokenType = SqlTokenType.TimeLiteral;
+
+                                return rval;
+                            }
+                            catch (Exception)
+                            {
+                            }
+                        }
+                        else if (Tokenizer.TimestampLiteralRegex.IsMatch(tokenValue))
+                        {
+                            try
+                            {
+                                object rval = HsqlDateTime.timestampValue(tokenValue);
+
+                                tokenType = SqlTokenType.TimestampLiteral;
+
+                                return rval;
+                            }
+                            catch (Exception)
+                            {
+                            }
+                        }
+
+                        return tokenValue;
+                    }
+                case SqlTokenType.BigIntLiteral:
+                    {
+                        return HsqlValuePool.getLong(JavaLong.parseLong(tokenValue));
+                    }
+                case SqlTokenType.NumberLiteral:
+                    {
+                        // Returns unsigned values which may later need to be negated.
+                        // As a result, Integer.MIN_VALUE or Long.MIN_VALUE are promoted
+                        // to a wider type.
+                        if (tokenValue.Length < 11)
+                        {
+                            try
+                            {
+                                object rval = HsqlValuePool.getInt(
+                                    JavaInteger.parseInt(tokenValue));
+
+                                tokenType = SqlTokenType.IntegerLiteral;
+
+                                return rval;
+                            }
+                            catch (Exception)
+                            {
+                            }
+                        }
+
+                        if (tokenValue.Length < 20)
+                        {
+                            try
+                            {
+                                object rval = HsqlValuePool.getLong(
+                                    JavaLong.parseLong(tokenValue));
+
+                                tokenType = SqlTokenType.BigIntLiteral;
+                            }
+                            catch (Exception)
+                            {
+                            }
+                        }
+
+                        tokenType = SqlTokenType.DecimalLiteral;
+
+                        return new JavaBigDecimal(tokenValue);
+                    }
+                case SqlTokenType.FloatLiteral:
+                    {
+                        double d = JavaSystem.parseDouble(tokenValue);
+                        long l = JavaDouble.doubleToLongBits(d);
+
+                        return HsqlValuePool.getDouble(l);
+                    }
+                case SqlTokenType.DecimalLiteral:
+                    {
+                        return new JavaBigDecimal(tokenValue);
+                    }
+                case SqlTokenType.BooleanLiteral:
+                    {
+                        return Token.ValueFor.TRUE.Equals(tokenValue, 
+                            InvariantCultureIgnoreCase) ? JavaBoolean.TRUE
+                            : JavaBoolean.FALSE;
+                    }
+                case SqlTokenType.DateLiteral:
+                    {
+                        return HsqlDateTime.dateValue(tokenValue);
+                    }
+                case SqlTokenType.TimeLiteral:
+                    {
+                        return HsqlDateTime.timeValue(tokenValue);
+                    }
+                case SqlTokenType.TimestampLiteral:
+                    {
+                        return HsqlDateTime.timestampValue(tokenValue);
+                    }
+                default:
+                    {
+                        return tokenValue;
+                    }
+            }
+        }
         #endregion
 
         #region WasThis(string)
@@ -1183,16 +1351,17 @@ namespace System.Data.Hsqldb.Common.Sql
         /// Gets the identifier chain.
         /// </summary>
         /// <value>The identifier chain.</value>
-        public IEnumerable<Token> IdentifierChain
+        public GenericTokenEnumerable IdentifierChain
         {
             get { return m_identifierChain; }
-        } 
+        }
         #endregion
 
         #region IdentifierChainPredecessor
 
         /// <summary>
-        /// Gets the component of the identifier chain immediately preceding the subject [right-most] component.
+        /// Gets the component of the identifier chain immediately preceding 
+        /// the subject [right-most] component.
         /// </summary>
         /// <value>The subject predecessor component of the identifier chain.</value>
         /// <remarks>
@@ -1205,7 +1374,7 @@ namespace System.Data.Hsqldb.Common.Sql
             {
                 if (m_wait)
                 {
-                    throw IllegalWaitState();
+                    throw Tokenizer.IllegalWaitState();
                 }
 
                 return m_identifierChainPredecessor;
@@ -1266,98 +1435,10 @@ namespace System.Data.Hsqldb.Common.Sql
             {
                 if (!WasLiteralValue)
                 {
-                    throw UnexpectedToken(m_token);
+                    throw Tokenizer.UnexpectedToken(m_token);
                 }
 
-                switch (m_tokenType)
-                {
-                    case SqlTokenType.Null:
-                        {
-                            return null;
-                        }
-                    case SqlTokenType.StringLiteral:
-                        {
-                            return m_token;
-                        }
-                    case SqlTokenType.BigIntLiteral:
-                        {
-                            return ValuePool.getLong(
-                                Long.parseLong(m_token));
-                        }
-                    case SqlTokenType.NumberLiteral:
-                        {
-                            // Returns unsigned values which
-                            // are later negated. As a result,
-                            // Integer.MIN_VALUE or Long.MIN_VALUE
-                            // are promoted to a wider type.
-                            if (m_token.Length < 11)
-                            {
-                                try
-                                {
-                                    java.lang.Integer rval = ValuePool.getInt(
-                                        Integer.parseInt(m_token));
-
-                                    m_tokenType = SqlTokenType.IntegerLiteral;
-
-                                    return rval;
-                                }
-                                catch (Exception)
-                                {
-                                }
-                            }
-
-                            if (m_token.Length < 20)
-                            {
-                                try
-                                {
-                                    java.lang.Long rval = ValuePool.getLong(
-                                        Long.parseLong(m_token));
-
-                                    m_tokenType = SqlTokenType.BigIntLiteral;
-                                }
-                                catch (Exception)
-                                {
-                                }
-                            }
-
-                            m_tokenType = SqlTokenType.DecimalLiteral;
-
-                            return new BigDecimal(m_token);
-                        }
-                    case SqlTokenType.FloatLiteral:
-                        {
-                            double d = JavaSystem.parseDouble(m_token);
-                            long l = java.lang.Double.doubleToLongBits(d);
-
-                            return ValuePool.getDouble(l);
-                        }
-                    case SqlTokenType.DecimalLiteral:
-                        {
-                            return new BigDecimal(m_token);
-                        }
-                    case SqlTokenType.BooleanLiteral:
-                        {
-                            return m_token.Equals("TRUE", m_IgnoreCase)
-                                       ? java.lang.Boolean.TRUE
-                                       : java.lang.Boolean.FALSE;
-                        }
-                    case SqlTokenType.DateLiteral:
-                        {
-                            return HsqlDateTime.dateValue(m_token);
-                        }
-                    case SqlTokenType.TimeLiteral:
-                        {
-                            return HsqlDateTime.timeValue(m_token);
-                        }
-                    case SqlTokenType.TimestampLiteral:
-                        {
-                            return HsqlDateTime.timestampValue(m_token);
-                        }
-                    default:
-                        {
-                            return m_token;
-                        }
-                }
+                return Tokenizer.ToLiteralValue(ref m_tokenType, m_token);
             }
         }
 
@@ -1384,8 +1465,11 @@ namespace System.Data.Hsqldb.Common.Sql
             {
                 if (m_wait)
                 {
-                    throw IllegalWaitState();
+                    throw Tokenizer.IllegalWaitState();
                 }
+
+                // TODO: eliminate this inefficiency.
+                Tokenizer.ToLiteralValue(ref m_tokenType, m_token);
 
                 // TODO: make sure this is used only for valued tokens.
                 switch (m_tokenType)
@@ -1396,56 +1480,15 @@ namespace System.Data.Hsqldb.Common.Sql
                         }
                     case SqlTokenType.NumberLiteral:
                         {
-                            if (m_token.Length < 11)
-                            {
-                                try
-                                {
-                                    java.lang.Integer.parseInt(m_token);
-
-                                    m_tokenType = SqlTokenType.IntegerLiteral;
-
-                                    return HsqlProviderType.Integer;
-                                }
-                                catch (Exception)
-                                {
-                                }
-
-                            }
-
-                            if (m_token.Length < 20)
-                            {
-                                try
-                                {
-                                    java.lang.Long.parseLong(m_token);
-
-                                    m_tokenType = SqlTokenType.BigIntLiteral;
-
-                                    return HsqlProviderType.BigInt;
-                                }
-                                catch (Exception)
-                                {
-                                }
-                            }
-
-                            try
-                            {
-                                java.lang.Double.parseDouble(m_token);
-
-                                m_tokenType = SqlTokenType.FloatLiteral;
-
-                                return HsqlProviderType.Double;
-                            }
-                            catch (Exception)
-                            {
-                            }
-
-                            m_tokenType = SqlTokenType.DecimalLiteral;
-
                             return HsqlProviderType.Decimal;
                         }
                     case SqlTokenType.BigIntLiteral:
                         {
                             return HsqlProviderType.BigInt;
+                        }
+                    case SqlTokenType.IntegerLiteral:
+                        {
+                            return HsqlProviderType.Integer;
                         }
                     case SqlTokenType.FloatLiteral:
                         {
@@ -1507,7 +1550,7 @@ namespace System.Data.Hsqldb.Common.Sql
             {
                 if (m_wait)
                 {
-                    throw IllegalWaitState();
+                    throw Tokenizer.IllegalWaitState();
                 }
 
                 string token;
@@ -1518,13 +1561,13 @@ namespace System.Data.Hsqldb.Common.Sql
 
                     if (WasIdentifierChainPredecessorDelimited)
                     {
-                        qualifierPart = StringConverter.toQuotedString(
+                        qualifierPart = HsqlStringConverter.toQuotedString(
                             qualifierPart, '"', true);
                     }
 
                     if (WasDelimitedIdentifier)
                     {
-                        token = StringConverter.toQuotedString(
+                        token = HsqlStringConverter.toQuotedString(
                             m_token, '"', true);
                     }
                     else
@@ -1536,12 +1579,12 @@ namespace System.Data.Hsqldb.Common.Sql
                 }
                 else if (WasDelimitedIdentifier)
                 {
-                    token = StringConverter.toQuotedString(
+                    token = HsqlStringConverter.toQuotedString(
                         m_token, '"', true);
                 }
                 else if (m_tokenType == SqlTokenType.StringLiteral)
                 {
-                    token = StringConverter.toQuotedString(
+                    token = HsqlStringConverter.toQuotedString(
                         m_token, '\'', true);
                 }
                 else if (m_tokenType == SqlTokenType.NamedParameter)
@@ -1579,7 +1622,7 @@ namespace System.Data.Hsqldb.Common.Sql
             {
                 if (m_wait)
                 {
-                    throw IllegalWaitState();
+                    throw Tokenizer.IllegalWaitState();
                 }
 
                 return m_parameterName;
@@ -1606,7 +1649,7 @@ namespace System.Data.Hsqldb.Common.Sql
             {
                 if (m_wait)
                 {
-                    throw IllegalWaitState();
+                    throw Tokenizer.IllegalWaitState();
                 }
 
                 return m_parameterNamePrefix;
@@ -1665,15 +1708,20 @@ namespace System.Data.Hsqldb.Common.Sql
                     throw IllegalWaitState();
                 }
 
-                if (m_tokenType == SqlTokenType.Special)
+                switch (m_tokenType)
                 {
-                    return (m_token == "?") ? SqlTokenType.ParameterMarker
-                        : SqlTokenType.Special;
-                }
-                else if (m_tokenType == SqlTokenType.NumberLiteral)
-                {
-                    // resolves most specific literal type
-                    object lv = this.LiteralValue;
+                    case SqlTokenType.Special:
+                        {
+                            return (m_token == "?") ? SqlTokenType.ParameterMarker
+                                : SqlTokenType.Special;
+                        }
+                    case SqlTokenType.NumberLiteral:
+                    case SqlTokenType.StringLiteral:
+                        {
+                            // TODO - eliminate this inefficiency
+                            Tokenizer.ToLiteralValue(ref m_tokenType, m_token);
+                            break;
+                        }
                 }
 
                 return m_tokenType;
@@ -1695,6 +1743,17 @@ namespace System.Data.Hsqldb.Common.Sql
                 if (m_wait)
                 {
                     throw IllegalWaitState();
+                }
+
+                switch (m_tokenType)
+                {
+                    case SqlTokenType.NumberLiteral:
+                    case SqlTokenType.StringLiteral:
+                        {
+                            // TODO - eliminate this inefficiecy.
+                            Tokenizer.ToLiteralValue(ref m_tokenType, m_token);
+                            break;
+                        }
                 }
 
                 switch (m_tokenType)
@@ -1805,7 +1864,7 @@ namespace System.Data.Hsqldb.Common.Sql
             {
                 if (m_wait)
                 {
-                    throw IllegalWaitState();
+                    throw Tokenizer.IllegalWaitState();
                 }
 
                 return m_wasLastTokenDelimited;
@@ -1826,7 +1885,7 @@ namespace System.Data.Hsqldb.Common.Sql
             {
                 if (m_wait)
                 {
-                    throw IllegalWaitState();
+                    throw Tokenizer.IllegalWaitState();
                 }
 
                 return (m_tokenType == SqlTokenType.IdentifierChain);
@@ -1860,7 +1919,7 @@ namespace System.Data.Hsqldb.Common.Sql
             {
                 if (m_wait)
                 {
-                    throw IllegalWaitState();
+                    throw Tokenizer.IllegalWaitState();
                 }
 
                 return (m_identifierChainPredecessorType
@@ -1888,17 +1947,21 @@ namespace System.Data.Hsqldb.Common.Sql
             {
                 if (m_wait)
                 {
-                    throw IllegalWaitState();
+                    throw Tokenizer.IllegalWaitState();
                 }
 
                 switch (m_tokenType)
                 {
-                    case SqlTokenType.StringLiteral:
-                    case SqlTokenType.NumberLiteral:
                     case SqlTokenType.BigIntLiteral:
-                    case SqlTokenType.FloatLiteral:
-                    case SqlTokenType.DecimalLiteral:
                     case SqlTokenType.BooleanLiteral:
+                    case SqlTokenType.DateLiteral:
+                    case SqlTokenType.DecimalLiteral:
+                    case SqlTokenType.FloatLiteral:
+                    case SqlTokenType.IntegerLiteral:
+                    case SqlTokenType.NumberLiteral:
+                    case SqlTokenType.StringLiteral:
+                    case SqlTokenType.TimeLiteral:
+                    case SqlTokenType.TimestampLiteral:
                     case SqlTokenType.Null: // checkme
                         {
                             return true;
@@ -1935,7 +1998,7 @@ namespace System.Data.Hsqldb.Common.Sql
             {
                 if (m_wait)
                 {
-                    throw IllegalWaitState();
+                    throw Tokenizer.IllegalWaitState();
                 }
 
                 if (WasDelimitedIdentifier)
@@ -1949,7 +2012,7 @@ namespace System.Data.Hsqldb.Common.Sql
                     return false;
                 }
 
-                return  !Token.Map.IsKeyword(m_token);
+                return !Token.Map.IsKeyword(m_token);
             }
         }
 
@@ -1973,7 +2036,7 @@ namespace System.Data.Hsqldb.Common.Sql
             {
                 if (m_wait)
                 {
-                    throw IllegalWaitState();
+                    throw Tokenizer.IllegalWaitState();
                 }
 
                 return (m_tokenType == SqlTokenType.NamedParameter);
@@ -1997,7 +2060,7 @@ namespace System.Data.Hsqldb.Common.Sql
             {
                 if (m_wait)
                 {
-                    throw IllegalWaitState();
+                    throw Tokenizer.IllegalWaitState();
                 }
 
                 return ((m_tokenType == SqlTokenType.Special)
@@ -2024,7 +2087,7 @@ namespace System.Data.Hsqldb.Common.Sql
             {
                 if (m_wait)
                 {
-                    throw IllegalWaitState();
+                    throw Tokenizer.IllegalWaitState();
                 }
 
                 if ((m_tokenType == SqlTokenType.DelimitedIdentifier)
@@ -2086,7 +2149,7 @@ namespace System.Data.Hsqldb.Common.Sql
 
         #region Constants
 
-        private const StringComparison m_IgnoreCase
+        private const StringComparison InvariantCultureIgnoreCase
             = StringComparison.InvariantCultureIgnoreCase;
 
         #endregion
@@ -2119,8 +2182,8 @@ namespace System.Data.Hsqldb.Common.Sql
             m_EnglishCulture = CultureInfo.GetCultureInfo("en");
 
             m_LongMaxValuePlusOne
-                = BigDecimal.valueOf(long.MaxValue)
-                    .add(BigDecimal.valueOf(1));
+                = JavaBigDecimal.valueOf(long.MaxValue)
+                    .add(JavaBigDecimal.valueOf(1));
         }
 
         #endregion
@@ -2136,7 +2199,7 @@ namespace System.Data.Hsqldb.Common.Sql
         /// <returns>a new <c>HsqlDataSourceException</c>.</returns>
         public static HsqlDataSourceException WrongDataType(HsqlProviderType type)
         {
-            HsqlException he = Trace.error(Trace.WRONG_DATA_TYPE,
+            HsqlException he = HsqlTrace.error(HsqlTrace.WRONG_DATA_TYPE,
                                            HsqlTypes.getTypeString((int)type));
 
             return new HsqlDataSourceException(he);
@@ -2152,7 +2215,7 @@ namespace System.Data.Hsqldb.Common.Sql
         /// <returns>a new <c>HsqlDataSourceException</c>.</returns>
         public static HsqlDataSourceException IdentiferChainLengthExceeded()
         {
-            HsqlException he = Trace.error(Trace.THREE_PART_IDENTIFIER);
+            HsqlException he = HsqlTrace.error(HsqlTrace.THREE_PART_IDENTIFIER);
             HsqlDataSourceException ex = new HsqlDataSourceException(he);
 
             return ex;
@@ -2169,7 +2232,7 @@ namespace System.Data.Hsqldb.Common.Sql
         /// <returns>a new <c>HsqlDataSourceException</c>.</returns>
         public static HsqlDataSourceException UnexpectedEndOfCommand()
         {
-            HsqlException he = Trace.error(Trace.UNEXPECTED_END_OF_COMMAND);
+            HsqlException he = HsqlTrace.error(HsqlTrace.UNEXPECTED_END_OF_COMMAND);
             HsqlDataSourceException ex = new HsqlDataSourceException(he);
 
             return ex;
@@ -2187,7 +2250,7 @@ namespace System.Data.Hsqldb.Common.Sql
         /// <returns>a new <c>HsqlDataSourceException</c>.</returns>
         public static HsqlDataSourceException InvalidIdentifier(object token)
         {
-            HsqlException he = Trace.error(Trace.INVALID_IDENTIFIER, token);
+            HsqlException he = HsqlTrace.error(HsqlTrace.INVALID_IDENTIFIER, token);
             HsqlDataSourceException ex = new HsqlDataSourceException(he);
 
             return ex;
@@ -2215,7 +2278,7 @@ namespace System.Data.Hsqldb.Common.Sql
         public static HsqlDataSourceException IllegalWaitState()
         {
             HsqlException he
-                = Trace.error(Trace.ASSERT_FAILED,
+                = HsqlTrace.error(HsqlTrace.ASSERT_FAILED,
                               "Querying state when in Wait mode");
             HsqlDataSourceException ex = new HsqlDataSourceException(he);
 
@@ -2234,7 +2297,7 @@ namespace System.Data.Hsqldb.Common.Sql
         /// <returns>a new <c>HsqlDataSourceException</c>.</returns>
         public static HsqlDataSourceException UnexpectedToken(object token)
         {
-            HsqlException he = Trace.error(Trace.UNEXPECTED_TOKEN, token);
+            HsqlException he = HsqlTrace.error(HsqlTrace.UNEXPECTED_TOKEN, token);
             HsqlDataSourceException ex = new HsqlDataSourceException(he);
 
             return ex;
@@ -2252,14 +2315,12 @@ namespace System.Data.Hsqldb.Common.Sql
         /// <param name="token">The token.</param>
         /// <param name="match">The value to match.</param>
         /// <returns>a new <c>HsqlDataSourceException</c>.</returns>
-        public static HsqlDataSourceException MatchFailed(
-            object token,
+        public static HsqlDataSourceException MatchFailed(object token,
             object match)
         {
             object[] parms = new object[] { token, match };
-            HsqlException he = Trace.error(Trace.UNEXPECTED_TOKEN,
-                                           Trace.TOKEN_REQUIRED,
-                                           parms);
+            HsqlException he = HsqlTrace.error(HsqlTrace.UNEXPECTED_TOKEN,
+                HsqlTrace.TOKEN_REQUIRED, parms);
             HsqlDataSourceException ex = new HsqlDataSourceException(he);
 
             return ex;

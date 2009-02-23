@@ -5,6 +5,7 @@ using System.Data.Hsqldb.Common.Enumeration;
 using System.Data.Hsqldb.Common.Sql;
 using System.Data.Hsqldb.TestCoverage;
 using NUnit.Framework;
+using System.Text;
 #endregion
 
 namespace System.Data.Hsqldb.Common.Sql.UnitTests
@@ -303,7 +304,7 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
             Assert.AreEqual(Token.ValueFor.VARCHAR, testSubject.GetThis(Token.ValueFor.VARCHAR));
             Assert.AreEqual(Token.ValueFor.OPENBRACKET, testSubject.GetThis(Token.ValueFor.OPENBRACKET));
             Assert.AreEqual("12", testSubject.GetThis("12"));
-            Assert.That(testSubject.TokenType == SqlTokenType.NumberLiteral);
+            Assert.That(testSubject.TokenType == SqlTokenType.IntegerLiteral);
             Assert.That(testSubject.LiteralValueDataType == HsqlProviderType.Integer);
             Assert.AreEqual(Token.ValueFor.CLOSEBRACKET, testSubject.GetThis(Token.ValueFor.CLOSEBRACKET));
             Assert.AreEqual(Token.ValueFor.CLOSEBRACKET, testSubject.GetThis(Token.ValueFor.CLOSEBRACKET));
@@ -389,7 +390,6 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
         {
             Tokenizer testSubject = new Tokenizer("create table test(id int, \"val\" varchar(12));");
 
-
             if (testSubject.IsGetThis(Token.ValueFor.ALTER))
             {
                 Assert.AreEqual(Token.ValueFor.CREATE, Token.ValueFor.ALTER);
@@ -422,25 +422,136 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
         [Test, OfMember("LastPart")]
         public void LastPart()
         {
-            Assert.Fail("TODO");
+            Tokenizer testSubject = new Tokenizer("create table test(id int, \"val\" varchar(12));");
+
+            Assert.AreEqual(Token.ValueFor.CREATE, testSubject.GetNextAsSimpleToken());
+            Assert.AreEqual(6, testSubject.Position);
+            Assert.AreEqual("create", testSubject.LastPart);
+
+            Assert.AreEqual(Token.ValueFor.TABLE, testSubject.GetNextAsSimpleToken());
+            Assert.AreEqual(12, testSubject.Position);
+            Assert.AreEqual("create table", testSubject.LastPart);
+
+            testSubject.SetPartMarker();
+
+            Assert.AreEqual("TEST", testSubject.GetNextAsSimpleName());
+            Assert.AreEqual(17, testSubject.Position);
+            Assert.AreEqual(" test", testSubject.LastPart);
+
+            Assert.AreEqual(Token.ValueFor.OPENBRACKET, testSubject.GetNextAsSimpleToken());
+            Assert.AreEqual(18, testSubject.Position);
+            Assert.AreEqual(" test(", testSubject.LastPart);
+
+            Assert.AreEqual("ID", testSubject.GetNextAsSimpleName());
+            Assert.AreEqual(20, testSubject.Position);
+            Assert.AreEqual(" test(id", testSubject.LastPart);
+
+            Assert.AreEqual(Token.ValueFor.INT, testSubject.GetNextAsSimpleToken());
+            Assert.AreEqual(24, testSubject.Position);
+            Assert.AreEqual(" test(id int", testSubject.LastPart);
+
+            testSubject.SetPartMarker();
+
+            Assert.AreEqual(Token.ValueFor.COMMA, testSubject.GetNextAsSimpleToken());
+            Assert.AreEqual(25, testSubject.Position);
+            Assert.AreEqual(Token.ValueFor.COMMA, testSubject.LastPart);
+
+            Assert.AreEqual("val", testSubject.GetNextAsName());
+            Assert.AreEqual(SqlTokenType.DelimitedIdentifier, testSubject.TokenType);
+            Assert.AreEqual(31,testSubject.Position);
+            Assert.AreEqual(", \"val\"", testSubject.LastPart);
+
+            Assert.AreEqual(Token.ValueFor.VARCHAR, testSubject.GetNextAsSimpleToken());
+            Assert.AreEqual(39, testSubject.Position);
+            Assert.AreEqual(", \"val\" varchar", testSubject.LastPart);
+
+            Assert.AreEqual(Token.ValueFor.OPENBRACKET, testSubject.GetThis(Token.ValueFor.OPENBRACKET));
+            Assert.AreEqual(40, testSubject.Position);
+            Assert.AreEqual(", \"val\" varchar(", testSubject.LastPart);
+
+            Assert.AreEqual(12, testSubject.GetNextAsInt());
+            Assert.AreEqual(42, testSubject.Position);
+            Assert.AreEqual(", \"val\" varchar(12", testSubject.LastPart);
+
+            Assert.AreEqual(Token.ValueFor.CLOSEBRACKET, testSubject.GetThis(Token.ValueFor.CLOSEBRACKET));
+            Assert.AreEqual(43, testSubject.Position);
+            Assert.AreEqual(", \"val\" varchar(12)", testSubject.LastPart);
+
+            testSubject.SetPartMarker();
+
+            Assert.AreEqual(Token.ValueFor.CLOSEBRACKET, testSubject.GetThis(Token.ValueFor.CLOSEBRACKET));
+            Assert.AreEqual(44, testSubject.Position);
+            Assert.AreEqual(Token.ValueFor.CLOSEBRACKET, testSubject.LastPart);
+
+            Assert.AreEqual(Token.ValueFor.SEMICOLON, testSubject.GetThis(Token.ValueFor.SEMICOLON));
+            Assert.AreEqual(45, testSubject.Position);
+            Assert.AreEqual(");", testSubject.LastPart);
+
+            Assert.AreEqual(string.Empty, testSubject.GetNextAsString());
+
+            Assert.AreEqual(45, testSubject.Position);
+            Assert.AreEqual(");", testSubject.LastPart);
+
+            testSubject.SetPartMarker();
+
+            Assert.AreEqual(string.Empty, testSubject.LastPart);
         }
 
         [Test, OfMember("Length")]
         public void Length()
         {
-            Assert.Fail("TODO");
-        }
+            StringBuilder sb = new StringBuilder();
+            Tokenizer testSubject = new Tokenizer();
 
-        [Test, OfMember("LiteralValue")]
-        public void LiteralValue()
-        {
-            Assert.Fail("TODO");
+            for (int i = 0; i < 30; i++)
+            {
+                testSubject.Reset(sb.ToString());
+
+                Assert.AreEqual(i, testSubject.Length);
+
+                sb.Append(' ');
+            }
         }
 
         [Test, OfMember("LiteralValueDataType")]
         public void LiteralValueDataType()
         {
-            Assert.Fail("TODO");
+            Tokenizer testSubject = new Tokenizer("1 1.0 1.0E2 '2009-01-01' '12:00:01' '2009-01-01 12:00:01' '2009-01-01 12:00:01.123456789'");
+
+            testSubject.GetNextAsString();
+
+            Assert.AreEqual(SqlTokenType.IntegerLiteral, testSubject.TokenType);
+            Assert.AreEqual(HsqlProviderType.Integer, testSubject.LiteralValueDataType);
+
+            testSubject.GetNextAsString();
+
+            Assert.AreEqual(SqlTokenType.DecimalLiteral, testSubject.TokenType);
+            Assert.AreEqual(HsqlProviderType.Decimal, testSubject.LiteralValueDataType);
+
+            testSubject.GetNextAsString();
+
+            Assert.AreEqual(SqlTokenType.FloatLiteral, testSubject.TokenType);
+            Assert.AreEqual(HsqlProviderType.Double, testSubject.LiteralValueDataType);
+
+            testSubject.GetNextAsString();
+
+            Assert.AreEqual(SqlTokenType.DateLiteral, testSubject.TokenType);
+            Assert.AreEqual(HsqlProviderType.Date, testSubject.LiteralValueDataType);
+
+            testSubject.GetNextAsString();
+
+            Assert.AreEqual(SqlTokenType.TimeLiteral, testSubject.TokenType);
+            Assert.AreEqual(HsqlProviderType.Time, testSubject.LiteralValueDataType);
+
+            testSubject.GetNextAsString();
+
+            Assert.AreEqual(SqlTokenType.TimestampLiteral, testSubject.TokenType);
+            Assert.AreEqual(HsqlProviderType.TimeStamp, testSubject.LiteralValueDataType);
+
+            testSubject.GetNextAsString();
+
+            Assert.AreEqual(SqlTokenType.TimestampLiteral, testSubject.TokenType);
+            Assert.AreEqual(HsqlProviderType.TimeStamp, testSubject.LiteralValueDataType);
         }
         
         [Test, OfMember("MatchFailed")]
