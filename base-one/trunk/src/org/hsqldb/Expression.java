@@ -3308,6 +3308,8 @@ public class Expression {
             case LIKE :
             case EXISTS :
             case IN :
+            case IS_NULL :
+            case NOT :
                 return test(session);
 
             case CONVERT :

@@ -151,9 +151,6 @@ public class Logger {
     public boolean closeLog(int closemode) {
 
         if (log == null) {
-            appLog.sendLine(SimpleLog.LOG_ERROR, "Database closed");
-            appLog.close();
-
             return true;
         }
 

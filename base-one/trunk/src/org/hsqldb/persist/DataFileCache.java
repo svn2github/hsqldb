@@ -293,6 +293,8 @@ public class DataFileCache {
             if (cacheReadonly) {
                 if (dataFile != null) {
                     dataFile.close();
+
+                    dataFile = null;
                 }
 
                 return;
