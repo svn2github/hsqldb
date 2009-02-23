@@ -1,4 +1,8 @@
-/*--------
+/*
+ * @(#)$Id$
+ *
+ * HyperSQL ODBC Driver
+ *
  * Module:          pgtypes.c
  *
  * Description:     This module contains routines for getting information
@@ -13,7 +17,25 @@
  * API functions:   none
  *
  * Comments:        See "notice.txt" for copyright and license information.
- *--------
+ *                  Significant modifications Copyright 2009 by
+ *                  the HSQL Development Group.  Changes made by the HSQL
+ *                  Development are documented precisely in the public HyperSQL
+ *                  source code repository, available through http://hsqldb.org.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Library General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Library General Public
+ *  License along with this library; if not, write to the
+ *  Free Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ *  Boston, MA  02110-1301  USA
  */
 
 #include "pgtypes.h"
@@ -207,8 +229,11 @@ sqltype_to_pgtype(StatementClass *stmt, SQLSMALLINT fSqlType)
             break;
 
         case SQL_SMALLINT:
-        case SQL_TINYINT:
             pgType = PG_TYPE_INT2;
+            break;
+
+        case SQL_TINYINT:
+            pgType = HSQL_TYPE_TINYINT;
             break;
 
         case SQL_TIME:
@@ -325,6 +350,10 @@ pgtype_to_concise_type(StatementClass *stmt, OID type, int col)
                 return SQL_VARBINARY;
         case PG_TYPE_LO_UNDEFINED:
             return SQL_LONGVARBINARY;
+
+        case HSQL_TYPE_TINYINT: // Mon Feb 23 10:40:25 EST 2009 by Blaine
+            return SQL_TINYINT;
+
 
         case PG_TYPE_INT2:
             return SQL_SMALLINT;
