@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * This software consists of voluntary contributions made by many individuals 
+ * This software consists of voluntary contributions made by many individuals
  * on behalf of the Hypersonic SQL Group.
  *
  *
@@ -448,9 +448,13 @@ public class Table extends BaseTable {
      */
     void addConstraint(Constraint c) {
 
+        int position = c.constType == Constraint.PRIMARY_KEY ? 0
+                                                             : constraintList
+                                                                 .length;
+
         constraintList =
             (Constraint[]) ArrayUtil.toAdjustedArray(constraintList, c,
-                constraintList.length, 1);
+                position, 1);
     }
 
     /**

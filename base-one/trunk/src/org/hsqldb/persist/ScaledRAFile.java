@@ -91,15 +91,16 @@ class ScaledRAFile implements ScaledRAInterface {
         if (classname != null) {
             try {
                 Class storageClass = null;
+
                 try {
                     ClassLoader classLoader =
                         Thread.currentThread().getContextClassLoader();
-                    storageClass =
-                        classLoader.loadClass(classname);
-                }
-                catch (ClassNotFoundException e) {
+
+                    storageClass = classLoader.loadClass(classname);
+                } catch (ClassNotFoundException e) {
                     storageClass = Class.forName(classname);
                 }
+
                 Constructor constructor =
                     storageClass.getConstructor(new Class[] {
                     String.class, Boolean.class, Object.class
@@ -417,8 +418,8 @@ class ScaledRAFile implements ScaledRAInterface {
                 realPosition = seekPosition;
             }
 
-            if (seekPosition >= bufferOffset
-                    && seekPosition < bufferOffset + buffer.length) {
+            if (seekPosition < bufferOffset + buffer.length
+                    && seekPosition + len > bufferOffset) {
                 bufferDirty = true;
             }
 
@@ -443,8 +444,8 @@ class ScaledRAFile implements ScaledRAInterface {
                 realPosition = seekPosition;
             }
 
-            if (seekPosition >= bufferOffset
-                    && seekPosition < bufferOffset + buffer.length) {
+            if (seekPosition < bufferOffset + buffer.length
+                    && seekPosition + 4 > bufferOffset) {
                 bufferDirty = true;
             }
 
@@ -469,8 +470,8 @@ class ScaledRAFile implements ScaledRAInterface {
                 realPosition = seekPosition;
             }
 
-            if (seekPosition >= bufferOffset
-                    && seekPosition < bufferOffset + buffer.length) {
+            if (seekPosition < bufferOffset + buffer.length
+                    && seekPosition + 8 > bufferOffset) {
                 bufferDirty = true;
             }
 
