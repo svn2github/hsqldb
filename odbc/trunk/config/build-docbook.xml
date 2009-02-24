@@ -30,9 +30,9 @@
        file specifications must be relative to the project root, not build/ -->
 
   <!-- Put local env property changes in this NON-CHANGE-CONTROLLED file: -->
-  <property file="build/local-docbook.properties"/>
+  <property file="config/local-docbook.properties"/>
   <!-- For change-controlled (by your project) ant-docbook-specific props: -->
-  <property file="build/docbook.properties"/>
+  <property file="config/docbook.properties"/>
 
   <property name="oasis.stylesheet.url"
             value="http://docbook.sourceforge.net/release/xsl-ns/current"/>
@@ -53,7 +53,7 @@
   <property name="xml.catalog.prefer" value="public"/>
   <property name="xml.catalog.allowPI" value="yes"/>
   <property name="xml.catalog.staticCatalog" value="yes"/>
-  <property name="ivy.dep.file" value="build/ivy.xml"/>
+  <property name="ivy.dep.file" value="config/ivy.xml"/>
   <property name="distro.baseurl" value="http://hsqldb.org/doc/2.0"/>
 
   <property name="docoutput.path" value="doc"/>
@@ -408,14 +408,14 @@ OR for any CMD-like Windows shell:
 
     SET ANT_ARGS=-lib "%HOMEDRIVE%%HOMEPATH%/ivy-2.0.0.jar" -noclasspath</fail>
 
-    <available property="_ivysettings.present" file="build/ivysettings.xml"
+    <available property="_ivysettings.present" file="config/ivysettings.xml"
                type="file"/>
     <antcall target="-ensure-ivysettings"/>
     <ivy:settings/>
   </target>
 
   <target name="-ensure-ivysettings" unless="_ivysettings.present">
-    <copy file="build/ivysettings-sample.xml" tofile="build/ivysettings.xml"/>
+    <copy file="config/ivysettings-sample.xml" tofile="config/ivysettings.xml"/>
     <echo>Just created a local 'ivysettings.xml' file for you.
 Customize this as you wish and/or set Ivy properties (or any other
 docbook-specific local build properties) in a 'local.properties'
