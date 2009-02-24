@@ -223,7 +223,8 @@ entire directories of files.</echo>
       <srcfileset dir="doc-src" excludes="**/.*"
                   includes="*.*, entities/**, images/**, verbatim/**"/>
       <targetfileset dir="tmp/doc-work"/>
-      <targetfileset dir="${docoutput.path}" excludes="apidocs/**"/>
+      <targetfileset dir="${docoutput.path}"
+                     excludes="*.txt, *.html, apidocs/**"/>
     </dependset>
     <dependset>
       <srcfileset dir="doc-src/${doc.name}" excludes="**/.*"/>
@@ -397,7 +398,7 @@ entire directories of files.</echo>
   <target name="clean-docs" description="Remove all derived doc artifacts">
     <delete dir="tmp/doc-work"/>
     <delete includeemptydirs="true">
-      <fileset dir="${docoutput.path}" excludes="zaurus/**"/>
+      <fileset dir="${docoutput.path}" excludes="*.txt, *.html"/>
     </delete>
   </target>
 
