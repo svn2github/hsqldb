@@ -809,7 +809,8 @@ inolog("2stime fr=%d\n", std_time.fr);
              * This is a large object OID, which is used to store
              * LONGVARBINARY objects.
              */
-        case PG_TYPE_LO_UNDEFINED:
+        case HSQL_TYPE_BLOB:  // Mon Feb 23 17:02:22 EST 2009 blaine replaces
+                               // PG_TYPE_LO_UNDEFINED
 
             return convert_lo(stmt, value, fCType, rgbValueBindRow, cbValueMax, pcbValueBindRow);
 

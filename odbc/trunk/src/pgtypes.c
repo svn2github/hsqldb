@@ -348,7 +348,8 @@ pgtype_to_concise_type(StatementClass *stmt, OID type, int col)
                 return SQL_LONGVARBINARY;
             else
                 return SQL_VARBINARY;
-        case PG_TYPE_LO_UNDEFINED:
+        case HSQL_TYPE_BLOB:   // Mon Feb 23 16:51:06 EST 2009
+                               // changed from PG_TYPE_LO_UNDEFINED by Blaine
             return SQL_LONGVARBINARY;
 
         case HSQL_TYPE_TINYINT: // Mon Feb 23 10:40:25 EST 2009 by Blaine
@@ -530,7 +531,8 @@ pgtype_to_ctype(StatementClass *stmt, OID type)
 
         case PG_TYPE_BYTEA:
             return SQL_C_BINARY;
-        case PG_TYPE_LO_UNDEFINED:
+        case HSQL_TYPE_BLOB:   // Mon Feb 23 16:51:06 EST 2009
+                               // changed from PG_TYPE_LO_UNDEFINED by Blaine
             return SQL_C_BINARY;
 #ifdef  UNICODE_SUPPORT
         case PG_TYPE_BPCHAR:
@@ -638,13 +640,14 @@ inolog("pgtype_to_name int4\n");
         case PG_TYPE_UUID:
             return "uuid";
 
-        case PG_TYPE_LO_UNDEFINED:
-            return PG_TYPE_LO_NAME;
+        case HSQL_TYPE_BLOB:   // Mon Feb 23 16:51:06 EST 2009
+             return "blob";    // changed from PG_TYPE_LO_UNDEFINED
+                               // and PG_TYPELO_NAME ("lo") by Blaine
 
         default:
             /* hack until permanent type is available */
             if (type == stmt->hdbc->lobj_type)
-                return PG_TYPE_LO_NAME;
+                return "blob";  // Ditto as *_BLOB a few lines up
 
             /*
              * "unknown" can actually be used in alter table because it is
@@ -1009,7 +1012,8 @@ pgtype_column_size(StatementClass *stmt, OID type, int col, int handle_unknown_s
         case PG_TYPE_UUID:
             return sizeof("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX");
 
-        case PG_TYPE_LO_UNDEFINED:
+        case HSQL_TYPE_BLOB:   // Mon Feb 23 16:51:06 EST 2009
+                               // changed from PG_TYPE_LO_UNDEFINED by Blaine
             return SQL_NO_TOTAL;
 
         default:

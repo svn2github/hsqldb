@@ -451,9 +451,8 @@ RETCODE SQL_API ER_ReturnError(PG_ErrorInfo **, SQLSMALLINT, UCHAR FAR *,
 
 void        logs_on_off(int cnopen, int, int);
 
-#define PG_TYPE_LO_UNDEFINED            (-999)      /* hack until permanent
-                                                 * type available */
-#define PG_TYPE_LO_NAME             "lo"
+// Mon Feb 23 16:57:11 EST 2009  Blaine removed definition of
+//                       PG_TYPE_LO_UNDEFINED.  Superseded by HSQL_TYPE_BLOB.
 #define CTID_ATTNUM             (-1)    /* the attnum of ctid */
 #define OID_ATTNUM              (-2)    /* the attnum of oid */
 #define XMIN_ATTNUM             (-3)    /* the attnum of xmin */

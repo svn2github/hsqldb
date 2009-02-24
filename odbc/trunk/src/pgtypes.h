@@ -100,6 +100,7 @@
 #define PG_TYPE_VOID            2278
 #define PG_TYPE_UUID            2950
 #define INTERNAL_ASIS_TYPE      (-9999)
+#define HSQL_TYPE_BLOB          9998  // Mon Feb 23 16:50:14 EST 2009 by Blaine
 #define HSQL_TYPE_TINYINT       9999  // Mon Feb 23 10:40:25 EST 2009 by Blaine
 
 /* extern Int4 pgtypes_defined[]; */

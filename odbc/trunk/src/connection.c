@@ -344,7 +344,8 @@ CC_Constructor()
         rv->num_descs = STMT_INCREMENT;
 #endif /* ODBCVER */
 
-        rv->lobj_type = PG_TYPE_LO_UNDEFINED;
+        rv->lobj_type = HSQL_TYPE_BLOB; // Mon Feb 23 17:02:22 EST 2009
+                                        // blaine replaces PG_TYPE_LO_UNDEFINED
         rv->driver_version = ODBCVER;
 #ifdef  WIN32
         if (VER_PLATFORM_WIN32_WINDOWS == platformId && rv->driver_version > 0x0300)
