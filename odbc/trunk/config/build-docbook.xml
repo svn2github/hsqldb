@@ -55,6 +55,7 @@
   <property name="xml.catalog.staticCatalog" value="yes"/>
   <property name="ivy.dep.file" value="config/ivy.xml"/>
   <property name="distro.baseurl" value="http://hsqldb.org/doc/2.0"/>
+  <property name="ivy.settings.file" value="config/ivysettings.xml"/>
 
   <property name="docoutput.path" value="doc"/>
   <property name="javac.debug" value="true"/>
@@ -87,7 +88,7 @@ required.  This is normally the "images" subdirectory of a DocBook v.5 NS Style
 Sheet distribution.  The docbook-xsl-ns distro can be downloaded from
 'http://docbook.sourceforge.net/projects/docbook'.  Set property 'dbimage.path'
 to the local path to the images subdirectory (perhaps in file
-'build.properties').</fail>
+'local-docbook.properties').</fail>
     <copy todir="doc-src/images/db">
       <fileset dir="${dbimage.path}"/>
     </copy>
@@ -109,7 +110,7 @@ to the local path to the images subdirectory (perhaps in file
   </target>
 
   <target name="-ensure-catalog" unless="_catalog.present">
-    <copy file="build/rng-catalog-sample.xml"
+    <copy file="config/rng-catalog-sample.xml"
           tofile="stylesheets/rng-catalog.xml"/>
     <echo>Just created a local 'stylesheets/rng-catalog.xml' file for you.
 To speed up XML validations, you should edit this file.</echo>
@@ -431,7 +432,7 @@ OR for any CMD-like Windows shell:
     <copy file="config/ivysettings-sample.xml" tofile="config/ivysettings.xml"/>
     <echo>Just created a local 'ivysettings.xml' file for you.
 Customize this as you wish and/or set Ivy properties (or any other
-docbook-specific local build properties) in a 'local.properties'
+docbook-specific local build properties) in a 'local-docbook.properties'
 file.</echo>
   </target>
 
@@ -488,9 +489,5 @@ http://xml.apache.org/commons/components/resolver/resolver-article.html#ctrlreso
         <present targetdir="doc-src/verbatim"/>
       </fileset>
     </copy>
-  </target>
-
-  <target name="-validation-setup">
-    <fail message="Something is wrong.  '-validation-setup' is abstract"/>
   </target>
 </project>
