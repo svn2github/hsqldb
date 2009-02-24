@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<project name="hsqlodbc-ant-docbook" default="gen-docs"
+<project name="hsqlodbc-ant-docbook" default="gen-docs" basedir=".."
          xmlns:ivy="antlib:org.apache.ivy.ant">
   <!--
     USAGE
@@ -81,6 +81,46 @@
   <property name="dbcentx.url" value="UNSET_STYLEBASE"/>
   <!-- ditto about the default value -->
 
+  <target name="-prep-images">
+    <fail unless="dbimage.path">Ant property 'dbimage.path' is
+required.  This is normally the "images" subdirectory of a DocBook v.5 NS Style
+Sheet distribution.  The docbook-xsl-ns distro can be downloaded from
+'http://docbook.sourceforge.net/projects/docbook'.  Set property 'dbimage.path'
+to the local path to the images subdirectory (perhaps in file
+'build.properties').</fail>
+    <copy todir="doc-src/images/db">
+      <fileset dir="${dbimage.path}"/>
+    </copy>
+  </target>
+
+  <target name="gen-docs" description="Generate Docbook documents for project"
+          depends="validate-docs, -prep-images, -gen-docs-setup">
+    <antcall target="docbook-transform">
+      <param name="doc.name" value="hsqlodbc"/>
+    </antcall>
+    <antcall target="-gen-docs-complete"/>
+  </target>
+
+  <target name="validate-docs"
+          description="Validate project DocBook source files using a modified version of Sun's MSV Validator">
+    <antcall target="validate-doc">
+      <param name="doc.name" value="hsqlodbc"/>
+    </antcall>
+  </target>
+
+  <target name="-ensure-catalog" unless="_catalog.present">
+    <copy file="build/rng-catalog-sample.xml"
+          tofile="stylesheets/rng-catalog.xml"/>
+    <echo>Just created a local 'stylesheets/rng-catalog.xml' file for you.
+To speed up XML validations, you should edit this file.</echo>
+  </target>
+
+  <target name="-validation-setup">
+    <available property="_catalog.present" file="stylesheets/rng-catalog.xml"
+               type="file"/>
+    <antcall target="-ensure-catalog"/>
+  </target>
+
   <target name="fetch-images"
           description="Fetch stock DocBook image files from Internet">
     <echo>Copy the images directory from the latest stable version of the
@@ -95,30 +135,6 @@ entire directories of files.</echo>
   <target name="regen-docs"
           description="Clean and regen project DocBook docs.  N.b this wipes javadocs too!"
           depends="clean-docs, gen-docs"/>
-
-  <property name="_for.automation.blurb"
-    value="If you want to automate the antcalls and you don't mind using
-Ant-contrib or Antelope, you can use one of their 'for' tasks with a DirSet."/>
-
-  <target name="gen-docs">
-    <fail>You must implement your own "gen-docs" target by editing
-"build-docbook.xml" or overriding it in your own build file which imports
-"build-docbook.xml".
-Your "gen-docs" target must depend on -gen-docs-setup, do an "antcall" of
-"docbook-transform" for each doc.name, then call -gen-docs-complete.
-
-${_for.automation.blurb}</fail>
-  </target>
-
-  <target name="validate-docs">
-    <fail>You must implement your own "validate-docs" target
-by editing "build-docbook.xml" or overriding it in your own build file which
-imports "build-docbook.xml".
-Your "validate-docs" target must do an "antcall" of "validate-doc" for each
-doc.name.
-
-${_for.automation.blurb}</fail>
-  </target>
 
   <target name="-gen-docs-setup" depends="refresh-verbatim"/>
 
@@ -143,6 +159,7 @@ ${_for.automation.blurb}</fail>
       <fileset dir="doc-src"
                excludes="**/.*, **/*.txt, **/entities/**, apidocs/**,
                          **/*.xml, **/*.java, **/*.sql, **/*.cfg, **/*.css,
+                         **/*.c, **/*.h, **/*.cpp,
                          **/*.ent, **/*.rc, **/*.html, **/*.properties"/>
     </copy>
 
@@ -173,7 +190,7 @@ ${_for.automation.blurb}</fail>
              encoding="UTF-8" srcdir="doc-src"
              excludes="**/.*, **/entities/**, apidocs/**"
              includes="**/*.java, **/*.sql, **/*.cfg, **/*.css,
-                       **/*.rc, **/*.properties"/>
+                       **/*.c, **/*.h, **/*.cpp, **/*.rc, **/*.properties"/>
     <!-- To allow substitution of ant-variables like ${x} in any of the text
          files above, just move that file type from the fixcrlf above to the
          copy below. -->
@@ -202,14 +219,10 @@ ${_for.automation.blurb}</fail>
           message="DocBook 5 FO style sheet missing: ${fo.path}"/>
 
     <dependset>
-      <srcfileset dir="doc-src" excludes="**/.*, *_lic.txt, readme*, index.html"
+      <srcfileset dir="doc-src" excludes="**/.*"
                   includes="*.*, entities/**, images/**, verbatim/**"/>
-          <!-- Remove *_lic.txt from excludes above and below if we add any
-               reference to license files from any of our DocBook documents.
-          -->
       <targetfileset dir="tmp/doc-work"/>
-      <targetfileset dir="${docoutput.path}"
-             excludes="zaurus/**, apidocs/**, readme*, index.html, *_lic.txt"/>
+      <targetfileset dir="${docoutput.path}" excludes="apidocs/**"/>
     </dependset>
     <dependset>
       <srcfileset dir="doc-src/${doc.name}" excludes="**/.*"/>
