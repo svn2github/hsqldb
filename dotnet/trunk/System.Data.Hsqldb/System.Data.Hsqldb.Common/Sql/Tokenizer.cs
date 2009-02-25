@@ -98,7 +98,7 @@ namespace System.Data.Hsqldb.Common.Sql
         private SqlTokenType m_identifierChainPredecessorType = SqlTokenType.None;
         private bool m_inIdentifierChain;
         private int m_nextTokenIndex;
-        private string m_parameterName;
+        private string m_parameterName = string.Empty;
         private char m_parameterNamePrefix = ' ';
         private string m_token;
         private int m_tokenIndex;
@@ -1263,8 +1263,10 @@ namespace System.Data.Hsqldb.Common.Sql
                                     JavaLong.parseLong(tokenValue));
 
                                 tokenType = SqlTokenType.BigIntLiteral;
+
+                                return rval;
                             }
-                            catch (Exception)
+                            catch (Exception ex)
                             {
                             }
                         }
@@ -1316,6 +1318,10 @@ namespace System.Data.Hsqldb.Common.Sql
         /// Determines whether the token that was last read is equal to
         /// the specified <c>match</c> value.
         /// </summary>
+        /// <remarks>
+        /// Note that this method is *not* intended for use with delimited
+        /// or chained identifiers.
+        /// </remarks>
         /// <param name="match">The value to match.</param>
         /// <returns>
         /// <c>true</c> if the token that was last read is equal to the
@@ -1323,9 +1329,18 @@ namespace System.Data.Hsqldb.Common.Sql
         /// </returns>
         public bool WasThis(string match)
         {
-            return m_token.Equals(match)
-                   && (m_tokenType != SqlTokenType.DelimitedIdentifier)
-                   && (m_tokenType != SqlTokenType.IdentifierChain);
+            switch (m_tokenType)
+            {
+                case SqlTokenType.DelimitedIdentifier:
+                case SqlTokenType.IdentifierChain:
+                    {
+                        return false;
+                    }
+                default:
+                    {
+                        return object.Equals(m_token, match);
+                    }
+            }
         }
 
         #endregion
@@ -1823,6 +1838,10 @@ namespace System.Data.Hsqldb.Common.Sql
                             return (m_token == "?")
                                        ? "Parameter Marker"
                                        : "Special";
+                        }
+                    case SqlTokenType.ParameterMarker:
+                        {
+                            return "Parameter Marker";
                         }
                     case SqlTokenType.StringLiteral:
                         {

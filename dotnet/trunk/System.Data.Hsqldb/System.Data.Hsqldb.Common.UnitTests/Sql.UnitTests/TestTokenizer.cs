@@ -195,7 +195,8 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
             string expected = "SIMPLE";
             string actual = testSubject.GetNextAsSimpleName();
 
-            Assert.AreEqual(HsqlProviderType.Null, testSubject.LiteralValueDataType, "literal value data type");
+            Assert.AreEqual(HsqlProviderType.Null, testSubject.LiteralValueDataType, 
+                "literal value data type");
             Assert.AreEqual(false, testSubject.WasDelimitedIdentifier);
             Assert.AreEqual(false, testSubject.WasIdentifierChain);
 
@@ -314,13 +315,13 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
         [Test, OfMember("IdentiferChain")]
         public void IdentiferChain()
         {
-
+            Assert.Fail("TODO");
         }
 
         [Test, OfMember("IdentiferChainPredecessor")]
         public void IdentiferChainPredecessor()
         {
-
+            Assert.Fail("TODO");
         }
         
         [Test, OfMember("IdentiferChainLengthExceeded")]
@@ -368,6 +369,24 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
             {
                 Assert.IsInstanceOfType(typeof(HsqlDataSourceException), ex);
                 Assert.AreEqual(org.hsqldb.Trace.ASSERT_FAILED, -((HsqlDataSourceException)ex).ErrorCode);
+            }
+
+            Tokenizer testSubject = new Tokenizer("t2 t2 t3");
+
+            testSubject.GetThis("t1");
+            object rval;
+
+            if (!testSubject.IsGetThis("t3"))
+            {
+                try
+                {
+                    rval = testSubject.IdentifierChainPredecessor;
+                }
+                catch (Exception ex)
+                {
+                    Assert.IsInstanceOfType(typeof(HsqlDataSourceException), ex);
+                    Assert.AreEqual(org.hsqldb.Trace.ASSERT_FAILED, -((HsqlDataSourceException)ex).ErrorCode);
+                }
             }
         }
         
@@ -432,23 +451,23 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
             Assert.AreEqual(12, testSubject.Position);
             Assert.AreEqual("create table", testSubject.LastPart);
 
-            testSubject.SetPartMarker();
+            testSubject.PartMarker = testSubject.Position + 1;
 
             Assert.AreEqual("TEST", testSubject.GetNextAsSimpleName());
             Assert.AreEqual(17, testSubject.Position);
-            Assert.AreEqual(" test", testSubject.LastPart);
+            Assert.AreEqual("test", testSubject.LastPart);
 
             Assert.AreEqual(Token.ValueFor.OPENBRACKET, testSubject.GetNextAsSimpleToken());
             Assert.AreEqual(18, testSubject.Position);
-            Assert.AreEqual(" test(", testSubject.LastPart);
+            Assert.AreEqual("test(", testSubject.LastPart);
 
             Assert.AreEqual("ID", testSubject.GetNextAsSimpleName());
             Assert.AreEqual(20, testSubject.Position);
-            Assert.AreEqual(" test(id", testSubject.LastPart);
+            Assert.AreEqual("test(id", testSubject.LastPart);
 
             Assert.AreEqual(Token.ValueFor.INT, testSubject.GetNextAsSimpleToken());
             Assert.AreEqual(24, testSubject.Position);
-            Assert.AreEqual(" test(id int", testSubject.LastPart);
+            Assert.AreEqual("test(id int", testSubject.LastPart);
 
             testSubject.SetPartMarker();
 
@@ -573,6 +592,23 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
                //Assert.IsTrue(hdse.Message.Contains(org.hsqldb.Trace.getMessage(
                //    org.hsqldb.Trace.TOKEN_REQUIRED)));
             }
+
+            Tokenizer testSubject = new Tokenizer("notwhatismatched");
+
+            try
+            {
+                testSubject.GetThis("whatismatched");
+
+                Assert.Fail("Unexpected successful match of 'whatismatched' to 'notwhatismatched'");
+            }
+            catch (AssertionException)
+            {
+                throw;
+            }
+            catch (HsqlDataSourceException ex)
+            {
+                Assert.AreEqual(org.hsqldb.Trace.UNEXPECTED_TOKEN, -ex.ErrorCode);
+            }
         }
 
         [Test, OfMember("NormalizedToken")]
@@ -614,13 +650,73 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
         [Test, OfMember("TokenType")]
         public void TokenTypeTest()
         {
-            Assert.Fail("TODO");
+            Tokenizer testSubject = new Tokenizer();
+
+            Assert.AreEqual(SqlTokenType.None, testSubject.TokenType);
+
+            object[][] values = new object[][]
+            {
+            new object[] {"2147483649", SqlTokenType.BigIntLiteral},
+            new object[] {Token.ValueFor.TRUE, SqlTokenType.BooleanLiteral},
+            new object[] {"'2009-01-01'", SqlTokenType.DateLiteral},
+            new object[] {"123.0123", SqlTokenType.DecimalLiteral},
+            new object[] {"\"foo\"", SqlTokenType.DelimitedIdentifier},
+            new object[] {"123.1e-23", SqlTokenType.FloatLiteral},
+            new object[] {"foo.bar", SqlTokenType.IdentifierChain},
+            new object[] {int.MaxValue.ToString(), SqlTokenType.IntegerLiteral},
+            new object[] {"column_one", SqlTokenType.Name},
+            new object[] {"@MyNamedParameter", SqlTokenType.NamedParameter},            
+            new object[] {"?", SqlTokenType.ParameterMarker},
+            new object[] {"<", SqlTokenType.Special},
+            new object[] {"'''foo'' they said.'", SqlTokenType.StringLiteral},
+            new object[] {"'12:23:02'", SqlTokenType.TimeLiteral},
+            new object[] {"'2009-01-01 12:23:02.123456789'", SqlTokenType.TimestampLiteral}
+            };
+
+            foreach (object[] row in values)
+            {
+                testSubject.Reset(row[0].ToString());
+
+                testSubject.GetNextAsString();
+
+                Assert.AreEqual((SqlTokenType)row[1], testSubject.TokenType);
+            }
         }
 
         [Test, OfMember("TokenTypeName")]
         public void TokenTypeName()
         {
-            Assert.Fail("TODO");
+            Tokenizer testSubject = new Tokenizer();
+
+            Assert.AreEqual("None", testSubject.TokenTypeName);
+
+            object[][] values = new object[][]
+            {
+            new object[] {"2147483649", "BigInt"},
+            new object[] {Token.ValueFor.TRUE, "Boolean"},
+            new object[] {"'2009-01-01'", "Date"},
+            new object[] {"123.0123", "Decimal"},
+            new object[] {"\"foo\"", "Delimited Identifier"},
+            new object[] {"123.1e-23", "Float"},
+            new object[] {"foo.bar", "Identifier Chain"},
+            new object[] {int.MaxValue.ToString(), "Integer"},
+            new object[] {"column_one", "Name"},
+            new object[] {"@MyNamedParameter", "Named Parameter"},            
+            new object[] {"?", "Parameter Marker"},
+            new object[] {"<", "Special"},
+            new object[] {"'''foo'' they said.'","String"},
+            new object[] {"'12:23:02'", "Time"},
+            new object[] {"'2009-01-01 12:23:02.123456789'", "Timestamp"}
+            };
+
+            foreach (object[] row in values)
+            {
+                testSubject.Reset(row[0].ToString());
+
+                testSubject.GetNextAsString();
+
+                Assert.AreEqual((string)row[1], testSubject.TokenTypeName);
+            }
         }
         
         [Test, OfMember("UnexpectedEndOfCommand")]
@@ -652,45 +748,218 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
         [Test, OfMember("WasDelimitedIdentifier")]
         public void WasDelimitedIdentifier()
         {
-            Assert.Fail("TODO");
+            Tokenizer testSubject = new Tokenizer("+ join foo \"foo\" bar.\"foo\"");
+
+            testSubject.GetThis(Token.ValueFor.PLUS);
+
+            Assert.AreEqual(false, testSubject.WasDelimitedIdentifier);
+
+            Assert.AreEqual(Token.ValueFor.JOIN, testSubject.GetNextAsSimpleToken());
+
+            Assert.AreEqual(false, testSubject.WasDelimitedIdentifier);
+
+            Assert.AreEqual("FOO", testSubject.GetNextAsName());
+
+            Assert.AreEqual(false, testSubject.WasDelimitedIdentifier);
+
+            Assert.AreEqual("foo", testSubject.GetNextAsName());
+
+            Assert.AreEqual(true, testSubject.WasDelimitedIdentifier);
+            Assert.AreEqual(false, testSubject.WasIdentifierChain);
+            Assert.AreEqual(null, testSubject.IdentifierChainPredecessor);
+
+            Assert.AreEqual("foo", testSubject.GetNextAsName());
+
+            Assert.AreEqual(true, testSubject.WasDelimitedIdentifier);
+            Assert.AreEqual(true, testSubject.WasIdentifierChain);
+            Assert.AreEqual(false, testSubject.WasIdentifierChainPredecessorDelimited);
+            Assert.AreEqual("BAR", testSubject.IdentifierChainPredecessor);
         }
 
         [Test, OfMember("WasIdentifierChain")]
         public void WasIdentifierChain()
         {
-            Assert.Fail("TODO");
+            Tokenizer testSubject = new Tokenizer("foo foo.bar \"foo\".bar foo.\"bar\" \"foo\".\"bar\" \"foo\".\"bar\"");
+
+            testSubject.GetNextAsName();
+
+            Assert.AreEqual(false, testSubject.WasIdentifierChain);
+
+            string tokenValue;
+
+            while (string.Empty != (tokenValue = testSubject.GetNextAsName()))
+            {
+                Assert.AreEqual(true, testSubject.WasIdentifierChain);
+            }
         }
 
         [Test, OfMember("WasIdentifierChainPredecessorDelimited")]
         public void WasIdentifierChainPredecessorDelimited()
         {
-            Assert.Fail("TODO");
+            Tokenizer testSubject = new Tokenizer("foo foo.bar \"foo\".bar");
+
+            testSubject.GetNextAsName();
+
+            Assert.AreEqual(false, testSubject.WasIdentifierChain);
+            Assert.AreEqual(false, testSubject.WasIdentifierChainPredecessorDelimited);
+
+            testSubject.GetNextAsName();
+
+            Assert.AreEqual(true, testSubject.WasIdentifierChain);
+            Assert.AreEqual(false, testSubject.WasIdentifierChainPredecessorDelimited);
+
+            testSubject.GetNextAsName();
+
+            Assert.AreEqual(true, testSubject.WasIdentifierChain);
+            Assert.AreEqual(true, testSubject.WasIdentifierChainPredecessorDelimited);
         }
 
         [Test, OfMember("WasNamedParameter")]
         public void WasNamedParameter()
         {
-            Assert.Fail("TODO");
+            Tokenizer testSubject = new Tokenizer("update test set id = @IdParam, val = :ValParam");
+
+            Assert.AreEqual(false, testSubject.WasNamedParameter);
+            Assert.AreEqual(string.Empty, testSubject.ParameterName);
+            Assert.AreEqual(' ', testSubject.ParameterNamePrefix);
+
+            testSubject.GetThis(Token.ValueFor.UPDATE);
+
+            Assert.AreEqual(false, testSubject.WasNamedParameter);
+            Assert.AreEqual(string.Empty, testSubject.ParameterName);
+            Assert.AreEqual(' ', testSubject.ParameterNamePrefix);
+
+            testSubject.GetThis("TEST");
+
+            Assert.AreEqual(false, testSubject.WasNamedParameter);
+            Assert.AreEqual(null, testSubject.ParameterName);
+            Assert.AreEqual(' ', testSubject.ParameterNamePrefix);
+
+            testSubject.GetThis(Token.ValueFor.SET);
+
+            Assert.AreEqual(false, testSubject.WasNamedParameter);
+            Assert.AreEqual(null, testSubject.ParameterName);
+            Assert.AreEqual(' ', testSubject.ParameterNamePrefix);
+
+            testSubject.GetThis("ID");
+
+            Assert.AreEqual(false, testSubject.WasNamedParameter);
+            Assert.AreEqual(null, testSubject.ParameterName);
+            Assert.AreEqual(' ', testSubject.ParameterNamePrefix);
+
+            testSubject.GetThis(Token.ValueFor.EQUALS);
+
+            Assert.AreEqual(false, testSubject.WasNamedParameter);
+            Assert.AreEqual(null, testSubject.ParameterName);
+            Assert.AreEqual(' ', testSubject.ParameterNamePrefix);
+
+            testSubject.GetNextAsString();
+
+            Assert.AreEqual(true, testSubject.WasNamedParameter);
+            Assert.AreEqual("IdParam", testSubject.ParameterName);
+            Assert.AreEqual('@', testSubject.ParameterNamePrefix);
+
+            testSubject.GetThis(Token.ValueFor.COMMA);
+
+            Assert.AreEqual(false, testSubject.WasNamedParameter);
+            Assert.AreEqual(null, testSubject.ParameterName);
+            Assert.AreEqual(' ', testSubject.ParameterNamePrefix);
+
+            testSubject.GetThis("VAL");
+
+            Assert.AreEqual(false, testSubject.WasNamedParameter);
+            Assert.AreEqual(null, testSubject.ParameterName);
+            Assert.AreEqual(' ', testSubject.ParameterNamePrefix);
+
+            testSubject.GetThis(Token.ValueFor.EQUALS);
+
+            Assert.AreEqual(false, testSubject.WasNamedParameter);
+            Assert.AreEqual(null, testSubject.ParameterName);
+            Assert.AreEqual(' ', testSubject.ParameterNamePrefix);
+
+            testSubject.GetNextAsString();
+
+            Assert.AreEqual(true, testSubject.WasNamedParameter);
+            Assert.AreEqual("ValParam", testSubject.ParameterName);
+            Assert.AreEqual(':', testSubject.ParameterNamePrefix);
         }
 
         [Test, OfMember("WasParameterMarker")]
         public void WasParameterMarker()
         {
-            Assert.Fail("TODO");
+            Tokenizer testSubject = new Tokenizer("update test set id = ?, val = ?");
+
+            testSubject.GetThis(Token.ValueFor.UPDATE);
+
+            Assert.AreEqual(false, testSubject.WasParameterMarker);
+
+            testSubject.GetThis("TEST");
+
+            Assert.AreEqual(false, testSubject.WasParameterMarker);
+
+            testSubject.GetThis(Token.ValueFor.SET);
+
+            Assert.AreEqual(false, testSubject.WasParameterMarker);
+
+            testSubject.GetThis("ID");
+
+            Assert.AreEqual(false, testSubject.WasParameterMarker);
+
+            testSubject.GetThis(Token.ValueFor.EQUALS);
+
+            Assert.AreEqual(false, testSubject.WasParameterMarker);
+
+            testSubject.GetThis(Token.ValueFor.QUESTION);
+
+            Assert.AreEqual(true, testSubject.WasParameterMarker);
+
+            testSubject.GetThis(Token.ValueFor.COMMA);
+
+            Assert.AreEqual(false, testSubject.WasParameterMarker);
+
+            testSubject.GetThis("VAL");
+
+            Assert.AreEqual(false, testSubject.WasParameterMarker);
+
+            testSubject.GetThis(Token.ValueFor.EQUALS);
+
+            Assert.AreEqual(false, testSubject.WasParameterMarker);
+
+            testSubject.GetThis(Token.ValueFor.QUESTION);
+
+            Assert.AreEqual(true, testSubject.WasParameterMarker);
         }
         
         [Test, OfMember("WasThis")]
         public void WasThis()
         {
-            Tokenizer testSubject = new Tokenizer("foo bar baz");
+            Tokenizer testSubject = new Tokenizer("foo bar \"baz\" foo.bar");
 
             testSubject.GetThis("FOO");
             testSubject.GetThis("BAR");
 
-            bool expected = true;
-            bool actual = testSubject.WasThis("BAR");
+            Assert.AreEqual(true, testSubject.WasThis("BAR"));
+            Assert.AreEqual(false, testSubject.WasThis("bar"));
+            Assert.AreEqual(false, testSubject.WasThis(" BAR "));
+            Assert.AreEqual(false, testSubject.WasThis("NOTBAR"));
 
-            Assert.AreEqual(expected, actual);
+            string name = testSubject.GetNextAsName();
+
+            // not for use with delimited identifier.
+
+            Assert.AreEqual(false, testSubject.WasThis("baz")); 
+            Assert.AreEqual(false, testSubject.WasThis("BAZ"));
+            Assert.AreEqual(false, testSubject.WasThis(" baz "));
+            Assert.AreEqual(false, testSubject.WasThis("notbaz"));
+
+            string s = testSubject.GetNextAsString();
+
+            // not for use with identifier chain.
+
+            Assert.AreEqual(false, testSubject.WasThis("bar"));
+            Assert.AreEqual(false, testSubject.WasThis("BAR"));
+            Assert.AreEqual(false, testSubject.WasThis(" bar "));
+            Assert.AreEqual(false, testSubject.WasThis("notbar"));
         }
         
         [Test, OfMember("WrongDataType")]
@@ -705,7 +974,55 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
                 Assert.AreEqual(org.hsqldb.Trace.WRONG_DATA_TYPE, -hdse.ErrorCode);
                 // TODO
                 //Assert.IsTrue(hdse.Message.Contains("JAVA_OBJECT"), "message contains JAVA_OBJECT: " + hdse.Message);
-            } 
+            }
+
+            Tokenizer testSubject = new Tokenizer("'foo'");
+
+            try
+            {
+                testSubject.GetNextAsBigint();
+
+                Assert.Fail("Failed to throw wrong data type exception getting 'foo' as BigInt");
+            }
+            catch (AssertionException)
+            {
+                throw;
+            }
+            catch (HsqlDataSourceException hdse)
+            {
+                Assert.AreEqual(org.hsqldb.Trace.WRONG_DATA_TYPE, -hdse.ErrorCode);
+            }
+
+            testSubject = new Tokenizer("1.0");
+
+            try
+            {
+                testSubject.GetNextAsBigint();
+
+                Assert.Fail("Failed to throw wrong data type exception getting 1.0 as BigInt");
+            }
+            catch (AssertionException)
+            {
+                throw;
+            }
+            catch (HsqlDataSourceException hdse)
+            {
+                Assert.AreEqual(org.hsqldb.Trace.WRONG_DATA_TYPE, -hdse.ErrorCode);
+            }
+
+            testSubject = new Tokenizer(long.MinValue.ToString());
+
+            try
+            {
+                testSubject.GetNextAsBigint();
+            }
+            catch (HsqlDataSourceException hdse)
+            {
+                if (org.hsqldb.Trace.WRONG_DATA_TYPE == -hdse.ErrorCode)
+                {
+                    Assert.Fail("");
+                }
+            }
         }
     }
 }
