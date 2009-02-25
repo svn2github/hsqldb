@@ -2,6 +2,21 @@ $Id$
 
 UNIX Build Procedure
 
+PREREQUISITES
+
+    GCC (Gnu C compiler)
+    Autoconf >= v2.59
+    Automake >= v1.9.2
+    Libtool >= v1.5.10
+    unixODBC, developer distro (can do a custom build with iodbc instead)
+
+
+STANDARD BUILD
+
+  Edit "src/configure.ac" and change the 2nd parameter to AC_INIT to your
+  desired version number.  IMPORTANT:  You must use 4-integer dotted notation!
+  Don't expect things to work if you do not.
+
   cd src
 
   autoreconf -i
@@ -15,8 +30,31 @@ from the project home directory).  This location will be changing.
 
 Run "make maintainer-clean" to reset/clear all the steps above.
 
-Add parameter "--disable-unicode" to "configure" to build the ANSI driver
-"hsqlodbca.so" insteadf of "hsqlodbcu.so".
+
+INSTALLATION
+
+  Normal users of the HyperSQL ODBC driver will not use "make" to install.
+  If you plan to distribute your customized driver build, you will probably
+  want to pack up a binary-only distribution that minimizes system
+  requirements for the end-user client computer.
+  You can use "make" to help you build such a package, or to install the
+  driver onto developer workstations.
+  Just run "make install" as root from the "src" directory, after you have
+  successfully run plain "make" as described under STANDARD BUILD or
+  CUSTOMIZED BUILDS.
+
+
+CUSTOMIZED BUILDS
+
+    Before running "./configure", run "./configure --help" to list the
+    available build options.
+
+    Use parameter "--disable-unicode" to build the ANSI driver "hsqlodbca.so"
+    instead of "hsqlodbcu.so".
+
+    The "dist" target builds a UNIX-specific source distribution in tar.gz
+    format.  (I haven't worked with this yet.  TODO:  Update this after work
+    on source distros).
 
 **** IMPORTANT RUNTIME TIPS ****
 

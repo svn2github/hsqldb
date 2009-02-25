@@ -22,11 +22,13 @@ continued to be maintained by Byron Nikolaidis, the developer at Insight who
 overhauled the driver for some time.
 
 The PostgreSQL project took over maintenance of the driver at this point, and
-continue to maintain it as "psqlODBC".  The HyperSQL development team branched
-the code in early 2009 and our branch "is" the HyperSQL ODBC Driver.  In
-conclusion, the HyperSQL ODBC Driver, hsqlodbc, is a branch off of psqlODBC
-(PostgreSQL's ODBC driver), and the two are significantly different, as they
-support database servers with are significantly different.
+continue to maintain it as "psqlODBC".  Peter Eisentraut provided a UNIX/C
+build system to make the project independent of the main PostgreSQL baseline.
+The HyperSQL development team branched the code in early 2009 and our branch
+"is" the HyperSQL ODBC Driver.  In conclusion, the HyperSQL ODBC Driver,
+hsqlodbc, is a branch off of psqlODBC (PostgreSQL's ODBC driver), and the two
+are significantly different, as they support database servers with are
+significantly different.
 
 The HyperSQL ODBC driver has benefitted by several of the excellent Gnu
 development tools, and from OpenSSL, Kerberos, unixoDBC, and WiX.  We hereby
