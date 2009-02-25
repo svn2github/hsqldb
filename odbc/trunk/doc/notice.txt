@@ -31,8 +31,8 @@ the two are significantly different, as they support database servers which are
 significantly different.
 
 The HyperSQL ODBC driver has benefitted by several of the excellent Gnu
-development tools, and from OpenSSL, Kerberos, unixoDBC, and WiX.  We hereby
-recognize the GNU Project, the OpenSSL Project, MIT, the unixODBC Project, and
+development tools, and from OpenSSL, unixoDBC, and WiX.  We hereby
+recognize the GNU Project, the OpenSSL Project, the unixODBC Project, and
 the WiX developers.
 
 This library is free software; you can redistribute it and/or

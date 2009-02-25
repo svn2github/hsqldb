@@ -2,6 +2,10 @@ $Id$
 
 UNIX Build Procedure
 
+* Notice *  SSL capability is disabled for now.
+            We will add this capability back when we have time to implement
+            the necessary server-side support in the HyperSQL Engine.
+
 PREREQUISITES
 
     GCC (Gnu C compiler)

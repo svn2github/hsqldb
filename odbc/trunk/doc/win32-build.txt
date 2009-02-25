@@ -1,5 +1,9 @@
 $Id$
 
+* Notice *  SSL capability is disabled for now.
+            We will add this capability back when we have time to implement
+            the necessary server-side support in the HyperSQL Engine.
+
 This file documents building hsqlodbc from the command line, using
 Microsoft Visual C++ 2008.
 
