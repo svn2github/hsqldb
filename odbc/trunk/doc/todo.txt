@@ -6,6 +6,9 @@ Update DocBook docs with content of my *.txt files.
 
 Track down bytea as LO setting.  Understand then eliminate it.
 
+Pull remaining pieces of *build*.html files into my *build*.txt files so can
+remove the former.
+
 Abort processing at
 connection.c:CC_send_query_append(), op switch for op 'Z'.
 This state is very likely to result in deadlock.
