@@ -1,11 +1,26 @@
 $Id$
 
+#########  IMPORTANT ########################################################
+This file documents building hsqlodbc from the command line, using Microsoft
+Visual C++ 2008's "nmake".  The key artifacts that make this work are the files
+"win32.mak", "win64.mak", "hsqlodbc.vcproj".
+I have not built with the IDE, but I think that process would use the files
+"hsqlodbc.sln" and/or "hsqlodbc.dsp".  The IDE settings will have to be
+updated to parallel the many improvements and updates to "win*.mak" and
+"hsqlodbc.vcproj".
+TODO:  Get a Windows C IDE person's help to determine which config files are
+used (I suspect that *.dsp is obsolete); and to update them.
+Unless you are very handy with the IDE, you are advised to do builds using
+nmake for now.
+#############################################################################
+
+
 * Notice *  SSL capability is disabled for now.
             We will add this capability back when we have time to implement
             the necessary server-side support in the HyperSQL Engine.
 
-This file documents building hsqlodbc from the command line, using
-Microsoft Visual C++ 2008.
+* Notice *  I do not have access to a 64 bit Windows development system, so
+            the information about 64-bit builds is untested.
 
 ONE-TIME SETUP FOR DLL BUILDING
 
@@ -40,13 +55,21 @@ BUILDING driver DLLs
 
     The installation of Visual C++ adds global variable VS90COMNTOOLS.
     Run %VS90COMNTOOLS%\vsvars32.bat to set up your MSV C++ build environment.
+    (Presumably .../vsvars64.bat on a 64-bit system).
+
+    Edit "src/configure.ac" and change the 2nd parameter to AC_INIT to your
+    desired version number.  IMPORTANT:  You must use 4-integer dotted
+    notation!  Don't expect things to work if you do not.
 
     To make the Unicode DLL (better ODBC support):
         nmake /f win32.mak CFG=Release ALL
     To make the ANSI DLL (required for some older/unmaintained/bad clients):
         nmake /f win32.mak ANSI_VERSION=yes CFG=Release ALL
 
+    Obviously, substitute "win64.mak" for 64-bit systems.
+
     Can use target "CLEAN" instead of "ALL, for the obvious purpose.
+    Can use CFG of "Debug" instead of "Release" for the obvious purpose.
 
     The output DLLs get written to directories "Release" and
     "MultibyteRelease" ("src/Release" and "src/MultibyteRelease" from the
@@ -54,6 +77,12 @@ BUILDING driver DLLs
 
     BEWARE!!!:  If nmake fails, do not expect the real failure details to
      appear near where it aborts.  You must examine all of the nmake output.
+
+    I don't know much about MSDTC, but according to conflicting clues in the
+    psqlodbc project, it is used for builds with pre-v.6.0 VC++, and can be
+    enabled manually with nmake parameter "MSDTC=yes".  (If it works without
+    it, then why?...).  TODO:  Test whether MSDTC is ever useful and remove
+    all traces of it if answer negative.
 
 
 BUILDING MSI INSTALLER
@@ -71,10 +100,11 @@ BUILDING MSI INSTALLER
         nmake /f win32.mak CFG=Release ALL
         nmake /f win32.mak ANSI_VERSION=yes CFG=Release ALL
         cd ..\msi-src
-        .\make <VERSION>
+        build
 
-    where <VERSION> is a label of the format "08.03.0401" (without the qoutes).
-    The output *.msi file gets written to the same (msi-src) directory.
+    Use the "win64.mak" file to do a 64-bit build.
+
+    The output *.msi file gets written to the peer "dist" directory.
 
     It is alright to rename the *.msi output file.
 

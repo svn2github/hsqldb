@@ -1,5 +1,7 @@
 $Id$
 
+URGENT
+
 Update DocBook docs with content of my *.txt files.
 
 Track down bytea as LO setting.  Understand then eliminate it.
@@ -8,6 +10,20 @@ Add screen shots of both Windows DSN option screens.
 
 Pull remaining pieces of *build*.html files into my *build*.txt files so can
 remove the former.
+
+Find out what the LINKMT and MT build settings are for.  If just for Kerberos
+support, wipe it all.
+
+Run tests on Windows to determine whether MSDTC is ever useful.  Eliminate
+all traces if yes.  Docs say that MSDTC builds create
+    pgenlist.dll, pgenlista.dll, pgxalib.dll
+so, wipe all traces of these too if we dump MSDTC.
+
+Streamline the win*.mak scripts by eliminating obsoleted settings.
+
+Test the "make install" and "make dist" targets.
+
+--------------
 
 Abort processing at
 connection.c:CC_send_query_append(), op switch for op 'Z'.
