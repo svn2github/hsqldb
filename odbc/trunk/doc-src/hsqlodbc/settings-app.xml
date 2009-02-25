@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- $Id$ -->
+
+<!DOCTYPE book [
+  <!ENTITY % dummy22 SYSTEM "../entities/global.ent"> %dummy22;
+]>
+
+<appendix version="5.0" xmlns="http://docbook.org/ns/docbook"
+      xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="settings-app"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <!-- We declare the default namespace + those for prefixes xlink: and xi: in
+       the root element, so we can use them anywhere in this file. -->
+
+  <info>
+    <title xml:id="settings-app-title">Settings List</title>
+
+    <author>
+      <personname>
+        <firstname>Blaine</firstname>
+
+        <surname>Simpson</surname>
+      </personname>
+
+      <affiliation>
+        <orgname>The HSQL Development Group</orgname>
+      </affiliation>
+    </author>
+
+    <releaseinfo>$Revision$</releaseinfo>
+
+    <pubdate>$Date$</pubdate>
+
+    <keywordset>
+      <keyword>HSQLDB</keyword>
+      <keyword>HyperSQL</keyword>
+      <keyword>ODBC</keyword>
+      <keyword>Settings</keyword>
+    </keywordset>
+  </info>
+
+  <simpara>
+    See the <link xlink:href="#settings-chapt" endterm="settings-title"/>
+    chapter for descriptions and usage details.
+    This appendix just contains a list of the available settings.
+  </simpara>
+
+  <table>
+    <title>Settings List</title>
+    <tgroup cols="3">
+      <thead><row>
+        <entry>Keyword</entry>
+        <entry>Abbrev.</entry>
+        <entry>Purpose</entry>
+      </row></thead>
+      <tbody>
+        <row>
+          <entry>Description</entry>
+          <entry>N/A</entry>
+          <entry>Data source description</entry>
+        </row>
+        <row>
+          <entry>Servername</entry>
+          <entry>N/A</entry>
+          <entry>Name of Server</entry>
+        </row>
+        <row>
+          <entry>Port</entry>
+          <entry>N/A</entry>
+          <entry>HyperSQL Server Listen Port</entry>
+        </row>
+        <row>
+          <entry>Username</entry>
+          <entry>N/A</entry>
+          <entry>User Name</entry>
+        </row>
+        <row>
+          <entry>Password</entry>
+          <entry>N/A</entry>
+          <entry>Password</entry>
+        </row>
+        <row>
+          <entry>Debug</entry>
+          <entry>B2</entry>
+          <entry>MyLog logging level</entry>
+        </row>
+        <row>
+          <entry>Fetch</entry>
+          <entry>A7</entry>
+          <entry>Fetch Max Count</entry>
+        </row>
+        <row>
+          <entry>Socket</entry>
+          <entry>A8</entry>
+          <entry>Socket buffer size</entry>
+        </row>
+        <row>
+          <entry>ReadOnly</entry>
+          <entry>A0</entry>
+          <entry>Read Only</entry>
+        </row>
+        <row>
+          <entry>CommLog</entry>
+          <entry>B3</entry>
+          <entry>Log communications to log file</entry>
+        </row>
+        <row>
+          <entry>UniqueIndex</entry>
+          <entry>N/A</entry>
+          <entry>Recognize unique indexes</entry>
+        </row>
+        <row>
+          <entry>UnknownSizes</entry>
+          <entry>A9</entry>
+          <entry>Unknown result set sizes</entry>
+        </row>
+        <row>
+          <entry>CancelAsFreeStmt</entry>
+          <entry>C1</entry>
+          <entry>Cancel as FreeStmt</entry>
+        </row>
+        <row>
+          <entry>TextAsLongVarchar</entry>
+          <entry>B7</entry>
+          <entry>Text as LongVarchar</entry>
+        </row>
+        <row>
+          <entry>UnknownsAsLongVarchar</entry>
+          <entry>B8</entry>
+          <entry>Unknowns as LongVarchar</entry>
+        </row>
+        <row>
+          <entry>BoolsAsChar</entry>
+          <entry>B9</entry>
+          <entry>Bools as Char</entry>
+        </row>
+        <row>
+          <entry>MaxVarcharSize</entry>
+          <entry>B0</entry>
+          <entry>Max Varchar size</entry>
+        </row>
+        <row>
+          <entry>MaxLongVarcharSize</entry>
+          <entry>B1</entry>
+          <entry>Max LongVarchar size</entry>
+        </row>
+        <row>
+          <entry>RowVersioning</entry>
+          <entry>A4</entry>
+          <entry>Row Versioning</entry>
+        </row>
+        <row>
+          <entry>ShowSystemTables</entry>
+          <entry>A5</entry>
+          <entry>Show System Tables</entry>
+        </row>
+        <row>
+          <entry>DisallowPremature</entry>
+          <entry>C3</entry>
+          <entry>Disallow Premature</entry>
+        </row>
+        <row>
+          <entry>UpdatableCursors</entry>
+          <entry>C4</entry>
+          <entry>Updatable Cursors</entry>
+        </row>
+        <row>
+          <entry>LFConversion</entry>
+          <entry>C5</entry>
+          <entry>LF &lt;-&gt; CR/LF conversion</entry>
+        </row>
+        <row>
+          <entry>TureIsMinus1</entry>
+          <entry>C6</entry>
+          <entry>True is -1</entry>
+        </row>
+        <row>
+          <entry>BI</entry>
+          <entry>N/A</entry>
+          <entry>Datatype to report BIGINT coluns as</entry>
+        </row>
+        <row>
+          <entry>LowerCaseIdentifier</entry>
+          <entry>C9</entry>
+          <entry>Lower case identifier</entry>
+        </row>
+        <row>
+          <entry>SSLmode</entry>
+          <entry>CA</entry>
+          <entry>SSL mode</entry>
+        </row>
+        <row>
+          <entry>AB</entry>
+          <entry>N/A</entry>
+          <entry>Extra options</entry>
+        </row>
+      </tbody>
+    </tgroup>
+  </table>
+  <simpara>
+    Abbreviations are for use in connection strings.
+  </simpara>
+
+</appendix>
