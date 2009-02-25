@@ -1,5 +1,13 @@
 $Id$
 
+Change MSI default to install the end user documentation.
+
+Replace psqlodbc docs with ours in the MSI deliverable.
+
+Try taking screen shots of Windows DSN settings from XP.
+
+Track down bytea as LO setting.  Understand then eliminate it.
+
 Abort processing at
 connection.c:CC_send_query_append(), op switch for op 'Z'.
 This state is very likely to result in deadlock.

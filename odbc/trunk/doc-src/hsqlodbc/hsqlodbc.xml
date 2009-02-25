@@ -69,7 +69,37 @@
     support facilities which are listed at http://hsqldb.org/support</para>
 
     <xi:include href="../altformats-sect.xml" />
+
+    <section>
+      <info><title>Purpose</title></info>
+      <simpara>
+        This document is directed to users of a production ODBC Driver,
+        not to those who wish to either modify the driver itself or make a
+        custom driver build.
+      </simpara> <simpara>
+        Those who wish to make custom driver builds should attend to the
+        *.txt files in the doc directory of a source distribution or of a
+        Subversion export or checkout.
+      </simpara>
+    </section>
+
+    <section>
+      <info><title>License</title></info>
+      <simpara>
+        The HyperSQL ODBC Driver, hsqlodbc, is licensed under LGPL v2.
+        The file <filename>license.txt</filename>, included with all of our
+        distributions, includes the full text of the license.
+      </simpara>
+    </section>
   </preface>
+
+  <xi:include href="unix.xml" />
+  <xi:include href="windows.xml" />
+  <xi:include href="settings.xml" />
+
+  <xi:include href="settings-app.xml" />
+  <xi:include href="codesamples-app.xml" />
+
   <index xml:id="book-ind">
     <title>General Index</title>
   </index>

@@ -485,6 +485,18 @@ http://xml.apache.org/commons/components/resolver/resolver-article.html#ctrlreso
     <!-- It's good to apply preservelastmodified to stuff under doc-src/,
          but be very careful if applying it to doc/..., since that could
          break our dependsets. -->
+
+    <fail unless="hsqldb.workdir.path">
+Property 'hsqldb.workdir' is required by the 'refresh-verbatim' target.
+This directory must contain an up-to-date HSQLDB base project code base which
+will be used to obtain 'verbatim' artifacts to include in our hsqlodbc docs.
+</fail>
+    <copy todir="${hsqldb.workdir.path}doc-src/verbatim"
+          preservelastmodified="true">
+      <fileset dir=".">
+        <present targetdir="doc-src/verbatim"/>
+      </fileset>
+    </copy>
     <copy todir="doc-src/verbatim" preservelastmodified="true">
       <fileset dir=".">
         <present targetdir="doc-src/verbatim"/>
