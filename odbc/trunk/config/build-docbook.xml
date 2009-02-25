@@ -480,16 +480,17 @@ http://xml.apache.org/commons/components/resolver/resolver-article.html#ctrlreso
 </echo>
   </target>
 
-  <target name="refresh-verbatim"
+  <target name="refresh-verbatim" unless="skip.refresh-verbatim"
           description="Update files under doc-src/verbatim">
     <!-- It's good to apply preservelastmodified to stuff under doc-src/,
          but be very careful if applying it to doc/..., since that could
          break our dependsets. -->
 
     <fail unless="hsqldb.workdir.path">
-Property 'hsqldb.workdir' is required by the 'refresh-verbatim' target.
+Property 'hsqldb.workdir.path' is required by the 'refresh-verbatim' target.
 This directory must contain an up-to-date HSQLDB base project code base which
 will be used to obtain 'verbatim' artifacts to include in our hsqlodbc docs.
+... Or just set property 'skip.refresh-verbatim'.
 </fail>
     <copy todir="${hsqldb.workdir.path}doc-src/verbatim"
           preservelastmodified="true">

@@ -1,10 +1,8 @@
 $Id$
 
-Change MSI default to install the end user documentation.
-
-Replace psqlodbc docs with ours in the MSI deliverable.
-
 Try taking screen shots of Windows DSN settings from XP.
+
+Update DocBook docs with content of my *.txt files.
 
 Track down bytea as LO setting.  Understand then eliminate it.
 

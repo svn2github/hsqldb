@@ -91,6 +91,20 @@
         distributions, includes the full text of the license.
       </simpara>
     </section>
+
+    <section>
+      <info><title>Credits</title></info>
+      <simpara>
+        This software is the product of the work of many individuals and
+        organizations, and also benefits from the use of several open
+        source libraries and utilities.
+        I will here just list the significant contributors to the current
+        HyperSQL ODBC Driver as well as its predecessors.
+        Please see the file <filename>notice.txt</filename> which we supply
+        with all of our distributions, for more details about these
+        contributors.
+      </simpara>
+    </section>
   </preface>
 
   <xi:include href="unix.xml" />

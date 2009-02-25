@@ -71,6 +71,10 @@ IF ERRORLEVEL 1 (
     exit /b 1
 )
 
+if not exist "../doc/hsqlodbc/hsqlodbc.html" (
+    echo You must build the User Guide with Ant before building the MSI
+    exit /b 1
+)
 echo Building hsqlodbc MSI database v. %PACKAGE_VERSION% for the MM...
 
 candle -nologo -dVERSION=%PACKAGE_VERSION% -dPROGRAMFILES="%ProgramFiles%" -dPROGRAMCOM="%ProgramFiles%/Common Files/Merge Modules" hsqlodbc.wxs

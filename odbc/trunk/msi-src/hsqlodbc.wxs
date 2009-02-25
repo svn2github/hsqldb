@@ -66,51 +66,206 @@
                    SourceFile="../dist/hsqlodbc.msm" />
           </Directory>
           <Directory Id="DOCSDIR" Name="docs">
-            <Component Id="docs" Guid="91C8184E-C164-31A0-A594-545B3E46D4D6">
-              <File Id="docs.index_html" Name="index.html"
-                    DiskId="1" Source="../doc/index.html" KeyPath="yes" />
-              <File Id="docs.config_html" Name="config.html"
-                    DiskId="1" Source="../doc/config.html" />
-              <File Id="docs.config_opt_html" Name="config-opt.html"
-                    DiskId="1" Source="../doc/config-opt.html" />
-              <File Id="docs.faq_html" Name="faq.html"
-                    DiskId="1" Source="../doc/faq.html" />
-              <File Id="docs.howto_accesslo_html" Name="howto-accesslo.html"
-                    DiskId="1" Source="../doc/howto-accesslo.html" />
-              <File Id="docs.howto_accessvba_html" Name="howto-accessvba.html"
-                    DiskId="1" Source="../doc/howto-accessvba.html" />
-              <File Id="docs.howto_bo_html" Name="howto-bo.html"
-                    DiskId="1" Source="../doc/howto-bo.html" />
-              <File Id="docs.howto_ch_html" Name="howto-ch.html"
-                    DiskId="1" Source="../doc/howto-ch.html" />
-              <File Id="docs.howto_csharp_html" Name="howto-csharp.html"
-                    DiskId="1" Source="../doc/howto-csharp.html" />
-              <File Id="docs.howto_vb_html" Name="howto-vb.html"
-                    DiskId="1" Source="../doc/howto-vb.html" />
-              <File Id="docs.howto_vblo_html" Name="howto-vblo.html"
-                    DiskId="1" Source="../doc/howto-vblo.html" />
-              <File Id="docs.release_html" Name="release.html"
-                    DiskId="1" Source="../doc/release.html" />
-              <File Id="docs.unix_compilation_html"
-                    Name="unix-compilation.html"
-                    DiskId="1" Source="../doc/unix-compilation.html" />
-              <File Id="docs.win32_compilation_html"
-                    Name="win32-compilation.html"
-                    DiskId="1" Source="../doc/win32-compilation.html" />
-              <File Id="docs.notice_txt" Name="notice.txt"
-                    DiskId="1" Source="../doc/notice.txt" />
+            <Directory Id="DOCIMGDIR" Name="images">
+              <Directory Id="DOCIMGDBDIR" Name="db">
+                <Directory Id="DOCIMGCALLOUTSDIR" Name="callouts">
+                  <Component Id="docimgcalloutsdir_comp"
+                             Guid="3C06E8C0-02DC-11DE-8A3F-001D7DE9C585">
+                    <File Name="1.gif"
+                          Source="../doc/images/db/callouts/1.gif" />
+                    <File Name="1.png"
+                          Source="../doc/images/db/callouts/1.png" />
+                    <File Name="2.gif"
+                          Source="../doc/images/db/callouts/2.gif" />
+                    <File Name="2.png"
+                          Source="../doc/images/db/callouts/2.png" />
+                    <File Name="3.gif"
+                          Source="../doc/images/db/callouts/3.gif" />
+                    <File Name="3.png"
+                          Source="../doc/images/db/callouts/3.png" />
+                    <File Name="4.gif"
+                          Source="../doc/images/db/callouts/4.gif" />
+                    <File Name="4.png"
+                          Source="../doc/images/db/callouts/4.png" />
+                    <File Name="5.gif"
+                          Source="../doc/images/db/callouts/5.gif" />
+                    <File Name="5.png"
+                          Source="../doc/images/db/callouts/5.png" />
+                    <File Name="6.gif"
+                          Source="../doc/images/db/callouts/6.gif" />
+                    <File Name="6.png"
+                          Source="../doc/images/db/callouts/6.png" />
+                    <File Name="7.gif"
+                          Source="../doc/images/db/callouts/7.gif" />
+                    <File Name="7.png"
+                          Source="../doc/images/db/callouts/7.png" />
+                    <File Name="8.gif"
+                          Source="../doc/images/db/callouts/8.gif" />
+                    <File Name="8.png"
+                          Source="../doc/images/db/callouts/8.png" />
+                    <File Name="9.gif"
+                          Source="../doc/images/db/callouts/9.gif" />
+                    <File Name="9.png"
+                          Source="../doc/images/db/callouts/9.png" />
+                    <File Name="10.gif"
+                          Source="../doc/images/db/callouts/10.gif" />
+                    <File Name="10.png"
+                          Source="../doc/images/db/callouts/10.png" />
+                    <File Name="11.gif"
+                          Source="../doc/images/db/callouts/11.gif" />
+                    <File Name="11.png"
+                          Source="../doc/images/db/callouts/11.png" />
+                    <File Name="12.gif"
+                          Source="../doc/images/db/callouts/12.gif" />
+                    <File Name="12.png"
+                          Source="../doc/images/db/callouts/12.png" />
+                    <File Name="13.gif"
+                          Source="../doc/images/db/callouts/13.gif" />
+                    <File Name="13.png"
+                          Source="../doc/images/db/callouts/13.png" />
+                    <File Name="14.gif"
+                          Source="../doc/images/db/callouts/14.gif" />
+                    <File Name="14.png"
+                          Source="../doc/images/db/callouts/14.png" />
+                    <File Name="15.gif"
+                          Source="../doc/images/db/callouts/15.gif" />
+                    <File Name="15.png"
+                          Source="../doc/images/db/callouts/15.png" />
+                  </Component>
+                </Directory>
+                <Component Id="docimgdbdir_comp"
+                           Guid="4F4FE3F0-02DC-11DE-9A7F-001D7DE9C585">
+                  <File Name="annot-close.png"
+                        Source="../doc/images/db/annot-close.png" />
+                  <File Name="annot-open.png"
+                        Source="../doc/images/db/annot-open.png" />
+                  <File Name="blank.png"
+                        Source="../doc/images/db/blank.png" />
+                  <File Name="caution.gif"
+                        Source="../doc/images/db/caution.gif" />
+                  <File Name="caution.Png"
+                        Source="../doc/images/db/caution.png" />
+                  <File Name="draft.png"
+                        Source="../doc/images/db/draft.png" />
+                  <File Name="home.gif"
+                        Source="../doc/images/db/home.gif" />
+                  <File Name="home.png"
+                        Source="../doc/images/db/home.png" />
+                  <File Name="important.gif"
+                        Source="../doc/images/db/important.gif" />
+                  <File Name="important.png"
+                        Source="../doc/images/db/important.png" />
+                  <File Name="next.gif"
+                        Source="../doc/images/db/next.gif" />
+                  <File Name="next.png"
+                        Source="../doc/images/db/next.png" />
+                  <File Name="note.png"
+                        Source="../doc/images/db/note.png" />
+                  <File Name="note.gif"
+                        Source="../doc/images/db/note.gif" />
+                  <File Name="prev.png"
+                        Source="../doc/images/db/prev.png" />
+                  <File Name="prev.gif"
+                        Source="../doc/images/db/prev.gif" />
+                  <File Name="tip.png"
+                        Source="../doc/images/db/tip.png" />
+                  <File Name="tip.gif"
+                        Source="../doc/images/db/tip.gif" />
+                  <File Name="toc-blank.png"
+                        Source="../doc/images/db/toc-blank.png" />
+                  <File Name="toc-minus.png"
+                        Source="../doc/images/db/toc-minus.png" />
+                  <File Name="toc-plus.png"
+                        Source="../doc/images/db/toc-plus.png" />
+                  <File Name="up.gif"
+                        Source="../doc/images/db/up.gif" />
+                  <File Name="up.png"
+                        Source="../doc/images/db/up.png" />
+                  <File Name="warning.gif"
+                        Source="../doc/images/db/warning.gif" />
+                  <File Name="warning.png"
+                        Source="../doc/images/db/warning.png" />
+                </Component>
+              </Directory>  <!-- End DOCIMGDBDIR db -->
+            </Directory>  <!-- End DOCIMGDIR images -->
+            <Directory Id="GUIDEDIR" Name="hsqlodbc">
+              <Directory Id="GUIDEIMGDIR" Name="images">
+                <Component Id="guideimgdir_comp"
+                           Guid="E389CA20-02E8-11DE-B3D6-001D7DE9C585">
+                  <File Name="odbcsetup1.png"
+                        Source="../doc/hsqlodbc/images/odbcsetup1.png" />
+                  <File Name="odbcsetup2.png"
+                        Source="../doc/hsqlodbc/images/odbcsetup2.png" />
+                  <File Name="odbcsetup3.png"
+                        Source="../doc/hsqlodbc/images/odbcsetup3.png" />
+                  <File Name="odbcsetup4.png"
+                        Source="../doc/hsqlodbc/images/odbcsetup4.png" />
+                  <File Name="odbcsetup5.png"
+                        Source="../doc/hsqlodbc/images/odbcsetup5.png" />
+                </Component>
+              </Directory>  <!-- End GUIDEIMGDIR images -->
+              <Component Id="guidedir_comp"
+                         Guid="16C116E0-02DB-11DE-9F03-001D7DE9C585">
+                <File Id="guide_html" Name="index.html" KeyPath="yes"
+                      Source="../doc/hsqlodbc/index.html">
+                  <Shortcut Id="guide_html" Directory="SMDir" Advertise="yes"
+                            Name="HTML User Guide" Show="normal" />
+                </File>
+                <File Name="book-ind.html"
+                      Source="../doc/hsqlodbc/book-ind.html" />
+                <File Name="book-pref.html"
+                      Source="../doc/hsqlodbc/book-pref.html" />
+                <File Name="codesample-app.html"
+                      Source="../doc/hsqlodbc/codesample-app.html" />
+                <File Name="hsqlodbc.html"
+                      Source="../doc/hsqlodbc/hsqlodbc.html" />
+                <File Name="settings-app.html"
+                      Source="../doc/hsqlodbc/settings-app.html" />
+                <File Name="settings-chapt.html"
+                      Source="../doc/hsqlodbc/settings-chapt.html" />
+                <File Name="unix-chapt.html"
+                      Source="../doc/hsqlodbc/unix-chapt.html" />
+                <File Name="windows-chapt.html"
+                      Source="../doc/hsqlodbc/windows-chapt.html" />
 
-              <Shortcut Id="docs.index_html" Directory="SMDir"
-                        Name="Documentation index"
-                        Description="hsqlodbc documentation, HOWTOs and FAQs"
-                        Advertise="yes" Show="normal" />
+              </Component>
+              <Component Id="pdf_comp"
+                         Guid="014B3880-02FA-11DE-8EDD-001D7DE9C585">
+                <File Id="guide_pdf" Name="hsqlodbc.pdf" KeyPath="yes"
+                      Source="../doc/hsqlodbc/hsqlodbc.pdf">
+                  <Shortcut Id="guide_pdf" Directory="SMDir" Advertise="yes"
+                            Name="PDF  User Guide" Show="normal" />
+                </File>
+              </Component>
+            </Directory> <!-- End GUIDEDIR hsqlodbc -->
+            <Directory Id="VERBATIMDIR" Name="verbatim">
+              <Directory Id="VERBATIMSAMPLEDIR" Name="sample">
+                <Component Id="verbatimsampledir_comp"
+                           Guid="D7086260-02E9-11DE-8541-001D7DE9C585">
+                  <File Name="sample.c"
+                        Source="../doc/verbatim/sample/sample.c" />
+                  <File Name="sample.php"
+                        Source="../doc/verbatim/sample/sample.php" />
+                  <File Name="sample.py"
+                        Source="../doc/verbatim/sample/sample.py" />
+                  <File Name="sample.pl"
+                        Source="../doc/verbatim/sample/sample.pl" />
+                </Component>
+              </Directory>
+            </Directory>
+            <Component Id="docsdir_comp"
+                       Guid="91C8184E-C164-31A0-A594-545B3E46D4D6">
+              <File Name="notice.txt" Source="../doc/notice.txt" />
+              <File Name="license.txt" Source="../doc/license.txt" />
+              <File Name="docbook.css" Source="../doc/docbook.css" />
             </Component>
-          </Directory>
+          </Directory> <!-- end DOCSDIR docs -->
         </Directory>
       </Directory>
       <Directory Id="ProgramMenuFolder" Name="." SourceName="Programs">
-        <Directory Id="SMDir" Name="hsqlodbc">
-          <Component Id="smdir" Guid="7F26DF6E-A06C-36AE-9792-EF5D5276BB17">
+        <Directory Id="SMDir" Name="HyperSQL ODBC Driver">
+          <Component Id="smdir_comp"
+                     Guid="7F26DF6E-A06C-36AE-9792-EF5D5276BB17">
             <RegistryValue KeyPath="yes" Type="string" Root="HKCU"
                            Key="Software\hsqlodbc\SMDir Created" Value="y" />
             <RemoveFolder Id="SMDir" On="uninstall" />
@@ -123,23 +278,30 @@
              Description="hsqlodbc - The HyperSQL ODBC Driver"
              ConfigurableDirectory="BASEDIR" Display="expand">
       <Feature Id="binaries" Title="ODBC Driver" Level="1"
-               Description="The ODBC driver and supporting libraries.">
+       Description="Unicode and ANSI ODBC drivers and supporting libraries.">
         <ComponentRef Id="registration" />
         <MergeRef Id="hsqlodbcm" />
         <MergeRef Id="msvcr90dll" />
         <MergeRef Id="msvcr90policy" />
       </Feature>
 
-      <Feature Id="docs" Title="Documentation" Level="4"
-               Description="Documentation, FAQs and HOWTOs.">
-        <ComponentRef Id="smdir" />
-        <ComponentRef Id="docs" />
+      <Feature Id="docs" Title="Documentation" Level="3"
+               Description="Documentation.">
+        <ComponentRef Id="smdir_comp" />
+        <ComponentRef Id="pdf_comp" />
+        <ComponentRef Id="docsdir_comp" />
+        <ComponentRef Id="docimgcalloutsdir_comp" />
+        <ComponentRef Id="docimgdbdir_comp" />
+        <ComponentRef Id="guideimgdir_comp" />
+        <ComponentRef Id="guidedir_comp" />
+        <ComponentRef Id="verbatimsampledir_comp" />
       </Feature>
     </Feature>
     <Media Id="1" EmbedCab="yes" Cabinet="hsqlodbc.cab"/>
 
     <Property Id="ALLUSERS">2</Property>
     <Property Id="WIXUI_INSTALLDIR" Value="BASEDIR" />
+    <Property Id="INSTALLLEVEL" Value="3" />
 
      <!-- UI -->
      <UIRef Id="WixUI_FeatureTree" />

@@ -9,8 +9,29 @@ Copyright (C) 1998 - 2008   The PostgreSQL Global Development Group
 Multibyte support was added by Sankyo Unyu Service, (C) 2001.
 
 The code contained in this library is based on code written by
-Christian Czezatke and Dan McGuirk, (C) 1996.
+Christian Czezatke and Dan McGuirk (C) 1996, and later maintained by
+Julie Ann Case.  (It was probably originally written to support PostgreSQL).
 
+As part of a commercial research project, the developers at Insight
+Distributions System overhauled the driver. Their goal was to make the driver
+commercially viable. In keeping with the spirit with which the original source
+was acquired, Insight published their work for the public. Some time later and
+after some discussion with members of the PostgreSQL organization, psqlODBC
+was adapted as the part of the PostgreSQL source distribution. The driver
+continued to be maintained by Byron Nikolaidis, the developer at Insight who
+overhauled the driver for some time.
+
+The PostgreSQL project took over maintenance of the driver at this point, and
+continue to maintain it as "psqlODBC".  The HyperSQL development team branched
+the code in early 2009 and our branch "is" the HyperSQL ODBC Driver.  In
+conclusion, the HyperSQL ODBC Driver, hsqlodbc, is a branch off of psqlODBC
+(PostgreSQL's ODBC driver), and the two are significantly different, as they
+support database servers with are significantly different.
+
+The HyperSQL ODBC driver has benefitted by several of the excellent Gnu
+development tools, and from OpenSSL, Kerberos, unixoDBC, and WiX.  We hereby
+recognize the GNU Project, the OpenSSL Project, MIT, the unixODBC Project, and
+the WiX developers.
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Library General Public
