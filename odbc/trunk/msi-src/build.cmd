@@ -42,7 +42,7 @@ if not exist "../src/Release/hsqlodbcu.dll" (
 )
 
 java -version > nul
-IF ERRORLEVEL 1 (
+if errorlevel 1 (
     echo You must have Java in your search path
     exit /b 1
 )
@@ -60,13 +60,13 @@ if errorlevel 1 exit /b 1
 echo Building hsqlodbc merge module v. %PACKAGE_VERSION%...
 
 candle -nologo -dVERSION=%PACKAGE_VERSION% -dPROGRAMFILES="%ProgramFiles%" -dSYSTEM32DIR="%SystemRoot%/system32" -dNEW_GUID="%NEW_GUID%" hsqlodbc-mm.wxs
-IF ERRORLEVEL 1 (
+if errorlevel 1 (
     echo Candle execution for Merge Module failed
     exit /b 1
 )
 
-light -nologo -o ..\dist\hsqlodbc.msm hsqlodbc-mm.wixobj
-IF ERRORLEVEL 1 (
+light -nologo -o ..\dist\hsqlodbc-%PACKAGE_VERSION%.msm hsqlodbc-mm.wixobj
+if errorlevel 1 (
     echo Light execution for Merge Module failed
     exit /b 1
 )
@@ -78,13 +78,13 @@ if not exist "../doc/hsqlodbc/hsqlodbc.html" (
 echo Building hsqlodbc MSI database v. %PACKAGE_VERSION% for the MM...
 
 candle -nologo -dVERSION=%PACKAGE_VERSION% -dPROGRAMFILES="%ProgramFiles%" -dPROGRAMCOM="%ProgramFiles%/Common Files/Merge Modules" hsqlodbc.wxs
-IF ERRORLEVEL 1 (
+if errorlevel 1 (
     echo Candle execution for MSI failed
     exit /b 1
 )
 
-light -nologo -o ..\dist\hsqlodbc.msi -ext WixUIExtension -cultures:en-us -sw1076 -sw1055 -sw1056 hsqlodbc.wixobj
-IF ERRORLEVEL 1 (
+light -nologo -o ..\dist\hsqlodbc-%PACKAGE_VERSION%.msi -ext WixUIExtension -cultures:en-us -sw1076 -sw1055 -sw1056 hsqlodbc.wixobj
+if errorlevel 1 (
     echo Light execution for MSI failed
     exit /b 1
 )

@@ -106,4 +106,5 @@ BUILDING MSI INSTALLER
 
     The output *.msi file gets written to the peer "dist" directory.
 
-    It is alright to rename the *.msi output file.
+
+Application integrators can use the generated hsqlodbc-mm.

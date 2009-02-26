@@ -63,7 +63,7 @@
                              Value="$(var.VERSION)" />
             </Component>
             <Merge Id="hsqlodbcm" DiskId="1" Language="1033"
-                   SourceFile="../dist/hsqlodbc.msm" />
+                   SourceFile="../dist/hsqlodbc-$(var.VERSION).msm" />
           </Directory>
           <Directory Id="DOCSDIR" Name="docs">
             <Directory Id="DOCIMGDIR" Name="images">
