@@ -60,14 +60,5 @@ CUSTOMIZED BUILDS
     format.  (I haven't worked with this yet.  TODO:  Update this after work
     on source distros).
 
-**** IMPORTANT RUNTIME TIPS ****
 
-The unixODBC graphical program "ODBCConfig" just does not work for any driver
-I have ever tried to add.  If the same applies to you, you will need to edit
-the files
-
-    /etc/odbc.ini      Driver definitions
-    /etc/odbcinst.ini  Global DSN definitions
-    $HOME/.odbc.ini    Personal DSN definitions
-    
-See the RUNTIME SETTINGS section in the notes.txt file.
+See the User Guide for runtime configuration tips.

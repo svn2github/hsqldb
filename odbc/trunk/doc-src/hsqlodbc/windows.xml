@@ -67,9 +67,52 @@
     <simpara>
       See the <link xlink:href="#settings-chapt" endterm="settings-title"/>
       chapter about individual driver runtime settings.
+    </simpara> <simpara>
+      Our Windows binary distributions include MSI installers.
+      This page assumes that you are installing with our MSI installer.
+      If you get your HyperSQL ODBC driver with another application, much of
+      what is written here may apply to your distribution.
+      Our driver is designed to facilitate incorporation into installers for
+      other products as a <emphasis>Merge Module</emphasis>.
     </simpara>
+  </section>
 
-    <simpara>etc....
-      </simpara>
+  <section xml:id="windows_replace-sect">
+    <title>Replacing Installed Driver</title>
+    <simpara>
+      The "Date" column in the ODBC Data Source Administrator shows the driver
+       install date.
+    </simpara> <simpara>
+      Can uninstall by rerunning the same *.msi used to install; or run
+      <guilabel>Control Panel</guilabel> /
+      <guilabel>Programs and Features</guilabel> (Vista)
+      <guilabel>Control Panel</guilabel> /
+      <guilabel>Add/Remove Programs</guilabel> (other)
+    </simpara> <simpara>
+      Fortunately, DSNs for removed drivers are retained!
+      Uh... unfortunately, DSNs can only be removed or edited if a compatible
+      driver is not currently installed.  Therefore if you are not replacing
+      a driver with a compatible one, you have better remove your DSNs first.
+    </simpara> <simpara>
+      I see no benefit to using our upgrade batch script, which just passes
+      params to "msiexec".
+    </simpara> <simpara>
+      Just make sure no "running" programs are using the driver, and you do not
+       need to reboot in order to pick up a newly installed driver.
+      Use Control Panel / Administrative Tools / Data Sources (ODBC) to
+      configure your DSNs.  (This is the Windows ODBC Data Source
+      Administrator).
+    </simpara> <simpara>
+      ODBC does not allow an empty string for a DSM database name.  Therefore,
+      you must specify "/" (without the quotes) to indicate the default
+      database.  This setting is on the main Configure page for the DSN.
+    </simpara> <simpara>
+      You may want to turn on one or more of the log files at the Datasource
+      or Global level of the DSN Configure screen.
+    </simpara> <simpara>
+      The logging destination files shown in the Data Source Administrator are
+      wrong, at least in some common cases.  The MyLog file gets written in
+      your home directory, if you have one.
+    </simpara>
   </section>
 </chapter>

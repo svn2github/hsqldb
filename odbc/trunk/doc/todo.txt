@@ -8,9 +8,6 @@ Track down bytea as LO setting.  Understand then eliminate it.
 
 Add screen shots of both Windows DSN option screens.
 
-Pull remaining pieces of *build*.html files into my *build*.txt files so can
-remove the former.
-
 Find out what the LINKMT and MT build settings are for.  If just for Kerberos
 support, wipe it all.
 
@@ -22,6 +19,11 @@ so, wipe all traces of these too if we dump MSDTC.
 Streamline the win*.mak scripts by eliminating obsoleted settings.
 
 Test the "make install" and "make dist" targets.
+
+Test where Yes/No vs. 0/1 must be used.
+
+Change max_varchar_size == 0 behavior to mean "unlimited"; then change the
+default of MaxVarchar from 255 to 0.
 
 --------------
 

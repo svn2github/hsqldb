@@ -52,9 +52,29 @@
     <simpara>
       See the <link xlink:href="#settings-chapt" endterm="settings-title"/>
       chapter about individual driver runtime settings.
+    </simpara> <simpara>
+      Our binary distributions contain drivers that work with unixODBC, and
+      that is what this page assumes you are using.
+      You can build drivers that work with iodbc instead.  If you do that,
+      see the iodbc docs about how to manage installed drivers and DSN
+      definitions.
     </simpara>
 
-    <simpara>unixODBC, etc....
-      </simpara>
+    <para>
+      The unixODBC graphical program "ODBCConfig" just does not work for any
+      driver I have ever tried to add.
+      If the same applies to you, you will need to edit the files
+      <itemizedlist>
+        <listitem><simpara>
+          <filename>/etc/odbc.ini</filename>      Driver definitions
+        </simpara></listitem>
+        <listitem><simpara>
+          <filename>/etc/odbcinst.ini</filename>  Global DSN definitions
+        </simpara></listitem>
+        <listitem><simpara>
+          <filename>$HOME/.odbc.ini</filename>    Personal DSN definitions
+        </simpara></listitem>
+      </itemizedlist>
+    </para>
   </section>
 </chapter>

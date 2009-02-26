@@ -1,46 +1,8 @@
 $Id$
 
-RUNTIME SETTINGS
-
-ODBC does not allow an empty string for a DSM database name.  Therefore,
-you must specify DSN database name of "/" (without the quotes) to indicate
-the default database
-
-
-(The settings marked with * below are on by default).
-
-Disable
-
-    RowVersioning: No.
-    Deprecated because Implementation is Postgresql-specific.
-    Fred may re-implement.
-
-Enable
-
-    UniqueIndex*: 1
-    (just a guess)  Dialog code says default is "1   /* don't recognize */"
-    Seems to be saying that the default is on and it is off.
-
-Special
-
-    TextAsLongVarchar  0  Currently unused.  We may use this to switch some
-    HyperSQL data type to LongVarchar to satisfy some client programs.
-
-    UnknownSizes may be useful until we start passing column precision/sizes
-    from the server.  After that, we don't want this setting.  Default -1???
-
-    MaxVarcharSize seems to only be desirable as a client app idiocy workaround.
-
-    UpdateableCursors  0/1.  This is pseudo client cursor caching.
-     I think Fred is going to implement the real thing.
-
-    ByteaAsLongVarBinary: 0.  ?  Don't have LOs working yet.
-
     FakeOidIndex: Yes|No
     ShowOidColumn: Yes|No
     I don't know much about OID/Rowid usage in ODBC.
-
-    CancelAsFreeStmt.  ? Undocumented.
 
     [Parse, not shown in Gui:  It's possible that Fred may want to implement
     this]
@@ -97,8 +59,3 @@ Settings
 
 We have SSL disabled for now, because it was dependent upon SSPI and
 libpq, and we want to use neither of them.
-
-
-UUIDs for Wix were generated using the perl module Data::UUID, with
-namespace "hsqlodbc" and "name" identifying the object being named,
-like "hsqlodbc_files" or "product".

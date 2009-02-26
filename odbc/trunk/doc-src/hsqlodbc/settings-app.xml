@@ -46,152 +46,191 @@
 
   <table>
     <title>Settings List</title>
-    <tgroup cols="3">
+    <tgroup cols="4">
       <thead><row>
         <entry>Keyword</entry>
         <entry>Abbrev.</entry>
+        <entry>Default Val.</entry>
         <entry>Purpose</entry>
       </row></thead>
       <tbody>
         <row>
           <entry>Description</entry>
           <entry>N/A</entry>
+          <entry></entry>
           <entry>Data source description</entry>
         </row>
         <row>
           <entry>Servername</entry>
           <entry>N/A</entry>
+          <entry>[required]</entry>
           <entry>Name of Server</entry>
         </row>
         <row>
           <entry>Port</entry>
           <entry>N/A</entry>
+          <entry>9001</entry>
           <entry>HyperSQL Server Listen Port</entry>
         </row>
         <row>
           <entry>Username</entry>
           <entry>N/A</entry>
+          <entry>[required]</entry>
           <entry>User Name</entry>
         </row>
         <row>
           <entry>Password</entry>
           <entry>N/A</entry>
+          <entry>[required]</entry>
           <entry>Password</entry>
         </row>
         <row>
           <entry>Debug</entry>
           <entry>B2</entry>
+          <entry>0</entry>
           <entry>MyLog logging level</entry>
         </row>
         <row>
           <entry>Fetch</entry>
           <entry>A7</entry>
-          <entry>Fetch Max Count</entry>
+          <entry>100</entry>
+          <entry>Fetch Max Count
+            <remark>Test to test if this applies to EXECDIRECT
+              and/or prepared queries</remark>
+          </entry>
         </row>
         <row>
           <entry>Socket</entry>
           <entry>A8</entry>
+          <entry>4096</entry>
           <entry>Socket buffer size</entry>
         </row>
         <row>
           <entry>ReadOnly</entry>
           <entry>A0</entry>
+          <entry>No/0</entry>
           <entry>Read Only</entry>
         </row>
         <row>
           <entry>CommLog</entry>
           <entry>B3</entry>
+          <entry>0</entry>
           <entry>Log communications to log file</entry>
         </row>
         <row>
           <entry>UniqueIndex</entry>
           <entry>N/A</entry>
+          <entry>1</entry>
           <entry>Recognize unique indexes</entry>
         </row>
         <row>
           <entry>UnknownSizes</entry>
           <entry>A9</entry>
+          <entry>0 [= max prec. for type]</entry>
           <entry>Unknown result set sizes</entry>
         </row>
         <row>
           <entry>CancelAsFreeStmt</entry>
           <entry>C1</entry>
+          <entry>0</entry>
           <entry>Cancel as FreeStmt</entry>
         </row>
+        <!--  We have no Text type.
+              Keeping the slot to config some other supported data type.
         <row>
           <entry>TextAsLongVarchar</entry>
           <entry>B7</entry>
+          <entry>0</entry>
           <entry>Text as LongVarchar</entry>
         </row>
+        -->
         <row>
           <entry>UnknownsAsLongVarchar</entry>
           <entry>B8</entry>
+          <entry>0</entry>
           <entry>Unknowns as LongVarchar</entry>
         </row>
         <row>
           <entry>BoolsAsChar</entry>
           <entry>B9</entry>
+          <entry>0</entry>
           <entry>Bools as Char</entry>
         </row>
         <row>
           <entry>MaxVarcharSize</entry>
           <entry>B0</entry>
-          <entry>Max Varchar size</entry>
+          <entry>255</entry>
+          <entry>Max Varchar size.
+            Value of 0 will break everything.
+            We will be changing 0 to mean <emphasis>unlimited</emphasis> and
+            will then change the default to 0.
+          </entry>
         </row>
         <row>
           <entry>MaxLongVarcharSize</entry>
           <entry>B1</entry>
+          <entry>8190</entry>
           <entry>Max LongVarchar size</entry>
         </row>
         <row>
           <entry>RowVersioning</entry>
           <entry>A4</entry>
+          <entry>0</entry>
           <entry>Row Versioning</entry>
         </row>
         <row>
           <entry>ShowSystemTables</entry>
           <entry>A5</entry>
+          <entry>0</entry>
           <entry>Show System Tables</entry>
         </row>
         <row>
           <entry>DisallowPremature</entry>
           <entry>C3</entry>
+          <entry>0</entry>
           <entry>Disallow Premature</entry>
         </row>
         <row>
           <entry>UpdatableCursors</entry>
           <entry>C4</entry>
+          <entry>0</entry>
           <entry>Updatable Cursors</entry>
         </row>
         <row>
           <entry>LFConversion</entry>
           <entry>C5</entry>
+          <entry>1 Windows, 0 UNIX</entry>
           <entry>LF &lt;-&gt; CR/LF conversion</entry>
         </row>
         <row>
-          <entry>TureIsMinus1</entry>
+          <entry>TrueIsMinus1</entry>
           <entry>C6</entry>
+          <entry>0</entry>
           <entry>True is -1</entry>
         </row>
         <row>
           <entry>BI</entry>
           <entry>N/A</entry>
-          <entry>Datatype to report BIGINT coluns as</entry>
+          <entry>0</entry>
+          <entry>Datatype to report BIGINT columns as</entry>
         </row>
         <row>
           <entry>LowerCaseIdentifier</entry>
           <entry>C9</entry>
+          <entry>0</entry>
           <entry>Lower case identifier</entry>
         </row>
         <row>
           <entry>SSLmode</entry>
           <entry>CA</entry>
+          <entry>disable</entry>
           <entry>SSL mode</entry>
         </row>
         <row>
           <entry>AB</entry>
           <entry>N/A</entry>
-          <entry>Extra options</entry>
+          <entry></entry>
+          <entry>Connection string suffix options</entry>
         </row>
       </tbody>
     </tgroup>
