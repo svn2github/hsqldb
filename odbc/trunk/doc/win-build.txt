@@ -20,7 +20,8 @@ nmake for now.
             the necessary server-side support in the HyperSQL Engine.
 
 * Notice *  I do not have access to a 64 bit Windows development system, so
-            the information about 64-bit builds is untested.
+            the information about 64-bit builds and my considerable edits to
+            win64.mak are untested.
 
 ONE-TIME SETUP FOR DLL BUILDING
 
@@ -59,30 +60,26 @@ BUILDING driver DLLs
 
     Edit "src/configure.ac" and change the 2nd parameter to AC_INIT to your
     desired version number.  IMPORTANT:  You must use 4-integer dotted
-    notation!  Don't expect things to work if you do not.
+    notation with no extra white space!  Don't expect things to work if you
+    do not.
 
     To make the Unicode DLL (better ODBC support):
-        nmake /f win32.mak CFG=Release ALL
+        nmake /f win32.mak
     To make the ANSI DLL (required for some older/unmaintained/bad clients):
-        nmake /f win32.mak ANSI_VERSION=yes CFG=Release ALL
+        nmake /f win32.mak DRIVER_VARIANT=ansi
 
     Obviously, substitute "win64.mak" for 64-bit systems.
 
-    Can use target "CLEAN" instead of "ALL, for the obvious purpose.
-    Can use CFG of "Debug" instead of "Release" for the obvious purpose.
+    Run "nmake /f win32.mak HELP" (or same with win64.mak) to see the other
+    available targets (like "CLEAN"), and several available build settings.
+    MSDTC is for transactions spanning multiple data sources, just like Java's
+     XA JDBC features.  MSDTC is required for building merge modules or msi's.
 
-    The output DLLs get written to directories "Release" and
-    "MultibyteRelease" ("src/Release" and "src/MultibyteRelease" from the
-    project home directory).  This location will be changing.
+    The output, including the output DLLs, get written to subdirectories of
+    "build" (which is a peer directory to "src").
 
     BEWARE!!!:  If nmake fails, do not expect the real failure details to
      appear near where it aborts.  You must examine all of the nmake output.
-
-    I don't know much about MSDTC, but according to conflicting clues in the
-    psqlodbc project, it is used for builds with pre-v.6.0 VC++, and can be
-    enabled manually with nmake parameter "MSDTC=yes".  (If it works without
-    it, then why?...).  TODO:  Test whether MSDTC is ever useful and remove
-    all traces of it if answer negative.
 
 
 BUILDING MSI INSTALLER
@@ -94,17 +91,21 @@ BUILDING MSI INSTALLER
     Put the Wix program's bin directory into your search path.
 
     Run the nmake commands above for both the Unicode and ANSI DLLs.
-    Then run the make script in the "msi-src" directory.
+    Then run the build script in the "msi-src" directory, specifying the
+    platform.
 
         cd src
-        nmake /f win32.mak CFG=Release ALL
-        nmake /f win32.mak ANSI_VERSION=yes CFG=Release ALL
+        nmake /f win32.mak
+        nmake /f win32.mak DRIVER_VARIANT=ansi
         cd ..\msi-src
-        build
+        build win32
 
-    Use the "win64.mak" file to do a 64-bit build.
+    If you use TARGETENV=debug for your nmake, then you need to set env.
+    var DEBUG (like "setenv DEBUG=true") before running the MSI build.
+
+    Change the 32's to 64's for a 64 bit system build.
 
     The output *.msi file gets written to the peer "dist" directory.
 
-
-Application integrators can use the generated hsqlodbc-mm.
+    Application integrators can use the generated *.msm file which gets built
+    by the same procedure.

@@ -27,6 +27,10 @@
     License along with this library; if not, write to the
     Free Foundation, Inc., 51 Franklin Street, Fifth Floor,
     Boston, MA  02110-1301  USA
+
+
+    It looks like this file requires a MSDTC build, since it bundles
+    MSDTC support files.
 -->
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Module Id="hsqlodbc" Version="$(var.VERSION)" Language="1033">
@@ -53,15 +57,15 @@
       <Directory Id="BINDIR" Name=".">
         <Component Id="hsqlodbc_files" Guid="DA8F2D4A-1A56-3FCF-A80F-CE7AAAC061C2">
           <File Id="hsqlodbca_dll" Name="hsqlodbca.dll"
-                Source="../src/MultibyteRelease/hsqlodbca.dll" />
+                Source="$(var.ANSI_DIR)/hsqlodbca.dll" />
           <File Id="hsqlodbcu_dll" Name="hsqlodbcu.dll"
-                Source="../src/Release/hsqlodbcu.dll" />
+                Source="$(var.UNICODE_DIR)/hsqlodbcu.dll" />
           <File Id="pgxalib_dll" Name="pgxalib.dll"
-                Source="../src/Release/pgxalib.dll" />
+                Source="$(var.UNICODE_DIR)/pgxalib.dll" />
           <File Id="pgenlist_dll" Name="pgenlist.dll"
-                Source="../src/Release/pgenlist.dll" />
+                Source="$(var.UNICODE_DIR)/pgenlist.dll" />
           <File Id="pgenlista_dll" Name="pgenlista.dll"
-                Source="../src/MultibyteRelease/pgenlista.dll" />
+                Source="$(var.ANSI_DIR)/pgenlista.dll" />
 
           <!-- Gettext
           <File Id="libintl3_dll" Name="libintl3.dll"

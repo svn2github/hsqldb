@@ -5,12 +5,10 @@
 #
 # File:         win32.mak
 #
-# Description:  32-bit Windows Build file for hsqlodbcu Unicode,
-#               and hsqlodbca ANSI versionsfile for Win32.
+# Description:  32-bit Windows Build file for hsqlodbcu Unicode driver,
+#               and hsqlodbca ANSI driver for Win32.
 #
-# Configurations: Debug, Release
-# Build Types:  ALL, CLEAN
-# Usage:        NMAKE /f win32.mak CFG=[Release | Debug] [ALL | CLEAN]
+# Run "nmake /f win32.mak HELP" to display the available targets and settings.
 #
 # Comments:     Created by Dave Page, 2001-02-12
 # Copyright (C) 1998          Insight Distribution Systems
@@ -34,17 +32,73 @@
 #   Free Foundation, Inc., 51 Franklin Street, Fifth Floor,
 #   Boston, MA  02110-1301  USA
 
-!IF "$(ANSI_VERSION)" == "yes"
-!MESSAGE Building the HyperSQL ANSI 3.0 Driver for Win32...
+!IF "$(DRIVER_VARIANT)" == "ansi"
+MAINLIB = hsqlodbca
 !ELSE
-!MESSAGE Building the HyperSQL Unicode 3.5 Driver for Win32...
+MAINLIB = hsqlodbcu
 !ENDIF
-!MESSAGE
-!IF "$(CFG)" == ""
-CFG=Release
-!MESSAGE No configuration specified. Defaulting to Release.
-!MESSAGE
+MAINDLL = $(MAINLIB).dll 
+XALIB = pgxalib 
+XADLL = $(XALIB).dll 
+
+!IF "$(LINKMT)" == ""
+LINKMT=MT
+!ENDIF
+
+!IF  "$(TARGETENV)" == "debug"
+OUTDIR=..\build\$(DRIVER_VARIANT)g_$(CPU)
+!ELSE
+OUTDIR=..\build\$(DRIVER_VARIANT)_$(CPU)
+!ENDIF
+!IF "$(LINKMT)" != "MT"
+OUTDIR = $(OUTDIR)$(LINKMT)
+!ENDIF
+OUTDIRBIN=$(OUTDIR)
+INTDIR=$(OUTDIR)
+
+ALLDLL  = "$(INTDIR)"
+!IF "$(OUTDIR)" != "$(INTDIR)"
+ALLDLL = $(ALLDLL) "$(OUTDIR)"
+!ENDIF
+ALLDLL  = $(ALLDLL) "$(OUTDIR)\$(MAINDLL)"
+
+!IF "$(MSDTC)" != "no"
+MSDTC=yes
+!ENDIF
+!IF  "$(MSDTC)" == "yes"
+ALLDLL = $(ALLDLL) "$(OUTDIR)\$(XADLL)" "$(OUTDIR)\$(DTCDLL)"
+!ENDIF
+
+!IF "$(CPU)" == ""
+CPU=win32
+!ENDIF
+!IF "$(TARGETENV)" == ""
+TARGETENV=prod
 !ENDIF 
+!IF "$(DRIVER_VARIANT)" == "ansi"
+ODBC_VERSION_MSG=ANSI driver is ODBC-3.0 compliant
+!ELSE
+ODBC_VERSION_MSG=Unicode driver is ODBC-3.5 compliant
+DRIVER_VARIANT=unicode
+!ENDIF
+
+!IF "$(DRIVER_VARIANT)" == "ansi"
+DTCLIB = pgenlista
+!ELSE
+DTCLIB = pgenlist
+!ENDIF
+DTCDLL = $(DTCLIB).dll 
+
+
+# FIRST and therefore DEFAULT target:
+ALL : BUILDMSGS GEN_CONFIG_H $(ALLDLL)
+
+BUILDMSGS:
+	@echo $(ODBC_VERSION_MSG)
+	@echo Building $(DRIVER_VARIANT) driver for $(TARGETENV) $(CPU) w/multi-thread option '$(LINKMT)'.
+
+HELP :
+	@type win_syntaxmsg.txt
 
 USE_LIBPQ=no
 USE_SSPI=no
@@ -53,39 +107,16 @@ USE_SSPI=no
 # LIBQP off, because our server does not support the Postgresql-specific
 # libpq library.
 
-!IF "$(CFG)" != "Release" && "$(CFG)" != "Debug"
-!MESSAGE Invalid configuration "$(CFG)" specified.
-!MESSAGE You can specify a configuration when running NMAKE
-!MESSAGE by defining the macro CFG on the command line. For example:
-!MESSAGE 
-!MESSAGE NMAKE /f win32.mak CFG=[Release | Debug] [ALL | CLEAN]
-!MESSAGE 
-!MESSAGE Possible choices for configuration are:
-!MESSAGE 
-!MESSAGE "Release" (Win32 Release DLL)
-!MESSAGE "Debug" (Win32 Debug DLL)
-!MESSAGE 
-!ERROR An invalid configuration was specified.
-!ENDIF 
 
-!IF "$(LINKMT)" == ""
-LINKMT=MT
-!ENDIF
-!IF "$(LINKMT)" == "MT"
-!MESSAGE Linking static Multithread library
-!ELSE
-!MESSAGE Linking dynamic Multithread library
-!ENDIF
+#!IF "$(SSL_INC)" == ""
+#SSL_INC=C:\OpenSSL\include
+#!MESSAGE Using default OpenSSL Include directory: $(SSL_INC)
+#!ENDIF
 
-!IF "$(SSL_INC)" == ""
-SSL_INC=C:\OpenSSL\include
-!MESSAGE Using default OpenSSL Include directory: $(SSL_INC)
-!ENDIF
-
-!IF "$(SSL_LIB)" == ""
-SSL_LIB=C:\OpenSSL\lib\VC
-!MESSAGE Using default OpenSSL Library directory: $(SSL_LIB)
-!ENDIF
+#!IF "$(SSL_LIB)" == ""
+#SSL_LIB=C:\OpenSSL\lib\VC
+#!MESSAGE Using default OpenSSL Library directory: $(SSL_LIB)
+#!ENDIF
 
 #SSL_DLL = "SSLEAY32.dll"
 #RESET_CRYPTO = yes
@@ -93,29 +124,20 @@ SSL_LIB=C:\OpenSSL\lib\VC
 
 ADD_DEFINES = $(ADD_DEFINES) /D NOT_USE_LIBPQ
 
-!IF "$(ANSI_VERSION)" == "yes"
-DTCLIB = pgenlista
-!ELSE
-DTCLIB = pgenlist
-!ENDIF
-DTCDLL = $(DTCLIB).dll 
-!IF "$(_NMAKE_VER)" == "6.00.9782.0"
-MSVC_VERSION=vc60
-VC07_DELAY_LOAD=
-MSDTC=no
-VC_FLAGS=/GX /YX
-!ELSE
-MSVC_VERSION=vc70
+# Seems to me to be very bad design to hard-code a product version when
+# we have no clue about what the real product version is.  Commenting out
+# in hopes that this variable is not used at all.  - blaine
+#MSVC_VERSION=vc70
+
 #!IF "$(RESET_CRYPTO)" == "yes"
 #VC07_DELAY_LOAD=$(VC07_DELAY_LOAD) /DelayLoad:libeay32.dll
 #ADD_DEFINES=$(ADD_DEFINES) /D RESET_CRYPTO_CALLBACKS
 #!ENDIF
 VC07_DELAY_LOAD=$(VC07_DELAY_LOAD) /delayLoad:$(DTCDLL) /DELAY:UNLOAD
 VC_FLAGS=/EHsc
-!ENDIF
 ADD_DEFINES = $(ADD_DEFINES) /D "DYNAMIC_LOAD"
 
-!IF "$(MSDTC)" != "no"
+!IF "$(MSDTC)" == "yes"
 ADD_DEFINES = $(ADD_DEFINES) /D "_HANDLE_ENLIST_IN_DTC_"
 !ENDIF
 !IF "$(MEMORY_DEBUG)" == "yes"
@@ -123,7 +145,7 @@ ADD_DEFINES = $(ADD_DEFINES) /D "_MEMORY_DEBUG_" /GS
 !ELSE
 ADD_DEFINES = $(ADD_DEFINES) /GS
 !ENDIF
-!IF "$(ANSI_VERSION)" == "yes"
+!IF "$(DRIVER_VARIANT)" == "ansi"
 ADD_DEFINES = $(ADD_DEFINES) /D "DBMS_NAME=\"HyperSQL ANSI\"" /D "ODBCVER=0x0350"
 !ELSE
 ADD_DEFINES = $(ADD_DEFINES) /D "UNICODE_SUPPORT" /D "ODBCVER=0x0351"
@@ -140,57 +162,11 @@ NULL=
 NULL=nul
 !ENDIF
 
-!IF "$(ANSI_VERSION)" == "yes"
-MAINLIB = hsqlodbca
-!ELSE
-MAINLIB = hsqlodbcu
-!ENDIF
-MAINDLL = $(MAINLIB).dll 
-XALIB = pgxalib 
-XADLL = $(XALIB).dll 
-
-!IF  "$(CFG)" == "Release"
-!IF  "$(ANSI_VERSION)" == "yes"
-OUTDIR=.\MultibyteRelease
-OUTDIRBIN=.\MultibyteRelease
-INTDIR=.\MultibyteRelease
-!ELSE
-OUTDIR=.\Release
-OUTDIRBIN=.\Release
-INTDIR=.\Release
-!ENDIF
-!ELSEIF  "$(CFG)" == "Debug"
-!IF  "$(ANSI_VERSION)" == "yes"
-OUTDIR=.\MultibyteDebug
-OUTDIRBIN=.\MultibyteDebug
-INTDIR=.\MultibyteDebug
-!ELSE
-OUTDIR=.\Debug
-OUTDIRBIN=.\Debug
-INTDIR=.\Debug
-!ENDIF
-!ENDIF
-!IF "$(LINKMT)" != "MT"
-OUTDIR = $(OUTDIR)$(LINKMT)
-OUTDIRBIN = $(OUTDIRBIN)$(LINKMT)
-INTDIR = $(INTDIR)$(LINKMT)
-!ENDIF
-
-ALLDLL  = "$(INTDIR)"
-!IF "$(OUTDIR)" != "$(INTDIR)"
-ALLDLL = $(ALLDLL) "$(OUTDIR)"
-!ENDIF
-ALLDLL  = $(ALLDLL) "$(OUTDIR)\$(MAINDLL)"
-
-!IF  "$(MSDTC)" != "no"
-ALLDLL = $(ALLDLL) "$(OUTDIR)\$(XADLL)" "$(OUTDIR)\$(DTCDLL)"
-!ENDIF
-
-ALL : GEN_CONFIG_H $(ALLDLL)
-
 GEN_CONFIG_H :
 	config_h > config.h
 
+# TODO:  Find out which of OUTDIR/INTDIR *.illk, *.idb, *.pdb get written
+#        to, and clean them up too.
 CLEAN :
 	-@erase "$(INTDIR)\*.obj"
 	-@erase "$(INTDIR)\*.res"
@@ -217,13 +193,13 @@ CLEAN :
 $(INTDIR)\connection.obj $(INTDIR)\psqlodbc.res: config.h
 
 CPP=cl.exe
-!IF  "$(CFG)" == "Release"
-CPP_PROJ=/nologo /$(LINKMT) /O2 /D "NDEBUG"
-!ELSEIF  "$(CFG)" == "Debug"
+!IF  "$(TARGETENV)" == "debug"
 CPP_PROJ=/nologo /$(LINKMT)d /Gm /ZI /Od /RTC1 /D "_DEBUG"
+!ELSE 
+CPP_PROJ=/nologo /$(LINKMT) /O2 /D "NDEBUG"
 !ENDIF
-CPP_PROJ=$(CPP_PROJ) /W3 $(VC_FLAGS) /I "$(SSL_INC)" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "_CRT_SECURE_NO_DEPRECATE" /D "PSQLODBC_EXPORTS" /D "WIN_MULTITHREAD_SUPPORT" $(ADD_DEFINES) /Fp"$(INTDIR)\hsqlodbc.pch" /Fo"$(INTDIR)"\ /Fd"$(INTDIR)"\ /FD
-!MESSAGE CPP_PROJ=$(CPP_PROJ)
+CPP_PROJ=$(CPP_PROJ) /W3 $(VC_FLAGS) /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "_CRT_SECURE_NO_DEPRECATE" /D "PSQLODBC_EXPORTS" /D "WIN_MULTITHREAD_SUPPORT" $(ADD_DEFINES) /Fp"$(INTDIR)\hsqlodbc.pch" /Fo"$(INTDIR)"\ /Fd"$(INTDIR)"\ /FD
+#CPP_PROJ=$(CPP_PROJ) /W3 $(VC_FLAGS) /I "$(SSL_INC)" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "_CRT_SECURE_NO_DEPRECATE" /D "PSQLODBC_EXPORTS" /D "WIN_MULTITHREAD_SUPPORT" $(ADD_DEFINES) /Fp"$(INTDIR)\hsqlodbc.pch" /Fo"$(INTDIR)"\ /Fd"$(INTDIR)"\ /FD
 .c{$(INTDIR)}.obj::
    $(CPP) @<<
    $(CPP_PROJ) /c $< 
@@ -260,7 +236,7 @@ BSC32=bscmake.exe
 MTL_PROJ=/nologo /mktyplib203 /win32 
 RSC_PROJ=/l 0x809 /d "MULTIBYTE" 
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\hsqlodbc.bsc" 
-!IF  "$(CFG)" == "Release"
+!IF  "$(TARGETENV)" == "release"
 MTL_PROJ=$(MTL_PROC) /D "NDEBUG" 
 RSC_PROJ=$(RSC_PROJ) /d "NDEBUG"
 !ELSE
@@ -271,21 +247,22 @@ BSC32_SBRS= \
 	
 LINK32=link.exe
 LIB32=lib.exe
-!IF "$(MSDTC)" != "no"
+!IF "$(MSDTC)" == "yes"
 LINK32_FLAGS=$(OUTDIR)\$(DTCLIB).lib ws2_32.lib
 !ENDIF
 LINK32_FLAGS=$(LINK32_FLAGS) kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib winmm.lib /nologo /dll /machine:I386 /def:$(DEF_FILE)
-!IF  "$(ANSI_VERSION)" == "yes"
+!IF  "$(DRIVER_VARIANT)" == "ansi"
 DEF_FILE= "hsqlodbca.def"
 !ELSE
 DEF_FILE= "hsqlodbcu.def"
 !ENDIF
-!IF  "$(CFG)" == "Release"
+!IF  "$(TARGETENV)" == "release"
 LINK32_FLAGS=$(LINK32_FLAGS) /incremental:no
 !ELSE
 LINK32_FLAGS=$(LINK32_FLAGS) /incremental:yes /debug
 !ENDIF
-LINK32_FLAGS=$(LINK32_FLAGS) $(VC07_DELAY_LOAD) /libpath:"$(SSL_LIB)"
+LINK32_FLAGS=$(LINK32_FLAGS) $(VC07_DELAY_LOAD)
+#LINK32_FLAGS=$(LINK32_FLAGS) $(VC07_DELAY_LOAD) /libpath:"$(SSL_LIB)"
 
 LINK32_OBJS= \
 	"$(INTDIR)\bind.obj" \
@@ -319,12 +296,12 @@ LINK32_OBJS= \
 	"$(INTDIR)\odbcapi30.obj" \
 	"$(INTDIR)\descriptor.obj" \
 	"$(INTDIR)\loadlib.obj" \
-!IF "$(ANSI_VERSION)" != "yes"
+!IF "$(DRIVER_VARIANT)" == "unicode"
 	"$(INTDIR)\win_unicode.obj" \
 	"$(INTDIR)\odbcapiw.obj" \
 	"$(INTDIR)\odbcapi30w.obj" \
 !ENDIF
-!IF "$(MSDTC)" != "no"
+!IF "$(MSDTC)" == "yes"
 	"$(INTDIR)\xalibname.obj" \
 !ENDIF
 !IF "$(MEMORY_DEBUG)" == "yes"

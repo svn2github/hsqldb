@@ -27,6 +27,9 @@ default of MaxVarchar from 255 to 0.
 
 --------------
 
+After implement SSL again, get rid of all occurrences of "libpq", including
+setting of and #ifdefs of NOT_USE_LIBPQ.
+
 Abort processing at
 connection.c:CC_send_query_append(), op switch for op 'Z'.
 This state is very likely to result in deadlock.

@@ -27,28 +27,54 @@ setlocal
 ::  License along with this library; if not, write to the
 ::  Free Foundation, Inc., 51 Franklin Street, Fifth Floor,
 ::  Boston, MA  02110-1301  USA
+::
+::
+::  TODO:  Figure out which step exactly generates *.wixpdb in same dir
+::  as the .msm and .msi output files.  Change to not write this to dist
+::  dir since it is not distributable.
 
 if not exist "..\src\setpversion.cmd" (
     echo 'setpversion.cmd' not present in source directory
     exit /b 1
 )
-if not exist "../src/MultibyteRelease/hsqlodbca.dll" (
-    echo 'hsqlodbca.dll' not present in MultibyteRelease directory
-    exit /b 1
+
+if (%1)==() (
+    echo SYNTAX:  build CPU_CLASS [NON_DEFAULT_MULTITHREAD_OPT]
+    echo Set env var DEBUG, to anything, to use debug build dir *g_*.
+    exit /b 0
 )
-if not exist "../src/Release/hsqlodbcu.dll" (
-    echo 'hsqlodbcu.dll' not present in Release directory
+set CPU_CLASS=%1
+shift
+if not (%1)==() (
+    set MT_OPT=%1
+    shift
+)
+if not (%1)==() (
+    echo Run with no arguments to see required invocation syntax
     exit /b 1
 )
 
-java -version > nul
+if (%DEBUG%)==() (
+    set ANSI_DIR=..\build\ansig_%CPU_CLASS%
+    set UNICODE_DIR=..\build\unicodeg_%CPU_CLASS%
+)
+if not (%DEBUG%)==() (
+    set ANSI_DIR=..\build\ansi_%CPU_CLASS%
+    set UNICODE_DIR=..\build\unicode_%CPU_CLASS%
+)
+
+if not exist "%ANSI_DIR%/hsqlodbca.dll" (
+    echo 'hsqlodbca.dll' not present in ANSI directory '%ANSI_DIR%'.
+    exit /b 1
+)
+if not exist "%UNICODE_DIR%/hsqlodbcu.dll" (
+    echo 'hsqlodbcu.dll' not present in Unicode directory '%UNICODE_DIR%'.
+    exit /b 1
+)
+
+java -version > nul 2>&1
 if errorlevel 1 (
     echo You must have Java in your search path
-    exit /b 1
-)
-
-if not (%1)==() (
-    echo This script does not take any command-line arguments
     exit /b 1
 )
 
@@ -59,13 +85,14 @@ if errorlevel 1 exit /b 1
 
 echo Building hsqlodbc merge module v. %PACKAGE_VERSION%...
 
-candle -nologo -dVERSION=%PACKAGE_VERSION% -dPROGRAMFILES="%ProgramFiles%" -dSYSTEM32DIR="%SystemRoot%/system32" -dNEW_GUID="%NEW_GUID%" hsqlodbc-mm.wxs
+candle -nologo -dVERSION=%PACKAGE_VERSION% -dPROGRAMFILES="%ProgramFiles%" -dSYSTEM32DIR="%SystemRoot%/system32" -dNEW_GUID="%NEW_GUID%" -dANSI_DIR="%ANSI_DIR%" -dUNICODE_DIR="%UNICODE_DIR%" hsqlodbc-mm.wxs
 if errorlevel 1 (
     echo Candle execution for Merge Module failed
     exit /b 1
 )
 
-light -nologo -o ..\dist\hsqlodbc-%PACKAGE_VERSION%.msm hsqlodbc-mm.wixobj
+echo light -nologo -o ..\dist\hsqlodbc-%CPU_CLASS%-%PACKAGE_VERSION%.msm hsqlodbc-mm.wixobj
+light -nologo -o ..\dist\hsqlodbc-%CPU_CLASS%-%PACKAGE_VERSION%.msm hsqlodbc-mm.wixobj
 if errorlevel 1 (
     echo Light execution for Merge Module failed
     exit /b 1
@@ -77,13 +104,13 @@ if not exist "../doc/hsqlodbc/hsqlodbc.html" (
 )
 echo Building hsqlodbc MSI database v. %PACKAGE_VERSION% for the MM...
 
-candle -nologo -dVERSION=%PACKAGE_VERSION% -dPROGRAMFILES="%ProgramFiles%" -dPROGRAMCOM="%ProgramFiles%/Common Files/Merge Modules" hsqlodbc.wxs
+candle -nologo -dVERSION=%PACKAGE_VERSION% -dCPU_CLASS="%CPU_CLASS%" -dPROGRAMCOM="%ProgramFiles%/Common Files/Merge Modules" hsqlodbc.wxs
 if errorlevel 1 (
     echo Candle execution for MSI failed
     exit /b 1
 )
 
-light -nologo -o ..\dist\hsqlodbc-%PACKAGE_VERSION%.msi -ext WixUIExtension -cultures:en-us -sw1076 -sw1055 -sw1056 hsqlodbc.wixobj
+light -nologo -o ..\dist\hsqlodbc-%CPU_CLASS%-%PACKAGE_VERSION%.msi -ext WixUIExtension -cultures:en-us -sw1076 -sw1055 -sw1056 hsqlodbc.wixobj
 if errorlevel 1 (
     echo Light execution for MSI failed
     exit /b 1

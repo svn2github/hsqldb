@@ -1,0 +1,16 @@
+Syntax:
+
+    NMAKE /f win32.mak [key=val...] [TARGET]      # for 32 bit
+
+    NMAKE /f win64.mak [key=val...] [TARGET]      # for 64 bit
+
+TARGET may be ALL, HELP, or CLEAN.  Defaults to ALL.
+
+Available key/vals (default value is listed first):
+    TARGETENV: prod, debug.
+    DRIVER_VARIANT: unicode, ansi.
+    MSDTC: yes, no.
+    MT: MT, ?.  (Default of 'MT' means Static Multi-thread).
+                (MT settings only available for 32-bit builds).
+    CPU: win32 (for 32-bit builds)      (Required for 64-bit builds)
+

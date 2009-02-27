@@ -15,5 +15,5 @@ echo #define PACKAGE_VERSION "%FULLVER%"
 echo #define PACKAGE_VERSION_COMMAS %CVER%
 echo #define PACKAGE_VERSION_NTS "%FULLVER%\0"
 
-echo @set PACKAGE_VERSION=%FULLVER% > setpversion.cmd
+echo @set PACKAGE_VERSION=%FULLVER%> setpversion.cmd
 echo @exit /b 0 >> setpversion.cmd
