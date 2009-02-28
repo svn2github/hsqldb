@@ -309,9 +309,9 @@ namespace System.Data.Hsqldb.Common.Lob.UnitTests
 
             try
             {
-                actual = testSubject.GetSubString(LobCharsLength + 1, 1);
+                actual = testSubject.GetSubString(LobCharsLength, 2);
 
-                Assert.Fail("successful invocation of GetSubString(pos,len) with pos value too large (> LobCharsLength) for non-zero len");
+                Assert.Fail("successful invocation of GetSubString(pos,len) with pos value too large (LobCharsLength) for len (2)");
             }
             catch (AssertionException)
             {

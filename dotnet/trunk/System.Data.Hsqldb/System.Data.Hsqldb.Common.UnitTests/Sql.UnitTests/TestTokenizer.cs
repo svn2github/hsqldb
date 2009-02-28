@@ -6,6 +6,10 @@ using System.Data.Hsqldb.Common.Sql;
 using System.Data.Hsqldb.TestCoverage;
 using NUnit.Framework;
 using System.Text;
+using System.Collections.Generic;
+
+using HsqlBinary = org.hsqldb.types.Binary;
+using HsqlStringConverter = org.hsqldb.lib.StringConverter;
 #endregion
 
 namespace System.Data.Hsqldb.Common.Sql.UnitTests
@@ -23,6 +27,44 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
             testSubject.EnforceTwoPartIdentifierChain = true;
 
             Assert.AreEqual(true, testSubject.EnforceTwoPartIdentifierChain);
+
+            testSubject.Reset("foo.bar.baz");
+
+            try
+            {
+                testSubject.GetNextAsName();
+            }
+            catch (HsqlDataSourceException hdse)
+            {
+                Assert.AreEqual(org.hsqldb.Trace.THREE_PART_IDENTIFIER, -hdse.ErrorCode);
+            }
+
+            testSubject.EnforceTwoPartIdentifierChain = false;
+
+            testSubject.Reset("foo.\"bar\".baz.null.true.false");
+
+            testSubject.GetNextAsName();
+
+            Token[] expected = new Token[]
+            {
+                new Token("FOO",SqlTokenType.Name),
+                new Token("bar",SqlTokenType.DelimitedIdentifier),
+                new Token("BAZ",SqlTokenType.Name),
+                new Token("NULL",SqlTokenType.Name),
+                new Token("TRUE",SqlTokenType.Name),
+                new Token("FALSE",SqlTokenType.Name),
+            };
+
+            int i = 0;
+
+            foreach (Token token in testSubject.IdentifierChain)
+            {
+                Console.WriteLine(token);
+                Console.WriteLine(expected[i]);
+                Assert.AreEqual(expected[i], token);
+
+                i++;
+            }
         }
 
         [Test, OfMember("GetNextAsBigint")]
@@ -46,7 +88,43 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
 
             Assert.AreEqual(expected, actual); 
         }
-        
+
+        class NextAsLiteralValueTestParameters
+        {
+            public NextAsLiteralValueTestParameters(
+                string chars, 
+                HsqlProviderType providerType, 
+                object value, 
+                int? errorCode, 
+                string errorMessage)
+            {
+                this.Chars = chars;
+                this.ProviderType = providerType;
+                this.Value = value;
+                this.ErrorCode = errorCode;
+                this.ErrorMessage = errorMessage;
+            }
+
+            public readonly string Chars;
+            public readonly HsqlProviderType ProviderType;
+            public readonly object Value;
+            public readonly int? ErrorCode;
+            public readonly string ErrorMessage;
+
+            public override string ToString()
+            {
+                StringBuilder sb = new StringBuilder(base.ToString());
+
+                sb.Append("[Chars: \"" + this.Chars + "\"");
+                sb.Append(", ProviderType: " + this.ProviderType);
+                sb.Append(", Value: " + (this.Value == null ? "<NULL>" : this.Value));
+                sb.Append(", ErrorCode: " + (this.ErrorCode == null ? "<NULL>" : this.ErrorCode.ToString()));
+                sb.Append(", ErrorMessage: " + (this.ErrorMessage == null ? "<NULL>" : "\"" + this.ErrorMessage + "\"]"));
+
+                return sb.ToString();
+            }
+        }
+
         [Test, OfMember("GetNextAsLiteralValue")]
         public void GetNextAsLiteralValue()
         {
@@ -54,118 +132,213 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
 
             Tokenizer testSubject = new Tokenizer();
 
-            testSubject.Reset("foo 123456789123456789 'AFD14E7B9F82' 'CAFEBABE'"); 
+            List<NextAsLiteralValueTestParameters> testParameters = 
+                new List<NextAsLiteralValueTestParameters>();
 
-            try
-            {
-                testSubject.GetNextAsLiteralValue(HsqlProviderType.Array);
+            // Array Literal
 
-                Assert.Fail("SQL ARRAY literal tokens are not supposed to be supported");
-            }
-            catch (HsqlDataSourceException)
-            {
-            }
+            testParameters.Add(new NextAsLiteralValueTestParameters(
+                "foo", 
+                HsqlProviderType.Array, 
+                null,
+                org.hsqldb.Trace.UNEXPECTED_TOKEN, 
+                "SQL ARRAY literal tokens are not supposed to be supported"));
+
+            // BigInt Literal
+
+            testParameters.Add(new NextAsLiteralValueTestParameters(
+                "-1", 
+                HsqlProviderType.BigInt, 
+                null,
+                org.hsqldb.Trace.UNEXPECTED_TOKEN, 
+                "Atomic retrieval of a negative BIGINT literal is not supposed to be supported."));
+
+            testParameters.Add(new NextAsLiteralValueTestParameters(
+                "0", 
+                HsqlProviderType.BigInt, 
+                new java.lang.Long(0),
+                null, 
+                null));
+
+            testParameters.Add(new NextAsLiteralValueTestParameters(
+                "1", 
+                HsqlProviderType.BigInt, 
+                new java.lang.Long(1),
+                null, 
+                null));
+
+            testParameters.Add(new NextAsLiteralValueTestParameters(
+                long.MaxValue.ToString(), 
+                HsqlProviderType.BigInt, 
+                new java.lang.Long(long.MaxValue),
+                null, 
+                null));
+
+            testParameters.Add(new NextAsLiteralValueTestParameters(
+                long.MinValue.ToString(), 
+                HsqlProviderType.BigInt,
+                null,
+                org.hsqldb.Trace.UNEXPECTED_TOKEN, 
+                "Atomic retrieval of a negative BIGINT literal is not supposed to be supported."));
+
+            // Binary Literal
+
+            testParameters.Add(new NextAsLiteralValueTestParameters(
+                "/* a binary literal value */ 'AFD14E7B9F82' ", 
+                HsqlProviderType.Binary,
+                new HsqlBinary(HsqlStringConverter.hexToByte("AFD14E7B9F82"), false),
+                null, 
+                null));
+
             
-            object bigint = testSubject.GetNextAsLiteralValue(HsqlProviderType.BigInt);
-
-            Assert.IsInstanceOfType(typeof(java.lang.Long), bigint);
-
-            object bytes = testSubject.GetNextAsLiteralValue(HsqlProviderType.Binary);
-
-            Assert.IsInstanceOfType(typeof(org.hsqldb.types.Binary), bytes);
-
-            try
+            foreach (NextAsLiteralValueTestParameters parameters in 
+                testParameters)
             {
-                testSubject.GetNextAsLiteralValue(HsqlProviderType.Blob);
+                Console.WriteLine(parameters);
 
-                Assert.Fail("SQL BLOB literal tokens are not supposed to be supported at this time");
+                testSubject.Reset(parameters.Chars);
+
+                try
+                {
+                    object value = testSubject.GetNextAsLiteralValue(
+                        parameters.ProviderType);
+
+                    if (parameters.ErrorMessage != null) {
+                        Assert.Fail(parameters.ErrorMessage);
+                    }
+
+                    System.Type expectedValueType = 
+                        HsqlConvert.ToProviderSpecificDataType(
+                        parameters.ProviderType);
+
+                    Assert.IsAssignableFrom(expectedValueType, 
+                        parameters.Value);
+                    Assert.IsAssignableFrom(expectedValueType, 
+                        value);
+                    
+                    Assert.AreEqual(parameters.Value, value);
+                }
+                catch(AssertionException) 
+                {
+                    throw;
+                }
+                catch(HsqlDataSourceException hdse) 
+                {
+                    Assert.AreEqual(parameters.ErrorCode, -hdse.ErrorCode);
+                }
             }
-            catch (HsqlDataSourceException)
-            {
-            }
+
+            //testSubject.Reset("'AFD14E7B9F82'");
+
+            //object bytes = testSubject.GetNextAsLiteralValue(HsqlProviderType.Binary);
+
+            //Assert.IsInstanceOfType(typeof(org.hsqldb.types.Binary), bytes);
+
+            //testSubject.Reset("'CAFEBABE'");
+
+            //try
+            //{
+            //    testSubject.GetNextAsLiteralValue(HsqlProviderType.Blob);
+
+            //    Assert.Fail("SQL BLOB literal tokens are not supposed to be supported at this time");
+            //}
+            //catch (HsqlDataSourceException)
+            //{
+            //}
+
+            //testSubject.Reset("TRUE");
 
             //testSubject.GetNextAsLiteralValue(HsqlProviderType.Boolean);
-            //testSubject.GetNextAsLiteralValue(HsqlProviderType.Char);
-            try
-            {
-                testSubject.GetNextAsLiteralValue(HsqlProviderType.Clob);
 
-                Assert.Fail("SQL CLOB literal tokens are not supposed to be supported at this time");
-            }
-            catch (HsqlDataSourceException)
-            {
-            }
-            try
-            {
-                testSubject.GetNextAsLiteralValue(HsqlProviderType.DataLink);
+            //testSubject.Reset("FALSE");
 
-                Assert.Fail("SQL DATALINK literal tokens are not supposed to be supported at this time");
-            }
-            catch (HsqlDataSourceException)
-            {
-            }
-            //testSubject.GetNextAsLiteralValue(HsqlProviderType.Date);
-            //testSubject.GetNextAsLiteralValue(HsqlProviderType.Decimal);
-            try
-            {
-                testSubject.GetNextAsLiteralValue(HsqlProviderType.Distinct);
+            //testSubject.GetNextAsLiteralValue(HsqlProviderType.Boolean);
 
-                Assert.Fail("SQL DISTINCT literal tokens are not supposed to be supported");
-            }
-            catch (HsqlDataSourceException)
-            {
-            }
-            //testSubject.GetNextAsLiteralValue(HsqlProviderType.Double);
-            //testSubject.GetNextAsLiteralValue(HsqlProviderType.Float);
-            //testSubject.GetNextAsLiteralValue(HsqlProviderType.Integer);
-            try
-            {
-                testSubject.GetNextAsLiteralValue(HsqlProviderType.JavaObject);
+            //testSubject.Reset("NULL");
 
-                Assert.Fail("SQL JAVA_OBJECT literal tokens are not supposed to be supported at this time");
-            }
-            catch (HsqlDataSourceException)
-            {
-            }
-            //testSubject.GetNextAsLiteralValue(HsqlProviderType.LongVarBinary);
-            //testSubject.GetNextAsLiteralValue(HsqlProviderType.LongVarChar);
-            //testSubject.GetNextAsLiteralValue(HsqlProviderType.Null);
-            //testSubject.GetNextAsLiteralValue(HsqlProviderType.Numeric);
-            //testSubject.GetNextAsLiteralValue(HsqlProviderType.Object);
-            //testSubject.GetNextAsLiteralValue(HsqlProviderType.Real);
-            try
-            {
-                testSubject.GetNextAsLiteralValue(HsqlProviderType.Ref);
+            //testSubject.GetNextAsLiteralValue(HsqlProviderType.Boolean);
 
-                Assert.Fail("SQL REF literal tokens are not supposed to be supported");
-            }
-            catch (HsqlDataSourceException)
-            {
-            }
-            //testSubject.GetNextAsLiteralValue(HsqlProviderType.SmallInt);
-            try
-            {
-                testSubject.GetNextAsLiteralValue(HsqlProviderType.Struct);
+            ////testSubject.GetNextAsLiteralValue(HsqlProviderType.Char);
+            //try
+            //{
+            //    testSubject.GetNextAsLiteralValue(HsqlProviderType.Clob);
 
-                Assert.Fail("SQL STRUCT literal tokens are not supposed to be supported");
-            }
-            catch (HsqlDataSourceException)
-            {
-            }
-            //testSubject.GetNextAsLiteralValue(HsqlProviderType.Time);
-            //testSubject.GetNextAsLiteralValue(HsqlProviderType.TimeStamp);
-            //testSubject.GetNextAsLiteralValue(HsqlProviderType.TinyInt);
-            //testSubject.GetNextAsLiteralValue(HsqlProviderType.VarBinary);
-            //testSubject.GetNextAsLiteralValue(HsqlProviderType.VarChar);
-            try
-            {
-                testSubject.GetNextAsLiteralValue(HsqlProviderType.Xml);
+            //    Assert.Fail("SQL CLOB literal tokens are not supposed to be supported at this time");
+            //}
+            //catch (HsqlDataSourceException)
+            //{
+            //}
+            //try
+            //{
+            //    testSubject.GetNextAsLiteralValue(HsqlProviderType.DataLink);
 
-                Assert.Fail("SQL XML literal tokens are not supposed to be supported at this time");
-            }
-            catch (HsqlDataSourceException)
-            {
-            }
+            //    Assert.Fail("SQL DATALINK literal tokens are not supposed to be supported at this time");
+            //}
+            //catch (HsqlDataSourceException)
+            //{
+            //}
+            ////testSubject.GetNextAsLiteralValue(HsqlProviderType.Date);
+            ////testSubject.GetNextAsLiteralValue(HsqlProviderType.Decimal);
+            //try
+            //{
+            //    testSubject.GetNextAsLiteralValue(HsqlProviderType.Distinct);
+
+            //    Assert.Fail("SQL DISTINCT literal tokens are not supposed to be supported");
+            //}
+            //catch (HsqlDataSourceException)
+            //{
+            //}
+            ////testSubject.GetNextAsLiteralValue(HsqlProviderType.Double);
+            ////testSubject.GetNextAsLiteralValue(HsqlProviderType.Float);
+            ////testSubject.GetNextAsLiteralValue(HsqlProviderType.Integer);
+            //try
+            //{
+            //    testSubject.GetNextAsLiteralValue(HsqlProviderType.JavaObject);
+
+            //    Assert.Fail("SQL JAVA_OBJECT literal tokens are not supposed to be supported at this time");
+            //}
+            //catch (HsqlDataSourceException)
+            //{
+            //}
+            ////testSubject.GetNextAsLiteralValue(HsqlProviderType.LongVarBinary);
+            ////testSubject.GetNextAsLiteralValue(HsqlProviderType.LongVarChar);
+            ////testSubject.GetNextAsLiteralValue(HsqlProviderType.Null);
+            ////testSubject.GetNextAsLiteralValue(HsqlProviderType.Numeric);
+            ////testSubject.GetNextAsLiteralValue(HsqlProviderType.Object);
+            ////testSubject.GetNextAsLiteralValue(HsqlProviderType.Real);
+            //try
+            //{
+            //    testSubject.GetNextAsLiteralValue(HsqlProviderType.Ref);
+
+            //    Assert.Fail("SQL REF literal tokens are not supposed to be supported");
+            //}
+            //catch (HsqlDataSourceException)
+            //{
+            //}
+            ////testSubject.GetNextAsLiteralValue(HsqlProviderType.SmallInt);
+            //try
+            //{
+            //    testSubject.GetNextAsLiteralValue(HsqlProviderType.Struct);
+
+            //    Assert.Fail("SQL STRUCT literal tokens are not supposed to be supported");
+            //}
+            //catch (HsqlDataSourceException)
+            //{
+            //}
+            ////testSubject.GetNextAsLiteralValue(HsqlProviderType.Time);
+            ////testSubject.GetNextAsLiteralValue(HsqlProviderType.TimeStamp);
+            ////testSubject.GetNextAsLiteralValue(HsqlProviderType.TinyInt);
+            ////testSubject.GetNextAsLiteralValue(HsqlProviderType.VarBinary);
+            ////testSubject.GetNextAsLiteralValue(HsqlProviderType.VarChar);
+            //try
+            //{
+            //    testSubject.GetNextAsLiteralValue(HsqlProviderType.Xml);
+
+            //    Assert.Fail("SQL XML literal tokens are not supposed to be supported at this time");
+            //}
+            //catch (HsqlDataSourceException)
+            //{
+            //}
         }
         
         [Test, OfMember("GetNextAsName")]

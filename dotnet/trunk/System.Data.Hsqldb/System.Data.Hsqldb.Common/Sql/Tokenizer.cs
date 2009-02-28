@@ -591,17 +591,9 @@ namespace System.Data.Hsqldb.Common.Sql
                 m_identifierChain = new GenericTokenList();
             }
 
-            if (m_inIdentifierChain)
+            if (m_inIdentifierChain && m_enforceTwoPartIdentifierChain)
             {
-                if (m_enforceTwoPartIdentifierChain)
-                {
-                    throw Tokenizer.IdentiferChainLengthExceeded();
-                }
-
-                Token predecessor = new Token(m_identifierChainPredecessor,
-                    m_identifierChainPredecessorType);
-
-                m_identifierChain.Add(predecessor);
+                throw Tokenizer.IdentiferChainLengthExceeded();
             }
 
             m_identifierChainPredecessor = m_token;
@@ -610,14 +602,12 @@ namespace System.Data.Hsqldb.Common.Sql
 
             m_currentIndex++;
 
+            m_identifierChain.Add(new Token(m_token, m_tokenType));
+
             // TODO: avoid recursion
             // Also, this has problems when there is whitespace
             // after the dot; same with NAME
             ReadToken();
-
-            m_identifierChain.Add(new Token(m_token, m_tokenType));
-            m_inIdentifierChain = false;
-            m_tokenType = SqlTokenType.IdentifierChain;
         }
         #endregion
 
@@ -831,6 +821,13 @@ namespace System.Data.Hsqldb.Common.Sql
 
                             if (m_currentIndex == m_chars.Length)
                             {
+                                if (m_inIdentifierChain)
+                                {
+                                    m_identifierChain.Add(new Token(m_token, m_tokenType));
+                                    m_inIdentifierChain = false;
+                                    m_tokenType = SqlTokenType.IdentifierChain;
+                                }
+                                
                                 return;
                             }
 
@@ -839,6 +836,12 @@ namespace System.Data.Hsqldb.Common.Sql
                             if (c == '.')
                             {
                                 ReadIdentifierChain();
+                            } 
+                            else if (m_inIdentifierChain)
+                            {
+                                m_identifierChain.Add(new Token(m_token, m_tokenType));
+                                m_inIdentifierChain = false;
+                                m_tokenType = SqlTokenType.IdentifierChain;
                             }
 
                             return;
@@ -928,11 +931,17 @@ namespace System.Data.Hsqldb.Common.Sql
                             {
                                 ReadIdentifierChain();
                             }
+                            else if (m_inIdentifierChain /*&& c!= '.'*/)
+                            {
+                                m_identifierChain.Add(new Token(m_token, m_tokenType));
+                                m_inIdentifierChain = false;
+                                m_tokenType = SqlTokenType.IdentifierChain;
+                            }
                             else if (c == '(')
                             {
                                 // no-op
                                 // potentially a function call, SQL operator, etc.
-                            }
+                            }                            
                             else
                             {
                                 // if in value list then it is a value
