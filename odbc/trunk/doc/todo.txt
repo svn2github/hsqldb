@@ -2,16 +2,22 @@ $Id$
 
 URGENT
 
+Test whether the multiple-get-failure is jdbc:odbc-specific or
+hsql-odbc-specific.
+
 Track down bytea as LO setting.  Understand then eliminate it.
 
 Add screen shots of both Windows DSN option screens.
 
 Test the "make install" and "make dist" targets.
 
-Test where Yes/No vs. 0/1 must be used.
+Test the effects of EVERY ODBC setting.  Include
+    Where Yes/No vs. 0/1 must be used.
 
 Change max_varchar_size == 0 behavior to mean "unlimited"; then change the
 default of MaxVarchar from 255 to 0.
+
+Run the Microsoft ODBC test.
 
 --------------
 
