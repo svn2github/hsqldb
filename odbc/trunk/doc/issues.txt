@@ -1,0 +1,15 @@
+# $Id$
+
+Known Issues
+
+
++ Can't "get" the same datum more than once.
+    It seems that jdbc:odbc can't use the same getter twice.  For example, with
+        resultSet.getInt(3);
+        resultSet.getInt(3);
+    the second getter would complain "No data found".
+    hsqlodbc (and its predecessor psqlodbc) limit this even more, so that you
+    can't even use a different getter for the same cell.  The second getter
+    here will fail too:
+        resultSet.getInt(3);
+        resultSet.getString(3);

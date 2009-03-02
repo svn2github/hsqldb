@@ -2,9 +2,6 @@ $Id$
 
 URGENT
 
-Test whether the multiple-get-failure is jdbc:odbc-specific or
-hsql-odbc-specific.
-
 Track down bytea as LO setting.  Understand then eliminate it.
 
 Add screen shots of both Windows DSN option screens.
