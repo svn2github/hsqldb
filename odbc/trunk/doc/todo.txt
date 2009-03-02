@@ -12,7 +12,9 @@ Test the effects of EVERY ODBC setting.  Include
     Where Yes/No vs. 0/1 must be used.
 
 Change max_varchar_size == 0 behavior to mean "unlimited"; then change the
-default of MaxVarchar from 255 to 0.
+default of MaxVarchar from 255 to 0.  After looking at a variety of ODBC
+drivers, it may not make sense to default (or possibly support at all)
+"unlimited".
 
 Run the Microsoft ODBC test.
 
