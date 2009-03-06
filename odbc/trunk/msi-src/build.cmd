@@ -54,11 +54,11 @@ if not (%1)==() (
     exit /b 1
 )
 
-if (%DEBUG%)==() (
+if not (%DEBUG%)==() (
     set ANSI_DIR=..\build\ansig_%CPU_CLASS%
     set UNICODE_DIR=..\build\unicodeg_%CPU_CLASS%
 )
-if not (%DEBUG%)==() (
+if (%DEBUG%)==() (
     set ANSI_DIR=..\build\ansi_%CPU_CLASS%
     set UNICODE_DIR=..\build\unicode_%CPU_CLASS%
 )
