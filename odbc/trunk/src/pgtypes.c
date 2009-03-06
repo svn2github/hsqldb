@@ -1018,11 +1018,16 @@ pgtype_column_size(StatementClass *stmt, OID type, int col, int handle_unknown_s
 
         default:
 
-            if (type == stmt->hdbc->lobj_type)  /* hack until permanent
-                                                 * type is available */
+            /* Sun Mar  1 20:44:51 EST 2009.  We have a permanent BLOB type
+             *                                now.  Shouldn't need any
+             *                                funky handling here any more.
+             *                                - blaine
+            if (type == stmt->hdbc->lobj_type)  -- hack until permanent
+                                                 * type is available
                 return SQL_NO_TOTAL;
             if (PG_TYPE_BYTEA == type && ci->bytea_as_longvarbinary)
                 return SQL_NO_TOTAL;
+            */
 
             /* Handle Character types and unknown types */
             return getCharColumnSize(stmt, type, col, handle_unknown_size_as);

@@ -3,6 +3,7 @@ $Id$
 URGENT
 
 Track down bytea as LO setting.  Understand then eliminate it.
+Rename ci->bytea_as_longvarbinary to ci->map_vb_to_blob and REVERSE SENSE.
 
 Add screen shots of both Windows DSN option screens.
 
