@@ -321,7 +321,7 @@ typedef struct
     signed char lf_conversion;
     signed char true_is_minus1;
     signed char int8_as;
-    signed char bytea_as_longvarbinary;
+    signed char map_vb_to_blob;
     signed char use_server_side_prepare;
     signed char lower_case_identifier;
     signed char rollback_on_error;

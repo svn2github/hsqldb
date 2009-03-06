@@ -208,10 +208,7 @@ sqltype_to_pgtype(StatementClass *stmt, SQLSMALLINT fSqlType)
             break;
 
         case SQL_LONGVARBINARY:
-            if (ci->bytea_as_longvarbinary)
-                pgType = PG_TYPE_BYTEA;
-            else
-                pgType = conn->lobj_type;
+            pgType = ci->map_vb_to_blob ? conn->lobj_type : PG_TYPE_BYTEA;
             break;
 
         case SQL_LONGVARCHAR:
@@ -344,10 +341,7 @@ pgtype_to_concise_type(StatementClass *stmt, OID type, int col)
 #endif /* UNICODE_SUPPORT */
 
         case PG_TYPE_BYTEA:
-            if (ci->bytea_as_longvarbinary)
-                return SQL_LONGVARBINARY;
-            else
-                return SQL_VARBINARY;
+            return ci->map_vb_to_blob? SQL_VARBINARY : SQL_LONGVARBINARY;
         case HSQL_TYPE_BLOB:   // Mon Feb 23 16:51:06 EST 2009
                                // changed from PG_TYPE_LO_UNDEFINED by Blaine
             return SQL_LONGVARBINARY;
@@ -1025,7 +1019,7 @@ pgtype_column_size(StatementClass *stmt, OID type, int col, int handle_unknown_s
             if (type == stmt->hdbc->lobj_type)  -- hack until permanent
                                                  * type is available
                 return SQL_NO_TOTAL;
-            if (PG_TYPE_BYTEA == type && ci->bytea_as_longvarbinary)
+            if (PG_TYPE_BYTEA == type && !ci->map_vb_to_blob)
                 return SQL_NO_TOTAL;
             */
 

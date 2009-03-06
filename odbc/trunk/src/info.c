@@ -926,7 +926,7 @@ PGAPI_GetTypeInfo(
 if (sqlType == SQL_LONGVARBINARY)
 {
 ConnInfo    *ci = &(conn->connInfo);
-inolog("%d sqltype=%d -> pgtype=%d\n", ci->bytea_as_longvarbinary, sqlType, pgType);
+inolog("%d sqltype=%d -> pgtype=%d\n", ci->map_vb_to_blob, sqlType, pgType);
 }
 
         if (fSqlType == SQL_ALL_TYPES || fSqlType == sqlType)

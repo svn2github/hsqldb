@@ -278,7 +278,7 @@ CC_conninfo_init(ConnInfo *conninfo)
         conninfo->lf_conversion = -1;
         conninfo->true_is_minus1 = -1;
         conninfo->int8_as = -101;
-        conninfo->bytea_as_longvarbinary = -1;
+        conninfo->map_vb_to_blob = -1;
         conninfo->use_server_side_prepare = -1;
         conninfo->lower_case_identifier = -1;
         conninfo->rollback_on_error = -1;
@@ -771,7 +771,6 @@ EatReadyForQuery(ConnectionClass *conn)
             CC_set_in_error_trans(conn);
             break;  
     }
-mylog("## Server report Trans STATUS (%d)\n", id);
     return id;  
 }
 
@@ -1632,8 +1631,8 @@ inolog("CC_send_settings\n");
     if (CC_is_in_unicode_driver(self)
         && 0 < ci->bde_environment)
         self->unicode |= CONN_DISALLOW_WCHAR;
-mylog("conn->unicode=%d\n", self->unicode);
     ret = 1;
+mylog("VB->LO=%d\n", ci->map_vb_to_blob);
 
 cleanup:
     mylog("%s: returning...%d\n", func, ret);

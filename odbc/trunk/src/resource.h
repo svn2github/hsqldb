@@ -81,7 +81,7 @@
 #define DS_INT8_AS_DOUBLE               1071
 #define DS_INT8_AS_INT4                 1072
 #define DRV_MSG_LABEL2                  1073
-#define DS_BYTEAASLONGVARBINARY         1073
+#define DS_MAPVBTOBLOB         1073
 #define IDAPPLY                         1074
 #define DS_SERVERSIDEPREPARE            1075
 #define IDC_DRIVERNAME                  1076

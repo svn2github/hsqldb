@@ -909,7 +909,7 @@ PGAPI_Execute(HSTMT hstmt, UWORD flag)
         if (NOT_YET_PREPARED == stmt->prepared &&
             PROTOCOL_74(ci) &&
             ci->use_server_side_prepare &&
-           (ci->bytea_as_longvarbinary || /* both lo and bytea are LO */
+           ((!ci->map_vb_to_blob) || /* both lo and bytea are LO */
             ci->cvt_null_date_string))
         {
             SQLSMALLINT num_params = stmt->num_params;
@@ -936,7 +936,7 @@ PGAPI_Execute(HSTMT hstmt, UWORD flag)
                         break;
                     if (SQL_LONGVARBINARY == ipara->SQLType)
                     {
-                        if (ci->bytea_as_longvarbinary)
+                        if (!ci->map_vb_to_blob)
                         {
                             bCallPrepare = TRUE;
                             break;

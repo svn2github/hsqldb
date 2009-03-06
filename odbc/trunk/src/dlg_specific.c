@@ -200,7 +200,7 @@ inolog("hlen=%d", hlen);
             INI_DISALLOWPREMATURE "=%d;"
             INI_TRUEISMINUS1 "=%d;"
             INI_INT8AS "=%d;"
-            INI_BYTEAASLONGVARBINARY "=%d;"
+            INI_MAPVBTOBLOB "=%d;"
             INI_USESERVERSIDEPREPARE "=%d;"
             INI_LOWERCASEIDENTIFIER "=%d;"
 #ifdef  _HANDLE_ENLIST_IN_DTC_
@@ -235,7 +235,7 @@ inolog("hlen=%d", hlen);
             ,ci->disallow_premature
             ,ci->true_is_minus1
             ,ci->int8_as
-            ,ci->bytea_as_longvarbinary
+            ,ci->map_vb_to_blob
             ,ci->use_server_side_prepare
             ,ci->lower_case_identifier
 #ifdef  _HANDLE_ENLIST_IN_DTC_
@@ -302,8 +302,8 @@ inolog("hlen=%d", hlen);
             flag |= BIT_FAKEOIDINDEX;
         if (ci->true_is_minus1)
             flag |= BIT_TRUEISMINUS1;
-        if (ci->bytea_as_longvarbinary)
-            flag |= BIT_BYTEAASLONGVARBINARY;
+        if (ci->map_vb_to_blob)
+            flag |= BIT_MAPVBTOBLOB;
         if (ci->use_server_side_prepare)
             flag |= BIT_USESERVERSIDEPREPARE;
         if (ci->lower_case_identifier)
@@ -423,7 +423,7 @@ unfoldCXAttribute(ConnInfo *ci, const char *value)
     sprintf(ci->show_oid_column, "%d", (char)((flag & BIT_SHOWOIDCOLUMN) != 0));
     sprintf(ci->fake_oid_index, "%d", (char)((flag & BIT_FAKEOIDINDEX) != 0));
     ci->true_is_minus1 = (char)((flag & BIT_TRUEISMINUS1) != 0);
-    ci->bytea_as_longvarbinary = (char)((flag & BIT_BYTEAASLONGVARBINARY) != 0);
+    ci->map_vb_to_blob = (char)((flag & BIT_MAPVBTOBLOB) != 0);
     ci->use_server_side_prepare = (char)((flag & BIT_USESERVERSIDEPREPARE) != 0);
     ci->lower_case_identifier = (char)((flag & BIT_LOWERCASEIDENTIFIER) != 0);
 }
@@ -503,8 +503,8 @@ copyAttributes(ConnInfo *ci, const char *attribute, const char *value)
         ci->true_is_minus1 = atoi(value);
     else if (stricmp(attribute, INI_INT8AS) == 0)
         ci->int8_as = atoi(value);
-    else if (stricmp(attribute, INI_BYTEAASLONGVARBINARY) == 0 || stricmp(attribute, ABBR_BYTEAASLONGVARBINARY) == 0)
-        ci->bytea_as_longvarbinary = atoi(value);
+    else if (stricmp(attribute, INI_MAPVBTOBLOB) == 0 || stricmp(attribute, ABBR_MAPVBTOBLOB) == 0)
+        ci->map_vb_to_blob = atoi(value);
     else if (stricmp(attribute, INI_USESERVERSIDEPREPARE) == 0 || stricmp(attribute, ABBR_USESERVERSIDEPREPARE) == 0)
         ci->use_server_side_prepare = atoi(value);
     else if (stricmp(attribute, INI_LOWERCASEIDENTIFIER) == 0 || stricmp(attribute, ABBR_LOWERCASEIDENTIFIER) == 0)
@@ -669,8 +669,8 @@ getDSNdefaults(ConnInfo *ci)
         ci->true_is_minus1 = DEFAULT_TRUEISMINUS1;
     if (ci->int8_as < -100)
         ci->int8_as = DEFAULT_INT8AS;
-    if (ci->bytea_as_longvarbinary < 0)
-        ci->bytea_as_longvarbinary = DEFAULT_BYTEAASLONGVARBINARY;
+    if (ci->map_vb_to_blob < 0)
+        ci->map_vb_to_blob = DEFAULT_MAPVBTOBLOB;
     if (ci->use_server_side_prepare < 0)
         ci->use_server_side_prepare = DEFAULT_USESERVERSIDEPREPARE;
     if (ci->lower_case_identifier < 0)
@@ -826,11 +826,11 @@ getDSNinfo(ConnInfo *ci, char overwrite)
             ci->int8_as = atoi(temp);
     }
 
-    if (ci->bytea_as_longvarbinary < 0 || overwrite)
+    if (ci->map_vb_to_blob < 0 || overwrite)
     {
-        SQLGetPrivateProfileString(DSN, INI_BYTEAASLONGVARBINARY, "", temp, sizeof(temp), ODBC_INI);
+        SQLGetPrivateProfileString(DSN, INI_MAPVBTOBLOB, "", temp, sizeof(temp), ODBC_INI);
         if (temp[0])
-            ci->bytea_as_longvarbinary = atoi(temp);
+            ci->map_vb_to_blob = atoi(temp);
     }
 
     if (ci->use_server_side_prepare < 0 || overwrite)
@@ -1113,9 +1113,9 @@ writeDSNinfo(const ConnInfo *ci)
                             INI_EXTRAOPTIONS,
                              temp,
                              ODBC_INI);
-    sprintf(temp, "%d", ci->bytea_as_longvarbinary);
+    sprintf(temp, "%d", ci->map_vb_to_blob);
     SQLWritePrivateProfileString(DSN,
-                                 INI_BYTEAASLONGVARBINARY,
+                                 INI_MAPVBTOBLOB,
                                  temp,
                                  ODBC_INI);
     sprintf(temp, "%d", ci->use_server_side_prepare);

@@ -565,7 +565,7 @@ ds_options2Proc(HWND hdlg,
             CheckDlgButton(hdlg, DS_TRUEISMINUS1, ci->true_is_minus1);
             CheckDlgButton(hdlg, DS_UPDATABLECURSORS, ci->allow_keyset);
             CheckDlgButton(hdlg, DS_SERVERSIDEPREPARE, ci->use_server_side_prepare);
-            CheckDlgButton(hdlg, DS_BYTEAASLONGVARBINARY, ci->bytea_as_longvarbinary);
+            CheckDlgButton(hdlg, DS_MAPVBTOBLOB, ci->map_vb_to_blob);
             /*CheckDlgButton(hdlg, DS_LOWERCASEIDENTIFIER, ci->lower_case_identifier);*/
 
             EnableWindow(GetDlgItem(hdlg, DS_FAKEOIDINDEX), atoi(ci->show_oid_column));
@@ -637,7 +637,7 @@ ds_options2Proc(HWND hdlg,
                     ci->true_is_minus1 = IsDlgButtonChecked(hdlg, DS_TRUEISMINUS1);
                     ci->allow_keyset = IsDlgButtonChecked(hdlg, DS_UPDATABLECURSORS);
                     ci->use_server_side_prepare = IsDlgButtonChecked(hdlg, DS_SERVERSIDEPREPARE);
-                    ci->bytea_as_longvarbinary = IsDlgButtonChecked(hdlg, DS_BYTEAASLONGVARBINARY);
+                    ci->map_vb_to_blob = IsDlgButtonChecked(hdlg, DS_MAPVBTOBLOB);
                     /*ci->lower_case_identifier = IsDlgButtonChecked(hdlg, DS_LOWERCASEIDENTIFIER);*/
 
                     /* OID Options */

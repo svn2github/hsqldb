@@ -157,8 +157,8 @@ extern "C" {
 #define INI_TRUEISMINUS1        "TrueIsMinus1"
 #define ABBR_TRUEISMINUS1       "C6"
 #define INI_INT8AS          "BI"
-#define INI_BYTEAASLONGVARBINARY    "ByteaAsLongVarBinary"
-#define ABBR_BYTEAASLONGVARBINARY   "C7"
+#define INI_MAPVBTOBLOB    "MapVbToBlob"
+#define ABBR_MAPVBTOBLOB   "C7"
 #define INI_USESERVERSIDEPREPARE    "UseServerSidePrepare"
 #define ABBR_USESERVERSIDEPREPARE   "C8"
 #define INI_LOWERCASEIDENTIFIER     "LowerCaseIdentifier"
@@ -201,7 +201,7 @@ const char *GetXaLibPath();
 #define BIT_SHOWOIDCOLUMN           (1L<<21)
 #define BIT_FAKEOIDINDEX            (1L<<22)
 #define BIT_TRUEISMINUS1            (1L<<23)
-#define BIT_BYTEAASLONGVARBINARY        (1L<<24)
+#define BIT_MAPVBTOBLOB        (1L<<24)
 #define BIT_USESERVERSIDEPREPARE        (1L<<25)
 #define BIT_LOWERCASEIDENTIFIER         (1L<<26)
 
@@ -252,7 +252,7 @@ const char *GetXaLibPath();
 #define DEFAULT_LFCONVERSION        0
 #endif  /* WIN32 */
 #define DEFAULT_INT8AS          0
-#define DEFAULT_BYTEAASLONGVARBINARY    0
+#define DEFAULT_MAPVBTOBLOB    1
 #define DEFAULT_USESERVERSIDEPREPARE    1
 #define DEFAULT_LOWERCASEIDENTIFIER 0
 #define DEFAULT_SSLMODE         SSLMODE_DISABLE
