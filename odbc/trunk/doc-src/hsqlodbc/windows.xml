@@ -43,21 +43,38 @@
     <procedure>
       <title>Windows Installer</title>
       <step><simpara>Execute the provided *.msi file</simpara></step>
-      <step> <mediaobject> <imageobject>
-          <imagedata fileref="images/odbcsetup1.png" format="PNG"/>
-      </imageobject> </mediaobject> </step>
-      <step> <mediaobject> <imageobject>
-          <imagedata fileref="images/odbcsetup2.png" format="PNG"/>
-      </imageobject> </mediaobject> </step>
-      <step> <mediaobject> <imageobject>
-          <imagedata fileref="images/odbcsetup3.png" format="PNG"/>
-      </imageobject> </mediaobject> </step>
-      <step> <mediaobject> <imageobject>
-          <imagedata fileref="images/odbcsetup4.png" format="PNG"/>
-      </imageobject> </mediaobject> </step>
-      <step> <mediaobject> <imageobject>
-          <imagedata fileref="images/odbcsetup5.png" format="PNG"/>
-      </imageobject> </mediaobject> </step>
+      <step> <para>
+        Click Next.
+        <mediaobject> <imageobject>
+        <imagedata fileref="images/odbcsetup1.png" format="PNG" valign="top"/>
+        </imageobject> </mediaobject>
+      </para> </step>
+      <step> <para>
+        Accept the license agreement, then click Next.
+        <mediaobject> <imageobject>
+        <imagedata fileref="images/odbcsetup2.png" format="PNG" valign="top"/>
+        </imageobject> </mediaobject>
+      </para> </step>
+      <step> <para>
+        De-select the Documentation if you don't want it.
+        Select a different installation directory if you don't like the default.
+        Click Next.
+        <mediaobject> <imageobject>
+        <imagedata fileref="images/odbcsetup3.png" format="PNG" valign="top"/>
+        </imageobject> </mediaobject>
+      </para> </step>
+      <step> <para>
+        Click Install.
+        <mediaobject> <imageobject>
+        <imagedata fileref="images/odbcsetup4.png" format="PNG" valign="top"/>
+        </imageobject> </mediaobject>
+      </para> </step>
+      <step> <para>
+        Click Finish.
+        <mediaobject> <imageobject>
+        <imagedata fileref="images/odbcsetup5.png" format="PNG" valign="top"/>
+        </imageobject> </mediaobject>
+      </para> </step>
     </procedure>
   </section>
 
@@ -67,11 +84,26 @@
     <simpara>
       See the <link xlink:href="#settings-chapt" endterm="settings-title"/>
       chapter about individual driver runtime settings.
-    </simpara> <simpara>
+    </simpara> <para>
+      Here are the DSN definition screens captured from a Vista PC.
+      First, the DSN definition screen.
+      <mediaobject> <imageobject>
+          <imagedata fileref="images/dsndef.png" format="PNG" valign="top"/>
+      </imageobject> </mediaobject>
+      Then option screen 1 of 2.
+      <mediaobject> <imageobject>
+        <imagedata fileref="images/dsnoptions1.png" format="PNG" valign="top"/>
+      </imageobject> </mediaobject>
+      ... and 2 of 2.
+      <mediaobject> <imageobject>
+        <imagedata fileref="images/dsnoptions2.png" format="PNG" valign="top"/>
+      </imageobject> </mediaobject>
+    </para> <simpara>
       Our Windows binary distributions include MSI installers.
       This page assumes that you are installing with our MSI installer.
       If you get your HyperSQL ODBC driver with another application, much of
       what is written here may apply to your distribution.
+    </simpara> <simpara>
       Our driver is designed to facilitate incorporation into installers for
       other products as a <emphasis>Merge Module</emphasis>.
     </simpara>
