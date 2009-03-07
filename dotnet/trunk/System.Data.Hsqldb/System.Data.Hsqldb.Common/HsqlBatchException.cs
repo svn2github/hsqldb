@@ -36,8 +36,8 @@
 using System.Data.Common;
 using System.Runtime.Serialization;
 using System.Security.Permissions;
-using BatchConstants = java.sql.Statement.__Fields;
-using Trace = org.hsqldb.Trace;
+using StatementBatchConstants = java.sql.Statement.__Fields;
+using HsqlTrace = org.hsqldb.Trace;
 #endregion
 
 namespace System.Data.Hsqldb.Common
@@ -61,24 +61,69 @@ namespace System.Data.Hsqldb.Common
         /// Indicates a successful statement exection for which no count
         /// of the number of rows it affected is available or applicable.
         /// </summary>
+        /// <remarks>
+        /// An item in the <see cref="UpdateCounts"/> array property is set to
+        /// this value to denote the described condition for the i'th statement
+        /// execution in a batch.
+        /// </remarks>
         /// <value>-2</value>
-        public const int SuccessNoInfo = BatchConstants.SUCCESS_NO_INFO;
+        public const int SuccessNoInfo = StatementBatchConstants.SUCCESS_NO_INFO;
         #endregion
 
         #region ExecuteFailed
         /// <summary>
         /// Indicates that an error occured while executing a batch statement.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// An item in the <see cref="UpdateCounts"/> array property is set
+        /// to this value to denote the described condition for the i'th
+        /// statement execution in a batch.
+        /// </para>
+        /// <para>
+        /// There are two possible batch execution behaviours, the first being
+        /// to execute all statements without regard to errors and mark each
+        /// failed execution in the <see cref="UpdateCounts"/> array, and the
+        /// second being to terminate execution upon the first encountered
+        /// error.
+        /// </para>
+        /// <para>
+        /// When only the last item in the array has this value, this is a
+        /// strong, although not perfect indication that the batch execution
+        /// policy is to terminate on the first error encountered.
+        /// </para>
+        /// <para>
+        /// When, in addition to only the last item in the array having this
+        /// value, the array length is also less than the total number of
+        /// statements known to be in the batch, then this is an 
+        /// incontravertible indication that the batch execution policy is to
+        /// terminate on the first error encountered.
+        /// </para>
+        /// <para>
+        /// On the other hand, when an item other than the last has this value,
+        /// then the the batch execution policy must be to execute all
+        /// statements in a batch, without regard to errors.
+        /// </para>
+        /// <para>
+        /// The HSQLDB 1.8.0 policy is to terminate execution upon the
+        /// first encountered error, but it is possible the policy encountered
+        /// at runtime may be different, for instance when connected to a more
+        /// recently released back-end or when the update count is passed
+        /// through from execution on a foreign server or from execution of a
+        /// user-defined stored proceedure.
+        /// </para>
+        /// </remarks>
         /// <value>-3</value>
-        public const int ExecuteFailed = BatchConstants.EXECUTE_FAILED;
+        public const int ExecuteFailed = StatementBatchConstants.EXECUTE_FAILED;
         #endregion
 
         #region VendorCode
         /// <summary>
-        /// The error code value reported by all instances of <c>HsqlBatchUpdateException</c> 
+        /// The error code value reported by all instances of 
+        /// <c>HsqlBatchUpdateException</c> 
         /// </summary>
-        /// <value>-142</value>
-        public const int VendorCode = Trace.jdbcStatement_executeUpdate; 
+        /// <value>-40</value>
+        public const int VendorCode = -HsqlTrace.GENERAL_ERROR; 
         #endregion
 
         #endregion
@@ -86,9 +131,11 @@ namespace System.Data.Hsqldb.Common
         #region Fields
 
         // classifier-scope
-        
-        private static readonly string m_Message = Trace.getMessage(VendorCode);
-        private static readonly string m_State = Trace.error(VendorCode).getSQLState();
+
+        private static readonly string m_Message = HsqlTrace.getMessage(
+            -VendorCode) + " - Batch update failed";
+        private static readonly string m_SqlState = HsqlTrace.error(
+            -VendorCode).getSQLState();
         private static readonly int[] m_NoUpdateCount = new int[0];
 
         // instance-scope
@@ -114,7 +161,7 @@ namespace System.Data.Hsqldb.Common
         /// </summary>
         /// <param name="message">The message.</param>
         public HsqlBatchUpdateException(string message)
-            : base(m_Message + " : " + message, VendorCode)
+            : base(m_Message + " : " + message)
         {
             m_updateCounts = m_NoUpdateCount;
         } 
@@ -128,7 +175,7 @@ namespace System.Data.Hsqldb.Common
         /// <param name="message">The message.</param>
         /// <param name="innerException">The inner exception.</param>
         public HsqlBatchUpdateException(string message, Exception innerException)
-            : base(message, innerException)
+            : base(m_Message + " : " + message, innerException)
         {
             m_updateCounts = m_NoUpdateCount;
         } 
@@ -139,13 +186,39 @@ namespace System.Data.Hsqldb.Common
         /// Constructs a new <c>HsqlBatchException</c> with
         /// the specified update counts.
         /// </summary>
-        /// <param name="updateCounts">
+        /// <param name="updateCounts"><para>
         /// The update counts.
-        /// </param>
+        /// </para><para>
+        /// <c>null</c> may be used to indicate no update count,
+        /// and, for efficiency reasons, is to be generally peferred
+        /// over submitting a zero-length array.
+        /// </para></param>
         public HsqlBatchUpdateException(int[] updateCounts)
-            : base(m_Message, VendorCode)
+            : base(m_Message)
         {
-            m_updateCounts = updateCounts;
+            m_updateCounts = (updateCounts == null) 
+                ? m_NoUpdateCount : updateCounts;
+        }
+        #endregion
+
+        #region HsqlBatchUpdateException(string, int[])
+        /// <summary>
+        /// Constructs a new <c>HsqlBatchException</c> with
+        /// the specified message and update counts.
+        /// </summary>
+        /// <param name="message">The message.</param>
+        /// <param name="updateCounts"><para>
+        /// The update counts.
+        /// </para><para>
+        /// <c>null</c> may be used to indicate no update count,
+        /// and, for efficiency reasons, is to be generally peferred
+        /// over submitting a zero-length array.
+        /// </para></param>
+        public HsqlBatchUpdateException(String message, int[] updateCounts)
+            : base(m_Message + " : " + message)
+        {
+            m_updateCounts = (updateCounts == null)
+                ? m_NoUpdateCount : updateCounts;
         }
         #endregion
 
@@ -180,6 +253,17 @@ namespace System.Data.Hsqldb.Common
 
         #region Properties
 
+        #region ErrorCode
+        /// <summary>
+        /// The vendor-specific code associated with the error.
+        /// </summary>
+        /// <value>the SQL <see cref="VendorCode"/></value>
+        public override int ErrorCode
+        {
+            get { return HsqlBatchUpdateException.VendorCode; }
+        } 
+        #endregion
+
         #region SqlState
 
         /// <summary>
@@ -192,7 +276,7 @@ namespace System.Data.Hsqldb.Common
         /// </value>
         public string SqlState
         {
-            get { return m_State; }
+            get { return m_SqlState; }
         }
 
         #endregion
@@ -204,18 +288,28 @@ namespace System.Data.Hsqldb.Common
         /// </summary>
         /// <remarks>
         /// <para>
-        /// The order of elements corresponds to the order in which the
+        /// The order of elements always corresponds to the order in which the
         /// commands were added to the batch.
         /// </para>
         /// <para>
-        /// Commands subsequent to the problematic command are ignored and the
-        /// array is of length one greater than the number of commands
-        /// executed successfully before the error was encountered. The last
-        /// element contains the value
+        /// The HSQLDB 1.8.0 policy is to terminate execution upon the
+        /// first encountered error, but it is possible the policy encountered
+        /// at runtime may be different, for instance when connected to a more
+        /// recently released back-end or when the update count is passed
+        /// through from execution on a foreign server or from execution of a
+        /// user-defined stored proceedure.
+        /// </para>
+        /// <para>
+        /// Under the HSQLDB 1.8.0 policy, commands subsequent to the
+        /// problematic command are ignored and the array is of length
+        /// one greater than the number of commands executed successfully
+        /// before the error was encountered, in which case the last
+        /// element (and only the last element) contains the value
         /// <see cref="ExecuteFailed"/>.
         /// </para>
         /// </remarks>
         /// <value>The update counts.</value>
+        /// <seealso cref="SuccessNoInfo"/>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1819:PropertiesShouldNotReturnArrays")]
         public int[] UpdateCounts
         {
