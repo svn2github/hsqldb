@@ -20,7 +20,7 @@
                 transitive="false" conf="msv->default"/>
     <dependency name="isorelax" rev="20081113"
                 transitive="false" conf="msv->default"/>
-    <dependency name="fop" rev="0.94"
+    <dependency name="fop" rev="0.95"
                 transitive="false" conf="fop->default"/>
     <dependency name="fop-hyph" rev="1.2"
                 transitive="false" conf="fop->default"/>
@@ -28,11 +28,11 @@
                 transitive="false" conf="fop->default"/>
     <dependency name="jai_core" rev="1.1.3"
                 transitive="false" conf="fop->default"/>
-    <dependency name="xmlgraphics-commons" rev="1.2"
+    <dependency name="xmlgraphics-commons" rev="1.3.1"
                 transitive="false" conf="fop->default"/>
     <dependency name="avalon-framework" rev="4.2.0"
                 transitive="false" conf="fop->default"/>
-    <dependency name="batik-all" rev="1.6"
+    <dependency name="batik-all" rev="1.7"
                 transitive="false" conf="fop->default"/>
     <dependency name="commons-io" rev="1.3.1"
                 transitive="false" conf="fop->default"/>
