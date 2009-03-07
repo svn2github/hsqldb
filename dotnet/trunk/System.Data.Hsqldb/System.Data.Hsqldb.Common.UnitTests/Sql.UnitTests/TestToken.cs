@@ -2,12 +2,60 @@ using System;
 using NUnit.Framework;
 using System.Data.Hsqldb.TestCoverage;
 using System.Data.Hsqldb.Common.Enumeration;
+using org.hsqldb;
+using System.Collections.Generic;
+using HsqlValuePool = org.hsqldb.store.ValuePool;
+using JavaBoolean = java.lang.Boolean;
+using JavaDecimal = java.math.BigDecimal;
+using JavaDouble = java.lang.Double;
+using System.Text;
 
 namespace System.Data.Hsqldb.Common.Sql.UnitTests
 {
     [TestFixture, ForSubject(typeof(Token))]
     public class TestToken
     {
+        class LiteralValueTestParameters
+        {
+            public LiteralValueTestParameters(
+                string chars,
+                SqlTokenType tokenType,
+                HsqlProviderType providerType,
+                object value,
+                int? errorCode,
+                string errorMessage)
+            {
+                this.Chars = chars;
+                this.TokenType = tokenType;
+                this.ProviderType = providerType;
+                this.Value = value;
+                this.ErrorCode = errorCode;
+                this.ErrorMessage = errorMessage;
+            }
+
+            public readonly string Chars;
+            public readonly SqlTokenType TokenType;
+            public readonly HsqlProviderType ProviderType;
+            public readonly object Value;
+            public readonly int? ErrorCode;
+            public readonly string ErrorMessage;
+
+            public override string ToString()
+            {
+                StringBuilder sb = new StringBuilder(base.ToString());
+
+                sb.Append("[Chars: \"" + this.Chars + "\"");
+                sb.Append(", TokenType: " + this.TokenType);
+                sb.Append(", ProviderType: " + this.ProviderType);
+                sb.Append(", Value: " + (this.Value == null ? "<NULL>" : this.Value));
+                sb.Append(", ErrorCode: " + (this.ErrorCode == null ? "<NULL>" : this.ErrorCode.ToString()));
+                sb.Append(", ErrorMessage: " + (this.ErrorMessage == null ? "<NULL>" : "\"" + this.ErrorMessage + "\""));
+                sb.Append("]");
+
+                return sb.ToString();
+            }
+        }
+
         [Test, OfMember("Equals")]
         public void Equals()
         {
@@ -50,50 +98,121 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
         [Test, OfMember("LiteralValue")]
         public void LiteralValue()
         {
-            Token testSubject = new Token("1234", SqlTokenType.BigIntLiteral);
+            List<LiteralValueTestParameters> testParameters = new List<LiteralValueTestParameters>();
 
-            Assert.IsInstanceOfType(typeof(Int64), testSubject.LiteralValue);
-            Assert.AreEqual(1234D, testSubject.LiteralValue);
+            testParameters.Add(new LiteralValueTestParameters(
+                "1234", 
+                SqlTokenType.BigIntLiteral, 
+                HsqlProviderType.BigInt,
+                HsqlValuePool.getLong(1234L), 
+                null, 
+                null));
 
-            testSubject = new Token("TRUE", SqlTokenType.BooleanLiteral);
+            testParameters.Add(new LiteralValueTestParameters(
+                "TRUE", 
+                SqlTokenType.BooleanLiteral,
+                HsqlProviderType.Boolean,
+                JavaBoolean.TRUE,
+                null,
+                null));
 
-            Assert.IsInstanceOfType(typeof(bool), testSubject.LiteralValue);
-            Assert.AreEqual(true, testSubject.LiteralValue);
+            testParameters.Add(new LiteralValueTestParameters(
+                "2009-2-8",
+                SqlTokenType.DateLiteral,
+                HsqlProviderType.Date,
+                HsqlDateTime.dateValue("2009-2-8"),
+                null,
+                null));
 
-            testSubject = new Token("2009-2-8", SqlTokenType.DateLiteral);
+            testParameters.Add(new LiteralValueTestParameters(
+                "12345678987654321.12345678987654321",
+                SqlTokenType.DecimalLiteral,
+                HsqlProviderType.Decimal,
+                new JavaDecimal("12345678987654321.12345678987654321"),
+                null,
+                null));
 
-            Assert.IsInstanceOfType(typeof(java.sql.Date), testSubject.LiteralValue);
-            Assert.AreEqual(java.sql.Date.valueOf("2009-2-8"), testSubject.LiteralValue);
+            testParameters.Add(new LiteralValueTestParameters(
+                "123.456",
+                SqlTokenType.FloatLiteral,
+                HsqlProviderType.Double,
+                new JavaDouble(123.456D),
+                null,
+                null));
 
-            testSubject = new Token("12345678987654321.12345678987654321", SqlTokenType.DecimalLiteral);
+            testParameters.Add(new LiteralValueTestParameters(
+                "FOO",
+                SqlTokenType.Null,
+                HsqlProviderType.Null,
+                null,
+                null,
+                null));
 
-            Assert.IsInstanceOfType(typeof(decimal), testSubject.LiteralValue);
-            Assert.AreEqual(12345678987654321.12345678987654321M, testSubject.LiteralValue);
+            testParameters.Add(new LiteralValueTestParameters(
+                "1234567898765432123456712345678987654321234567.1234567898765432123456712345678987654321234567",
+                SqlTokenType.NumberLiteral,
+                HsqlProviderType.Numeric,
+                new JavaDecimal("1234567898765432123456712345678987654321234567.1234567898765432123456712345678987654321234567"),
+                null,
+                null));
 
-            testSubject = new Token("123.456", SqlTokenType.FloatLiteral);
+            testParameters.Add(new LiteralValueTestParameters(
+                "He said 'high five!'",
+                SqlTokenType.StringLiteral,
+                HsqlProviderType.VarChar,
+                "He said 'high five!'", 
+                null, 
+                null));
 
-            Assert.IsInstanceOfType(typeof(double), testSubject.LiteralValue);
-            Assert.AreEqual(123.456, testSubject.LiteralValue);
+            testParameters.Add(new LiteralValueTestParameters(
+                "12:01:01", 
+                SqlTokenType.TimeLiteral,
+                HsqlProviderType.Time,
+                HsqlDateTime.timeValue("12:01:01"), 
+                null, 
+                null));
 
-            testSubject = new Token("FOO", SqlTokenType.Null);
-            Assert.AreEqual("FOO", testSubject.LiteralValue);
+            testParameters.Add(new LiteralValueTestParameters(
+                "2009-02-09 12:01:01.123456", 
+                SqlTokenType.TimestampLiteral,
+                HsqlProviderType.TimeStamp,
+                HsqlDateTime.timestampValue("2009-02-09 12:01:01.123456"),
+                null,
+                null));
 
-            testSubject = new Token("1234567898765432123456712345678987654321234567.1234567898765432123456712345678987654321234567", SqlTokenType.NumberLiteral);
+            foreach (LiteralValueTestParameters item in testParameters)
+            {
+                Console.WriteLine(item);
 
-            Assert.IsInstanceOfType(typeof(java.math.BigDecimal), testSubject.LiteralValue);
-            Assert.AreEqual(new java.math.BigDecimal("1234567898765432123456712345678987654321234567.1234567898765432123456712345678987654321234567"), testSubject.LiteralValue);
+                try
+                {
+                    Token token = new Token(item.Chars, item.TokenType);
 
-            testSubject = new Token("'He said ''high five!'''", SqlTokenType.StringLiteral);
-            Assert.IsInstanceOfType(typeof(string), testSubject.LiteralValue);
-            Assert.AreEqual("He said 'high five!'", testSubject.LiteralValue);
+                    object value = token.LiteralValue;
 
-            testSubject = new Token("12:01:01", SqlTokenType.TimeLiteral);
-            Assert.IsInstanceOfType(typeof(java.sql.Time), testSubject.LiteralValue);
-            Assert.AreEqual(java.sql.Time.valueOf("12:01:01"), testSubject.LiteralValue);
+                    if (item.ErrorMessage != null)
+                    {
+                        Assert.Fail(item.ErrorMessage);
+                    }
 
-            testSubject = new Token("2009-02-09 12:01:01.001", SqlTokenType.TimestampLiteral);
-            Assert.IsInstanceOfType(typeof(java.sql.Timestamp), testSubject.LiteralValue);
-            Assert.AreEqual(java.sql.Timestamp.valueOf("2009-02-09 12:01:01.001"), testSubject.LiteralValue);
+                    System.Type expectedType = HsqlConvert.ToProviderSpecificDataType(item.ProviderType);
+
+                    if (expectedType != null && !(typeof(void).Equals(expectedType)))
+                    {
+                        Assert.IsInstanceOfType(expectedType, value);
+                    }
+                    
+                    Assert.AreEqual(item.Value, value);
+                }
+                catch (AssertionException)
+                {
+                    throw;
+                }
+                catch (HsqlDataSourceException hdse)
+                {
+                    Assert.AreEqual(item.ErrorCode, -hdse.ErrorCode);
+                }
+            }
         }
 
         [Test, OfMember("ToString")]

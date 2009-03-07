@@ -119,7 +119,8 @@ namespace System.Data.Hsqldb.Common.Sql.UnitTests
                 sb.Append(", ProviderType: " + this.ProviderType);
                 sb.Append(", Value: " + (this.Value == null ? "<NULL>" : this.Value));
                 sb.Append(", ErrorCode: " + (this.ErrorCode == null ? "<NULL>" : this.ErrorCode.ToString()));
-                sb.Append(", ErrorMessage: " + (this.ErrorMessage == null ? "<NULL>" : "\"" + this.ErrorMessage + "\"]"));
+                sb.Append(", ErrorMessage: " + (this.ErrorMessage == null ? "<NULL>" : "\"" + this.ErrorMessage + "\""));
+                sb.Append("]");
 
                 return sb.ToString();
             }
