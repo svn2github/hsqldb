@@ -775,8 +775,7 @@ namespace System.Data.Hsqldb.Common
                 case IsolationLevel.Snapshot:
                 default:
                     {
-                        throw new ArgumentException("Unsupported: (0) "
-                            + isolationLevel, "isolationLevel");
+                        throw new ArgumentException("Unsupported Level: (0) ","isolationLevel");
                     }
             }
         }

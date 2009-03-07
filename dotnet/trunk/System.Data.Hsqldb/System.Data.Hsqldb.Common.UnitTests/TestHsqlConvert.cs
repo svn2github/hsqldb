@@ -128,7 +128,7 @@ namespace System.Data.Hsqldb.Common.UnitTests
             catch (ArgumentException ae)
             {
                 Assert.AreEqual("isolationLevel", ae.ParamName);
-                Assert.AreEqual(string.Format("Unsupported: (0) ", IsolationLevel.Chaos), ae.Message); 
+                Assert.AreEqual(string.Format("Unsupported: {0}", IsolationLevel.Chaos), ae.Message); 
             }
 
             try
@@ -140,7 +140,7 @@ namespace System.Data.Hsqldb.Common.UnitTests
             catch (ArgumentException ae)
             {
                 Assert.AreEqual("isolationLevel", ae.ParamName);
-                Assert.AreEqual(string.Format("Unsupported: (0) ", IsolationLevel.Snapshot), ae.Message); 
+                Assert.AreEqual(string.Format("Unsupported (0) ", IsolationLevel.Snapshot), ae.Message); 
             }
         }
 

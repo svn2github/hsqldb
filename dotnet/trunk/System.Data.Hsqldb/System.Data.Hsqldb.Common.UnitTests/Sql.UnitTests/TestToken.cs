@@ -1,14 +1,16 @@
-using System;
 using NUnit.Framework;
+
+using System;
+using System.Collections.Generic;
 using System.Data.Hsqldb.TestCoverage;
 using System.Data.Hsqldb.Common.Enumeration;
-using org.hsqldb;
-using System.Collections.Generic;
+using System.Text;
+
 using HsqlValuePool = org.hsqldb.store.ValuePool;
+using HsqlDateTime = org.hsqldb.HsqlDateTime;
 using JavaBoolean = java.lang.Boolean;
 using JavaDecimal = java.math.BigDecimal;
 using JavaDouble = java.lang.Double;
-using System.Text;
 
 namespace System.Data.Hsqldb.Common.Sql.UnitTests
 {
